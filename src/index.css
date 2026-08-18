@@ -1,1 +1,14 @@
-@import 'tailwindcss';
+/*
+ * DHIS2 injects an unlayered reset, so keep Tailwind in the same cascade
+ * context and load it afterward. This lets Tailwind utilities override both
+ * resets using their normal selector specificity.
+ */
+@import 'tailwindcss/theme.css';
+@import 'tailwindcss/preflight.css';
+@import 'tailwindcss/utilities.css';
+
+:where(#dhis2-app-root, #dhis2-portal-root) :is(h1, h2, h3, h4, h5, h6) {
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+}

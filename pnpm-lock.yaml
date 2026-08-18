@@ -19,9 +19,6 @@ importers:
             react-dom:
                 specifier: ^18.3.1
                 version: 18.3.1(react@18.3.1)
-            react-router:
-                specifier: ^7.11.0
-                version: 7.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
         devDependencies:
             '@dhis2/cli-app-scripts':
                 specifier: 12.10.3
@@ -4454,13 +4451,6 @@ packages:
                 integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==,
             }
 
-    cookie@1.1.1:
-        resolution:
-            {
-                integrity: sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ==,
-            }
-        engines: { node: '>=18' }
-
     core-js-compat@3.47.0:
         resolution:
             {
@@ -8174,19 +8164,6 @@ packages:
             }
         engines: { node: '>=0.10.0' }
 
-    react-router@7.11.0:
-        resolution:
-            {
-                integrity: sha512-uI4JkMmjbWCZc01WVP2cH7ZfSzH91JAZUDd7/nIprDgWxBV1TkkmLToFh7EbMTcMak8URFRa2YoBL/W8GWnCTQ==,
-            }
-        engines: { node: '>=20.0.0' }
-        peerDependencies:
-            react: '>=18'
-            react-dom: '>=18'
-        peerDependenciesMeta:
-            react-dom:
-                optional: true
-
     react@18.3.1:
         resolution:
             {
@@ -8587,12 +8564,6 @@ packages:
         resolution:
             {
                 integrity: sha512-KiKBS8AnWGEyLzofFfmvKwpdPzqiy16LvQfK3yv/fVH7Bj13/wl3JSR1J+rfgRE9q7xUJK4qvgS8raSOeLUehw==,
-            }
-
-    set-cookie-parser@2.7.2:
-        resolution:
-            {
-                integrity: sha512-oeM1lpU/UvhTxw+g3cIfxXHyJRc/uidd3yK1P242gzHds0udQBYzs3y8j4gCCW+ZJ7ad0yctld8RYO+bdurlvw==,
             }
 
     set-function-length@1.2.2:
@@ -13497,8 +13468,6 @@ snapshots:
 
     convert-source-map@2.0.0: {}
 
-    cookie@1.1.1: {}
-
     core-js-compat@3.47.0:
         dependencies:
             browserslist: 4.28.1
@@ -16030,14 +15999,6 @@ snapshots:
 
     react-refresh@0.17.0: {}
 
-    react-router@7.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
-        dependencies:
-            cookie: 1.1.1
-            react: 18.3.1
-            set-cookie-parser: 2.7.2
-        optionalDependencies:
-            react-dom: 18.3.1(react@18.3.1)
-
     react@18.3.1:
         dependencies:
             loose-envify: 1.4.0
@@ -16327,8 +16288,6 @@ snapshots:
             randombytes: 2.1.0
 
     set-blocking@2.0.0: {}
-
-    set-cookie-parser@2.7.2: {}
 
     set-function-length@1.2.2:
         dependencies:

@@ -5,35 +5,13 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-18T16:04:48.358Z\n"
-"PO-Revision-Date: 2026-08-18T16:04:48.360Z\n"
+"POT-Creation-Date: 2026-08-18T16:43:29.068Z\n"
+"PO-Revision-Date: 2026-08-18T16:43:29.069Z\n"
 
-msgid "ERROR"
-msgstr "ERROR"
+msgctxt "Application title"
+msgid "__MANIFEST_APP_TITLE"
+msgstr "working-list-demo"
 
-msgid "Loading..."
-msgstr "Loading..."
-
-msgid "Hello {{name}}"
-msgstr "Hello {{name}}"
-
-msgid "Error"
-msgstr "Error"
-
-msgid "Error loading the data elements"
-msgstr "Error loading the data elements"
-
-msgid "ID"
-msgstr "ID"
-
-msgid "Name"
-msgstr "Name"
-
-msgid "Domain"
-msgstr "Domain"
-
-msgid "Value Type"
-msgstr "Value Type"
-
-msgid "Created by"
-msgstr "Created by"
+msgctxt "Application description"
+msgid "__MANIFEST_APP_DESCRIPTION"
+msgstr ""

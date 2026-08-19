@@ -101,7 +101,6 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Not empty'),
     i18n.t('Only records with a true value will match.'),
     i18n.t('Open'),
-    i18n.t('Open file'),
     i18n.t('Open row {{number}}'),
     i18n.t('Overdue'),
     i18n.t('Owner organisation unit'),

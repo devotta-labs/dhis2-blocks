@@ -253,6 +253,7 @@ export const EventSchema = z
             .object({
                 uid: z.string().min(1),
                 username: z.string().optional(),
+                displayName: z.string().optional(),
                 firstName: z.string().optional(),
                 surname: z.string().optional(),
             })

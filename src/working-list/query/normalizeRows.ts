@@ -2,7 +2,12 @@ import i18n from '@dhis2/d2-i18n'
 import { z } from 'zod'
 import type { TrackerEvent, TrackedEntity } from '../api/schemas'
 import type { FieldCatalog, WorkingListField } from '../domain/model'
-import { getValueTypeDefinition, ValueParseError } from '../registry/valueTypes'
+import {
+    getValueTypeDefinition,
+    ValueParseError,
+    type WorkingListFileValue,
+    type WorkingListUserValue,
+} from '../registry/valueTypes'
 
 const ParsedTrackerScalarSchema = z.union([
     z.string(),
@@ -13,10 +18,20 @@ const ParsedTrackerScalarSchema = z.union([
 /**
  * A single normalized cell. Structural and system-column failures stay
  * fail-fast; a data value that breaks its value-type contract becomes an
- * invalid cell so the row can still render.
+ * invalid cell so the row can still render. FILE_RESOURCE, IMAGE, and
+ * assigned-user cells carry Capture-style client objects instead of strings.
  */
 export type WorkingListCellValue =
-    | { valid: true; value: string | number | boolean | undefined }
+    | {
+          valid: true
+          value:
+              | string
+              | number
+              | boolean
+              | WorkingListFileValue
+              | WorkingListUserValue
+              | undefined
+      }
     | { valid: false; raw: unknown; message: string }
 
 export type WorkingListRowValues = Readonly<
@@ -126,6 +141,64 @@ const dataValueCell = (
     }
 }
 
+type FileUrlRecordContext =
+    | { type: 'trackedEntity'; trackedEntityId: string; programId?: string }
+    | { type: 'event'; eventId: string }
+
+/** Tracker-scoped download URLs, mirroring Capture's buildUrlByElementType. */
+const trackerFileUrls = (input: {
+    record: FileUrlRecordContext
+    fieldId: string
+    valueType: 'FILE_RESOURCE' | 'IMAGE'
+}): Pick<WorkingListFileValue, 'url' | 'previewUrl'> => {
+    const { record, fieldId, valueType } = input
+    const kind = valueType === 'IMAGE' ? 'image' : 'file'
+    if (record.type === 'trackedEntity') {
+        const program = record.programId
+            ? `?program=${encodeURIComponent(record.programId)}`
+            : ''
+        const base = `/api/tracker/trackedEntities/${encodeURIComponent(record.trackedEntityId)}/attributes/${encodeURIComponent(fieldId)}/${kind}`
+        return valueType === 'IMAGE'
+            ? {
+                  url: `${base}${program}`,
+                  previewUrl: `${base}${program}${program ? '&' : '?'}dimension=small`,
+              }
+            : { url: `${base}${program}` }
+    }
+    const base = `/api/tracker/events/${encodeURIComponent(record.eventId)}/dataValues/${encodeURIComponent(fieldId)}/${kind}`
+    return valueType === 'IMAGE'
+        ? { url: base, previewUrl: `${base}?dimension=small` }
+        : { url: base }
+}
+
+/** Replaces a valid FILE_RESOURCE/IMAGE UID with its Capture-style object. */
+const withFileValue = (
+    cell: WorkingListCellValue,
+    field: WorkingListField | undefined,
+    record: FileUrlRecordContext
+): WorkingListCellValue => {
+    if (
+        !field ||
+        (field.valueType !== 'FILE_RESOURCE' && field.valueType !== 'IMAGE') ||
+        !cell.valid ||
+        typeof cell.value !== 'string' ||
+        !cell.value
+    ) {
+        return cell
+    }
+    return {
+        valid: true,
+        value: {
+            id: cell.value,
+            ...trackerFileUrls({
+                record,
+                fieldId: field.id,
+                valueType: field.valueType,
+            }),
+        },
+    }
+}
+
 const collectIssues = (
     values: Record<string, WorkingListCellValue>,
     fields: FieldCatalog
@@ -159,14 +232,23 @@ export const normalizeTrackedEntityValues = (
 ): NormalizedTrackedEntity => {
     const translate = options.translate ?? defaultTranslate
     const values: Record<string, WorkingListCellValue> = {}
+    const recordContext: FileUrlRecordContext = {
+        type: 'trackedEntity',
+        trackedEntityId: trackedEntity.trackedEntity,
+        programId: options.programId,
+    }
 
     for (const attribute of trackedEntity.attributes) {
         const field = fields.get(attribute.attribute)
-        values[attribute.attribute] = dataValueCell(attribute.value, {
+        values[attribute.attribute] = withFileValue(
+            dataValueCell(attribute.value, {
+                field,
+                required: field?.required === true,
+                translate,
+            }),
             field,
-            required: field?.required === true,
-            translate,
-        })
+            recordContext
+        )
     }
     for (const field of fields.values()) {
         if (
@@ -231,14 +313,22 @@ export const normalizeEventValues = (
 
     const requiredInStage = (field: WorkingListField) =>
         Boolean(stageId && field.requiredInStageIds?.includes(stageId))
+    const recordContext: FileUrlRecordContext = {
+        type: 'event',
+        eventId: event.event,
+    }
 
     for (const dataValue of event.dataValues) {
         const field = fields.get(dataValue.dataElement)
-        values[dataValue.dataElement] = dataValueCell(dataValue.value, {
+        values[dataValue.dataElement] = withFileValue(
+            dataValueCell(dataValue.value, {
+                field,
+                required: field !== undefined && requiredInStage(field),
+                translate,
+            }),
             field,
-            required: field !== undefined && requiredInStage(field),
-            translate,
-        })
+            recordContext
+        )
     }
     for (const field of fields.values()) {
         if (
@@ -285,11 +375,19 @@ export const normalizeEventValues = (
     values.eventAssignedUser = {
         valid: true,
         value: event.assignedUser
-            ? [event.assignedUser.firstName, event.assignedUser.surname]
-                  .filter(Boolean)
-                  .join(' ') ||
-              event.assignedUser.username ||
-              event.assignedUser.uid
+            ? ({
+                  id: event.assignedUser.uid,
+                  name:
+                      event.assignedUser.displayName ||
+                      [event.assignedUser.firstName, event.assignedUser.surname]
+                          .filter(Boolean)
+                          .join(' ') ||
+                      event.assignedUser.username ||
+                      event.assignedUser.uid,
+                  username: event.assignedUser.username,
+                  firstName: event.assignedUser.firstName,
+                  surname: event.assignedUser.surname,
+              } satisfies WorkingListUserValue)
             : undefined,
     }
 

@@ -135,11 +135,57 @@ describe('value formatting and filtering contracts', () => {
             getCellDisplayValue('https://dhis2.org', field('URL'))
         ).toMatchObject({ kind: 'link', href: 'https://dhis2.org/' })
         expect(
-            getCellDisplayValue('Abcdef12345', field('FILE_RESOURCE'))
-        ).toMatchObject({
+            getCellDisplayValue(
+                {
+                    id: 'Abcdef12345',
+                    url: '/api/tracker/trackedEntities/Tei00000001/attributes/FileAttr001/file?program=Program0001',
+                },
+                field('FILE_RESOURCE'),
+                { resolveFileResourceName: () => 'consent-form.pdf' }
+            )
+        ).toEqual({
             kind: 'file',
-            resource: { resource: 'fileResources', id: 'Abcdef12345' },
+            text: 'consent-form.pdf',
+            href: '/api/tracker/trackedEntities/Tei00000001/attributes/FileAttr001/file?program=Program0001',
         })
+        // Capture parity: a file whose name cannot be resolved renders empty.
+        expect(
+            getCellDisplayValue('Abcdef12345', field('FILE_RESOURCE'))
+        ).toEqual({ kind: 'empty', text: '' })
+        expect(
+            getCellDisplayValue(
+                {
+                    id: 'Abcdef12345',
+                    url: '/api/tracker/events/Event000001/dataValues/ImageDe0001/image',
+                    previewUrl:
+                        '/api/tracker/events/Event000001/dataValues/ImageDe0001/image?dimension=small',
+                },
+                field('IMAGE')
+            )
+        ).toEqual({
+            kind: 'image',
+            alt: '',
+            href: '/api/tracker/events/Event000001/dataValues/ImageDe0001/image',
+            previewHref:
+                '/api/tracker/events/Event000001/dataValues/ImageDe0001/image?dimension=small',
+        })
+        // A bare UID (no tracker context) falls back to the direct download.
+        expect(getCellDisplayValue('Abcdef12345', field('IMAGE'))).toEqual({
+            kind: 'image',
+            alt: '',
+            href: '/api/fileResources/Abcdef12345/data',
+            previewHref: '/api/fileResources/Abcdef12345/data',
+        })
+        expect(
+            getCellDisplayValue(
+                {
+                    id: 'User0000001',
+                    name: 'John Traore',
+                    username: 'admin',
+                },
+                field('USERNAME')
+            )
+        ).toEqual({ kind: 'text', text: 'John Traore (admin)' })
         expect(
             getCellDisplayValue('[12.5,7.25]', field('COORDINATE'))
         ).toMatchObject({

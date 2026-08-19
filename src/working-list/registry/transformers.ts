@@ -245,6 +245,7 @@ export interface WorkingListTransformerOptions {
     trueLabel?: string
     falseLabel?: string
     resolveDisplayName?: (id: string) => string | undefined
+    resolveFileResourceName?: (id: string) => string | undefined
     /** ISO date override for deterministic serialization and tests. */
     today?: string
     /** Sunday is 0. Defaults to Capture's Sunday-first fallback. */
@@ -534,6 +535,7 @@ export const createWorkingListValueTransformers = (
         trueLabel: options.trueLabel,
         falseLabel: options.falseLabel,
         resolveDisplayName: options.resolveDisplayName,
+        resolveFileResourceName: options.resolveFileResourceName,
         formatDate,
         formatNumber: (value) =>
             new Intl.NumberFormat(options.locale).format(value),

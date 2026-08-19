@@ -45,24 +45,54 @@ export interface CellFormattingContext {
     trueLabel?: string
     falseLabel?: string
     resolveDisplayName?: (id: string) => string | undefined
+    /** Resolves a fileResource UID to its display name (FILE_RESOURCE only). */
+    resolveFileResourceName?: (id: string) => string | undefined
     formatDate?: (value: string, valueType: Dhis2ValueType) => string
     formatNumber?: (value: number, valueType: Dhis2ValueType) => string
 }
+
+/**
+ * Client-side value for FILE_RESOURCE and IMAGE cells, mirroring the Capture
+ * app: the fileResource UID plus tracker-scoped download URLs. Display names
+ * are resolved separately via resolveFileResourceName.
+ */
+export interface WorkingListFileValue {
+    id: string
+    url: string
+    previewUrl?: string
+}
+
+/** Client-side value for the assigned-user column, mirroring the Capture app. */
+export interface WorkingListUserValue {
+    id: string
+    name: string
+    username?: string
+    firstName?: string
+    surname?: string
+}
+
+export const isWorkingListFileValue = (
+    value: unknown
+): value is WorkingListFileValue =>
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as WorkingListFileValue).id === 'string' &&
+    typeof (value as WorkingListFileValue).url === 'string'
+
+export const isWorkingListUserValue = (
+    value: unknown
+): value is WorkingListUserValue =>
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as WorkingListUserValue).id === 'string' &&
+    typeof (value as WorkingListUserValue).name === 'string'
 
 export type CellDisplayValue =
     | { kind: 'empty'; text: '' }
     | { kind: 'text'; text: string }
     | { kind: 'link'; text: string; href: string }
-    | {
-          kind: 'file'
-          text: string
-          resource: { resource: 'fileResources'; id: string }
-      }
-    | {
-          kind: 'image'
-          alt: string
-          resource: { resource: 'fileResources'; id: string }
-      }
+    | { kind: 'file'; text: string; href: string }
+    | { kind: 'image'; alt: string; href: string; previewHref: string }
     | {
           kind: 'coordinate'
           text: string
@@ -239,6 +269,14 @@ const formatText = (
     if (value === undefined || value === null || value === '') {
         return ''
     }
+    if (isWorkingListUserValue(value)) {
+        return value.username ? `${value.name} (${value.username})` : value.name
+    }
+    if (isWorkingListFileValue(value)) {
+        return field.valueType === 'FILE_RESOURCE'
+            ? (context?.resolveFileResourceName?.(value.id) ?? '')
+            : value.id
+    }
     const raw = String(value)
     if (field.valueType === 'MULTI_TEXT') {
         return raw
@@ -257,6 +295,15 @@ const formatText = (
     return option?.displayName ?? context?.resolveDisplayName?.(raw) ?? raw
 }
 
+/** Direct-download fallback for values that never got tracker-scoped URLs. */
+const fileResourceFallbackUrl = (id: string) =>
+    `/api/fileResources/${encodeURIComponent(id)}/data`
+
+const toFileValue = (value: unknown): WorkingListFileValue =>
+    isWorkingListFileValue(value)
+        ? value
+        : { id: String(value), url: fileResourceFallbackUrl(String(value)) }
+
 const textDisplay = (input: {
     valueType: Dhis2ValueType
     value: unknown
@@ -264,6 +311,27 @@ const textDisplay = (input: {
     context?: CellFormattingContext
 }): CellDisplayValue => {
     const { valueType, value, field, context } = input
+    if (value === undefined || value === null || value === '') {
+        return { kind: 'empty', text: '' }
+    }
+    if (valueType === 'FILE_RESOURCE') {
+        const file = toFileValue(value)
+        const name = context?.resolveFileResourceName?.(file.id)
+        // Capture parity: a file whose resource name cannot be resolved
+        // renders as an empty cell instead of a dead link.
+        return name
+            ? { kind: 'file', text: name, href: file.url }
+            : { kind: 'empty', text: '' }
+    }
+    if (valueType === 'IMAGE') {
+        const file = toFileValue(value)
+        return {
+            kind: 'image',
+            alt: '',
+            href: file.url,
+            previewHref: file.previewUrl ?? file.url,
+        }
+    }
     const text = formatText(value, field, context)
     if (!text) {
         return { kind: 'empty', text: '' }
@@ -276,20 +344,6 @@ const textDisplay = (input: {
             }
         } catch {
             return { kind: 'text', text }
-        }
-    }
-    if (valueType === 'FILE_RESOURCE') {
-        return {
-            kind: 'file',
-            text,
-            resource: { resource: 'fileResources', id: String(value) },
-        }
-    }
-    if (valueType === 'IMAGE') {
-        return {
-            kind: 'image',
-            alt: text,
-            resource: { resource: 'fileResources', id: String(value) },
         }
     }
     if (valueType === 'ORGANISATION_UNIT') {

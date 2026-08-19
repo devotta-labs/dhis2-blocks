@@ -195,6 +195,70 @@ describe('metadata-aware row normalization', () => {
         ).toThrow('DHIS2 UID')
     })
 
+    it('wraps file and image attributes in Capture-style client objects', () => {
+        const fileField: WorkingListField = {
+            id: 'FileAttr001',
+            displayName: 'Consent form',
+            source: 'trackedEntityAttribute',
+            scope: 'trackedEntity',
+            valueType: 'FILE_RESOURCE',
+            filterable: false,
+        }
+        const imageField: WorkingListField = {
+            id: 'ImageAttr01',
+            displayName: 'Photo',
+            source: 'trackedEntityAttribute',
+            scope: 'trackedEntity',
+            valueType: 'IMAGE',
+            filterable: false,
+        }
+        const fileFields: FieldCatalog = new Map([
+            ...fields,
+            [fileField.id, fileField],
+            [imageField.id, imageField],
+        ])
+        const normalized = normalizeTrackedEntityValues(
+            record([
+                { attribute: fileField.id, value: 'FileRes0001' },
+                { attribute: imageField.id, value: 'ImageRes001' },
+                { attribute: requiredField.id, value: 'id-1' },
+            ]),
+            fileFields,
+            { programId: 'Program0001' }
+        )
+        expect(normalized.values[fileField.id]).toEqual({
+            valid: true,
+            value: {
+                id: 'FileRes0001',
+                url: '/api/tracker/trackedEntities/Entity00001/attributes/FileAttr001/file?program=Program0001',
+            },
+        })
+        expect(normalized.values[imageField.id]).toEqual({
+            valid: true,
+            value: {
+                id: 'ImageRes001',
+                url: '/api/tracker/trackedEntities/Entity00001/attributes/ImageAttr01/image?program=Program0001',
+                previewUrl:
+                    '/api/tracker/trackedEntities/Entity00001/attributes/ImageAttr01/image?program=Program0001&dimension=small',
+            },
+        })
+        expect(normalized.issues).toEqual([])
+
+        const invalid = normalizeTrackedEntityValues(
+            record([
+                { attribute: fileField.id, value: 'not a uid' },
+                { attribute: requiredField.id, value: 'id-1' },
+            ]),
+            fileFields,
+            { programId: 'Program0001' }
+        )
+        expect(invalid.values[fileField.id]).toEqual({
+            valid: false,
+            raw: 'not a uid',
+            message: 'FILE_RESOURCE requires a DHIS2 UID',
+        })
+    })
+
     it('picks the program owner matching the requested program', () => {
         const normalized = normalizeTrackedEntityValues(
             {
@@ -294,6 +358,99 @@ describe('metadata-aware event normalization', () => {
         )
         expect(normalized.values[stageDataElement.id]).toBeUndefined()
         expect(normalized.issues).toEqual([])
+    })
+
+    it('wraps event file data values in Capture-style client objects', () => {
+        const eventFileElement: WorkingListField = {
+            id: 'FileDe00001',
+            displayName: 'Attachment',
+            source: 'eventDataElement',
+            scope: 'event',
+            valueType: 'FILE_RESOURCE',
+            filterable: false,
+            programStageIds: ['StageAaaaa1'],
+        }
+        const eventImageElement: WorkingListField = {
+            id: 'ImageDe0001',
+            displayName: 'Photo',
+            source: 'eventDataElement',
+            scope: 'event',
+            valueType: 'IMAGE',
+            filterable: false,
+            programStageIds: ['StageAaaaa1'],
+        }
+        const fileEventFields: FieldCatalog = new Map([
+            ...eventFields,
+            [eventFileElement.id, eventFileElement],
+            [eventImageElement.id, eventImageElement],
+        ])
+        const normalized = normalizeEventValues(
+            event([
+                { dataElement: eventFileElement.id, value: 'FileRes0001' },
+                { dataElement: eventImageElement.id, value: 'ImageRes001' },
+            ]),
+            fileEventFields
+        )
+        expect(normalized.values[eventFileElement.id]).toEqual({
+            valid: true,
+            value: {
+                id: 'FileRes0001',
+                url: '/api/tracker/events/EventAaaaa1/dataValues/FileDe00001/file',
+            },
+        })
+        expect(normalized.values[eventImageElement.id]).toEqual({
+            valid: true,
+            value: {
+                id: 'ImageRes001',
+                url: '/api/tracker/events/EventAaaaa1/dataValues/ImageDe0001/image',
+                previewUrl:
+                    '/api/tracker/events/EventAaaaa1/dataValues/ImageDe0001/image?dimension=small',
+            },
+        })
+    })
+
+    it('keeps the assigned user as a Capture-style object', () => {
+        const normalized = normalizeEventValues(
+            {
+                ...event([]),
+                assignedUser: {
+                    uid: 'User0000001',
+                    username: 'jtraore',
+                    displayName: 'John Traore',
+                    firstName: 'John',
+                    surname: 'Traore',
+                },
+            },
+            eventFields
+        )
+        expect(normalized.values.eventAssignedUser).toEqual({
+            valid: true,
+            value: {
+                id: 'User0000001',
+                name: 'John Traore',
+                username: 'jtraore',
+                firstName: 'John',
+                surname: 'Traore',
+            },
+        })
+
+        const nameless = normalizeEventValues(
+            {
+                ...event([]),
+                assignedUser: { uid: 'User0000001', username: 'jtraore' },
+            },
+            eventFields
+        )
+        expect(nameless.values.eventAssignedUser).toMatchObject({
+            valid: true,
+            value: { id: 'User0000001', name: 'jtraore' },
+        })
+
+        const unassigned = normalizeEventValues(event([]), eventFields)
+        expect(unassigned.values.eventAssignedUser).toEqual({
+            valid: true,
+            value: undefined,
+        })
     })
 
     it('fails fast on a malformed event organisation unit', () => {

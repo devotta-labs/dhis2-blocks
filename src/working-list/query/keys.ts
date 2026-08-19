@@ -66,4 +66,11 @@ export const workingListQueryKeys = {
             'organisation-units',
             [...new Set(ids)].sort(),
         ] as const,
+    fileResourceNames: (ids: string[]) =>
+        [
+            ...workingListQueryKeys.all,
+            'reference-labels',
+            'file-resources',
+            [...new Set(ids)].sort(),
+        ] as const,
 }

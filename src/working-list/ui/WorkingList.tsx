@@ -56,6 +56,11 @@ import {
     workingListPageQueryOptions,
     type WorkingListPage,
 } from '../query/fetchers'
+import {
+    collectFileResourceIds,
+    createFileResourceNameResolver,
+    fileResourceNamesQueryOptions,
+} from '../query/fileResourceLabels'
 import { workingListQueryKeys } from '../query/keys'
 import {
     collectOrganisationUnitIds,
@@ -722,6 +727,26 @@ const WorkingListInstance = ({
     const organisationUnitLabelsReady =
         organisationUnitIds.length === 0 ||
         organisationUnitLabelsQuery.isSuccess
+    const fileResourceIds = useMemo(
+        () =>
+            pageQuery.data
+                ? collectFileResourceIds(pageQuery.data, metadata.fields)
+                : [],
+        [metadata.fields, pageQuery.data]
+    )
+    const fileResourceNamesQuery = useQuery({
+        ...fileResourceNamesQueryOptions(client, fileResourceIds),
+        enabled:
+            selectionReady &&
+            Boolean(pageQuery.data) &&
+            fileResourceIds.length > 0,
+    })
+    // Capture parity: unresolved file names blank their cells; a failed
+    // lookup never blocks the table.
+    const fileResourceNamesReady =
+        fileResourceIds.length === 0 ||
+        fileResourceNamesQuery.isSuccess ||
+        fileResourceNamesQuery.isError
     const displayTransformers = useMemo(
         () =>
             createWorkingListValueTransformers({
@@ -732,8 +757,17 @@ const WorkingListInstance = ({
                 resolveDisplayName: createOrganisationUnitLabelResolver(
                     organisationUnitLabelsQuery.data ?? new Map()
                 ),
+                resolveFileResourceName: createFileResourceNameResolver(
+                    fileResourceNamesQuery.data ?? new Map()
+                ),
             }),
-        [locale, organisationUnitLabelsQuery.data, systemInfo, translate]
+        [
+            locale,
+            organisationUnitLabelsQuery.data,
+            fileResourceNamesQuery.data,
+            systemInfo,
+            translate,
+        ]
     )
 
     useEffect(() => {
@@ -1464,7 +1498,12 @@ const WorkingListInstance = ({
                         <WorkingListTable
                             allFields={tableFields}
                             visibleColumnIds={view.columns}
-                            rows={organisationUnitLabelsReady ? rows : []}
+                            rows={
+                                organisationUnitLabelsReady &&
+                                fileResourceNamesReady
+                                    ? rows
+                                    : []
+                            }
                             dataQualityMode={dataQualityMode}
                             sort={view.sort}
                             page={page}
@@ -1473,12 +1512,14 @@ const WorkingListInstance = ({
                             isInitialLoading={
                                 !selectionReady ||
                                 pageQuery.isPending ||
-                                !organisationUnitLabelsReady
+                                !organisationUnitLabelsReady ||
+                                !fileResourceNamesReady
                             }
                             isUpdating={
                                 (pageQuery.isFetching &&
                                     !pageQuery.isPending) ||
-                                organisationUnitLabelsQuery.isFetching
+                                organisationUnitLabelsQuery.isFetching ||
+                                fileResourceNamesQuery.isFetching
                             }
                             formattingContext={
                                 displayTransformers.formattingContext

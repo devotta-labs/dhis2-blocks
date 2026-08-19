@@ -121,6 +121,8 @@ export {
     getCellDisplayValue,
     getFilterEditorKind,
     getValueTypeDefinition,
+    isWorkingListFileValue,
+    isWorkingListUserValue,
     validateAppliedFilter,
     ValueParseError,
     valueTypeRegistry,
@@ -132,4 +134,6 @@ export type {
     FilterParsingContext,
     FilterSerializationContext,
     ValueTypeDefinition,
+    WorkingListFileValue,
+    WorkingListUserValue,
 } from './registry/valueTypes'

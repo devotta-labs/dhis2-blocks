@@ -50,9 +50,6 @@ const columnHelper = createColumnHelper<
 
 const EMPTY_ROWS: WorkingListDisplayRow[] = []
 
-const fileResourceUrl = (id: string) =>
-    `/api/fileResources/${encodeURIComponent(id)}/data`
-
 const isInteractiveTarget = (target: EventTarget | null) =>
     target instanceof Element &&
     Boolean(
@@ -158,25 +155,25 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
         case 'file':
             return (
                 <a
-                    href={fileResourceUrl(display.resource.id)}
+                    href={display.href}
                     rel="noreferrer noopener"
                     target="_blank"
                 >
-                    {t('Open file')}
+                    {display.text}
                 </a>
             )
         case 'image':
             return (
                 <a
-                    href={fileResourceUrl(display.resource.id)}
+                    href={display.href}
                     rel="noreferrer noopener"
                     target="_blank"
                 >
                     <img
-                        alt={t('Image attachment')}
+                        alt={display.alt || t('Image attachment')}
                         className="working-list-cell-image"
                         loading="lazy"
-                        src={fileResourceUrl(display.resource.id)}
+                        src={display.previewHref}
                     />
                 </a>
             )

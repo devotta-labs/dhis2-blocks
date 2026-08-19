@@ -1,5 +1,26 @@
 This project was bootstrapped with [DHIS2 Application Platform](https://github.com/dhis2/app-platform).
 
+## Working-list library
+
+The reusable component has an independent ESM and TypeScript declaration
+build. This does not replace or modify the DHIS2 application build.
+
+```sh
+pnpm build:library
+pnpm package:check
+```
+
+Workspace or tarball consumers import the public component surface and its
+stylesheet separately:
+
+```ts
+import { WorkingList } from 'working-list-demo'
+import 'working-list-demo/style.css'
+```
+
+The package remains private while its API is iterated, but its `exports`,
+`types`, `files`, and CSS contract are ready for workspace consumption.
+
 ## Available Scripts
 
 In the project directory, you can run:

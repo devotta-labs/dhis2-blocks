@@ -1,7 +1,6 @@
-import React, { FC } from 'react'
+import React from 'react'
+import { AppShell } from '@/app/AppShell'
 
-const MyApp: FC = () => {
-    return <h1>Hello!</h1>
-}
+const App = () => <AppShell />
 
-export default MyApp
+export default App

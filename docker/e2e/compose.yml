@@ -1,0 +1,61 @@
+services:
+    database-download:
+        image: busybox:1.36.1
+        command:
+            - sh
+            - -ec
+            - |
+                case "$${DHIS2_DB_DUMP_URL}" in
+                    https://databases.dhis2.org/sierra-leone/*/dhis2-db-sierra-leone.sql.gz) ;;
+                    *) echo "Refusing unexpected database URL: $${DHIS2_DB_DUMP_URL}" >&2; exit 64 ;;
+                esac
+                test -s /opt/dump/dhis2-db-sierra-leone.sql.gz || \
+                    wget -O /opt/dump/dhis2-db-sierra-leone.sql.gz "$${DHIS2_DB_DUMP_URL}"
+        environment:
+            DHIS2_DB_DUMP_URL: ${DHIS2_DB_DUMP_URL:?Set DHIS2_DB_DUMP_URL}
+        volumes:
+            - database-dump:/opt/dump
+
+    database:
+        image: ghcr.io/baosystems/postgis:16-3.5
+        environment:
+            POSTGRES_DB: dhis
+            POSTGRES_USER: dhis
+            POSTGRES_PASSWORD: dhis
+            PGPASSWORD: dhis
+        volumes:
+            - database-dump:/docker-entrypoint-initdb.d:ro
+        healthcheck:
+            test:
+                - CMD-SHELL
+                - >-
+                    psql --no-password --quiet --username "$${POSTGRES_USER}"
+                    postgres://127.0.0.1/"$${POSTGRES_DB}" -p 5432
+                    --command "SELECT 'ok'" > /dev/null
+            start_period: 300s
+            interval: 2s
+            timeout: 5s
+            retries: 30
+        depends_on:
+            database-download:
+                condition: service_completed_successfully
+
+    dhis2:
+        image: ${DHIS2_IMAGE:?Set DHIS2_IMAGE}
+        environment:
+            DB_HOSTNAME: database
+            DB_NAME: dhis
+            DB_USERNAME: dhis
+            DB_PASSWORD: dhis
+            JAVA_TOOL_OPTIONS: -Xms256m -Xmx1536m
+        ports:
+            - 127.0.0.1:${DHIS2_HTTP_PORT:?Set DHIS2_HTTP_PORT}:8080
+        volumes:
+            - ./dhis.conf:/opt/dhis2/dhis.conf:ro
+        depends_on:
+            database:
+                condition: service_healthy
+        stop_grace_period: 30s
+
+volumes:
+    database-dump: {}

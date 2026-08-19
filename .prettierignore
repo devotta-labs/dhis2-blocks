@@ -1,0 +1,4 @@
+.agents/
+e2e/artifacts/
+.npm-cache/
+skills-lock.json

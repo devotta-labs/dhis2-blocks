@@ -1,0 +1,589 @@
+{
+    "userRoles": [
+        {
+            "id": "WlE2eRol001",
+            "name": "Working list E2E non-admin",
+            "authorities": []
+        }
+    ],
+    "userGroups": [
+        {
+            "id": "WlE2eGrp001",
+            "name": "Working list E2E readers"
+        }
+    ],
+    "optionSets": [
+        {
+            "id": "WlE2eOpt001",
+            "name": "Working list E2E multi-select options",
+            "valueType": "TEXT",
+            "options": [{ "id": "WlE2eOpA001" }, { "id": "WlE2eOpB001" }]
+        }
+    ],
+    "options": [
+        {
+            "id": "WlE2eOpA001",
+            "name": "Alpha",
+            "code": "ALPHA",
+            "sortOrder": 1,
+            "optionSet": { "id": "WlE2eOpt001" }
+        },
+        {
+            "id": "WlE2eOpB001",
+            "name": "Beta",
+            "code": "BETA",
+            "sortOrder": 2,
+            "optionSet": { "id": "WlE2eOpt001" }
+        }
+    ],
+    "trackedEntityAttributes": [
+        {
+            "id": "WlAtText001",
+            "name": "E2E text attribute",
+            "shortName": "E2E text attribute",
+            "valueType": "TEXT",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlAtIntg001",
+            "name": "E2E integer attribute",
+            "shortName": "E2E integer attribute",
+            "valueType": "INTEGER",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlAtNumb001",
+            "name": "E2E number attribute",
+            "shortName": "E2E number attribute",
+            "valueType": "NUMBER",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlAtBool001",
+            "name": "E2E boolean attribute",
+            "shortName": "E2E boolean attribute",
+            "valueType": "BOOLEAN",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlAtDate001",
+            "name": "E2E date attribute",
+            "shortName": "E2E date attribute",
+            "valueType": "DATE",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlAtDttm001",
+            "name": "E2E date-time attribute",
+            "shortName": "E2E date-time attribute",
+            "valueType": "DATETIME",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlAtOrgu001",
+            "name": "E2E organisation unit attribute",
+            "shortName": "E2E org unit attribute",
+            "valueType": "ORGANISATION_UNIT",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlAtCoor001",
+            "name": "E2E coordinate attribute",
+            "shortName": "E2E coordinate attribute",
+            "valueType": "COORDINATE",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlAtFile001",
+            "name": "E2E file attribute",
+            "shortName": "E2E file attribute",
+            "valueType": "FILE_RESOURCE",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlAtMult001",
+            "name": "E2E multi-text attribute",
+            "shortName": "E2E multi-text attribute",
+            "valueType": "MULTI_TEXT",
+            "aggregationType": "NONE",
+            "optionSet": { "id": "WlE2eOpt001" }
+        },
+        {
+            "id": "WlAtMail001",
+            "name": "E2E email attribute",
+            "shortName": "E2E email attribute",
+            "valueType": "EMAIL",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlAtPhon001",
+            "name": "E2E phone attribute",
+            "shortName": "E2E phone attribute",
+            "valueType": "PHONE_NUMBER",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlAtGeoj001",
+            "name": "E2E GeoJSON attribute",
+            "shortName": "E2E GeoJSON attribute",
+            "valueType": "GEOJSON",
+            "aggregationType": "NONE"
+        }
+    ],
+    "trackedEntityTypes": [
+        {
+            "id": "WlE2eTet001",
+            "name": "Working list E2E entity",
+            "shortName": "Working list E2E entity",
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": { "public": "rwrw----" },
+            "trackedEntityTypeAttributes": [
+                {
+                    "id": "WlTaText001",
+                    "trackedEntityAttribute": { "id": "WlAtText001" },
+                    "displayInListNoProgram": true,
+                    "searchable": true
+                },
+                {
+                    "id": "WlTaIntg001",
+                    "trackedEntityAttribute": { "id": "WlAtIntg001" },
+                    "displayInListNoProgram": true,
+                    "searchable": true
+                },
+                {
+                    "id": "WlTaNumb001",
+                    "trackedEntityAttribute": { "id": "WlAtNumb001" },
+                    "displayInListNoProgram": true,
+                    "searchable": true
+                },
+                {
+                    "id": "WlTaBool001",
+                    "trackedEntityAttribute": { "id": "WlAtBool001" },
+                    "displayInListNoProgram": true,
+                    "searchable": true
+                },
+                {
+                    "id": "WlTaDate001",
+                    "trackedEntityAttribute": { "id": "WlAtDate001" },
+                    "displayInListNoProgram": true,
+                    "searchable": true
+                },
+                {
+                    "id": "WlTaDttm001",
+                    "trackedEntityAttribute": { "id": "WlAtDttm001" },
+                    "displayInListNoProgram": true,
+                    "searchable": true
+                },
+                {
+                    "id": "WlTaOrgu001",
+                    "trackedEntityAttribute": { "id": "WlAtOrgu001" },
+                    "displayInListNoProgram": true,
+                    "searchable": true
+                },
+                {
+                    "id": "WlTaCoor001",
+                    "trackedEntityAttribute": { "id": "WlAtCoor001" },
+                    "displayInListNoProgram": true,
+                    "searchable": false
+                },
+                {
+                    "id": "WlTaFile001",
+                    "trackedEntityAttribute": { "id": "WlAtFile001" },
+                    "displayInListNoProgram": true,
+                    "searchable": false
+                },
+                {
+                    "id": "WlTaMult001",
+                    "trackedEntityAttribute": { "id": "WlAtMult001" },
+                    "displayInListNoProgram": true,
+                    "searchable": true
+                },
+                {
+                    "id": "WlTaMail001",
+                    "trackedEntityAttribute": { "id": "WlAtMail001" },
+                    "displayInListNoProgram": true,
+                    "searchable": true
+                },
+                {
+                    "id": "WlTaPhon001",
+                    "trackedEntityAttribute": { "id": "WlAtPhon001" },
+                    "displayInListNoProgram": true,
+                    "searchable": true
+                },
+                {
+                    "id": "WlTaGeoj001",
+                    "trackedEntityAttribute": { "id": "WlAtGeoj001" },
+                    "displayInListNoProgram": true,
+                    "searchable": false
+                }
+            ]
+        }
+    ],
+    "dataElements": [
+        {
+            "id": "WlDeText001",
+            "name": "E2E text data element",
+            "shortName": "E2E text data element",
+            "domainType": "TRACKER",
+            "valueType": "TEXT",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlDeIntg001",
+            "name": "E2E integer data element",
+            "shortName": "E2E integer data element",
+            "domainType": "TRACKER",
+            "valueType": "INTEGER",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlDeNumb001",
+            "name": "E2E number data element",
+            "shortName": "E2E number data element",
+            "domainType": "TRACKER",
+            "valueType": "NUMBER",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlDeBool001",
+            "name": "E2E boolean data element",
+            "shortName": "E2E boolean data element",
+            "domainType": "TRACKER",
+            "valueType": "BOOLEAN",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlDeDate001",
+            "name": "E2E date data element",
+            "shortName": "E2E date data element",
+            "domainType": "TRACKER",
+            "valueType": "DATE",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlDeDttm001",
+            "name": "E2E date-time data element",
+            "shortName": "E2E date-time data element",
+            "domainType": "TRACKER",
+            "valueType": "DATETIME",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlDeOrgu001",
+            "name": "E2E organisation unit data element",
+            "shortName": "E2E org unit data element",
+            "domainType": "TRACKER",
+            "valueType": "ORGANISATION_UNIT",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlDeCoor001",
+            "name": "E2E coordinate data element",
+            "shortName": "E2E coordinate data element",
+            "domainType": "TRACKER",
+            "valueType": "COORDINATE",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlDeFile001",
+            "name": "E2E file data element",
+            "shortName": "E2E file data element",
+            "domainType": "TRACKER",
+            "valueType": "FILE_RESOURCE",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "WlDeMult001",
+            "name": "E2E multi-text data element",
+            "shortName": "E2E multi-text data element",
+            "domainType": "TRACKER",
+            "valueType": "MULTI_TEXT",
+            "aggregationType": "NONE",
+            "optionSet": { "id": "WlE2eOpt001" }
+        }
+    ],
+    "programs": [
+        {
+            "id": "WlE2ePrg001",
+            "name": "Working list E2E tracker program",
+            "shortName": "Working list E2E program",
+            "programType": "WITH_REGISTRATION",
+            "publicAccess": "rwrw----",
+            "sharing": { "public": "rwrw----" },
+            "trackedEntityType": { "id": "WlE2eTet001" },
+            "organisationUnits": [{ "id": "DiszpKrYNg8" }],
+            "programTrackedEntityAttributes": [
+                {
+                    "id": "WlPaText001",
+                    "trackedEntityAttribute": { "id": "WlAtText001" },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 1
+                },
+                {
+                    "id": "WlPaIntg001",
+                    "trackedEntityAttribute": { "id": "WlAtIntg001" },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 2
+                },
+                {
+                    "id": "WlPaNumb001",
+                    "trackedEntityAttribute": { "id": "WlAtNumb001" },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 3
+                },
+                {
+                    "id": "WlPaBool001",
+                    "trackedEntityAttribute": { "id": "WlAtBool001" },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 4
+                },
+                {
+                    "id": "WlPaDate001",
+                    "trackedEntityAttribute": { "id": "WlAtDate001" },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 5
+                },
+                {
+                    "id": "WlPaDttm001",
+                    "trackedEntityAttribute": { "id": "WlAtDttm001" },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 6
+                },
+                {
+                    "id": "WlPaOrgu001",
+                    "trackedEntityAttribute": { "id": "WlAtOrgu001" },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 7
+                },
+                {
+                    "id": "WlPaCoor001",
+                    "trackedEntityAttribute": { "id": "WlAtCoor001" },
+                    "mandatory": false,
+                    "searchable": false,
+                    "displayInList": true,
+                    "sortOrder": 8
+                },
+                {
+                    "id": "WlPaFile001",
+                    "trackedEntityAttribute": { "id": "WlAtFile001" },
+                    "mandatory": false,
+                    "searchable": false,
+                    "displayInList": true,
+                    "sortOrder": 9
+                },
+                {
+                    "id": "WlPaMult001",
+                    "trackedEntityAttribute": { "id": "WlAtMult001" },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 10
+                },
+                {
+                    "id": "WlPaMail001",
+                    "trackedEntityAttribute": { "id": "WlAtMail001" },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 11
+                },
+                {
+                    "id": "WlPaPhon001",
+                    "trackedEntityAttribute": { "id": "WlAtPhon001" },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 12
+                },
+                {
+                    "id": "WlPaGeoj001",
+                    "trackedEntityAttribute": { "id": "WlAtGeoj001" },
+                    "mandatory": false,
+                    "searchable": false,
+                    "displayInList": true,
+                    "sortOrder": 13
+                }
+            ],
+            "programStages": [{ "id": "WlE2eStg001" }, { "id": "WlE2eStg002" }]
+        }
+    ],
+    "programStages": [
+        {
+            "id": "WlE2eStg001",
+            "name": "Working list E2E programme stage",
+            "program": { "id": "WlE2ePrg001" },
+            "repeatable": true,
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": { "public": "rwrw----" },
+            "programStageDataElements": [
+                {
+                    "id": "WlPeText001",
+                    "dataElement": { "id": "WlDeText001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 1
+                },
+                {
+                    "id": "WlPeIntg001",
+                    "dataElement": { "id": "WlDeIntg001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 2
+                },
+                {
+                    "id": "WlPeNumb001",
+                    "dataElement": { "id": "WlDeNumb001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 3
+                },
+                {
+                    "id": "WlPeBool001",
+                    "dataElement": { "id": "WlDeBool001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 4
+                },
+                {
+                    "id": "WlPeDate001",
+                    "dataElement": { "id": "WlDeDate001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 5
+                },
+                {
+                    "id": "WlPeDttm001",
+                    "dataElement": { "id": "WlDeDttm001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 6
+                },
+                {
+                    "id": "WlPeOrgu001",
+                    "dataElement": { "id": "WlDeOrgu001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 7
+                },
+                {
+                    "id": "WlPeCoor001",
+                    "dataElement": { "id": "WlDeCoor001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 8
+                },
+                {
+                    "id": "WlPeFile001",
+                    "dataElement": { "id": "WlDeFile001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 9
+                },
+                {
+                    "id": "WlPeMult001",
+                    "dataElement": { "id": "WlDeMult001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 10
+                }
+            ]
+        },
+        {
+            "id": "WlE2eStg002",
+            "name": "Working list E2E alternate programme stage",
+            "program": { "id": "WlE2ePrg001" },
+            "repeatable": true,
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": { "public": "rwrw----" },
+            "programStageDataElements": [
+                {
+                    "id": "WlPeText002",
+                    "dataElement": { "id": "WlDeText001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 1
+                },
+                {
+                    "id": "WlPeIntg002",
+                    "dataElement": { "id": "WlDeIntg001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 2
+                },
+                {
+                    "id": "WlPeNumb002",
+                    "dataElement": { "id": "WlDeNumb001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 3
+                },
+                {
+                    "id": "WlPeBool002",
+                    "dataElement": { "id": "WlDeBool001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 4
+                },
+                {
+                    "id": "WlPeDate002",
+                    "dataElement": { "id": "WlDeDate001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 5
+                },
+                {
+                    "id": "WlPeDttm002",
+                    "dataElement": { "id": "WlDeDttm001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 6
+                },
+                {
+                    "id": "WlPeOrgu002",
+                    "dataElement": { "id": "WlDeOrgu001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 7
+                },
+                {
+                    "id": "WlPeCoor002",
+                    "dataElement": { "id": "WlDeCoor001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 8
+                },
+                {
+                    "id": "WlPeFile002",
+                    "dataElement": { "id": "WlDeFile001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 9
+                },
+                {
+                    "id": "WlPeMult002",
+                    "dataElement": { "id": "WlDeMult001" },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 10
+                }
+            ]
+        }
+    ]
+}

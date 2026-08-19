@@ -3,3 +3,6 @@ node_modules
 .d2
 src/locales
 build
+dist
+.npm-cache
+e2e/artifacts

@@ -1,0 +1,74 @@
+{
+    "lists": [
+        {
+            "resource": "trackedEntityInstanceFilters",
+            "id": "WlE2eLst001",
+            "name": "E2E private owner list",
+            "data": {
+                "id": "WlE2eLst001",
+                "name": "E2E private owner list",
+                "program": { "id": "WlE2ePrg001" },
+                "publicAccess": "--------",
+                "externalAccess": false,
+                "sortOrder": 1,
+                "entityQueryCriteria": {
+                    "displayColumnOrder": [
+                        "WlAtText001",
+                        "WlAtIntg001",
+                        "WlAtBool001"
+                    ],
+                    "order": "WlAtText001:asc",
+                    "attributeValueFilters": []
+                }
+            }
+        },
+        {
+            "resource": "trackedEntityInstanceFilters",
+            "id": "WlE2eLst002",
+            "name": "E2E shared reader list",
+            "data": {
+                "id": "WlE2eLst002",
+                "name": "E2E shared reader list",
+                "program": { "id": "WlE2ePrg001" },
+                "publicAccess": "--------",
+                "externalAccess": false,
+                "sortOrder": 2,
+                "entityQueryCriteria": {
+                    "displayColumnOrder": [
+                        "WlAtText001",
+                        "WlAtIntg001",
+                        "WlAtBool001"
+                    ],
+                    "order": "WlAtText001:asc",
+                    "enrollmentStatus": "ACTIVE",
+                    "attributeValueFilters": []
+                }
+            }
+        },
+        {
+            "resource": "trackedEntityInstanceFilters",
+            "id": "WlE2eLst003",
+            "name": "E2E stale metadata list",
+            "data": {
+                "id": "WlE2eLst003",
+                "name": "E2E stale metadata list",
+                "program": { "id": "WlE2ePrg001" },
+                "publicAccess": "--------",
+                "externalAccess": false,
+                "sortOrder": 3,
+                "entityQueryCriteria": {
+                    "displayColumnOrder": ["WlAtText001", "WlMissing01"],
+                    "order": "WlAtText001:asc",
+                    "attributeValueFilters": []
+                }
+            }
+        }
+    ],
+    "sharing": {
+        "resource": "trackedEntityInstanceFilter",
+        "id": "WlE2eLst002",
+        "publicAccess": "--------",
+        "userGroupAccesses": [{ "id": "WlE2eGrp001", "access": "r-------" }],
+        "userAccesses": []
+    }
+}

@@ -1,0 +1,40 @@
+{
+    "users": [
+        {
+            "id": "WlE2eUsr001",
+            "username": "wl_e2e_owner",
+            "password": "WorkingList123!",
+            "firstName": "Working list",
+            "surname": "Owner",
+            "userRoles": [{ "id": "WlE2eRol001" }],
+            "userGroups": [],
+            "organisationUnits": [{ "id": "DiszpKrYNg8" }],
+            "dataViewOrganisationUnits": [{ "id": "DiszpKrYNg8" }],
+            "teiSearchOrganisationUnits": [{ "id": "DiszpKrYNg8" }]
+        },
+        {
+            "id": "WlE2eUsr002",
+            "username": "wl_e2e_reader",
+            "password": "WorkingList123!",
+            "firstName": "Working list",
+            "surname": "Reader",
+            "userRoles": [{ "id": "WlE2eRol001" }],
+            "userGroups": [{ "id": "WlE2eGrp001" }],
+            "organisationUnits": [{ "id": "DiszpKrYNg8" }],
+            "dataViewOrganisationUnits": [{ "id": "DiszpKrYNg8" }],
+            "teiSearchOrganisationUnits": [{ "id": "DiszpKrYNg8" }]
+        },
+        {
+            "id": "WlE2eUsr003",
+            "username": "wl_e2e_outsider",
+            "password": "WorkingList123!",
+            "firstName": "Working list",
+            "surname": "Outsider",
+            "userRoles": [{ "id": "WlE2eRol001" }],
+            "userGroups": [],
+            "organisationUnits": [{ "id": "DiszpKrYNg8" }],
+            "dataViewOrganisationUnits": [{ "id": "DiszpKrYNg8" }],
+            "teiSearchOrganisationUnits": [{ "id": "DiszpKrYNg8" }]
+        }
+    ]
+}

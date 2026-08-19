@@ -1,0 +1,36 @@
+diff --git a/build/cjs/constants.js b/build/cjs/constants.js
+index 276ec1d731e49d406942bbd57613ba008b941ba6..5261ce252db49f7db7bc7137a01582d801ccfb96 100644
+--- a/build/cjs/constants.js
++++ b/build/cjs/constants.js
+@@ -73,6 +73,7 @@ const DIALOG_TYPES = exports.DIALOG_TYPES = {
+   SQL_VIEW: 'sqlView',
+   TRACKED_ENTITY_ATTRIBUTE: 'trackedEntityAttribute',
+   TRACKED_ENTITY_FILTER: 'trackedEntityFilter',
++  TRACKED_ENTITY_INSTANCE_FILTER: 'trackedEntityInstanceFilter',
+   TRACKED_ENTITY_TYPE: 'trackedEntityType',
+   USER_GROUP: 'userGroup',
+   USER_ROLE: 'userRole',
+diff --git a/build/es/constants.js b/build/es/constants.js
+index 6ce0435fd47a0f512f945f6043f0498518d0519f..220711d601cc5700884b32f725252e15ce590bf1 100644
+--- a/build/es/constants.js
++++ b/build/es/constants.js
+@@ -67,6 +67,7 @@ export const DIALOG_TYPES = {
+   SQL_VIEW: 'sqlView',
+   TRACKED_ENTITY_ATTRIBUTE: 'trackedEntityAttribute',
+   TRACKED_ENTITY_FILTER: 'trackedEntityFilter',
++  TRACKED_ENTITY_INSTANCE_FILTER: 'trackedEntityInstanceFilter',
+   TRACKED_ENTITY_TYPE: 'trackedEntityType',
+   USER_GROUP: 'userGroup',
+   USER_ROLE: 'userRole',
+diff --git a/types/index.d.ts b/types/index.d.ts
+index deafc9103ca2ebcb3be4a2db564a17d0dbf23195..c06ccd6af351bb80ce2fbc118cc1f438e605ac01 100644
+--- a/types/index.d.ts
++++ b/types/index.d.ts
+@@ -65,6 +65,7 @@ type SharingType =
+     | 'sqlView'
+     | 'trackedEntityAttribute'
+     | 'trackedEntityFilter'
++    | 'trackedEntityInstanceFilter'
+     | 'trackedEntityType'
+     | 'userGroup'
+     | 'userRole'

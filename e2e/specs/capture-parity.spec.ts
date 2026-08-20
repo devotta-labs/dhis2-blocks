@@ -1292,13 +1292,13 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             await chooseSavedListOption(page, 'share-working-list')
             await expect(sharingDialog).toBeVisible()
             const readerAccessRow = sharingDialog.locator('.wrapper').filter({
-                has: sharingDialog.getByText('Working list Reader', {
+                has: page.getByText('Working list Reader', {
                     exact: true,
                 }),
             })
             await expect(readerAccessRow).toBeVisible()
             await readerAccessRow
-                .getByText('View only', { exact: true })
+                .locator('[data-test="dhis2-uicore-select-input"]')
                 .click()
             const revokeResponse = page.waitForResponse(
                 (response) =>

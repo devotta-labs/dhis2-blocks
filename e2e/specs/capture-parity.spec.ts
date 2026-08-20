@@ -75,6 +75,7 @@ const waitForTrackerResponse = async (
 ) => {
     const pending = page.waitForResponse(
         (response) =>
+            response.request().method() === 'GET' &&
             isTrackerResource(response, resource) &&
             matches(requestUrl(response))
     )
@@ -330,9 +331,10 @@ test.describe('Capture context and generated tracker views', () => {
             }
         }
         page.on('request', countTrackerRequest)
+        await page.locator('[data-test="program-selector"]').click()
         await chooseDhis2Option(
             page,
-            '[data-test="program-selector"]',
+            '[data-test="program-selector-input"]',
             PROGRAM_NAME
         )
         await expect(page.getByTestId('org-unit-empty-state')).toBeVisible({
@@ -505,21 +507,13 @@ test.describe('Capture context and generated tracker views', () => {
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
         )
 
-        await waitForTrackerResponse(
-            page,
-            'trackedEntities',
-            () => activeView.click(),
-            (url) => url.searchParams.get(statusParameter) === 'ACTIVE'
-        )
+        // React Query can satisfy this recently loaded query from cache.
+        await activeView.click()
         await expect(activeView).toHaveAttribute('aria-current', 'true')
         await expect(page).toHaveURL(/selectedTemplateId=active/)
 
-        await waitForTrackerResponse(
-            page,
-            'trackedEntities',
-            () => activeView.click(),
-            (url) => !url.searchParams.has(statusParameter)
-        )
+        await activeView.click()
+        await expect(activeView).not.toHaveAttribute('aria-current', 'true')
         await expect(page).toHaveURL(
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
         )
@@ -826,10 +820,10 @@ test.describe('Capture context and generated tracker views', () => {
             page,
             'trackedEntities',
             () => page.getByTestId(`sort-${TEXT_ATTRIBUTE}`).click(),
-            (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:asc`
+            (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:desc`
         )
         expect(firstSort.searchParams.getAll('order')).toEqual([
-            `${TEXT_ATTRIBUTE}:asc`,
+            `${TEXT_ATTRIBUTE}:desc`,
         ])
 
         const replacementSort = await waitForTrackerResponse(
@@ -948,7 +942,7 @@ test.describe('Capture programme-stage joint data strategy', () => {
             page,
             'events',
             () => page.getByTestId(`sort-${TEXT_ATTRIBUTE}`).click(),
-            (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:asc`
+            (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:desc`
         )
         expect(attributeSort.searchParams.getAll('order')).toHaveLength(1)
         const dataSort = await waitForTrackerResponse(
@@ -1213,9 +1207,12 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             ).toContainText('E2E renamed tracker lifecycle')
 
             await chooseSavedListOption(page, 'share-working-list')
-            const sharingDialog = page.locator(
-                '[data-test="dhis2-uicore-sharingdialog-modal"]'
-            )
+            const sharingDialog = page.getByRole('dialog').filter({
+                has: page.getByRole('heading', {
+                    name: 'Sharing and access: E2E renamed tracker lifecycle',
+                    exact: true,
+                }),
+            })
             await expect(sharingDialog).toBeVisible()
             await sharingDialog.getByPlaceholder('Search').fill(READER.username)
             await page

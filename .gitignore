@@ -1,9 +1,10 @@
 # DHIS2 Platform
 node_modules
 .d2
-src/locales
-build
-dist
+apps/web/src/locales
+apps/*/build
+packages/*/dist
+.turbo
 .npm-cache
 e2e/artifacts
 

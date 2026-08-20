@@ -3,8 +3,6 @@ import {
     CalendarInput,
     Checkbox,
     FlyoutMenu,
-    // eslint-disable-next-line import/named -- Re-exported by @dhis2/ui at runtime.
-    IconCross16,
     MenuItem,
     MultiSelectField,
     MultiSelectOption,
@@ -13,6 +11,7 @@ import {
     SingleSelectField,
     SingleSelectOption,
 } from '@dhis2/ui'
+import { IconCross16 } from '@dhis2/ui-icons'
 import { useQuery } from '@tanstack/react-query'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'

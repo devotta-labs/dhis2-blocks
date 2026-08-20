@@ -1,9 +1,4 @@
-import {
-    // eslint-disable-next-line import/named -- @dhis2/ui re-exports @dhis2/ui-icons
-    IconWarningFilled16,
-    Pagination,
-    Tooltip,
-} from '@dhis2/ui'
+import { IconWarningFilled16, Pagination, Tooltip } from '@dhis2/ui'
 import {
     columnOrderingFeature,
     columnVisibilityFeature,

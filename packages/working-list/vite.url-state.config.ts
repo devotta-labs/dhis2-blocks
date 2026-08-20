@@ -14,13 +14,12 @@ const isExternalDependency = (id: string) =>
 
 export default defineConfig({
     build: {
-        outDir: 'dist/working-list',
-        emptyOutDir: true,
+        outDir: 'dist',
+        emptyOutDir: false,
         lib: {
-            entry: path.resolve(__dirname, 'src/working-list/index.ts'),
-            formats: ['es'],
-            fileName: () => 'index.mjs',
-            cssFileName: 'style',
+            entry: path.resolve(__dirname, 'src/url-state.ts'),
+            formats: ['cjs'],
+            fileName: () => 'url-state.cjs',
         },
         rollupOptions: {
             external: isExternalDependency,

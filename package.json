@@ -1,41 +1,19 @@
 {
-    "name": "working-list-demo",
+    "name": "dhis2-blocks",
     "version": "1.0.0",
-    "description": "",
+    "description": "Reusable DHIS2 UI blocks and their development applications",
     "license": "BSD-3-Clause",
     "private": true,
-    "module": "./dist/working-list/index.mjs",
-    "types": "./dist/working-list/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/working-list/index.d.ts",
-            "import": "./dist/working-list/index.mjs"
-        },
-        "./style.css": "./dist/working-list/style.css",
-        "./package.json": "./package.json"
-    },
-    "files": [
-        "dist/working-list"
-    ],
-    "sideEffects": [
-        "**/*.css"
-    ],
     "packageManager": "pnpm@10.13.1",
-    "jest": {
-        "watchman": false,
-        "moduleNameMapper": {
-            "^@/(.*)$": "<rootDir>/src/$1"
-        }
-    },
     "scripts": {
-        "build": "d2-app-scripts build",
-        "build:library": "vite build --config vite.library.config.ts && tsc -p tsconfig.library.json",
-        "package:check": "pnpm build:library && npm pack --dry-run --cache .npm-cache",
-        "start": "d2-app-scripts start",
-        "test": "d2-app-scripts test",
-        "typecheck": "tsc --noEmit",
-        "deploy": "d2-app-scripts deploy",
-        "lint": "eslint && prettier -c .",
+        "build": "turbo run build",
+        "build:library": "turbo run build --filter=@dhis2-blocks/working-list",
+        "package:check": "turbo run package:check --filter=@dhis2-blocks/working-list",
+        "start": "turbo run start --filter=@dhis2-blocks/web",
+        "test": "turbo run test",
+        "typecheck": "turbo run typecheck",
+        "deploy": "turbo run deploy --filter=@dhis2-blocks/web",
+        "lint": "turbo run lint && prettier -c .",
         "format": "prettier . -w",
         "e2e": "bash scripts/e2e/run-version.sh dev",
         "e2e:41": "bash scripts/e2e/run-version.sh 41",
@@ -46,41 +24,15 @@
         "e2e:up": "bash scripts/e2e/up.sh",
         "e2e:down": "bash scripts/e2e/down.sh"
     },
-    "dependencies": {
-        "@dhis2/app-runtime": "^3.15.1",
-        "@dhis2/d2-i18n": "1.2.0",
-        "@dhis2/multi-calendar-dates": "2.1.2",
-        "@dhis2/ui": "^10.11.0",
-        "@dnd-kit/core": "^6.3.1",
-        "@dnd-kit/sortable": "^10.0.0",
-        "@dnd-kit/utilities": "^3.2.2",
-        "@tanstack/react-query": "^5.101.4",
-        "@tanstack/react-table": "^9.1.2",
-        "zod": "^4.4.3",
-        "zustand": "^5.0.15"
-    },
-    "peerDependencies": {
-        "react": "^18.3.1",
-        "react-dom": "^18.3.1"
-    },
     "devDependencies": {
         "@axe-core/playwright": "^4.13.0",
-        "@dhis2/cli-app-scripts": "12.10.3",
         "@dhis2/config-eslint": "^0.2.2",
         "@dhis2/config-prettier": "^0.2.2",
         "@eslint/compat": "^2.0.0",
         "@playwright/test": "^1.62.1",
-        "@tailwindcss/vite": "^4.3.3",
-        "@types/jest": "^30.0.0",
-        "@types/react": "^18.3.31",
-        "@types/react-dom": "^18.3.7",
         "eslint": "^9.39.2",
         "prettier": "^3.7.4",
-        "react": "18.3.1",
-        "react-dom": "18.3.1",
-        "react-router-dom": "^7.18.2",
-        "tailwindcss": "^4.3.3",
-        "typescript": "^5.9.3",
-        "vite": "^7.3.0"
+        "turbo": "^2.10.10",
+        "typescript": "^5.9.3"
     }
 }

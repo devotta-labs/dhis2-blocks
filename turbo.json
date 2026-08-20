@@ -1,0 +1,34 @@
+{
+    "$schema": "https://turborepo.dev/schema.json",
+    "cacheDir": ".turbo/cache",
+    "tasks": {
+        "build": {
+            "dependsOn": ["^build"],
+            "outputs": ["build/**", "dist/**", ".d2/**", "src/locales/**"]
+        },
+        "package:check": {
+            "dependsOn": ["build"],
+            "outputs": []
+        },
+        "test": {
+            "dependsOn": ["^build"],
+            "outputs": []
+        },
+        "typecheck": {
+            "dependsOn": ["^build"],
+            "outputs": []
+        },
+        "lint": {
+            "outputs": []
+        },
+        "start": {
+            "dependsOn": ["^build"],
+            "cache": false,
+            "persistent": true
+        },
+        "deploy": {
+            "dependsOn": ["build"],
+            "cache": false
+        }
+    }
+}

@@ -1,0 +1,167 @@
+.working-list-table-scroll {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    contain: layout;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+}
+
+.working-list-table {
+    width: 100%;
+    min-width: 680px;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-size: 14px;
+}
+
+.working-list-table th {
+    height: 40px;
+    padding: 0;
+    color: #405261;
+    background: #f3f5f7;
+    border-bottom: 1px solid #d5dde5;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.working-list-table th + th,
+.working-list-table td + td {
+    border-left: 1px solid #f0f2f4;
+}
+
+.working-list-table td {
+    min-width: 140px;
+    height: 44px;
+    padding: 10px 12px;
+    color: #25394a;
+    background: #fff;
+    border-bottom: 1px solid #e8edf2;
+    vertical-align: middle;
+}
+
+.working-list-row {
+    cursor: pointer;
+}
+
+.working-list-row:hover td {
+    background: #f7fbff;
+}
+
+.working-list-row:focus-within td {
+    background: #eaf3fa;
+}
+
+/* Data-quality highlight overrides the default/hover/focus cell backgrounds. */
+.working-list-row--invalid td {
+    background: #fff0f0;
+}
+
+.working-list-row--invalid:hover td {
+    background: #ffe6e6;
+}
+
+.working-list-row--invalid:focus-within td {
+    background: #ffdcdc;
+}
+
+.working-list-warning-icon {
+    display: inline-flex;
+    align-items: center;
+    color: #b93d2e;
+}
+
+/* Shrink-to-fit: width 1px + no min-width collapses the column to its content. */
+.working-list-table .working-list-issues-cell {
+    width: 1px;
+    min-width: 0;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.working-list-row-issues {
+    padding-left: 16px;
+    margin: 0;
+}
+
+.sort-button {
+    display: flex;
+    width: 100%;
+    min-height: 40px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 7px 12px;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font-weight: inherit;
+    text-align: left;
+}
+
+.sort-button:hover {
+    color: #0053a0;
+    background: #eaf3fa;
+}
+
+.sort-indicator {
+    color: #6c7785;
+    font-size: 13px;
+}
+
+.empty-results {
+    padding: 40px 16px !important;
+    color: #5f6b7a !important;
+    text-align: center;
+}
+
+.empty-results strong,
+.empty-results span {
+    display: block;
+}
+
+.empty-results strong {
+    margin-bottom: 4px;
+    color: #36454f;
+    font-weight: 500;
+}
+
+.working-list-pagination {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 56px;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 8px 12px;
+}
+
+.working-list-results {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.working-list-table td > a {
+    color: #0053a0;
+    text-underline-offset: 2px;
+}
+
+.working-list-cell-image {
+    display: block;
+    width: 56px;
+    height: 40px;
+    object-fit: cover;
+    background: #f3f5f7;
+    border: 1px solid #d5dde5;
+    border-radius: 3px;
+}
+
+.sort-button:focus-visible {
+    outline: 3px solid rgb(20 124 215 / 35%);
+    outline-offset: 2px;
+}

@@ -1,0 +1,76 @@
+.saved-list-bar {
+    display: flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e8edf2;
+}
+
+.saved-list-pills {
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+    flex: 1 1 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.saved-list-pill {
+    min-height: 30px;
+    padding: 5px 11px;
+    color: #405261;
+    background: #f3f5f7;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 18px;
+}
+
+.saved-list-pill:hover:not(:disabled) {
+    color: #1d5280;
+    background: #eaf3fa;
+}
+
+.saved-list-pill--active {
+    color: #fff;
+    background: #087f73;
+}
+
+.saved-list-pill--active:hover:not(:disabled) {
+    color: #fff;
+    background: #076b62;
+}
+
+.saved-list-pill:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.saved-list-pill__dirty {
+    margin-left: 4px;
+    font-weight: 700;
+}
+
+.saved-list-pill:focus-visible {
+    outline: 3px solid rgb(20 124 215 / 35%);
+    outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+    .saved-list-bar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 560px) {
+    .saved-list-bar {
+        padding-right: 8px;
+        padding-left: 8px;
+    }
+}

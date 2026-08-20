@@ -1,0 +1,88 @@
+.column-settings-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.column-settings-description {
+    margin: 0 0 12px;
+    color: #5f6b7a;
+    font-size: 13px;
+    line-height: 18px;
+}
+
+.column-settings-header,
+.column-settings-row {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) minmax(52px, max-content);
+    column-gap: 12px;
+    align-items: center;
+}
+
+.column-settings-header {
+    min-height: 32px;
+    padding: 4px 8px;
+    color: #6c7785;
+    background: #f3f5f7;
+    border-bottom: 1px solid #d5dde5;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.column-settings-header > :last-child {
+    justify-self: end;
+}
+
+.column-settings-row {
+    min-height: 52px;
+    padding: 8px;
+    background: #fff;
+    border-bottom: 1px solid #e8edf2;
+}
+
+.column-settings-row--dragging {
+    position: relative;
+    z-index: 1;
+    background: #eaf3fa;
+    box-shadow: 0 2px 6px rgb(33 41 52 / 20%);
+    opacity: 0.9;
+}
+
+.column-settings-drag-handle {
+    display: inline-flex;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: #5f6b7a;
+    background: transparent;
+    border: 0;
+    border-radius: 3px;
+    cursor: grab;
+    touch-action: none;
+}
+
+.column-settings-drag-handle:active {
+    cursor: grabbing;
+}
+
+.column-settings-drag-handle:hover {
+    color: #0053a0;
+    background: #eaf3fa;
+}
+
+.column-settings-drag-handle:focus-visible {
+    outline: 3px solid rgb(20 124 215 / 35%);
+    outline-offset: 1px;
+}
+
+.column-settings-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.column-settings-visibility {
+    min-width: 0;
+    justify-self: end;
+}

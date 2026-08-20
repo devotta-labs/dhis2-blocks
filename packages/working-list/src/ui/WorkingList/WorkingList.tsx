@@ -18,12 +18,12 @@ import { useStore } from 'zustand'
 import {
     detectMetadataFeatures,
     resolveWorkingListCapabilities,
-} from '../api/capabilities'
-import type { WorkingListClient } from '../api/client'
+} from '../../api/capabilities'
+import type { WorkingListClient } from '../../api/client'
 import {
     buildProgramFieldCatalog,
     type ProgramFieldCatalog,
-} from '../api/metadata'
+} from '../../api/metadata'
 import {
     createDefaultWorkingList,
     createGeneratedDefaultLists,
@@ -33,13 +33,13 @@ import {
     replaceSavedWorkingList,
     savedWorkingListsQueryOptions,
     type NormalizedSavedWorkingList,
-} from '../api/savedLists'
+} from '../../api/savedLists'
 import type {
     ProgramStageWorkingList,
     TrackedEntityInstanceFilter,
     TrackerProgram,
-} from '../api/schemas'
-import type { WorkingListSystemInfo } from '../api/systemInfo'
+} from '../../api/schemas'
+import type { WorkingListSystemInfo } from '../../api/systemInfo'
 import type {
     AppliedFilter,
     WorkingListConfiguration,
@@ -47,52 +47,55 @@ import type {
     WorkingListRowOpenEvent,
     WorkingListSort,
     WorkingListViewConfiguration,
-} from '../domain/model'
-import { WorkingListContextSchema } from '../domain/schemas'
+} from '../../domain/model'
+import { WorkingListContextSchema } from '../../domain/schemas'
 import {
     type StaleReferenceIssue,
     type StaleReferenceRepairDecision,
-} from '../domain/staleReferences'
+} from '../../domain/staleReferences'
 import {
     workingListPageQueryOptions,
     type WorkingListPage,
-} from '../query/fetchers'
+} from '../../query/fetchers'
 import {
     collectFileResourceIds,
     createFileResourceNameResolver,
     fileResourceNamesQueryOptions,
-} from '../query/fileResourceLabels'
-import { workingListQueryKeys } from '../query/keys'
+} from '../../query/fileResourceLabels'
+import { workingListQueryKeys } from '../../query/keys'
 import {
     collectOrganisationUnitIds,
     createOrganisationUnitLabelResolver,
     organisationUnitLabelsQueryOptions,
-} from '../query/referenceLabels'
-import { DEFAULT_WORKING_LIST_SORT } from '../query/serialize'
-import { systemFilterRegistry } from '../registry/systemFilters'
-import { createWorkingListValueTransformers } from '../registry/transformers'
+} from '../../query/referenceLabels'
+import { DEFAULT_WORKING_LIST_SORT } from '../../query/serialize'
+import { systemFilterRegistry } from '../../registry/systemFilters'
+import { createWorkingListValueTransformers } from '../../registry/transformers'
 import {
     composeWorkingListConfiguration,
     createWorkingListStore,
     type SelectedWorkingListIdentity,
-} from '../store/workingListStore'
-import { ColumnSettingsDialog } from './ColumnSettingsDialog'
-import { ConfigureMenu } from './ConfigureMenu'
+} from '../../store/workingListStore'
+import { ColumnSettingsDialog } from '../ColumnSettingsDialog'
+import { ConfigureMenu } from '../ConfigureMenu'
 import {
     FilterButton,
     MoreFilters,
     ProgramStageControl,
-} from './FilterControls'
-import { SavedListBar } from './SavedListBar'
+} from '../FilterControls'
+import { SavedListBar } from '../SavedListBar'
+import type {
+    WorkingListDataQualityMode,
+    WorkingListDisplayRow,
+} from '../types'
+import { WorkingListQueryBoundary } from '../WorkingListQueryBoundary'
+import { WorkingListTable } from '../WorkingListTable'
 import {
     WorkingListTextProvider,
     useWorkingListText,
     type WorkingListTranslate,
-} from './text'
-import type { WorkingListDataQualityMode, WorkingListDisplayRow } from './types'
-import { WorkingListQueryBoundary } from './WorkingListQueryBoundary'
-import { WorkingListTable } from './WorkingListTable'
-import './working-list.css'
+} from '../WorkingListText'
+import '../working-list.css'
 
 export interface WorkingListProps {
     apiVersion: number

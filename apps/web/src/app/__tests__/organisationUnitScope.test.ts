@@ -1,9 +1,9 @@
-import type { OrganisationUnitReference } from './OrganisationUnitPicker'
+import type { OrganisationUnitReference } from '../OrganisationUnitPicker'
 import {
     intersectOrganisationUnitScopes,
     isOrganisationUnitInScope,
     resolveTrackerSearchRoots,
-} from './organisationUnitScope'
+} from '../organisationUnitScope'
 
 const unit = (id: string, path: string): OrganisationUnitReference => ({
     id,

@@ -1,12 +1,12 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { WorkingListField } from '../domain/model'
+import type { WorkingListField } from '../../domain/model'
 import {
     ColumnSettingsDialog,
     getInitialColumnDialogOrder,
     getVisibleColumnIdsInOrder,
-} from './ColumnSettingsDialog'
-import { WorkingListTextProvider } from './text'
+} from '../ColumnSettingsDialog'
+import { WorkingListTextProvider } from '../WorkingListText'
 
 const fields: WorkingListField[] = ['a', 'b', 'c', 'd'].map((id) => ({
     id,

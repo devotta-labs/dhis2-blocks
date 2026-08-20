@@ -15,33 +15,33 @@ import { IconCross16 } from '@dhis2/ui-icons'
 import { useQuery } from '@tanstack/react-query'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'
-import type { WorkingListCapabilities } from '../api/capabilities'
-import type { WorkingListClient } from '../api/client'
-import type { TrackerProgram } from '../api/schemas'
+import type { WorkingListCapabilities } from '../../api/capabilities'
+import type { WorkingListClient } from '../../api/client'
+import type { TrackerProgram } from '../../api/schemas'
 import type {
     WorkingListCalendar,
     WorkingListDateFormat,
-} from '../api/systemInfo'
+} from '../../api/systemInfo'
 import {
     RELATIVE_DATE_PERIODS,
     type AppliedFilter,
     type FilterOperator,
     type FilterValue,
     type WorkingListField,
-} from '../domain/model'
-import { toMultiCalendarIdentifier } from '../registry/transformers'
+} from '../../domain/model'
+import { toMultiCalendarIdentifier } from '../../registry/transformers'
 import {
     getAllowedFilterOperators,
     getValueTypeDefinition,
     validateAppliedFilter,
     type FilterEditorKind,
     type FilterSerializationContext,
-} from '../registry/valueTypes'
+} from '../../registry/valueTypes'
 import {
     defaultWorkingListTranslate,
     useWorkingListText,
     type WorkingListTranslate,
-} from './text'
+} from '../WorkingListText'
 
 // CalendarInput supports this at runtime (and documents it in PropTypes), but
 // @dhis2/ui 10.11 omits the prop from its declaration bundle.

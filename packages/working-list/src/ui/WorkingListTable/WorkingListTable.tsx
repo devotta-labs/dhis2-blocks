@@ -16,20 +16,20 @@ import type {
     WorkingListField,
     WorkingListRowOpenEvent,
     WorkingListSort,
-} from '../domain/model'
-import type { WorkingListCellValue } from '../query/normalizeRows'
+} from '../../domain/model'
+import type { WorkingListCellValue } from '../../query/normalizeRows'
 import {
     getCellDisplayValue,
     type CellDisplayValue,
     type CellFormattingContext,
-} from '../registry/valueTypes'
-import { fieldDisplayName, localizedField } from './FilterControls'
-import { useWorkingListText } from './text'
+} from '../../registry/valueTypes'
+import { fieldDisplayName, localizedField } from '../FilterControls'
 import {
     rowOpenEvent,
     type WorkingListDataQualityMode,
     type WorkingListDisplayRow,
-} from './types'
+} from '../types'
+import { useWorkingListText } from '../WorkingListText'
 
 const tableFeatureSet = tableFeatures({
     columnOrderingFeature,

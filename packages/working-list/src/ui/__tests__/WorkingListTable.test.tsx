@@ -1,9 +1,9 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { WorkingListField } from '../domain/model'
-import { WorkingListTextProvider } from './text'
-import type { WorkingListDisplayRow } from './types'
-import { WorkingListTable } from './WorkingListTable'
+import type { WorkingListField } from '../../domain/model'
+import type { WorkingListDisplayRow } from '../types'
+import { WorkingListTable } from '../WorkingListTable'
+import { WorkingListTextProvider } from '../WorkingListText'
 
 jest.mock('@dhis2/ui', () => ({
     Pagination: () => null,

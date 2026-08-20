@@ -1,4 +1,4 @@
-import { getGuardedOrganisationUnitState } from './contextTransitions'
+import { getGuardedOrganisationUnitState } from '../contextTransitions'
 
 describe('organisation unit context transitions', () => {
     const current = {

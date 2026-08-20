@@ -1,6 +1,6 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ContextSelectorBar } from './ContextSelectorBar'
+import { ContextSelectorBar } from '../ContextSelectorBar'
 
 describe('ContextSelectorBar', () => {
     it('renders compact labelled selector items without a page heading', () => {

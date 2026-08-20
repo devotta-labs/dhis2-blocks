@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import {
     createWorkingListQueryClient,
     WorkingListQueryBoundary,
-} from './WorkingListQueryBoundary'
+} from '../WorkingListQueryBoundary'
 
 describe('WorkingListQueryBoundary', () => {
     it('provides a package-owned query client without a host provider', () => {

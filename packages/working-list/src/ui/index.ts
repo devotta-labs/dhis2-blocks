@@ -8,6 +8,6 @@ export {
     WorkingListTextProvider,
     type WorkingListTranslate,
     type WorkingListTranslationValues,
-} from './text'
+} from './WorkingListText'
 export type { WorkingListRowOpenEvent } from '../domain/model'
 export type { WorkingListDataQualityMode } from './types'

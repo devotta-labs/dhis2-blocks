@@ -1,6 +1,6 @@
 import React from 'react'
-import type { NormalizedSavedWorkingList } from '../api/savedLists'
-import { useWorkingListText } from './text'
+import type { NormalizedSavedWorkingList } from '../../api/savedLists'
+import { useWorkingListText } from '../WorkingListText'
 
 interface SavedListBarProps {
     lists: NormalizedSavedWorkingList[]

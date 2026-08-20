@@ -25,9 +25,9 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import React, { useEffect, useMemo, useState } from 'react'
-import type { WorkingListField } from '../domain/model'
-import { fieldDisplayName } from './FilterControls'
-import { useWorkingListText } from './text'
+import type { WorkingListField } from '../../domain/model'
+import { fieldDisplayName } from '../FilterControls'
+import { useWorkingListText } from '../WorkingListText'
 
 interface ColumnSettingsDialogProps {
     fields: WorkingListField[]

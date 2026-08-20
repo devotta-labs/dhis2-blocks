@@ -1,10 +1,10 @@
-import { resolveWorkingListCapabilities } from '../api/capabilities'
-import type { WorkingListField } from '../domain/model'
+import { resolveWorkingListCapabilities } from '../../api/capabilities'
+import type { WorkingListField } from '../../domain/model'
 import {
     fieldDisplayName,
     localizedField,
     usesMultipleOptionSelection,
-} from './FilterControls'
+} from '../FilterControls'
 
 const capabilities = resolveWorkingListCapabilities({ apiVersion: 43 })
 

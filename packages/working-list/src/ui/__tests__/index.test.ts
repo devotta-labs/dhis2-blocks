@@ -3,9 +3,9 @@ import {
     WorkingListQueryBoundary,
     WorkingListTextProvider,
     createWorkingListQueryClient,
-} from './index'
+} from '../index'
 
-jest.mock('./WorkingList', () => ({ WorkingList: () => null }))
+jest.mock('../WorkingList', () => ({ WorkingList: () => null }))
 
 describe('working-list package UI surface', () => {
     it('exports the self-contained component and translation provider', () => {

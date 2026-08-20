@@ -23,24 +23,24 @@ import { useQuery } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useBlocker, useSearchParams } from 'react-router-dom'
 import { z, ZodError } from 'zod'
-import { ContextSelectorBar } from './ContextSelectorBar'
-import { getGuardedOrganisationUnitState } from './contextTransitions'
+import { ContextSelectorBar } from '../ContextSelectorBar'
+import { getGuardedOrganisationUnitState } from '../contextTransitions'
 import {
     OrganisationUnitPicker,
     type OrganisationUnitReference,
-} from './OrganisationUnitPicker'
+} from '../OrganisationUnitPicker'
 import {
     intersectOrganisationUnitScopes,
     isOrganisationUnitInScope,
     resolveTrackerSearchRoots,
-} from './organisationUnitScope'
+} from '../organisationUnitScope'
 import {
     isGuardedAppUrlTransition,
     parseAppUrlState,
     parseAppUrlStateFromHash,
     serializeAppUrlState,
     type AppUrlState,
-} from './urlState'
+} from '../urlState'
 import i18n from '@/locales'
 
 const OrganisationUnitReferenceSchema = z

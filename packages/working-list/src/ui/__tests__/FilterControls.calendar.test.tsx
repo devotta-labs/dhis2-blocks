@@ -1,17 +1,17 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { resolveWorkingListCapabilities } from '../api/capabilities'
-import type { WorkingListClient } from '../api/client'
-import type { TrackerProgram } from '../api/schemas'
-import type { AppliedFilter, WorkingListField } from '../domain/model'
+import { resolveWorkingListCapabilities } from '../../api/capabilities'
+import type { WorkingListClient } from '../../api/client'
+import type { TrackerProgram } from '../../api/schemas'
+import type { AppliedFilter, WorkingListField } from '../../domain/model'
 import {
     FilterButton,
     MoreFilters,
     ProgramStageControl,
     calendarInputDateToCanonical,
     canonicalDateToCalendarInput,
-} from './FilterControls'
-import { WorkingListTextProvider } from './text'
+} from '../FilterControls'
+import { WorkingListTextProvider } from '../WorkingListText'
 
 interface MockCalendarInputProps {
     calendar: string

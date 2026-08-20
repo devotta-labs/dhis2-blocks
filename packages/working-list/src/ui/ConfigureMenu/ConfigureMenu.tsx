@@ -17,8 +17,8 @@ import {
     getSharingType,
     type NormalizedSavedWorkingList,
     type SavedListResource,
-} from '../api/savedLists'
-import { useWorkingListText } from './text'
+} from '../../api/savedLists'
+import { useWorkingListText } from '../WorkingListText'
 
 interface ConfigureMenuProps {
     selectedList?: NormalizedSavedWorkingList

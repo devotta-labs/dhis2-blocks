@@ -1,8 +1,8 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { NormalizedSavedWorkingList } from '../api/savedLists'
-import { ConfigureMenu } from './ConfigureMenu'
-import { WorkingListTextProvider } from './text'
+import type { NormalizedSavedWorkingList } from '../../api/savedLists'
+import { ConfigureMenu } from '../ConfigureMenu'
+import { WorkingListTextProvider } from '../WorkingListText'
 
 const generatedList: NormalizedSavedWorkingList = {
     id: 'active',

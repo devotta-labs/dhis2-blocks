@@ -1,8 +1,8 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { WorkingListField } from '../domain/model'
-import { MoreFilters } from './FilterControls'
-import { WorkingListTextProvider } from './text'
+import type { WorkingListField } from '../../domain/model'
+import { MoreFilters } from '../FilterControls'
+import { WorkingListTextProvider } from '../WorkingListText'
 
 const field: WorkingListField = {
     id: 'followUp',

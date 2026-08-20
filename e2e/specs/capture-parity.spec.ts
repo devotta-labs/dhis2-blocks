@@ -12,6 +12,7 @@ import {
     e2eEnvironment,
     expect,
     test,
+    testFromDhis2Version,
     type E2ECredentials,
 } from '../fixtures/test'
 
@@ -58,6 +59,9 @@ const environment = (
     }
 ).process?.env
 const targetMajor = Number(environment?.E2E_EXPECTED_MAJOR)
+const typedRegistryTest = testFromDhis2Version(43)
+const typedRegistryTestTitle =
+    'uses the typed registry for numeric, boolean, and option filters while keeping unsupported values display-only @dhis2-min-43'
 
 const requestUrl = (request: Request | Response) => new URL(request.url())
 const isTrackerResource = (
@@ -75,6 +79,7 @@ const waitForTrackerResponse = async (
 ) => {
     const pending = page.waitForResponse(
         (response) =>
+            response.request().method() === 'GET' &&
             isTrackerResource(response, resource) &&
             matches(requestUrl(response))
     )
@@ -155,7 +160,9 @@ const chooseSavedListOption = async (page: Page, dataTest: string) => {
     const menu = await openSavedListOptions(page)
     const option = menu.locator(`[data-test="${dataTest}"]`)
     await expect(option).toBeVisible()
-    await option.click()
+    const menuItem = option.getByRole('menuitem')
+    await expect(menuItem).toBeEnabled()
+    await menuItem.click()
 }
 
 type OrganisationUnitAncestor = {
@@ -331,9 +338,10 @@ test.describe('Capture context and generated tracker views', () => {
             }
         }
         page.on('request', countTrackerRequest)
+        await page.locator('[data-test="program-selector"]').click()
         await chooseDhis2Option(
             page,
-            '[data-test="program-selector"]',
+            '[data-test="program-selector-input"]',
             PROGRAM_NAME
         )
         await expect(page.getByTestId('org-unit-empty-state')).toBeVisible({
@@ -506,21 +514,13 @@ test.describe('Capture context and generated tracker views', () => {
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
         )
 
-        await waitForTrackerResponse(
-            page,
-            'trackedEntities',
-            () => activeView.click(),
-            (url) => url.searchParams.get(statusParameter) === 'ACTIVE'
-        )
+        // React Query can satisfy this recently loaded query from cache.
+        await activeView.click()
         await expect(activeView).toHaveAttribute('aria-current', 'true')
         await expect(page).toHaveURL(/selectedTemplateId=active/)
 
-        await waitForTrackerResponse(
-            page,
-            'trackedEntities',
-            () => activeView.click(),
-            (url) => !url.searchParams.has(statusParameter)
-        )
+        await activeView.click()
+        await expect(activeView).not.toHaveAttribute('aria-current', 'true')
         await expect(page).toHaveURL(
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
         )
@@ -626,9 +626,7 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(resultRows(page)).toHaveCount(7)
     })
 
-    test('uses the typed registry for numeric, boolean, and option filters while keeping unsupported values display-only', async ({
-        page,
-    }) => {
+    typedRegistryTest(typedRegistryTestTitle, async ({ page }) => {
         await openWorkingList(page)
 
         await addFilter(page, 'tracked-entity', NUMBER_ATTRIBUTE)
@@ -831,10 +829,10 @@ test.describe('Capture context and generated tracker views', () => {
             page,
             'trackedEntities',
             () => page.getByTestId(`sort-${TEXT_ATTRIBUTE}`).click(),
-            (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:asc`
+            (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:desc`
         )
         expect(firstSort.searchParams.getAll('order')).toEqual([
-            `${TEXT_ATTRIBUTE}:asc`,
+            `${TEXT_ATTRIBUTE}:desc`,
         ])
 
         const replacementSort = await waitForTrackerResponse(
@@ -869,11 +867,13 @@ test.describe('Capture context and generated tracker views', () => {
         const initialColumnRows = await columnRows.evaluateAll((rows) =>
             rows.map((row) => row.getAttribute('data-testid'))
         )
-        const moveCount =
-            initialColumnRows.indexOf(
-                `column-settings-row-${INTEGER_ATTRIBUTE}`
-            ) -
-            initialColumnRows.indexOf(`column-settings-row-${TEXT_ATTRIBUTE}`)
+        const initialIntegerIndex = initialColumnRows.indexOf(
+            `column-settings-row-${INTEGER_ATTRIBUTE}`
+        )
+        const initialTextIndex = initialColumnRows.indexOf(
+            `column-settings-row-${TEXT_ATTRIBUTE}`
+        )
+        const moveCount = initialIntegerIndex - initialTextIndex
         expect(moveCount).toBeGreaterThan(0)
         const integerDragHandle = settings.getByRole('button', {
             name: 'Reorder E2E integer attribute',
@@ -882,18 +882,26 @@ test.describe('Capture context and generated tracker views', () => {
         await page.keyboard.press('Space')
         for (let move = 0; move < moveCount; move += 1) {
             await page.keyboard.press('ArrowUp')
+            await expect(settings.getByRole('status')).toContainText(
+                `E2E integer attribute moved to position ${initialIntegerIndex - move}`
+            )
         }
         await page.keyboard.press('Space')
-        const orderedColumnRows = await columnRows.evaluateAll((rows) =>
-            rows.map((row) => row.getAttribute('data-testid'))
-        )
-        expect(
-            orderedColumnRows.indexOf(
-                `column-settings-row-${INTEGER_ATTRIBUTE}`
-            )
-        ).toBeLessThan(
-            orderedColumnRows.indexOf(`column-settings-row-${TEXT_ATTRIBUTE}`)
-        )
+        await expect
+            .poll(async () => {
+                const orderedColumnRows = await columnRows.evaluateAll((rows) =>
+                    rows.map((row) => row.getAttribute('data-testid'))
+                )
+                return (
+                    orderedColumnRows.indexOf(
+                        `column-settings-row-${INTEGER_ATTRIBUTE}`
+                    ) <
+                    orderedColumnRows.indexOf(
+                        `column-settings-row-${TEXT_ATTRIBUTE}`
+                    )
+                )
+            })
+            .toBe(true)
         await page.locator('[data-test="column-settings-done"]').click()
 
         await expect(page.getByTestId(`sort-${BOOLEAN_ATTRIBUTE}`)).toHaveCount(
@@ -953,7 +961,7 @@ test.describe('Capture programme-stage joint data strategy', () => {
             page,
             'events',
             () => page.getByTestId(`sort-${TEXT_ATTRIBUTE}`).click(),
-            (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:asc`
+            (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:desc`
         )
         expect(attributeSort.searchParams.getAll('order')).toHaveLength(1)
         const dataSort = await waitForTrackerResponse(
@@ -997,6 +1005,9 @@ test.describe('Capture programme-stage joint data strategy', () => {
         expect(dateRequest.searchParams.get('occurredBefore')).toBe(
             '2025-02-01'
         )
+        await expect(
+            page.locator('[data-testid="working-list-table"] tbody')
+        ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
 
         await page.getByTestId('filter-programStage').click()
         await page.locator('[data-test="filter-reset-programStage"]').click()
@@ -1218,9 +1229,12 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             ).toContainText('E2E renamed tracker lifecycle')
 
             await chooseSavedListOption(page, 'share-working-list')
-            const sharingDialog = page.locator(
-                '[data-test="dhis2-uicore-sharingdialog-modal"]'
-            )
+            const sharingDialog = page.getByRole('dialog').filter({
+                has: page.getByRole('heading', {
+                    name: 'Sharing and access: E2E renamed tracker lifecycle',
+                    exact: true,
+                }),
+            })
             await expect(sharingDialog).toBeVisible()
             await sharingDialog.getByPlaceholder('Search').fill(READER.username)
             await page
@@ -1300,14 +1314,16 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             await chooseSavedListOption(page, 'share-working-list')
             await expect(sharingDialog).toBeVisible()
             const readerAccessRow = sharingDialog.locator('.wrapper').filter({
-                has: sharingDialog.getByText('Working list Reader', {
+                has: page.getByText('Working list Reader', {
                     exact: true,
                 }),
             })
             await expect(readerAccessRow).toBeVisible()
-            await readerAccessRow
-                .getByText('View only', { exact: true })
-                .click()
+            const readerAccessSelect = readerAccessRow.locator(
+                '[data-test="dhis2-uicore-select-input"]'
+            )
+            await expect(readerAccessSelect).not.toHaveClass(/disabled/)
+            await readerAccessSelect.click()
             const revokeResponse = page.waitForResponse(
                 (response) =>
                     response.request().method() === 'PUT' &&

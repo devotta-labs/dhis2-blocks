@@ -1,60 +1,60 @@
-name: e2e real DHIS2 matrix
+name: verify
 
 on:
-    pull_request:
     push:
-        branches: [master, main]
+        branches: ['**']
     workflow_dispatch:
 
 permissions:
     contents: read
 
 concurrency:
-    group: e2e-real-dhis2-${{ github.workflow }}-${{ github.ref }}
+    group: verify-${{ github.ref }}
     cancel-in-progress: true
 
 jobs:
-    quality:
-        name: Static checks, unit tests, and production build
+    checks:
         runs-on: ubuntu-latest
         timeout-minutes: 30
 
         steps:
-            - name: Check out repository
+            - name: checkout
               uses: actions/checkout@v4
 
-            - name: Set up pnpm
+            - name: pnpm
               uses: pnpm/action-setup@v4
               with:
                   version: 10.13.1
 
-            - name: Set up Node.js
+            - name: node
               uses: actions/setup-node@v4
               with:
                   node-version: 22
                   cache: pnpm
 
-            - name: Install dependencies
+            - name: install
               run: pnpm install --frozen-lockfile
 
-            - name: Typecheck
+            - name: locales
+              run: pnpm exec d2-app-scripts i18n generate
+
+            - name: typescript
               run: pnpm typecheck
 
-            - name: Build and inspect the library package
+            - name: package
               run: pnpm package:check
 
-            - name: Lint and check formatting
+            - name: lint
               run: pnpm lint
 
-            - name: Run unit tests
+            - name: test
               run: pnpm test
 
-            - name: Build the production bundle
+            - name: build
               run: pnpm build
 
-    browser:
-        name: DHIS2 ${{ matrix.dhis2 }}
-        needs: quality
+    e2e:
+        needs: checks
         runs-on: ubuntu-latest
         timeout-minutes: 90
         strategy:
@@ -63,37 +63,37 @@ jobs:
                 dhis2: ['41', '42', '43', 'dev']
 
         steps:
-            - name: Check out repository
+            - name: checkout
               uses: actions/checkout@v4
 
-            - name: Set up pnpm
+            - name: pnpm
               uses: pnpm/action-setup@v4
               with:
                   version: 10.13.1
 
-            - name: Set up Node.js
+            - name: node
               uses: actions/setup-node@v4
               with:
                   node-version: 22
                   cache: pnpm
 
-            - name: Install dependencies
+            - name: install
               run: pnpm install --frozen-lockfile
 
-            - name: Install Chromium and system dependencies
+            - name: browser
               run: pnpm exec playwright install --with-deps chromium
 
-            - name: Validate official image/database target
+            - name: validate
               run: bash scripts/e2e/validate.sh '${{ matrix.dhis2 }}'
 
-            - name: Run the real-server browser suite
+            - name: e2e
               run: bash scripts/e2e/run-version.sh '${{ matrix.dhis2 }}'
               env:
                   CI: 'true'
                   E2E_DHIS2_USERNAME: admin
                   E2E_DHIS2_PASSWORD: district
 
-            - name: Upload browser and server diagnostics
+            - name: artifacts
               if: always()
               uses: actions/upload-artifact@v4
               with:

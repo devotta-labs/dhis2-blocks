@@ -36,7 +36,7 @@ jobs:
               run: pnpm install --frozen-lockfile
 
             - name: locales
-              run: pnpm exec d2-app-scripts i18n generate
+              run: pnpm --filter @dhis2-blocks/web exec d2-app-scripts i18n generate
 
             - name: typescript
               run: pnpm typecheck

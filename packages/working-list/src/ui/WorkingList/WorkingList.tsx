@@ -84,6 +84,8 @@ import {
     ProgramStageControl,
 } from '../FilterControls'
 import { SavedListBar } from '../SavedListBar'
+import accessibilityStyles from '../styles/accessibility.module.css'
+import layoutStyles from '../styles/layout.module.css'
 import type {
     WorkingListDataQualityMode,
     WorkingListDisplayRow,
@@ -95,7 +97,7 @@ import {
     useWorkingListText,
     type WorkingListTranslate,
 } from '../WorkingListText'
-import '../working-list.css'
+import styles from './WorkingList.module.css'
 
 export interface WorkingListProps {
     apiVersion: number
@@ -1123,8 +1125,11 @@ const WorkingListInstance = ({
 
     if (savedListsQuery.error) {
         return (
-            <article className="working-list-card" data-testid="working-list">
-                <div className="working-list-blocking-error">
+            <article
+                className={styles['working-list-card']}
+                data-testid="working-list"
+            >
+                <div className={styles['working-list-blocking-error']}>
                     <NoticeBox
                         error
                         title={i18n.t('Could not load saved working lists')}
@@ -1147,7 +1152,10 @@ const WorkingListInstance = ({
     }
 
     return (
-        <article className="working-list-card" data-testid="working-list">
+        <article
+            className={styles['working-list-card']}
+            data-testid="working-list"
+        >
             <SavedListBar
                 lists={displayedLists}
                 selectedId={selectedTemplateId ?? selectedListIdentity?.id}
@@ -1190,10 +1198,10 @@ const WorkingListInstance = ({
             {(createdListReloadMissing ||
                 selectedList?.compatibility === 'incompatible') && (
                 <section
-                    className="filter-section"
+                    className={styles['filter-section']}
                     aria-label={i18n.t('Working list actions')}
                 >
-                    <div className="filter-row">
+                    <div className={styles['filter-row']}>
                         {renderConfigureMenu({ withColumns: false })}
                     </div>
                 </section>
@@ -1201,7 +1209,7 @@ const WorkingListInstance = ({
 
             {createdListReloadMissing ? (
                 <section
-                    className="working-list-blocking-error"
+                    className={styles['working-list-blocking-error']}
                     data-testid="created-list-reload-error"
                 >
                     <NoticeBox
@@ -1225,7 +1233,7 @@ const WorkingListInstance = ({
                 </section>
             ) : selectedList?.compatibility === 'incompatible' ? (
                 <section
-                    className="stale-list-panel"
+                    className={styles['stale-list-panel']}
                     data-testid="stale-list-panel"
                     aria-labelledby="stale-list-heading"
                 >
@@ -1276,7 +1284,7 @@ const WorkingListInstance = ({
                 </section>
             ) : !selectionReady ? (
                 <section
-                    className="working-list-selection-loading"
+                    className={styles['working-list-selection-loading']}
                     data-testid="working-list-selection-loading"
                     aria-live="polite"
                 >
@@ -1286,17 +1294,17 @@ const WorkingListInstance = ({
             ) : (
                 <>
                     <section
-                        className="filter-section"
+                        className={styles['filter-section']}
                         aria-labelledby="tracker-filters-heading"
                     >
                         <h2
                             id="tracker-filters-heading"
-                            className="visually-hidden"
+                            className={accessibilityStyles['visually-hidden']}
                         >
                             {i18n.t('Tracked entity filters')}
                         </h2>
-                        <div className="filter-row">
-                            <div className="filter-row__filters">
+                        <div className={styles['filter-row']}>
+                            <div className={styles['filter-row__filters']}>
                                 {visibleTrackerFilterIds.map((fieldId) => {
                                     const field = metadata.fields.get(fieldId)
                                     if (!field || !field.filterable) {
@@ -1358,14 +1366,14 @@ const WorkingListInstance = ({
 
                     {stageFilterVisible && (
                         <section
-                            className="filter-section filter-section--event"
+                            className={`${styles['filter-section']} ${styles['filter-section--event']}`}
                             data-testid="stage-filter-section"
                             aria-labelledby="stage-filters-heading"
                         >
                             <h2 id="stage-filters-heading">
                                 {i18n.t('Stage filters')}
                             </h2>
-                            <div className="filter-row">
+                            <div className={styles['filter-row']}>
                                 <ProgramStageControl
                                     program={program}
                                     selectedStageId={
@@ -1442,7 +1450,7 @@ const WorkingListInstance = ({
 
                     {resultsError ? (
                         <div
-                            className="results-error"
+                            className={styles['results-error']}
                             data-testid="results-error"
                         >
                             <NoticeBox
@@ -1583,7 +1591,7 @@ const WorkingListInstance = ({
                             </ul>
                         </ModalContent>
                         <ModalActions>
-                            <div className="modal-button-strip">
+                            <div className={layoutStyles['modal-button-strip']}>
                                 <Button
                                     dataTest="repair-working-list-cancel"
                                     onClick={() => setRepairDialogOpen(false)}

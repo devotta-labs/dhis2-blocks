@@ -1,6 +1,8 @@
 import React from 'react'
 import type { NormalizedSavedWorkingList } from '../../api/savedLists'
+import accessibilityStyles from '../styles/accessibility.module.css'
 import { useWorkingListText } from '../WorkingListText'
+import styles from './SavedListBar.module.css'
 
 interface SavedListBarProps {
     lists: NormalizedSavedWorkingList[]
@@ -33,18 +35,22 @@ export const SavedListBar = ({
 
     return (
         <section
-            className="saved-list-bar"
+            className={styles['saved-list-bar']}
             data-testid="saved-list-bar"
             aria-label={i18n.t('Working list views')}
         >
-            <div className="saved-list-pills">
+            <div className={styles['saved-list-pills']}>
                 {lists.map((list) => {
                     const incompatible = list.compatibility === 'incompatible'
                     return (
                         <button
                             key={`${list.resource}-${list.id}`}
                             type="button"
-                            className={`saved-list-pill${selectedId === list.id ? ' saved-list-pill--active' : ''}`}
+                            className={`${styles['saved-list-pill']}${
+                                selectedId === list.id
+                                    ? ` ${styles['saved-list-pill--active']}`
+                                    : ''
+                            }`}
                             data-testid={`working-list-view-${list.id}`}
                             aria-current={
                                 selectedId === list.id ? 'true' : undefined
@@ -62,12 +68,21 @@ export const SavedListBar = ({
                                 <>
                                     <span
                                         aria-hidden="true"
-                                        className="saved-list-pill__dirty"
+                                        className={
+                                            styles['saved-list-pill__dirty']
+                                        }
                                         data-testid="working-list-dirty-indicator"
                                     >
                                         *
                                     </span>
-                                    <span className="visually-hidden">
+                                    <span
+                                        className={
+                                            accessibilityStyles[
+                                                'visually-hidden'
+                                            ]
+                                        }
+                                        data-testid="working-list-dirty-label"
+                                    >
                                         {i18n.t('Unsaved changes')}
                                     </span>
                                 </>

@@ -24,12 +24,14 @@ import {
     type CellFormattingContext,
 } from '../../registry/valueTypes'
 import { fieldDisplayName, localizedField } from '../FilterControls'
+import accessibilityStyles from '../styles/accessibility.module.css'
 import {
     rowOpenEvent,
     type WorkingListDataQualityMode,
     type WorkingListDisplayRow,
 } from '../types'
 import { useWorkingListText } from '../WorkingListText'
+import styles from './WorkingListTable.module.css'
 
 const tableFeatureSet = tableFeatures({
     columnOrderingFeature,
@@ -83,7 +85,7 @@ const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
     return (
         <Tooltip
             content={
-                <ul className="working-list-row-issues">
+                <ul className={styles['working-list-row-issues']}>
                     {row.issues.map((issue) => (
                         <li key={`${issue.fieldId}-${issue.message}`}>
                             {`${issue.fieldName}: ${issue.message}`}
@@ -93,7 +95,7 @@ const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
             }
         >
             <span
-                className="working-list-warning-icon"
+                className={styles['working-list-warning-icon']}
                 role="img"
                 data-testid={`row-issues-${row.id}`}
                 aria-label={t('Row has {{count}} data quality issues', {
@@ -140,7 +142,7 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
                 >
                     <img
                         alt={display.alt || t('Image attachment')}
-                        className="working-list-cell-image"
+                        className={styles['working-list-cell-image']}
                         loading="lazy"
                         src={display.previewHref}
                     />
@@ -234,7 +236,7 @@ export const WorkingListTable = ({
             columnHelper.display({
                 id: DATA_QUALITY_COLUMN_ID,
                 header: () => (
-                    <span className="visually-hidden">
+                    <span className={accessibilityStyles['visually-hidden']}>
                         {translate('Data quality')}
                     </span>
                 ),
@@ -338,16 +340,22 @@ export const WorkingListTable = ({
 
     return (
         <section
-            className="working-list-results"
+            className={styles['working-list-results']}
             data-testid="working-list-results"
             aria-labelledby="results-heading"
         >
-            <h2 id="results-heading" className="visually-hidden">
+            <h2
+                id="results-heading"
+                className={accessibilityStyles['visually-hidden']}
+            >
                 {i18n.t('Working list results')}
             </h2>
-            <div className="working-list-table-scroll">
+            <div
+                className={styles['working-list-table-scroll']}
+                data-testid="working-list-table-scroll"
+            >
                 <table
-                    className="working-list-table"
+                    className={styles['working-list-table']}
                     data-testid="working-list-table"
                 >
                     <thead>
@@ -362,7 +370,11 @@ export const WorkingListTable = ({
                                             <th
                                                 key={header.id}
                                                 scope="col"
-                                                className="working-list-issues-cell"
+                                                className={
+                                                    styles[
+                                                        'working-list-issues-cell'
+                                                    ]
+                                                }
                                             >
                                                 <table.FlexRender
                                                     header={header}
@@ -385,7 +397,9 @@ export const WorkingListTable = ({
                                         >
                                             <button
                                                 type="button"
-                                                className="sort-button"
+                                                className={
+                                                    styles['sort-button']
+                                                }
                                                 data-testid={`sort-${header.column.id}`}
                                                 disabled={
                                                     !header.column.getCanSort()
@@ -401,7 +415,9 @@ export const WorkingListTable = ({
                                                 />
                                                 <span
                                                     aria-hidden="true"
-                                                    className="sort-indicator"
+                                                    className={
+                                                        styles['sort-indicator']
+                                                    }
                                                 >
                                                     {sorted === 'asc'
                                                         ? '↑'
@@ -427,7 +443,7 @@ export const WorkingListTable = ({
                                                 1
                                             ) + (showIssuesColumn ? 1 : 0)
                                         }
-                                        className="empty-results"
+                                        className={styles['empty-results']}
                                     >
                                         <strong>
                                             {i18n.t('No items to display')}
@@ -447,12 +463,15 @@ export const WorkingListTable = ({
                             return (
                                 <tr
                                     key={row.id}
-                                    className={
+                                    className={`${styles['working-list-row']}${
                                         highlightIssues
-                                            ? 'working-list-row working-list-row--invalid'
-                                            : 'working-list-row'
-                                    }
+                                            ? ` ${styles['working-list-row--invalid']}`
+                                            : ''
+                                    }`}
                                     data-testid={`working-list-row-${row.id}`}
+                                    data-invalid={
+                                        highlightIssues ? 'true' : undefined
+                                    }
                                     onClick={(event) => {
                                         if (
                                             !isInteractiveTarget(event.target)
@@ -469,14 +488,26 @@ export const WorkingListTable = ({
                                                 className={
                                                     cell.column.id ===
                                                     DATA_QUALITY_COLUMN_ID
-                                                        ? 'working-list-issues-cell'
+                                                        ? styles[
+                                                              'working-list-issues-cell'
+                                                          ]
+                                                        : undefined
+                                                }
+                                                data-testid={
+                                                    cell.column.id ===
+                                                    DATA_QUALITY_COLUMN_ID
+                                                        ? `working-list-issues-cell-${row.id}`
                                                         : undefined
                                                 }
                                             >
                                                 {index === 0 && (
                                                     <button
                                                         type="button"
-                                                        className="visually-hidden working-list-row-open"
+                                                        className={
+                                                            accessibilityStyles[
+                                                                'visually-hidden'
+                                                            ]
+                                                        }
                                                         data-testid={`row-open-${row.id}`}
                                                         onClick={() =>
                                                             openRow(
@@ -503,7 +534,7 @@ export const WorkingListTable = ({
                     </tbody>
                 </table>
             </div>
-            <div className="working-list-pagination">
+            <div className={styles['working-list-pagination']}>
                 <Pagination
                     dataTest="working-list-pagination"
                     page={page}

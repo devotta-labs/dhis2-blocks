@@ -5,4 +5,3 @@ export {
     type WorkingListTranslate,
     type WorkingListTranslationValues,
 } from './WorkingListText'
-

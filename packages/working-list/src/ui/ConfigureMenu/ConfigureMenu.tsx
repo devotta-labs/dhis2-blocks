@@ -18,7 +18,10 @@ import {
     type NormalizedSavedWorkingList,
     type SavedListResource,
 } from '../../api/savedLists'
+import filterStyles from '../FilterControls/FilterControls.module.css'
+import layoutStyles from '../styles/layout.module.css'
 import { useWorkingListText } from '../WorkingListText'
+import styles from './ConfigureMenu.module.css'
 
 interface ConfigureMenuProps {
     selectedList?: NormalizedSavedWorkingList
@@ -110,10 +113,10 @@ export const ConfigureMenu = ({
 
     return (
         <>
-            <div ref={setOptionsReference} className="configure-menu">
+            <div ref={setOptionsReference} className={styles['configure-menu']}>
                 <button
                     type="button"
-                    className="filter-button configure-menu__trigger"
+                    className={filterStyles['filter-button']}
                     data-test="working-list-options"
                     data-testid="working-list-options"
                     aria-controls={
@@ -135,7 +138,7 @@ export const ConfigureMenu = ({
                         <div
                             ref={setOptionsMenu}
                             id="working-list-options-menu"
-                            className="menu-popover-sheet"
+                            className={filterStyles['menu-popover-sheet']}
                         >
                             <FlyoutMenu
                                 dense
@@ -231,7 +234,7 @@ export const ConfigureMenu = ({
                     onClose={() => setNameDialog(undefined)}
                 >
                     <form
-                        className="working-list-name-form"
+                        className={styles['working-list-name-form']}
                         onSubmit={(event) => {
                             event.preventDefault()
                             const nextName = name.trim()
@@ -264,7 +267,7 @@ export const ConfigureMenu = ({
                             />
                         </ModalContent>
                         <ModalActions>
-                            <div className="modal-button-strip">
+                            <div className={layoutStyles['modal-button-strip']}>
                                 <Button
                                     type="button"
                                     dataTest="working-list-name-cancel"
@@ -301,7 +304,7 @@ export const ConfigureMenu = ({
                         })}
                     </ModalContent>
                     <ModalActions>
-                        <div className="modal-button-strip">
+                        <div className={layoutStyles['modal-button-strip']}>
                             <Button
                                 dataTest="delete-working-list-cancel"
                                 onClick={() => setDeleteList(undefined)}

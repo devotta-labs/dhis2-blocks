@@ -27,7 +27,9 @@ import { CSS } from '@dnd-kit/utilities'
 import React, { useEffect, useMemo, useState } from 'react'
 import type { WorkingListField } from '../../domain/model'
 import { fieldDisplayName } from '../FilterControls'
+import accessibilityStyles from '../styles/accessibility.module.css'
 import { useWorkingListText } from '../WorkingListText'
+import styles from './ColumnSettingsDialog.module.css'
 
 interface ColumnSettingsDialogProps {
     fields: WorkingListField[]
@@ -99,7 +101,9 @@ const SortableColumnRow = ({
     return (
         <li
             ref={setNodeRef}
-            className={`column-settings-row${isDragging ? ' column-settings-row--dragging' : ''}`}
+            className={`${styles['column-settings-row']}${
+                isDragging ? ` ${styles['column-settings-row--dragging']}` : ''
+            }`}
             style={{
                 transform: CSS.Transform.toString(transform),
                 transition,
@@ -108,22 +112,25 @@ const SortableColumnRow = ({
         >
             <button
                 type="button"
-                className="column-settings-drag-handle"
+                className={styles['column-settings-drag-handle']}
+                data-testid={`column-settings-drag-${field.id}`}
                 aria-label={reorderLabel}
                 {...attributes}
                 {...listeners}
             >
                 <IconDragHandle24 />
             </button>
-            <span className="column-settings-name">{name}</span>
-            <div className="column-settings-visibility">
+            <span className={styles['column-settings-name']}>{name}</span>
+            <div className={styles['column-settings-visibility']}>
                 <Checkbox
                     dense
                     dataTest={`column-${field.id}`}
                     checked={visible}
                     disabled={disableVisibilityToggle}
                     label={
-                        <span className="visually-hidden">
+                        <span
+                            className={accessibilityStyles['visually-hidden']}
+                        >
                             {visibilityLabel}
                         </span>
                     }
@@ -229,7 +236,7 @@ export const ColumnSettingsDialog = ({
             <ModalTitle>{i18n.t('Configure columns')}</ModalTitle>
             <ModalContent>
                 <div data-testid="column-settings">
-                    <p className="column-settings-description">
+                    <p className={styles['column-settings-description']}>
                         {i18n.t(
                             'Choose which columns are visible and drag them into the order you want. Active filters are not affected.'
                         )}
@@ -294,8 +301,9 @@ export const ColumnSettingsDialog = ({
                         onDragEnd={handleDragEnd}
                     >
                         <div
-                            className="column-settings-header"
+                            className={styles['column-settings-header']}
                             aria-hidden="true"
+                            data-testid="column-settings-header"
                         >
                             <span />
                             <span>{i18n.t('Column')}</span>
@@ -305,7 +313,7 @@ export const ColumnSettingsDialog = ({
                             items={orderedFields.map((field) => field.id)}
                             strategy={verticalListSortingStrategy}
                         >
-                            <ul className="column-settings-list">
+                            <ul className={styles['column-settings-list']}>
                                 {orderedFields.map((field) => {
                                     const visible = visibleColumnIds.includes(
                                         field.id

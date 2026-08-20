@@ -3,4 +3,3 @@ export {
     getInitialColumnDialogOrder,
     getVisibleColumnIdsInOrder,
 } from './ColumnSettingsDialog'
-

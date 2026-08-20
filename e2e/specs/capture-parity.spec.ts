@@ -130,7 +130,8 @@ const openWorkingList = async (
     ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
 }
 
-const resultRows = (page: Page) => page.locator('.working-list-row')
+const resultRows = (page: Page) =>
+    page.locator('[data-testid^="working-list-row-"]')
 
 const chooseDhis2Option = async (
     page: Page,
@@ -404,7 +405,7 @@ test.describe('Capture context and generated tracker views', () => {
             name: 'Working lists',
         })
         await expect(documentHeading).toBeAttached()
-        await expect(documentHeading).toHaveClass(/visually-hidden/)
+        await expect(documentHeading).toHaveCSS('position', 'absolute')
     })
 
     test('loads generated defaults and reinstates active, completed, and cancelled filters', async ({
@@ -778,29 +779,33 @@ test.describe('Capture context and generated tracker views', () => {
         // included, with no data-quality visuals.
         const dirtyRow = page.getByTestId('working-list-row-WlE2eTei002')
         await expect(dirtyRow).toBeVisible()
-        await expect(dirtyRow).not.toHaveClass(/working-list-row--invalid/)
+        await expect(dirtyRow).not.toHaveAttribute('data-invalid')
         await expect(dirtyRow).toContainText(CORRUPTED_DATE_VALUE)
-        await expect(page.locator('.working-list-issues-cell')).toHaveCount(0)
+        await expect(
+            page.locator('[data-testid^="working-list-issues-cell-"]')
+        ).toHaveCount(0)
         await expect(page.getByTestId('row-issues-WlE2eTei002')).toHaveCount(0)
         expect(dataQualityWarnings.length).toBeGreaterThan(0)
 
         await page.locator('[data-test="data-quality-mode-toggle"]').click()
 
-        await expect(dirtyRow).toHaveClass(/working-list-row--invalid/)
+        await expect(dirtyRow).toHaveAttribute('data-invalid', 'true')
         await expect(dirtyRow).toContainText(CORRUPTED_DATE_VALUE)
         const rowIssuesMarker = page.getByTestId('row-issues-WlE2eTei002')
         await expect(rowIssuesMarker).toHaveAccessibleName(
             'Row has 1 data quality issues'
         )
-        await expect(rowIssuesMarker.locator('xpath=ancestor::td')).toHaveClass(
-            /working-list-issues-cell/
-        )
         await expect(
-            dirtyRow.locator('td.working-list-issues-cell')
+            rowIssuesMarker.locator('xpath=ancestor::td')
+        ).toHaveAttribute('data-testid', 'working-list-issues-cell-WlE2eTei002')
+        await expect(
+            dirtyRow.locator(
+                '[data-testid="working-list-issues-cell-WlE2eTei002"]'
+            )
         ).toHaveCount(1)
         await expect(
             page.getByTestId('working-list-row-WlE2eTei001')
-        ).not.toHaveClass(/working-list-row--invalid/)
+        ).not.toHaveAttribute('data-invalid')
 
         const accessibility = await new AxeBuilder({ page })
             .include('[data-testid="working-list-main"]')
@@ -813,7 +818,7 @@ test.describe('Capture context and generated tracker views', () => {
         ).toEqual([])
 
         await page.locator('[data-test="data-quality-mode-toggle"]').click()
-        await expect(dirtyRow).not.toHaveClass(/working-list-row--invalid/)
+        await expect(dirtyRow).not.toHaveAttribute('data-invalid')
         await expect(dirtyRow).toContainText(CORRUPTED_DATE_VALUE)
     })
 
@@ -1683,7 +1688,7 @@ test.describe('accessibility and keyboard feedback', () => {
         ).toBeLessThanOrEqual(overflowMetrics.documentClientWidth + 1)
         expect(
             await page
-                .locator('.working-list-table-scroll')
+                .getByTestId('working-list-table-scroll')
                 .evaluate(
                     (element) => element.scrollWidth > element.clientWidth
                 )
@@ -1738,7 +1743,7 @@ test.describe('accessibility and keyboard feedback', () => {
             .first()
             .getByTestId('row-open-WlE2eTei001')
         await expect(rowOpen).toHaveAttribute('type', 'button')
-        await expect(rowOpen).toHaveClass(/visually-hidden/)
+        await expect(rowOpen).toHaveCSS('position', 'absolute')
         await expect(rowOpen).toHaveAccessibleName(/^Open row \d+$/)
 
         await rowOpen.focus()

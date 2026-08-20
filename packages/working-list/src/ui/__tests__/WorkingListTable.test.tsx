@@ -266,9 +266,7 @@ describe('WorkingListTable', () => {
                 expect(openRowButton?.closest('td')).toBe(
                     row?.querySelectorAll('td')[0]
                 )
-                expect(
-                    openRowButton?.classList.contains('visually-hidden')
-                ).toBe(true)
+                expect(openRowButton?.getAttribute('aria-label')).toBeNull()
 
                 act(() =>
                     firstNameCell?.dispatchEvent(
@@ -350,14 +348,14 @@ describe('WorkingListTable', () => {
                     '[data-testid="working-list-row-tei-2"]'
                 )
                 expect(row).not.toBeNull()
-                expect(
-                    row?.classList.contains('working-list-row--invalid')
-                ).toBe(false)
+                expect(row?.hasAttribute('data-invalid')).toBe(false)
                 expect(
                     container.querySelector('[data-testid="row-issues-tei-2"]')
                 ).toBeNull()
                 expect(
-                    container.querySelector('.working-list-issues-cell')
+                    container.querySelector(
+                        '[data-testid^="working-list-issues-cell-"]'
+                    )
                 ).toBeNull()
                 const cells = row?.querySelectorAll('td')
                 expect(cells?.[1].textContent).toBe('###')
@@ -382,9 +380,7 @@ describe('WorkingListTable', () => {
                 const row = container.querySelector<HTMLTableRowElement>(
                     '[data-testid="working-list-row-tei-2"]'
                 )
-                expect(
-                    row?.classList.contains('working-list-row--invalid')
-                ).toBe(true)
+                expect(row?.getAttribute('data-invalid')).toBe('true')
                 const cells = row?.querySelectorAll('td')
                 expect(cells?.[1].textContent).toBe('###')
                 expect(cells?.[1].querySelector('[role="img"]')).toBeNull()
@@ -400,9 +396,9 @@ describe('WorkingListTable', () => {
                 )
                 const lastCell = cells?.[cells.length - 1]
                 expect(marker?.closest('td')).toBe(lastCell)
-                expect(
-                    lastCell?.classList.contains('working-list-issues-cell')
-                ).toBe(true)
+                expect(lastCell?.dataset.testid).toBe(
+                    'working-list-issues-cell-tei-2'
+                )
             } finally {
                 act(() => root.unmount())
                 container.remove()

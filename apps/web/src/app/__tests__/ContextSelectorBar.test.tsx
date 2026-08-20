@@ -57,8 +57,8 @@ describe('ContextSelectorBar', () => {
             ).toBe('Working list context')
             expect(navigation?.querySelector('h1')).toBeNull()
             expect(navigation?.querySelector('label')).toBeNull()
-            expect(container.querySelector('h1')?.className).toBe(
-                'visually-hidden'
+            expect(container.querySelector('h1')?.dataset.testid).toBe(
+                'working-list-heading'
             )
             expect(container.querySelector('h1')?.textContent).toBe(
                 'Working lists'

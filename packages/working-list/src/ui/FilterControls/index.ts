@@ -9,4 +9,3 @@ export {
     usesMultipleOptionSelection,
     type FilterCalendarContext,
 } from './FilterControls'
-

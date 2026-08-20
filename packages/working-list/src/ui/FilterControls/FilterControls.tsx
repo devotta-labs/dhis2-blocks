@@ -42,6 +42,7 @@ import {
     useWorkingListText,
     type WorkingListTranslate,
 } from '../WorkingListText'
+import styles from './FilterControls.module.css'
 
 // CalendarInput supports this at runtime (and documents it in PropTypes), but
 // @dhis2/ui 10.11 omits the prop from its declaration bundle.
@@ -275,10 +276,10 @@ const UserFilterSelect = ({
 
     return (
         <div
-            className="reference-filter-editor"
+            className={styles['reference-filter-editor']}
             data-testid="assignee-user-selector"
         >
-            <label className="native-field">
+            <label className={styles['native-field']}>
                 <span>{i18n.t('Search users')}</span>
                 <input
                     type="search"
@@ -369,7 +370,7 @@ const OrganisationUnitFilterSelect = ({
 
     return (
         <div
-            className="reference-filter-editor organisation-unit-filter-tree"
+            className={`${styles['reference-filter-editor']} ${styles['organisation-unit-filter-tree']}`}
             data-testid="filter-organisation-unit-tree"
             aria-busy={rootsQuery.isPending || selectedQuery.isPending}
         >
@@ -558,11 +559,11 @@ export const MoreFilters = ({
     }
 
     return (
-        <div className="more-filters-menu">
+        <div className={styles['more-filters-menu']}>
             <button
                 ref={setButtonElement}
                 type="button"
-                className="filter-button more-filters-menu__trigger"
+                className={styles['filter-button']}
                 data-testid={`more-filters-${scope}`}
                 aria-expanded={open}
                 aria-haspopup="menu"
@@ -579,7 +580,10 @@ export const MoreFilters = ({
                     reference={buttonElement}
                     onClickOutside={close}
                 >
-                    <div ref={setMenuElement} className="menu-popover-sheet">
+                    <div
+                        ref={setMenuElement}
+                        className={styles['menu-popover-sheet']}
+                    >
                         <FlyoutMenu
                             dense
                             dataTest={`more-filters-menu-${scope}`}
@@ -650,11 +654,13 @@ export const FilterButton = ({
     useEscapeToClose(open, close)
 
     return (
-        <div className="filter-control">
+        <div className={styles['filter-control']}>
             <button
                 ref={setButtonElement}
                 type="button"
-                className={`filter-button${summary ? ' filter-button--active' : ''}`}
+                className={`${styles['filter-button']}${
+                    summary ? ` ${styles['filter-button--active']}` : ''
+                }`}
                 data-testid={`filter-${field.id}`}
                 aria-expanded={open}
                 aria-haspopup="dialog"
@@ -679,7 +685,7 @@ export const FilterButton = ({
                     reference={buttonElement}
                     onClickOutside={close}
                 >
-                    <div className="filter-popover-sheet">
+                    <div className={styles['filter-popover-sheet']}>
                         <FilterEditor
                             key={`${field.id}-${JSON.stringify(filter?.value)}`}
                             field={field}
@@ -770,7 +776,7 @@ const FilterEditor = ({
     return (
         <form
             ref={editorRef}
-            className="filter-editor"
+            className={styles['filter-editor']}
             data-testid={`filter-editor-${field.id}`}
             role="dialog"
             aria-label={fieldDisplayName(field, translate)}
@@ -813,11 +819,11 @@ const FilterEditor = ({
                 </div>
             )}
             {error && (
-                <p className="filter-editor__error" role="alert">
+                <p className={styles['filter-editor__error']} role="alert">
                     {error}
                 </p>
             )}
-            <div className="filter-editor__actions">
+            <div className={styles['filter-editor__actions']}>
                 <Button
                     primary
                     small
@@ -967,7 +973,7 @@ const EditorValue = ({
         const values = value.kind === 'boolean' ? value.values : []
         return (
             <div
-                className="boolean-editor"
+                className={styles['boolean-editor']}
                 role="group"
                 aria-label={i18n.t('Values')}
             >
@@ -1005,7 +1011,7 @@ const EditorValue = ({
                 ? value
                 : { kind: 'dateRange', mode: 'absolute' }
         return (
-            <div className="date-range-editor">
+            <div className={styles['date-range-editor']}>
                 <SingleSelectField
                     dense
                     dataTest={`date-mode-${field.id}`}
@@ -1213,7 +1219,7 @@ const EditorValue = ({
 
     const text = value.kind === 'text' ? value.value : ''
     return (
-        <label className="native-field">
+        <label className={styles['native-field']}>
             <span>{i18n.t('Value')}</span>
             <input
                 autoFocus
@@ -1251,8 +1257,8 @@ const RangeFields = ({
     placeholder?: string
     onChange: (min: string | undefined, max: string | undefined) => void
 }) => (
-    <div className="range-editor">
-        <label className="native-field">
+    <div className={styles['range-editor']}>
+        <label className={styles['native-field']}>
             <span>{minLabel}</span>
             <input
                 type={type}
@@ -1266,7 +1272,7 @@ const RangeFields = ({
                 }
             />
         </label>
-        <label className="native-field">
+        <label className={styles['native-field']}>
             <span>{maxLabel}</span>
             <input
                 type={type}
@@ -1335,11 +1341,11 @@ const CalendarRangeFields = ({
         return (
             <button
                 type="button"
-                className={
+                className={`${styles['calendar-field__clear']}${
                     validation?.error || validation?.warning
-                        ? 'calendar-field__clear calendar-field__clear--status-icon'
-                        : 'calendar-field__clear'
-                }
+                        ? ` ${styles['calendar-field__clear--status-icon']}`
+                        : ''
+                }`}
                 data-test={`date-range-${position}-clear`}
                 aria-label={translate('Clear')}
                 title={translate('Clear')}
@@ -1357,8 +1363,10 @@ const CalendarRangeFields = ({
     }
 
     return (
-        <div className="range-editor calendar-range-editor">
-            <div className="calendar-field">
+        <div
+            className={`${styles['range-editor']} ${styles['calendar-range-editor']}`}
+        >
+            <div className={styles['calendar-field']}>
                 <StrictCalendarInput
                     dense
                     strictValidation
@@ -1382,7 +1390,7 @@ const CalendarRangeFields = ({
                 />
                 {start && clearButton('start')}
             </div>
-            <div className="calendar-field">
+            <div className={styles['calendar-field']}>
                 <StrictCalendarInput
                     dense
                     strictValidation
@@ -1462,11 +1470,13 @@ export const ProgramStageControl = ({
     }, [open])
 
     return (
-        <div className="filter-control">
+        <div className={styles['filter-control']}>
             <button
                 ref={setButtonElement}
                 type="button"
-                className={`filter-button${selectedStageId ? ' filter-button--active' : ''}`}
+                className={`${styles['filter-button']}${
+                    selectedStageId ? ` ${styles['filter-button--active']}` : ''
+                }`}
                 data-testid="filter-programStage"
                 aria-expanded={open}
                 aria-haspopup="dialog"
@@ -1494,10 +1504,10 @@ export const ProgramStageControl = ({
                     reference={buttonElement}
                     onClickOutside={close}
                 >
-                    <div className="filter-popover-sheet">
+                    <div className={styles['filter-popover-sheet']}>
                         <form
                             ref={editorRef}
-                            className="filter-editor"
+                            className={styles['filter-editor']}
                             data-testid="filter-editor-programStage"
                             role="dialog"
                             aria-label={i18n.t('Program stage')}
@@ -1526,7 +1536,7 @@ export const ProgramStageControl = ({
                                     />
                                 ))}
                             </SingleSelectField>
-                            <div className="filter-editor__actions">
+                            <div className={styles['filter-editor__actions']}>
                                 <Button
                                     primary
                                     small

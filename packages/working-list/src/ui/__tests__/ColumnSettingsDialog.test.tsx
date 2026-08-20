@@ -69,7 +69,9 @@ describe('column settings dialog', () => {
                 )
             })
 
-            const header = document.querySelector('.column-settings-header')
+            const header = document.querySelector(
+                '[data-testid="column-settings-header"]'
+            )
             expect(header?.textContent).toContain('Column')
             expect(header?.textContent).toContain('Visible')
 
@@ -86,9 +88,7 @@ describe('column settings dialog', () => {
             ])
             expect(
                 rows[0]
-                    ?.querySelector<HTMLButtonElement>(
-                        '.column-settings-drag-handle'
-                    )
+                    ?.querySelector<HTMLButtonElement>('button')
                     ?.getAttribute('aria-label')
             ).toBe('Reorder Column C')
 
@@ -157,7 +157,7 @@ describe('column settings dialog', () => {
             })
 
             const handle = document.querySelector<HTMLButtonElement>(
-                '[data-testid="column-settings-row-c"] .column-settings-drag-handle'
+                '[data-testid="column-settings-drag-c"]'
             )
             expect(handle).not.toBeNull()
             act(() => {

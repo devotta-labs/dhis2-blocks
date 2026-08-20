@@ -11,7 +11,7 @@ const viteConfig = defineConfig(async (configEnv: ConfigEnv) => {
                       find: /^@dhis2-blocks\/working-list\/style\.css$/,
                       replacement: path.resolve(
                           __dirname,
-                          '../../packages/working-list/src/ui/working-list.css'
+                          '../../packages/working-list/src/ui/style.css'
                       ),
                   },
                   {

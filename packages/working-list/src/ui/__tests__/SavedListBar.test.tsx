@@ -67,13 +67,16 @@ describe('SavedListBar', () => {
 
         try {
             const section = container.querySelector<HTMLElement>(
-                'section.saved-list-bar[aria-label="Working list views"]'
+                '[data-testid="saved-list-bar"]'
             )
             const activeView = container.querySelector<HTMLButtonElement>(
                 '[data-testid="working-list-view-active"]'
             )
 
             expect(section).not.toBeNull()
+            expect(section?.getAttribute('aria-label')).toBe(
+                'Working list views'
+            )
             expect(activeView?.getAttribute('aria-current')).toBe('true')
             expect(section?.querySelector('[role="list"]')).toBeNull()
             expect(
@@ -97,7 +100,7 @@ describe('SavedListBar', () => {
             expect(indicator?.getAttribute('aria-hidden')).toBe('true')
             expect(
                 container.querySelector(
-                    '[data-testid="working-list-view-active"] .visually-hidden'
+                    '[data-testid="working-list-dirty-label"]'
                 )?.textContent
             ).toBe('Unsaved changes')
         } finally {

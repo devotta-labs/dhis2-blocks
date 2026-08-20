@@ -7,6 +7,7 @@
     "jest": {
         "watchman": false,
         "moduleNameMapper": {
+            "\\.(css|less)$": "<rootDir>/src/test/styleMock.ts",
             "^@dhis2-blocks/working-list/url-state$": "<rootDir>/../../packages/working-list/dist/url-state.cjs",
             "^@/locales$": "<rootDir>/src/test/locales.ts",
             "^@/(.*)$": "<rootDir>/src/$1"

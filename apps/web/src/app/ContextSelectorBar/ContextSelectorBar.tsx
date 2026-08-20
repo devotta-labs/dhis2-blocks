@@ -6,6 +6,7 @@ import {
 } from '@dhis2/ui'
 import React, { useState } from 'react'
 import i18n from '@/locales'
+import accessibilityStyles from '@/styles/accessibility.module.css'
 
 interface ProgramOption {
     id: string
@@ -115,7 +116,12 @@ export const ContextSelectorBar = ({
                     </SelectorBarItem>
                 </SelectorBar>
             </nav>
-            <h1 className="visually-hidden">{i18n.t('Working lists')}</h1>
+            <h1
+                className={accessibilityStyles['visually-hidden']}
+                data-testid="working-list-heading"
+            >
+                {i18n.t('Working lists')}
+            </h1>
         </>
     )
 }

@@ -3,3 +3,4 @@ e2e/artifacts/
 .npm-cache/
 pnpm-lock.yaml
 skills-lock.json
+pnpm-lock.yaml

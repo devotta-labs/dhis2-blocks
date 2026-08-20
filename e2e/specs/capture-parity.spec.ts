@@ -159,7 +159,9 @@ const chooseSavedListOption = async (page: Page, dataTest: string) => {
     const menu = await openSavedListOptions(page)
     const option = menu.locator(`[data-test="${dataTest}"]`)
     await expect(option).toBeVisible()
-    await option.click()
+    const menuItem = option.getByRole('menuitem')
+    await expect(menuItem).toBeEnabled()
+    await menuItem.click()
 }
 
 type OrganisationUnitAncestor = {
@@ -860,11 +862,13 @@ test.describe('Capture context and generated tracker views', () => {
         const initialColumnRows = await columnRows.evaluateAll((rows) =>
             rows.map((row) => row.getAttribute('data-testid'))
         )
-        const moveCount =
-            initialColumnRows.indexOf(
-                `column-settings-row-${INTEGER_ATTRIBUTE}`
-            ) -
-            initialColumnRows.indexOf(`column-settings-row-${TEXT_ATTRIBUTE}`)
+        const initialIntegerIndex = initialColumnRows.indexOf(
+            `column-settings-row-${INTEGER_ATTRIBUTE}`
+        )
+        const initialTextIndex = initialColumnRows.indexOf(
+            `column-settings-row-${TEXT_ATTRIBUTE}`
+        )
+        const moveCount = initialIntegerIndex - initialTextIndex
         expect(moveCount).toBeGreaterThan(0)
         const integerDragHandle = settings.getByRole('button', {
             name: 'Reorder E2E integer attribute',
@@ -873,18 +877,26 @@ test.describe('Capture context and generated tracker views', () => {
         await page.keyboard.press('Space')
         for (let move = 0; move < moveCount; move += 1) {
             await page.keyboard.press('ArrowUp')
+            await expect(settings.getByRole('status')).toContainText(
+                `E2E integer attribute moved to position ${initialIntegerIndex - move}`
+            )
         }
         await page.keyboard.press('Space')
-        const orderedColumnRows = await columnRows.evaluateAll((rows) =>
-            rows.map((row) => row.getAttribute('data-testid'))
-        )
-        expect(
-            orderedColumnRows.indexOf(
-                `column-settings-row-${INTEGER_ATTRIBUTE}`
-            )
-        ).toBeLessThan(
-            orderedColumnRows.indexOf(`column-settings-row-${TEXT_ATTRIBUTE}`)
-        )
+        await expect
+            .poll(async () => {
+                const orderedColumnRows = await columnRows.evaluateAll((rows) =>
+                    rows.map((row) => row.getAttribute('data-testid'))
+                )
+                return (
+                    orderedColumnRows.indexOf(
+                        `column-settings-row-${INTEGER_ATTRIBUTE}`
+                    ) <
+                    orderedColumnRows.indexOf(
+                        `column-settings-row-${TEXT_ATTRIBUTE}`
+                    )
+                )
+            })
+            .toBe(true)
         await page.locator('[data-test="column-settings-done"]').click()
 
         await expect(page.getByTestId(`sort-${BOOLEAN_ATTRIBUTE}`)).toHaveCount(
@@ -1302,9 +1314,11 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 }),
             })
             await expect(readerAccessRow).toBeVisible()
-            await readerAccessRow
-                .locator('[data-test="dhis2-uicore-select-input"]')
-                .click()
+            const readerAccessSelect = readerAccessRow.locator(
+                '[data-test="dhis2-uicore-select-input"]'
+            )
+            await expect(readerAccessSelect).not.toHaveClass(/disabled/)
+            await readerAccessSelect.click()
             const revokeResponse = page.waitForResponse(
                 (response) =>
                     response.request().method() === 'PUT' &&

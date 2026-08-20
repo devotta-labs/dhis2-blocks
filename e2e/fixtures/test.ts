@@ -285,4 +285,11 @@ export const test = base.extend<WorkingListFixtures>({
     },
 })
 
+export const testFromDhis2Version = (minimumVersion: number) => {
+    const targetMajor = Number(environment?.E2E_EXPECTED_MAJOR)
+    return !Number.isFinite(targetMajor) || targetMajor >= minimumVersion
+        ? test
+        : test.skip
+}
+
 export { expect }

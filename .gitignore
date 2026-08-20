@@ -1,6 +1,9 @@
 # DHIS2 Platform
 node_modules
 .d2
+/build/
+/dist/
+/src/locales/
 apps/web/src/locales
 apps/*/build
 packages/*/dist

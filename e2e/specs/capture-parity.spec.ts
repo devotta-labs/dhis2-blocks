@@ -12,6 +12,7 @@ import {
     e2eEnvironment,
     expect,
     test,
+    testFromDhis2Version,
     type E2ECredentials,
 } from '../fixtures/test'
 
@@ -58,6 +59,9 @@ const environment = (
     }
 ).process?.env
 const targetMajor = Number(environment?.E2E_EXPECTED_MAJOR)
+const typedRegistryTest = testFromDhis2Version(42)
+const typedRegistryTestTitle =
+    'uses the typed registry for numeric, boolean, and option filters while keeping unsupported values display-only @dhis2-min-42'
 
 const requestUrl = (request: Request | Response) => new URL(request.url())
 const isTrackerResource = (
@@ -619,9 +623,7 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(resultRows(page)).toHaveCount(7)
     })
 
-    test('uses the typed registry for numeric, boolean, and option filters while keeping unsupported values display-only', async ({
-        page,
-    }) => {
+    typedRegistryTest(typedRegistryTestTitle, async ({ page }) => {
         await openWorkingList(page)
 
         await addFilter(page, 'tracked-entity', NUMBER_ATTRIBUTE)
@@ -986,6 +988,9 @@ test.describe('Capture programme-stage joint data strategy', () => {
         expect(dateRequest.searchParams.get('occurredBefore')).toBe(
             '2025-02-01'
         )
+        await expect(
+            page.locator('[data-testid="working-list-table"] tbody')
+        ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
 
         await page.getByTestId('filter-programStage').click()
         await page.locator('[data-test="filter-reset-programStage"]').click()

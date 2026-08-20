@@ -1,7 +1,6 @@
 import {
     Button,
     Checkbox,
-    // eslint-disable-next-line import/named -- @dhis2/ui re-exports @dhis2/ui-icons
     IconDragHandle24,
     Modal,
     ModalActions,

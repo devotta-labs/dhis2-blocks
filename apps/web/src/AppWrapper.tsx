@@ -7,6 +7,7 @@ import {
     useLocation,
 } from 'react-router-dom'
 import App from '@/App'
+import '@dhis2-blocks/working-list/style.css'
 import '@/index.css'
 import '@/locales'
 import { ErrorBoundary } from '@/app/ErrorBoundary'

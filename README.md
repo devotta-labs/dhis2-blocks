@@ -1,66 +1,91 @@
-This project was bootstrapped with [DHIS2 Application Platform](https://github.com/dhis2/app-platform).
+# DHIS2 blocks
 
-## Working-list library
+This repository is a pnpm and Turborepo monorepo for reusable DHIS2 UI blocks
+and the applications used to develop them.
 
-The reusable component has an independent ESM and TypeScript declaration
-build. This does not replace or modify the DHIS2 application build.
+## Workspace layout
+
+```text
+apps/
+  web/                  DHIS2 wrapper and component demo application
+packages/
+  working-list/         Reusable Working List component and client library
+e2e/                    Real-DHIS2 Playwright coverage
+scripts/e2e/            Real-DHIS2 environment orchestration
+```
+
+The web application depends on `@dhis2-blocks/working-list` through pnpm's
+`workspace:*` protocol. Turborepo uses that dependency to build the library
+before building, testing, or typechecking the application.
+
+## Setup
+
+```sh
+pnpm install
+```
+
+## Development application
+
+```sh
+pnpm start
+```
+
+This starts the existing DHIS2 custom wrapper from `apps/web`. By default the
+DHIS2 Application Platform opens the application at
+[http://localhost:3000](http://localhost:3000).
+
+The deployable application bundle is built with:
+
+```sh
+pnpm build
+```
+
+The DHIS2 application output is written below `apps/web/build`.
+
+## Working List library
+
+Build just the reusable package or inspect the publishable tarball contents:
 
 ```sh
 pnpm build:library
 pnpm package:check
 ```
 
-Workspace or tarball consumers import the public component surface and its
+Workspace and packed consumers import the supported component surface and its
 stylesheet separately:
 
 ```ts
-import { WorkingList } from 'working-list-demo'
-import 'working-list-demo/style.css'
+import { WorkingList } from '@dhis2-blocks/working-list'
+import '@dhis2-blocks/working-list/style.css'
 ```
 
-The package remains private while its API is iterated, but its `exports`,
-`types`, `files`, and CSS contract are ready for workspace consumption.
+The package remains private while its API is iterated, but its ESM, TypeScript
+declaration, `exports`, and CSS contracts are ready for workspace or tarball
+consumption.
 
-## Available Scripts
+## Quality checks
 
-In the project directory, you can run:
+```sh
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
+```
 
-### `yarn start`
+Turborepo runs each task in the workspaces that provide it and caches declared
+build outputs.
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Real-DHIS2 browser tests
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+The existing version-specific commands remain available from the repository
+root:
 
-### `yarn test`
+```sh
+pnpm e2e:41
+pnpm e2e:42
+pnpm e2e:43
+pnpm e2e:dev
+```
 
-Launches the test runner and runs all available tests found in `/src`.<br />
-
-See the section about [running tests](https://platform.dhis2.nu/#/scripts/test) for more information.
-
-### `yarn build`
-
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br />
-A deployable `.zip` file can be found in `build/bundle`!
-
-See the section about [building](https://platform.dhis2.nu/#/scripts/build) for more information.
-
-### `yarn deploy`
-
-Deploys the built app in the `build` folder to a running DHIS2 instance.<br />
-This command will prompt you to enter a server URL as well as the username and password of a DHIS2 user with the App Management authority.<br/>
-You must run `yarn build` before running `yarn deploy`.<br />
-
-See the section about [deploying](https://platform.dhis2.nu/#/scripts/deploy) for more information.
-
-## Learn More
-
-You can learn more about the platform in the [DHIS2 Application Platform Documentation](https://platform.dhis2.nu/).
-
-You can learn more about the runtime in the [DHIS2 Application Runtime Documentation](https://runtime.dhis2.nu/).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+See the [DHIS2 Application Platform documentation](https://platform.dhis2.nu/)
+for platform-specific development and deployment guidance.

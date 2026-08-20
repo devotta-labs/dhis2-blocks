@@ -51,6 +51,8 @@ export {
     buildProgramFieldCatalog,
     fetchTrackerProgram,
     fetchTrackerPrograms,
+    trackerProgramQueryOptions,
+    trackerProgramsQueryOptions,
 } from './api/metadata'
 export type { ProgramFieldCatalog } from './api/metadata'
 
@@ -58,6 +60,7 @@ export {
     WORKING_LIST_CALENDARS,
     WorkingListSystemInfoSchema,
     fetchWorkingListSystemInfo,
+    workingListSystemInfoQueryOptions,
 } from './api/systemInfo'
 export type {
     WorkingListCalendar,
@@ -67,6 +70,9 @@ export type {
 
 export { TrackerProgramSchema } from './api/schemas'
 export type { TrackerProgram } from './api/schemas'
+
+export { WorkingListUrlStateSchema } from './domain/schemas'
+export type { WorkingListUrlState } from './domain/schemas'
 
 export {
     DHIS2_VALUE_TYPES,

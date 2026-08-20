@@ -1,3 +1,7 @@
+packages:
+    - apps/*
+    - packages/*
+
 onlyBuiltDependencies:
     - '@dhis2/cli-helpers-engine'
     - core-js-pure

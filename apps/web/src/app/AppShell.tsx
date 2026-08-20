@@ -9,6 +9,16 @@ import {
     NoticeBox,
     Switch,
 } from '@dhis2/ui'
+import {
+    createWorkingListClient,
+    trackerProgramQueryOptions,
+    trackerProgramsQueryOptions,
+    workingListSystemInfoQueryOptions,
+    WorkingList,
+    type DataEngineLike,
+    type WorkingListDataQualityMode,
+    type WorkingListRowOpenEvent,
+} from '@dhis2-blocks/working-list'
 import { useQuery } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useBlocker, useSearchParams } from 'react-router-dom'
@@ -32,18 +42,6 @@ import {
     type AppUrlState,
 } from './urlState'
 import i18n from '@/locales'
-import {
-    createWorkingListClient,
-    type DataEngineLike,
-} from '@/working-list/api/client'
-import {
-    trackerProgramQueryOptions,
-    trackerProgramsQueryOptions,
-} from '@/working-list/api/metadata'
-import { workingListSystemInfoQueryOptions } from '@/working-list/api/systemInfo'
-import type { WorkingListRowOpenEvent } from '@/working-list/domain/model'
-import type { WorkingListDataQualityMode } from '@/working-list/ui/types'
-import { WorkingList } from '@/working-list/ui/WorkingList'
 
 const OrganisationUnitReferenceSchema = z
     .object({

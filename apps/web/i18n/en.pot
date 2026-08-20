@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-20T13:12:07.523Z\n"
-"PO-Revision-Date: 2026-08-20T13:12:07.523Z\n"
+"POT-Creation-Date: 2026-08-20T20:48:43.337Z\n"
+"PO-Revision-Date: 2026-08-20T20:48:43.337Z\n"
 
 msgid "Discard the unsaved changes to this working list?"
 msgstr "Discard the unsaved changes to this working list?"
@@ -106,368 +106,26 @@ msgstr "Reload application"
 msgid "Select one organisation unit for this list."
 msgstr "Select one organisation unit for this list."
 
-msgid "Configure columns"
-msgstr "Configure columns"
-
-msgid ""
-"Choose which columns are visible and drag them into the order you want. "
-"Active filters are not affected."
-msgstr ""
-"Choose which columns are visible and drag them into the order you want. "
-"Active filters are not affected."
-
-msgid ""
-"To reorder a column, press Space to pick it up, use the arrow keys to move "
-"it, and press Space again to drop it."
-msgstr ""
-"To reorder a column, press Space to pick it up, use the arrow keys to move "
-"it, and press Space again to drop it."
-
-msgid "{{column}} picked up."
-msgstr "{{column}} picked up."
-
-msgid "{{column}} moved to position {{position}} of {{total}}."
-msgstr "{{column}} moved to position {{position}} of {{total}}."
-
-msgid "{{column}} dropped."
-msgstr "{{column}} dropped."
-
-msgid "{{column}} was not moved."
-msgstr "{{column}} was not moved."
-
-msgid "Reordering {{column}} cancelled."
-msgstr "Reordering {{column}} cancelled."
-
-msgid "Column"
-msgstr "Column"
-
-msgid "Visible"
-msgstr "Visible"
-
-msgid "Reorder {{column}}"
-msgstr "Reorder {{column}}"
-
-msgid "Show {{column}}"
-msgstr "Show {{column}}"
-
-msgid "Done"
-msgstr "Done"
-
-msgid "Configure"
-msgstr "Configure"
-
-msgid "Saved list"
-msgstr "Saved list"
-
-msgid "Update saved list"
-msgstr "Update saved list"
-
-msgid "Save as new"
-msgstr "Save as new"
-
-msgid "Rename"
-msgstr "Rename"
-
-msgid "Sharing and access"
-msgstr "Sharing and access"
-
-msgid "Delete"
-msgstr "Delete"
-
-msgid "Columns"
-msgstr "Columns"
-
-msgid "Rename working list"
-msgstr "Rename working list"
-
-msgid "Save as new working list"
-msgstr "Save as new working list"
-
-msgid "Name"
-msgstr "Name"
-
-msgid "Cancel"
-msgstr "Cancel"
-
-msgid "Save"
-msgstr "Save"
-
-msgid "Delete working list?"
-msgstr "Delete working list?"
-
-msgid "“{{name}}” will be permanently deleted."
-msgstr "“{{name}}” will be permanently deleted."
-
-msgid "Could not update sharing"
-msgstr "Could not update sharing"
-
-msgid "Search users"
-msgstr "Search users"
-
-msgid "Users"
-msgstr "Users"
-
-msgid "No users match"
-msgstr "No users match"
-
-msgid "Could not load users"
-msgstr "Could not load users"
-
-msgid "Could not load organisation units"
-msgstr "Could not load organisation units"
-
-msgid "Loading organisation units…"
-msgstr "Loading organisation units…"
-
-msgid "Empty"
-msgstr "Empty"
-
-msgid "Not empty"
-msgstr "Not empty"
-
-msgid "Yes"
-msgstr "Yes"
-
-msgid "No"
-msgstr "No"
-
-msgid "Current user"
-msgstr "Current user"
-
-msgid "Unassigned"
-msgstr "Unassigned"
-
-msgid "Any assigned user"
-msgstr "Any assigned user"
-
-msgid "Selected users"
-msgstr "Selected users"
-
-msgid "Today"
-msgstr "Today"
-
-msgid "This week"
-msgstr "This week"
-
-msgid "Last week"
-msgstr "Last week"
-
-msgid "This month"
-msgstr "This month"
-
-msgid "Last month"
-msgstr "Last month"
-
-msgid "Last three months"
-msgstr "Last three months"
-
-msgid "This year"
-msgstr "This year"
-
-msgid "{{start}} to {{end}} days"
-msgstr "{{start}} to {{end}} days"
-
-msgid "More filters"
-msgstr "More filters"
-
-msgid "Program stage"
-msgstr "Program stage"
-
-msgid "The filter value is invalid. Review the value and try again."
-msgstr "The filter value is invalid. Review the value and try again."
-
-msgid "Match"
-msgstr "Match"
-
-msgid "Update"
-msgstr "Update"
-
-msgid "Reset filter"
-msgstr "Reset filter"
-
-msgid "Assignment"
-msgstr "Assignment"
-
-msgid "Specific users"
-msgstr "Specific users"
-
-msgid "Values"
-msgstr "Values"
-
-msgid "No values match"
-msgstr "No values match"
-
-msgid "Value"
-msgstr "Value"
-
-msgid "Date range type"
-msgstr "Date range type"
-
-msgid "Specific dates"
-msgstr "Specific dates"
-
-msgid "Relative period"
-msgstr "Relative period"
-
-msgid "From"
-msgstr "From"
-
-msgid "To"
-msgstr "To"
-
-msgid "Relative range type"
-msgstr "Relative range type"
-
-msgid "Named period"
-msgstr "Named period"
-
-msgid "Day offsets"
-msgstr "Day offsets"
-
-msgid "Start buffer"
-msgstr "Start buffer"
-
-msgid "End buffer"
-msgstr "End buffer"
-
-msgid "Minimum"
-msgstr "Minimum"
-
-msgid "Maximum"
-msgstr "Maximum"
-
-msgid "Only records with a true value will match."
-msgstr "Only records with a true value will match."
-
-msgid "{{filterName}}{{escape}}"
-msgstr "{{filterName}}{{escape}}"
-
-msgid "Stage"
-msgstr "Stage"
-
-msgid "Remove filter"
-msgstr "Remove filter"
-
-msgid "Active enrollments"
-msgstr "Active enrollments"
-
-msgid "Completed enrollments"
-msgstr "Completed enrollments"
-
-msgid "Cancelled enrollments"
-msgstr "Cancelled enrollments"
-
-msgid "Working list views"
-msgstr "Working list views"
-
-msgid "This view is unavailable"
-msgstr "This view is unavailable"
-
-msgid "Unavailable"
-msgstr "Unavailable"
-
-msgid "Unsaved changes"
-msgstr "Unsaved changes"
-
-msgid ""
-"Save this mode change as a new working list instead of replacing a "
-"different resource type."
-msgstr ""
-"Save this mode change as a new working list instead of replacing a "
-"different resource type."
-
-msgid "An unavailable saved list cannot be renamed."
-msgstr "An unavailable saved list cannot be renamed."
-
-msgid "Unsupported DHIS2 version"
-msgstr "Unsupported DHIS2 version"
-
-msgid "Working lists require DHIS2 41 or newer."
-msgstr "Working lists require DHIS2 41 or newer."
-
-msgid "Could not load saved working lists"
-msgstr "Could not load saved working lists"
-
-msgid "Could not save the working list"
-msgstr "Could not save the working list"
-
-msgid "Working list actions"
-msgstr "Working list actions"
-
-msgid "The saved working list could not be reloaded"
-msgstr "The saved working list could not be reloaded"
-
-msgid ""
-"The list was created, but the server has not returned it yet. No records "
-"will be queried until it is available."
-msgstr ""
-"The list was created, but the server has not returned it yet. No records "
-"will be queried until it is available."
-
-msgid "This saved list cannot be used"
-msgstr "This saved list cannot be used"
-
-msgid ""
-"The list references metadata that is no longer available. No records will "
-"be queried while this list is selected."
-msgstr ""
-"The list references metadata that is no longer available. No records will "
-"be queried while this list is selected."
-
-msgid "You need update access to repair this saved list."
-msgstr "You need update access to repair this saved list."
-
-msgid "Review repair"
-msgstr "Review repair"
-
-msgid "Loading the selected working list…"
-msgstr "Loading the selected working list…"
-
-msgid "Tracked entity filters"
-msgstr "Tracked entity filters"
-
-msgid "Stage filters"
-msgstr "Stage filters"
-
-msgid "Could not load results"
-msgstr "Could not load results"
-
-msgid "Repair saved working list?"
-msgstr "Repair saved working list?"
-
-msgid ""
-"No records will be queried until you confirm. The repair keeps every "
-"available setting and updates this saved list in place."
-msgstr ""
-"No records will be queried until you confirm. The repair keeps every "
-"available setting and updates this saved list in place."
-
-msgid "Replace the unavailable sort with the default sort"
-msgstr "Replace the unavailable sort with the default sort"
-
-msgid "Repair and update list"
-msgstr "Repair and update list"
-
-msgid "Working list results"
-msgstr "Working list results"
-
-msgid "No items to display"
-msgstr "No items to display"
-
-msgid "Try adjusting the filters or organisation unit."
-msgstr "Try adjusting the filters or organisation unit."
-
-msgid "Open row {{number}}"
-msgstr "Open row {{number}}"
-
 msgid "A required value is missing"
 msgstr "A required value is missing"
 
 msgid "Active"
 msgstr "Active"
 
+msgid "Active enrollments"
+msgstr "Active enrollments"
+
+msgid "Any assigned user"
+msgstr "Any assigned user"
+
+msgid "An unavailable saved list cannot be renamed."
+msgstr "An unavailable saved list cannot be renamed."
+
 msgid "Assigned to"
 msgstr "Assigned to"
+
+msgid "Assignment"
+msgstr "Assignment"
 
 msgid "At least"
 msgstr "At least"
@@ -478,8 +136,14 @@ msgstr "At most"
 msgid "Between"
 msgstr "Between"
 
+msgid "Cancel"
+msgstr "Cancel"
+
 msgid "Cancelled"
 msgstr "Cancelled"
+
+msgid "Cancelled enrollments"
+msgstr "Cancelled enrollments"
 
 msgid ""
 "Choose visible columns and arrange their display order. Active filters are "
@@ -488,14 +152,48 @@ msgstr ""
 "Choose visible columns and arrange their display order. Active filters are "
 "not affected."
 
+msgid ""
+"Choose which columns are visible and drag them into the order you want. "
+"Active filters are not affected."
+msgstr ""
+"Choose which columns are visible and drag them into the order you want. "
+"Active filters are not affected."
+
 msgid "Clear"
 msgstr "Clear"
+
+msgid "Column"
+msgstr "Column"
 
 msgid "Column {{reference}} is no longer available."
 msgstr "Column {{reference}} is no longer available."
 
+msgid "{{column}} dropped."
+msgstr "{{column}} dropped."
+
+msgid "{{column}} moved to position {{position}} of {{total}}."
+msgstr "{{column}} moved to position {{position}} of {{total}}."
+
+msgid "{{column}} picked up."
+msgstr "{{column}} picked up."
+
+msgid "{{column}} was not moved."
+msgstr "{{column}} was not moved."
+
+msgid "Columns"
+msgstr "Columns"
+
 msgid "Completed"
 msgstr "Completed"
+
+msgid "Completed enrollments"
+msgstr "Completed enrollments"
+
+msgid "Configure"
+msgstr "Configure"
+
+msgid "Configure columns"
+msgstr "Configure columns"
 
 msgid "Contains"
 msgstr "Contains"
@@ -506,14 +204,56 @@ msgstr "COORDINATE is not valid JSON"
 msgid "COORDINATE requires [longitude, latitude]"
 msgstr "COORDINATE requires [longitude, latitude]"
 
+msgid "Could not load organisation units"
+msgstr "Could not load organisation units"
+
+msgid "Could not load results"
+msgstr "Could not load results"
+
+msgid "Could not load saved working lists"
+msgstr "Could not load saved working lists"
+
+msgid "Could not load users"
+msgstr "Could not load users"
+
+msgid "Could not save the working list"
+msgstr "Could not save the working list"
+
+msgid "Could not update sharing"
+msgstr "Could not update sharing"
+
+msgid "Current user"
+msgstr "Current user"
+
 msgid "Data quality"
 msgstr "Data quality"
+
+msgid "Date range type"
+msgstr "Date range type"
 
 msgid "DATETIME requires a valid ISO date and time"
 msgstr "DATETIME requires a valid ISO date and time"
 
+msgid "Day offsets"
+msgstr "Day offsets"
+
+msgid "Delete"
+msgstr "Delete"
+
+msgid "Delete working list?"
+msgstr "Delete working list?"
+
+msgid "Done"
+msgstr "Done"
+
 msgid "EMAIL contains an invalid email address"
 msgstr "EMAIL contains an invalid email address"
+
+msgid "Empty"
+msgstr "Empty"
+
+msgid "End buffer"
+msgstr "End buffer"
 
 msgid "Ends with"
 msgstr "Ends with"
@@ -563,6 +303,9 @@ msgstr "Filter {{reference}} is not supported by this server."
 msgid "Follow up"
 msgstr "Follow up"
 
+msgid "From"
+msgstr "From"
+
 msgid "GEOJSON is not valid JSON"
 msgstr "GEOJSON is not valid JSON"
 
@@ -587,14 +330,41 @@ msgstr "Is not empty"
 msgid "Is one of"
 msgstr "Is one of"
 
+msgid "Last month"
+msgstr "Last month"
+
 msgid "LETTER requires exactly one character"
 msgstr "LETTER requires exactly one character"
+
+msgid "Last three months"
+msgstr "Last three months"
+
+msgid "Last week"
+msgstr "Last week"
 
 msgid "Latitude {{latitude}}, longitude {{longitude}}"
 msgstr "Latitude {{latitude}}, longitude {{longitude}}"
 
 msgid "Less than"
 msgstr "Less than"
+
+msgid "Loading organisation units…"
+msgstr "Loading organisation units…"
+
+msgid "Loading the selected working list…"
+msgstr "Loading the selected working list…"
+
+msgid "Match"
+msgstr "Match"
+
+msgid "Maximum"
+msgstr "Maximum"
+
+msgid "Minimum"
+msgstr "Minimum"
+
+msgid "More filters"
+msgstr "More filters"
 
 msgid "Move left"
 msgstr "Move left"
@@ -608,8 +378,35 @@ msgstr "Move {{column}} left"
 msgid "Move {{column}} right"
 msgstr "Move {{column}} right"
 
+msgid "Name"
+msgstr "Name"
+
+msgid "Named period"
+msgstr "Named period"
+
+msgid "No items to display"
+msgstr "No items to display"
+
+msgid "No users match"
+msgstr "No users match"
+
+msgid "No values match"
+msgstr "No values match"
+
+msgid "No"
+msgstr "No"
+
+msgid "Not empty"
+msgstr "Not empty"
+
+msgid "Only records with a true value will match."
+msgstr "Only records with a true value will match."
+
 msgid "Open"
 msgstr "Open"
+
+msgid "Open row {{number}}"
+msgstr "Open row {{number}}"
 
 msgid "Overdue"
 msgstr "Overdue"
@@ -620,14 +417,33 @@ msgstr "Owner organisation unit"
 msgid "PERCENTAGE requires a value from zero to 100"
 msgstr "PERCENTAGE requires a value from zero to 100"
 
+msgid "Program stage"
+msgstr "Program stage"
+
 msgid "Program stage {{reference}} is no longer available."
 msgstr "Program stage {{reference}} is no longer available."
+
+msgid ""
+"No records will be queried until you confirm. The repair keeps every "
+"available setting and updates this saved list in place."
+msgstr ""
+"No records will be queried until you confirm. The repair keeps every "
+"available setting and updates this saved list in place."
 
 msgid "Registration date"
 msgstr "Registration date"
 
+msgid "Relative period"
+msgstr "Relative period"
+
 msgid "Relative range"
 msgstr "Relative range"
+
+msgid "Relative range type"
+msgstr "Relative range type"
+
+msgid "Remove filter"
+msgstr "Remove filter"
 
 msgid "Remove {{count}} unavailable columns"
 msgstr "Remove {{count}} unavailable columns"
@@ -635,11 +451,35 @@ msgstr "Remove {{count}} unavailable columns"
 msgid "Remove {{count}} unavailable filters"
 msgstr "Remove {{count}} unavailable filters"
 
+msgid "Reorder {{column}}"
+msgstr "Reorder {{column}}"
+
+msgid "Reordering {{column}} cancelled."
+msgstr "Reordering {{column}} cancelled."
+
+msgid "Rename"
+msgstr "Rename"
+
+msgid "Rename working list"
+msgstr "Rename working list"
+
 msgid "Report date"
 msgstr "Report date"
 
+msgid "Repair and update list"
+msgstr "Repair and update list"
+
+msgid "Repair saved working list?"
+msgstr "Repair saved working list?"
+
+msgid "Replace the unavailable sort with the default sort"
+msgstr "Replace the unavailable sort with the default sort"
+
 msgid "Replace {{count}} unavailable columns with program defaults"
 msgstr "Replace {{count}} unavailable columns with program defaults"
+
+msgid "Reset filter"
+msgstr "Reset filter"
 
 msgid ""
 "Review a repair that removes only unavailable references, or select another "
@@ -649,6 +489,9 @@ msgstr ""
 "Review a repair that removes only unavailable references, or select another "
 "list. You can also delete the list or review its sharing settings using the "
 "controls above."
+
+msgid "Review repair"
+msgstr "Review repair"
 
 msgid "Row actions"
 msgstr "Row actions"
@@ -656,11 +499,33 @@ msgstr "Row actions"
 msgid "Row has {{count}} data quality issues"
 msgstr "Row has {{count}} data quality issues"
 
+msgid "Save"
+msgstr "Save"
+
+msgid ""
+"Save this mode change as a new working list instead of replacing a "
+"different resource type."
+msgstr ""
+"Save this mode change as a new working list instead of replacing a "
+"different resource type."
+
+msgid "Save as new"
+msgstr "Save as new"
+
+msgid "Saved list"
+msgstr "Saved list"
+
+msgid "Save as new working list"
+msgstr "Save as new working list"
+
 msgid "Scheduled"
 msgstr "Scheduled"
 
 msgid "Scheduled date"
 msgstr "Scheduled date"
+
+msgid "Search users"
+msgstr "Search users"
 
 msgid ""
 "Select another list, delete this list, or review its sharing settings using "
@@ -669,20 +534,70 @@ msgstr ""
 "Select another list, delete this list, or review its sharing settings using "
 "the controls above."
 
+msgid "Selected users"
+msgstr "Selected users"
+
+msgid "Sharing and access"
+msgstr "Sharing and access"
+
+msgid "Show {{column}}"
+msgstr "Show {{column}}"
+
 msgid "Skipped"
 msgstr "Skipped"
 
 msgid "Sort field {{reference}} is no longer available."
 msgstr "Sort field {{reference}} is no longer available."
 
+msgid "Specific dates"
+msgstr "Specific dates"
+
+msgid "Specific users"
+msgstr "Specific users"
+
+msgid "Stage"
+msgstr "Stage"
+
+msgid "Stage filters"
+msgstr "Stage filters"
+
+msgid "Start buffer"
+msgstr "Start buffer"
+
 msgid "Starts with"
 msgstr "Starts with"
+
+msgid "The filter value is invalid. Review the value and try again."
+msgstr "The filter value is invalid. Review the value and try again."
+
+msgid ""
+"The list was created, but the server has not returned it yet. No records "
+"will be queried until it is available."
+msgstr ""
+"The list was created, but the server has not returned it yet. No records "
+"will be queried until it is available."
+
+msgid ""
+"The list references metadata that is no longer available. No records will "
+"be queried while this list is selected."
+msgstr ""
+"The list references metadata that is no longer available. No records will "
+"be queried while this list is selected."
 
 msgid "The repaired view would have no visible columns."
 msgstr "The repaired view would have no visible columns."
 
+msgid "The saved working list could not be reloaded"
+msgstr "The saved working list could not be reloaded"
+
 msgid "The value has an unsupported type"
 msgstr "The value has an unsupported type"
+
+msgid "This month"
+msgstr "This month"
+
+msgid "This saved list cannot be used"
+msgstr "This saved list cannot be used"
 
 msgid ""
 "This view cannot be repaired automatically. Select another list, delete "
@@ -694,17 +609,99 @@ msgstr ""
 msgid "This view belongs to a different program ({{reference}})."
 msgstr "This view belongs to a different program ({{reference}})."
 
+msgid "This view is unavailable"
+msgstr "This view is unavailable"
+
+msgid "This week"
+msgstr "This week"
+
+msgid "This year"
+msgstr "This year"
+
 msgid "TIME requires a 24-hour time, optionally with seconds"
 msgstr "TIME requires a 24-hour time, optionally with seconds"
+
+msgid "To"
+msgstr "To"
+
+msgid ""
+"To reorder a column, press Space to pick it up, use the arrow keys to move "
+"it, and press Space again to drop it."
+msgstr ""
+"To reorder a column, press Space to pick it up, use the arrow keys to move "
+"it, and press Space again to drop it."
+
+msgid "Today"
+msgstr "Today"
+
+msgid "Tracked entity filters"
+msgstr "Tracked entity filters"
+
+msgid "Try adjusting the filters or organisation unit."
+msgstr "Try adjusting the filters or organisation unit."
+
+msgid "Unassigned"
+msgstr "Unassigned"
+
+msgid "Unavailable"
+msgstr "Unavailable"
+
+msgid "Unsaved changes"
+msgstr "Unsaved changes"
+
+msgid "Unsupported DHIS2 version"
+msgstr "Unsupported DHIS2 version"
+
+msgid "Update"
+msgstr "Update"
+
+msgid "Update saved list"
+msgstr "Update saved list"
 
 msgid "URL contains an invalid HTTP(S) URL"
 msgstr "URL contains an invalid HTTP(S) URL"
 
+msgid "Users"
+msgstr "Users"
+
+msgid "Value"
+msgstr "Value"
+
+msgid "Values"
+msgstr "Values"
+
+msgid "Visible"
+msgstr "Visible"
+
 msgid "Visited"
 msgstr "Visited"
 
+msgid "Working list actions"
+msgstr "Working list actions"
+
+msgid "Working list results"
+msgstr "Working list results"
+
+msgid "Working list views"
+msgstr "Working list views"
+
+msgid "Working lists require DHIS2 41 or newer."
+msgstr "Working lists require DHIS2 41 or newer."
+
 msgid "Working lists require a tracker program with registration."
 msgstr "Working lists require a tracker program with registration."
+
+msgid "Yes"
+msgstr "Yes"
+
+msgid "You need update access to repair this saved list."
+msgstr "You need update access to repair this saved list."
+
+msgid "{{filterName}}{{escape}}"
+msgstr "{{filterName}}{{escape}}"
+
+msgid "{{start}} to {{end}} days"
+msgstr "{{start}} to {{end}} days"
 
 msgid "{{value}} is not a known option"
 msgstr "{{value}} is not a known option"
@@ -717,6 +714,9 @@ msgstr "{{valueType}} requires a valid YYYY-MM-DD date"
 
 msgid "{{valueType}} requires an integer"
 msgstr "{{valueType}} requires an integer"
+
+msgid "“{{name}}” will be permanently deleted."
+msgstr "“{{name}}” will be permanently deleted."
 
 msgctxt "NEGATIVE requires a value less than zero"
 msgid "INTEGER"

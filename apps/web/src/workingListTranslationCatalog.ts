@@ -21,8 +21,16 @@ export const workingListTranslationCatalog = () => [
     i18n.t(
         'Choose visible columns and arrange their display order. Active filters are not affected.'
     ),
+    i18n.t(
+        'Choose which columns are visible and drag them into the order you want. Active filters are not affected.'
+    ),
     i18n.t('Clear'),
+    i18n.t('Column'),
     i18n.t('Column {{reference}} is no longer available.'),
+    i18n.t('{{column}} dropped.'),
+    i18n.t('{{column}} moved to position {{position}} of {{total}}.'),
+    i18n.t('{{column}} picked up.'),
+    i18n.t('{{column}} was not moved.'),
     i18n.t('Columns'),
     i18n.t('Completed'),
     i18n.t('Completed enrollments'),
@@ -118,6 +126,8 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Remove filter'),
     i18n.t('Remove {{count}} unavailable columns'),
     i18n.t('Remove {{count}} unavailable filters'),
+    i18n.t('Reorder {{column}}'),
+    i18n.t('Reordering {{column}} cancelled.'),
     i18n.t('Rename'),
     i18n.t('Rename working list'),
     i18n.t('Report date'),
@@ -147,6 +157,7 @@ export const workingListTranslationCatalog = () => [
     ),
     i18n.t('Selected users'),
     i18n.t('Sharing and access'),
+    i18n.t('Show {{column}}'),
     i18n.t('Skipped'),
     i18n.t('Sort field {{reference}} is no longer available.'),
     i18n.t('Specific dates'),
@@ -176,6 +187,9 @@ export const workingListTranslationCatalog = () => [
     i18n.t('This year'),
     i18n.t('TIME requires a 24-hour time, optionally with seconds'),
     i18n.t('To'),
+    i18n.t(
+        'To reorder a column, press Space to pick it up, use the arrow keys to move it, and press Space again to drop it.'
+    ),
     i18n.t('Today'),
     i18n.t('Tracked entity filters'),
     i18n.t('TRUE_ONLY accepts only true'),
@@ -192,6 +206,7 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Users'),
     i18n.t('Value'),
     i18n.t('Values'),
+    i18n.t('Visible'),
     i18n.t('Visited'),
     i18n.t('Working list actions'),
     i18n.t('Working list results'),

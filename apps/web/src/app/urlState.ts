@@ -1,5 +1,5 @@
+import { WorkingListUrlStateSchema } from '@dhis2-blocks/working-list/url-state'
 import { z } from 'zod'
-import { WorkingListUrlStateSchema } from '@/working-list/domain/schemas'
 
 export type AppUrlState = z.infer<typeof WorkingListUrlStateSchema>
 

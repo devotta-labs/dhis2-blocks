@@ -1581,6 +1581,36 @@ export const getSharingType = (resource: SavedListResource) =>
         ? 'trackedEntityInstanceFilter'
         : 'programStageWorkingList'
 
+/**
+ * Capture parity: the unfiltered fallback view is a client-side template
+ * whose id concatenates the program id with `-default`. Because the id is
+ * written to the URL like any saved list, deselecting a list survives a
+ * page reload instead of snapping back to the first available list.
+ */
+export const defaultWorkingListId = (programId: string) =>
+    `${programId}-default`
+
+export const createDefaultWorkingList = ({
+    programId,
+    columns,
+}: {
+    programId: string
+    columns: string[]
+}): Extract<NormalizedSavedWorkingList, { compatibility: 'compatible' }> => ({
+    id: defaultWorkingListId(programId),
+    name: 'default',
+    resource: 'trackedEntityInstanceFilters',
+    sharing: {},
+    compatibility: 'compatible',
+    configuration: {
+        mode: 'trackedEntity',
+        programId,
+        filters: [],
+        columns,
+        sort: { ...DEFAULT_WORKING_LIST_SORT },
+    },
+})
+
 export const createGeneratedDefaultLists = ({
     programId,
     columns,

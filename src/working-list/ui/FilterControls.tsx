@@ -3,6 +3,7 @@ import {
     CalendarInput,
     Checkbox,
     FlyoutMenu,
+    IconCross16,
     MenuItem,
     MultiSelectField,
     MultiSelectOption,
@@ -620,10 +621,9 @@ interface FilterButtonProps {
     capabilities: WorkingListCapabilities
     validationContext?: FilterSerializationContext
     calendarContext: FilterCalendarContext
-    removable: boolean
+    defaultOpen?: boolean
     onApply: (filter: AppliedFilter) => void
     onReset: () => void
-    onRemove: () => void
 }
 
 export const FilterButton = ({
@@ -633,15 +633,14 @@ export const FilterButton = ({
     capabilities,
     validationContext,
     calendarContext,
-    removable,
+    defaultOpen,
     onApply,
     onReset,
-    onRemove,
 }: FilterButtonProps) => {
     const translate = useWorkingListText()
     const [buttonElement, setButtonElement] =
         useState<HTMLButtonElement | null>(null)
-    const [open, setOpen] = useState(false)
+    const [open, setOpen] = useState(defaultOpen ?? false)
     const summary = summaryForFilter(filter, translate)
 
     const close = () => {
@@ -661,8 +660,15 @@ export const FilterButton = ({
                 aria-haspopup="dialog"
                 onClick={() => setOpen((value) => !value)}
             >
-                <span>{fieldDisplayName(field, translate)}</span>
-                {summary && <strong>: {summary}</strong>}
+                <span>
+                    {summary
+                        ? translate('{{filterName}}{{escape}}', {
+                              filterName: fieldDisplayName(field, translate),
+                              escape: ':',
+                          })
+                        : fieldDisplayName(field, translate)}
+                </span>
+                {summary && <strong>{summary}</strong>}
                 <span aria-hidden="true">▾</span>
             </button>
             {open && buttonElement && (
@@ -682,17 +688,12 @@ export const FilterButton = ({
                             capabilities={capabilities}
                             validationContext={validationContext}
                             calendarContext={calendarContext}
-                            removable={removable}
                             onApply={(next) => {
                                 onApply(next)
                                 close()
                             }}
                             onReset={() => {
                                 onReset()
-                                close()
-                            }}
-                            onRemove={() => {
-                                onRemove()
                                 close()
                             }}
                         />
@@ -714,10 +715,8 @@ const FilterEditor = ({
     capabilities,
     validationContext,
     calendarContext,
-    removable,
     onApply,
     onReset,
-    onRemove,
 }: FilterEditorProps) => {
     const translate = useWorkingListText()
     const i18n = { t: translate }
@@ -835,17 +834,6 @@ const FilterEditor = ({
                 >
                     {i18n.t('Reset filter')}
                 </Button>
-                {removable && (
-                    <Button
-                        destructive
-                        small
-                        type="button"
-                        dataTest={`filter-remove-${field.id}`}
-                        onClick={onRemove}
-                    >
-                        {i18n.t('Remove filter')}
-                    </Button>
-                )}
             </div>
         </form>
     )
@@ -1310,6 +1298,7 @@ const CalendarRangeFields = ({
     calendarContext: FilterCalendarContext
     onChange: (start: string | undefined, end: string | undefined) => void
 }) => {
+    const translate = useWorkingListText()
     const calendar = toMultiCalendarIdentifier(calendarContext.calendar)
     const [startValidation, setStartValidation] =
         useState<CalendarValidationFeedback>()
@@ -1336,52 +1325,87 @@ const CalendarRangeFields = ({
         )
     }
 
+    // CalendarInput's own `clearable` renders a boxed "Clear" text button;
+    // we render a compact icon inside the input instead. It clears the
+    // committed selection along with the visible text (the input syncs to
+    // the `date` prop).
+    const clearButton = (position: 'start' | 'end') => {
+        const validation =
+            position === 'start' ? startValidation : endValidation
+        return (
+            <button
+                type="button"
+                className={
+                    validation?.error || validation?.warning
+                        ? 'calendar-field__clear calendar-field__clear--status-icon'
+                        : 'calendar-field__clear'
+                }
+                data-test={`date-range-${position}-clear`}
+                aria-label={translate('Clear')}
+                title={translate('Clear')}
+                onClick={() =>
+                    handleSelection(
+                        null,
+                        position === 'start' ? end : start,
+                        position
+                    )
+                }
+            >
+                <IconCross16 />
+            </button>
+        )
+    }
+
     return (
         <div className="range-editor calendar-range-editor">
-            <StrictCalendarInput
-                dense
-                clearable
-                strictValidation
-                dataTest="date-range-start"
-                label={startLabel}
-                calendar={calendar}
-                locale={calendarContext.locale}
-                format={calendarContext.dateFormat}
-                error={startValidation?.error}
-                warning={startValidation?.warning}
-                validationText={startValidation?.validationText}
-                date={canonicalDateToCalendarInput(
-                    start,
-                    calendarContext.dateFormat
-                )}
-                inputWidth="100%"
-                width="min(320px, calc(100vw - 64px))"
-                onDateSelect={(payload) =>
-                    handleSelection(payload, end, 'start')
-                }
-            />
-            <StrictCalendarInput
-                dense
-                clearable
-                strictValidation
-                dataTest="date-range-end"
-                label={endLabel}
-                calendar={calendar}
-                locale={calendarContext.locale}
-                format={calendarContext.dateFormat}
-                error={endValidation?.error}
-                warning={endValidation?.warning}
-                validationText={endValidation?.validationText}
-                date={canonicalDateToCalendarInput(
-                    end,
-                    calendarContext.dateFormat
-                )}
-                inputWidth="100%"
-                width="min(320px, calc(100vw - 64px))"
-                onDateSelect={(payload) =>
-                    handleSelection(payload, start, 'end')
-                }
-            />
+            <div className="calendar-field">
+                <StrictCalendarInput
+                    dense
+                    strictValidation
+                    dataTest="date-range-start"
+                    label={startLabel}
+                    calendar={calendar}
+                    locale={calendarContext.locale}
+                    format={calendarContext.dateFormat}
+                    error={startValidation?.error}
+                    warning={startValidation?.warning}
+                    validationText={startValidation?.validationText}
+                    date={canonicalDateToCalendarInput(
+                        start,
+                        calendarContext.dateFormat
+                    )}
+                    inputWidth="100%"
+                    width="min(320px, calc(100vw - 64px))"
+                    onDateSelect={(payload) =>
+                        handleSelection(payload, end, 'start')
+                    }
+                />
+                {start && clearButton('start')}
+            </div>
+            <div className="calendar-field">
+                <StrictCalendarInput
+                    dense
+                    strictValidation
+                    dataTest="date-range-end"
+                    label={endLabel}
+                    calendar={calendar}
+                    locale={calendarContext.locale}
+                    format={calendarContext.dateFormat}
+                    error={endValidation?.error}
+                    warning={endValidation?.warning}
+                    validationText={endValidation?.validationText}
+                    date={canonicalDateToCalendarInput(
+                        end,
+                        calendarContext.dateFormat
+                    )}
+                    inputWidth="100%"
+                    width="min(320px, calc(100vw - 64px))"
+                    onDateSelect={(payload) =>
+                        handleSelection(payload, start, 'end')
+                    }
+                />
+                {end && clearButton('end')}
+            </div>
         </div>
     )
 }
@@ -1389,6 +1413,7 @@ const CalendarRangeFields = ({
 interface ProgramStageControlProps {
     program: TrackerProgram
     selectedStageId?: string
+    defaultOpen?: boolean
     onChange: (stageId?: string) => void
     onRemove: () => void
 }
@@ -1396,6 +1421,7 @@ interface ProgramStageControlProps {
 export const ProgramStageControl = ({
     program,
     selectedStageId,
+    defaultOpen,
     onChange,
     onRemove,
 }: ProgramStageControlProps) => {
@@ -1403,7 +1429,7 @@ export const ProgramStageControl = ({
     const [buttonElement, setButtonElement] =
         useState<HTMLButtonElement | null>(null)
     const editorRef = useRef<HTMLFormElement>(null)
-    const [open, setOpen] = useState(false)
+    const [open, setOpen] = useState(defaultOpen ?? false)
     const [draft, setDraft] = useState(selectedStageId ?? '')
     const stages = useMemo(
         () =>
@@ -1449,8 +1475,15 @@ export const ProgramStageControl = ({
                     setOpen((value) => !value)
                 }}
             >
-                <span>{i18n.t('Program stage')}</span>
-                {selectedName && <strong>: {selectedName}</strong>}
+                <span>
+                    {selectedName
+                        ? i18n.t('{{filterName}}{{escape}}', {
+                              filterName: i18n.t('Program stage'),
+                              escape: ':',
+                          })
+                        : i18n.t('Program stage')}
+                </span>
+                {selectedName && <strong>{selectedName}</strong>}
                 <span aria-hidden="true">▾</span>
             </button>
             {open && buttonElement && (

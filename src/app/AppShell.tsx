@@ -10,7 +10,8 @@ import {
     Switch,
 } from '@dhis2/ui'
 import { useQuery } from '@tanstack/react-query'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useBlocker, useSearchParams } from 'react-router-dom'
 import { z, ZodError } from 'zod'
 import { ContextSelectorBar } from './ContextSelectorBar'
 import { getGuardedOrganisationUnitState } from './contextTransitions'
@@ -26,8 +27,8 @@ import {
 import {
     isGuardedAppUrlTransition,
     parseAppUrlState,
-    replaceAppUrlState,
-    writeAppUrlState,
+    parseAppUrlStateFromHash,
+    serializeAppUrlState,
     type AppUrlState,
 } from './urlState'
 import i18n from '@/locales'
@@ -74,46 +75,26 @@ const AppRuntimeConfigSchema = z
 const retryOperationalError = (failureCount: number, error: Error) =>
     !(error instanceof ZodError) && failureCount < 2
 
-const useBrowserUrlState = (
-    acceptExternalTransition: (
-        current: AppUrlState,
-        next: AppUrlState
-    ) => boolean
-) => {
-    const [state, setState] = useState<AppUrlState>(() =>
-        parseAppUrlState(
-            typeof window === 'undefined' ? undefined : window.location
-        )
+const useAppUrlState = () => {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const state = useMemo(() => parseAppUrlState(searchParams), [searchParams])
+    const update = useCallback(
+        (next: AppUrlState | ((current: AppUrlState) => AppUrlState)) =>
+            setSearchParams((committed) =>
+                serializeAppUrlState(
+                    typeof next === 'function'
+                        ? next(
+                              typeof window === 'undefined'
+                                  ? parseAppUrlState(committed)
+                                  : parseAppUrlStateFromHash(
+                                        window.location.hash
+                                    )
+                          )
+                        : next
+                )
+            ),
+        [setSearchParams]
     )
-    const stateRef = useRef(state)
-    const acceptExternalTransitionRef = useRef(acceptExternalTransition)
-    acceptExternalTransitionRef.current = acceptExternalTransition
-
-    useEffect(() => {
-        const updateFromBrowser = () => {
-            const next = parseAppUrlState(window.location)
-            const current = stateRef.current
-            if (!acceptExternalTransitionRef.current(current, next)) {
-                replaceAppUrlState(current)
-                return
-            }
-            stateRef.current = next
-            setState(next)
-        }
-        window.addEventListener('hashchange', updateFromBrowser)
-        window.addEventListener('popstate', updateFromBrowser)
-        return () => {
-            window.removeEventListener('hashchange', updateFromBrowser)
-            window.removeEventListener('popstate', updateFromBrowser)
-        }
-    }, [])
-
-    const update = useCallback((next: AppUrlState) => {
-        stateRef.current = next
-        setState(next)
-        writeAppUrlState(next)
-    }, [])
-
     return [state, update] as const
 }
 
@@ -142,17 +123,41 @@ export const AppShell = () => {
             i18n.t('Discard the unsaved changes to this working list?')
         )
     }, [dirty])
-    const [urlState, setUrlState] = useBrowserUrlState((current, next) => {
-        if (!isGuardedAppUrlTransition(current, next)) {
-            return true
+    const [urlState, setUrlState] = useAppUrlState()
+
+    // Guard browser back/forward (and manual hash edits, which the router
+    // also receives as POP) against discarding unsaved working-list changes.
+    // In-app navigations confirm before writing the URL, so PUSH/REPLACE
+    // must pass through unblocked to avoid a double confirmation.
+    const externalTransitionBlocker = useBlocker(
+        ({ currentLocation, nextLocation, historyAction }) => {
+            if (historyAction !== 'POP' || !dirty) {
+                return false
+            }
+            try {
+                return isGuardedAppUrlTransition(
+                    parseAppUrlState(
+                        new URLSearchParams(currentLocation.search)
+                    ),
+                    parseAppUrlState(new URLSearchParams(nextLocation.search))
+                )
+            } catch {
+                return false
+            }
         }
-        if (!confirmDiscard()) {
-            return false
+    )
+    useEffect(() => {
+        if (externalTransitionBlocker.state !== 'blocked') {
+            return
         }
-        setDirty(false)
-        setOpenedRecord(undefined)
-        return true
-    })
+        if (confirmDiscard()) {
+            setDirty(false)
+            setOpenedRecord(undefined)
+            externalTransitionBlocker.proceed()
+        } else {
+            externalTransitionBlocker.reset()
+        }
+    }, [confirmDiscard, externalTransitionBlocker])
 
     const programsQuery = useQuery(
         trackerProgramsQueryOptions(client, runtimeConfig.apiVersion)
@@ -540,15 +545,19 @@ export const AppShell = () => {
                             selectedTemplateId={urlState.selectedTemplateId}
                             onDirtyChange={setDirty}
                             onPageChange={(page, pageSize) =>
-                                setUrlState({ ...urlState, page, pageSize })
+                                setUrlState((current) => ({
+                                    ...current,
+                                    page,
+                                    pageSize,
+                                }))
                             }
                             onRowOpen={setOpenedRecord}
                             onSelectedTemplateChange={(selectedTemplateId) =>
-                                setUrlState({
-                                    ...urlState,
+                                setUrlState((current) => ({
+                                    ...current,
                                     selectedTemplateId,
                                     page: 1,
-                                })
+                                }))
                             }
                             requestDiscardConfirmation={confirmDiscard}
                         />

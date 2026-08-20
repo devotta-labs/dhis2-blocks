@@ -21,6 +21,7 @@ export const workingListTranslationCatalog = () => [
     i18n.t(
         'Choose visible columns and arrange their display order. Active filters are not affected.'
     ),
+    i18n.t('Clear'),
     i18n.t('Column {{reference}} is no longer available.'),
     i18n.t('Columns'),
     i18n.t('Completed'),
@@ -37,7 +38,7 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Could not save the working list'),
     i18n.t('Could not update sharing'),
     i18n.t('Current user'),
-    i18n.t('Data quality issue. {{message}}'),
+    i18n.t('Data quality'),
     i18n.t('Date range type'),
     i18n.t('DATETIME requires a valid ISO date and time'),
     i18n.t('Day offsets'),
@@ -199,6 +200,7 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Working lists require a tracker program with registration.'),
     i18n.t('Yes'),
     i18n.t('You need update access to repair this saved list.'),
+    i18n.t('{{filterName}}{{escape}}'),
     i18n.t('{{start}} to {{end}} days'),
     i18n.t('{{value}} is not a known option'),
     i18n.t('{{valueType}} requires a DHIS2 UID'),

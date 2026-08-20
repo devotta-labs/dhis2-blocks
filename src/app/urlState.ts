@@ -13,20 +13,7 @@ const ALLOWED_KEYS = [
 
 const SingleUrlParameterSchema = z.array(z.string()).length(1)
 
-const getParameters = (location: Pick<Location, 'hash' | 'search'>) => {
-    const hashQuery = location.hash.includes('?')
-        ? location.hash.slice(location.hash.indexOf('?') + 1)
-        : ''
-    return new URLSearchParams(hashQuery || location.search)
-}
-
-export const parseAppUrlState = (
-    location?: Pick<Location, 'hash' | 'search'>
-): AppUrlState => {
-    if (!location) {
-        return {}
-    }
-    const parameters = getParameters(location)
+export const parseAppUrlState = (parameters: URLSearchParams): AppUrlState => {
     const candidate = Object.fromEntries(
         ALLOWED_KEYS.flatMap((key) => {
             if (!parameters.has(key)) {
@@ -41,6 +28,15 @@ export const parseAppUrlState = (
     return WorkingListUrlStateSchema.parse(candidate)
 }
 
+/* react-router applies navigations to window.location synchronously but
+   commits the matching React state in a transition. Incremental updates
+   must merge against the live URL, not the possibly stale committed one,
+   or two quick writes (select template, then reset page) lose the first. */
+export const parseAppUrlStateFromHash = (hash: string): AppUrlState => {
+    const query = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : ''
+    return parseAppUrlState(new URLSearchParams(query))
+}
+
 export const serializeAppUrlState = (state: AppUrlState) => {
     const validated = WorkingListUrlStateSchema.parse(state)
     const parameters = new URLSearchParams()
@@ -52,25 +48,6 @@ export const serializeAppUrlState = (state: AppUrlState) => {
     }
     return parameters.toString()
 }
-
-const updateBrowserUrl = (
-    state: AppUrlState,
-    method: 'pushState' | 'replaceState'
-) => {
-    if (typeof window === 'undefined') {
-        return
-    }
-    const query = serializeAppUrlState(state)
-    const base = window.location.pathname
-    const nextUrl = `${base}#/${query ? `?${query}` : ''}`
-    window.history[method](null, '', nextUrl)
-}
-
-export const writeAppUrlState = (state: AppUrlState) =>
-    updateBrowserUrl(state, 'pushState')
-
-export const replaceAppUrlState = (state: AppUrlState) =>
-    updateBrowserUrl(state, 'replaceState')
 
 export const isGuardedAppUrlTransition = (
     current: AppUrlState,

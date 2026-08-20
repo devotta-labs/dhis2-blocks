@@ -50,6 +50,13 @@ const columnHelper = createColumnHelper<
 
 const EMPTY_ROWS: WorkingListDisplayRow[] = []
 
+/**
+ * Trailing display column holding the per-row data-quality marker. The `__`
+ * prefix keeps it clear of DHIS2 field ids, and it is filtered out before
+ * column configuration changes are reported.
+ */
+const DATA_QUALITY_COLUMN_ID = '__dataQuality'
+
 const isInteractiveTarget = (target: EventTarget | null) =>
     target instanceof Element &&
     Boolean(
@@ -76,39 +83,6 @@ const invalidCellText = (raw: unknown) => {
     return '-'
 }
 
-const InvalidCellValue = ({
-    cell,
-    highlighted,
-}: {
-    cell: Extract<WorkingListCellValue, { valid: false }>
-    highlighted: boolean
-}) => {
-    const t = useWorkingListText()
-    const text = invalidCellText(cell.raw)
-    if (!highlighted) {
-        return <>{text}</>
-    }
-    return (
-        <span
-            className="working-list-cell-invalid"
-            data-testid="invalid-cell-value"
-        >
-            <Tooltip content={cell.message}>
-                <span
-                    className="working-list-warning-icon"
-                    role="img"
-                    aria-label={t('Data quality issue. {{message}}', {
-                        message: cell.message,
-                    })}
-                >
-                    <IconWarningFilled16 />
-                </span>
-            </Tooltip>
-            {text}
-        </span>
-    )
-}
-
 const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
     const t = useWorkingListText()
     return (
@@ -124,7 +98,7 @@ const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
             }
         >
             <span
-                className="working-list-warning-icon working-list-row-warning"
+                className="working-list-warning-icon"
                 role="img"
                 data-testid={`row-issues-${row.id}`}
                 aria-label={t('Row has {{count}} data quality issues', {
@@ -231,44 +205,60 @@ export const WorkingListTable = ({
 }: WorkingListTableProps) => {
     const translate = useWorkingListText()
     const i18n = useMemo(() => ({ t: translate }), [translate])
-    const columns = useMemo(
-        () =>
-            columnHelper.columns(
-                allFields.map((field) =>
-                    columnHelper.accessor((row) => row.values[field.id], {
-                        id: field.id,
-                        header: fieldDisplayName(field, translate),
-                        enableSorting: true,
-                        cell: (context) => {
-                            const cellValue = context.getValue() as
-                                | WorkingListCellValue
-                                | undefined
-                            if (cellValue && !cellValue.valid) {
-                                return (
-                                    <InvalidCellValue
-                                        cell={cellValue}
-                                        highlighted={
-                                            dataQualityMode === 'highlighted'
-                                        }
-                                    />
-                                )
-                            }
-                            return (
-                                <CellValue
-                                    display={getCellDisplayValue(
-                                        cellValue?.value,
-                                        localizedField(field, translate),
-                                        formattingContext
-                                    )}
-                                />
-                            )
-                        },
-                    })
-                )
-            ),
-        [allFields, dataQualityMode, formattingContext, translate]
-    )
+    const showIssuesColumn = dataQualityMode === 'highlighted'
+    const columns = useMemo(() => {
+        const fieldColumns = allFields.map((field) =>
+            columnHelper.accessor((row) => row.values[field.id], {
+                id: field.id,
+                header: fieldDisplayName(field, translate),
+                enableSorting: true,
+                cell: (context) => {
+                    const cellValue = context.getValue() as
+                        | WorkingListCellValue
+                        | undefined
+                    if (cellValue && !cellValue.valid) {
+                        return <>{invalidCellText(cellValue.raw)}</>
+                    }
+                    return (
+                        <CellValue
+                            display={getCellDisplayValue(
+                                cellValue?.value,
+                                localizedField(field, translate),
+                                formattingContext
+                            )}
+                        />
+                    )
+                },
+            })
+        )
+        if (!showIssuesColumn) {
+            return columnHelper.columns(fieldColumns)
+        }
+        return columnHelper.columns([
+            ...fieldColumns,
+            columnHelper.display({
+                id: DATA_QUALITY_COLUMN_ID,
+                header: () => (
+                    <span className="visually-hidden">
+                        {translate('Data quality')}
+                    </span>
+                ),
+                enableSorting: false,
+                cell: (context) =>
+                    context.row.original.issues.length > 0 ? (
+                        <RowIssuesMarker row={context.row.original} />
+                    ) : null,
+            }),
+        ])
+    }, [allFields, formattingContext, showIssuesColumn, translate])
 
+    const columnOrder = useMemo(
+        () =>
+            showIssuesColumn
+                ? [...visibleColumnIds, DATA_QUALITY_COLUMN_ID]
+                : visibleColumnIds,
+        [showIssuesColumn, visibleColumnIds]
+    )
     const columnVisibility = useMemo<ColumnVisibilityState>(
         () =>
             Object.fromEntries(
@@ -300,7 +290,7 @@ export const WorkingListTable = ({
             enableMultiSort: false,
             enableSortingRemoval: false,
             state: {
-                columnOrder: visibleColumnIds,
+                columnOrder,
                 columnVisibility,
                 pagination,
                 sorting,
@@ -308,10 +298,14 @@ export const WorkingListTable = ({
             onColumnOrderChange: (updater) => {
                 const next =
                     typeof updater === 'function'
-                        ? updater(visibleColumnIds)
+                        ? updater(columnOrder)
                         : updater
                 onColumnConfigurationChange(
-                    next.filter((id) => columnVisibility[id] !== false)
+                    next.filter(
+                        (id) =>
+                            id !== DATA_QUALITY_COLUMN_ID &&
+                            columnVisibility[id] !== false
+                    )
                 )
             },
             onColumnVisibilityChange: (updater) => {
@@ -365,6 +359,22 @@ export const WorkingListTable = ({
                         {table.getHeaderGroups().map((group) => (
                             <tr key={group.id}>
                                 {group.headers.map((header) => {
+                                    if (
+                                        header.column.id ===
+                                        DATA_QUALITY_COLUMN_ID
+                                    ) {
+                                        return (
+                                            <th
+                                                key={header.id}
+                                                scope="col"
+                                                className="working-list-issues-cell"
+                                            >
+                                                <table.FlexRender
+                                                    header={header}
+                                                />
+                                            </th>
+                                        )
+                                    }
                                     const sorted = header.column.getIsSorted()
                                     return (
                                         <th
@@ -416,10 +426,12 @@ export const WorkingListTable = ({
                             table.getRowModel().rows.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={Math.max(
-                                            visibleColumnIds.length,
-                                            1
-                                        )}
+                                        colSpan={
+                                            Math.max(
+                                                visibleColumnIds.length,
+                                                1
+                                            ) + (showIssuesColumn ? 1 : 0)
+                                        }
                                         className="empty-results"
                                     >
                                         <strong>
@@ -457,7 +469,15 @@ export const WorkingListTable = ({
                                     {row
                                         .getVisibleCells()
                                         .map((cell, index) => (
-                                            <td key={cell.id}>
+                                            <td
+                                                key={cell.id}
+                                                className={
+                                                    cell.column.id ===
+                                                    DATA_QUALITY_COLUMN_ID
+                                                        ? 'working-list-issues-cell'
+                                                        : undefined
+                                                }
+                                            >
                                                 {index === 0 && (
                                                     <button
                                                         type="button"
@@ -479,12 +499,6 @@ export const WorkingListTable = ({
                                                         )}
                                                     </button>
                                                 )}
-                                                {index === 0 &&
-                                                    highlightIssues && (
-                                                        <RowIssuesMarker
-                                                            row={row.original}
-                                                        />
-                                                    )}
                                                 <table.FlexRender cell={cell} />
                                             </td>
                                         ))}

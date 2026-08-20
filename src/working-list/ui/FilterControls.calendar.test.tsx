@@ -154,10 +154,8 @@ describe('calendar filter controls', () => {
                                 locale: 'am-ET',
                                 timeZone: 'Africa/Addis_Ababa',
                             }}
-                            removable
                             onApply={onApply}
                             onReset={jest.fn()}
-                            onRemove={jest.fn()}
                         />
                     </WorkingListTextProvider>
                 )
@@ -175,6 +173,24 @@ describe('calendar filter controls', () => {
             expect(startInput?.dataset.format).toBe('DD-MM-YYYY')
             expect(startInput?.dataset.date).toBe('02-01-2017')
             expect(startInput?.dataset.timeZone).toBeUndefined()
+
+            const startClear = document.querySelector<HTMLButtonElement>(
+                '[data-test="date-range-start-clear"]'
+            )
+            expect(startClear?.getAttribute('aria-label')).toBe('Clear')
+            expect(
+                document.querySelector('[data-test="date-range-end-clear"]')
+            ).toBeNull()
+            act(() => startClear?.click())
+            expect(
+                document.querySelector<HTMLButtonElement>(
+                    '[data-test="date-range-start"]'
+                )?.dataset.date
+            ).toBeUndefined()
+            expect(
+                document.querySelector('[data-test="date-range-start-clear"]')
+            ).toBeNull()
+
             expect(
                 document
                     .querySelector('[data-testid="mock-popover"]')

@@ -25,6 +25,7 @@ import {
     type ProgramFieldCatalog,
 } from '../api/metadata'
 import {
+    createDefaultWorkingList,
     createGeneratedDefaultLists,
     createSavedWorkingList,
     deleteSavedWorkingList,
@@ -514,28 +515,28 @@ const WorkingListInstance = ({
             }),
         [metadata, program.id]
     )
-    const initialList = generatedLists[0]
-    if (!initialList || initialList.compatibility !== 'compatible') {
+    // Capture parity: the unfiltered default view is a synthetic template
+    // with the concatenated id `<programId>-default`. It is never listed as
+    // a pill and is selected whenever no saved list is.
+    const defaultList = useMemo(
+        () =>
+            createDefaultWorkingList({
+                programId: program.id,
+                columns: metadata.defaultTrackedEntityColumns,
+            }),
+        [metadata.defaultTrackedEntityColumns, program.id]
+    )
+    if (!defaultList.configuration.columns.length) {
         throw new Error(
             `Program ${program.id} has no usable default working list`
         )
     }
-    const defaultConfiguration = useMemo<WorkingListConfiguration>(
-        () => ({
-            mode: 'trackedEntity',
-            programId: program.id,
-            filters: [],
-            columns: metadata.defaultTrackedEntityColumns,
-            sort: { ...DEFAULT_WORKING_LIST_SORT },
-        }),
-        [metadata.defaultTrackedEntityColumns, program.id]
-    )
 
     const store = useMemo(
         () =>
             createWorkingListStore(
-                initialList.configuration,
-                listIdentity(initialList, true)
+                defaultList.configuration,
+                listIdentity(defaultList, true)
             ),
         // The child is keyed by program ID. Do not recreate the store when
         // capability objects are recomputed for an organisation-unit change.
@@ -545,27 +546,34 @@ const WorkingListInstance = ({
     const dirty = useStore(store, (state) => state.dirty)
     const selectedListIdentity = useStore(store, (state) => state.selectedList)
     const [view, setView] = useState<WorkingListViewConfiguration>({
-        columns: initialList.configuration.columns,
-        sort: initialList.configuration.sort,
+        columns: defaultList.configuration.columns,
+        sort: defaultList.configuration.sort,
     })
     const [visibleTrackerFilterIds, setVisibleTrackerFilterIds] = useState(
         () =>
-            visibleFiltersForConfiguration(initialList.configuration, fields)
+            visibleFiltersForConfiguration(defaultList.configuration, fields)
                 .tracker
     )
     const [visibleEventFilterIds, setVisibleEventFilterIds] = useState(
         () =>
-            visibleFiltersForConfiguration(initialList.configuration, fields)
+            visibleFiltersForConfiguration(defaultList.configuration, fields)
                 .event
     )
     const [stageFilterVisible, setStageFilterVisible] = useState(false)
+    // Opens a filter's editor right after it is added from "More filters".
+    // Cleared on the next commit so remounts don't reopen it.
+    const [autoOpenFilterId, setAutoOpenFilterId] = useState<string>()
+    useEffect(() => {
+        if (autoOpenFilterId) {
+            setAutoOpenFilterId(undefined)
+        }
+    }, [autoOpenFilterId])
     const [columnSettingsOpen, setColumnSettingsOpen] = useState(false)
     const [repairDialogOpen, setRepairDialogOpen] = useState(false)
     const [pendingCreatedTemplateId, setPendingCreatedTemplateId] =
         useState<string>()
     const lastAppliedTemplate = useRef<string | undefined>(undefined)
     const [appliedTemplateId, setAppliedTemplateId] = useState<string>()
-    const [deselected, setDeselected] = useState(false)
 
     const configuration = useMemo(
         () => composeWorkingListConfiguration(criteria, view),
@@ -615,16 +623,11 @@ const WorkingListInstance = ({
         applyConfigurationView(list.configuration)
         lastAppliedTemplate.current = list.id
         setAppliedTemplateId(list.id)
-        setDeselected(false)
     }
 
     const deselectList = () => {
-        store.getState().clearSelection(defaultConfiguration)
-        applyConfigurationView(defaultConfiguration)
-        lastAppliedTemplate.current = undefined
-        setAppliedTemplateId(undefined)
-        setDeselected(true)
-        onSelectedTemplateChange(undefined)
+        applyList(defaultList, true)
+        onSelectedTemplateChange(defaultList.id)
     }
 
     useEffect(() => {
@@ -632,50 +635,42 @@ const WorkingListInstance = ({
             return
         }
         const requestedId = selectedTemplateId
-        if (deselected && !requestedId) {
-            // The user explicitly deselected the active list; stay on the
-            // default view instead of re-applying the first list.
-            return
-        }
         if (requestedId && lastAppliedTemplate.current === requestedId) {
             return
         }
-        const requested = requestedId
-            ? displayedLists.find((list) => list.id === requestedId)
-            : undefined
-        if (requestedId && !requested) {
+        // Capture parity: a missing template selects the unfiltered default
+        // view and writes its id to the URL, so a reload keeps the user on
+        // the default view instead of the first saved list.
+        if (!requestedId) {
+            applyList(defaultList, true)
+            onSelectedTemplateChange(defaultList.id)
+            return
+        }
+        if (requestedId === defaultList.id) {
+            applyList(defaultList, true)
+            return
+        }
+        const requested = displayedLists.find((list) => list.id === requestedId)
+        if (!requested) {
             if (savedListsQuery.isFetching) {
                 return
             }
             if (requestedId === pendingCreatedTemplateId) {
                 return
             }
-            const fallback = displayedLists[0]
-            if (fallback) {
-                applyList(fallback, usingGeneratedLists)
-                onSelectedTemplateChange(fallback.id)
-            }
+            applyList(defaultList, true)
+            onSelectedTemplateChange(defaultList.id)
             return
         }
-        const target = requested ?? displayedLists[0]
-        if (!target) {
-            return
-        }
-        if (target.compatibility !== 'compatible') {
-            lastAppliedTemplate.current = target.id
+        if (requested.compatibility !== 'compatible') {
+            lastAppliedTemplate.current = requested.id
             setAppliedTemplateId(undefined)
-            if (!requestedId) {
-                onSelectedTemplateChange(target.id)
-            }
             return
         }
-        if (target.id === pendingCreatedTemplateId) {
+        if (requested.id === pendingCreatedTemplateId) {
             setPendingCreatedTemplateId(undefined)
         }
-        applyList(target, usingGeneratedLists)
-        if (!requestedId) {
-            onSelectedTemplateChange(target.id)
-        }
+        applyList(requested, usingGeneratedLists)
         // Selection changes are intentionally the only trigger. Applying a
         // refetched list while the user edits would discard local work.
     }, [
@@ -683,14 +678,11 @@ const WorkingListInstance = ({
         savedListsQuery.isPending,
         pendingCreatedTemplateId,
         selectedTemplateId,
-        deselected,
     ])
 
     useEffect(() => onDirtyChange?.(dirty), [dirty, onDirtyChange])
 
-    const requestedTemplateId = deselected
-        ? undefined
-        : (selectedTemplateId ?? displayedLists[0]?.id)
+    const requestedTemplateId = selectedTemplateId ?? defaultList.id
     const selectionReady =
         savedListsQuery.isSuccess && appliedTemplateId === requestedTemplateId
     const pageQuery = useQuery({
@@ -1161,9 +1153,8 @@ const WorkingListInstance = ({
                 onSelect={(list) => {
                     setPendingCreatedTemplateId(undefined)
                     const same =
-                        !deselected &&
                         list.id ===
-                            (selectedTemplateId ?? selectedListIdentity?.id)
+                        (selectedTemplateId ?? selectedListIdentity?.id)
                     if (dirty && requestDiscardConfirmation() === false) {
                         return
                     }
@@ -1176,7 +1167,6 @@ const WorkingListInstance = ({
                     if (list.compatibility !== 'compatible') {
                         lastAppliedTemplate.current = list.id
                         setAppliedTemplateId(undefined)
-                        setDeselected(false)
                         onSelectedTemplateChange(list.id)
                         return
                     }
@@ -1303,68 +1293,62 @@ const WorkingListInstance = ({
                             {i18n.t('Tracked entity filters')}
                         </h2>
                         <div className="filter-row">
-                            {visibleTrackerFilterIds.map((fieldId) => {
-                                const field = metadata.fields.get(fieldId)
-                                if (!field || !field.filterable) {
-                                    return null
-                                }
-                                const defaultIds = defaultVisibleFilterIds(
-                                    fields,
-                                    'trackedEntity'
-                                )
-                                return (
-                                    <FilterButton
-                                        key={field.id}
-                                        client={client}
-                                        field={field}
-                                        filter={criteria.filters.find(
-                                            (filter) =>
-                                                filter.field.id === field.id
-                                        )}
-                                        capabilities={capabilities}
-                                        validationContext={
-                                            valueTransformers.serializationContext
-                                        }
-                                        calendarContext={filterCalendarContext}
-                                        removable={
-                                            !defaultIds.includes(field.id)
-                                        }
-                                        onApply={applyFilter}
-                                        onReset={() => resetFilter(field.id)}
-                                        onRemove={() => {
-                                            resetFilter(field.id)
-                                            setVisibleTrackerFilterIds((ids) =>
-                                                ids.filter(
-                                                    (id) => id !== field.id
-                                                )
-                                            )
-                                        }}
-                                    />
-                                )
-                            })}
-                            <MoreFilters
-                                scope="tracked-entity"
-                                fields={trackerFilterFields}
-                                visibleFilterIds={[
-                                    ...visibleTrackerFilterIds,
-                                    ...(stageFilterVisible
-                                        ? ['programStage']
-                                        : []),
-                                ]}
-                                includeProgramStage={program.programStages.some(
-                                    (stage) => stage.access?.read !== false
-                                )}
-                                onAdd={(fieldId) => {
-                                    if (fieldId === 'programStage') {
-                                        setStageFilterVisible(true)
-                                    } else {
-                                        setVisibleTrackerFilterIds((ids) => [
-                                            ...ids,
-                                            fieldId,
-                                        ])
+                            <div className="filter-row__filters">
+                                {visibleTrackerFilterIds.map((fieldId) => {
+                                    const field = metadata.fields.get(fieldId)
+                                    if (!field || !field.filterable) {
+                                        return null
                                     }
-                                }}
-                            />
+                                    return (
+                                        <FilterButton
+                                            key={field.id}
+                                            client={client}
+                                            field={field}
+                                            filter={criteria.filters.find(
+                                                (filter) =>
+                                                    filter.field.id === field.id
+                                            )}
+                                            capabilities={capabilities}
+                                            validationContext={
+                                                valueTransformers.serializationContext
+                                            }
+                                            calendarContext={
+                                                filterCalendarContext
+                                            }
+                                            defaultOpen={
+                                                autoOpenFilterId === field.id
+                                            }
+                                            onApply={applyFilter}
+                                            onReset={() =>
+                                                resetFilter(field.id)
+                                            }
+                                        />
+                                    )
+                                })}
+                                <MoreFilters
+                                    scope="tracked-entity"
+                                    fields={trackerFilterFields}
+                                    visibleFilterIds={[
+                                        ...visibleTrackerFilterIds,
+                                        ...(stageFilterVisible
+                                            ? ['programStage']
+                                            : []),
+                                    ]}
+                                    includeProgramStage={program.programStages.some(
+                                        (stage) => stage.access?.read !== false
+                                    )}
+                                    onAdd={(fieldId) => {
+                                        if (fieldId === 'programStage') {
+                                            setStageFilterVisible(true)
+                                        } else {
+                                            setVisibleTrackerFilterIds(
+                                                (ids) => [...ids, fieldId]
+                                            )
+                                        }
+                                        setAutoOpenFilterId(fieldId)
+                                    }}
+                                />
+                            </div>
                             {renderConfigureMenu()}
                         </div>
                     </section>
@@ -1386,6 +1370,9 @@ const WorkingListInstance = ({
                                             ? criteria.programStageId
                                             : undefined
                                     }
+                                    defaultOpen={
+                                        autoOpenFilterId === 'programStage'
+                                    }
                                     onChange={enterStage}
                                     onRemove={() => {
                                         if (criteria.mode === 'event') {
@@ -1404,11 +1391,6 @@ const WorkingListInstance = ({
                                         ) {
                                             return null
                                         }
-                                        const defaultIds =
-                                            defaultVisibleFilterIds(
-                                                fields,
-                                                'event'
-                                            )
                                         return (
                                             <FilterButton
                                                 key={field.id}
@@ -1426,26 +1408,14 @@ const WorkingListInstance = ({
                                                 calendarContext={
                                                     filterCalendarContext
                                                 }
-                                                removable={
-                                                    !defaultIds.includes(
-                                                        field.id
-                                                    )
+                                                defaultOpen={
+                                                    autoOpenFilterId ===
+                                                    field.id
                                                 }
                                                 onApply={applyFilter}
                                                 onReset={() =>
                                                     resetFilter(field.id)
                                                 }
-                                                onRemove={() => {
-                                                    resetFilter(field.id)
-                                                    setVisibleEventFilterIds(
-                                                        (ids) =>
-                                                            ids.filter(
-                                                                (id) =>
-                                                                    id !==
-                                                                    field.id
-                                                            )
-                                                    )
-                                                }}
                                             />
                                         )
                                     })}
@@ -1454,12 +1424,13 @@ const WorkingListInstance = ({
                                         scope="event"
                                         fields={eventFilterFields}
                                         visibleFilterIds={visibleEventFilterIds}
-                                        onAdd={(fieldId) =>
+                                        onAdd={(fieldId) => {
                                             setVisibleEventFilterIds((ids) => [
                                                 ...ids,
                                                 fieldId,
                                             ])
-                                        }
+                                            setAutoOpenFilterId(fieldId)
+                                        }}
                                     />
                                 )}
                             </div>

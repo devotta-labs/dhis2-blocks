@@ -40,10 +40,11 @@ describe('URL state privacy boundary', () => {
     })
 
     it('ignores filter values and unknown keys from a tampered URL', () => {
-        const parsed = parseAppUrlState({
-            hash: '#/?programId=IpHINAT79UW&filter=firstName%3ATest&token=secret',
-            search: '',
-        })
+        const parsed = parseAppUrlState(
+            new URLSearchParams(
+                'programId=IpHINAT79UW&filter=firstName%3ATest&token=secret'
+            )
+        )
 
         expect(parsed).toEqual({ programId: 'IpHINAT79UW' })
         expect(JSON.stringify(parsed)).not.toContain('Test')
@@ -52,25 +53,18 @@ describe('URL state privacy boundary', () => {
 
     it('fails fast when a known URL preference is malformed', () => {
         expect(() =>
-            parseAppUrlState({
-                hash: '#/?programId=IpHINAT79UW&page=-1',
-                search: '',
-            })
+            parseAppUrlState(
+                new URLSearchParams('programId=IpHINAT79UW&page=-1')
+            )
         ).toThrow()
     })
 
     it('fails fast for duplicate or blank known URL parameters', () => {
         expect(() =>
-            parseAppUrlState({
-                hash: '#/?programId=one&programId=two',
-                search: '',
-            })
+            parseAppUrlState(new URLSearchParams('programId=one&programId=two'))
         ).toThrow()
         expect(() =>
-            parseAppUrlState({
-                hash: '#/?orgUnitId=',
-                search: '',
-            })
+            parseAppUrlState(new URLSearchParams('orgUnitId='))
         ).toThrow()
     })
 

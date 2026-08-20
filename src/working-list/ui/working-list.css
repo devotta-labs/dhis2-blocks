@@ -118,7 +118,22 @@
 }
 
 .configure-menu {
+    flex-shrink: 0;
     margin-left: auto;
+}
+
+/* Wrapping group for filter buttons so the configure menu keeps its spot
+   at the top right when filters overflow onto new lines. */
+.filter-row__filters {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 0%;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    /* Together with the row gap this keeps at least 16px between the
+       filters and the configure menu. */
+    margin-right: 8px;
 }
 
 .filter-button {
@@ -228,11 +243,15 @@
     font-weight: 500;
 }
 
+/* Matches the dense @dhis2/ui input (32px tall) used for the Match selector. */
 .native-field input {
+    box-sizing: border-box;
     width: 100%;
-    min-height: 36px;
-    padding: 7px 9px;
+    height: 32px;
+    padding: 7px 8px;
     color: #212934;
+    font-size: 14px;
+    line-height: 16px;
     background: #fff;
     border: 1px solid #a9b7c4;
     border-radius: 3px;
@@ -267,6 +286,40 @@
     max-width: 100%;
 }
 
+.calendar-field {
+    position: relative;
+    min-width: 0;
+}
+
+/* Compact clear icon inside the calendar input, replacing @dhis2/ui's
+   boxed "Clear" text button. The input sits below a 19px label plus the
+   field's 2px gap, so centring the 24px button on the 32px dense input
+   puts its top at 21px + (32px - 24px) / 2. */
+.calendar-field__clear {
+    position: absolute;
+    inset-block-start: 25px;
+    inset-inline-end: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    color: #6c7785;
+    background: transparent;
+    border: 0;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.calendar-field__clear:hover {
+    color: #212934;
+    background: #f3f5f7;
+}
+
+/* Make room for the input's status icon on error or warning. */
+.calendar-field__clear--status-icon {
+    inset-inline-end: 36px;
+}
+
 .organisation-unit-filter-tree {
     overflow: auto;
     max-height: min(52vh, 520px);
@@ -279,6 +332,7 @@
 .filter-row {
     min-width: 0;
     max-width: 100%;
+    align-items: flex-start;
 }
 
 .working-list-table-scroll {
@@ -350,21 +404,18 @@
     background: #ffdcdc;
 }
 
-.working-list-cell-invalid {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
 .working-list-warning-icon {
     display: inline-flex;
     align-items: center;
     color: #b93d2e;
 }
 
-.working-list-row-warning {
-    margin-right: 6px;
-    vertical-align: middle;
+/* Shrink-to-fit: width 1px + no min-width collapses the column to its content. */
+.working-list-table .working-list-issues-cell {
+    width: 1px;
+    min-width: 0;
+    text-align: center;
+    white-space: nowrap;
 }
 
 .working-list-row-issues {

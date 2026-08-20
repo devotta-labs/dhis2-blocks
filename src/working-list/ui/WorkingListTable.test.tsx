@@ -14,13 +14,18 @@ jest.mock('@dhis2/ui', () => ({
 jest.mock('@tanstack/react-table', () => {
     const React = jest.requireActual<typeof import('react')>('react')
     const feature = {}
+    type MockColumn = {
+        id: string
+        accessor?: (row: unknown) => unknown
+        enableSorting?: boolean
+        cell: (context: {
+            getValue: () => unknown
+            row: { original: unknown }
+        }) => React.ReactNode
+        header: React.ReactNode | (() => React.ReactNode)
+    }
     const orderedColumns = (options: {
-        columns: Array<{
-            id: string
-            accessor: (row: unknown) => unknown
-            cell: (context: { getValue: () => unknown }) => React.ReactNode
-            header: React.ReactNode
-        }>
+        columns: MockColumn[]
         state: {
             columnOrder: string[]
             columnVisibility: Record<string, boolean>
@@ -46,14 +51,10 @@ jest.mock('@tanstack/react-table', () => {
                 accessor: (row: unknown) => unknown,
                 definition: Record<string, unknown>
             ) => ({ ...definition, accessor }),
+            display: (definition: Record<string, unknown>) => definition,
         }),
         useTable: (options: {
-            columns: Array<{
-                id: string
-                accessor: (row: unknown) => unknown
-                cell: (context: { getValue: () => unknown }) => React.ReactNode
-                header: React.ReactNode
-            }>
+            columns: MockColumn[]
             data: Array<{ id: string }>
             state: {
                 columnOrder: string[]
@@ -65,7 +66,7 @@ jest.mock('@tanstack/react-table', () => {
             const columnApi = (column: (typeof columns)[number]) => ({
                 id: column.id,
                 columnDef: column,
-                getCanSort: () => true,
+                getCanSort: () => column.enableSorting !== false,
                 getIsSorted: () => {
                     const sort = options.state.sorting[0]
                     return sort?.id === column.id
@@ -85,17 +86,22 @@ jest.mock('@tanstack/react-table', () => {
                     cell?: {
                         column: ReturnType<typeof columnApi>
                         value: unknown
+                        row: { original: unknown }
                     }
                 }) =>
                     header
                         ? React.createElement(
                               React.Fragment,
                               null,
-                              header.column.columnDef.header
+                              typeof header.column.columnDef.header ===
+                                  'function'
+                                  ? header.column.columnDef.header()
+                                  : header.column.columnDef.header
                           )
                         : cell
                           ? cell.column.columnDef.cell({
                                 getValue: () => cell.value,
+                                row: cell.row,
                             })
                           : null,
                 getHeaderGroups: () => [
@@ -116,7 +122,8 @@ jest.mock('@tanstack/react-table', () => {
                             columns.map((column) => ({
                                 id: `${original.id}-${column.id}`,
                                 column: columnApi(column),
-                                value: column.accessor(original),
+                                value: column.accessor?.(original),
+                                row: { original },
                             })),
                     })),
                 }),
@@ -347,12 +354,10 @@ describe('WorkingListTable', () => {
                     row?.classList.contains('working-list-row--invalid')
                 ).toBe(false)
                 expect(
-                    container.querySelector(
-                        '[data-testid="invalid-cell-value"]'
-                    )
+                    container.querySelector('[data-testid="row-issues-tei-2"]')
                 ).toBeNull()
                 expect(
-                    container.querySelector('[data-testid="row-issues-tei-2"]')
+                    container.querySelector('.working-list-issues-cell')
                 ).toBeNull()
                 const cells = row?.querySelectorAll('td')
                 expect(cells?.[1].textContent).toBe('###')
@@ -364,7 +369,7 @@ describe('WorkingListTable', () => {
         })
     })
 
-    it('tints the row and marks invalid cells in highlighted mode', () => {
+    it('tints the row and shows a trailing issues marker in highlighted mode', () => {
         withActEnvironment(() => {
             const container = document.createElement('div')
             document.body.appendChild(container)
@@ -380,25 +385,24 @@ describe('WorkingListTable', () => {
                 expect(
                     row?.classList.contains('working-list-row--invalid')
                 ).toBe(true)
-                const invalidCells = container.querySelectorAll(
-                    '[data-testid="invalid-cell-value"]'
+                const cells = row?.querySelectorAll('td')
+                expect(cells?.[1].textContent).toBe('###')
+                expect(cells?.[1].querySelector('[role="img"]')).toBeNull()
+                const headerCells = container.querySelectorAll('thead th') ?? []
+                expect(headerCells[headerCells.length - 1]?.textContent).toBe(
+                    'Data quality'
                 )
-                expect(invalidCells).toHaveLength(2)
-                expect(invalidCells[0].textContent).toBe('###')
-                expect(
-                    invalidCells[0]
-                        .querySelector('[role="img"]')
-                        ?.getAttribute('aria-label')
-                ).toBe('Data quality issue. Bad value')
                 const marker = container.querySelector(
                     '[data-testid="row-issues-tei-2"]'
                 )
                 expect(marker?.getAttribute('aria-label')).toBe(
                     'Row has 2 data quality issues'
                 )
-                expect(marker?.closest('td')).toBe(
-                    row?.querySelectorAll('td')[0]
-                )
+                const lastCell = cells?.[cells.length - 1]
+                expect(marker?.closest('td')).toBe(lastCell)
+                expect(
+                    lastCell?.classList.contains('working-list-issues-cell')
+                ).toBe(true)
             } finally {
                 act(() => root.unmount())
                 container.remove()

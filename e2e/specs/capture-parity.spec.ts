@@ -207,6 +207,16 @@ const addFilter = async (
     await page.getByTestId(`more-filters-${scope}`).click()
     await page.locator(`[data-test="add-filter-${fieldId}"]`).click()
     await expect(page.getByTestId(`filter-${fieldId}`)).toBeVisible()
+    // Newly added filters open their editor right away.
+    await expect(page.getByTestId(`filter-editor-${fieldId}`)).toBeVisible()
+}
+
+const openFilterEditor = async (page: Page, fieldId: string) => {
+    const button = page.getByTestId(`filter-${fieldId}`)
+    if ((await button.getAttribute('aria-expanded')) !== 'true') {
+        await button.click()
+    }
+    await expect(page.getByTestId(`filter-editor-${fieldId}`)).toBeVisible()
 }
 
 // This is a small UI DSL used across both tracked-entity and event endpoints.
@@ -217,7 +227,7 @@ const applyTextFilter = async (
     resource: 'trackedEntities' | 'events',
     parameter: 'filter' | 'filterAttributes'
 ) => {
-    await page.getByTestId(`filter-${fieldId}`).click()
+    await openFilterEditor(page, fieldId)
     const editor = page.getByTestId(`filter-editor-${fieldId}`)
     await editor.getByLabel('Value').fill(value)
     return waitForTrackerResponse(
@@ -239,7 +249,7 @@ const enterStageMode = async (page: Page, stageName = STAGE_NAME) => {
     if (!(await page.getByTestId('filter-programStage').isVisible())) {
         await addFilter(page, 'tracked-entity', 'programStage')
     }
-    await page.getByTestId('filter-programStage').click()
+    await openFilterEditor(page, 'programStage')
     await chooseDhis2Option(
         page,
         '[data-test="filter-value-programStage"]',
@@ -441,6 +451,37 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(resultRows(page)).toHaveCount(6)
     })
 
+    test('opens the unfiltered default view with its concatenated id when no list is requested', async ({
+        page,
+    }) => {
+        const statusParameter =
+            targetMajor === 41 ? 'programStatus' : 'enrollmentStatus'
+        const parameters = new URLSearchParams({
+            programId: PROGRAM,
+            orgUnitId: ORG_UNIT,
+        })
+        const initialQuery = await waitForTrackerResponse(
+            page,
+            'trackedEntities',
+            () => page.goto(`/#/?${parameters.toString()}`),
+            (url) => !url.searchParams.has(statusParameter)
+        )
+        expect(initialQuery.searchParams.has('filter')).toBe(false)
+        // Capture parity: the default view's id is written to the URL so a
+        // reload does not fall back to the first saved list.
+        await expect(page).toHaveURL(
+            new RegExp(`selectedTemplateId=${PROGRAM}-default`)
+        )
+        await expect(
+            page.locator(
+                '[aria-current="true"][data-testid^="working-list-view-"]'
+            )
+        ).toHaveCount(0)
+        await expect(
+            page.locator('[data-testid="working-list-table"] tbody')
+        ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
+    })
+
     test('deselects the active list and falls back to the unfiltered default view', async ({
         page,
     }) => {
@@ -458,7 +499,11 @@ test.describe('Capture context and generated tracker views', () => {
         )
         expect(deselectedQuery.searchParams.get('page')).toBe('1')
         await expect(activeView).not.toHaveAttribute('aria-current', 'true')
-        await expect(page).not.toHaveURL(/selectedTemplateId=/)
+        // Deselection selects the synthetic default template so the
+        // preference survives a reload.
+        await expect(page).toHaveURL(
+            new RegExp(`selectedTemplateId=${PROGRAM}-default`)
+        )
 
         await waitForTrackerResponse(
             page,
@@ -468,6 +513,29 @@ test.describe('Capture context and generated tracker views', () => {
         )
         await expect(activeView).toHaveAttribute('aria-current', 'true')
         await expect(page).toHaveURL(/selectedTemplateId=active/)
+
+        await waitForTrackerResponse(
+            page,
+            'trackedEntities',
+            () => activeView.click(),
+            (url) => !url.searchParams.has(statusParameter)
+        )
+        await expect(page).toHaveURL(
+            new RegExp(`selectedTemplateId=${PROGRAM}-default`)
+        )
+        const reloadedQuery = await waitForTrackerResponse(
+            page,
+            'trackedEntities',
+            () => page.reload(),
+            (url) => !url.searchParams.has(statusParameter)
+        )
+        expect(reloadedQuery.searchParams.has('filter')).toBe(false)
+        await expect(page).toHaveURL(
+            new RegExp(`selectedTemplateId=${PROGRAM}-default`)
+        )
+        await expect(
+            page.getByTestId('working-list-view-active')
+        ).not.toHaveAttribute('aria-current', 'true')
     })
 
     test('keeps text edits draft-only until Update and supports real null gates when available', async ({
@@ -563,7 +631,6 @@ test.describe('Capture context and generated tracker views', () => {
         await openWorkingList(page)
 
         await addFilter(page, 'tracked-entity', NUMBER_ATTRIBUTE)
-        await page.getByTestId(`filter-${NUMBER_ATTRIBUTE}`).click()
         const numberEditor = page.getByTestId(
             `filter-editor-${NUMBER_ATTRIBUTE}`
         )
@@ -586,7 +653,6 @@ test.describe('Capture context and generated tracker views', () => {
         )
 
         await addFilter(page, 'tracked-entity', BOOLEAN_ATTRIBUTE)
-        await page.getByTestId(`filter-${BOOLEAN_ATTRIBUTE}`).click()
         const booleanEditor = page.getByTestId(
             `filter-editor-${BOOLEAN_ATTRIBUTE}`
         )
@@ -613,7 +679,6 @@ test.describe('Capture context and generated tracker views', () => {
         )
 
         await addFilter(page, 'tracked-entity', MULTI_TEXT_ATTRIBUTE)
-        await page.getByTestId(`filter-${MULTI_TEXT_ATTRIBUTE}`).click()
         const optionEditor = page.getByTestId(
             `filter-editor-${MULTI_TEXT_ATTRIBUTE}`
         )
@@ -715,19 +780,24 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(dirtyRow).toBeVisible()
         await expect(dirtyRow).not.toHaveClass(/working-list-row--invalid/)
         await expect(dirtyRow).toContainText(CORRUPTED_DATE_VALUE)
-        await expect(dirtyRow.getByTestId('invalid-cell-value')).toHaveCount(0)
+        await expect(page.locator('.working-list-issues-cell')).toHaveCount(0)
         await expect(page.getByTestId('row-issues-WlE2eTei002')).toHaveCount(0)
         expect(dataQualityWarnings.length).toBeGreaterThan(0)
 
         await page.locator('[data-test="data-quality-mode-toggle"]').click()
 
         await expect(dirtyRow).toHaveClass(/working-list-row--invalid/)
-        const invalidCell = dirtyRow.getByTestId('invalid-cell-value')
-        await expect(invalidCell).toHaveCount(1)
-        await expect(invalidCell).toContainText(CORRUPTED_DATE_VALUE)
+        await expect(dirtyRow).toContainText(CORRUPTED_DATE_VALUE)
+        const rowIssuesMarker = page.getByTestId('row-issues-WlE2eTei002')
+        await expect(rowIssuesMarker).toHaveAccessibleName(
+            'Row has 1 data quality issues'
+        )
+        await expect(rowIssuesMarker.locator('xpath=ancestor::td')).toHaveClass(
+            /working-list-issues-cell/
+        )
         await expect(
-            page.getByTestId('row-issues-WlE2eTei002')
-        ).toHaveAccessibleName('Row has 1 data quality issues')
+            dirtyRow.locator('td.working-list-issues-cell')
+        ).toHaveCount(1)
         await expect(
             page.getByTestId('working-list-row-WlE2eTei001')
         ).not.toHaveClass(/working-list-row--invalid/)

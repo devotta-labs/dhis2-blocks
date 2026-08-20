@@ -10,4 +10,12 @@ export default defineConfig([
     {
         extends: [config],
     },
+    {
+        settings: {
+            // react-router v7 resolves through its package "exports" map,
+            // which the classic node resolver can't follow, so import/named
+            // would false-positive on every react-router-dom named export.
+            'import/ignore': ['react-router'],
+        },
+    },
 ])

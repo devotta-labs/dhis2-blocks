@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-19T14:35:53.501Z\n"
-"PO-Revision-Date: 2026-08-19T14:35:53.508Z\n"
+"POT-Creation-Date: 2026-08-20T13:12:07.523Z\n"
+"PO-Revision-Date: 2026-08-20T13:12:07.523Z\n"
 
 msgid "Discard the unsaved changes to this working list?"
 msgstr "Discard the unsaved changes to this working list?"
@@ -285,9 +285,6 @@ msgstr "Update"
 msgid "Reset filter"
 msgstr "Reset filter"
 
-msgid "Remove filter"
-msgstr "Remove filter"
-
 msgid "Assignment"
 msgstr "Assignment"
 
@@ -342,8 +339,14 @@ msgstr "Maximum"
 msgid "Only records with a true value will match."
 msgstr "Only records with a true value will match."
 
+msgid "{{filterName}}{{escape}}"
+msgstr "{{filterName}}{{escape}}"
+
 msgid "Stage"
 msgstr "Stage"
+
+msgid "Remove filter"
+msgstr "Remove filter"
 
 msgid "Active enrollments"
 msgstr "Active enrollments"
@@ -485,6 +488,9 @@ msgstr ""
 "Choose visible columns and arrange their display order. Active filters are "
 "not affected."
 
+msgid "Clear"
+msgstr "Clear"
+
 msgid "Column {{reference}} is no longer available."
 msgstr "Column {{reference}} is no longer available."
 
@@ -500,8 +506,8 @@ msgstr "COORDINATE is not valid JSON"
 msgid "COORDINATE requires [longitude, latitude]"
 msgstr "COORDINATE requires [longitude, latitude]"
 
-msgid "Data quality issue. {{message}}"
-msgstr "Data quality issue. {{message}}"
+msgid "Data quality"
+msgstr "Data quality"
 
 msgid "DATETIME requires a valid ISO date and time"
 msgstr "DATETIME requires a valid ISO date and time"

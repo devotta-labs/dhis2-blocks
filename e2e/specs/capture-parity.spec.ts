@@ -59,9 +59,9 @@ const environment = (
     }
 ).process?.env
 const targetMajor = Number(environment?.E2E_EXPECTED_MAJOR)
-const typedRegistryTest = testFromDhis2Version(42)
+const typedRegistryTest = testFromDhis2Version(43)
 const typedRegistryTestTitle =
-    'uses the typed registry for numeric, boolean, and option filters while keeping unsupported values display-only @dhis2-min-42'
+    'uses the typed registry for numeric, boolean, and option filters while keeping unsupported values display-only @dhis2-min-43'
 
 const requestUrl = (request: Request | Response) => new URL(request.url())
 const isTrackerResource = (

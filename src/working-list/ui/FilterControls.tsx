@@ -3,6 +3,7 @@ import {
     CalendarInput,
     Checkbox,
     FlyoutMenu,
+    // eslint-disable-next-line import/named -- Re-exported by @dhis2/ui at runtime.
     IconCross16,
     MenuItem,
     MultiSelectField,

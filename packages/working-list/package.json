@@ -47,6 +47,7 @@
     },
     "devDependencies": {
         "@dhis2/cli-app-scripts": "12.10.3",
+        "@tanstack/table-core": "9.1.2",
         "@types/jest": "^30.0.0",
         "@types/react": "^18.3.31",
         "@types/react-dom": "^18.3.7",
@@ -60,6 +61,13 @@
         "react-dom": "^18.3.1"
     },
     "jest": {
+        "moduleNameMapper": {
+            "\\.(css|less)$": "<rootDir>/test/styleMock.ts",
+            "^@tanstack/table-core/(.*)$": "<rootDir>/node_modules/@tanstack/react-table/../table-core/dist/$1.js"
+        },
+        "transformIgnorePatterns": [
+            "/node_modules/(?!\\.pnpm/@tanstack\\+|@tanstack/)"
+        ],
         "watchman": false
     }
 }

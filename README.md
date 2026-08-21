@@ -30,8 +30,11 @@ pnpm install
 pnpm start
 ```
 
-This starts the existing DHIS2 custom wrapper from `apps/web`. By default the
-DHIS2 Application Platform opens the application at
+This starts the DHIS2 custom wrapper from `apps/web` together with watch-mode
+builds for its workspace dependencies. Changes in `packages/working-list` are
+rebuilt continuously, while the development Vite alias provides source-level
+hot updates in the application. By default the DHIS2 Application Platform opens
+the application at
 [http://localhost:3000](http://localhost:3000).
 
 The deployable application bundle is built with:

@@ -37,16 +37,18 @@ import {
 import type { ProgramFieldCatalog } from './metadata'
 import {
     DeleteMutationResponseSchema,
+    DateFilterContentsSchema,
     MutationResponseSchema,
     ProgramStageWorkingListsResponseSchema,
     ProgramStageWorkingListSchema,
+    TrackerEnrollmentStatusSchema,
+    TrackerEventStatusSchema,
     TrackedEntityInstanceFilterSchema,
     TrackedEntityInstanceFiltersResponseSchema,
     type EntityQueryCriteria,
     type ProgramStageQueryCriteria,
     type ProgramStageWorkingList,
     type SavedValueFilter,
-    type SharingAccessEntry,
     type TrackedEntityInstanceFilter,
 } from './schemas'
 
@@ -54,13 +56,40 @@ export type SavedListResource =
     | 'trackedEntityInstanceFilters'
     | 'programStageWorkingLists'
 
-export interface SavedListSharing {
-    access?: Record<string, unknown>
-    externalAccess?: boolean
-    publicAccess?: string
-    user?: Record<string, unknown>
-    userAccesses?: SharingAccessEntry[]
-    userGroupAccesses?: SharingAccessEntry[]
+export type SavedListSharing = Pick<
+    TrackedEntityInstanceFilter,
+    | 'access'
+    | 'externalAccess'
+    | 'publicAccess'
+    | 'user'
+    | 'userAccesses'
+    | 'userGroupAccesses'
+>
+
+type SavedDateFilter = NonNullable<EntityQueryCriteria['enrollmentCreatedDate']>
+
+interface WritableSavedCriteria {
+    enrollmentStatus?: EntityQueryCriteria['enrollmentStatus']
+    order?: EntityQueryCriteria['order']
+    displayColumnOrder?: EntityQueryCriteria['displayColumnOrder']
+    assignedUserMode?: EntityQueryCriteria['assignedUserMode']
+    assignedUsers?: EntityQueryCriteria['assignedUsers']
+    followUp?: EntityQueryCriteria['followUp']
+    attributeValueFilters?: EntityQueryCriteria['attributeValueFilters']
+    enrollmentCreatedDate?: EntityQueryCriteria['enrollmentCreatedDate']
+    enrollmentIncidentDate?: EntityQueryCriteria['enrollmentIncidentDate']
+    enrolledAt?: ProgramStageQueryCriteria['enrolledAt']
+    enrollmentOccurredAt?: ProgramStageQueryCriteria['enrollmentOccurredAt']
+    eventStatus?: ProgramStageQueryCriteria['eventStatus']
+    eventOccurredAt?: ProgramStageQueryCriteria['eventOccurredAt']
+    eventScheduledAt?: ProgramStageQueryCriteria['eventScheduledAt']
+    dataFilters?: ProgramStageQueryCriteria['dataFilters']
+}
+
+interface SavedListPayloadBase extends SavedListSharing {
+    name: string
+    program: { id: string }
+    sortOrder?: number
 }
 
 export interface SavedListBase {
@@ -535,33 +564,39 @@ export const normalizeSavedWorkingListResource = ({
     metadata: ProgramFieldCatalog
     parsingContext?: FilterParsingContext
 }): NormalizedSavedWorkingList => {
-    resource =
+    const parsed =
         type === 'trackedEntityInstanceFilters'
-            ? TrackedEntityInstanceFilterSchema.parse(resource)
-            : ProgramStageWorkingListSchema.parse(resource)
-    if (resource.program.id !== programId) {
+            ? {
+                  type: 'trackedEntityInstanceFilters' as const,
+                  resource: TrackedEntityInstanceFilterSchema.parse(resource),
+              }
+            : {
+                  type: 'programStageWorkingLists' as const,
+                  resource: ProgramStageWorkingListSchema.parse(resource),
+              }
+    if (parsed.resource.program.id !== programId) {
         throw new Error(
-            `Saved list ${resource.id} belongs to program ${resource.program.id}, not ${programId}`
+            `Saved list ${parsed.resource.id} belongs to program ${parsed.resource.program.id}, not ${programId}`
         )
     }
     const base: SavedListBase = {
-        id: resource.id,
-        name: resource.displayName,
+        id: parsed.resource.id,
+        name: parsed.resource.displayName,
         resource: type,
-        sortOrder: resource.sortOrder,
-        sharing: getSharing(resource),
+        sortOrder: parsed.resource.sortOrder,
+        sharing: getSharing(parsed.resource),
     }
     try {
         const configuration =
-            type === 'trackedEntityInstanceFilters'
+            parsed.type === 'trackedEntityInstanceFilters'
                 ? normalizeTrackedEntityResource({
-                      resource: resource as TrackedEntityInstanceFilter,
+                      resource: parsed.resource,
                       programId,
                       metadata,
                       parsingContext,
                   })
                 : normalizeEventResource({
-                      resource: resource as ProgramStageWorkingList,
+                      resource: parsed.resource,
                       programId,
                       metadata,
                       parsingContext,
@@ -576,7 +611,7 @@ export const normalizeSavedWorkingListResource = ({
                 ...base,
                 compatibility: 'incompatible',
                 issues: references.issues,
-                raw: resource,
+                raw: parsed.resource,
                 candidateConfiguration: configuration,
             }
         }
@@ -605,7 +640,7 @@ export const normalizeSavedWorkingListResource = ({
                 ...base,
                 compatibility: 'incompatible',
                 issues: unsupportedFilters,
-                raw: resource,
+                raw: parsed.resource,
                 candidateConfiguration: configuration,
             }
         }
@@ -613,7 +648,7 @@ export const normalizeSavedWorkingListResource = ({
             ...base,
             compatibility: 'compatible',
             configuration,
-            raw: resource,
+            raw: parsed.resource,
         }
     } catch (error) {
         if (error instanceof StaleWorkingListError) {
@@ -621,7 +656,7 @@ export const normalizeSavedWorkingListResource = ({
                 ...base,
                 compatibility: 'incompatible',
                 issues: error.issues,
-                raw: resource,
+                raw: parsed.resource,
             }
         }
         throw error
@@ -723,7 +758,7 @@ const dateContents = (
     if (!serialized.dateFilter) {
         throw new Error(`${filter.field.id} did not serialize to a dateFilter`)
     }
-    return serialized.dateFilter
+    return DateFilterContentsSchema.parse(serialized.dateFilter)
 }
 
 const commonCriteriaPayload = (
@@ -731,7 +766,7 @@ const commonCriteriaPayload = (
     fields: FieldCatalog,
     serializationContext?: FilterSerializationContext
 ) => {
-    const criteria: Record<string, unknown> = {
+    const criteria: WritableSavedCriteria = {
         displayColumnOrder: configuration.columns.map(
             (id) => fields.get(id)?.apiName ?? id
         ),
@@ -762,7 +797,9 @@ const commonCriteriaPayload = (
             case 'enrollmentStatus':
                 criteria.enrollmentStatus =
                     filter.value.kind === 'options'
-                        ? filter.value.values[0]
+                        ? TrackerEnrollmentStatusSchema.optional().parse(
+                              filter.value.values[0]
+                          )
                         : undefined
                 break
             case 'enrolledAt':
@@ -782,7 +819,9 @@ const commonCriteriaPayload = (
             case 'followUp':
                 criteria.followUp =
                     filter.value.kind === 'boolean'
-                        ? JSON.stringify(filter.value.values[0])
+                        ? filter.value.values[0]
+                            ? 'true'
+                            : 'false'
                         : undefined
                 break
             case 'assignedUser':
@@ -797,7 +836,9 @@ const commonCriteriaPayload = (
             case 'eventStatus':
                 criteria.eventStatus =
                     filter.value.kind === 'options'
-                        ? filter.value.values[0]
+                        ? TrackerEventStatusSchema.optional().parse(
+                              filter.value.values[0]
+                          )
                         : undefined
                 break
             case 'eventOccurredAt':
@@ -823,30 +864,32 @@ const commonCriteriaPayload = (
     return criteria
 }
 
-const writableSharing = (sharing?: SavedListSharing) => {
+const writableSharing = (sharing?: SavedListSharing): SavedListSharing => {
     if (!sharing) {
         return {
             publicAccess: '--------',
             externalAccess: false,
-            userAccesses: [] as SharingAccessEntry[],
-            userGroupAccesses: [] as SharingAccessEntry[],
+            userAccesses: [],
+            userGroupAccesses: [],
         }
     }
-    return {
-        ...(sharing.publicAccess !== undefined
-            ? { publicAccess: sharing.publicAccess }
-            : {}),
-        ...(sharing.externalAccess !== undefined
-            ? { externalAccess: sharing.externalAccess }
-            : {}),
-        ...(sharing.user !== undefined ? { user: { ...sharing.user } } : {}),
-        ...(sharing.userAccesses !== undefined
-            ? { userAccesses: [...sharing.userAccesses] }
-            : {}),
-        ...(sharing.userGroupAccesses !== undefined
-            ? { userGroupAccesses: [...sharing.userGroupAccesses] }
-            : {}),
+    const writable: SavedListSharing = {}
+    if (sharing.publicAccess !== undefined) {
+        writable.publicAccess = sharing.publicAccess
     }
+    if (sharing.externalAccess !== undefined) {
+        writable.externalAccess = sharing.externalAccess
+    }
+    if (sharing.user !== undefined) {
+        writable.user = { ...sharing.user }
+    }
+    if (sharing.userAccesses !== undefined) {
+        writable.userAccesses = [...sharing.userAccesses]
+    }
+    if (sharing.userGroupAccesses !== undefined) {
+        writable.userGroupAccesses = [...sharing.userGroupAccesses]
+    }
+    return writable
 }
 
 const SAVED_VALUE_FILTER_KEYS = new Set([
@@ -898,8 +941,8 @@ const STAGE_CRITERIA_KEYS = new Set([
     'dataFilters',
 ])
 
-const unknownFields = (
-    source: Record<string, unknown> | undefined,
+const unknownFields = <Source extends object>(
+    source: Source | undefined,
     knownKeys: ReadonlySet<string>
 ) =>
     source
@@ -908,32 +951,28 @@ const unknownFields = (
           )
         : {}
 
-const mergeDateFilterExtensions = (existing: unknown, next: unknown) => {
-    if (
-        !existing ||
-        typeof existing !== 'object' ||
-        !next ||
-        typeof next !== 'object'
-    ) {
+const mergeDateFilterExtensions = (
+    existing: SavedDateFilter | null | undefined,
+    next: SavedDateFilter | null | undefined
+) => {
+    if (!existing || !next) {
         return next
     }
     return {
-        ...unknownFields(existing as Record<string, unknown>, DATE_FILTER_KEYS),
-        ...(next as Record<string, unknown>),
+        ...unknownFields(existing, DATE_FILTER_KEYS),
+        ...next,
     }
 }
 
 const mergeSavedFilterExtensions = (
-    existingFilters: unknown,
-    nextFilters: unknown
+    existingFilters: SavedValueFilter[] | null | undefined,
+    nextFilters: SavedValueFilter[] | null | undefined
 ) => {
-    if (!Array.isArray(nextFilters)) {
+    if (!nextFilters) {
         return nextFilters
     }
-    const previous = Array.isArray(existingFilters)
-        ? (existingFilters as Record<string, unknown>[])
-        : []
-    return (nextFilters as Record<string, unknown>[]).map((next) => {
+    const previous = existingFilters ?? []
+    return nextFilters.map((next) => {
         const reference = next.attribute ?? next.dataItem
         const existing = previous.find(
             (candidate) =>
@@ -942,24 +981,23 @@ const mergeSavedFilterExtensions = (
         if (!existing) {
             return next
         }
-        return {
+        const merged: SavedValueFilter = {
             ...unknownFields(existing, SAVED_VALUE_FILTER_KEYS),
             ...next,
-            ...(next.dateFilter
-                ? {
-                      dateFilter: mergeDateFilterExtensions(
-                          existing.dateFilter,
-                          next.dateFilter
-                      ),
-                  }
-                : {}),
         }
+        if (next.dateFilter) {
+            merged.dateFilter = mergeDateFilterExtensions(
+                existing.dateFilter,
+                next.dateFilter
+            )
+        }
+        return merged
     })
 }
 
 const mergeCriteriaExtensions = (
-    existing: Record<string, unknown> | undefined,
-    next: Record<string, unknown>,
+    existing: WritableSavedCriteria | undefined,
+    next: WritableSavedCriteria,
     resource: SavedListResource
 ) => {
     if (!existing) {
@@ -969,23 +1007,25 @@ const mergeCriteriaExtensions = (
         resource === 'trackedEntityInstanceFilters'
             ? ENTITY_CRITERIA_KEYS
             : STAGE_CRITERIA_KEYS
-    const merged: Record<string, unknown> = {
+    const merged: WritableSavedCriteria = {
         ...unknownFields(existing, knownKeys),
         ...next,
     }
-    for (const key of [
+    const dateKeys = [
         'enrollmentCreatedDate',
         'enrollmentIncidentDate',
         'enrolledAt',
         'enrollmentOccurredAt',
         'eventOccurredAt',
         'eventScheduledAt',
-    ]) {
+    ] as const
+    for (const key of dateKeys) {
         if (next[key] !== undefined) {
             merged[key] = mergeDateFilterExtensions(existing[key], next[key])
         }
     }
-    for (const key of ['attributeValueFilters', 'dataFilters']) {
+    const filterKeys = ['attributeValueFilters', 'dataFilters'] as const
+    for (const key of filterKeys) {
         if (next[key] !== undefined) {
             merged[key] = mergeSavedFilterExtensions(existing[key], next[key])
         }
@@ -1012,9 +1052,8 @@ export const buildSavedListPayload = ({
     existingResource?: TrackedEntityInstanceFilter | ProgramStageWorkingList
 }) => {
     const parsedName = z.string().trim().min(1).parse(name)
-    const parsedConfiguration = WorkingListConfigurationSchema.parse(
-        configuration
-    ) as WorkingListConfiguration
+    const parsedConfiguration =
+        WorkingListConfigurationSchema.parse(configuration)
     const missingFieldIds = [
         ...parsedConfiguration.columns,
         parsedConfiguration.sort.fieldId,
@@ -1030,7 +1069,12 @@ export const buildSavedListPayload = ({
     const validatedConfiguration: WorkingListConfiguration = {
         ...parsedConfiguration,
         filters: parsedConfiguration.filters.map((filter) => {
-            const currentField = fields.get(filter.field.id)!
+            const currentField = fields.get(filter.field.id)
+            if (!currentField) {
+                throw new StaleWorkingListError([
+                    getMissingIssue(filter.field.id, 'configuration.filters'),
+                ])
+            }
             if (
                 parsedConfiguration.mode === 'event' &&
                 currentField.source === 'eventDataElement' &&
@@ -1054,7 +1098,12 @@ export const buildSavedListPayload = ({
             ...validatedConfiguration.columns,
             validatedConfiguration.sort.fieldId,
         ]) {
-            const field = fields.get(fieldId)!
+            const field = fields.get(fieldId)
+            if (!field) {
+                throw new StaleWorkingListError([
+                    getMissingIssue(fieldId, 'configuration.columns'),
+                ])
+            }
             if (
                 field.source === 'eventDataElement' &&
                 !field.programStageIds?.includes(
@@ -1082,25 +1131,26 @@ export const buildSavedListPayload = ({
             'Existing saved-list resource does not match the replacement configuration'
         )
     }
-    const common = {
+    const common: SavedListPayloadBase = {
         name: parsedName,
         program: { id: validatedConfiguration.programId },
-        ...(existingResource?.sortOrder !== undefined
-            ? { sortOrder: existingResource.sortOrder }
-            : {}),
         ...writableSharing(
             sharing ??
                 (existingResource ? getSharing(existingResource) : undefined)
         ),
     }
+    if (existingResource?.sortOrder !== undefined) {
+        common.sortOrder = existingResource.sortOrder
+    }
+    const existingCriteria = existingResource
+        ? resource === 'programStageWorkingLists'
+            ? ProgramStageWorkingListSchema.parse(existingResource)
+                  .programStageQueryCriteria
+            : TrackedEntityInstanceFilterSchema.parse(existingResource)
+                  .entityQueryCriteria
+        : undefined
     const criteria = mergeCriteriaExtensions(
-        existingResource
-            ? resource === 'trackedEntityInstanceFilters'
-                ? (existingResource as TrackedEntityInstanceFilter)
-                      .entityQueryCriteria
-                : (existingResource as ProgramStageWorkingList)
-                      .programStageQueryCriteria
-            : undefined,
+        existingCriteria,
         commonCriteriaPayload(
             validatedConfiguration,
             fields,
@@ -1158,47 +1208,52 @@ const unsupportedFilterIssues = (
 
 const cloneSavedResource = (
     list: Extract<NormalizedSavedWorkingList, { compatibility: 'incompatible' }>
-): TrackedEntityInstanceFilter | ProgramStageWorkingList => {
+) => {
     if (list.resource === 'trackedEntityInstanceFilters') {
-        const raw = list.raw as TrackedEntityInstanceFilter
-        const criteria = raw.entityQueryCriteria
-        return {
-            ...raw,
-            entityQueryCriteria: criteria
-                ? {
-                      ...criteria,
-                      attributeValueFilters:
-                          criteria.attributeValueFilters?.map((filter) => ({
-                              ...filter,
-                          })),
-                      displayColumnOrder: criteria.displayColumnOrder
-                          ? [...criteria.displayColumnOrder]
-                          : undefined,
-                  }
-                : {},
-        }
-    }
-    const raw = list.raw as ProgramStageWorkingList
-    const criteria = raw.programStageQueryCriteria
-    return {
-        ...raw,
-        programStage: { ...raw.programStage },
-        programStageQueryCriteria: criteria
+        const raw = TrackedEntityInstanceFilterSchema.parse(list.raw)
+        const criteria: EntityQueryCriteria = raw.entityQueryCriteria
             ? {
-                  ...criteria,
-                  attributeValueFilters: criteria.attributeValueFilters?.map(
-                      (filter) => ({
-                          ...filter,
-                      })
-                  ),
-                  dataFilters: criteria.dataFilters?.map((filter) => ({
-                      ...filter,
-                  })),
-                  displayColumnOrder: criteria.displayColumnOrder
-                      ? [...criteria.displayColumnOrder]
+                  ...raw.entityQueryCriteria,
+                  attributeValueFilters:
+                      raw.entityQueryCriteria.attributeValueFilters?.map(
+                          (filter) => ({ ...filter })
+                      ),
+                  displayColumnOrder: raw.entityQueryCriteria.displayColumnOrder
+                      ? [...raw.entityQueryCriteria.displayColumnOrder]
                       : undefined,
               }
-            : {},
+            : {}
+        return {
+            type: 'trackedEntityInstanceFilters' as const,
+            criteria,
+            raw: { ...raw, entityQueryCriteria: criteria },
+        }
+    }
+    const raw = ProgramStageWorkingListSchema.parse(list.raw)
+    const criteria: ProgramStageQueryCriteria = raw.programStageQueryCriteria
+        ? {
+              ...raw.programStageQueryCriteria,
+              attributeValueFilters:
+                  raw.programStageQueryCriteria.attributeValueFilters?.map(
+                      (filter) => ({ ...filter })
+                  ),
+              dataFilters: raw.programStageQueryCriteria.dataFilters?.map(
+                  (filter) => ({ ...filter })
+              ),
+              displayColumnOrder: raw.programStageQueryCriteria
+                  .displayColumnOrder
+                  ? [...raw.programStageQueryCriteria.displayColumnOrder]
+                  : undefined,
+          }
+        : {}
+    return {
+        type: 'programStageWorkingLists' as const,
+        criteria,
+        raw: {
+            ...raw,
+            programStage: { ...raw.programStage },
+            programStageQueryCriteria: criteria,
+        },
     }
 }
 
@@ -1335,14 +1390,14 @@ export const repairSavedWorkingList = ({
         return blockedRepair(unresolved)
     }
 
-    const raw = cloneSavedResource(list)
-    const criteria =
-        list.resource === 'trackedEntityInstanceFilters'
-            ? (raw as TrackedEntityInstanceFilter).entityQueryCriteria!
-            : (raw as ProgramStageWorkingList).programStageQueryCriteria!
+    const cloned = cloneSavedResource(list)
+    const criteria = cloned.criteria
 
     for (const issue of list.issues) {
-        const decision = decisionsByPath.get(issue.path)!
+        const decision = decisionsByPath.get(issue.path)
+        if (!decision) {
+            return blockedRepair(issue)
+        }
         const attributeMatch = issue.path.match(
             /^attributeValueFilters\.(\d+)\.attribute$/
         )
@@ -1350,18 +1405,24 @@ export const repairSavedWorkingList = ({
         const columnMatch = issue.path.match(/^displayColumnOrder\.(\d+)$/)
         if (attributeMatch) {
             const index = Number(attributeMatch[1])
-            const savedFilter = criteria.attributeValueFilters?.[index]
+            const filters = criteria.attributeValueFilters
+            const savedFilter = filters?.[index]
             if (!savedFilter) {
                 return blockedRepair(issue)
             }
             try {
-                criteria.attributeValueFilters![index] = repairRawFilter({
+                const repaired = repairRawFilter({
                     savedFilter,
                     decision,
                     expectedSource: 'trackedEntityAttribute',
                     metadata,
                     serializationContext,
-                }) as never
+                })
+                if (repaired) {
+                    filters[index] = repaired
+                } else {
+                    delete filters[index]
+                }
             } catch (error) {
                 return blockedRepair({
                     ...issue,
@@ -1372,21 +1433,27 @@ export const repairSavedWorkingList = ({
             }
             continue
         }
-        if (dataMatch && list.resource === 'programStageWorkingLists') {
-            const stageCriteria = criteria as ProgramStageQueryCriteria
+        if (dataMatch && cloned.type === 'programStageWorkingLists') {
+            const stageCriteria = cloned.criteria
             const index = Number(dataMatch[1])
-            const savedFilter = stageCriteria.dataFilters?.[index]
+            const filters = stageCriteria.dataFilters
+            const savedFilter = filters?.[index]
             if (!savedFilter) {
                 return blockedRepair(issue)
             }
             try {
-                stageCriteria.dataFilters![index] = repairRawFilter({
+                const repaired = repairRawFilter({
                     savedFilter,
                     decision,
                     expectedSource: 'eventDataElement',
                     metadata,
                     serializationContext,
-                }) as never
+                })
+                if (repaired) {
+                    filters[index] = repaired
+                } else {
+                    delete filters[index]
+                }
             } catch (error) {
                 return blockedRepair({
                     ...issue,
@@ -1400,7 +1467,7 @@ export const repairSavedWorkingList = ({
         if (columnMatch && criteria.displayColumnOrder) {
             const index = Number(columnMatch[1])
             if (decision.action === 'remove') {
-                criteria.displayColumnOrder[index] = undefined as never
+                delete criteria.displayColumnOrder[index]
             } else if (decision.action === 'replaceColumn') {
                 const field = metadata.fields.get(decision.fieldId)
                 if (!field) {
@@ -1431,9 +1498,9 @@ export const repairSavedWorkingList = ({
 
     criteria.attributeValueFilters =
         criteria.attributeValueFilters?.filter(Boolean)
-    if ('dataFilters' in criteria) {
-        const stageCriteria = criteria as ProgramStageQueryCriteria
-        stageCriteria.dataFilters = stageCriteria.dataFilters?.filter(Boolean)
+    if (cloned.type === 'programStageWorkingLists') {
+        cloned.criteria.dataFilters =
+            cloned.criteria.dataFilters?.filter(Boolean)
     }
     criteria.displayColumnOrder = criteria.displayColumnOrder?.filter(Boolean)
     if (criteria.displayColumnOrder && !criteria.displayColumnOrder.length) {
@@ -1452,7 +1519,7 @@ export const repairSavedWorkingList = ({
     }
 
     const normalized = normalizeSavedWorkingListResource({
-        resource: raw,
+        resource: cloned.raw,
         type: list.resource,
         programId,
         metadata,
@@ -1471,7 +1538,7 @@ export const repairSavedWorkingList = ({
             capabilities: metadata.capabilities,
             sharing: list.sharing,
             serializationContext,
-            existingResource: raw,
+            existingResource: cloned.raw,
         }),
     }
 }

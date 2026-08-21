@@ -4,9 +4,7 @@ import { ContextSelectorBar } from '../ContextSelectorBar'
 
 describe('ContextSelectorBar', () => {
     it('renders compact labelled selector items without a page heading', () => {
-        const actEnvironment = globalThis as typeof globalThis & {
-            IS_REACT_ACT_ENVIRONMENT?: boolean
-        }
+        const actEnvironment = globalThis
         const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
         actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
         const container = document.createElement('div')

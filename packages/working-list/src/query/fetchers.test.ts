@@ -1,5 +1,9 @@
 import { resolveWorkingListCapabilities } from '../api/capabilities'
-import { WorkingListBoundaryError, type WorkingListClient } from '../api/client'
+import {
+    WorkingListBoundaryError,
+    type DataEngineValue,
+    type WorkingListClient,
+} from '../api/client'
 import type {
     FieldCatalog,
     WorkingListConfiguration,
@@ -47,11 +51,14 @@ const pageInput = (client: WorkingListClient) => ({
     fields,
 })
 
-const clientReturning = (response: unknown) =>
-    ({
-        query: jest.fn().mockResolvedValue(response),
-        mutate: jest.fn(),
-    }) as unknown as WorkingListClient
+const clientReturning = (response: DataEngineValue): WorkingListClient => ({
+    async query(_request, schema) {
+        return schema.parse(response)
+    },
+    async mutate() {
+        throw new Error('Mutation is not implemented by this query-only fake')
+    },
+})
 
 describe('working-list page fetching with lenient data values', () => {
     let warn: jest.SpyInstance

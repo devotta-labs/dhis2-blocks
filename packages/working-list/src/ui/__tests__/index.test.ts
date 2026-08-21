@@ -1,17 +1,15 @@
-import {
-    WorkingList,
-    WorkingListQueryBoundary,
-    WorkingListTextProvider,
-    createWorkingListQueryClient,
-} from '../index'
+import { readFileSync } from 'node:fs'
 
-jest.mock('../WorkingList', () => ({ WorkingList: () => null }))
+const packageSurface = readFileSync(require.resolve('../index'), 'utf8')
 
 describe('working-list package UI surface', () => {
     it('exports the self-contained component and translation provider', () => {
-        expect(typeof WorkingList).toBe('function')
-        expect(typeof WorkingListQueryBoundary).toBe('function')
-        expect(typeof WorkingListTextProvider).toBe('function')
-        expect(typeof createWorkingListQueryClient).toBe('function')
+        expect(packageSurface).toContain(
+            "export { WorkingList, type WorkingListProps } from './WorkingList'"
+        )
+        expect(packageSurface).toContain('WorkingListQueryBoundary,')
+        expect(packageSurface).toContain("from './WorkingListQueryBoundary'")
+        expect(packageSurface).toContain('WorkingListTextProvider')
+        expect(packageSurface).toContain('createWorkingListQueryClient')
     })
 })

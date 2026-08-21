@@ -1,136 +1,18 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { WorkingListField } from '../../domain/model'
+import { z } from 'zod'
+import type {
+    WorkingListField,
+    WorkingListRowOpenEvent,
+    WorkingListSort,
+} from '../../domain/model'
 import type { WorkingListDisplayRow } from '../types'
-import { WorkingListTable } from '../WorkingListTable'
+import {
+    WorkingListTableView,
+    type WorkingListTableHeaderView,
+    type WorkingListTableViewModel,
+} from '../WorkingListTable/WorkingListTableView'
 import { WorkingListTextProvider } from '../WorkingListText'
-
-jest.mock('@dhis2/ui', () => ({
-    Pagination: () => null,
-    Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    IconWarningFilled16: () => null,
-}))
-
-jest.mock('@tanstack/react-table', () => {
-    const React = jest.requireActual<typeof import('react')>('react')
-    const feature = {}
-    type MockColumn = {
-        id: string
-        accessor?: (row: unknown) => unknown
-        enableSorting?: boolean
-        cell: (context: {
-            getValue: () => unknown
-            row: { original: unknown }
-        }) => React.ReactNode
-        header: React.ReactNode | (() => React.ReactNode)
-    }
-    const orderedColumns = (options: {
-        columns: MockColumn[]
-        state: {
-            columnOrder: string[]
-            columnVisibility: Record<string, boolean>
-            sorting: Array<{ id: string; desc: boolean }>
-        }
-    }) =>
-        options.state.columnOrder.flatMap((id) => {
-            const column = options.columns.find((item) => item.id === id)
-            return column && options.state.columnVisibility[id] !== false
-                ? [column]
-                : []
-        })
-
-    return {
-        columnOrderingFeature: feature,
-        columnVisibilityFeature: feature,
-        rowPaginationFeature: feature,
-        rowSortingFeature: feature,
-        tableFeatures: (features: unknown) => features,
-        createColumnHelper: () => ({
-            columns: (columns: unknown) => columns,
-            accessor: (
-                accessor: (row: unknown) => unknown,
-                definition: Record<string, unknown>
-            ) => ({ ...definition, accessor }),
-            display: (definition: Record<string, unknown>) => definition,
-        }),
-        useTable: (options: {
-            columns: MockColumn[]
-            data: Array<{ id: string }>
-            state: {
-                columnOrder: string[]
-                columnVisibility: Record<string, boolean>
-                sorting: Array<{ id: string; desc: boolean }>
-            }
-        }) => {
-            const columns = orderedColumns(options)
-            const columnApi = (column: (typeof columns)[number]) => ({
-                id: column.id,
-                columnDef: column,
-                getCanSort: () => column.enableSorting !== false,
-                getIsSorted: () => {
-                    const sort = options.state.sorting[0]
-                    return sort?.id === column.id
-                        ? sort.desc
-                            ? 'desc'
-                            : 'asc'
-                        : false
-                },
-                getToggleSortingHandler: () => () => undefined,
-            })
-            return {
-                FlexRender: ({
-                    header,
-                    cell,
-                }: {
-                    header?: { column: ReturnType<typeof columnApi> }
-                    cell?: {
-                        column: ReturnType<typeof columnApi>
-                        value: unknown
-                        row: { original: unknown }
-                    }
-                }) =>
-                    header
-                        ? React.createElement(
-                              React.Fragment,
-                              null,
-                              typeof header.column.columnDef.header ===
-                                  'function'
-                                  ? header.column.columnDef.header()
-                                  : header.column.columnDef.header
-                          )
-                        : cell
-                          ? cell.column.columnDef.cell({
-                                getValue: () => cell.value,
-                                row: cell.row,
-                            })
-                          : null,
-                getHeaderGroups: () => [
-                    {
-                        id: 'header',
-                        headers: columns.map((column) => ({
-                            id: column.id,
-                            column: columnApi(column),
-                        })),
-                    },
-                ],
-                getRowModel: () => ({
-                    rows: options.data.map((original, rowIndex) => ({
-                        id: original.id,
-                        original,
-                        getDisplayIndex: () => rowIndex,
-                        getVisibleCells: () =>
-                            columns.map((column) => ({
-                                id: `${original.id}-${column.id}`,
-                                column: columnApi(column),
-                                value: column.accessor?.(original),
-                                row: { original },
-                            })),
-                    })),
-                }),
-            }
-        },
-    }
-})
 
 const fields: WorkingListField[] = [
     {
@@ -168,29 +50,154 @@ const translate = (
         message
     )
 
+const TestCellScalarSchema = z.union([z.string(), z.number(), z.boolean()])
+
+interface WorkingListTableScenario {
+    rows: WorkingListDisplayRow[]
+    dataQualityMode: 'hidden' | 'highlighted'
+    sort: WorkingListSort
+    page: number
+    pageSize: number
+    hasNextPage: boolean
+    isInitialLoading: boolean
+    isUpdating: boolean
+    onPageChange: (page: number, pageSize: number) => void
+    onRowOpen: (event: WorkingListRowOpenEvent) => void
+    onSortChange: (sort: WorkingListSort) => void
+}
+
+const cellContent = (row: WorkingListDisplayRow, field: WorkingListField) => {
+    const cell = row.values[field.id]
+    if (!cell) {
+        return null
+    }
+    if (!cell.valid) {
+        if (cell.raw === undefined || cell.raw === null || cell.raw === '') {
+            return null
+        }
+        const scalar = TestCellScalarSchema.safeParse(cell.raw)
+        return scalar.success ? String(scalar.data) : '-'
+    }
+    if (cell.value === undefined) {
+        return null
+    }
+    if (field.valueType === 'URL') {
+        const href = z.string().url().parse(cell.value)
+        return (
+            <a href={href} rel="noreferrer noopener" target="_blank">
+                {href}
+            </a>
+        )
+    }
+    return String(TestCellScalarSchema.parse(cell.value))
+}
+
+const createViewModel = (
+    scenario: WorkingListTableScenario
+): WorkingListTableViewModel => {
+    const showIssues = scenario.dataQualityMode === 'highlighted'
+    const headers: WorkingListTableHeaderView[] = fields.map((field) => ({
+        id: field.id,
+        fieldId: field.id,
+        content: field.displayName,
+        canSort: true,
+        isDataQuality: false,
+        sorted:
+            scenario.sort.fieldId === field.id
+                ? scenario.sort.direction
+                : false,
+        onToggleSorting: () =>
+            scenario.onSortChange({
+                fieldId: field.id,
+                direction:
+                    scenario.sort.fieldId === field.id &&
+                    scenario.sort.direction === 'asc'
+                        ? 'desc'
+                        : 'asc',
+            }),
+    }))
+    if (showIssues) {
+        headers.push({
+            id: '__dataQuality',
+            fieldId: '__dataQuality',
+            content: 'Data quality',
+            canSort: false,
+            isDataQuality: true,
+            sorted: false,
+            onToggleSorting: () => undefined,
+        })
+    }
+    return {
+        headerGroups: [{ id: 'header', headers }],
+        rows: scenario.rows.map((row, displayIndex) => ({
+            id: row.id,
+            displayIndex,
+            original: row,
+            cells: [
+                ...fields.map((field) => ({
+                    id: `${row.id}-${field.id}`,
+                    fieldId: field.id,
+                    content: cellContent(row, field),
+                    isDataQuality: false,
+                })),
+                ...(showIssues
+                    ? [
+                          {
+                              id: `${row.id}-__dataQuality`,
+                              fieldId: '__dataQuality',
+                              content:
+                                  row.issues.length > 0 ? (
+                                      <span
+                                          role="img"
+                                          data-testid={`row-issues-${row.id}`}
+                                          aria-label={translate(
+                                              'Row has {{count}} data quality issues',
+                                              { count: row.issues.length }
+                                          )}
+                                      />
+                                  ) : null,
+                              isDataQuality: true,
+                          },
+                      ]
+                    : []),
+            ],
+        })),
+    }
+}
+
 const renderTable = (
     container: HTMLElement,
-    props: Partial<React.ComponentProps<typeof WorkingListTable>>
+    props: Partial<WorkingListTableScenario>
 ) => {
+    const scenario: WorkingListTableScenario = {
+        rows: [],
+        dataQualityMode: 'hidden',
+        sort: { fieldId: 'lastName', direction: 'desc' },
+        page: 1,
+        pageSize: 15,
+        hasNextPage: false,
+        isInitialLoading: false,
+        isUpdating: false,
+        onPageChange: () => undefined,
+        onRowOpen: () => undefined,
+        onSortChange: () => undefined,
+        ...props,
+    }
     const root = createRoot(container)
     act(() => {
         root.render(
             <WorkingListTextProvider translate={translate}>
-                <WorkingListTable
-                    allFields={fields}
-                    visibleColumnIds={fields.map((field) => field.id)}
-                    sort={{ fieldId: 'lastName', direction: 'desc' }}
-                    page={1}
-                    pageSize={15}
-                    hasNextPage={false}
-                    isInitialLoading={false}
-                    isUpdating={false}
-                    formattingContext={{ locale: 'en' }}
-                    onColumnConfigurationChange={() => undefined}
-                    onPageChange={() => undefined}
-                    onRowOpen={() => undefined}
-                    onSortChange={() => undefined}
-                    {...props}
+                <WorkingListTableView
+                    model={createViewModel(scenario)}
+                    visibleColumnCount={fields.length}
+                    dataQualityMode={scenario.dataQualityMode}
+                    page={scenario.page}
+                    pageSize={scenario.pageSize}
+                    hasNextPage={scenario.hasNextPage}
+                    isInitialLoading={scenario.isInitialLoading}
+                    isUpdating={scenario.isUpdating}
+                    onPageChange={scenario.onPageChange}
+                    onRowOpen={scenario.onRowOpen}
                 />
             </WorkingListTextProvider>
         )
@@ -199,9 +206,7 @@ const renderTable = (
 }
 
 const withActEnvironment = (run: () => void) => {
-    const actEnvironment = globalThis as typeof globalThis & {
-        IS_REACT_ACT_ENVIRONMENT?: boolean
-    }
+    const actEnvironment = globalThis
     const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
     actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
     try {

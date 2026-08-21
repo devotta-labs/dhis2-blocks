@@ -8,6 +8,7 @@ import type {
     Request,
     Response,
 } from '@playwright/test'
+import { z } from 'zod'
 import {
     e2eEnvironment,
     expect,
@@ -53,15 +54,74 @@ const OUTSIDER: E2ECredentials = {
     password: TEST_PASSWORD,
 }
 
-const environment = (
-    globalThis as typeof globalThis & {
-        process?: { env: Record<string, string | undefined> }
-    }
-).process?.env
+const environment = process.env
 const targetMajor = Number(environment?.E2E_EXPECTED_MAJOR)
 const typedRegistryTest = testFromDhis2Version(43)
 const typedRegistryTestTitle =
     'uses the typed registry for numeric, boolean, and option filters while keeping unsupported values display-only @dhis2-min-43'
+
+const OrganisationUnitSchema = z
+    .object({
+        id: z.string(),
+        displayName: z.string(),
+        ancestors: z.array(
+            z.object({ id: z.string(), displayName: z.string() })
+        ),
+    })
+    .passthrough()
+const MutationResponseSchema = z
+    .object({ response: z.object({ uid: z.string().optional() }).optional() })
+    .passthrough()
+const SavedTrackedEntityListSchema = z
+    .object({
+        publicAccess: z.string().optional(),
+        sharing: z.object({ public: z.string().optional() }).optional(),
+        access: z
+            .object({
+                write: z.boolean().optional(),
+                update: z.boolean().optional(),
+            })
+            .optional(),
+        entityQueryCriteria: z.object({}).passthrough(),
+    })
+    .passthrough()
+const SharingResponseSchema = z
+    .object({
+        object: z
+            .object({
+                userAccesses: z
+                    .array(
+                        z.object({
+                            id: z.string().optional(),
+                            access: z.string().optional(),
+                        })
+                    )
+                    .optional(),
+            })
+            .optional(),
+    })
+    .passthrough()
+const SavedListCollectionSchema = z
+    .object({
+        trackedEntityInstanceFilters: z
+            .array(z.object({ id: z.string().optional() }))
+            .optional(),
+    })
+    .passthrough()
+const SavedStageListSchema = z
+    .object({
+        publicAccess: z.string().optional(),
+        sharing: z.object({ public: z.string().optional() }).optional(),
+        programStage: z.object({ id: z.string().optional() }).optional(),
+    })
+    .passthrough()
+const RepairedListSchema = z
+    .object({
+        entityQueryCriteria: z
+            .object({ displayColumnOrder: z.array(z.string()).optional() })
+            .optional(),
+    })
+    .passthrough()
 
 const requestUrl = (request: Request | Response) => new URL(request.url())
 const isTrackerResource = (
@@ -74,7 +134,7 @@ const isTrackerResource = (
 const waitForTrackerResponse = async (
     page: Page,
     resource: 'trackedEntities' | 'events',
-    action: () => Promise<unknown>,
+    action: () => Promise<void | Response | null>,
     matches: (url: URL) => boolean = () => true
 ) => {
     const pending = page.waitForResponse(
@@ -316,11 +376,9 @@ test.describe('Capture context and generated tracker views', () => {
             }
         )
         expect(organisationUnitResponse.ok()).toBe(true)
-        const organisationUnit = (await organisationUnitResponse.json()) as {
-            id: string
-            displayName: string
-            ancestors: OrganisationUnitAncestor[]
-        }
+        const organisationUnit = OrganisationUnitSchema.parse(
+            await organisationUnitResponse.json()
+        )
         expect(organisationUnit).toMatchObject({
             id: ORG_UNIT,
             displayName: ORG_UNIT_NAME,
@@ -1137,9 +1195,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             await page.locator('[data-test="working-list-name-submit"]').click()
             const createResponse = await createResponsePromise
             expect(createResponse.ok(), await createResponse.text()).toBe(true)
-            const createBody = (await createResponse.json()) as {
-                response?: { uid?: string }
-            }
+            const createBody = MutationResponseSchema.parse(
+                await createResponse.json()
+            )
             createdId = createBody.response?.uid
             expect(createdId).toBeTruthy()
             await selectionNavigation
@@ -1156,12 +1214,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 }
             )
             expect(savedResponse.ok()).toBe(true)
-            const saved = (await savedResponse.json()) as {
-                publicAccess?: string
-                sharing?: { public?: string }
-                access?: { write?: boolean; update?: boolean }
-                entityQueryCriteria: Record<string, unknown>
-            }
+            const saved = SavedTrackedEntityListSchema.parse(
+                await savedResponse.json()
+            )
             expect(saved.sharing?.public ?? saved.publicAccess).toBe('--------')
             expect(saved.access).toMatchObject({ write: true, update: true })
             expect(saved.entityQueryCriteria).not.toHaveProperty('page')
@@ -1276,11 +1331,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 },
             })
             expect(sharingAfterGrant.ok()).toBe(true)
-            const grantedObject = (await sharingAfterGrant.json()) as {
-                object?: {
-                    userAccesses?: Array<{ id?: string; access?: string }>
-                }
-            }
+            const grantedObject = SharingResponseSchema.parse(
+                await sharingAfterGrant.json()
+            )
             expect(grantedObject.object?.userAccesses).toContainEqual(
                 expect.objectContaining({
                     id: 'WlE2eUsr002',
@@ -1302,9 +1355,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     if (!response.ok()) {
                         return false
                     }
-                    const body = (await response.json()) as {
-                        trackedEntityInstanceFilters?: Array<{ id?: string }>
-                    }
+                    const body = SavedListCollectionSchema.parse(
+                        await response.json()
+                    )
                     return body.trackedEntityInstanceFilters?.some(
                         (list) => list.id === createdId
                     )
@@ -1343,9 +1396,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 },
             })
             expect(sharingAfterRevoke.ok()).toBe(true)
-            const revokedObject = (await sharingAfterRevoke.json()) as {
-                object?: { userAccesses?: Array<{ id?: string }> }
-            }
+            const revokedObject = SharingResponseSchema.parse(
+                await sharingAfterRevoke.json()
+            )
             expect(
                 revokedObject.object?.userAccesses?.some(
                     (entry) => entry.id === 'WlE2eUsr002'
@@ -1366,9 +1419,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     if (!response.ok()) {
                         return false
                     }
-                    const body = (await response.json()) as {
-                        trackedEntityInstanceFilters?: Array<{ id?: string }>
-                    }
+                    const body = SavedListCollectionSchema.parse(
+                        await response.json()
+                    )
                     return body.trackedEntityInstanceFilters?.some(
                         (list) => list.id === createdId
                     )
@@ -1430,9 +1483,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             await page.locator('[data-test="working-list-name-submit"]').click()
             const createResponse = await createResponsePromise
             expect(createResponse.ok(), await createResponse.text()).toBe(true)
-            const createBody = (await createResponse.json()) as {
-                response?: { uid?: string }
-            }
+            const createBody = MutationResponseSchema.parse(
+                await createResponse.json()
+            )
             createdId = createBody.response?.uid
             expect(createdId).toBeTruthy()
             await selectionNavigation
@@ -1450,11 +1503,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 }
             )
             expect(saved.ok()).toBe(true)
-            const savedStageList = (await saved.json()) as {
-                publicAccess?: string
-                sharing?: { public?: string }
-                programStage?: { id?: string }
-            }
+            const savedStageList = SavedStageListSchema.parse(
+                await saved.json()
+            )
             expect(
                 savedStageList.sharing?.public ?? savedStageList.publicAccess
             ).toBe('--------')
@@ -1567,9 +1618,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 { params: { fields: 'id,entityQueryCriteria' } }
             )
             expect(repairedResponse.ok()).toBe(true)
-            const repaired = (await repairedResponse.json()) as {
-                entityQueryCriteria?: { displayColumnOrder?: string[] }
-            }
+            const repaired = RepairedListSchema.parse(
+                await repairedResponse.json()
+            )
             expect(repaired.entityQueryCriteria?.displayColumnOrder).toContain(
                 TEXT_ATTRIBUTE
             )
@@ -1669,10 +1720,7 @@ test.describe('accessibility and keyboard feedback', () => {
                         testId:
                             element.getAttribute('data-testid') ??
                             element.getAttribute('data-test'),
-                        className:
-                            typeof element.className === 'string'
-                                ? element.className
-                                : undefined,
+                        className: element.getAttribute('class') ?? undefined,
                         left: Math.round(rect.left * 100) / 100,
                         right: Math.round(rect.right * 100) / 100,
                         width: Math.round(rect.width * 100) / 100,

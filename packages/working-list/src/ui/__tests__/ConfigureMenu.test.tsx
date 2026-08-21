@@ -75,9 +75,7 @@ const renderMenu = (props: {
 }
 
 describe('ConfigureMenu', () => {
-    const actEnvironment = globalThis as typeof globalThis & {
-        IS_REACT_ACT_ENVIRONMENT?: boolean
-    }
+    const actEnvironment = globalThis
     let originalActEnvironment: boolean | undefined
     let originalRequestAnimationFrame: typeof window.requestAnimationFrame
     let originalCancelAnimationFrame: typeof window.cancelAnimationFrame

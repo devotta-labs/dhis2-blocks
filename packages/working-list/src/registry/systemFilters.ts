@@ -400,7 +400,7 @@ export const systemFilterRegistry: ReadonlyMap<
 > = new Map(definitions.map((definition) => [definition.id, definition]))
 
 export const getSystemFilterDefinition = (id: string) =>
-    systemFilterRegistry.get(id as SystemFilterId)
+    definitions.find((definition) => definition.id === id)
 
 export const getSystemFilterOperators = (
     id: string

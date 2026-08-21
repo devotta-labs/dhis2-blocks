@@ -15,9 +15,7 @@ const field: WorkingListField = {
 
 describe('MoreFilters keyboard focus', () => {
     it('focuses and activates DHIS2 menu items, then restores the trigger', () => {
-        const actEnvironment = globalThis as typeof globalThis & {
-            IS_REACT_ACT_ENVIRONMENT?: boolean
-        }
+        const actEnvironment = globalThis
         const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
         const originalRequestAnimationFrame = window.requestAnimationFrame
         const originalCancelAnimationFrame = window.cancelAnimationFrame

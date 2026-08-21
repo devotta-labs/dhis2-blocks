@@ -1,15 +1,34 @@
 import { test, expect } from '../fixtures/test'
+import { z } from 'zod'
 
 const SEEDED_PROGRAM = 'WlE2ePrg001'
 const SEEDED_STAGE = 'WlE2eStg001'
 const SEEDED_ORG_UNIT = 'DiszpKrYNg8'
 const SEEDED_TRACKED_ENTITY = 'WlE2eTei001'
 const SEEDED_EVENT = 'WlE2eEvt001'
-const environment = (
-    globalThis as typeof globalThis & {
-        process?: { env: Record<string, string | undefined> }
-    }
-).process?.env
+const environment = process.env
+
+const ServerInfoSchema = z.object({ version: z.string().min(1) }).passthrough()
+const SeededProgramSchema = z
+    .object({
+        id: z.string(),
+        programType: z.string(),
+        programTrackedEntityAttributes: z.array(
+            z.object({
+                trackedEntityAttribute: z.object({ valueType: z.string() }),
+            })
+        ),
+        programStages: z.array(
+            z.object({
+                programStageDataElements: z.array(
+                    z.object({
+                        dataElement: z.object({ valueType: z.string() }),
+                    })
+                ),
+            })
+        ),
+    })
+    .passthrough()
 
 test.describe('real DHIS2 server contract', () => {
     test('runs the requested supported server generation', async ({
@@ -20,7 +39,7 @@ test.describe('real DHIS2 server contract', () => {
         )
         expect(response.ok()).toBe(true)
 
-        const info = (await response.json()) as { version: string }
+        const info = ServerInfoSchema.parse(await response.json())
         const expectedMajor = environment?.E2E_EXPECTED_MAJOR
         expect(info.version).toBeTruthy()
 
@@ -44,18 +63,7 @@ test.describe('real DHIS2 server contract', () => {
         )
         expect(response.ok()).toBe(true)
 
-        const program = (await response.json()) as {
-            id: string
-            programType: string
-            programTrackedEntityAttributes: Array<{
-                trackedEntityAttribute: { valueType: string }
-            }>
-            programStages: Array<{
-                programStageDataElements: Array<{
-                    dataElement: { valueType: string }
-                }>
-            }>
-        }
+        const program = SeededProgramSchema.parse(await response.json())
 
         expect(program.id).toBe(SEEDED_PROGRAM)
         expect(program.programType).toBe('WITH_REGISTRATION')

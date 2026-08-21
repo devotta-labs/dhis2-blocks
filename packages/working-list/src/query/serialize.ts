@@ -69,9 +69,7 @@ export const serializeWorkingListRequest = ({
     serializationContext,
     today,
 }: SerializeWorkingListRequestInput): ResourceRequest => {
-    const configuration = WorkingListConfigurationSchema.parse(
-        rawConfiguration
-    ) as WorkingListConfiguration
+    const configuration = WorkingListConfigurationSchema.parse(rawConfiguration)
     const pagination = WorkingListPaginationSchema.parse(rawPagination)
     const parsedContext = WorkingListContextSchema.parse(context)
     if (parsedContext.programId !== configuration.programId) {

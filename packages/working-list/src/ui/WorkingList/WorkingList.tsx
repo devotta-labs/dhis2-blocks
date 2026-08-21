@@ -34,10 +34,10 @@ import {
     savedWorkingListsQueryOptions,
     type NormalizedSavedWorkingList,
 } from '../../api/savedLists'
-import type {
-    ProgramStageWorkingList,
-    TrackedEntityInstanceFilter,
-    TrackerProgram,
+import {
+    ProgramStageWorkingListSchema,
+    TrackedEntityInstanceFilterSchema,
+    type TrackerProgram,
 } from '../../api/schemas'
 import type { WorkingListSystemInfo } from '../../api/systemInfo'
 import type {
@@ -268,10 +268,10 @@ const createSavedListRepairDecisions = (
     )
     const rawColumns =
         list.resource === 'trackedEntityInstanceFilters'
-            ? (list.raw as TrackedEntityInstanceFilter).entityQueryCriteria
-                  ?.displayColumnOrder
-            : (list.raw as ProgramStageWorkingList).programStageQueryCriteria
-                  ?.displayColumnOrder
+            ? TrackedEntityInstanceFilterSchema.parse(list.raw)
+                  .entityQueryCriteria?.displayColumnOrder
+            : ProgramStageWorkingListSchema.parse(list.raw)
+                  .programStageQueryCriteria?.displayColumnOrder
     const validColumnCount = candidate
         ? candidate.columns.filter(
               (_column, index) => !invalidColumnPaths.has(`columns.${index}`)
@@ -279,7 +279,7 @@ const createSavedListRepairDecisions = (
         : Math.max((rawColumns?.length ?? 0) - invalidColumnPaths.size, 0)
     const rawProgramStageId =
         list.resource === 'programStageWorkingLists'
-            ? (list.raw as ProgramStageWorkingList).programStage.id
+            ? ProgramStageWorkingListSchema.parse(list.raw).programStage.id
             : undefined
     const defaultColumns =
         candidate?.mode === 'event'
@@ -468,9 +468,7 @@ const WorkingListInstance = ({
     const translate = useWorkingListText()
     const i18n = useMemo(() => ({ t: translate }), [translate])
     const queryClient = useQueryClient()
-    const locale =
-        configuredLocale ??
-        (typeof navigator === 'undefined' ? 'en' : navigator.language)
+    const locale = configuredLocale ?? globalThis.navigator?.language ?? 'en'
     const valueTransformers = useMemo(
         () =>
             createWorkingListValueTransformers({
@@ -1057,9 +1055,7 @@ const WorkingListInstance = ({
                 : undefined,
         [metadata, program.id, repairPlan, selectedList, valueTransformers]
     )
-    const selectedListAccess = selectedList?.sharing.access as
-        | Record<string, unknown>
-        | undefined
+    const selectedListAccess = selectedList?.sharing.access
     const hasSelectedListUpdateAccess =
         selectedListAccess?.write === true && selectedListAccess.update === true
     const repairedResource =

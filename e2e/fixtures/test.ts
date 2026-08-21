@@ -25,11 +25,7 @@ type WorkingListFixtures = {
     page: Page
 }
 
-const environment = (
-    globalThis as typeof globalThis & {
-        process?: { env: Record<string, string | undefined> }
-    }
-).process?.env
+const environment = process.env
 const username = environment?.E2E_DHIS2_USERNAME ?? 'admin'
 const password = environment?.E2E_DHIS2_PASSWORD ?? 'district'
 

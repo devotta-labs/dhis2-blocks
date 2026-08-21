@@ -216,6 +216,8 @@ export const repairConfigurationReferences = ({
         sort: { ...configuration.sort },
     }
     const invalidDecisions: StaleReferenceIssue[] = []
+    const removedFilterIndexes = new Set<number>()
+    const removedColumnIndexes = new Set<number>()
 
     for (const issue of issues) {
         const decision = decisionsByPath.get(issue.path)
@@ -237,7 +239,7 @@ export const repairConfigurationReferences = ({
                 continue
             }
             if (decision.action === 'remove') {
-                candidate.filters[index] = undefined as never
+                removedFilterIndexes.add(index)
             } else if (decision.action === 'replaceFilter') {
                 candidate.filters[index] = decision.filter
             } else {
@@ -257,7 +259,7 @@ export const repairConfigurationReferences = ({
                 continue
             }
             if (decision.action === 'remove') {
-                candidate.columns[index] = undefined as never
+                removedColumnIndexes.add(index)
             } else if (decision.action === 'replaceColumn') {
                 candidate.columns[index] = decision.fieldId
             } else {
@@ -280,8 +282,12 @@ export const repairConfigurationReferences = ({
     if (invalidDecisions.length) {
         return { status: 'blocked', issues: invalidDecisions }
     }
-    candidate.filters = candidate.filters.filter(Boolean)
-    candidate.columns = candidate.columns.filter(Boolean)
+    candidate.filters = candidate.filters.filter(
+        (_filter, index) => !removedFilterIndexes.has(index)
+    )
+    candidate.columns = candidate.columns.filter(
+        (_column, index) => !removedColumnIndexes.has(index)
+    )
     if (!candidate.columns.length) {
         return {
             status: 'blocked',
@@ -312,7 +318,7 @@ export const repairConfigurationReferences = ({
             ],
         }
     }
-    const parsed = parsedResult.data as WorkingListConfiguration
+    const parsed = parsedResult.data
     const validation = validateConfigurationReferences(parsed, metadata)
     if ('issues' in validation) {
         return { status: 'blocked', issues: validation.issues }

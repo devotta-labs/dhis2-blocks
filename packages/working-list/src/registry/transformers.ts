@@ -18,6 +18,7 @@ import type {
     CellFormattingContext,
     FilterParsingContext,
     FilterSerializationContext,
+    WorkingListRawValue,
 } from './valueTypes'
 
 type MultiCalendarIdentifier = Parameters<typeof convertFromIso8601>[1]
@@ -25,15 +26,16 @@ type MultiCalendarIdentifier = Parameters<typeof convertFromIso8601>[1]
 const DATE_VALUE_TYPES = new Set<Dhis2ValueType>(['AGE', 'DATE', 'DATETIME'])
 
 /** Official Unicode calendar identifiers for DHIS2 calendars supported by Intl. */
-const INTL_CALENDAR_BY_DHIS2: Partial<Record<WorkingListCalendar, string>> = {
+const INTL_CALENDAR_BY_DHIS2 = {
     coptic: 'coptic',
     ethiopian: 'ethiopic',
     gregorian: 'gregory',
     islamic: 'islamic',
     iso8601: 'gregory',
+    nepali: undefined,
     persian: 'persian',
     thai: 'buddhist',
-}
+} satisfies Record<WorkingListCalendar, string | undefined>
 
 const pad = (value: number, length = 2) =>
     value.toString().padStart(length, '0')
@@ -75,16 +77,18 @@ const parseClientDate = (value: string): CalendarDateParts => {
 export const toMultiCalendarIdentifier = (
     calendar: WorkingListSystemInfo['calendar']
 ): MultiCalendarIdentifier =>
-    ({
-        coptic: 'coptic',
-        ethiopian: 'ethiopic',
-        gregorian: 'gregory',
-        islamic: 'islamic',
-        iso8601: 'iso8601',
-        nepali: 'nepali',
-        persian: 'persian',
-        thai: 'buddhist',
-    })[calendar] as MultiCalendarIdentifier
+    (
+        ({
+            coptic: 'coptic',
+            ethiopian: 'ethiopic',
+            gregorian: 'gregory',
+            islamic: 'islamic',
+            iso8601: 'iso8601',
+            nepali: 'nepali',
+            persian: 'persian',
+            thai: 'buddhist',
+        }) satisfies Record<WorkingListCalendar, MultiCalendarIdentifier>
+    )[calendar]
 
 const clientDateString = ({ year, month, day }: CalendarDateParts) =>
     `${pad(year, 4)}-${pad(month)}-${pad(day)}`
@@ -260,7 +264,7 @@ export interface WorkingListValueTransformers {
     serverToView(value: string, valueType: Dhis2ValueType): string
     clientToServer(value: string, valueType: Dhis2ValueType): string
     isValidClientDate(value: string): boolean
-    formatListValue(value: unknown, field: WorkingListField): string
+    formatListValue(value: WorkingListRawValue, field: WorkingListField): string
     resolveRelativeDate(value: {
         period?: RelativeDatePeriod
         startBuffer?: number
@@ -327,23 +331,25 @@ export const createWorkingListValueTransformers = (
                 )
             )
             try {
-                const formatter = new Intl.DateTimeFormat(options.locale, {
+                const formatOptions: Intl.DateTimeFormatOptions = {
                     calendar: intlCalendar,
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric',
-                    ...(valueType === 'DATETIME' && timePart
-                        ? {
-                              hour: 'numeric' as const,
-                              minute: '2-digit' as const,
-                              second: '2-digit' as const,
-                          }
-                        : {}),
                     // Tracker values are calendar-local. Constructing the
                     // original ISO lexical fields in UTC preserves their date
                     // and time instead of applying a host-zone or offset shift.
                     timeZone: 'UTC',
-                })
+                }
+                if (valueType === 'DATETIME' && timePart) {
+                    formatOptions.hour = 'numeric'
+                    formatOptions.minute = '2-digit'
+                    formatOptions.second = '2-digit'
+                }
+                const formatter = new Intl.DateTimeFormat(
+                    options.locale,
+                    formatOptions
+                )
                 if (formatter.resolvedOptions().calendar === intlCalendar) {
                     return formatter.format(lexicalServerValue)
                 }

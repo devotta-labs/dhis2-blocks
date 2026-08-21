@@ -33,13 +33,14 @@ const collectValueOrganisationUnits = (
     fields: FieldCatalog
 ) => {
     for (const [fieldId, cell] of Object.entries(values)) {
+        const organisationUnitId = cell.valid
+            ? z.string().min(1).safeParse(cell.value)
+            : null
         if (
             fields.get(fieldId)?.valueType === 'ORGANISATION_UNIT' &&
-            cell.valid &&
-            typeof cell.value === 'string' &&
-            cell.value
+            organisationUnitId?.success
         ) {
-            result.add(cell.value)
+            result.add(organisationUnitId.data)
         }
     }
 }

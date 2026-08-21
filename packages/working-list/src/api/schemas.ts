@@ -13,9 +13,13 @@ const LooseReferenceSchema = z
     })
     .passthrough()
 
-const NormalizedReferenceSchema = z
-    .union([LooseReferenceSchema, z.string().min(1)])
-    .transform((value) => (typeof value === 'string' ? { id: value } : value))
+const NormalizedReferenceSchema = z.union([
+    LooseReferenceSchema,
+    z
+        .string()
+        .min(1)
+        .transform((id) => ({ id })),
+])
 
 export const OptionSchema = z
     .object({
@@ -200,10 +204,7 @@ export const TrackedEntitiesResponseSchema = z
 
 export const normalizeTrackedEntitiesResponse = (
     response: z.infer<typeof TrackedEntitiesResponseSchema>
-): {
-    trackedEntities: TrackedEntity[]
-    pager?: z.infer<typeof PagerSchema>
-} => {
+) => {
     return {
         trackedEntities: response.trackedEntities ?? response.instances ?? [],
         pager: response.pager,
@@ -282,7 +283,7 @@ export const EventsResponseSchema = z
 
 export const normalizeEventsResponse = (
     response: z.infer<typeof EventsResponseSchema>
-): { events: TrackerEvent[]; pager?: z.infer<typeof PagerSchema> } => {
+) => {
     return {
         events: response.events ?? response.instances ?? [],
         pager: response.pager,
@@ -312,7 +313,7 @@ export const SharingAccessEntrySchema = z
     })
     .passthrough()
 
-const DateFilterContentsSchema = z
+export const DateFilterContentsSchema = z
     .object({
         type: z.enum(['ABSOLUTE', 'RELATIVE']),
         startDate: OptionalStringSchema,
@@ -424,7 +425,7 @@ export const SavedValueFilterSchema = z
         }
     })
 
-const SavedCriteriaBaseShape = {
+const SavedCriteriaFields = {
     enrollmentStatus: TrackerEnrollmentStatusSchema.nullish(),
     order: OptionalStringSchema,
     displayColumnOrder: OptionalStringArraySchema,
@@ -436,7 +437,7 @@ const SavedCriteriaBaseShape = {
 
 export const EntityQueryCriteriaSchema = z
     .object({
-        ...SavedCriteriaBaseShape,
+        ...SavedCriteriaFields,
         enrollmentCreatedDate: DateFilterContentsSchema.nullish(),
         enrollmentIncidentDate: DateFilterContentsSchema.nullish(),
     })
@@ -444,7 +445,7 @@ export const EntityQueryCriteriaSchema = z
 
 export const ProgramStageQueryCriteriaSchema = z
     .object({
-        ...SavedCriteriaBaseShape,
+        ...SavedCriteriaFields,
         enrolledAt: DateFilterContentsSchema.nullish(),
         enrollmentOccurredAt: DateFilterContentsSchema.nullish(),
         eventStatus: TrackerEventStatusSchema.nullish(),
@@ -454,7 +455,7 @@ export const ProgramStageQueryCriteriaSchema = z
     })
     .passthrough()
 
-const SharingShape = {
+const SharingFields = {
     access: AccessSchema.optional(),
     externalAccess: z.boolean().optional(),
     publicAccess: SharingAccessStringSchema.optional(),
@@ -470,7 +471,7 @@ export const TrackedEntityInstanceFilterSchema = z
         sortOrder: z.number().int().nonnegative().optional(),
         program: NormalizedReferenceSchema,
         entityQueryCriteria: EntityQueryCriteriaSchema.optional(),
-        ...SharingShape,
+        ...SharingFields,
     })
     .passthrough()
 
@@ -482,7 +483,7 @@ export const ProgramStageWorkingListSchema = z
         program: NormalizedReferenceSchema,
         programStage: NormalizedReferenceSchema,
         programStageQueryCriteria: ProgramStageQueryCriteriaSchema.optional(),
-        ...SharingShape,
+        ...SharingFields,
     })
     .passthrough()
 

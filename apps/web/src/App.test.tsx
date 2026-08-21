@@ -1,23 +1,23 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import App from './App'
+import { AppView } from './AppView'
 import {
     isGuardedAppUrlTransition,
     parseAppUrlState,
     serializeAppUrlState,
 } from './app/urlState'
 
-jest.mock('./app/AppShell', () => ({
-    AppShell: () => (
-        <main aria-label="Working lists" data-testid="working-list-app">
-            Working lists
-        </main>
-    ),
-}))
+const TestAppShell = () => (
+    <main aria-label="Working lists" data-testid="working-list-app">
+        Working lists
+    </main>
+)
 
 describe('application entry point', () => {
     it('renders an accessible application landmark', () => {
-        const markup = renderToStaticMarkup(<App />)
+        const markup = renderToStaticMarkup(
+            <AppView AppShellComponent={TestAppShell} />
+        )
 
         expect(markup).toContain('<main')
         expect(markup).toContain('aria-label="Working lists"')

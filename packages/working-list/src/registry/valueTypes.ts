@@ -56,36 +56,50 @@ export interface CellFormattingContext {
  * app: the fileResource UID plus tracker-scoped download URLs. Display names
  * are resolved separately via resolveFileResourceName.
  */
-export interface WorkingListFileValue {
-    id: string
-    url: string
-    previewUrl?: string
-}
+const WorkingListFileValueSchema = z.object({
+    id: z.string(),
+    url: z.string(),
+    previewUrl: z.string().optional(),
+})
+
+export type WorkingListFileValue = z.infer<typeof WorkingListFileValueSchema>
 
 /** Client-side value for the assigned-user column, mirroring the Capture app. */
-export interface WorkingListUserValue {
-    id: string
-    name: string
-    username?: string
-    firstName?: string
-    surname?: string
-}
+const WorkingListUserValueSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    username: z.string().optional(),
+    firstName: z.string().optional(),
+    surname: z.string().optional(),
+})
+
+export type WorkingListUserValue = z.infer<typeof WorkingListUserValueSchema>
+
+/** Parses the raw tracker values accepted by registry formatting and decoding. */
+export const WorkingListRawValueSchema = z.union([
+    z.string(),
+    z.number().finite(),
+    z.boolean(),
+    WorkingListFileValueSchema,
+    WorkingListUserValueSchema,
+    z.null(),
+    z.undefined(),
+])
+
+/** Values accepted after tracker responses have crossed their schema boundary. */
+export type WorkingListRawValue = z.infer<typeof WorkingListRawValueSchema>
+
+export type WorkingListParsedValue = string | number | boolean
 
 export const isWorkingListFileValue = (
-    value: unknown
+    value: WorkingListRawValue
 ): value is WorkingListFileValue =>
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as WorkingListFileValue).id === 'string' &&
-    typeof (value as WorkingListFileValue).url === 'string'
+    WorkingListFileValueSchema.safeParse(value).success
 
 export const isWorkingListUserValue = (
-    value: unknown
+    value: WorkingListRawValue
 ): value is WorkingListUserValue =>
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as WorkingListUserValue).id === 'string' &&
-    typeof (value as WorkingListUserValue).name === 'string'
+    WorkingListUserValueSchema.safeParse(value).success
 
 export type CellDisplayValue =
     | { kind: 'empty'; text: '' }
@@ -109,15 +123,15 @@ export type CellDisplayValue =
 export interface ValueTypeDefinition {
     valueType: Dhis2ValueType
     editor: FilterEditorKind
-    parseServerValue(value: unknown): unknown
-    parseEditorValue(value: unknown): FilterValue
+    parseServerValue(value: WorkingListRawValue): WorkingListParsedValue
+    parseEditorValue(value: FilterValue): FilterValue
     format(
-        value: unknown,
+        value: WorkingListRawValue,
         field: WorkingListField,
         context?: CellFormattingContext
     ): string
     display(
-        value: unknown,
+        value: WorkingListRawValue,
         field: WorkingListField,
         context?: CellFormattingContext
     ): CellDisplayValue
@@ -167,7 +181,7 @@ const escapeFilterValue = (value: string) =>
     value.replaceAll('/', '//').replaceAll(':', '/:').replaceAll(',', '/,')
 
 const operatorToApi = (operator: FilterOperator) => {
-    const operators: Partial<Record<FilterOperator, string>> = {
+    const operators = {
         like: 'like',
         startsWith: 'sw',
         endsWith: 'ew',
@@ -179,7 +193,8 @@ const operatorToApi = (operator: FilterOperator) => {
         in: 'in',
         empty: 'null',
         notEmpty: '!null',
-    }
+        range: undefined,
+    } satisfies Record<FilterOperator, string | undefined>
     const result = operators[operator]
     if (!result) {
         throw new Error(`Filter operator ${operator} has no scalar API mapping`)
@@ -187,8 +202,10 @@ const operatorToApi = (operator: FilterOperator) => {
     return result
 }
 
-const apiToOperator = (operator: string): FilterOperator => {
-    const operators: Record<string, FilterOperator> = {
+type SavedScalarApiOperator = 'like' | 'sw' | 'ew' | 'eq' | 'ge' | 'le' | 'in'
+
+const apiToOperator = (operator: SavedScalarApiOperator): FilterOperator => {
+    const operators = {
         like: 'like',
         sw: 'startsWith',
         ew: 'endsWith',
@@ -196,7 +213,7 @@ const apiToOperator = (operator: string): FilterOperator => {
         ge: 'greaterThanOrEqual',
         le: 'lessThanOrEqual',
         in: 'in',
-    }
+    } satisfies Record<SavedScalarApiOperator, FilterOperator>
     const result = operators[operator]
     if (!result) {
         throw new Error(`Unknown saved-list filter operator: ${operator}`)
@@ -204,10 +221,10 @@ const apiToOperator = (operator: string): FilterOperator => {
     return result
 }
 
-const emptyOperators = (capabilities: WorkingListCapabilities) =>
-    capabilities.emptyValueFilters
-        ? (['empty', 'notEmpty'] as FilterOperator[])
-        : []
+const emptyOperators = (
+    capabilities: WorkingListCapabilities
+): FilterOperator[] =>
+    capabilities.emptyValueFilters ? ['empty', 'notEmpty'] : []
 
 const ensureEmptyValue = (filter: AppliedFilter) => {
     if (filter.value.kind !== 'empty') {
@@ -224,7 +241,7 @@ const serializeEmptySaved = (filter: AppliedFilter) => {
 }
 
 const parseEmptySaved = (filter: SavedValueFilter): FilterValue | undefined =>
-    typeof filter.null === 'boolean'
+    filter.null === true || filter.null === false
         ? { kind: 'empty', isEmpty: filter.null }
         : undefined
 
@@ -262,7 +279,7 @@ const textOperators = (
 }
 
 const formatText = (
-    value: unknown,
+    value: WorkingListRawValue,
     field: WorkingListField,
     context?: CellFormattingContext
 ) => {
@@ -299,14 +316,14 @@ const formatText = (
 const fileResourceFallbackUrl = (id: string) =>
     `/api/fileResources/${encodeURIComponent(id)}/data`
 
-const toFileValue = (value: unknown): WorkingListFileValue =>
+const toFileValue = (value: WorkingListRawValue): WorkingListFileValue =>
     isWorkingListFileValue(value)
         ? value
         : { id: String(value), url: fileResourceFallbackUrl(String(value)) }
 
 const textDisplay = (input: {
     valueType: Dhis2ValueType
-    value: unknown
+    value: WorkingListRawValue
     field: WorkingListField
     context?: CellFormattingContext
 }): CellDisplayValue => {
@@ -356,16 +373,11 @@ const textDisplay = (input: {
     }
     if (valueType === 'COORDINATE') {
         try {
-            const coordinate = JSON.parse(String(value)) as unknown
-            if (
-                Array.isArray(coordinate) &&
-                coordinate.length === 2 &&
-                coordinate.every(
-                    (entry) =>
-                        typeof entry === 'number' && Number.isFinite(entry)
-                )
-            ) {
-                const [longitude, latitude] = coordinate
+            const coordinate = z
+                .tuple([z.number().finite(), z.number().finite()])
+                .safeParse(JSON.parse(String(value)))
+            if (coordinate.success) {
+                const [longitude, latitude] = coordinate.data
                 return {
                     kind: 'coordinate',
                     text,
@@ -380,21 +392,45 @@ const textDisplay = (input: {
     return { kind: 'text', text }
 }
 
-const parseText = (value: unknown) => {
-    if (typeof value !== 'string') {
+const rawValueType = (value: WorkingListRawValue) => {
+    if (value === undefined) {
+        return 'undefined'
+    }
+    if (
+        value === null ||
+        isWorkingListFileValue(value) ||
+        isWorkingListUserValue(value)
+    ) {
+        return 'object'
+    }
+    if (z.number().safeParse(value).success) {
+        return 'number'
+    }
+    if (z.boolean().safeParse(value).success) {
+        return 'boolean'
+    }
+    return 'string'
+}
+
+const parseText = (value: WorkingListRawValue) => {
+    const result = z.string().safeParse(value)
+    if (!result.success) {
         throw new ValueParseError(
             'Expected a string value, received {{type}}',
             {
-                type: typeof value,
+                type: rawValueType(value),
             }
         )
     }
-    return value
+    return result.data
 }
 
 const UID_PATTERN = /^[A-Za-z][A-Za-z0-9]{10}$/
 
-const parseDhis2Uid = (value: unknown, valueType: Dhis2ValueType) => {
+const parseDhis2Uid = (
+    value: WorkingListRawValue,
+    valueType: Dhis2ValueType
+) => {
     const parsed = parseText(value)
     if (!UID_PATTERN.test(parsed)) {
         throw new ValueParseError('{{valueType}} requires a DHIS2 UID', {
@@ -452,7 +488,7 @@ const isValidEditorDate = (value: string) => {
 
 const parseDateValue = (
     valueType: 'AGE' | 'DATE' | 'DATETIME',
-    value: unknown
+    value: WorkingListRawValue
 ) => {
     const parsed = parseText(value)
     if (valueType === 'DATE' || valueType === 'AGE') {
@@ -473,7 +509,7 @@ const parseDateValue = (
     return parsed
 }
 
-const parseTimeValue = (value: unknown) => {
+const parseTimeValue = (value: WorkingListRawValue) => {
     const parsed = parseText(value)
     if (!isValidTime(parsed)) {
         // No colon in the message: i18next treats ':' as a namespace separator.
@@ -484,7 +520,10 @@ const parseTimeValue = (value: unknown) => {
     return parsed
 }
 
-const parseTextValue = (valueType: Dhis2ValueType, value: unknown) => {
+const parseTextValue = (
+    valueType: Dhis2ValueType,
+    value: WorkingListRawValue
+) => {
     const parsed = parseText(value)
     switch (valueType) {
         case 'LETTER':
@@ -513,21 +552,19 @@ const parseTextValue = (valueType: Dhis2ValueType, value: unknown) => {
             break
         }
         case 'COORDINATE': {
-            let coordinate: unknown
+            let coordinateInput: unknown
             try {
-                coordinate = JSON.parse(parsed)
+                coordinateInput = JSON.parse(parsed)
             } catch {
                 throw new ValueParseError('COORDINATE is not valid JSON')
             }
+            const coordinate = z
+                .tuple([z.number().finite(), z.number().finite()])
+                .safeParse(coordinateInput)
             if (
-                !Array.isArray(coordinate) ||
-                coordinate.length !== 2 ||
-                coordinate.some(
-                    (entry) =>
-                        typeof entry !== 'number' || !Number.isFinite(entry)
-                ) ||
-                Math.abs(coordinate[0]) > 180 ||
-                Math.abs(coordinate[1]) > 90
+                !coordinate.success ||
+                Math.abs(coordinate.data[0]) > 180 ||
+                Math.abs(coordinate.data[1]) > 90
             ) {
                 throw new ValueParseError(
                     'COORDINATE requires [longitude, latitude]'
@@ -559,7 +596,7 @@ const parseTextValue = (valueType: Dhis2ValueType, value: unknown) => {
             } catch {
                 throw new ValueParseError('GEOJSON is not valid JSON')
             }
-            if (!geoJson || typeof geoJson !== 'object') {
+            if (!z.record(z.string(), z.json()).safeParse(geoJson).success) {
                 throw new ValueParseError('GEOJSON requires an object')
             }
             break
@@ -634,16 +671,22 @@ const textDefinition = (valueType: Dhis2ValueType): ValueTypeDefinition => ({
                 values: filter.in,
             })
         }
-        const entry = ['eq', 'sw', 'ew', 'like']
-            .map((key) => [key, filter[key as keyof SavedValueFilter]] as const)
-            .find(([, value]) => typeof value === 'string')
+        const entries = [
+            ['eq', filter.eq],
+            ['sw', filter.sw],
+            ['ew', filter.ew],
+            ['like', filter.like],
+        ] as const
+        const entry = entries.find(
+            ([, value]) => z.string().safeParse(value).success
+        )
         if (!entry) {
             throw new Error(`Saved ${valueType} filter has no value`)
         }
         apiToOperator(entry[0])
         return FilterValueSchema.parse({
             kind: 'text',
-            value: entry[1] as string,
+            value: z.string().parse(entry[1]),
         })
     },
 })
@@ -690,13 +733,18 @@ const validateNumberForValueType = (
     }
 }
 
-const parseNumberServerValue = (valueType: Dhis2ValueType, value: unknown) => {
-    if (typeof value === 'string' && value.trim() === '') {
+const parseNumberServerValue = (
+    valueType: Dhis2ValueType,
+    value: WorkingListRawValue
+) => {
+    const stringValue = z.string().safeParse(value)
+    if (stringValue.success && stringValue.data.trim() === '') {
         throw new ValueParseError('Expected a finite {{valueType}} value', {
             valueType,
         })
     }
-    const parsed = typeof value === 'number' ? value : Number(value)
+    const numberValue = z.number().safeParse(value)
+    const parsed = numberValue.success ? numberValue.data : Number(value)
     if (!Number.isFinite(parsed)) {
         throw new ValueParseError('Expected a finite {{valueType}} value', {
             valueType,
@@ -706,7 +754,10 @@ const parseNumberServerValue = (valueType: Dhis2ValueType, value: unknown) => {
     return parsed
 }
 
-const parseNumericEditorValue = (valueType: Dhis2ValueType, value: unknown) => {
+const parseNumericEditorValue = (
+    valueType: Dhis2ValueType,
+    value: FilterValue
+) => {
     const parsed = FilterValueSchema.parse(value)
     if (parsed.kind !== 'numberRange' && parsed.kind !== 'empty') {
         throw new Error(`${valueType} expects a numeric range or empty value`)
@@ -739,7 +790,8 @@ const numericDefinition = (valueType: Dhis2ValueType): ValueTypeDefinition => ({
         return parseNumericEditorValue(valueType, value)
     },
     format(value, _field, context) {
-        const parsed = typeof value === 'number' ? value : Number(value)
+        const numberValue = z.number().safeParse(value)
+        const parsed = numberValue.success ? numberValue.data : Number(value)
         if (!Number.isFinite(parsed)) {
             return ''
         }
@@ -916,7 +968,7 @@ const defaultResolveRelativeDate = (
 
 const parseDateEditorValue = (
     valueType: 'AGE' | 'DATE' | 'DATETIME',
-    value: unknown
+    value: FilterValue
 ) => {
     const parsed = FilterValueSchema.parse(value)
     if (parsed.kind !== 'dateRange' && parsed.kind !== 'empty') {
@@ -949,20 +1001,22 @@ const dateDefinition = (
         return parseDateEditorValue(valueType, value)
     },
     format(value, _field, context) {
-        if (typeof value !== 'string' || !value) {
+        const stringValue = z.string().safeParse(value)
+        if (!stringValue.success || !stringValue.data) {
             return ''
         }
-        const transformed = context?.formatDate?.(value, valueType)
+        const parsedValue = stringValue.data
+        const transformed = context?.formatDate?.(parsedValue, valueType)
         if (transformed !== undefined) {
             return transformed
         }
         const date = new Date(
             valueType === 'DATE' || valueType === 'AGE'
-                ? `${value.slice(0, 10)}T00:00:00Z`
-                : value
+                ? `${parsedValue.slice(0, 10)}T00:00:00Z`
+                : parsedValue
         )
         if (Number.isNaN(date.getTime())) {
-            return value
+            return parsedValue
         }
         const options: Intl.DateTimeFormatOptions =
             valueType === 'DATETIME'
@@ -1039,8 +1093,7 @@ const dateDefinition = (
         if (!filter.dateFilter) {
             throw new Error(`Saved ${valueType} filter has no dateFilter`)
         }
-        return parseDateEditorValue(
-            valueType,
+        const value = FilterValueSchema.parse(
             filter.dateFilter.type === 'ABSOLUTE'
                 ? {
                       kind: 'dateRange',
@@ -1064,10 +1117,11 @@ const dateDefinition = (
                       endBuffer: filter.dateFilter.endBuffer,
                   }
         )
+        return parseDateEditorValue(valueType, value)
     },
 })
 
-const parseTimeEditorValue = (value: unknown) => {
+const parseTimeEditorValue = (value: FilterValue) => {
     const parsed = FilterValueSchema.parse(value)
     if (parsed.kind !== 'timeRange' && parsed.kind !== 'empty') {
         throw new Error('TIME expects a time range or empty value')
@@ -1127,11 +1181,13 @@ const timeDefinition: ValueTypeDefinition = {
         if (empty) {
             return empty
         }
-        return parseTimeEditorValue({
-            kind: 'timeRange',
-            min: filter.ge,
-            max: filter.le,
-        })
+        return parseTimeEditorValue(
+            FilterValueSchema.parse({
+                kind: 'timeRange',
+                min: filter.ge,
+                max: filter.le,
+            })
+        )
     },
 }
 
@@ -1396,7 +1452,7 @@ export const getAllowedFilterOperators = (
         : getValueTypeDefinition(field.valueType).operators(field, capabilities)
 
 export const getCellDisplayValue = (
-    value: unknown,
+    value: WorkingListRawValue,
     field: WorkingListField,
     context?: CellFormattingContext
 ): CellDisplayValue =>
@@ -1417,9 +1473,7 @@ const validateOperatorValuePair = (
         }
         return
     }
-    const expectedKinds: Partial<
-        Record<FilterEditorKind, FilterValue['kind']>
-    > = {
+    const expectedKinds = {
         text: 'text',
         numberRange: 'numberRange',
         timeRange: 'timeRange',
@@ -1428,7 +1482,8 @@ const validateOperatorValuePair = (
         options: 'options',
         organisationUnit: 'organisationUnit',
         trueOnly: 'trueOnly',
-    }
+        displayOnly: undefined,
+    } satisfies Record<FilterEditorKind, FilterValue['kind'] | undefined>
     const expected = expectedKinds[editor]
     if (!expected || filter.value.kind !== expected) {
         throw new Error(
@@ -1438,11 +1493,11 @@ const validateOperatorValuePair = (
 }
 
 export const validateAppliedFilter = (
-    input: unknown,
+    input: AppliedFilter,
     capabilities: WorkingListCapabilities,
     context?: FilterSerializationContext
 ): AppliedFilter => {
-    const filter = AppliedFilterSchema.parse(input) as AppliedFilter
+    const filter = AppliedFilterSchema.parse(input)
     if (
         !filter.field.filterable ||
         !capabilities.supportsValueTypeFilter(filter.field.valueType)

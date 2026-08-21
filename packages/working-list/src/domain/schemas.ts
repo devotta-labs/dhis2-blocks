@@ -190,24 +190,24 @@ export const WorkingListSortSchema = z
     })
     .strict()
 
-const CriteriaShape = {
+const workingListCriteriaFields = {
     programId: z.string().min(1),
     filters: z.array(AppliedFilterSchema),
 }
 
-const ViewConfigurationShape = {
+const workingListViewFields = {
     columns: z.array(z.string().min(1)).min(1),
     sort: WorkingListSortSchema,
 }
 
 export const WorkingListViewConfigurationSchema = z
-    .object(ViewConfigurationShape)
+    .object(workingListViewFields)
     .strict()
 
 export const TrackedEntityWorkingListCriteriaSchema = z
     .object({
         mode: z.literal('trackedEntity'),
-        ...CriteriaShape,
+        ...workingListCriteriaFields,
     })
     .strict()
 
@@ -215,7 +215,7 @@ export const EventWorkingListCriteriaSchema = z
     .object({
         mode: z.literal('event'),
         programStageId: z.string().min(1),
-        ...CriteriaShape,
+        ...workingListCriteriaFields,
     })
     .strict()
 
@@ -227,8 +227,8 @@ export const WorkingListCriteriaSchema = z.discriminatedUnion('mode', [
 export const TrackedEntityWorkingListConfigurationSchema = z
     .object({
         mode: z.literal('trackedEntity'),
-        ...CriteriaShape,
-        ...ViewConfigurationShape,
+        ...workingListCriteriaFields,
+        ...workingListViewFields,
     })
     .strict()
 
@@ -236,8 +236,8 @@ export const EventWorkingListConfigurationSchema = z
     .object({
         mode: z.literal('event'),
         programStageId: z.string().min(1),
-        ...CriteriaShape,
-        ...ViewConfigurationShape,
+        ...workingListCriteriaFields,
+        ...workingListViewFields,
     })
     .strict()
 

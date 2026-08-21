@@ -25,12 +25,12 @@ export const SavedListBar = ({
         if (!listsAreGenerated) {
             return list.name
         }
-        const names: Record<string, string> = {
-            active: i18n.t('Active enrollments'),
-            completed: i18n.t('Completed enrollments'),
-            cancelled: i18n.t('Cancelled enrollments'),
-        }
-        return names[list.id] ?? list.name
+        const names = new Map([
+            ['active', i18n.t('Active enrollments')],
+            ['completed', i18n.t('Completed enrollments')],
+            ['cancelled', i18n.t('Cancelled enrollments')],
+        ])
+        return names.get(list.id) ?? list.name
     }
 
     return (

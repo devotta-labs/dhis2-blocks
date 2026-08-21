@@ -1,10 +1,9 @@
 {
     "name": "dhis2-blocks",
     "version": "1.0.0",
+    "private": true,
     "description": "Reusable DHIS2 UI blocks and their development applications",
     "license": "BSD-3-Clause",
-    "private": true,
-    "packageManager": "pnpm@10.13.1",
     "scripts": {
         "build": "turbo run build",
         "build:library": "turbo run build --filter=@dhis2-blocks/working-list",
@@ -13,8 +12,8 @@
         "test": "turbo run test",
         "typecheck": "turbo run typecheck",
         "deploy": "turbo run deploy --filter=@dhis2-blocks/web",
-        "lint": "turbo run lint && prettier -c .",
-        "format": "prettier . -w",
+        "lint": "oxlint --deny-warnings . && oxfmt --check .",
+        "format": "oxfmt --write .",
         "e2e": "bash scripts/e2e/run-version.sh dev",
         "e2e:41": "bash scripts/e2e/run-version.sh 41",
         "e2e:42": "bash scripts/e2e/run-version.sh 42",
@@ -26,13 +25,12 @@
     },
     "devDependencies": {
         "@axe-core/playwright": "^4.13.0",
-        "@dhis2/config-eslint": "^0.2.2",
-        "@dhis2/config-prettier": "^0.2.2",
-        "@eslint/compat": "^2.0.0",
+        "@oxlint/plugins": "1.79.0",
         "@playwright/test": "^1.62.1",
-        "eslint": "^9.39.2",
-        "prettier": "^3.7.4",
+        "oxfmt": "0.64.0",
+        "oxlint": "1.79.0",
         "turbo": "^2.10.10",
         "typescript": "^5.9.3"
-    }
+    },
+    "packageManager": "pnpm@10.13.1"
 }

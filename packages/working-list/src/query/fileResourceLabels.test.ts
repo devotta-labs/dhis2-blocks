@@ -84,14 +84,13 @@ describe('file resource name resolution', () => {
         const warn = jest
             .spyOn(console, 'warn')
             .mockImplementation(() => undefined)
-        const query = jest.fn(
-            (request: { id?: string }): Promise<unknown> =>
-                request.id === 'Missing0001'
-                    ? Promise.reject(new Error('404 Not Found'))
-                    : Promise.resolve({
-                          id: request.id,
-                          displayName: `${request.id}.pdf`,
-                      })
+        const query = jest.fn((request: { id?: string }): Promise<unknown> =>
+            request.id === 'Missing0001'
+                ? Promise.reject(new Error('404 Not Found'))
+                : Promise.resolve({
+                      id: request.id,
+                      displayName: `${request.id}.pdf`,
+                  })
         )
         const client = {
             query,

@@ -1,25 +1,16 @@
 {
     "name": "@dhis2-blocks/web",
     "version": "1.0.0",
+    "private": true,
     "description": "DHIS2 wrapper application for developing Working List blocks",
     "license": "BSD-3-Clause",
-    "private": true,
-    "jest": {
-        "watchman": false,
-        "moduleNameMapper": {
-            "\\.(css|less)$": "<rootDir>/src/test/styleMock.ts",
-            "^@dhis2-blocks/working-list/url-state$": "<rootDir>/../../packages/working-list/dist/url-state.cjs",
-            "^@/locales$": "<rootDir>/src/test/locales.ts",
-            "^@/(.*)$": "<rootDir>/src/$1"
-        }
-    },
     "scripts": {
         "build": "d2-app-scripts build",
         "start": "d2-app-scripts start",
         "test": "d2-app-scripts test",
         "typecheck": "tsc --noEmit",
         "deploy": "d2-app-scripts deploy",
-        "lint": "eslint src"
+        "lint": "oxlint --deny-warnings src"
     },
     "dependencies": {
         "@dhis2-blocks/working-list": "workspace:*",
@@ -41,5 +32,14 @@
         "tailwindcss": "^4.3.3",
         "typescript": "^5.9.3",
         "vite": "^7.3.0"
+    },
+    "jest": {
+        "moduleNameMapper": {
+            "\\.(css|less)$": "<rootDir>/src/test/styleMock.ts",
+            "^@dhis2-blocks/working-list/url-state$": "<rootDir>/../../packages/working-list/dist/url-state.cjs",
+            "^@/locales$": "<rootDir>/src/test/locales.ts",
+            "^@/(.*)$": "<rootDir>/src/$1"
+        },
+        "watchman": false
     }
 }

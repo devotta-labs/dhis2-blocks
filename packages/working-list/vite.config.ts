@@ -13,23 +13,19 @@ const isExternalDependency = (id: string) =>
         (dependency) => id === dependency || id.startsWith(`${dependency}/`)
     )
 
-export default defineConfig(({ mode }) => {
-    const isWatchMode = mode === 'development'
-
-    return {
-        plugins: [libInjectCss()],
-        build: {
-            outDir: 'dist',
-            emptyOutDir: !isWatchMode,
-            lib: {
-                entry: path.resolve(__dirname, 'src/index.ts'),
-                formats: ['es'],
-                fileName: () => 'index.mjs',
-            },
-            rollupOptions: {
-                external: isExternalDependency,
-            },
-            sourcemap: true,
+export default defineConfig({
+    plugins: [libInjectCss()],
+    build: {
+        outDir: 'dist',
+        emptyOutDir: true,
+        lib: {
+            entry: path.resolve(__dirname, 'src/index.ts'),
+            formats: ['es'],
+            fileName: () => 'index.mjs',
         },
-    }
+        rollupOptions: {
+            external: isExternalDependency,
+        },
+        sourcemap: true,
+    },
 })

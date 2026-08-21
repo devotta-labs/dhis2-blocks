@@ -1,26 +1,13 @@
 import tailwindcss from '@tailwindcss/vite'
-import path from 'path'
-import { defineConfig, ConfigEnv } from 'vite'
+import { defineConfig } from 'vite'
 
-const viteConfig = defineConfig(async (configEnv: ConfigEnv) => {
-    const { mode } = configEnv
-    const workspaceAliases =
-        mode === 'development'
-            ? [
-                  {
-                      find: /^@dhis2-blocks\/working-list$/,
-                      replacement: path.resolve(
-                          __dirname,
-                          '../../packages/working-list/src/index.ts'
-                      ),
-                  },
-              ]
-            : []
+const viteConfig = defineConfig(({ mode }) => {
     return {
         // In dev environments, don't clear the terminal after files update
         clearScreen: mode !== 'development',
         resolve: {
-            alias: workspaceAliases,
+            conditions:
+                mode === 'development' ? ['@dhis2-blocks/development'] : [],
         },
         plugins: [tailwindcss()],
         // ...other config options here

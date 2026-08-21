@@ -5,8 +5,8 @@ import {
     SingleSelectOption,
 } from '@dhis2/ui'
 import React, { useState } from 'react'
-import i18n from '@/locales'
-import accessibilityStyles from '@/styles/accessibility.module.css'
+import i18n from '../../i18n'
+import accessibilityStyles from '../../styles/accessibility.module.css'
 
 interface ProgramOption {
     id: string

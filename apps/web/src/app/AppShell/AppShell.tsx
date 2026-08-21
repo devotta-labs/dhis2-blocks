@@ -43,7 +43,7 @@ import {
     serializeAppUrlState,
     type AppUrlState,
 } from '../urlState'
-import i18n from '@/locales'
+import i18n from '../../i18n'
 
 const OrganisationUnitReferenceSchema = z
     .object({

@@ -7,7 +7,7 @@ import {
     OrganisationUnitTree,
 } from '@dhis2/ui'
 import React, { useMemo } from 'react'
-import i18n from '@/locales'
+import i18n from '../../i18n'
 
 export interface OrganisationUnitReference {
     id: string

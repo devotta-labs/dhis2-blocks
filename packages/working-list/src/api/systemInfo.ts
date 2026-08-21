@@ -26,9 +26,8 @@ const DateFormatSchema = z
         'yyyy-mm-dd',
         'dd-mm-yyyy',
     ])
-    .transform(
-        (value): WorkingListDateFormat =>
-            value.toLowerCase().startsWith('dd') ? 'DD-MM-YYYY' : 'YYYY-MM-DD'
+    .transform((value): WorkingListDateFormat =>
+        value.toLowerCase().startsWith('dd') ? 'DD-MM-YYYY' : 'YYYY-MM-DD'
     )
 
 const TimeZoneSchema = z

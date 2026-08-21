@@ -1,9 +1,15 @@
 {
     "name": "@dhis2-blocks/working-list",
     "version": "1.0.0",
+    "private": true,
     "description": "Reusable DHIS2 Working List component",
     "license": "BSD-3-Clause",
-    "private": true,
+    "files": [
+        "dist"
+    ],
+    "sideEffects": [
+        "**/*.css"
+    ],
     "module": "./dist/index.mjs",
     "types": "./dist/index.d.ts",
     "exports": {
@@ -19,21 +25,12 @@
         "./style.css": "./dist/style.css",
         "./package.json": "./package.json"
     },
-    "files": [
-        "dist"
-    ],
-    "sideEffects": [
-        "**/*.css"
-    ],
-    "jest": {
-        "watchman": false
-    },
     "scripts": {
         "build": "vite build && vite build --config vite.url-state.config.ts && tsc",
         "package:check": "npm pack --dry-run --cache .npm-cache",
         "test": "d2-app-scripts test",
         "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-        "lint": "eslint src"
+        "lint": "oxlint --deny-warnings src"
     },
     "dependencies": {
         "@dhis2/d2-i18n": "1.2.0",
@@ -48,10 +45,6 @@
         "zod": "^4.4.3",
         "zustand": "^5.0.15"
     },
-    "peerDependencies": {
-        "react": "^18.3.1",
-        "react-dom": "^18.3.1"
-    },
     "devDependencies": {
         "@dhis2/cli-app-scripts": "12.10.3",
         "@types/jest": "^30.0.0",
@@ -61,5 +54,12 @@
         "react-dom": "18.3.1",
         "typescript": "^5.9.3",
         "vite": "^7.3.0"
+    },
+    "peerDependencies": {
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1"
+    },
+    "jest": {
+        "watchman": false
     }
 }

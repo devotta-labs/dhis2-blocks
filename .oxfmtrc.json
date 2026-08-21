@@ -1,0 +1,25 @@
+{
+    "$schema": "./node_modules/oxfmt/configuration_schema.json",
+    "printWidth": 80,
+    "tabWidth": 4,
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "ignorePatterns": [
+        ".agent/**",
+        ".agents/**",
+        ".claude/**",
+        ".codex/**",
+        ".continue/**",
+        ".cursor/**",
+        ".gemini/**",
+        ".opencode/**",
+        ".pi/**",
+        ".roo/**",
+        ".windsurf/**",
+        ".npm-cache/**",
+        "e2e/artifacts/**",
+        "skills-lock.json",
+        "tools/oxlint/anti-slop/**"
+    ]
+}

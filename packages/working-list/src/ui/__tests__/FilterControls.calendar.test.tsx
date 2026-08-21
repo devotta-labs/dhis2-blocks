@@ -2,79 +2,75 @@ import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { resolveWorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
-import type { TrackerProgram } from '../../api/schemas'
+import { TrackerProgramSchema } from '../../api/schemas'
 import type { AppliedFilter, WorkingListField } from '../../domain/model'
 import {
     FilterButton,
+    FilterControlsComponentProvider,
     MoreFilters,
     ProgramStageControl,
     calendarInputDateToCanonical,
     canonicalDateToCalendarInput,
+    type StrictCalendarInputProps,
 } from '../FilterControls'
 import { WorkingListTextProvider } from '../WorkingListText'
 
-interface MockCalendarInputProps {
-    calendar: string
-    dataTest: string
-    date?: string
-    format?: string
-    error?: boolean
-    validationText?: string
-    timeZone?: string
-    onDateSelect: (payload: unknown) => void
+const TestCalendarInput = (props: StrictCalendarInputProps) =>
+    React.createElement(
+        'button',
+        {
+            type: 'button',
+            'data-test': props.dataTest,
+            'data-calendar': props.calendar,
+            'data-date': props.date,
+            'data-error': String(Boolean(props.error)),
+            'data-format': props.format,
+            'data-time-zone': props.timeZone,
+            onClick: () =>
+                props.onDateSelect({
+                    calendarDateString: '31-12-2017',
+                    validation: {
+                        valid: true,
+                        error: false,
+                        warning: false,
+                    },
+                }),
+            onDoubleClick: () =>
+                props.onDateSelect({
+                    calendarDateString: '32-13-2017',
+                    validation: {
+                        valid: false,
+                        error: true,
+                        validationText: 'Invalid date',
+                    },
+                }),
+        },
+        props.validationText ?? props.dataTest
+    )
+
+const TestPopover = ({
+    arrow,
+    children,
+}: {
+    arrow?: boolean
+    children: React.ReactNode
+}) =>
+    React.createElement(
+        'div',
+        { 'data-testid': 'mock-popover', 'data-arrow': String(arrow) },
+        children
+    )
+
+const testComponents = {
+    CalendarInput: TestCalendarInput,
+    Popover: TestPopover,
 }
 
-jest.mock('@dhis2/ui', () => {
-    const actual = jest.requireActual('@dhis2/ui')
-    const ReactForMock = jest.requireActual<typeof import('react')>('react')
-    return {
-        ...actual,
-        CalendarInput: (props: MockCalendarInputProps) =>
-            ReactForMock.createElement(
-                'button',
-                {
-                    type: 'button',
-                    'data-test': props.dataTest,
-                    'data-calendar': props.calendar,
-                    'data-date': props.date,
-                    'data-error': String(Boolean(props.error)),
-                    'data-format': props.format,
-                    'data-time-zone': props.timeZone,
-                    onClick: () =>
-                        props.onDateSelect({
-                            calendarDateString: '31-12-2017',
-                            validation: {
-                                valid: true,
-                                error: false,
-                                warning: false,
-                            },
-                        }),
-                    onDoubleClick: () =>
-                        props.onDateSelect({
-                            calendarDateString: '32-13-2017',
-                            validation: {
-                                valid: false,
-                                error: true,
-                                validationText: 'Invalid date',
-                            },
-                        }),
-                },
-                props.validationText ?? props.dataTest
-            ),
-        Popover: ({
-            arrow,
-            children,
-        }: {
-            arrow?: boolean
-            children: React.ReactNode
-        }) =>
-            ReactForMock.createElement(
-                'div',
-                { 'data-testid': 'mock-popover', 'data-arrow': String(arrow) },
-                children
-            ),
-    }
-})
+const unusedClient: WorkingListClient = {
+    query: () => Promise.reject(new Error('Unexpected query in calendar test')),
+    mutate: () =>
+        Promise.reject(new Error('Unexpected mutation in calendar test')),
+}
 
 const field: WorkingListField = {
     id: 'birthday',
@@ -104,9 +100,7 @@ describe('calendar filter controls', () => {
     )
 
     it('normalises a calendar draft and applies it only after Update', () => {
-        const actEnvironment = globalThis as typeof globalThis & {
-            IS_REACT_ACT_ENVIRONMENT?: boolean
-        }
+        const actEnvironment = globalThis
         const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
         const originalRequestAnimationFrame = window.requestAnimationFrame
         const originalCancelAnimationFrame = window.cancelAnimationFrame
@@ -126,37 +120,41 @@ describe('calendar filter controls', () => {
             act(() => {
                 root.render(
                     <WorkingListTextProvider translate={(message) => message}>
-                        <FilterButton
-                            client={{} as WorkingListClient}
-                            field={field}
-                            filter={{
-                                field,
-                                operator: 'range',
-                                value: {
-                                    kind: 'dateRange',
-                                    mode: 'absolute',
-                                    start: '2017-01-02',
-                                },
-                            }}
-                            capabilities={resolveWorkingListCapabilities({
-                                apiVersion: 42,
-                            })}
-                            validationContext={{
-                                validateDate: (value) => {
-                                    if (value === '2017-13-32') {
-                                        throw new Error('Invalid date')
-                                    }
-                                },
-                            }}
-                            calendarContext={{
-                                calendar: 'ethiopian',
-                                dateFormat: 'DD-MM-YYYY',
-                                locale: 'am-ET',
-                                timeZone: 'Africa/Addis_Ababa',
-                            }}
-                            onApply={onApply}
-                            onReset={jest.fn()}
-                        />
+                        <FilterControlsComponentProvider
+                            components={testComponents}
+                        >
+                            <FilterButton
+                                client={unusedClient}
+                                field={field}
+                                filter={{
+                                    field,
+                                    operator: 'range',
+                                    value: {
+                                        kind: 'dateRange',
+                                        mode: 'absolute',
+                                        start: '2017-01-02',
+                                    },
+                                }}
+                                capabilities={resolveWorkingListCapabilities({
+                                    apiVersion: 42,
+                                })}
+                                validationContext={{
+                                    validateDate: (value) => {
+                                        if (value === '2017-13-32') {
+                                            throw new Error('Invalid date')
+                                        }
+                                    },
+                                }}
+                                calendarContext={{
+                                    calendar: 'ethiopian',
+                                    dateFormat: 'DD-MM-YYYY',
+                                    locale: 'am-ET',
+                                    timeZone: 'Africa/Addis_Ababa',
+                                }}
+                                onApply={onApply}
+                                onReset={jest.fn()}
+                            />
+                        </FilterControlsComponentProvider>
                     </WorkingListTextProvider>
                 )
             })
@@ -237,9 +235,7 @@ describe('calendar filter controls', () => {
     })
 
     it('disables arrows on filter menus and program-stage popovers', () => {
-        const actEnvironment = globalThis as typeof globalThis & {
-            IS_REACT_ACT_ENVIRONMENT?: boolean
-        }
+        const actEnvironment = globalThis
         const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
         const originalRequestAnimationFrame = window.requestAnimationFrame
         const originalCancelAnimationFrame = window.cancelAnimationFrame
@@ -258,29 +254,34 @@ describe('calendar filter controls', () => {
             act(() => {
                 root.render(
                     <WorkingListTextProvider translate={(message) => message}>
-                        <MoreFilters
-                            fields={[field]}
-                            visibleFilterIds={[]}
-                            scope="tracked-entity"
-                            onAdd={jest.fn()}
-                        />
-                        <ProgramStageControl
-                            program={
-                                {
+                        <FilterControlsComponentProvider
+                            components={testComponents}
+                        >
+                            <MoreFilters
+                                fields={[field]}
+                                visibleFilterIds={[]}
+                                scope="tracked-entity"
+                                onAdd={jest.fn()}
+                            />
+                            <ProgramStageControl
+                                program={TrackerProgramSchema.parse({
                                     id: 'program',
                                     displayName: 'Program',
+                                    programType: 'WITH_REGISTRATION',
+                                    programTrackedEntityAttributes: [],
                                     programStages: [
                                         {
                                             id: 'stage',
                                             displayName: 'Stage',
                                             access: { read: true },
+                                            programStageDataElements: [],
                                         },
                                     ],
-                                } as TrackerProgram
-                            }
-                            onChange={jest.fn()}
-                            onRemove={jest.fn()}
-                        />
+                                })}
+                                onChange={jest.fn()}
+                                onRemove={jest.fn()}
+                            />
+                        </FilterControlsComponentProvider>
                     </WorkingListTextProvider>
                 )
             })

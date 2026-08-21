@@ -1,5 +1,5 @@
 import { resolveWorkingListCapabilities } from './capabilities'
-import type { WorkingListClient } from './client'
+import { createWorkingListClient, type DataEngineLike } from './client'
 import {
     PROGRAM_SUMMARY_FIELDS,
     buildProgramFieldCatalog,
@@ -69,14 +69,17 @@ const program: TrackerProgram = {
 
 describe('version-aware Tracker metadata catalog', () => {
     it('loads lightweight program summaries before one selected program', async () => {
-        const query = jest
+        const query: jest.MockedFunction<DataEngineLike['query']> = jest
             .fn()
-            .mockResolvedValueOnce({ programs: [] })
-            .mockResolvedValueOnce(program)
-        const client = {
+            .mockResolvedValueOnce({
+                workingListResource: { programs: [] },
+            })
+            .mockResolvedValueOnce({ workingListResource: program })
+        const engine: DataEngineLike = {
             query,
-            mutate: jest.fn(),
-        } as unknown as WorkingListClient
+            mutate: jest.fn().mockResolvedValue(undefined),
+        }
+        const client = createWorkingListClient(engine)
 
         await fetchTrackerPrograms(client)
         await fetchTrackerProgram(client, {
@@ -85,21 +88,27 @@ describe('version-aware Tracker metadata catalog', () => {
         })
 
         expect(query.mock.calls[0][0]).toEqual({
-            resource: 'programs',
-            params: {
-                fields: PROGRAM_SUMMARY_FIELDS,
-                filter: 'programType:eq:WITH_REGISTRATION',
-                paging: false,
+            workingListResource: {
+                resource: 'programs',
+                params: {
+                    fields: PROGRAM_SUMMARY_FIELDS,
+                    filter: 'programType:eq:WITH_REGISTRATION',
+                    paging: false,
+                },
             },
         })
-        expect(query.mock.calls[0][0].params.fields).not.toContain(
-            'programStages'
-        )
+        expect(
+            query.mock.calls[0][0].workingListResource.params?.fields
+        ).not.toContain('programStages')
         expect(query.mock.calls[1][0]).toMatchObject({
-            id: program.id,
-            resource: 'programs',
+            workingListResource: {
+                id: program.id,
+                resource: 'programs',
+            },
         })
-        expect(query.mock.calls[1][0].params.fields).toContain('programStages[')
+        expect(
+            query.mock.calls[1][0].workingListResource.params?.fields
+        ).toContain('programStages[')
     })
 
     it('does not request newer search fields from v41/v42', () => {

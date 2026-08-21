@@ -107,21 +107,28 @@ export const trackerProgramsQueryOptions = (
     })
 
 const normalizeSearchOperator = (operator?: string | null) => {
-    const operators: Record<
-        string,
-        WorkingListField['preferredSearchOperator']
-    > = {
-        LIKE: 'like',
-        SW: 'startsWith',
-        EW: 'endsWith',
-        EQ: 'equals',
-        RANGE: 'range',
-        GE: 'greaterThanOrEqual',
-        LE: 'lessThanOrEqual',
-        NULL: 'empty',
-        '!NULL': 'notEmpty',
+    switch (operator) {
+        case 'LIKE':
+            return 'like'
+        case 'SW':
+            return 'startsWith'
+        case 'EW':
+            return 'endsWith'
+        case 'EQ':
+            return 'equals'
+        case 'RANGE':
+            return 'range'
+        case 'GE':
+            return 'greaterThanOrEqual'
+        case 'LE':
+            return 'lessThanOrEqual'
+        case 'NULL':
+            return 'empty'
+        case '!NULL':
+            return 'notEmpty'
+        default:
+            return undefined
     }
-    return operator ? operators[operator] : undefined
 }
 
 export interface ProgramFieldCatalog {
@@ -199,7 +206,9 @@ export const buildProgramFieldCatalog = ({
                 ? (binding.minCharactersToSearch ??
                   attribute.minCharactersToSearch)
                 : undefined,
-            ...(binding.mandatory ? { required: true } : {}),
+        }
+        if (binding.mandatory) {
+            field.required = true
         }
         fields.set(field.id, field)
         if (binding.displayInList) {
@@ -267,7 +276,9 @@ export const buildProgramFieldCatalog = ({
                         stage.id,
                     ]),
                 ],
-                ...(requiredInStageIds.length ? { requiredInStageIds } : {}),
+            }
+            if (requiredInStageIds.length) {
+                field.requiredInStageIds = requiredInStageIds
             }
             fields.set(field.id, field)
             if (binding.displayInReports) {

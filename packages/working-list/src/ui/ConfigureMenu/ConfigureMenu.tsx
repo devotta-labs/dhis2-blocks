@@ -40,7 +40,7 @@ interface ConfigureMenuProps {
 }
 
 const accessFor = (list: NormalizedSavedWorkingList | undefined) =>
-    list?.sharing.access as Record<string, unknown> | undefined
+    list?.sharing.access
 
 const canUpdateList = (list: NormalizedSavedWorkingList | undefined) => {
     const access = accessFor(list)

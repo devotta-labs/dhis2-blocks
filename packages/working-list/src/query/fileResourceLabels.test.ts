@@ -1,4 +1,5 @@
-import type { WorkingListClient } from '../api/client'
+import type { ResourceRequest, WorkingListClient } from '../api/client'
+import type { ZodType } from 'zod'
 import type { FieldCatalog, WorkingListField } from '../domain/model'
 import type { TrackedEntityWorkingListPage } from './fetchers'
 import {
@@ -84,18 +85,25 @@ describe('file resource name resolution', () => {
         const warn = jest
             .spyOn(console, 'warn')
             .mockImplementation(() => undefined)
-        const query = jest.fn((request: { id?: string }): Promise<unknown> =>
-            request.id === 'Missing0001'
-                ? Promise.reject(new Error('404 Not Found'))
-                : Promise.resolve({
-                      id: request.id,
-                      displayName: `${request.id}.pdf`,
-                  })
+        const query = jest.fn(
+            async <T>(request: ResourceRequest, schema: ZodType<T>) => {
+                if (request.id === 'Missing0001') {
+                    throw new Error('404 Not Found')
+                }
+                return schema.parse({
+                    id: request.id,
+                    displayName: `${request.id}.pdf`,
+                })
+            }
         )
-        const client = {
+        const client: WorkingListClient = {
             query,
-            mutate: jest.fn(),
-        } as unknown as WorkingListClient
+            async mutate() {
+                throw new Error(
+                    'Mutation is not implemented by this query-only fake'
+                )
+            },
+        }
 
         try {
             const names = await fetchFileResourceNames({

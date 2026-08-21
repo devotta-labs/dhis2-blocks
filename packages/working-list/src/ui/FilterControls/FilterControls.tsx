@@ -13,7 +13,14 @@ import {
 } from '@dhis2/ui'
 import { IconCross16 } from '@dhis2/ui-icons'
 import { useQuery } from '@tanstack/react-query'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, {
+    createContext,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
 import { z } from 'zod'
 import type { WorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
@@ -23,6 +30,7 @@ import type {
     WorkingListDateFormat,
 } from '../../api/systemInfo'
 import {
+    FILTER_OPERATORS,
     RELATIVE_DATE_PERIODS,
     type AppliedFilter,
     type FilterOperator,
@@ -46,9 +54,46 @@ import styles from './FilterControls.module.css'
 
 // CalendarInput supports this at runtime (and documents it in PropTypes), but
 // @dhis2/ui 10.11 omits the prop from its declaration bundle.
-const StrictCalendarInput = CalendarInput as React.ComponentType<
-    React.ComponentProps<typeof CalendarInput> & { strictValidation?: boolean }
->
+export type StrictCalendarInputProps = React.ComponentProps<
+    typeof CalendarInput
+> & {
+    strictValidation?: boolean
+}
+
+interface FilterControlsComponents {
+    CalendarInput: React.ComponentType<StrictCalendarInputProps>
+    Popover: React.ComponentType<React.ComponentProps<typeof Popover>>
+}
+
+const FilterControlsComponentsContext = createContext<FilterControlsComponents>(
+    { CalendarInput, Popover }
+)
+
+export const FilterControlsComponentProvider = ({
+    components,
+    children,
+}: {
+    components: FilterControlsComponents
+    children: React.ReactNode
+}) => (
+    <FilterControlsComponentsContext.Provider value={components}>
+        {children}
+    </FilterControlsComponentsContext.Provider>
+)
+
+const StrictCalendarInput = (props: StrictCalendarInputProps) => {
+    const { CalendarInput: CalendarInputComponent } = useContext(
+        FilterControlsComponentsContext
+    )
+    return <CalendarInputComponent {...props} />
+}
+
+const FilterPopover = (props: React.ComponentProps<typeof Popover>) => {
+    const { Popover: PopoverComponent } = useContext(
+        FilterControlsComponentsContext
+    )
+    return <PopoverComponent {...props} />
+}
 
 const useEscapeToClose = (open: boolean, onClose: () => void) => {
     const onCloseRef = useRef(onClose)
@@ -104,22 +149,22 @@ export const fieldDisplayName = (
     field: WorkingListField,
     translate: WorkingListTranslate = defaultWorkingListTranslate
 ) => {
-    const labels: Record<string, string> = {
-        enrollmentStatus: translate('Enrollment status'),
-        enrolledAt: translate('Enrollment date'),
-        enrollmentOccurredAt: translate('Incident date'),
-        followUp: translate('Follow up'),
-        assignedUser: translate('Assigned to'),
-        eventOccurredAt: translate('Report date'),
-        eventStatus: translate('Event status'),
-        eventScheduledAt: translate('Scheduled date'),
-        eventAssignedUser: translate('Assigned to'),
-        programStage: translate('Program stage'),
-        createdAt: translate('Registration date'),
-        programOwnerId: translate('Owner organisation unit'),
-        eventOrgUnit: translate('Event organisation unit'),
-    }
-    return labels[field.id] ?? field.displayName
+    const labels = new Map([
+        ['enrollmentStatus', translate('Enrollment status')],
+        ['enrolledAt', translate('Enrollment date')],
+        ['enrollmentOccurredAt', translate('Incident date')],
+        ['followUp', translate('Follow up')],
+        ['assignedUser', translate('Assigned to')],
+        ['eventOccurredAt', translate('Report date')],
+        ['eventStatus', translate('Event status')],
+        ['eventScheduledAt', translate('Scheduled date')],
+        ['eventAssignedUser', translate('Assigned to')],
+        ['programStage', translate('Program stage')],
+        ['createdAt', translate('Registration date')],
+        ['programOwnerId', translate('Owner organisation unit')],
+        ['eventOrgUnit', translate('Event organisation unit')],
+    ])
+    return labels.get(field.id) ?? field.displayName
 }
 
 const optionDisplayName = (
@@ -260,11 +305,16 @@ const UserFilterSelect = ({
             client.query(
                 {
                     resource: 'users',
-                    params: {
-                        fields: 'id,displayName,username',
-                        pageSize: 50,
-                        ...(search.trim() ? { query: search.trim() } : {}),
-                    },
+                    params: (() => {
+                        const params = {
+                            fields: 'id,displayName,username',
+                            pageSize: 50,
+                        }
+                        if (search.trim()) {
+                            return { ...params, query: search.trim() }
+                        }
+                        return params
+                    })(),
                 },
                 UsersResponseSchema,
                 signal
@@ -573,7 +623,7 @@ export const MoreFilters = ({
                 <span aria-hidden="true">▾</span>
             </button>
             {open && buttonElement && (
-                <Popover
+                <FilterPopover
                     arrow={false}
                     maxWidth={400}
                     placement="bottom-start"
@@ -612,7 +662,7 @@ export const MoreFilters = ({
                             )}
                         </FlyoutMenu>
                     </div>
-                </Popover>
+                </FilterPopover>
             )}
         </div>
     )
@@ -678,7 +728,7 @@ export const FilterButton = ({
                 <span aria-hidden="true">▾</span>
             </button>
             {open && buttonElement && (
-                <Popover
+                <FilterPopover
                     arrow={false}
                     maxWidth={400}
                     placement="bottom-start"
@@ -704,7 +754,7 @@ export const FilterButton = ({
                             }}
                         />
                     </div>
-                </Popover>
+                </FilterPopover>
             )}
         </div>
     )
@@ -792,9 +842,10 @@ const FilterEditor = ({
                     dataTest={`filter-operator-${field.id}`}
                     label={i18n.t('Match')}
                     selected={operator}
-                    onChange={({ selected }) =>
-                        setOperator(selected as FilterOperator)
-                    }
+                    onChange={({ selected }) => {
+                        const parsed = z.enum(FILTER_OPERATORS).parse(selected)
+                        setOperator(parsed)
+                    }}
                 >
                     {operators.map((item) => (
                         <SingleSelectOption
@@ -883,7 +934,9 @@ const EditorValue = ({
                     onChange={({ selected }) =>
                         onChange({
                             kind: 'assignee',
-                            mode: selected as typeof assignee.mode,
+                            mode: z
+                                .enum(['CURRENT', 'PROVIDED', 'NONE', 'ANY'])
+                                .parse(selected),
                         })
                     }
                 >
@@ -1311,7 +1364,7 @@ const CalendarRangeFields = ({
     const [endValidation, setEndValidation] =
         useState<CalendarValidationFeedback>()
     const handleSelection = (
-        payload: unknown,
+        payload: z.input<typeof CalendarSelectionSchema>,
         otherValue: string | undefined,
         position: 'start' | 'end'
     ) => {
@@ -1497,7 +1550,7 @@ export const ProgramStageControl = ({
                 <span aria-hidden="true">▾</span>
             </button>
             {open && buttonElement && (
-                <Popover
+                <FilterPopover
                     arrow={false}
                     maxWidth={400}
                     placement="bottom-start"
@@ -1572,7 +1625,7 @@ export const ProgramStageControl = ({
                             </div>
                         </form>
                     </div>
-                </Popover>
+                </FilterPopover>
             )}
         </div>
     )

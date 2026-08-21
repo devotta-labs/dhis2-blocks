@@ -1,24 +1,25 @@
 import type { ResourceRequest } from '../api/client'
+import {
+    CanonicalValueSchema,
+    canonicalizeValue,
+} from '../domain/canonicalValue'
 import type {
     WorkingListConfiguration,
     WorkingListContext,
     WorkingListPagination,
 } from '../domain/model'
 
-const canonicalize = (value: unknown): unknown => {
-    if (Array.isArray(value)) {
-        return value.map(canonicalize)
-    }
-    if (value && typeof value === 'object') {
-        return Object.fromEntries(
-            Object.entries(value as Record<string, unknown>)
-                .filter(([, entry]) => entry !== undefined)
-                .sort(([left], [right]) => left.localeCompare(right))
-                .map(([key, entry]) => [key, canonicalize(entry)])
-        )
-    }
-    return value
+interface WorkingListRecordKeyInput {
+    context: WorkingListContext
+    configuration: WorkingListConfiguration
+    pagination: WorkingListPagination
 }
+
+const canonicalizeRecordKey = (value: WorkingListRecordKeyInput) =>
+    canonicalizeValue(CanonicalValueSchema.parse(value))
+
+const canonicalizeRecordRequest = (request: ResourceRequest) =>
+    canonicalizeValue(CanonicalValueSchema.parse(request))
 
 export const workingListQueryKeys = {
     all: ['working-list'] as const,
@@ -44,13 +45,13 @@ export const workingListQueryKeys = {
         [
             ...workingListQueryKeys.all,
             'records',
-            canonicalize({ context, configuration, pagination }),
+            canonicalizeRecordKey({ context, configuration, pagination }),
         ] as const,
     recordRequest: (request: ResourceRequest) =>
         [
             ...workingListQueryKeys.all,
             'records',
-            canonicalize(request),
+            canonicalizeRecordRequest(request),
         ] as const,
     trackedEntityJoin: (programId: string, trackedEntityIds: string[]) =>
         [

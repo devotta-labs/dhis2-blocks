@@ -1,5 +1,6 @@
 export {
     FilterButton,
+    FilterControlsComponentProvider,
     MoreFilters,
     ProgramStageControl,
     calendarInputDateToCanonical,
@@ -8,4 +9,5 @@ export {
     localizedField,
     usesMultipleOptionSelection,
     type FilterCalendarContext,
+    type StrictCalendarInputProps,
 } from './FilterControls'

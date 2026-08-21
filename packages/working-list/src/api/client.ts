@@ -13,19 +13,40 @@ export interface DataEngineQueryDefinition {
 
 export type DataEngineQuery = Record<string, DataEngineQueryDefinition>
 
+export interface DataEngineResourceResponse {
+    [key: string]: DataEngineValue
+}
+
+export type DataEngineValue =
+    | string
+    | number
+    | boolean
+    | null
+    | undefined
+    | ReadonlyArray<DataEngineValue>
+    | DataEngineResourceResponse
+
+export type DataEngineMutationPayload =
+    | string
+    | number
+    | boolean
+    | null
+    | undefined
+    | object
+
 export interface DataEngineMutation {
     resource: string
     id?: string
     type: 'create' | 'update' | 'replace' | 'delete'
-    data?: unknown
+    data?: DataEngineMutationPayload
 }
 
 export interface DataEngineLike {
     query(
         query: DataEngineQuery,
         options?: { signal?: AbortSignal }
-    ): Promise<Record<string, unknown>>
-    mutate(mutation: DataEngineMutation): Promise<unknown>
+    ): Promise<Record<string, DataEngineValue>>
+    mutate(mutation: DataEngineMutation): Promise<DataEngineMutationPayload>
 }
 
 export interface ResourceRequest {
@@ -54,23 +75,26 @@ export class WorkingListBoundaryError extends Error {
     }
 }
 
-export const asWorkingListBoundaryError = (error: unknown, context: string) => {
-    if (error instanceof WorkingListBoundaryError) {
-        return error
+export const asWorkingListBoundaryError = (cause: unknown, context: string) => {
+    if (cause instanceof WorkingListBoundaryError) {
+        return cause
     }
-    const detail = error instanceof Error ? error.message : String(error)
-    return new WorkingListBoundaryError(`${context}: ${detail}`, error)
+    const detail = cause instanceof Error ? cause.message : String(cause)
+    return new WorkingListBoundaryError(`${context}: ${detail}`, cause)
 }
 
-const getErrorStatus = (error: unknown) => {
-    if (!error || typeof error !== 'object') {
-        return undefined
-    }
-    const candidate = error as {
-        status?: number
-        response?: { status?: number }
-    }
-    return candidate.status ?? candidate.response?.status
+const RequestFailureSchema = z
+    .object({
+        status: z.number().optional(),
+        response: z.object({ status: z.number().optional() }).optional(),
+    })
+    .passthrough()
+
+const getErrorStatus = (cause: unknown) => {
+    const candidate = RequestFailureSchema.safeParse(cause)
+    return candidate.success
+        ? (candidate.data.status ?? candidate.data.response?.status)
+        : undefined
 }
 
 /**
@@ -80,16 +104,16 @@ const getErrorStatus = (error: unknown) => {
  */
 export const shouldRetryWorkingListRequest = (
     failureCount: number,
-    error: unknown
+    cause: unknown
 ) => {
     if (
         failureCount >= 2 ||
-        error instanceof ZodError ||
-        error instanceof WorkingListBoundaryError
+        cause instanceof ZodError ||
+        cause instanceof WorkingListBoundaryError
     ) {
         return false
     }
-    const status = getErrorStatus(error)
+    const status = getErrorStatus(cause)
     if (status !== undefined && status < 500) {
         return false
     }

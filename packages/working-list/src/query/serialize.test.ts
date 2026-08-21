@@ -4,6 +4,7 @@ import type {
     WorkingListConfiguration,
     WorkingListField,
 } from '../domain/model'
+import { WorkingListContextSchema } from '../domain/schemas'
 import {
     getSystemFilterDefinition,
     systemColumnFields,
@@ -94,20 +95,9 @@ describe('Tracker working-list request serialization', () => {
         expect(request.params).not.toHaveProperty('enrollmentStatus')
     })
 
-    it('rejects a request without a selected organisation unit', () => {
+    it('rejects a context without a selected organisation unit', () => {
         expect(() =>
-            serializeWorkingListRequest({
-                context: { programId: 'Program0001' } as never,
-                configuration: {
-                    ...trackedEntityConfiguration,
-                    filters: [],
-                },
-                pagination: { page: 1, pageSize: 15 },
-                capabilities: resolveWorkingListCapabilities({
-                    apiVersion: 43,
-                }),
-                fields,
-            })
+            WorkingListContextSchema.parse({ programId: 'Program0001' })
         ).toThrow()
     })
 

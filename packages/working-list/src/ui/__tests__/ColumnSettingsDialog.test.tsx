@@ -45,9 +45,7 @@ describe('column settings dialog', () => {
     })
 
     it('renders drag handles, column names, and visibility controls as three columns', () => {
-        const actEnvironment = globalThis as typeof globalThis & {
-            IS_REACT_ACT_ENVIRONMENT?: boolean
-        }
+        const actEnvironment = globalThis
         const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
         actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
         const container = document.createElement('div')
@@ -110,9 +108,7 @@ describe('column settings dialog', () => {
     })
 
     it('reorders visible columns with the keyboard drag sensor', async () => {
-        const actEnvironment = globalThis as typeof globalThis & {
-            IS_REACT_ACT_ENVIRONMENT?: boolean
-        }
+        const actEnvironment = globalThis
         const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
         const originalGetBoundingClientRect =
             HTMLElement.prototype.getBoundingClientRect

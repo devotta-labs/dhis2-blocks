@@ -1,4 +1,5 @@
 import type { AppliedFilter, FilterValue } from '../domain/model'
+import { FilterValueSchema } from '../domain/schemas'
 import {
     getSystemFilterDefinition,
     systemFilterRegistry,
@@ -85,7 +86,7 @@ describe('system filter registry', () => {
         (id, operator, value) => {
             expect(() =>
                 validateSystemFilter(
-                    filter(id, operator, value as unknown as FilterValue)
+                    filter(id, operator, FilterValueSchema.parse(value))
                 )
             ).not.toThrow()
         }

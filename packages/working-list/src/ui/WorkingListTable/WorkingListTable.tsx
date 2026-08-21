@@ -1,8 +1,9 @@
-import { IconWarningFilled16, Pagination, Tooltip } from '@dhis2/ui'
+import { IconWarningFilled16, Tooltip } from '@dhis2/ui'
 import {
     columnOrderingFeature,
     columnVisibilityFeature,
     createColumnHelper,
+    functionalUpdate,
     rowPaginationFeature,
     rowSortingFeature,
     tableFeatures,
@@ -12,6 +13,7 @@ import {
     type SortingState,
 } from '@tanstack/react-table'
 import React, { useMemo } from 'react'
+import { z } from 'zod'
 import type {
     WorkingListField,
     WorkingListRowOpenEvent,
@@ -25,13 +27,16 @@ import {
 } from '../../registry/valueTypes'
 import { fieldDisplayName, localizedField } from '../FilterControls'
 import accessibilityStyles from '../styles/accessibility.module.css'
-import {
-    rowOpenEvent,
-    type WorkingListDataQualityMode,
-    type WorkingListDisplayRow,
+import type {
+    WorkingListDataQualityMode,
+    WorkingListDisplayRow,
 } from '../types'
 import { useWorkingListText } from '../WorkingListText'
 import styles from './WorkingListTable.module.css'
+import {
+    WorkingListTableView,
+    type WorkingListTableViewModel,
+} from './WorkingListTableView'
 
 const tableFeatureSet = tableFeatures({
     columnOrderingFeature,
@@ -54,30 +59,21 @@ const EMPTY_ROWS: WorkingListDisplayRow[] = []
  */
 const DATA_QUALITY_COLUMN_ID = '__dataQuality'
 
-const isInteractiveTarget = (target: EventTarget | null) =>
-    target instanceof Element &&
-    Boolean(
-        target.closest(
-            'a, button, input, select, textarea, summary, [role="button"], [role="link"]'
-        )
-    )
-
 /**
  * Best-effort rendering for a value that failed validation: the raw scalar
  * verbatim, an empty cell for a missing value, a dash when unrenderable.
  */
-const invalidCellText = (raw: unknown) => {
+const InvalidCellScalarSchema = z.union([z.string(), z.number(), z.boolean()])
+
+const invalidCellText = (
+    cellValue: Extract<WorkingListCellValue, { valid: false }>
+) => {
+    const raw = cellValue.raw
     if (raw === undefined || raw === null || raw === '') {
         return ''
     }
-    if (
-        typeof raw === 'string' ||
-        typeof raw === 'number' ||
-        typeof raw === 'boolean'
-    ) {
-        return String(raw)
-    }
-    return '-'
+    const scalar = InvalidCellScalarSchema.safeParse(raw)
+    return scalar.success ? String(scalar.data) : '-'
 }
 
 const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
@@ -201,7 +197,6 @@ export const WorkingListTable = ({
     onSortChange,
 }: WorkingListTableProps) => {
     const translate = useWorkingListText()
-    const i18n = useMemo(() => ({ t: translate }), [translate])
     const showIssuesColumn = dataQualityMode === 'highlighted'
     const columns = useMemo(() => {
         const fieldColumns = allFields.map((field) =>
@@ -210,11 +205,9 @@ export const WorkingListTable = ({
                 header: fieldDisplayName(field, translate),
                 enableSorting: true,
                 cell: (context) => {
-                    const cellValue = context.getValue() as
-                        | WorkingListCellValue
-                        | undefined
+                    const cellValue = context.row.original.values[field.id]
                     if (cellValue && !cellValue.valid) {
-                        return <>{invalidCellText(cellValue.raw)}</>
+                        return <>{invalidCellText(cellValue)}</>
                     }
                     return (
                         <CellValue
@@ -293,10 +286,7 @@ export const WorkingListTable = ({
                 sorting,
             },
             onColumnOrderChange: (updater) => {
-                const next =
-                    typeof updater === 'function'
-                        ? updater(columnOrder)
-                        : updater
+                const next = functionalUpdate(updater, columnOrder)
                 onColumnConfigurationChange(
                     next.filter(
                         (id) =>
@@ -306,10 +296,7 @@ export const WorkingListTable = ({
                 )
             },
             onColumnVisibilityChange: (updater) => {
-                const next =
-                    typeof updater === 'function'
-                        ? updater(columnVisibility)
-                        : updater
+                const next = functionalUpdate(updater, columnVisibility)
                 onColumnConfigurationChange(
                     allFields
                         .map((field) => field.id)
@@ -317,8 +304,7 @@ export const WorkingListTable = ({
                 )
             },
             onSortingChange: (updater) => {
-                const next =
-                    typeof updater === 'function' ? updater(sorting) : updater
+                const next = functionalUpdate(updater, sorting)
                 const first = next[0]
                 if (first) {
                     onSortChange({
@@ -336,223 +322,45 @@ export const WorkingListTable = ({
         })
     )
 
-    const openRow = (row: WorkingListDisplayRow) => onRowOpen(rowOpenEvent(row))
+    const model: WorkingListTableViewModel = {
+        headerGroups: table.getHeaderGroups().map((group) => ({
+            id: group.id,
+            headers: group.headers.map((header) => ({
+                id: header.id,
+                fieldId: header.column.id,
+                content: <table.FlexRender header={header} />,
+                canSort: header.column.getCanSort(),
+                isDataQuality: header.column.id === DATA_QUALITY_COLUMN_ID,
+                sorted: header.column.getIsSorted(),
+                onToggleSorting: (event) =>
+                    header.column.getToggleSortingHandler()?.(event),
+            })),
+        })),
+        rows: table.getRowModel().rows.map((row) => ({
+            id: row.id,
+            displayIndex: row.getDisplayIndex(),
+            original: row.original,
+            cells: row.getVisibleCells().map((cell) => ({
+                id: cell.id,
+                fieldId: cell.column.id,
+                content: <table.FlexRender cell={cell} />,
+                isDataQuality: cell.column.id === DATA_QUALITY_COLUMN_ID,
+            })),
+        })),
+    }
 
     return (
-        <section
-            className={styles['working-list-results']}
-            data-testid="working-list-results"
-            aria-labelledby="results-heading"
-        >
-            <h2
-                id="results-heading"
-                className={accessibilityStyles['visually-hidden']}
-            >
-                {i18n.t('Working list results')}
-            </h2>
-            <div
-                className={styles['working-list-table-scroll']}
-                data-testid="working-list-table-scroll"
-            >
-                <table
-                    className={styles['working-list-table']}
-                    data-testid="working-list-table"
-                >
-                    <thead>
-                        {table.getHeaderGroups().map((group) => (
-                            <tr key={group.id}>
-                                {group.headers.map((header) => {
-                                    if (
-                                        header.column.id ===
-                                        DATA_QUALITY_COLUMN_ID
-                                    ) {
-                                        return (
-                                            <th
-                                                key={header.id}
-                                                scope="col"
-                                                className={
-                                                    styles[
-                                                        'working-list-issues-cell'
-                                                    ]
-                                                }
-                                            >
-                                                <table.FlexRender
-                                                    header={header}
-                                                />
-                                            </th>
-                                        )
-                                    }
-                                    const sorted = header.column.getIsSorted()
-                                    return (
-                                        <th
-                                            key={header.id}
-                                            scope="col"
-                                            aria-sort={
-                                                sorted === 'asc'
-                                                    ? 'ascending'
-                                                    : sorted === 'desc'
-                                                      ? 'descending'
-                                                      : 'none'
-                                            }
-                                        >
-                                            <button
-                                                type="button"
-                                                className={
-                                                    styles['sort-button']
-                                                }
-                                                data-testid={`sort-${header.column.id}`}
-                                                disabled={
-                                                    !header.column.getCanSort()
-                                                }
-                                                onClick={(event) =>
-                                                    header.column.getToggleSortingHandler()?.(
-                                                        event
-                                                    )
-                                                }
-                                            >
-                                                <table.FlexRender
-                                                    header={header}
-                                                />
-                                                <span
-                                                    aria-hidden="true"
-                                                    className={
-                                                        styles['sort-indicator']
-                                                    }
-                                                >
-                                                    {sorted === 'asc'
-                                                        ? '↑'
-                                                        : sorted === 'desc'
-                                                          ? '↓'
-                                                          : '↕'}
-                                                </span>
-                                            </button>
-                                        </th>
-                                    )
-                                })}
-                            </tr>
-                        ))}
-                    </thead>
-                    <tbody aria-busy={isInitialLoading || isUpdating}>
-                        {!isInitialLoading &&
-                            table.getRowModel().rows.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={
-                                            Math.max(
-                                                visibleColumnIds.length,
-                                                1
-                                            ) + (showIssuesColumn ? 1 : 0)
-                                        }
-                                        className={styles['empty-results']}
-                                    >
-                                        <strong>
-                                            {i18n.t('No items to display')}
-                                        </strong>
-                                        <span>
-                                            {i18n.t(
-                                                'Try adjusting the filters or organisation unit.'
-                                            )}
-                                        </span>
-                                    </td>
-                                </tr>
-                            )}
-                        {table.getRowModel().rows.map((row) => {
-                            const highlightIssues =
-                                dataQualityMode === 'highlighted' &&
-                                row.original.issues.length > 0
-                            return (
-                                <tr
-                                    key={row.id}
-                                    className={`${styles['working-list-row']}${
-                                        highlightIssues
-                                            ? ` ${styles['working-list-row--invalid']}`
-                                            : ''
-                                    }`}
-                                    data-testid={`working-list-row-${row.id}`}
-                                    data-invalid={
-                                        highlightIssues ? 'true' : undefined
-                                    }
-                                    onClick={(event) => {
-                                        if (
-                                            !isInteractiveTarget(event.target)
-                                        ) {
-                                            openRow(row.original)
-                                        }
-                                    }}
-                                >
-                                    {row
-                                        .getVisibleCells()
-                                        .map((cell, index) => (
-                                            <td
-                                                key={cell.id}
-                                                className={
-                                                    cell.column.id ===
-                                                    DATA_QUALITY_COLUMN_ID
-                                                        ? styles[
-                                                              'working-list-issues-cell'
-                                                          ]
-                                                        : undefined
-                                                }
-                                                data-testid={
-                                                    cell.column.id ===
-                                                    DATA_QUALITY_COLUMN_ID
-                                                        ? `working-list-issues-cell-${row.id}`
-                                                        : undefined
-                                                }
-                                            >
-                                                {index === 0 && (
-                                                    <button
-                                                        type="button"
-                                                        className={
-                                                            accessibilityStyles[
-                                                                'visually-hidden'
-                                                            ]
-                                                        }
-                                                        data-testid={`row-open-${row.id}`}
-                                                        onClick={() =>
-                                                            openRow(
-                                                                row.original
-                                                            )
-                                                        }
-                                                    >
-                                                        {i18n.t(
-                                                            'Open row {{number}}',
-                                                            {
-                                                                number:
-                                                                    row.getDisplayIndex() +
-                                                                    1,
-                                                            }
-                                                        )}
-                                                    </button>
-                                                )}
-                                                <table.FlexRender cell={cell} />
-                                            </td>
-                                        ))}
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
-            </div>
-            <div className={styles['working-list-pagination']}>
-                <Pagination
-                    dataTest="working-list-pagination"
-                    page={page}
-                    pageSize={pageSize}
-                    pageLength={rows.length}
-                    pageSizes={['10', '15', '25', '50', '100']}
-                    isLastPage={!hasNextPage}
-                    hidePageSelect
-                    hidePageSummary
-                    disabled={isInitialLoading}
-                    onPageChange={(nextPage) =>
-                        onPageChange(nextPage, pageSize)
-                    }
-                    onPageSizeChange={(nextPageSize) =>
-                        onPageChange(1, nextPageSize)
-                    }
-                />
-            </div>
-        </section>
+        <WorkingListTableView
+            model={model}
+            visibleColumnCount={visibleColumnIds.length}
+            dataQualityMode={dataQualityMode}
+            page={page}
+            pageSize={pageSize}
+            hasNextPage={hasNextPage}
+            isInitialLoading={isInitialLoading}
+            isUpdating={isUpdating}
+            onPageChange={onPageChange}
+            onRowOpen={onRowOpen}
+        />
     )
 }

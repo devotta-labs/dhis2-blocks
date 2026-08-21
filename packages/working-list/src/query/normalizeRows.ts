@@ -6,6 +6,7 @@ import {
     getValueTypeDefinition,
     ValueParseError,
     type WorkingListFileValue,
+    type WorkingListRawValue,
     type WorkingListUserValue,
 } from '../registry/valueTypes'
 
@@ -66,7 +67,10 @@ export interface NormalizedEvent {
 }
 
 /** System columns keep today's fail-fast contract: a bad value throws. */
-const parseSystemValue = (value: unknown, field?: WorkingListField) =>
+const parseSystemValue = (
+    value: WorkingListRawValue,
+    field?: WorkingListField
+) =>
     field
         ? ParsedTrackerScalarSchema.parse(
               getValueTypeDefinition(field.valueType).parseServerValue(value)
@@ -82,7 +86,7 @@ const missingRequiredCell = (
 })
 
 const dataValueCell = (
-    raw: unknown,
+    raw: WorkingListRawValue,
     context: {
         field?: WorkingListField
         required: boolean
@@ -177,19 +181,18 @@ const withFileValue = (
     field: WorkingListField | undefined,
     record: FileUrlRecordContext
 ): WorkingListCellValue => {
+    const fileId = cell.valid ? z.string().min(1).safeParse(cell.value) : null
     if (
         !field ||
         (field.valueType !== 'FILE_RESOURCE' && field.valueType !== 'IMAGE') ||
-        !cell.valid ||
-        typeof cell.value !== 'string' ||
-        !cell.value
+        !fileId?.success
     ) {
         return cell
     }
     return {
         valid: true,
         value: {
-            id: cell.value,
+            id: fileId.data,
             ...trackerFileUrls({
                 record,
                 fieldId: field.id,

@@ -218,11 +218,9 @@ describe('saved-list payloads', () => {
 
     it('fails fast when the saved program is missing or mismatched', () => {
         expect(() =>
-            normalizeSavedWorkingListResource({
-                resource: { ...savedResource, program: undefined } as never,
-                type: 'trackedEntityInstanceFilters',
-                programId: 'Program0001',
-                metadata,
+            TrackedEntityInstanceFilterSchema.parse({
+                ...savedResource,
+                program: undefined,
             })
         ).toThrow()
         expect(() =>

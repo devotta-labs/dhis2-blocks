@@ -13,6 +13,10 @@ import {
     WorkingListCriteriaSchema,
     WorkingListViewConfigurationSchema,
 } from '../domain/schemas'
+import {
+    CanonicalValueSchema,
+    canonicalizeValue,
+} from '../domain/canonicalValue'
 
 export interface SelectedWorkingListIdentity {
     id: string
@@ -48,23 +52,10 @@ export interface WorkingListStoreState {
 
 export type WorkingListStore = StoreApi<WorkingListStoreState>
 
-const canonicalize = (value: unknown): unknown => {
-    if (Array.isArray(value)) {
-        return value.map(canonicalize)
-    }
-    if (value && typeof value === 'object') {
-        return Object.fromEntries(
-            Object.entries(value as Record<string, unknown>)
-                .sort(([left], [right]) => left.localeCompare(right))
-                .map(([key, entry]) => [key, canonicalize(entry)])
-        )
-    }
-    return value
-}
-
 export const getWorkingListFingerprint = (
     configuration: WorkingListConfiguration
-) => JSON.stringify(canonicalize(configuration))
+) =>
+    JSON.stringify(canonicalizeValue(CanonicalValueSchema.parse(configuration)))
 
 export const composeWorkingListConfiguration = (
     criteria: WorkingListCriteria,
@@ -91,9 +82,8 @@ export const createWorkingListStore = (
     initialConfiguration: WorkingListConfiguration,
     initialIdentity?: SelectedWorkingListIdentity
 ): WorkingListStore => {
-    const parsedInitialConfiguration = WorkingListConfigurationSchema.parse(
-        initialConfiguration
-    ) as WorkingListConfiguration
+    const parsedInitialConfiguration =
+        WorkingListConfigurationSchema.parse(initialConfiguration)
     const initialFingerprint = getWorkingListFingerprint(
         parsedInitialConfiguration
     )
@@ -104,16 +94,12 @@ export const createWorkingListStore = (
         baselineFingerprint: initialFingerprint,
         setCriteria(criteria) {
             set({
-                criteria: WorkingListCriteriaSchema.parse(
-                    criteria
-                ) as WorkingListCriteria,
+                criteria: WorkingListCriteriaSchema.parse(criteria),
                 dirty: true,
             })
         },
         setFilters(filters) {
-            const parsedFilters = AppliedFilterSchema.array().parse(
-                filters
-            ) as AppliedFilter[]
+            const parsedFilters = AppliedFilterSchema.array().parse(filters)
             set((state) => ({
                 criteria: { ...state.criteria, filters: parsedFilters },
                 dirty: true,
@@ -146,9 +132,8 @@ export const createWorkingListStore = (
             })
         },
         selectList(identity, configuration) {
-            const parsedConfiguration = WorkingListConfigurationSchema.parse(
-                configuration
-            ) as WorkingListConfiguration
+            const parsedConfiguration =
+                WorkingListConfigurationSchema.parse(configuration)
             set({
                 criteria: criteriaFromConfiguration(parsedConfiguration),
                 selectedList: identity,
@@ -158,9 +143,8 @@ export const createWorkingListStore = (
             })
         },
         clearSelection(configuration) {
-            const parsedConfiguration = WorkingListConfigurationSchema.parse(
-                configuration
-            ) as WorkingListConfiguration
+            const parsedConfiguration =
+                WorkingListConfigurationSchema.parse(configuration)
             set({
                 criteria: criteriaFromConfiguration(parsedConfiguration),
                 selectedList: undefined,
@@ -171,9 +155,7 @@ export const createWorkingListStore = (
         },
         reconcileView(view) {
             const state = get()
-            const parsedView = WorkingListViewConfigurationSchema.parse(
-                view
-            ) as WorkingListViewConfiguration
+            const parsedView = WorkingListViewConfigurationSchema.parse(view)
             const candidate = composeWorkingListConfiguration(
                 state.criteria,
                 parsedView
@@ -185,9 +167,8 @@ export const createWorkingListStore = (
             })
         },
         acceptConfiguration(configuration, identity) {
-            const parsedConfiguration = WorkingListConfigurationSchema.parse(
-                configuration
-            ) as WorkingListConfiguration
+            const parsedConfiguration =
+                WorkingListConfigurationSchema.parse(configuration)
             set({
                 criteria: criteriaFromConfiguration(parsedConfiguration),
                 selectedList: identity ?? get().selectedList,

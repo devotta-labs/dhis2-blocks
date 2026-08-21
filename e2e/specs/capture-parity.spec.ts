@@ -179,6 +179,16 @@ const programHash = ({
     return `/#/?${parameters.toString()}`
 }
 
+const savedViewButton = (page: Page, listId: string) =>
+    page
+        .getByTestId(`working-list-view-${listId}`)
+        .locator('button:not([data-saved-view-menu])')
+
+const uiButton = (page: Page, dataTest: string) =>
+    page.locator(
+        `button[data-test="${dataTest}"], [data-test="${dataTest}"] button`
+    )
+
 const openWorkingList = async (
     page: Page,
     options: Parameters<typeof programHash>[0] = {}
@@ -188,7 +198,7 @@ const openWorkingList = async (
         timeout: 30_000,
     })
     await expect(
-        page.getByTestId(`working-list-view-${options.template ?? 'active'}`)
+        savedViewButton(page, options.template ?? 'active')
     ).toHaveAttribute('aria-current', 'true', { timeout: 30_000 })
     await expect(
         page.getByTestId('working-list-selection-loading')
@@ -214,16 +224,36 @@ const chooseDhis2Option = async (
     await page.getByText(label, { exact: true }).last().click()
 }
 
-const openSavedListOptions = async (page: Page) => {
-    const trigger = page.locator('[data-test="working-list-options"]')
+const openMoreActions = async (page: Page) => {
+    const trigger = uiButton(page, 'working-list-options')
     await trigger.click()
-    const menu = page.locator('[data-test="working-list-options-menu"]')
+    const download = page.locator('[data-test="download-working-list"]')
+    await expect(download).toBeVisible()
+    return download
+}
+
+const chooseSaveViewOption = async (page: Page, dataTest: string) => {
+    await uiButton(page, 'save-working-list').click()
+    const option = page.locator(`[data-test="${dataTest}"]`)
+    await expect(option).toBeVisible()
+    const menuItem = option.getByRole('menuitem')
+    await expect(menuItem).toBeEnabled()
+    await menuItem.click()
+}
+
+const openSavedViewActions = async (page: Page, listId: string) => {
+    await page.getByTestId(`working-list-view-${listId}-menu`).click()
+    const menu = page.locator('[data-test="saved-view-actions-menu"]')
     await expect(menu).toBeVisible()
     return menu
 }
 
-const chooseSavedListOption = async (page: Page, dataTest: string) => {
-    const menu = await openSavedListOptions(page)
+const chooseSavedViewAction = async (
+    page: Page,
+    listId: string,
+    dataTest: string
+) => {
+    const menu = await openSavedViewActions(page, listId)
     const option = menu.locator(`[data-test="${dataTest}"]`)
     await expect(option).toBeVisible()
     const menuItem = option.getByRole('menuitem')
@@ -278,19 +308,47 @@ const addFilter = async (
     scope: 'tracked-entity' | 'event',
     fieldId: string
 ) => {
-    await page.getByTestId(`more-filters-${scope}`).click()
-    await page.locator(`[data-test="add-filter-${fieldId}"]`).click()
+    if (scope === 'event') {
+        const stageControl = page.getByTestId('filter-programStage')
+        if ((await stageControl.count()) === 0) {
+            await page.getByTestId('more-filters-tracked-entity').click()
+            await page
+                .locator('[data-test="program-stage-filter-menu"]')
+                .getByRole('menuitem')
+                .hover()
+            await page
+                .locator(`[data-test="select-filter-stage-${STAGE}"]`)
+                .getByRole('menuitem')
+                .click()
+            await expect(stageControl).toBeVisible()
+        }
+        await page.getByTestId('more-filters-tracked-entity').click()
+        await page
+            .locator(`[data-test="stage-filter-fields-${STAGE}"]`)
+            .getByRole('menuitem')
+            .hover()
+        await page
+            .locator(`[data-test="add-stage-filter-${STAGE}-${fieldId}"]`)
+            .getByRole('menuitem')
+            .click()
+    } else {
+        await page.getByTestId('more-filters-tracked-entity').click()
+        await page.locator(`[data-test="add-filter-${fieldId}"]`).click()
+    }
     await expect(page.getByTestId(`filter-${fieldId}`)).toBeVisible()
     // Newly added filters open their editor right away.
     await expect(page.getByTestId(`filter-editor-${fieldId}`)).toBeVisible()
 }
 
 const openFilterEditor = async (page: Page, fieldId: string) => {
-    const button = page.getByTestId(`filter-${fieldId}`)
-    if ((await button.getAttribute('aria-expanded')) !== 'true') {
-        await button.click()
+    const editor = page.getByTestId(`filter-editor-${fieldId}`)
+    if (!(await editor.isVisible())) {
+        await page
+            .getByTestId(`filter-${fieldId}`)
+            .getByRole('combobox')
+            .click()
     }
-    await expect(page.getByTestId(`filter-editor-${fieldId}`)).toBeVisible()
+    await expect(editor).toBeVisible()
 }
 
 // This is a small UI DSL used across both tracked-entity and event endpoints.
@@ -319,20 +377,11 @@ const applyTextFilter = async (
 }
 /* eslint-enable max-params */
 
-const enterStageMode = async (page: Page, stageName = STAGE_NAME) => {
-    if (!(await page.getByTestId('filter-programStage').isVisible())) {
-        await addFilter(page, 'tracked-entity', 'programStage')
-    }
-    await openFilterEditor(page, 'programStage')
-    await chooseDhis2Option(
-        page,
-        '[data-test="filter-value-programStage"]',
-        stageName
-    )
+const enterStageMode = async (page: Page) => {
     return waitForTrackerResponse(
         page,
         'events',
-        () => page.locator('[data-test="filter-update-programStage"]').click(),
+        () => addFilter(page, 'event', 'eventOccurredAt'),
         (url) => url.searchParams.get('programStage') === STAGE
     )
 }
@@ -484,24 +533,20 @@ test.describe('Capture context and generated tracker views', () => {
         page,
     }) => {
         await openWorkingList(page)
-        await expect(
-            page.getByTestId('working-list-view-active')
-        ).toHaveAttribute('aria-current', 'true')
+        await expect(savedViewButton(page, 'active')).toHaveAttribute(
+            'aria-current',
+            'true'
+        )
         await expect(resultRows(page)).toHaveCount(8)
-        const generatedOptions = await openSavedListOptions(page)
+        await expect(uiButton(page, 'configure-columns')).toHaveText('Columns')
         await expect(
-            generatedOptions.locator('[data-test="save-as-working-list"]')
-        ).toBeVisible()
-        for (const customListAction of [
-            'update-working-list',
-            'rename-working-list',
-            'share-working-list',
-            'delete-working-list',
-        ]) {
-            await expect(
-                generatedOptions.locator(`[data-test="${customListAction}"]`)
-            ).toHaveCount(0)
-        }
+            page.getByTestId('more-filters-tracked-entity')
+        ).toHaveText('Filter')
+        await expect(uiButton(page, 'save-working-list')).toHaveText(
+            'Save view'
+        )
+        await expect(uiButton(page, 'working-list-options')).toHaveText('More')
+        await openMoreActions(page)
         await page.keyboard.press('Escape')
 
         const statusParameter =
@@ -509,7 +554,7 @@ test.describe('Capture context and generated tracker views', () => {
         const completed = await waitForTrackerResponse(
             page,
             'trackedEntities',
-            () => page.getByTestId('working-list-view-completed').click(),
+            () => savedViewButton(page, 'completed').click(),
             (url) => url.searchParams.get(statusParameter) === 'COMPLETED'
         )
         expect(completed.searchParams.get('page')).toBe('1')
@@ -518,7 +563,7 @@ test.describe('Capture context and generated tracker views', () => {
         await waitForTrackerResponse(
             page,
             'trackedEntities',
-            () => page.getByTestId('working-list-view-cancelled').click(),
+            () => savedViewButton(page, 'cancelled').click(),
             (url) => url.searchParams.get(statusParameter) === 'CANCELLED'
         )
         await expect(resultRows(page)).toHaveCount(6)
@@ -547,7 +592,7 @@ test.describe('Capture context and generated tracker views', () => {
         )
         await expect(
             page.locator(
-                '[aria-current="true"][data-testid^="working-list-view-"]'
+                '[data-testid^="working-list-view-"] button[aria-current="true"]'
             )
         ).toHaveCount(0)
         await expect(
@@ -613,7 +658,7 @@ test.describe('Capture context and generated tracker views', () => {
         page,
     }) => {
         await openWorkingList(page)
-        const activeView = page.getByTestId('working-list-view-active')
+        const activeView = savedViewButton(page, 'active')
         await expect(activeView).toHaveAttribute('aria-current', 'true')
         const statusParameter =
             targetMajor === 41 ? 'programStatus' : 'enrollmentStatus'
@@ -652,16 +697,17 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(page).toHaveURL(
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
         )
-        await expect(
-            page.getByTestId('working-list-view-active')
-        ).not.toHaveAttribute('aria-current', 'true')
+        await expect(savedViewButton(page, 'active')).not.toHaveAttribute(
+            'aria-current',
+            'true'
+        )
     })
 
     test('keeps text edits draft-only until Update and supports real null gates when available', async ({
         page,
     }) => {
         await openWorkingList(page)
-        await page.getByTestId(`filter-${TEXT_ATTRIBUTE}`).click()
+        await openFilterEditor(page, TEXT_ATTRIBUTE)
         const editor = page.getByTestId(`filter-editor-${TEXT_ATTRIBUTE}`)
 
         let trackerRequests = 0
@@ -694,7 +740,7 @@ test.describe('Capture context and generated tracker views', () => {
             page.getByTestId('working-list-row-WlE2eTei001')
         ).toBeVisible()
 
-        await page.getByTestId(`filter-${TEXT_ATTRIBUTE}`).click()
+        await openFilterEditor(page, TEXT_ATTRIBUTE)
         const operator = page.locator(
             `[data-test="filter-operator-${TEXT_ATTRIBUTE}"]`
         )
@@ -723,7 +769,7 @@ test.describe('Capture context and generated tracker views', () => {
         )
         await expect(resultRows(page)).toHaveCount(1)
 
-        await page.getByTestId(`filter-${TEXT_ATTRIBUTE}`).click()
+        await openFilterEditor(page, TEXT_ATTRIBUTE)
         await chooseDhis2Option(
             page,
             `[data-test="filter-operator-${TEXT_ATTRIBUTE}"]`,
@@ -973,50 +1019,53 @@ test.describe('Capture context and generated tracker views', () => {
             )
         ).toHaveCount(1)
 
-        await chooseSavedListOption(page, 'configure-columns')
+        await uiButton(page, 'configure-columns').click()
         const settings = page.getByTestId('column-settings')
         await expect(settings).toBeVisible()
+        const pickedColumns = settings.locator(
+            '[data-test="column-settings-transfer-pickedoptions"]'
+        )
+        const booleanColumn = pickedColumns.locator(
+            `[data-value="${BOOLEAN_ATTRIBUTE}"]`
+        )
+        await booleanColumn.click()
         await settings
-            .locator(`[data-test="column-${BOOLEAN_ATTRIBUTE}"] input`)
-            .uncheck()
-        const columnRows = settings.locator(
-            '[data-testid^="column-settings-row-"]'
-        )
-        const initialColumnRows = await columnRows.evaluateAll((rows) =>
-            rows.map((row) => row.getAttribute('data-testid'))
-        )
-        const initialIntegerIndex = initialColumnRows.indexOf(
-            `column-settings-row-${INTEGER_ATTRIBUTE}`
-        )
-        const initialTextIndex = initialColumnRows.indexOf(
-            `column-settings-row-${TEXT_ATTRIBUTE}`
-        )
+            .locator(
+                '[data-test="column-settings-transfer-actions-removeindividual"]'
+            )
+            .click()
+        await expect(booleanColumn).toHaveCount(0)
+
+        const initialPickedIds = await pickedColumns
+            .locator('[data-value]')
+            .evaluateAll((options) =>
+                options.map((option) => option.getAttribute('data-value'))
+            )
+        const initialIntegerIndex = initialPickedIds.indexOf(INTEGER_ATTRIBUTE)
+        const initialTextIndex = initialPickedIds.indexOf(TEXT_ATTRIBUTE)
         const moveCount = initialIntegerIndex - initialTextIndex
         expect(moveCount).toBeGreaterThan(0)
-        const integerDragHandle = settings.getByRole('button', {
-            name: 'Reorder E2E integer attribute',
-        })
-        await integerDragHandle.focus()
-        await page.keyboard.press('Space')
+        await pickedColumns
+            .locator(`[data-value="${INTEGER_ATTRIBUTE}"]`)
+            .click()
+        const moveUp = settings.locator(
+            '[data-test="column-settings-transfer-reorderingactions-buttonmoveup"]'
+        )
         for (let move = 0; move < moveCount; move += 1) {
-            await page.keyboard.press('ArrowUp')
-            await expect(settings.getByRole('status')).toContainText(
-                `E2E integer attribute moved to position ${initialIntegerIndex - move}`
-            )
+            await moveUp.click()
         }
-        await page.keyboard.press('Space')
         await expect
             .poll(async () => {
-                const orderedColumnRows = await columnRows.evaluateAll((rows) =>
-                    rows.map((row) => row.getAttribute('data-testid'))
-                )
-                return (
-                    orderedColumnRows.indexOf(
-                        `column-settings-row-${INTEGER_ATTRIBUTE}`
-                    ) <
-                    orderedColumnRows.indexOf(
-                        `column-settings-row-${TEXT_ATTRIBUTE}`
+                const orderedIds = await pickedColumns
+                    .locator('[data-value]')
+                    .evaluateAll((options) =>
+                        options.map((option) =>
+                            option.getAttribute('data-value')
+                        )
                     )
+                return (
+                    orderedIds.indexOf(INTEGER_ATTRIBUTE) <
+                    orderedIds.indexOf(TEXT_ATTRIBUTE)
                 )
             })
             .toBe(true)
@@ -1055,7 +1104,9 @@ test.describe('Capture programme-stage joint data strategy', () => {
         expect(stageRequest.searchParams.getAll('filterAttributes')).toEqual([
             `${TEXT_ATTRIBUTE}:like:Alpha person 01`,
         ])
-        await expect(page.getByTestId('stage-filter-section')).toBeVisible()
+        await expect(page.getByTestId('filters-and-columns')).toContainText(
+            `${STAGE_NAME} / Report date`
+        )
 
         await addFilter(page, 'event', TEXT_DATA_ELEMENT)
         const combined = await applyTextFilter(
@@ -1097,7 +1148,7 @@ test.describe('Capture programme-stage joint data strategy', () => {
             new RegExp(`^${INTEGER_DATA_ELEMENT}:(asc|desc)$`)
         )
 
-        await page.getByTestId('filter-eventOccurredAt').click()
+        await openFilterEditor(page, 'eventOccurredAt')
         const dateEditor = page.getByTestId('filter-editor-eventOccurredAt')
         const startDate = dateEditor
             .locator('[data-test="date-range-start"]')
@@ -1127,10 +1178,43 @@ test.describe('Capture programme-stage joint data strategy', () => {
             page.locator('[data-testid="working-list-table"] tbody')
         ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
 
-        await page.getByTestId('filter-programStage').click()
-        await page.locator('[data-test="filter-reset-programStage"]').click()
-        await expect(page.getByTestId('filter-programStage')).not.toContainText(
-            STAGE_NAME
+        await waitForTrackerResponse(
+            page,
+            'events',
+            () =>
+                page
+                    .locator(
+                        `[data-test="filter-${TEXT_DATA_ELEMENT}-select-clear"]`
+                    )
+                    .click(),
+            (url) =>
+                url.searchParams.get('programStage') === STAGE &&
+                !url.searchParams
+                    .getAll('filter')
+                    .some((entry) => entry.startsWith(`${TEXT_DATA_ELEMENT}:`))
+        )
+        await waitForTrackerResponse(
+            page,
+            'events',
+            () =>
+                page
+                    .locator(
+                        '[data-test="filter-eventOccurredAt-select-clear"]'
+                    )
+                    .click(),
+            (url) =>
+                url.searchParams.get('programStage') === STAGE &&
+                !url.searchParams.has('occurredAfter') &&
+                !url.searchParams.has('occurredBefore')
+        )
+        await waitForTrackerResponse(
+            page,
+            'trackedEntities',
+            () =>
+                page
+                    .locator('[data-test="filter-programStage-select-clear"]')
+                    .click(),
+            (url) => !url.searchParams.has('programStage')
         )
         await expect(
             page.getByTestId('working-list-row-WlE2eTei001')
@@ -1138,9 +1222,8 @@ test.describe('Capture programme-stage joint data strategy', () => {
         await expect(page.getByTestId(`sort-${TEXT_DATA_ELEMENT}`)).toHaveCount(
             0
         )
-        await page.getByTestId('filter-programStage').click()
-        await page.locator('[data-test="filter-remove-programStage"]').click()
-        await expect(page.getByTestId('stage-filter-section')).toHaveCount(0)
+        await expect(page.getByTestId('filter-eventOccurredAt')).toHaveCount(0)
+        await expect(page.getByTestId('filters-and-columns')).toBeVisible()
     })
 
     test('shows a genuine empty event state from a valid real-server query', async ({
@@ -1217,7 +1300,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
         await expect(resultRows(page)).toHaveCount(15)
     })
 
-    test('saves, reloads, updates, renames, shares, and deletes a private tracker list', async ({
+    test('saves, reloads, updates, shares, and deletes a private tracker list', async ({
         page,
         playwright,
     }) => {
@@ -1236,7 +1319,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                         ?.startsWith(`${INTEGER_ATTRIBUTE}:`) === true
             )
 
-            await chooseSavedListOption(page, 'save-as-working-list')
+            await chooseSaveViewOption(page, 'save-as-working-list')
             await page
                 .locator('[data-test="working-list-name-input"] input')
                 .fill('E2E browser tracker lifecycle')
@@ -1281,22 +1364,44 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             expect(saved.access).toMatchObject({ write: true, update: true })
             expect(saved.entityQueryCriteria).not.toHaveProperty('page')
             expect(saved.entityQueryCriteria).not.toHaveProperty('pageSize')
-            await expect(
-                page.getByTestId(`working-list-view-${createdId}`)
-            ).toHaveAttribute('aria-current', 'true')
+            await expect(savedViewButton(page, createdId!)).toHaveAttribute(
+                'aria-current',
+                'true'
+            )
             await expect(page).toHaveURL(
                 new RegExp(`selectedTemplateId=${createdId}`)
             )
             await expect(
                 page.getByTestId('working-list-dirty-indicator')
             ).toHaveCount(0)
-            const settledOptions = await openSavedListOptions(page)
+            const cleanUpdateRequests: string[] = []
+            page.on('request', (request) => {
+                if (request.method() === 'PUT') {
+                    cleanUpdateRequests.push(request.url())
+                }
+            })
+            await uiButton(page, 'save-working-list').click()
             await expect(
-                settledOptions.locator('[data-test="save-as-working-list"]')
+                page.locator('[data-test="save-as-working-list"]')
+            ).toBeVisible()
+            const cleanUpdateAction = page
+                .locator('[data-test="update-working-list"]')
+                .getByRole('menuitem')
+            await expect(cleanUpdateAction).toBeEnabled()
+            await cleanUpdateAction.click()
+            await expect(cleanUpdateAction).toHaveCount(0)
+            expect(cleanUpdateRequests).toEqual([])
+
+            const settledActions = await openSavedViewActions(page, createdId!)
+            await expect(
+                settledActions.locator('[data-test="update-saved-view"]')
+            ).toHaveCount(0)
+            await expect(
+                settledActions.locator('[data-test="share-saved-view"]')
             ).toBeVisible()
             await expect(
-                settledOptions.locator('[data-test="update-working-list"]')
-            ).toHaveCount(0)
+                settledActions.locator('[data-test="delete-saved-view"]')
+            ).toBeVisible()
             await page.keyboard.press('Escape')
 
             // This query was loaded before Save As, so React Query may satisfy
@@ -1305,9 +1410,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             await expect(
                 page.getByTestId('working-list-dirty-indicator')
             ).toBeVisible()
-            const dirtyOptions = await openSavedListOptions(page)
+            const dirtyOptions = await openSavedViewActions(page, createdId!)
             await expect(
-                dirtyOptions.locator('[data-test="update-working-list"]')
+                dirtyOptions.locator('[data-test="update-saved-view"]')
             ).toBeVisible()
             const updateResponse = page.waitForResponse(
                 (response) =>
@@ -1317,36 +1422,18 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     )
             )
             await dirtyOptions
-                .locator('[data-test="update-working-list"]')
+                .locator('[data-test="update-saved-view"]')
+                .getByRole('menuitem')
                 .click()
             expect((await updateResponse).ok()).toBe(true)
             await expect(
                 page.getByTestId('working-list-dirty-indicator')
             ).toHaveCount(0)
 
-            await chooseSavedListOption(page, 'rename-working-list')
-            await page
-                .locator('[data-test="working-list-name-input"] input')
-                .fill('E2E renamed tracker lifecycle')
-            const renameResponse = page.waitForResponse(
-                (response) =>
-                    response.request().method() === 'PUT' &&
-                    requestUrl(response).pathname.endsWith(
-                        `/trackedEntityInstanceFilters/${createdId}`
-                    )
-            )
-            await page
-                .locator('[data-test="working-list-name-input"] input')
-                .press('Enter')
-            expect((await renameResponse).ok()).toBe(true)
-            await expect(
-                page.getByTestId(`working-list-view-${createdId}`)
-            ).toContainText('E2E renamed tracker lifecycle')
-
-            await chooseSavedListOption(page, 'share-working-list')
+            await chooseSavedViewAction(page, createdId!, 'share-saved-view')
             const sharingDialog = page.getByRole('dialog').filter({
                 has: page.getByRole('heading', {
-                    name: 'Sharing and access: E2E renamed tracker lifecycle',
+                    name: 'Sharing and access: E2E browser tracker lifecycle',
                     exact: true,
                 }),
             })
@@ -1424,7 +1511,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 })
                 .toBe(true)
 
-            await chooseSavedListOption(page, 'share-working-list')
+            await chooseSavedViewAction(page, createdId!, 'share-saved-view')
             await expect(sharingDialog).toBeVisible()
             const readerAccessRow = sharingDialog.locator('.wrapper').filter({
                 has: page.getByText('Working list Reader', {
@@ -1488,7 +1575,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 })
                 .toBe(false)
 
-            await chooseSavedListOption(page, 'delete-working-list')
+            await chooseSavedViewAction(page, createdId!, 'delete-saved-view')
             const deleteResponse = page.waitForResponse(
                 (response) =>
                     response.request().method() === 'DELETE' &&
@@ -1497,7 +1584,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     )
             )
             await page
-                .locator('[data-test="delete-working-list-confirm"]')
+                .locator('[data-test="delete-saved-view-confirm"]')
                 .click()
             expect((await deleteResponse).ok()).toBe(true)
             await expect(
@@ -1524,7 +1611,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
         try {
             await openWorkingList(page, { template: PRIVATE_LIST })
             await enterStageMode(page)
-            await chooseSavedListOption(page, 'save-as-working-list')
+            await chooseSaveViewOption(page, 'save-as-working-list')
             await page
                 .locator('[data-test="working-list-name-input"] input')
                 .fill('E2E browser stage lifecycle')
@@ -1549,9 +1636,11 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             createdId = createBody.response?.uid
             expect(createdId).toBeTruthy()
             await selectionNavigation
-            await expect(
-                page.getByTestId(`working-list-view-${createdId}`)
-            ).toHaveAttribute('aria-current', 'true', { timeout: 30_000 })
+            await expect(savedViewButton(page, createdId!)).toHaveAttribute(
+                'aria-current',
+                'true',
+                { timeout: 30_000 }
+            )
             await expect(
                 page.getByTestId('working-list-selection-loading')
             ).toHaveCount(0, { timeout: 30_000 })
@@ -1559,9 +1648,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             await expect(
                 page.locator('[data-testid="working-list-table"] tbody')
             ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
-            const savedOptions = await openSavedListOptions(page)
+            await uiButton(page, 'save-working-list').click()
             await expect(
-                savedOptions.locator('[data-test="save-as-working-list"]')
+                page.locator('[data-test="save-as-working-list"]')
             ).toBeVisible()
             await page.keyboard.press('Escape')
             const saved = await ownerApi.get(
@@ -1581,7 +1670,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             ).toBe('--------')
             expect(savedStageList.programStage?.id).toBe(STAGE)
 
-            await chooseSavedListOption(page, 'delete-working-list')
+            await chooseSavedViewAction(page, createdId!, 'delete-saved-view')
             const deleteResponse = page.waitForResponse(
                 (response) =>
                     response.request().method() === 'DELETE' &&
@@ -1590,7 +1679,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     )
             )
             await page
-                .locator('[data-test="delete-working-list-confirm"]')
+                .locator('[data-test="delete-saved-view-confirm"]')
                 .click()
             expect((await deleteResponse).ok()).toBe(true)
             createdId = undefined
@@ -1636,9 +1725,10 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 timeout: 30_000,
             })
             await expect(page.getByTestId('working-list-table')).toHaveCount(0)
-            await expect(
-                page.getByTestId(`working-list-view-${STALE_LIST}`)
-            ).toHaveAttribute('aria-current', 'true')
+            await expect(savedViewButton(page, STALE_LIST)).toHaveAttribute(
+                'aria-current',
+                'true'
+            )
             await page.waitForTimeout(300)
             expect(trackerRequests).toHaveLength(0)
 
@@ -1714,7 +1804,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
 test.describe('read-only shared-list permissions', () => {
     test.use({ e2eCredentials: READER })
 
-    test('suppresses generated defaults and disables owner-only actions', async ({
+    test('suppresses generated defaults and hides saved-view owner actions', async ({
         page,
     }) => {
         await openWorkingList(page, { template: SHARED_LIST })
@@ -1727,20 +1817,18 @@ test.describe('read-only shared-list permissions', () => {
         await expect(page.getByTestId('working-list-view-active')).toHaveCount(
             0
         )
-        const options = await openSavedListOptions(page)
         await expect(
-            options.locator('[data-test="save-as-working-list"]')
+            page.getByTestId(`working-list-view-${SHARED_LIST}-menu`)
+        ).toHaveCount(0)
+        await uiButton(page, 'save-working-list').click()
+        await expect(
+            page.locator('[data-test="save-as-working-list"]')
         ).toBeVisible()
-        for (const ownerAction of [
-            'update-working-list',
-            'rename-working-list',
-            'share-working-list',
-            'delete-working-list',
-        ]) {
-            await expect(
-                options.locator(`[data-test="${ownerAction}"]`)
-            ).toHaveCount(0)
-        }
+        await expect(
+            page
+                .locator('[data-test="update-working-list"]')
+                .getByRole('menuitem')
+        ).toHaveAttribute('aria-disabled', 'true')
     })
 })
 
@@ -1845,7 +1933,9 @@ test.describe('accessibility and keyboard feedback', () => {
         await page.keyboard.press('Escape')
         await expect(moreFilters).toBeFocused()
 
-        const filterButton = page.getByTestId(`filter-${TEXT_ATTRIBUTE}`)
+        const filterButton = page
+            .getByTestId(`filter-${TEXT_ATTRIBUTE}`)
+            .getByRole('combobox')
         await filterButton.focus()
         await page.keyboard.press('Enter')
         await expect(
@@ -1923,32 +2013,24 @@ test.describe('accessibility and keyboard feedback', () => {
 test.describe('offline feedback', () => {
     test.use({ allowOfflineRequestFailures: true })
 
-    test('announces browser offline state globally and disables server actions', async ({
+    test('announces browser offline state and only disables server-backed actions', async ({
         context,
         page,
     }) => {
         await openWorkingList(page)
         await context.setOffline(true)
         await expect(page.getByTestId('offline-notice')).toBeVisible()
-        const offlineMenu = await openSavedListOptions(page)
+        await expect(uiButton(page, 'save-working-list')).toBeDisabled()
+        await expect(uiButton(page, 'configure-columns')).toBeEnabled()
         await expect(
-            offlineMenu.locator(
-                '[data-test="save-as-working-list"] [role="menuitem"]'
-            )
-        ).toHaveAttribute('aria-disabled', 'true')
-        await expect(
-            offlineMenu.locator(
-                '[data-test="configure-columns"] [role="menuitem"]'
-            )
-        ).not.toHaveAttribute('aria-disabled', 'true')
+            page.getByTestId('more-filters-tracked-entity')
+        ).toBeEnabled()
+        await expect(uiButton(page, 'working-list-options')).toBeEnabled()
+        const download = await openMoreActions(page)
+        await expect(download.getByRole('menuitem')).toBeEnabled()
         await page.keyboard.press('Escape')
         await context.setOffline(false)
         await expect(page.getByTestId('offline-notice')).toHaveCount(0)
-        const onlineMenu = await openSavedListOptions(page)
-        await expect(
-            onlineMenu.locator(
-                '[data-test="save-as-working-list"] [role="menuitem"]'
-            )
-        ).not.toHaveAttribute('aria-disabled', 'true')
+        await expect(uiButton(page, 'save-working-list')).toBeEnabled()
     })
 })

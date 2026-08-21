@@ -1,0 +1,40 @@
+diff --git a/build/cjs/reordering-actions.js b/build/cjs/reordering-actions.js
+index 9f6940fc23565d88448253ccc9be9bfc310a2acc..9f6f63463eafbd3aafe46319cdc0d17f19440284 100644
+--- a/build/cjs/reordering-actions.js
++++ b/build/cjs/reordering-actions.js
+@@ -24,6 +24,7 @@ const ReorderingActions = _ref => {
+     className: _style.default.dynamic([["874845231", [_uiConstants.spacers.dp8, _uiConstants.spacers.dp8, _uiConstants.spacers.dp8]]])
+   }, /*#__PURE__*/_react.default.createElement(_button.Button, {
+     small: true,
++    "aria-label": "Move down",
+     disabled: disabledDown,
+     onClick: () => !disabledDown && onChangeDown(event),
+     dataTest: `${dataTest}-buttonmovedown`,
+@@ -33,6 +34,7 @@ const ReorderingActions = _ref => {
+     })
+   }), /*#__PURE__*/_react.default.createElement(_button.Button, {
+     small: true,
++    "aria-label": "Move up",
+     disabled: disabledUp,
+     onClick: () => !disabledUp && onChangeUp(event),
+     dataTest: `${dataTest}-buttonmoveup`,
+diff --git a/build/es/reordering-actions.js b/build/es/reordering-actions.js
+index a76f2dd89b86a7a488e0e439fa3345ec2c9e5210..e6cac27ca2e40d7bd8f08066f0199dca254af199 100644
+--- a/build/es/reordering-actions.js
++++ b/build/es/reordering-actions.js
+@@ -17,6 +17,7 @@ export const ReorderingActions = _ref => {
+     className: _JSXStyle.dynamic([["874845231", [spacers.dp8, spacers.dp8, spacers.dp8]]])
+   }, /*#__PURE__*/React.createElement(Button, {
+     small: true,
++    "aria-label": "Move down",
+     disabled: disabledDown,
+     onClick: () => !disabledDown && onChangeDown(event),
+     dataTest: `${dataTest}-buttonmovedown`,
+@@ -26,6 +27,7 @@ export const ReorderingActions = _ref => {
+     })
+   }), /*#__PURE__*/React.createElement(Button, {
+     small: true,
++    "aria-label": "Move up",
+     disabled: disabledUp,
+     onClick: () => !disabledUp && onChangeUp(event),
+     dataTest: `${dataTest}-buttonmoveup`,

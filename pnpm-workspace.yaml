@@ -8,7 +8,8 @@ onlyBuiltDependencies:
     - esbuild
 
 patchedDependencies:
-    '@dhis2-ui/sharing-dialog@10.11.0': patches/@dhis2-ui__sharing-dialog@10.11.0.patch
+    '@dhis2-ui/sharing-dialog@10.13.0': patches/@dhis2-ui__sharing-dialog@10.13.0.patch
+    '@dhis2-ui/transfer@10.13.0': patches/@dhis2-ui__transfer@10.13.0.patch
 
 publicHoistPattern:
     - '@dhis2/ui'

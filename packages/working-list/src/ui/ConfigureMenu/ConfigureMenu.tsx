@@ -1,24 +1,20 @@
 import {
     Button,
+    DropdownButton,
     FlyoutMenu,
     InputField,
     MenuItem,
-    MenuSectionHeader,
     Modal,
     ModalActions,
     ModalContent,
     ModalTitle,
-    NoticeBox,
-    Popover,
-    SharingDialog,
 } from '@dhis2/ui'
-import React, { useEffect, useState } from 'react'
-import {
-    getSharingType,
-    type NormalizedSavedWorkingList,
-    type SavedListResource,
+import { IconMore16 } from '@dhis2/ui-icons'
+import React, { useState } from 'react'
+import type {
+    NormalizedSavedWorkingList,
+    SavedListResource,
 } from '../../api/savedLists'
-import filterStyles from '../FilterControls/FilterControls.module.css'
 import layoutStyles from '../styles/layout.module.css'
 import { useWorkingListText } from '../WorkingListText'
 import styles from './ConfigureMenu.module.css'
@@ -27,211 +23,130 @@ interface ConfigureMenuProps {
     selectedList?: NormalizedSavedWorkingList
     selectedIsGenerated: boolean
     activeResource: SavedListResource
+    hasFilters: boolean
     dirty: boolean
     online: boolean
     busy: boolean
-    onDelete: (list: NormalizedSavedWorkingList) => void
-    onRename: (list: NormalizedSavedWorkingList, name: string) => void
+    onDownload: () => void
     onSaveAs: (name: string) => void
-    onSharingSaved: () => void
     onUpdate: (list: NormalizedSavedWorkingList) => void
-    /** When omitted, the Columns group is left out of the menu. */
-    onConfigureColumns?: () => void
 }
-
-const accessFor = (list: NormalizedSavedWorkingList | undefined) =>
-    list?.sharing.access
 
 const canUpdateList = (list: NormalizedSavedWorkingList | undefined) => {
-    const access = accessFor(list)
+    const access = list?.sharing.access
     return access?.write === true && access.update === true
 }
-
-const canDeleteList = (list: NormalizedSavedWorkingList | undefined) =>
-    accessFor(list)?.delete === true
-
-const canManageList = (list: NormalizedSavedWorkingList | undefined) =>
-    accessFor(list)?.manage === true
 
 export const ConfigureMenu = ({
     selectedList,
     selectedIsGenerated,
     activeResource,
+    hasFilters,
     dirty,
     online,
     busy,
-    onDelete,
-    onRename,
+    onDownload,
     onSaveAs,
-    onSharingSaved,
     onUpdate,
-    onConfigureColumns,
 }: ConfigureMenuProps) => {
     const i18n = { t: useWorkingListText() }
-    const [nameDialog, setNameDialog] = useState<'saveAs' | 'rename'>()
+    const [nameDialogOpen, setNameDialogOpen] = useState(false)
     const [name, setName] = useState('')
-    const [sharingList, setSharingList] = useState<NormalizedSavedWorkingList>()
-    const [deleteList, setDeleteList] = useState<NormalizedSavedWorkingList>()
-    const [sharingError, setSharingError] = useState<string>()
-    const [optionsOpen, setOptionsOpen] = useState(false)
-    const [optionsReference, setOptionsReference] =
-        useState<HTMLDivElement | null>(null)
-    const [optionsMenu, setOptionsMenu] = useState<HTMLDivElement | null>(null)
+    const [saveMenuOpen, setSaveMenuOpen] = useState(false)
+    const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+    const persistedSelection =
+        !selectedIsGenerated && selectedList ? selectedList : undefined
     const canUpdate =
-        !selectedIsGenerated &&
-        selectedList?.compatibility === 'compatible' &&
-        canUpdateList(selectedList) &&
-        selectedList.resource === activeResource &&
-        dirty
-    const canRename =
-        !selectedIsGenerated &&
-        selectedList?.compatibility === 'compatible' &&
-        canUpdateList(selectedList)
-    const canDelete = !selectedIsGenerated && canDeleteList(selectedList)
-    const canShare = !selectedIsGenerated && canManageList(selectedList)
-    const savedListLocked = !online || busy
-    const optionsTrigger = () =>
-        optionsReference?.querySelector<HTMLButtonElement>(
-            '[data-test="working-list-options"]'
-        )
-    const closeOptions = () => {
-        setOptionsOpen(false)
-        optionsTrigger()?.focus()
+        persistedSelection?.compatibility === 'compatible' &&
+        persistedSelection.resource === activeResource &&
+        canUpdateList(persistedSelection)
+    const locked = !online || busy
+    const openSaveAs = () => {
+        setSaveMenuOpen(false)
+        setName('')
+        setNameDialogOpen(true)
     }
-
-    useEffect(() => {
-        if (!optionsOpen || !optionsMenu) {
-            return
-        }
-        const frame = requestAnimationFrame(() => {
-            optionsMenu
-                .querySelector<HTMLElement>('[role="presentation"][tabindex]')
-                ?.focus()
-        })
-        return () => cancelAnimationFrame(frame)
-    }, [optionsMenu, optionsOpen])
 
     return (
         <>
-            <div ref={setOptionsReference} className={styles['configure-menu']}>
-                <button
-                    type="button"
-                    className={filterStyles['filter-button']}
-                    data-test="working-list-options"
-                    data-testid="working-list-options"
-                    aria-controls={
-                        optionsOpen ? 'working-list-options-menu' : undefined
-                    }
-                    aria-expanded={optionsOpen}
-                    aria-haspopup="menu"
-                    onClick={() => setOptionsOpen((open) => !open)}
-                >
-                    {i18n.t('Configure')}
-                    <span aria-hidden="true">▾</span>
-                </button>
-                {optionsOpen && optionsReference && (
-                    <Popover
-                        placement="bottom-end"
-                        reference={optionsReference}
-                        onClickOutside={closeOptions}
-                    >
-                        <div
-                            ref={setOptionsMenu}
-                            id="working-list-options-menu"
-                            className={filterStyles['menu-popover-sheet']}
-                        >
-                            <FlyoutMenu
-                                dense
-                                dataTest="working-list-options-menu"
-                                closeMenu={closeOptions}
-                            >
-                                <MenuSectionHeader
-                                    hideDivider
-                                    label={i18n.t('Saved list')}
-                                />
-                                {canUpdate && selectedList && (
-                                    <MenuItem
-                                        dataTest="update-working-list"
-                                        disabled={savedListLocked}
-                                        label={i18n.t('Update saved list')}
-                                        onClick={() => {
-                                            closeOptions()
-                                            onUpdate(selectedList)
-                                        }}
-                                    />
-                                )}
+            <div
+                className={styles['configure-menu']}
+                data-testid="working-list-actions"
+            >
+                {persistedSelection ? (
+                    <DropdownButton
+                        small
+                        dataTest="save-working-list"
+                        open={saveMenuOpen}
+                        disabled={locked}
+                        onClick={({ open }) => setSaveMenuOpen(open)}
+                        component={
+                            <FlyoutMenu dense>
                                 <MenuItem
-                                    dataTest="save-as-working-list"
-                                    disabled={savedListLocked}
-                                    label={i18n.t('Save as new')}
+                                    dataTest="update-working-list"
+                                    disabled={!canUpdate || locked}
+                                    label={i18n.t('Save changes to this view')}
                                     onClick={() => {
-                                        closeOptions()
-                                        setName('')
-                                        setNameDialog('saveAs')
+                                        setSaveMenuOpen(false)
+                                        if (dirty && canUpdate) {
+                                            onUpdate(persistedSelection)
+                                        }
                                     }}
                                 />
-                                {canRename && selectedList && (
-                                    <MenuItem
-                                        dataTest="rename-working-list"
-                                        disabled={savedListLocked}
-                                        label={i18n.t('Rename')}
-                                        onClick={() => {
-                                            closeOptions()
-                                            setName(selectedList.name)
-                                            setNameDialog('rename')
-                                        }}
-                                    />
-                                )}
-                                {canShare && selectedList && (
-                                    <MenuItem
-                                        dataTest="share-working-list"
-                                        disabled={savedListLocked}
-                                        label={i18n.t('Sharing and access')}
-                                        onClick={() => {
-                                            closeOptions()
-                                            setSharingError(undefined)
-                                            setSharingList(selectedList)
-                                        }}
-                                    />
-                                )}
-                                {canDelete && selectedList && (
-                                    <MenuItem
-                                        destructive
-                                        dataTest="delete-working-list"
-                                        disabled={savedListLocked}
-                                        label={i18n.t('Delete')}
-                                        onClick={() => {
-                                            closeOptions()
-                                            setDeleteList(selectedList)
-                                        }}
-                                    />
-                                )}
-                                {onConfigureColumns && (
-                                    <MenuSectionHeader
-                                        label={i18n.t('Columns')}
-                                    />
-                                )}
-                                {onConfigureColumns && (
-                                    <MenuItem
-                                        dataTest="configure-columns"
-                                        label={i18n.t('Configure columns')}
-                                        onClick={() => {
-                                            closeOptions()
-                                            onConfigureColumns()
-                                        }}
-                                    />
-                                )}
+                                <MenuItem
+                                    dataTest="save-as-working-list"
+                                    disabled={locked}
+                                    label={i18n.t('Create new view…')}
+                                    onClick={openSaveAs}
+                                />
                             </FlyoutMenu>
-                        </div>
-                    </Popover>
+                        }
+                    >
+                        {i18n.t('Save view')}
+                    </DropdownButton>
+                ) : (
+                    <>
+                        {hasFilters && (
+                            <Button
+                                small
+                                dataTest="save-working-list"
+                                disabled={locked}
+                                onClick={openSaveAs}
+                            >
+                                {i18n.t('Save view')}
+                            </Button>
+                        )}
+                        <DropdownButton
+                            secondary
+                            small
+                            icon={<IconMore16 />}
+                            dataTest="working-list-options"
+                            open={moreMenuOpen}
+                            onClick={({ open }) => setMoreMenuOpen(open)}
+                            component={
+                                <FlyoutMenu dense>
+                                    <MenuItem
+                                        dataTest="download-working-list"
+                                        label={i18n.t('Download data…')}
+                                        onClick={() => {
+                                            setMoreMenuOpen(false)
+                                            onDownload()
+                                        }}
+                                    />
+                                </FlyoutMenu>
+                            }
+                        >
+                            {i18n.t('More')}
+                        </DropdownButton>
+                    </>
                 )}
             </div>
 
-            {nameDialog && (
+            {nameDialogOpen && (
                 <Modal
                     small
                     position="middle"
-                    onClose={() => setNameDialog(undefined)}
+                    onClose={() => setNameDialogOpen(false)}
                 >
                     <form
                         className={styles['working-list-name-form']}
@@ -241,21 +156,12 @@ export const ConfigureMenu = ({
                             if (!nextName || busy) {
                                 return
                             }
-                            if (nameDialog === 'rename') {
-                                if (!selectedList) {
-                                    return
-                                }
-                                onRename(selectedList, nextName)
-                            } else {
-                                onSaveAs(nextName)
-                            }
-                            setNameDialog(undefined)
+                            onSaveAs(nextName)
+                            setNameDialogOpen(false)
                         }}
                     >
                         <ModalTitle>
-                            {nameDialog === 'rename'
-                                ? i18n.t('Rename working list')
-                                : i18n.t('Save as new working list')}
+                            {i18n.t('Save as new working list')}
                         </ModalTitle>
                         <ModalContent>
                             <InputField
@@ -271,7 +177,7 @@ export const ConfigureMenu = ({
                                 <Button
                                     type="button"
                                     dataTest="working-list-name-cancel"
-                                    onClick={() => setNameDialog(undefined)}
+                                    onClick={() => setNameDialogOpen(false)}
                                 >
                                     {i18n.t('Cancel')}
                                 </Button>
@@ -281,77 +187,12 @@ export const ConfigureMenu = ({
                                     dataTest="working-list-name-submit"
                                     disabled={!name.trim() || busy}
                                 >
-                                    {nameDialog === 'rename'
-                                        ? i18n.t('Rename')
-                                        : i18n.t('Save')}
+                                    {i18n.t('Save')}
                                 </Button>
                             </div>
                         </ModalActions>
                     </form>
                 </Modal>
-            )}
-
-            {deleteList && (
-                <Modal
-                    small
-                    position="middle"
-                    onClose={() => setDeleteList(undefined)}
-                >
-                    <ModalTitle>{i18n.t('Delete working list?')}</ModalTitle>
-                    <ModalContent>
-                        {i18n.t('“{{name}}” will be permanently deleted.', {
-                            name: deleteList.name,
-                        })}
-                    </ModalContent>
-                    <ModalActions>
-                        <div className={layoutStyles['modal-button-strip']}>
-                            <Button
-                                dataTest="delete-working-list-cancel"
-                                onClick={() => setDeleteList(undefined)}
-                            >
-                                {i18n.t('Cancel')}
-                            </Button>
-                            <Button
-                                destructive
-                                dataTest="delete-working-list-confirm"
-                                disabled={busy}
-                                onClick={() => {
-                                    onDelete(deleteList)
-                                    setDeleteList(undefined)
-                                }}
-                            >
-                                {i18n.t('Delete')}
-                            </Button>
-                        </div>
-                    </ModalActions>
-                </Modal>
-            )}
-
-            {sharingError && (
-                <NoticeBox error title={i18n.t('Could not update sharing')}>
-                    {sharingError}
-                </NoticeBox>
-            )}
-
-            {sharingList && (
-                <SharingDialog
-                    id={sharingList.id}
-                    type={getSharingType(sharingList.resource)}
-                    metadataSharing
-                    onClose={() => setSharingList(undefined)}
-                    onError={(error) =>
-                        setSharingError(
-                            error instanceof Error
-                                ? error.message
-                                : String(error)
-                        )
-                    }
-                    onSave={() => {
-                        setSharingError(undefined)
-                        setSharingList(undefined)
-                        onSharingSaved()
-                    }}
-                />
             )}
         </>
     )

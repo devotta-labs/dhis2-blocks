@@ -140,6 +140,11 @@
     padding: 8px 12px;
 }
 
+.working-list-pagination
+    :global([data-test='dhis2-uicore-select-input'] > :last-child) {
+    margin-block-start: 0;
+}
+
 .working-list-results {
     width: 100%;
     min-width: 0;

@@ -1,17 +1,23 @@
 import {
+    Box,
     Button,
     CalendarInput,
     Checkbox,
-    FlyoutMenu,
+    Field,
+    Menu,
+    MenuDivider,
     MenuItem,
+    MultiSelect,
     MultiSelectField,
     MultiSelectOption,
     OrganisationUnitTree,
     Popover,
+    SingleSelect,
     SingleSelectField,
     SingleSelectOption,
+    Tooltip,
 } from '@dhis2/ui'
-import { IconCross16 } from '@dhis2/ui-icons'
+import { IconCross16, IconFilter16 } from '@dhis2/ui-icons'
 import { useQuery } from '@tanstack/react-query'
 import React, {
     createContext,
@@ -299,8 +305,16 @@ const UserFilterSelect = ({
 }) => {
     const i18n = { t: useWorkingListText() }
     const [search, setSearch] = useState('')
+    const [debouncedSearch, setDebouncedSearch] = useState('')
+    useEffect(() => {
+        const timeout = window.setTimeout(
+            () => setDebouncedSearch(search.trim()),
+            250
+        )
+        return () => window.clearTimeout(timeout)
+    }, [search])
     const usersQuery = useQuery({
-        queryKey: ['working-list', 'users', search],
+        queryKey: ['working-list', 'users', debouncedSearch],
         queryFn: ({ signal }) =>
             client.query(
                 {
@@ -310,15 +324,15 @@ const UserFilterSelect = ({
                             fields: 'id,displayName,username',
                             pageSize: 50,
                         }
-                        if (search.trim()) {
-                            return { ...params, query: search.trim() }
-                        }
-                        return params
+                        return debouncedSearch
+                            ? { ...params, query: debouncedSearch }
+                            : params
                     })(),
                 },
                 UsersResponseSchema,
                 signal
             ),
+        placeholderData: (previous) => previous,
         staleTime: 60_000,
     })
     const users = usersQuery.data?.users ?? []
@@ -328,41 +342,51 @@ const UserFilterSelect = ({
         <div
             className={styles['reference-filter-editor']}
             data-testid="assignee-user-selector"
+            onChangeCapture={(event) => {
+                const target = event.target
+                if (
+                    target instanceof HTMLInputElement &&
+                    target.name === 'filter'
+                ) {
+                    setSearch(target.value)
+                }
+            }}
         >
-            <label className={styles['native-field']}>
-                <span>{i18n.t('Search users')}</span>
-                <input
-                    type="search"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                />
-            </label>
-            <MultiSelectField
-                dense
-                dataTest="assignee-users"
-                label={i18n.t('Users')}
-                loading={usersQuery.isPending || usersQuery.isFetching}
-                selected={selected}
-                noMatchText={i18n.t('No users match')}
-                onChange={({ selected: next }) => onChange(next)}
-            >
-                {users.map((user) => (
-                    <MultiSelectOption
-                        key={user.id}
-                        value={user.id}
-                        label={
-                            user.username
-                                ? `${user.displayName} (${user.username})`
-                                : user.displayName
-                        }
-                    />
-                ))}
-                {selected
-                    .filter((id) => !knownIds.has(id))
-                    .map((id) => (
-                        <MultiSelectOption key={id} value={id} label={id} />
-                    ))}
-            </MultiSelectField>
+            <Field dataTest="assignee-users" label={i18n.t('Users')}>
+                <Box minWidth="100px">
+                    <MultiSelect
+                        collapseSelectionAfter={1}
+                        dense
+                        filterable
+                        filterPlaceholder={i18n.t('Search users')}
+                        loading={usersQuery.isPending || usersQuery.isFetching}
+                        selected={selected}
+                        noMatchText={i18n.t('No users match')}
+                        onChange={({ selected: next }) => onChange(next)}
+                    >
+                        {users.map((user) => (
+                            <MultiSelectOption
+                                key={user.id}
+                                value={user.id}
+                                label={
+                                    user.username
+                                        ? `${user.displayName} (${user.username})`
+                                        : user.displayName
+                                }
+                            />
+                        ))}
+                        {selected
+                            .filter((id) => !knownIds.has(id))
+                            .map((id) => (
+                                <MultiSelectOption
+                                    key={id}
+                                    value={id}
+                                    label={id}
+                                />
+                            ))}
+                    </MultiSelect>
+                </Box>
+            </Field>
             {usersQuery.error && (
                 <p role="alert">
                     {i18n.t('Could not load users')}: {String(usersQuery.error)}
@@ -563,32 +587,62 @@ interface MoreFiltersProps {
     fields: WorkingListField[]
     visibleFilterIds: string[]
     scope: 'tracked-entity' | 'event'
-    includeProgramStage?: boolean
+    program?: TrackerProgram
+    selectedStageId?: string
+    eventFields?: WorkingListField[]
     onAdd: (fieldId: string) => void
+    onSelectStage?: (stageId: string) => void
+    onAddStageFilter?: (stageId: string, fieldId: string) => void
 }
 
 export const MoreFilters = ({
     fields,
     visibleFilterIds,
     scope,
-    includeProgramStage,
+    program,
+    selectedStageId,
+    eventFields = [],
     onAdd,
+    onSelectStage,
+    onAddStageFilter,
 }: MoreFiltersProps) => {
     const translate = useWorkingListText()
     const i18n = { t: translate }
-    const [buttonElement, setButtonElement] =
-        useState<HTMLButtonElement | null>(null)
+    const [buttonElement, setButtonElement] = useState<HTMLDivElement | null>(
+        null
+    )
     const [menuElement, setMenuElement] = useState<HTMLDivElement | null>(null)
     const [open, setOpen] = useState(false)
+    const [openSubMenu, setOpenSubMenu] = useState<
+        'program-stages' | 'stage-fields' | null
+    >(null)
     const available = fields.filter(
         (field) => field.filterable && !visibleFilterIds.includes(field.id)
     )
-    const hasProgramStage =
-        includeProgramStage && !visibleFilterIds.includes('programStage')
+    const stages = useMemo(
+        () =>
+            program?.programStages.filter(
+                (stage) => stage.access?.read !== false
+            ) ?? [],
+        [program]
+    )
+    const menuStage = stages.find((stage) => stage.id === selectedStageId)
+    const availableStageFields = eventFields.filter(
+        (field) =>
+            field.filterable &&
+            !visibleFilterIds.includes(field.id) &&
+            (field.source !== 'eventDataElement' ||
+                menuStage?.programStageDataElements.some(
+                    (binding) => binding.dataElement.id === field.id
+                ))
+    )
 
     const close = () => {
         setOpen(false)
-        requestAnimationFrame(() => buttonElement?.focus())
+        setOpenSubMenu(null)
+        requestAnimationFrame(() =>
+            buttonElement?.querySelector<HTMLButtonElement>('button')?.focus()
+        )
     }
     useEscapeToClose(open, close)
     useEffect(() => {
@@ -597,31 +651,29 @@ export const MoreFilters = ({
         }
         const frame = requestAnimationFrame(() => {
             menuElement
-                .querySelector<HTMLElement>(
-                    '[data-test^="add-filter-"][tabindex]'
-                )
+                .querySelector<HTMLElement>('[role="presentation"][tabindex]')
                 ?.focus()
         })
         return () => cancelAnimationFrame(frame)
     }, [menuElement, open])
-    if (!available.length && !hasProgramStage) {
+    if (!available.length && !stages.length && !availableStageFields.length) {
         return null
     }
 
     return (
-        <div className={styles['more-filters-menu']}>
-            <button
-                ref={setButtonElement}
-                type="button"
-                className={styles['filter-button']}
+        <div ref={setButtonElement} className={styles['more-filters-menu']}>
+            <Button
+                secondary
+                small
+                icon={<IconFilter16 />}
+                dataTest={`more-filters-${scope}`}
                 data-testid={`more-filters-${scope}`}
                 aria-expanded={open}
                 aria-haspopup="menu"
                 onClick={() => setOpen((value) => !value)}
             >
-                {i18n.t('More filters')}
-                <span aria-hidden="true">▾</span>
-            </button>
+                {i18n.t('Filter')}
+            </Button>
             {open && buttonElement && (
                 <FilterPopover
                     arrow={false}
@@ -633,12 +685,145 @@ export const MoreFilters = ({
                     <div
                         ref={setMenuElement}
                         className={styles['menu-popover-sheet']}
+                        style={{
+                            maxHeight: `max(160px, calc(100vh - ${
+                                Math.ceil(
+                                    buttonElement.getBoundingClientRect().bottom
+                                ) + 16
+                            }px))`,
+                        }}
+                        onMouseOver={(event) => {
+                            const target = event.target
+                            if (!(target instanceof Element)) {
+                                return
+                            }
+                            if (
+                                target.closest(
+                                    '[data-test="program-stage-filter-menu"]'
+                                )
+                            ) {
+                                setOpenSubMenu('program-stages')
+                            } else if (
+                                menuStage &&
+                                target.closest(
+                                    `[data-test="stage-filter-fields-${menuStage.id}"]`
+                                )
+                            ) {
+                                setOpenSubMenu('stage-fields')
+                            } else if (
+                                target.closest('[data-test^="add-filter-"]')
+                            ) {
+                                setOpenSubMenu(null)
+                            }
+                        }}
                     >
-                        <FlyoutMenu
-                            dense
-                            dataTest={`more-filters-menu-${scope}`}
-                            closeMenu={close}
-                        >
+                        <Menu dense dataTest={`more-filters-menu-${scope}`}>
+                            {stages.length > 0 && (
+                                <MenuItem
+                                    dataTest="program-stage-filter-menu"
+                                    label={i18n.t('Program stage')}
+                                    showSubMenu={
+                                        openSubMenu === 'program-stages'
+                                    }
+                                    toggleSubMenu={() =>
+                                        setOpenSubMenu('program-stages')
+                                    }
+                                >
+                                    {stages.map((stage) => {
+                                        const disabled =
+                                            Boolean(selectedStageId)
+                                        const lockMessage = i18n.t(
+                                            'Can only filter using one program stage.'
+                                        )
+                                        const label = disabled ? (
+                                            <Tooltip
+                                                dataTest={`stage-lock-tooltip-${stage.id}`}
+                                                content={lockMessage}
+                                                openDelay={200}
+                                            >
+                                                {({ ref, ...tooltipProps }) => (
+                                                    <span
+                                                        ref={(element) => {
+                                                            if (element) {
+                                                                ref.current =
+                                                                    element
+                                                            }
+                                                        }}
+                                                        className={
+                                                            styles[
+                                                                'stage-lock-tooltip-target'
+                                                            ]
+                                                        }
+                                                        tabIndex={0}
+                                                        aria-label={`${stage.displayName}. ${lockMessage}`}
+                                                        {...tooltipProps}
+                                                    >
+                                                        {stage.displayName}
+                                                    </span>
+                                                )}
+                                            </Tooltip>
+                                        ) : (
+                                            stage.displayName
+                                        )
+                                        return (
+                                            <MenuItem
+                                                key={stage.id}
+                                                dataTest={`select-filter-stage-${stage.id}`}
+                                                disabled={disabled}
+                                                active={
+                                                    stage.id === selectedStageId
+                                                }
+                                                label={label}
+                                                {...(disabled
+                                                    ? {
+                                                          ariaLabel:
+                                                              stage.displayName,
+                                                      }
+                                                    : {})}
+                                                onClick={() => {
+                                                    if (!disabled) {
+                                                        onSelectStage?.(
+                                                            stage.id
+                                                        )
+                                                        close()
+                                                    }
+                                                }}
+                                            />
+                                        )
+                                    })}
+                                </MenuItem>
+                            )}
+                            {menuStage && availableStageFields.length > 0 && (
+                                <MenuItem
+                                    dataTest={`stage-filter-fields-${menuStage.id}`}
+                                    label={menuStage.displayName}
+                                    showSubMenu={openSubMenu === 'stage-fields'}
+                                    toggleSubMenu={() =>
+                                        setOpenSubMenu('stage-fields')
+                                    }
+                                >
+                                    {availableStageFields.map((field) => (
+                                        <MenuItem
+                                            key={field.id}
+                                            dataTest={`add-stage-filter-${menuStage.id}-${field.id}`}
+                                            label={fieldDisplayName(
+                                                field,
+                                                translate
+                                            )}
+                                            onClick={() => {
+                                                onAddStageFilter?.(
+                                                    menuStage.id,
+                                                    field.id
+                                                )
+                                                close()
+                                            }}
+                                        />
+                                    ))}
+                                </MenuItem>
+                            )}
+                            {stages.length > 0 && available.length > 0 && (
+                                <MenuDivider dataTest="filter-scope-divider" />
+                            )}
                             {available.map((field) => (
                                 <MenuItem
                                     key={field.id}
@@ -650,17 +835,7 @@ export const MoreFilters = ({
                                     }}
                                 />
                             ))}
-                            {hasProgramStage && (
-                                <MenuItem
-                                    dataTest="add-filter-programStage"
-                                    label={i18n.t('Program stage')}
-                                    onClick={() => {
-                                        onAdd('programStage')
-                                        close()
-                                    }}
-                                />
-                            )}
-                        </FlyoutMenu>
+                        </Menu>
                     </div>
                 </FilterPopover>
             )}
@@ -676,8 +851,10 @@ interface FilterButtonProps {
     validationContext?: FilterSerializationContext
     calendarContext: FilterCalendarContext
     defaultOpen?: boolean
+    prefix?: string
     onApply: (filter: AppliedFilter) => void
     onReset: () => void
+    onRemove?: () => void
 }
 
 export const FilterButton = ({
@@ -688,45 +865,123 @@ export const FilterButton = ({
     validationContext,
     calendarContext,
     defaultOpen,
+    prefix,
     onApply,
     onReset,
+    onRemove,
 }: FilterButtonProps) => {
     const translate = useWorkingListText()
-    const [buttonElement, setButtonElement] =
-        useState<HTMLButtonElement | null>(null)
+    const i18n = { t: translate }
+    const [buttonElement, setButtonElement] = useState<HTMLDivElement | null>(
+        null
+    )
     const [open, setOpen] = useState(defaultOpen ?? false)
     const summary = summaryForFilter(filter, translate)
+    const displayPrefix = prefix ?? fieldDisplayName(field, translate)
 
     const close = () => {
         setOpen(false)
-        requestAnimationFrame(() => buttonElement?.focus())
+        requestAnimationFrame(() =>
+            buttonElement
+                ?.querySelector<HTMLElement>(
+                    `[data-test="filter-${field.id}-select"] [tabindex]`
+                )
+                ?.focus()
+        )
     }
     useEscapeToClose(open, close)
+    useEffect(() => {
+        const combobox = buttonElement?.querySelector<HTMLElement>(
+            `[data-test="filter-${field.id}-select"] [tabindex]`
+        )
+        if (!combobox) {
+            return
+        }
+        // The SingleSelect supplies the required visual/combobox semantics,
+        // while this control opens the richer filter editor instead of its
+        // option list. Keep the announced state aligned with that editor.
+        combobox.setAttribute('role', 'combobox')
+        combobox.setAttribute('aria-expanded', String(open))
+        combobox.setAttribute('aria-haspopup', 'dialog')
+        combobox.setAttribute('aria-controls', `filter-editor-${field.id}`)
+    }, [buttonElement, field.id, open])
 
     return (
-        <div className={styles['filter-control']}>
-            <button
-                ref={setButtonElement}
-                type="button"
-                className={`${styles['filter-button']}${
-                    summary ? ` ${styles['filter-button--active']}` : ''
-                }`}
-                data-testid={`filter-${field.id}`}
-                aria-expanded={open}
-                aria-haspopup="dialog"
-                onClick={() => setOpen((value) => !value)}
+        <div
+            ref={setButtonElement}
+            className={styles['filter-control']}
+            data-testid={`filter-${field.id}`}
+            onMouseDownCapture={(event) => {
+                const target =
+                    event.target instanceof Element ? event.target : null
+                if (
+                    !target?.closest(
+                        `[data-test="filter-${field.id}-select-clear"]`
+                    )
+                ) {
+                    return
+                }
+                // A click outside closes the editor popover on mouse-down.
+                // Clear before that dismissal can consume the subsequent click.
+                event.preventDefault()
+                event.stopPropagation()
+                onReset()
+                onRemove?.()
+            }}
+            onClickCapture={(event) => {
+                const target =
+                    event.target instanceof Element ? event.target : null
+                const select = target?.closest(
+                    `[data-test="filter-${field.id}-select"]`
+                )
+                if (!select && target !== event.currentTarget) {
+                    return
+                }
+                if (
+                    target?.closest(
+                        `[data-test="filter-${field.id}-select-clear"]`
+                    )
+                ) {
+                    return
+                }
+                event.preventDefault()
+                event.stopPropagation()
+                setOpen((value) => !value)
+            }}
+            onKeyDownCapture={(event) => {
+                const target =
+                    event.target instanceof Element ? event.target : null
+                if (
+                    ['Enter', ' ', 'ArrowDown'].includes(event.key) &&
+                    target?.closest(
+                        `[data-test="filter-${field.id}-select"] [tabindex]`
+                    )
+                ) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    setOpen(true)
+                }
+            }}
+        >
+            <SingleSelect
+                dense
+                clearable
+                clearText={i18n.t('Clear filter')}
+                dataTest={`filter-${field.id}-select`}
+                prefix={`${displayPrefix}:`}
+                selected="current-filter"
+                onChange={({ selected }) => {
+                    if (!selected) {
+                        onReset()
+                        onRemove?.()
+                    }
+                }}
             >
-                <span>
-                    {summary
-                        ? translate('{{filterName}}{{escape}}', {
-                              filterName: fieldDisplayName(field, translate),
-                              escape: ':',
-                          })
-                        : fieldDisplayName(field, translate)}
-                </span>
-                {summary && <strong>{summary}</strong>}
-                <span aria-hidden="true">▾</span>
-            </button>
+                <SingleSelectOption
+                    value="current-filter"
+                    label={summary ?? i18n.t('All')}
+                />
+            </SingleSelect>
             {open && buttonElement && (
                 <FilterPopover
                     arrow={false}
@@ -779,10 +1034,14 @@ const FilterEditor = ({
     const editorRef = useRef<HTMLFormElement>(null)
     const definition = getValueTypeDefinition(field.valueType)
     const operators = getAllowedFilterOperators(field, capabilities)
+    const isTrueOnly = definition.editor === 'trueOnly'
     const initialOperator = filter?.operator ?? operators[0] ?? 'equals'
     const [operator, setOperator] = useState<FilterOperator>(initialOperator)
     const [value, setValue] = useState<FilterValue>(
-        filter?.value ?? defaultValue(field, definition.editor)
+        filter?.value ??
+            (isTrueOnly
+                ? { kind: 'boolean', values: [] }
+                : defaultValue(field, definition.editor))
     )
     const [error, setError] = useState<string>()
 
@@ -801,9 +1060,15 @@ const FilterEditor = ({
         if (operator === 'empty' || operator === 'notEmpty') {
             setValue({ kind: 'empty', isEmpty: operator === 'empty' })
         } else if (value.kind === 'empty') {
-            setValue(defaultValue(field, definition.editor))
+            setValue(
+                isTrueOnly
+                    ? { kind: 'boolean', values: [] }
+                    : defaultValue(field, definition.editor)
+            )
         }
-    }, [definition.editor, field, operator, value.kind])
+    }, [definition.editor, field, isTrueOnly, operator, value.kind])
+
+    const trueOnlyHasValue = value.kind === 'trueOnly' || value.kind === 'empty'
 
     const apply = () => {
         try {
@@ -826,6 +1091,7 @@ const FilterEditor = ({
     return (
         <form
             ref={editorRef}
+            id={`filter-editor-${field.id}`}
             className={styles['filter-editor']}
             data-testid={`filter-editor-${field.id}`}
             role="dialog"
@@ -836,7 +1102,7 @@ const FilterEditor = ({
             }}
         >
             <h3>{fieldDisplayName(field, translate)}</h3>
-            {operators.length > 1 && (
+            {!isTrueOnly && operators.length > 1 && (
                 <SingleSelectField
                     dense
                     dataTest={`filter-operator-${field.id}`}
@@ -856,7 +1122,69 @@ const FilterEditor = ({
                     ))}
                 </SingleSelectField>
             )}
-            {operator !== 'empty' && operator !== 'notEmpty' && (
+            {isTrueOnly ? (
+                <div
+                    className={styles['true-only-editor']}
+                    role="group"
+                    aria-label={i18n.t('Values')}
+                >
+                    {operators.includes('empty') && (
+                        <Checkbox
+                            dense
+                            dataTest={`true-only-empty-${field.id}`}
+                            label={translatedOperator('empty', translate)}
+                            checked={
+                                operator === 'empty' && value.kind === 'empty'
+                            }
+                            onChange={({ checked }) => {
+                                setOperator(checked ? 'empty' : 'equals')
+                                setValue(
+                                    checked
+                                        ? { kind: 'empty', isEmpty: true }
+                                        : { kind: 'boolean', values: [] }
+                                )
+                            }}
+                        />
+                    )}
+                    {operators.includes('notEmpty') && (
+                        <Checkbox
+                            dense
+                            dataTest={`true-only-not-empty-${field.id}`}
+                            label={translatedOperator('notEmpty', translate)}
+                            checked={
+                                operator === 'notEmpty' &&
+                                value.kind === 'empty'
+                            }
+                            onChange={({ checked }) => {
+                                setOperator(checked ? 'notEmpty' : 'equals')
+                                setValue(
+                                    checked
+                                        ? { kind: 'empty', isEmpty: false }
+                                        : { kind: 'boolean', values: [] }
+                                )
+                            }}
+                        />
+                    )}
+                    {(operators.includes('empty') ||
+                        operators.includes('notEmpty')) && (
+                        <MenuDivider dataTest="true-only-divider" />
+                    )}
+                    <Checkbox
+                        dense
+                        dataTest={`true-only-yes-${field.id}`}
+                        label={i18n.t('Yes')}
+                        checked={value.kind === 'trueOnly'}
+                        onChange={({ checked }) => {
+                            setOperator('equals')
+                            setValue(
+                                checked
+                                    ? { kind: 'trueOnly', value: true }
+                                    : { kind: 'boolean', values: [] }
+                            )
+                        }}
+                    />
+                </div>
+            ) : operator !== 'empty' && operator !== 'notEmpty' ? (
                 <div data-testid={`filter-value-${field.id}`}>
                     <EditorValue
                         client={client}
@@ -868,7 +1196,7 @@ const FilterEditor = ({
                         onChange={setValue}
                     />
                 </div>
-            )}
+            ) : null}
             {error && (
                 <p className={styles['filter-editor__error']} role="alert">
                     {error}
@@ -880,6 +1208,7 @@ const FilterEditor = ({
                     small
                     type="submit"
                     dataTest={`filter-update-${field.id}`}
+                    disabled={isTrueOnly && !trueOnlyHasValue}
                 >
                     {i18n.t('Update')}
                 </Button>
@@ -926,7 +1255,7 @@ const EditorValue = ({
                 ? value
                 : ({ kind: 'assignee', mode: 'CURRENT' } as const)
         return (
-            <>
+            <div className={styles['assignee-filter-editor']}>
                 <SingleSelectField
                     dense
                     label={i18n.t('Assignment')}
@@ -970,7 +1299,7 @@ const EditorValue = ({
                         }
                     />
                 )}
-            </>
+            </div>
         )
     }
 
@@ -1266,26 +1595,27 @@ const EditorValue = ({
             />
         )
     }
-    if (editor === 'trueOnly') {
-        return <p>{i18n.t('Only records with a true value will match.')}</p>
-    }
-
     const text = value.kind === 'text' ? value.value : ''
+    const minimumCharacters =
+        field.minCharactersToSearch !== undefined &&
+        field.minCharactersToSearch > 0
+            ? field.minCharactersToSearch
+            : undefined
     return (
         <label className={styles['native-field']}>
             <span>{i18n.t('Value')}</span>
             <input
                 autoFocus
                 value={text}
-                minLength={field.minCharactersToSearch}
+                minLength={minimumCharacters}
                 onChange={(event) =>
                     onChange({ kind: 'text', value: event.target.value })
                 }
             />
-            {field.minCharactersToSearch !== undefined && (
+            {minimumCharacters !== undefined && (
                 <small>
                     {i18n.t('Enter at least {{count}} characters', {
-                        count: field.minCharactersToSearch,
+                        count: minimumCharacters,
                     })}
                 </small>
             )}
@@ -1487,8 +1817,9 @@ export const ProgramStageControl = ({
     onRemove,
 }: ProgramStageControlProps) => {
     const i18n = { t: useWorkingListText() }
-    const [buttonElement, setButtonElement] =
-        useState<HTMLButtonElement | null>(null)
+    const [buttonElement, setButtonElement] = useState<HTMLDivElement | null>(
+        null
+    )
     const editorRef = useRef<HTMLFormElement>(null)
     const [open, setOpen] = useState(defaultOpen ?? false)
     const [draft, setDraft] = useState(selectedStageId ?? '')
@@ -1505,9 +1836,27 @@ export const ProgramStageControl = ({
 
     const close = () => {
         setOpen(false)
-        requestAnimationFrame(() => buttonElement?.focus())
+        requestAnimationFrame(() =>
+            buttonElement
+                ?.querySelector<HTMLElement>(
+                    '[data-test="filter-programStage-select"] [tabindex]'
+                )
+                ?.focus()
+        )
     }
     useEscapeToClose(open, close)
+    useEffect(() => {
+        const combobox = buttonElement?.querySelector<HTMLElement>(
+            '[data-test="filter-programStage-select"] [tabindex]'
+        )
+        if (!combobox) {
+            return
+        }
+        combobox.setAttribute('role', 'combobox')
+        combobox.setAttribute('aria-expanded', String(open))
+        combobox.setAttribute('aria-haspopup', 'dialog')
+        combobox.setAttribute('aria-controls', 'filter-editor-programStage')
+    }, [buttonElement, open])
     useEffect(() => {
         if (!open) {
             return
@@ -1523,32 +1872,84 @@ export const ProgramStageControl = ({
     }, [open])
 
     return (
-        <div className={styles['filter-control']}>
-            <button
-                ref={setButtonElement}
-                type="button"
-                className={`${styles['filter-button']}${
-                    selectedStageId ? ` ${styles['filter-button--active']}` : ''
-                }`}
-                data-testid="filter-programStage"
-                aria-expanded={open}
-                aria-haspopup="dialog"
-                onClick={() => {
+        <div
+            ref={setButtonElement}
+            className={styles['filter-control']}
+            data-testid="filter-programStage"
+            onMouseDownCapture={(event) => {
+                const target =
+                    event.target instanceof Element ? event.target : null
+                if (
+                    !target?.closest(
+                        '[data-test="filter-programStage-select-clear"]'
+                    )
+                ) {
+                    return
+                }
+                event.preventDefault()
+                event.stopPropagation()
+                onRemove()
+            }}
+            onClickCapture={(event) => {
+                const target =
+                    event.target instanceof Element ? event.target : null
+                const select = target?.closest(
+                    '[data-test="filter-programStage-select"]'
+                )
+                if (!select && target !== event.currentTarget) {
+                    return
+                }
+                if (
+                    target?.closest(
+                        '[data-test="filter-programStage-select-clear"]'
+                    )
+                ) {
+                    return
+                }
+                event.preventDefault()
+                event.stopPropagation()
+                setDraft(selectedStageId ?? '')
+                setOpen((value) => !value)
+            }}
+            onKeyDownCapture={(event) => {
+                const target =
+                    event.target instanceof Element ? event.target : null
+                if (
+                    ['Enter', ' ', 'ArrowDown'].includes(event.key) &&
+                    target?.closest(
+                        '[data-test="filter-programStage-select"] [tabindex]'
+                    )
+                ) {
+                    event.preventDefault()
+                    event.stopPropagation()
                     setDraft(selectedStageId ?? '')
-                    setOpen((value) => !value)
+                    setOpen(true)
+                }
+            }}
+        >
+            <SingleSelect
+                dense
+                clearable
+                clearText={i18n.t('Clear filter')}
+                dataTest="filter-programStage-select"
+                prefix={i18n.t('{{filterName}}{{escape}}', {
+                    filterName: i18n.t('Program stage'),
+                    escape: ':',
+                })}
+                selected={selectedName ? 'current-stage' : undefined}
+                onChange={({ selected }) => {
+                    if (!selected) {
+                        onRemove()
+                    }
                 }}
             >
-                <span>
-                    {selectedName
-                        ? i18n.t('{{filterName}}{{escape}}', {
-                              filterName: i18n.t('Program stage'),
-                              escape: ':',
-                          })
-                        : i18n.t('Program stage')}
-                </span>
-                {selectedName && <strong>{selectedName}</strong>}
-                <span aria-hidden="true">▾</span>
-            </button>
+                {selectedName && (
+                    <SingleSelectOption
+                        value="current-stage"
+                        label={selectedName}
+                    />
+                )}
+            </SingleSelect>
             {open && buttonElement && (
                 <FilterPopover
                     arrow={false}
@@ -1609,18 +2010,6 @@ export const ProgramStageControl = ({
                                     }}
                                 >
                                     {i18n.t('Reset filter')}
-                                </Button>
-                                <Button
-                                    destructive
-                                    small
-                                    type="button"
-                                    dataTest="filter-remove-programStage"
-                                    onClick={() => {
-                                        onRemove()
-                                        close()
-                                    }}
-                                >
-                                    {i18n.t('Remove filter')}
                                 </Button>
                             </div>
                         </form>

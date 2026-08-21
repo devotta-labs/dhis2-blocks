@@ -6,7 +6,9 @@ import {
     ModalContent,
     ModalTitle,
     NoticeBox,
+    SharingDialog,
 } from '@dhis2/ui'
+import { IconLayoutColumns16 } from '@dhis2/ui-icons'
 import {
     useMutation,
     useQuery,
@@ -29,6 +31,7 @@ import {
     createGeneratedDefaultLists,
     createSavedWorkingList,
     deleteSavedWorkingList,
+    getSharingType,
     repairSavedWorkingList,
     replaceSavedWorkingList,
     savedWorkingListsQueryOptions,
@@ -69,8 +72,8 @@ import {
     organisationUnitLabelsQueryOptions,
 } from '../../query/referenceLabels'
 import { DEFAULT_WORKING_LIST_SORT } from '../../query/serialize'
-import { systemFilterRegistry } from '../../registry/systemFilters'
 import { createWorkingListValueTransformers } from '../../registry/transformers'
+import { getCellDisplayValue } from '../../registry/valueTypes'
 import {
     composeWorkingListConfiguration,
     createWorkingListStore,
@@ -79,7 +82,9 @@ import {
 import { ColumnSettingsDialog } from '../ColumnSettingsDialog'
 import { ConfigureMenu } from '../ConfigureMenu'
 import {
+    fieldDisplayName,
     FilterButton,
+    localizedField,
     MoreFilters,
     ProgramStageControl,
 } from '../FilterControls'
@@ -131,48 +136,19 @@ export interface WorkingListProps {
     requestDiscardConfirmation: () => boolean
 }
 
-const defaultVisibleFilterIds = (
-    fields: WorkingListField[],
-    scope: 'trackedEntity' | 'event'
-) => {
-    const systemDefaults = [...systemFilterRegistry.values()]
-        .filter(
-            (definition) =>
-                definition.defaultVisible &&
-                definition.field.scope === scope &&
-                definition.id !== 'programStage'
-        )
-        .map((definition) => definition.id)
-    if (scope === 'event') {
-        return systemDefaults
-    }
-    const firstAttribute = fields.find(
-        (field) =>
-            field.scope === 'trackedEntity' &&
-            field.source === 'trackedEntityAttribute' &&
-            field.filterable
-    )
-    return firstAttribute
-        ? [...systemDefaults, firstAttribute.id]
-        : systemDefaults
-}
-
 const visibleFiltersForConfiguration = (
-    configuration: WorkingListConfiguration,
-    fields: WorkingListField[]
+    configuration: WorkingListConfiguration
 ) => {
-    const tracker = new Set([
-        ...defaultVisibleFilterIds(fields, 'trackedEntity'),
-        ...configuration.filters
+    const tracker = new Set(
+        configuration.filters
             .filter((filter) => filter.field.scope === 'trackedEntity')
-            .map((filter) => filter.field.id),
-    ])
-    const event = new Set([
-        ...defaultVisibleFilterIds(fields, 'event'),
-        ...configuration.filters
+            .map((filter) => filter.field.id)
+    )
+    const event = new Set(
+        configuration.filters
             .filter((filter) => filter.field.scope === 'event')
-            .map((filter) => filter.field.id),
-    ])
+            .map((filter) => filter.field.id)
+    )
     return { tracker: [...tracker], event: [...event] }
 }
 
@@ -554,16 +530,11 @@ const WorkingListInstance = ({
         sort: defaultList.configuration.sort,
     })
     const [visibleTrackerFilterIds, setVisibleTrackerFilterIds] = useState(
-        () =>
-            visibleFiltersForConfiguration(defaultList.configuration, fields)
-                .tracker
+        () => visibleFiltersForConfiguration(defaultList.configuration).tracker
     )
     const [visibleEventFilterIds, setVisibleEventFilterIds] = useState(
-        () =>
-            visibleFiltersForConfiguration(defaultList.configuration, fields)
-                .event
+        () => visibleFiltersForConfiguration(defaultList.configuration).event
     )
-    const [stageFilterVisible, setStageFilterVisible] = useState(false)
     // Opens a filter's editor right after it is added from "More filters".
     // Cleared on the next commit so remounts don't reopen it.
     const [autoOpenFilterId, setAutoOpenFilterId] = useState<string>()
@@ -573,6 +544,8 @@ const WorkingListInstance = ({
         }
     }, [autoOpenFilterId])
     const [columnSettingsOpen, setColumnSettingsOpen] = useState(false)
+    const [sharingList, setSharingList] = useState<NormalizedSavedWorkingList>()
+    const [sharingError, setSharingError] = useState<string>()
     const [repairDialogOpen, setRepairDialogOpen] = useState(false)
     const [pendingCreatedTemplateId, setPendingCreatedTemplateId] =
         useState<string>()
@@ -633,10 +606,9 @@ const WorkingListInstance = ({
             columns: configuration.columns,
             sort: configuration.sort,
         })
-        const visible = visibleFiltersForConfiguration(configuration, fields)
+        const visible = visibleFiltersForConfiguration(configuration)
         setVisibleTrackerFilterIds(visible.tracker)
         setVisibleEventFilterIds(visible.event)
-        setStageFilterVisible(configuration.mode === 'event')
         onPageChange(1, pageSize)
     }
 
@@ -789,6 +761,49 @@ const WorkingListInstance = ({
             translate,
         ]
     )
+    const downloadVisibleRows = () => {
+        const visibleFields = view.columns
+            .map((id) => metadata.fields.get(id))
+            .filter((field): field is WorkingListField => Boolean(field))
+        const escapeCsv = (value: string) => `"${value.replaceAll('"', '""')}"`
+        const cellText = (
+            row: WorkingListDisplayRow,
+            field: WorkingListField
+        ) => {
+            const cell = row.values[field.id]
+            if (cell && !cell.valid) {
+                return cell.raw === undefined || cell.raw === null
+                    ? ''
+                    : String(cell.raw)
+            }
+            const display = getCellDisplayValue(
+                cell?.value,
+                localizedField(field, translate),
+                displayTransformers.formattingContext
+            )
+            return display.kind === 'image' ? display.alt : display.text
+        }
+        const csv = [
+            visibleFields
+                .map((field) => escapeCsv(fieldDisplayName(field, translate)))
+                .join(','),
+            ...rows.map((row) =>
+                visibleFields
+                    .map((field) => escapeCsv(cellText(row, field)))
+                    .join(',')
+            ),
+        ].join('\n')
+        const url = URL.createObjectURL(
+            new Blob([csv], { type: 'text/csv;charset=utf-8' })
+        )
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `${program.displayName}-working-list.csv`
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        URL.revokeObjectURL(url)
+    }
 
     useEffect(() => {
         if (
@@ -849,6 +864,12 @@ const WorkingListInstance = ({
     const trackerFilterFields = fields.filter(
         (field) => field.scope === 'trackedEntity' && field.filterable
     )
+    const allEventFilterFields = fields.filter(
+        (field) =>
+            field.scope === 'event' &&
+            field.id !== 'programStage' &&
+            field.filterable
+    )
     const currentStage =
         configuration.mode === 'event'
             ? program.programStages.find(
@@ -860,13 +881,10 @@ const WorkingListInstance = ({
             (binding) => binding.dataElement.id
         ) ?? []
     )
-    const eventFilterFields = fields.filter(
+    const eventFilterFields = allEventFilterFields.filter(
         (field) =>
-            field.scope === 'event' &&
-            field.id !== 'programStage' &&
-            field.filterable &&
-            (field.source !== 'eventDataElement' ||
-                currentStageDataElementIds.has(field.id))
+            field.source !== 'eventDataElement' ||
+            currentStageDataElementIds.has(field.id)
     )
     const tableFields = fields.filter((field) => {
         if (field.source === 'trackedEntityAttribute') {
@@ -904,6 +922,9 @@ const WorkingListInstance = ({
             onPageChange(1, pageSize)
             return
         }
+        if (criteria.mode === 'event' && criteria.programStageId === stageId) {
+            return
+        }
         store.getState().enterEventMode(stageId)
         const next = {
             columns:
@@ -912,7 +933,7 @@ const WorkingListInstance = ({
             sort: { ...DEFAULT_WORKING_LIST_SORT },
         }
         updateView(next)
-        setVisibleEventFilterIds(defaultVisibleFilterIds(fields, 'event'))
+        setVisibleEventFilterIds([])
         onPageChange(1, pageSize)
     }
 
@@ -996,38 +1017,6 @@ const WorkingListInstance = ({
             })
         },
     })
-    const renameMutation = useMutation({
-        mutationFn: ({
-            list,
-            name,
-        }: {
-            list: NormalizedSavedWorkingList
-            name: string
-        }) => {
-            if (list.compatibility !== 'compatible') {
-                throw new Error(
-                    i18n.t('An unavailable saved list cannot be renamed.')
-                )
-            }
-            return replaceSavedWorkingList({
-                client,
-                id: list.id,
-                resource: list.resource,
-                name,
-                configuration: list.configuration,
-                fields: metadata.fields,
-                capabilities,
-                sharing: list.sharing,
-                existingResource: list.raw,
-                serializationContext: valueTransformers.serializationContext,
-            })
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({
-                queryKey: workingListQueryKeys.savedLists(program.id),
-            })
-        },
-    })
     const deleteMutation = useMutation({
         mutationFn: (list: NormalizedSavedWorkingList) =>
             deleteSavedWorkingList(client, list.resource, list.id),
@@ -1035,21 +1024,17 @@ const WorkingListInstance = ({
             await queryClient.invalidateQueries({
                 queryKey: workingListQueryKeys.savedLists(program.id),
             })
-            if (selectedListIdentity?.id === list.id) {
+            if ((selectedTemplateId ?? selectedListIdentity?.id) === list.id) {
                 lastAppliedTemplate.current = undefined
                 onSelectedTemplateChange(undefined)
             }
         },
     })
     const mutationError =
-        createMutation.error ??
-        replaceMutation.error ??
-        renameMutation.error ??
-        deleteMutation.error
+        createMutation.error ?? replaceMutation.error ?? deleteMutation.error
     const mutationBusy =
         createMutation.isPending ||
         replaceMutation.isPending ||
-        renameMutation.isPending ||
         deleteMutation.isPending
 
     const useDefaultWorkingList = () => {
@@ -1099,7 +1084,7 @@ const WorkingListInstance = ({
         repairedResource === selectedList.resource
     const resultsError = pageQuery.error ?? organisationUnitLabelsQuery.error
 
-    const renderConfigureMenu = ({ withColumns = true } = {}) => (
+    const renderConfigureMenu = () => (
         <ConfigureMenu
             selectedList={displayedLists.find(
                 (list) =>
@@ -1111,9 +1096,13 @@ const WorkingListInstance = ({
                     ? 'programStageWorkingLists'
                     : 'trackedEntityInstanceFilters'
             }
+            hasFilters={
+                criteria.filters.length > 0 || criteria.mode === 'event'
+            }
             dirty={dirty}
             online={online}
             busy={mutationBusy}
+            onDownload={downloadVisibleRows}
             onSaveAs={(name) => createMutation.mutate(name)}
             onUpdate={(list) =>
                 replaceMutation.mutate({
@@ -1121,18 +1110,6 @@ const WorkingListInstance = ({
                     name: list.name,
                     nextConfiguration: configuration,
                 })
-            }
-            onRename={(list, name) => {
-                renameMutation.mutate({ list, name })
-            }}
-            onDelete={(list) => deleteMutation.mutate(list)}
-            onSharingSaved={() =>
-                void queryClient.invalidateQueries({
-                    queryKey: workingListQueryKeys.savedLists(program.id),
-                })
-            }
-            onConfigureColumns={
-                withColumns ? () => setColumnSettingsOpen(true) : undefined
             }
         />
     )
@@ -1183,6 +1160,20 @@ const WorkingListInstance = ({
                 selectedId={selectedTemplateId ?? selectedListIdentity?.id}
                 listsAreGenerated={usingGeneratedLists}
                 dirty={dirty}
+                online={online}
+                busy={mutationBusy}
+                onUpdate={(list) =>
+                    replaceMutation.mutate({
+                        list,
+                        name: list.name,
+                        nextConfiguration: configuration,
+                    })
+                }
+                onShare={(list) => {
+                    setSharingError(undefined)
+                    setSharingList(list)
+                }}
+                onDelete={(list) => deleteMutation.mutate(list)}
                 onSelect={(list) => {
                     setPendingCreatedTemplateId(undefined)
                     const same =
@@ -1215,18 +1206,6 @@ const WorkingListInstance = ({
                 >
                     {mutationError.message}
                 </NoticeBox>
-            )}
-
-            {(status === WorkingListStatuses.CREATED_LIST_RELOAD_ERROR ||
-                status === WorkingListStatuses.INCOMPATIBLE_TEMPLATE) && (
-                <section
-                    className={styles['filter-section']}
-                    aria-label={i18n.t('Working list actions')}
-                >
-                    <div className={styles['filter-row']}>
-                        {renderConfigureMenu({ withColumns: false })}
-                    </div>
-                </section>
             )}
 
             {status === WorkingListStatuses.CREATED_LIST_RELOAD_ERROR ? (
@@ -1339,7 +1318,7 @@ const WorkingListInstance = ({
             ) : (
                 <>
                     <section
-                        className={styles['filter-section']}
+                        className={styles['filter-actions-bar']}
                         aria-labelledby="tracker-filters-heading"
                     >
                         <h2
@@ -1348,8 +1327,54 @@ const WorkingListInstance = ({
                         >
                             {i18n.t('Tracked entity filters')}
                         </h2>
-                        <div className={styles['filter-row']}>
-                            <div className={styles['filter-row__filters']}>
+                        <div
+                            className={styles['filters-and-columns']}
+                            data-testid="filters-and-columns"
+                        >
+                            <Button
+                                secondary
+                                small
+                                icon={<IconLayoutColumns16 />}
+                                dataTest="configure-columns"
+                                onClick={() => setColumnSettingsOpen(true)}
+                            >
+                                {i18n.t('Columns')}
+                            </Button>
+                            <MoreFilters
+                                scope="tracked-entity"
+                                fields={trackerFilterFields}
+                                visibleFilterIds={[
+                                    ...visibleTrackerFilterIds,
+                                    ...visibleEventFilterIds,
+                                ]}
+                                program={program}
+                                selectedStageId={
+                                    criteria.mode === 'event'
+                                        ? criteria.programStageId
+                                        : undefined
+                                }
+                                eventFields={allEventFilterFields}
+                                onAdd={(fieldId) => {
+                                    setVisibleTrackerFilterIds((ids) => [
+                                        ...ids,
+                                        fieldId,
+                                    ])
+                                    setAutoOpenFilterId(fieldId)
+                                }}
+                                onSelectStage={(stageId) => {
+                                    enterStage(stageId)
+                                }}
+                                onAddStageFilter={(stageId, fieldId) => {
+                                    enterStage(stageId)
+                                    setVisibleEventFilterIds((ids) =>
+                                        ids.includes(fieldId)
+                                            ? ids
+                                            : [...ids, fieldId]
+                                    )
+                                    setAutoOpenFilterId(fieldId)
+                                }}
+                            />
+                            <div className={styles['tracker-filter-controls']}>
                                 {visibleTrackerFilterIds.map((fieldId) => {
                                     const field = metadata.fields.get(fieldId)
                                     if (!field || !field.filterable) {
@@ -1378,67 +1403,33 @@ const WorkingListInstance = ({
                                             onReset={() =>
                                                 resetFilter(field.id)
                                             }
+                                            onRemove={() =>
+                                                setVisibleTrackerFilterIds(
+                                                    (ids) =>
+                                                        ids.filter(
+                                                            (id) =>
+                                                                id !== field.id
+                                                        )
+                                                )
+                                            }
                                         />
                                     )
                                 })}
-                                <MoreFilters
-                                    scope="tracked-entity"
-                                    fields={trackerFilterFields}
-                                    visibleFilterIds={[
-                                        ...visibleTrackerFilterIds,
-                                        ...(stageFilterVisible
-                                            ? ['programStage']
-                                            : []),
-                                    ]}
-                                    includeProgramStage={program.programStages.some(
-                                        (stage) => stage.access?.read !== false
-                                    )}
-                                    onAdd={(fieldId) => {
-                                        if (fieldId === 'programStage') {
-                                            setStageFilterVisible(true)
-                                        } else {
-                                            setVisibleTrackerFilterIds(
-                                                (ids) => [...ids, fieldId]
-                                            )
-                                        }
-                                        setAutoOpenFilterId(fieldId)
-                                    }}
-                                />
                             </div>
-                            {renderConfigureMenu()}
-                        </div>
-                    </section>
-
-                    {stageFilterVisible && (
-                        <section
-                            className={`${styles['filter-section']} ${styles['filter-section--event']}`}
-                            data-testid="stage-filter-section"
-                            aria-labelledby="stage-filters-heading"
-                        >
-                            <h2 id="stage-filters-heading">
-                                {i18n.t('Stage filters')}
-                            </h2>
-                            <div className={styles['filter-row']}>
-                                <ProgramStageControl
-                                    program={program}
-                                    selectedStageId={
-                                        criteria.mode === 'event'
-                                            ? criteria.programStageId
-                                            : undefined
-                                    }
-                                    defaultOpen={
-                                        autoOpenFilterId === 'programStage'
-                                    }
-                                    onChange={enterStage}
-                                    onRemove={() => {
-                                        if (criteria.mode === 'event') {
-                                            enterStage(undefined)
+                            {criteria.mode === 'event' && (
+                                <div
+                                    className={styles['stage-filter-controls']}
+                                    data-testid="stage-filter-section"
+                                >
+                                    <ProgramStageControl
+                                        program={program}
+                                        selectedStageId={
+                                            criteria.programStageId
                                         }
-                                        setStageFilterVisible(false)
-                                    }}
-                                />
-                                {criteria.mode === 'event' &&
-                                    visibleEventFilterIds.map((fieldId) => {
+                                        onChange={enterStage}
+                                        onRemove={() => enterStage(undefined)}
+                                    />
+                                    {visibleEventFilterIds.map((fieldId) => {
                                         const field =
                                             metadata.fields.get(fieldId)
                                         if (
@@ -1452,6 +1443,7 @@ const WorkingListInstance = ({
                                                 key={field.id}
                                                 client={client}
                                                 field={field}
+                                                prefix={`${currentStage?.displayName ?? ''} / ${fieldDisplayName(field, translate)}`}
                                                 filter={criteria.filters.find(
                                                     (filter) =>
                                                         filter.field.id ===
@@ -1472,26 +1464,24 @@ const WorkingListInstance = ({
                                                 onReset={() =>
                                                     resetFilter(field.id)
                                                 }
+                                                onRemove={() => {
+                                                    setVisibleEventFilterIds(
+                                                        (ids) =>
+                                                            ids.filter(
+                                                                (id) =>
+                                                                    id !==
+                                                                    field.id
+                                                            )
+                                                    )
+                                                }}
                                             />
                                         )
                                     })}
-                                {criteria.mode === 'event' && (
-                                    <MoreFilters
-                                        scope="event"
-                                        fields={eventFilterFields}
-                                        visibleFilterIds={visibleEventFilterIds}
-                                        onAdd={(fieldId) => {
-                                            setVisibleEventFilterIds((ids) => [
-                                                ...ids,
-                                                fieldId,
-                                            ])
-                                            setAutoOpenFilterId(fieldId)
-                                        }}
-                                    />
-                                )}
-                            </div>
-                        </section>
-                    )}
+                                </div>
+                            )}
+                        </div>
+                        {renderConfigureMenu()}
+                    </section>
 
                     {resultsError ? (
                         <div
@@ -1574,6 +1564,37 @@ const WorkingListInstance = ({
                         />
                     )}
                 </>
+            )}
+
+            {sharingError && (
+                <NoticeBox error title={i18n.t('Could not update sharing')}>
+                    {sharingError}
+                </NoticeBox>
+            )}
+
+            {sharingList && (
+                <SharingDialog
+                    id={sharingList.id}
+                    type={getSharingType(sharingList.resource)}
+                    metadataSharing
+                    onClose={() => setSharingList(undefined)}
+                    onError={(error) =>
+                        setSharingError(
+                            error instanceof Error
+                                ? error.message
+                                : String(error)
+                        )
+                    }
+                    onSave={() => {
+                        setSharingError(undefined)
+                        setSharingList(undefined)
+                        void queryClient.invalidateQueries({
+                            queryKey: workingListQueryKeys.savedLists(
+                                program.id
+                            ),
+                        })
+                    }}
+                />
             )}
 
             {repairDialogOpen &&

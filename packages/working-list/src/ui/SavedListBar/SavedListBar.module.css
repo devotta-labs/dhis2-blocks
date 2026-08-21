@@ -1,37 +1,80 @@
 .saved-list-bar {
     display: flex;
-    min-height: 52px;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 10px 12px;
+    min-width: 0;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
     border-bottom: 1px solid #e8edf2;
+}
+
+.saved-list-bar__title {
+    color: var(--colors-grey700);
+    font-size: 12px;
+    line-height: 16px;
 }
 
 .saved-list-pills {
     display: flex;
     min-width: 0;
     max-width: 100%;
-    flex: 1 1 auto;
     align-items: center;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 4px;
 }
 
 .saved-list-pill {
+    display: inline-flex;
     min-height: 30px;
-    padding: 5px 11px;
+    align-items: stretch;
+    overflow: hidden;
     color: #405261;
     background: #f3f5f7;
     border: 1px solid transparent;
     border-radius: 16px;
-    cursor: pointer;
     font-size: 13px;
     font-weight: 500;
     line-height: 18px;
 }
 
-.saved-list-pill:hover:not(:disabled) {
+.saved-list-pill__select,
+.saved-list-pill__menu {
+    color: inherit;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+}
+
+.saved-list-pill__select {
+    padding: 5px 11px;
+}
+
+.saved-list-pill__menu {
+    position: relative;
+    display: inline-flex;
+    width: 28px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+}
+
+.saved-list-pill__menu::before {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 1px;
+    height: 16px;
+    background: #c4cdd5;
+    content: '';
+    transform: translateY(-50%);
+}
+
+.saved-list-pill__menu svg {
+    display: block;
+}
+
+.saved-list-pill__select:hover,
+.saved-list-pill__menu:hover {
     color: #1d5280;
     background: #eaf3fa;
 }
@@ -41,14 +84,14 @@
     background: #087f73;
 }
 
-.saved-list-pill--active:hover:not(:disabled) {
-    color: #fff;
-    background: #076b62;
+.saved-list-pill--active .saved-list-pill__menu::before {
+    background: rgb(255 255 255 / 35%);
 }
 
-.saved-list-pill:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
+.saved-list-pill--active .saved-list-pill__select:hover,
+.saved-list-pill--active .saved-list-pill__menu:hover {
+    color: #fff;
+    background: #076b62;
 }
 
 .saved-list-pill__dirty {
@@ -56,21 +99,20 @@
     font-weight: 700;
 }
 
-.saved-list-pill:focus-visible {
+.saved-list-pill__select:focus-visible,
+.saved-list-pill__menu:focus-visible {
     outline: 3px solid rgb(20 124 215 / 35%);
-    outline-offset: 2px;
+    outline-offset: -2px;
 }
 
-@media (max-width: 900px) {
-    .saved-list-bar {
-        align-items: stretch;
-        flex-direction: column;
-    }
+.saved-list-menu {
+    width: max-content;
 }
 
-@media (max-width: 560px) {
-    .saved-list-bar {
-        padding-right: 8px;
-        padding-left: 8px;
-    }
+/* FlyoutMenu already provides the menu surface. Remove the surrounding
+   Popover card so the actions render as one compact sheet. */
+:global([data-test='dhis2-uicore-popover']):has(.saved-list-menu) {
+    background-color: transparent;
+    border-radius: 0;
+    box-shadow: none;
 }

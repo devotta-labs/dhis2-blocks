@@ -187,6 +187,12 @@ const openWorkingList = async (
     await expect(page.getByTestId('working-list-main')).toBeVisible({
         timeout: 30_000,
     })
+    await expect(
+        page.getByTestId(`working-list-view-${options.template ?? 'active'}`)
+    ).toHaveAttribute('aria-current', 'true', { timeout: 30_000 })
+    await expect(
+        page.getByTestId('working-list-selection-loading')
+    ).toHaveCount(0)
     await expect(page.getByTestId('working-list-table')).toBeVisible({
         timeout: 30_000,
     })
@@ -547,6 +553,60 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(
             page.locator('[data-testid="working-list-table"] tbody')
         ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
+    })
+
+    test('preserves an unavailable URL selection until the user explicitly chooses the default', async ({
+        page,
+    }) => {
+        const missingTemplateId = 'WlMissing01'
+        const trackerRequests: URL[] = []
+        const captureTrackerRequest = (request: Request) => {
+            if (isTrackerResource(request, 'trackedEntities')) {
+                trackerRequests.push(requestUrl(request))
+            }
+        }
+        page.on('request', captureTrackerRequest)
+
+        try {
+            await page.goto(programHash({ template: missingTemplateId }))
+            await expect(
+                page.getByTestId('unavailable-working-list-error')
+            ).toBeVisible({ timeout: 30_000 })
+            await expect(
+                page.getByTestId('unavailable-working-list-error')
+            ).toContainText(
+                'may no longer exist, or you may no longer have access'
+            )
+            expect(
+                new URLSearchParams(new URL(page.url()).hash.split('?')[1]).get(
+                    'selectedTemplateId'
+                )
+            ).toBe(missingTemplateId)
+            await expect(page.getByTestId('working-list-table')).toHaveCount(0)
+            expect(trackerRequests).toHaveLength(0)
+
+            const defaultQuery = await waitForTrackerResponse(
+                page,
+                'trackedEntities',
+                () =>
+                    page
+                        .locator('[data-test="use-default-working-list"]')
+                        .click(),
+                (url) =>
+                    url.searchParams.get('orgUnits') === ORG_UNIT &&
+                    !url.searchParams.has('filter')
+            )
+            expect(defaultQuery.searchParams.get('page')).toBe('1')
+            await expect(page).toHaveURL(
+                new RegExp(`selectedTemplateId=${PROGRAM}-default`)
+            )
+            await expect(
+                page.getByTestId('unavailable-working-list-error')
+            ).toHaveCount(0)
+            await expect(page.getByTestId('working-list-table')).toBeVisible()
+        } finally {
+            page.off('request', captureTrackerRequest)
+        }
     })
 
     test('deselects the active list and falls back to the unfiltered default view', async ({
@@ -1489,6 +1549,16 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             createdId = createBody.response?.uid
             expect(createdId).toBeTruthy()
             await selectionNavigation
+            await expect(
+                page.getByTestId(`working-list-view-${createdId}`)
+            ).toHaveAttribute('aria-current', 'true', { timeout: 30_000 })
+            await expect(
+                page.getByTestId('working-list-selection-loading')
+            ).toHaveCount(0, { timeout: 30_000 })
+            await expect(page.getByTestId('working-list-table')).toBeVisible()
+            await expect(
+                page.locator('[data-testid="working-list-table"] tbody')
+            ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
             const savedOptions = await openSavedListOptions(page)
             await expect(
                 savedOptions.locator('[data-test="save-as-working-list"]')

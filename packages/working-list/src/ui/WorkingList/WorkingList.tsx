@@ -98,6 +98,7 @@ import {
     type WorkingListTranslate,
 } from '../WorkingListText'
 import styles from './WorkingList.module.css'
+import { resolveWorkingListStatus, WorkingListStatuses } from './selection'
 
 export interface WorkingListProps {
     apiVersion: number
@@ -598,6 +599,32 @@ const WorkingListInstance = ({
             ? generatedLists
             : customLists
         : []
+    const selectedList = displayedLists.find(
+        (list) => list.id === (selectedTemplateId ?? selectedListIdentity?.id)
+    )
+    const status = useMemo(
+        () =>
+            resolveWorkingListStatus({
+                selectedTemplateId,
+                defaultTemplateId: defaultList.id,
+                availableTemplateIds: displayedLists.map((list) => list.id),
+                pendingCreatedTemplateId,
+                savedListsResolved: savedListsQuery.isSuccess,
+                savedListsFetching: savedListsQuery.isFetching,
+                appliedTemplateId,
+                selectedTemplateCompatibility: selectedList?.compatibility,
+            }),
+        [
+            appliedTemplateId,
+            defaultList.id,
+            displayedLists,
+            pendingCreatedTemplateId,
+            savedListsQuery.isFetching,
+            savedListsQuery.isSuccess,
+            selectedList?.compatibility,
+            selectedTemplateId,
+        ]
+    )
 
     const applyConfigurationView = (
         configuration: WorkingListConfiguration
@@ -661,8 +688,6 @@ const WorkingListInstance = ({
             if (requestedId === pendingCreatedTemplateId) {
                 return
             }
-            applyList(defaultList, true)
-            onSelectedTemplateChange(defaultList.id)
             return
         }
         if (requested.compatibility !== 'compatible') {
@@ -685,9 +710,6 @@ const WorkingListInstance = ({
 
     useEffect(() => onDirtyChange?.(dirty), [dirty, onDirtyChange])
 
-    const requestedTemplateId = selectedTemplateId ?? defaultList.id
-    const selectionReady =
-        savedListsQuery.isSuccess && appliedTemplateId === requestedTemplateId
     const pageQuery = useQuery({
         ...workingListPageQueryOptions({
             client,
@@ -699,11 +721,14 @@ const WorkingListInstance = ({
             serializationContext: valueTransformers.serializationContext,
             translate,
         }),
-        enabled: selectionReady,
+        enabled: status === WorkingListStatuses.READY,
     })
     const rows = useMemo(
-        () => (selectionReady ? pageRows(pageQuery.data) : []),
-        [pageQuery.data, selectionReady]
+        () =>
+            status === WorkingListStatuses.READY
+                ? pageRows(pageQuery.data)
+                : [],
+        [pageQuery.data, status]
     )
     const organisationUnitIds = useMemo(
         () =>
@@ -715,7 +740,7 @@ const WorkingListInstance = ({
     const organisationUnitLabelsQuery = useQuery({
         ...organisationUnitLabelsQueryOptions(client, organisationUnitIds),
         enabled:
-            selectionReady &&
+            status === WorkingListStatuses.READY &&
             Boolean(pageQuery.data) &&
             organisationUnitIds.length > 0,
     })
@@ -732,7 +757,7 @@ const WorkingListInstance = ({
     const fileResourceNamesQuery = useQuery({
         ...fileResourceNamesQueryOptions(client, fileResourceIds),
         enabled:
-            selectionReady &&
+            status === WorkingListStatuses.READY &&
             Boolean(pageQuery.data) &&
             fileResourceIds.length > 0,
     })
@@ -766,7 +791,10 @@ const WorkingListInstance = ({
     )
 
     useEffect(() => {
-        if (!selectionReady || !pageQuery.data?.hasNextPage) {
+        if (
+            status !== WorkingListStatuses.READY ||
+            !pageQuery.data?.hasNextPage
+        ) {
             return
         }
         void queryClient.prefetchQuery(
@@ -792,7 +820,7 @@ const WorkingListInstance = ({
         pageSize,
         program.id,
         queryClient,
-        selectionReady,
+        status,
         translate,
         valueTransformers.serializationContext,
     ])
@@ -1024,15 +1052,13 @@ const WorkingListInstance = ({
         renameMutation.isPending ||
         deleteMutation.isPending
 
-    const selectedList = displayedLists.find(
-        (list) => list.id === (selectedTemplateId ?? selectedListIdentity?.id)
-    )
-    const createdListReloadMissing =
-        Boolean(pendingCreatedTemplateId) &&
-        pendingCreatedTemplateId === selectedTemplateId &&
-        savedListsQuery.isSuccess &&
-        !savedListsQuery.isFetching &&
-        !selectedList
+    const useDefaultWorkingList = () => {
+        if (dirty && requestDiscardConfirmation() === false) {
+            return
+        }
+        setPendingCreatedTemplateId(undefined)
+        deselectList()
+    }
     const repairPlan = useMemo(
         () =>
             selectedList?.compatibility === 'incompatible'
@@ -1191,8 +1217,8 @@ const WorkingListInstance = ({
                 </NoticeBox>
             )}
 
-            {(createdListReloadMissing ||
-                selectedList?.compatibility === 'incompatible') && (
+            {(status === WorkingListStatuses.CREATED_LIST_RELOAD_ERROR ||
+                status === WorkingListStatuses.INCOMPATIBLE_TEMPLATE) && (
                 <section
                     className={styles['filter-section']}
                     aria-label={i18n.t('Working list actions')}
@@ -1203,7 +1229,7 @@ const WorkingListInstance = ({
                 </section>
             )}
 
-            {createdListReloadMissing ? (
+            {status === WorkingListStatuses.CREATED_LIST_RELOAD_ERROR ? (
                 <section
                     className={styles['working-list-blocking-error']}
                     data-testid="created-list-reload-error"
@@ -1227,7 +1253,30 @@ const WorkingListInstance = ({
                         </Button>
                     </NoticeBox>
                 </section>
-            ) : selectedList?.compatibility === 'incompatible' ? (
+            ) : status === WorkingListStatuses.INVALID_TEMPLATE_ID ? (
+                <section
+                    className={styles['working-list-blocking-error']}
+                    data-testid="unavailable-working-list-error"
+                >
+                    <NoticeBox
+                        error
+                        title={i18n.t('This working list is unavailable')}
+                    >
+                        <p>
+                            {i18n.t(
+                                'The selected working list may no longer exist, or you may no longer have access. No records will be queried while it is selected.'
+                            )}
+                        </p>
+                        <Button
+                            dataTest="use-default-working-list"
+                            onClick={useDefaultWorkingList}
+                        >
+                            {i18n.t('Use the default working list')}
+                        </Button>
+                    </NoticeBox>
+                </section>
+            ) : status === WorkingListStatuses.INCOMPATIBLE_TEMPLATE &&
+              selectedList?.compatibility === 'incompatible' ? (
                 <section
                     className={styles['stale-list-panel']}
                     data-testid="stale-list-panel"
@@ -1278,7 +1327,7 @@ const WorkingListInstance = ({
                         )}
                     </NoticeBox>
                 </section>
-            ) : !selectionReady ? (
+            ) : status === WorkingListStatuses.LOADING ? (
                 <section
                     className={styles['working-list-selection-loading']}
                     data-testid="working-list-selection-loading"
@@ -1488,7 +1537,7 @@ const WorkingListInstance = ({
                             pageSize={pageSize}
                             hasNextPage={pageQuery.data?.hasNextPage ?? false}
                             isInitialLoading={
-                                !selectionReady ||
+                                status !== WorkingListStatuses.READY ||
                                 pageQuery.isPending ||
                                 !organisationUnitLabelsReady ||
                                 !fileResourceNamesReady

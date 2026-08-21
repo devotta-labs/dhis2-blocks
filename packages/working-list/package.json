@@ -14,6 +14,7 @@
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
+            "@dhis2-blocks/development": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.mjs"
         },
@@ -21,7 +22,6 @@
     },
     "scripts": {
         "build": "vite build && tsc",
-        "start": "concurrently -n build,types --hide types \"vite build --watch --mode development\" \"tsc --watch --preserveWatchOutput\"",
         "package:check": "npm pack --dry-run --cache .npm-cache",
         "test": "d2-app-scripts test",
         "typecheck": "tsc --noEmit --emitDeclarationOnly false",

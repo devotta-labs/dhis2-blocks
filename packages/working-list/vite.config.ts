@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { defineConfig } from 'vite'
+import { libInjectCss } from 'vite-plugin-lib-inject-css'
 import packageJson from './package.json'
 
 const externalDependencies = [
@@ -13,17 +14,14 @@ const isExternalDependency = (id: string) =>
     )
 
 export default defineConfig({
+    plugins: [libInjectCss()],
     build: {
         outDir: 'dist',
         emptyOutDir: true,
         lib: {
-            entry: {
-                index: path.resolve(__dirname, 'src/index.ts'),
-                'url-state': path.resolve(__dirname, 'src/url-state.ts'),
-            },
+            entry: path.resolve(__dirname, 'src/index.ts'),
             formats: ['es'],
-            fileName: (_, entryName) => `${entryName}.mjs`,
-            cssFileName: 'style',
+            fileName: () => 'index.mjs',
         },
         rollupOptions: {
             external: isExternalDependency,

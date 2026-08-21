@@ -259,15 +259,3 @@ export const WorkingListContextSchema = z
         orgUnitId: z.string().min(1),
     })
     .strict()
-
-export const WorkingListUrlStateSchema = z
-    .object({
-        programId: z.string().min(1).optional(),
-        orgUnitId: z.string().min(1).optional(),
-        selectedTemplateId: z.string().min(1).optional(),
-        page: z.coerce.number().int().positive().optional(),
-        pageSize: z.coerce.number().int().positive().max(1000).optional(),
-    })
-    .strict()
-
-export type WorkingListUrlState = z.infer<typeof WorkingListUrlStateSchema>

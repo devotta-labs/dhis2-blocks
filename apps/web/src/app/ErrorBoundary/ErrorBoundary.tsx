@@ -1,6 +1,6 @@
 import { Button, NoticeBox } from '@dhis2/ui'
 import React, { Component, type ErrorInfo, type ReactNode } from 'react'
-import i18n from '@/locales'
+import i18n from '../../i18n'
 
 interface ErrorBoundaryProps {
     children: ReactNode

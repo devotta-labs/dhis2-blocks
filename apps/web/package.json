@@ -34,12 +34,6 @@
         "vite": "^7.3.0"
     },
     "jest": {
-        "moduleNameMapper": {
-            "\\.(css|less)$": "<rootDir>/src/test/styleMock.ts",
-            "^@dhis2-blocks/working-list/url-state$": "<rootDir>/../../packages/working-list/dist/url-state.cjs",
-            "^@/locales$": "<rootDir>/src/test/locales.ts",
-            "^@/(.*)$": "<rootDir>/src/$1"
-        },
         "watchman": false
     }
 }

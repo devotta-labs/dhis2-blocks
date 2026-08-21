@@ -51,12 +51,11 @@ pnpm build:library
 pnpm package:check
 ```
 
-Workspace and packed consumers import the supported component surface and its
-stylesheet separately:
+Workspace and packed consumers import the supported component surface. Its CSS
+Modules are included automatically by the package entry:
 
 ```ts
 import { WorkingList } from '@dhis2-blocks/working-list'
-import '@dhis2-blocks/working-list/style.css'
 ```
 
 The package remains private while its API is iterated, but its ESM, TypeScript

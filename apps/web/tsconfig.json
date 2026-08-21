@@ -8,11 +8,7 @@
         "esModuleInterop": true,
         "target": "ESNext",
         "module": "esnext",
-        "moduleResolution": "bundler",
-        "baseUrl": ".",
-        "paths": {
-            "@/*": ["src/*"]
-        }
+        "moduleResolution": "bundler"
     },
     "include": ["src", "types"]
 }

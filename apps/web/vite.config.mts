@@ -8,20 +8,6 @@ const viteConfig = defineConfig(async (configEnv: ConfigEnv) => {
         mode === 'development'
             ? [
                   {
-                      find: /^@dhis2-blocks\/working-list\/style\.css$/,
-                      replacement: path.resolve(
-                          __dirname,
-                          '../../packages/working-list/src/ui/style.css'
-                      ),
-                  },
-                  {
-                      find: /^@dhis2-blocks\/working-list\/url-state$/,
-                      replacement: path.resolve(
-                          __dirname,
-                          '../../packages/working-list/src/url-state.ts'
-                      ),
-                  },
-                  {
                       find: /^@dhis2-blocks\/working-list$/,
                       replacement: path.resolve(
                           __dirname,
@@ -33,12 +19,8 @@ const viteConfig = defineConfig(async (configEnv: ConfigEnv) => {
     return {
         // In dev environments, don't clear the terminal after files update
         clearScreen: mode !== 'development',
-        // Use an import alias: import from '@/' anywhere instead of 'src/'
         resolve: {
-            alias: [
-                ...workspaceAliases,
-                { find: '@', replacement: path.resolve(__dirname, 'src') },
-            ],
+            alias: workspaceAliases,
         },
         plugins: [tailwindcss()],
         // ...other config options here

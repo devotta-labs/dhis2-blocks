@@ -71,9 +71,6 @@ export type {
 export { TrackerProgramSchema } from './api/schemas'
 export type { TrackerProgram } from './api/schemas'
 
-export { WorkingListUrlStateSchema } from './domain/schemas'
-export type { WorkingListUrlState } from './domain/schemas'
-
 export {
     DHIS2_VALUE_TYPES,
     FILTER_OPERATORS,

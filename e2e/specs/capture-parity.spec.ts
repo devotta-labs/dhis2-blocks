@@ -1937,8 +1937,7 @@ test.describe('accessibility and keyboard feedback', () => {
         await page.keyboard.press('Escape')
         await expect(moreFilters).toBeFocused()
 
-        const statusFilterId =
-            targetMajor === 41 ? 'programStatus' : 'enrollmentStatus'
+        const statusFilterId = 'enrollmentStatus'
         const filterButton = page
             .getByTestId(`filter-${statusFilterId}`)
             .getByRole('combobox')

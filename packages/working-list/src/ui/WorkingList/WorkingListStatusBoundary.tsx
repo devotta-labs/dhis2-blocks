@@ -1,72 +1,12 @@
 import { Button, CircularLoader, NoticeBox } from '@dhis2/ui'
 import React, { type ReactNode } from 'react'
 import type { NormalizedSavedWorkingList } from '../../api/savedLists'
-import type { StaleReferenceIssue } from '../../domain/staleReferences'
-import {
-    useWorkingListText,
-    type WorkingListTranslate,
-} from '../WorkingListText'
+import { useWorkingListText } from '../WorkingListText'
 import styles from './WorkingList.module.css'
 import { WorkingListStatuses } from './selection'
 
 type WorkingListStatus =
     (typeof WorkingListStatuses)[keyof typeof WorkingListStatuses]
-
-const staleIssueLabel = (
-    issue: StaleReferenceIssue,
-    translate: WorkingListTranslate
-) => {
-    const values = { reference: issue.referenceId }
-    switch (issue.kind) {
-        case 'programMismatch':
-            return translate(
-                'This view belongs to a different program ({{reference}}).',
-                values
-            )
-        case 'missingProgramStage':
-            return translate(
-                'Program stage {{reference}} is no longer available.',
-                values
-            )
-        case 'missingFilterField':
-            return translate(
-                'Filter field {{reference}} is no longer available.',
-                values
-            )
-        case 'missingColumn':
-            return translate(
-                'Column {{reference}} is no longer available.',
-                values
-            )
-        case 'missingSortField':
-            return translate(
-                'Sort field {{reference}} is no longer available.',
-                values
-            )
-        case 'scopeMismatch':
-            return translate(
-                'Field {{reference}} cannot be used at this result level.',
-                values
-            )
-        case 'fieldChanged':
-            return translate(
-                'Field {{reference}} has changed type or source.',
-                values
-            )
-        case 'programStageFieldMismatch':
-            return translate(
-                'Field {{reference}} does not belong to this program stage.',
-                values
-            )
-        case 'unsupportedFilter':
-            return translate(
-                'Filter {{reference}} is not supported by this server.',
-                values
-            )
-        case 'noVisibleColumns':
-            return translate('The repaired view would have no visible columns.')
-    }
-}
 
 interface WorkingListStatusBoundaryProps {
     status: WorkingListStatus
@@ -150,54 +90,39 @@ export const WorkingListStatusBoundary = ({
         status === WorkingListStatuses.INCOMPATIBLE_TEMPLATE &&
         selectedList?.compatibility === 'incompatible'
     ) {
+        const title = repairAvailable
+            ? i18n.t('This saved list has unavailable settings')
+            : i18n.t('This saved list is unavailable')
+        const description = repairAvailable
+            ? canRepair
+                ? i18n.t(
+                      'Some filters, columns, or sorting options are no longer available. Repair lets you review the proposed changes before updating the list.'
+                  )
+                : i18n.t(
+                      'Some parts of this list are no longer available. Ask someone who can edit the list to repair it, or select another list.'
+                  )
+            : i18n.t(
+                  'A required part of this list is no longer available. The program metadata may have changed, or you may no longer have access. Select another list, or use the list menu for more options.'
+              )
+
         return (
             <section
                 className={styles['stale-list-panel']}
                 data-testid="stale-list-panel"
-                aria-labelledby="stale-list-heading"
+                aria-label={title}
             >
-                <NoticeBox
-                    error
-                    title={i18n.t('This saved list cannot be used')}
-                >
-                    <p id="stale-list-heading">
-                        {i18n.t(
-                            'The list references metadata that is no longer available. No records will be queried while this list is selected.'
-                        )}
-                    </p>
-                    <ul>
-                        {selectedList.issues.map((issue) => (
-                            <li
-                                key={`${issue.kind}-${issue.path}-${issue.referenceId}`}
-                            >
-                                {staleIssueLabel(issue, translate)}
-                            </li>
-                        ))}
-                    </ul>
-                    <p>
-                        {i18n.t(
-                            repairAvailable
-                                ? 'Review a repair that removes only unavailable references, or select another list. You can also delete the list or review its sharing settings using the controls above.'
-                                : 'This view cannot be repaired automatically. Select another list, delete this list, or review its sharing settings using the controls above.'
-                        )}
-                    </p>
-                    {repairAvailable && (
-                        <>
-                            {!canRepair && (
-                                <p>
-                                    {i18n.t(
-                                        'You need update access to repair this saved list.'
-                                    )}
-                                </p>
-                            )}
+                <NoticeBox error title={title}>
+                    <p>{description}</p>
+                    {repairAvailable && canRepair && (
+                        <div className={styles['stale-list-repair-action']}>
                             <Button
+                                small
                                 dataTest="repair-working-list"
-                                disabled={!canRepair}
                                 onClick={onReviewRepair}
                             >
-                                {i18n.t('Review repair')}
+                                {i18n.t('Repair')}
                             </Button>
-                        </>
+                        </div>
                     )}
                 </NoticeBox>
             </section>

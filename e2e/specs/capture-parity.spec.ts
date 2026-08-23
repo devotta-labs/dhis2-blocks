@@ -1740,7 +1740,10 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             await expect(repairDialog).toBeVisible()
             await expect(
                 page.getByTestId('repair-working-list-preview')
-            ).toContainText('Remove 1 unavailable columns')
+            ).toContainText('WlMissing01')
+            await expect(
+                page.getByTestId('repair-working-list-preview')
+            ).toContainText('Remove')
 
             const savedRepair = page.waitForResponse(
                 (response) =>

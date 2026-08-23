@@ -6,6 +6,9 @@ import i18n from '@dhis2/d2-i18n'
  */
 export const workingListTranslationCatalog = () => [
     i18n.t('A required value is missing'),
+    i18n.t(
+        'A required part of this list is no longer available. The program metadata may have changed, or you may no longer have access. Select another list, or use the list menu for more options.'
+    ),
     i18n.t('Active'),
     i18n.t('Active enrollments'),
     i18n.t('Actions for {{name}}'),
@@ -35,7 +38,6 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Clear filter'),
     i18n.t('Clear {{filter}} filter'),
     i18n.t('Column'),
-    i18n.t('Column {{reference}} is no longer available.'),
     i18n.t('{{column}} dropped.'),
     i18n.t('{{column}} moved to position {{position}} of {{total}}.'),
     i18n.t('{{column}} picked up.'),
@@ -57,6 +59,7 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Could not update sharing'),
     i18n.t('Current user'),
     i18n.t('Data quality'),
+    i18n.t('Data element'),
     i18n.t('Date range type'),
     i18n.t('DATETIME requires a valid ISO date and time'),
     i18n.t('Day offsets'),
@@ -79,13 +82,8 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Expected a boolean value'),
     i18n.t('Expected a finite {{valueType}} value'),
     i18n.t('Expected a string value, received {{type}}'),
-    i18n.t('Field {{reference}} cannot be used at this result level.'),
-    i18n.t('Field {{reference}} does not belong to this program stage.'),
-    i18n.t('Field {{reference}} has changed type or source.'),
     i18n.t('Filter'),
     i18n.t('Filter available columns'),
-    i18n.t('Filter field {{reference}} is no longer available.'),
-    i18n.t('Filter {{reference}} is not supported by this server.'),
     i18n.t('Follow up'),
     i18n.t('From'),
     i18n.t('GEOJSON is not valid JSON'),
@@ -132,30 +130,23 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Owner organisation unit'),
     i18n.t('PERCENTAGE requires a value from zero to 100'),
     i18n.t('Program stage'),
-    i18n.t('Program stage {{reference}} is no longer available.'),
-    i18n.t(
-        'No records will be queried until you confirm. The repair keeps every available setting and updates this saved list in place.'
-    ),
     i18n.t('Registration date'),
     i18n.t('Relative period'),
     i18n.t('Relative range'),
     i18n.t('Relative range type'),
-    i18n.t('Remove {{count}} unavailable columns'),
-    i18n.t('Remove {{count}} unavailable filters'),
+    i18n.t('Proposed repair'),
+    i18n.t('Reference'),
+    i18n.t('Remove'),
     i18n.t('Reorder {{column}}'),
     i18n.t('Reordering {{column}} cancelled.'),
     i18n.t('Rename'),
     i18n.t('Rename working list'),
     i18n.t('Report date'),
-    i18n.t('Repair and update list'),
-    i18n.t('Repair saved working list?'),
-    i18n.t('Replace the unavailable sort with the default sort'),
-    i18n.t('Replace {{count}} unavailable columns with program defaults'),
+    i18n.t('Repair'),
+    i18n.t('Repair this saved list?'),
+    i18n.t('Replace with default'),
+    i18n.t('Replace with {{replacement}}'),
     i18n.t('Reset filter'),
-    i18n.t(
-        'Review a repair that removes only unavailable references, or select another list. You can also delete the list or review its sharing settings using the controls above.'
-    ),
-    i18n.t('Review repair'),
     i18n.t('Row actions'),
     i18n.t('Row has {{count}} data quality issues'),
     i18n.t('Save'),
@@ -172,37 +163,34 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Scheduled date'),
     i18n.t('Search users'),
     i18n.t('Search columns'),
-    i18n.t(
-        'Select another list, delete this list, or review its sharing settings using the controls above.'
-    ),
     i18n.t('Selected users'),
     i18n.t('Select at least one visible column'),
     i18n.t('Sharing and access'),
     i18n.t('Show {{column}}'),
     i18n.t('Skipped'),
-    i18n.t('Sort field {{reference}} is no longer available.'),
+    i18n.t(
+        'Some filters, columns, or sorting options are no longer available. Repair lets you review the proposed changes before updating the list.'
+    ),
+    i18n.t('Some metadata changed, was removed, or is no longer accessible.'),
+    i18n.t(
+        'Some parts of this list are no longer available. Ask someone who can edit the list to repair it, or select another list.'
+    ),
     i18n.t('Specific dates'),
     i18n.t('Specific users'),
     i18n.t('Stage'),
     i18n.t('Stage filters'),
     i18n.t('Start buffer'),
     i18n.t('Starts with'),
+    i18n.t('System field'),
     i18n.t('The filter value is invalid. Review the value and try again.'),
     i18n.t(
         'The list was created, but the server has not returned it yet. No records will be queried until it is available.'
     ),
-    i18n.t(
-        'The list references metadata that is no longer available. No records will be queried while this list is selected.'
-    ),
-    i18n.t('The repaired view would have no visible columns.'),
     i18n.t('The saved working list could not be reloaded'),
     i18n.t('The value has an unsupported type'),
     i18n.t('This month'),
-    i18n.t('This saved list cannot be used'),
-    i18n.t(
-        'This view cannot be repaired automatically. Select another list, delete this list, or review its sharing settings using the controls above.'
-    ),
-    i18n.t('This view belongs to a different program ({{reference}}).'),
+    i18n.t('This saved list is unavailable'),
+    i18n.t('This saved list has unavailable settings'),
     i18n.t('This view is unavailable'),
     i18n.t('This week'),
     i18n.t('This year'),
@@ -212,6 +200,7 @@ export const workingListTranslationCatalog = () => [
         'To reorder a column, press Space to pick it up, use the arrow keys to move it, and press Space again to drop it.'
     ),
     i18n.t('Today'),
+    i18n.t('Tracked entity attribute'),
     i18n.t('Tracked entity filters'),
     i18n.t('TRUE_ONLY accepts only true'),
     i18n.t('Try adjusting the filters or organisation unit.'),
@@ -236,7 +225,6 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Working lists require DHIS2 41 or newer.'),
     i18n.t('Working lists require a tracker program with registration.'),
     i18n.t('Yes'),
-    i18n.t('You need update access to repair this saved list.'),
     i18n.t('{{filterName}}{{escape}}'),
     i18n.t('{{start}} to {{end}} days'),
     i18n.t('{{value}} is not a known option'),

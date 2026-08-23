@@ -101,6 +101,32 @@ const FilterPopover = (props: React.ComponentProps<typeof Popover>) => {
     return <PopoverComponent {...props} />
 }
 
+const focusFirstControl = (element: HTMLElement | null) => {
+    if (!element) {
+        return
+    }
+    requestAnimationFrame(() =>
+        element
+            .querySelector<HTMLElement>(
+                'input, button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )
+            ?.focus()
+    )
+}
+
+const configureFilterCombobox = (
+    root: HTMLElement | null,
+    selector: string,
+    open: boolean,
+    controls: string
+) => {
+    const combobox = root?.querySelector<HTMLElement>(selector)
+    combobox?.setAttribute('role', 'combobox')
+    combobox?.setAttribute('aria-expanded', String(open))
+    combobox?.setAttribute('aria-haspopup', 'dialog')
+    combobox?.setAttribute('aria-controls', controls)
+}
+
 const useEscapeToClose = (open: boolean, onClose: () => void) => {
     const onCloseRef = useRef(onClose)
     onCloseRef.current = onClose
@@ -611,7 +637,6 @@ export const MoreFilters = ({
     const [buttonElement, setButtonElement] = useState<HTMLDivElement | null>(
         null
     )
-    const [menuElement, setMenuElement] = useState<HTMLDivElement | null>(null)
     const [open, setOpen] = useState(false)
     const [openSubMenu, setOpenSubMenu] = useState<
         'program-stages' | 'stage-fields' | null
@@ -645,17 +670,6 @@ export const MoreFilters = ({
         )
     }
     useEscapeToClose(open, close)
-    useEffect(() => {
-        if (!open || !menuElement) {
-            return
-        }
-        const frame = requestAnimationFrame(() => {
-            menuElement
-                .querySelector<HTMLElement>('[role="presentation"][tabindex]')
-                ?.focus()
-        })
-        return () => cancelAnimationFrame(frame)
-    }, [menuElement, open])
     if (!available.length && !stages.length && !availableStageFields.length) {
         return null
     }
@@ -683,7 +697,17 @@ export const MoreFilters = ({
                     onClickOutside={close}
                 >
                     <div
-                        ref={setMenuElement}
+                        ref={(element) => {
+                            if (element) {
+                                requestAnimationFrame(() =>
+                                    element
+                                        .querySelector<HTMLElement>(
+                                            '[role="presentation"][tabindex]'
+                                        )
+                                        ?.focus()
+                                )
+                            }
+                        }}
                         className={styles['menu-popover-sheet']}
                         style={{
                             maxHeight: `max(160px, calc(100vh - ${
@@ -879,8 +903,17 @@ export const FilterButton = ({
     const summary = summaryForFilter(filter, translate)
     const displayPrefix = prefix ?? fieldDisplayName(field, translate)
 
+    const setEditorOpen = (nextOpen: boolean) => {
+        configureFilterCombobox(
+            buttonElement,
+            `[data-test="filter-${field.id}-select"] [tabindex]`,
+            nextOpen,
+            `filter-editor-${field.id}`
+        )
+        setOpen(nextOpen)
+    }
     const close = () => {
-        setOpen(false)
+        setEditorOpen(false)
         requestAnimationFrame(() =>
             buttonElement
                 ?.querySelector<HTMLElement>(
@@ -890,25 +923,20 @@ export const FilterButton = ({
         )
     }
     useEscapeToClose(open, close)
-    useEffect(() => {
-        const combobox = buttonElement?.querySelector<HTMLElement>(
-            `[data-test="filter-${field.id}-select"] [tabindex]`
-        )
-        if (!combobox) {
-            return
-        }
-        // The SingleSelect supplies the required visual/combobox semantics,
-        // while this control opens the richer filter editor instead of its
-        // option list. Keep the announced state aligned with that editor.
-        combobox.setAttribute('role', 'combobox')
-        combobox.setAttribute('aria-expanded', String(open))
-        combobox.setAttribute('aria-haspopup', 'dialog')
-        combobox.setAttribute('aria-controls', `filter-editor-${field.id}`)
-    }, [buttonElement, field.id, open])
 
     return (
         <div
-            ref={setButtonElement}
+            ref={(element) => {
+                if (element && element !== buttonElement) {
+                    setButtonElement(element)
+                    configureFilterCombobox(
+                        element,
+                        `[data-test="filter-${field.id}-select"] [tabindex]`,
+                        open,
+                        `filter-editor-${field.id}`
+                    )
+                }
+            }}
             className={styles['filter-control']}
             data-testid={`filter-${field.id}`}
             onMouseDownCapture={(event) => {
@@ -946,7 +974,7 @@ export const FilterButton = ({
                 }
                 event.preventDefault()
                 event.stopPropagation()
-                setOpen((value) => !value)
+                setEditorOpen(!open)
             }}
             onKeyDownCapture={(event) => {
                 const target =
@@ -959,7 +987,7 @@ export const FilterButton = ({
                 ) {
                     event.preventDefault()
                     event.stopPropagation()
-                    setOpen(true)
+                    setEditorOpen(true)
                 }
             }}
         >
@@ -1031,7 +1059,6 @@ const FilterEditor = ({
 }: FilterEditorProps) => {
     const translate = useWorkingListText()
     const i18n = { t: translate }
-    const editorRef = useRef<HTMLFormElement>(null)
     const definition = getValueTypeDefinition(field.valueType)
     const operators = getAllowedFilterOperators(field, capabilities)
     const isTrueOnly = definition.editor === 'trueOnly'
@@ -1044,29 +1071,6 @@ const FilterEditor = ({
                 : defaultValue(field, definition.editor))
     )
     const [error, setError] = useState<string>()
-
-    useEffect(() => {
-        const frame = requestAnimationFrame(() => {
-            editorRef.current
-                ?.querySelector<HTMLElement>(
-                    'input, button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-                )
-                ?.focus()
-        })
-        return () => cancelAnimationFrame(frame)
-    }, [])
-
-    useEffect(() => {
-        if (operator === 'empty' || operator === 'notEmpty') {
-            setValue({ kind: 'empty', isEmpty: operator === 'empty' })
-        } else if (value.kind === 'empty') {
-            setValue(
-                isTrueOnly
-                    ? { kind: 'boolean', values: [] }
-                    : defaultValue(field, definition.editor)
-            )
-        }
-    }, [definition.editor, field, isTrueOnly, operator, value.kind])
 
     const trueOnlyHasValue = value.kind === 'trueOnly' || value.kind === 'empty'
 
@@ -1090,7 +1094,7 @@ const FilterEditor = ({
 
     return (
         <form
-            ref={editorRef}
+            ref={focusFirstControl}
             id={`filter-editor-${field.id}`}
             className={styles['filter-editor']}
             data-testid={`filter-editor-${field.id}`}
@@ -1111,6 +1115,17 @@ const FilterEditor = ({
                     onChange={({ selected }) => {
                         const parsed = z.enum(FILTER_OPERATORS).parse(selected)
                         setOperator(parsed)
+                        setValue((current) => {
+                            if (parsed === 'empty' || parsed === 'notEmpty') {
+                                return {
+                                    kind: 'empty',
+                                    isEmpty: parsed === 'empty',
+                                }
+                            }
+                            return current.kind === 'empty'
+                                ? defaultValue(field, definition.editor)
+                                : current
+                        })
                     }}
                 >
                     {operators.map((item) => (
@@ -1820,7 +1835,6 @@ export const ProgramStageControl = ({
     const [buttonElement, setButtonElement] = useState<HTMLDivElement | null>(
         null
     )
-    const editorRef = useRef<HTMLFormElement>(null)
     const [open, setOpen] = useState(defaultOpen ?? false)
     const [draft, setDraft] = useState(selectedStageId ?? '')
     const stages = useMemo(
@@ -1834,8 +1848,17 @@ export const ProgramStageControl = ({
         (stage) => stage.id === selectedStageId
     )?.displayName
 
+    const setEditorOpen = (nextOpen: boolean) => {
+        configureFilterCombobox(
+            buttonElement,
+            '[data-test="filter-programStage-select"] [tabindex]',
+            nextOpen,
+            'filter-editor-programStage'
+        )
+        setOpen(nextOpen)
+    }
     const close = () => {
-        setOpen(false)
+        setEditorOpen(false)
         requestAnimationFrame(() =>
             buttonElement
                 ?.querySelector<HTMLElement>(
@@ -1845,35 +1868,20 @@ export const ProgramStageControl = ({
         )
     }
     useEscapeToClose(open, close)
-    useEffect(() => {
-        const combobox = buttonElement?.querySelector<HTMLElement>(
-            '[data-test="filter-programStage-select"] [tabindex]'
-        )
-        if (!combobox) {
-            return
-        }
-        combobox.setAttribute('role', 'combobox')
-        combobox.setAttribute('aria-expanded', String(open))
-        combobox.setAttribute('aria-haspopup', 'dialog')
-        combobox.setAttribute('aria-controls', 'filter-editor-programStage')
-    }, [buttonElement, open])
-    useEffect(() => {
-        if (!open) {
-            return
-        }
-        const frame = requestAnimationFrame(() => {
-            editorRef.current
-                ?.querySelector<HTMLElement>(
-                    'input, button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-                )
-                ?.focus()
-        })
-        return () => cancelAnimationFrame(frame)
-    }, [open])
 
     return (
         <div
-            ref={setButtonElement}
+            ref={(element) => {
+                if (element && element !== buttonElement) {
+                    setButtonElement(element)
+                    configureFilterCombobox(
+                        element,
+                        '[data-test="filter-programStage-select"] [tabindex]',
+                        open,
+                        'filter-editor-programStage'
+                    )
+                }
+            }}
             className={styles['filter-control']}
             data-testid="filter-programStage"
             onMouseDownCapture={(event) => {
@@ -1909,7 +1917,7 @@ export const ProgramStageControl = ({
                 event.preventDefault()
                 event.stopPropagation()
                 setDraft(selectedStageId ?? '')
-                setOpen((value) => !value)
+                setEditorOpen(!open)
             }}
             onKeyDownCapture={(event) => {
                 const target =
@@ -1923,7 +1931,7 @@ export const ProgramStageControl = ({
                     event.preventDefault()
                     event.stopPropagation()
                     setDraft(selectedStageId ?? '')
-                    setOpen(true)
+                    setEditorOpen(true)
                 }
             }}
         >
@@ -1960,7 +1968,7 @@ export const ProgramStageControl = ({
                 >
                     <div className={styles['filter-popover-sheet']}>
                         <form
-                            ref={editorRef}
+                            ref={focusFirstControl}
                             className={styles['filter-editor']}
                             data-testid="filter-editor-programStage"
                             role="dialog"

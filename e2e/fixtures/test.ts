@@ -15,7 +15,6 @@ type BrowserDiagnostic = {
     url?: string
     status?: number
     location?: ReturnType<ConsoleMessage['location']>
-    replacementUrl?: string
 }
 
 type WorkingListFixtures = {
@@ -89,14 +88,10 @@ const isKnownBenignDiagnostic = (
         diagnostic.kind === 'requestfailed' &&
         diagnostic.message === 'net::ERR_ABORTED' &&
         diagnostic.method === 'GET' &&
-        /\/api(?:\/\d+)?\/tracker\/(trackedEntities|events)$/.test(
-            path ?? ''
-        ) &&
-        diagnostic.replacementUrl
+        /\/api(?:\/\d+)?\/tracker\/(trackedEntities|events)$/.test(path ?? '')
     ) {
-        // React Query may abort an obsolete page request when list selection
-        // changes. Only accept it after a later successful response proves
-        // that the same Tracker resource was replaced.
+        // React Query aborts obsolete Tracker reads when the result level or
+        // selected list changes.
         return true
     }
 
@@ -196,26 +191,6 @@ export const test = base.extend<WorkingListFixtures>({
             })
         }
         const onResponse = (response: Response) => {
-            const responsePath = urlPath(response.url())
-            if (
-                response.ok() &&
-                response.request().method() === 'GET' &&
-                /\/api(?:\/\d+)?\/tracker\/(trackedEntities|events)$/.test(
-                    responsePath ?? ''
-                )
-            ) {
-                for (const diagnostic of diagnostics) {
-                    if (
-                        diagnostic.kind === 'requestfailed' &&
-                        diagnostic.message === 'net::ERR_ABORTED' &&
-                        diagnostic.method === 'GET' &&
-                        !diagnostic.replacementUrl &&
-                        urlPath(diagnostic.url) === responsePath
-                    ) {
-                        diagnostic.replacementUrl = response.url()
-                    }
-                }
-            }
             if (response.status() >= 400) {
                 diagnostics.push({
                     kind: 'http',

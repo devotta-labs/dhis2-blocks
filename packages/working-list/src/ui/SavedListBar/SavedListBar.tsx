@@ -9,7 +9,7 @@ import {
     Popover,
 } from '@dhis2/ui'
 import { IconMore16 } from '@dhis2/ui-icons'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import type { NormalizedSavedWorkingList } from '../../api/savedLists'
 import accessibilityStyles from '../styles/accessibility.module.css'
 import layoutStyles from '../styles/layout.module.css'
@@ -20,7 +20,6 @@ interface SavedListBarProps {
     lists: NormalizedSavedWorkingList[]
     selectedId?: string
     listsAreGenerated: boolean
-    /** Marks the active list with an unsaved-changes indicator. */
     dirty: boolean
     online: boolean
     busy: boolean
@@ -48,6 +47,19 @@ interface OpenMenu {
     reference: HTMLElement
 }
 
+const focusFirstMenuItem = (element: HTMLElement | null) => {
+    if (!element) {
+        return
+    }
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() =>
+            element
+                .querySelector<HTMLElement>('[role="presentation"][tabindex]')
+                ?.focus()
+        )
+    })
+}
+
 export const SavedListBar = ({
     lists,
     selectedId,
@@ -62,7 +74,6 @@ export const SavedListBar = ({
 }: SavedListBarProps) => {
     const i18n = { t: useWorkingListText() }
     const [openMenu, setOpenMenu] = useState<OpenMenu>()
-    const [menuElement, setMenuElement] = useState<HTMLDivElement | null>(null)
     const [deleteList, setDeleteList] = useState<NormalizedSavedWorkingList>()
     const generatedListName = (list: NormalizedSavedWorkingList) => {
         if (!listsAreGenerated) {
@@ -84,18 +95,6 @@ export const SavedListBar = ({
         }
         setOpenMenu(undefined)
     }
-
-    useEffect(() => {
-        if (!openMenu || !menuElement) {
-            return
-        }
-        const frame = requestAnimationFrame(() => {
-            menuElement
-                .querySelector<HTMLElement>('[role="presentation"][tabindex]')
-                ?.focus()
-        })
-        return () => cancelAnimationFrame(frame)
-    }, [menuElement, openMenu])
 
     return (
         <>
@@ -227,7 +226,7 @@ export const SavedListBar = ({
                     onClickOutside={() => closeMenu()}
                 >
                     <div
-                        ref={setMenuElement}
+                        ref={focusFirstMenuItem}
                         id="saved-view-actions-menu"
                         className={styles['saved-list-menu']}
                     >

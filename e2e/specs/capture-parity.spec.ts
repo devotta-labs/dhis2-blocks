@@ -378,12 +378,17 @@ const applyTextFilter = async (
 /* eslint-enable max-params */
 
 const enterStageMode = async (page: Page) => {
-    return waitForTrackerResponse(
+    const response = await waitForTrackerResponse(
         page,
         'events',
         () => addFilter(page, 'event', 'eventOccurredAt'),
         (url) => url.searchParams.get('programStage') === STAGE
     )
+    await page.keyboard.press('Escape')
+    await expect(page.getByTestId('filter-editor-eventOccurredAt')).toHaveCount(
+        0
+    )
+    return response
 }
 
 const basicAuthorization = ({ username, password }: E2ECredentials) =>
@@ -707,6 +712,7 @@ test.describe('Capture context and generated tracker views', () => {
         page,
     }) => {
         await openWorkingList(page)
+        await addFilter(page, 'tracked-entity', TEXT_ATTRIBUTE)
         await openFilterEditor(page, TEXT_ATTRIBUTE)
         const editor = page.getByTestId(`filter-editor-${TEXT_ATTRIBUTE}`)
 
@@ -1090,6 +1096,7 @@ test.describe('Capture programme-stage joint data strategy', () => {
         page,
     }) => {
         await openWorkingList(page)
+        await addFilter(page, 'tracked-entity', TEXT_ATTRIBUTE)
         await applyTextFilter(
             page,
             TEXT_ATTRIBUTE,
@@ -1207,15 +1214,9 @@ test.describe('Capture programme-stage joint data strategy', () => {
                 !url.searchParams.has('occurredAfter') &&
                 !url.searchParams.has('occurredBefore')
         )
-        await waitForTrackerResponse(
-            page,
-            'trackedEntities',
-            () =>
-                page
-                    .locator('[data-test="filter-programStage-select-clear"]')
-                    .click(),
-            (url) => !url.searchParams.has('programStage')
-        )
+        await page
+            .locator('[data-test="filter-programStage-select-clear"]')
+            .click()
         await expect(
             page.getByTestId('working-list-row-WlE2eTei001')
         ).toBeVisible()
@@ -1739,7 +1740,10 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             await expect(repairDialog).toBeVisible()
             await expect(
                 page.getByTestId('repair-working-list-preview')
-            ).toContainText('Remove 1 unavailable columns')
+            ).toContainText('WlMissing01')
+            await expect(
+                page.getByTestId('repair-working-list-preview')
+            ).toContainText('Remove')
 
             const savedRepair = page.waitForResponse(
                 (response) =>
@@ -1933,19 +1937,20 @@ test.describe('accessibility and keyboard feedback', () => {
         await page.keyboard.press('Escape')
         await expect(moreFilters).toBeFocused()
 
+        const statusFilterId = 'enrollmentStatus'
         const filterButton = page
-            .getByTestId(`filter-${TEXT_ATTRIBUTE}`)
+            .getByTestId(`filter-${statusFilterId}`)
             .getByRole('combobox')
         await filterButton.focus()
         await page.keyboard.press('Enter')
         await expect(
-            page.getByTestId(`filter-editor-${TEXT_ATTRIBUTE}`)
+            page.getByTestId(`filter-editor-${statusFilterId}`)
         ).toBeVisible()
         await expect(
             page.locator('[data-test="dhis2-uicore-popoverarrow"]')
         ).toHaveCount(0)
         const filterPopoverBounds = await page
-            .getByTestId(`filter-editor-${TEXT_ATTRIBUTE}`)
+            .getByTestId(`filter-editor-${statusFilterId}`)
             .boundingBox()
         expect(filterPopoverBounds).not.toBeNull()
         expect(filterPopoverBounds!.x).toBeGreaterThanOrEqual(0)

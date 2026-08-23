@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-21T13:05:39.338Z\n"
-"PO-Revision-Date: 2026-08-21T13:05:39.339Z\n"
+"POT-Creation-Date: 2026-08-23T18:15:26.684Z\n"
+"PO-Revision-Date: 2026-08-23T18:15:26.684Z\n"
 
 msgid "Discard the unsaved changes to this working list?"
 msgstr "Discard the unsaved changes to this working list?"
@@ -109,6 +109,15 @@ msgstr "Select one organisation unit for this list."
 msgid "A required value is missing"
 msgstr "A required value is missing"
 
+msgid ""
+"A required part of this list is no longer available. The program metadata "
+"may have changed, or you may no longer have access. Select another list, or "
+"use the list menu for more options."
+msgstr ""
+"A required part of this list is no longer available. The program metadata "
+"may have changed, or you may no longer have access. Select another list, or "
+"use the list menu for more options."
+
 msgid "Active"
 msgstr "Active"
 
@@ -190,9 +199,6 @@ msgstr "Clear {{filter}} filter"
 msgid "Column"
 msgstr "Column"
 
-msgid "Column {{reference}} is no longer available."
-msgstr "Column {{reference}} is no longer available."
-
 msgid "{{column}} dropped."
 msgstr "{{column}} dropped."
 
@@ -255,6 +261,9 @@ msgstr "Current user"
 
 msgid "Data quality"
 msgstr "Data quality"
+
+msgid "Data element"
+msgstr "Data element"
 
 msgid "Date range type"
 msgstr "Date range type"
@@ -322,26 +331,11 @@ msgstr "Expected a finite {{valueType}} value"
 msgid "Expected a string value, received {{type}}"
 msgstr "Expected a string value, received {{type}}"
 
-msgid "Field {{reference}} cannot be used at this result level."
-msgstr "Field {{reference}} cannot be used at this result level."
-
-msgid "Field {{reference}} does not belong to this program stage."
-msgstr "Field {{reference}} does not belong to this program stage."
-
-msgid "Field {{reference}} has changed type or source."
-msgstr "Field {{reference}} has changed type or source."
-
 msgid "Filter"
 msgstr "Filter"
 
 msgid "Filter available columns"
 msgstr "Filter available columns"
-
-msgid "Filter field {{reference}} is no longer available."
-msgstr "Filter field {{reference}} is no longer available."
-
-msgid "Filter {{reference}} is not supported by this server."
-msgstr "Filter {{reference}} is not supported by this server."
 
 msgid "Follow up"
 msgstr "Follow up"
@@ -469,16 +463,6 @@ msgstr "PERCENTAGE requires a value from zero to 100"
 msgid "Program stage"
 msgstr "Program stage"
 
-msgid "Program stage {{reference}} is no longer available."
-msgstr "Program stage {{reference}} is no longer available."
-
-msgid ""
-"No records will be queried until you confirm. The repair keeps every "
-"available setting and updates this saved list in place."
-msgstr ""
-"No records will be queried until you confirm. The repair keeps every "
-"available setting and updates this saved list in place."
-
 msgid "Registration date"
 msgstr "Registration date"
 
@@ -491,11 +475,14 @@ msgstr "Relative range"
 msgid "Relative range type"
 msgstr "Relative range type"
 
-msgid "Remove {{count}} unavailable columns"
-msgstr "Remove {{count}} unavailable columns"
+msgid "Proposed repair"
+msgstr "Proposed repair"
 
-msgid "Remove {{count}} unavailable filters"
-msgstr "Remove {{count}} unavailable filters"
+msgid "Reference"
+msgstr "Reference"
+
+msgid "Remove"
+msgstr "Remove"
 
 msgid "Reorder {{column}}"
 msgstr "Reorder {{column}}"
@@ -512,32 +499,20 @@ msgstr "Rename working list"
 msgid "Report date"
 msgstr "Report date"
 
-msgid "Repair and update list"
-msgstr "Repair and update list"
+msgid "Repair"
+msgstr "Repair"
 
-msgid "Repair saved working list?"
-msgstr "Repair saved working list?"
+msgid "Repair this saved list?"
+msgstr "Repair this saved list?"
 
-msgid "Replace the unavailable sort with the default sort"
-msgstr "Replace the unavailable sort with the default sort"
+msgid "Replace with default"
+msgstr "Replace with default"
 
-msgid "Replace {{count}} unavailable columns with program defaults"
-msgstr "Replace {{count}} unavailable columns with program defaults"
+msgid "Replace with {{replacement}}"
+msgstr "Replace with {{replacement}}"
 
 msgid "Reset filter"
 msgstr "Reset filter"
-
-msgid ""
-"Review a repair that removes only unavailable references, or select another "
-"list. You can also delete the list or review its sharing settings using the "
-"controls above."
-msgstr ""
-"Review a repair that removes only unavailable references, or select another "
-"list. You can also delete the list or review its sharing settings using the "
-"controls above."
-
-msgid "Review repair"
-msgstr "Review repair"
 
 msgid "Row actions"
 msgstr "Row actions"
@@ -585,13 +560,6 @@ msgstr "Search users"
 msgid "Search columns"
 msgstr "Search columns"
 
-msgid ""
-"Select another list, delete this list, or review its sharing settings using "
-"the controls above."
-msgstr ""
-"Select another list, delete this list, or review its sharing settings using "
-"the controls above."
-
 msgid "Selected users"
 msgstr "Selected users"
 
@@ -607,8 +575,22 @@ msgstr "Show {{column}}"
 msgid "Skipped"
 msgstr "Skipped"
 
-msgid "Sort field {{reference}} is no longer available."
-msgstr "Sort field {{reference}} is no longer available."
+msgid ""
+"Some filters, columns, or sorting options are no longer available. Repair "
+"lets you review the proposed changes before updating the list."
+msgstr ""
+"Some filters, columns, or sorting options are no longer available. Repair "
+"lets you review the proposed changes before updating the list."
+
+msgid "Some metadata changed, was removed, or is no longer accessible."
+msgstr "Some metadata changed, was removed, or is no longer accessible."
+
+msgid ""
+"Some parts of this list are no longer available. Ask someone who can edit "
+"the list to repair it, or select another list."
+msgstr ""
+"Some parts of this list are no longer available. Ask someone who can edit "
+"the list to repair it, or select another list."
 
 msgid "Specific dates"
 msgstr "Specific dates"
@@ -628,6 +610,9 @@ msgstr "Start buffer"
 msgid "Starts with"
 msgstr "Starts with"
 
+msgid "System field"
+msgstr "System field"
+
 msgid "The filter value is invalid. Review the value and try again."
 msgstr "The filter value is invalid. Review the value and try again."
 
@@ -638,16 +623,6 @@ msgstr ""
 "The list was created, but the server has not returned it yet. No records "
 "will be queried until it is available."
 
-msgid ""
-"The list references metadata that is no longer available. No records will "
-"be queried while this list is selected."
-msgstr ""
-"The list references metadata that is no longer available. No records will "
-"be queried while this list is selected."
-
-msgid "The repaired view would have no visible columns."
-msgstr "The repaired view would have no visible columns."
-
 msgid "The saved working list could not be reloaded"
 msgstr "The saved working list could not be reloaded"
 
@@ -657,18 +632,11 @@ msgstr "The value has an unsupported type"
 msgid "This month"
 msgstr "This month"
 
-msgid "This saved list cannot be used"
-msgstr "This saved list cannot be used"
+msgid "This saved list is unavailable"
+msgstr "This saved list is unavailable"
 
-msgid ""
-"This view cannot be repaired automatically. Select another list, delete "
-"this list, or review its sharing settings using the controls above."
-msgstr ""
-"This view cannot be repaired automatically. Select another list, delete "
-"this list, or review its sharing settings using the controls above."
-
-msgid "This view belongs to a different program ({{reference}})."
-msgstr "This view belongs to a different program ({{reference}})."
+msgid "This saved list has unavailable settings"
+msgstr "This saved list has unavailable settings"
 
 msgid "This view is unavailable"
 msgstr "This view is unavailable"
@@ -694,6 +662,9 @@ msgstr ""
 
 msgid "Today"
 msgstr "Today"
+
+msgid "Tracked entity attribute"
+msgstr "Tracked entity attribute"
 
 msgid "Tracked entity filters"
 msgstr "Tracked entity filters"
@@ -757,9 +728,6 @@ msgstr "Working lists require a tracker program with registration."
 
 msgid "Yes"
 msgstr "Yes"
-
-msgid "You need update access to repair this saved list."
-msgstr "You need update access to repair this saved list."
 
 msgid "{{filterName}}{{escape}}"
 msgstr "{{filterName}}{{escape}}"

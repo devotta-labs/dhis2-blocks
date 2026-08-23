@@ -53,9 +53,8 @@
     color: var(--colors-grey700);
 }
 
-.stale-list-panel ul {
-    padding-left: 22px;
-    margin: 12px 0;
+.stale-list-repair-action {
+    margin-top: 8px;
 }
 
 @media (max-width: 560px) {

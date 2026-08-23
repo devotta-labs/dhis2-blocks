@@ -318,4 +318,166 @@ describe('calendar filter controls', () => {
             actEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment
         }
     })
+
+    it('shows minimum-character guidance only for positive limits', () => {
+        const actEnvironment = globalThis
+        const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
+        actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
+
+        const container = document.createElement('div')
+        document.body.appendChild(container)
+        const root = createRoot(container)
+        const renderFilter = (minCharactersToSearch: number) => {
+            act(() => {
+                root.render(
+                    <WorkingListTextProvider translate={(message) => message}>
+                        <FilterControlsComponentProvider
+                            components={testComponents}
+                        >
+                            <FilterButton
+                                defaultOpen
+                                client={unusedClient}
+                                field={{
+                                    id: 'name',
+                                    displayName: 'Name',
+                                    source: 'trackedEntityAttribute',
+                                    scope: 'trackedEntity',
+                                    valueType: 'TEXT',
+                                    filterable: true,
+                                    minCharactersToSearch,
+                                }}
+                                capabilities={resolveWorkingListCapabilities({
+                                    apiVersion: 43,
+                                })}
+                                calendarContext={{
+                                    calendar: 'gregory',
+                                    dateFormat: 'YYYY-MM-DD',
+                                    locale: 'en',
+                                    timeZone: 'Etc/UTC',
+                                }}
+                                onApply={jest.fn()}
+                                onReset={jest.fn()}
+                            />
+                        </FilterControlsComponentProvider>
+                    </WorkingListTextProvider>
+                )
+            })
+        }
+
+        try {
+            renderFilter(0)
+            expect(container.textContent).not.toContain(
+                'Enter at least 0 characters'
+            )
+            expect(
+                container
+                    .querySelector<HTMLInputElement>(
+                        '#filter-editor-name input'
+                    )
+                    ?.getAttribute('minlength')
+            ).toBeNull()
+
+            renderFilter(3)
+            expect(container.textContent).toContain(
+                'Enter at least {{count}} characters'
+            )
+            expect(
+                container
+                    .querySelector<HTMLInputElement>(
+                        '#filter-editor-name input'
+                    )
+                    ?.getAttribute('minlength')
+            ).toBe('3')
+        } finally {
+            act(() => root.unmount())
+            container.remove()
+            actEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment
+        }
+    })
+
+    it('uses the Capture yes-only checkbox interaction', () => {
+        const actEnvironment = globalThis
+        const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
+        actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
+
+        const container = document.createElement('div')
+        document.body.appendChild(container)
+        const root = createRoot(container)
+        const onApply = jest.fn<void, [AppliedFilter]>()
+
+        try {
+            act(() => {
+                root.render(
+                    <WorkingListTextProvider translate={(message) => message}>
+                        <FilterControlsComponentProvider
+                            components={testComponents}
+                        >
+                            <FilterButton
+                                defaultOpen
+                                client={unusedClient}
+                                field={{
+                                    id: 'startedOnArt',
+                                    displayName: 'Started on ART?',
+                                    source: 'eventDataElement',
+                                    scope: 'event',
+                                    valueType: 'TRUE_ONLY',
+                                    filterable: true,
+                                }}
+                                capabilities={resolveWorkingListCapabilities({
+                                    apiVersion: 43,
+                                })}
+                                calendarContext={{
+                                    calendar: 'gregory',
+                                    dateFormat: 'YYYY-MM-DD',
+                                    locale: 'en',
+                                    timeZone: 'Etc/UTC',
+                                }}
+                                onApply={onApply}
+                                onReset={jest.fn()}
+                            />
+                        </FilterControlsComponentProvider>
+                    </WorkingListTextProvider>
+                )
+            })
+
+            expect(
+                container.querySelector(
+                    '[data-test="filter-operator-startedOnArt"]'
+                )
+            ).toBeNull()
+            expect(container.textContent).not.toContain(
+                'Only records with a true value will match.'
+            )
+            expect(container.textContent).toContain('Is empty')
+            expect(container.textContent).toContain('Is not empty')
+            expect(container.textContent).toContain('Yes')
+            expect(
+                container.querySelector('[data-test="true-only-divider"]')
+            ).not.toBeNull()
+
+            const update = container.querySelector<HTMLButtonElement>(
+                '[data-test="filter-update-startedOnArt"]'
+            )
+            expect(update?.disabled).toBe(true)
+
+            const yes = container.querySelector<HTMLInputElement>(
+                '[data-test="true-only-yes-startedOnArt"] input'
+            )
+            act(() => yes?.click())
+            expect(yes?.checked).toBe(true)
+            expect(update?.disabled).toBe(false)
+
+            act(() => update?.click())
+            expect(onApply).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    operator: 'equals',
+                    value: { kind: 'trueOnly', value: true },
+                })
+            )
+        } finally {
+            act(() => root.unmount())
+            container.remove()
+            actEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment
+        }
+    })
 })

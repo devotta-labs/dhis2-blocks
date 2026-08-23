@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-20T20:48:43.337Z\n"
-"PO-Revision-Date: 2026-08-20T20:48:43.337Z\n"
+"POT-Creation-Date: 2026-08-21T13:05:39.338Z\n"
+"PO-Revision-Date: 2026-08-21T13:05:39.339Z\n"
 
 msgid "Discard the unsaved changes to this working list?"
 msgstr "Discard the unsaved changes to this working list?"
@@ -115,6 +115,12 @@ msgstr "Active"
 msgid "Active enrollments"
 msgstr "Active enrollments"
 
+msgid "Actions for {{name}}"
+msgstr "Actions for {{name}}"
+
+msgid "All"
+msgstr "All"
+
 msgid "Any assigned user"
 msgstr "Any assigned user"
 
@@ -133,11 +139,17 @@ msgstr "At least"
 msgid "At most"
 msgstr "At most"
 
+msgid "Available columns"
+msgstr "Available columns"
+
 msgid "Between"
 msgstr "Between"
 
 msgid "Cancel"
 msgstr "Cancel"
+
+msgid "Can only filter using one program stage."
+msgstr "Can only filter using one program stage."
 
 msgid "Cancelled"
 msgstr "Cancelled"
@@ -153,6 +165,13 @@ msgstr ""
 "not affected."
 
 msgid ""
+"Choose visible columns and arrange them in the order they should appear. "
+"Active filters are not affected."
+msgstr ""
+"Choose visible columns and arrange them in the order they should appear. "
+"Active filters are not affected."
+
+msgid ""
 "Choose which columns are visible and drag them into the order you want. "
 "Active filters are not affected."
 msgstr ""
@@ -161,6 +180,12 @@ msgstr ""
 
 msgid "Clear"
 msgstr "Clear"
+
+msgid "Clear filter"
+msgstr "Clear filter"
+
+msgid "Clear {{filter}} filter"
+msgstr "Clear {{filter}} filter"
 
 msgid "Column"
 msgstr "Column"
@@ -197,6 +222,9 @@ msgstr "Configure columns"
 
 msgid "Contains"
 msgstr "Contains"
+
+msgid "Create new view…"
+msgstr "Create new view…"
 
 msgid "COORDINATE is not valid JSON"
 msgstr "COORDINATE is not valid JSON"
@@ -240,11 +268,20 @@ msgstr "Day offsets"
 msgid "Delete"
 msgstr "Delete"
 
+msgid "Delete view"
+msgstr "Delete view"
+
+msgid "Delete view?"
+msgstr "Delete view?"
+
 msgid "Delete working list?"
 msgstr "Delete working list?"
 
 msgid "Done"
 msgstr "Done"
+
+msgid "Download data…"
+msgstr "Download data…"
 
 msgid "EMAIL contains an invalid email address"
 msgstr "EMAIL contains an invalid email address"
@@ -293,6 +330,12 @@ msgstr "Field {{reference}} does not belong to this program stage."
 
 msgid "Field {{reference}} has changed type or source."
 msgstr "Field {{reference}} has changed type or source."
+
+msgid "Filter"
+msgstr "Filter"
+
+msgid "Filter available columns"
+msgstr "Filter available columns"
 
 msgid "Filter field {{reference}} is no longer available."
 msgstr "Filter field {{reference}} is no longer available."
@@ -357,6 +400,9 @@ msgstr "Loading the selected working list…"
 msgid "Match"
 msgstr "Match"
 
+msgid "Manage sharing"
+msgstr "Manage sharing"
+
 msgid "Maximum"
 msgstr "Maximum"
 
@@ -365,6 +411,9 @@ msgstr "Minimum"
 
 msgid "More filters"
 msgstr "More filters"
+
+msgid "More"
+msgstr "More"
 
 msgid "Move left"
 msgstr "Move left"
@@ -387,6 +436,9 @@ msgstr "Named period"
 msgid "No items to display"
 msgstr "No items to display"
 
+msgid "No available columns"
+msgstr "No available columns"
+
 msgid "No users match"
 msgstr "No users match"
 
@@ -398,9 +450,6 @@ msgstr "No"
 
 msgid "Not empty"
 msgstr "Not empty"
-
-msgid "Only records with a true value will match."
-msgstr "Only records with a true value will match."
 
 msgid "Open"
 msgstr "Open"
@@ -441,9 +490,6 @@ msgstr "Relative range"
 
 msgid "Relative range type"
 msgstr "Relative range type"
-
-msgid "Remove filter"
-msgstr "Remove filter"
 
 msgid "Remove {{count}} unavailable columns"
 msgstr "Remove {{count}} unavailable columns"
@@ -502,6 +548,9 @@ msgstr "Row has {{count}} data quality issues"
 msgid "Save"
 msgstr "Save"
 
+msgid "Save changes to this view"
+msgstr "Save changes to this view"
+
 msgid ""
 "Save this mode change as a new working list instead of replacing a "
 "different resource type."
@@ -518,6 +567,12 @@ msgstr "Saved list"
 msgid "Save as new working list"
 msgstr "Save as new working list"
 
+msgid "Save view"
+msgstr "Save view"
+
+msgid "Saved views in this program"
+msgstr "Saved views in this program"
+
 msgid "Scheduled"
 msgstr "Scheduled"
 
@@ -526,6 +581,9 @@ msgstr "Scheduled date"
 
 msgid "Search users"
 msgstr "Search users"
+
+msgid "Search columns"
+msgstr "Search columns"
 
 msgid ""
 "Select another list, delete this list, or review its sharing settings using "
@@ -536,6 +594,9 @@ msgstr ""
 
 msgid "Selected users"
 msgstr "Selected users"
+
+msgid "Select at least one visible column"
+msgstr "Select at least one visible column"
 
 msgid "Sharing and access"
 msgstr "Sharing and access"
@@ -672,6 +733,9 @@ msgstr "Values"
 
 msgid "Visible"
 msgstr "Visible"
+
+msgid "Visible columns"
+msgstr "Visible columns"
 
 msgid "Visited"
 msgstr "Visited"

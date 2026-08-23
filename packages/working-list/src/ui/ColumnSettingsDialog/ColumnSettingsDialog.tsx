@@ -1,33 +1,14 @@
 import {
     Button,
-    Checkbox,
-    IconDragHandle24,
     Modal,
     ModalActions,
     ModalContent,
     ModalTitle,
+    Transfer,
 } from '@dhis2/ui'
-import {
-    DndContext,
-    KeyboardSensor,
-    PointerSensor,
-    closestCenter,
-    useSensor,
-    useSensors,
-    type DragEndEvent,
-} from '@dnd-kit/core'
-import {
-    SortableContext,
-    arrayMove,
-    sortableKeyboardCoordinates,
-    useSortable,
-    verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import type { WorkingListField } from '../../domain/model'
 import { fieldDisplayName } from '../FilterControls'
-import accessibilityStyles from '../styles/accessibility.module.css'
 import { useWorkingListText } from '../WorkingListText'
 import styles from './ColumnSettingsDialog.module.css'
 
@@ -40,7 +21,7 @@ interface ColumnSettingsDialogProps {
 
 /**
  * Keeps metadata order for hidden fields while applying the saved ordering to
- * the visible slots. This means visibility and ordering remain independent.
+ * the visible slots. Retained for consumers that use the ordering helpers.
  */
 export const getInitialColumnDialogOrder = (
     fields: WorkingListField[],
@@ -70,77 +51,6 @@ export const getVisibleColumnIdsInOrder = (
         .filter((id) => visibleIds.has(id))
 }
 
-interface SortableColumnRowProps {
-    field: WorkingListField
-    name: string
-    visible: boolean
-    disableVisibilityToggle: boolean
-    reorderLabel: string
-    visibilityLabel: string
-    onVisibilityChange: (checked: boolean) => void
-}
-
-const SortableColumnRow = ({
-    field,
-    name,
-    visible,
-    disableVisibilityToggle,
-    reorderLabel,
-    visibilityLabel,
-    onVisibilityChange,
-}: SortableColumnRowProps) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id: field.id })
-
-    return (
-        <li
-            ref={setNodeRef}
-            className={`${styles['column-settings-row']}${
-                isDragging ? ` ${styles['column-settings-row--dragging']}` : ''
-            }`}
-            style={{
-                transform: CSS.Transform.toString(transform),
-                transition,
-            }}
-            data-testid={`column-settings-row-${field.id}`}
-        >
-            <button
-                type="button"
-                className={styles['column-settings-drag-handle']}
-                data-testid={`column-settings-drag-${field.id}`}
-                aria-label={reorderLabel}
-                {...attributes}
-                {...listeners}
-            >
-                <IconDragHandle24 />
-            </button>
-            <span className={styles['column-settings-name']}>{name}</span>
-            <div className={styles['column-settings-visibility']}>
-                <Checkbox
-                    dense
-                    dataTest={`column-${field.id}`}
-                    checked={visible}
-                    disabled={disableVisibilityToggle}
-                    label={
-                        <span
-                            className={accessibilityStyles['visually-hidden']}
-                        >
-                            {visibilityLabel}
-                        </span>
-                    }
-                    onChange={({ checked }) => onVisibilityChange(checked)}
-                />
-            </div>
-        </li>
-    )
-}
-
 export const ColumnSettingsDialog = ({
     fields,
     visibleColumnIds,
@@ -148,217 +58,94 @@ export const ColumnSettingsDialog = ({
     onClose,
 }: ColumnSettingsDialogProps) => {
     const translate = useWorkingListText()
-    const i18n = { t: translate }
-    const [orderedFields, setOrderedFields] = useState(() =>
-        getInitialColumnDialogOrder(fields, visibleColumnIds)
+    const fieldIds = useMemo(
+        () => new Set(fields.map((field) => field.id)),
+        [fields]
     )
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: { distance: 6 },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
+    const [draftSelected, setDraftSelected] = useState(() =>
+        visibleColumnIds.filter((id) => fieldIds.has(id))
     )
-
-    useEffect(() => {
-        setOrderedFields((current) => {
-            const currentIds = new Set(current.map((field) => field.id))
-            const fieldsById = new Map(fields.map((field) => [field.id, field]))
-            const nextIds = new Set(fields.map((field) => field.id))
-            return [
-                ...current
-                    .filter((field) => nextIds.has(field.id))
-                    .map((field) => fieldsById.get(field.id) ?? field),
-                ...fields.filter((field) => !currentIds.has(field.id)),
-            ]
-        })
-    }, [fields])
-
-    const fieldNames = useMemo(
+    const [showValidationError, setShowValidationError] = useState(false)
+    const options = useMemo(
         () =>
-            new Map(
-                fields.map((field) => [
-                    field.id,
-                    fieldDisplayName(field, translate),
-                ])
-            ),
+            fields.map((field) => ({
+                value: field.id,
+                label: fieldDisplayName(field, translate),
+            })),
         [fields, translate]
     )
 
-    const toggle = (fieldId: string, checked: boolean) => {
-        if (!checked && visibleColumnIds.length === 1) {
-            return
+    const handleChange = ({
+        selected: nextSelected,
+    }: {
+        selected: string[]
+    }) => {
+        const validSelected = nextSelected.filter((id) => fieldIds.has(id))
+        setDraftSelected(validSelected)
+        if (validSelected.length > 0) {
+            setShowValidationError(false)
         }
-        const nextVisibleIds = new Set(visibleColumnIds)
-        if (checked) {
-            nextVisibleIds.add(fieldId)
-        } else {
-            nextVisibleIds.delete(fieldId)
-        }
-        onChange(
-            orderedFields
-                .map((field) => field.id)
-                .filter((id) => nextVisibleIds.has(id))
-        )
     }
 
-    const handleDragEnd = ({ active, over }: DragEndEvent) => {
-        if (!over || active.id === over.id) {
+    const save = () => {
+        if (draftSelected.length === 0) {
+            setShowValidationError(true)
             return
         }
-        const oldIndex = orderedFields.findIndex(
-            (field) => field.id === active.id
-        )
-        const newIndex = orderedFields.findIndex(
-            (field) => field.id === over.id
-        )
-        if (oldIndex < 0 || newIndex < 0) {
-            return
-        }
-        const reordered = arrayMove(orderedFields, oldIndex, newIndex)
-        setOrderedFields(reordered)
-        const reorderedVisibleIds = getVisibleColumnIdsInOrder(
-            reordered,
-            visibleColumnIds
-        )
-        if (
-            reorderedVisibleIds.some(
-                (id, index) => id !== visibleColumnIds[index]
-            )
-        ) {
-            onChange(reorderedVisibleIds)
-        }
+        onChange(draftSelected)
+        onClose()
     }
 
     return (
-        <Modal position="middle" onClose={onClose}>
-            <ModalTitle>{i18n.t('Configure columns')}</ModalTitle>
+        <Modal fluid position="middle" onClose={onClose}>
+            <ModalTitle>{translate('Configure table columns')}</ModalTitle>
             <ModalContent>
                 <div data-testid="column-settings">
-                    <p className={styles['column-settings-description']}>
-                        {i18n.t(
-                            'Choose which columns are visible and drag them into the order you want. Active filters are not affected.'
-                        )}
-                    </p>
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        accessibility={{
-                            screenReaderInstructions: {
-                                draggable: i18n.t(
-                                    'To reorder a column, press Space to pick it up, use the arrow keys to move it, and press Space again to drop it.'
-                                ),
-                            },
-                            announcements: {
-                                onDragStart: ({ active }) =>
-                                    i18n.t('{{column}} picked up.', {
-                                        column:
-                                            fieldNames.get(String(active.id)) ??
-                                            String(active.id),
-                                    }),
-                                onDragOver: ({ active, over }) =>
-                                    over
-                                        ? i18n.t(
-                                              '{{column}} moved to position {{position}} of {{total}}.',
-                                              {
-                                                  column:
-                                                      fieldNames.get(
-                                                          String(active.id)
-                                                      ) ?? String(active.id),
-                                                  position:
-                                                      orderedFields.findIndex(
-                                                          (field) =>
-                                                              field.id ===
-                                                              over.id
-                                                      ) + 1,
-                                                  total: orderedFields.length,
-                                              }
-                                          )
-                                        : undefined,
-                                onDragEnd: ({ active, over }) =>
-                                    over
-                                        ? i18n.t('{{column}} dropped.', {
-                                              column:
-                                                  fieldNames.get(
-                                                      String(active.id)
-                                                  ) ?? String(active.id),
-                                          })
-                                        : i18n.t('{{column}} was not moved.', {
-                                              column:
-                                                  fieldNames.get(
-                                                      String(active.id)
-                                                  ) ?? String(active.id),
-                                          }),
-                                onDragCancel: ({ active }) =>
-                                    i18n.t('Reordering {{column}} cancelled.', {
-                                        column:
-                                            fieldNames.get(String(active.id)) ??
-                                            String(active.id),
-                                    }),
-                            },
-                        }}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <div
-                            className={styles['column-settings-header']}
-                            aria-hidden="true"
-                            data-testid="column-settings-header"
+                    <Transfer
+                        dataTest="column-settings-transfer"
+                        options={options}
+                        selected={draftSelected}
+                        filterable
+                        enableOrderChange
+                        height="448px"
+                        optionsWidth="440px"
+                        selectedWidth="440px"
+                        leftHeader={
+                            <h4 className={styles['column-settings-heading']}>
+                                {translate('Available columns')}
+                            </h4>
+                        }
+                        rightHeader={
+                            <h4 className={styles['column-settings-heading']}>
+                                {translate('Selected columns')}
+                            </h4>
+                        }
+                        filterPlaceholder={translate('Filter')}
+                        onChange={handleChange}
+                    />
+                    {showValidationError && (
+                        <p
+                            className={styles['column-settings-error']}
+                            role="alert"
                         >
-                            <span />
-                            <span>{i18n.t('Column')}</span>
-                            <span>{i18n.t('Visible')}</span>
-                        </div>
-                        <SortableContext
-                            items={orderedFields.map((field) => field.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            <ul className={styles['column-settings-list']}>
-                                {orderedFields.map((field) => {
-                                    const visible = visibleColumnIds.includes(
-                                        field.id
-                                    )
-                                    const name = fieldDisplayName(
-                                        field,
-                                        translate
-                                    )
-                                    return (
-                                        <SortableColumnRow
-                                            key={field.id}
-                                            field={field}
-                                            name={name}
-                                            visible={visible}
-                                            disableVisibilityToggle={
-                                                visible &&
-                                                visibleColumnIds.length === 1
-                                            }
-                                            reorderLabel={i18n.t(
-                                                'Reorder {{column}}',
-                                                { column: name }
-                                            )}
-                                            visibilityLabel={i18n.t(
-                                                'Show {{column}}',
-                                                { column: name }
-                                            )}
-                                            onVisibilityChange={(checked) =>
-                                                toggle(field.id, checked)
-                                            }
-                                        />
-                                    )
-                                })}
-                            </ul>
-                        </SortableContext>
-                    </DndContext>
+                            {translate('Select at least one visible column')}
+                        </p>
+                    )}
                 </div>
             </ModalContent>
             <ModalActions>
-                <Button
-                    primary
-                    dataTest="column-settings-done"
-                    onClick={onClose}
-                >
-                    {i18n.t('Done')}
-                </Button>
+                <div className={styles['column-settings-actions']}>
+                    <Button dataTest="column-settings-cancel" onClick={onClose}>
+                        {translate('Cancel')}
+                    </Button>
+                    <Button
+                        primary
+                        dataTest="column-settings-done"
+                        onClick={save}
+                    >
+                        {translate('Save column configuration')}
+                    </Button>
+                </div>
             </ModalActions>
         </Modal>
     )

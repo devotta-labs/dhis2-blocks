@@ -72,6 +72,12 @@ export const ConfigureMenu = ({
             <div
                 className={styles['configure-menu']}
                 data-testid="working-list-actions"
+                onKeyDownCapture={(event) => {
+                    if (event.key === 'Escape') {
+                        setSaveMenuOpen(false)
+                        setMoreMenuOpen(false)
+                    }
+                }}
             >
                 {persistedSelection ? (
                     <DropdownButton

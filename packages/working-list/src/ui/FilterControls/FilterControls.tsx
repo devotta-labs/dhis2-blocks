@@ -114,17 +114,36 @@ const focusFirstControl = (element: HTMLElement | null) => {
     )
 }
 
+const focusFirstAvailableFilter = (element: HTMLElement | null) => {
+    if (!element) {
+        return
+    }
+    requestAnimationFrame(() =>
+        element
+            .querySelector<HTMLElement>('[data-test^="add-filter-"]')
+            ?.focus()
+    )
+}
+
 const configureFilterCombobox = (
     root: HTMLElement | null,
     selector: string,
     open: boolean,
-    controls: string
+    controls: string,
+    label: string,
+    clearSelector: string,
+    clearLabel: string
 ) => {
     const combobox = root?.querySelector<HTMLElement>(selector)
     combobox?.setAttribute('role', 'combobox')
     combobox?.setAttribute('aria-expanded', String(open))
     combobox?.setAttribute('aria-haspopup', 'dialog')
     combobox?.setAttribute('aria-controls', controls)
+    combobox?.setAttribute('aria-label', label)
+    root?.querySelector<HTMLElement>(clearSelector)?.setAttribute(
+        'aria-label',
+        clearLabel
+    )
 }
 
 const useEscapeToClose = (open: boolean, onClose: () => void) => {
@@ -697,17 +716,7 @@ export const MoreFilters = ({
                     onClickOutside={close}
                 >
                     <div
-                        ref={(element) => {
-                            if (element) {
-                                requestAnimationFrame(() =>
-                                    element
-                                        .querySelector<HTMLElement>(
-                                            '[role="presentation"][tabindex]'
-                                        )
-                                        ?.focus()
-                                )
-                            }
-                        }}
+                        ref={focusFirstAvailableFilter}
                         className={styles['menu-popover-sheet']}
                         style={{
                             maxHeight: `max(160px, calc(100vh - ${
@@ -908,7 +917,10 @@ export const FilterButton = ({
             buttonElement,
             `[data-test="filter-${field.id}-select"] [tabindex]`,
             nextOpen,
-            `filter-editor-${field.id}`
+            `filter-editor-${field.id}`,
+            displayPrefix,
+            `[data-test="filter-${field.id}-select-clear"]`,
+            i18n.t('Clear {{filter}} filter', { filter: displayPrefix })
         )
         setOpen(nextOpen)
     }
@@ -933,7 +945,12 @@ export const FilterButton = ({
                         element,
                         `[data-test="filter-${field.id}-select"] [tabindex]`,
                         open,
-                        `filter-editor-${field.id}`
+                        `filter-editor-${field.id}`,
+                        displayPrefix,
+                        `[data-test="filter-${field.id}-select-clear"]`,
+                        i18n.t('Clear {{filter}} filter', {
+                            filter: displayPrefix,
+                        })
                     )
                 }
             }}
@@ -1853,7 +1870,12 @@ export const ProgramStageControl = ({
             buttonElement,
             '[data-test="filter-programStage-select"] [tabindex]',
             nextOpen,
-            'filter-editor-programStage'
+            'filter-editor-programStage',
+            i18n.t('Program stage'),
+            '[data-test="filter-programStage-select-clear"]',
+            i18n.t('Clear {{filter}} filter', {
+                filter: i18n.t('Program stage'),
+            })
         )
         setOpen(nextOpen)
     }
@@ -1878,7 +1900,12 @@ export const ProgramStageControl = ({
                         element,
                         '[data-test="filter-programStage-select"] [tabindex]',
                         open,
-                        'filter-editor-programStage'
+                        'filter-editor-programStage',
+                        i18n.t('Program stage'),
+                        '[data-test="filter-programStage-select-clear"]',
+                        i18n.t('Clear {{filter}} filter', {
+                            filter: i18n.t('Program stage'),
+                        })
                     )
                 }
             }}

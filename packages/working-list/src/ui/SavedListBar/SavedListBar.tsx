@@ -47,6 +47,19 @@ interface OpenMenu {
     reference: HTMLElement
 }
 
+const focusFirstMenuItem = (element: HTMLElement | null) => {
+    if (!element) {
+        return
+    }
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() =>
+            element
+                .querySelector<HTMLElement>('[role="presentation"][tabindex]')
+                ?.focus()
+        )
+    })
+}
+
 export const SavedListBar = ({
     lists,
     selectedId,
@@ -213,17 +226,7 @@ export const SavedListBar = ({
                     onClickOutside={() => closeMenu()}
                 >
                     <div
-                        ref={(element) => {
-                            if (element) {
-                                requestAnimationFrame(() =>
-                                    element
-                                        .querySelector<HTMLElement>(
-                                            '[role="presentation"][tabindex]'
-                                        )
-                                        ?.focus()
-                                )
-                            }
-                        }}
+                        ref={focusFirstMenuItem}
                         id="saved-view-actions-menu"
                         className={styles['saved-list-menu']}
                     >

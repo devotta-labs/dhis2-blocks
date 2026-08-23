@@ -1,6 +1,6 @@
 import { Button, NoticeBox } from '@dhis2/ui'
-import { useQuery } from '@tanstack/react-query'
-import React, { useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import React, { useEffect, useMemo } from 'react'
 import type { WorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
 import type { ProgramFieldCatalog } from '../../api/metadata'
@@ -112,6 +112,7 @@ export const WorkingListWorkspace = ({
 }: WorkingListWorkspaceProps) => {
     const translate = useWorkingListText()
     const i18n = { t: translate }
+    const queryClient = useQueryClient()
     const pageQuery = useQuery(
         workingListPageQueryOptions({
             client,
@@ -124,6 +125,38 @@ export const WorkingListWorkspace = ({
             translate,
         })
     )
+
+    useEffect(() => {
+        if (!pageQuery.data?.hasNextPage) {
+            return
+        }
+        void queryClient.prefetchQuery(
+            workingListPageQueryOptions({
+                client,
+                context: { programId: program.id, orgUnitId },
+                configuration,
+                pagination: { page: page + 1, pageSize },
+                capabilities,
+                fields: metadata.fields,
+                serializationContext,
+                translate,
+            })
+        )
+    }, [
+        capabilities,
+        client,
+        configuration,
+        metadata.fields,
+        orgUnitId,
+        page,
+        pageQuery.data?.hasNextPage,
+        pageSize,
+        program.id,
+        queryClient,
+        serializationContext,
+        translate,
+    ])
+
     const rows = useMemo(() => pageRows(pageQuery.data), [pageQuery.data])
     const organisationUnitIds = useMemo(
         () =>

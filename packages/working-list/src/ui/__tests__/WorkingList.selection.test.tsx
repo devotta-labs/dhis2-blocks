@@ -43,7 +43,9 @@ interface ClientHarness {
     requests: ResourceRequest[]
 }
 
-const createClientHarness = (): ClientHarness => {
+const createClientHarness = ({
+    total = 0,
+}: { total?: number } = {}): ClientHarness => {
     const requests: ResourceRequest[] = []
     const client: WorkingListClient = {
         async query<T>(request: ResourceRequest, schema: ZodType<T>) {
@@ -59,10 +61,10 @@ const createClientHarness = (): ClientHarness => {
                     return schema.parse({
                         trackedEntities: [],
                         pager: {
-                            page: 1,
+                            page: request.params?.page ?? 1,
                             pageSize: 15,
-                            total: 0,
-                            pageCount: 0,
+                            total,
+                            pageCount: Math.ceil(total / 15),
                         },
                     })
                 default:
@@ -273,6 +275,33 @@ describe('WorkingList controlled selection', () => {
             } else {
                 expect(onSelectedTemplateChange).not.toHaveBeenCalled()
             }
+        } finally {
+            harness.cleanup()
+        }
+    })
+
+    it('prefetches the next page when the current page has more results', async () => {
+        const { client, requests } = createClientHarness({ total: 30 })
+        const harness = createRenderHarness(client, jest.fn())
+
+        try {
+            harness.render(DEFAULT_LIST_ID)
+            await waitForCondition(() =>
+                requests.some(
+                    (request) =>
+                        request.resource === 'tracker/trackedEntities' &&
+                        request.params?.page === 2
+                )
+            )
+
+            expect(
+                requests
+                    .filter(
+                        (request) =>
+                            request.resource === 'tracker/trackedEntities'
+                    )
+                    .map((request) => request.params?.page)
+            ).toEqual([1, 2])
         } finally {
             harness.cleanup()
         }

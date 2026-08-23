@@ -39,6 +39,26 @@ const visibleFiltersForConfiguration = (
     return { tracker, event }
 }
 
+export const visibleEventFiltersAfterStageChange = ({
+    criteria,
+    stageId,
+    visibleFilterIds,
+    addedFilterId,
+}: {
+    criteria: WorkingListCriteria
+    stageId?: string
+    visibleFilterIds: string[]
+    addedFilterId?: string
+}) => {
+    const stageChanged =
+        Boolean(stageId) &&
+        (criteria.mode !== 'event' || criteria.programStageId !== stageId)
+    const nextIds = stageChanged ? [] : visibleFilterIds
+    return addedFilterId && !nextIds.includes(addedFilterId)
+        ? [...nextIds, addedFilterId]
+        : nextIds
+}
+
 interface WorkingListFilterBarProps {
     client: WorkingListClient
     program: TrackerProgram
@@ -115,6 +135,17 @@ export const WorkingListFilterBar = ({
         setAutoOpenFilterId((openId) =>
             openId === fieldId ? undefined : openId
         )
+    const enterStage = (stageId?: string, addedFilterId?: string) => {
+        onEnterStage(stageId)
+        setVisibleEventFilterIds((visibleFilterIds) =>
+            visibleEventFiltersAfterStageChange({
+                criteria,
+                stageId,
+                visibleFilterIds,
+                addedFilterId,
+            })
+        )
+    }
 
     return (
         <>
@@ -162,12 +193,9 @@ export const WorkingListFilterBar = ({
                             ])
                             setAutoOpenFilterId(fieldId)
                         }}
-                        onSelectStage={onEnterStage}
+                        onSelectStage={enterStage}
                         onAddStageFilter={(stageId, fieldId) => {
-                            onEnterStage(stageId)
-                            setVisibleEventFilterIds((ids) =>
-                                ids.includes(fieldId) ? ids : [...ids, fieldId]
-                            )
+                            enterStage(stageId, fieldId)
                             setAutoOpenFilterId(fieldId)
                         }}
                     />
@@ -209,8 +237,8 @@ export const WorkingListFilterBar = ({
                             <ProgramStageControl
                                 program={program}
                                 selectedStageId={criteria.programStageId}
-                                onChange={onEnterStage}
-                                onRemove={() => onEnterStage(undefined)}
+                                onChange={enterStage}
+                                onRemove={() => enterStage(undefined)}
                             />
                             {visibleEventFilterIds.map((fieldId) => {
                                 const field = metadata.fields.get(fieldId)

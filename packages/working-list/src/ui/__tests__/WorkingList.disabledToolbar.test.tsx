@@ -103,9 +103,12 @@ describe('working-list unavailable toolbar', () => {
             expect(
                 container.querySelector('[data-consumer="columns"]')?.className
             ).toBe('consumer-columns')
-            expect(
-                container.querySelector('[data-consumer="filters"]')?.className
-            ).toContain('consumer-filters')
+            const filterControls = container.querySelector(
+                '[data-consumer="filters"]'
+            )
+            expect(filterControls?.className).toContain('consumer-filters')
+            expect(filterControls?.className).toContain('gap-1')
+            expect(filterControls?.className).not.toContain('gap-2')
             expect(
                 container.querySelector('[data-consumer="actions"]')?.className
             ).toContain('consumer-actions')

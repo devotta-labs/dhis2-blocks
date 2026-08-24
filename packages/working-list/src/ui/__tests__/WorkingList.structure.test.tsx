@@ -121,6 +121,8 @@ describe('WorkingList structural components', () => {
                 expect(toolbar?.className).toContain('toolbar-class')
                 expect(toolbar?.className).toContain('items-center')
                 expect(toolbar?.className).not.toContain('items-start')
+                expect(toolbar?.className).toContain('gap-1')
+                expect(toolbar?.className).not.toContain('gap-2')
                 expect(toolbar?.dataset.consumer).toBe('toolbar')
 
                 const table = container.querySelector<HTMLElement>(

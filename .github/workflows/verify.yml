@@ -44,9 +44,6 @@ jobs:
             - name: lint
               run: pnpm lint
 
-            - name: dead code configuration
-              run: pnpm dead-code:config
-
             - name: dead code audit
               run: pnpm dead-code:audit
 

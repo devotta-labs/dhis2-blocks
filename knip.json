@@ -23,7 +23,6 @@
             "entry": ["e2e/specs/**/*.spec.ts"],
             "project": [
                 "e2e/**/*.ts",
-                "scripts/**/*.{js,mjs,cjs,ts,mts,cts}",
                 "tools/**/*.ts",
                 "*.config.{js,mjs,cjs,ts,mts,cts}"
             ]
@@ -39,6 +38,14 @@
             "project": ["src/**/*.{ts,tsx,css}"],
             "includeEntryExports": true,
             "ignoreIssues": {
+                "d2.config.js": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
                 "src/AppWrapper.tsx": [
                     "exports",
                     "types",

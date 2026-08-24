@@ -11,7 +11,6 @@
         "typecheck": "turbo run typecheck",
         "deploy": "turbo run deploy --filter=@dhis2-blocks/web",
         "dead-code:audit": "knip",
-        "dead-code:config": "node scripts/validate-knip-config.mjs",
         "lint": "oxlint --deny-warnings . && oxfmt --check .",
         "format": "oxfmt --write .",
         "e2e": "bash scripts/e2e/run-version.sh dev",

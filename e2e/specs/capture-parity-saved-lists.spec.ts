@@ -242,7 +242,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     response.request().method() === 'PUT' &&
                     requestUrl(response).pathname.endsWith('/sharing') &&
                     requestUrl(response).searchParams.get('type') ===
-                        'trackedEntityInstanceFilter' &&
+                        'trackedEntityFilter' &&
                     requestUrl(response).searchParams.get('id') === createdId
             )
             await addAccessForm
@@ -253,7 +253,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
 
             const sharingAfterGrant = await ownerApi.get('/api/sharing', {
                 params: {
-                    type: 'trackedEntityInstanceFilter',
+                    type: 'trackedEntityFilter',
                     id: createdId!,
                 },
             })
@@ -309,7 +309,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     response.request().method() === 'PUT' &&
                     requestUrl(response).pathname.endsWith('/sharing') &&
                     requestUrl(response).searchParams.get('type') ===
-                        'trackedEntityInstanceFilter' &&
+                        'trackedEntityFilter' &&
                     requestUrl(response).searchParams.get('id') === createdId
             )
             await page.getByText('Remove access', { exact: true }).click()
@@ -318,7 +318,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
 
             const sharingAfterRevoke = await ownerApi.get('/api/sharing', {
                 params: {
-                    type: 'trackedEntityInstanceFilter',
+                    type: 'trackedEntityFilter',
                     id: createdId!,
                 },
             })

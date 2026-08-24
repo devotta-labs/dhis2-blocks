@@ -131,7 +131,7 @@ export const deleteSavedWorkingList = async (
 
 export const getSharingType = (resource: SavedListResource) =>
     resource === 'trackedEntityInstanceFilters'
-        ? 'trackedEntityInstanceFilter'
+        ? 'trackedEntityFilter'
         : 'programStageWorkingList'
 
 /**

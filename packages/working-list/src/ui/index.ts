@@ -9,10 +9,6 @@ export {
     type WorkingListProps,
     type WorkingListTableProps,
     type WorkingListViewSwitcherProps,
-    type WorkingListContainerProps,
-    type WorkingListDefaultProps,
-    type WorkingListResultsProps,
-    type WorkingListSectionProps,
     type WorkingListToolbarProps,
 } from './WorkingList'
 export type { WorkingListColumnSelectorProps } from './Columns'

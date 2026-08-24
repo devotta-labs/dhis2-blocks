@@ -1,4 +1,3 @@
-import { Result } from 'better-result'
 import React, { createContext, useContext, useMemo, useRef } from 'react'
 import { useStore } from 'zustand'
 import type {
@@ -20,9 +19,7 @@ export const WorkingListPublicContext =
 const usePublicContext = () => {
     const context = useContext(WorkingListPublicContext)
     if (!context) {
-        throw new Error(
-            'Working List hooks must be used within WorkingList or WorkingList.Provider.'
-        )
+        throw new Error('Working List hooks must be used within WorkingList.')
     }
     return context
 }
@@ -66,25 +63,11 @@ export const useStableWorkingListActions = (
                 currentRef.current.setProgramStage(programStageId),
             setPage: (page) => currentRef.current.setPage(page),
             setPageSize: (pageSize) => currentRef.current.setPageSize(pageSize),
-            selectView: (id) => currentRef.current.selectSavedList(id),
-            clearViewSelection: () =>
-                currentRef.current.clearSavedListSelection(),
-            createView: async (name) => {
-                const result = await currentRef.current.createSavedList(name)
-                return Result.isError(result)
-                    ? result
-                    : Result.ok({ viewId: result.value.savedListId })
-            },
-            updateSelectedView: () =>
-                currentRef.current.updateSelectedSavedList(),
-            deleteView: (id) => currentRef.current.deleteSavedList(id),
-            selectSavedList: (id) => currentRef.current.selectSavedList(id),
-            clearSavedListSelection: () =>
-                currentRef.current.clearSavedListSelection(),
-            createSavedList: (name) => currentRef.current.createSavedList(name),
-            updateSelectedSavedList: () =>
-                currentRef.current.updateSelectedSavedList(),
-            deleteSavedList: (id) => currentRef.current.deleteSavedList(id),
+            selectView: (id) => currentRef.current.selectView(id),
+            clearViewSelection: () => currentRef.current.clearViewSelection(),
+            createView: (name) => currentRef.current.createView(name),
+            updateSelectedView: () => currentRef.current.updateSelectedView(),
+            deleteView: (id) => currentRef.current.deleteView(id),
             downloadVisibleRows: () => currentRef.current.downloadVisibleRows(),
         }),
         []

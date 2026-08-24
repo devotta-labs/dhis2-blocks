@@ -10,8 +10,4 @@ export {
     type WorkingListTableProps,
     type WorkingListViewSwitcherProps,
 } from './WorkingList'
-export type { WorkingListContainerProps } from '../Container'
-export type { WorkingListDefaultProps } from '../Default'
-export type { WorkingListResultsProps } from '../Results'
-export type { WorkingListSectionProps } from '../Section'
 export type { WorkingListToolbarProps } from '../Toolbar'

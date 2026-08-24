@@ -299,16 +299,6 @@
                     "target": "@components/working-list/ui/Container/index.ts"
                 },
                 {
-                    "path": "packages/working-list/src/ui/Default/WorkingListDefault.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/Default/WorkingListDefault.tsx"
-                },
-                {
-                    "path": "packages/working-list/src/ui/Default/index.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/Default/index.ts"
-                },
-                {
                     "path": "packages/working-list/src/ui/FilterControls/CalendarRangeFields.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/FilterControls/CalendarRangeFields.tsx"
@@ -397,16 +387,6 @@
                     "path": "packages/working-list/src/ui/SavedViews/index.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/SavedViews/index.ts"
-                },
-                {
-                    "path": "packages/working-list/src/ui/Section/WorkingListSection.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/Section/WorkingListSection.tsx"
-                },
-                {
-                    "path": "packages/working-list/src/ui/Section/index.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/Section/index.ts"
                 },
                 {
                     "path": "packages/working-list/src/ui/Toolbar/WorkingListToolbar.tsx",

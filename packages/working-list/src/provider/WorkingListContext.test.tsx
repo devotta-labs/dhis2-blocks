@@ -23,13 +23,6 @@ const createActions = (): WorkingListActions => ({
     createView: jest.fn(async () => Result.ok({ viewId: 'SavedList01' })),
     updateSelectedView: jest.fn(async () => Result.ok()),
     deleteView: jest.fn(async () => Result.ok()),
-    selectSavedList: jest.fn(() => Result.ok()),
-    clearSavedListSelection: jest.fn(() => Result.ok()),
-    createSavedList: jest.fn(async () =>
-        Result.ok({ savedListId: 'SavedList01' })
-    ),
-    updateSelectedSavedList: jest.fn(async () => Result.ok()),
-    deleteSavedList: jest.fn(async () => Result.ok()),
     downloadVisibleRows: jest.fn(() => Result.ok()),
 })
 
@@ -58,9 +51,7 @@ describe('useStableWorkingListActions', () => {
         expect(secondHandlers.setPage).toHaveBeenCalledWith(3)
 
         second?.selectView('View00000001')
-        expect(secondHandlers.selectSavedList).toHaveBeenCalledWith(
-            'View00000001'
-        )
+        expect(secondHandlers.selectView).toHaveBeenCalledWith('View00000001')
 
         let createdViewId: string | undefined
         await act(async () => {
@@ -69,7 +60,7 @@ describe('useStableWorkingListActions', () => {
                 createdViewId = result.value.viewId
             }
         })
-        expect(secondHandlers.createSavedList).toHaveBeenCalledWith('New view')
+        expect(secondHandlers.createView).toHaveBeenCalledWith('New view')
         expect(createdViewId).toBe('SavedList01')
 
         act(() => root.unmount())

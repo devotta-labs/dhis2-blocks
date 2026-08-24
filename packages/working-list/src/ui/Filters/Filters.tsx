@@ -324,6 +324,3 @@ export const WorkingListFilterControls = ({
         </div>
     )
 }
-
-/** @deprecated Use `WorkingListFilterControls`. */
-export const WorkingListFilters = WorkingListFilterControls

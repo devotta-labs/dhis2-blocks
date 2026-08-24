@@ -138,6 +138,3 @@ export const WorkingListColumnSelector = ({
         </div>
     )
 }
-
-/** @deprecated Use `WorkingListColumnSelector`. */
-export const WorkingListColumns = WorkingListColumnSelector

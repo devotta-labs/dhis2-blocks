@@ -3,9 +3,9 @@ import { IconMore16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
 import type {
-    CreateSavedListError,
+    CreateViewError,
     DownloadVisibleRowsError,
-    UpdateSelectedSavedListError,
+    UpdateSelectedViewError,
 } from '../../provider/errors'
 import {
     useWorkingListActions,
@@ -18,7 +18,7 @@ import {
     type WorkingListTranslate,
 } from '../WorkingListText'
 
-type SaveError = CreateSavedListError | UpdateSelectedSavedListError
+type SaveError = CreateViewError | UpdateSelectedViewError
 
 type ActionCopy = (translate: WorkingListTranslate) => string
 
@@ -196,6 +196,3 @@ export const WorkingListToolbarActions = ({
         </div>
     )
 }
-
-/** @deprecated Use `WorkingListToolbarActions`. */
-export const WorkingListActions = WorkingListToolbarActions

@@ -7,18 +7,12 @@ import React, {
 } from 'react'
 import { WorkingListProvider } from '../../provider/WorkingListProvider'
 import type { WorkingListPagination } from '../../provider/contracts'
-import { WorkingListActions, WorkingListToolbarActions } from '../Actions'
-import { WorkingListColumns, WorkingListColumnSelector } from '../Columns'
+import { WorkingListToolbarActions } from '../Actions'
+import { WorkingListColumnSelector } from '../Columns'
 import { WorkingListContainer } from '../Container'
-import { WorkingListDefault } from '../Default'
-import { WorkingListFilters, WorkingListFilterControls } from '../Filters'
-import {
-    WorkingListResults,
-    WorkingListTable,
-    type WorkingListTableProps,
-} from '../Results'
+import { WorkingListFilterControls } from '../Filters'
+import { WorkingListTable, type WorkingListTableProps } from '../Results'
 import { WorkingListSavedViews } from '../SavedViews'
-import { WorkingListSection } from '../Section'
 import { WorkingListToolbar } from '../Toolbar'
 import { useWorkingListText } from '../WorkingListText'
 
@@ -28,26 +22,12 @@ type ControlledViewProps = {
     viewId: string | null
     onViewChange(id: string): void
     defaultViewId?: never
-    selectedSavedListId?: never
-    onSelectedSavedListChange?: never
 }
 
 type UncontrolledViewProps = {
     viewId?: never
     defaultViewId?: string | null
     onViewChange?(id: string): void
-    selectedSavedListId?: never
-    onSelectedSavedListChange?: never
-}
-
-type LegacyControlledViewProps = {
-    /** @deprecated Use `viewId`. */
-    selectedSavedListId: string | null
-    /** @deprecated Use `onViewChange`. */
-    onSelectedSavedListChange(id: string): void
-    viewId?: never
-    defaultViewId?: never
-    onViewChange?: never
 }
 
 type ControlledPaginationProps = {
@@ -72,7 +52,7 @@ interface WorkingListBaseProps extends Omit<
 }
 
 export type WorkingListProps = WorkingListBaseProps &
-    (ControlledViewProps | UncontrolledViewProps | LegacyControlledViewProps) &
+    (ControlledViewProps | UncontrolledViewProps) &
     (ControlledPaginationProps | UncontrolledPaginationProps)
 
 const WorkingListRootInstance = (props: WorkingListProps) => {
@@ -90,17 +70,11 @@ const WorkingListRootInstance = (props: WorkingListProps) => {
     )
     const [localPagination, setLocalPagination] =
         useState<WorkingListPagination>(defaultPagination ?? DEFAULT_PAGINATION)
-    const canonicalControlled = 'viewId' in props
-    const legacyControlled = 'selectedSavedListId' in props
+    const viewControlled = 'viewId' in props
     const paginationControlled = 'pagination' in props
-    if (canonicalControlled && !props.onViewChange) {
+    if (viewControlled && !props.onViewChange) {
         throw new Error(
             'WorkingList requires onViewChange when viewId is controlled.'
-        )
-    }
-    if (legacyControlled && !props.onSelectedSavedListChange) {
-        throw new Error(
-            'WorkingList requires onSelectedSavedListChange when selectedSavedListId is controlled.'
         )
     }
     if (paginationControlled && !onPaginationChange) {
@@ -108,28 +82,22 @@ const WorkingListRootInstance = (props: WorkingListProps) => {
             'WorkingList requires onPaginationChange when pagination is controlled.'
         )
     }
-    const selectedViewId: string | null = canonicalControlled
+    const selectedViewId: string | null = viewControlled
         ? (props.viewId ?? null)
-        : legacyControlled
-          ? (props.selectedSavedListId ?? null)
-          : localViewId
+        : localViewId
     const pagination: WorkingListPagination = paginationControlled
         ? (props.pagination ?? localPagination)
         : localPagination
     const handleViewChange = useCallback(
         (id: string) => {
-            if (canonicalControlled) {
+            if (viewControlled) {
                 props.onViewChange?.(id)
-                return
-            }
-            if (legacyControlled) {
-                props.onSelectedSavedListChange?.(id)
                 return
             }
             setLocalViewId(id)
             props.onViewChange?.(id)
         },
-        [canonicalControlled, legacyControlled, props]
+        [props, viewControlled]
     )
     const handlePaginationChange = useCallback(
         (next: WorkingListPagination) => {
@@ -143,15 +111,11 @@ const WorkingListRootInstance = (props: WorkingListProps) => {
     const {
         viewId: _viewId,
         onViewChange: _onViewChange,
-        selectedSavedListId: _selectedSavedListId,
-        onSelectedSavedListChange: _onSelectedSavedListChange,
         pagination: _pagination,
         ...containerProps
     } = rest as typeof rest & {
         viewId?: string | null
         onViewChange?: (id: string) => void
-        selectedSavedListId?: string | null
-        onSelectedSavedListChange?: (id: string) => void
         pagination?: WorkingListPagination
     }
 
@@ -215,22 +179,7 @@ export const WorkingListViewSwitcher = ({
     )
 }
 
-/**
- * The callable root is the canonical API. Its properties preserve the previous
- * compound API for installed blocks that have not migrated yet.
- */
-export const WorkingList = Object.assign(WorkingListRoot, {
-    Provider: WorkingListProvider,
-    Container: WorkingListContainer,
-    Section: WorkingListSection,
-    SavedViews: WorkingListSavedViews,
-    Toolbar: WorkingListToolbar,
-    Columns: WorkingListColumns,
-    Filters: WorkingListFilters,
-    Actions: WorkingListActions,
-    Results: WorkingListResults,
-    Default: WorkingListDefault,
-})
+export const WorkingList = WorkingListRoot
 
 export {
     WorkingListColumnSelector,

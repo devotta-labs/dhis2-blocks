@@ -138,12 +138,9 @@ optional: without it rows are static; providing it adds mouse and keyboard row
 opening. `WorkingListTable` also accepts
 `dataQualityMode="hidden" | "highlighted"`.
 
-The previous `WorkingList.Provider`, `.Container`, `.Section`, `.SavedViews`,
-`.Columns`, `.Filters`, `.Actions`, `.Results`, and `.Default` members remain as
-deprecated compatibility aliases. Existing consumers can migrate one
-composition at a time; `selectedSavedListId` and
-`onSelectedSavedListChange` are also accepted by the new root during that
-transition. New code should use the flat root-prefixed exports shown above.
+The public API intentionally exposes only the flat root-prefixed composition
+shown above. The earlier compound members and saved-list-named root props are
+not supported.
 
 The private `@dhis2-blocks/working-list` workspace package remains only as the
 repository's canonical development and test harness. It is not a compiled or

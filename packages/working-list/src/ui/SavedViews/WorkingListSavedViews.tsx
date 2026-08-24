@@ -11,9 +11,9 @@ import React, { useState } from 'react'
 import type { NormalizedSavedWorkingList } from '../../api/savedLists'
 import type { WorkingListSavedView } from '../../provider/contracts'
 import type {
-    DeleteSavedListError,
-    SelectSavedListError,
-    UpdateSelectedSavedListError,
+    DeleteViewError,
+    SelectViewError,
+    UpdateSelectedViewError,
 } from '../../provider/errors'
 import {
     useWorkingListActions,
@@ -28,9 +28,9 @@ import {
 } from '../WorkingListText'
 
 type SavedViewActionError =
-    | SelectSavedListError
-    | UpdateSelectedSavedListError
-    | DeleteSavedListError
+    | SelectViewError
+    | UpdateSelectedViewError
+    | DeleteViewError
 
 const actionErrorCopy = (
     error: SavedViewActionError,

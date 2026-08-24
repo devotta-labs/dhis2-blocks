@@ -27,7 +27,6 @@ import type {
     WorkingListMeta,
     WorkingListMutationStatus,
     WorkingListPagination,
-    WorkingListProviderProps,
     WorkingListSavedView,
     WorkingListSavedViewsMeta,
 } from './contracts'
@@ -102,6 +101,16 @@ const asSavedView = (
     canDelete: !generated && list.sharing.access?.delete === true,
     canShare: !generated && list.sharing.access?.manage === true,
 })
+
+interface WorkingListProviderProps {
+    children: React.ReactNode
+    programId: string
+    orgUnitId: string
+    selectedSavedListId: string | null
+    onSelectedSavedListChange(id: string): void
+    pagination: WorkingListPagination
+    onPaginationChange(next: WorkingListPagination): void
+}
 
 const WorkingListProviderInstance = ({
     programId,

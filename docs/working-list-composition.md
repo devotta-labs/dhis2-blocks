@@ -147,26 +147,6 @@ The action hook uses view terminology for new code: `selectView`,
 `clearViewSelection`, `createView`, `updateSelectedView`, and `deleteView`.
 Configuration, pagination, and download actions keep their existing names.
 
-## Compatibility and migration
-
-The former compound members remain callable for source installations that have
-not migrated:
-
-```tsx
-<WorkingList.Provider {...legacyProviderProps}>
-    <WorkingList.Container>
-        {/* WorkingList.Section, SavedViews, Toolbar, Columns, Filters,
-            Actions, Results, and Default remain available */}
-    </WorkingList.Container>
-</WorkingList.Provider>
-```
-
-They are compatibility aliases, not the documented composition. The root also
-accepts the deprecated `selectedSavedListId` /
-`onSelectedSavedListChange` controlled pair. The action hook retains the saved
-list method names as deprecated aliases. Migrate component names first, then
-state prop and action names; no data migration is required.
-
 ## Distribution boundary
 
 The shadcn registry copies production source and dependencies into the

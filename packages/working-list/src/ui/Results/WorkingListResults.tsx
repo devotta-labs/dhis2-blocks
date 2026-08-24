@@ -22,11 +22,6 @@ import { useWorkingListText } from '../WorkingListText'
 const visuallyHiddenClassName =
     'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
-export interface WorkingListResultsProps {
-    onClick: (target: WorkingListResultTarget) => void
-    dataQualityMode?: WorkingListDataQualityMode
-}
-
 export interface WorkingListTableProps extends Omit<
     ComponentPropsWithoutRef<'section'>,
     'children'
@@ -366,14 +361,3 @@ export const WorkingListTable = ({
         </section>
     )
 }
-
-/** @deprecated Use `WorkingListTable` with `onRowClick`. */
-export const WorkingListResults = ({
-    onClick,
-    dataQualityMode = 'hidden',
-}: WorkingListResultsProps) => (
-    <WorkingListResultsContent
-        onRowClick={onClick}
-        dataQualityMode={dataQualityMode}
-    />
-)

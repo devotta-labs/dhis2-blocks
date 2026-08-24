@@ -110,54 +110,38 @@ describe('WorkingList root state', () => {
         act(() => root.unmount())
     })
 
-    it('keeps controlled values authoritative and supports legacy controlled names', () => {
+    it('keeps controlled values authoritative', () => {
         const container = document.createElement('div')
         const root = createRoot(container)
         const onViewChange = jest.fn()
         const onPaginationChange = jest.fn()
-        const legacyChange = jest.fn()
 
         act(() => {
             root.render(
-                <>
-                    <WorkingList
-                        programId="Program0001"
-                        orgUnitId="OrgUnit00001"
-                        viewId="Controlled01"
-                        onViewChange={onViewChange}
-                        pagination={{ page: 4, pageSize: 25 }}
-                        onPaginationChange={onPaginationChange}
-                    >
-                        <span>Controlled</span>
-                    </WorkingList>
-                    <WorkingList
-                        programId="Program0002"
-                        orgUnitId="OrgUnit00002"
-                        selectedSavedListId="Legacy00001"
-                        onSelectedSavedListChange={legacyChange}
-                    >
-                        <span>Legacy</span>
-                    </WorkingList>
-                </>
+                <WorkingList
+                    programId="Program0001"
+                    orgUnitId="OrgUnit00001"
+                    viewId="Controlled01"
+                    onViewChange={onViewChange}
+                    pagination={{ page: 4, pageSize: 25 }}
+                    onPaginationChange={onPaginationChange}
+                >
+                    <span>Controlled</span>
+                </WorkingList>
             )
         })
 
         const controlled = observedProviders.find(
             (provider) => provider.programId === 'Program0001'
         )
-        const legacy = observedProviders.find(
-            (provider) => provider.programId === 'Program0002'
-        )
         act(() => controlled?.onSelectedSavedListChange('Controlled02'))
         act(() => controlled?.onPaginationChange({ page: 5, pageSize: 50 }))
-        act(() => legacy?.onSelectedSavedListChange('Legacy00002'))
 
         expect(onViewChange).toHaveBeenCalledWith('Controlled02')
         expect(onPaginationChange).toHaveBeenCalledWith({
             page: 5,
             pageSize: 50,
         })
-        expect(legacyChange).toHaveBeenCalledWith('Legacy00002')
         expect(controlled?.selectedSavedListId).toBe('Controlled01')
         expect(controlled?.pagination).toEqual({ page: 4, pageSize: 25 })
 

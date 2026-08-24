@@ -64,15 +64,15 @@ export type ConfigurationCommandError =
 
 export type PaginationCommandError = InvalidPaginationError
 
-export type SelectSavedListError = InvalidConfigurationError
+export type SelectViewError = InvalidConfigurationError
 
-export type CreateSavedListError =
+export type CreateViewError =
     | InvalidConfigurationError
     | OfflineMutationError
     | WorkingListNetworkError
     | WorkingListInvalidResponseError
 
-export type UpdateSelectedSavedListError =
+export type UpdateSelectedViewError =
     | InvalidConfigurationError
     | NoSelectedSavedListError
     | SavedListNotFoundError
@@ -82,14 +82,9 @@ export type UpdateSelectedSavedListError =
     | WorkingListNetworkError
     | WorkingListInvalidResponseError
 
-export type DeleteSavedListError =
+export type DeleteViewError =
     | SavedListNotFoundError
     | SavedListPermissionError
     | OfflineMutationError
     | WorkingListNetworkError
     | WorkingListInvalidResponseError
-
-export type SelectViewError = SelectSavedListError
-export type CreateViewError = CreateSavedListError
-export type UpdateSelectedViewError = UpdateSelectedSavedListError
-export type DeleteViewError = DeleteSavedListError

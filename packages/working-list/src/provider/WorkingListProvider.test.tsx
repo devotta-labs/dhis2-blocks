@@ -110,7 +110,7 @@ describe('WorkingListProvider controlled selection', () => {
         expect(observedActions.at(-1)).toBe(initialActions)
 
         act(() => {
-            observedActions.at(-1)?.selectSavedList('SavedList03')
+            observedActions.at(-1)?.selectView('SavedList03')
         })
         expect(firstSelectionChange).not.toHaveBeenCalled()
         expect(secondSelectionChange).toHaveBeenCalledWith('SavedList03')

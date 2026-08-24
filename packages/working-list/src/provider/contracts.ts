@@ -16,17 +16,13 @@ import type {
 import type {
     ConfigurationCommandError,
     CreateViewError,
-    CreateSavedListError,
     DeleteViewError,
-    DeleteSavedListError,
     DownloadVisibleRowsError,
     IncompatibleSavedListError,
     PaginationCommandError,
     SavedListNotFoundError,
     SelectViewError,
-    SelectSavedListError,
     UpdateSelectedViewError,
-    UpdateSelectedSavedListError,
     WorkingListInitializationError,
     WorkingListInvalidResponseError,
     WorkingListNetworkError,
@@ -199,39 +195,7 @@ export interface WorkingListActions {
     ): Promise<Result<{ viewId: string }, CreateViewError>>
     updateSelectedView(): Promise<Result<void, UpdateSelectedViewError>>
     deleteView(id: string): Promise<Result<void, DeleteViewError>>
-    /** @deprecated Use `selectView`. */
-    selectSavedList(id: string): Result<void, SelectSavedListError>
-    /** @deprecated Use `clearViewSelection`. */
-    clearSavedListSelection(): Result<void, SelectSavedListError>
-    /** @deprecated Use `createView`. */
-    createSavedList(
-        name: string
-    ): Promise<Result<{ savedListId: string }, CreateSavedListError>>
-    /** @deprecated Use `updateSelectedView`. */
-    updateSelectedSavedList(): Promise<
-        Result<void, UpdateSelectedSavedListError>
-    >
-    /** @deprecated Use `deleteView`. */
-    deleteSavedList(id: string): Promise<Result<void, DeleteSavedListError>>
     downloadVisibleRows(): Result<void, DownloadVisibleRowsError>
 }
 
-export type WorkingListActionImplementation = Omit<
-    WorkingListActions,
-    | 'selectView'
-    | 'clearViewSelection'
-    | 'createView'
-    | 'updateSelectedView'
-    | 'deleteView'
->
-
-export interface WorkingListProviderProps {
-    children: React.ReactNode
-    programId: string
-    orgUnitId: string
-    /** Pass null to select the generated default list. */
-    selectedSavedListId: string | null
-    onSelectedSavedListChange(id: string): void
-    pagination: WorkingListPagination
-    onPaginationChange(next: WorkingListPagination): void
-}
+export type WorkingListActionImplementation = WorkingListActions

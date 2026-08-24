@@ -26,11 +26,6 @@ const actions: WorkingListActionsContract = {
     createView: async () => Result.ok({ viewId: 'new-view' }),
     updateSelectedView: async () => Result.ok(),
     deleteView: async () => Result.ok(),
-    selectSavedList: () => Result.ok(),
-    clearSavedListSelection: () => Result.ok(),
-    createSavedList: async () => Result.ok({ savedListId: 'new-view' }),
-    updateSelectedSavedList: async () => Result.ok(),
-    deleteSavedList: async () => Result.ok(),
     downloadVisibleRows: () => Result.ok(),
 }
 

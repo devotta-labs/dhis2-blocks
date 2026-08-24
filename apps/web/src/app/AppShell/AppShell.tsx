@@ -1,27 +1,12 @@
 import { useConfig, useDataEngine } from '@dhis2/app-runtime'
-import {
-    Button,
-    CircularLoader,
-    Modal,
-    ModalActions,
-    ModalContent,
-    ModalTitle,
-    NoticeBox,
-    Switch,
-} from '@dhis2/ui'
+import { Button, CircularLoader, NoticeBox, Switch } from '@dhis2/ui'
 import {
     WorkingList,
     useWorkingListMeta,
     type WorkingListDataQualityMode,
     type WorkingListResultTarget,
 } from '@dhis2-blocks/working-list'
-import {
-    createWorkingListClient,
-    trackerProgramsQueryOptions,
-    type DataEngineLike,
-    type DataEngineMutation,
-    type DataEngineQuery,
-} from '@dhis2-blocks/working-list/development'
+import { trackerProgramsQueryOptions } from '@dhis2-blocks/working-list/development'
 import { useQuery } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useBlocker } from 'react-router-dom'
@@ -40,6 +25,8 @@ import {
 import { isGuardedAppUrlTransition, parseAppUrlState } from '../urlState'
 import { useAppUrlState } from '../useAppUrlState'
 import i18n from '../../i18n'
+import { createAppWorkingListClient } from './createAppWorkingListClient'
+import { RecordDetailsModal } from './RecordDetailsModal'
 
 const OrganisationUnitReferenceSchema = z
     .object({
@@ -71,85 +58,6 @@ const AppRuntimeConfigSchema = z
 const retryOperationalError = (failureCount: number, error: Error) =>
     !(error instanceof ZodError) && failureCount < 2
 
-type WorkingListEngineValue = Awaited<
-    ReturnType<DataEngineLike['query']>
->[string]
-
-const DataEngineValueSchema: z.ZodType<WorkingListEngineValue> = z.lazy(() =>
-    z.union([
-        z.string(),
-        z.number(),
-        z.boolean(),
-        z.null(),
-        z.undefined(),
-        z.array(DataEngineValueSchema),
-        z.record(z.string(), DataEngineValueSchema),
-    ])
-)
-const DataEngineResultSchema = z.record(z.string(), DataEngineValueSchema)
-const MutationDataSchema = z.record(z.string(), z.json())
-const RuntimeQueryParameterSchema = z.union([
-    z.string(),
-    z.number(),
-    z.boolean(),
-    z.undefined(),
-    z.array(z.union([z.string(), z.number()])),
-])
-
-const toRuntimeQuery = (query: DataEngineQuery) =>
-    Object.fromEntries(
-        Object.entries(query).map(([key, definition]) => {
-            const params = definition.params
-                ? Object.fromEntries(
-                      Object.entries(definition.params).map(
-                          ([parameter, value]) => [
-                              parameter,
-                              RuntimeQueryParameterSchema.parse(value),
-                          ]
-                      )
-                  )
-                : undefined
-            return [
-                key,
-                {
-                    resource: definition.resource,
-                    id: definition.id,
-                    params,
-                },
-            ]
-        })
-    )
-
-const toRuntimeMutation = (mutation: DataEngineMutation) => {
-    if (mutation.type === 'delete') {
-        if (!mutation.id) {
-            throw new Error('A delete mutation requires an id')
-        }
-        return {
-            resource: mutation.resource,
-            id: mutation.id,
-            type: mutation.type,
-        } as const
-    }
-    const data = MutationDataSchema.parse(mutation.data)
-    if (mutation.type === 'create') {
-        return {
-            resource: mutation.resource,
-            type: mutation.type,
-            data,
-        } as const
-    }
-    if (!mutation.id) {
-        throw new Error(`${mutation.type} mutation requires an id`)
-    }
-    return {
-        resource: mutation.resource,
-        id: mutation.id,
-        type: mutation.type,
-        data,
-    } as const
-}
-
 const WorkingListDirtyBridge = ({
     onChange,
 }: {
@@ -168,16 +76,7 @@ export const AppShell = () => {
         () => AppRuntimeConfigSchema.parse(config),
         [config]
     )
-    const client = useMemo(() => {
-        const dataEngine: DataEngineLike = {
-            query: async (query, options) =>
-                DataEngineResultSchema.parse(
-                    await engine.query(toRuntimeQuery(query), options)
-                ),
-            mutate: (mutation) => engine.mutate(toRuntimeMutation(mutation)),
-        }
-        return createWorkingListClient(dataEngine)
-    }, [engine])
+    const client = useMemo(() => createAppWorkingListClient(engine), [engine])
     const [orgUnitPickerOpen, setOrgUnitPickerOpen] = useState(false)
     const [dirty, setDirty] = useState(false)
     const [openedRecord, setOpenedRecord] = useState<WorkingListResultTarget>()
@@ -625,41 +524,10 @@ export const AppShell = () => {
                 )}
 
             {openedRecord && (
-                <Modal
-                    small
-                    position="middle"
+                <RecordDetailsModal
+                    record={openedRecord}
                     onClose={() => setOpenedRecord(undefined)}
-                >
-                    <ModalTitle>
-                        {openedRecord.mode === 'event'
-                            ? i18n.t('Event selected')
-                            : i18n.t('Tracked entity selected')}
-                    </ModalTitle>
-                    <ModalContent>
-                        <dl className="record-details">
-                            {openedRecord.mode === 'event' && (
-                                <>
-                                    <dt>{i18n.t('Event ID')}</dt>
-                                    <dd>{openedRecord.eventId}</dd>
-                                </>
-                            )}
-                            <dt>{i18n.t('Tracked entity ID')}</dt>
-                            <dd>
-                                {openedRecord.mode === 'trackedEntity'
-                                    ? openedRecord.trackedEntityId
-                                    : (openedRecord.trackedEntityId ?? '—')}
-                            </dd>
-                        </dl>
-                    </ModalContent>
-                    <ModalActions>
-                        <Button
-                            primary
-                            onClick={() => setOpenedRecord(undefined)}
-                        >
-                            {i18n.t('Close')}
-                        </Button>
-                    </ModalActions>
-                </Modal>
+                />
             )}
         </div>
     )

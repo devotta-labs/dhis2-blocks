@@ -226,10 +226,8 @@ The provider renders its children with no layout or status UI. All visible
 Working List output starts at `WorkingList.Container` and its composed
 descendants, allowing the provider to be mounted at the application root.
 
-`WorkingList.Provider` requires the nearest host `QueryClientProvider` and uses
-that QueryClient. It creates no fallback client and accepts no `queryClient`
-prop. Mounting it outside a TanStack Query provider throws a descriptive
-developer error.
+`WorkingList.Provider` assumes the host has configured TanStack Query and uses
+the nearest `QueryClientProvider`.
 
 The provider obtains the configured data engine, runtime configuration, and
 online status from `@dhis2/app-runtime` and builds its internal Working List
@@ -240,7 +238,7 @@ disabled by their owning components. Local configuration controls and cached
 results remain available.
 
 Each Working List query keeps its existing query-specific stale time and retry
-policy. The provider does not mutate the host QueryClient's default options.
+policy. The block does not configure or mutate the host QueryClient.
 
 The provider always renders its children. It exposes lifecycle separately from
 selection, active configuration, mutations, and results:

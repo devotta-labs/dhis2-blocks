@@ -37,12 +37,12 @@ export interface TrackedEntityWorkingListPage {
     hasNextPage: boolean
 }
 
-export interface EventWorkingListRow {
+interface EventWorkingListRow {
     event: NormalizedEvent
     trackedEntity?: NormalizedTrackedEntity
 }
 
-export interface EventWorkingListPage {
+interface EventWorkingListPage {
     mode: 'event'
     records: EventWorkingListRow[]
     page: number
@@ -244,8 +244,6 @@ export const fetchWorkingListPage = async ({
         ),
     }
 }
-
-export const shouldRetryWorkingListQuery = shouldRetryWorkingListRequest
 
 export const workingListPageQueryOptions = (
     input: Omit<FetchWorkingListPageInput, 'signal'>

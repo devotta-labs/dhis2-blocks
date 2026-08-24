@@ -87,7 +87,7 @@ export const toPublicConfiguration = (
         : { mode: 'trackedEntity', ...base }
 }
 
-export const resolveFilter = (
+const resolveFilter = (
     filter: AppliedFilter,
     metadata: ProgramFieldCatalog,
     serializationContext?: FilterSerializationContext,

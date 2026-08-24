@@ -32,11 +32,6 @@ export const getProgramMetadataFields = (apiVersion: number) =>
         'programStages[id,displayName,displayExecutionDateLabel,displayDueDateLabel,hideDueDate,enableUserAssignment,access,programStageDataElements[displayInReports,compulsory,dataElement[id,displayName,displayFormName,valueType,optionSet[id,displayName,options[id,code,displayName]]]]]',
     ].join(',')
 
-/** Latest projection retained for consumers that prebuild metadata queries. */
-export const PROGRAM_METADATA_FIELDS = getProgramMetadataFields(
-    Number.MAX_SAFE_INTEGER
-)
-
 export const PROGRAM_SUMMARY_FIELDS = 'id,displayName,programType,access'
 
 export const fetchTrackerProgram = (

@@ -9,10 +9,10 @@ import {
 export const UidSchema = z.string().regex(/^[A-Za-z][A-Za-z0-9]{10}$/)
 
 export const Dhis2ValueTypeSchema = z.enum(DHIS2_VALUE_TYPES)
-export const FilterOperatorSchema = z.enum(FILTER_OPERATORS)
-export const FilterSourceSchema = z.enum(FILTER_SOURCES)
+const FilterOperatorSchema = z.enum(FILTER_OPERATORS)
+const FilterSourceSchema = z.enum(FILTER_SOURCES)
 
-export const WorkingListFieldSchema = z
+const WorkingListFieldSchema = z
     .object({
         id: z.string().min(1),
         displayName: z.string().min(1),
@@ -185,7 +185,7 @@ export const AppliedFilterSchema = z
     })
     .strict()
 
-export const WorkingListSortSchema = z
+const WorkingListSortSchema = z
     .object({
         fieldId: z.string().min(1),
         direction: z.enum(['asc', 'desc']),
@@ -202,31 +202,7 @@ const workingListViewFields = {
     sort: WorkingListSortSchema,
 }
 
-export const WorkingListViewConfigurationSchema = z
-    .object(workingListViewFields)
-    .strict()
-
-export const TrackedEntityWorkingListCriteriaSchema = z
-    .object({
-        mode: z.literal('trackedEntity'),
-        ...workingListCriteriaFields,
-    })
-    .strict()
-
-export const EventWorkingListCriteriaSchema = z
-    .object({
-        mode: z.literal('event'),
-        programStageId: z.string().min(1),
-        ...workingListCriteriaFields,
-    })
-    .strict()
-
-export const WorkingListCriteriaSchema = z.discriminatedUnion('mode', [
-    TrackedEntityWorkingListCriteriaSchema,
-    EventWorkingListCriteriaSchema,
-])
-
-export const TrackedEntityWorkingListConfigurationSchema = z
+const TrackedEntityWorkingListConfigurationSchema = z
     .object({
         mode: z.literal('trackedEntity'),
         ...workingListCriteriaFields,
@@ -234,7 +210,7 @@ export const TrackedEntityWorkingListConfigurationSchema = z
     })
     .strict()
 
-export const EventWorkingListConfigurationSchema = z
+const EventWorkingListConfigurationSchema = z
     .object({
         mode: z.literal('event'),
         programStageId: z.string().min(1),

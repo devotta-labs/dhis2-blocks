@@ -12,7 +12,7 @@ import type {
     WorkingListRowValues,
 } from './normalizeRows'
 
-export const OrganisationUnitLabelSchema = z
+const OrganisationUnitLabelSchema = z
     .object({
         id: z.string().min(1),
         displayName: z.string().min(1),
@@ -81,7 +81,7 @@ export const collectOrganisationUnitIds = (
     return [...result].sort()
 }
 
-export const fetchOrganisationUnitLabels = async ({
+const fetchOrganisationUnitLabels = async ({
     client,
     ids,
     signal,

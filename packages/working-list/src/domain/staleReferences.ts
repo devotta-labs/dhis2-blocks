@@ -171,17 +171,6 @@ export const validateConfigurationReferences = (
     return issues.length ? { compatible: false, issues } : { compatible: true }
 }
 
-export const assertConfigurationReferences = (
-    configuration: WorkingListConfiguration,
-    metadata: Parameters<typeof validateConfigurationReferences>[1]
-) => {
-    const result = validateConfigurationReferences(configuration, metadata)
-    if ('issues' in result) {
-        throw new StaleWorkingListError(result.issues)
-    }
-    return configuration
-}
-
 export type StaleReferenceRepairDecision =
     | { path: string; action: 'remove' }
     | { path: string; action: 'replaceFilter'; filter: AppliedFilter }

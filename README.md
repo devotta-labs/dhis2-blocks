@@ -122,12 +122,16 @@ publishable consumer package.
 ```sh
 pnpm typecheck
 pnpm lint
+pnpm dead-code:config
+pnpm dead-code:audit
 pnpm test
 pnpm build
 ```
 
 Turborepo runs each task in the workspaces that provide it and caches declared
-build outputs.
+build outputs. The Knip audit is a warning-only, review-driven check for unused
+internal exports; see [the dead-code audit guide](docs/dead-code-audit.md) for
+its scope, limitations, and staged-enforcement process.
 
 ## Real-DHIS2 browser tests
 

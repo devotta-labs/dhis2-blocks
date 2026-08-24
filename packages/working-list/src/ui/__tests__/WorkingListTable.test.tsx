@@ -258,6 +258,11 @@ describe('WorkingListTable', () => {
 
                 expect(table).not.toBeNull()
                 expect(
+                    table?.querySelector(
+                        'table[data-test="working-list-data-table"]'
+                    )
+                ).not.toBeNull()
+                expect(
                     container.querySelector('[data-testid="sort-lastName"]')
                 ).not.toBeNull()
                 expect(

@@ -129,6 +129,11 @@ pnpm build
 Turborepo runs each task in the workspaces that provide it and caches declared
 build outputs.
 
+Run `pnpm audit:exports` to inspect statically unused internal exports. This is
+currently a review audit rather than a required quality gate; see
+[Unused export analysis](docs/unused-exports.md) for its public API exemption,
+limitations, and adoption plan.
+
 ## Real-DHIS2 browser tests
 
 The existing version-specific commands remain available from the repository

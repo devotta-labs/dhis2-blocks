@@ -18,8 +18,9 @@ import { WorkingListRepairDialog } from '../WorkingList/dialogs'
 import type { WorkingListDataQualityMode } from '../types'
 import { WorkingListTable } from '../WorkingListTable'
 import { useWorkingListText } from '../WorkingListText'
-import accessibilityStyles from '../styles/accessibility.module.css'
-import styles from '../WorkingList/WorkingList.module.css'
+
+const visuallyHiddenClassName =
+    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
 export interface WorkingListResultsProps {
     onClick: (target: WorkingListResultTarget) => void
@@ -72,7 +73,7 @@ const SelectionLoading = () => {
     const translate = useWorkingListText()
     return (
         <div
-            className={styles['working-list-selection-loading']}
+            className="flex min-h-48 items-center justify-center gap-[var(--spacers-dp12)] text-[var(--colors-grey700)]"
             data-testid="working-list-selection-loading"
             aria-live="polite"
         >
@@ -124,10 +125,7 @@ const ReadyResults = ({
 
     if (results.status === 'error') {
         return (
-            <div
-                className={styles['results-error']}
-                data-testid="results-error"
-            >
+            <div className="p-4" data-testid="results-error">
                 <NoticeBox error title={translate('Could not load results')}>
                     <p>
                         {translate(
@@ -145,7 +143,7 @@ const ReadyResults = ({
     return (
         <>
             <div
-                className={accessibilityStyles['visually-hidden']}
+                className={visuallyHiddenClassName}
                 role="status"
                 aria-live="polite"
                 data-testid="working-list-results-announcement"
@@ -206,10 +204,7 @@ const IncompatibleSelection = () => {
 
     return (
         <>
-            <div
-                className={styles['stale-list-panel']}
-                data-testid="stale-list-panel"
-            >
+            <div className="p-4" data-testid="stale-list-panel">
                 <NoticeBox
                     error
                     title={translate(
@@ -226,7 +221,7 @@ const IncompatibleSelection = () => {
                               )}
                     </p>
                     {repairable && (
-                        <div className={styles['stale-list-repair-action']}>
+                        <div className="mt-2">
                             <Button
                                 small
                                 dataTest="repair-working-list"
@@ -240,9 +235,7 @@ const IncompatibleSelection = () => {
                             </Button>
                             {repairPending && (
                                 <span
-                                    className={
-                                        accessibilityStyles['visually-hidden']
-                                    }
+                                    className={visuallyHiddenClassName}
                                     role="status"
                                     aria-live="polite"
                                 >
@@ -300,7 +293,7 @@ export const WorkingListResults = ({
                     <IncompatibleSelection />
                 ) : (
                     <div
-                        className={styles['working-list-blocking-error']}
+                        className="p-4"
                         data-testid="unavailable-working-list-error"
                     >
                         <NoticeBox

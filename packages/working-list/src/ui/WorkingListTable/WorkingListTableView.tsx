@@ -5,9 +5,16 @@ import {
     type WorkingListDisplayRow,
     type WorkingListPageSize,
 } from '../../provider/contracts'
-import accessibilityStyles from '../styles/accessibility.module.css'
 import { useWorkingListText } from '../WorkingListText'
-import styles from './WorkingListTable.module.css'
+
+const visuallyHiddenClassName =
+    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
+
+const tableHeaderClassName =
+    'h-10 whitespace-nowrap border-b border-[#d5dde5] bg-[#f3f5f7] p-0 text-left text-[12px] font-medium text-[#405261]'
+
+const tableCellClassName =
+    'h-11 border-b border-[#e8edf2] px-3 py-2.5 align-middle text-[#25394a]'
 
 export interface WorkingListTableHeaderView {
     id: string
@@ -89,31 +96,27 @@ export const WorkingListTableView = ({
 
     return (
         <div
-            className={styles['working-list-results']}
+            className="w-full min-w-0 max-w-full"
             data-testid="working-list-results"
         >
             <div
-                className={styles['working-list-table-scroll']}
+                className="w-full min-w-0 max-w-full overflow-x-auto [contain:layout] [overscroll-behavior-inline:contain]"
                 data-testid="working-list-table-scroll"
             >
                 <table
-                    className={styles['working-list-table']}
+                    className="w-full min-w-[680px] border-separate border-spacing-0 text-[14px]"
                     data-testid="working-list-table"
                 >
                     <thead>
                         {model.headerGroups.map((group) => (
                             <tr key={group.id}>
-                                {group.headers.map((header) => {
+                                {group.headers.map((header, index) => {
                                     if (header.isDataQuality) {
                                         return (
                                             <th
                                                 key={header.id}
                                                 scope="col"
-                                                className={
-                                                    styles[
-                                                        'working-list-issues-cell'
-                                                    ]
-                                                }
+                                                className={`${tableHeaderClassName} w-px min-w-0 text-center ${index > 0 ? 'border-l border-[#f0f2f4]' : ''}`}
                                             >
                                                 {header.content}
                                             </th>
@@ -123,6 +126,7 @@ export const WorkingListTableView = ({
                                         <th
                                             key={header.id}
                                             scope="col"
+                                            className={`${tableHeaderClassName} ${index > 0 ? 'border-l border-[#f0f2f4]' : ''}`}
                                             aria-sort={
                                                 header.sorted === 'asc'
                                                     ? 'ascending'
@@ -133,9 +137,7 @@ export const WorkingListTableView = ({
                                         >
                                             <button
                                                 type="button"
-                                                className={
-                                                    styles['sort-button']
-                                                }
+                                                className="flex min-h-10 w-full cursor-pointer items-center justify-between gap-2.5 border-0 bg-transparent px-3 py-[7px] text-left text-[inherit] [font-weight:inherit] [&:hover]:bg-[#eaf3fa] [&:hover]:text-[#0053a0] focus-visible:[outline:3px_solid_rgb(20_124_215_/_35%)] focus-visible:outline-offset-2"
                                                 data-testid={`sort-${header.fieldId}`}
                                                 disabled={
                                                     !header.canSort ||
@@ -146,9 +148,7 @@ export const WorkingListTableView = ({
                                                 {header.content}
                                                 <span
                                                     aria-hidden="true"
-                                                    className={
-                                                        styles['sort-indicator']
-                                                    }
+                                                    className="text-[13px] text-[#6c7785]"
                                                 >
                                                     {header.sorted === 'asc'
                                                         ? '↑'
@@ -172,12 +172,12 @@ export const WorkingListTableView = ({
                                         Math.max(visibleColumnCount, 1) +
                                         (showIssuesColumn ? 1 : 0)
                                     }
-                                    className={styles['empty-results']}
+                                    className={`${tableCellClassName} min-w-[140px] bg-white px-4! py-10! text-center text-[#5f6b7a]!`}
                                 >
-                                    <strong>
+                                    <strong className="mb-1 block font-medium text-[#36454f]">
                                         {i18n.t('No items to display')}
                                     </strong>
-                                    <span>
+                                    <span className="block">
                                         {i18n.t(
                                             'Try adjusting the filters or organisation unit.'
                                         )}
@@ -192,11 +192,11 @@ export const WorkingListTableView = ({
                             return (
                                 <tr
                                     key={row.id}
-                                    className={`${styles['working-list-row']}${
+                                    className={
                                         highlightIssues
-                                            ? ` ${styles['working-list-row--invalid']}`
-                                            : ''
-                                    }`}
+                                            ? 'cursor-pointer [&_td]:bg-[#fff0f0] [&:hover_td]:bg-[#ffe6e6] [&:focus-within_td]:bg-[#ffdcdc]'
+                                            : 'cursor-pointer [&_td]:bg-white [&:hover_td]:bg-[#f7fbff] [&:focus-within_td]:bg-[#eaf3fa]'
+                                    }
                                     data-testid={`working-list-row-${row.id}`}
                                     data-invalid={
                                         highlightIssues ? 'true' : undefined
@@ -212,13 +212,7 @@ export const WorkingListTableView = ({
                                     {row.cells.map((cell, index) => (
                                         <td
                                             key={cell.id}
-                                            className={
-                                                cell.isDataQuality
-                                                    ? styles[
-                                                          'working-list-issues-cell'
-                                                      ]
-                                                    : undefined
-                                            }
+                                            className={`${tableCellClassName} ${index > 0 ? 'border-l border-[#f0f2f4]' : ''} ${cell.isDataQuality ? 'w-px min-w-0 whitespace-nowrap text-center' : 'min-w-[140px]'}`}
                                             data-testid={
                                                 cell.isDataQuality
                                                     ? `working-list-issues-cell-${row.id}`
@@ -229,9 +223,7 @@ export const WorkingListTableView = ({
                                                 <button
                                                     type="button"
                                                     className={
-                                                        accessibilityStyles[
-                                                            'visually-hidden'
-                                                        ]
+                                                        visuallyHiddenClassName
                                                     }
                                                     data-testid={`row-open-${row.id}`}
                                                     onClick={() =>
@@ -257,7 +249,7 @@ export const WorkingListTableView = ({
                     </tbody>
                 </table>
             </div>
-            <div className={styles['working-list-pagination']}>
+            <div className="flex min-h-14 w-full min-w-0 max-w-full items-center justify-end px-3 py-2 [&_[data-test='dhis2-uicore-select-input']_>_:last-child]:[margin-block-start:0]">
                 <Pagination
                     dataTest="working-list-pagination"
                     page={page}

@@ -10,6 +10,6 @@
         "moduleResolution": "node",
         "noEmit": true
     },
-    "include": ["src/**/*.ts", "src/**/*.tsx"],
+    "include": ["src/**/*.ts", "src/**/*.tsx", "type-tests/**/*.ts"],
     "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

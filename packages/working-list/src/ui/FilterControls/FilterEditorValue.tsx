@@ -13,7 +13,6 @@ import type { FilterValue, WorkingListField } from '../../domain/model'
 import type { FilterEditorKind } from '../../registry/valueTypes'
 import { useWorkingListText } from '../WorkingListText'
 import { CalendarRangeFields } from './CalendarRangeFields'
-import styles from './FilterControls.module.css'
 import {
     type FilterCalendarContext,
     RelativeDatePeriodSchema,
@@ -54,7 +53,7 @@ export const EditorValue = ({
                 ? value
                 : ({ kind: 'assignee', mode: 'CURRENT' } as const)
         return (
-            <div className={styles['assignee-filter-editor']}>
+            <div className="[&>*+*]:mt-[12px]">
                 <SingleSelectField
                     dense
                     label={i18n.t('Assignment')}
@@ -154,7 +153,7 @@ export const EditorValue = ({
         const values = value.kind === 'boolean' ? value.values : []
         return (
             <div
-                className={styles['boolean-editor']}
+                className="flex flex-wrap items-center gap-[8px]"
                 role="group"
                 aria-label={i18n.t('Values')}
             >
@@ -192,7 +191,7 @@ export const EditorValue = ({
                 ? value
                 : { kind: 'dateRange', mode: 'absolute' }
         return (
-            <div className={styles['date-range-editor']}>
+            <div className="min-w-0 max-w-full [&>*+*]:mt-[12px]">
                 <SingleSelectField
                     dense
                     dataTest={`date-mode-${field.id}`}
@@ -401,7 +400,7 @@ export const EditorValue = ({
             ? field.minCharactersToSearch
             : undefined
     return (
-        <label className={styles['native-field']}>
+        <label className="flex flex-col gap-[5px] [&>span]:text-[12px] [&>span]:[font-weight:500] [&>span]:text-[#36454f] [&_input]:box-border [&_input]:h-[32px] [&_input]:w-full [&_input]:rounded-[3px] [&_input]:bg-[#fff] [&_input]:text-[14px] [&_input]:leading-[16px] [&_input]:text-[#212934] [&_input]:outline-none [&_input]:[border:1px_solid_#a9b7c4] [&_input]:[padding:7px_8px] [&_input:hover]:border-[#6c7785] [&_input:focus]:border-[#147cd7] [&_input:focus]:[box-shadow:0_0_0_2px_rgb(20_124_215_/_20%)] [&_small]:text-[12px] [&_small]:text-[#6c7785]">
             <span>{i18n.t('Value')}</span>
             <input
                 autoFocus
@@ -439,8 +438,8 @@ const RangeFields = ({
     placeholder?: string
     onChange: (min: string | undefined, max: string | undefined) => void
 }) => (
-    <div className={styles['range-editor']}>
-        <label className={styles['native-field']}>
+    <div className="grid w-full min-w-0 max-w-full grid-cols-2 gap-[10px] [@media(max-width:560px)]:grid-cols-1">
+        <label className="flex flex-col gap-[5px] [&>span]:text-[12px] [&>span]:[font-weight:500] [&>span]:text-[#36454f] [&_input]:box-border [&_input]:h-[32px] [&_input]:w-full [&_input]:rounded-[3px] [&_input]:bg-[#fff] [&_input]:text-[14px] [&_input]:leading-[16px] [&_input]:text-[#212934] [&_input]:outline-none [&_input]:[border:1px_solid_#a9b7c4] [&_input]:[padding:7px_8px] [&_input:hover]:border-[#6c7785] [&_input:focus]:border-[#147cd7] [&_input:focus]:[box-shadow:0_0_0_2px_rgb(20_124_215_/_20%)] [&_small]:text-[12px] [&_small]:text-[#6c7785]">
             <span>{minLabel}</span>
             <input
                 type={type}
@@ -454,7 +453,7 @@ const RangeFields = ({
                 }
             />
         </label>
-        <label className={styles['native-field']}>
+        <label className="flex flex-col gap-[5px] [&>span]:text-[12px] [&>span]:[font-weight:500] [&>span]:text-[#36454f] [&_input]:box-border [&_input]:h-[32px] [&_input]:w-full [&_input]:rounded-[3px] [&_input]:bg-[#fff] [&_input]:text-[14px] [&_input]:leading-[16px] [&_input]:text-[#212934] [&_input]:outline-none [&_input]:[border:1px_solid_#a9b7c4] [&_input]:[padding:7px_8px] [&_input:hover]:border-[#6c7785] [&_input:focus]:border-[#147cd7] [&_input:focus]:[box-shadow:0_0_0_2px_rgb(20_124_215_/_20%)] [&_small]:text-[12px] [&_small]:text-[#6c7785]">
             <span>{maxLabel}</span>
             <input
                 type={type}

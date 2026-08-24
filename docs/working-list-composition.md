@@ -16,6 +16,12 @@ Distribute the Working List as a source registry block. Installation copies the
 production source files and required package dependencies into the consuming
 repository so the block can be edited in place.
 
+The consuming project must have Tailwind CSS enabled and a valid shadcn
+`components.json` configuration. The registry installs beneath the configured
+components alias. Production components own their styles through local,
+statically detectable Tailwind utility classes; the block ships no CSS Module,
+generated stylesheet, or stylesheet import for consumers to maintain.
+
 The source registry is the only supported consumer distribution. The installed
 source entry point and its documented exports define the consumer contract. Do
 not also maintain compiled-package, `npm pack`, package-export, or generated
@@ -33,11 +39,21 @@ The installed source entry point exports only:
 - The compound `WorkingList` component.
 - `useWorkingListState`, `useWorkingListMeta`, and
   `useWorkingListActions`.
-- The documented provider, component, state, meta, action, configuration,
-  result-target, pagination constant, and operation-error contracts required to
+- The documented provider and component props; aggregate state, meta, and
+  action contracts; configuration value types; display-row and result-target
+  contracts; pagination contracts; and operation-error contracts required to
   consume those exports.
 - Public tagged-error classes returned by public actions or exposed public query
   state.
+
+Nested state and meta slice aliases are not separately re-exported from the
+entry point. Consumers normally receive those types through selector inference;
+when a reusable name is useful, derive one from the aggregate contract, for
+example `WorkingListMeta['selection']` or
+`Extract<WorkingListMeta['results'], { status: 'ready' }>`. Likewise, subsets of
+provider props are represented by `WorkingListProviderProps` instead of extra
+`Pick` aliases. This keeps the root autocomplete surface focused without hiding
+any data exposed by the supported APIs.
 
 Do not export the DHIS2 client, request or response schemas, TanStack Query keys
 or options, serializers, normalized server records, Zustand store, persistence
@@ -173,13 +189,14 @@ preload user/program organisation-unit scopes to validate `orgUnitId`; it uses
 the supplied ID in the tracker request. A rejection from that request is
 normalized into the regular Results error state.
 
-The application also provides the persisted saved-list identity:
+The persisted saved-list identity is represented by these fields of
+`WorkingListProviderProps`:
 
 ```ts
-interface WorkingListSelectionProps {
-    selectedSavedListId?: string
-    onSelectedSavedListChange(id: string): void
-}
+type SelectionProps = Pick<
+    WorkingListProviderProps,
+    'selectedSavedListId' | 'onSelectedSavedListChange'
+>
 ```
 
 Selection follows the standard controllable-state contract. When
@@ -190,11 +207,13 @@ differs from the staged ID wins, cancels or supersedes the pending transition,
 and starts the authoritative value's transition. Completion from a superseded
 transition is ignored.
 
-When `selectedSavedListId` is omitted, the provider owns selection.
-`onSelectedSavedListChange` is then a persistence notification rather than a
-request for the parent to echo the value. The provider resolves the omitted
-initial identity to the generated default and notifies the application of that
-effective ID.
+When `selectedSavedListId` is omitted or explicitly `undefined`, the provider
+owns selection. `onSelectedSavedListChange` is then a persistence notification
+rather than a request for the parent to echo the value. The provider resolves
+the missing initial identity to the generated default and notifies the
+application of that effective ID. Use `undefined`, not an empty string, to mean
+"no preselected saved list": an empty string is an invalid saved-list ID rather
+than a second unset value.
 
 Every effective ID change is a hard context transition: the provider
 immediately makes the active configuration and results unavailable, resets
@@ -241,14 +260,15 @@ Each Working List query keeps its existing query-specific stale time and retry
 policy. The block does not configure or mutate the host QueryClient.
 
 The provider always renders its children. It exposes lifecycle separately from
-selection, active configuration, mutations, and results:
+selection, active configuration, mutations, and results. A consumer that needs
+a named lifecycle type can derive it from the aggregate public contract:
 
 ```ts
-type WorkingListLifecycleMeta =
-    | { status: 'pending' }
-    | { status: 'error'; error: WorkingListInitializationError }
-    | { status: 'ready' }
+type Lifecycle = WorkingListMeta['lifecycle']
 ```
+
+That slice is a discriminated union of pending, initialization-error, and ready
+states.
 
 `WorkingList.Container` renders initialization loading and blocking error UI
 without unmounting its composed descendants. Each compound component selects
@@ -361,21 +381,13 @@ into this result state. Organisation-unit label failures are blocking result
 errors. File-resource label failures use the existing raw-value fallback.
 
 ```ts
-type WorkingListResultsMeta =
-    | {
-          status: 'pending'
-      }
-    | {
-          status: 'error'
-          error: WorkingListResultsError
-      }
-    | {
-          status: 'ready'
-          rows: readonly WorkingListDisplayRow[]
-          pagination: WorkingListPaginationMeta
-          isUpdating: boolean
-      }
+type Results = WorkingListMeta['results']
+type ReadyResults = Extract<Results, { status: 'ready' }>
 ```
+
+The results slice is a pending, error, or ready discriminated union. The ready
+variant contains `readonly WorkingListDisplayRow[]`, pagination metadata, and
+an `isUpdating` flag; the error variant contains `WorkingListResultsError`.
 
 Ready results remain available while required queries for the same selected
 saved list refresh and expose that condition through `isUpdating`. Empty
@@ -549,23 +561,19 @@ setPage(page)
 setPageSize(pageSize: WorkingListPageSize)
 ```
 
-The provider receives controlled pagination and its persistence callback:
+The provider receives controlled pagination and its persistence callback. The
+two props are part of `WorkingListProviderProps` rather than a separate public
+partial-props alias:
 
 ```ts
 export const WORKING_LIST_PAGE_SIZES = [10, 15, 25, 50, 100] as const
 
 type WorkingListPageSize = (typeof WORKING_LIST_PAGE_SIZES)[number]
 
-interface WorkingListPaginationProps {
-    pagination: {
-        page: number
-        pageSize: WorkingListPageSize
-    }
-    onPaginationChange(next: {
-        page: number
-        pageSize: WorkingListPageSize
-    }): void
-}
+type PaginationProps = Pick<
+    WorkingListProviderProps,
+    'pagination' | 'onPaginationChange'
+>
 ```
 
 The application chooses where to persist pagination. Lower-level components
@@ -710,19 +718,17 @@ existing manual “Try again” control for saved-list query errors and
 provider refetch interface and is not exposed by `useWorkingListActions()`.
 Initialization errors remain blocking and expose no in-place retry control.
 
-Expose pagination meta without requesting server totals:
+Expose pagination meta without requesting server totals. Consumers can derive
+its type from the aggregate meta contract:
 
 ```ts
-interface WorkingListPaginationMeta {
-    page: number
-    pageSize: WorkingListPageSize
-    displayedCount: number
-    hasNextPage: boolean
-}
+type ReadyResults = Extract<WorkingListMeta['results'], { status: 'ready' }>
+type PaginationMeta = ReadyResults['pagination']
 ```
 
 The provider exposes no total count or page count and never estimates them.
-`displayedCount` is the number of rendered rows.
+Pagination meta contains `page`, `pageSize`, `displayedCount`, and
+`hasNextPage`; `displayedCount` is the number of rendered rows.
 
 For DHIS2 42 and newer, use `pager.nextPage` for authoritative next-page state.
 For DHIS2 41, use the full-page heuristic:

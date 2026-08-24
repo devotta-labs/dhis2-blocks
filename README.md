@@ -51,7 +51,9 @@ Installation copies its production source and required dependencies into the
 consumer repository, where the block can be edited in place. The installed
 source entry point provides the documented compound component and hooks.
 
-Install it from the GitHub registry in a project configured for the shadcn CLI:
+Install it from the GitHub registry in a project with Tailwind CSS enabled and
+a valid shadcn `components.json` configuration. The installer uses the
+configured `aliases.components` directory as its target:
 
 ```sh
 pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list
@@ -68,6 +70,10 @@ import {
 } from '@/components/working-list'
 ```
 
+The installed components own their styling through Tailwind utility classes;
+the block does not require a separate stylesheet import. Adjust the import path
+above if the project's components alias differs from `@/components`.
+
 Render `WorkingList.Provider` beneath the DHIS2 app-runtime provider and a
 TanStack `QueryClientProvider`. Compose the standard UI with
 `WorkingList.Default`, or arrange the individual compound components:
@@ -77,6 +83,10 @@ TanStack `QueryClientProvider`. Compose the standard UI with
     <WorkingList.Default onClick={handleResultClick} />
 </WorkingList.Provider>
 ```
+
+`selectedSavedListId` accepts a saved-list ID or `undefined`. Passing
+`undefined` (or omitting the prop) starts from the generated default list; do
+not use an empty string as an unset sentinel.
 
 The base components use `WorkingList.Section` for their semantic regions. Give
 each section either a visible `title` or an `ariaLabel`, but never both:

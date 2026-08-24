@@ -4,7 +4,7 @@ import {
     OrganisationUnitSchema,
     PROGRAM,
     PROGRAM_NAME,
-    Request,
+    type Request,
     TEXT_ATTRIBUTE,
     addFilter,
     chooseDhis2Option,

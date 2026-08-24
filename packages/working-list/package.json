@@ -4,9 +4,6 @@
     "private": true,
     "description": "Reusable DHIS2 Working List component",
     "license": "BSD-3-Clause",
-    "sideEffects": [
-        "**/*.css"
-    ],
     "exports": {
         ".": "./src/index.ts",
         "./development": "./src/development.ts"

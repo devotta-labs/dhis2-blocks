@@ -21,7 +21,7 @@ import type {
 } from './store'
 
 interface UseWorkingListSelectionOptions {
-    selectedSavedListId?: string
+    selectedSavedListId?: string | undefined
     onSelectedSavedListChange: (id: string) => void
     defaultList?: Extract<
         NormalizedSavedWorkingList,

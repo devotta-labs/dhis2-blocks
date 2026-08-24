@@ -1,4 +1,4 @@
-import { useDataEngine } from '@dhis2/app-runtime'
+import type { useDataEngine } from '@dhis2/app-runtime'
 import {
     createWorkingListClient,
     type DataEngineLike,

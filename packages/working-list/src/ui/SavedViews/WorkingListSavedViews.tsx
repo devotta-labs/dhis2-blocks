@@ -21,13 +21,11 @@ import {
 } from '../../provider/WorkingListContext'
 import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
 import { SavedListBar } from '../SavedListBar'
-import layoutStyles from '../styles/layout.module.css'
 import { WorkingListSharingDialog } from '../WorkingList/dialogs'
 import {
     useWorkingListText,
     type WorkingListTranslate,
 } from '../WorkingListText'
-import styles from '../WorkingList/WorkingList.module.css'
 
 type SavedViewActionError =
     | SelectSavedListError
@@ -66,11 +64,11 @@ const actionErrorCopy = (
 
 const SavedViewsLoading = () => (
     <div
-        className={styles['saved-views-placeholder']}
+        className="flex min-h-[38px] items-center border-b border-[#e8edf2] px-2 pt-0 pb-2 text-xs leading-4 text-[var(--colors-grey700)]"
         data-testid="saved-list-bar"
     >
         <div
-            className={styles['saved-view-pill-placeholder']}
+            className="h-[30px] w-[148px] rounded-2xl bg-[var(--colors-grey200)]"
             aria-hidden="true"
         />
     </div>
@@ -153,10 +151,7 @@ export const WorkingListSavedViews = () => {
                 />
             )}
             {savedViews.status === 'error' && (
-                <div
-                    className={styles['working-list-blocking-error']}
-                    data-testid="saved-working-lists-error"
-                >
+                <div className="p-4" data-testid="saved-working-lists-error">
                     <NoticeBox
                         error
                         title={translate('Could not load saved working lists')}
@@ -217,7 +212,7 @@ export const WorkingListSavedViews = () => {
                         )}
                     </ModalContent>
                     <ModalActions>
-                        <div className={layoutStyles['modal-button-strip']}>
+                        <div className="flex flex-wrap items-center justify-end gap-2">
                             <Button
                                 dataTest="discard-saved-view-change-cancel"
                                 onClick={() => setPendingSelection(undefined)}

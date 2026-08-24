@@ -5,7 +5,7 @@ import {
     PRIVATE_LIST,
     PROGRAM,
     RepairedListSchema,
-    Request,
+    type Request,
     STAGE,
     STALE_LIST,
     SavedStageListSchema,

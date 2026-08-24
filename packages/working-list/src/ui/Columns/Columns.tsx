@@ -13,7 +13,6 @@ import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContex
 import type { WorkingListConfiguration } from '../../provider/contracts'
 import { ColumnSettingsDialog } from '../ColumnSettingsDialog'
 import { useWorkingListText } from '../WorkingListText'
-import styles from '../WorkingList/WorkingList.module.css'
 
 const tableFieldsFor = (
     fields: readonly WorkingListField[],
@@ -74,7 +73,7 @@ const ColumnsControl = () => {
     const tableFields = tableFieldsFor(fields, program, configuration)
 
     return (
-        <div className={styles['working-list-columns']}>
+        <div className="flex flex-none items-center">
             <Button
                 secondary
                 small

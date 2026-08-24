@@ -20,7 +20,7 @@ import { WorkingListTextProvider } from '../ui/WorkingListText'
 import {
     publicConfigurationFingerprint,
     resolvePublicConfiguration,
-    toPublicConfiguration,
+    type toPublicConfiguration,
 } from './configuration'
 import type {
     WorkingListMeta,

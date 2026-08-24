@@ -2,7 +2,6 @@ import { CircularLoader, NoticeBox } from '@dhis2/ui'
 import React, { type ReactNode } from 'react'
 import { useWorkingListMeta } from '../../provider/WorkingListContext'
 import { useWorkingListText } from '../WorkingListText'
-import styles from '../WorkingList/WorkingList.module.css'
 
 export interface WorkingListContainerProps {
     children: ReactNode
@@ -17,13 +16,10 @@ export const WorkingListContainer = ({
     const blocked = lifecycle.status !== 'ready'
 
     return (
-        <div
-            className={styles['working-list-main']}
-            data-testid="working-list-main"
-        >
+        <div className="w-full min-w-0" data-testid="working-list-main">
             {!online && (
                 <div
-                    className={styles['offline-notice']}
+                    className="border border-[var(--colors-yellow300)] bg-[var(--colors-yellow100)] px-3 py-2 text-[var(--colors-yellow900)] [border-radius:4px_4px_0_0]"
                     data-testid="offline-notice"
                     role="status"
                 >
@@ -34,7 +30,7 @@ export const WorkingListContainer = ({
             )}
             {lifecycle.status === 'pending' && (
                 <div
-                    className={styles['working-list-initializing']}
+                    className="flex min-h-48 items-center justify-center gap-3 text-[var(--colors-grey700)]"
                     data-testid="working-list-initializing"
                     aria-live="polite"
                 >
@@ -43,10 +39,7 @@ export const WorkingListContainer = ({
                 </div>
             )}
             {lifecycle.status === 'error' && (
-                <div
-                    className={styles['working-list-blocking-error']}
-                    data-testid="working-list-lifecycle-error"
-                >
+                <div className="p-4" data-testid="working-list-lifecycle-error">
                     <NoticeBox
                         error
                         title={translate('Could not load the working list')}
@@ -58,9 +51,7 @@ export const WorkingListContainer = ({
                 </div>
             )}
             <article
-                className={`${styles['working-list-card']}${
-                    blocked ? ` ${styles['working-list-card--blocked']}` : ''
-                }`}
+                className={`w-full min-w-0 max-w-full overflow-visible rounded-[4px] border border-[#d5dde5] bg-white shadow-[0_1px_2px_rgb(33_41_52_/_8%)]${blocked ? ' hidden' : ''}`}
                 data-testid="working-list"
                 hidden={blocked}
             >

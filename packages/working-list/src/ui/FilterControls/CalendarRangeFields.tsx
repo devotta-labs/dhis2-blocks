@@ -1,10 +1,9 @@
 import { IconCross16 } from '@dhis2/ui-icons'
 import React, { useState } from 'react'
-import { z } from 'zod'
+import type { z } from 'zod'
 import { toMultiCalendarIdentifier } from '../../registry/transformers'
 import { useWorkingListText } from '../WorkingListText'
 import { StrictCalendarInput } from './FilterControlPrimitives'
-import styles from './FilterControls.module.css'
 import {
     CalendarSelectionSchema,
     type CalendarValidationFeedback,
@@ -65,9 +64,9 @@ export const CalendarRangeFields = ({
         return (
             <button
                 type="button"
-                className={`${styles['calendar-field__clear']}${
+                className={`absolute [inset-block-start:25px] [inset-inline-end:6px] flex cursor-pointer items-center justify-center rounded-[3px] bg-transparent p-[4px] text-[#6c7785] [border:0] [&:hover]:bg-[#f3f5f7] [&:hover]:text-[#212934]${
                     validation?.error || validation?.warning
-                        ? ` ${styles['calendar-field__clear--status-icon']}`
+                        ? ' [inset-inline-end:36px]'
                         : ''
                 }`}
                 data-test={`date-range-${position}-clear`}
@@ -87,10 +86,8 @@ export const CalendarRangeFields = ({
     }
 
     return (
-        <div
-            className={`${styles['range-editor']} ${styles['calendar-range-editor']}`}
-        >
-            <div className={styles['calendar-field']}>
+        <div className="grid w-full min-w-0 max-w-full grid-cols-2 gap-[10px] [@media(max-width:560px)]:grid-cols-1">
+            <div className="relative min-w-0">
                 <StrictCalendarInput
                     dense
                     strictValidation
@@ -114,7 +111,7 @@ export const CalendarRangeFields = ({
                 />
                 {start && clearButton('start')}
             </div>
-            <div className={styles['calendar-field']}>
+            <div className="relative min-w-0">
                 <StrictCalendarInput
                     dense
                     strictValidation

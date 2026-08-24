@@ -10,7 +10,6 @@ import React, { useMemo, useState } from 'react'
 import type { WorkingListField } from '../../domain/model'
 import { fieldDisplayName } from '../FilterControls'
 import { useWorkingListText } from '../WorkingListText'
-import styles from './ColumnSettingsDialog.module.css'
 
 interface ColumnSettingsDialogProps {
     fields: WorkingListField[]
@@ -114,12 +113,12 @@ export const ColumnSettingsDialog = ({
                         optionsWidth="440px"
                         selectedWidth="440px"
                         leftHeader={
-                            <h4 className={styles['column-settings-heading']}>
+                            <h4 className="m-0 px-0 py-2.5 text-sm font-medium leading-5 text-[#405261]">
                                 {translate('Available columns')}
                             </h4>
                         }
                         rightHeader={
-                            <h4 className={styles['column-settings-heading']}>
+                            <h4 className="m-0 px-0 py-2.5 text-sm font-medium leading-5 text-[#405261]">
                                 {translate('Selected columns')}
                             </h4>
                         }
@@ -128,7 +127,7 @@ export const ColumnSettingsDialog = ({
                     />
                     {showValidationError && (
                         <p
-                            className={styles['column-settings-error']}
+                            className="text-sm leading-5 text-[var(--colors-red600)] [margin:12px_0_0]"
                             role="alert"
                         >
                             {translate('Select at least one visible column')}
@@ -137,7 +136,7 @@ export const ColumnSettingsDialog = ({
                 </div>
             </ModalContent>
             <ModalActions>
-                <div className={styles['column-settings-actions']}>
+                <div className="flex gap-2">
                     <Button dataTest="column-settings-cancel" onClick={onClose}>
                         {translate('Cancel')}
                     </Button>

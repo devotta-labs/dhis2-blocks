@@ -21,6 +21,7 @@ interface RegistryManifest {
 interface PackageManifest {
     dependencies: Record<string, string>
     peerDependencies: Record<string, string>
+    sideEffects?: boolean | string[]
 }
 
 const repositoryRoot = path.resolve(__dirname, '../../..')
@@ -103,6 +104,18 @@ describe('working-list source registry', () => {
         expect([...registry.items[0].dependencies].sort()).toEqual(
             expectedDependencies
         )
+    })
+
+    it('ships Tailwind-styled source without CSS Module artifacts', () => {
+        const declaredPaths = registry.items[0].files.map((file) => file.path)
+
+        expect(declaredPaths).not.toContain(
+            'packages/working-list/src/css-modules.d.ts'
+        )
+        expect(
+            declaredPaths.some((filePath) => filePath.endsWith('.module.css'))
+        ).toBe(false)
+        expect(packageManifest.sideEffects).toBeUndefined()
     })
 
     it('does not rely on repository-only DHIS2 UI patches', () => {

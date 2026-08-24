@@ -19,12 +19,10 @@ import type {
     StaleReferenceIssue,
     StaleReferenceRepairDecision,
 } from '../../../../domain/staleReferences'
-import layoutStyles from '../../../styles/layout.module.css'
 import {
     useWorkingListText,
     type WorkingListTranslate,
 } from '../../../WorkingListText'
-import styles from './WorkingListRepairDialog.module.css'
 
 interface WorkingListRepairPreview {
     decisions: StaleReferenceRepairDecision[]
@@ -164,14 +162,14 @@ export const WorkingListRepairDialog = ({
             onClose={onClose}
         >
             <ModalTitle>{i18n.t('Repair this saved list?')}</ModalTitle>
-            <ModalContent className={styles['content']}>
-                <p className={styles['intro']}>
+            <ModalContent className="text-[14px]">
+                <p className="m-0 text-[var(--colors-grey700)]">
                     {i18n.t(
                         'Some metadata changed, was removed, or is no longer accessible.'
                     )}
                 </p>
                 <div
-                    className={styles['changes']}
+                    className="[margin:16px_0]"
                     data-testid="repair-working-list-preview"
                 >
                     <Table suppressZebraStriping>
@@ -199,7 +197,7 @@ export const WorkingListRepairDialog = ({
                 </div>
             </ModalContent>
             <ModalActions>
-                <div className={layoutStyles['modal-button-strip']}>
+                <div className="flex flex-wrap items-center justify-end gap-2">
                     <Button
                         dataTest="repair-working-list-cancel"
                         onClick={onClose}

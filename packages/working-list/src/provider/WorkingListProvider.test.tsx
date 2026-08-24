@@ -62,7 +62,7 @@ describe('WorkingListProvider controlled selection', () => {
             return null
         }
         const render = (
-            selectedSavedListId: string,
+            selectedSavedListId: string | undefined,
             onSelectedSavedListChange: (id: string) => void
         ) => (
             <QueryClientProvider client={queryClient}>
@@ -106,6 +106,48 @@ describe('WorkingListProvider controlled selection', () => {
             status: 'pending',
             requestedSavedListId: 'SavedList03',
         })
+
+        act(() => root.unmount())
+        queryClient.clear()
+    })
+
+    it('does not treat an explicit undefined selection as a saved-list ID', () => {
+        const container = document.createElement('div')
+        const root = createRoot(container)
+        const queryClient = new QueryClient({
+            defaultOptions: { queries: { retry: false } },
+        })
+        const selectionChange = jest.fn()
+        const paginationChange = jest.fn()
+        const observedSelections: WorkingListSelectionMeta[] = []
+
+        const Probe = () => {
+            observedSelections.push(
+                useWorkingListMeta((meta) => meta.selection)
+            )
+            return null
+        }
+
+        act(() =>
+            root.render(
+                <QueryClientProvider client={queryClient}>
+                    <WorkingListProvider
+                        programId="Program0001"
+                        orgUnitId="OrgUnit00001"
+                        selectedSavedListId={undefined}
+                        onSelectedSavedListChange={selectionChange}
+                        pagination={{ page: 3, pageSize: 15 }}
+                        onPaginationChange={paginationChange}
+                    >
+                        <Probe />
+                    </WorkingListProvider>
+                </QueryClientProvider>
+            )
+        )
+
+        expect(observedSelections.at(-1)).toEqual({ status: 'pending' })
+        expect(selectionChange).not.toHaveBeenCalled()
+        expect(paginationChange).not.toHaveBeenCalled()
 
         act(() => root.unmount())
         queryClient.clear()

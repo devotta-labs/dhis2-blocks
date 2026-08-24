@@ -17,7 +17,6 @@ import {
     useWorkingListText,
     type WorkingListTranslate,
 } from '../WorkingListText'
-import styles from '../WorkingList/WorkingList.module.css'
 
 type SaveError = CreateSavedListError | UpdateSelectedSavedListError
 
@@ -118,7 +117,7 @@ const ActionsControl = () => {
     }
 
     return (
-        <div className={styles['working-list-actions-region']}>
+        <div className="flex items-start gap-2">
             <ConfigureMenu
                 selectedView={selectedView}
                 dirty={dirty}
@@ -161,14 +160,14 @@ export const WorkingListActions = () => {
 
     return (
         <div
-            className={styles['working-list-actions-slot']}
+            className="ml-auto flex flex-none items-center"
             data-testid="working-list-actions-slot"
         >
             {ready ? (
                 <ActionsControl />
             ) : (
                 <div
-                    className={styles['working-list-unavailable-actions']}
+                    className="flex items-center gap-1"
                     data-testid="working-list-actions"
                 >
                     <Button small dataTest="save-working-list" disabled>

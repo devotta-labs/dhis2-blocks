@@ -26,14 +26,15 @@ import {
     type CellFormattingContext,
 } from '../../registry/valueTypes'
 import { fieldDisplayName, localizedField } from '../FilterControls'
-import accessibilityStyles from '../styles/accessibility.module.css'
 import type { WorkingListDataQualityMode } from '../types'
 import { useWorkingListText } from '../WorkingListText'
-import styles from './WorkingListTable.module.css'
 import {
     WorkingListTableView,
     type WorkingListTableViewModel,
 } from './WorkingListTableView'
+
+const visuallyHiddenClassName =
+    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
 const tableFeatureSet = tableFeatures({
     columnOrderingFeature,
@@ -78,7 +79,7 @@ const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
     return (
         <Tooltip
             content={
-                <ul className={styles['working-list-row-issues']}>
+                <ul className="m-0 pl-4">
                     {row.issues.map((issue) => (
                         <li key={`${issue.fieldId}-${issue.message}`}>
                             {`${issue.fieldName}: ${issue.message}`}
@@ -88,7 +89,7 @@ const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
             }
         >
             <span
-                className={styles['working-list-warning-icon']}
+                className="inline-flex items-center text-[#b93d2e]"
                 role="img"
                 data-testid={`row-issues-${row.id}`}
                 aria-label={t('Row has {{count}} data quality issues', {
@@ -109,6 +110,7 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
         case 'link':
             return (
                 <a
+                    className="text-[#0053a0] underline-offset-2"
                     href={display.href}
                     rel="noreferrer noopener"
                     target="_blank"
@@ -119,6 +121,7 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
         case 'file':
             return (
                 <a
+                    className="text-[#0053a0] underline-offset-2"
                     href={display.href}
                     rel="noreferrer noopener"
                     target="_blank"
@@ -129,13 +132,14 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
         case 'image':
             return (
                 <a
+                    className="text-[#0053a0] underline-offset-2"
                     href={display.href}
                     rel="noreferrer noopener"
                     target="_blank"
                 >
                     <img
                         alt={display.alt || t('Image attachment')}
-                        className={styles['working-list-cell-image']}
+                        className="block h-10 w-14 rounded-[3px] border border-[#d5dde5] bg-[#f3f5f7] object-cover"
                         loading="lazy"
                         src={display.previewHref}
                     />
@@ -230,7 +234,7 @@ export const WorkingListTable = ({
             columnHelper.display({
                 id: DATA_QUALITY_COLUMN_ID,
                 header: () => (
-                    <span className={accessibilityStyles['visually-hidden']}>
+                    <span className={visuallyHiddenClassName}>
                         {translate('Data quality')}
                     </span>
                 ),

@@ -66,9 +66,9 @@ const configuration: WorkingListConfiguration = {
 }
 
 describe('saved-list sharing types', () => {
-    it('uses SharingDialog resource names for both working-list resources', () => {
+    it('uses DHIS2 server resource names for both working-list resources', () => {
         expect(getSharingType('trackedEntityInstanceFilters')).toBe(
-            'trackedEntityFilter'
+            'trackedEntityInstanceFilter'
         )
         expect(getSharingType('programStageWorkingLists')).toBe(
             'programStageWorkingList'

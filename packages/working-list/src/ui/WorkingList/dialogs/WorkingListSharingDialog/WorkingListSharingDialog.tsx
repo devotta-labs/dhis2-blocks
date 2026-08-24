@@ -1,10 +1,22 @@
 import { NoticeBox, SharingDialog } from '@dhis2/ui'
-import React from 'react'
+import React, { type ComponentProps, type ComponentType } from 'react'
 import {
     getSharingType,
     type NormalizedSavedWorkingList,
 } from '../../../../api/savedLists'
 import { useWorkingListText } from '../../../WorkingListText'
+
+type SharingDialogCompatProps = Omit<
+    ComponentProps<typeof SharingDialog>,
+    'type'
+> & {
+    type: ReturnType<typeof getSharingType>
+}
+
+// SAFETY: DHIS2 servers require trackedEntityInstanceFilter for this metadata
+// type, while @dhis2/ui 10.17 exposes the narrower trackedEntityFilter union.
+const SharingDialogCompat =
+    SharingDialog as ComponentType<SharingDialogCompatProps>
 
 interface WorkingListSharingDialogProps {
     list?: NormalizedSavedWorkingList
@@ -31,7 +43,7 @@ export const WorkingListSharingDialog = ({
                 </NoticeBox>
             )}
             {list && (
-                <SharingDialog
+                <SharingDialogCompat
                     id={list.id}
                     type={getSharingType(list.resource)}
                     metadataSharing

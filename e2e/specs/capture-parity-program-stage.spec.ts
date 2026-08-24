@@ -36,7 +36,7 @@ test.describe('Capture programme-stage joint data strategy', () => {
         expect(stageRequest.searchParams.getAll('filterAttributes')).toEqual([
             `${TEXT_ATTRIBUTE}:like:Alpha person 01`,
         ])
-        await expect(page.getByTestId('filters-and-columns')).toContainText(
+        await expect(page.getByTestId('working-list-toolbar')).toContainText(
             `${STAGE_NAME} / Report date`
         )
 
@@ -149,7 +149,7 @@ test.describe('Capture programme-stage joint data strategy', () => {
             0
         )
         await expect(page.getByTestId('filter-eventOccurredAt')).toHaveCount(0)
-        await expect(page.getByTestId('filters-and-columns')).toBeVisible()
+        await expect(page.getByTestId('working-list-toolbar')).toBeVisible()
     })
 
     test('shows a genuine empty event state from a valid real-server query', async ({

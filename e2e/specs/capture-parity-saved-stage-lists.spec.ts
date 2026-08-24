@@ -27,6 +27,8 @@ import {
 } from './capture-parity.support'
 
 test.describe('owner pagination and saved-list lifecycle', () => {
+    test.use({ e2eCredentials: OWNER })
+
     test('saves and deletes a programme-stage view in its dedicated metadata resource', async ({
         page,
         playwright,

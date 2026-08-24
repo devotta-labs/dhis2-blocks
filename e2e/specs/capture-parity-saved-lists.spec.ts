@@ -166,8 +166,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             const cleanUpdateAction = page
                 .locator('[data-test="update-working-list"]')
                 .getByRole('menuitem')
-            await expect(cleanUpdateAction).toBeEnabled()
-            await cleanUpdateAction.click()
+            await expect(cleanUpdateAction).toBeDisabled()
+            expect(cleanUpdateRequests).toEqual([])
+            await page.keyboard.press('Escape')
             await expect(cleanUpdateAction).toHaveCount(0)
             expect(cleanUpdateRequests).toEqual([])
 

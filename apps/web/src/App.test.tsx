@@ -40,11 +40,10 @@ describe('URL state privacy boundary', () => {
         )
     })
 
-    it('omits an explicitly undefined selected view', () => {
+    it('omits an absent selected view', () => {
         expect(
             serializeAppUrlState({
                 programId: 'IpHINAT79UW',
-                selectedTemplateId: undefined,
                 page: 1,
                 pageSize: 15,
             })

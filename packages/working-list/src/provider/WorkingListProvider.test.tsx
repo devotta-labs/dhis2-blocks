@@ -62,7 +62,7 @@ describe('WorkingListProvider controlled selection', () => {
             return null
         }
         const render = (
-            selectedSavedListId: string | undefined,
+            selectedSavedListId: string | null,
             onSelectedSavedListChange: (id: string) => void
         ) => (
             <QueryClientProvider client={queryClient}>
@@ -111,7 +111,10 @@ describe('WorkingListProvider controlled selection', () => {
         queryClient.clear()
     })
 
-    it('does not treat an explicit undefined selection as a saved-list ID', () => {
+    it.each([
+        ['null', null],
+        ['an empty string', ''],
+    ])('uses the generated default for %s', (_label, selectedSavedListId) => {
         const container = document.createElement('div')
         const root = createRoot(container)
         const queryClient = new QueryClient({
@@ -134,7 +137,7 @@ describe('WorkingListProvider controlled selection', () => {
                     <WorkingListProvider
                         programId="Program0001"
                         orgUnitId="OrgUnit00001"
-                        selectedSavedListId={undefined}
+                        selectedSavedListId={selectedSavedListId}
                         onSelectedSavedListChange={selectionChange}
                         pagination={{ page: 3, pageSize: 15 }}
                         onPaginationChange={paginationChange}
@@ -145,9 +148,15 @@ describe('WorkingListProvider controlled selection', () => {
             )
         )
 
-        expect(observedSelections.at(-1)).toEqual({ status: 'pending' })
+        expect(observedSelections.at(-1)).toEqual({
+            status: 'pending',
+            requestedSavedListId: 'Program0001-default',
+        })
         expect(selectionChange).not.toHaveBeenCalled()
-        expect(paginationChange).not.toHaveBeenCalled()
+        expect(paginationChange).toHaveBeenCalledWith({
+            page: 1,
+            pageSize: 15,
+        })
 
         act(() => root.unmount())
         queryClient.clear()

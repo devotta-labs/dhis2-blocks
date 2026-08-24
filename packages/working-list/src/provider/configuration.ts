@@ -30,8 +30,16 @@ export const internalConfigurationFingerprint = (
 
 export const shouldBeginControlledSelection = (
     previousId: string | undefined,
-    nextId: string | undefined
-) => nextId !== undefined && previousId !== nextId
+    nextId: string
+) => previousId !== nextId
+
+export const resolveSelectedSavedListId = (
+    selectedSavedListId: string | null,
+    defaultListId: string
+) =>
+    selectedSavedListId && selectedSavedListId.trim().length > 0
+        ? selectedSavedListId
+        : defaultListId
 
 export const isCurrentSelection = (
     currentId: string | undefined,

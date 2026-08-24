@@ -199,21 +199,20 @@ type SelectionProps = Pick<
 >
 ```
 
-Selection follows the standard controllable-state contract. When
-`selectedSavedListId` is supplied, it is authoritative. An internally initiated
-selection stages the requested ID synchronously and calls
+`selectedSavedListId` is required and has type `string | null`. A valid,
+non-empty string is authoritative. An internally initiated selection stages
+the requested ID synchronously and calls
 `onSelectedSavedListChange`. On a subsequent render, a supplied prop value that
 differs from the staged ID wins, cancels or supersedes the pending transition,
 and starts the authoritative value's transition. Completion from a superseded
 transition is ignored.
 
-When `selectedSavedListId` is omitted or explicitly `undefined`, the provider
-owns selection. `onSelectedSavedListChange` is then a persistence notification
-rather than a request for the parent to echo the value. The provider resolves
-the missing initial identity to the generated default and notifies the
-application of that effective ID. Use `undefined`, not an empty string, to mean
-"no preselected saved list": an empty string is an invalid saved-list ID rather
-than a second unset value.
+Pass `null` when no saved list is preselected. The provider resolves it to the
+generated default saved-list ID before initializing selection or result
+queries. `onSelectedSavedListChange` still receives only real string IDs. As a
+defensive runtime fallback, an empty or whitespace-only string resolves to the
+same generated default rather than leaving selection pending indefinitely.
+Callers should use `null`, not a blank string, to represent no preselection.
 
 Every effective ID change is a hard context transition: the provider
 immediately makes the active configuration and results unavailable, resets

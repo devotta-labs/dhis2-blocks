@@ -55,7 +55,7 @@ export type SupportedWorkingListTypes = [
 ]
 
 const providerProps = (
-    selectedSavedListId: string | undefined
+    selectedSavedListId: string | null
 ): WorkingListProviderProps => ({
     children: null,
     programId: 'Program0001',
@@ -66,11 +66,22 @@ const providerProps = (
     onPaginationChange: () => undefined,
 })
 
-// Both a preselected saved-list ID and an explicit undefined are supported.
+type SelectionIsRequired = WorkingListProviderProps extends {
+    selectedSavedListId: string | null
+}
+    ? true
+    : false
+
+export const selectionIsRequired: SelectionIsRequired = true
+
+// Both a preselected saved-list ID and null are supported.
 export const supportedSelectionInputs = [
     providerProps('SavedList01'),
-    providerProps(undefined),
+    providerProps(null),
 ]
+
+// @ts-expect-error undefined is not a supported selection value.
+export const unsupportedUndefinedSelection = providerProps(undefined)
 
 // Nested slices are intentionally available through the aggregate contracts,
 // not as additional names on the public entry point.

@@ -481,7 +481,9 @@ export const AppShell = () => {
                         <WorkingList.Provider
                             programId={selectedProgramSummary.id}
                             orgUnitId={urlState.orgUnitId}
-                            selectedSavedListId={urlState.selectedTemplateId}
+                            selectedSavedListId={
+                                urlState.selectedTemplateId ?? null
+                            }
                             pagination={{
                                 page: urlState.page ?? 1,
                                 pageSize: urlState.pageSize ?? 15,

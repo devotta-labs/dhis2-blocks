@@ -201,8 +201,8 @@ export interface WorkingListProviderProps {
     children: React.ReactNode
     programId: string
     orgUnitId: string
-    /** Omit or pass undefined to start from the generated default list. */
-    selectedSavedListId?: string | undefined
+    /** Pass null to select the generated default list. */
+    selectedSavedListId: string | null
     onSelectedSavedListChange(id: string): void
     pagination: WorkingListPagination
     onPaginationChange(next: WorkingListPagination): void

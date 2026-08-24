@@ -84,9 +84,11 @@ TanStack `QueryClientProvider`. Compose the standard UI with
 </WorkingList.Provider>
 ```
 
-`selectedSavedListId` accepts a saved-list ID or `undefined`. Passing
-`undefined` (or omitting the prop) starts from the generated default list; do
-not use an empty string as an unset sentinel.
+`selectedSavedListId` is required and accepts a saved-list ID or `null`. Pass
+`null` to start from the generated default list. As a defensive runtime
+fallback, an empty or whitespace-only string also selects the generated
+default instead of leaving selection loading indefinitely; callers should use
+`null` to express that intent.
 
 The base components use `WorkingList.Section` for their semantic regions. Give
 each section either a visible `title` or an `ariaLabel`, but never both:

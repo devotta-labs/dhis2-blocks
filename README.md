@@ -142,6 +142,17 @@ The public API intentionally exposes only the flat root-prefixed composition
 shown above. The earlier compound members and saved-list-named root props are
 not supported.
 
+`WorkingList` defaults its instance lifetime to `programId`, so changing the
+program resets its uncontrolled state. When rendering multiple working lists,
+use React's reserved `key` to give each instance a stable identity:
+
+```tsx
+<WorkingList key={workingListKey ?? programId} {...props} />
+```
+
+A supplied React key overrides the outer instance identity; changing it replaces
+that instance even when `programId` stays the same.
+
 The private `@dhis2-blocks/working-list` workspace package remains only as the
 repository's canonical development and test harness. It is not a compiled or
 publishable consumer package.

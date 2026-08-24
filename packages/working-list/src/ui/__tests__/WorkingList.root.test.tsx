@@ -57,6 +57,7 @@ describe('WorkingList root state', () => {
             root.render(
                 <>
                     <WorkingList
+                        key="primary-list"
                         programId="Program0001"
                         orgUnitId="OrgUnit00001"
                         defaultViewId="View0000001"
@@ -67,7 +68,8 @@ describe('WorkingList root state', () => {
                         <span>First</span>
                     </WorkingList>
                     <WorkingList
-                        programId="Program0002"
+                        key="secondary-list"
+                        programId="Program0001"
                         orgUnitId="OrgUnit00002"
                         onViewChange={secondViewChange}
                     >
@@ -78,10 +80,10 @@ describe('WorkingList root state', () => {
         })
 
         const first = observedProviders.find(
-            (provider) => provider.programId === 'Program0001'
+            (provider) => provider.orgUnitId === 'OrgUnit00001'
         )
         const second = observedProviders.find(
-            (provider) => provider.programId === 'Program0002'
+            (provider) => provider.orgUnitId === 'OrgUnit00002'
         )
         expect(first?.selectedSavedListId).toBe('View0000001')
         expect(first?.pagination).toEqual({ page: 2, pageSize: 25 })
@@ -92,10 +94,10 @@ describe('WorkingList root state', () => {
         act(() => first?.onPaginationChange({ page: 3, pageSize: 50 }))
 
         const updatedFirst = observedProviders
-            .filter((provider) => provider.programId === 'Program0001')
+            .filter((provider) => provider.orgUnitId === 'OrgUnit00001')
             .at(-1)
         const updatedSecond = observedProviders
-            .filter((provider) => provider.programId === 'Program0002')
+            .filter((provider) => provider.orgUnitId === 'OrgUnit00002')
             .at(-1)
         expect(updatedFirst?.selectedSavedListId).toBe('View0000003')
         expect(updatedFirst?.pagination).toEqual({ page: 3, pageSize: 50 })
@@ -106,6 +108,47 @@ describe('WorkingList root state', () => {
             pageSize: 50,
         })
         expect(secondViewChange).not.toHaveBeenCalled()
+
+        act(() => root.unmount())
+    })
+
+    it('uses a caller-provided React key to replace a same-program instance', () => {
+        const container = document.createElement('div')
+        const root = createRoot(container)
+        const renderInstance = (key: string) => (
+            <WorkingList
+                key={key}
+                programId="Program0001"
+                orgUnitId="OrgUnit00001"
+                defaultViewId="DefaultView"
+                defaultPagination={{ page: 2, pageSize: 25 }}
+            >
+                <span>Content</span>
+            </WorkingList>
+        )
+
+        act(() => root.render(renderInstance('first-instance')))
+        const first = observedProviders.at(-1)
+        act(() => first?.onSelectedSavedListChange('ChangedView'))
+        act(() => first?.onPaginationChange({ page: 5, pageSize: 50 }))
+
+        expect(observedProviders.at(-1)?.selectedSavedListId).toBe(
+            'ChangedView'
+        )
+        expect(observedProviders.at(-1)?.pagination).toEqual({
+            page: 5,
+            pageSize: 50,
+        })
+
+        act(() => root.render(renderInstance('second-instance')))
+
+        expect(observedProviders.at(-1)?.selectedSavedListId).toBe(
+            'DefaultView'
+        )
+        expect(observedProviders.at(-1)?.pagination).toEqual({
+            page: 2,
+            pageSize: 25,
+        })
 
         act(() => root.unmount())
     })

@@ -147,6 +147,31 @@ The action hook uses view terminology for new code: `selectView`,
 `clearViewSelection`, `createView`, `updateSelectedView`, and `deleteView`.
 Configuration, pagination, and download actions keep their existing names.
 
+## Instance identity
+
+`WorkingList` uses `programId` as its default lifecycle key. Changing the
+program therefore replaces the scoped provider and resets uncontrolled view and
+pagination state. React's reserved `key` overrides the outer instance identity,
+which is useful when multiple working lists share a page or program:
+
+```tsx
+{
+    workingLists.map(({ key, programId, orgUnitId }) => (
+        <WorkingList
+            key={key ?? programId}
+            programId={programId}
+            orgUnitId={orgUnitId}
+        >
+            {/* canonical composition */}
+        </WorkingList>
+    ))
+}
+```
+
+Provide distinct keys when two entries can use the same program. Changing a key
+intentionally replaces only that working-list instance. React does not pass
+`key` through as a component prop or DOM attribute.
+
 ## Distribution boundary
 
 The shadcn registry copies production source and dependencies into the

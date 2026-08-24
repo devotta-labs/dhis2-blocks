@@ -1,23 +1,43 @@
 {
     "$schema": "https://unpkg.com/knip@6/schema.json",
+    "include": [
+        "files",
+        "dependencies",
+        "unlisted",
+        "binaries",
+        "unresolved",
+        "exports",
+        "nsExports",
+        "types",
+        "nsTypes",
+        "enumMembers",
+        "namespaceMembers",
+        "duplicates",
+        "catalog",
+        "catalogReferences",
+        "cycles"
+    ],
     "rules": {
-        "binaries": "off",
-        "catalog": "off",
-        "dependencies": "off",
-        "devDependencies": "off",
-        "duplicates": "off",
-        "enumMembers": "warn",
-        "exports": "warn",
-        "files": "off",
-        "namespaceMembers": "warn",
-        "nsExports": "warn",
-        "nsTypes": "warn",
-        "optionalPeerDependencies": "off",
-        "types": "warn",
-        "unlisted": "off",
-        "unresolved": "off"
+        "binaries": "error",
+        "catalog": "error",
+        "catalogReferences": "error",
+        "cycles": "warn",
+        "dependencies": "error",
+        "devDependencies": "error",
+        "duplicates": "error",
+        "enumMembers": "error",
+        "exports": "error",
+        "files": "error",
+        "namespaceMembers": "error",
+        "nsExports": "error",
+        "nsTypes": "error",
+        "optionalPeerDependencies": "error",
+        "types": "error",
+        "unlisted": "error",
+        "unresolved": "error"
     },
     "treatConfigHintsAsErrors": true,
+    "treatTagHintsAsErrors": true,
     "workspaces": {
         ".": {
             "entry": ["e2e/specs/**/*.spec.ts"],
@@ -53,6 +73,14 @@
                     "nsTypes",
                     "enumMembers",
                     "namespaceMembers"
+                ],
+                "src/workingListTranslationCatalog.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
                 ]
             }
         },
@@ -69,6 +97,7 @@
                 "type-tests/**/*.ts"
             ],
             "includeEntryExports": true,
+            "ignoreDependencies": ["@tanstack/table-core"],
             "ignoreIssues": {
                 "src/index.ts": [
                     "exports",

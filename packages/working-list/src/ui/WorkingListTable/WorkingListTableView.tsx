@@ -26,19 +26,19 @@ export interface WorkingListTableHeaderView {
     onToggleSorting: (event: React.MouseEvent<HTMLButtonElement>) => void
 }
 
-export interface WorkingListTableHeaderGroupView {
+interface WorkingListTableHeaderGroupView {
     id: string
     headers: WorkingListTableHeaderView[]
 }
 
-export interface WorkingListTableCellView {
+interface WorkingListTableCellView {
     id: string
     fieldId: string
     content: React.ReactNode
     isDataQuality: boolean
 }
 
-export interface WorkingListTableRowView {
+interface WorkingListTableRowView {
     id: string
     displayIndex: number
     original: WorkingListDisplayRow

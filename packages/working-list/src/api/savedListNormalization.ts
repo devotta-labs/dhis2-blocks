@@ -49,7 +49,7 @@ export const getSharing = (
     userGroupAccesses: resource.userGroupAccesses,
 })
 
-export const findField = (fields: FieldCatalog, idOrApiName: string) =>
+const findField = (fields: FieldCatalog, idOrApiName: string) =>
     fields.get(idOrApiName) ??
     [...fields.values()].find((field) => field.apiName === idOrApiName)
 
@@ -64,7 +64,7 @@ export const getMissingIssue = (
     message: `Saved list references unavailable ${referenceId} at ${path}`,
 })
 
-export const getSavedFilterOperator = (
+const getSavedFilterOperator = (
     filter: SavedValueFilter,
     value: FilterValue
 ): FilterOperator => {
@@ -93,7 +93,7 @@ export const getSavedFilterOperator = (
     return 'equals'
 }
 
-export const normalizeValueFilter = (
+const normalizeValueFilter = (
     filter: SavedValueFilter,
     field: WorkingListField,
     parsingContext?: FilterParsingContext
@@ -109,7 +109,7 @@ export const normalizeValueFilter = (
     }
 }
 
-export const normalizeDateValue = (
+const normalizeDateValue = (
     value:
         | EntityQueryCriteria['enrollmentCreatedDate']
         | ProgramStageQueryCriteria['eventOccurredAt'],
@@ -140,7 +140,7 @@ export const normalizeDateValue = (
           }
 }
 
-export const systemFilter = (
+const systemFilter = (
     fields: FieldCatalog,
     {
         id,
@@ -159,7 +159,7 @@ export const systemFilter = (
     return validateSystemFilter({ field, operator, value })
 }
 
-export const normalizeCommonCriteria = (
+const normalizeCommonCriteria = (
     criteria: EntityQueryCriteria | ProgramStageQueryCriteria,
     fields: FieldCatalog,
     parsingContext?: FilterParsingContext
@@ -236,7 +236,7 @@ export const normalizeCommonCriteria = (
     return filters
 }
 
-export const normalizeColumns = (
+const normalizeColumns = (
     displayColumnOrder: string[] | null | undefined,
     defaults: string[],
     fields: FieldCatalog
@@ -255,7 +255,7 @@ export const normalizeColumns = (
         return field.id
     })
 
-export const normalizeSort = (
+const normalizeSort = (
     order: string | null | undefined,
     fields: FieldCatalog
 ): WorkingListSort => {
@@ -277,7 +277,7 @@ export const normalizeSort = (
     return { fieldId: field.id, direction }
 }
 
-export const normalizeTrackedEntityResource = ({
+const normalizeTrackedEntityResource = ({
     resource,
     programId,
     metadata,
@@ -331,7 +331,7 @@ export const normalizeTrackedEntityResource = ({
     }
 }
 
-export const normalizeEventResource = ({
+const normalizeEventResource = ({
     resource,
     programId,
     metadata,

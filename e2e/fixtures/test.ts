@@ -103,7 +103,7 @@ const isKnownBenignDiagnostic = (
     )
 }
 
-export const signInToApp = async (
+const signInToApp = async (
     page: Page,
     credentials: E2ECredentials = { username, password }
 ) => {

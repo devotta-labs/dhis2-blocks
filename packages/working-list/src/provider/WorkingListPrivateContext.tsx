@@ -22,7 +22,7 @@ import type {
 import type { WorkingListActions, WorkingListResultTarget } from './contracts'
 import type { WorkingListProviderStore } from './store'
 
-export interface WorkingListPrivateCalendarContext {
+interface WorkingListPrivateCalendarContext {
     calendar: WorkingListSystemInfo['calendar']
     dateFormat: WorkingListSystemInfo['dateFormat']
     locale: string

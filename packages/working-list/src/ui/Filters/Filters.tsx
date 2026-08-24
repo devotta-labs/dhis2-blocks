@@ -22,7 +22,7 @@ import {
 } from '../FilterControls'
 import { useWorkingListText } from '../WorkingListText'
 
-export const visibleFiltersForConfiguration = (
+const visibleFiltersForConfiguration = (
     configuration: WorkingListConfiguration,
     fields: ReadonlyMap<string, WorkingListField>
 ) => {

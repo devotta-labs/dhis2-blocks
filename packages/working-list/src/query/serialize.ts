@@ -14,7 +14,6 @@ import {
 } from '../domain/schemas'
 import {
     getSystemFilterDefinition,
-    systemFilterRegistry,
     validateSystemFilter,
 } from '../registry/systemFilters'
 import type { FilterSerializationContext } from '../registry/valueTypes'
@@ -23,13 +22,13 @@ import {
     validateAppliedFilter,
 } from '../registry/valueTypes'
 
-export const TRACKED_ENTITY_LIST_FIELDS =
+const TRACKED_ENTITY_LIST_FIELDS =
     'trackedEntity,createdAt,updatedAt,inactive,attributes[attribute,value],programOwners[orgUnit,program]'
 
-export const EVENT_LIST_FIELDS =
+const EVENT_LIST_FIELDS =
     'event,status,program,programStage,enrollment,trackedEntity,occurredAt,scheduledAt,createdAt,updatedAt,orgUnit,assignedUser[uid,username,firstName,surname],dataValues[dataElement,value]'
 
-export const TRACKED_ENTITY_JOIN_FIELDS =
+const TRACKED_ENTITY_JOIN_FIELDS =
     'trackedEntity,createdAt,updatedAt,attributes[attribute,value],programOwners[orgUnit],enrollments[enrollment]'
 
 const mergeParameters = (
@@ -233,5 +232,3 @@ export const DEFAULT_WORKING_LIST_SORT = {
     fieldId: 'createdAt',
     direction: 'desc',
 } as const
-
-export const SYSTEM_FILTER_IDS = [...systemFilterRegistry.keys()]

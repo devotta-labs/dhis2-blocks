@@ -21,7 +21,7 @@ const NormalizedReferenceSchema = z.union([
         .transform((id) => ({ id })),
 ])
 
-export const OptionSchema = z
+const OptionSchema = z
     .object({
         id: z.string().min(1).optional(),
         code: z.string(),
@@ -29,7 +29,7 @@ export const OptionSchema = z
     })
     .passthrough()
 
-export const OptionSetSchema = z
+const OptionSetSchema = z
     .object({
         id: z.string().min(1),
         displayName: z.string().optional(),
@@ -49,7 +49,7 @@ const SearchOperatorSchema = z.enum([
     '!NULL',
 ])
 
-export const TrackedEntityAttributeSchema = z
+const TrackedEntityAttributeSchema = z
     .object({
         id: z.string().min(1),
         displayName: z.string(),
@@ -65,7 +65,7 @@ export const TrackedEntityAttributeSchema = z
     })
     .passthrough()
 
-export const ProgramTrackedEntityAttributeSchema = z
+const ProgramTrackedEntityAttributeSchema = z
     .object({
         displayInList: z.boolean().optional(),
         mandatory: z.boolean().optional(),
@@ -77,7 +77,7 @@ export const ProgramTrackedEntityAttributeSchema = z
     })
     .passthrough()
 
-export const DataElementSchema = z
+const DataElementSchema = z
     .object({
         id: z.string().min(1),
         displayName: z.string(),
@@ -88,7 +88,7 @@ export const DataElementSchema = z
     })
     .passthrough()
 
-export const ProgramStageDataElementSchema = z
+const ProgramStageDataElementSchema = z
     .object({
         displayInReports: z.boolean().optional(),
         compulsory: z.boolean().optional(),
@@ -96,7 +96,7 @@ export const ProgramStageDataElementSchema = z
     })
     .passthrough()
 
-export const ProgramStageSchema = z
+const ProgramStageSchema = z
     .object({
         id: z.string().min(1),
         displayName: z.string(),
@@ -127,7 +127,7 @@ export const TrackerProgramSchema = z
     })
     .passthrough()
 
-export const TrackerProgramSummarySchema = z
+const TrackerProgramSummarySchema = z
     .object({
         id: z.string().min(1),
         displayName: z.string(),
@@ -146,7 +146,7 @@ export const TrackerProgramsResponseSchema = z
     })
     .passthrough()
 
-export const PagerSchema = z
+const PagerSchema = z
     .object({
         page: z.number().int().positive(),
         pageSize: z.number().int().positive(),
@@ -157,14 +157,14 @@ export const PagerSchema = z
     })
     .passthrough()
 
-export const TrackedEntityAttributeValueSchema = z
+const TrackedEntityAttributeValueSchema = z
     .object({
         attribute: z.string().min(1),
         value: z.union([z.string(), z.number(), z.boolean()]),
     })
     .passthrough()
 
-export const TrackedEntitySchema = z
+const TrackedEntitySchema = z
     .object({
         trackedEntity: z.string().min(1),
         createdAt: z.string().optional(),
@@ -211,7 +211,7 @@ export const normalizeTrackedEntitiesResponse = (
     }
 }
 
-export const EventDataValueSchema = z
+const EventDataValueSchema = z
     .object({
         dataElement: z.string().min(1),
         value: z.union([z.string(), z.number(), z.boolean()]),
@@ -237,7 +237,7 @@ export const TRACKER_ENROLLMENT_STATUSES = [
 
 export const TrackerEnrollmentStatusSchema = z.enum(TRACKER_ENROLLMENT_STATUSES)
 
-export const EventSchema = z
+const EventSchema = z
     .object({
         event: z.string().min(1),
         status: TrackerEventStatusSchema,
@@ -290,7 +290,7 @@ export const normalizeEventsResponse = (
     }
 }
 
-export const AccessSchema = z
+const AccessSchema = z
     .object({
         read: z.boolean().optional(),
         update: z.boolean().optional(),
@@ -305,7 +305,7 @@ const SharingAccessStringSchema = z
     .string()
     .regex(/^[rwx-]{8}$/, 'Expected an eight-character DHIS2 access string')
 
-export const SharingAccessEntrySchema = z
+const SharingAccessEntrySchema = z
     .object({
         id: z.string().min(1),
         access: SharingAccessStringSchema,
@@ -362,7 +362,7 @@ export const DateFilterContentsSchema = z
         }
     })
 
-export const SavedValueFilterSchema = z
+const SavedValueFilterSchema = z
     .object({
         attribute: OptionalStringSchema,
         dataItem: OptionalStringSchema,
@@ -435,7 +435,7 @@ const SavedCriteriaFields = {
     attributeValueFilters: z.array(SavedValueFilterSchema).nullish(),
 }
 
-export const EntityQueryCriteriaSchema = z
+const EntityQueryCriteriaSchema = z
     .object({
         ...SavedCriteriaFields,
         enrollmentCreatedDate: DateFilterContentsSchema.nullish(),
@@ -443,7 +443,7 @@ export const EntityQueryCriteriaSchema = z
     })
     .passthrough()
 
-export const ProgramStageQueryCriteriaSchema = z
+const ProgramStageQueryCriteriaSchema = z
     .object({
         ...SavedCriteriaFields,
         enrolledAt: DateFilterContentsSchema.nullish(),
@@ -525,7 +525,6 @@ export const DeleteMutationResponseSchema = z.union([
 ])
 
 export type TrackerProgram = z.infer<typeof TrackerProgramSchema>
-export type TrackerProgramSummary = z.infer<typeof TrackerProgramSummarySchema>
 export type TrackedEntity = z.infer<typeof TrackedEntitySchema>
 export type TrackerEvent = z.infer<typeof EventSchema>
 export type EntityQueryCriteria = z.infer<typeof EntityQueryCriteriaSchema>
@@ -533,7 +532,6 @@ export type ProgramStageQueryCriteria = z.infer<
     typeof ProgramStageQueryCriteriaSchema
 >
 export type SavedValueFilter = z.infer<typeof SavedValueFilterSchema>
-export type SharingAccessEntry = z.infer<typeof SharingAccessEntrySchema>
 export type TrackedEntityInstanceFilter = z.infer<
     typeof TrackedEntityInstanceFilterSchema
 >

@@ -14,7 +14,7 @@ const RequestFailureSchema = z
     })
     .passthrough()
 
-export const getRequestErrorStatus = (cause: unknown) => {
+const getRequestErrorStatus = (cause: unknown) => {
     const parsed = RequestFailureSchema.safeParse(cause)
     return parsed.success
         ? (parsed.data.status ??

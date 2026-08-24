@@ -6,4 +6,3 @@ export {
     type WorkingListSectionProps,
     type WorkingListToolbarProps,
 } from './WorkingList'
-export type { WorkingListDataQualityMode } from './types'

@@ -17,7 +17,7 @@ import {
     type E2ECredentials,
 } from '../fixtures/test'
 
-export { AxeBuilder, e2eEnvironment, expect, test, testFromDhis2Version }
+export { AxeBuilder, expect, test }
 export type {
     APIRequestContext,
     Page,
@@ -48,7 +48,7 @@ export const INTEGER_DATA_ELEMENT = 'WlDeIntg001'
 // scripts/e2e/seed-metadata.sh writes this invalid date through SQL because
 // the tracker importer would reject it.
 export const CORRUPTED_DATE_VALUE = '2025-13-45'
-export const TEST_PASSWORD = 'WorkingList123!'
+const TEST_PASSWORD = 'WorkingList123!'
 
 export const OWNER: E2ECredentials = {
     username: 'wl_e2e_owner',
@@ -63,7 +63,7 @@ export const OUTSIDER: E2ECredentials = {
     password: TEST_PASSWORD,
 }
 
-export const environment = process.env
+const environment = process.env
 export const targetMajor = Number(environment?.E2E_EXPECTED_MAJOR)
 export const typedRegistryTest = testFromDhis2Version(43)
 export const typedRegistryTestTitle =
@@ -401,7 +401,7 @@ export const enterStageMode = async (page: Page) => {
     return response
 }
 
-export const basicAuthorization = ({ username, password }: E2ECredentials) =>
+const basicAuthorization = ({ username, password }: E2ECredentials) =>
     `Basic ${globalThis.btoa(`${username}:${password}`)}`
 
 export const createApi = async (

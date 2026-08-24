@@ -54,7 +54,7 @@ export const FILTER_SOURCES = [
     'system',
 ] as const
 
-export type FilterSource = (typeof FILTER_SOURCES)[number]
+type FilterSource = (typeof FILTER_SOURCES)[number]
 
 export type FilterScope = 'trackedEntity' | 'event'
 
@@ -81,24 +81,24 @@ export interface WorkingListField {
     requiredInStageIds?: ReadonlyArray<string>
 }
 
-export type TextFilterValue = {
+type TextFilterValue = {
     kind: 'text'
     value: string
 }
 
-export type NumberFilterValue = {
+type NumberFilterValue = {
     kind: 'numberRange'
     min?: number
     max?: number
 }
 
-export type TimeFilterValue = {
+type TimeFilterValue = {
     kind: 'timeRange'
     min?: string
     max?: string
 }
 
-export type AbsoluteDateFilterValue = {
+type AbsoluteDateFilterValue = {
     kind: 'dateRange'
     mode: 'absolute'
     start?: string
@@ -117,7 +117,7 @@ export const RELATIVE_DATE_PERIODS = [
 
 export type RelativeDatePeriod = (typeof RELATIVE_DATE_PERIODS)[number]
 
-export type RelativeDateFilterValue = {
+type RelativeDateFilterValue = {
     kind: 'dateRange'
     mode: 'relative'
     period?: RelativeDatePeriod
@@ -125,36 +125,36 @@ export type RelativeDateFilterValue = {
     endBuffer?: number
 }
 
-export type DateFilterValue = AbsoluteDateFilterValue | RelativeDateFilterValue
+type DateFilterValue = AbsoluteDateFilterValue | RelativeDateFilterValue
 
-export type BooleanFilterValue = {
+type BooleanFilterValue = {
     kind: 'boolean'
     values: boolean[]
 }
 
-export type OptionFilterValue = {
+type OptionFilterValue = {
     kind: 'options'
     values: string[]
 }
 
-export type EmptyFilterValue = {
+type EmptyFilterValue = {
     kind: 'empty'
     isEmpty: boolean
 }
 
-export type TrueOnlyFilterValue = {
+type TrueOnlyFilterValue = {
     kind: 'trueOnly'
     value: true
 }
 
-export type OrganisationUnitFilterValue = {
+type OrganisationUnitFilterValue = {
     kind: 'organisationUnit'
     id: string
 }
 
-export type AssigneeMode = 'CURRENT' | 'PROVIDED' | 'NONE' | 'ANY'
+type AssigneeMode = 'CURRENT' | 'PROVIDED' | 'NONE' | 'ANY'
 
-export type AssigneeFilterValue = {
+type AssigneeFilterValue = {
     kind: 'assignee'
     mode: AssigneeMode
     userIds?: string[]
@@ -183,27 +183,27 @@ export interface WorkingListSort {
     direction: 'asc' | 'desc'
 }
 
-export interface WorkingListViewConfiguration {
+interface WorkingListViewConfiguration {
     /** Visible column identifiers, in display order. */
     columns: string[]
     /** Capture-compatible single server-side sort. */
     sort: WorkingListSort
 }
 
-export interface TrackedEntityWorkingListCriteria {
+interface TrackedEntityWorkingListCriteria {
     mode: 'trackedEntity'
     programId: string
     filters: AppliedFilter[]
 }
 
-export interface EventWorkingListCriteria {
+interface EventWorkingListCriteria {
     mode: 'event'
     programId: string
     programStageId: string
     filters: AppliedFilter[]
 }
 
-export type WorkingListCriteria =
+type WorkingListCriteria =
     | TrackedEntityWorkingListCriteria
     | EventWorkingListCriteria
 
@@ -219,16 +219,5 @@ export interface WorkingListContext {
     programId: string
     orgUnitId: string
 }
-
-export type WorkingListRowOpenEvent =
-    | {
-          mode: 'trackedEntity'
-          trackedEntityId: string
-      }
-    | {
-          mode: 'event'
-          eventId: string
-          trackedEntityId?: string
-      }
 
 export type FieldCatalog = ReadonlyMap<string, WorkingListField>

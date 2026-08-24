@@ -1,4 +1,3 @@
-import { mutationOptions } from '@tanstack/react-query'
 import type { FieldCatalog } from '../domain/model'
 import { DEFAULT_WORKING_LIST_SORT } from '../query/serialize'
 import type { WorkingListClient } from './client'
@@ -16,18 +15,12 @@ import { buildSavedListPayload } from './savedListPayload'
 
 export type {
     NormalizedSavedWorkingList,
-    SavedListBase,
     SavedListResource,
-    SavedListSharing,
 } from './savedListContracts'
 export { normalizeSavedWorkingListResource } from './savedListNormalization'
 export { buildSavedListPayload } from './savedListPayload'
-export {
-    fetchSavedWorkingLists,
-    savedWorkingListsQueryOptions,
-} from './savedListQueries'
+export { fetchSavedWorkingLists } from './savedListQueries'
 export { repairSavedWorkingList } from './savedListRepair'
-export type { SavedWorkingListRepairResult } from './savedListRepair'
 
 export const createSavedWorkingList = async ({
     client,
@@ -46,11 +39,6 @@ export const createSavedWorkingList = async ({
     }
     return id
 }
-
-export const createSavedWorkingListMutationOptions = () =>
-    mutationOptions({
-        mutationFn: createSavedWorkingList,
-    })
 
 export const replaceSavedWorkingList = async ({
     client,
@@ -113,11 +101,6 @@ export const replaceSavedWorkingList = async ({
         MutationResponseSchema
     )
 }
-
-export const replaceSavedWorkingListMutationOptions = () =>
-    mutationOptions({
-        mutationFn: replaceSavedWorkingList,
-    })
 
 export const deleteSavedWorkingList = async (
     client: WorkingListClient,

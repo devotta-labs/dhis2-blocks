@@ -74,7 +74,7 @@ const WorkingListUserValueSchema = z.object({
 export type WorkingListUserValue = z.infer<typeof WorkingListUserValueSchema>
 
 /** Parses the raw tracker values accepted by registry formatting and decoding. */
-export const WorkingListRawValueSchema = z.union([
+const WorkingListRawValueSchema = z.union([
     z.string(),
     z.number().finite(),
     z.boolean(),
@@ -87,7 +87,7 @@ export const WorkingListRawValueSchema = z.union([
 /** Values accepted after tracker responses have crossed their schema boundary. */
 export type WorkingListRawValue = z.infer<typeof WorkingListRawValueSchema>
 
-export type WorkingListParsedValue = string | number | boolean
+type WorkingListParsedValue = string | number | boolean
 
 export const isWorkingListFileValue = (
     value: WorkingListRawValue

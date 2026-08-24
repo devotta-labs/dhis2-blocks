@@ -18,7 +18,7 @@ export const resolveTrackerSearchRoots = ({
         ? teiSearchOrganisationUnits
         : organisationUnits
 
-export const areOrganisationUnitPathsRelated = (left: string, right: string) =>
+const areOrganisationUnitPathsRelated = (left: string, right: string) =>
     left === right ||
     left.startsWith(`${right}/`) ||
     right.startsWith(`${left}/`)

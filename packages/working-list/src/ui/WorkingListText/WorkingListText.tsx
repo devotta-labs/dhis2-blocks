@@ -1,7 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import React, { createContext, useContext } from 'react'
 
-export type WorkingListTranslationValues = Record<
+type WorkingListTranslationValues = Record<
     string,
     string | number | boolean | undefined
 >

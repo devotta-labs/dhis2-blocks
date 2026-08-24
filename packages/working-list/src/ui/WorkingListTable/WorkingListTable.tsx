@@ -58,19 +58,6 @@ const EMPTY_ROWS: WorkingListDisplayRow[] = []
  */
 const DATA_QUALITY_COLUMN_ID = '__dataQuality'
 
-export const nextWorkingListSort = (
-    currentSort: WorkingListSort,
-    fieldId: string
-): WorkingListSort => {
-    if (currentSort.fieldId !== fieldId) {
-        return { fieldId, direction: 'asc' }
-    }
-    if (currentSort.direction === 'asc') {
-        return { fieldId, direction: 'desc' }
-    }
-    return { ...DEFAULT_WORKING_LIST_SORT }
-}
-
 /**
  * Best-effort rendering for a value that failed validation: the raw scalar
  * verbatim, an empty cell for a missing value, a dash when unrenderable.
@@ -297,6 +284,8 @@ export const WorkingListDataTable = ({
             manualSorting: true,
             pageCount: -1,
             enableMultiSort: false,
+            enableSortingRemoval: true,
+            sortDescFirst: false,
             state: {
                 columnOrder,
                 columnVisibility,
@@ -321,6 +310,18 @@ export const WorkingListDataTable = ({
                         .filter((id) => next[id] !== false)
                 )
             },
+            onSortingChange: (updater) => {
+                const next = functionalUpdate(updater, sorting)
+                const first = next[0]
+                onSortChange(
+                    first
+                        ? {
+                              fieldId: first.id,
+                              direction: first.desc ? 'desc' : 'asc',
+                          }
+                        : { ...DEFAULT_WORKING_LIST_SORT }
+                )
+            },
         },
         (state) => ({
             columnOrder: state.columnOrder,
@@ -340,8 +341,8 @@ export const WorkingListDataTable = ({
                 canSort: header.column.getCanSort(),
                 isDataQuality: header.column.id === DATA_QUALITY_COLUMN_ID,
                 sorted: header.column.getIsSorted(),
-                onToggleSorting: () =>
-                    onSortChange(nextWorkingListSort(sort, header.column.id)),
+                onToggleSorting: (event) =>
+                    header.column.getToggleSortingHandler()?.(event),
             })),
         })),
         rows: table.getRowModel().rows.map((row) => ({

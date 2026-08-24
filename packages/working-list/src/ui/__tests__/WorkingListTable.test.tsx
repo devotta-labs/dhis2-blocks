@@ -6,10 +6,7 @@ import type {
     WorkingListDisplayRow,
     WorkingListPageSize,
 } from '../../provider/contracts'
-import {
-    nextWorkingListSort,
-    WorkingListDataTable,
-} from '../WorkingListTable/WorkingListTable'
+import { WorkingListDataTable } from '../WorkingListTable/WorkingListTable'
 import {
     WorkingListTableView,
     type WorkingListTableHeaderView,
@@ -223,28 +220,6 @@ const withActEnvironment = (run: () => void) => {
 }
 
 describe('WorkingListTable', () => {
-    it('cycles Capture-compatible sorting back to the default sort', () => {
-        const ascending = nextWorkingListSort(
-            { fieldId: 'createdAt', direction: 'desc' },
-            'firstName'
-        )
-        expect(ascending).toEqual({
-            fieldId: 'firstName',
-            direction: 'asc',
-        })
-
-        const descending = nextWorkingListSort(ascending, 'firstName')
-        expect(descending).toEqual({
-            fieldId: 'firstName',
-            direction: 'desc',
-        })
-
-        expect(nextWorkingListSort(descending, 'firstName')).toEqual({
-            fieldId: 'createdAt',
-            direction: 'desc',
-        })
-    })
-
     it('renders the ascending, descending, and default states across three clicks', () => {
         withActEnvironment(() => {
             const container = document.createElement('div')

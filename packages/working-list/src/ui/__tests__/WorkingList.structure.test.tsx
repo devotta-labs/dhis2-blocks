@@ -119,6 +119,8 @@ describe('WorkingList structural components', () => {
                     'Working list controls'
                 )
                 expect(toolbar?.className).toContain('toolbar-class')
+                expect(toolbar?.className).toContain('items-center')
+                expect(toolbar?.className).not.toContain('items-start')
                 expect(toolbar?.dataset.consumer).toBe('toolbar')
 
                 const table = container.querySelector<HTMLElement>(

@@ -88,3 +88,8 @@ export type DeleteSavedListError =
     | OfflineMutationError
     | WorkingListNetworkError
     | WorkingListInvalidResponseError
+
+export type SelectViewError = SelectSavedListError
+export type CreateViewError = CreateSavedListError
+export type UpdateSelectedViewError = UpdateSelectedSavedListError
+export type DeleteViewError = DeleteSavedListError

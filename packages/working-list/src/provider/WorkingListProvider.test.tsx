@@ -63,12 +63,13 @@ describe('WorkingListProvider controlled selection', () => {
         }
         const render = (
             selectedSavedListId: string | null,
-            onSelectedSavedListChange: (id: string) => void
+            onSelectedSavedListChange: (id: string) => void,
+            orgUnitId = 'OrgUnit00001'
         ) => (
             <QueryClientProvider client={queryClient}>
                 <WorkingListProvider
                     programId="Program0001"
-                    orgUnitId="OrgUnit00001"
+                    orgUnitId={orgUnitId}
                     selectedSavedListId={selectedSavedListId}
                     onSelectedSavedListChange={onSelectedSavedListChange}
                     pagination={{ page: 3, pageSize: 15 }}
@@ -89,6 +90,17 @@ describe('WorkingListProvider controlled selection', () => {
             pageSize: 15,
         })
         const initialActions = observedActions.at(-1)
+
+        paginationChange.mockClear()
+        act(() =>
+            root.render(
+                render('SavedList01', firstSelectionChange, 'OrgUnit00002')
+            )
+        )
+        expect(paginationChange).toHaveBeenCalledWith({
+            page: 1,
+            pageSize: 15,
+        })
 
         act(() => root.render(render('SavedList02', secondSelectionChange)))
         expect(observedSelections.at(-1)).toEqual({

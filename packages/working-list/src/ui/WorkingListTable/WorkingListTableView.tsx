@@ -63,7 +63,7 @@ export interface WorkingListTableViewProps {
     configurationDisabled?: boolean
     onPageChange: (page: number) => void
     onPageSizeChange: (pageSize: WorkingListPageSize) => void
-    onRowOpen: (row: WorkingListDisplayRow) => void
+    onRowOpen?: (row: WorkingListDisplayRow) => void
 }
 
 const isInteractiveTarget = (target: EventTarget | null) =>
@@ -93,7 +93,8 @@ export const WorkingListTableView = ({
 }: WorkingListTableViewProps) => {
     const i18n = { t: useWorkingListText() }
     const showIssuesColumn = dataQualityMode === 'highlighted'
-    const openRow = (row: WorkingListDisplayRow) => onRowOpen(row)
+    const interactive = Boolean(onRowOpen)
+    const openRow = (row: WorkingListDisplayRow) => onRowOpen?.(row)
 
     return (
         <div
@@ -201,14 +202,21 @@ export const WorkingListTableView = ({
                                 const openRowFromCell = (
                                     event: React.MouseEvent<HTMLTableCellElement>
                                 ) => {
-                                    if (!isInteractiveTarget(event.target)) {
+                                    if (
+                                        interactive &&
+                                        !isInteractiveTarget(event.target)
+                                    ) {
                                         openRow(row.original)
                                     }
                                 }
                                 return (
                                     <DataTableRow
                                         key={row.id}
-                                        className="cursor-pointer"
+                                        className={
+                                            interactive
+                                                ? 'cursor-pointer'
+                                                : undefined
+                                        }
                                         dataTest={`working-list-row-${row.id}`}
                                         data-testid={`working-list-row-${row.id}`}
                                         data-invalid={
@@ -243,9 +251,13 @@ export const WorkingListTableView = ({
                                                         ? `working-list-issues-cell-${row.id}`
                                                         : undefined
                                                 }
-                                                onClick={openRowFromCell}
+                                                onClick={
+                                                    interactive
+                                                        ? openRowFromCell
+                                                        : undefined
+                                                }
                                             >
-                                                {index === 0 && (
+                                                {index === 0 && interactive && (
                                                     <button
                                                         type="button"
                                                         className={

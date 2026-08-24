@@ -58,12 +58,12 @@ import {
 const assertPagination = (pagination: WorkingListPagination) => {
     if (!Number.isInteger(pagination.page) || pagination.page < 1) {
         throw new Error(
-            `WorkingList.Provider requires pagination.page to be a positive integer; received ${String(pagination.page)}`
+            `WorkingList requires pagination.page to be a positive integer; received ${String(pagination.page)}`
         )
     }
     if (!WORKING_LIST_PAGE_SIZES.includes(pagination.pageSize)) {
         throw new Error(
-            `WorkingList.Provider requires pagination.pageSize to be one of ${WORKING_LIST_PAGE_SIZES.join(', ')}; received ${String(pagination.pageSize)}`
+            `WorkingList requires pagination.pageSize to be one of ${WORKING_LIST_PAGE_SIZES.join(', ')}; received ${String(pagination.pageSize)}`
         )
     }
 }

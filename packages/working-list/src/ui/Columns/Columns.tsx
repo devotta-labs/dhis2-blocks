@@ -1,7 +1,7 @@
 import { Button } from '@dhis2/ui'
 import { IconLayoutColumns16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
-import React, { useState } from 'react'
+import React, { useState, type ComponentPropsWithoutRef } from 'react'
 import type { TrackerProgram } from '../../api/schemas'
 import type { WorkingListField } from '../../domain/model'
 import {
@@ -67,7 +67,7 @@ const ColumnsControl = () => {
 
     if (!program) {
         throw new Error(
-            'WorkingList.Columns requires resolved program metadata.'
+            'WorkingListColumnSelector requires resolved program metadata.'
         )
     }
     const tableFields = tableFieldsFor(fields, program, configuration)
@@ -102,14 +102,26 @@ const ColumnsControl = () => {
     )
 }
 
-export const WorkingListColumns = () => {
+export interface WorkingListColumnSelectorProps extends Omit<
+    ComponentPropsWithoutRef<'div'>,
+    'children'
+> {}
+
+export const WorkingListColumnSelector = ({
+    className,
+    ...props
+}: WorkingListColumnSelectorProps) => {
     const translate = useWorkingListText()
     const ready = useWorkingListMeta(
         (meta) => meta.activeConfiguration.status === 'ready'
     )
 
     return (
-        <div data-testid="working-list-columns">
+        <div
+            {...props}
+            className={className}
+            data-testid="working-list-columns"
+        >
             {ready ? (
                 <ColumnsControl />
             ) : (
@@ -126,3 +138,6 @@ export const WorkingListColumns = () => {
         </div>
     )
 }
+
+/** @deprecated Use `WorkingListColumnSelector`. */
+export const WorkingListColumns = WorkingListColumnSelector

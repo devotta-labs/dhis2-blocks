@@ -1,14 +1,14 @@
 import { CircularLoader, NoticeBox } from '@dhis2/ui'
-import React, { type ReactNode } from 'react'
+import React, { type ComponentPropsWithoutRef } from 'react'
 import { useWorkingListMeta } from '../../provider/WorkingListContext'
 import { useWorkingListText } from '../WorkingListText'
 
-export interface WorkingListContainerProps {
-    children: ReactNode
-}
+export interface WorkingListContainerProps extends ComponentPropsWithoutRef<'article'> {}
 
 export const WorkingListContainer = ({
     children,
+    className,
+    ...props
 }: WorkingListContainerProps) => {
     const translate = useWorkingListText()
     const lifecycle = useWorkingListMeta((meta) => meta.lifecycle)
@@ -51,7 +51,8 @@ export const WorkingListContainer = ({
                 </div>
             )}
             <article
-                className={`w-full min-w-0 max-w-full overflow-visible rounded-[4px] border border-[#d5dde5] bg-white shadow-[0_1px_2px_rgb(33_41_52_/_8%)]${blocked ? ' hidden' : ''}`}
+                {...props}
+                className={`w-full min-w-0 max-w-full overflow-visible rounded-[4px] border border-[#d5dde5] bg-white shadow-[0_1px_2px_rgb(33_41_52_/_8%)]${blocked ? ' hidden' : ''}${className ? ` ${className}` : ''}`}
                 data-testid="working-list"
                 hidden={blocked}
             >

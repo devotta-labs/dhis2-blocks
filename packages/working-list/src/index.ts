@@ -7,6 +7,18 @@
  */
 export {
     WorkingList,
+    WorkingListColumnSelector,
+    WorkingListFilterControls,
+    WorkingListTable,
+    WorkingListToolbar,
+    WorkingListToolbarActions,
+    WorkingListViewSwitcher,
+    type WorkingListProps,
+    type WorkingListTableProps,
+    type WorkingListViewSwitcherProps,
+    type WorkingListColumnSelectorProps,
+    type WorkingListFilterControlsProps,
+    type WorkingListToolbarActionsProps,
     type WorkingListContainerProps,
     type WorkingListDefaultProps,
     type WorkingListResultsProps,
@@ -32,6 +44,7 @@ export type {
     WorkingListProviderProps,
     WorkingListResultTarget,
     WorkingListState,
+    WorkingListView,
 } from './provider/contracts'
 
 export {
@@ -52,10 +65,14 @@ export {
 } from './provider/errors'
 export type {
     ConfigurationCommandError,
+    CreateViewError,
     CreateSavedListError,
+    DeleteViewError,
     DeleteSavedListError,
     PaginationCommandError,
     SelectSavedListError,
+    SelectViewError,
+    UpdateSelectedViewError,
     UpdateSelectedSavedListError,
 } from './provider/errors'
 

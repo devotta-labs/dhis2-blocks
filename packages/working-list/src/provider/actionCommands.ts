@@ -25,7 +25,7 @@ import {
 } from './configuration'
 import type {
     AppliedFilter,
-    WorkingListActions,
+    WorkingListActionImplementation,
     WorkingListConfiguration,
     WorkingListDisplayRow,
     WorkingListMeta,
@@ -91,7 +91,7 @@ interface CreateWorkingListActionsOptions {
     validateAndCommit: (
         configuration: WorkingListConfiguration,
         resetPage: boolean
-    ) => ReturnType<WorkingListActions['setColumns']>
+    ) => ReturnType<WorkingListActionImplementation['setColumns']>
 }
 
 const idleMutation = (): WorkingListMutationStatus => ({ status: 'idle' })
@@ -110,7 +110,7 @@ export const createWorkingListActions = ({
     translate,
     updateStore,
     validateAndCommit,
-}: CreateWorkingListActionsOptions): WorkingListActions => ({
+}: CreateWorkingListActionsOptions): WorkingListActionImplementation => ({
     setFilter(filter: AppliedFilter) {
         const runtime = runtimeRef.current
         if (!runtime.activeState)

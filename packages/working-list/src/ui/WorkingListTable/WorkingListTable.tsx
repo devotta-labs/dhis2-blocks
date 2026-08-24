@@ -162,7 +162,7 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
     }
 }
 
-interface WorkingListTableProps {
+interface WorkingListDataTableProps {
     allFields: WorkingListField[]
     visibleColumnIds: string[]
     rows?: WorkingListDisplayRow[]
@@ -178,11 +178,11 @@ interface WorkingListTableProps {
     onColumnConfigurationChange: (columnIds: string[]) => void
     onPageChange: (page: number) => void
     onPageSizeChange: (pageSize: WorkingListPageSize) => void
-    onRowOpen: (row: WorkingListDisplayRow) => void
+    onRowOpen?: (row: WorkingListDisplayRow) => void
     onSortChange: (sort: WorkingListSort) => void
 }
 
-export const WorkingListTable = ({
+export const WorkingListDataTable = ({
     allFields,
     visibleColumnIds,
     rows = EMPTY_ROWS,
@@ -200,7 +200,7 @@ export const WorkingListTable = ({
     onPageSizeChange,
     onRowOpen,
     onSortChange,
-}: WorkingListTableProps) => {
+}: WorkingListDataTableProps) => {
     const translate = useWorkingListText()
     const showIssuesColumn = dataQualityMode === 'highlighted'
     const columns = useMemo(() => {

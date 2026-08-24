@@ -98,8 +98,8 @@ export const WorkingListSavedViews = () => {
         setActionError(undefined)
         const result =
             view.id === selectedId
-                ? actions.clearSavedListSelection()
-                : actions.selectSavedList(view.id)
+                ? actions.clearViewSelection()
+                : actions.selectView(view.id)
         if (Result.isError(result)) {
             setActionError(result.error)
         }
@@ -113,14 +113,14 @@ export const WorkingListSavedViews = () => {
     }
     const updateSelected = async () => {
         setActionError(undefined)
-        const result = await actions.updateSelectedSavedList()
+        const result = await actions.updateSelectedView()
         if (Result.isError(result)) {
             setActionError(result.error)
         }
     }
     const deleteView = async (view: WorkingListSavedView) => {
         setActionError(undefined)
-        const result = await actions.deleteSavedList(view.id)
+        const result = await actions.deleteView(view.id)
         if (Result.isError(result)) {
             setActionError(result.error)
         }

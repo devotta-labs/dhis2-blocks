@@ -62,7 +62,7 @@ interface WorkingListTableScenario {
     isUpdating: boolean
     onPageChange: (page: number) => void
     onPageSizeChange: (pageSize: WorkingListPageSize) => void
-    onRowOpen: (row: WorkingListDisplayRow) => void
+    onRowOpen?: (row: WorkingListDisplayRow) => void
     onSortChange: (sort: WorkingListSort) => void
 }
 
@@ -310,6 +310,44 @@ describe('WorkingListTable', () => {
                     )
                 })
                 expect(onRowOpen).toHaveBeenCalledTimes(2)
+            } finally {
+                act(() => root.unmount())
+                container.remove()
+            }
+        })
+    })
+
+    it('renders rows without pointer or keyboard affordances when no row callback is supplied', () => {
+        withActEnvironment(() => {
+            const container = document.createElement('div')
+            document.body.appendChild(container)
+            const root = renderTable(container, {
+                rows: [
+                    {
+                        id: 'tei-static',
+                        trackedEntityId: 'tei-static',
+                        values: {
+                            firstName: { valid: true, value: 'Static' },
+                        },
+                        issues: [],
+                    },
+                ],
+                onRowOpen: undefined,
+            })
+
+            try {
+                const row = container.querySelector<HTMLTableRowElement>(
+                    '[data-testid="working-list-row-tei-static"]'
+                )
+                const firstCell = row?.querySelector<HTMLTableCellElement>('td')
+
+                expect(row?.className).not.toContain('cursor-pointer')
+                expect(row?.hasAttribute('role')).toBe(false)
+                expect(row?.hasAttribute('tabindex')).toBe(false)
+                expect(
+                    row?.querySelector('[data-testid="row-open-tei-static"]')
+                ).toBeNull()
+                expect(firstCell?.onclick).toBeNull()
             } finally {
                 act(() => root.unmount())
                 container.remove()

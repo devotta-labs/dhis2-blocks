@@ -1,22 +1,29 @@
 import type {
     AppliedFilter,
     ConfigurationCommandError,
+    CreateViewError,
     CreateSavedListError,
+    DeleteViewError,
     DeleteSavedListError,
     FilterOperator,
     FilterValue,
     PaginationCommandError,
     SelectSavedListError,
+    SelectViewError,
+    UpdateSelectedViewError,
     UpdateSelectedSavedListError,
     WorkingListActions,
+    WorkingListColumnSelectorProps,
     WorkingListConfiguration,
     WorkingListContainerProps,
     WorkingListDataQualityMode,
     WorkingListDefaultProps,
     WorkingListDisplayRow,
+    WorkingListFilterControlsProps,
     WorkingListMeta,
     WorkingListPageSize,
     WorkingListPagination,
+    WorkingListProps,
     WorkingListProviderProps,
     WorkingListResultsProps,
     WorkingListResultTarget,
@@ -24,27 +31,38 @@ import type {
     WorkingListSort,
     WorkingListState,
     WorkingListToolbarProps,
+    WorkingListToolbarActionsProps,
+    WorkingListTableProps,
+    WorkingListView,
+    WorkingListViewSwitcherProps,
 } from '../src'
 
 export type SupportedWorkingListTypes = [
     AppliedFilter,
     ConfigurationCommandError,
+    CreateViewError,
     CreateSavedListError,
+    DeleteViewError,
     DeleteSavedListError,
     FilterOperator,
     FilterValue,
     PaginationCommandError,
     SelectSavedListError,
+    SelectViewError,
+    UpdateSelectedViewError,
     UpdateSelectedSavedListError,
     WorkingListActions,
+    WorkingListColumnSelectorProps,
     WorkingListConfiguration,
     WorkingListContainerProps,
     WorkingListDataQualityMode,
     WorkingListDefaultProps,
     WorkingListDisplayRow,
+    WorkingListFilterControlsProps,
     WorkingListMeta,
     WorkingListPageSize,
     WorkingListPagination,
+    WorkingListProps,
     WorkingListProviderProps,
     WorkingListResultsProps,
     WorkingListResultTarget,
@@ -52,7 +70,63 @@ export type SupportedWorkingListTypes = [
     WorkingListSort,
     WorkingListState,
     WorkingListToolbarProps,
+    WorkingListToolbarActionsProps,
+    WorkingListTableProps,
+    WorkingListView,
+    WorkingListViewSwitcherProps,
 ]
+
+export const uncontrolledRootProps: WorkingListProps = {
+    children: null,
+    programId: 'Program0001',
+    orgUnitId: 'OrgUnit00001',
+}
+
+export const defaultedRootProps: WorkingListProps = {
+    children: null,
+    programId: 'Program0001',
+    orgUnitId: 'OrgUnit00001',
+    defaultViewId: 'View00000001',
+    onViewChange: () => undefined,
+    defaultPagination: { page: 1, pageSize: 25 },
+    onPaginationChange: () => undefined,
+}
+
+export const controlledRootProps: WorkingListProps = {
+    children: null,
+    programId: 'Program0001',
+    orgUnitId: 'OrgUnit00001',
+    viewId: null,
+    onViewChange: () => undefined,
+    pagination: { page: 2, pageSize: 15 },
+    onPaginationChange: () => undefined,
+}
+
+// @ts-expect-error A controlled view requires its change callback.
+export const controlledViewWithoutCallback: WorkingListProps = {
+    children: null,
+    programId: 'Program0001',
+    orgUnitId: 'OrgUnit00001',
+    viewId: 'View00000001',
+}
+
+// @ts-expect-error Controlled pagination requires its change callback.
+export const controlledPaginationWithoutCallback: WorkingListProps = {
+    children: null,
+    programId: 'Program0001',
+    orgUnitId: 'OrgUnit00001',
+    pagination: { page: 2, pageSize: 15 },
+}
+
+// @ts-expect-error Controlled and uncontrolled view props cannot be combined.
+export const conflictingViewModes: WorkingListProps = {
+    children: null,
+    programId: 'Program0001',
+    orgUnitId: 'OrgUnit00001',
+    viewId: 'View00000001',
+    defaultViewId: 'View00000002',
+    onViewChange: () => undefined,
+}
 
 const providerProps = (
     selectedSavedListId: string | null

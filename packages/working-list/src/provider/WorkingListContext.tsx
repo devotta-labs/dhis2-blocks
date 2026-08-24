@@ -1,7 +1,9 @@
+import { Result } from 'better-result'
 import React, { createContext, useContext, useMemo, useRef } from 'react'
 import { useStore } from 'zustand'
 import type {
     WorkingListActions,
+    WorkingListActionImplementation,
     WorkingListMeta,
     WorkingListState,
 } from './contracts'
@@ -19,7 +21,7 @@ const usePublicContext = () => {
     const context = useContext(WorkingListPublicContext)
     if (!context) {
         throw new Error(
-            'Working List hooks must be used within WorkingList.Provider.'
+            'Working List hooks must be used within WorkingList or WorkingList.Provider.'
         )
     }
     return context
@@ -50,7 +52,7 @@ export const useWorkingListActions = (): WorkingListActions =>
     usePublicContext().actions
 
 export const useStableWorkingListActions = (
-    current: WorkingListActions
+    current: WorkingListActionImplementation
 ): WorkingListActions => {
     const currentRef = useRef(current)
     currentRef.current = current
@@ -64,6 +66,18 @@ export const useStableWorkingListActions = (
                 currentRef.current.setProgramStage(programStageId),
             setPage: (page) => currentRef.current.setPage(page),
             setPageSize: (pageSize) => currentRef.current.setPageSize(pageSize),
+            selectView: (id) => currentRef.current.selectSavedList(id),
+            clearViewSelection: () =>
+                currentRef.current.clearSavedListSelection(),
+            createView: async (name) => {
+                const result = await currentRef.current.createSavedList(name)
+                return Result.isError(result)
+                    ? result
+                    : Result.ok({ viewId: result.value.savedListId })
+            },
+            updateSelectedView: () =>
+                currentRef.current.updateSelectedSavedList(),
+            deleteView: (id) => currentRef.current.deleteSavedList(id),
             selectSavedList: (id) => currentRef.current.selectSavedList(id),
             clearSavedListSelection: () =>
                 currentRef.current.clearSavedListSelection(),

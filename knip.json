@@ -21,7 +21,7 @@
         "binaries": "error",
         "catalog": "error",
         "catalogReferences": "error",
-        "cycles": "warn",
+        "cycles": "error",
         "dependencies": "error",
         "devDependencies": "error",
         "duplicates": "error",

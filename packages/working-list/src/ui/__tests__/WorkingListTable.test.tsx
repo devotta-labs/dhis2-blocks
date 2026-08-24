@@ -1,4 +1,4 @@
-import React, { act } from 'react'
+import React, { act, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { z } from 'zod'
 import type { WorkingListField, WorkingListSort } from '../../domain/model'
@@ -6,6 +6,10 @@ import type {
     WorkingListDisplayRow,
     WorkingListPageSize,
 } from '../../provider/contracts'
+import {
+    nextWorkingListSort,
+    WorkingListDataTable,
+} from '../WorkingListTable/WorkingListTable'
 import {
     WorkingListTableView,
     type WorkingListTableHeaderView,
@@ -219,6 +223,98 @@ const withActEnvironment = (run: () => void) => {
 }
 
 describe('WorkingListTable', () => {
+    it('cycles Capture-compatible sorting back to the default sort', () => {
+        const ascending = nextWorkingListSort(
+            { fieldId: 'createdAt', direction: 'desc' },
+            'firstName'
+        )
+        expect(ascending).toEqual({
+            fieldId: 'firstName',
+            direction: 'asc',
+        })
+
+        const descending = nextWorkingListSort(ascending, 'firstName')
+        expect(descending).toEqual({
+            fieldId: 'firstName',
+            direction: 'desc',
+        })
+
+        expect(nextWorkingListSort(descending, 'firstName')).toEqual({
+            fieldId: 'createdAt',
+            direction: 'desc',
+        })
+    })
+
+    it('renders the ascending, descending, and default states across three clicks', () => {
+        withActEnvironment(() => {
+            const container = document.createElement('div')
+            document.body.appendChild(container)
+            const root = createRoot(container)
+            const sortFields: WorkingListField[] = [
+                ...fields,
+                {
+                    id: 'createdAt',
+                    displayName: 'Registration date',
+                    source: 'system',
+                    scope: 'trackedEntity',
+                    valueType: 'DATETIME',
+                    filterable: true,
+                },
+            ]
+            const SortingHarness = () => {
+                const [sort, setSort] = useState<WorkingListSort>({
+                    fieldId: 'createdAt',
+                    direction: 'desc',
+                })
+                return (
+                    <WorkingListTextProvider translate={translate}>
+                        <WorkingListDataTable
+                            allFields={sortFields}
+                            visibleColumnIds={fields.map((field) => field.id)}
+                            sort={sort}
+                            page={1}
+                            pageSize={15}
+                            hasNextPage={false}
+                            isInitialLoading={false}
+                            isUpdating={false}
+                            formattingContext={{}}
+                            onColumnConfigurationChange={() => undefined}
+                            onPageChange={() => undefined}
+                            onPageSizeChange={() => undefined}
+                            onSortChange={setSort}
+                        />
+                    </WorkingListTextProvider>
+                )
+            }
+
+            try {
+                act(() => root.render(<SortingHarness />))
+                const sortButton = container.querySelector<HTMLButtonElement>(
+                    '[data-testid="sort-firstName"]'
+                )
+                const header = sortButton?.closest('th')
+
+                expect(sortButton?.textContent).toContain('↕')
+                expect(header?.getAttribute('aria-sort')).toBe('none')
+
+                act(() => sortButton?.click())
+                expect(sortButton?.textContent).toContain('↑')
+                expect(header?.getAttribute('aria-sort')).toBe('ascending')
+
+                act(() => sortButton?.click())
+                expect(sortButton?.textContent).toContain('↓')
+                expect(header?.getAttribute('aria-sort')).toBe('descending')
+
+                act(() => sortButton?.click())
+                expect(sortButton?.textContent).toContain('↕')
+                expect(header?.getAttribute('aria-sort')).toBe('none')
+            } finally {
+                act(() => root.unmount())
+                container.remove()
+            }
+        })
+    })
+
     it('opens a row by pointer or its accessible in-cell control without hijacking links', () => {
         withActEnvironment(() => {
             const container = document.createElement('div')

@@ -20,6 +20,7 @@ import type {
     WorkingListPageSize,
 } from '../../provider/contracts'
 import type { WorkingListCellValue } from '../../query/normalizeRows'
+import { DEFAULT_WORKING_LIST_SORT } from '../../query/serialize'
 import {
     getCellDisplayValue,
     type CellDisplayValue,
@@ -56,6 +57,19 @@ const EMPTY_ROWS: WorkingListDisplayRow[] = []
  * column configuration changes are reported.
  */
 const DATA_QUALITY_COLUMN_ID = '__dataQuality'
+
+export const nextWorkingListSort = (
+    currentSort: WorkingListSort,
+    fieldId: string
+): WorkingListSort => {
+    if (currentSort.fieldId !== fieldId) {
+        return { fieldId, direction: 'asc' }
+    }
+    if (currentSort.direction === 'asc') {
+        return { fieldId, direction: 'desc' }
+    }
+    return { ...DEFAULT_WORKING_LIST_SORT }
+}
 
 /**
  * Best-effort rendering for a value that failed validation: the raw scalar
@@ -283,7 +297,6 @@ export const WorkingListDataTable = ({
             manualSorting: true,
             pageCount: -1,
             enableMultiSort: false,
-            enableSortingRemoval: false,
             state: {
                 columnOrder,
                 columnVisibility,
@@ -308,16 +321,6 @@ export const WorkingListDataTable = ({
                         .filter((id) => next[id] !== false)
                 )
             },
-            onSortingChange: (updater) => {
-                const next = functionalUpdate(updater, sorting)
-                const first = next[0]
-                if (first) {
-                    onSortChange({
-                        fieldId: first.id,
-                        direction: first.desc ? 'desc' : 'asc',
-                    })
-                }
-            },
         },
         (state) => ({
             columnOrder: state.columnOrder,
@@ -337,8 +340,8 @@ export const WorkingListDataTable = ({
                 canSort: header.column.getCanSort(),
                 isDataQuality: header.column.id === DATA_QUALITY_COLUMN_ID,
                 sorted: header.column.getIsSorted(),
-                onToggleSorting: (event) =>
-                    header.column.getToggleSortingHandler()?.(event),
+                onToggleSorting: () =>
+                    onSortChange(nextWorkingListSort(sort, header.column.id)),
             })),
         })),
         rows: table.getRowModel().rows.map((row) => ({

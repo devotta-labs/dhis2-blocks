@@ -71,18 +71,16 @@ export interface FetchWorkingListPageInput {
 const getHasNextPage = (
     recordCount: number,
     pagination: WorkingListPagination,
+    apiVersion: number,
     pager?: {
         total?: number
         nextPage?: string
     }
 ) => {
-    if (pager?.nextPage) {
-        return true
+    if (apiVersion >= 42) {
+        return Boolean(pager?.nextPage)
     }
-    if (pager?.total !== undefined) {
-        return pagination.page * pagination.pageSize < pager.total
-    }
-    return recordCount >= pagination.pageSize
+    return recordCount === pagination.pageSize
 }
 
 const reportDataQualityIssues = (
@@ -151,6 +149,7 @@ export const fetchWorkingListPage = async ({
             hasNextPage: getHasNextPage(
                 records.length,
                 input.pagination,
+                input.capabilities.apiVersion,
                 response.pager
             ),
         }
@@ -240,6 +239,7 @@ export const fetchWorkingListPage = async ({
         hasNextPage: getHasNextPage(
             events.length,
             input.pagination,
+            input.capabilities.apiVersion,
             eventsResponse.pager
         ),
     }
@@ -257,6 +257,5 @@ export const workingListPageQueryOptions = (
         staleTime: 20_000,
         gcTime: 5 * 60_000,
         retry: shouldRetryWorkingListRequest,
-        placeholderData: (previous) => previous,
     })
 }

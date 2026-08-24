@@ -1,50 +1,23 @@
-import type { QueryClient } from '@tanstack/react-query'
-import React from 'react'
-import type { ProgramFieldCatalog } from '../../api/metadata'
-import { WorkingListContextSchema } from '../../domain/schemas'
-import { WorkingListQueryBoundary } from '../WorkingListQueryBoundary'
-import {
-    WorkingListTextProvider,
-    type WorkingListTranslate,
-} from '../WorkingListText'
-import {
-    WorkingListInstance,
-    type WorkingListInstanceProps,
-} from './WorkingListInstance'
+import { WorkingListProvider } from '../../provider/WorkingListProvider'
+import { WorkingListActions } from '../Actions'
+import { WorkingListColumns } from '../Columns'
+import { WorkingListContainer } from '../Container'
+import { WorkingListDefault } from '../Default'
+import { WorkingListFilters } from '../Filters'
+import { WorkingListResults } from '../Results'
+import { WorkingListSavedViews } from '../SavedViews'
+import { WorkingListSection } from '../Section'
+import { WorkingListToolbar } from '../Toolbar'
 
-export interface WorkingListProps extends WorkingListInstanceProps {
-    translate?: WorkingListTranslate
-    queryClient?: QueryClient
-}
-
-export const WorkingList = ({
-    queryClient,
-    translate,
-    ...props
-}: WorkingListProps) => {
-    if (props.program.programType !== 'WITH_REGISTRATION') {
-        throw new Error(
-            translate?.(
-                'Working lists require a tracker program with registration.'
-            ) ?? 'Working lists require a tracker program with registration.'
-        )
-    }
-    const context = WorkingListContextSchema.parse({
-        orgUnitId: props.orgUnitId,
-        programId: props.program.id,
-    })
-
-    return (
-        <WorkingListQueryBoundary client={queryClient}>
-            <WorkingListTextProvider translate={translate}>
-                <WorkingListInstance
-                    key={props.program.id}
-                    {...props}
-                    orgUnitId={context.orgUnitId}
-                />
-            </WorkingListTextProvider>
-        </WorkingListQueryBoundary>
-    )
-}
-
-export type { ProgramFieldCatalog }
+export const WorkingList = {
+    Provider: WorkingListProvider,
+    Container: WorkingListContainer,
+    Section: WorkingListSection,
+    SavedViews: WorkingListSavedViews,
+    Toolbar: WorkingListToolbar,
+    Columns: WorkingListColumns,
+    Filters: WorkingListFilters,
+    Actions: WorkingListActions,
+    Results: WorkingListResults,
+    Default: WorkingListDefault,
+} as const

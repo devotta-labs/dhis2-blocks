@@ -23,6 +23,7 @@ import React, {
     createContext,
     useContext,
     useEffect,
+    useId,
     useMemo,
     useRef,
     useState,
@@ -635,6 +636,7 @@ interface MoreFiltersProps {
     program?: TrackerProgram
     selectedStageId?: string
     eventFields?: WorkingListField[]
+    disabled?: boolean
     onAdd: (fieldId: string) => void
     onSelectStage?: (stageId: string) => void
     onAddStageFilter?: (stageId: string, fieldId: string) => void
@@ -647,6 +649,7 @@ export const MoreFilters = ({
     program,
     selectedStageId,
     eventFields = [],
+    disabled = false,
     onAdd,
     onSelectStage,
     onAddStageFilter,
@@ -701,13 +704,18 @@ export const MoreFilters = ({
                 icon={<IconFilter16 />}
                 dataTest={`more-filters-${scope}`}
                 data-testid={`more-filters-${scope}`}
-                aria-expanded={open}
+                disabled={disabled}
+                aria-expanded={open && !disabled}
                 aria-haspopup="menu"
-                onClick={() => setOpen((value) => !value)}
+                onClick={() => {
+                    if (!disabled) {
+                        setOpen((value) => !value)
+                    }
+                }}
             >
                 {i18n.t('Filter')}
             </Button>
-            {open && buttonElement && (
+            {open && !disabled && buttonElement && (
                 <FilterPopover
                     arrow={false}
                     maxWidth={400}
@@ -885,6 +893,7 @@ interface FilterButtonProps {
     calendarContext: FilterCalendarContext
     defaultOpen?: boolean
     prefix?: string
+    disabled?: boolean
     onApply: (filter: AppliedFilter) => void
     onReset: () => void
     onRemove?: () => void
@@ -899,12 +908,14 @@ export const FilterButton = ({
     calendarContext,
     defaultOpen,
     prefix,
+    disabled = false,
     onApply,
     onReset,
     onRemove,
 }: FilterButtonProps) => {
     const translate = useWorkingListText()
     const i18n = { t: translate }
+    const editorId = useId()
     const [buttonElement, setButtonElement] = useState<HTMLDivElement | null>(
         null
     )
@@ -917,7 +928,7 @@ export const FilterButton = ({
             buttonElement,
             `[data-test="filter-${field.id}-select"] [tabindex]`,
             nextOpen,
-            `filter-editor-${field.id}`,
+            editorId,
             displayPrefix,
             `[data-test="filter-${field.id}-select-clear"]`,
             i18n.t('Clear {{filter}} filter', { filter: displayPrefix })
@@ -945,7 +956,7 @@ export const FilterButton = ({
                         element,
                         `[data-test="filter-${field.id}-select"] [tabindex]`,
                         open,
-                        `filter-editor-${field.id}`,
+                        editorId,
                         displayPrefix,
                         `[data-test="filter-${field.id}-select-clear"]`,
                         i18n.t('Clear {{filter}} filter', {
@@ -957,6 +968,9 @@ export const FilterButton = ({
             className={styles['filter-control']}
             data-testid={`filter-${field.id}`}
             onMouseDownCapture={(event) => {
+                if (disabled) {
+                    return
+                }
                 const target =
                     event.target instanceof Element ? event.target : null
                 if (
@@ -974,6 +988,9 @@ export const FilterButton = ({
                 onRemove?.()
             }}
             onClickCapture={(event) => {
+                if (disabled) {
+                    return
+                }
                 const target =
                     event.target instanceof Element ? event.target : null
                 const select = target?.closest(
@@ -994,6 +1011,9 @@ export const FilterButton = ({
                 setEditorOpen(!open)
             }}
             onKeyDownCapture={(event) => {
+                if (disabled) {
+                    return
+                }
                 const target =
                     event.target instanceof Element ? event.target : null
                 if (
@@ -1013,6 +1033,7 @@ export const FilterButton = ({
                 clearable
                 clearText={i18n.t('Clear filter')}
                 dataTest={`filter-${field.id}-select`}
+                disabled={disabled}
                 prefix={`${displayPrefix}:`}
                 selected="current-filter"
                 onChange={({ selected }) => {
@@ -1027,7 +1048,7 @@ export const FilterButton = ({
                     label={summary ?? i18n.t('All')}
                 />
             </SingleSelect>
-            {open && buttonElement && (
+            {open && !disabled && buttonElement && (
                 <FilterPopover
                     arrow={false}
                     maxWidth={400}
@@ -1038,6 +1059,7 @@ export const FilterButton = ({
                     <div className={styles['filter-popover-sheet']}>
                         <FilterEditor
                             key={`${field.id}-${JSON.stringify(filter?.value)}`}
+                            id={editorId}
                             field={field}
                             client={client}
                             filter={filter}
@@ -1061,10 +1083,12 @@ export const FilterButton = ({
 }
 
 interface FilterEditorProps extends Omit<FilterButtonProps, 'onReset'> {
+    id: string
     onReset: () => void
 }
 
 const FilterEditor = ({
+    id,
     field,
     client,
     filter,
@@ -1112,7 +1136,7 @@ const FilterEditor = ({
     return (
         <form
             ref={focusFirstControl}
-            id={`filter-editor-${field.id}`}
+            id={id}
             className={styles['filter-editor']}
             data-testid={`filter-editor-${field.id}`}
             role="dialog"
@@ -1837,6 +1861,7 @@ interface ProgramStageControlProps {
     program: TrackerProgram
     selectedStageId?: string
     defaultOpen?: boolean
+    disabled?: boolean
     onChange: (stageId?: string) => void
     onRemove: () => void
 }
@@ -1845,10 +1870,12 @@ export const ProgramStageControl = ({
     program,
     selectedStageId,
     defaultOpen,
+    disabled = false,
     onChange,
     onRemove,
 }: ProgramStageControlProps) => {
     const i18n = { t: useWorkingListText() }
+    const editorId = useId()
     const [buttonElement, setButtonElement] = useState<HTMLDivElement | null>(
         null
     )
@@ -1870,7 +1897,7 @@ export const ProgramStageControl = ({
             buttonElement,
             '[data-test="filter-programStage-select"] [tabindex]',
             nextOpen,
-            'filter-editor-programStage',
+            editorId,
             i18n.t('Program stage'),
             '[data-test="filter-programStage-select-clear"]',
             i18n.t('Clear {{filter}} filter', {
@@ -1900,7 +1927,7 @@ export const ProgramStageControl = ({
                         element,
                         '[data-test="filter-programStage-select"] [tabindex]',
                         open,
-                        'filter-editor-programStage',
+                        editorId,
                         i18n.t('Program stage'),
                         '[data-test="filter-programStage-select-clear"]',
                         i18n.t('Clear {{filter}} filter', {
@@ -1912,6 +1939,9 @@ export const ProgramStageControl = ({
             className={styles['filter-control']}
             data-testid="filter-programStage"
             onMouseDownCapture={(event) => {
+                if (disabled) {
+                    return
+                }
                 const target =
                     event.target instanceof Element ? event.target : null
                 if (
@@ -1926,6 +1956,9 @@ export const ProgramStageControl = ({
                 onRemove()
             }}
             onClickCapture={(event) => {
+                if (disabled) {
+                    return
+                }
                 const target =
                     event.target instanceof Element ? event.target : null
                 const select = target?.closest(
@@ -1947,6 +1980,9 @@ export const ProgramStageControl = ({
                 setEditorOpen(!open)
             }}
             onKeyDownCapture={(event) => {
+                if (disabled) {
+                    return
+                }
                 const target =
                     event.target instanceof Element ? event.target : null
                 if (
@@ -1967,6 +2003,7 @@ export const ProgramStageControl = ({
                 clearable
                 clearText={i18n.t('Clear filter')}
                 dataTest="filter-programStage-select"
+                disabled={disabled}
                 prefix={i18n.t('{{filterName}}{{escape}}', {
                     filterName: i18n.t('Program stage'),
                     escape: ':',
@@ -1985,7 +2022,7 @@ export const ProgramStageControl = ({
                     />
                 )}
             </SingleSelect>
-            {open && buttonElement && (
+            {open && !disabled && buttonElement && (
                 <FilterPopover
                     arrow={false}
                     maxWidth={400}
@@ -1996,6 +2033,7 @@ export const ProgramStageControl = ({
                     <div className={styles['filter-popover-sheet']}>
                         <form
                             ref={focusFirstControl}
+                            id={editorId}
                             className={styles['filter-editor']}
                             data-testid="filter-editor-programStage"
                             role="dialog"

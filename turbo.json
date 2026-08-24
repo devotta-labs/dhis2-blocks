@@ -3,19 +3,12 @@
     "cacheDir": ".turbo/cache",
     "tasks": {
         "build": {
-            "dependsOn": ["^build"],
-            "outputs": ["build/**", "dist/**", ".d2/**", "src/locales/**"]
-        },
-        "package:check": {
-            "dependsOn": ["build"],
-            "outputs": []
+            "outputs": ["build/**", ".d2/**", "src/locales/**"]
         },
         "test": {
-            "dependsOn": ["^build"],
             "outputs": []
         },
         "typecheck": {
-            "dependsOn": ["^build"],
             "outputs": []
         },
         "lint": {

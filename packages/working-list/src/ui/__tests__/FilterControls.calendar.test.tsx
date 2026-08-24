@@ -372,7 +372,7 @@ describe('calendar filter controls', () => {
             expect(
                 container
                     .querySelector<HTMLInputElement>(
-                        '#filter-editor-name input'
+                        '[data-testid="filter-editor-name"] input'
                     )
                     ?.getAttribute('minlength')
             ).toBeNull()
@@ -384,7 +384,7 @@ describe('calendar filter controls', () => {
             expect(
                 container
                     .querySelector<HTMLInputElement>(
-                        '#filter-editor-name input'
+                        '[data-testid="filter-editor-name"] input'
                     )
                     ?.getAttribute('minlength')
             ).toBe('3')

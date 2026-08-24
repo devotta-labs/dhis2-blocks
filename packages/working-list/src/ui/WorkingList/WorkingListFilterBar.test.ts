@@ -1,18 +1,19 @@
-import type { WorkingListCriteria } from '../../domain/model'
-import { visibleEventFiltersAfterStageChange } from './WorkingListFilterBar'
+import type { WorkingListConfiguration } from '../../provider/contracts'
+import { visibleEventFiltersAfterStageChange } from '../Filters'
 
-const criteria: WorkingListCriteria = {
+const configuration: WorkingListConfiguration = {
     mode: 'event',
-    programId: 'Program0001',
     programStageId: 'Stage000001',
     filters: [],
+    columns: ['createdAt'],
+    sort: { fieldId: 'createdAt', direction: 'desc' },
 }
 
 describe('visibleEventFiltersAfterStageChange', () => {
     it('clears controls left over from the previous stage', () => {
         expect(
             visibleEventFiltersAfterStageChange({
-                criteria,
+                configuration,
                 stageId: 'Stage000002',
                 visibleFilterIds: ['eventOccurredAt'],
             })
@@ -22,7 +23,7 @@ describe('visibleEventFiltersAfterStageChange', () => {
     it('keeps the newly selected filter while entering its stage', () => {
         expect(
             visibleEventFiltersAfterStageChange({
-                criteria,
+                configuration,
                 stageId: 'Stage000002',
                 visibleFilterIds: ['eventOccurredAt'],
                 addedFilterId: 'eventStatus',
@@ -33,7 +34,7 @@ describe('visibleEventFiltersAfterStageChange', () => {
     it('preserves controls when re-entering the current stage', () => {
         expect(
             visibleEventFiltersAfterStageChange({
-                criteria,
+                configuration,
                 stageId: 'Stage000001',
                 visibleFilterIds: ['eventOccurredAt'],
             })

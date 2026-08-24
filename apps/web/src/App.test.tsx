@@ -5,6 +5,7 @@ import {
     isGuardedAppUrlTransition,
     parseAppUrlState,
     serializeAppUrlState,
+    type AppUrlState,
 } from './app/urlState'
 
 const TestAppShell = () => (
@@ -69,7 +70,7 @@ describe('URL state privacy boundary', () => {
     })
 
     it('guards external program and list changes, but not OU or paging', () => {
-        const current = {
+        const current: AppUrlState = {
             programId: 'Program0001',
             orgUnitId: 'OrgUnit0001',
             selectedTemplateId: 'List0000001',

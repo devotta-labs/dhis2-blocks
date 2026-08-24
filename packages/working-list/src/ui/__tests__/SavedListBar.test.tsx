@@ -1,49 +1,39 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { NormalizedSavedWorkingList } from '../../api/savedLists'
+import type { WorkingListSavedView } from '../../provider/contracts'
 import { SavedListBar } from '../SavedListBar'
 import { WorkingListTextProvider } from '../WorkingListText'
 
-const generatedList: NormalizedSavedWorkingList = {
+const generatedList: WorkingListSavedView = {
     id: 'active',
     name: 'Active enrollments',
-    resource: 'trackedEntityInstanceFilters',
-    sharing: {},
-    compatibility: 'compatible',
-    configuration: {
-        mode: 'trackedEntity',
-        programId: 'Program0001',
-        filters: [],
-        columns: ['createdAt'],
-        sort: { fieldId: 'createdAt', direction: 'desc' },
-    },
+    generated: true,
+    compatible: true,
+    canUpdate: false,
+    canDelete: false,
+    canShare: false,
 }
 
-const ownedList: NormalizedSavedWorkingList = {
+const ownedList: WorkingListSavedView = {
     ...generatedList,
     id: 'OwnedList01',
     name: 'My working list',
-    sharing: {
-        access: {
-            delete: true,
-            manage: true,
-            update: true,
-            write: true,
-        },
-    },
+    generated: false,
+    canUpdate: true,
+    canDelete: true,
+    canShare: true,
 }
 
-const readOnlyList: NormalizedSavedWorkingList = {
+const readOnlyList: WorkingListSavedView = {
     ...generatedList,
     id: 'ReadOnly01',
     name: 'Shared with me',
-    sharing: { access: { read: true } },
+    generated: false,
 }
 
 interface RenderBarOptions {
-    lists?: NormalizedSavedWorkingList[]
+    lists?: WorkingListSavedView[]
     selectedId?: string
-    listsAreGenerated?: boolean
     dirty?: boolean
     online?: boolean
     busy?: boolean
@@ -99,7 +89,6 @@ describe('SavedListBar', () => {
                     <SavedListBar
                         lists={lists}
                         selectedId={options.selectedId}
-                        listsAreGenerated={options.listsAreGenerated ?? false}
                         dirty={options.dirty ?? false}
                         online={options.online ?? true}
                         busy={options.busy ?? false}
@@ -132,14 +121,14 @@ describe('SavedListBar', () => {
             `[data-test="${dataTest}"] [role="menuitem"]`
         )
 
-    it('labels the section and keeps selection separate from view actions', () => {
+    it('leaves section naming to its parent and keeps selection separate from view actions', () => {
         const { callbacks, container, cleanup } = renderBar({
             lists: [ownedList],
             selectedId: ownedList.id,
         })
 
         try {
-            const section = container.querySelector<HTMLElement>(
+            const bar = container.querySelector<HTMLElement>(
                 '[data-testid="saved-list-bar"]'
             )
             const view = container.querySelector<HTMLElement>(
@@ -152,10 +141,9 @@ describe('SavedListBar', () => {
                 'button[data-saved-view-menu]'
             )
 
-            expect(section?.getAttribute('aria-label')).toBe(
-                'Working list views'
-            )
-            expect(section?.textContent).toContain(
+            expect(bar?.tagName).toBe('DIV')
+            expect(bar?.hasAttribute('aria-label')).toBe(false)
+            expect(bar?.textContent).not.toContain(
                 'Saved views in this program'
             )
             expect(selectButton?.getAttribute('aria-current')).toBe('true')
@@ -258,7 +246,6 @@ describe('SavedListBar', () => {
         const generated = renderBar({
             lists: [generatedList],
             selectedId: generatedList.id,
-            listsAreGenerated: true,
             dirty: true,
         })
 

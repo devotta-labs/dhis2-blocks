@@ -5,18 +5,11 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-23T18:15:26.684Z\n"
-"PO-Revision-Date: 2026-08-23T18:15:26.684Z\n"
+"POT-Creation-Date: 2026-08-24T11:13:56.089Z\n"
+"PO-Revision-Date: 2026-08-24T11:13:56.090Z\n"
 
 msgid "Discard the unsaved changes to this working list?"
 msgstr "Discard the unsaved changes to this working list?"
-
-msgid ""
-"You are offline. Cached results remain available; server actions are "
-"disabled."
-msgstr ""
-"You are offline. Cached results remain available; server actions are "
-"disabled."
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -57,6 +50,15 @@ msgstr "Choose another organisation unit"
 
 msgid "Highlight data quality issues"
 msgstr "Highlight data quality issues"
+
+msgid "Saved views in this program"
+msgstr "Saved views in this program"
+
+msgid "Tracked entity filters"
+msgstr "Tracked entity filters"
+
+msgid "Working list results"
+msgstr "Working list results"
 
 msgid "Event selected"
 msgstr "Event selected"
@@ -545,9 +547,6 @@ msgstr "Save as new working list"
 msgid "Save view"
 msgstr "Save view"
 
-msgid "Saved views in this program"
-msgstr "Saved views in this program"
-
 msgid "Scheduled"
 msgstr "Scheduled"
 
@@ -666,9 +665,6 @@ msgstr "Today"
 msgid "Tracked entity attribute"
 msgstr "Tracked entity attribute"
 
-msgid "Tracked entity filters"
-msgstr "Tracked entity filters"
-
 msgid "Try adjusting the filters or organisation unit."
 msgstr "Try adjusting the filters or organisation unit."
 
@@ -713,9 +709,6 @@ msgstr "Visited"
 
 msgid "Working list actions"
 msgstr "Working list actions"
-
-msgid "Working list results"
-msgstr "Working list results"
 
 msgid "Working list views"
 msgstr "Working list views"
@@ -773,3 +766,11 @@ msgstr "TRUE_ONLY accepts only true"
 msgctxt "INTERVAL requires a value from zero to one"
 msgid "UNIT"
 msgstr "UNIT_INTERVAL requires a value from zero to one"
+
+msgctxt "Application title"
+msgid "__MANIFEST_APP_TITLE"
+msgstr "@dhis2-blocks/web"
+
+msgctxt "Application description"
+msgid "__MANIFEST_APP_DESCRIPTION"
+msgstr "DHIS2 wrapper application for developing Working List blocks"

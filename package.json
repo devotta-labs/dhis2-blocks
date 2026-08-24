@@ -5,9 +5,7 @@
     "description": "Reusable DHIS2 UI blocks and their development applications",
     "license": "BSD-3-Clause",
     "scripts": {
-        "build": "turbo run build",
-        "build:library": "turbo run build --filter=@dhis2-blocks/working-list",
-        "package:check": "turbo run package:check --filter=@dhis2-blocks/working-list",
+        "build": "turbo run build --filter=@dhis2-blocks/web",
         "start": "turbo run start --filter=@dhis2-blocks/web",
         "test": "turbo run test",
         "typecheck": "turbo run typecheck",

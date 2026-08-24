@@ -1,4 +1,4 @@
-import { useConfig, useDataEngine, useOnlineStatus } from '@dhis2/app-runtime'
+import { useConfig, useDataEngine } from '@dhis2/app-runtime'
 import {
     Button,
     CircularLoader,
@@ -10,20 +10,21 @@ import {
     Switch,
 } from '@dhis2/ui'
 import {
-    createWorkingListClient,
-    trackerProgramQueryOptions,
-    trackerProgramsQueryOptions,
-    workingListSystemInfoQueryOptions,
     WorkingList,
+    useWorkingListMeta,
+    type WorkingListDataQualityMode,
+    type WorkingListResultTarget,
+} from '@dhis2-blocks/working-list'
+import {
+    createWorkingListClient,
+    trackerProgramsQueryOptions,
     type DataEngineLike,
     type DataEngineMutation,
     type DataEngineQuery,
-    type WorkingListDataQualityMode,
-    type WorkingListRowOpenEvent,
-} from '@dhis2-blocks/working-list'
+} from '@dhis2-blocks/working-list/development'
 import { useQuery } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useBlocker, useSearchParams } from 'react-router-dom'
+import { useBlocker } from 'react-router-dom'
 import { z, ZodError } from 'zod'
 import { ContextSelectorBar } from '../ContextSelectorBar'
 import { getGuardedOrganisationUnitState } from '../contextTransitions'
@@ -36,13 +37,8 @@ import {
     isOrganisationUnitInScope,
     resolveTrackerSearchRoots,
 } from '../organisationUnitScope'
-import {
-    isGuardedAppUrlTransition,
-    parseAppUrlState,
-    parseAppUrlStateFromHash,
-    serializeAppUrlState,
-    type AppUrlState,
-} from '../urlState'
+import { isGuardedAppUrlTransition, parseAppUrlState } from '../urlState'
+import { useAppUrlState } from '../useAppUrlState'
 import i18n from '../../i18n'
 
 const OrganisationUnitReferenceSchema = z
@@ -154,28 +150,15 @@ const toRuntimeMutation = (mutation: DataEngineMutation) => {
     } as const
 }
 
-const useAppUrlState = () => {
-    const [searchParams, setSearchParams] = useSearchParams()
-    const state = useMemo(() => parseAppUrlState(searchParams), [searchParams])
-    const update = useCallback(
-        (next: AppUrlState | ((current: AppUrlState) => AppUrlState)) => {
-            const resolveNext =
-                next instanceof Function
-                    ? (current: AppUrlState) => next(current)
-                    : () => next
-            setSearchParams((committed) =>
-                serializeAppUrlState(
-                    resolveNext(
-                        globalThis.window
-                            ? parseAppUrlStateFromHash(window.location.hash)
-                            : parseAppUrlState(committed)
-                    )
-                )
-            )
-        },
-        [setSearchParams]
-    )
-    return [state, update] as const
+const WorkingListDirtyBridge = ({
+    onChange,
+}: {
+    onChange(dirty: boolean): void
+}) => {
+    const dirty = useWorkingListMeta((meta) => meta.dirty)
+
+    useEffect(() => onChange(dirty), [dirty, onChange])
+    return null
 }
 
 export const AppShell = () => {
@@ -185,7 +168,6 @@ export const AppShell = () => {
         () => AppRuntimeConfigSchema.parse(config),
         [config]
     )
-    const networkStatus = useOnlineStatus()
     const client = useMemo(() => {
         const dataEngine: DataEngineLike = {
             query: async (query, options) =>
@@ -198,7 +180,7 @@ export const AppShell = () => {
     }, [engine])
     const [orgUnitPickerOpen, setOrgUnitPickerOpen] = useState(false)
     const [dirty, setDirty] = useState(false)
-    const [openedRecord, setOpenedRecord] = useState<WorkingListRowOpenEvent>()
+    const [openedRecord, setOpenedRecord] = useState<WorkingListResultTarget>()
     const [dataQualityMode, setDataQualityMode] =
         useState<WorkingListDataQualityMode>('hidden')
     const confirmDiscard = useCallback(() => {
@@ -248,7 +230,6 @@ export const AppShell = () => {
     const programsQuery = useQuery(
         trackerProgramsQueryOptions(client, runtimeConfig.apiVersion)
     )
-    const systemInfoQuery = useQuery(workingListSystemInfoQueryOptions(client))
 
     const currentUserQuery = useQuery({
         queryKey: ['working-list', 'shell', 'current-user-org-units'],
@@ -280,15 +261,6 @@ export const AppShell = () => {
     const selectedProgramSummary = programs.find(
         (program) => program.id === urlState.programId
     )
-    const selectedProgramQuery = useQuery({
-        ...trackerProgramQueryOptions(
-            client,
-            urlState.programId ?? 'no-program-selected',
-            runtimeConfig.apiVersion
-        ),
-        enabled: Boolean(selectedProgramSummary),
-    })
-    const selectedProgram = selectedProgramQuery.data
 
     const programOrgUnitsQuery = useQuery({
         queryKey: [
@@ -409,19 +381,15 @@ export const AppShell = () => {
 
     const loading =
         programsQuery.isPending ||
-        systemInfoQuery.isPending ||
         currentUserQuery.isPending ||
         Boolean(
             selectedProgramSummary &&
-            (selectedProgramQuery.isPending ||
-                programOrgUnitsQuery.isPending ||
+            (programOrgUnitsQuery.isPending ||
                 (urlState.orgUnitId && selectedOrgUnitQuery.isPending))
         )
     const shellError =
         programsQuery.error ??
-        systemInfoQuery.error ??
         currentUserQuery.error ??
-        (selectedProgramSummary ? selectedProgramQuery.error : undefined) ??
         (selectedProgramSummary ? programOrgUnitsQuery.error : undefined) ??
         (selectedProgramSummary && urlState.orgUnitId
             ? selectedOrgUnitQuery.error
@@ -429,18 +397,6 @@ export const AppShell = () => {
 
     return (
         <div className="app-shell" data-testid="working-list-app">
-            {!networkStatus.online && (
-                <div
-                    className="offline-notice"
-                    data-testid="offline-notice"
-                    role="status"
-                >
-                    {i18n.t(
-                        'You are offline. Cached results remain available; server actions are disabled.'
-                    )}
-                </div>
-            )}
-
             <ContextSelectorBar
                 programs={programs}
                 selectedProgram={selectedProgramSummary}
@@ -507,10 +463,8 @@ export const AppShell = () => {
                         <Button
                             onClick={() => {
                                 void programsQuery.refetch()
-                                void systemInfoQuery.refetch()
                                 void currentUserQuery.refetch()
                                 if (selectedProgramSummary) {
-                                    void selectedProgramQuery.refetch()
                                     void programOrgUnitsQuery.refetch()
                                 }
                                 if (
@@ -543,7 +497,7 @@ export const AppShell = () => {
 
             {!loading &&
                 !shellError &&
-                selectedProgram &&
+                selectedProgramSummary &&
                 !urlState.orgUnitId && (
                     <main
                         className="context-state"
@@ -567,7 +521,7 @@ export const AppShell = () => {
 
             {!loading &&
                 !shellError &&
-                selectedProgram &&
+                selectedProgramSummary &&
                 urlState.orgUnitId &&
                 !selectedOrgUnitIsAllowed && (
                     <main
@@ -597,7 +551,7 @@ export const AppShell = () => {
 
             {!loading &&
                 !shellError &&
-                selectedProgram &&
+                selectedProgramSummary &&
                 urlState.orgUnitId &&
                 selectedOrgUnitIsAllowed && (
                     <main
@@ -616,37 +570,57 @@ export const AppShell = () => {
                                 }
                             />
                         </div>
-                        <WorkingList
-                            key={selectedProgram.id}
-                            dataQualityMode={dataQualityMode}
-                            apiVersion={runtimeConfig.apiVersion}
-                            client={client}
-                            online={networkStatus.online}
+                        <WorkingList.Provider
+                            programId={selectedProgramSummary.id}
                             orgUnitId={urlState.orgUnitId}
-                            page={urlState.page ?? 1}
-                            pageSize={urlState.pageSize ?? 15}
-                            program={selectedProgram}
-                            systemInfo={systemInfoQuery.data!}
-                            locale={i18n.language}
-                            selectedTemplateId={urlState.selectedTemplateId}
-                            onDirtyChange={setDirty}
-                            onPageChange={(page, pageSize) =>
+                            selectedSavedListId={urlState.selectedTemplateId}
+                            pagination={{
+                                page: urlState.page ?? 1,
+                                pageSize: urlState.pageSize ?? 15,
+                            }}
+                            onPaginationChange={({ page, pageSize }) =>
                                 setUrlState((current) => ({
                                     ...current,
                                     page,
                                     pageSize,
                                 }))
                             }
-                            onRowOpen={setOpenedRecord}
-                            onSelectedTemplateChange={(selectedTemplateId) =>
+                            onSelectedSavedListChange={(selectedSavedListId) =>
                                 setUrlState((current) => ({
                                     ...current,
-                                    selectedTemplateId,
+                                    selectedTemplateId: selectedSavedListId,
                                     page: 1,
                                 }))
                             }
-                            requestDiscardConfirmation={confirmDiscard}
-                        />
+                        >
+                            <WorkingListDirtyBridge onChange={setDirty} />
+                            <WorkingList.Container>
+                                <WorkingList.Section
+                                    title={i18n.t(
+                                        'Saved views in this program'
+                                    )}
+                                >
+                                    <WorkingList.SavedViews />
+                                </WorkingList.Section>
+                                <WorkingList.Section
+                                    ariaLabel={i18n.t('Tracked entity filters')}
+                                >
+                                    <WorkingList.Toolbar>
+                                        <WorkingList.Columns />
+                                        <WorkingList.Filters />
+                                        <WorkingList.Actions />
+                                    </WorkingList.Toolbar>
+                                </WorkingList.Section>
+                                <WorkingList.Section
+                                    ariaLabel={i18n.t('Working list results')}
+                                >
+                                    <WorkingList.Results
+                                        dataQualityMode={dataQualityMode}
+                                        onClick={setOpenedRecord}
+                                    />
+                                </WorkingList.Section>
+                            </WorkingList.Container>
+                        </WorkingList.Provider>
                     </main>
                 )}
 

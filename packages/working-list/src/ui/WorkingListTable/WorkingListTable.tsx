@@ -14,11 +14,11 @@ import {
 } from '@tanstack/react-table'
 import React, { useMemo } from 'react'
 import { z } from 'zod'
+import type { WorkingListField, WorkingListSort } from '../../domain/model'
 import type {
-    WorkingListField,
-    WorkingListRowOpenEvent,
-    WorkingListSort,
-} from '../../domain/model'
+    WorkingListDisplayRow,
+    WorkingListPageSize,
+} from '../../provider/contracts'
 import type { WorkingListCellValue } from '../../query/normalizeRows'
 import {
     getCellDisplayValue,
@@ -27,10 +27,7 @@ import {
 } from '../../registry/valueTypes'
 import { fieldDisplayName, localizedField } from '../FilterControls'
 import accessibilityStyles from '../styles/accessibility.module.css'
-import type {
-    WorkingListDataQualityMode,
-    WorkingListDisplayRow,
-} from '../types'
+import type { WorkingListDataQualityMode } from '../types'
 import { useWorkingListText } from '../WorkingListText'
 import styles from './WorkingListTable.module.css'
 import {
@@ -168,14 +165,16 @@ interface WorkingListTableProps {
     dataQualityMode?: WorkingListDataQualityMode
     sort: WorkingListSort
     page: number
-    pageSize: number
+    pageSize: WorkingListPageSize
     hasNextPage: boolean
     isInitialLoading: boolean
     isUpdating: boolean
+    configurationDisabled?: boolean
     formattingContext: CellFormattingContext
     onColumnConfigurationChange: (columnIds: string[]) => void
-    onPageChange: (page: number, pageSize: number) => void
-    onRowOpen: (event: WorkingListRowOpenEvent) => void
+    onPageChange: (page: number) => void
+    onPageSizeChange: (pageSize: WorkingListPageSize) => void
+    onRowOpen: (row: WorkingListDisplayRow) => void
     onSortChange: (sort: WorkingListSort) => void
 }
 
@@ -190,9 +189,11 @@ export const WorkingListTable = ({
     hasNextPage,
     isInitialLoading,
     isUpdating,
+    configurationDisabled = false,
     formattingContext,
     onColumnConfigurationChange,
     onPageChange,
+    onPageSizeChange,
     onRowOpen,
     onSortChange,
 }: WorkingListTableProps) => {
@@ -359,7 +360,9 @@ export const WorkingListTable = ({
             hasNextPage={hasNextPage}
             isInitialLoading={isInitialLoading}
             isUpdating={isUpdating}
+            configurationDisabled={configurationDisabled}
             onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
             onRowOpen={onRowOpen}
         />
     )

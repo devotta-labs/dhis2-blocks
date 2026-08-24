@@ -1,0 +1,190 @@
+import { Button, NoticeBox } from '@dhis2/ui'
+import { IconMore16 } from '@dhis2/ui-icons'
+import { Result } from 'better-result'
+import React, { useState } from 'react'
+import type {
+    CreateSavedListError,
+    DownloadVisibleRowsError,
+    UpdateSelectedSavedListError,
+} from '../../provider/errors'
+import {
+    useWorkingListActions,
+    useWorkingListMeta,
+} from '../../provider/WorkingListContext'
+import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
+import { ConfigureMenu } from '../ConfigureMenu'
+import {
+    useWorkingListText,
+    type WorkingListTranslate,
+} from '../WorkingListText'
+import styles from '../WorkingList/WorkingList.module.css'
+
+type SaveError = CreateSavedListError | UpdateSelectedSavedListError
+
+type ActionCopy = (translate: WorkingListTranslate) => string
+
+const actionCopy = {
+    controls: {
+        saveView: (translate) => translate('Save view'),
+        more: (translate) => translate('More'),
+    },
+    noticeTitles: {
+        save: (translate) => translate('Could not save the working list'),
+        download: (translate) => translate('Could not download data'),
+    },
+    saveErrors: {
+        OfflineMutationError: (translate) =>
+            translate('This action is unavailable while offline.'),
+        WorkingListNetworkError: (translate) =>
+            translate(
+                'A network error stopped the request. Check the connection and try again.'
+            ),
+        WorkingListInvalidResponseError: (translate) =>
+            translate('The server returned an unexpected response.'),
+        SavedListPermissionError: (translate) =>
+            translate('You do not have permission to make this change.'),
+        SavedListNotFoundError: (translate) =>
+            translate(
+                'The working list could not be found. It may have been deleted.'
+            ),
+        IncompatibleSavedListError: (translate) =>
+            translate('Repair this working list before saving changes to it.'),
+        NoSelectedSavedListError: (translate) =>
+            translate('Select a saved working list before updating it.'),
+        InvalidConfigurationError: (translate) =>
+            translate(
+                'The current working list configuration cannot be saved.'
+            ),
+    },
+    downloadErrors: {
+        DownloadVisibleRowsError: (translate) =>
+            translate(
+                'The results are still loading. Try the download again once they have loaded.'
+            ),
+    },
+} satisfies {
+    controls: Record<'saveView' | 'more', ActionCopy>
+    noticeTitles: Record<'save' | 'download', ActionCopy>
+    saveErrors: Record<SaveError['_tag'], ActionCopy>
+    downloadErrors: Record<DownloadVisibleRowsError['_tag'], ActionCopy>
+}
+
+const saveErrorCopy = (error: SaveError, translate: WorkingListTranslate) =>
+    actionCopy.saveErrors[error._tag](translate)
+
+const downloadErrorCopy = (
+    error: DownloadVisibleRowsError,
+    translate: WorkingListTranslate
+) => actionCopy.downloadErrors[error._tag](translate)
+
+const ActionsControl = () => {
+    const translate = useWorkingListText()
+    const online = useWorkingListMeta((meta) => meta.online)
+    const dirty = useWorkingListMeta((meta) => meta.dirty)
+    const selection = useWorkingListMeta((meta) => meta.selection)
+    const savedViews = useWorkingListMeta((meta) => meta.savedViews)
+    const mutations = useWorkingListMeta((meta) => meta.mutations)
+    const actions = useWorkingListActions()
+    const { mutationBusy } = useWorkingListPrivateUi()
+    const [saveError, setSaveError] = useState<string>()
+    const [downloadError, setDownloadError] = useState<string>()
+
+    const selectedView =
+        selection.status === 'ready'
+            ? savedViews.views.find(
+                  (view) => view.id === selection.selectedSavedListId
+              )
+            : undefined
+    const saveAs = async (name: string) => {
+        setSaveError(undefined)
+        const result = await actions.createSavedList(name)
+        return Result.isError(result)
+            ? saveErrorCopy(result.error, translate)
+            : undefined
+    }
+    const update = async () => {
+        setSaveError(undefined)
+        const result = await actions.updateSelectedSavedList()
+        if (Result.isError(result)) {
+            setSaveError(saveErrorCopy(result.error, translate))
+        }
+    }
+    const download = () => {
+        setDownloadError(undefined)
+        const result = actions.downloadVisibleRows()
+        if (Result.isError(result)) {
+            setDownloadError(downloadErrorCopy(result.error, translate))
+        }
+    }
+
+    return (
+        <div className={styles['working-list-actions-region']}>
+            <ConfigureMenu
+                selectedView={selectedView}
+                dirty={dirty}
+                online={online}
+                busy={mutationBusy}
+                createPending={mutations.create.status === 'pending'}
+                onDownload={download}
+                onSaveAs={saveAs}
+                onUpdate={() => void update()}
+            />
+            {saveError && (
+                <div data-testid="working-list-save-error">
+                    <NoticeBox
+                        error
+                        title={actionCopy.noticeTitles.save(translate)}
+                    >
+                        {saveError}
+                    </NoticeBox>
+                </div>
+            )}
+            {downloadError && (
+                <div data-testid="working-list-download-error">
+                    <NoticeBox
+                        error
+                        title={actionCopy.noticeTitles.download(translate)}
+                    >
+                        {downloadError}
+                    </NoticeBox>
+                </div>
+            )}
+        </div>
+    )
+}
+
+export const WorkingListActions = () => {
+    const translate = useWorkingListText()
+    const ready = useWorkingListMeta(
+        (meta) => meta.activeConfiguration.status === 'ready'
+    )
+
+    return (
+        <div
+            className={styles['working-list-actions-slot']}
+            data-testid="working-list-actions-slot"
+        >
+            {ready ? (
+                <ActionsControl />
+            ) : (
+                <div
+                    className={styles['working-list-unavailable-actions']}
+                    data-testid="working-list-actions"
+                >
+                    <Button small dataTest="save-working-list" disabled>
+                        {actionCopy.controls.saveView(translate)}
+                    </Button>
+                    <Button
+                        secondary
+                        small
+                        icon={<IconMore16 />}
+                        dataTest="working-list-options"
+                        disabled
+                    >
+                        {actionCopy.controls.more(translate)}
+                    </Button>
+                </div>
+            )}
+        </div>
+    )
+}

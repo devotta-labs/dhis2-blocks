@@ -11,40 +11,28 @@ import {
 } from '@dhis2/ui'
 import { IconMore16 } from '@dhis2/ui-icons'
 import React, { useState } from 'react'
-import type {
-    NormalizedSavedWorkingList,
-    SavedListResource,
-} from '../../api/savedLists'
+import type { WorkingListSavedView } from '../../provider/contracts'
 import layoutStyles from '../styles/layout.module.css'
 import { useWorkingListText } from '../WorkingListText'
 import styles from './ConfigureMenu.module.css'
 
 interface ConfigureMenuProps {
-    selectedList?: NormalizedSavedWorkingList
-    selectedIsGenerated: boolean
-    activeResource: SavedListResource
-    hasFilters: boolean
+    selectedView?: WorkingListSavedView
     dirty: boolean
     online: boolean
     busy: boolean
+    createPending: boolean
     onDownload: () => void
-    onSaveAs: (name: string) => void
-    onUpdate: (list: NormalizedSavedWorkingList) => void
-}
-
-const canUpdateList = (list: NormalizedSavedWorkingList | undefined) => {
-    const access = list?.sharing.access
-    return access?.write === true && access.update === true
+    onSaveAs: (name: string) => Promise<string | undefined>
+    onUpdate: () => void
 }
 
 export const ConfigureMenu = ({
-    selectedList,
-    selectedIsGenerated,
-    activeResource,
-    hasFilters,
+    selectedView,
     dirty,
     online,
     busy,
+    createPending,
     onDownload,
     onSaveAs,
     onUpdate,
@@ -52,18 +40,18 @@ export const ConfigureMenu = ({
     const i18n = { t: useWorkingListText() }
     const [nameDialogOpen, setNameDialogOpen] = useState(false)
     const [name, setName] = useState('')
+    const [nameError, setNameError] = useState<string>()
     const [saveMenuOpen, setSaveMenuOpen] = useState(false)
     const [moreMenuOpen, setMoreMenuOpen] = useState(false)
     const persistedSelection =
-        !selectedIsGenerated && selectedList ? selectedList : undefined
+        selectedView && !selectedView.generated ? selectedView : undefined
     const canUpdate =
-        persistedSelection?.compatibility === 'compatible' &&
-        persistedSelection.resource === activeResource &&
-        canUpdateList(persistedSelection)
+        persistedSelection?.compatible === true && persistedSelection.canUpdate
     const locked = !online || busy
     const openSaveAs = () => {
         setSaveMenuOpen(false)
         setName('')
+        setNameError(undefined)
         setNameDialogOpen(true)
     }
 
@@ -90,12 +78,12 @@ export const ConfigureMenu = ({
                             <FlyoutMenu dense>
                                 <MenuItem
                                     dataTest="update-working-list"
-                                    disabled={!canUpdate || locked}
+                                    disabled={!canUpdate || !dirty || locked}
                                     label={i18n.t('Save changes to this view')}
                                     onClick={() => {
                                         setSaveMenuOpen(false)
                                         if (dirty && canUpdate) {
-                                            onUpdate(persistedSelection)
+                                            onUpdate()
                                         }
                                     }}
                                 />
@@ -112,16 +100,14 @@ export const ConfigureMenu = ({
                     </DropdownButton>
                 ) : (
                     <>
-                        {hasFilters && (
-                            <Button
-                                small
-                                dataTest="save-working-list"
-                                disabled={locked}
-                                onClick={openSaveAs}
-                            >
-                                {i18n.t('Save view')}
-                            </Button>
-                        )}
+                        <Button
+                            small
+                            dataTest="save-working-list"
+                            disabled={locked}
+                            onClick={openSaveAs}
+                        >
+                            {i18n.t('Save view')}
+                        </Button>
                         <DropdownButton
                             secondary
                             small
@@ -162,8 +148,14 @@ export const ConfigureMenu = ({
                             if (!nextName || busy) {
                                 return
                             }
-                            onSaveAs(nextName)
-                            setNameDialogOpen(false)
+                            setNameError(undefined)
+                            void onSaveAs(nextName).then((error) => {
+                                if (error) {
+                                    setNameError(error)
+                                    return
+                                }
+                                setNameDialogOpen(false)
+                            })
                         }}
                     >
                         <ModalTitle>
@@ -177,6 +169,14 @@ export const ConfigureMenu = ({
                                 value={name}
                                 onChange={({ value }) => setName(value ?? '')}
                             />
+                            {nameError && (
+                                <p
+                                    role="alert"
+                                    data-testid="working-list-name-error"
+                                >
+                                    {nameError}
+                                </p>
+                            )}
                         </ModalContent>
                         <ModalActions>
                             <div className={layoutStyles['modal-button-strip']}>
@@ -189,6 +189,7 @@ export const ConfigureMenu = ({
                                 </Button>
                                 <Button
                                     primary
+                                    loading={createPending}
                                     type="submit"
                                     dataTest="working-list-name-submit"
                                     disabled={!name.trim() || busy}

@@ -187,3 +187,72 @@ describe('working-list page fetching with lenient data values', () => {
         ).rejects.toThrow(WorkingListBoundaryError)
     })
 })
+
+describe('working-list next-page capability semantics', () => {
+    const records = [
+        {
+            trackedEntity: 'EntityAaaa1',
+            attributes: [],
+            programOwners: [],
+        },
+        {
+            trackedEntity: 'EntityBbbb1',
+            attributes: [],
+            programOwners: [],
+        },
+    ]
+
+    it('uses pager.nextPage authoritatively on DHIS2 42 and newer', async () => {
+        const base = pageInput(
+            clientReturning({
+                trackedEntities: records,
+                pager: { page: 1, pageSize: 2, total: 99 },
+            })
+        )
+        const page = await fetchWorkingListPage({
+            ...base,
+            pagination: { page: 1, pageSize: 2 },
+        })
+        expect(page.hasNextPage).toBe(false)
+
+        const withNext = await fetchWorkingListPage({
+            ...base,
+            client: clientReturning({
+                trackedEntities: records,
+                pager: {
+                    page: 1,
+                    pageSize: 2,
+                    nextPage: '/api/tracker/trackedEntities?page=2',
+                },
+            }),
+            pagination: { page: 1, pageSize: 2 },
+        })
+        expect(withNext.hasNextPage).toBe(true)
+    })
+
+    it('uses the full-page heuristic on DHIS2 41', async () => {
+        const page = await fetchWorkingListPage({
+            ...pageInput(
+                clientReturning({
+                    trackedEntities: records,
+                    pager: { page: 1, pageSize: 2, total: 2 },
+                })
+            ),
+            capabilities: resolveWorkingListCapabilities({ apiVersion: 41 }),
+            pagination: { page: 1, pageSize: 2 },
+        })
+        expect(page.hasNextPage).toBe(true)
+
+        const oversized = await fetchWorkingListPage({
+            ...pageInput(
+                clientReturning({
+                    trackedEntities: records,
+                    pager: { page: 1, pageSize: 1, total: 2 },
+                })
+            ),
+            capabilities: resolveWorkingListCapabilities({ apiVersion: 41 }),
+            pagination: { page: 1, pageSize: 1 },
+        })
+        expect(oversized.hasNextPage).toBe(false)
+    })
+})

@@ -91,6 +91,7 @@ describe('working-list unavailable toolbar', () => {
                 ['Columns', 'Filter', 'Save view', 'More']
             )
             buttons.forEach((button) => expect(button.disabled).toBe(true))
+            expect(buttons[2]?.className).toContain('secondary')
             const toolbar = container.querySelector<HTMLElement>(
                 '[data-testid="working-list-toolbar"]'
             )

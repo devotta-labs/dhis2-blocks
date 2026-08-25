@@ -100,6 +100,8 @@ export const ProgramStageSchema = z
     .object({
         id: z.string().min(1),
         displayName: z.string(),
+        displayExecutionDateLabel: OptionalStringSchema,
+        displayDueDateLabel: OptionalStringSchema,
         hideDueDate: z.boolean().optional(),
         enableUserAssignment: z.boolean().optional(),
         access: z
@@ -115,6 +117,9 @@ export const TrackerProgramSchema = z
         id: z.string().min(1),
         displayName: z.string(),
         programType: z.string().optional(),
+        displayEnrollmentDateLabel: OptionalStringSchema,
+        displayIncidentDate: z.boolean().optional(),
+        displayIncidentDateLabel: OptionalStringSchema,
         trackedEntityType: LooseReferenceSchema.optional(),
         access: z
             .object({ read: z.boolean().optional() })

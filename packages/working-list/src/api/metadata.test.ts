@@ -8,11 +8,15 @@ import {
     getProgramMetadataFields,
 } from './metadata'
 import type { TrackerProgram } from './schemas'
+import { normalizeSavedWorkingListResource } from './savedListNormalization'
 
 const program: TrackerProgram = {
     id: 'Program0001',
     displayName: 'Child programme',
     programType: 'WITH_REGISTRATION',
+    displayEnrollmentDateLabel: 'Start of treatment date',
+    displayIncidentDate: false,
+    displayIncidentDateLabel: 'Date of diagnosis',
     programTrackedEntityAttributes: [
         {
             displayInList: true,
@@ -37,7 +41,10 @@ const program: TrackerProgram = {
         {
             id: 'ProgramStg1',
             displayName: 'Birth',
+            displayExecutionDateLabel: 'TB visit date',
+            displayDueDateLabel: 'TB visit due date',
             hideDueDate: false,
+            enableUserAssignment: true,
             programStageDataElements: [
                 {
                     displayInReports: true,
@@ -123,6 +130,12 @@ describe('version-aware Tracker metadata catalog', () => {
         expect(getProgramMetadataFields(43)).toContain(
             'preferredSearchOperator'
         )
+        expect(getProgramMetadataFields(41)).toContain(
+            'displayEnrollmentDateLabel'
+        )
+        expect(getProgramMetadataFields(41)).toContain(
+            'displayExecutionDateLabel'
+        )
     })
 
     it('builds fields, default columns, and program-stage membership once', () => {
@@ -133,6 +146,16 @@ describe('version-aware Tracker metadata catalog', () => {
         })
 
         expect(catalog.defaultTrackedEntityColumns).toEqual(['Attribute01'])
+        expect(catalog.fields.get('enrolledAt')).toMatchObject({
+            displayName: 'Start of treatment date',
+            displayNameIsMetadata: true,
+        })
+        expect(catalog.fields.get('enrollmentOccurredAt')).toMatchObject({
+            displayName: 'Date of diagnosis',
+            displayNameIsMetadata: true,
+            filterable: false,
+        })
+        expect(catalog.fields.get('assignedUser')?.filterable).toBe(true)
         expect(catalog.fields.get('createdAt')?.valueType).toBe('DATETIME')
         expect(catalog.fields.get('DataElement1')?.programStageIds).toEqual([
             'ProgramStg1',
@@ -153,6 +176,49 @@ describe('version-aware Tracker metadata catalog', () => {
                 'DataElement1',
             ])
         )
+        expect(
+            catalog.fieldsByProgramStage
+                .get('ProgramStg1')
+                ?.get('eventOccurredAt')
+        ).toMatchObject({
+            displayName: 'TB visit date',
+            displayNameIsMetadata: true,
+        })
+        expect(
+            catalog.fieldsByProgramStage
+                .get('ProgramStg1')
+                ?.get('eventScheduledAt')
+        ).toMatchObject({
+            displayName: 'TB visit due date',
+            displayNameIsMetadata: true,
+            filterable: true,
+            columnable: true,
+        })
+        expect(
+            catalog.fieldsByProgramStage
+                .get('ProgramStg1')
+                ?.get('eventAssignedUser')
+        ).toMatchObject({ filterable: true, columnable: true })
+        expect(
+            catalog.fieldsByProgramStage
+                .get('ProgramStg2')
+                ?.get('eventOccurredAt')
+        ).toMatchObject({ displayName: 'Report date' })
+        expect(
+            catalog.fieldsByProgramStage
+                .get('ProgramStg2')
+                ?.get('eventOccurredAt')?.displayNameIsMetadata
+        ).toBeUndefined()
+        expect(
+            catalog.fieldsByProgramStage
+                .get('ProgramStg2')
+                ?.get('eventScheduledAt')
+        ).toMatchObject({ filterable: false, columnable: false })
+        expect(
+            catalog.fieldsByProgramStage
+                .get('ProgramStg2')
+                ?.get('eventAssignedUser')
+        ).toMatchObject({ filterable: false, columnable: false })
     })
 
     it('keeps unsupported values as columns while hiding unreliable filters', () => {
@@ -170,5 +236,83 @@ describe('version-aware Tracker metadata catalog', () => {
         expect(v41.fields.has('FileField01')).toBe(true)
         expect(v41.fields.get('FileField01')?.filterable).toBe(false)
         expect(v42.fields.get('FileField01')?.filterable).toBe(true)
+    })
+
+    it('keeps generic system labels as localizable fallbacks', () => {
+        const catalog = buildProgramFieldCatalog({
+            program: {
+                ...program,
+                displayEnrollmentDateLabel: null,
+                displayIncidentDate: true,
+                displayIncidentDateLabel: null,
+                programStages: program.programStages.map((stage) => ({
+                    ...stage,
+                    displayExecutionDateLabel: null,
+                    displayDueDateLabel: null,
+                })),
+            },
+            capabilities: resolveWorkingListCapabilities({ apiVersion: 43 }),
+            hasSelectedOrgUnit: true,
+        })
+
+        expect(catalog.fields.get('enrolledAt')).toMatchObject({
+            displayName: 'Enrollment date',
+            filterable: true,
+        })
+        expect(
+            catalog.fields.get('enrolledAt')?.displayNameIsMetadata
+        ).toBeUndefined()
+        expect(catalog.fields.get('enrollmentOccurredAt')).toMatchObject({
+            displayName: 'Incident date',
+            filterable: true,
+        })
+        expect(
+            catalog.fieldsByProgramStage
+                .get('ProgramStg1')
+                ?.get('eventOccurredAt')
+        ).toMatchObject({ displayName: 'Report date' })
+        expect(
+            catalog.fieldsByProgramStage
+                .get('ProgramStg1')
+                ?.get('eventScheduledAt')
+        ).toMatchObject({ displayName: 'Scheduled date' })
+    })
+
+    it('normalizes saved stage filters with the stage metadata label', () => {
+        const catalog = buildProgramFieldCatalog({
+            program,
+            capabilities: resolveWorkingListCapabilities({ apiVersion: 43 }),
+            hasSelectedOrgUnit: true,
+        })
+        const normalized = normalizeSavedWorkingListResource({
+            resource: {
+                id: 'SavedList01',
+                displayName: 'TB visits',
+                program: { id: program.id },
+                programStage: { id: 'ProgramStg1' },
+                programStageQueryCriteria: {
+                    displayColumnOrder: ['occurredAt'],
+                    eventOccurredAt: {
+                        type: 'ABSOLUTE',
+                        startDate: '2026-08-01',
+                    },
+                },
+            },
+            type: 'programStageWorkingLists',
+            programId: program.id,
+            metadata: catalog,
+        })
+
+        expect(normalized.compatibility).toBe('compatible')
+        if (normalized.compatibility === 'compatible') {
+            expect(normalized.configuration.filters[0]?.field).toMatchObject({
+                id: 'eventOccurredAt',
+                displayName: 'TB visit date',
+                displayNameIsMetadata: true,
+            })
+            expect(normalized.configuration.columns).toContain(
+                'eventOccurredAt'
+            )
+        }
     })
 })

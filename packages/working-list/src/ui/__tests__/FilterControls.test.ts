@@ -44,6 +44,14 @@ describe('filter control policy', () => {
             optionField('trackedEntityAttribute'),
             translate
         )
+        const metadataSystem = localizedField(
+            {
+                ...optionField('system'),
+                displayName: 'TB visit date',
+                displayNameIsMetadata: true,
+            },
+            translate
+        )
 
         expect(fieldDisplayName(system, translate)).toBe(
             'translated:Event status'
@@ -51,5 +59,6 @@ describe('filter control policy', () => {
         expect(system.options?.[0]?.displayName).toBe('translated:Active')
         expect(metadata.displayName).toBe('Gender')
         expect(metadata.options?.[0]?.displayName).toBe('Active')
+        expect(metadataSystem.displayName).toBe('TB visit date')
     })
 })

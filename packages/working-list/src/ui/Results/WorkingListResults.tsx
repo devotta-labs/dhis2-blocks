@@ -1,6 +1,7 @@
 import { Button, CircularLoader, NoticeBox } from '@dhis2/ui'
 import { Result } from 'better-result'
 import React, { useMemo, useState, type ComponentPropsWithoutRef } from 'react'
+import { fieldsForConfiguration } from '../../api/metadata'
 import type { TrackerProgram } from '../../api/schemas'
 import type { WorkingListField, WorkingListSort } from '../../domain/model'
 import {
@@ -47,6 +48,9 @@ const tableFieldsFor = (
         ) ?? []
     )
     return fields.filter((field) => {
+        if (field.columnable === false) {
+            return false
+        }
         if (field.source === 'trackedEntityAttribute') {
             return true
         }
@@ -94,7 +98,7 @@ const ReadyResults = ({
     const translate = useWorkingListText()
     const results = useWorkingListMeta((meta) => meta.results)
     const pagination = useWorkingListMeta((meta) => meta.pagination)
-    const fields = useWorkingListMeta((meta) => meta.fields)
+    const metadata = useWorkingListMeta((meta) => meta.fieldCatalog)
     const configuration = useWorkingListState((state) => state.configuration)
     const actions = useWorkingListActions()
     const {
@@ -105,12 +109,17 @@ const ReadyResults = ({
         privateActions,
     } = useWorkingListPrivateUi()
 
-    if (!program || !formattingContext) {
+    if (!program || !metadata || !formattingContext) {
         throw new Error('WorkingListTable requires resolved metadata.')
     }
     const tableFields = useMemo(
-        () => tableFieldsFor(fields, program, configuration),
-        [configuration, fields, program]
+        () =>
+            tableFieldsFor(
+                [...fieldsForConfiguration(metadata, configuration).values()],
+                program,
+                configuration
+            ),
+        [configuration, metadata, program]
     )
     const commit = <TValue, TError>(result: Result<TValue, TError>) => {
         if (Result.isError(result)) {

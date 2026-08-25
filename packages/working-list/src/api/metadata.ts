@@ -23,10 +23,13 @@ export const getProgramMetadataFields = (apiVersion: number) =>
         'id',
         'displayName',
         'programType',
+        'displayEnrollmentDateLabel',
+        'displayIncidentDate',
+        'displayIncidentDateLabel',
         'trackedEntityType[id,displayName]',
         'access',
         `programTrackedEntityAttributes[displayInList,mandatory,searchable${searchMetadataFields(apiVersion)},trackedEntityAttribute[id,displayName,displayFormName,valueType,unique,searchable${searchMetadataFields(apiVersion)},optionSet[id,displayName,options[id,code,displayName]]]]`,
-        'programStages[id,displayName,hideDueDate,enableUserAssignment,access,programStageDataElements[displayInReports,compulsory,dataElement[id,displayName,displayFormName,valueType,optionSet[id,displayName,options[id,code,displayName]]]]]',
+        'programStages[id,displayName,displayExecutionDateLabel,displayDueDateLabel,hideDueDate,enableUserAssignment,access,programStageDataElements[displayInReports,compulsory,dataElement[id,displayName,displayFormName,valueType,optionSet[id,displayName,options[id,code,displayName]]]]]',
     ].join(',')
 
 /** Latest projection retained for consumers that prebuild metadata queries. */
@@ -133,10 +136,47 @@ const normalizeSearchOperator = (operator?: string | null) => {
 
 export interface ProgramFieldCatalog {
     fields: FieldCatalog
+    fieldsByProgramStage: ReadonlyMap<string, FieldCatalog>
     capabilities: WorkingListCapabilities
     defaultTrackedEntityColumns: string[]
     defaultEventColumnsByStage: ReadonlyMap<string, string[]>
     readableProgramStageIds: ReadonlySet<string>
+}
+
+type ConfigurationWithMode =
+    | { mode: 'trackedEntity' }
+    | { mode: 'event'; programStageId: string }
+
+export const fieldsForProgramStage = (
+    metadata: ProgramFieldCatalog,
+    programStageId?: string
+) =>
+    programStageId
+        ? (metadata.fieldsByProgramStage.get(programStageId) ?? metadata.fields)
+        : metadata.fields
+
+export const fieldsForConfiguration = (
+    metadata: ProgramFieldCatalog,
+    configuration: ConfigurationWithMode
+) =>
+    fieldsForProgramStage(
+        metadata,
+        configuration.mode === 'event'
+            ? configuration.programStageId
+            : undefined
+    )
+
+const metadataLabel = (label: string | null | undefined) =>
+    label?.trim() ? label : undefined
+
+const withMetadataLabel = (
+    field: WorkingListField,
+    label: string | null | undefined
+): WorkingListField => {
+    const resolved = metadataLabel(label)
+    return resolved
+        ? { ...field, displayName: resolved, displayNameIsMetadata: true }
+        : field
 }
 
 export const buildProgramFieldCatalog = ({
@@ -154,6 +194,38 @@ export const buildProgramFieldCatalog = ({
     systemFilterRegistry.forEach((definition) =>
         fields.set(definition.field.id, definition.field)
     )
+
+    const enrolledAt = fields.get('enrolledAt')
+    const enrollmentOccurredAt = fields.get('enrollmentOccurredAt')
+    const assignedUser = fields.get('assignedUser')
+    if (enrolledAt) {
+        fields.set(
+            enrolledAt.id,
+            withMetadataLabel(
+                enrolledAt,
+                parsedProgram.displayEnrollmentDateLabel
+            )
+        )
+    }
+    if (enrollmentOccurredAt) {
+        fields.set(enrollmentOccurredAt.id, {
+            ...withMetadataLabel(
+                enrollmentOccurredAt,
+                parsedProgram.displayIncidentDateLabel
+            ),
+            filterable: parsedProgram.displayIncidentDate !== false,
+        })
+    }
+    if (assignedUser) {
+        fields.set(assignedUser.id, {
+            ...assignedUser,
+            filterable: parsedProgram.programStages.some(
+                (stage) =>
+                    stage.access?.read !== false &&
+                    stage.enableUserAssignment === true
+            ),
+        })
+    }
 
     const defaultTrackedEntityColumns: string[] = []
     for (const binding of parsedProgram.programTrackedEntityAttributes) {
@@ -233,6 +305,9 @@ export const buildProgramFieldCatalog = ({
             'eventOccurredAt',
             ...(stage.hideDueDate === false ? ['eventScheduledAt'] : []),
             'eventOrgUnit',
+            ...(stage.enableUserAssignment === true
+                ? ['eventAssignedUser']
+                : []),
         ]
         for (const binding of stage.programStageDataElements) {
             const dataElement = binding.dataElement
@@ -288,8 +363,48 @@ export const buildProgramFieldCatalog = ({
         defaultEventColumnsByStage.set(stage.id, columns)
     }
 
+    const fieldsByProgramStage = new Map<string, FieldCatalog>()
+    for (const stage of parsedProgram.programStages) {
+        if (stage.access?.read === false) {
+            continue
+        }
+        const stageFields = new Map(fields)
+        const stageAssignedUser = stageFields.get('assignedUser')
+        const occurredAt = stageFields.get('eventOccurredAt')
+        const scheduledAt = stageFields.get('eventScheduledAt')
+        const eventAssignedUser = stageFields.get('eventAssignedUser')
+        if (stageAssignedUser) {
+            stageFields.set(stageAssignedUser.id, {
+                ...stageAssignedUser,
+                filterable: false,
+            })
+        }
+        if (occurredAt) {
+            stageFields.set(
+                occurredAt.id,
+                withMetadataLabel(occurredAt, stage.displayExecutionDateLabel)
+            )
+        }
+        if (scheduledAt) {
+            stageFields.set(scheduledAt.id, {
+                ...withMetadataLabel(scheduledAt, stage.displayDueDateLabel),
+                filterable: stage.hideDueDate === false,
+                columnable: stage.hideDueDate === false,
+            })
+        }
+        if (eventAssignedUser) {
+            stageFields.set(eventAssignedUser.id, {
+                ...eventAssignedUser,
+                filterable: stage.enableUserAssignment === true,
+                columnable: stage.enableUserAssignment === true,
+            })
+        }
+        fieldsByProgramStage.set(stage.id, stageFields)
+    }
+
     return {
         fields,
+        fieldsByProgramStage,
         capabilities,
         defaultTrackedEntityColumns,
         defaultEventColumnsByStage,

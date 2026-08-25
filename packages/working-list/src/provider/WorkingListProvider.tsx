@@ -10,6 +10,7 @@ import React, {
     useSyncExternalStore,
 } from 'react'
 import { shouldRetryWorkingListRequest } from '../api/client'
+import { fieldsForConfiguration } from '../api/metadata'
 import {
     fetchSavedWorkingLists,
     type NormalizedSavedWorkingList,
@@ -281,6 +282,15 @@ const WorkingListProviderInstance = ({
         subscribe,
         () => store.getState().activeState
     )
+    useEffect(() => {
+        if (!activeState || !metadata) return
+        const fields = Array.from(
+            fieldsForConfiguration(metadata, activeState.configuration).values()
+        )
+        updateStore((current) => ({
+            meta: { ...current.meta, fields },
+        }))
+    }, [activeState, metadata, updateStore])
     const resolvedConfiguration = useSyncExternalStore(
         subscribe,
         () => store.getState().resolvedConfiguration

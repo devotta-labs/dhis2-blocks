@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef } from 'react'
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type { WorkingListClient } from '../api/client'
-import type { ProgramFieldCatalog } from '../api/metadata'
+import {
+    fieldsForConfiguration,
+    type ProgramFieldCatalog,
+} from '../api/metadata'
 import type { WorkingListSystemInfo } from '../api/systemInfo'
 import type { WorkingListConfiguration as InternalConfiguration } from '../domain/model'
 import {
@@ -76,9 +79,13 @@ export const useWorkingListResults = ({
     store,
     updateStore,
 }: UseWorkingListResultsOptions) => {
+    const fields =
+        metadata && resolvedConfiguration
+            ? fieldsForConfiguration(metadata, resolvedConfiguration)
+            : metadata?.fields
     const previousResultOrgUnitRef = useRef(orgUnitId)
     const pageQuery = useQuery({
-        ...(resolvedConfiguration && metadata
+        ...(resolvedConfiguration && fields
             ? workingListPageQueryOptions({
                   client,
                   context: { programId, orgUnitId },
@@ -91,7 +98,7 @@ export const useWorkingListResults = ({
                                 pageSize: effectivePagination.pageSize,
                             },
                   capabilities,
-                  fields: metadata.fields,
+                  fields,
                   serializationContext,
                   translate,
               })
@@ -100,16 +107,16 @@ export const useWorkingListResults = ({
                   queryFn: (): Promise<WorkingListPage> =>
                       Promise.reject(new Error('Results are not ready')),
               }),
-        enabled: Boolean(resolvedConfiguration && metadata),
+        enabled: Boolean(resolvedConfiguration && fields),
     })
     const pageData = pageQuery.data
     const rows = useMemo(() => toDisplayRows(pageData), [pageData])
     const organisationUnitIds = useMemo(
         () =>
-            pageData && metadata
-                ? collectOrganisationUnitIds(pageData, metadata.fields)
+            pageData && fields
+                ? collectOrganisationUnitIds(pageData, fields)
                 : [],
-        [metadata, pageData]
+        [fields, pageData]
     )
     const organisationUnitLabelsQuery = useQuery({
         ...organisationUnitLabelsQueryOptions(client, organisationUnitIds),
@@ -117,10 +124,8 @@ export const useWorkingListResults = ({
     })
     const fileResourceIds = useMemo(
         () =>
-            pageData && metadata
-                ? collectFileResourceIds(pageData, metadata.fields)
-                : [],
-        [metadata, pageData]
+            pageData && fields ? collectFileResourceIds(pageData, fields) : [],
+        [fields, pageData]
     )
     const fileResourceNamesQuery = useQuery({
         ...fileResourceNamesQueryOptions(client, fileResourceIds),

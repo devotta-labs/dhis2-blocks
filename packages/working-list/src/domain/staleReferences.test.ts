@@ -164,6 +164,61 @@ describe('stale working-list references', () => {
         })
     })
 
+    it('refreshes retained filter fields from current metadata during repair', () => {
+        const metadataField = {
+            ...attribute,
+            displayName: 'Current program label',
+            displayNameIsMetadata: true as const,
+        }
+        const repairMetadata = {
+            ...metadata,
+            fields: new Map([
+                ...fields,
+                [metadataField.id, metadataField] as const,
+            ]),
+        }
+        const configuration: WorkingListConfiguration = {
+            mode: 'trackedEntity',
+            programId: 'Program0001',
+            filters: [
+                {
+                    field: { ...attribute, displayName: 'Old label' },
+                    operator: 'like',
+                    value: { kind: 'text', value: 'x' },
+                },
+            ],
+            columns: [attribute.id],
+            sort: { fieldId: 'MissingSort1', direction: 'asc' },
+        }
+
+        const result = repairConfigurationReferences({
+            configuration,
+            issues: [
+                {
+                    kind: 'missingSortField',
+                    referenceId: 'MissingSort1',
+                    path: 'sort.fieldId',
+                    message: 'Sort field is missing',
+                },
+            ],
+            decisions: [
+                {
+                    path: 'sort.fieldId',
+                    action: 'replaceSort',
+                    sort: { fieldId: 'createdAt', direction: 'desc' },
+                },
+            ],
+            metadata: repairMetadata,
+        })
+
+        expect(result.status).toBe('repaired')
+        if (result.status === 'repaired') {
+            expect(result.configuration.filters[0]?.field).toEqual(
+                metadataField
+            )
+        }
+    })
+
     it('rejects zero-column configurations at the domain boundary', () => {
         expect(() =>
             WorkingListConfigurationSchema.parse({

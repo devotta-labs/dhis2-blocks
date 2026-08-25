@@ -2,6 +2,7 @@ import { Button } from '@dhis2/ui'
 import { IconFilter16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
+import { fieldsForConfiguration } from '../../api/metadata'
 import type { AppliedFilter as ResolvedAppliedFilter } from '../../domain/model'
 import type { WorkingListField } from '../../domain/model'
 import {
@@ -100,9 +101,11 @@ const FiltersControl = () => {
         )
     }
 
+    const activeFields = fieldsForConfiguration(metadata, configuration)
+
     const initialVisible = visibleFiltersForConfiguration(
         configuration,
-        metadata.fields
+        activeFields
     )
     const [visibleTrackerFilterIds, setVisibleTrackerFilterIds] = useState(
         initialVisible.tracker
@@ -112,7 +115,7 @@ const FiltersControl = () => {
     )
     const [autoOpenFilterId, setAutoOpenFilterId] = useState<string>()
 
-    const fields = [...metadata.fields.values()]
+    const fields = [...activeFields.values()]
     const trackerFilterFields = fields.filter(
         (field) => field.scope === 'trackedEntity' && field.filterable
     )
@@ -140,13 +143,13 @@ const FiltersControl = () => {
     const trackerChipIds = withAppliedFilterIds(
         visibleTrackerFilterIds,
         configuration,
-        metadata.fields,
+        activeFields,
         'trackedEntity'
     )
     const eventChipIds = withAppliedFilterIds(
         visibleEventFilterIds,
         configuration,
-        metadata.fields,
+        activeFields,
         'event'
     )
 
@@ -218,7 +221,7 @@ const FiltersControl = () => {
             />
             <div className="contents">
                 {trackerChipIds.map((fieldId) => {
-                    const field = metadata.fields.get(fieldId)
+                    const field = activeFields.get(fieldId)
                     if (!field?.filterable) {
                         return null
                     }
@@ -255,7 +258,7 @@ const FiltersControl = () => {
                         onRemove={() => enterStage(undefined)}
                     />
                     {eventChipIds.map((fieldId) => {
-                        const field = metadata.fields.get(fieldId)
+                        const field = activeFields.get(fieldId)
                         if (!field || !eventFilterFields.includes(field)) {
                             return null
                         }

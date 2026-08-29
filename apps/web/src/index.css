@@ -8,8 +8,8 @@
 @import 'tailwindcss/utilities.css';
 
 /* The DHIS2 dev shell copies this stylesheet into .d2/shell/src/D2App. */
-@source '../../../packages/working-list/src';
-@source '../../../../../../packages/working-list/src';
+@source '../../../packages/blocks/working-list/src';
+@source '../../../../../../packages/blocks/working-list/src';
 
 :root {
     color: #212934;

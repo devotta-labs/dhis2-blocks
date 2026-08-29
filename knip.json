@@ -84,7 +84,7 @@
                 ]
             }
         },
-        "packages/*": {
+        "packages/blocks/*": {
             "entry": [
                 "src/**/*.{test,spec}.{ts,tsx}",
                 "src/**/__tests__/**/*.{ts,tsx}",

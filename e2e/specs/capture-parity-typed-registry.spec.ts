@@ -223,10 +223,10 @@ test.describe('Capture context and generated tracker views', () => {
             page,
             'trackedEntities',
             () => page.getByTestId(`sort-${TEXT_ATTRIBUTE}`).click(),
-            (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:desc`
+            (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:asc`
         )
         expect(firstSort.searchParams.getAll('order')).toEqual([
-            `${TEXT_ATTRIBUTE}:desc`,
+            `${TEXT_ATTRIBUTE}:asc`,
         ])
 
         const replacementSort = await waitForTrackerResponse(

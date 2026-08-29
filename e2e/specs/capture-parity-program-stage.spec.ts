@@ -62,7 +62,7 @@ test.describe('Capture programme-stage joint data strategy', () => {
             page,
             'events',
             () => page.getByTestId(`sort-${TEXT_ATTRIBUTE}`).click(),
-            (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:desc`
+            (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:asc`
         )
         expect(attributeSort.searchParams.getAll('order')).toHaveLength(1)
         const dataSort = await waitForTrackerResponse(

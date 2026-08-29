@@ -12,8 +12,3 @@ export {
 } from './api/client'
 export { trackerProgramsQueryOptions } from './api/metadata'
 export { WORKING_LIST_PAGE_SIZES } from './provider/contracts'
-export { Provider as WorkingListRuntimeProvider } from '@dhis2/app-runtime'
-export {
-    QueryClient as WorkingListQueryClient,
-    QueryClientProvider as WorkingListQueryClientProvider,
-} from '@tanstack/react-query'

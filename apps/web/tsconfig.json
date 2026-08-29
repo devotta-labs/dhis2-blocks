@@ -8,8 +8,7 @@
         "esModuleInterop": true,
         "target": "ESNext",
         "module": "esnext",
-        "moduleResolution": "bundler",
-        "customConditions": ["@dhis2-blocks/development"]
+        "moduleResolution": "bundler"
     },
     "include": ["src", "types"]
 }

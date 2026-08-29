@@ -85,12 +85,6 @@ stack_started=1
 artifact_dir="$(e2e_artifact_dir)"
 app_log="$artifact_dir/app-server.log"
 
-echo "Building the Working List workspace package"
-(
-    cd "$E2E_REPO_ROOT"
-    pnpm build:library
-)
-
 echo "Starting the app at $E2E_APP_URL with API proxy $E2E_PROXY_URL"
 (
     cd "$E2E_REPO_ROOT/apps/web"

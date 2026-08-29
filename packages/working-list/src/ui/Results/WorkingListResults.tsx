@@ -1,0 +1,343 @@
+import { Button, CircularLoader, NoticeBox } from '@dhis2/ui'
+import { Result } from 'better-result'
+import React, { useMemo, useState } from 'react'
+import type { TrackerProgram } from '../../api/schemas'
+import type { WorkingListField, WorkingListSort } from '../../domain/model'
+import {
+    useWorkingListActions,
+    useWorkingListMeta,
+    useWorkingListState,
+} from '../../provider/WorkingListContext'
+import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
+import type {
+    WorkingListConfiguration,
+    WorkingListDisplayRow,
+    WorkingListResultTarget,
+} from '../../provider/contracts'
+import { WorkingListRepairDialog } from '../WorkingList/dialogs'
+import type { WorkingListDataQualityMode } from '../types'
+import { WorkingListTable } from '../WorkingListTable'
+import { useWorkingListText } from '../WorkingListText'
+import accessibilityStyles from '../styles/accessibility.module.css'
+import styles from '../WorkingList/WorkingList.module.css'
+
+export interface WorkingListResultsProps {
+    onClick: (target: WorkingListResultTarget) => void
+    dataQualityMode?: WorkingListDataQualityMode
+}
+
+const tableFieldsFor = (
+    fields: readonly WorkingListField[],
+    program: TrackerProgram,
+    configuration: WorkingListConfiguration
+) => {
+    const currentStage =
+        configuration.mode === 'event'
+            ? program.programStages.find(
+                  (stage) => stage.id === configuration.programStageId
+              )
+            : undefined
+    const stageDataElementIds = new Set(
+        currentStage?.programStageDataElements.map(
+            (binding) => binding.dataElement.id
+        ) ?? []
+    )
+    return fields.filter((field) => {
+        if (field.source === 'trackedEntityAttribute') {
+            return true
+        }
+        if (field.source === 'eventDataElement') {
+            return (
+                configuration.mode === 'event' &&
+                stageDataElementIds.has(field.id)
+            )
+        }
+        if (['createdAt', 'programOwnerId'].includes(field.id)) {
+            return true
+        }
+        return (
+            configuration.mode === 'event' &&
+            [
+                'eventStatus',
+                'eventOccurredAt',
+                'eventScheduledAt',
+                'eventOrgUnit',
+                'eventAssignedUser',
+            ].includes(field.id)
+        )
+    })
+}
+
+const SelectionLoading = () => {
+    const translate = useWorkingListText()
+    return (
+        <div
+            className={styles['working-list-selection-loading']}
+            data-testid="working-list-selection-loading"
+            aria-live="polite"
+        >
+            <CircularLoader small />
+            <p>{translate('Loading the selected working list…')}</p>
+        </div>
+    )
+}
+
+const ReadyResults = ({
+    onClick,
+    dataQualityMode,
+}: Required<WorkingListResultsProps>) => {
+    const translate = useWorkingListText()
+    const results = useWorkingListMeta((meta) => meta.results)
+    const pagination = useWorkingListMeta((meta) => meta.pagination)
+    const fields = useWorkingListMeta((meta) => meta.fields)
+    const configuration = useWorkingListState((state) => state.configuration)
+    const actions = useWorkingListActions()
+    const {
+        program,
+        formattingContext,
+        mutationBusy,
+        resultTargets,
+        privateActions,
+    } = useWorkingListPrivateUi()
+
+    if (!program || !formattingContext) {
+        throw new Error('WorkingList.Results requires resolved metadata.')
+    }
+    const tableFields = useMemo(
+        () => tableFieldsFor(fields, program, configuration),
+        [configuration, fields, program]
+    )
+    const commit = <TValue, TError>(result: Result<TValue, TError>) => {
+        if (Result.isError(result)) {
+            throw result.error
+        }
+    }
+    const openRow = (row: WorkingListDisplayRow) => {
+        const target = resultTargets.get(row.id)
+        if (!target) {
+            throw new Error(
+                `Working list row ${row.id} has no result target to open.`
+            )
+        }
+        onClick(target)
+    }
+
+    if (results.status === 'error') {
+        return (
+            <div
+                className={styles['results-error']}
+                data-testid="results-error"
+            >
+                <NoticeBox error title={translate('Could not load results')}>
+                    <p>
+                        {translate(
+                            'The working list results could not be loaded. Check the connection and try again.'
+                        )}
+                    </p>
+                    <Button onClick={() => void privateActions.retryResults()}>
+                        {translate('Try again')}
+                    </Button>
+                </NoticeBox>
+            </div>
+        )
+    }
+
+    return (
+        <>
+            <div
+                className={accessibilityStyles['visually-hidden']}
+                role="status"
+                aria-live="polite"
+                data-testid="working-list-results-announcement"
+            >
+                {results.status === 'pending'
+                    ? translate('Loading working list results…')
+                    : results.isUpdating
+                      ? translate('Updating working list results…')
+                      : ''}
+            </div>
+            <WorkingListTable
+                allFields={tableFields}
+                visibleColumnIds={configuration.columns}
+                rows={
+                    results.status === 'ready' ? [...results.rows] : undefined
+                }
+                dataQualityMode={dataQualityMode}
+                sort={configuration.sort}
+                page={pagination.page}
+                pageSize={pagination.pageSize}
+                hasNextPage={
+                    results.status === 'ready'
+                        ? results.pagination.hasNextPage
+                        : false
+                }
+                isInitialLoading={results.status === 'pending'}
+                isUpdating={results.status === 'ready' && results.isUpdating}
+                configurationDisabled={mutationBusy}
+                formattingContext={formattingContext}
+                onColumnConfigurationChange={(columns) =>
+                    commit(actions.setColumns(columns))
+                }
+                onPageChange={(page) => commit(actions.setPage(page))}
+                onPageSizeChange={(pageSize) =>
+                    commit(actions.setPageSize(pageSize))
+                }
+                onRowOpen={openRow}
+                onSortChange={(sort: WorkingListSort) =>
+                    commit(actions.setSort(sort))
+                }
+            />
+        </>
+    )
+}
+
+const IncompatibleSelection = () => {
+    const translate = useWorkingListText()
+    const { selectedList, repair, privateActions } = useWorkingListPrivateUi()
+    const [dialogOpen, setDialogOpen] = useState(false)
+    const [repairError, setRepairError] = useState<string>()
+    const incompatibleList =
+        selectedList?.compatibility === 'incompatible'
+            ? selectedList
+            : undefined
+    const canRepair = repair?.canRepair === true
+    const repairPending = repair?.isPending === true
+    const repairable = canRepair || repairPending
+
+    return (
+        <>
+            <div
+                className={styles['stale-list-panel']}
+                data-testid="stale-list-panel"
+            >
+                <NoticeBox
+                    error
+                    title={translate(
+                        'This saved list has unavailable settings'
+                    )}
+                >
+                    <p>
+                        {repairable
+                            ? translate(
+                                  'Some filters, columns, or sorting options are no longer available. Repair lets you review the proposed changes before updating the list.'
+                              )
+                            : translate(
+                                  'Some parts of this list are no longer available. Ask someone who can edit the list to repair it, or select another list.'
+                              )}
+                    </p>
+                    {repairable && (
+                        <div className={styles['stale-list-repair-action']}>
+                            <Button
+                                small
+                                dataTest="repair-working-list"
+                                disabled={repairPending}
+                                loading={repairPending}
+                                onClick={() => setDialogOpen(true)}
+                            >
+                                {repairPending
+                                    ? translate('Repairing…')
+                                    : translate('Repair')}
+                            </Button>
+                            {repairPending && (
+                                <span
+                                    className={
+                                        accessibilityStyles['visually-hidden']
+                                    }
+                                    role="status"
+                                    aria-live="polite"
+                                >
+                                    {translate('Repairing this saved list…')}
+                                </span>
+                            )}
+                        </div>
+                    )}
+                    {repairError && <p role="alert">{repairError}</p>}
+                </NoticeBox>
+            </div>
+            <WorkingListRepairDialog
+                open={dialogOpen}
+                list={incompatibleList}
+                preview={repair?.plan}
+                repairedConfiguration={repair?.repairedConfiguration}
+                canRepair={canRepair}
+                onClose={() => setDialogOpen(false)}
+                onRepair={() => {
+                    setDialogOpen(false)
+                    setRepairError(undefined)
+                    void privateActions
+                        .repairSelectedSavedList()
+                        .then((result) => {
+                            if (Result.isError(result)) {
+                                setRepairError(
+                                    translate(
+                                        'The saved working list could not be repaired.'
+                                    )
+                                )
+                            }
+                        })
+                }}
+            />
+        </>
+    )
+}
+
+export const WorkingListResults = ({
+    onClick,
+    dataQualityMode = 'hidden',
+}: WorkingListResultsProps) => {
+    const translate = useWorkingListText()
+    const selection = useWorkingListMeta((meta) => meta.selection)
+    const activeConfiguration = useWorkingListMeta(
+        (meta) => meta.activeConfiguration
+    )
+    const actions = useWorkingListActions()
+
+    return (
+        <div data-testid="working-list-results-slot">
+            {selection.status === 'pending' && <SelectionLoading />}
+            {selection.status === 'error' &&
+                (selection.error._tag === 'IncompatibleSavedListError' ? (
+                    <IncompatibleSelection />
+                ) : (
+                    <div
+                        className={styles['working-list-blocking-error']}
+                        data-testid="unavailable-working-list-error"
+                    >
+                        <NoticeBox
+                            error
+                            title={translate(
+                                'This working list is unavailable'
+                            )}
+                        >
+                            <p>
+                                {translate(
+                                    'The selected working list may no longer exist, or you may no longer have access. No records will be queried while it is selected.'
+                                )}
+                            </p>
+                            <Button
+                                dataTest="use-default-working-list"
+                                onClick={() => {
+                                    const result =
+                                        actions.clearSavedListSelection()
+                                    if (Result.isError(result)) {
+                                        throw result.error
+                                    }
+                                }}
+                            >
+                                {translate('Use the default working list')}
+                            </Button>
+                        </NoticeBox>
+                    </div>
+                ))}
+            {selection.status === 'ready' &&
+                (activeConfiguration.status === 'ready' ? (
+                    <ReadyResults
+                        onClick={onClick}
+                        dataQualityMode={dataQualityMode}
+                    />
+                ) : (
+                    <SelectionLoading />
+                ))}
+        </div>
+    )
+}

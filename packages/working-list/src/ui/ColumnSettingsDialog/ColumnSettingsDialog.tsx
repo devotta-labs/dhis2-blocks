@@ -15,6 +15,7 @@ import styles from './ColumnSettingsDialog.module.css'
 interface ColumnSettingsDialogProps {
     fields: WorkingListField[]
     visibleColumnIds: string[]
+    disabled?: boolean
     onChange: (columnIds: string[]) => void
     onClose: () => void
 }
@@ -54,6 +55,7 @@ export const getVisibleColumnIdsInOrder = (
 export const ColumnSettingsDialog = ({
     fields,
     visibleColumnIds,
+    disabled = false,
     onChange,
     onClose,
 }: ColumnSettingsDialogProps) => {
@@ -105,6 +107,7 @@ export const ColumnSettingsDialog = ({
                         dataTest="column-settings-transfer"
                         options={options}
                         selected={draftSelected}
+                        disabled={disabled}
                         filterable
                         enableOrderChange
                         height="448px"
@@ -141,6 +144,7 @@ export const ColumnSettingsDialog = ({
                     <Button
                         primary
                         dataTest="column-settings-done"
+                        disabled={disabled}
                         onClick={save}
                     >
                         {translate('Save column configuration')}

@@ -9,41 +9,27 @@ import {
     Popover,
 } from '@dhis2/ui'
 import { IconMore16 } from '@dhis2/ui-icons'
-import React, { useState } from 'react'
-import type { NormalizedSavedWorkingList } from '../../api/savedLists'
+import React, { useId, useState } from 'react'
+import type { WorkingListSavedView } from '../../provider/contracts'
 import accessibilityStyles from '../styles/accessibility.module.css'
 import layoutStyles from '../styles/layout.module.css'
 import { useWorkingListText } from '../WorkingListText'
 import styles from './SavedListBar.module.css'
 
 interface SavedListBarProps {
-    lists: NormalizedSavedWorkingList[]
+    lists: readonly WorkingListSavedView[]
     selectedId?: string
-    listsAreGenerated: boolean
     dirty: boolean
     online: boolean
     busy: boolean
-    onSelect: (list: NormalizedSavedWorkingList) => void
-    onUpdate: (list: NormalizedSavedWorkingList) => void
-    onShare: (list: NormalizedSavedWorkingList) => void
-    onDelete: (list: NormalizedSavedWorkingList) => void
+    onSelect: (list: WorkingListSavedView) => void
+    onUpdate: (list: WorkingListSavedView) => void
+    onShare: (list: WorkingListSavedView) => void
+    onDelete: (list: WorkingListSavedView) => void
 }
-
-const accessFor = (list: NormalizedSavedWorkingList) => list.sharing.access
-
-const canUpdateList = (list: NormalizedSavedWorkingList) => {
-    const access = accessFor(list)
-    return access?.write === true && access.update === true
-}
-
-const canManageList = (list: NormalizedSavedWorkingList) =>
-    accessFor(list)?.manage === true
-
-const canDeleteList = (list: NormalizedSavedWorkingList) =>
-    accessFor(list)?.delete === true
 
 interface OpenMenu {
-    list: NormalizedSavedWorkingList
+    list: WorkingListSavedView
     reference: HTMLElement
 }
 
@@ -63,7 +49,6 @@ const focusFirstMenuItem = (element: HTMLElement | null) => {
 export const SavedListBar = ({
     lists,
     selectedId,
-    listsAreGenerated,
     dirty,
     online,
     busy,
@@ -73,10 +58,11 @@ export const SavedListBar = ({
     onDelete,
 }: SavedListBarProps) => {
     const i18n = { t: useWorkingListText() }
+    const actionsMenuId = useId()
     const [openMenu, setOpenMenu] = useState<OpenMenu>()
-    const [deleteList, setDeleteList] = useState<NormalizedSavedWorkingList>()
-    const generatedListName = (list: NormalizedSavedWorkingList) => {
-        if (!listsAreGenerated) {
+    const [deleteList, setDeleteList] = useState<WorkingListSavedView>()
+    const generatedListName = (list: WorkingListSavedView) => {
+        if (!list.generated) {
             return list.name
         }
         const names = new Map([
@@ -98,34 +84,26 @@ export const SavedListBar = ({
 
     return (
         <>
-            <section
+            <div
                 className={styles['saved-list-bar']}
                 data-testid="saved-list-bar"
-                aria-label={i18n.t('Working list views')}
             >
-                <div className={styles['saved-list-bar__title']}>
-                    {i18n.t('Saved views in this program')}
-                </div>
                 <div className={styles['saved-list-pills']}>
                     {lists.map((list) => {
                         const selected = selectedId === list.id
-                        const incompatible =
-                            list.compatibility === 'incompatible'
+                        const incompatible = !list.compatible
                         const canUpdate =
-                            selected &&
-                            dirty &&
-                            !incompatible &&
-                            canUpdateList(list)
-                        const canShare = canManageList(list)
-                        const canDelete = canDeleteList(list)
+                            selected && dirty && !incompatible && list.canUpdate
+                        const canShare = list.canShare
+                        const canDelete = list.canDelete
                         const hasMenu =
-                            !listsAreGenerated &&
+                            !list.generated &&
                             (canUpdate || canShare || canDelete)
                         const name = generatedListName(list)
 
                         return (
                             <span
-                                key={`${list.resource}-${list.id}`}
+                                key={list.id}
                                 className={`${styles['saved-list-pill']}${
                                     selected
                                         ? ` ${styles['saved-list-pill--active']}`
@@ -189,7 +167,7 @@ export const SavedListBar = ({
                                         )}
                                         aria-controls={
                                             openMenu?.list.id === list.id
-                                                ? 'saved-view-actions-menu'
+                                                ? actionsMenuId
                                                 : undefined
                                         }
                                         aria-expanded={
@@ -217,7 +195,7 @@ export const SavedListBar = ({
                         )
                     })}
                 </div>
-            </section>
+            </div>
 
             {openMenu && (
                 <Popover
@@ -227,7 +205,7 @@ export const SavedListBar = ({
                 >
                     <div
                         ref={focusFirstMenuItem}
-                        id="saved-view-actions-menu"
+                        id={actionsMenuId}
                         className={styles['saved-list-menu']}
                     >
                         <FlyoutMenu
@@ -237,8 +215,8 @@ export const SavedListBar = ({
                         >
                             {selectedId === openMenu.list.id &&
                                 dirty &&
-                                openMenu.list.compatibility === 'compatible' &&
-                                canUpdateList(openMenu.list) && (
+                                openMenu.list.compatible &&
+                                openMenu.list.canUpdate && (
                                     <MenuItem
                                         dataTest="update-saved-view"
                                         disabled={savedListLocked}
@@ -252,7 +230,7 @@ export const SavedListBar = ({
                                         }}
                                     />
                                 )}
-                            {canManageList(openMenu.list) && (
+                            {openMenu.list.canShare && (
                                 <MenuItem
                                     dataTest="share-saved-view"
                                     disabled={savedListLocked}
@@ -264,7 +242,7 @@ export const SavedListBar = ({
                                     }}
                                 />
                             )}
-                            {canDeleteList(openMenu.list) && (
+                            {openMenu.list.canDelete && (
                                 <MenuItem
                                     destructive
                                     dataTest="delete-saved-view"

@@ -1,1 +1,6 @@
-export { WorkingList, type WorkingListProps } from './WorkingList'
+export { WorkingList } from './WorkingList'
+export type { WorkingListContainerProps } from '../Container'
+export type { WorkingListDefaultProps } from '../Default'
+export type { WorkingListResultsProps } from '../Results'
+export type { WorkingListSectionProps } from '../Section'
+export type { WorkingListToolbarProps } from '../Toolbar'

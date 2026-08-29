@@ -58,13 +58,22 @@ const cleanUp = (root: Root, container: HTMLElement) => {
 describe('column settings dialog', () => {
     const actEnvironment = globalThis
     const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
+    const originalCss = globalThis.CSS
 
     beforeAll(() => {
         actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
+        Object.defineProperty(globalThis, 'CSS', {
+            configurable: true,
+            value: { escape: (value: string) => value },
+        })
     })
 
     afterAll(() => {
         actEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment
+        Object.defineProperty(globalThis, 'CSS', {
+            configurable: true,
+            value: originalCss,
+        })
     })
 
     it('interleaves hidden columns while retaining saved visible order', () => {
@@ -202,6 +211,9 @@ describe('column settings dialog', () => {
             )
             const moveUp = document.querySelector<HTMLButtonElement>(
                 '[data-test="column-settings-transfer-reorderingactions-buttonmoveup"]'
+            )
+            expect(moveUp?.getAttribute('aria-label')).toBe(
+                'Move selected items up'
             )
             act(() => pickedA?.click())
             act(() => moveUp?.click())

@@ -1,29 +1,15 @@
-import { useConfig, useDataEngine, useOnlineStatus } from '@dhis2/app-runtime'
+import { useConfig, useDataEngine } from '@dhis2/app-runtime'
+import { Button, CircularLoader, NoticeBox, Switch } from '@dhis2/ui'
 import {
-    Button,
-    CircularLoader,
-    Modal,
-    ModalActions,
-    ModalContent,
-    ModalTitle,
-    NoticeBox,
-    Switch,
-} from '@dhis2/ui'
-import {
-    createWorkingListClient,
-    trackerProgramQueryOptions,
-    trackerProgramsQueryOptions,
-    workingListSystemInfoQueryOptions,
     WorkingList,
-    type DataEngineLike,
-    type DataEngineMutation,
-    type DataEngineQuery,
+    useWorkingListMeta,
     type WorkingListDataQualityMode,
-    type WorkingListRowOpenEvent,
+    type WorkingListResultTarget,
 } from '@dhis2-blocks/working-list'
+import { trackerProgramsQueryOptions } from '@dhis2-blocks/working-list/development'
 import { useQuery } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useBlocker, useSearchParams } from 'react-router-dom'
+import { useBlocker } from 'react-router-dom'
 import { z, ZodError } from 'zod'
 import { ContextSelectorBar } from '../ContextSelectorBar'
 import { getGuardedOrganisationUnitState } from '../contextTransitions'
@@ -36,14 +22,11 @@ import {
     isOrganisationUnitInScope,
     resolveTrackerSearchRoots,
 } from '../organisationUnitScope'
-import {
-    isGuardedAppUrlTransition,
-    parseAppUrlState,
-    parseAppUrlStateFromHash,
-    serializeAppUrlState,
-    type AppUrlState,
-} from '../urlState'
+import { isGuardedAppUrlTransition, parseAppUrlState } from '../urlState'
+import { useAppUrlState } from '../useAppUrlState'
 import i18n from '../../i18n'
+import { createAppWorkingListClient } from './createAppWorkingListClient'
+import { RecordDetailsModal } from './RecordDetailsModal'
 
 const OrganisationUnitReferenceSchema = z
     .object({
@@ -75,107 +58,15 @@ const AppRuntimeConfigSchema = z
 const retryOperationalError = (failureCount: number, error: Error) =>
     !(error instanceof ZodError) && failureCount < 2
 
-type WorkingListEngineValue = Awaited<
-    ReturnType<DataEngineLike['query']>
->[string]
+const WorkingListDirtyBridge = ({
+    onChange,
+}: {
+    onChange(dirty: boolean): void
+}) => {
+    const dirty = useWorkingListMeta((meta) => meta.dirty)
 
-const DataEngineValueSchema: z.ZodType<WorkingListEngineValue> = z.lazy(() =>
-    z.union([
-        z.string(),
-        z.number(),
-        z.boolean(),
-        z.null(),
-        z.undefined(),
-        z.array(DataEngineValueSchema),
-        z.record(z.string(), DataEngineValueSchema),
-    ])
-)
-const DataEngineResultSchema = z.record(z.string(), DataEngineValueSchema)
-const MutationDataSchema = z.record(z.string(), z.json())
-const RuntimeQueryParameterSchema = z.union([
-    z.string(),
-    z.number(),
-    z.boolean(),
-    z.undefined(),
-    z.array(z.union([z.string(), z.number()])),
-])
-
-const toRuntimeQuery = (query: DataEngineQuery) =>
-    Object.fromEntries(
-        Object.entries(query).map(([key, definition]) => {
-            const params = definition.params
-                ? Object.fromEntries(
-                      Object.entries(definition.params).map(
-                          ([parameter, value]) => [
-                              parameter,
-                              RuntimeQueryParameterSchema.parse(value),
-                          ]
-                      )
-                  )
-                : undefined
-            return [
-                key,
-                {
-                    resource: definition.resource,
-                    id: definition.id,
-                    params,
-                },
-            ]
-        })
-    )
-
-const toRuntimeMutation = (mutation: DataEngineMutation) => {
-    if (mutation.type === 'delete') {
-        if (!mutation.id) {
-            throw new Error('A delete mutation requires an id')
-        }
-        return {
-            resource: mutation.resource,
-            id: mutation.id,
-            type: mutation.type,
-        } as const
-    }
-    const data = MutationDataSchema.parse(mutation.data)
-    if (mutation.type === 'create') {
-        return {
-            resource: mutation.resource,
-            type: mutation.type,
-            data,
-        } as const
-    }
-    if (!mutation.id) {
-        throw new Error(`${mutation.type} mutation requires an id`)
-    }
-    return {
-        resource: mutation.resource,
-        id: mutation.id,
-        type: mutation.type,
-        data,
-    } as const
-}
-
-const useAppUrlState = () => {
-    const [searchParams, setSearchParams] = useSearchParams()
-    const state = useMemo(() => parseAppUrlState(searchParams), [searchParams])
-    const update = useCallback(
-        (next: AppUrlState | ((current: AppUrlState) => AppUrlState)) => {
-            const resolveNext =
-                next instanceof Function
-                    ? (current: AppUrlState) => next(current)
-                    : () => next
-            setSearchParams((committed) =>
-                serializeAppUrlState(
-                    resolveNext(
-                        globalThis.window
-                            ? parseAppUrlStateFromHash(window.location.hash)
-                            : parseAppUrlState(committed)
-                    )
-                )
-            )
-        },
-        [setSearchParams]
-    )
-    return [state, update] as const
+    useEffect(() => onChange(dirty), [dirty, onChange])
+    return null
 }
 
 export const AppShell = () => {
@@ -185,20 +76,10 @@ export const AppShell = () => {
         () => AppRuntimeConfigSchema.parse(config),
         [config]
     )
-    const networkStatus = useOnlineStatus()
-    const client = useMemo(() => {
-        const dataEngine: DataEngineLike = {
-            query: async (query, options) =>
-                DataEngineResultSchema.parse(
-                    await engine.query(toRuntimeQuery(query), options)
-                ),
-            mutate: (mutation) => engine.mutate(toRuntimeMutation(mutation)),
-        }
-        return createWorkingListClient(dataEngine)
-    }, [engine])
+    const client = useMemo(() => createAppWorkingListClient(engine), [engine])
     const [orgUnitPickerOpen, setOrgUnitPickerOpen] = useState(false)
     const [dirty, setDirty] = useState(false)
-    const [openedRecord, setOpenedRecord] = useState<WorkingListRowOpenEvent>()
+    const [openedRecord, setOpenedRecord] = useState<WorkingListResultTarget>()
     const [dataQualityMode, setDataQualityMode] =
         useState<WorkingListDataQualityMode>('hidden')
     const confirmDiscard = useCallback(() => {
@@ -248,7 +129,6 @@ export const AppShell = () => {
     const programsQuery = useQuery(
         trackerProgramsQueryOptions(client, runtimeConfig.apiVersion)
     )
-    const systemInfoQuery = useQuery(workingListSystemInfoQueryOptions(client))
 
     const currentUserQuery = useQuery({
         queryKey: ['working-list', 'shell', 'current-user-org-units'],
@@ -280,15 +160,6 @@ export const AppShell = () => {
     const selectedProgramSummary = programs.find(
         (program) => program.id === urlState.programId
     )
-    const selectedProgramQuery = useQuery({
-        ...trackerProgramQueryOptions(
-            client,
-            urlState.programId ?? 'no-program-selected',
-            runtimeConfig.apiVersion
-        ),
-        enabled: Boolean(selectedProgramSummary),
-    })
-    const selectedProgram = selectedProgramQuery.data
 
     const programOrgUnitsQuery = useQuery({
         queryKey: [
@@ -409,19 +280,15 @@ export const AppShell = () => {
 
     const loading =
         programsQuery.isPending ||
-        systemInfoQuery.isPending ||
         currentUserQuery.isPending ||
         Boolean(
             selectedProgramSummary &&
-            (selectedProgramQuery.isPending ||
-                programOrgUnitsQuery.isPending ||
+            (programOrgUnitsQuery.isPending ||
                 (urlState.orgUnitId && selectedOrgUnitQuery.isPending))
         )
     const shellError =
         programsQuery.error ??
-        systemInfoQuery.error ??
         currentUserQuery.error ??
-        (selectedProgramSummary ? selectedProgramQuery.error : undefined) ??
         (selectedProgramSummary ? programOrgUnitsQuery.error : undefined) ??
         (selectedProgramSummary && urlState.orgUnitId
             ? selectedOrgUnitQuery.error
@@ -429,18 +296,6 @@ export const AppShell = () => {
 
     return (
         <div className="app-shell" data-testid="working-list-app">
-            {!networkStatus.online && (
-                <div
-                    className="offline-notice"
-                    data-testid="offline-notice"
-                    role="status"
-                >
-                    {i18n.t(
-                        'You are offline. Cached results remain available; server actions are disabled.'
-                    )}
-                </div>
-            )}
-
             <ContextSelectorBar
                 programs={programs}
                 selectedProgram={selectedProgramSummary}
@@ -507,10 +362,8 @@ export const AppShell = () => {
                         <Button
                             onClick={() => {
                                 void programsQuery.refetch()
-                                void systemInfoQuery.refetch()
                                 void currentUserQuery.refetch()
                                 if (selectedProgramSummary) {
-                                    void selectedProgramQuery.refetch()
                                     void programOrgUnitsQuery.refetch()
                                 }
                                 if (
@@ -543,7 +396,7 @@ export const AppShell = () => {
 
             {!loading &&
                 !shellError &&
-                selectedProgram &&
+                selectedProgramSummary &&
                 !urlState.orgUnitId && (
                     <main
                         className="context-state"
@@ -567,7 +420,7 @@ export const AppShell = () => {
 
             {!loading &&
                 !shellError &&
-                selectedProgram &&
+                selectedProgramSummary &&
                 urlState.orgUnitId &&
                 !selectedOrgUnitIsAllowed && (
                     <main
@@ -597,7 +450,7 @@ export const AppShell = () => {
 
             {!loading &&
                 !shellError &&
-                selectedProgram &&
+                selectedProgramSummary &&
                 urlState.orgUnitId &&
                 selectedOrgUnitIsAllowed && (
                     <main
@@ -616,76 +469,65 @@ export const AppShell = () => {
                                 }
                             />
                         </div>
-                        <WorkingList
-                            key={selectedProgram.id}
-                            dataQualityMode={dataQualityMode}
-                            apiVersion={runtimeConfig.apiVersion}
-                            client={client}
-                            online={networkStatus.online}
+                        <WorkingList.Provider
+                            programId={selectedProgramSummary.id}
                             orgUnitId={urlState.orgUnitId}
-                            page={urlState.page ?? 1}
-                            pageSize={urlState.pageSize ?? 15}
-                            program={selectedProgram}
-                            systemInfo={systemInfoQuery.data!}
-                            locale={i18n.language}
-                            selectedTemplateId={urlState.selectedTemplateId}
-                            onDirtyChange={setDirty}
-                            onPageChange={(page, pageSize) =>
+                            selectedSavedListId={urlState.selectedTemplateId}
+                            pagination={{
+                                page: urlState.page ?? 1,
+                                pageSize: urlState.pageSize ?? 15,
+                            }}
+                            onPaginationChange={({ page, pageSize }) =>
                                 setUrlState((current) => ({
                                     ...current,
                                     page,
                                     pageSize,
                                 }))
                             }
-                            onRowOpen={setOpenedRecord}
-                            onSelectedTemplateChange={(selectedTemplateId) =>
+                            onSelectedSavedListChange={(selectedSavedListId) =>
                                 setUrlState((current) => ({
                                     ...current,
-                                    selectedTemplateId,
+                                    selectedTemplateId: selectedSavedListId,
                                     page: 1,
                                 }))
                             }
-                            requestDiscardConfirmation={confirmDiscard}
-                        />
+                        >
+                            <WorkingListDirtyBridge onChange={setDirty} />
+                            <WorkingList.Container>
+                                <WorkingList.Section
+                                    title={i18n.t(
+                                        'Saved views in this program'
+                                    )}
+                                >
+                                    <WorkingList.SavedViews />
+                                </WorkingList.Section>
+                                <WorkingList.Section
+                                    ariaLabel={i18n.t('Tracked entity filters')}
+                                >
+                                    <WorkingList.Toolbar>
+                                        <WorkingList.Columns />
+                                        <WorkingList.Filters />
+                                        <WorkingList.Actions />
+                                    </WorkingList.Toolbar>
+                                </WorkingList.Section>
+                                <WorkingList.Section
+                                    ariaLabel={i18n.t('Working list results')}
+                                >
+                                    <WorkingList.Results
+                                        dataQualityMode={dataQualityMode}
+                                        onClick={setOpenedRecord}
+                                    />
+                                </WorkingList.Section>
+                            </WorkingList.Container>
+                        </WorkingList.Provider>
                     </main>
                 )}
 
             {openedRecord && (
-                <Modal
-                    small
-                    position="middle"
+                <RecordDetailsModal
+                    record={openedRecord}
                     onClose={() => setOpenedRecord(undefined)}
-                >
-                    <ModalTitle>
-                        {openedRecord.mode === 'event'
-                            ? i18n.t('Event selected')
-                            : i18n.t('Tracked entity selected')}
-                    </ModalTitle>
-                    <ModalContent>
-                        <dl className="record-details">
-                            {openedRecord.mode === 'event' && (
-                                <>
-                                    <dt>{i18n.t('Event ID')}</dt>
-                                    <dd>{openedRecord.eventId}</dd>
-                                </>
-                            )}
-                            <dt>{i18n.t('Tracked entity ID')}</dt>
-                            <dd>
-                                {openedRecord.mode === 'trackedEntity'
-                                    ? openedRecord.trackedEntityId
-                                    : (openedRecord.trackedEntityId ?? '—')}
-                            </dd>
-                        </dl>
-                    </ModalContent>
-                    <ModalActions>
-                        <Button
-                            primary
-                            onClick={() => setOpenedRecord(undefined)}
-                        >
-                            {i18n.t('Close')}
-                        </Button>
-                    </ModalActions>
-                </Modal>
+                />
             )}
         </div>
     )

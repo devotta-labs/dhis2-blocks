@@ -4,39 +4,27 @@
     "private": true,
     "description": "Reusable DHIS2 Working List component",
     "license": "BSD-3-Clause",
-    "files": [
-        "dist"
-    ],
     "sideEffects": [
         "**/*.css"
     ],
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
     "exports": {
-        ".": {
-            "@dhis2-blocks/development": "./src/index.ts",
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.mjs"
-        },
-        "./package.json": "./package.json"
+        ".": "./src/index.ts",
+        "./development": "./src/development.ts"
     },
     "scripts": {
-        "build": "vite build && tsc",
-        "package:check": "npm pack --dry-run --cache .npm-cache",
         "test": "d2-app-scripts test",
-        "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+        "typecheck": "tsc --noEmit",
         "lint": "oxlint --deny-warnings src"
     },
     "dependencies": {
+        "@dhis2/app-runtime": "^3.15.1",
         "@dhis2/d2-i18n": "1.2.0",
         "@dhis2/multi-calendar-dates": "2.1.2",
-        "@dhis2/ui": "^10.13.0",
-        "@dhis2/ui-icons": "^10.13.0",
-        "@dnd-kit/core": "^6.3.1",
-        "@dnd-kit/sortable": "^10.0.0",
-        "@dnd-kit/utilities": "^3.2.2",
+        "@dhis2/ui": "^10.17.0",
+        "@dhis2/ui-icons": "^10.17.0",
         "@tanstack/react-query": "^5.101.4",
         "@tanstack/react-table": "^9.1.2",
+        "better-result": "^3.0.1",
         "zod": "^4.4.3",
         "zustand": "^5.0.15"
     },
@@ -48,9 +36,7 @@
         "@types/react-dom": "^18.3.7",
         "react": "18.3.1",
         "react-dom": "18.3.1",
-        "typescript": "^5.9.3",
-        "vite": "^7.3.0",
-        "vite-plugin-lib-inject-css": "2.2.2"
+        "typescript": "^5.9.3"
     },
     "peerDependencies": {
         "react": "^18.3.1",
@@ -59,10 +45,14 @@
     "jest": {
         "moduleNameMapper": {
             "\\.(css|less)$": "<rootDir>/test/styleMock.ts",
+            "^better-result$": "<rootDir>/test/betterResultMock.ts",
             "^@tanstack/table-core/(.*)$": "<rootDir>/node_modules/@tanstack/react-table/../table-core/dist/$1.js"
         },
+        "setupFilesAfterEnv": [
+            "<rootDir>/test/setup.ts"
+        ],
         "transformIgnorePatterns": [
-            "/node_modules/(?!\\.pnpm/@tanstack\\+|@tanstack/)"
+            "/node_modules/(?!\\.pnpm/(?:@tanstack\\+|better-result@)|@tanstack/|better-result/)"
         ],
         "watchman": false
     }

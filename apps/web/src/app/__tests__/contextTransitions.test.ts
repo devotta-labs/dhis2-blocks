@@ -1,7 +1,8 @@
 import { getGuardedOrganisationUnitState } from '../contextTransitions'
+import type { AppUrlState } from '../urlState'
 
 describe('organisation unit context transitions', () => {
-    const current = {
+    const current: AppUrlState = {
         programId: 'Program0001',
         orgUnitId: 'OrgUnit0001',
         selectedTemplateId: 'SavedList01',

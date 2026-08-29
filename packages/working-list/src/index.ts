@@ -1,142 +1,77 @@
-/**
- * Supported package surface. Internal DHIS2 request schemas, query keys,
- * persistence commands, and store implementation deliberately stay private so
- * they can evolve without creating accidental compatibility commitments.
- */
+/** Public entry point for the installed Working List source block. */
 export {
     WorkingList,
-    WorkingListQueryBoundary,
-    WorkingListTextProvider,
-    createWorkingListQueryClient,
+    type WorkingListContainerProps,
+    type WorkingListDefaultProps,
+    type WorkingListResultsProps,
+    type WorkingListSectionProps,
+    type WorkingListToolbarProps,
 } from './ui'
-export type {
-    WorkingListDataQualityMode,
-    WorkingListProps,
-    WorkingListQueryBoundaryProps,
-    WorkingListTranslate,
-    WorkingListTranslationValues,
-} from './ui'
-
-export type {
-    WorkingListCellValue,
-    WorkingListRowIssue,
-    WorkingListRowValues,
-} from './query/normalizeRows'
+export type { WorkingListDataQualityMode } from './ui/types'
 
 export {
-    WorkingListBoundaryError,
-    createWorkingListClient,
-    shouldRetryWorkingListRequest,
-} from './api/client'
-export type {
-    DataEngineLike,
-    DataEngineMutation,
-    DataEngineQuery,
-    DataEngineQueryDefinition,
-    DataEngineQueryParameters,
-    ResourceRequest,
-    WorkingListClient,
-} from './api/client'
-
-export {
-    detectMetadataFeatures,
-    resolveWorkingListCapabilities,
-} from './api/capabilities'
-export type {
-    MetadataFeaturePresence,
-    WorkingListCapabilities,
-} from './api/capabilities'
-
-export {
-    buildProgramFieldCatalog,
-    fetchTrackerProgram,
-    fetchTrackerPrograms,
-    trackerProgramQueryOptions,
-    trackerProgramsQueryOptions,
-} from './api/metadata'
-export type { ProgramFieldCatalog } from './api/metadata'
-
-export {
-    WORKING_LIST_CALENDARS,
-    WorkingListSystemInfoSchema,
-    fetchWorkingListSystemInfo,
-    workingListSystemInfoQueryOptions,
-} from './api/systemInfo'
-export type {
-    WorkingListCalendar,
-    WorkingListDateFormat,
-    WorkingListSystemInfo,
-} from './api/systemInfo'
-
-export { TrackerProgramSchema } from './api/schemas'
-export type { TrackerProgram } from './api/schemas'
-
-export {
-    DHIS2_VALUE_TYPES,
-    FILTER_OPERATORS,
-    FILTER_SOURCES,
-    RELATIVE_DATE_PERIODS,
-} from './domain/model'
+    useWorkingListActions,
+    useWorkingListMeta,
+    useWorkingListState,
+} from './provider/WorkingListContext'
+export { WORKING_LIST_PAGE_SIZES } from './provider/contracts'
 export type {
     AppliedFilter,
-    AssigneeFilterValue,
-    AssigneeMode,
-    BooleanFilterValue,
-    DateFilterValue,
-    Dhis2ValueType,
-    EmptyFilterValue,
-    EventWorkingListCriteria,
-    FieldCatalog,
-    FilterOperator,
-    FilterScope,
-    FilterSource,
-    FilterValue,
-    NumberFilterValue,
-    OptionFilterValue,
-    OrganisationUnitFilterValue,
-    RelativeDateFilterValue,
-    RelativeDatePeriod,
-    TextFilterValue,
-    TimeFilterValue,
-    TrackedEntityWorkingListCriteria,
-    TrueOnlyFilterValue,
+    WorkingListActions,
+    WorkingListActiveConfigurationMeta,
     WorkingListConfiguration,
-    WorkingListContext,
-    WorkingListCriteria,
-    WorkingListField,
+    WorkingListDisplayRow,
+    WorkingListLifecycleMeta,
+    WorkingListMeta,
+    WorkingListMutationMeta,
+    WorkingListMutationStatus,
+    WorkingListPageSize,
     WorkingListPagination,
-    WorkingListRowOpenEvent,
+    WorkingListPaginationMeta,
+    WorkingListProviderProps,
+    WorkingListResultsMeta,
+    WorkingListResultTarget,
+    WorkingListSavedView,
+    WorkingListSavedViewsMeta,
+    WorkingListSelectionMeta,
+    WorkingListState,
+} from './provider/contracts'
+export type WorkingListSelectionProps = Pick<
+    import('./provider/contracts').WorkingListProviderProps,
+    'selectedSavedListId' | 'onSelectedSavedListChange'
+>
+export type WorkingListPaginationProps = Pick<
+    import('./provider/contracts').WorkingListProviderProps,
+    'pagination' | 'onPaginationChange'
+>
+
+export {
+    DownloadVisibleRowsError,
+    IncompatibleSavedListError,
+    InvalidConfigurationError,
+    InvalidPaginationError,
+    NoSelectedSavedListError,
+    OfflineMutationError,
+    SavedListNotFoundError,
+    SavedListPermissionError,
+    UnknownFieldError,
+    UnknownProgramStageError,
+    WorkingListInitializationError,
+    WorkingListInvalidResponseError,
+    WorkingListNetworkError,
+    WorkingListResultsError,
+} from './provider/errors'
+export type {
+    ConfigurationCommandError,
+    CreateSavedListError,
+    DeleteSavedListError,
+    PaginationCommandError,
+    SelectSavedListError,
+    UpdateSelectedSavedListError,
+} from './provider/errors'
+
+export type {
+    FilterOperator,
+    FilterValue,
     WorkingListSort,
-    WorkingListViewConfiguration,
 } from './domain/model'
-
-export {
-    createWorkingListValueTransformers,
-    isValidWorkingListClientDate,
-} from './registry/transformers'
-export type {
-    WorkingListTransformerOptions,
-    WorkingListValueTransformers,
-} from './registry/transformers'
-
-export {
-    getAllowedFilterOperators,
-    getCellDisplayValue,
-    getFilterEditorKind,
-    getValueTypeDefinition,
-    isWorkingListFileValue,
-    isWorkingListUserValue,
-    validateAppliedFilter,
-    ValueParseError,
-    valueTypeRegistry,
-} from './registry/valueTypes'
-export type {
-    CellDisplayValue,
-    CellFormattingContext,
-    FilterEditorKind,
-    FilterParsingContext,
-    FilterSerializationContext,
-    ValueTypeDefinition,
-    WorkingListFileValue,
-    WorkingListUserValue,
-} from './registry/valueTypes'

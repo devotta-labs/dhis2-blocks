@@ -1,41 +1,25 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { NormalizedSavedWorkingList } from '../../api/savedLists'
+import type { WorkingListSavedView } from '../../provider/contracts'
 import { ConfigureMenu } from '../ConfigureMenu'
 import { WorkingListTextProvider } from '../WorkingListText'
 
-const ownedList: NormalizedSavedWorkingList = {
+const ownedList: WorkingListSavedView = {
     id: 'OwnedList01',
     name: 'My working list',
-    resource: 'trackedEntityInstanceFilters',
-    sharing: {
-        access: {
-            delete: true,
-            manage: true,
-            update: true,
-            write: true,
-        },
-    },
-    compatibility: 'compatible',
-    configuration: {
-        mode: 'trackedEntity',
-        programId: 'Program0001',
-        filters: [],
-        columns: ['createdAt'],
-        sort: { fieldId: 'createdAt', direction: 'desc' },
-    },
+    generated: false,
+    compatible: true,
+    canUpdate: true,
+    canDelete: true,
+    canShare: true,
 }
 
 const renderMenu = ({
-    selectedList,
-    selectedIsGenerated = false,
-    hasFilters = false,
+    selectedView,
     dirty = false,
     online = true,
 }: {
-    selectedList?: NormalizedSavedWorkingList
-    selectedIsGenerated?: boolean
-    hasFilters?: boolean
+    selectedView?: WorkingListSavedView
     dirty?: boolean
     online?: boolean
 }) => {
@@ -43,20 +27,18 @@ const renderMenu = ({
     document.body.appendChild(container)
     const root = createRoot(container)
     const onDownload = jest.fn()
-    const onSaveAs = jest.fn()
+    const onSaveAs = jest.fn(async () => undefined)
     const onUpdate = jest.fn()
 
     act(() => {
         root.render(
             <WorkingListTextProvider translate={(message) => message}>
                 <ConfigureMenu
-                    selectedList={selectedList}
-                    selectedIsGenerated={selectedIsGenerated}
-                    activeResource="trackedEntityInstanceFilters"
-                    hasFilters={hasFilters}
+                    selectedView={selectedView}
                     dirty={dirty}
                     online={online}
                     busy={false}
+                    createPending={false}
                     onDownload={onDownload}
                     onSaveAs={onSaveAs}
                     onUpdate={onUpdate}
@@ -89,12 +71,12 @@ describe('working-list actions', () => {
         actEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment
     })
 
-    it('shows only More with Download data for an unfiltered default view', () => {
+    it('offers create and download for an unfiltered default view', () => {
         const { container, onDownload, cleanup } = renderMenu({})
         try {
             expect(
                 container.querySelector('[data-test="save-working-list"]')
-            ).toBeNull()
+            ).not.toBeNull()
             act(() => {
                 container
                     .querySelector<HTMLButtonElement>(
@@ -113,8 +95,8 @@ describe('working-list actions', () => {
         }
     })
 
-    it('adds a direct Save view action when filters are applied', () => {
-        const { container, cleanup } = renderMenu({ hasFilters: true })
+    it('keeps create and download together for a generated view', () => {
+        const { container, cleanup } = renderMenu({})
         try {
             expect(
                 container.querySelector('[data-test="save-working-list"]')
@@ -129,7 +111,7 @@ describe('working-list actions', () => {
 
     it('shows update and create-new actions for a persisted selection', () => {
         const { container, onUpdate, cleanup } = renderMenu({
-            selectedList: ownedList,
+            selectedView: ownedList,
             dirty: true,
         })
         try {
@@ -151,7 +133,7 @@ describe('working-list actions', () => {
                 document.querySelector('[data-test="save-as-working-list"]')
             ).not.toBeNull()
             act(() => update?.click())
-            expect(onUpdate).toHaveBeenCalledWith(ownedList)
+            expect(onUpdate).toHaveBeenCalledWith()
         } finally {
             cleanup()
         }
@@ -159,7 +141,7 @@ describe('working-list actions', () => {
 
     it('does not send an update when the selected view is clean', () => {
         const { container, onUpdate, cleanup } = renderMenu({
-            selectedList: ownedList,
+            selectedView: ownedList,
         })
         try {
             act(() => {

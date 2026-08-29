@@ -1,4 +1,17 @@
+import { WORKING_LIST_PAGE_SIZES } from '@dhis2-blocks/working-list'
 import { z } from 'zod'
+
+const WorkingListPageSizeSchema = z.coerce
+    .number()
+    .pipe(
+        z.union([
+            z.literal(WORKING_LIST_PAGE_SIZES[0]),
+            z.literal(WORKING_LIST_PAGE_SIZES[1]),
+            z.literal(WORKING_LIST_PAGE_SIZES[2]),
+            z.literal(WORKING_LIST_PAGE_SIZES[3]),
+            z.literal(WORKING_LIST_PAGE_SIZES[4]),
+        ])
+    )
 
 const WorkingListUrlStateSchema = z
     .object({
@@ -6,7 +19,7 @@ const WorkingListUrlStateSchema = z
         orgUnitId: z.string().min(1).optional(),
         selectedTemplateId: z.string().min(1).optional(),
         page: z.coerce.number().int().positive().optional(),
-        pageSize: z.coerce.number().int().positive().max(1000).optional(),
+        pageSize: WorkingListPageSizeSchema.optional(),
     })
     .strict()
 
@@ -35,15 +48,6 @@ export const parseAppUrlState = (parameters: URLSearchParams): AppUrlState => {
         })
     )
     return WorkingListUrlStateSchema.parse(candidate)
-}
-
-/* react-router applies navigations to window.location synchronously but
-   commits the matching React state in a transition. Incremental updates
-   must merge against the live URL, not the possibly stale committed one,
-   or two quick writes (select template, then reset page) lose the first. */
-export const parseAppUrlStateFromHash = (hash: string): AppUrlState => {
-    const query = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : ''
-    return parseAppUrlState(new URLSearchParams(query))
 }
 
 export const serializeAppUrlState = (state: AppUrlState) => {

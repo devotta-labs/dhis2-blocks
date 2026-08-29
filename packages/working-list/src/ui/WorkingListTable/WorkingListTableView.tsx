@@ -1,8 +1,11 @@
 import { Pagination } from '@dhis2/ui'
 import React from 'react'
-import type { WorkingListRowOpenEvent } from '../../domain/model'
+import {
+    WORKING_LIST_PAGE_SIZES,
+    type WorkingListDisplayRow,
+    type WorkingListPageSize,
+} from '../../provider/contracts'
 import accessibilityStyles from '../styles/accessibility.module.css'
-import { rowOpenEvent, type WorkingListDisplayRow } from '../types'
 import { useWorkingListText } from '../WorkingListText'
 import styles from './WorkingListTable.module.css'
 
@@ -45,12 +48,14 @@ export interface WorkingListTableViewProps {
     visibleColumnCount: number
     dataQualityMode: 'hidden' | 'highlighted'
     page: number
-    pageSize: number
+    pageSize: WorkingListPageSize
     hasNextPage: boolean
     isInitialLoading: boolean
     isUpdating: boolean
-    onPageChange: (page: number, pageSize: number) => void
-    onRowOpen: (event: WorkingListRowOpenEvent) => void
+    configurationDisabled?: boolean
+    onPageChange: (page: number) => void
+    onPageSizeChange: (pageSize: WorkingListPageSize) => void
+    onRowOpen: (row: WorkingListDisplayRow) => void
 }
 
 const isInteractiveTarget = (target: EventTarget | null) =>
@@ -61,6 +66,9 @@ const isInteractiveTarget = (target: EventTarget | null) =>
         )
     )
 
+const isWorkingListPageSize = (value: number): value is WorkingListPageSize =>
+    WORKING_LIST_PAGE_SIZES.some((pageSize) => pageSize === value)
+
 export const WorkingListTableView = ({
     model,
     visibleColumnCount,
@@ -70,25 +78,20 @@ export const WorkingListTableView = ({
     hasNextPage,
     isInitialLoading,
     isUpdating,
+    configurationDisabled = false,
     onPageChange,
+    onPageSizeChange,
     onRowOpen,
 }: WorkingListTableViewProps) => {
     const i18n = { t: useWorkingListText() }
     const showIssuesColumn = dataQualityMode === 'highlighted'
-    const openRow = (row: WorkingListDisplayRow) => onRowOpen(rowOpenEvent(row))
+    const openRow = (row: WorkingListDisplayRow) => onRowOpen(row)
 
     return (
-        <section
+        <div
             className={styles['working-list-results']}
             data-testid="working-list-results"
-            aria-labelledby="results-heading"
         >
-            <h2
-                id="results-heading"
-                className={accessibilityStyles['visually-hidden']}
-            >
-                {i18n.t('Working list results')}
-            </h2>
             <div
                 className={styles['working-list-table-scroll']}
                 data-testid="working-list-table-scroll"
@@ -134,7 +137,10 @@ export const WorkingListTableView = ({
                                                     styles['sort-button']
                                                 }
                                                 data-testid={`sort-${header.fieldId}`}
-                                                disabled={!header.canSort}
+                                                disabled={
+                                                    !header.canSort ||
+                                                    configurationDisabled
+                                                }
                                                 onClick={header.onToggleSorting}
                                             >
                                                 {header.content}
@@ -257,19 +263,22 @@ export const WorkingListTableView = ({
                     page={page}
                     pageSize={pageSize}
                     pageLength={model.rows.length}
-                    pageSizes={['10', '15', '25', '50', '100']}
+                    pageSizes={WORKING_LIST_PAGE_SIZES.map(String)}
                     isLastPage={!hasNextPage}
                     hidePageSelect
                     hidePageSummary
                     disabled={isInitialLoading}
-                    onPageChange={(nextPage) =>
-                        onPageChange(nextPage, pageSize)
-                    }
-                    onPageSizeChange={(nextPageSize) =>
-                        onPageChange(1, nextPageSize)
-                    }
+                    onPageChange={onPageChange}
+                    onPageSizeChange={(nextPageSize) => {
+                        if (!isWorkingListPageSize(nextPageSize)) {
+                            throw new Error(
+                                `Unsupported working-list page size: ${nextPageSize}`
+                            )
+                        }
+                        onPageSizeChange(nextPageSize)
+                    }}
                 />
             </div>
-        </section>
+        </div>
     )
 }

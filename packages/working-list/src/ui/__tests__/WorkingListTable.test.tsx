@@ -1,12 +1,11 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { z } from 'zod'
+import type { WorkingListField, WorkingListSort } from '../../domain/model'
 import type {
-    WorkingListField,
-    WorkingListRowOpenEvent,
-    WorkingListSort,
-} from '../../domain/model'
-import type { WorkingListDisplayRow } from '../types'
+    WorkingListDisplayRow,
+    WorkingListPageSize,
+} from '../../provider/contracts'
 import {
     WorkingListTableView,
     type WorkingListTableHeaderView,
@@ -57,12 +56,13 @@ interface WorkingListTableScenario {
     dataQualityMode: 'hidden' | 'highlighted'
     sort: WorkingListSort
     page: number
-    pageSize: number
+    pageSize: WorkingListPageSize
     hasNextPage: boolean
     isInitialLoading: boolean
     isUpdating: boolean
-    onPageChange: (page: number, pageSize: number) => void
-    onRowOpen: (event: WorkingListRowOpenEvent) => void
+    onPageChange: (page: number) => void
+    onPageSizeChange: (pageSize: WorkingListPageSize) => void
+    onRowOpen: (row: WorkingListDisplayRow) => void
     onSortChange: (sort: WorkingListSort) => void
 }
 
@@ -179,6 +179,7 @@ const renderTable = (
         isInitialLoading: false,
         isUpdating: false,
         onPageChange: () => undefined,
+        onPageSizeChange: () => undefined,
         onRowOpen: () => undefined,
         onSortChange: () => undefined,
         ...props,
@@ -197,6 +198,7 @@ const renderTable = (
                     isInitialLoading={scenario.isInitialLoading}
                     isUpdating={scenario.isUpdating}
                     onPageChange={scenario.onPageChange}
+                    onPageSizeChange={scenario.onPageSizeChange}
                     onRowOpen={scenario.onRowOpen}
                 />
             </WorkingListTextProvider>
@@ -280,10 +282,12 @@ describe('WorkingListTable', () => {
                         })
                     )
                 )
-                expect(onRowOpen).toHaveBeenLastCalledWith({
-                    mode: 'trackedEntity',
-                    trackedEntityId: 'tei-1',
-                })
+                expect(onRowOpen).toHaveBeenLastCalledWith(
+                    expect.objectContaining({
+                        id: 'tei-1',
+                        trackedEntityId: 'tei-1',
+                    })
+                )
 
                 act(() => openRowButton?.click())
                 expect(onRowOpen).toHaveBeenCalledTimes(2)

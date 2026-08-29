@@ -9,14 +9,15 @@ and the applications used to develop them.
 apps/
   web/                  DHIS2 wrapper and component demo application
 packages/
-  working-list/         Reusable Working List component and client library
+  working-list/         Canonical Working List source and test harness
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
 ```
 
 The web application depends on `@dhis2-blocks/working-list` through pnpm's
-`workspace:*` protocol. Turborepo uses that dependency to build the library
-before building, testing, or typechecking the application.
+`workspace:*` protocol. The private workspace package resolves directly to its
+source entry point, so the demo, tests, and production application build all
+exercise the same canonical source.
 
 ## Setup
 
@@ -30,11 +31,9 @@ pnpm install
 pnpm start
 ```
 
-This starts the DHIS2 custom wrapper from `apps/web`. In development, Vite and
-TypeScript select the Working List package's scoped development export so
-source changes receive hot updates without rebuilding `dist`. Production builds
-continue to consume the compiled package export. By default the DHIS2
-Application Platform opens the application at
+This starts the DHIS2 custom wrapper from `apps/web`. Working List source
+changes receive hot updates without a separate library build. By default the
+DHIS2 Application Platform opens the application at
 [http://localhost:3000](http://localhost:3000).
 
 The deployable application bundle is built with:
@@ -45,25 +44,66 @@ pnpm build
 
 The DHIS2 application output is written below `apps/web/build`.
 
-## Working List library
+## Working List block
 
-Build just the reusable package or inspect the publishable tarball contents:
+The Working List is distributed to consumers as a source registry block.
+Installation copies its production source and required dependencies into the
+consumer repository, where the block can be edited in place. The installed
+source entry point provides the documented compound component and hooks.
+
+Install it from the GitHub registry in a project configured for the shadcn CLI:
 
 ```sh
-pnpm build:library
-pnpm package:check
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list
 ```
 
-Workspace and packed consumers import the supported component surface. Its CSS
-Modules are included automatically by the package entry:
+Import the installed source through the project's components alias:
 
-```ts
-import { WorkingList } from '@dhis2-blocks/working-list'
+```tsx
+import {
+    WorkingList,
+    useWorkingListActions,
+    useWorkingListMeta,
+    useWorkingListState,
+} from '@/components/working-list'
 ```
 
-The package remains private while its API is iterated, but its ESM, TypeScript
-declaration, `exports`, and CSS contracts are ready for workspace or tarball
-consumption.
+Render `WorkingList.Provider` beneath the DHIS2 app-runtime provider and a
+TanStack `QueryClientProvider`. Compose the standard UI with
+`WorkingList.Default`, or arrange the individual compound components:
+
+```tsx
+<WorkingList.Provider {...providerProps}>
+    <WorkingList.Default onClick={handleResultClick} />
+</WorkingList.Provider>
+```
+
+The base components use `WorkingList.Section` for their semantic regions. Give
+each section either a visible `title` or an `ariaLabel`, but never both:
+
+```tsx
+<WorkingList.Provider {...providerProps}>
+    <WorkingList.Container>
+        <WorkingList.Section title={t('Saved views in this program')}>
+            <WorkingList.SavedViews />
+        </WorkingList.Section>
+        <WorkingList.Section ariaLabel={t('Tracked entity filters')}>
+            <WorkingList.Toolbar>
+                <WorkingList.Columns />
+                <WorkingList.Filters />
+                <WorkingList.Actions />
+            </WorkingList.Toolbar>
+        </WorkingList.Section>
+        <WorkingList.Section ariaLabel={t('Working list results')}>
+            <WorkingList.Results onClick={handleResultClick} />
+        </WorkingList.Section>
+    </WorkingList.Container>
+</WorkingList.Provider>
+```
+
+The private `@dhis2-blocks/working-list` workspace package remains only as the
+repository's canonical development and test harness. It is not a compiled or
+publishable consumer package.
 
 ## Quality checks
 

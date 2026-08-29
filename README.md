@@ -36,7 +36,10 @@ pnpm start
 This starts the DHIS2 custom wrapper from `apps/web`. Working List source
 changes receive hot updates without a separate library build. By default the
 DHIS2 Application Platform opens the application at
-[http://localhost:3000](http://localhost:3000).
+[http://localhost:3002](http://localhost:3002).
+
+The interactive Context Selector primitive showcase is available at
+`#/context-selector-showcase` and from the link at the bottom of the demo.
 
 The interactive Context Selector primitive showcase is available at
 `#/context-selector-showcase` and from the link at the bottom of the demo.

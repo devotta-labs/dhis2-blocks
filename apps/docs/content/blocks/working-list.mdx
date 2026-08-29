@@ -1,0 +1,73 @@
+---
+title: Working List
+description: A ready-to-use list for finding and reviewing tracker records in DHIS2.
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs'
+import { RegistryInstallCommand } from '@/components/registry-install-command'
+import { WorkingListPreview } from '@/components/working-list-preview'
+
+Use Working List to help people find the records they need. They can switch between saved views, choose which columns to see, narrow the results with filters, and review the data in one place.
+
+## Live Preview / Code
+
+<Tabs items={['Live Preview', 'Code']}>
+    <Tab className="overflow-hidden rounded-t-none bg-transparent p-0">
+        <WorkingListPreview />
+    </Tab>
+    <Tab>
+
+```tsx
+<WorkingList
+    programId="IpHINAT79UW"
+    orgUnitId="y77LiPqLMoq"
+    defaultPagination={{ page: 1, pageSize: 15 }}
+>
+    <WorkingListViewSwitcher />
+    <WorkingListToolbar>
+        <WorkingListColumnSelector />
+        <WorkingListFilterControls />
+    </WorkingListToolbar>
+    <WorkingListTable />
+</WorkingList>
+```
+
+    </Tab>
+
+</Tabs>
+
+## Installation
+
+Add Working List to your project with the shadcn CLI:
+
+<RegistryInstallCommand item="working-list" />
+
+## Basic usage
+
+Choose the controls your users need and place them inside `WorkingList`. This example includes saved views, column choices, filters, and the results table. It assumes DHIS2 app runtime and TanStack Query are already configured in your app.
+
+```tsx
+import {
+    WorkingList,
+    WorkingListColumnSelector,
+    WorkingListFilterControls,
+    WorkingListTable,
+    WorkingListToolbar,
+    WorkingListViewSwitcher,
+} from '@/components/working-list'
+
+export const BasicWorkingList = () => (
+    <WorkingList
+        programId="IpHINAT79UW"
+        orgUnitId="y77LiPqLMoq"
+        defaultPagination={{ page: 1, pageSize: 15 }}
+    >
+        <WorkingListViewSwitcher />
+        <WorkingListToolbar>
+            <WorkingListColumnSelector />
+            <WorkingListFilterControls />
+        </WorkingListToolbar>
+        <WorkingListTable />
+    </WorkingList>
+)
+```

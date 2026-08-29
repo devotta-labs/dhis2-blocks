@@ -7,6 +7,14 @@ onlyBuiltDependencies:
     - core-js-pure
     - esbuild
 
+# Keep React's ambient types out of pnpm's shared hidden hoist. Each workspace
+# resolves the version it declares, which lets the React 18 apps coexist with
+# the React 19 documentation app.
+hoistPattern:
+    - '*'
+    - '!@types/react'
+    - '!@types/react-dom'
+
 publicHoistPattern:
     - '@dhis2/ui'
     - typeface-roboto

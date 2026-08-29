@@ -20,7 +20,7 @@ import { getGuardedOrganisationUnitState } from '../contextTransitions'
 import { DiscardChangesDialog } from '../DiscardChangesDialog'
 import { OrganisationUnitSelectorContent } from '../OrganisationUnitSelectorContent'
 import {
-    intersectOrganisationUnitScopes,
+    getCaptureOrganisationUnitPickerScope,
     isOrganisationUnitInScope,
     resolveCaptureOrganisationUnitRoots,
     type OrganisationUnitReference,
@@ -210,7 +210,7 @@ export const AppShell = () => {
                 OrganisationUnitReferenceSchema,
                 signal
             ),
-        enabled: Boolean(selectedProgramSummary && urlState.orgUnitId),
+        enabled: Boolean(urlState.orgUnitId),
         staleTime: 60 * 60 * 1000,
         gcTime: 2 * 60 * 60 * 1000,
         retry: retryOperationalError,
@@ -254,9 +254,9 @@ export const AppShell = () => {
         [currentUserQuery.data]
     )
     const programOrgUnits = programOrgUnitsQuery.data?.organisationUnits ?? []
-    const organisationUnitScope = useMemo(
-        () => intersectOrganisationUnitScopes(searchRoots, programOrgUnits),
-        [programOrgUnits, searchRoots]
+    const organisationUnitPickerScope = useMemo(
+        () => getCaptureOrganisationUnitPickerScope(searchRoots),
+        [searchRoots]
     )
     const selectedOrgUnitIsAllowed = useMemo(
         () =>
@@ -267,17 +267,42 @@ export const AppShell = () => {
             ),
         [programOrgUnits, searchRoots, selectedOrgUnitQuery.data]
     )
-    const programOptions = useMemo(
+    const compatibleProgramOptions = useMemo(
         () =>
             buildProgramOptions({
                 programs,
+                selectedOrganisationUnitId: selectedOrgUnitQuery.data?.id,
                 selectedOrganisationUnitPath: selectedOrgUnitQuery.data?.path,
                 baseUrl: runtimeConfig.baseUrl,
                 apiVersion: runtimeConfig.apiVersion,
             }),
-        [programs, runtimeConfig, selectedOrgUnitQuery.data?.path]
+        [
+            programs,
+            runtimeConfig,
+            selectedOrgUnitQuery.data?.id,
+            selectedOrgUnitQuery.data?.path,
+        ]
     )
-    const programsAreFiltered = programOptions.length < programs.length
+    const programOptions = useMemo(
+        () =>
+            buildProgramOptions({
+                programs,
+                selectedOrganisationUnitId: selectedOrgUnitQuery.data?.id,
+                selectedOrganisationUnitPath: selectedOrgUnitQuery.data?.path,
+                preservedProgramId: selectedProgramSummary?.id,
+                baseUrl: runtimeConfig.baseUrl,
+                apiVersion: runtimeConfig.apiVersion,
+            }),
+        [
+            programs,
+            runtimeConfig,
+            selectedOrgUnitQuery.data?.id,
+            selectedOrgUnitQuery.data?.path,
+            selectedProgramSummary?.id,
+        ]
+    )
+    const programsAreFiltered =
+        compatibleProgramOptions.length < programs.length
 
     useEffect(() => {
         if (!dirty) {
@@ -300,8 +325,8 @@ export const AppShell = () => {
         ) {
             return
         }
-        setUrlState({})
-    }, [programs, programsQuery.isPending, setUrlState, urlState.programId])
+        setUrlState({ orgUnitId: urlState.orgUnitId })
+    }, [programs, programsQuery.isPending, setUrlState, urlState])
 
     const updateProgram = (programId: string) => {
         requestTransition(() => {
@@ -319,21 +344,23 @@ export const AppShell = () => {
                           page: 1,
                           pageSize: 15,
                       }
-                    : {}
+                    : { orgUnitId: urlState.orgUnitId }
             )
         })
     }
 
     const updateOrgUnit = (organisationUnit: OrganisationUnitReference) => {
+        // Capture dismisses the picker immediately, even when committing the
+        // context change is deferred behind dirty-state confirmation.
+        setOrgUnitSelectorOpen(false)
+        setOrganisationUnitSearch('')
+        setDebouncedOrganisationUnitSearch('')
         requestTransition(() => {
             const next = getGuardedOrganisationUnitState(
                 urlState,
                 organisationUnit.id,
                 () => true
             )
-            setOrgUnitSelectorOpen(false)
-            setOrganisationUnitSearch('')
-            setDebouncedOrganisationUnitSearch('')
             setOpenedRecord(undefined)
             setDirty(false)
             setUrlState(next)
@@ -359,18 +386,13 @@ export const AppShell = () => {
     const loading =
         programsQuery.isPending ||
         currentUserQuery.isPending ||
-        Boolean(
-            selectedProgramSummary &&
-            (programOrgUnitsQuery.isPending ||
-                (urlState.orgUnitId && selectedOrgUnitQuery.isPending))
-        )
+        Boolean(selectedProgramSummary && programOrgUnitsQuery.isPending) ||
+        Boolean(urlState.orgUnitId && selectedOrgUnitQuery.isPending)
     const shellError =
         programsQuery.error ??
         currentUserQuery.error ??
         (selectedProgramSummary ? programOrgUnitsQuery.error : undefined) ??
-        (selectedProgramSummary && urlState.orgUnitId
-            ? selectedOrgUnitQuery.error
-            : undefined)
+        (urlState.orgUnitId ? selectedOrgUnitQuery.error : undefined)
 
     return (
         <div
@@ -378,61 +400,47 @@ export const AppShell = () => {
             data-testid="working-list-app"
         >
             <WorkingListContextControls
-                clearAction={{
-                    disabled: !selectedProgramSummary,
-                    onClick: () =>
-                        requestTransition(() => {
-                            setProgramSelectorOpen(false)
-                            setOrgUnitSelectorOpen(false)
-                            setOrganisationUnitSearch('')
-                            setDebouncedOrganisationUnitSearch('')
-                            setDirty(false)
-                            setOpenedRecord(undefined)
-                            setUrlState({})
-                        }),
-                }}
-                programOptions={programOptions}
-                selectedProgramId={selectedProgramSummary?.id}
-                programControl={
-                    programsQuery.isPending
-                        ? {
-                              mode: 'loading',
-                              loadingLabel: i18n.t('Loading tracker programs…'),
-                          }
-                        : {
-                              mode: 'interactive',
-                              open: programSelectorOpen,
-                              onOpenChange: setProgramSelectorOpen,
-                              onSelect: updateProgram,
-                              onClear: () => updateProgram(''),
-                          }
+                clearDisabled={!selectedProgramSummary && !urlState.orgUnitId}
+                onClear={() =>
+                    requestTransition(() => {
+                        setProgramSelectorOpen(false)
+                        setOrgUnitSelectorOpen(false)
+                        setOrganisationUnitSearch('')
+                        setDebouncedOrganisationUnitSearch('')
+                        setDirty(false)
+                        setOpenedRecord(undefined)
+                        setUrlState({})
+                    })
                 }
+                programOptions={programOptions}
+                programValue={selectedProgramSummary?.id}
+                programOpen={programSelectorOpen}
+                onProgramOpenChange={setProgramSelectorOpen}
+                onProgramChange={updateProgram}
+                onProgramClear={() => updateProgram('')}
+                programLoading={programsQuery.isPending}
+                programLoadingLabel={i18n.t('Loading tracker programs…')}
                 programsAreFiltered={programsAreFiltered}
                 onShowAllPrograms={clearOrganisationUnit}
                 showOrganisationUnit={Boolean(selectedProgramSummary)}
                 organisationUnitValue={selectedOrgUnitQuery.data?.displayName}
-                organisationUnitControl={
-                    currentUserQuery.isPending || programOrgUnitsQuery.isPending
-                        ? { mode: 'loading' }
-                        : organisationUnitScope.pickerRoots.length === 0
-                          ? { mode: 'disabled' }
-                          : {
-                                mode: 'interactive',
-                                open: orgUnitSelectorOpen,
-                                onOpenChange: (open) => {
-                                    setOrgUnitSelectorOpen(open)
-                                    if (!open) {
-                                        setOrganisationUnitSearch('')
-                                        setDebouncedOrganisationUnitSearch('')
-                                    }
-                                },
-                                onClear: clearOrganisationUnit,
-                            }
+                organisationUnitOpen={orgUnitSelectorOpen}
+                onOrganisationUnitOpenChange={(open) => {
+                    setOrgUnitSelectorOpen(open)
+                    if (!open) {
+                        setOrganisationUnitSearch('')
+                        setDebouncedOrganisationUnitSearch('')
+                    }
+                }}
+                onOrganisationUnitClear={clearOrganisationUnit}
+                organisationUnitLoading={currentUserQuery.isPending}
+                organisationUnitDisabled={
+                    organisationUnitPickerScope.pickerRoots.length === 0
                 }
                 organisationUnitContent={
                     <OrganisationUnitSelectorContent
-                        roots={organisationUnitScope.pickerRoots}
-                        allowedPaths={organisationUnitScope.allowedPaths}
+                        roots={organisationUnitPickerScope.pickerRoots}
+                        allowedPaths={organisationUnitPickerScope.allowedPaths}
                         selected={selectedOrgUnitQuery.data}
                         searchValue={organisationUnitSearch}
                         treeKey={debouncedOrganisationUnitSearch || 'initial'}

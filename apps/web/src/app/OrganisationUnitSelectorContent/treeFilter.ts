@@ -28,7 +28,12 @@ export const getInitialOrganisationUnitExpandedPaths = (
 export const buildOrganisationUnitTreeFilter = (
     allowedPaths: string[],
     visibleRoots: OrganisationUnitReference[]
-) =>
-    Array.from(
+) => {
+    if (allowedPaths.length === 0) {
+        return []
+    }
+
+    return Array.from(
         new Set([...allowedPaths, ...visibleRoots.map((root) => `/${root.id}`)])
     )
+}

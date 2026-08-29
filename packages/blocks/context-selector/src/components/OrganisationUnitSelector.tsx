@@ -2,44 +2,53 @@ import type { ReactNode } from 'react'
 import React from 'react'
 import i18n from '@dhis2/d2-i18n'
 import { CircularLoader } from '@dhis2/ui'
-import type { ContextPopupMode } from '../types'
 import { CaptureSelectorBarItem } from './internal'
 
-export interface ContextOrganisationUnitSelectorProps {
-    value?: ReactNode
-    control: ContextPopupMode
+const ignoreOpenChange = () => undefined
+
+export interface OrganisationUnitSelectorProps {
+    value?: string
+    onClear?: () => void
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
+    loading?: boolean
+    loadingLabel?: string
+    disabled?: boolean
+    readOnly?: boolean
     children?: ReactNode
     label?: string
-    noValueMessage?: string
-    dataTest?: string
+    placeholder?: string
 }
 
 /**
  * Capture-sized popup shell for a host-owned organisation-unit picker.
  * Tree data, selection state, path expansion and picker callbacks stay outside.
  */
-export const ContextOrganisationUnitSelector = ({
+export const OrganisationUnitSelector = ({
     value,
-    control,
+    onClear,
+    open: requestedOpen = false,
+    onOpenChange,
+    loading = false,
+    loadingLabel,
+    disabled = false,
+    readOnly = false,
     children,
     label = i18n.t('Organisation unit'),
-    noValueMessage = i18n.t('Choose an organisation unit'),
-    dataTest = 'org-unit-selector-container',
-}: ContextOrganisationUnitSelectorProps) => {
-    if (control.mode === 'loading') {
+    placeholder = i18n.t('Choose an organisation unit'),
+}: OrganisationUnitSelectorProps) => {
+    if (loading) {
         return (
             <div
                 className="flex h-full items-center justify-center"
-                aria-label={control.loadingLabel ?? i18n.t('Loading')}
+                aria-label={loadingLabel ?? i18n.t('Loading')}
             >
                 <CircularLoader />
             </div>
         )
     }
 
-    const interactive = control.mode === 'interactive'
-    const displayOnly = control.mode === 'display'
-    const disabled = control.mode === 'disabled'
+    const interactive = !disabled && !readOnly
 
     return (
         <CaptureSelectorBarItem
@@ -47,21 +56,21 @@ export const ContextOrganisationUnitSelector = ({
             value={value}
             noValueMessage={
                 interactive
-                    ? noValueMessage
-                    : control.mode === 'display'
+                    ? placeholder
+                    : readOnly
                       ? i18n.t('None selected')
                       : ''
             }
             disabled={disabled}
-            displayOnly={displayOnly}
-            open={interactive && control.open}
-            setOpen={interactive ? control.onOpenChange : undefined}
-            onClearSelectionClick={
-                (interactive || control.mode === 'display') && value
-                    ? control.onClear
-                    : undefined
+            displayOnly={readOnly && !disabled}
+            open={interactive && requestedOpen}
+            setOpen={
+                interactive ? (onOpenChange ?? ignoreOpenChange) : undefined
             }
-            dataTest={dataTest}
+            onClearSelectionClick={
+                !disabled && !readOnly && value && onClear ? onClear : undefined
+            }
+            dataTest="org-unit-selector-container"
         >
             {interactive ? (
                 <div className="min-h-[96px] min-w-[640px] max-h-[80vh] overflow-auto">

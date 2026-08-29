@@ -11,6 +11,15 @@ const organisationUnit = (id: string, path: string) => ({
 })
 
 describe('buildOrganisationUnitTreeFilter', () => {
+    it('leaves the user capture roots unfiltered so every descendant can load', () => {
+        expect(
+            buildOrganisationUnitTreeFilter(
+                [],
+                [organisationUnit('root', '/global/root')]
+            )
+        ).toEqual([])
+    })
+
     it('retains nested user and server-search roots alongside full scope paths', () => {
         const allowedPaths = ['/global/district/facility/program-child']
         const nestedUserRoot = organisationUnit(

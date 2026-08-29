@@ -7,25 +7,34 @@ const renderControls = async ({
     programOptions,
     programsAreFiltered,
     onShowAllPrograms,
+    clearDisabled = true,
+    onClear = () => undefined,
 }: {
     programOptions: Array<{ value: string; label: string }>
     programsAreFiltered: boolean
     onShowAllPrograms: () => void
+    clearDisabled?: boolean
+    onClear?: () => void
 }) =>
     render(
         <WorkingListContextControls
-            clearAction={{ disabled: true, onClick: () => undefined }}
+            onClear={onClear}
+            clearDisabled={clearDisabled}
             programOptions={programOptions}
-            programControl={{
-                mode: 'interactive',
-                open: true,
-                onOpenChange: () => undefined,
-                onSelect: () => undefined,
-            }}
+            programOpen
+            onProgramOpenChange={() => undefined}
+            onProgramChange={() => undefined}
+            onProgramClear={() => undefined}
+            programLoading={false}
+            programLoadingLabel="Loading tracker programs…"
             programsAreFiltered={programsAreFiltered}
             onShowAllPrograms={onShowAllPrograms}
             showOrganisationUnit={false}
-            organisationUnitControl={{ mode: 'disabled' }}
+            organisationUnitOpen={false}
+            onOrganisationUnitOpenChange={() => undefined}
+            onOrganisationUnitClear={() => undefined}
+            organisationUnitLoading={false}
+            organisationUnitDisabled
             organisationUnitContent={null}
         />
     )
@@ -89,5 +98,23 @@ describe('WorkingListContextControls program scope actions', () => {
         expect(getComputedStyle(warning!).color).toBe('rgb(74, 87, 104)')
         await screen.getByRole('button', { name: 'Show all programs' }).click()
         expect(onShowAllPrograms).toHaveBeenCalledOnce()
+    })
+
+    it('keeps clear-all enabled when only the hidden organisation-unit context remains', async () => {
+        const onClear = vi.fn()
+        const screen = await renderControls({
+            programOptions: [],
+            programsAreFiltered: true,
+            onShowAllPrograms: () => undefined,
+            clearDisabled: false,
+            onClear,
+        })
+
+        const clearAll = screen.getByRole('button', {
+            name: 'Clear selections',
+        })
+        await expect.element(clearAll).toBeEnabled()
+        await clearAll.click()
+        expect(onClear).toHaveBeenCalledOnce()
     })
 })

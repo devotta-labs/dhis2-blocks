@@ -1,11 +1,8 @@
 import {
-    ContextOrganisationUnitSelector,
-    ContextProgramSelector,
     ContextSelector,
-    type ContextControl,
-    type ContextOption,
-    type ContextPopupControl,
-    type ContextSelectorClearAction,
+    OrganisationUnitSelector,
+    ProgramSelector,
+    type Option,
 } from '@dhis2-blocks/context-selector'
 import { Button, MenuDivider } from '@dhis2/ui'
 import type { ReactNode } from 'react'
@@ -13,77 +10,117 @@ import React from 'react'
 import i18n from '../../i18n'
 
 interface WorkingListContextControlsProps {
-    clearAction: ContextSelectorClearAction
-    programOptions: ContextOption[]
-    selectedProgramId?: string
-    programControl: ContextControl
+    onClear: () => void
+    clearDisabled: boolean
+    programOptions: Option[]
+    programValue?: string
+    programOpen: boolean
+    onProgramOpenChange: (open: boolean) => void
+    onProgramChange: (value: string) => void
+    onProgramClear: () => void
+    programLoading: boolean
+    programLoadingLabel: string
     programsAreFiltered: boolean
     onShowAllPrograms: () => void
     showOrganisationUnit: boolean
     organisationUnitValue?: string
-    organisationUnitControl: ContextPopupControl
+    organisationUnitOpen: boolean
+    onOrganisationUnitOpenChange: (open: boolean) => void
+    onOrganisationUnitClear: () => void
+    organisationUnitLoading: boolean
+    organisationUnitDisabled: boolean
     organisationUnitContent: ReactNode
 }
 
 export const WorkingListContextControls = ({
-    clearAction,
+    onClear,
+    clearDisabled,
     programOptions,
-    selectedProgramId,
-    programControl,
+    programValue,
+    programOpen,
+    onProgramOpenChange,
+    onProgramChange,
+    onProgramClear,
+    programLoading,
+    programLoadingLabel,
     programsAreFiltered,
     onShowAllPrograms,
     showOrganisationUnit,
     organisationUnitValue,
-    organisationUnitControl,
+    organisationUnitOpen,
+    onOrganisationUnitOpenChange,
+    onOrganisationUnitClear,
+    organisationUnitLoading,
+    organisationUnitDisabled,
     organisationUnitContent,
-}: WorkingListContextControlsProps) => (
-    <ContextSelector
-        ariaLabel={i18n.t('Working list context')}
-        dataTest="context-selector-bar"
-        clearAction={clearAction}
-    >
-        <ContextProgramSelector
-            options={programOptions}
-            selectedValue={selectedProgramId}
-            control={programControl}
+}: WorkingListContextControlsProps) => {
+    const visibleProgramOptions = programOptions.filter(
+        (option) => !option.excludeFromMenu
+    )
+
+    return (
+        <ContextSelector
+            ariaLabel={i18n.t('Working list context')}
+            onClear={onClear}
+            clearDisabled={clearDisabled}
         >
-            {programOptions.length === 0 ? (
-                <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
-                    <span>{i18n.t('No programs available.')}</span>
-                    <Button
-                        small
-                        secondary
-                        dataTest="program-selector-no-programs"
-                        onClick={onShowAllPrograms}
-                    >
-                        {i18n.t('Show all')}
-                    </Button>
-                </div>
-            ) : programsAreFiltered ? (
-                <>
-                    <MenuDivider />
+            <ProgramSelector
+                label={i18n.t('Program')}
+                placeholder={i18n.t('Choose a program')}
+                searchPlaceholder={i18n.t('Search for a program')}
+                options={programOptions}
+                value={programValue}
+                open={programOpen}
+                onOpenChange={onProgramOpenChange}
+                onChange={onProgramChange}
+                onClear={onProgramClear}
+                loading={programLoading}
+                loadingLabel={programLoadingLabel}
+            >
+                {visibleProgramOptions.length === 0 ? (
                     <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
-                        <span>
-                            {i18n.t(
-                                'Some programs are being filtered by the chosen organisation unit'
-                            )}
-                        </span>
-                        <Button small secondary onClick={onShowAllPrograms}>
-                            {i18n.t('Show all programs')}
+                        <span>{i18n.t('No programs available.')}</span>
+                        <Button
+                            small
+                            secondary
+                            dataTest="program-selector-no-programs"
+                            onClick={onShowAllPrograms}
+                        >
+                            {i18n.t('Show all')}
                         </Button>
                     </div>
-                </>
-            ) : null}
-        </ContextProgramSelector>
+                ) : programsAreFiltered ? (
+                    <>
+                        <MenuDivider />
+                        <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
+                            <span>
+                                {i18n.t(
+                                    'Some programs are being filtered by the chosen organisation unit'
+                                )}
+                            </span>
+                            <Button small secondary onClick={onShowAllPrograms}>
+                                {i18n.t('Show all programs')}
+                            </Button>
+                        </div>
+                    </>
+                ) : null}
+            </ProgramSelector>
 
-        {showOrganisationUnit ? (
-            <ContextOrganisationUnitSelector
-                key={selectedProgramId}
-                value={organisationUnitValue}
-                control={organisationUnitControl}
-            >
-                {organisationUnitContent}
-            </ContextOrganisationUnitSelector>
-        ) : null}
-    </ContextSelector>
-)
+            {showOrganisationUnit ? (
+                <OrganisationUnitSelector
+                    key={programValue}
+                    label={i18n.t('Organisation unit')}
+                    placeholder={i18n.t('Choose an organisation unit')}
+                    value={organisationUnitValue}
+                    open={organisationUnitOpen}
+                    onOpenChange={onOrganisationUnitOpenChange}
+                    onClear={onOrganisationUnitClear}
+                    loading={organisationUnitLoading}
+                    disabled={organisationUnitDisabled}
+                >
+                    {organisationUnitContent}
+                </OrganisationUnitSelector>
+            ) : null}
+        </ContextSelector>
+    )
+}

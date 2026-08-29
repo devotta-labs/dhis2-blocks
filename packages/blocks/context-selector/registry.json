@@ -14,24 +14,24 @@
             ],
             "files": [
                 {
-                    "path": "src/components/ContextDisplayItem.tsx",
+                    "path": "src/components/ContextValue.tsx",
                     "type": "registry:file",
-                    "target": "@components/context-selector/components/ContextDisplayItem.tsx"
+                    "target": "@components/context-selector/components/ContextValue.tsx"
                 },
                 {
-                    "path": "src/components/ContextOptionLabel.tsx",
+                    "path": "src/components/OptionLabel.tsx",
                     "type": "registry:file",
-                    "target": "@components/context-selector/components/ContextOptionLabel.tsx"
+                    "target": "@components/context-selector/components/OptionLabel.tsx"
                 },
                 {
-                    "path": "src/components/ContextOptionSelector.tsx",
+                    "path": "src/components/OptionSelector.tsx",
                     "type": "registry:file",
-                    "target": "@components/context-selector/components/ContextOptionSelector.tsx"
+                    "target": "@components/context-selector/components/OptionSelector.tsx"
                 },
                 {
-                    "path": "src/components/ContextOrganisationUnitSelector.tsx",
+                    "path": "src/components/OrganisationUnitSelector.tsx",
                     "type": "registry:file",
-                    "target": "@components/context-selector/components/ContextOrganisationUnitSelector.tsx"
+                    "target": "@components/context-selector/components/OrganisationUnitSelector.tsx"
                 },
                 {
                     "path": "src/components/ContextSelector.tsx",
@@ -39,9 +39,9 @@
                     "target": "@components/context-selector/components/ContextSelector.tsx"
                 },
                 {
-                    "path": "src/components/ContextVariants.tsx",
+                    "path": "src/components/SelectorVariants.tsx",
                     "type": "registry:file",
-                    "target": "@components/context-selector/components/ContextVariants.tsx"
+                    "target": "@components/context-selector/components/SelectorVariants.tsx"
                 },
                 {
                     "path": "src/components/internal.tsx",

@@ -16,9 +16,12 @@ interface SelectorBarItemRuntimeProps {
     onClearSelectionClick?: () => void
 }
 
-// SAFETY: The local augmentation exposes the verified runtime export; this widens stale optional/value props.
-const CaptureSelectorBarItem =
-    SelectorBarItem as React.ComponentType<SelectorBarItemRuntimeProps>
+// SAFETY: The verified runtime export is a function component. Binding creates
+// a local component with identical rendering while omitting its stale static
+// value prop-type, which rejects Capture's supported icon-plus-label node.
+const CaptureSelectorBarItem = SelectorBarItem.bind(
+    null
+) as React.ComponentType<SelectorBarItemRuntimeProps>
 
 export { CaptureSelectorBarItem }
 

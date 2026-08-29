@@ -1,5 +1,6 @@
 import {
     areOrganisationUnitPathsRelated,
+    getCaptureOrganisationUnitPickerScope,
     intersectOrganisationUnitScopes,
     isOrganisationUnitInScope,
     resolveCaptureOrganisationUnitRoots,
@@ -49,6 +50,17 @@ describe('Capture organisation-unit scope', () => {
         ).toEqual([captureRoot])
     })
 
+    it('keeps the full user scope in the quick selector regardless of program assignments', () => {
+        const outsideProgram = unit('outside', '/root/outside')
+
+        expect(
+            getCaptureOrganisationUnitPickerScope([searchRoot, outsideProgram])
+        ).toEqual({
+            allowedPaths: [],
+            pickerRoots: [searchRoot, outsideProgram],
+        })
+    })
+
     it('intersects Capture roots with the selected program scope', () => {
         const outsideProgram = unit('outside', '/root/outside')
         const intersection = intersectOrganisationUnitScopes(
@@ -61,12 +73,18 @@ describe('Capture organisation-unit scope', () => {
             pickerRoots: [searchRoot],
         })
         expect(
+            isOrganisationUnitInScope(programRoot, [searchRoot], [programRoot])
+        ).toBe(true)
+        expect(
             isOrganisationUnitInScope(
-                unit('selected', `${programRoot.path}/selected`),
+                unit('descendant', `${programRoot.path}/descendant`),
                 [searchRoot],
                 [programRoot]
             )
-        ).toBe(true)
+        ).toBe(false)
+        expect(
+            isOrganisationUnitInScope(searchRoot, [searchRoot], [programRoot])
+        ).toBe(false)
         expect(
             isOrganisationUnitInScope(
                 outsideProgram,

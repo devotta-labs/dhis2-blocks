@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-29T15:51:18.425Z\n"
-"PO-Revision-Date: 2026-08-29T15:51:18.426Z\n"
+"POT-Creation-Date: 2026-08-29T16:46:43.207Z\n"
+"PO-Revision-Date: 2026-08-29T16:46:43.208Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -42,11 +42,11 @@ msgstr "Select an organisation unit assigned to both you and this program."
 msgid "Choose organisation unit"
 msgstr "Choose organisation unit"
 
-msgid "Organisation unit is outside the available scope"
-msgstr "Organisation unit is outside the available scope"
+msgid "Selected program is invalid for selected organisation unit"
+msgstr "Selected program is invalid for selected organisation unit"
 
-msgid "Choose an organisation unit assigned to both you and this program."
-msgstr "Choose an organisation unit assigned to both you and this program."
+msgid "Clear the selected program or choose another organisation unit."
+msgstr "Clear the selected program or choose another organisation unit."
 
 msgid "Choose another organisation unit"
 msgstr "Choose another organisation unit"
@@ -69,6 +69,15 @@ msgstr "Close"
 msgid "Working list context"
 msgstr "Working list context"
 
+msgid "Program"
+msgstr "Program"
+
+msgid "Choose a program"
+msgstr "Choose a program"
+
+msgid "Search for a program"
+msgstr "Search for a program"
+
 msgid "No programs available."
 msgstr "No programs available."
 
@@ -80,6 +89,9 @@ msgstr "Some programs are being filtered by the chosen organisation unit"
 
 msgid "Show all programs"
 msgstr "Show all programs"
+
+msgid "Organisation unit"
+msgstr "Organisation unit"
 
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
@@ -779,11 +791,3 @@ msgstr "TRUE_ONLY accepts only true"
 msgctxt "INTERVAL requires a value from zero to one"
 msgid "UNIT"
 msgstr "UNIT_INTERVAL requires a value from zero to one"
-
-msgctxt "Application title"
-msgid "__MANIFEST_APP_TITLE"
-msgstr "@dhis2-blocks/web"
-
-msgctxt "Application description"
-msgid "__MANIFEST_APP_DESCRIPTION"
-msgstr "DHIS2 wrapper application for developing Working List blocks"

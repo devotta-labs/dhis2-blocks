@@ -24,6 +24,16 @@ export interface OrganisationUnitScopeIntersection {
     pickerRoots: OrganisationUnitReference[]
 }
 
+/** Capture's quick selector shows every organisation unit in the user's data-entry scope. */
+export const getCaptureOrganisationUnitPickerScope = (
+    roots: OrganisationUnitReference[]
+): OrganisationUnitScopeIntersection => ({
+    // An empty filter lets @dhis2/ui load every descendant of the user's
+    // capture roots. Supplying only the root paths hides all child nodes.
+    allowedPaths: [],
+    pickerRoots: roots,
+})
+
 /**
  * The selectable tree is the intersection of Capture's data-entry roots and
  * the organisation units assigned to the selected program.
@@ -62,8 +72,6 @@ export const isOrganisationUnitInScope = (
                 selected.path.startsWith(`${root.path}/`)
         ) &&
         programOrganisationUnits.some(
-            (root) =>
-                selected.path === root.path ||
-                selected.path.startsWith(`${root.path}/`)
+            (root) => selected.id === root.id || selected.path === root.path
         )
     )

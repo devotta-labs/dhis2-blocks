@@ -1,24 +1,22 @@
-import type { ReactNode } from 'react'
 import React, { useEffect, useMemo, useState } from 'react'
 import i18n from '@dhis2/d2-i18n'
 import { CircularLoader, Input, Menu, MenuDivider, MenuItem } from '@dhis2/ui'
-import type { ContextControlMode, ContextOption } from '../types'
-import { ContextOptionLabel } from './ContextOptionLabel'
+import type { SelectorProps } from '../types'
+import { OptionLabel } from './OptionLabel'
 import {
     capitalizeFirst,
     CaptureSelectorBarItem,
     lowerCaseFirst,
 } from './internal'
 
-export interface ContextOptionSelectorProps {
+// SAFETY: @dhis2/ui reads ariaLabel at runtime when label is a React node, but
+// the published MenuItem declaration omits it.
+const AccessibleMenuItem = MenuItem as React.ComponentType<
+    React.ComponentProps<typeof MenuItem> & { ariaLabel?: string }
+>
+
+export interface OptionSelectorProps extends Omit<SelectorProps, 'label'> {
     label: string
-    options: readonly ContextOption[]
-    selectedValue?: string | null
-    control: ContextControlMode
-    noValueMessage?: string
-    searchPlaceholder?: string
-    dataTest?: string
-    children?: ReactNode
 }
 
 const LoadingIndicator = ({ label }: { label: string }) => (
@@ -27,8 +25,12 @@ const LoadingIndicator = ({ label }: { label: string }) => (
     </div>
 )
 
-interface CaptureOptionSelectorProps extends ContextOptionSelectorProps {
+const ignoreOpenChange = () => undefined
+
+interface CaptureOptionSelectorProps extends SelectorProps {
+    label: string
     structure: 'program' | 'locked'
+    dataTest: string
 }
 
 /**
@@ -38,9 +40,16 @@ interface CaptureOptionSelectorProps extends ContextOptionSelectorProps {
 export const CaptureOptionSelector = ({
     label,
     options,
-    selectedValue,
-    control,
-    noValueMessage,
+    value: currentValue,
+    onChange,
+    onClear,
+    open: requestedOpen = false,
+    onOpenChange,
+    loading = false,
+    loadingLabel,
+    disabled = false,
+    readOnly = false,
+    placeholder,
     searchPlaceholder,
     dataTest,
     children,
@@ -48,20 +57,22 @@ export const CaptureOptionSelector = ({
 }: CaptureOptionSelectorProps) => {
     const [filter, setFilter] = useState('')
     const normalizedLabel = capitalizeFirst(label)
-    const normalizedDataTest =
-        dataTest ?? `${lowerCaseFirst(label)}-selector-container`
+    const normalizedDataTest = dataTest
     const conciseDataTest = normalizedDataTest.replace(
         /-selector-container$/,
         ''
     )
     const selectedOption = options.find(
-        (option) => option.value === selectedValue
+        (option) => option.value === currentValue
     )
-    const manyOptions = options.length > 10
-    const interactive = control.mode === 'interactive'
-    const open = interactive && control.open
-    const displayOnly = control.mode === 'display' || control.mode === 'loading'
-    const disabled = control.mode === 'disabled'
+    const menuOptions = useMemo(
+        () => options.filter((option) => !option.excludeFromMenu),
+        [options]
+    )
+    const manyOptions = menuOptions.length > 10
+    const interactive = !loading && !disabled && !readOnly
+    const open = interactive && requestedOpen
+    const displayOnly = !loading && !disabled && readOnly
     useEffect(() => {
         if (!open) {
             setFilter('')
@@ -69,44 +80,39 @@ export const CaptureOptionSelector = ({
     }, [open])
     const visibleOptions = useMemo(() => {
         const normalizedFilter = filter.toLowerCase()
-        return options.filter((option) =>
+        return menuOptions.filter((option) =>
             option.label.toLowerCase().includes(normalizedFilter)
         )
-    }, [filter, options])
+    }, [filter, menuOptions])
     const emptyMessage =
-        noValueMessage ??
+        placeholder ??
         i18n.t('Choose a {{title}}', {
             title: lowerCaseFirst(label),
             interpolation: { escapeValue: false },
         })
     const value = selectedOption ? (
-        <ContextOptionLabel
-            icon={selectedOption.icon}
-            label={selectedOption.label}
-        />
+        <OptionLabel icon={selectedOption.icon} label={selectedOption.label} />
     ) : undefined
 
     const selectOption = (valueToSelect: string | undefined) => {
         if (!interactive || !valueToSelect) {
             return
         }
-        control.onSelect(valueToSelect)
-        control.onOpenChange(false)
+        onChange?.(valueToSelect)
+        onOpenChange?.(false)
     }
 
     const clearSelection = () => {
-        if (!interactive || !control.onClear) {
+        if (!interactive || !onClear) {
             return
         }
-        control.onOpenChange(false)
-        control.onClear()
+        onOpenChange?.(false)
+        onClear()
     }
 
-    if (control.mode === 'loading') {
+    if (loading) {
         const loader = (
-            <LoadingIndicator
-                label={control.loadingLabel ?? i18n.t('Loading')}
-            />
+            <LoadingIndicator label={loadingLabel ?? i18n.t('Loading')} />
         )
         return structure === 'locked' ? (
             <span data-test="single-locked-select">{loader}</span>
@@ -121,15 +127,17 @@ export const CaptureOptionSelector = ({
             displayOnly={displayOnly}
             label={normalizedLabel}
             value={value}
-            noValueMessage={interactive ? emptyMessage : ''}
+            noValueMessage={
+                interactive || (structure === 'program' && displayOnly)
+                    ? emptyMessage
+                    : ''
+            }
             open={open}
-            setOpen={interactive ? control.onOpenChange : undefined}
+            setOpen={
+                interactive ? (onOpenChange ?? ignoreOpenChange) : undefined
+            }
             onClearSelectionClick={
-                (interactive || control.mode === 'display') &&
-                selectedOption &&
-                control.onClear
-                    ? control.onClear
-                    : undefined
+                !disabled && selectedOption && onClear ? onClear : undefined
             }
             dataTest={normalizedDataTest}
         >
@@ -152,7 +160,10 @@ export const CaptureOptionSelector = ({
                                     placeholder={
                                         searchPlaceholder ??
                                         i18n.t('Search for a {{title}}', {
-                                            title: lowerCaseFirst(label),
+                                            title:
+                                                structure === 'program'
+                                                    ? lowerCaseFirst(label)
+                                                    : label,
                                             interpolation: {
                                                 escapeValue: false,
                                             },
@@ -162,10 +173,11 @@ export const CaptureOptionSelector = ({
                                 />
                                 {visibleOptions.length > 0 ? (
                                     visibleOptions.map((option) => (
-                                        <MenuItem
+                                        <AccessibleMenuItem
                                             key={option.value}
+                                            ariaLabel={option.label}
                                             label={
-                                                <ContextOptionLabel
+                                                <OptionLabel
                                                     icon={option.icon}
                                                     label={option.label}
                                                 />
@@ -188,11 +200,12 @@ export const CaptureOptionSelector = ({
                                 )}
                             </>
                         ) : (
-                            options.map((option) => (
-                                <MenuItem
+                            menuOptions.map((option) => (
+                                <AccessibleMenuItem
                                     key={option.value}
+                                    ariaLabel={option.label}
                                     label={
-                                        <ContextOptionLabel
+                                        <OptionLabel
                                             icon={option.icon}
                                             label={option.label}
                                         />
@@ -207,7 +220,7 @@ export const CaptureOptionSelector = ({
                             ))
                         )}
                         {children}
-                        {selectedOption && manyOptions && control.onClear ? (
+                        {selectedOption && manyOptions && onClear ? (
                             <>
                                 <MenuDivider />
                                 <MenuItem
@@ -231,6 +244,10 @@ export const CaptureOptionSelector = ({
     )
 }
 
-export const ContextOptionSelector = (props: ContextOptionSelectorProps) => (
-    <CaptureOptionSelector {...props} structure="locked" />
+export const OptionSelector = (props: OptionSelectorProps) => (
+    <CaptureOptionSelector
+        {...props}
+        structure="locked"
+        dataTest={`${lowerCaseFirst(props.label)}-selector-container`}
+    />
 )

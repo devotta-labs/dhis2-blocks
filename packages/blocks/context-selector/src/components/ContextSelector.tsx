@@ -3,17 +3,11 @@ import React from 'react'
 import i18n from '@dhis2/d2-i18n'
 import { SelectorBar } from '@dhis2/ui'
 
-export interface ContextSelectorClearAction {
-    onClick: () => void
-    disabled?: boolean
-}
-
 export interface ContextSelectorProps {
     children: ReactNode
-    clearAction?: ContextSelectorClearAction
     ariaLabel?: string
-    className?: string
-    dataTest?: string
+    onClear?: () => void
+    clearDisabled?: boolean
 }
 
 type SelectorBarRuntimeProps = {
@@ -35,24 +29,21 @@ const CaptureSelectorBar =
  */
 export const ContextSelector = ({
     children,
-    clearAction,
     ariaLabel = i18n.t('Context selector'),
-    className,
-    dataTest = 'context-selector',
+    onClear,
+    clearDisabled = false,
 }: ContextSelectorProps) => (
     <nav
-        className={`sticky top-0 z-[1000] w-full${className ? ` ${className}` : ''}`}
+        className="sticky top-0 z-[1000] w-full"
         aria-label={ariaLabel}
-        data-test={dataTest}
-        data-testid={dataTest}
+        data-test="context-selector"
+        data-testid="context-selector"
     >
         <CaptureSelectorBar
             ariaLabel={ariaLabel}
-            dataTest={`${dataTest}-bar`}
-            disableClearSelections={
-                !clearAction || Boolean(clearAction.disabled)
-            }
-            onClearSelectionClick={clearAction?.onClick}
+            dataTest="context-selector-bar"
+            disableClearSelections={!onClear || clearDisabled}
+            onClearSelectionClick={onClear}
         >
             {children}
         </CaptureSelectorBar>

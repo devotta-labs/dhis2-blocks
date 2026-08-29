@@ -1,116 +1,106 @@
 import type {
-    ContextControl,
-    ContextControlMode,
-    ContextDisplayItemProps,
-    ContextEnrollmentSelectorProps,
-    ContextIcon,
-    ContextOption,
-    ContextOptionLabelProps,
-    ContextOptionSelectorProps,
-    ContextOrganisationUnitSelectorProps,
-    ContextPopupMode,
-    ContextPopupControl,
-    ContextProgramSelectorProps,
-    ContextSelectorClearAction,
     ContextSelectorProps,
-    ContextStageSelectorProps,
+    ContextValueProps,
+    EnrollmentSelectorProps,
+    EventSelectorProps,
+    Option,
+    OptionIcon,
+    OptionSelectorProps,
+    OrganisationUnitSelectorProps,
+    ProgramSelectorProps,
+    SelectorProps,
+    StageSelectorProps,
 } from '../src'
 import {
-    ContextEnrollmentSelector,
-    ContextOptionSelector,
-    ContextStageSelector,
+    ContextSelector,
+    ContextValue,
+    EnrollmentSelector,
+    EventSelector,
+    OptionSelector,
+    OrganisationUnitSelector,
+    ProgramSelector,
+    StageSelector,
 } from '../src'
 
 export type SupportedContextSelectorTypes = [
-    ContextControl,
-    ContextControlMode,
-    ContextDisplayItemProps,
-    ContextEnrollmentSelectorProps,
-    ContextIcon,
-    ContextOption,
-    ContextOptionLabelProps,
-    ContextOptionSelectorProps,
-    ContextOrganisationUnitSelectorProps,
-    ContextPopupMode,
-    ContextPopupControl,
-    ContextProgramSelectorProps,
-    ContextSelectorClearAction,
     ContextSelectorProps,
-    ContextStageSelectorProps,
+    ContextValueProps,
+    EnrollmentSelectorProps,
+    EventSelectorProps,
+    Option,
+    OptionIcon,
+    OptionSelectorProps,
+    OrganisationUnitSelectorProps,
+    ProgramSelectorProps,
+    SelectorProps,
+    StageSelectorProps,
 ]
 
 export const supportedContextSelectorComponents = [
-    ContextEnrollmentSelector,
-    ContextOptionSelector,
-    ContextStageSelector,
+    ContextSelector,
+    ProgramSelector,
+    OrganisationUnitSelector,
+    EnrollmentSelector,
+    StageSelector,
+    EventSelector,
+    OptionSelector,
+    ContextValue,
 ] as const
 
-const options: ContextOption[] = [{ value: 'program-a', label: 'Program A' }]
-
-export const interactiveProgram: ContextProgramSelectorProps = {
-    options,
-    selectedValue: 'program-a',
-    control: {
-        mode: 'interactive',
-        open: false,
-        onOpenChange: () => undefined,
-        onSelect: () => undefined,
-        onClear: () => undefined,
+const options: Option[] = [
+    {
+        value: 'program-a',
+        label: 'Program A',
+        excludeFromMenu: false,
     },
-}
+]
 
-export const displayProgram: ContextProgramSelectorProps = {
+export const interactiveProgram: ProgramSelectorProps = {
     options,
-    selectedValue: 'program-a',
-    control: { mode: 'display', onClear: () => undefined },
+    value: 'program-a',
+    open: false,
+    onOpenChange: () => undefined,
+    onChange: () => undefined,
+    onClear: () => undefined,
 }
 
-export const loadingProgram: ContextProgramSelectorProps = {
+export const readOnlyProgram: ProgramSelectorProps = {
     options,
-    control: { mode: 'loading', loadingLabel: 'Loading programs' },
+    value: 'program-a',
+    readOnly: true,
+    onClear: () => undefined,
 }
 
-export const disabledOrgUnit: ContextOrganisationUnitSelectorProps = {
+export const loadingProgram: ProgramSelectorProps = {
+    options,
+    loading: true,
+    loadingLabel: 'Loading programs',
+}
+
+export const disabledOrgUnit: OrganisationUnitSelectorProps = {
     value: 'Ngelehun CHC',
-    control: { mode: 'disabled' },
+    disabled: true,
 }
 
-export const interactiveOrgUnit: ContextOrganisationUnitSelectorProps = {
+export const interactiveOrgUnit: OrganisationUnitSelectorProps = {
     value: 'Ngelehun CHC',
     children: null,
-    control: {
-        mode: 'interactive',
-        open: false,
-        onOpenChange: () => undefined,
-        onClear: () => undefined,
-    },
+    open: false,
+    onOpenChange: () => undefined,
+    onClear: () => undefined,
 }
 
-export const missingOpen: ContextProgramSelectorProps = {
+export const interactiveEvent: EventSelectorProps = {
+    label: 'Visit date',
     options,
-    // @ts-expect-error Interactive selectors require controlled popup state.
-    control: {
-        mode: 'interactive',
-        onOpenChange: () => undefined,
-        onSelect: () => undefined,
-    },
+    value: 'program-a',
+    open: false,
+    onOpenChange: () => undefined,
+    onChange: () => undefined,
 }
 
-export const displayCannotSelect: ContextProgramSelectorProps = {
-    options,
-    control: {
-        mode: 'display',
-        // @ts-expect-error Display mode cannot emit selection intent.
-        onSelect: () => undefined,
-    },
-}
+// @ts-expect-error Event labels are metadata-derived and therefore host-owned.
+export const eventWithoutLabel: EventSelectorProps = { options }
 
-export const orgUnitCannotSelect: ContextOrganisationUnitSelectorProps = {
-    control: {
-        mode: 'interactive',
-        open: false,
-        onOpenChange: () => undefined,
-        // @ts-expect-error The injected picker owns organisation-unit selection.
-        onSelect: () => undefined,
-    },
-}
+// @ts-expect-error Generic option selectors require a host-owned label.
+export const optionWithoutLabel: OptionSelectorProps = { options }

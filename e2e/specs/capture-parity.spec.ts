@@ -59,11 +59,7 @@ test.describe('Capture context and generated tracker views', () => {
         }
         page.on('request', countTrackerRequest)
         await page.locator('[data-test="program-selector-container"]').click()
-        await chooseDhis2Option(
-            page,
-            '[data-test="program-selector-input"]',
-            PROGRAM_NAME
-        )
+        await page.getByText(PROGRAM_NAME, { exact: true }).last().click()
         await expect(page.getByTestId('org-unit-empty-state')).toBeVisible({
             timeout: 30_000,
         })
@@ -111,7 +107,7 @@ test.describe('Capture context and generated tracker views', () => {
                 '[data-testid="working-list-app"]'
             )
             const bar = document.querySelector<HTMLElement>(
-                '[data-testid="context-selector-bar"]'
+                '[data-testid="context-selector"]'
             )
             if (!app || !bar) {
                 return undefined

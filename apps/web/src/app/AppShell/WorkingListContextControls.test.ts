@@ -9,13 +9,13 @@ describe('buildProgramOptions', () => {
             id: 'program-a',
             displayName: 'Program A',
             style: { color: '#0f6cbd', icon: 'medicine' },
-            organisationUnits: [{ path: '/root/a' }],
+            organisationUnits: [{ id: 'ou-a', path: '/root/a' }],
             access: { data: { read: true } },
         },
         {
             id: 'program-b',
             displayName: 'Program B',
-            organisationUnits: [{ path: '/root/b' }],
+            organisationUnits: [{ id: 'ou-b', path: '/root/b' }],
             access: { data: { read: true } },
         },
     ]
@@ -24,7 +24,7 @@ describe('buildProgramOptions', () => {
         expect(
             buildProgramOptions({
                 programs,
-                selectedOrganisationUnitPath: '/root/a/child',
+                selectedOrganisationUnitPath: '/root/a',
                 baseUrl: 'https://play.dhis2.org/dev/',
                 apiVersion: 43,
             })
@@ -39,6 +39,56 @@ describe('buildProgramOptions', () => {
                 },
             },
         ])
+    })
+
+    it('preserves an incompatible committed program for display until the host clears it', () => {
+        expect(
+            buildProgramOptions({
+                programs,
+                selectedOrganisationUnitPath: '/root/outside',
+                preservedProgramId: 'program-a',
+                baseUrl: 'https://play.dhis2.org/dev',
+                apiVersion: 43,
+            })
+        ).toEqual([
+            expect.objectContaining({
+                value: 'program-a',
+                label: 'Program A',
+                excludeFromMenu: true,
+            }),
+        ])
+
+        expect(
+            buildProgramOptions({
+                programs,
+                selectedOrganisationUnitPath: '/root/outside',
+                baseUrl: 'https://play.dhis2.org/dev',
+                apiVersion: 43,
+            })
+        ).toEqual([])
+    })
+
+    it('does not treat ancestor or descendant assignments as exact Capture compatibility', () => {
+        for (const selectedOrganisationUnitPath of ['/root/a/child', '/root']) {
+            expect(
+                buildProgramOptions({
+                    programs,
+                    selectedOrganisationUnitPath,
+                    baseUrl: 'https://play.dhis2.org/dev',
+                    apiVersion: 43,
+                })
+            ).toEqual([])
+        }
+
+        expect(
+            buildProgramOptions({
+                programs,
+                selectedOrganisationUnitId: 'different-ou',
+                selectedOrganisationUnitPath: '/root/a',
+                baseUrl: 'https://play.dhis2.org/dev',
+                apiVersion: 43,
+            })
+        ).toEqual([])
     })
 
     it('requires Capture data-read access, not only metadata read access', () => {

@@ -96,17 +96,17 @@ export const ContextStatus = ({
         return (
             <main
                 className={contextStateClassName}
-                data-testid="invalid-org-unit-context"
+                data-testid="invalid-program-context"
             >
                 <NoticeBox
                     error
                     title={i18n.t(
-                        'Organisation unit is outside the available scope'
+                        'Selected program is invalid for selected organisation unit'
                     )}
                 >
                     <p>
                         {i18n.t(
-                            'Choose an organisation unit assigned to both you and this program.'
+                            'Clear the selected program or choose another organisation unit.'
                         )}
                     </p>
                     <Button

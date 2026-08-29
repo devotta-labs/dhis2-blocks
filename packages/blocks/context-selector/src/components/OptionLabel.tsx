@@ -1,12 +1,12 @@
 import React from 'react'
-import type { ContextIcon } from '../types'
+import type { OptionIcon } from '../types'
 
-export interface ContextOptionLabelProps {
-    icon?: ContextIcon
+interface OptionLabelProps {
+    icon?: OptionIcon
     label: string
 }
 
-const ContextIconView = ({ source, color, alternativeText }: ContextIcon) => (
+const OptionIconView = ({ source, color, alternativeText }: OptionIcon) => (
     <div
         className="h-[22px] w-[22px] shrink-0 overflow-hidden rounded-[2px]"
         style={{ backgroundColor: color }}
@@ -20,14 +20,11 @@ const ContextIconView = ({ source, color, alternativeText }: ContextIcon) => (
 )
 
 /** Capture's 22px program/stage icon followed by a 5px label gap. */
-export const ContextOptionLabel = ({
-    icon,
-    label,
-}: ContextOptionLabelProps) => (
+export const OptionLabel = ({ icon, label }: OptionLabelProps) => (
     <span className="flex items-center">
         {icon ? (
             <span className="flex items-center pe-[5px]" aria-hidden="true">
-                <ContextIconView {...icon} />
+                <OptionIconView {...icon} />
             </span>
         ) : null}
         <span>{label}</span>

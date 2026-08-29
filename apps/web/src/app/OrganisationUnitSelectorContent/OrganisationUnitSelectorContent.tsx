@@ -1,5 +1,6 @@
 import { CircularLoader, OrganisationUnitTree } from '@dhis2/ui'
-import React, { useMemo } from 'react'
+import type { ComponentType, MouseEvent } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import i18n from '../../i18n'
 import type { OrganisationUnitReference } from '../organisationUnitScope'
 import {
@@ -18,6 +19,89 @@ interface OrganisationUnitSelectorContentProps {
     searchLoading?: boolean
     treeKey: string
     onSelect: (organisationUnit: OrganisationUnitReference) => void
+    treeComponent?: ComponentType<OrganisationUnitTreeRuntimeProps>
+}
+
+interface OrganisationUnitTreeRuntimeProps {
+    roots: string[]
+    filter: string[]
+    selected: string[]
+    singleSelection: boolean
+    expanded: string[]
+    handleExpand: (payload: { path: string }) => void
+    handleCollapse: (payload: { path: string }) => void
+    onChange: (
+        payload: OrganisationUnitReference & { checked: boolean },
+        event: MouseEvent<HTMLElement>
+    ) => void
+}
+
+const Dhis2OrganisationUnitTree = (props: OrganisationUnitTreeRuntimeProps) => {
+    // SAFETY: @dhis2/ui accepts string[] at runtime; its published declaration incorrectly types expanded as boolean.
+    const expanded = props.expanded as never
+    return <OrganisationUnitTree {...props} expanded={expanded} />
+}
+
+interface ControlledOrganisationUnitTreeProps {
+    visibleRoots: OrganisationUnitReference[]
+    treeFilter: string[]
+    selected?: OrganisationUnitReference
+    onSelect: (organisationUnit: OrganisationUnitReference) => void
+    TreeComponent: ComponentType<OrganisationUnitTreeRuntimeProps>
+}
+
+/**
+ * The selector popup is mounted and unmounted with @dhis2/ui's Layer. Keep
+ * expansion controlled within each keyed tree instance so rapid expand and
+ * collapse events always update from the latest state. This mirrors Capture's
+ * OrgUnitTree integration and avoids the tree's uncontrolled closure losing a
+ * click while nodes are loading.
+ */
+const ControlledOrganisationUnitTree = ({
+    visibleRoots,
+    treeFilter,
+    selected,
+    onSelect,
+    TreeComponent,
+}: ControlledOrganisationUnitTreeProps) => {
+    const [expanded, setExpanded] = useState(() =>
+        getInitialOrganisationUnitExpandedPaths(visibleRoots, selected?.path)
+    )
+    const handleExpand = useCallback(({ path }: { path: string }) => {
+        setExpanded((current) =>
+            current.includes(path) ? current : [...current, path]
+        )
+    }, [])
+    const handleCollapse = useCallback(({ path }: { path: string }) => {
+        setExpanded((current) => current.filter((item) => item !== path))
+    }, [])
+
+    return (
+        <TreeComponent
+            roots={visibleRoots.map((root) => root.id)}
+            filter={treeFilter}
+            selected={selected ? [selected.path] : []}
+            singleSelection
+            expanded={expanded}
+            handleExpand={handleExpand}
+            handleCollapse={handleCollapse}
+            onChange={(payload, event) => {
+                // SelectorBarItem is a button and the Layer uses a React
+                // portal. Prevent a tree selection click from bubbling back
+                // to the trigger and immediately reopening the popup.
+                event.stopPropagation()
+                event.preventDefault()
+                if (!payload.checked) {
+                    return
+                }
+                onSelect({
+                    id: payload.id,
+                    displayName: payload.displayName,
+                    path: payload.path,
+                })
+            }}
+        />
+    )
 }
 
 /** Host-owned TanStack-backed tree content composed into the selector popover. */
@@ -31,20 +115,15 @@ export const OrganisationUnitSelectorContent = ({
     searchLoading = false,
     treeKey,
     onSelect,
+    treeComponent,
 }: OrganisationUnitSelectorContentProps) => {
+    const TreeComponent = treeComponent ?? Dhis2OrganisationUnitTree
     const visibleRoots = searchRoots ?? roots
     const treeFilter = useMemo(
         () => buildOrganisationUnitTreeFilter(allowedPaths, visibleRoots),
         [allowedPaths, visibleRoots]
     )
-    const initiallyExpanded = useMemo(
-        () =>
-            getInitialOrganisationUnitExpandedPaths(
-                visibleRoots,
-                selected?.path
-            ),
-        [selected?.path, visibleRoots]
-    )
+    const stableTreeKey = `${treeKey}-${visibleRoots.map((root) => root.id).join('-')}`
 
     return (
         <div className="z-0 h-full w-full rounded-[3px] border border-[#e8edf2] bg-white">
@@ -73,23 +152,13 @@ export const OrganisationUnitSelectorContent = ({
                     {searchLoading ? (
                         <CircularLoader />
                     ) : (
-                        <OrganisationUnitTree
-                            key={`${treeKey}-${visibleRoots.map((root) => root.id).join('-')}`}
-                            roots={visibleRoots.map((root) => root.id)}
-                            filter={treeFilter}
-                            selected={selected ? [selected.path] : []}
-                            singleSelection
-                            initiallyExpanded={initiallyExpanded}
-                            onChange={(payload) => {
-                                if (!payload.checked) {
-                                    return
-                                }
-                                onSelect({
-                                    id: payload.id,
-                                    displayName: payload.displayName,
-                                    path: payload.path,
-                                })
-                            }}
+                        <ControlledOrganisationUnitTree
+                            key={stableTreeKey}
+                            visibleRoots={visibleRoots}
+                            treeFilter={treeFilter}
+                            selected={selected}
+                            onSelect={onSelect}
+                            TreeComponent={TreeComponent}
                         />
                     )}
                 </div>

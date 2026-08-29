@@ -61,10 +61,11 @@ Import the installed source through the project's configured components alias:
 ```tsx
 import {
     ContextSelector,
-    ContextEnrollmentSelector,
-    ContextOrganisationUnitSelector,
-    ContextProgramSelector,
-    ContextStageSelector,
+    EnrollmentSelector,
+    EventSelector,
+    OrganisationUnitSelector,
+    ProgramSelector,
+    StageSelector,
 } from '@/components/context-selector'
 ```
 
@@ -76,8 +77,9 @@ order. The block does not fetch data, synchronize a router or URL, own workflow
 state, or decide when progressive disclosure advances.
 
 A program-first application can initially render only
-`ContextProgramSelector`, then add organisation-unit, enrollment, and stage
-children as its own context policy makes them relevant. See
+`ProgramSelector`, then add organisation-unit, enrollment, stage, and event
+children as its own context policy makes them relevant. All values, direct
+callbacks, and metadata-derived labels are supplied by the host. See
 [Context Selector composition](docs/context-selector-composition.md) for the
 implemented contracts and a complete controlled example.
 

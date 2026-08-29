@@ -1,11 +1,11 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { ContextOptionLabel } from './ContextOptionLabel'
+import { OptionLabel } from './OptionLabel'
 
-describe('ContextOptionLabel', () => {
+describe('OptionLabel', () => {
     it('renders Capture-sized host-resolved icon markup', () => {
         const markup = renderToStaticMarkup(
-            React.createElement(ContextOptionLabel, {
+            React.createElement(OptionLabel, {
                 label: 'Malaria case registration',
                 icon: {
                     source: '/icons/medicine/icon.svg',

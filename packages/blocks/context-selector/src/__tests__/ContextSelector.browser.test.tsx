@@ -2,15 +2,18 @@ import React, { useState } from 'react'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import {
-    ContextDisplayItem,
-    ContextOrganisationUnitSelector,
-    ContextProgramSelector,
     ContextSelector,
-    ContextStageSelector,
+    ContextValue,
+    EnrollmentSelector,
+    EventSelector,
+    OptionSelector,
+    OrganisationUnitSelector,
+    ProgramSelector,
+    StageSelector,
 } from '../index'
-import type { ContextOption } from '../types'
+import type { Option } from '../types'
 
-const programs: ContextOption[] = Array.from({ length: 11 }, (_, index) => ({
+const programs: Option[] = Array.from({ length: 11 }, (_, index) => ({
     value: `program-${index + 1}`,
     label:
         index === 10 ? 'Tuberculosis program' : `Malaria program ${index + 1}`,
@@ -20,11 +23,8 @@ describe('ContextSelector', () => {
     it('owns Capture sticky toolbar semantics and delegates clear-all', async () => {
         const onClear = vi.fn()
         const screen = await render(
-            <ContextSelector
-                ariaLabel="Registration context"
-                clearAction={{ onClick: onClear }}
-            >
-                <ContextDisplayItem label="Program" value="Malaria" />
+            <ContextSelector ariaLabel="Registration context" onClear={onClear}>
+                <ContextValue label="Program" value="Malaria" />
             </ContextSelector>
         )
 
@@ -81,11 +81,24 @@ describe('ContextSelector', () => {
     it('omits clear-all when the host does not provide an action', async () => {
         const screen = await render(
             <ContextSelector>
-                <ContextDisplayItem label="Program" value="Malaria" />
+                <ContextValue label="Program" value="Malaria" />
             </ContextSelector>
         )
 
         expect(screen.container.textContent).not.toContain('Clear selections')
+    })
+
+    it('disables the direct clear-all action when requested by the host', async () => {
+        const onClear = vi.fn()
+        const screen = await render(
+            <ContextSelector onClear={onClear} clearDisabled>
+                <ContextValue label="Program" value="Malaria" />
+            </ContextSelector>
+        )
+
+        const clear = screen.getByRole('button', { name: 'Clear selections' })
+        expect(clear.element().hasAttribute('disabled')).toBe(true)
+        expect(onClear).not.toHaveBeenCalled()
     })
 
     it('filters more than ten options and emits controlled selection intent', async () => {
@@ -93,14 +106,11 @@ describe('ContextSelector', () => {
         const onSelect = vi.fn()
         await render(
             <ContextSelector>
-                <ContextProgramSelector
+                <ProgramSelector
                     options={programs}
-                    control={{
-                        mode: 'interactive',
-                        open: true,
-                        onOpenChange,
-                        onSelect,
-                    }}
+                    open
+                    onOpenChange={onOpenChange}
+                    onChange={onSelect}
                 />
             </ContextSelector>
         )
@@ -121,6 +131,39 @@ describe('ContextSelector', () => {
         expect(onOpenChange).toHaveBeenCalledWith(false)
     })
 
+    it('resolves a committed option that is excluded from the open menu', async () => {
+        const screen = await render(
+            <ContextSelector>
+                <ProgramSelector
+                    options={[
+                        {
+                            value: 'incompatible',
+                            label: 'Incompatible committed program',
+                            excludeFromMenu: true,
+                        },
+                        { value: 'available', label: 'Available program' },
+                    ]}
+                    value="incompatible"
+                    open
+                    onOpenChange={() => undefined}
+                    onChange={() => undefined}
+                    onClear={() => undefined}
+                />
+            </ContextSelector>
+        )
+
+        await expect
+            .element(
+                screen.getByRole('button', {
+                    name: /Program.*Incompatible committed program/,
+                })
+            )
+            .toBeVisible()
+        const menu = screen.getByRole('menu').element()
+        expect(menu.textContent).toContain('Available program')
+        expect(menu.textContent).not.toContain('Incompatible committed program')
+    })
+
     it('resets the Capture program filter whenever the controlled popup closes', async () => {
         const Harness = () => {
             const [open, setOpen] = useState(true)
@@ -133,14 +176,11 @@ describe('ContextSelector', () => {
                         Open popup
                     </button>
                     <ContextSelector>
-                        <ContextProgramSelector
+                        <ProgramSelector
                             options={programs}
-                            control={{
-                                mode: 'interactive',
-                                open,
-                                onOpenChange: setOpen,
-                                onSelect: () => undefined,
-                            }}
+                            open={open}
+                            onOpenChange={setOpen}
+                            onChange={() => undefined}
                         />
                     </ContextSelector>
                 </>
@@ -160,14 +200,11 @@ describe('ContextSelector', () => {
     it('keeps Program as a direct SelectorBar child for arrow-key focus', async () => {
         const screen = await render(
             <ContextSelector>
-                <ContextProgramSelector
+                <ProgramSelector
                     options={programs.slice(0, 2)}
-                    control={{
-                        mode: 'interactive',
-                        open: false,
-                        onOpenChange: () => undefined,
-                        onSelect: () => undefined,
-                    }}
+                    open={false}
+                    onOpenChange={() => undefined}
+                    onChange={() => undefined}
                 />
             </ContextSelector>
         )
@@ -182,7 +219,7 @@ describe('ContextSelector', () => {
     it('renders Capture icon and menu filter geometry from computed styles', async () => {
         await render(
             <ContextSelector>
-                <ContextProgramSelector
+                <ProgramSelector
                     options={programs.map((program, index) =>
                         index === 0
                             ? {
@@ -195,13 +232,10 @@ describe('ContextSelector', () => {
                               }
                             : program
                     )}
-                    selectedValue="program-1"
-                    control={{
-                        mode: 'interactive',
-                        open: true,
-                        onOpenChange: () => undefined,
-                        onSelect: () => undefined,
-                    }}
+                    value="program-1"
+                    open
+                    onOpenChange={() => undefined}
+                    onChange={() => undefined}
                 />
             </ContextSelector>
         )
@@ -232,10 +266,11 @@ describe('ContextSelector', () => {
         const onClear = vi.fn()
         const screen = await render(
             <ContextSelector>
-                <ContextProgramSelector
+                <ProgramSelector
                     options={programs}
-                    selectedValue="program-1"
-                    control={{ mode: 'display', onClear }}
+                    value="program-1"
+                    readOnly
+                    onClear={onClear}
                 />
             </ContextSelector>
         )
@@ -253,19 +288,24 @@ describe('ContextSelector', () => {
         expect(page.getByRole('menu').query()).toBeNull()
     })
 
+    it('keeps Capture program placeholder copy in an empty read-only state', async () => {
+        await render(
+            <ContextSelector>
+                <ProgramSelector options={programs} readOnly />
+            </ContextSelector>
+        )
+
+        await expect.element(page.getByText('Choose a program')).toBeVisible()
+    })
+
     it('matches Capture disabled and loading selector states', async () => {
         const screen = await render(
             <ContextSelector>
-                <ContextProgramSelector
+                <ProgramSelector options={programs} disabled />
+                <StageSelector
                     options={programs}
-                    control={{ mode: 'disabled' }}
-                />
-                <ContextStageSelector
-                    options={programs}
-                    control={{
-                        mode: 'loading',
-                        loadingLabel: 'Loading stages',
-                    }}
+                    loading
+                    loadingLabel="Loading stages"
                 />
             </ContextSelector>
         )
@@ -282,41 +322,245 @@ describe('ContextSelector', () => {
         expect(getComputedStyle(loading).justifyContent).toBe('center')
     })
 
-    it('keeps locked selector menus unpadded and shows Capture read-only OU text', async () => {
+    it('applies loading before disabled, read-only, open, and clear props', async () => {
+        const onChange = vi.fn()
+        const onClear = vi.fn()
+        const onOpenChange = vi.fn()
+        const screen = await render(
+            <ContextSelector>
+                <ProgramSelector
+                    options={programs}
+                    value="program-1"
+                    loading
+                    disabled
+                    readOnly
+                    open
+                    onChange={onChange}
+                    onClear={onClear}
+                    onOpenChange={onOpenChange}
+                    loadingLabel="Loading programs"
+                />
+            </ContextSelector>
+        )
+
+        await expect
+            .element(screen.getByLabelText('Loading programs'))
+            .toBeVisible()
+        expect(
+            screen.container.querySelector(
+                '[data-test="program-selector-container"]'
+            )
+        ).toBeNull()
+        expect(page.getByRole('menu').query()).toBeNull()
+        expect(onChange).not.toHaveBeenCalled()
+        expect(onClear).not.toHaveBeenCalled()
+        expect(onOpenChange).not.toHaveBeenCalled()
+    })
+
+    it('applies disabled before read-only, open, and clear props', async () => {
+        const onClear = vi.fn()
+        const onOpenChange = vi.fn()
+        const screen = await render(
+            <ContextSelector>
+                <ProgramSelector
+                    options={programs}
+                    value="program-1"
+                    disabled
+                    readOnly
+                    open
+                    onClear={onClear}
+                    onOpenChange={onOpenChange}
+                />
+            </ContextSelector>
+        )
+
+        const item = screen.container.querySelector<HTMLButtonElement>(
+            '[data-test="program-selector-container"]'
+        )
+        expect(item?.disabled).toBe(true)
+        expect(
+            screen.container.querySelector(
+                '[data-test="program-selector-container-clear-icon"]'
+            )
+        ).toBeNull()
+        expect(page.getByRole('menu').query()).toBeNull()
+        expect(onClear).not.toHaveBeenCalled()
+        expect(onOpenChange).not.toHaveBeenCalled()
+    })
+
+    it('uses a host-owned event label and emits interactive event intent', async () => {
+        const onChange = vi.fn()
+        const onOpenChange = vi.fn()
         await render(
             <ContextSelector>
-                <ContextStageSelector
-                    options={programs}
-                    control={{
-                        mode: 'interactive',
-                        open: true,
-                        onOpenChange: () => undefined,
-                        onSelect: () => undefined,
-                    }}
+                <EventSelector
+                    label="Visit date"
+                    options={programs.slice(0, 2)}
+                    open
+                    onChange={onChange}
+                    onOpenChange={onOpenChange}
                 />
-                <ContextOrganisationUnitSelector
-                    control={{ mode: 'display' }}
+            </ContextSelector>
+        )
+
+        await expect
+            .element(page.getByText('Visit date', { exact: true }))
+            .toBeVisible()
+        await page.getByText('Malaria program 2').click()
+        expect(onChange).toHaveBeenCalledWith('program-2')
+        expect(onOpenChange).toHaveBeenCalledWith(false)
+    })
+
+    it('keeps a read-only event clearable without opening its menu', async () => {
+        const onClear = vi.fn()
+        const screen = await render(
+            <ContextSelector>
+                <EventSelector
+                    label="Date of consultation"
+                    options={programs.slice(0, 2)}
+                    value="program-1"
+                    readOnly
+                    open
+                    onClear={onClear}
+                />
+            </ContextSelector>
+        )
+
+        const item = screen.container.querySelector(
+            '[data-test="event-selector-container"]'
+        )
+        expect(item?.className).not.toContain('openable')
+        await expect
+            .element(page.getByText('Date of consultation'))
+            .toBeVisible()
+        const clear = screen.container.querySelector<HTMLElement>(
+            '[data-test="event-selector-container-clear-icon"]'
+        )
+        expect(clear).not.toBeNull()
+        clear?.click()
+        expect(onClear).toHaveBeenCalledOnce()
+        expect(page.getByRole('menu').query()).toBeNull()
+    })
+
+    it('supports specialized label overrides and the generic option escape hatch', async () => {
+        const onChange = vi.fn()
+        await render(
+            <ContextSelector>
+                <EnrollmentSelector
+                    label="Active enrollment"
+                    options={programs.slice(0, 2)}
+                    value="program-1"
+                    readOnly
+                />
+                <OptionSelector
+                    label="Category option"
+                    options={programs.slice(0, 2)}
+                    open
+                    onChange={onChange}
+                />
+            </ContextSelector>
+        )
+
+        await expect.element(page.getByText('Active enrollment')).toBeVisible()
+        await expect
+            .element(page.getByText('Category option', { exact: true }))
+            .toBeVisible()
+        await page.getByText('Malaria program 2').click()
+        expect(onChange).toHaveBeenCalledWith('program-2')
+    })
+
+    it('keeps an externally open popup safe when onOpenChange is omitted', async () => {
+        await render(
+            <ContextSelector>
+                <OptionSelector
+                    label="Category option"
+                    options={programs.slice(0, 2)}
+                    open
+                />
+            </ContextSelector>
+        )
+
+        const backdrop = document.querySelector<HTMLElement>('.backdrop')
+        expect(backdrop).not.toBeNull()
+        expect(() => backdrop?.click()).not.toThrow()
+        await expect.element(page.getByRole('menu')).toBeVisible()
+    })
+
+    it('emits close intent independently when onChange is omitted', async () => {
+        const onOpenChange = vi.fn()
+        await render(
+            <ContextSelector>
+                <OptionSelector
+                    label="Category option"
+                    options={programs.slice(0, 2)}
+                    open
+                    onOpenChange={onOpenChange}
+                />
+            </ContextSelector>
+        )
+
+        await page.getByText('Malaria program 2').click()
+        expect(onOpenChange).toHaveBeenCalledWith(false)
+    })
+
+    it('renders ContextValue as a non-selectable, optionally clearable value', async () => {
+        const onClear = vi.fn()
+        const screen = await render(
+            <ContextSelector>
+                <ContextValue
+                    label="Tracked entity"
+                    value="Person"
+                    onClear={onClear}
+                />
+            </ContextSelector>
+        )
+
+        const item = screen.container.querySelector('.selector-bar-item')
+        expect(item?.className).not.toContain('openable')
+        await expect.element(page.getByText('Person')).toBeVisible()
+        const clear = screen.container.querySelector<HTMLElement>(
+            '[data-test$="-clear-icon"]'
+        )
+        expect(clear).not.toBeNull()
+        clear?.click()
+        expect(onClear).toHaveBeenCalledOnce()
+    })
+
+    it('keeps locked selector menus unpadded and shows Capture read-only OU text', async () => {
+        const onClear = vi.fn()
+        await render(
+            <ContextSelector>
+                <StageSelector
+                    options={programs}
+                    open
+                    onOpenChange={() => undefined}
+                    onChange={() => undefined}
+                />
+                <OrganisationUnitSelector
+                    value="Ngelehun CHC"
+                    readOnly
+                    onClear={onClear}
                 />
             </ContextSelector>
         )
 
         const menuShell = page.getByRole('menu').element().parentElement
         expect(getComputedStyle(menuShell!).paddingBottom).toBe('0px')
-        await expect.element(page.getByText('None selected')).toBeVisible()
+        await expect.element(page.getByText('Ngelehun CHC')).toBeVisible()
+        expect(
+            document.querySelector(
+                '[data-test="org-unit-selector-container-clear-icon"]'
+            )
+        ).toBeNull()
+        expect(onClear).not.toHaveBeenCalled()
     })
 
     it('provides the Capture organisation-unit popup geometry to host children', async () => {
         await render(
             <ContextSelector>
-                <ContextOrganisationUnitSelector
-                    control={{
-                        mode: 'interactive',
-                        open: true,
-                        onOpenChange: () => undefined,
-                    }}
-                >
+                <OrganisationUnitSelector open onOpenChange={() => undefined}>
                     <div data-testid="host-picker">Host tree</div>
-                </ContextOrganisationUnitSelector>
+                </OrganisationUnitSelector>
             </ContextSelector>
         )
 

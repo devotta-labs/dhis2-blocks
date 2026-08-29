@@ -41,6 +41,7 @@
     "workspaces": {
         ".": {
             "entry": ["e2e/specs/**/*.spec.ts"],
+            "ignoreDependencies": ["@types/react", "@types/react-dom"],
             "project": [
                 "e2e/**/*.ts",
                 "tools/**/*.ts",
@@ -75,6 +76,39 @@
                     "namespaceMembers"
                 ],
                 "src/workingListTranslationCatalog.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ]
+            }
+        },
+        "apps/docs": {
+            "entry": [
+                "app/**/{page,layout,route}.ts",
+                "app/**/{page,layout,route}.tsx",
+                "components/mdx.tsx",
+                "scripts/*.mjs",
+                "**/*.{test,spec}.{ts,tsx}"
+            ],
+            "project": [
+                "app/**/*.{ts,tsx,css}",
+                "components/**/*.{ts,tsx}",
+                "content/**/*.mdx",
+                "lib/**/*.ts",
+                "**/*.{test,spec}.{ts,tsx}"
+            ],
+            "ignoreIssues": {
+                "components/ui/**": ["exports"]
+            }
+        },
+        "apps/previews": {
+            "entry": ["src/main.tsx"],
+            "project": ["src/**/*.{ts,tsx,css}"],
+            "ignoreIssues": {
+                "src/config.ts": [
                     "exports",
                     "types",
                     "nsExports",

@@ -1,0 +1,65 @@
+@import 'tailwindcss/theme.css';
+@import 'tailwindcss/preflight.css';
+@import 'tailwindcss/utilities.css';
+
+@source '../../../packages/blocks/working-list/src';
+
+:root {
+    color: #212934;
+    background: #ffffff;
+    font-family: Roboto, Helvetica, Arial, sans-serif;
+    font-synthesis: none;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    background: #ffffff;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+.preview-shell {
+    margin: 0 auto;
+    width: 100%;
+    max-width: 1440px;
+    padding: 24px;
+}
+
+.preview-message {
+    margin: 0;
+    padding: 32px;
+    color: #4a5768;
+    font-size: 14px;
+}
+
+@media (max-width: 900px) {
+    .preview-shell {
+        padding: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

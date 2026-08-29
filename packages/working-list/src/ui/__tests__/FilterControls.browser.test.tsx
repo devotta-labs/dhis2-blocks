@@ -36,16 +36,17 @@ describe('MoreFilters real-browser keyboard focus', () => {
             '[data-test="add-filter-followUp"]'
         )
         expect(focusTarget?.hasAttribute('tabindex')).toBe(true)
-        expect(document.activeElement).toBe(focusTarget)
+        await expect.poll(() => document.activeElement).toBe(focusTarget)
 
         await userEvent.keyboard('{Enter}')
         expect(onAdd).toHaveBeenCalledWith('followUp')
         await expect.element(trigger).toHaveFocus()
 
         await trigger.click()
-        expect(document.activeElement).toBe(
-            document.querySelector('[data-test="add-filter-followUp"]')
-        )
+        await expect.element(firstItem).toBeVisible()
+        await expect
+            .poll(() => document.activeElement)
+            .toBe(document.querySelector('[data-test="add-filter-followUp"]'))
 
         await userEvent.keyboard('{Escape}')
         await expect.element(trigger).toHaveFocus()

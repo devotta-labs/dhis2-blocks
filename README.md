@@ -170,6 +170,10 @@ pnpm build
 Turborepo runs each task in the workspaces that provide it and caches declared
 build outputs.
 
+Unit and component tests use Vitest. See [Testing](docs/testing.md) for the
+workspace-local configuration model, environment split, and the boundary with
+the real-DHIS2 Playwright suite.
+
 `pnpm dead-code:audit` runs the complete Knip configuration and fails on any
 finding, including circular imports. See
 [Knip dead-code analysis](docs/unused-exports.md) for the public API exemptions

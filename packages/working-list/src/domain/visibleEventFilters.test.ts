@@ -1,5 +1,5 @@
-import type { WorkingListConfiguration } from '../../provider/contracts'
-import { visibleEventFiltersAfterStageChange } from '../Filters'
+import type { WorkingListConfiguration } from '../provider/contracts'
+import { visibleEventFiltersAfterStageChange } from './visibleEventFilters'
 
 const configuration: WorkingListConfiguration = {
     mode: 'event',

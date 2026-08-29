@@ -294,7 +294,7 @@ describe('WorkingListTable', () => {
         withActEnvironment(() => {
             const container = document.createElement('div')
             document.body.appendChild(container)
-            const onRowOpen = jest.fn()
+            const onRowOpen = vi.fn()
             const root = renderTable(container, {
                 rows: [
                     {

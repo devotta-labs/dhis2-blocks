@@ -27,6 +27,7 @@ const TestCalendarInput = (props: StrictCalendarInputProps) =>
             'data-format': props.format,
             'data-time-zone': props.timeZone,
             onClick: () =>
+                // SAFETY: DHIS2 CalendarInput emits this documented runtime validation payload.
                 props.onDateSelect({
                     calendarDateString: '31-12-2017',
                     validation: {
@@ -34,8 +35,9 @@ const TestCalendarInput = (props: StrictCalendarInputProps) =>
                         error: false,
                         warning: false,
                     },
-                }),
+                } as Parameters<typeof props.onDateSelect>[0]),
             onDoubleClick: () =>
+                // SAFETY: DHIS2 CalendarInput emits this documented runtime validation payload.
                 props.onDateSelect({
                     calendarDateString: '32-13-2017',
                     validation: {
@@ -43,7 +45,7 @@ const TestCalendarInput = (props: StrictCalendarInputProps) =>
                         error: true,
                         validationText: 'Invalid date',
                     },
-                }),
+                } as Parameters<typeof props.onDateSelect>[0]),
         },
         props.validationText ?? props.dataTest
     )
@@ -114,7 +116,7 @@ describe('calendar filter controls', () => {
         const container = document.createElement('div')
         document.body.appendChild(container)
         const root = createRoot(container)
-        const onApply = jest.fn<void, [AppliedFilter]>()
+        const onApply = vi.fn<(filter: AppliedFilter) => void>()
 
         try {
             act(() => {
@@ -152,7 +154,7 @@ describe('calendar filter controls', () => {
                                     timeZone: 'Africa/Addis_Ababa',
                                 }}
                                 onApply={onApply}
-                                onReset={jest.fn()}
+                                onReset={vi.fn()}
                             />
                         </FilterControlsComponentProvider>
                     </WorkingListTextProvider>
@@ -261,7 +263,7 @@ describe('calendar filter controls', () => {
                                 fields={[field]}
                                 visibleFilterIds={[]}
                                 scope="tracked-entity"
-                                onAdd={jest.fn()}
+                                onAdd={vi.fn()}
                             />
                             <ProgramStageControl
                                 program={TrackerProgramSchema.parse({
@@ -278,8 +280,8 @@ describe('calendar filter controls', () => {
                                         },
                                     ],
                                 })}
-                                onChange={jest.fn()}
-                                onRemove={jest.fn()}
+                                onChange={vi.fn()}
+                                onRemove={vi.fn()}
                             />
                         </FilterControlsComponentProvider>
                     </WorkingListTextProvider>
@@ -350,13 +352,13 @@ describe('calendar filter controls', () => {
                                     apiVersion: 43,
                                 })}
                                 calendarContext={{
-                                    calendar: 'gregory',
+                                    calendar: 'gregorian',
                                     dateFormat: 'YYYY-MM-DD',
                                     locale: 'en',
                                     timeZone: 'Etc/UTC',
                                 }}
-                                onApply={jest.fn()}
-                                onReset={jest.fn()}
+                                onApply={vi.fn()}
+                                onReset={vi.fn()}
                             />
                         </FilterControlsComponentProvider>
                     </WorkingListTextProvider>
@@ -403,7 +405,7 @@ describe('calendar filter controls', () => {
         const container = document.createElement('div')
         document.body.appendChild(container)
         const root = createRoot(container)
-        const onApply = jest.fn<void, [AppliedFilter]>()
+        const onApply = vi.fn<(filter: AppliedFilter) => void>()
 
         try {
             act(() => {
@@ -427,13 +429,13 @@ describe('calendar filter controls', () => {
                                     apiVersion: 43,
                                 })}
                                 calendarContext={{
-                                    calendar: 'gregory',
+                                    calendar: 'gregorian',
                                     dateFormat: 'YYYY-MM-DD',
                                     locale: 'en',
                                     timeZone: 'Etc/UTC',
                                 }}
                                 onApply={onApply}
-                                onReset={jest.fn()}
+                                onReset={vi.fn()}
                             />
                         </FilterControlsComponentProvider>
                     </WorkingListTextProvider>

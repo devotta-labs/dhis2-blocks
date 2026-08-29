@@ -3,6 +3,7 @@ import { IconFilter16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
 import { fieldsForConfiguration } from '../../api/metadata'
+import { visibleEventFiltersAfterStageChange } from '../../domain/visibleEventFilters'
 import type { AppliedFilter as ResolvedAppliedFilter } from '../../domain/model'
 import type { WorkingListField } from '../../domain/model'
 import {
@@ -40,27 +41,6 @@ const visibleFiltersForConfiguration = (
         }
     }
     return { tracker, event }
-}
-
-export const visibleEventFiltersAfterStageChange = ({
-    configuration,
-    stageId,
-    visibleFilterIds,
-    addedFilterId,
-}: {
-    configuration: WorkingListConfiguration
-    stageId?: string
-    visibleFilterIds: string[]
-    addedFilterId?: string
-}) => {
-    const stageChanged =
-        Boolean(stageId) &&
-        (configuration.mode !== 'event' ||
-            configuration.programStageId !== stageId)
-    const nextIds = stageChanged ? [] : visibleFilterIds
-    return addedFilterId && !nextIds.includes(addedFilterId)
-        ? [...nextIds, addedFilterId]
-        : nextIds
 }
 
 const withAppliedFilterIds = (

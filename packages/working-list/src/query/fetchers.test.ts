@@ -61,10 +61,10 @@ const clientReturning = (response: DataEngineValue): WorkingListClient => ({
 })
 
 describe('working-list page fetching with lenient data values', () => {
-    let warn: jest.SpyInstance
+    let warn: ReturnType<typeof vi.spyOn>
 
     beforeEach(() => {
-        warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+        warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     })
 
     afterEach(() => {

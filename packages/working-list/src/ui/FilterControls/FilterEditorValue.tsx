@@ -9,6 +9,7 @@ import React from 'react'
 import { z } from 'zod'
 import type { WorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
+import { usesMultipleOptionSelection } from '../../domain/filterControlPolicy'
 import type { FilterValue, WorkingListField } from '../../domain/model'
 import type { FilterEditorKind } from '../../registry/valueTypes'
 import { useWorkingListText } from '../WorkingListText'
@@ -22,11 +23,6 @@ import {
     OrganisationUnitFilterSelect,
     UserFilterSelect,
 } from './ReferenceFilterSelects'
-
-export const usesMultipleOptionSelection = (
-    field: WorkingListField,
-    capabilities: WorkingListCapabilities
-) => capabilities.multipleOptionValues && field.source !== 'system'
 
 export const EditorValue = ({
     client,

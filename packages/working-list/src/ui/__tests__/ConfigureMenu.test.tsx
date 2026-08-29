@@ -1,5 +1,6 @@
-import React, { act } from 'react'
-import { createRoot } from 'react-dom/client'
+import React from 'react'
+import { page } from 'vitest/browser'
+import { render } from 'vitest-browser-react'
 import type { WorkingListSavedView } from '../../provider/contracts'
 import { ConfigureMenu } from '../ConfigureMenu'
 import { WorkingListTextProvider } from '../WorkingListText'
@@ -14,7 +15,7 @@ const ownedList: WorkingListSavedView = {
     canShare: true,
 }
 
-const renderMenu = ({
+const renderMenu = async ({
     selectedView,
     dirty = false,
     online = true,
@@ -23,163 +24,100 @@ const renderMenu = ({
     dirty?: boolean
     online?: boolean
 }) => {
-    const container = document.createElement('div')
-    document.body.appendChild(container)
-    const root = createRoot(container)
-    const onDownload = jest.fn()
-    const onSaveAs = jest.fn(async () => undefined)
-    const onUpdate = jest.fn()
+    const onDownload = vi.fn()
+    const onSaveAs = vi.fn(async () => undefined)
+    const onUpdate = vi.fn()
+    const screen = await render(
+        <WorkingListTextProvider translate={(message) => message}>
+            <ConfigureMenu
+                selectedView={selectedView}
+                dirty={dirty}
+                online={online}
+                busy={false}
+                createPending={false}
+                onDownload={onDownload}
+                onSaveAs={onSaveAs}
+                onUpdate={onUpdate}
+            />
+        </WorkingListTextProvider>
+    )
 
-    act(() => {
-        root.render(
-            <WorkingListTextProvider translate={(message) => message}>
-                <ConfigureMenu
-                    selectedView={selectedView}
-                    dirty={dirty}
-                    online={online}
-                    busy={false}
-                    createPending={false}
-                    onDownload={onDownload}
-                    onSaveAs={onSaveAs}
-                    onUpdate={onUpdate}
-                />
-            </WorkingListTextProvider>
-        )
-    })
-
-    return {
-        container,
-        onDownload,
-        onUpdate,
-        cleanup: () => {
-            act(() => root.unmount())
-            container.remove()
-        },
-    }
+    return { screen, onDownload, onUpdate }
 }
 
 describe('working-list actions', () => {
-    const actEnvironment = globalThis
-    let originalActEnvironment: boolean | undefined
+    it('offers create and download for an unfiltered default view', async () => {
+        const { screen, onDownload } = await renderMenu({})
+        const save = screen.getByRole('button', { name: 'Save view' })
+        await expect.element(save).toBeVisible()
 
-    beforeEach(() => {
-        originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
-        actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
-    })
-
-    afterEach(() => {
-        actEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment
-    })
-
-    it('offers create and download for an unfiltered default view', () => {
-        const { container, onDownload, cleanup } = renderMenu({})
-        try {
-            const save = container.querySelector<HTMLButtonElement>(
-                '[data-test="save-working-list"]'
+        await save.click()
+        await expect
+            .element(
+                page.getByRole('heading', {
+                    name: 'Save as new working list',
+                })
             )
-            expect(save?.className).toContain('secondary')
-            act(() => {
-                save?.click()
-            })
-            expect(
-                document.querySelector<HTMLButtonElement>(
-                    '[data-test="working-list-name-submit"]'
-                )?.className
-            ).toContain('secondary')
-            act(() => {
-                document
-                    .querySelector<HTMLButtonElement>(
-                        '[data-test="working-list-name-cancel"]'
-                    )
-                    ?.click()
-                container
-                    .querySelector<HTMLButtonElement>(
-                        '[data-test="working-list-options"] button'
-                    )
-                    ?.click()
-            })
-            const download = document.querySelector<HTMLElement>(
-                '[data-test="download-working-list"] [role="menuitem"]'
-            )
-            expect(download).not.toBeNull()
-            act(() => download?.click())
-            expect(onDownload).toHaveBeenCalledTimes(1)
-        } finally {
-            cleanup()
-        }
+            .toBeVisible()
+        await expect
+            .element(page.getByRole('button', { name: 'Save', exact: true }))
+            .toBeDisabled()
+        await page.getByRole('button', { name: 'Cancel' }).click()
+
+        await screen.getByRole('button', { name: 'More' }).click()
+        const download = page.getByRole('menuitem', {
+            name: 'Download data…',
+        })
+        await expect.element(download).toBeVisible()
+        await download.click()
+        expect(onDownload).toHaveBeenCalledTimes(1)
     })
 
-    it('keeps create and download together for a generated view', () => {
-        const { container, cleanup } = renderMenu({})
-        try {
-            expect(
-                container.querySelector('[data-test="save-working-list"]')
-            ).not.toBeNull()
-            expect(
-                container.querySelector('[data-test="working-list-options"]')
-            ).not.toBeNull()
-        } finally {
-            cleanup()
-        }
+    it('keeps create and download together for a generated view', async () => {
+        const { screen } = await renderMenu({})
+
+        await expect
+            .element(screen.getByRole('button', { name: 'Save view' }))
+            .toBeVisible()
+        await expect
+            .element(screen.getByRole('button', { name: 'More' }))
+            .toBeVisible()
     })
 
-    it('shows update and create-new actions for a persisted selection', () => {
-        const { container, onUpdate, cleanup } = renderMenu({
+    it('shows update and create-new actions for a persisted selection', async () => {
+        const { screen, onUpdate } = await renderMenu({
             selectedView: ownedList,
             dirty: true,
         })
-        try {
-            expect(
-                container.querySelector('[data-test="working-list-options"]')
-            ).toBeNull()
-            expect(
-                container.querySelector<HTMLButtonElement>(
-                    '[data-test="save-working-list"] button'
-                )?.className
-            ).toContain('secondary')
-            act(() => {
-                container
-                    .querySelector<HTMLButtonElement>(
-                        '[data-test="save-working-list"] button'
-                    )
-                    ?.click()
-            })
-            const update = document.querySelector<HTMLElement>(
-                '[data-test="update-working-list"] [role="menuitem"]'
-            )
-            expect(update).not.toBeNull()
-            expect(
-                document.querySelector('[data-test="save-as-working-list"]')
-            ).not.toBeNull()
-            act(() => update?.click())
-            expect(onUpdate).toHaveBeenCalledWith()
-        } finally {
-            cleanup()
-        }
+
+        expect(
+            screen.container.querySelector('[data-test="working-list-options"]')
+        ).toBeNull()
+        await screen.getByRole('button', { name: 'Save view' }).click()
+        const update = page.getByRole('menuitem', {
+            name: 'Save changes to this view',
+        })
+        await expect.element(update).toBeEnabled()
+        await expect
+            .element(page.getByRole('menuitem', { name: 'Create new view…' }))
+            .toBeVisible()
+        await update.click()
+        expect(onUpdate).toHaveBeenCalledOnce()
     })
 
-    it('does not send an update when the selected view is clean', () => {
-        const { container, onUpdate, cleanup } = renderMenu({
+    it('does not enable an update when the selected view is clean', async () => {
+        const { screen, onUpdate } = await renderMenu({
             selectedView: ownedList,
         })
-        try {
-            act(() => {
-                container
-                    .querySelector<HTMLButtonElement>(
-                        '[data-test="save-working-list"] button'
-                    )
-                    ?.click()
-            })
-            act(() => {
-                document
-                    .querySelector<HTMLElement>(
-                        '[data-test="update-working-list"] [role="menuitem"]'
-                    )
-                    ?.click()
-            })
-            expect(onUpdate).not.toHaveBeenCalled()
-        } finally {
-            cleanup()
-        }
+
+        await screen.getByRole('button', { name: 'Save view' }).click()
+        await expect
+            .element(
+                page.getByRole('menuitem', {
+                    name: 'Save changes to this view',
+                })
+            )
+            .toBeDisabled()
+        expect(onUpdate).not.toHaveBeenCalled()
     })
 })

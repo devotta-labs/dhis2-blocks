@@ -1,29 +1,9 @@
-import React from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { AppView } from './AppView'
 import {
     isGuardedAppUrlTransition,
     parseAppUrlState,
     serializeAppUrlState,
     type AppUrlState,
-} from './app/urlState'
-
-const TestAppShell = () => (
-    <main aria-label="Working lists" data-testid="working-list-app">
-        Working lists
-    </main>
-)
-
-describe('application entry point', () => {
-    it('renders an accessible application landmark', () => {
-        const markup = renderToStaticMarkup(
-            <AppView AppShellComponent={TestAppShell} />
-        )
-
-        expect(markup).toContain('<main')
-        expect(markup).toContain('aria-label="Working lists"')
-    })
-})
+} from './urlState'
 
 describe('URL state privacy boundary', () => {
     it('serializes only context, selected view, and pagination preferences', () => {

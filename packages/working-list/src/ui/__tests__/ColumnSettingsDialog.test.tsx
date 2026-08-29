@@ -29,8 +29,8 @@ const translate = (
 
 const renderDialog = (
     visibleColumnIds: string[],
-    onChange = jest.fn(),
-    onClose = jest.fn()
+    onChange = vi.fn(),
+    onClose = vi.fn()
 ) => {
     const container = document.createElement('div')
     document.body.appendChild(container)

@@ -76,15 +76,16 @@ const program: TrackerProgram = {
 
 describe('version-aware Tracker metadata catalog', () => {
     it('loads lightweight program summaries before one selected program', async () => {
-        const query: jest.MockedFunction<DataEngineLike['query']> = jest
+        const query = vi
             .fn()
             .mockResolvedValueOnce({
                 workingListResource: { programs: [] },
             })
             .mockResolvedValueOnce({ workingListResource: program })
         const engine: DataEngineLike = {
-            query,
-            mutate: jest.fn().mockResolvedValue(undefined),
+            // SAFETY: The mock returns the same query envelopes as DataEngineLike in call order.
+            query: query as DataEngineLike['query'],
+            mutate: vi.fn().mockResolvedValue(undefined),
         }
         const client = createWorkingListClient(engine)
 

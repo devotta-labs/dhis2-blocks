@@ -82,10 +82,10 @@ describe('file resource name resolution', () => {
     })
 
     it('resolves names per resource and tolerates missing file resources', async () => {
-        const warn = jest
+        const warn = vi
             .spyOn(console, 'warn')
             .mockImplementation(() => undefined)
-        const query = jest.fn(
+        const query = vi.fn(
             async <T>(request: ResourceRequest, schema: ZodType<T>) => {
                 if (request.id === 'Missing0001') {
                     throw new Error('404 Not Found')
@@ -97,7 +97,8 @@ describe('file resource name resolution', () => {
             }
         )
         const client: WorkingListClient = {
-            query,
+            // SAFETY: The generic schema argument validates every value returned by this fake.
+            query: query as WorkingListClient['query'],
             async mutate() {
                 throw new Error(
                     'Mutation is not implemented by this query-only fake'

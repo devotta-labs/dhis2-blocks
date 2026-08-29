@@ -9,8 +9,9 @@
         "./development": "./src/development.ts"
     },
     "scripts": {
-        "test": "d2-app-scripts test",
-        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "test:browser": "vitest run --project browser",
+        "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json --noEmit",
         "lint": "oxlint --deny-warnings src"
     },
     "dependencies": {
@@ -26,31 +27,20 @@
         "zustand": "^5.0.15"
     },
     "devDependencies": {
-        "@dhis2/cli-app-scripts": "12.10.3",
-        "@tanstack/table-core": "9.1.2",
-        "@types/jest": "^30.0.0",
+        "@types/node": "^22.0.0",
         "@types/react": "^18.3.31",
         "@types/react-dom": "^18.3.7",
+        "@vitest/browser-playwright": "4.1.11",
+        "playwright": "1.62.1",
         "react": "18.3.1",
         "react-dom": "18.3.1",
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "vite": "^7.3.0",
+        "vitest": "4.1.11",
+        "vitest-browser-react": "2.2.0"
     },
     "peerDependencies": {
         "react": "^18.3.1",
         "react-dom": "^18.3.1"
-    },
-    "jest": {
-        "moduleNameMapper": {
-            "\\.(css|less)$": "<rootDir>/test/styleMock.ts",
-            "^better-result$": "<rootDir>/test/betterResultMock.ts",
-            "^@tanstack/table-core/(.*)$": "<rootDir>/node_modules/@tanstack/react-table/../table-core/dist/$1.js"
-        },
-        "setupFilesAfterEnv": [
-            "<rootDir>/test/setup.ts"
-        ],
-        "transformIgnorePatterns": [
-            "/node_modules/(?!\\.pnpm/(?:@tanstack\\+|better-result@)|@tanstack/|better-result/)"
-        ],
-        "watchman": false
     }
 }

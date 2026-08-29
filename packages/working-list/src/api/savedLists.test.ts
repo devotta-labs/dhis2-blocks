@@ -251,8 +251,8 @@ describe('saved-list payloads', () => {
 
     it('rejects replacing an id through the wrong metadata endpoint', async () => {
         const client: WorkingListClient = {
-            query: jest.fn(),
-            mutate: jest.fn(),
+            query: vi.fn(),
+            mutate: vi.fn(),
         }
 
         await expect(
@@ -271,7 +271,7 @@ describe('saved-list payloads', () => {
 
     it('loads the current resource before replace and preserves extensions', async () => {
         const client: WorkingListClient = {
-            query: jest.fn().mockResolvedValue(
+            query: vi.fn().mockResolvedValue(
                 TrackedEntityInstanceFilterSchema.parse({
                     ...savedResource,
                     entityQueryCriteria: {
@@ -280,7 +280,7 @@ describe('saved-list payloads', () => {
                     },
                 })
             ),
-            mutate: jest.fn().mockResolvedValue({ status: 'OK' }),
+            mutate: vi.fn().mockResolvedValue({ status: 'OK' }),
         }
 
         await replaceSavedWorkingList({

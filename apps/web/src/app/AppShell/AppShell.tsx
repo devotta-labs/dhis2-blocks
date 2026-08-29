@@ -565,6 +565,15 @@ export const AppShell = () => {
                     onClose={() => setOpenedRecord(undefined)}
                 />
             )}
+
+            <footer className="mx-auto mt-8 flex w-full max-w-[1440px] justify-end px-6 [@media(max-width:900px)]:px-3">
+                <a
+                    className="text-xs text-[#6c7787] underline-offset-2 hover:text-[#147cd7] hover:underline"
+                    href="#/context-selector-showcase"
+                >
+                    Context Selector showcase
+                </a>
+            </footer>
         </div>
     )
 }

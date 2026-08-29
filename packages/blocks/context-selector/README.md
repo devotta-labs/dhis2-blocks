@@ -2,7 +2,9 @@
 
 Purely presentational, controlled context-selector primitives for React 18
 DHIS2 applications. The visual structure follows the DHIS2 Capture selector
-bar while leaving data and workflow policy to the host.
+bar while leaving data and workflow policy to the host. The row fills its
+containing width by default; constrain the parent only when embedding it in a
+narrower surface.
 
 The block does not fetch metadata, read routes, provide context, or decide
 which controls are relevant. The host resolves labels and options, renders

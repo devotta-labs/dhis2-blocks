@@ -41,6 +41,7 @@ export const ContextSelector = ({
     >
         <CaptureSelectorBar
             ariaLabel={ariaLabel}
+            className="w-full max-w-none!"
             dataTest="context-selector-bar"
             disableClearSelections={!onClear || clearDisabled}
             onClearSelectionClick={onClear}

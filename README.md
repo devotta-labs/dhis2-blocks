@@ -38,6 +38,9 @@ changes receive hot updates without a separate library build. By default the
 DHIS2 Application Platform opens the application at
 [http://localhost:3000](http://localhost:3000).
 
+The interactive Context Selector primitive showcase is available at
+`#/context-selector-showcase` and from the link at the bottom of the demo.
+
 The deployable application bundle is built with:
 
 ```sh

@@ -57,6 +57,9 @@ describe('ContextSelector', () => {
         expect(getComputedStyle(toolbar).backgroundColor).toBe(
             'rgb(255, 255, 255)'
         )
+        expect(getComputedStyle(toolbar).width).toBe(
+            getComputedStyle(navigation.element()).width
+        )
         expect(getComputedStyle(toolbar).boxShadow).toBe(
             'rgb(213, 221, 229) 0px -1px 0px 0px inset'
         )

@@ -6,7 +6,8 @@ The Context Selector is a source-installed React 18 block. Install it into a
 Tailwind-enabled project with a valid shadcn `components.json`, then import it
 through the configured components alias. Its components own Capture-compatible
 layout, styling, semantics, and generic interface language. No separate
-stylesheet is required.
+stylesheet is required. The row fills its containing width by default; a host
+can opt into a narrower presentation by constraining the parent surface.
 
 The block is deliberately presentational. It has no provider, query client,
 metadata client, store, router adapter, URL synchronization, application state,

@@ -14,6 +14,11 @@
             ],
             "files": [
                 {
+                    "path": "src/components/ClearSelections.tsx",
+                    "type": "registry:file",
+                    "target": "@components/context-selector/components/ClearSelections.tsx"
+                },
+                {
                     "path": "src/components/ContextValue.tsx",
                     "type": "registry:file",
                     "target": "@components/context-selector/components/ContextValue.tsx"

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import {
+    ClearSelections,
     ContextSelector,
     ContextValue,
     EnrollmentSelector,
@@ -20,11 +21,12 @@ const programs: Option[] = Array.from({ length: 11 }, (_, index) => ({
 }))
 
 describe('ContextSelector', () => {
-    it('owns Capture sticky toolbar semantics and delegates clear-all', async () => {
+    it('owns Capture sticky toolbar semantics and composes clear-all', async () => {
         const onClear = vi.fn()
         const screen = await render(
-            <ContextSelector ariaLabel="Registration context" onClear={onClear}>
+            <ContextSelector ariaLabel="Registration context">
                 <ContextValue label="Program" value="Malaria" />
+                <ClearSelections onClear={onClear} />
             </ContextSelector>
         )
 
@@ -77,11 +79,20 @@ describe('ContextSelector', () => {
             'rgb(213, 221, 229) 0px 0px 0px 1px'
         )
 
+        const clearSelections = screen.container.querySelector<HTMLElement>(
+            '[data-test="clear-selections"]'
+        )
+        expect(getComputedStyle(clearSelections!).display).toBe('flex')
+        expect(getComputedStyle(clearSelections!).alignItems).toBe('center')
+        expect(getComputedStyle(clearSelections!).height).toBe('40px')
+        expect(getComputedStyle(clearSelections!).paddingLeft).toBe('8px')
+        expect(getComputedStyle(clearSelections!).paddingRight).toBe('8px')
+
         await screen.getByRole('button', { name: 'Clear selections' }).click()
         expect(onClear).toHaveBeenCalledOnce()
     })
 
-    it('omits clear-all when the host does not provide an action', async () => {
+    it('omits clear-all when the host does not compose it', async () => {
         const screen = await render(
             <ContextSelector>
                 <ContextValue label="Program" value="Malaria" />
@@ -91,11 +102,12 @@ describe('ContextSelector', () => {
         expect(screen.container.textContent).not.toContain('Clear selections')
     })
 
-    it('disables the direct clear-all action when requested by the host', async () => {
+    it('disables the composed clear-all action when requested by the host', async () => {
         const onClear = vi.fn()
         const screen = await render(
-            <ContextSelector onClear={onClear} clearDisabled>
+            <ContextSelector>
                 <ContextValue label="Program" value="Malaria" />
+                <ClearSelections onClear={onClear} disabled />
             </ContextSelector>
         )
 

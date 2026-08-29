@@ -1,4 +1,5 @@
 import {
+    ClearSelections,
     ContextSelector,
     ContextValue,
     EnrollmentSelector,
@@ -104,11 +105,7 @@ export const ContextSelectorShowcase = () => {
             className="min-h-screen bg-[#f3f5f7] pb-10"
             data-testid="context-selector-showcase"
         >
-            <ContextSelector
-                ariaLabel="Context selector showcase"
-                onClear={() => setValues({})}
-                clearDisabled={!Object.values(values).some(Boolean)}
-            >
+            <ContextSelector ariaLabel="Context selector showcase">
                 {selectorSet === 'primary' ? (
                     <>
                         <ProgramSelector
@@ -204,6 +201,10 @@ export const ContextSelectorShowcase = () => {
                         />
                     </>
                 )}
+                <ClearSelections
+                    onClear={() => setValues({})}
+                    disabled={!Object.values(values).some(Boolean)}
+                />
             </ContextSelector>
 
             <main className="mx-auto mt-6 w-[min(880px,calc(100%-32px))] rounded border border-[#d5dde5] bg-white p-6 shadow-sm">

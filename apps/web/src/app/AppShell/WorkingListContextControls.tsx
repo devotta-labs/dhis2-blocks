@@ -1,4 +1,5 @@
 import {
+    ClearSelections,
     ContextSelector,
     OrganisationUnitSelector,
     ProgramSelector,
@@ -59,11 +60,7 @@ export const WorkingListContextControls = ({
     )
 
     return (
-        <ContextSelector
-            ariaLabel={i18n.t('Working list context')}
-            onClear={onClear}
-            clearDisabled={clearDisabled}
-        >
+        <ContextSelector ariaLabel={i18n.t('Working list context')}>
             <ProgramSelector
                 label={i18n.t('Program')}
                 placeholder={i18n.t('Choose a program')}
@@ -121,6 +118,7 @@ export const WorkingListContextControls = ({
                     {organisationUnitContent}
                 </OrganisationUnitSelector>
             ) : null}
+            <ClearSelections onClear={onClear} disabled={clearDisabled} />
         </ContextSelector>
     )
 }

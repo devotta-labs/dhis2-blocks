@@ -63,6 +63,7 @@ Import the installed source through the project's configured components alias:
 
 ```tsx
 import {
+    ClearSelections,
     ContextSelector,
     EnrollmentSelector,
     EventSelector,
@@ -78,6 +79,9 @@ host supplies all option data, selected values, availability state, popup
 content, and callbacks; it also chooses which controls render and in what
 order. The block does not fetch data, synchronize a router or URL, own workflow
 state, or decide when progressive disclosure advances.
+
+Compose `ClearSelections` wherever the row-wide clear action belongs and pass
+its controlled `onClear` and `disabled` props directly.
 
 A program-first application can initially render only
 `ProgramSelector`, then add organisation-unit, enrollment, stage, and event

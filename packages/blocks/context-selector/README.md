@@ -12,11 +12,7 @@ children in workflow order, and owns committed values, popup state, URL
 synchronization, dirty-state guards, and progressive disclosure.
 
 ```tsx
-<ContextSelector
-    ariaLabel="Registration context"
-    onClear={clearContext}
-    clearDisabled={!programId}
->
+<ContextSelector ariaLabel="Registration context">
     <ProgramSelector
         options={programOptions}
         value={programId}
@@ -47,6 +43,8 @@ synchronization, dirty-state guards, and progressive disclosure.
             onChange={selectEvent}
         />
     ) : null}
+
+    <ClearSelections onClear={clearContext} disabled={!programId} />
 </ContextSelector>
 ```
 

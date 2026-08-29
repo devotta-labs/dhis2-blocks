@@ -1,4 +1,5 @@
 import type {
+    ClearSelectionsProps,
     ContextSelectorProps,
     ContextValueProps,
     EnrollmentSelectorProps,
@@ -12,6 +13,7 @@ import type {
     StageSelectorProps,
 } from '../src'
 import {
+    ClearSelections,
     ContextSelector,
     ContextValue,
     EnrollmentSelector,
@@ -23,6 +25,7 @@ import {
 } from '../src'
 
 export type SupportedContextSelectorTypes = [
+    ClearSelectionsProps,
     ContextSelectorProps,
     ContextValueProps,
     EnrollmentSelectorProps,
@@ -38,6 +41,7 @@ export type SupportedContextSelectorTypes = [
 
 export const supportedContextSelectorComponents = [
     ContextSelector,
+    ClearSelections,
     ProgramSelector,
     OrganisationUnitSelector,
     EnrollmentSelector,
@@ -46,6 +50,11 @@ export const supportedContextSelectorComponents = [
     OptionSelector,
     ContextValue,
 ] as const
+
+export const clearSelections: ClearSelectionsProps = {
+    onClear: () => undefined,
+    disabled: false,
+}
 
 const options: Option[] = [
     {

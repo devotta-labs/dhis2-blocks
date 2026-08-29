@@ -3,6 +3,10 @@ export {
     type ContextSelectorProps,
 } from './components/ContextSelector'
 export {
+    ClearSelections,
+    type ClearSelectionsProps,
+} from './components/ClearSelections'
+export {
     OptionSelector,
     type OptionSelectorProps,
 } from './components/OptionSelector'

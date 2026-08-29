@@ -12,9 +12,7 @@ import {
 import { IconMore16 } from '@dhis2/ui-icons'
 import React, { useState } from 'react'
 import type { WorkingListSavedView } from '../../provider/contracts'
-import layoutStyles from '../styles/layout.module.css'
 import { useWorkingListText } from '../WorkingListText'
-import styles from './ConfigureMenu.module.css'
 
 interface ConfigureMenuProps {
     selectedView?: WorkingListSavedView
@@ -58,7 +56,7 @@ export const ConfigureMenu = ({
     return (
         <>
             <div
-                className={styles['configure-menu']}
+                className="ml-auto flex flex-shrink-0 items-center gap-1"
                 data-testid="working-list-actions"
                 onKeyDownCapture={(event) => {
                     if (event.key === 'Escape') {
@@ -141,7 +139,7 @@ export const ConfigureMenu = ({
                     onClose={() => setNameDialogOpen(false)}
                 >
                     <form
-                        className={styles['working-list-name-form']}
+                        className="flex min-w-0 flex-col"
                         onSubmit={(event) => {
                             event.preventDefault()
                             const nextName = name.trim()
@@ -179,7 +177,7 @@ export const ConfigureMenu = ({
                             )}
                         </ModalContent>
                         <ModalActions>
-                            <div className={layoutStyles['modal-button-strip']}>
+                            <div className="flex flex-wrap items-center justify-end gap-2">
                                 <Button
                                     type="button"
                                     dataTest="working-list-name-cancel"

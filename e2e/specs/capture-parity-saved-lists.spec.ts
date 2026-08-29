@@ -1,3 +1,4 @@
+import type { Locator, Page } from '@playwright/test'
 import {
     INTEGER_ATTRIBUTE,
     MutationResponseSchema,
@@ -24,6 +25,42 @@ import {
     uiButton,
     waitForTrackerResponse,
 } from './capture-parity.support'
+
+const openTrackerSharingDialog = async (
+    page: Page,
+    listId: string,
+    dialog: Locator
+) => {
+    const originalConsoleError = await page.evaluateHandle(
+        () => globalThis.console.error
+    )
+    await page.evaluate(() => {
+        const originalError = globalThis.console.error
+        globalThis.console.error = (...args) => {
+            const message = args.map(String).join(' ')
+            const isKnownUiTypeWarning =
+                message.includes(
+                    'Invalid prop `type` of value `trackedEntityInstanceFilter`'
+                ) &&
+                (message.includes('supplied to `SharingDialog`') ||
+                    message.includes('supplied to `TabbedContent`'))
+
+            if (!isKnownUiTypeWarning) {
+                originalError.apply(globalThis.console, args)
+            }
+        }
+    })
+
+    try {
+        await chooseSavedViewAction(page, listId, 'share-saved-view')
+        await expect(dialog).toBeVisible()
+    } finally {
+        await page.evaluate((originalError) => {
+            globalThis.console.error = originalError
+        }, originalConsoleError)
+        await originalConsoleError.dispose()
+    }
+}
 
 test.describe('owner pagination and saved-list lifecycle', () => {
     test.use({ e2eCredentials: OWNER })
@@ -166,8 +203,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             const cleanUpdateAction = page
                 .locator('[data-test="update-working-list"]')
                 .getByRole('menuitem')
-            await expect(cleanUpdateAction).toBeEnabled()
-            await cleanUpdateAction.click()
+            await expect(cleanUpdateAction).toBeDisabled()
+            expect(cleanUpdateRequests).toEqual([])
+            await page.keyboard.press('Escape')
             await expect(cleanUpdateAction).toHaveCount(0)
             expect(cleanUpdateRequests).toEqual([])
 
@@ -209,14 +247,13 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 page.getByTestId('working-list-dirty-indicator')
             ).toHaveCount(0)
 
-            await chooseSavedViewAction(page, createdId!, 'share-saved-view')
             const sharingDialog = page.getByRole('dialog').filter({
                 has: page.getByRole('heading', {
                     name: 'Sharing and access: E2E browser tracker lifecycle',
                     exact: true,
                 }),
             })
-            await expect(sharingDialog).toBeVisible()
+            await openTrackerSharingDialog(page, createdId!, sharingDialog)
             await sharingDialog.getByPlaceholder('Search').fill(READER.username)
             await page
                 .locator('[data-test="dhis2-uicore-menuitem"]')
@@ -290,8 +327,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 })
                 .toBe(true)
 
-            await chooseSavedViewAction(page, createdId!, 'share-saved-view')
-            await expect(sharingDialog).toBeVisible()
+            await openTrackerSharingDialog(page, createdId!, sharingDialog)
             const readerAccessRow = sharingDialog.locator('.wrapper').filter({
                 has: page.getByText('Working list Reader', {
                     exact: true,

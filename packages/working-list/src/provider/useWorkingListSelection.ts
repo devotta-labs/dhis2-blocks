@@ -21,7 +21,7 @@ import type {
 } from './store'
 
 interface UseWorkingListSelectionOptions {
-    selectedSavedListId?: string
+    selectedSavedListId: string
     onSelectedSavedListChange: (id: string) => void
     defaultList?: Extract<
         NormalizedSavedWorkingList,
@@ -52,12 +52,8 @@ export const useWorkingListSelection = ({
     store,
     updateStore,
 }: UseWorkingListSelectionOptions) => {
-    const controlledSelection = selectedSavedListId !== undefined
-    const [uncontrolledSelection, setUncontrolledSelection] = useState<string>()
     const [transitionId, setTransitionId] = useState<string>()
-    const requestedId =
-        transitionId ??
-        (controlledSelection ? selectedSavedListId : uncontrolledSelection)
+    const requestedId = transitionId ?? selectedSavedListId
     const selectionToken = useRef(0)
     const latestRequestedIdRef = useRef<string | undefined>(selectedSavedListId)
     const onSelectionChangeRef = useRef(onSelectedSavedListChange)
@@ -68,7 +64,6 @@ export const useWorkingListSelection = ({
             selectionToken.current += 1
             latestRequestedIdRef.current = id
             setTransitionId(id)
-            if (!controlledSelection) setUncontrolledSelection(id)
             updateStore((current) => ({
                 activeState: undefined,
                 resolvedConfiguration: undefined,
@@ -90,12 +85,11 @@ export const useWorkingListSelection = ({
             })
             if (notify) onSelectionChangeRef.current(id)
         },
-        [controlledSelection, stagePagination, store, updateStore]
+        [stagePagination, store, updateStore]
     )
 
     const previousControlledId = useRef<string>()
     useLayoutEffect(() => {
-        if (!controlledSelection) return
         if (
             !shouldBeginControlledSelection(
                 previousControlledId.current,
@@ -108,33 +102,16 @@ export const useWorkingListSelection = ({
         if (selectedSavedListId && selectedSavedListId !== transitionId) {
             hardTransition(selectedSavedListId, false)
         }
-    }, [controlledSelection, hardTransition, selectedSavedListId, transitionId])
+    }, [hardTransition, selectedSavedListId, transitionId])
 
     useEffect(() => {
         if (
-            controlledSelection &&
             transitionId !== undefined &&
             selectedSavedListId === transitionId
         ) {
             setTransitionId(undefined)
         }
-    }, [controlledSelection, selectedSavedListId, transitionId])
-
-    const initialSelectionNotified = useRef(false)
-    useEffect(() => {
-        if (!defaultList || !confirmedLists || requestedId) return
-        if (!controlledSelection && !initialSelectionNotified.current) {
-            initialSelectionNotified.current = true
-            hardTransition(defaultListId, true)
-        }
-    }, [
-        confirmedLists,
-        controlledSelection,
-        defaultList,
-        defaultListId,
-        hardTransition,
-        requestedId,
-    ])
+    }, [selectedSavedListId, transitionId])
 
     const commitSelection = useCallback(
         (id: string, internal: InternalConfiguration) => {
@@ -152,11 +129,11 @@ export const useWorkingListSelection = ({
                     results: { status: 'pending' },
                 },
             }))
-            if (!controlledSelection || selectedSavedListId === id) {
+            if (selectedSavedListId === id) {
                 setTransitionId(undefined)
             }
         },
-        [controlledSelection, selectedSavedListId, updateStore]
+        [selectedSavedListId, updateStore]
     )
 
     useEffect(() => {

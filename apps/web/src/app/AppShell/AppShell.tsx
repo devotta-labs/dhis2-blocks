@@ -28,6 +28,9 @@ import i18n from '../../i18n'
 import { createAppWorkingListClient } from './createAppWorkingListClient'
 import { RecordDetailsModal } from './RecordDetailsModal'
 
+const contextStateClassName =
+    'mx-auto mt-4 flex min-h-[220px] w-full min-w-0 max-w-[1440px] flex-col items-center justify-center gap-3 px-6 text-center text-[#405261] [@media(max-width:900px)]:px-3 [&_h2]:text-[20px] [&_h2]:font-medium [&_h2]:text-[#17212b] [&_p]:m-0 [&_p]:max-w-[560px]'
+
 const OrganisationUnitReferenceSchema = z
     .object({
         id: z.string().min(1),
@@ -295,7 +298,10 @@ export const AppShell = () => {
             : undefined)
 
     return (
-        <div className="app-shell" data-testid="working-list-app">
+        <div
+            className="min-h-screen w-full min-w-0 max-w-full pb-10"
+            data-testid="working-list-app"
+        >
             <ContextSelectorBar
                 programs={programs}
                 selectedProgram={selectedProgramSummary}
@@ -339,7 +345,7 @@ export const AppShell = () => {
 
             {loading && (
                 <main
-                    className="context-state"
+                    className={contextStateClassName}
                     data-testid="app-context-loading"
                     aria-live="polite"
                 >
@@ -349,7 +355,10 @@ export const AppShell = () => {
             )}
 
             {!loading && shellError && (
-                <main className="context-state" data-testid="app-context-error">
+                <main
+                    className={contextStateClassName}
+                    data-testid="app-context-error"
+                >
                     <NoticeBox
                         error
                         title={i18n.t('Could not load app context')}
@@ -382,7 +391,7 @@ export const AppShell = () => {
 
             {!loading && !shellError && !selectedProgramSummary && (
                 <main
-                    className="context-state"
+                    className={contextStateClassName}
                     data-testid="program-empty-state"
                 >
                     <h2>{i18n.t('Choose a program to start')}</h2>
@@ -399,7 +408,7 @@ export const AppShell = () => {
                 selectedProgramSummary &&
                 !urlState.orgUnitId && (
                     <main
-                        className="context-state"
+                        className={contextStateClassName}
                         data-testid="org-unit-empty-state"
                     >
                         <h2>{i18n.t('Choose an organisation unit')}</h2>
@@ -424,7 +433,7 @@ export const AppShell = () => {
                 urlState.orgUnitId &&
                 !selectedOrgUnitIsAllowed && (
                     <main
-                        className="context-state"
+                        className={contextStateClassName}
                         data-testid="invalid-org-unit-context"
                     >
                         <NoticeBox
@@ -454,10 +463,10 @@ export const AppShell = () => {
                 urlState.orgUnitId &&
                 selectedOrgUnitIsAllowed && (
                     <main
-                        className="working-list-layout"
-                        data-testid="working-list-main"
+                        className="mx-auto mt-4 w-full min-w-0 max-w-[1440px] px-6 [@media(max-width:900px)]:px-3"
+                        data-testid="working-list-layout"
                     >
-                        <div className="working-list-demo-toolbar">
+                        <div className="flex justify-end pb-3">
                             <Switch
                                 dataTest="data-quality-mode-toggle"
                                 checked={dataQualityMode === 'highlighted'}
@@ -472,7 +481,9 @@ export const AppShell = () => {
                         <WorkingList.Provider
                             programId={selectedProgramSummary.id}
                             orgUnitId={urlState.orgUnitId}
-                            selectedSavedListId={urlState.selectedTemplateId}
+                            selectedSavedListId={
+                                urlState.selectedTemplateId ?? null
+                            }
                             pagination={{
                                 page: urlState.page ?? 1,
                                 pageSize: urlState.pageSize ?? 15,

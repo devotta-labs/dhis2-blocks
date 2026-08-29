@@ -10,7 +10,6 @@ import React, { useEffect, useState } from 'react'
 import { z } from 'zod'
 import type { WorkingListClient } from '../../api/client'
 import { useWorkingListText } from '../WorkingListText'
-import styles from './FilterControls.module.css'
 
 const UserReferenceSchema = z
     .object({
@@ -82,7 +81,7 @@ export const UserFilterSelect = ({
 
     return (
         <div
-            className={styles['reference-filter-editor']}
+            className="[&>*+*]:mt-[12px]"
             data-testid="assignee-user-selector"
             onChangeCapture={(event) => {
                 const target = event.target
@@ -186,7 +185,7 @@ export const OrganisationUnitFilterSelect = ({
 
     return (
         <div
-            className={`${styles['reference-filter-editor']} ${styles['organisation-unit-filter-tree']}`}
+            className="max-h-[min(52vh,520px)] overflow-auto rounded-[3px] bg-[#fff] p-[8px] [border:1px_solid_#d5dde5] [&>*+*]:mt-[12px]"
             data-testid="filter-organisation-unit-tree"
             aria-busy={rootsQuery.isPending || selectedQuery.isPending}
         >

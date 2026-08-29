@@ -13,7 +13,6 @@ import {
     focusFirstControl,
     useEscapeToClose,
 } from './FilterControlPrimitives'
-import styles from './FilterControls.module.css'
 
 interface ProgramStageControlProps {
     program: TrackerProgram
@@ -94,7 +93,7 @@ export const ProgramStageControl = ({
                     )
                 }
             }}
-            className={styles['filter-control']}
+            className="relative min-w-0 max-w-full [&_[data-test$=-select-clear]]:[margin-inline-start:4px] [&_[data-test=dhis2-uicore-select-input]>:last-child]:[margin-block-start:0]"
             data-testid="filter-programStage"
             onMouseDownCapture={(event) => {
                 if (disabled) {
@@ -188,11 +187,11 @@ export const ProgramStageControl = ({
                     reference={buttonElement}
                     onClickOutside={close}
                 >
-                    <div className={styles['filter-popover-sheet']}>
+                    <div className="box-border w-[min(400px,calc(100vw_-_16px))] min-w-0 max-w-[calc(100vw_-_16px)] [contain:layout]">
                         <form
                             ref={focusFirstControl}
                             id={editorId}
-                            className={styles['filter-editor']}
+                            className="box-border w-[min(380px,calc(100vw_-_32px))] min-w-0 max-w-[calc(100vw_-_32px)] p-[16px] [&>*+*]:mt-[12px] [&>*]:box-border [&>*]:min-w-0 [&>*]:max-w-full [&_[data-test]]:box-border [&_[data-test]]:min-w-0 [&_[data-test]]:max-w-full [&_[data-testid^=filter-value-]]:box-border [&_[data-testid^=filter-value-]]:min-w-0 [&_[data-testid^=filter-value-]]:max-w-full [&_:is(input,select,textarea)]:box-border [&_:is(input,select,textarea)]:min-w-0 [&_:is(input,select,textarea)]:max-w-full [&_h3]:[margin:0_0_12px]! [&_h3]:text-[#17212b] [&_h3]:[font-size:16px]! [&_h3]:[font-weight:500]!"
                             data-testid="filter-editor-programStage"
                             role="dialog"
                             aria-label={i18n.t('Program stage')}
@@ -221,7 +220,7 @@ export const ProgramStageControl = ({
                                     />
                                 ))}
                             </SingleSelectField>
-                            <div className={styles['filter-editor__actions']}>
+                            <div className="flex flex-wrap gap-[8px] pt-[12px] [border-top:1px_solid_#e8edf2]">
                                 <Button
                                     primary
                                     small

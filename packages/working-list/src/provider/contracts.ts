@@ -18,7 +18,9 @@ import type {
     CreateSavedListError,
     DeleteSavedListError,
     DownloadVisibleRowsError,
+    IncompatibleSavedListError,
     PaginationCommandError,
+    SavedListNotFoundError,
     SelectSavedListError,
     UpdateSelectedSavedListError,
     WorkingListInitializationError,
@@ -102,9 +104,7 @@ export type WorkingListSelectionMeta =
     | {
           status: 'error'
           requestedSavedListId: string
-          error:
-              | import('./errors').SavedListNotFoundError
-              | import('./errors').IncompatibleSavedListError
+          error: SavedListNotFoundError | IncompatibleSavedListError
       }
     | { status: 'ready'; selectedSavedListId: string }
 
@@ -201,7 +201,8 @@ export interface WorkingListProviderProps {
     children: React.ReactNode
     programId: string
     orgUnitId: string
-    selectedSavedListId?: string
+    /** Pass null to select the generated default list. */
+    selectedSavedListId: string | null
     onSelectedSavedListChange(id: string): void
     pagination: WorkingListPagination
     onPaginationChange(next: WorkingListPagination): void

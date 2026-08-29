@@ -79,11 +79,6 @@
                     "target": "@components/working-list/api/systemInfo.ts"
                 },
                 {
-                    "path": "packages/working-list/src/css-modules.d.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list/css-modules.d.ts"
-                },
-                {
                     "path": "packages/working-list/src/domain/canonicalValue.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/domain/canonicalValue.ts"
@@ -264,11 +259,6 @@
                     "target": "@components/working-list/ui/Actions/index.ts"
                 },
                 {
-                    "path": "packages/working-list/src/ui/ColumnSettingsDialog/ColumnSettingsDialog.module.css",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/ColumnSettingsDialog/ColumnSettingsDialog.module.css"
-                },
-                {
                     "path": "packages/working-list/src/ui/ColumnSettingsDialog/ColumnSettingsDialog.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/ColumnSettingsDialog/ColumnSettingsDialog.tsx"
@@ -287,11 +277,6 @@
                     "path": "packages/working-list/src/ui/Columns/index.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/Columns/index.ts"
-                },
-                {
-                    "path": "packages/working-list/src/ui/ConfigureMenu/ConfigureMenu.module.css",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/ConfigureMenu/ConfigureMenu.module.css"
                 },
                 {
                     "path": "packages/working-list/src/ui/ConfigureMenu/ConfigureMenu.tsx",
@@ -337,11 +322,6 @@
                     "path": "packages/working-list/src/ui/FilterControls/FilterControlPrimitives.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/FilterControls/FilterControlPrimitives.tsx"
-                },
-                {
-                    "path": "packages/working-list/src/ui/FilterControls/FilterControls.module.css",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/FilterControls/FilterControls.module.css"
                 },
                 {
                     "path": "packages/working-list/src/ui/FilterControls/FilterControls.tsx",
@@ -399,11 +379,6 @@
                     "target": "@components/working-list/ui/Results/index.ts"
                 },
                 {
-                    "path": "packages/working-list/src/ui/SavedListBar/SavedListBar.module.css",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/SavedListBar/SavedListBar.module.css"
-                },
-                {
                     "path": "packages/working-list/src/ui/SavedListBar/SavedListBar.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/SavedListBar/SavedListBar.tsx"
@@ -422,11 +397,6 @@
                     "path": "packages/working-list/src/ui/SavedViews/index.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/SavedViews/index.ts"
-                },
-                {
-                    "path": "packages/working-list/src/ui/Section/WorkingListSection.module.css",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/Section/WorkingListSection.module.css"
                 },
                 {
                     "path": "packages/working-list/src/ui/Section/WorkingListSection.tsx",
@@ -449,19 +419,9 @@
                     "target": "@components/working-list/ui/Toolbar/index.ts"
                 },
                 {
-                    "path": "packages/working-list/src/ui/WorkingList/WorkingList.module.css",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/WorkingList/WorkingList.module.css"
-                },
-                {
                     "path": "packages/working-list/src/ui/WorkingList/WorkingList.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/WorkingList/WorkingList.tsx"
-                },
-                {
-                    "path": "packages/working-list/src/ui/WorkingList/dialogs/WorkingListRepairDialog/WorkingListRepairDialog.module.css",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/WorkingList/dialogs/WorkingListRepairDialog/WorkingListRepairDialog.module.css"
                 },
                 {
                     "path": "packages/working-list/src/ui/WorkingList/dialogs/WorkingListRepairDialog/WorkingListRepairDialog.tsx",
@@ -494,11 +454,6 @@
                     "target": "@components/working-list/ui/WorkingList/index.ts"
                 },
                 {
-                    "path": "packages/working-list/src/ui/WorkingListTable/WorkingListTable.module.css",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/WorkingListTable/WorkingListTable.module.css"
-                },
-                {
                     "path": "packages/working-list/src/ui/WorkingListTable/WorkingListTable.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/WorkingListTable/WorkingListTable.tsx"
@@ -527,16 +482,6 @@
                     "path": "packages/working-list/src/ui/index.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/index.ts"
-                },
-                {
-                    "path": "packages/working-list/src/ui/styles/accessibility.module.css",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/styles/accessibility.module.css"
-                },
-                {
-                    "path": "packages/working-list/src/ui/styles/layout.module.css",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/styles/layout.module.css"
                 },
                 {
                     "path": "packages/working-list/src/ui/types.ts",

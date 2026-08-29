@@ -62,7 +62,7 @@ describe('WorkingListProvider controlled selection', () => {
             return null
         }
         const render = (
-            selectedSavedListId: string,
+            selectedSavedListId: string | null,
             onSelectedSavedListChange: (id: string) => void
         ) => (
             <QueryClientProvider client={queryClient}>
@@ -105,6 +105,57 @@ describe('WorkingListProvider controlled selection', () => {
         expect(observedSelections.at(-1)).toEqual({
             status: 'pending',
             requestedSavedListId: 'SavedList03',
+        })
+
+        act(() => root.unmount())
+        queryClient.clear()
+    })
+
+    it.each([
+        ['null', null],
+        ['an empty string', ''],
+    ])('uses the generated default for %s', (_label, selectedSavedListId) => {
+        const container = document.createElement('div')
+        const root = createRoot(container)
+        const queryClient = new QueryClient({
+            defaultOptions: { queries: { retry: false } },
+        })
+        const selectionChange = jest.fn()
+        const paginationChange = jest.fn()
+        const observedSelections: WorkingListSelectionMeta[] = []
+
+        const Probe = () => {
+            observedSelections.push(
+                useWorkingListMeta((meta) => meta.selection)
+            )
+            return null
+        }
+
+        act(() =>
+            root.render(
+                <QueryClientProvider client={queryClient}>
+                    <WorkingListProvider
+                        programId="Program0001"
+                        orgUnitId="OrgUnit00001"
+                        selectedSavedListId={selectedSavedListId}
+                        onSelectedSavedListChange={selectionChange}
+                        pagination={{ page: 3, pageSize: 15 }}
+                        onPaginationChange={paginationChange}
+                    >
+                        <Probe />
+                    </WorkingListProvider>
+                </QueryClientProvider>
+            )
+        )
+
+        expect(observedSelections.at(-1)).toEqual({
+            status: 'pending',
+            requestedSavedListId: 'Program0001-default',
+        })
+        expect(selectionChange).not.toHaveBeenCalled()
+        expect(paginationChange).toHaveBeenCalledWith({
+            page: 1,
+            pageSize: 15,
         })
 
         act(() => root.unmount())

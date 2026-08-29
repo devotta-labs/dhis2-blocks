@@ -21,7 +21,6 @@ import {
     ProgramStageControl,
 } from '../FilterControls'
 import { useWorkingListText } from '../WorkingListText'
-import styles from '../WorkingList/WorkingList.module.css'
 
 export const visibleFiltersForConfiguration = (
     configuration: WorkingListConfiguration,
@@ -217,7 +216,7 @@ const FiltersControl = () => {
                     setAutoOpenFilterId(fieldId)
                 }}
             />
-            <div className={styles['tracker-filter-controls']}>
+            <div className="contents">
                 {trackerChipIds.map((fieldId) => {
                     const field = metadata.fields.get(fieldId)
                     if (!field?.filterable) {
@@ -247,10 +246,7 @@ const FiltersControl = () => {
                 })}
             </div>
             {configuration.mode === 'event' && (
-                <div
-                    className={styles['stage-filter-controls']}
-                    data-testid="stage-filter-section"
-                >
+                <div className="contents" data-testid="stage-filter-section">
                     <ProgramStageControl
                         program={program}
                         selectedStageId={configuration.programStageId}
@@ -300,7 +296,7 @@ export const WorkingListFilters = () => {
 
     return (
         <div
-            className={styles['working-list-filters']}
+            className="flex min-w-0 flex-[1_1_0%] flex-wrap items-center gap-1"
             data-testid="working-list-filters"
         >
             {ready ? (

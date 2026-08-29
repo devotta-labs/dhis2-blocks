@@ -4,7 +4,7 @@ import {
     OrganisationUnitSchema,
     PROGRAM,
     PROGRAM_NAME,
-    Request,
+    type Request,
     TEXT_ATTRIBUTE,
     addFilter,
     chooseDhis2Option,
@@ -176,7 +176,7 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(resultRows(page)).toHaveCount(6)
     })
 
-    test('opens the unfiltered default view with its concatenated id when no list is requested', async ({
+    test('keeps the unfiltered generated default across reloads when no list is requested', async ({
         page,
     }) => {
         const statusParameter =
@@ -192,11 +192,10 @@ test.describe('Capture context and generated tracker views', () => {
             (url) => !url.searchParams.has(statusParameter)
         )
         expect(initialQuery.searchParams.has('filter')).toBe(false)
-        // Capture parity: the default view's id is written to the URL so a
-        // reload does not fall back to the first saved list.
-        await expect(page).toHaveURL(
-            new RegExp(`selectedTemplateId=${PROGRAM}-default`)
-        )
+        // An absent URL selection is controlled null. The provider resolves
+        // it to the generated default without echoing an external selection
+        // through the persistence callback.
+        await expect(page).not.toHaveURL(/selectedTemplateId=/)
         await expect(
             page.locator(
                 '[data-testid^="working-list-view-"] button[aria-current="true"]'
@@ -205,6 +204,25 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(
             page.locator('[data-testid="working-list-table"] tbody')
         ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
+
+        // Reloading the controlled null state must keep the unfiltered default
+        // instead of falling back to the first visible saved list.
+        const reloadedQuery = await waitForTrackerResponse(
+            page,
+            'trackedEntities',
+            () => page.reload(),
+            (url) => !url.searchParams.has(statusParameter)
+        )
+        expect(reloadedQuery.searchParams.has('filter')).toBe(false)
+        await expect(page).not.toHaveURL(/selectedTemplateId=/)
+        await expect(
+            page.locator(
+                '[data-testid^="working-list-view-"] button[aria-current="true"]'
+            )
+        ).toHaveCount(0)
+        await expect(page.getByTestId('working-list-table')).toBeVisible({
+            timeout: 30_000,
+        })
     })
 
     test('preserves an unavailable URL selection until the user explicitly chooses the default', async ({

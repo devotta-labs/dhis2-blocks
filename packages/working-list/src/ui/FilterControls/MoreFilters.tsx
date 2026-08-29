@@ -9,7 +9,6 @@ import {
     focusFirstAvailableFilter,
     useEscapeToClose,
 } from './FilterControlPrimitives'
-import styles from './FilterControls.module.css'
 import { fieldDisplayName } from './filterValueSupport'
 
 interface MoreFiltersProps {
@@ -80,7 +79,7 @@ export const MoreFilters = ({
     }
 
     return (
-        <div ref={setButtonElement} className={styles['more-filters-menu']}>
+        <div ref={setButtonElement} className="relative min-w-0 max-w-full">
             <Button
                 secondary
                 small
@@ -108,7 +107,7 @@ export const MoreFilters = ({
                 >
                     <div
                         ref={focusFirstAvailableFilter}
-                        className={styles['menu-popover-sheet']}
+                        className="min-w-[128px] overflow-y-auto [padding:4px_0] [overscroll-behavior:contain]"
                         style={{
                             maxHeight: `max(160px, calc(100vh - ${
                                 Math.ceil(
@@ -173,11 +172,7 @@ export const MoreFilters = ({
                                                                     element
                                                             }
                                                         }}
-                                                        className={
-                                                            styles[
-                                                                'stage-lock-tooltip-target'
-                                                            ]
-                                                        }
+                                                        className="w-full"
                                                         tabIndex={0}
                                                         aria-label={`${stage.displayName}. ${lockMessage}`}
                                                         {...tooltipProps}

@@ -23,7 +23,7 @@ export const RecordDetailsModal = ({
                 : i18n.t('Tracked entity selected')}
         </ModalTitle>
         <ModalContent>
-            <dl className="record-details">
+            <dl className="m-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-2 [&_dd]:m-0 [&_dd]:[overflow-wrap:anywhere] [&_dt]:font-medium [&_dt]:text-[#5f6b7a]">
                 {record.mode === 'event' && (
                     <>
                         <dt>{i18n.t('Event ID')}</dt>

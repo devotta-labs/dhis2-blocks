@@ -1,4 +1,10 @@
-/** Public entry point for the installed Working List source block. */
+/**
+ * Public entry point for the installed Working List source block.
+ *
+ * Aggregate contracts are named here; nested state and meta slices can be
+ * derived from `WorkingListState` and `WorkingListMeta` when consumers need a
+ * reusable local alias.
+ */
 export {
     WorkingList,
     type WorkingListContainerProps,
@@ -18,32 +24,15 @@ export { WORKING_LIST_PAGE_SIZES } from './provider/contracts'
 export type {
     AppliedFilter,
     WorkingListActions,
-    WorkingListActiveConfigurationMeta,
     WorkingListConfiguration,
     WorkingListDisplayRow,
-    WorkingListLifecycleMeta,
     WorkingListMeta,
-    WorkingListMutationMeta,
-    WorkingListMutationStatus,
     WorkingListPageSize,
     WorkingListPagination,
-    WorkingListPaginationMeta,
     WorkingListProviderProps,
-    WorkingListResultsMeta,
     WorkingListResultTarget,
-    WorkingListSavedView,
-    WorkingListSavedViewsMeta,
-    WorkingListSelectionMeta,
     WorkingListState,
 } from './provider/contracts'
-export type WorkingListSelectionProps = Pick<
-    import('./provider/contracts').WorkingListProviderProps,
-    'selectedSavedListId' | 'onSelectedSavedListChange'
->
-export type WorkingListPaginationProps = Pick<
-    import('./provider/contracts').WorkingListProviderProps,
-    'pagination' | 'onPaginationChange'
->
 
 export {
     DownloadVisibleRowsError,

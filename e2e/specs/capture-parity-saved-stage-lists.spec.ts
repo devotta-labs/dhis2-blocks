@@ -5,7 +5,7 @@ import {
     PRIVATE_LIST,
     PROGRAM,
     RepairedListSchema,
-    Request,
+    type Request,
     STAGE,
     STALE_LIST,
     SavedStageListSchema,
@@ -27,6 +27,8 @@ import {
 } from './capture-parity.support'
 
 test.describe('owner pagination and saved-list lifecycle', () => {
+    test.use({ e2eCredentials: OWNER })
+
     test('saves and deletes a programme-stage view in its dedicated metadata resource', async ({
         page,
         playwright,
@@ -162,12 +164,13 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 '[data-test="repair-working-list-dialog"]'
             )
             await expect(repairDialog).toBeVisible()
-            await expect(
-                page.getByTestId('repair-working-list-preview')
-            ).toContainText('WlMissing01')
-            await expect(
-                page.getByTestId('repair-working-list-preview')
-            ).toContainText('Remove')
+            const missingColumnRepair = page
+                .getByTestId('repair-working-list-preview')
+                .getByRole('row')
+                .filter({ hasText: 'WlMissing01' })
+            await expect(missingColumnRepair).toContainText(
+                'Replace with default'
+            )
 
             const savedRepair = page.waitForResponse(
                 (response) =>

@@ -1,0 +1,34 @@
+{
+    "$schema": "https://unpkg.com/knip@6/schema.json",
+    "workspaces": {
+        ".": {
+            "entry": [
+                "e2e/specs/**/*.spec.ts",
+                "tools/oxlint/anti-slop/effect/index.ts"
+            ],
+            "project": ["e2e/**/*.ts", "tools/oxlint/**/*.ts"]
+        },
+        "apps/web": {
+            "entry": ["src/AppWrapper.tsx"],
+            "project": ["src/**/*.{css,ts,tsx}"]
+        },
+        "packages/working-list": {
+            "includeEntryExports": true,
+            "ignoreIssues": {
+                "src/index.ts": [
+                    "exports",
+                    "nsExports",
+                    "types",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ]
+            },
+            "project": [
+                "src/**/*.{ts,tsx}",
+                "test/**/*.ts",
+                "type-tests/**/*.ts"
+            ]
+        }
+    }
+}

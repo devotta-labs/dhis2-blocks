@@ -6,6 +6,7 @@ import {
     canCommitMutationBaseline,
     isCurrentSelection,
     resolvePublicConfiguration,
+    resolveSelectedSavedListId,
     shouldBeginControlledSelection,
     toPublicConfiguration,
 } from './configuration'
@@ -142,6 +143,21 @@ describe('provider selection and mutation completion guards', () => {
         expect(
             shouldBeginControlledSelection('SavedList01', 'SavedList01')
         ).toBe(false)
+    })
+
+    it('resolves null and blank selections to the generated default ID', () => {
+        expect(resolveSelectedSavedListId(null, 'Program0001-default')).toBe(
+            'Program0001-default'
+        )
+        expect(resolveSelectedSavedListId('', 'Program0001-default')).toBe(
+            'Program0001-default'
+        )
+        expect(resolveSelectedSavedListId('   ', 'Program0001-default')).toBe(
+            'Program0001-default'
+        )
+        expect(resolveSelectedSavedListId('SavedList01', 'ignored')).toBe(
+            'SavedList01'
+        )
     })
 
     it('does not commit an update baseline after selection or configuration changed', () => {

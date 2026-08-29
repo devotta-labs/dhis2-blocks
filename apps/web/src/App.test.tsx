@@ -40,6 +40,16 @@ describe('URL state privacy boundary', () => {
         )
     })
 
+    it('omits an absent selected view', () => {
+        expect(
+            serializeAppUrlState({
+                programId: 'IpHINAT79UW',
+                page: 1,
+                pageSize: 15,
+            })
+        ).toBe('programId=IpHINAT79UW&page=1&pageSize=15')
+    })
+
     it('ignores filter values and unknown keys from a tampered URL', () => {
         const parsed = parseAppUrlState(
             new URLSearchParams(

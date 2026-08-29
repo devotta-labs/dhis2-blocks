@@ -1,5 +1,4 @@
 import React, { useId, type ReactNode } from 'react'
-import styles from './WorkingListSection.module.css'
 
 interface WorkingListSectionBaseProps {
     children: ReactNode
@@ -27,7 +26,10 @@ export const WorkingListSection = (props: WorkingListSectionProps) => {
                 aria-labelledby={headingId}
                 data-testid="working-list-section"
             >
-                <h2 id={headingId} className={styles.heading}>
+                <h2
+                    id={headingId}
+                    className="m-0 p-2 text-xs font-normal leading-4 text-[var(--colors-grey700)]"
+                >
                     {props.title}
                 </h2>
                 {props.children}

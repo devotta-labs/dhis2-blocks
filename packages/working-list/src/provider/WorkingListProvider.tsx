@@ -19,8 +19,9 @@ import { workingListQueryKeys } from '../query/keys'
 import { WorkingListTextProvider } from '../ui/WorkingListText'
 import {
     publicConfigurationFingerprint,
+    resolveSelectedSavedListId,
     resolvePublicConfiguration,
-    toPublicConfiguration,
+    type toPublicConfiguration,
 } from './configuration'
 import type {
     WorkingListMeta,
@@ -143,6 +144,10 @@ const WorkingListProviderInstance = ({
         defaultListId,
         lifecycleReady,
     } = useWorkingListLifecycle({ client, programId, updateStore })
+    const effectiveSelectedSavedListId = resolveSelectedSavedListId(
+        selectedSavedListId,
+        defaultListId
+    )
 
     const savedListsQuery = useQuery({
         queryKey: workingListQueryKeys.savedLists(programId),
@@ -247,7 +252,7 @@ const WorkingListProviderInstance = ({
         hardTransition,
         commitSelection,
     } = useWorkingListSelection({
-        selectedSavedListId,
+        selectedSavedListId: effectiveSelectedSavedListId,
         onSelectedSavedListChange,
         defaultList,
         confirmedLists,

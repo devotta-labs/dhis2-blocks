@@ -45,11 +45,11 @@ export const OrganisationUnitPicker = ({
         <Modal large position="top" onClose={onClose}>
             <ModalTitle>{i18n.t('Choose an organisation unit')}</ModalTitle>
             <ModalContent>
-                <p className="modal-introduction">
+                <p className="m-0 text-[#5f6b7a]">
                     {i18n.t('Select one organisation unit for this list.')}
                 </p>
                 <div
-                    className="organisation-unit-tree"
+                    className="max-h-[min(52vh,520px)] overflow-auto rounded-[3px] border border-[#d5dde5] bg-white p-2"
                     data-test="org-unit-tree"
                     data-testid="org-unit-tree"
                 >

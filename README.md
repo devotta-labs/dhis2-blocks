@@ -51,7 +51,9 @@ Installation copies its production source and required dependencies into the
 consumer repository, where the block can be edited in place. The installed
 source entry point provides the documented compound component and hooks.
 
-Install it from the GitHub registry in a project configured for the shadcn CLI:
+Install it from the GitHub registry in a project with Tailwind CSS enabled and
+a valid shadcn `components.json` configuration. The installer uses the
+configured `aliases.components` directory as its target:
 
 ```sh
 pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list
@@ -68,6 +70,10 @@ import {
 } from '@/components/working-list'
 ```
 
+The installed components own their styling through Tailwind utility classes;
+the block does not require a separate stylesheet import. Adjust the import path
+above if the project's components alias differs from `@/components`.
+
 Render `WorkingList.Provider` beneath the DHIS2 app-runtime provider and a
 TanStack `QueryClientProvider`. Compose the standard UI with
 `WorkingList.Default`, or arrange the individual compound components:
@@ -77,6 +83,12 @@ TanStack `QueryClientProvider`. Compose the standard UI with
     <WorkingList.Default onClick={handleResultClick} />
 </WorkingList.Provider>
 ```
+
+`selectedSavedListId` is required and accepts a saved-list ID or `null`. Pass
+`null` to start from the generated default list. As a defensive runtime
+fallback, an empty or whitespace-only string also selects the generated
+default instead of leaving selection loading indefinitely; callers should use
+`null` to express that intent.
 
 The base components use `WorkingList.Section` for their semantic regions. Give
 each section either a visible `title` or an `ariaLabel`, but never both:
@@ -116,6 +128,11 @@ pnpm build
 
 Turborepo runs each task in the workspaces that provide it and caches declared
 build outputs.
+
+Run `pnpm audit:exports` to inspect statically unused internal exports. This is
+currently a review audit rather than a required quality gate; see
+[Unused export analysis](docs/unused-exports.md) for its public API exemption,
+limitations, and adoption plan.
 
 ## Real-DHIS2 browser tests
 

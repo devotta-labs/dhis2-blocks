@@ -6,7 +6,6 @@ import {
 } from '@dhis2/ui'
 import React, { useState } from 'react'
 import i18n from '../../i18n'
-import accessibilityStyles from '../../styles/accessibility.module.css'
 
 interface ProgramOption {
     id: string
@@ -41,13 +40,13 @@ export const ContextSelectorBar = ({
     return (
         <>
             <nav
-                className="context-selector-bar"
+                className="w-full min-w-0 max-w-full"
                 data-testid="context-selector-bar"
                 aria-label={i18n.t('Working list context')}
             >
                 <SelectorBar
                     ariaLabel={i18n.t('Working list context')}
-                    className="context-selector-bar__toolbar"
+                    className="w-full min-w-0 max-w-full"
                     disableClearSelections={!selectedProgram}
                     onClearSelectionClick={() => {
                         setProgramSelectorOpen(false)
@@ -55,7 +54,7 @@ export const ContextSelectorBar = ({
                     }}
                 >
                     <SelectorBarItem
-                        className="context-selector-item context-selector-item--program"
+                        className="w-[min(360px,100%)] min-w-0 max-w-[min(420px,100%)] [@media(max-width:560px)]:w-full [@media(max-width:560px)]:max-w-full [&_.clear-icon]:flex-none [&_.label]:flex-none [&_.toggle-icon]:flex-none [&_.value]:min-w-0 [&_.value]:overflow-hidden [&_.value]:text-ellipsis [&_.value]:whitespace-nowrap"
                         dataTest="program-selector"
                         disabled={programsLoading}
                         label={i18n.t('Program')}
@@ -68,7 +67,7 @@ export const ContextSelectorBar = ({
                             onProgramChange('')
                         }}
                     >
-                        <div className="context-selector-program-popover">
+                        <div className="w-[min(360px,calc(100vw-32px))] min-w-0 max-w-full p-3 [&>*]:min-w-0 [&>*]:max-w-full">
                             <SingleSelectField
                                 dense
                                 dataTest="program-selector-input"
@@ -98,7 +97,7 @@ export const ContextSelectorBar = ({
                     </SelectorBarItem>
 
                     <SelectorBarItem
-                        className="context-selector-item context-selector-item--org-unit"
+                        className="w-[min(420px,100%)] min-w-0 max-w-[min(420px,100%)] [@media(max-width:560px)]:w-full [@media(max-width:560px)]:max-w-full [&_.clear-icon]:flex-none [&_.label]:flex-none [&_.toggle-icon]:flex-none [&_.value]:min-w-0 [&_.value]:overflow-hidden [&_.value]:text-ellipsis [&_.value]:whitespace-nowrap"
                         dataTest="org-unit-selector"
                         disabled={orgUnitDisabled}
                         label={i18n.t('Organisation unit')}
@@ -117,7 +116,7 @@ export const ContextSelectorBar = ({
                 </SelectorBar>
             </nav>
             <h1
-                className={accessibilityStyles['visually-hidden']}
+                className="absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!"
                 data-testid="working-list-heading"
             >
                 {i18n.t('Working lists')}

@@ -1,13 +1,21 @@
-import { Pagination } from '@dhis2/ui'
+import {
+    DataTable,
+    DataTableBody,
+    DataTableCell,
+    DataTableHead,
+    DataTableRow,
+    Pagination,
+} from '@dhis2/ui'
 import React from 'react'
 import {
     WORKING_LIST_PAGE_SIZES,
     type WorkingListDisplayRow,
     type WorkingListPageSize,
 } from '../../provider/contracts'
-import accessibilityStyles from '../styles/accessibility.module.css'
 import { useWorkingListText } from '../WorkingListText'
-import styles from './WorkingListTable.module.css'
+
+const visuallyHiddenClassName =
+    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
 export interface WorkingListTableHeaderView {
     id: string
@@ -89,175 +97,188 @@ export const WorkingListTableView = ({
 
     return (
         <div
-            className={styles['working-list-results']}
+            className="w-full min-w-0 max-w-full"
             data-testid="working-list-results"
         >
             <div
-                className={styles['working-list-table-scroll']}
+                className="w-full min-w-0 max-w-full overflow-x-auto [contain:layout] [overscroll-behavior-inline:contain]"
                 data-testid="working-list-table-scroll"
             >
-                <table
-                    className={styles['working-list-table']}
-                    data-testid="working-list-table"
-                >
-                    <thead>
-                        {model.headerGroups.map((group) => (
-                            <tr key={group.id}>
-                                {group.headers.map((header) => {
-                                    if (header.isDataQuality) {
-                                        return (
-                                            <th
-                                                key={header.id}
-                                                scope="col"
-                                                className={
-                                                    styles[
-                                                        'working-list-issues-cell'
-                                                    ]
-                                                }
-                                            >
-                                                {header.content}
-                                            </th>
-                                        )
-                                    }
-                                    return (
-                                        <th
-                                            key={header.id}
-                                            scope="col"
-                                            aria-sort={
-                                                header.sorted === 'asc'
-                                                    ? 'ascending'
-                                                    : header.sorted === 'desc'
-                                                      ? 'descending'
-                                                      : 'none'
-                                            }
-                                        >
-                                            <button
-                                                type="button"
-                                                className={
-                                                    styles['sort-button']
-                                                }
-                                                data-testid={`sort-${header.fieldId}`}
-                                                disabled={
-                                                    !header.canSort ||
-                                                    configurationDisabled
-                                                }
-                                                onClick={header.onToggleSorting}
-                                            >
-                                                {header.content}
-                                                <span
-                                                    aria-hidden="true"
-                                                    className={
-                                                        styles['sort-indicator']
-                                                    }
+                <div className="min-w-[680px]" data-testid="working-list-table">
+                    <DataTable dataTest="working-list-data-table">
+                        <DataTableHead>
+                            {model.headerGroups.map((group) => (
+                                <DataTableRow key={group.id}>
+                                    {group.headers.map((header) => {
+                                        if (header.isDataQuality) {
+                                            return (
+                                                <DataTableCell
+                                                    key={header.id}
+                                                    tag="th"
+                                                    scope="col"
+                                                    align="center"
+                                                    className="w-px min-w-0 whitespace-nowrap"
                                                 >
-                                                    {header.sorted === 'asc'
-                                                        ? '↑'
+                                                    {header.content}
+                                                </DataTableCell>
+                                            )
+                                        }
+                                        return (
+                                            <DataTableCell
+                                                key={header.id}
+                                                tag="th"
+                                                scope="col"
+                                                className="whitespace-nowrap"
+                                                aria-sort={
+                                                    header.sorted === 'asc'
+                                                        ? 'ascending'
                                                         : header.sorted ===
                                                             'desc'
-                                                          ? '↓'
-                                                          : '↕'}
-                                                </span>
-                                            </button>
-                                        </th>
-                                    )
-                                })}
-                            </tr>
-                        ))}
-                    </thead>
-                    <tbody aria-busy={isInitialLoading || isUpdating}>
-                        {!isInitialLoading && model.rows.length === 0 && (
-                            <tr>
-                                <td
-                                    colSpan={
-                                        Math.max(visibleColumnCount, 1) +
-                                        (showIssuesColumn ? 1 : 0)
-                                    }
-                                    className={styles['empty-results']}
-                                >
-                                    <strong>
-                                        {i18n.t('No items to display')}
-                                    </strong>
-                                    <span>
-                                        {i18n.t(
-                                            'Try adjusting the filters or organisation unit.'
-                                        )}
-                                    </span>
-                                </td>
-                            </tr>
-                        )}
-                        {model.rows.map((row) => {
-                            const highlightIssues =
-                                showIssuesColumn &&
-                                row.original.issues.length > 0
-                            return (
-                                <tr
-                                    key={row.id}
-                                    className={`${styles['working-list-row']}${
-                                        highlightIssues
-                                            ? ` ${styles['working-list-row--invalid']}`
-                                            : ''
-                                    }`}
-                                    data-testid={`working-list-row-${row.id}`}
-                                    data-invalid={
-                                        highlightIssues ? 'true' : undefined
-                                    }
-                                    onClick={(event) => {
-                                        if (
-                                            !isInteractiveTarget(event.target)
-                                        ) {
-                                            openRow(row.original)
-                                        }
-                                    }}
-                                >
-                                    {row.cells.map((cell, index) => (
-                                        <td
-                                            key={cell.id}
-                                            className={
-                                                cell.isDataQuality
-                                                    ? styles[
-                                                          'working-list-issues-cell'
-                                                      ]
-                                                    : undefined
-                                            }
-                                            data-testid={
-                                                cell.isDataQuality
-                                                    ? `working-list-issues-cell-${row.id}`
-                                                    : undefined
-                                            }
-                                        >
-                                            {index === 0 && (
+                                                          ? 'descending'
+                                                          : 'none'
+                                                }
+                                            >
                                                 <button
                                                     type="button"
-                                                    className={
-                                                        accessibilityStyles[
-                                                            'visually-hidden'
-                                                        ]
+                                                    className="flex w-full cursor-pointer items-center justify-between gap-2.5 border-0 bg-transparent text-left text-[inherit] [font-weight:inherit] disabled:cursor-default focus-visible:[outline:3px_solid_rgb(20_124_215_/_35%)] focus-visible:outline-offset-2"
+                                                    data-testid={`sort-${header.fieldId}`}
+                                                    disabled={
+                                                        !header.canSort ||
+                                                        configurationDisabled
                                                     }
-                                                    data-testid={`row-open-${row.id}`}
-                                                    onClick={() =>
-                                                        openRow(row.original)
+                                                    onClick={
+                                                        header.onToggleSorting
                                                     }
                                                 >
-                                                    {i18n.t(
-                                                        'Open row {{number}}',
-                                                        {
-                                                            number:
-                                                                row.displayIndex +
-                                                                1,
-                                                        }
-                                                    )}
+                                                    {header.content}
+                                                    <span
+                                                        aria-hidden="true"
+                                                        className="text-[var(--colors-grey600)]"
+                                                    >
+                                                        {header.sorted === 'asc'
+                                                            ? '↑'
+                                                            : header.sorted ===
+                                                                'desc'
+                                                              ? '↓'
+                                                              : '↕'}
+                                                    </span>
                                                 </button>
+                                            </DataTableCell>
+                                        )
+                                    })}
+                                </DataTableRow>
+                            ))}
+                        </DataTableHead>
+                        <DataTableBody
+                            aria-busy={isInitialLoading || isUpdating}
+                            loading={isInitialLoading}
+                        >
+                            {!isInitialLoading && model.rows.length === 0 && (
+                                <DataTableRow>
+                                    <DataTableCell
+                                        colSpan={String(
+                                            Math.max(visibleColumnCount, 1) +
+                                                (showIssuesColumn ? 1 : 0)
+                                        )}
+                                        align="center"
+                                        className="min-w-[140px] py-10!"
+                                    >
+                                        <strong className="mb-1 block font-medium">
+                                            {i18n.t('No items to display')}
+                                        </strong>
+                                        <span className="block">
+                                            {i18n.t(
+                                                'Try adjusting the filters or organisation unit.'
                                             )}
-                                            {cell.content}
-                                        </td>
-                                    ))}
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
+                                        </span>
+                                    </DataTableCell>
+                                </DataTableRow>
+                            )}
+                            {model.rows.map((row) => {
+                                const highlightIssues =
+                                    showIssuesColumn &&
+                                    row.original.issues.length > 0
+                                const openRowFromCell = (
+                                    event: React.MouseEvent<HTMLTableCellElement>
+                                ) => {
+                                    if (!isInteractiveTarget(event.target)) {
+                                        openRow(row.original)
+                                    }
+                                }
+                                return (
+                                    <DataTableRow
+                                        key={row.id}
+                                        className="cursor-pointer"
+                                        dataTest={`working-list-row-${row.id}`}
+                                        data-testid={`working-list-row-${row.id}`}
+                                        data-invalid={
+                                            highlightIssues ? 'true' : undefined
+                                        }
+                                    >
+                                        {row.cells.map((cell, index) => (
+                                            <DataTableCell
+                                                key={cell.id}
+                                                align={
+                                                    cell.isDataQuality
+                                                        ? 'center'
+                                                        : 'left'
+                                                }
+                                                backgroundColor={
+                                                    highlightIssues
+                                                        ? 'var(--colors-red050)'
+                                                        : undefined
+                                                }
+                                                className={
+                                                    cell.isDataQuality
+                                                        ? 'w-px min-w-0 whitespace-nowrap'
+                                                        : 'min-w-[140px]'
+                                                }
+                                                dataTest={
+                                                    cell.isDataQuality
+                                                        ? `working-list-issues-cell-${row.id}`
+                                                        : undefined
+                                                }
+                                                data-testid={
+                                                    cell.isDataQuality
+                                                        ? `working-list-issues-cell-${row.id}`
+                                                        : undefined
+                                                }
+                                                onClick={openRowFromCell}
+                                            >
+                                                {index === 0 && (
+                                                    <button
+                                                        type="button"
+                                                        className={
+                                                            visuallyHiddenClassName
+                                                        }
+                                                        data-testid={`row-open-${row.id}`}
+                                                        onClick={() =>
+                                                            openRow(
+                                                                row.original
+                                                            )
+                                                        }
+                                                    >
+                                                        {i18n.t(
+                                                            'Open row {{number}}',
+                                                            {
+                                                                number:
+                                                                    row.displayIndex +
+                                                                    1,
+                                                            }
+                                                        )}
+                                                    </button>
+                                                )}
+                                                {cell.content}
+                                            </DataTableCell>
+                                        ))}
+                                    </DataTableRow>
+                                )
+                            })}
+                        </DataTableBody>
+                    </DataTable>
+                </div>
             </div>
-            <div className={styles['working-list-pagination']}>
+            <div className="flex min-h-14 w-full min-w-0 max-w-full items-center justify-end px-3 py-2 [&_[data-test='dhis2-uicore-select-input']_>_:last-child]:[margin-block-start:0]">
                 <Pagination
                     dataTest="working-list-pagination"
                     page={page}

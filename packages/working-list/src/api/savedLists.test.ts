@@ -11,6 +11,7 @@ import type { WorkingListClient } from './client'
 import type { ProgramFieldCatalog } from './metadata'
 import {
     buildSavedListPayload,
+    getSharingType,
     normalizeSavedWorkingListResource,
     repairSavedWorkingList,
     replaceSavedWorkingList,
@@ -63,6 +64,17 @@ const configuration: WorkingListConfiguration = {
         },
     ],
 }
+
+describe('saved-list sharing types', () => {
+    it('uses DHIS2 server resource names for both working-list resources', () => {
+        expect(getSharingType('trackedEntityInstanceFilters')).toBe(
+            'trackedEntityInstanceFilter'
+        )
+        expect(getSharingType('programStageWorkingLists')).toBe(
+            'programStageWorkingList'
+        )
+    })
+})
 
 const savedResource = {
     id: 'SavedList01',

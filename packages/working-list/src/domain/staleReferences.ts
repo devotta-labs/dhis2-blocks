@@ -121,6 +121,13 @@ export const validateConfigurationReferences = (
                 path: `columns.${index}`,
                 message: `Column ${columnId} no longer exists`,
             })
+        } else if (field.columnable === false) {
+            issues.push({
+                kind: 'missingColumn',
+                referenceId: columnId,
+                path: `columns.${index}`,
+                message: `Column ${columnId} is unavailable in this program stage`,
+            })
         } else if (
             configuration.mode === 'event' &&
             field.source === 'eventDataElement' &&
@@ -141,6 +148,13 @@ export const validateConfigurationReferences = (
             referenceId: configuration.sort.fieldId,
             path: 'sort.fieldId',
             message: `Sort field ${configuration.sort.fieldId} no longer exists`,
+        })
+    } else if (sortField.columnable === false) {
+        issues.push({
+            kind: 'missingSortField',
+            referenceId: sortField.id,
+            path: 'sort.fieldId',
+            message: `Sort field ${sortField.id} is unavailable in this program stage`,
         })
     } else if (
         configuration.mode === 'event' &&
@@ -318,7 +332,13 @@ export const repairConfigurationReferences = ({
             ],
         }
     }
-    const parsed = parsedResult.data
+    const parsed = {
+        ...parsedResult.data,
+        filters: parsedResult.data.filters.map((filter) => ({
+            ...filter,
+            field: metadata.fields.get(filter.field.id) ?? filter.field,
+        })),
+    }
     const validation = validateConfigurationReferences(parsed, metadata)
     if ('issues' in validation) {
         return { status: 'blocked', issues: validation.issues }

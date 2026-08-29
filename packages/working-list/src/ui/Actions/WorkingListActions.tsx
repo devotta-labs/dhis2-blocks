@@ -179,7 +179,12 @@ export const WorkingListToolbarActions = ({
                     className="flex items-center gap-1"
                     data-testid="working-list-actions"
                 >
-                    <Button small dataTest="save-working-list" disabled>
+                    <Button
+                        secondary
+                        small
+                        dataTest="save-working-list"
+                        disabled
+                    >
                         {actionCopy.controls.saveView(translate)}
                     </Button>
                     <Button

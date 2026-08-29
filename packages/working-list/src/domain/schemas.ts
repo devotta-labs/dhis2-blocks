@@ -16,6 +16,7 @@ export const WorkingListFieldSchema = z
     .object({
         id: z.string().min(1),
         displayName: z.string().min(1),
+        displayNameIsMetadata: z.literal(true).optional(),
         source: FilterSourceSchema,
         scope: z.enum(['trackedEntity', 'event']),
         valueType: Dhis2ValueTypeSchema,
@@ -32,6 +33,7 @@ export const WorkingListFieldSchema = z
         unique: z.boolean().optional(),
         searchable: z.boolean().optional(),
         filterable: z.boolean(),
+        columnable: z.boolean().optional(),
         preferredSearchOperator: FilterOperatorSchema.optional(),
         blockedSearchOperators: z.array(FilterOperatorSchema).optional(),
         minCharactersToSearch: z.number().int().nonnegative().optional(),

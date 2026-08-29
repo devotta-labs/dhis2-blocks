@@ -61,6 +61,8 @@ export type FilterScope = 'trackedEntity' | 'event'
 export interface WorkingListField {
     id: string
     displayName: string
+    /** Metadata labels are already localized by DHIS2 and must not be translated. */
+    displayNameIsMetadata?: true
     source: FilterSource
     scope: FilterScope
     valueType: Dhis2ValueType
@@ -70,6 +72,8 @@ export interface WorkingListField {
     unique?: boolean
     searchable?: boolean
     filterable: boolean
+    /** Whether the field can be selected as a table column in this context. */
+    columnable?: boolean
     preferredSearchOperator?: FilterOperator
     blockedSearchOperators?: ReadonlyArray<FilterOperator>
     minCharactersToSearch?: number

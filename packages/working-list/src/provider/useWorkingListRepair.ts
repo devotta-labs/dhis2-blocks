@@ -2,7 +2,10 @@ import { Result } from 'better-result'
 import { useMemo, useState } from 'react'
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type { WorkingListClient } from '../api/client'
-import type { ProgramFieldCatalog } from '../api/metadata'
+import {
+    fieldsForConfiguration,
+    type ProgramFieldCatalog,
+} from '../api/metadata'
 import {
     repairSavedWorkingList,
     replaceSavedWorkingList,
@@ -196,7 +199,7 @@ export const useWorkingListRepair = ({
                         existingResource: selectedList.raw,
                         name: selectedList.name,
                         configuration: repaired,
-                        fields: metadata.fields,
+                        fields: fieldsForConfiguration(metadata, repaired),
                         capabilities,
                         sharing: selectedList.sharing,
                         serializationContext,

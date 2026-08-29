@@ -74,10 +74,24 @@ describe('working-list actions', () => {
     it('offers create and download for an unfiltered default view', () => {
         const { container, onDownload, cleanup } = renderMenu({})
         try {
-            expect(
-                container.querySelector('[data-test="save-working-list"]')
-            ).not.toBeNull()
+            const save = container.querySelector<HTMLButtonElement>(
+                '[data-test="save-working-list"]'
+            )
+            expect(save?.className).toContain('secondary')
             act(() => {
+                save?.click()
+            })
+            expect(
+                document.querySelector<HTMLButtonElement>(
+                    '[data-test="working-list-name-submit"]'
+                )?.className
+            ).toContain('secondary')
+            act(() => {
+                document
+                    .querySelector<HTMLButtonElement>(
+                        '[data-test="working-list-name-cancel"]'
+                    )
+                    ?.click()
                 container
                     .querySelector<HTMLButtonElement>(
                         '[data-test="working-list-options"] button'
@@ -118,6 +132,11 @@ describe('working-list actions', () => {
             expect(
                 container.querySelector('[data-test="working-list-options"]')
             ).toBeNull()
+            expect(
+                container.querySelector<HTMLButtonElement>(
+                    '[data-test="save-working-list"] button'
+                )?.className
+            ).toContain('secondary')
             act(() => {
                 container
                     .querySelector<HTMLButtonElement>(

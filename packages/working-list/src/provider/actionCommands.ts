@@ -1,7 +1,10 @@
 import { Result } from 'better-result'
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type { WorkingListClient } from '../api/client'
-import type { ProgramFieldCatalog } from '../api/metadata'
+import {
+    fieldsForConfiguration,
+    type ProgramFieldCatalog,
+} from '../api/metadata'
 import {
     createSavedWorkingList,
     deleteSavedWorkingList,
@@ -132,7 +135,11 @@ export const createWorkingListActions = ({
         const runtime = runtimeRef.current
         if (!runtime.activeState || !runtime.metadata)
             throw new Error('Working List configuration is unavailable')
-        if (!runtime.metadata.fields.has(fieldId)) {
+        const fields = fieldsForConfiguration(
+            runtime.metadata,
+            runtime.activeState.configuration
+        )
+        if (!fields.has(fieldId)) {
             return Result.err(
                 new UnknownFieldError({
                     fieldId,
@@ -198,11 +205,13 @@ export const createWorkingListActions = ({
             programStageId
         )
             return Result.ok()
-        const filters = current.filters.filter(
-            (filter) =>
-                runtime.metadata?.fields.get(filter.fieldId)?.scope ===
-                'trackedEntity'
-        )
+        const filters = current.filters.filter((filter) => {
+            const field = runtime.metadata?.fields.get(filter.fieldId)
+            return (
+                field?.scope === 'trackedEntity' &&
+                (!programStageId || field.id !== 'assignedUser')
+            )
+        })
         const columns = programStageId
             ? (runtime.metadata.defaultEventColumnsByStage.get(
                   programStageId
@@ -284,11 +293,12 @@ export const createWorkingListActions = ({
         const selectionVersion = selectionToken.current
         try {
             const snapshot = runtime.resolvedConfiguration
+            const fields = fieldsForConfiguration(runtime.metadata, snapshot)
             const id = await createSavedWorkingList({
                 client,
                 name: trimmed,
                 configuration: snapshot,
-                fields: runtime.metadata.fields,
+                fields,
                 capabilities,
                 serializationContext: runtime.serializationContext,
             })
@@ -387,6 +397,7 @@ export const createWorkingListActions = ({
         setMutation('update', { status: 'pending', targetId: id })
         try {
             const snapshot = runtime.resolvedConfiguration
+            const fields = fieldsForConfiguration(runtime.metadata, snapshot)
             await replaceSavedWorkingList({
                 client,
                 id,
@@ -394,7 +405,7 @@ export const createWorkingListActions = ({
                 existingResource: list.raw,
                 name: list.name,
                 configuration: snapshot,
-                fields: runtime.metadata.fields,
+                fields,
                 capabilities,
                 sharing: list.sharing,
                 serializationContext: runtime.serializationContext,
@@ -502,6 +513,7 @@ export const createWorkingListActions = ({
         const runtime = runtimeRef.current
         if (
             !runtime.activeState ||
+            !runtime.resolvedConfiguration ||
             !runtime.metadata ||
             !runtime.formattingContext ||
             !runtime.program ||
@@ -514,10 +526,14 @@ export const createWorkingListActions = ({
             )
         }
         try {
+            const fields = fieldsForConfiguration(
+                runtime.metadata,
+                runtime.resolvedConfiguration
+            )
             downloadRowsAsCsv({
                 rows: runtime.rows,
                 columns: runtime.activeState.configuration.columns,
-                fields: runtime.metadata.fields,
+                fields,
                 formattingContext: runtime.formattingContext,
                 translate,
                 fileName: `${runtime.program.displayName}-working-list.csv`,

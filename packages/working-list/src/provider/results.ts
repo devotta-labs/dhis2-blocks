@@ -5,6 +5,7 @@ import {
     type CellFormattingContext,
 } from '../registry/valueTypes'
 import type { WorkingListTranslate } from '../ui/WorkingListText'
+import { fieldDisplayName } from '../ui/FilterControls/filterValueSupport'
 import type {
     WorkingListConfiguration,
     WorkingListDisplayRow,
@@ -100,21 +101,21 @@ export const toResultTargets = ({
     return targets
 }
 
-export const downloadRowsAsCsv = ({
-    rows,
-    columns,
-    fields,
-    formattingContext,
-    translate,
-    fileName,
-}: {
+interface VisibleRowsCsvOptions {
     rows: readonly WorkingListDisplayRow[]
     columns: readonly string[]
     fields: FieldCatalog
     formattingContext: CellFormattingContext
     translate: WorkingListTranslate
-    fileName: string
-}) => {
+}
+
+export const visibleRowsAsCsv = ({
+    rows,
+    columns,
+    fields,
+    formattingContext,
+    translate,
+}: VisibleRowsCsvOptions) => {
     const visibleFields = columns
         .map((id) => fields.get(id))
         .filter((field): field is WorkingListField => Boolean(field))
@@ -129,14 +130,21 @@ export const downloadRowsAsCsv = ({
         )
         return display.kind === 'image' ? display.alt : display.text
     }
-    const csv = [
+    return [
         visibleFields
-            .map((field) => escape(translate(field.displayName)))
+            .map((field) => escape(fieldDisplayName(field, translate)))
             .join(','),
         ...rows.map((row) =>
             visibleFields.map((field) => escape(cellText(row, field))).join(',')
         ),
     ].join('\n')
+}
+
+export const downloadRowsAsCsv = ({
+    fileName,
+    ...options
+}: VisibleRowsCsvOptions & { fileName: string }) => {
+    const csv = visibleRowsAsCsv(options)
     const url = URL.createObjectURL(
         new Blob([csv], { type: 'text/csv;charset=utf-8' })
     )

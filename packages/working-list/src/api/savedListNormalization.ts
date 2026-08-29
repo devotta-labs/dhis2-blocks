@@ -19,7 +19,11 @@ import {
     validateAppliedFilter,
 } from '../registry/valueTypes'
 import type { FilterParsingContext } from '../registry/valueTypes'
-import type { ProgramFieldCatalog } from './metadata'
+import {
+    fieldsForConfiguration,
+    fieldsForProgramStage,
+    type ProgramFieldCatalog,
+} from './metadata'
 import {
     ProgramStageWorkingListSchema,
     TrackedEntityInstanceFilterSchema,
@@ -352,15 +356,12 @@ export const normalizeEventResource = ({
             ),
         ])
     }
+    const fields = fieldsForProgramStage(metadata, programStageId)
     const criteria = resource.programStageQueryCriteria ?? {}
-    const filters = normalizeCommonCriteria(
-        criteria,
-        metadata.fields,
-        parsingContext
-    )
+    const filters = normalizeCommonCriteria(criteria, fields, parsingContext)
     if (criteria.enrolledAt) {
         filters.push(
-            systemFilter(metadata.fields, {
+            systemFilter(fields, {
                 id: 'enrolledAt',
                 operator: 'range',
                 value: normalizeDateValue(criteria.enrolledAt, parsingContext),
@@ -369,7 +370,7 @@ export const normalizeEventResource = ({
     }
     if (criteria.enrollmentOccurredAt) {
         filters.push(
-            systemFilter(metadata.fields, {
+            systemFilter(fields, {
                 id: 'enrollmentOccurredAt',
                 operator: 'range',
                 value: normalizeDateValue(
@@ -381,7 +382,7 @@ export const normalizeEventResource = ({
     }
     if (criteria.eventStatus) {
         filters.push(
-            systemFilter(metadata.fields, {
+            systemFilter(fields, {
                 id: 'eventStatus',
                 operator: 'in',
                 value: {
@@ -393,7 +394,7 @@ export const normalizeEventResource = ({
     }
     if (criteria.eventOccurredAt) {
         filters.push(
-            systemFilter(metadata.fields, {
+            systemFilter(fields, {
                 id: 'eventOccurredAt',
                 operator: 'range',
                 value: normalizeDateValue(
@@ -405,7 +406,7 @@ export const normalizeEventResource = ({
     }
     if (criteria.eventScheduledAt) {
         filters.push(
-            systemFilter(metadata.fields, {
+            systemFilter(fields, {
                 id: 'eventScheduledAt',
                 operator: 'range',
                 value: normalizeDateValue(
@@ -423,7 +424,7 @@ export const normalizeEventResource = ({
             filters.splice(index, 1)
         }
         filters.push(
-            systemFilter(metadata.fields, {
+            systemFilter(fields, {
                 id: 'eventAssignedUser',
                 operator: 'equals',
                 value: {
@@ -438,7 +439,7 @@ export const normalizeEventResource = ({
         if (!savedFilter.dataItem) {
             throw new Error(`dataFilters.${index} is missing dataItem`)
         }
-        const field = metadata.fields.get(savedFilter.dataItem)
+        const field = fields.get(savedFilter.dataItem)
         if (!field) {
             throw new StaleWorkingListError([
                 getMissingIssue(
@@ -466,9 +467,9 @@ export const normalizeEventResource = ({
         columns: normalizeColumns(
             criteria.displayColumnOrder,
             metadata.defaultEventColumnsByStage.get(programStageId) ?? [],
-            metadata.fields
+            fields
         ),
-        sort: normalizeSort(criteria.order, metadata.fields),
+        sort: normalizeSort(criteria.order, fields),
     }
 }
 
@@ -524,7 +525,7 @@ export const normalizeSavedWorkingListResource = ({
                   })
         const references = validateConfigurationReferences(configuration, {
             expectedProgramId: programId,
-            fields: metadata.fields,
+            fields: fieldsForConfiguration(metadata, configuration),
             readableProgramStageIds: metadata.readableProgramStageIds,
         })
         if ('issues' in references) {

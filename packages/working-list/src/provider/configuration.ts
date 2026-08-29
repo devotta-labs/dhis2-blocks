@@ -1,6 +1,10 @@
 import { Result } from 'better-result'
-import type { ProgramFieldCatalog } from '../api/metadata'
+import {
+    fieldsForConfiguration,
+    type ProgramFieldCatalog,
+} from '../api/metadata'
 import type {
+    FieldCatalog,
     WorkingListConfiguration as InternalConfiguration,
     AppliedFilter as InternalFilter,
 } from '../domain/model'
@@ -86,9 +90,10 @@ export const toPublicConfiguration = (
 export const resolveFilter = (
     filter: AppliedFilter,
     metadata: ProgramFieldCatalog,
-    serializationContext?: FilterSerializationContext
+    serializationContext?: FilterSerializationContext,
+    fields: FieldCatalog = metadata.fields
 ): Result<InternalFilter, ConfigurationCommandError> => {
-    const field = metadata.fields.get(filter.fieldId)
+    const field = fields.get(filter.fieldId)
     if (!field) {
         return Result.err(
             new UnknownFieldError({
@@ -128,9 +133,15 @@ export const resolvePublicConfiguration = ({
     metadata: ProgramFieldCatalog
     serializationContext?: FilterSerializationContext
 }): Result<InternalConfiguration, ConfigurationCommandError> => {
+    const fields = fieldsForConfiguration(metadata, configuration)
     const filters: InternalFilter[] = []
     for (const filter of configuration.filters) {
-        const resolved = resolveFilter(filter, metadata, serializationContext)
+        const resolved = resolveFilter(
+            filter,
+            metadata,
+            serializationContext,
+            fields
+        )
         if (resolved.isErr()) {
             return resolved
         }
@@ -160,7 +171,7 @@ export const resolvePublicConfiguration = ({
     }
     const references = validateConfigurationReferences(parsed.data, {
         expectedProgramId: programId,
-        fields: metadata.fields,
+        fields,
         readableProgramStageIds: metadata.readableProgramStageIds,
     })
     if (!references.compatible) {

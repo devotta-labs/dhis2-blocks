@@ -2,6 +2,7 @@ import { Button } from '@dhis2/ui'
 import { IconLayoutColumns16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
+import { fieldsForConfiguration } from '../../api/metadata'
 import type { TrackerProgram } from '../../api/schemas'
 import type { WorkingListField } from '../../domain/model'
 import {
@@ -31,6 +32,9 @@ const tableFieldsFor = (
         ) ?? []
     )
     return fields.filter((field) => {
+        if (field.columnable === false) {
+            return false
+        }
         if (field.source === 'trackedEntityAttribute') {
             return true
         }
@@ -60,16 +64,17 @@ const ColumnsControl = () => {
     const translate = useWorkingListText()
     const configuration = useWorkingListState((state) => state.configuration)
     const program = useWorkingListMeta((meta) => meta.program)
-    const fields = useWorkingListMeta((meta) => meta.fields)
+    const metadata = useWorkingListMeta((meta) => meta.fieldCatalog)
     const actions = useWorkingListActions()
     const { mutationBusy } = useWorkingListPrivateUi()
     const [dialogOpen, setDialogOpen] = useState(false)
 
-    if (!program) {
+    if (!program || !metadata) {
         throw new Error(
             'WorkingListColumnSelector requires resolved program metadata.'
         )
     }
+    const fields = [...fieldsForConfiguration(metadata, configuration).values()]
     const tableFields = tableFieldsFor(fields, program, configuration)
 
     return (

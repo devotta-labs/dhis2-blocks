@@ -52,6 +52,9 @@ export const fieldDisplayName = (
     field: WorkingListField,
     translate: WorkingListTranslate = defaultWorkingListTranslate
 ) => {
+    if (field.displayNameIsMetadata) {
+        return field.displayName
+    }
     const labels = new Map([
         ['enrollmentStatus', translate('Enrollment status')],
         ['enrolledAt', translate('Enrollment date')],

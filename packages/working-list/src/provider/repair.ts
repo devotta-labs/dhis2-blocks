@@ -1,4 +1,8 @@
-import type { ProgramFieldCatalog } from '../api/metadata'
+import {
+    fieldsForConfiguration,
+    fieldsForProgramStage,
+    type ProgramFieldCatalog,
+} from '../api/metadata'
 import type { NormalizedSavedWorkingList } from '../api/savedLists'
 import { ProgramStageWorkingListSchema } from '../api/schemas'
 import type { StaleReferenceRepairDecision } from '../domain/staleReferences'
@@ -48,7 +52,10 @@ export const createSavedListRepairPlan = (
               ? (metadata.defaultEventColumnsByStage.get(rawProgramStageId) ??
                 [])
               : metadata.defaultTrackedEntityColumns
-    const fallbackColumn = defaults.find((id) => metadata.fields.has(id))
+    const fields = candidate
+        ? fieldsForConfiguration(metadata, candidate)
+        : fieldsForProgramStage(metadata, rawProgramStageId)
+    const fallbackColumn = defaults.find((id) => fields.has(id))
     let replacementColumnUsed = false
     const decisions: StaleReferenceRepairDecision[] = []
 
@@ -94,9 +101,7 @@ export const createSavedListRepairPlan = (
                 issue.kind === 'programStageFieldMismatch') &&
             (path === 'sort.fieldId' || path === 'order')
         ) {
-            const fieldId = metadata.fields.has(
-                DEFAULT_WORKING_LIST_SORT.fieldId
-            )
+            const fieldId = fields.has(DEFAULT_WORKING_LIST_SORT.fieldId)
                 ? DEFAULT_WORKING_LIST_SORT.fieldId
                 : fallbackColumn
             if (fieldId) {

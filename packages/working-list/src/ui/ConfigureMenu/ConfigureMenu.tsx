@@ -67,6 +67,7 @@ export const ConfigureMenu = ({
             >
                 {persistedSelection ? (
                     <DropdownButton
+                        secondary
                         small
                         dataTest="save-working-list"
                         open={saveMenuOpen}
@@ -99,6 +100,7 @@ export const ConfigureMenu = ({
                 ) : (
                     <>
                         <Button
+                            secondary
                             small
                             dataTest="save-working-list"
                             disabled={locked}
@@ -186,7 +188,7 @@ export const ConfigureMenu = ({
                                     {i18n.t('Cancel')}
                                 </Button>
                                 <Button
-                                    primary
+                                    secondary
                                     loading={createPending}
                                     type="submit"
                                     dataTest="working-list-name-submit"

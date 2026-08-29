@@ -10,7 +10,7 @@ import {
     shouldBeginControlledSelection,
     toPublicConfiguration,
 } from './configuration'
-import { toDisplayRows, toResultTargets } from './results'
+import { toDisplayRows, toResultTargets, visibleRowsAsCsv } from './results'
 
 const textField = {
     id: 'Attribute01',
@@ -23,6 +23,7 @@ const textField = {
 
 const metadata: ProgramFieldCatalog = {
     fields: new Map([[textField.id, textField]]),
+    fieldsByProgramStage: new Map(),
     capabilities: resolveWorkingListCapabilities({ apiVersion: 43 }),
     defaultTrackedEntityColumns: [textField.id],
     defaultEventColumnsByStage: new Map(),
@@ -75,6 +76,40 @@ describe('provider public configuration façade', () => {
 })
 
 describe('provider results normalization', () => {
+    it('uses metadata labels verbatim and translates generic CSV headers', () => {
+        const fields = new Map([
+            [
+                'enrolledAt',
+                {
+                    ...textField,
+                    id: 'enrolledAt',
+                    displayName: 'Start of treatment date',
+                    displayNameIsMetadata: true as const,
+                    source: 'system' as const,
+                },
+            ],
+            [
+                'createdAt',
+                {
+                    ...textField,
+                    id: 'createdAt',
+                    displayName: 'Registration date',
+                    source: 'system' as const,
+                },
+            ],
+        ])
+
+        expect(
+            visibleRowsAsCsv({
+                rows: [],
+                columns: ['enrolledAt', 'createdAt'],
+                fields,
+                formattingContext: {},
+                translate: (message) => `translated:${message}`,
+            })
+        ).toBe('"Start of treatment date","translated:Registration date"')
+    })
+
     it('builds ID-only event targets with provider and tracker context', () => {
         const page: WorkingListPage = {
             mode: 'event',

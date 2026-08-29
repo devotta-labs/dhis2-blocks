@@ -1,4 +1,4 @@
-import type { WorkingListConfiguration } from '../domain/model'
+import type { FieldCatalog, WorkingListConfiguration } from '../domain/model'
 import { repairConfigurationReferences } from '../domain/staleReferences'
 import type {
     StaleReferenceIssue,
@@ -12,7 +12,11 @@ import type {
     FilterParsingContext,
     FilterSerializationContext,
 } from '../registry/valueTypes'
-import type { ProgramFieldCatalog } from './metadata'
+import {
+    fieldsForConfiguration,
+    fieldsForProgramStage,
+    type ProgramFieldCatalog,
+} from './metadata'
 import {
     ProgramStageWorkingListSchema,
     TrackedEntityInstanceFilterSchema,
@@ -113,12 +117,14 @@ const repairRawFilter = ({
     decision,
     expectedSource,
     metadata,
+    fields,
     serializationContext,
 }: {
     savedFilter: SavedValueFilter
     decision: StaleReferenceRepairDecision
     expectedSource: 'trackedEntityAttribute' | 'eventDataElement'
     metadata: ProgramFieldCatalog
+    fields: FieldCatalog
     serializationContext?: FilterSerializationContext
 }): SavedValueFilter | undefined => {
     if (decision.action === 'remove') {
@@ -127,7 +133,7 @@ const repairRawFilter = ({
     if (decision.action !== 'replaceFilter') {
         throw new Error('A stale saved filter requires remove or replaceFilter')
     }
-    const currentField = metadata.fields.get(decision.filter.field.id)
+    const currentField = fields.get(decision.filter.field.id)
     if (!currentField || currentField.source !== expectedSource) {
         throw new Error(
             `Replacement filter ${decision.filter.field.id} has the wrong source`
@@ -190,13 +196,17 @@ export const repairSavedWorkingList = ({
     serializationContext?: FilterSerializationContext
 }): SavedWorkingListRepairResult => {
     if (list.candidateConfiguration) {
+        const candidateFields = fieldsForConfiguration(
+            metadata,
+            list.candidateConfiguration
+        )
         const result = repairConfigurationReferences({
             configuration: list.candidateConfiguration,
             issues: list.issues,
             decisions,
             metadata: {
                 expectedProgramId: programId,
-                fields: metadata.fields,
+                fields: candidateFields,
                 readableProgramStageIds: metadata.readableProgramStageIds,
             },
         })
@@ -210,13 +220,17 @@ export const repairSavedWorkingList = ({
         if (unsupported.length) {
             return { status: 'blocked', issues: unsupported }
         }
+        const repairedFields = fieldsForConfiguration(
+            metadata,
+            result.configuration
+        )
         return {
             status: 'repaired',
             configuration: result.configuration,
             payload: buildSavedListPayload({
                 name: list.name,
                 configuration: result.configuration,
-                fields: metadata.fields,
+                fields: repairedFields,
                 capabilities: metadata.capabilities,
                 sharing: list.sharing,
                 serializationContext,
@@ -243,6 +257,12 @@ export const repairSavedWorkingList = ({
 
     const cloned = cloneSavedResource(list)
     const criteria = cloned.criteria
+    const fields = fieldsForProgramStage(
+        metadata,
+        cloned.type === 'programStageWorkingLists'
+            ? cloned.raw.programStage.id
+            : undefined
+    )
 
     for (const issue of list.issues) {
         const decision = decisionsByPath.get(issue.path)
@@ -267,6 +287,7 @@ export const repairSavedWorkingList = ({
                     decision,
                     expectedSource: 'trackedEntityAttribute',
                     metadata,
+                    fields,
                     serializationContext,
                 })
                 if (repaired) {
@@ -298,6 +319,7 @@ export const repairSavedWorkingList = ({
                     decision,
                     expectedSource: 'eventDataElement',
                     metadata,
+                    fields,
                     serializationContext,
                 })
                 if (repaired) {
@@ -320,7 +342,7 @@ export const repairSavedWorkingList = ({
             if (decision.action === 'remove') {
                 delete criteria.displayColumnOrder[index]
             } else if (decision.action === 'replaceColumn') {
-                const field = metadata.fields.get(decision.fieldId)
+                const field = fields.get(decision.fieldId)
                 if (!field) {
                     return blockedRepair(issue)
                 }
@@ -334,7 +356,7 @@ export const repairSavedWorkingList = ({
             if (decision.action === 'remove') {
                 criteria.order = undefined
             } else if (decision.action === 'replaceSort') {
-                const field = metadata.fields.get(decision.sort.fieldId)
+                const field = fields.get(decision.sort.fieldId)
                 if (!field) {
                     return blockedRepair(issue)
                 }
@@ -379,13 +401,17 @@ export const repairSavedWorkingList = ({
     if (normalized.compatibility === 'incompatible') {
         return { status: 'blocked', issues: normalized.issues }
     }
+    const normalizedFields = fieldsForConfiguration(
+        metadata,
+        normalized.configuration
+    )
     return {
         status: 'repaired',
         configuration: normalized.configuration,
         payload: buildSavedListPayload({
             name: list.name,
             configuration: normalized.configuration,
-            fields: metadata.fields,
+            fields: normalizedFields,
             capabilities: metadata.capabilities,
             sharing: list.sharing,
             serializationContext,

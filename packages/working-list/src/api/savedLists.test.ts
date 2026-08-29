@@ -45,6 +45,7 @@ const metadata: ProgramFieldCatalog = {
     fields: new Map(
         [...systemFields, attribute].map((field) => [field.id, field])
     ),
+    fieldsByProgramStage: new Map(),
     capabilities: resolveWorkingListCapabilities({ apiVersion: 43 }),
     defaultTrackedEntityColumns: [attribute.id],
     defaultEventColumnsByStage: new Map(),

@@ -1,7 +1,7 @@
 import { Button } from '@dhis2/ui'
 import { IconFilter16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
-import React, { useState } from 'react'
+import React, { useState, type ComponentPropsWithoutRef } from 'react'
 import type { AppliedFilter as ResolvedAppliedFilter } from '../../domain/model'
 import type { WorkingListField } from '../../domain/model'
 import {
@@ -96,7 +96,7 @@ const FiltersControl = () => {
 
     if (!program || !metadata || !calendarContext) {
         throw new Error(
-            'WorkingList.Filters requires resolved program metadata.'
+            'WorkingListFilterControls requires resolved program metadata.'
         )
     }
 
@@ -288,7 +288,15 @@ const FiltersControl = () => {
     )
 }
 
-export const WorkingListFilters = () => {
+export interface WorkingListFilterControlsProps extends Omit<
+    ComponentPropsWithoutRef<'div'>,
+    'children'
+> {}
+
+export const WorkingListFilterControls = ({
+    className,
+    ...props
+}: WorkingListFilterControlsProps) => {
     const translate = useWorkingListText()
     const ready = useWorkingListMeta(
         (meta) => meta.activeConfiguration.status === 'ready'
@@ -296,7 +304,8 @@ export const WorkingListFilters = () => {
 
     return (
         <div
-            className="flex min-w-0 flex-[1_1_0%] flex-wrap items-center gap-1"
+            {...props}
+            className={`flex min-w-0 flex-[1_1_0%] flex-wrap items-center gap-1${className ? ` ${className}` : ''}`}
             data-testid="working-list-filters"
         >
             {ready ? (

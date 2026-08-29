@@ -1,1 +1,4 @@
-export { WorkingListColumns } from './Columns'
+export {
+    WorkingListColumnSelector,
+    type WorkingListColumnSelectorProps,
+} from './Columns'

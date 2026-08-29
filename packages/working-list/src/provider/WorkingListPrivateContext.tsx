@@ -15,7 +15,7 @@ import type {
 import type { WorkingListTranslate } from '../ui/WorkingListText'
 import type { SavedListRepairPlan } from './repair'
 import type {
-    UpdateSelectedSavedListError,
+    UpdateSelectedViewError,
     WorkingListInvalidResponseError,
     WorkingListNetworkError,
 } from './errors'
@@ -33,9 +33,7 @@ export interface WorkingListPrivateActions {
     retrySavedViews(): Promise<void>
     retryResults(): Promise<void>
     sharingSaved(): Promise<void>
-    repairSelectedSavedList(): Promise<
-        Result<void, UpdateSelectedSavedListError>
-    >
+    repairSelectedSavedList(): Promise<Result<void, UpdateSelectedViewError>>
 }
 
 export interface WorkingListPrivateUiContextValue {
@@ -85,7 +83,7 @@ export const useWorkingListPrivateUi = (): WorkingListPrivateUiContextValue => {
     const context = useContext(WorkingListPrivateUiContext)
     if (!context) {
         throw new Error(
-            'useWorkingListPrivateUi must be used within WorkingList.Provider.'
+            'useWorkingListPrivateUi must be used within WorkingList.'
         )
     }
     return context

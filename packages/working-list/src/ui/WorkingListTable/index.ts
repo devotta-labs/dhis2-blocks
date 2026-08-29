@@ -1,1 +1,1 @@
-export { WorkingListTable } from './WorkingListTable'
+export { WorkingListDataTable } from './WorkingListTable'

@@ -25,7 +25,7 @@ import {
 } from './configuration'
 import type {
     AppliedFilter,
-    WorkingListActions,
+    WorkingListActionImplementation,
     WorkingListConfiguration,
     WorkingListDisplayRow,
     WorkingListMeta,
@@ -91,7 +91,7 @@ interface CreateWorkingListActionsOptions {
     validateAndCommit: (
         configuration: WorkingListConfiguration,
         resetPage: boolean
-    ) => ReturnType<WorkingListActions['setColumns']>
+    ) => ReturnType<WorkingListActionImplementation['setColumns']>
 }
 
 const idleMutation = (): WorkingListMutationStatus => ({ status: 'idle' })
@@ -110,7 +110,7 @@ export const createWorkingListActions = ({
     translate,
     updateStore,
     validateAndCommit,
-}: CreateWorkingListActionsOptions): WorkingListActions => ({
+}: CreateWorkingListActionsOptions): WorkingListActionImplementation => ({
     setFilter(filter: AppliedFilter) {
         const runtime = runtimeRef.current
         if (!runtime.activeState)
@@ -249,7 +249,7 @@ export const createWorkingListActions = ({
         stagePagination({ page: 1, pageSize })
         return Result.ok()
     },
-    selectSavedList(id) {
+    selectView(id) {
         if (!id.trim())
             return Result.err(
                 new InvalidConfigurationError({
@@ -259,11 +259,11 @@ export const createWorkingListActions = ({
         hardTransition(id, true)
         return Result.ok()
     },
-    clearSavedListSelection() {
+    clearViewSelection() {
         hardTransition(defaultListId, true)
         return Result.ok()
     },
-    async createSavedList(name) {
+    async createView(name) {
         const runtime = runtimeRef.current
         if (!runtime.online)
             return Result.err(
@@ -297,7 +297,7 @@ export const createWorkingListActions = ({
             if (!confirmed || confirmed.compatibility !== 'compatible') {
                 return Result.err(
                     new WorkingListInvalidResponseError({
-                        operation: 'createSavedList',
+                        operation: 'createView',
                         message: `Created saved list ${id} was absent from canonical refresh`,
                     })
                 )
@@ -305,7 +305,7 @@ export const createWorkingListActions = ({
             if (selectionToken.current === selectionVersion) {
                 hardTransition(id, true)
             }
-            return Result.ok({ savedListId: id })
+            return Result.ok({ viewId: id })
         } catch (cause) {
             return Result.err(
                 toTransportError(cause, 'Creating a saved working list')
@@ -314,7 +314,7 @@ export const createWorkingListActions = ({
             setMutation('create', idleMutation())
         }
     },
-    async updateSelectedSavedList() {
+    async updateSelectedView() {
         const runtime = runtimeRef.current
         if (!runtime.online)
             return Result.err(
@@ -409,7 +409,7 @@ export const createWorkingListActions = ({
             ) {
                 return Result.err(
                     new WorkingListInvalidResponseError({
-                        operation: 'updateSelectedSavedList',
+                        operation: 'updateSelectedView',
                         message: `Updated saved list ${id} did not match the submitted configuration after canonical refresh`,
                     })
                 )
@@ -443,7 +443,7 @@ export const createWorkingListActions = ({
             setMutation('update', idleMutation())
         }
     },
-    async deleteSavedList(id) {
+    async deleteView(id) {
         const runtime = runtimeRef.current
         if (!runtime.online)
             return Result.err(
@@ -476,7 +476,7 @@ export const createWorkingListActions = ({
             if (lists.some((candidate) => candidate.id === id)) {
                 return Result.err(
                     new WorkingListInvalidResponseError({
-                        operation: 'deleteSavedList',
+                        operation: 'deleteView',
                         message: `Deleted saved list ${id} remained after canonical refresh`,
                     })
                 )

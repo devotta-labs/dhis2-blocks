@@ -24,7 +24,7 @@ import {
     OfflineMutationError,
     SavedListPermissionError,
     WorkingListInvalidResponseError,
-    type UpdateSelectedSavedListError,
+    type UpdateSelectedViewError,
 } from './errors'
 import { createSavedListRepairPlan } from './repair'
 import type { WorkingListPrivateActions } from './WorkingListPrivateContext'
@@ -128,7 +128,7 @@ export const useWorkingListRepair = ({
                 await refreshSavedLists()
             },
             async repairSelectedSavedList(): Promise<
-                Result<void, UpdateSelectedSavedListError>
+                Result<void, UpdateSelectedViewError>
             > {
                 if (!online) {
                     return Result.err(

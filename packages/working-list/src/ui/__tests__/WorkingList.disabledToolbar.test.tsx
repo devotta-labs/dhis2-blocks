@@ -7,9 +7,9 @@ import type {
 } from '../../provider/contracts'
 import { WorkingListPublicContext } from '../../provider/WorkingListContext'
 import { createWorkingListProviderStore } from '../../provider/store'
-import { WorkingListActions } from '../Actions'
-import { WorkingListColumns } from '../Columns'
-import { WorkingListFilters } from '../Filters'
+import { WorkingListToolbarActions } from '../Actions'
+import { WorkingListColumnSelector } from '../Columns'
+import { WorkingListFilterControls } from '../Filters'
 import { WorkingListToolbar } from '../Toolbar'
 import { WorkingListTextProvider } from '../WorkingListText'
 
@@ -21,11 +21,11 @@ const actions: WorkingListActionsContract = {
     setProgramStage: () => Result.ok(),
     setPage: () => Result.ok(),
     setPageSize: () => Result.ok(),
-    selectSavedList: () => Result.ok(),
-    clearSavedListSelection: () => Result.ok(),
-    createSavedList: async () => Result.ok({ savedListId: 'new-view' }),
-    updateSelectedSavedList: async () => Result.ok(),
-    deleteSavedList: async () => Result.ok(),
+    selectView: () => Result.ok(),
+    clearViewSelection: () => Result.ok(),
+    createView: async () => Result.ok({ viewId: 'new-view' }),
+    updateSelectedView: async () => Result.ok(),
+    deleteView: async () => Result.ok(),
     downloadVisibleRows: () => Result.ok(),
 }
 
@@ -67,9 +67,18 @@ describe('working-list unavailable toolbar', () => {
                             value={{ store, actions }}
                         >
                             <WorkingListToolbar>
-                                <WorkingListColumns />
-                                <WorkingListFilters />
-                                <WorkingListActions />
+                                <WorkingListColumnSelector
+                                    className="consumer-columns"
+                                    data-consumer="columns"
+                                />
+                                <WorkingListFilterControls
+                                    className="consumer-filters"
+                                    data-consumer="filters"
+                                />
+                                <WorkingListToolbarActions
+                                    className="consumer-actions"
+                                    data-consumer="actions"
+                                />
                             </WorkingListToolbar>
                         </WorkingListPublicContext.Provider>
                     </WorkingListTextProvider>
@@ -86,8 +95,23 @@ describe('working-list unavailable toolbar', () => {
                 '[data-testid="working-list-toolbar"]'
             )
             expect(toolbar?.tagName).toBe('DIV')
-            expect(toolbar?.hasAttribute('aria-label')).toBe(false)
+            expect(toolbar?.getAttribute('aria-label')).toBe(
+                'Working list controls'
+            )
+            expect(toolbar?.getAttribute('role')).toBe('toolbar')
             expect(toolbar?.hasAttribute('aria-labelledby')).toBe(false)
+            expect(
+                container.querySelector('[data-consumer="columns"]')?.className
+            ).toBe('consumer-columns')
+            const filterControls = container.querySelector(
+                '[data-consumer="filters"]'
+            )
+            expect(filterControls?.className).toContain('consumer-filters')
+            expect(filterControls?.className).toContain('gap-1')
+            expect(filterControls?.className).not.toContain('gap-2')
+            expect(
+                container.querySelector('[data-consumer="actions"]')?.className
+            ).toContain('consumer-actions')
             expect(container.textContent).not.toContain(
                 'Tracked entity filters'
             )

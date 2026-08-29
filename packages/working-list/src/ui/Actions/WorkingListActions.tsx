@@ -1,11 +1,11 @@
 import { Button, NoticeBox } from '@dhis2/ui'
 import { IconMore16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
-import React, { useState } from 'react'
+import React, { useState, type ComponentPropsWithoutRef } from 'react'
 import type {
-    CreateSavedListError,
+    CreateViewError,
     DownloadVisibleRowsError,
-    UpdateSelectedSavedListError,
+    UpdateSelectedViewError,
 } from '../../provider/errors'
 import {
     useWorkingListActions,
@@ -18,7 +18,7 @@ import {
     type WorkingListTranslate,
 } from '../WorkingListText'
 
-type SaveError = CreateSavedListError | UpdateSelectedSavedListError
+type SaveError = CreateViewError | UpdateSelectedViewError
 
 type ActionCopy = (translate: WorkingListTranslate) => string
 
@@ -96,14 +96,14 @@ const ActionsControl = () => {
             : undefined
     const saveAs = async (name: string) => {
         setSaveError(undefined)
-        const result = await actions.createSavedList(name)
+        const result = await actions.createView(name)
         return Result.isError(result)
             ? saveErrorCopy(result.error, translate)
             : undefined
     }
     const update = async () => {
         setSaveError(undefined)
-        const result = await actions.updateSelectedSavedList()
+        const result = await actions.updateSelectedView()
         if (Result.isError(result)) {
             setSaveError(saveErrorCopy(result.error, translate))
         }
@@ -152,7 +152,15 @@ const ActionsControl = () => {
     )
 }
 
-export const WorkingListActions = () => {
+export interface WorkingListToolbarActionsProps extends Omit<
+    ComponentPropsWithoutRef<'div'>,
+    'children'
+> {}
+
+export const WorkingListToolbarActions = ({
+    className,
+    ...props
+}: WorkingListToolbarActionsProps) => {
     const translate = useWorkingListText()
     const ready = useWorkingListMeta(
         (meta) => meta.activeConfiguration.status === 'ready'
@@ -160,7 +168,8 @@ export const WorkingListActions = () => {
 
     return (
         <div
-            className="ml-auto flex flex-none items-center"
+            {...props}
+            className={`ml-auto flex flex-none items-center${className ? ` ${className}` : ''}`}
             data-testid="working-list-actions-slot"
         >
             {ready ? (

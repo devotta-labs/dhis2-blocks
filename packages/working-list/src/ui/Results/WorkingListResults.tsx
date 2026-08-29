@@ -1,6 +1,6 @@
 import { Button, CircularLoader, NoticeBox } from '@dhis2/ui'
 import { Result } from 'better-result'
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, type ComponentPropsWithoutRef } from 'react'
 import type { TrackerProgram } from '../../api/schemas'
 import type { WorkingListField, WorkingListSort } from '../../domain/model'
 import {
@@ -16,14 +16,17 @@ import type {
 } from '../../provider/contracts'
 import { WorkingListRepairDialog } from '../WorkingList/dialogs'
 import type { WorkingListDataQualityMode } from '../types'
-import { WorkingListTable } from '../WorkingListTable'
+import { WorkingListDataTable } from '../WorkingListTable'
 import { useWorkingListText } from '../WorkingListText'
 
 const visuallyHiddenClassName =
     'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
-export interface WorkingListResultsProps {
-    onClick: (target: WorkingListResultTarget) => void
+export interface WorkingListTableProps extends Omit<
+    ComponentPropsWithoutRef<'section'>,
+    'children'
+> {
+    onRowClick?: (target: WorkingListResultTarget) => void
     dataQualityMode?: WorkingListDataQualityMode
 }
 
@@ -84,9 +87,10 @@ const SelectionLoading = () => {
 }
 
 const ReadyResults = ({
-    onClick,
+    onRowClick,
     dataQualityMode,
-}: Required<WorkingListResultsProps>) => {
+}: Required<Pick<WorkingListTableProps, 'dataQualityMode'>> &
+    Pick<WorkingListTableProps, 'onRowClick'>) => {
     const translate = useWorkingListText()
     const results = useWorkingListMeta((meta) => meta.results)
     const pagination = useWorkingListMeta((meta) => meta.pagination)
@@ -102,7 +106,7 @@ const ReadyResults = ({
     } = useWorkingListPrivateUi()
 
     if (!program || !formattingContext) {
-        throw new Error('WorkingList.Results requires resolved metadata.')
+        throw new Error('WorkingListTable requires resolved metadata.')
     }
     const tableFields = useMemo(
         () => tableFieldsFor(fields, program, configuration),
@@ -120,7 +124,7 @@ const ReadyResults = ({
                 `Working list row ${row.id} has no result target to open.`
             )
         }
-        onClick(target)
+        onRowClick?.(target)
     }
 
     if (results.status === 'error') {
@@ -154,7 +158,7 @@ const ReadyResults = ({
                       ? translate('Updating working list results…')
                       : ''}
             </div>
-            <WorkingListTable
+            <WorkingListDataTable
                 allFields={tableFields}
                 visibleColumnIds={configuration.columns}
                 rows={
@@ -180,7 +184,7 @@ const ReadyResults = ({
                 onPageSizeChange={(pageSize) =>
                     commit(actions.setPageSize(pageSize))
                 }
-                onRowOpen={openRow}
+                onRowOpen={onRowClick ? openRow : undefined}
                 onSortChange={(sort: WorkingListSort) =>
                     commit(actions.setSort(sort))
                 }
@@ -274,10 +278,10 @@ const IncompatibleSelection = () => {
     )
 }
 
-export const WorkingListResults = ({
-    onClick,
+const WorkingListResultsContent = ({
+    onRowClick,
     dataQualityMode = 'hidden',
-}: WorkingListResultsProps) => {
+}: Pick<WorkingListTableProps, 'onRowClick' | 'dataQualityMode'>) => {
     const translate = useWorkingListText()
     const selection = useWorkingListMeta((meta) => meta.selection)
     const activeConfiguration = useWorkingListMeta(
@@ -310,8 +314,7 @@ export const WorkingListResults = ({
                             <Button
                                 dataTest="use-default-working-list"
                                 onClick={() => {
-                                    const result =
-                                        actions.clearSavedListSelection()
+                                    const result = actions.clearViewSelection()
                                     if (Result.isError(result)) {
                                         throw result.error
                                     }
@@ -325,12 +328,36 @@ export const WorkingListResults = ({
             {selection.status === 'ready' &&
                 (activeConfiguration.status === 'ready' ? (
                     <ReadyResults
-                        onClick={onClick}
+                        onRowClick={onRowClick}
                         dataQualityMode={dataQualityMode}
                     />
                 ) : (
                     <SelectionLoading />
                 ))}
         </div>
+    )
+}
+
+export const WorkingListTable = ({
+    onRowClick,
+    dataQualityMode = 'hidden',
+    className,
+    'aria-label': ariaLabel,
+    ...props
+}: WorkingListTableProps) => {
+    const translate = useWorkingListText()
+
+    return (
+        <section
+            {...props}
+            aria-label={ariaLabel ?? translate('Working list results')}
+            className={className}
+            data-testid="working-list-table-section"
+        >
+            <WorkingListResultsContent
+                onRowClick={onRowClick}
+                dataQualityMode={dataQualityMode}
+            />
+        </section>
     )
 }

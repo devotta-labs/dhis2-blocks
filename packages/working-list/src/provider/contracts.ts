@@ -15,14 +15,14 @@ import type {
 } from '../query/normalizeRows'
 import type {
     ConfigurationCommandError,
-    CreateSavedListError,
-    DeleteSavedListError,
+    CreateViewError,
+    DeleteViewError,
     DownloadVisibleRowsError,
     IncompatibleSavedListError,
     PaginationCommandError,
     SavedListNotFoundError,
-    SelectSavedListError,
-    UpdateSelectedSavedListError,
+    SelectViewError,
+    UpdateSelectedViewError,
     WorkingListInitializationError,
     WorkingListInvalidResponseError,
     WorkingListNetworkError,
@@ -122,6 +122,9 @@ export interface WorkingListSavedView {
     canShare: boolean
 }
 
+/** Consumer-facing name for a selectable Working List view. */
+export type WorkingListView = WorkingListSavedView
+
 export type WorkingListSavedViewsMeta =
     | { status: 'pending'; views: readonly WorkingListSavedView[] }
     | {
@@ -185,25 +188,14 @@ export interface WorkingListActions {
     setPageSize(
         pageSize: WorkingListPageSize
     ): Result<void, PaginationCommandError>
-    selectSavedList(id: string): Result<void, SelectSavedListError>
-    clearSavedListSelection(): Result<void, SelectSavedListError>
-    createSavedList(
+    selectView(id: string): Result<void, SelectViewError>
+    clearViewSelection(): Result<void, SelectViewError>
+    createView(
         name: string
-    ): Promise<Result<{ savedListId: string }, CreateSavedListError>>
-    updateSelectedSavedList(): Promise<
-        Result<void, UpdateSelectedSavedListError>
-    >
-    deleteSavedList(id: string): Promise<Result<void, DeleteSavedListError>>
+    ): Promise<Result<{ viewId: string }, CreateViewError>>
+    updateSelectedView(): Promise<Result<void, UpdateSelectedViewError>>
+    deleteView(id: string): Promise<Result<void, DeleteViewError>>
     downloadVisibleRows(): Result<void, DownloadVisibleRowsError>
 }
 
-export interface WorkingListProviderProps {
-    children: React.ReactNode
-    programId: string
-    orgUnitId: string
-    /** Pass null to select the generated default list. */
-    selectedSavedListId: string | null
-    onSelectedSavedListChange(id: string): void
-    pagination: WorkingListPagination
-    onPaginationChange(next: WorkingListPagination): void
-}
+export type WorkingListActionImplementation = WorkingListActions

@@ -1,4 +1,4 @@
-import React, { act } from 'react'
+import React, { act, useId, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { resolveWorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
@@ -6,7 +6,6 @@ import type { WorkingListField } from '../../domain/model'
 import type { WorkingListSavedView } from '../../provider/contracts'
 import { FilterButton } from '../FilterControls'
 import { SavedListBar } from '../SavedListBar'
-import { WorkingListSection } from '../Section'
 import { WorkingListToolbar } from '../Toolbar'
 import {
     WorkingListTableView,
@@ -43,9 +42,31 @@ const emptyModel: WorkingListTableViewModel = {
     rows: [],
 }
 
+const TestSection = ({
+    title,
+    ariaLabel,
+    children,
+}: {
+    title?: string
+    ariaLabel?: string
+    children: ReactNode
+}) => {
+    const headingId = useId()
+    return (
+        <section
+            data-testid="working-list-section"
+            aria-label={ariaLabel}
+            aria-labelledby={title ? headingId : undefined}
+        >
+            {title && <h2 id={headingId}>{title}</h2>}
+            {children}
+        </section>
+    )
+}
+
 const RelationshipSet = () => (
     <>
-        <WorkingListSection title="Saved views in this program">
+        <TestSection title="Saved views in this program">
             <SavedListBar
                 lists={[savedView]}
                 dirty={false}
@@ -56,13 +77,13 @@ const RelationshipSet = () => (
                 onShare={() => undefined}
                 onDelete={() => undefined}
             />
-        </WorkingListSection>
-        <WorkingListSection ariaLabel="Tracked entity filters">
+        </TestSection>
+        <TestSection ariaLabel="Tracked entity filters">
             <WorkingListToolbar>
                 <span>Controls</span>
             </WorkingListToolbar>
-        </WorkingListSection>
-        <WorkingListSection ariaLabel="Working list results">
+        </TestSection>
+        <TestSection ariaLabel="Working list results">
             <WorkingListTableView
                 model={emptyModel}
                 visibleColumnCount={0}
@@ -76,7 +97,7 @@ const RelationshipSet = () => (
                 onPageSizeChange={() => undefined}
                 onRowOpen={() => undefined}
             />
-        </WorkingListSection>
+        </TestSection>
         <FilterButton
             defaultOpen
             client={client}

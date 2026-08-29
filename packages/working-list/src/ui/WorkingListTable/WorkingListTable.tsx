@@ -20,6 +20,7 @@ import type {
     WorkingListPageSize,
 } from '../../provider/contracts'
 import type { WorkingListCellValue } from '../../query/normalizeRows'
+import { DEFAULT_WORKING_LIST_SORT } from '../../query/serialize'
 import {
     getCellDisplayValue,
     type CellDisplayValue,
@@ -162,7 +163,7 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
     }
 }
 
-interface WorkingListTableProps {
+interface WorkingListDataTableProps {
     allFields: WorkingListField[]
     visibleColumnIds: string[]
     rows?: WorkingListDisplayRow[]
@@ -178,11 +179,11 @@ interface WorkingListTableProps {
     onColumnConfigurationChange: (columnIds: string[]) => void
     onPageChange: (page: number) => void
     onPageSizeChange: (pageSize: WorkingListPageSize) => void
-    onRowOpen: (row: WorkingListDisplayRow) => void
+    onRowOpen?: (row: WorkingListDisplayRow) => void
     onSortChange: (sort: WorkingListSort) => void
 }
 
-export const WorkingListTable = ({
+export const WorkingListDataTable = ({
     allFields,
     visibleColumnIds,
     rows = EMPTY_ROWS,
@@ -200,7 +201,7 @@ export const WorkingListTable = ({
     onPageSizeChange,
     onRowOpen,
     onSortChange,
-}: WorkingListTableProps) => {
+}: WorkingListDataTableProps) => {
     const translate = useWorkingListText()
     const showIssuesColumn = dataQualityMode === 'highlighted'
     const columns = useMemo(() => {
@@ -283,7 +284,8 @@ export const WorkingListTable = ({
             manualSorting: true,
             pageCount: -1,
             enableMultiSort: false,
-            enableSortingRemoval: false,
+            enableSortingRemoval: true,
+            sortDescFirst: false,
             state: {
                 columnOrder,
                 columnVisibility,
@@ -311,12 +313,14 @@ export const WorkingListTable = ({
             onSortingChange: (updater) => {
                 const next = functionalUpdate(updater, sorting)
                 const first = next[0]
-                if (first) {
-                    onSortChange({
-                        fieldId: first.id,
-                        direction: first.desc ? 'desc' : 'asc',
-                    })
-                }
+                onSortChange(
+                    first
+                        ? {
+                              fieldId: first.id,
+                              direction: first.desc ? 'desc' : 'asc',
+                          }
+                        : { ...DEFAULT_WORKING_LIST_SORT }
+                )
             },
         },
         (state) => ({

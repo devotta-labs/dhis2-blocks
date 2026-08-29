@@ -2,6 +2,7 @@ import React, { createContext, useContext, useMemo, useRef } from 'react'
 import { useStore } from 'zustand'
 import type {
     WorkingListActions,
+    WorkingListActionImplementation,
     WorkingListMeta,
     WorkingListState,
 } from './contracts'
@@ -18,9 +19,7 @@ export const WorkingListPublicContext =
 const usePublicContext = () => {
     const context = useContext(WorkingListPublicContext)
     if (!context) {
-        throw new Error(
-            'Working List hooks must be used within WorkingList.Provider.'
-        )
+        throw new Error('Working List hooks must be used within WorkingList.')
     }
     return context
 }
@@ -50,7 +49,7 @@ export const useWorkingListActions = (): WorkingListActions =>
     usePublicContext().actions
 
 export const useStableWorkingListActions = (
-    current: WorkingListActions
+    current: WorkingListActionImplementation
 ): WorkingListActions => {
     const currentRef = useRef(current)
     currentRef.current = current
@@ -64,13 +63,11 @@ export const useStableWorkingListActions = (
                 currentRef.current.setProgramStage(programStageId),
             setPage: (page) => currentRef.current.setPage(page),
             setPageSize: (pageSize) => currentRef.current.setPageSize(pageSize),
-            selectSavedList: (id) => currentRef.current.selectSavedList(id),
-            clearSavedListSelection: () =>
-                currentRef.current.clearSavedListSelection(),
-            createSavedList: (name) => currentRef.current.createSavedList(name),
-            updateSelectedSavedList: () =>
-                currentRef.current.updateSelectedSavedList(),
-            deleteSavedList: (id) => currentRef.current.deleteSavedList(id),
+            selectView: (id) => currentRef.current.selectView(id),
+            clearViewSelection: () => currentRef.current.clearViewSelection(),
+            createView: (name) => currentRef.current.createView(name),
+            updateSelectedView: () => currentRef.current.updateSelectedView(),
+            deleteView: (id) => currentRef.current.deleteView(id),
             downloadVisibleRows: () => currentRef.current.downloadVisibleRows(),
         }),
         []

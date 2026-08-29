@@ -1,5 +1,6 @@
 export {
     visibleEventFiltersAfterStageChange,
     visibleFiltersForConfiguration,
-    WorkingListFilters,
+    WorkingListFilterControls,
+    type WorkingListFilterControlsProps,
 } from './Filters'

@@ -299,16 +299,6 @@
                     "target": "@components/working-list/ui/Container/index.ts"
                 },
                 {
-                    "path": "packages/working-list/src/ui/Default/WorkingListDefault.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/Default/WorkingListDefault.tsx"
-                },
-                {
-                    "path": "packages/working-list/src/ui/Default/index.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/Default/index.ts"
-                },
-                {
                     "path": "packages/working-list/src/ui/FilterControls/CalendarRangeFields.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/FilterControls/CalendarRangeFields.tsx"
@@ -399,16 +389,6 @@
                     "target": "@components/working-list/ui/SavedViews/index.ts"
                 },
                 {
-                    "path": "packages/working-list/src/ui/Section/WorkingListSection.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/Section/WorkingListSection.tsx"
-                },
-                {
-                    "path": "packages/working-list/src/ui/Section/index.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/Section/index.ts"
-                },
-                {
                     "path": "packages/working-list/src/ui/Toolbar/WorkingListToolbar.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/Toolbar/WorkingListToolbar.tsx"
@@ -489,7 +469,7 @@
                     "target": "@components/working-list/ui/types.ts"
                 }
             ],
-            "docs": "Render WorkingList.Provider beneath the DHIS2 app-runtime provider and a TanStack QueryClientProvider. Import the installed source from your configured components alias and compose WorkingList.Default or the individual compound components."
+            "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs."
         }
     ]
 }

@@ -1,4 +1,4 @@
-import React, { act } from 'react'
+import React, { act, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { z } from 'zod'
 import type { WorkingListField, WorkingListSort } from '../../domain/model'
@@ -6,6 +6,7 @@ import type {
     WorkingListDisplayRow,
     WorkingListPageSize,
 } from '../../provider/contracts'
+import { WorkingListDataTable } from '../WorkingListTable/WorkingListTable'
 import {
     WorkingListTableView,
     type WorkingListTableHeaderView,
@@ -62,7 +63,7 @@ interface WorkingListTableScenario {
     isUpdating: boolean
     onPageChange: (page: number) => void
     onPageSizeChange: (pageSize: WorkingListPageSize) => void
-    onRowOpen: (row: WorkingListDisplayRow) => void
+    onRowOpen?: (row: WorkingListDisplayRow) => void
     onSortChange: (sort: WorkingListSort) => void
 }
 
@@ -219,6 +220,76 @@ const withActEnvironment = (run: () => void) => {
 }
 
 describe('WorkingListTable', () => {
+    it('renders the ascending, descending, and default states across three clicks', () => {
+        withActEnvironment(() => {
+            const container = document.createElement('div')
+            document.body.appendChild(container)
+            const root = createRoot(container)
+            const sortFields: WorkingListField[] = [
+                ...fields,
+                {
+                    id: 'createdAt',
+                    displayName: 'Registration date',
+                    source: 'system',
+                    scope: 'trackedEntity',
+                    valueType: 'DATETIME',
+                    filterable: true,
+                },
+            ]
+            const SortingHarness = () => {
+                const [sort, setSort] = useState<WorkingListSort>({
+                    fieldId: 'createdAt',
+                    direction: 'desc',
+                })
+                return (
+                    <WorkingListTextProvider translate={translate}>
+                        <WorkingListDataTable
+                            allFields={sortFields}
+                            visibleColumnIds={fields.map((field) => field.id)}
+                            sort={sort}
+                            page={1}
+                            pageSize={15}
+                            hasNextPage={false}
+                            isInitialLoading={false}
+                            isUpdating={false}
+                            formattingContext={{}}
+                            onColumnConfigurationChange={() => undefined}
+                            onPageChange={() => undefined}
+                            onPageSizeChange={() => undefined}
+                            onSortChange={setSort}
+                        />
+                    </WorkingListTextProvider>
+                )
+            }
+
+            try {
+                act(() => root.render(<SortingHarness />))
+                const sortButton = container.querySelector<HTMLButtonElement>(
+                    '[data-testid="sort-firstName"]'
+                )
+                const header = sortButton?.closest('th')
+
+                expect(sortButton?.textContent).toContain('↕')
+                expect(header?.getAttribute('aria-sort')).toBe('none')
+
+                act(() => sortButton?.click())
+                expect(sortButton?.textContent).toContain('↑')
+                expect(header?.getAttribute('aria-sort')).toBe('ascending')
+
+                act(() => sortButton?.click())
+                expect(sortButton?.textContent).toContain('↓')
+                expect(header?.getAttribute('aria-sort')).toBe('descending')
+
+                act(() => sortButton?.click())
+                expect(sortButton?.textContent).toContain('↕')
+                expect(header?.getAttribute('aria-sort')).toBe('none')
+            } finally {
+                act(() => root.unmount())
+                container.remove()
+            }
+        })
+    })
+
     it('opens a row by pointer or its accessible in-cell control without hijacking links', () => {
         withActEnvironment(() => {
             const container = document.createElement('div')
@@ -310,6 +381,44 @@ describe('WorkingListTable', () => {
                     )
                 })
                 expect(onRowOpen).toHaveBeenCalledTimes(2)
+            } finally {
+                act(() => root.unmount())
+                container.remove()
+            }
+        })
+    })
+
+    it('renders rows without pointer or keyboard affordances when no row callback is supplied', () => {
+        withActEnvironment(() => {
+            const container = document.createElement('div')
+            document.body.appendChild(container)
+            const root = renderTable(container, {
+                rows: [
+                    {
+                        id: 'tei-static',
+                        trackedEntityId: 'tei-static',
+                        values: {
+                            firstName: { valid: true, value: 'Static' },
+                        },
+                        issues: [],
+                    },
+                ],
+                onRowOpen: undefined,
+            })
+
+            try {
+                const row = container.querySelector<HTMLTableRowElement>(
+                    '[data-testid="working-list-row-tei-static"]'
+                )
+                const firstCell = row?.querySelector<HTMLTableCellElement>('td')
+
+                expect(row?.className).not.toContain('cursor-pointer')
+                expect(row?.hasAttribute('role')).toBe(false)
+                expect(row?.hasAttribute('tabindex')).toBe(false)
+                expect(
+                    row?.querySelector('[data-testid="row-open-tei-static"]')
+                ).toBeNull()
+                expect(firstCell?.onclick).toBeNull()
             } finally {
                 act(() => root.unmount())
                 container.remove()

@@ -18,18 +18,16 @@ const createActions = (): WorkingListActions => ({
     setProgramStage: jest.fn(() => Result.ok()),
     setPage: jest.fn(() => Result.ok()),
     setPageSize: jest.fn(() => Result.ok()),
-    selectSavedList: jest.fn(() => Result.ok()),
-    clearSavedListSelection: jest.fn(() => Result.ok()),
-    createSavedList: jest.fn(async () =>
-        Result.ok({ savedListId: 'SavedList01' })
-    ),
-    updateSelectedSavedList: jest.fn(async () => Result.ok()),
-    deleteSavedList: jest.fn(async () => Result.ok()),
+    selectView: jest.fn(() => Result.ok()),
+    clearViewSelection: jest.fn(() => Result.ok()),
+    createView: jest.fn(async () => Result.ok({ viewId: 'SavedList01' })),
+    updateSelectedView: jest.fn(async () => Result.ok()),
+    deleteView: jest.fn(async () => Result.ok()),
     downloadVisibleRows: jest.fn(() => Result.ok()),
 })
 
 describe('useStableWorkingListActions', () => {
-    it('keeps the public object and dispatchers stable while using current handlers', () => {
+    it('keeps the public object and dispatchers stable while using current handlers', async () => {
         const container = document.createElement('div')
         const root = createRoot(container)
         const firstHandlers = createActions()
@@ -51,6 +49,19 @@ describe('useStableWorkingListActions', () => {
         second?.setPage(3)
         expect(firstHandlers.setPage).not.toHaveBeenCalled()
         expect(secondHandlers.setPage).toHaveBeenCalledWith(3)
+
+        second?.selectView('View00000001')
+        expect(secondHandlers.selectView).toHaveBeenCalledWith('View00000001')
+
+        let createdViewId: string | undefined
+        await act(async () => {
+            const result = await second?.createView('New view')
+            if (result && Result.isOk(result)) {
+                createdViewId = result.value.viewId
+            }
+        })
+        expect(secondHandlers.createView).toHaveBeenCalledWith('New view')
+        expect(createdViewId).toBe('SavedList01')
 
         act(() => root.unmount())
     })

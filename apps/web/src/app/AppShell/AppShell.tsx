@@ -2,6 +2,12 @@ import { useConfig, useDataEngine } from '@dhis2/app-runtime'
 import { Button, CircularLoader, NoticeBox, Switch } from '@dhis2/ui'
 import {
     WorkingList,
+    WorkingListColumnSelector,
+    WorkingListFilterControls,
+    WorkingListTable,
+    WorkingListToolbar,
+    WorkingListToolbarActions,
+    WorkingListViewSwitcher,
     useWorkingListMeta,
     type WorkingListDataQualityMode,
     type WorkingListResultTarget,
@@ -478,12 +484,10 @@ export const AppShell = () => {
                                 }
                             />
                         </div>
-                        <WorkingList.Provider
+                        <WorkingList
                             programId={selectedProgramSummary.id}
                             orgUnitId={urlState.orgUnitId}
-                            selectedSavedListId={
-                                urlState.selectedTemplateId ?? null
-                            }
+                            viewId={urlState.selectedTemplateId ?? null}
                             pagination={{
                                 page: urlState.page ?? 1,
                                 pageSize: urlState.pageSize ?? 15,
@@ -495,42 +499,26 @@ export const AppShell = () => {
                                     pageSize,
                                 }))
                             }
-                            onSelectedSavedListChange={(selectedSavedListId) =>
+                            onViewChange={(viewId) =>
                                 setUrlState((current) => ({
                                     ...current,
-                                    selectedTemplateId: selectedSavedListId,
+                                    selectedTemplateId: viewId,
                                     page: 1,
                                 }))
                             }
                         >
                             <WorkingListDirtyBridge onChange={setDirty} />
-                            <WorkingList.Container>
-                                <WorkingList.Section
-                                    title={i18n.t(
-                                        'Saved views in this program'
-                                    )}
-                                >
-                                    <WorkingList.SavedViews />
-                                </WorkingList.Section>
-                                <WorkingList.Section
-                                    ariaLabel={i18n.t('Tracked entity filters')}
-                                >
-                                    <WorkingList.Toolbar>
-                                        <WorkingList.Columns />
-                                        <WorkingList.Filters />
-                                        <WorkingList.Actions />
-                                    </WorkingList.Toolbar>
-                                </WorkingList.Section>
-                                <WorkingList.Section
-                                    ariaLabel={i18n.t('Working list results')}
-                                >
-                                    <WorkingList.Results
-                                        dataQualityMode={dataQualityMode}
-                                        onClick={setOpenedRecord}
-                                    />
-                                </WorkingList.Section>
-                            </WorkingList.Container>
-                        </WorkingList.Provider>
+                            <WorkingListViewSwitcher />
+                            <WorkingListToolbar>
+                                <WorkingListColumnSelector />
+                                <WorkingListFilterControls />
+                                <WorkingListToolbarActions />
+                            </WorkingListToolbar>
+                            <WorkingListTable
+                                dataQualityMode={dataQualityMode}
+                                onRowClick={setOpenedRecord}
+                            />
+                        </WorkingList>
                     </main>
                 )}
 

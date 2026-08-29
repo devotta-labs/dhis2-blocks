@@ -64,6 +64,12 @@ Import the installed source through the project's components alias:
 ```tsx
 import {
     WorkingList,
+    WorkingListColumnSelector,
+    WorkingListFilterControls,
+    WorkingListTable,
+    WorkingListToolbar,
+    WorkingListToolbarActions,
+    WorkingListViewSwitcher,
     useWorkingListActions,
     useWorkingListMeta,
     useWorkingListState,
@@ -74,44 +80,78 @@ The installed components own their styling through Tailwind utility classes;
 the block does not require a separate stylesheet import. Adjust the import path
 above if the project's components alias differs from `@/components`.
 
-Render `WorkingList.Provider` beneath the DHIS2 app-runtime provider and a
-TanStack `QueryClientProvider`. Compose the standard UI with
-`WorkingList.Default`, or arrange the individual compound components:
+Render `WorkingList` beneath the DHIS2 app-runtime provider and a TanStack
+`QueryClientProvider`. The minimal complete composition is:
 
 ```tsx
-<WorkingList.Provider {...providerProps}>
-    <WorkingList.Default onClick={handleResultClick} />
-</WorkingList.Provider>
+<WorkingList programId={programId} orgUnitId={orgUnitId}>
+    <WorkingListViewSwitcher />
+
+    <WorkingListToolbar>
+        <WorkingListColumnSelector />
+        <WorkingListFilterControls />
+        <WorkingListToolbarActions />
+    </WorkingListToolbar>
+
+    <WorkingListTable onRowClick={openRecord} />
+</WorkingList>
 ```
 
-`selectedSavedListId` is required and accepts a saved-list ID or `null`. Pass
-`null` to start from the generated default list. As a defensive runtime
-fallback, an empty or whitespace-only string also selects the generated
-default instead of leaving selection loading indefinitely; callers should use
-`null` to express that intent.
-
-The base components use `WorkingList.Section` for their semantic regions. Give
-each section either a visible `title` or an `ariaLabel`, but never both:
+View selection and pagination are uncontrolled by default. `WorkingList`
+starts with the generated default view, page 1, and 15 rows per page. Use
+`defaultViewId` and `defaultPagination` to change those initial values. Optional
+change callbacks observe locally managed changes:
 
 ```tsx
-<WorkingList.Provider {...providerProps}>
-    <WorkingList.Container>
-        <WorkingList.Section title={t('Saved views in this program')}>
-            <WorkingList.SavedViews />
-        </WorkingList.Section>
-        <WorkingList.Section ariaLabel={t('Tracked entity filters')}>
-            <WorkingList.Toolbar>
-                <WorkingList.Columns />
-                <WorkingList.Filters />
-                <WorkingList.Actions />
-            </WorkingList.Toolbar>
-        </WorkingList.Section>
-        <WorkingList.Section ariaLabel={t('Working list results')}>
-            <WorkingList.Results onClick={handleResultClick} />
-        </WorkingList.Section>
-    </WorkingList.Container>
-</WorkingList.Provider>
+<WorkingList
+    programId={programId}
+    orgUnitId={orgUnitId}
+    defaultViewId={initialViewId}
+    defaultPagination={{ page: 1, pageSize: 25 }}
+    onViewChange={persistRecentView}
+    onPaginationChange={persistRecentPage}
+>
+    {/* composition above */}
+</WorkingList>
 ```
+
+Control either state independently when it belongs in a URL, router, or parent
+store. A controlled value must include its callback:
+
+```tsx
+<WorkingList
+    programId={programId}
+    orgUnitId={orgUnitId}
+    viewId={viewId}
+    onViewChange={setViewId}
+    pagination={pagination}
+    onPaginationChange={setPagination}
+>
+    {/* composition above */}
+</WorkingList>
+```
+
+`WorkingListViewSwitcher`, `WorkingListToolbar`, and `WorkingListTable` own safe
+localized accessible names. Structural components forward native element props
+and `className` for application-specific labeling and layout. `onRowClick` is
+optional: without it rows are static; providing it adds mouse and keyboard row
+opening. `WorkingListTable` also accepts
+`dataQualityMode="hidden" | "highlighted"`.
+
+The public API intentionally exposes only the flat root-prefixed composition
+shown above. The earlier compound members and saved-list-named root props are
+not supported.
+
+`WorkingList` defaults its instance lifetime to `programId`, so changing the
+program resets its uncontrolled state. When rendering multiple working lists,
+use React's reserved `key` to give each instance a stable identity:
+
+```tsx
+<WorkingList key={workingListKey ?? programId} {...props} />
+```
+
+A supplied React key overrides the outer instance identity; changing it replaces
+that instance even when `programId` stays the same.
 
 The private `@dhis2-blocks/working-list` workspace package remains only as the
 repository's canonical development and test harness. It is not a compiled or

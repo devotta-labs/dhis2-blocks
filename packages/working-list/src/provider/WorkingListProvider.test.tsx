@@ -63,12 +63,13 @@ describe('WorkingListProvider controlled selection', () => {
         }
         const render = (
             selectedSavedListId: string | null,
-            onSelectedSavedListChange: (id: string) => void
+            onSelectedSavedListChange: (id: string) => void,
+            orgUnitId = 'OrgUnit00001'
         ) => (
             <QueryClientProvider client={queryClient}>
                 <WorkingListProvider
                     programId="Program0001"
-                    orgUnitId="OrgUnit00001"
+                    orgUnitId={orgUnitId}
                     selectedSavedListId={selectedSavedListId}
                     onSelectedSavedListChange={onSelectedSavedListChange}
                     pagination={{ page: 3, pageSize: 15 }}
@@ -90,6 +91,17 @@ describe('WorkingListProvider controlled selection', () => {
         })
         const initialActions = observedActions.at(-1)
 
+        paginationChange.mockClear()
+        act(() =>
+            root.render(
+                render('SavedList01', firstSelectionChange, 'OrgUnit00002')
+            )
+        )
+        expect(paginationChange).toHaveBeenCalledWith({
+            page: 1,
+            pageSize: 15,
+        })
+
         act(() => root.render(render('SavedList02', secondSelectionChange)))
         expect(observedSelections.at(-1)).toEqual({
             status: 'pending',
@@ -98,7 +110,7 @@ describe('WorkingListProvider controlled selection', () => {
         expect(observedActions.at(-1)).toBe(initialActions)
 
         act(() => {
-            observedActions.at(-1)?.selectSavedList('SavedList03')
+            observedActions.at(-1)?.selectView('SavedList03')
         })
         expect(firstSelectionChange).not.toHaveBeenCalled()
         expect(secondSelectionChange).toHaveBeenCalledWith('SavedList03')

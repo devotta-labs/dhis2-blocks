@@ -1,87 +1,115 @@
 import type {
     AppliedFilter,
     ConfigurationCommandError,
-    CreateSavedListError,
-    DeleteSavedListError,
+    CreateViewError,
+    DeleteViewError,
     FilterOperator,
     FilterValue,
     PaginationCommandError,
-    SelectSavedListError,
-    UpdateSelectedSavedListError,
+    SelectViewError,
+    UpdateSelectedViewError,
     WorkingListActions,
+    WorkingListColumnSelectorProps,
     WorkingListConfiguration,
-    WorkingListContainerProps,
     WorkingListDataQualityMode,
-    WorkingListDefaultProps,
     WorkingListDisplayRow,
+    WorkingListFilterControlsProps,
     WorkingListMeta,
     WorkingListPageSize,
     WorkingListPagination,
-    WorkingListProviderProps,
-    WorkingListResultsProps,
+    WorkingListProps,
     WorkingListResultTarget,
-    WorkingListSectionProps,
     WorkingListSort,
     WorkingListState,
     WorkingListToolbarProps,
+    WorkingListToolbarActionsProps,
+    WorkingListTableProps,
+    WorkingListView,
+    WorkingListViewSwitcherProps,
 } from '../src'
+import { WorkingList } from '../src'
 
 export type SupportedWorkingListTypes = [
     AppliedFilter,
     ConfigurationCommandError,
-    CreateSavedListError,
-    DeleteSavedListError,
+    CreateViewError,
+    DeleteViewError,
     FilterOperator,
     FilterValue,
     PaginationCommandError,
-    SelectSavedListError,
-    UpdateSelectedSavedListError,
+    SelectViewError,
+    UpdateSelectedViewError,
     WorkingListActions,
+    WorkingListColumnSelectorProps,
     WorkingListConfiguration,
-    WorkingListContainerProps,
     WorkingListDataQualityMode,
-    WorkingListDefaultProps,
     WorkingListDisplayRow,
+    WorkingListFilterControlsProps,
     WorkingListMeta,
     WorkingListPageSize,
     WorkingListPagination,
-    WorkingListProviderProps,
-    WorkingListResultsProps,
+    WorkingListProps,
     WorkingListResultTarget,
-    WorkingListSectionProps,
     WorkingListSort,
     WorkingListState,
     WorkingListToolbarProps,
+    WorkingListToolbarActionsProps,
+    WorkingListTableProps,
+    WorkingListView,
+    WorkingListViewSwitcherProps,
 ]
 
-const providerProps = (
-    selectedSavedListId: string | null
-): WorkingListProviderProps => ({
+export const uncontrolledRootProps: WorkingListProps = {
     children: null,
     programId: 'Program0001',
     orgUnitId: 'OrgUnit00001',
-    selectedSavedListId,
-    onSelectedSavedListChange: () => undefined,
-    pagination: { page: 1, pageSize: 15 },
-    onPaginationChange: () => undefined,
-})
-
-type SelectionIsRequired = WorkingListProviderProps extends {
-    selectedSavedListId: string | null
 }
-    ? true
-    : false
 
-export const selectionIsRequired: SelectionIsRequired = true
+export const defaultedRootProps: WorkingListProps = {
+    children: null,
+    programId: 'Program0001',
+    orgUnitId: 'OrgUnit00001',
+    defaultViewId: 'View00000001',
+    onViewChange: () => undefined,
+    defaultPagination: { page: 1, pageSize: 25 },
+    onPaginationChange: () => undefined,
+}
 
-// Both a preselected saved-list ID and null are supported.
-export const supportedSelectionInputs = [
-    providerProps('SavedList01'),
-    providerProps(null),
-]
+export const controlledRootProps: WorkingListProps = {
+    children: null,
+    programId: 'Program0001',
+    orgUnitId: 'OrgUnit00001',
+    viewId: null,
+    onViewChange: () => undefined,
+    pagination: { page: 2, pageSize: 15 },
+    onPaginationChange: () => undefined,
+}
 
-// @ts-expect-error undefined is not a supported selection value.
-export const unsupportedUndefinedSelection = providerProps(undefined)
+// @ts-expect-error A controlled view requires its change callback.
+export const controlledViewWithoutCallback: WorkingListProps = {
+    children: null,
+    programId: 'Program0001',
+    orgUnitId: 'OrgUnit00001',
+    viewId: 'View00000001',
+}
+
+// @ts-expect-error Controlled pagination requires its change callback.
+export const controlledPaginationWithoutCallback: WorkingListProps = {
+    children: null,
+    programId: 'Program0001',
+    orgUnitId: 'OrgUnit00001',
+    pagination: { page: 2, pageSize: 15 },
+}
+
+// @ts-expect-error Controlled and uncontrolled view props cannot be combined.
+export const conflictingViewModes: WorkingListProps = {
+    children: null,
+    programId: 'Program0001',
+    orgUnitId: 'OrgUnit00001',
+    viewId: 'View00000001',
+    defaultViewId: 'View00000002',
+    onViewChange: () => undefined,
+}
 
 // Nested slices are intentionally available through the aggregate contracts,
 // not as additional names on the public entry point.
@@ -110,3 +138,46 @@ export type { WorkingListSelectionMeta } from '../src'
 export type { WorkingListPaginationProps } from '../src'
 // @ts-expect-error WorkingListSelectionProps is not a public alias.
 export type { WorkingListSelectionProps } from '../src'
+
+// Removed composition and saved-list compatibility names are intentionally not
+// part of the canonical entry point.
+// @ts-expect-error WorkingListProviderProps is not public.
+export type { WorkingListProviderProps } from '../src'
+// @ts-expect-error WorkingListContainerProps is not public.
+export type { WorkingListContainerProps } from '../src'
+// @ts-expect-error WorkingListSectionProps is not public.
+export type { WorkingListSectionProps } from '../src'
+// @ts-expect-error WorkingListDefaultProps is not public.
+export type { WorkingListDefaultProps } from '../src'
+// @ts-expect-error WorkingListResultsProps is not public.
+export type { WorkingListResultsProps } from '../src'
+// @ts-expect-error SelectSavedListError is not public.
+export type { SelectSavedListError } from '../src'
+// @ts-expect-error CreateSavedListError is not public.
+export type { CreateSavedListError } from '../src'
+// @ts-expect-error UpdateSelectedSavedListError is not public.
+export type { UpdateSelectedSavedListError } from '../src'
+// @ts-expect-error DeleteSavedListError is not public.
+export type { DeleteSavedListError } from '../src'
+
+export const legacyControlledRootProps: WorkingListProps = {
+    children: null,
+    programId: 'Program0001',
+    orgUnitId: 'OrgUnit00001',
+    // @ts-expect-error Legacy controlled view props are not accepted.
+    selectedSavedListId: 'SavedList01',
+    onSelectedSavedListChange: () => undefined,
+}
+
+declare const actions: WorkingListActions
+// @ts-expect-error Saved-list action aliases are not exposed.
+actions.selectSavedList('SavedList01')
+
+// @ts-expect-error The provider is owned by the root and is not a compound member.
+export const legacyProviderMember = WorkingList.Provider
+// @ts-expect-error The container is owned by the root and is not a compound member.
+export const legacyContainerMember = WorkingList.Container
+// @ts-expect-error Legacy default composition is not exposed.
+export const legacyDefaultMember = WorkingList.Default
+// @ts-expect-error Legacy results composition is not exposed.
+export const legacyResultsMember = WorkingList.Results

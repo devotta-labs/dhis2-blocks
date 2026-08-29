@@ -10,11 +10,15 @@ import {
     type FilterValue,
     type WorkingListField,
 } from '../../domain/model'
-import type { FilterEditorKind } from '../../registry/valueTypes'
 import {
-    defaultWorkingListTranslate,
-    type WorkingListTranslate,
-} from '../WorkingListText'
+    fieldDisplayName,
+    localizedField,
+    optionDisplayName,
+} from '../../domain/filterControlPolicy'
+import type { FilterEditorKind } from '../../registry/valueTypes'
+import type { WorkingListTranslate } from '../WorkingListText'
+
+export { fieldDisplayName, localizedField, optionDisplayName }
 
 export const translatedOperator = (
     operator: FilterOperator,
@@ -47,71 +51,6 @@ export const translatedOperator = (
             return translate('Is not empty')
     }
 }
-
-export const fieldDisplayName = (
-    field: WorkingListField,
-    translate: WorkingListTranslate = defaultWorkingListTranslate
-) => {
-    if (field.displayNameIsMetadata) {
-        return field.displayName
-    }
-    const labels = new Map([
-        ['enrollmentStatus', translate('Enrollment status')],
-        ['enrolledAt', translate('Enrollment date')],
-        ['enrollmentOccurredAt', translate('Incident date')],
-        ['followUp', translate('Follow up')],
-        ['assignedUser', translate('Assigned to')],
-        ['eventOccurredAt', translate('Report date')],
-        ['eventStatus', translate('Event status')],
-        ['eventScheduledAt', translate('Scheduled date')],
-        ['eventAssignedUser', translate('Assigned to')],
-        ['programStage', translate('Program stage')],
-        ['createdAt', translate('Registration date')],
-        ['programOwnerId', translate('Owner organisation unit')],
-        ['eventOrgUnit', translate('Event organisation unit')],
-    ])
-    return labels.get(field.id) ?? field.displayName
-}
-
-export const optionDisplayName = (
-    field: WorkingListField,
-    option: { code: string; displayName: string },
-    translate: WorkingListTranslate = defaultWorkingListTranslate
-) => {
-    if (field.source !== 'system') {
-        return option.displayName
-    }
-    switch (option.code) {
-        case 'ACTIVE':
-            return translate('Active')
-        case 'COMPLETED':
-            return translate('Completed')
-        case 'CANCELLED':
-            return translate('Cancelled')
-        case 'SCHEDULE':
-            return translate('Scheduled')
-        case 'OVERDUE':
-            return translate('Overdue')
-        case 'SKIPPED':
-            return translate('Skipped')
-        case 'VISITED':
-            return translate('Visited')
-        default:
-            return option.displayName
-    }
-}
-
-export const localizedField = (
-    field: WorkingListField,
-    translate: WorkingListTranslate = defaultWorkingListTranslate
-): WorkingListField => ({
-    ...field,
-    displayName: fieldDisplayName(field, translate),
-    options: field.options?.map((option) => ({
-        ...option,
-        displayName: optionDisplayName(field, option, translate),
-    })),
-})
 
 export const RelativeDatePeriodSchema = z.enum(RELATIVE_DATE_PERIODS)
 

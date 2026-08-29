@@ -20,14 +20,6 @@ export default defineConfig({
             {
                 test: {
                     ...sharedProjectOptions,
-                    name: 'jsdom',
-                    environment: 'jsdom',
-                    include: ['src/App.test.tsx'],
-                },
-            },
-            {
-                test: {
-                    ...sharedProjectOptions,
                     name: 'browser',
                     include: ['src/app/**/*.test.tsx'],
                     browser: {

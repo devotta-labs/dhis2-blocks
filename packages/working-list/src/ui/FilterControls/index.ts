@@ -7,6 +7,5 @@ export {
     canonicalDateToCalendarInput,
     fieldDisplayName,
     localizedField,
-    usesMultipleOptionSelection,
     type StrictCalendarInputProps,
 } from './FilterControls'

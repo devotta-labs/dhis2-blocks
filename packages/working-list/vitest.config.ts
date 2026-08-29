@@ -15,16 +15,6 @@ export default defineConfig({
                     name: 'node',
                     environment: 'node',
                     include: ['src/**/*.test.ts'],
-                    exclude: ['src/ui/**/*.test.ts'],
-                },
-            },
-            {
-                test: {
-                    ...sharedProjectOptions,
-                    name: 'jsdom',
-                    environment: 'jsdom',
-                    include: ['src/ui/**/*.test.ts'],
-                    setupFiles: ['./test/setup.ts'],
                 },
             },
             {

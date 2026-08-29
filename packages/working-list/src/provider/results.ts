@@ -1,11 +1,11 @@
 import type { FieldCatalog, WorkingListField } from '../domain/model'
+import { fieldDisplayName } from '../domain/filterControlPolicy'
 import type { WorkingListPage } from '../query/fetchers'
 import {
     getCellDisplayValue,
     type CellFormattingContext,
 } from '../registry/valueTypes'
 import type { WorkingListTranslate } from '../ui/WorkingListText'
-import { fieldDisplayName } from '../ui/FilterControls/filterValueSupport'
 import type {
     WorkingListConfiguration,
     WorkingListDisplayRow,

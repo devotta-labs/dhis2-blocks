@@ -84,6 +84,11 @@
                     "target": "@components/working-list/domain/canonicalValue.ts"
                 },
                 {
+                    "path": "packages/working-list/src/domain/filterControlPolicy.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/filterControlPolicy.ts"
+                },
+                {
                     "path": "packages/working-list/src/domain/model.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/domain/model.ts"
@@ -97,6 +102,11 @@
                     "path": "packages/working-list/src/domain/staleReferences.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/domain/staleReferences.ts"
+                },
+                {
+                    "path": "packages/working-list/src/domain/visibleEventFilters.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/visibleEventFilters.ts"
                 },
                 {
                     "path": "packages/working-list/src/index.ts",

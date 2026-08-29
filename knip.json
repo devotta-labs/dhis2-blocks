@@ -88,7 +88,6 @@
             "entry": [
                 "src/**/*.{test,spec}.{ts,tsx}",
                 "src/**/__tests__/**/*.{ts,tsx}",
-                "test/{betterResultMock,setup,styleMock}.ts",
                 "type-tests/**/*.ts"
             ],
             "project": [
@@ -97,7 +96,6 @@
                 "type-tests/**/*.ts"
             ],
             "includeEntryExports": true,
-            "ignoreDependencies": ["@tanstack/table-core"],
             "ignoreIssues": {
                 "src/index.ts": [
                     "exports",

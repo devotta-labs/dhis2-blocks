@@ -12,9 +12,12 @@ interface ObservedProviderProps {
     onPaginationChange(next: WorkingListPagination): void
 }
 
-const observedProviders: ObservedProviderProps[] = []
+const { observedProviders } = vi.hoisted(() => ({
+    // SAFETY: Every entry is written by the typed provider mock below.
+    observedProviders: [] as ObservedProviderProps[],
+}))
 
-jest.mock('../../provider/WorkingListProvider', () => ({
+vi.mock('../../provider/WorkingListProvider', () => ({
     WorkingListProvider: (
         props: ObservedProviderProps & { children: React.ReactNode }
     ) => {
@@ -23,7 +26,7 @@ jest.mock('../../provider/WorkingListProvider', () => ({
     },
 }))
 
-jest.mock('../Container', () => ({
+vi.mock('../Container', () => ({
     WorkingListContainer: ({
         children,
         ...props
@@ -49,9 +52,9 @@ describe('WorkingList root state', () => {
     it('provides independent uncontrolled view and pagination defaults with notifications', () => {
         const container = document.createElement('div')
         const root = createRoot(container)
-        const firstViewChange = jest.fn()
-        const secondViewChange = jest.fn()
-        const firstPaginationChange = jest.fn()
+        const firstViewChange = vi.fn()
+        const secondViewChange = vi.fn()
+        const firstPaginationChange = vi.fn()
 
         act(() => {
             root.render(
@@ -156,8 +159,8 @@ describe('WorkingList root state', () => {
     it('keeps controlled values authoritative', () => {
         const container = document.createElement('div')
         const root = createRoot(container)
-        const onViewChange = jest.fn()
-        const onPaginationChange = jest.fn()
+        const onViewChange = vi.fn()
+        const onPaginationChange = vi.fn()
 
         act(() => {
             root.render(
@@ -226,7 +229,7 @@ describe('WorkingList root state', () => {
     })
 
     it('throws descriptive errors for invalid controlled runtime props', () => {
-        const consoleError = jest
+        const consoleError = vi
             .spyOn(console, 'error')
             .mockImplementation(() => undefined)
         const viewContainer = document.createElement('div')

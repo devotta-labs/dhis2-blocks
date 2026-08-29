@@ -1,7 +1,7 @@
 /* oxlint-disable anti-slop/no-module-mocking -- The view-switcher boundary is isolated from saved-view data behavior already covered separately. */
 import { Result } from 'better-result'
-import React, { act } from 'react'
-import { createRoot } from 'react-dom/client'
+import React from 'react'
+import { render } from 'vitest-browser-react'
 import type {
     WorkingListActions,
     WorkingListMeta,
@@ -14,7 +14,7 @@ import { WorkingListTable } from '../Results'
 import { WorkingListToolbar } from '../Toolbar'
 import { WorkingListTextProvider } from '../WorkingListText'
 
-jest.mock('../SavedViews', () => ({
+vi.mock('../SavedViews', () => ({
     WorkingListSavedViews: () => <div data-testid="saved-views-content" />,
 }))
 
@@ -53,155 +53,114 @@ const meta = (lifecycle: WorkingListMeta['lifecycle']): WorkingListMeta => ({
     fields: [],
 })
 
-const withActEnvironment = (run: () => void) => {
-    const original = globalThis.IS_REACT_ACT_ENVIRONMENT
-    globalThis.IS_REACT_ACT_ENVIRONMENT = true
-    try {
-        run()
-    } finally {
-        globalThis.IS_REACT_ACT_ENVIRONMENT = original
-    }
-}
-
 describe('WorkingList structural components', () => {
-    it('provides localized accessible defaults and forwards native props', () => {
-        withActEnvironment(() => {
-            const container = document.createElement('div')
-            const root = createRoot(container)
-            const store = createWorkingListProviderStore(
-                meta({ status: 'pending' })
-            )
+    it('provides localized accessible defaults and forwards native props', async () => {
+        const store = createWorkingListProviderStore(
+            meta({ status: 'pending' })
+        )
+        const screen = await render(
+            <WorkingListTextProvider translate={(message) => message}>
+                <WorkingListPublicContext.Provider value={{ store, actions }}>
+                    <WorkingListViewSwitcher
+                        className="views-class"
+                        data-consumer="views"
+                    />
+                    <WorkingListToolbar
+                        className="toolbar-class"
+                        data-consumer="toolbar"
+                    >
+                        <span>Controls</span>
+                    </WorkingListToolbar>
+                    <WorkingListTable
+                        className="table-class"
+                        data-consumer="table"
+                    />
+                </WorkingListPublicContext.Provider>
+            </WorkingListTextProvider>
+        )
 
-            try {
-                act(() => {
-                    root.render(
-                        <WorkingListTextProvider
-                            translate={(message) => message}
-                        >
-                            <WorkingListPublicContext.Provider
-                                value={{ store, actions }}
-                            >
-                                <WorkingListViewSwitcher
-                                    className="views-class"
-                                    data-consumer="views"
-                                />
-                                <WorkingListToolbar
-                                    className="toolbar-class"
-                                    data-consumer="toolbar"
-                                >
-                                    <span>Controls</span>
-                                </WorkingListToolbar>
-                                <WorkingListTable
-                                    className="table-class"
-                                    data-consumer="table"
-                                />
-                            </WorkingListPublicContext.Provider>
-                        </WorkingListTextProvider>
-                    )
+        await expect
+            .element(
+                screen.getByRole('region', {
+                    name: 'Saved views in this program',
                 })
+            )
+            .toBeVisible()
+        const viewSwitcher = screen.container.querySelector<HTMLElement>(
+            '[data-testid="working-list-view-switcher"]'
+        )
+        const heading = viewSwitcher?.querySelector('h2')
+        expect(viewSwitcher?.getAttribute('aria-labelledby')).toBe(heading?.id)
+        expect(viewSwitcher?.className).toBe('views-class')
+        expect(viewSwitcher?.dataset.consumer).toBe('views')
 
-                const viewSwitcher = container.querySelector<HTMLElement>(
-                    '[data-testid="working-list-view-switcher"]'
-                )
-                const heading = viewSwitcher?.querySelector('h2')
-                expect(heading?.textContent).toBe('Saved views in this program')
-                expect(viewSwitcher?.getAttribute('aria-labelledby')).toBe(
-                    heading?.id
-                )
-                expect(viewSwitcher?.className).toBe('views-class')
-                expect(viewSwitcher?.dataset.consumer).toBe('views')
+        await expect
+            .element(
+                screen.getByRole('toolbar', { name: 'Working list controls' })
+            )
+            .toBeVisible()
+        const toolbar = screen.container.querySelector<HTMLElement>(
+            '[data-testid="working-list-toolbar"]'
+        )
+        expect(toolbar?.className).toContain('toolbar-class')
+        expect(toolbar?.className).toContain('items-center')
+        expect(toolbar?.className).not.toContain('items-start')
+        expect(toolbar?.className).toContain('gap-1')
+        expect(toolbar?.className).not.toContain('gap-2')
+        expect(toolbar?.dataset.consumer).toBe('toolbar')
 
-                const toolbar = container.querySelector<HTMLElement>(
-                    '[data-testid="working-list-toolbar"]'
-                )
-                expect(toolbar?.getAttribute('role')).toBe('toolbar')
-                expect(toolbar?.getAttribute('aria-label')).toBe(
-                    'Working list controls'
-                )
-                expect(toolbar?.className).toContain('toolbar-class')
-                expect(toolbar?.className).toContain('items-center')
-                expect(toolbar?.className).not.toContain('items-start')
-                expect(toolbar?.className).toContain('gap-1')
-                expect(toolbar?.className).not.toContain('gap-2')
-                expect(toolbar?.dataset.consumer).toBe('toolbar')
-
-                const table = container.querySelector<HTMLElement>(
-                    '[data-testid="working-list-table-section"]'
-                )
-                expect(table?.tagName).toBe('SECTION')
-                expect(table?.getAttribute('aria-label')).toBe(
-                    'Working list results'
-                )
-                expect(table?.className).toBe('table-class')
-                expect(table?.dataset.consumer).toBe('table')
-            } finally {
-                act(() => root.unmount())
-            }
-        })
+        await expect
+            .element(
+                screen.getByRole('region', { name: 'Working list results' })
+            )
+            .toBeVisible()
+        const table = screen.container.querySelector<HTMLElement>(
+            '[data-testid="working-list-table-section"]'
+        )
+        expect(table?.tagName).toBe('SECTION')
+        expect(table?.className).toBe('table-class')
+        expect(table?.dataset.consumer).toBe('table')
     })
 
-    it('keeps lifecycle loading and fatal errors at the outer container', () => {
-        withActEnvironment(() => {
-            const container = document.createElement('div')
-            const root = createRoot(container)
-            const store = createWorkingListProviderStore(
-                meta({ status: 'pending' })
-            )
+    it('keeps lifecycle loading and fatal errors at the outer container', async () => {
+        const store = createWorkingListProviderStore(
+            meta({ status: 'pending' })
+        )
+        const screen = await render(
+            <WorkingListTextProvider translate={(message) => message}>
+                <WorkingListPublicContext.Provider value={{ store, actions }}>
+                    <WorkingListContainer>
+                        <span data-testid="composed-child">Child</span>
+                    </WorkingListContainer>
+                </WorkingListPublicContext.Provider>
+            </WorkingListTextProvider>
+        )
 
-            try {
-                act(() => {
-                    root.render(
-                        <WorkingListTextProvider
-                            translate={(message) => message}
-                        >
-                            <WorkingListPublicContext.Provider
-                                value={{ store, actions }}
-                            >
-                                <WorkingListContainer>
-                                    <span data-testid="composed-child">
-                                        Child
-                                    </span>
-                                </WorkingListContainer>
-                            </WorkingListPublicContext.Provider>
-                        </WorkingListTextProvider>
-                    )
-                })
+        await expect
+            .element(screen.getByTestId('working-list-initializing'))
+            .toBeVisible()
+        expect(
+            screen.container
+                .querySelector('[data-testid="working-list"]')
+                ?.hasAttribute('hidden')
+        ).toBe(true)
+        expect(
+            screen.container.querySelector('[data-testid="composed-child"]')
+        ).not.toBeNull()
 
-                expect(
-                    container.querySelector(
-                        '[data-testid="working-list-initializing"]'
-                    )
-                ).not.toBeNull()
-                expect(
-                    container
-                        .querySelector('[data-testid="working-list"]')
-                        ?.hasAttribute('hidden')
-                ).toBe(true)
-                expect(
-                    container.querySelector('[data-testid="composed-child"]')
-                ).not.toBeNull()
-
-                act(() =>
-                    store.setState((current) => ({
-                        meta: {
-                            ...current.meta,
-                            lifecycle: {
-                                status: 'error',
-                                error: new WorkingListInitializationError({
-                                    message: 'Failed to initialize',
-                                }),
-                            },
-                        },
-                    }))
-                )
-                expect(
-                    container.querySelector(
-                        '[data-testid="working-list-lifecycle-error"]'
-                    )
-                ).not.toBeNull()
-            } finally {
-                act(() => root.unmount())
-            }
-        })
+        store.setState((current) => ({
+            meta: {
+                ...current.meta,
+                lifecycle: {
+                    status: 'error',
+                    error: new WorkingListInitializationError({
+                        message: 'Failed to initialize',
+                    }),
+                },
+            },
+        }))
+        await expect
+            .element(screen.getByTestId('working-list-lifecycle-error'))
+            .toBeVisible()
     })
 })

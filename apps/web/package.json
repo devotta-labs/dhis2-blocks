@@ -7,8 +7,9 @@
     "scripts": {
         "build": "d2-app-scripts build",
         "start": "d2-app-scripts start",
-        "test": "d2-app-scripts test",
-        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "test:browser": "vitest run --project browser",
+        "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json --noEmit",
         "deploy": "d2-app-scripts deploy",
         "lint": "oxlint --deny-warnings src"
     },
@@ -26,22 +27,15 @@
     "devDependencies": {
         "@dhis2/cli-app-scripts": "12.10.3",
         "@tailwindcss/vite": "^4.3.3",
-        "@types/jest": "^30.0.0",
         "@types/react": "^18.3.31",
         "@types/react-dom": "^18.3.7",
+        "@vitest/browser-playwright": "4.1.11",
+        "jsdom": "30.0.1",
+        "playwright": "1.62.1",
         "tailwindcss": "^4.3.3",
         "typescript": "^5.9.3",
-        "vite": "^7.3.0"
-    },
-    "jest": {
-        "moduleNameMapper": {
-            "\\.(css|less)$": "<rootDir>/../../packages/working-list/test/styleMock.ts",
-            "^better-result$": "<rootDir>/../../packages/working-list/test/betterResultMock.ts",
-            "^@tanstack/table-core/(.*)$": "<rootDir>/../../packages/working-list/node_modules/@tanstack/react-table/../table-core/dist/$1.js"
-        },
-        "transformIgnorePatterns": [
-            "/node_modules/(?!\\.pnpm/(?:@tanstack\\+)|@tanstack/)"
-        ],
-        "watchman": false
+        "vite": "^7.3.0",
+        "vitest": "4.1.11",
+        "vitest-browser-react": "2.2.0"
     }
 }

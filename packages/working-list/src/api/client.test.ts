@@ -13,14 +13,14 @@ const ResponseSchema = z
 describe('validated DataEngine-like client', () => {
     it('accepts unknown additional fields while validating known fields', async () => {
         const engine: DataEngineLike = {
-            query: jest.fn().mockResolvedValue({
+            query: vi.fn().mockResolvedValue({
                 workingListResource: {
                     id: 'Result00001',
                     required: 1,
                     futureField: 'kept',
                 },
             }),
-            mutate: jest.fn(),
+            mutate: vi.fn(),
         }
 
         await expect(
@@ -37,14 +37,14 @@ describe('validated DataEngine-like client', () => {
 
     it('fails hard for malformed envelopes and resources', async () => {
         const missingEnvelope: DataEngineLike = {
-            query: jest.fn().mockResolvedValue({ wrongKey: {} }),
-            mutate: jest.fn(),
+            query: vi.fn().mockResolvedValue({ wrongKey: {} }),
+            mutate: vi.fn(),
         }
         const malformedResource: DataEngineLike = {
-            query: jest.fn().mockResolvedValue({
+            query: vi.fn().mockResolvedValue({
                 workingListResource: { id: 'Result00001' },
             }),
-            mutate: jest.fn(),
+            mutate: vi.fn(),
         }
 
         await expect(

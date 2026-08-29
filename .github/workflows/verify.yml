@@ -41,6 +41,9 @@ jobs:
             - name: typescript
               run: pnpm typecheck
 
+            - name: component browser
+              run: pnpm exec playwright install --with-deps chromium
+
             - name: test
               run: pnpm test
 

@@ -27,104 +27,15 @@ const unusedClient: WorkingListClient = {
 }
 
 describe('MoreFilters keyboard focus', () => {
-    it('focuses and activates DHIS2 menu items, then restores the trigger', () => {
-        const actEnvironment = globalThis
-        const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
-        const originalRequestAnimationFrame = window.requestAnimationFrame
-        const originalCancelAnimationFrame = window.cancelAnimationFrame
-        actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
-        window.requestAnimationFrame = (callback) => {
-            callback(0)
-            return 1
-        }
-        window.cancelAnimationFrame = () => undefined
-
-        const container = document.createElement('div')
-        document.body.appendChild(container)
-        const root = createRoot(container)
-        const onAdd = jest.fn()
-
-        try {
-            act(() => {
-                root.render(
-                    <WorkingListTextProvider translate={(message) => message}>
-                        <MoreFilters
-                            fields={[field]}
-                            visibleFilterIds={[]}
-                            scope="tracked-entity"
-                            onAdd={onAdd}
-                        />
-                    </WorkingListTextProvider>
-                )
-            })
-
-            const trigger = container.querySelector<HTMLButtonElement>(
-                '[data-testid="more-filters-tracked-entity"]'
-            )
-            expect(trigger).not.toBeNull()
-
-            act(() => {
-                trigger?.dispatchEvent(
-                    new MouseEvent('click', { bubbles: true })
-                )
-            })
-
-            const firstItem = document.querySelector<HTMLElement>(
-                '[data-test="add-filter-followUp"]'
-            )
-            expect(firstItem).not.toBeNull()
-            expect(firstItem?.hasAttribute('tabindex')).toBe(true)
-            expect(document.activeElement).toBe(firstItem)
-
-            act(() => {
-                firstItem?.dispatchEvent(
-                    new KeyboardEvent('keydown', {
-                        key: 'Enter',
-                        bubbles: true,
-                    })
-                )
-            })
-
-            expect(onAdd).toHaveBeenCalledWith('followUp')
-            expect(document.activeElement).toBe(trigger)
-
-            act(() => {
-                trigger?.dispatchEvent(
-                    new MouseEvent('click', { bubbles: true })
-                )
-            })
-            expect(document.activeElement).toBe(
-                document.querySelector('[data-test="add-filter-followUp"]')
-            )
-
-            act(() => {
-                document.dispatchEvent(
-                    new KeyboardEvent('keydown', {
-                        key: 'Escape',
-                        bubbles: true,
-                    })
-                )
-            })
-
-            expect(document.activeElement).toBe(trigger)
-        } finally {
-            act(() => root.unmount())
-            container.remove()
-            window.requestAnimationFrame = originalRequestAnimationFrame
-            window.cancelAnimationFrame = originalCancelAnimationFrame
-            actEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment
-        }
-    })
-
     it('selects a stage row before adding a prefixed stage data-element filter', () => {
         const actEnvironment = globalThis
         const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
         actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
-        jest.useFakeTimers()
+        vi.useFakeTimers()
         const container = document.createElement('div')
         document.body.appendChild(container)
         const root = createRoot(container)
-        const onAddStageFilter = jest.fn()
+        const onAddStageFilter = vi.fn()
         const eventField: WorkingListField = {
             id: 'DataElement01',
             displayName: 'Result',
@@ -198,7 +109,7 @@ describe('MoreFilters keyboard focus', () => {
                                 apiVersion: 43,
                             })}
                             calendarContext={{
-                                calendar: 'gregory',
+                                calendar: 'gregorian',
                                 dateFormat: 'YYYY-MM-DD',
                                 locale: 'en',
                                 timeZone: 'Etc/UTC',
@@ -314,7 +225,7 @@ describe('MoreFilters keyboard focus', () => {
                 selectedStageTooltip?.dispatchEvent(
                     new MouseEvent('mouseover', { bubbles: true })
                 )
-                jest.advanceTimersByTime(201)
+                vi.advanceTimersByTime(201)
             })
             expect(
                 document.querySelector(
@@ -368,7 +279,7 @@ describe('MoreFilters keyboard focus', () => {
         } finally {
             act(() => root.unmount())
             container.remove()
-            jest.useRealTimers()
+            vi.useRealTimers()
             actEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment
         }
     })

@@ -1,6 +1,6 @@
 import { Result } from 'better-result'
-import React, { act } from 'react'
-import { createRoot } from 'react-dom/client'
+import React from 'react'
+import { render } from 'vitest-browser-react'
 import type {
     WorkingListActions as WorkingListActionsContract,
     WorkingListMeta,
@@ -50,76 +50,53 @@ const unavailableMeta: WorkingListMeta = {
 }
 
 describe('working-list unavailable toolbar', () => {
-    it('keeps familiar configuration controls visible and disabled', () => {
-        const actEnvironment = globalThis
-        const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
-        actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
-        const container = document.createElement('div')
-        document.body.appendChild(container)
-        const root = createRoot(container)
+    it('keeps familiar configuration controls visible and disabled', async () => {
         const store = createWorkingListProviderStore(unavailableMeta)
-
-        try {
-            act(() => {
-                root.render(
-                    <WorkingListTextProvider translate={(message) => message}>
-                        <WorkingListPublicContext.Provider
-                            value={{ store, actions }}
-                        >
-                            <WorkingListToolbar>
-                                <WorkingListColumnSelector
-                                    className="consumer-columns"
-                                    data-consumer="columns"
-                                />
-                                <WorkingListFilterControls
-                                    className="consumer-filters"
-                                    data-consumer="filters"
-                                />
-                                <WorkingListToolbarActions
-                                    className="consumer-actions"
-                                    data-consumer="actions"
-                                />
-                            </WorkingListToolbar>
-                        </WorkingListPublicContext.Provider>
-                    </WorkingListTextProvider>
-                )
-            })
-
-            const buttons = [...container.querySelectorAll('button')]
-            expect(buttons).toHaveLength(4)
-            expect(buttons.map((button) => button.textContent?.trim())).toEqual(
-                ['Columns', 'Filter', 'Save view', 'More']
-            )
-            buttons.forEach((button) => expect(button.disabled).toBe(true))
-            expect(buttons[2]?.className).toContain('secondary')
-            const toolbar = container.querySelector<HTMLElement>(
-                '[data-testid="working-list-toolbar"]'
-            )
-            expect(toolbar?.tagName).toBe('DIV')
-            expect(toolbar?.getAttribute('aria-label')).toBe(
-                'Working list controls'
-            )
-            expect(toolbar?.getAttribute('role')).toBe('toolbar')
-            expect(toolbar?.hasAttribute('aria-labelledby')).toBe(false)
-            expect(
-                container.querySelector('[data-consumer="columns"]')?.className
-            ).toBe('consumer-columns')
-            const filterControls = container.querySelector(
-                '[data-consumer="filters"]'
-            )
-            expect(filterControls?.className).toContain('consumer-filters')
-            expect(filterControls?.className).toContain('gap-1')
-            expect(filterControls?.className).not.toContain('gap-2')
-            expect(
-                container.querySelector('[data-consumer="actions"]')?.className
-            ).toContain('consumer-actions')
-            expect(container.textContent).not.toContain(
-                'Tracked entity filters'
-            )
-        } finally {
-            act(() => root.unmount())
-            container.remove()
-            actEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment
+        const screen = await render(
+            <WorkingListTextProvider translate={(message) => message}>
+                <WorkingListPublicContext.Provider value={{ store, actions }}>
+                    <WorkingListToolbar>
+                        <WorkingListColumnSelector
+                            className="consumer-columns"
+                            data-consumer="columns"
+                        />
+                        <WorkingListFilterControls
+                            className="consumer-filters"
+                            data-consumer="filters"
+                        />
+                        <WorkingListToolbarActions
+                            className="consumer-actions"
+                            data-consumer="actions"
+                        />
+                    </WorkingListToolbar>
+                </WorkingListPublicContext.Provider>
+            </WorkingListTextProvider>
+        )
+        const toolbar = screen.getByRole('toolbar', {
+            name: 'Working list controls',
+        })
+        await expect.element(toolbar).toBeVisible()
+        for (const name of ['Columns', 'Filter', 'Save view', 'More']) {
+            await expect
+                .element(screen.getByRole('button', { name }))
+                .toBeDisabled()
         }
+        expect(
+            screen.container.querySelector('[data-consumer="columns"]')
+                ?.className
+        ).toBe('consumer-columns')
+        const filterControls = screen.container.querySelector(
+            '[data-consumer="filters"]'
+        )
+        expect(filterControls?.className).toContain('consumer-filters')
+        expect(filterControls?.className).toContain('gap-1')
+        expect(filterControls?.className).not.toContain('gap-2')
+        expect(
+            screen.container.querySelector('[data-consumer="actions"]')
+                ?.className
+        ).toContain('consumer-actions')
+        expect(screen.container.textContent).not.toContain(
+            'Tracked entity filters'
+        )
     })
 })

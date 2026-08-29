@@ -153,7 +153,7 @@ describe('Tracker working-list request serialization', () => {
     })
 
     it('defaults scheduled events from the DHIS2 server time zone at midnight', () => {
-        jest.useFakeTimers().setSystemTime(new Date('2026-08-18T10:30:00.000Z'))
+        vi.useFakeTimers().setSystemTime(new Date('2026-08-18T10:30:00.000Z'))
         try {
             const transformers = createWorkingListValueTransformers({
                 systemInfo: {
@@ -195,7 +195,7 @@ describe('Tracker working-list request serialization', () => {
             // UTC is still August 18, while the configured server is UTC+14.
             expect(request.params?.scheduledAfter).toBe('2026-08-19')
         } finally {
-            jest.useRealTimers()
+            vi.useRealTimers()
         }
     })
 

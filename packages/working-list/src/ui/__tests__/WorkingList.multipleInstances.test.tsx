@@ -104,7 +104,7 @@ const RelationshipSet = () => (
             field={field}
             capabilities={resolveWorkingListCapabilities({ apiVersion: 43 })}
             calendarContext={{
-                calendar: 'gregory',
+                calendar: 'gregorian',
                 dateFormat: 'YYYY-MM-DD',
                 locale: 'en',
                 timeZone: 'Etc/UTC',

@@ -1,3 +1,4 @@
+import { resolveWorkingListCapabilities } from '../api/capabilities'
 import type { AppliedFilter, FilterValue } from '../domain/model'
 import { FilterValueSchema } from '../domain/schemas'
 import {
@@ -134,5 +135,60 @@ describe('system filter registry', () => {
                 })
             )
         ).toThrow('changes result mode')
+    })
+
+    it.each([
+        ['enrolledAt', 'enrollmentEnrolledAfter', 'enrollmentEnrolledBefore'],
+        [
+            'enrollmentOccurredAt',
+            'enrollmentOccurredAfter',
+            'enrollmentOccurredBefore',
+        ],
+        ['eventOccurredAt', 'occurredAfter', 'occurredBefore'],
+        ['eventScheduledAt', 'scheduledAfter', 'scheduledBefore'],
+    ] as const)(
+        'preserves DATE validation and query serialization for %s',
+        (id, after, before) => {
+            const definition = getSystemFilterDefinition(id)
+            if (!definition) {
+                throw new Error(`Missing ${id}`)
+            }
+            const appliedFilter = filter(id, 'range', {
+                kind: 'dateRange',
+                mode: 'absolute',
+                start: '2083-01-01',
+                end: '2083-01-02',
+            })
+
+            expect(() => validateSystemFilter(appliedFilter)).not.toThrow()
+            expect(
+                definition.toQueryParameters(
+                    appliedFilter,
+                    resolveWorkingListCapabilities({ apiVersion: 43 }),
+                    {
+                        toApiDate: (value) =>
+                            value === '2083-01-01'
+                                ? '2026-04-14'
+                                : '2026-04-15',
+                    }
+                )
+            ).toEqual({
+                [after]: '2026-04-14',
+                [before]: '2026-04-15',
+            })
+        }
+    )
+
+    it('preserves DATE boundary validation for system filters', () => {
+        expect(() =>
+            validateSystemFilter(
+                filter('enrolledAt', 'range', {
+                    kind: 'dateRange',
+                    mode: 'absolute',
+                    start: '2026-04-15',
+                    end: '2026-04-14',
+                })
+            )
+        ).toThrow('start cannot exceed')
     })
 })

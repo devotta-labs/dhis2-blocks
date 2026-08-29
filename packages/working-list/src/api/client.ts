@@ -5,7 +5,7 @@ export type DataEngineQueryParameters = Record<
     string | number | boolean | undefined | ReadonlyArray<string | number>
 >
 
-export interface DataEngineQueryDefinition {
+interface DataEngineQueryDefinition {
     resource: string
     id?: string
     params?: DataEngineQueryParameters
@@ -13,7 +13,7 @@ export interface DataEngineQueryDefinition {
 
 export type DataEngineQuery = Record<string, DataEngineQueryDefinition>
 
-export interface DataEngineResourceResponse {
+interface DataEngineResourceResponse {
     [key: string]: DataEngineValue
 }
 
@@ -26,7 +26,7 @@ export type DataEngineValue =
     | ReadonlyArray<DataEngineValue>
     | DataEngineResourceResponse
 
-export type DataEngineMutationPayload =
+type DataEngineMutationPayload =
     | string
     | number
     | boolean

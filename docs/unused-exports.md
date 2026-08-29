@@ -1,4 +1,4 @@
-# Unused export analysis
+# Knip dead-code analysis
 
 ## Outcome
 
@@ -7,14 +7,18 @@ another repository file. Its `no-unused-vars` rule deliberately treats an
 export as a use, and Oxlint has no project-wide unused-export rule. TypeScript's
 `noUnusedLocals` behaves the same way for exported declarations.
 
-The closest viable companion is Knip. Run the focused audit with:
+The closest viable companion is Knip. Run the CI-equivalent audit with:
 
 ```sh
-pnpm audit:exports
+pnpm dead-code:audit
 ```
 
-This command is intentionally separate from `pnpm lint` while the existing
-findings are reviewed. Do not use `knip --fix` on an unreviewed report.
+The command invokes the pinned Knip version directly. Every configured issue
+type, including circular imports, has error severity; configuration and tag
+hints are errors as well. There is no issue budget, committed baseline, or
+report filter, so any finding makes the command and its dedicated CI job fail.
+Do not use `knip --fix` on an unreviewed report. Run `pnpm audit:exports` when
+only the export/type subset is useful during investigation.
 
 ## Scope and public API policy
 
@@ -64,32 +68,30 @@ Cross-package imports are analyzed because pnpm workspaces and package
 `exports` are part of Knip's graph. A missing or computed consumer outside that
 graph remains an explicit review responsibility.
 
-## Representative audit
+## Reviewed cleanup
 
-On 2026-08-24, the configured default audit reported 126 candidates: 79 value
-exports and 47 exported types. Examples include:
+On 2026-08-24, the expanded audit initially reported two unused files, 80 value
+exports, 47 exported types, two unlisted root imports, and one runtime cycle.
+Direct usage analysis removed or internalized the high-confidence findings,
+including:
 
-- `PROGRAM_METADATA_FIELDS`, exported but referenced only in its defining file;
-- `findField`, exported but called only inside `savedListNormalization.ts`;
-- unused internal barrel edges such as `visibleFiltersForConfiguration`;
-- `valueTypeRegistry`, exported but read only inside `valueTypes.ts`.
+- the unregistered Effect-specific Oxlint rule files;
+- unused saved-list query and mutation option factories;
+- unused schema compositions, helpers, constants, and barrel edges;
+- export modifiers on declarations used only inside their defining modules.
 
-The initial unconfigured run also reported `OrganisationUnitPicker`, despite it
-being rendered by the app. Declaring `AppWrapper.tsx` as the app entry removed
-that false positive. A comparison production run found 31 additional
-candidates hidden by test consumers, including `fetchWorkingListPage` and
-`getInitialColumnDialogOrder`.
-
-These results demonstrate why the audit should be adopted in two phases:
-
-1. Review and reduce the existing baseline without bulk auto-fixing.
-2. Once the reviewed default audit is clean, add `pnpm audit:exports` to CI so
-   new statically unused internal exports fail the build.
+The final runtime cycle between `registry/systemFilters.ts` and
+`registry/valueTypes.ts` was removed by making the system-filter module depend
+directly on the lower-level date definition and value-type contracts. The
+assembled value-type registry still consumes the system-filter API, but the
+dependency is now one-way. Knip reports zero findings, so plain Knip is the CI
+gate and no baseline machinery remains.
 
 Authoritative references:
 
 - [Oxlint `no-unused-vars`](https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html)
 - [Knip unused exports](https://knip.dev/typescript/unused-exports)
+- [Knip CI guidance](https://knip.dev/guides/using-knip-in-ci)
 - [Knip entry exports and workspace configuration](https://knip.dev/reference/configuration)
 - [Knip production mode](https://knip.dev/features/production-mode)
 - [Knip issue handling and dynamic-import limitations](https://knip.dev/guides/handling-issues)

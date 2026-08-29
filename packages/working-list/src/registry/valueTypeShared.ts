@@ -167,12 +167,10 @@ export const formatText = (
 }
 
 /** Direct-download fallback for values that never got tracker-scoped URLs. */
-export const fileResourceFallbackUrl = (id: string) =>
+const fileResourceFallbackUrl = (id: string) =>
     `/api/fileResources/${encodeURIComponent(id)}/data`
 
-export const toFileValue = (
-    value: WorkingListRawValue
-): WorkingListFileValue =>
+const toFileValue = (value: WorkingListRawValue): WorkingListFileValue =>
     isWorkingListFileValue(value)
         ? value
         : { id: String(value), url: fileResourceFallbackUrl(String(value)) }
@@ -248,7 +246,7 @@ export const textDisplay = (input: {
     return { kind: 'text', text }
 }
 
-export const rawValueType = (value: WorkingListRawValue) => {
+const rawValueType = (value: WorkingListRawValue) => {
     if (value === undefined) {
         return 'undefined'
     }
@@ -268,7 +266,7 @@ export const rawValueType = (value: WorkingListRawValue) => {
     return 'string'
 }
 
-export const parseText = (value: WorkingListRawValue) => {
+const parseText = (value: WorkingListRawValue) => {
     const result = z.string().safeParse(value)
     if (!result.success) {
         throw new ValueParseError(
@@ -296,7 +294,7 @@ export const parseDhis2Uid = (
     return parsed
 }
 
-export const isValidGregorianDate = (value: string) => {
+const isValidGregorianDate = (value: string) => {
     const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
     if (!match) {
         return false
@@ -319,12 +317,12 @@ export const isValidTime = (value: string) => {
     return Number(hours) < 24 && Number(minutes) < 60 && Number(seconds) < 60
 }
 
-export const parseIsoDateTimeParts = (value: string) =>
+const parseIsoDateTimeParts = (value: string) =>
     value.match(
         /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?)(?:Z|[+-]\d{2}:\d{2})?$/
     )
 
-export const isValidIsoDateTime = (value: string) => {
+const isValidIsoDateTime = (value: string) => {
     const match = parseIsoDateTimeParts(value)
     return Boolean(
         match && isValidGregorianDate(match[1]) && isValidTime(match[2])

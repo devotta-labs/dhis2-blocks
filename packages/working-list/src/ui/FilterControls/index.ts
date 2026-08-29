@@ -8,6 +8,5 @@ export {
     fieldDisplayName,
     localizedField,
     usesMultipleOptionSelection,
-    type FilterCalendarContext,
     type StrictCalendarInputProps,
 } from './FilterControls'

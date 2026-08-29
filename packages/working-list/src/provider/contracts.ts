@@ -94,7 +94,7 @@ export interface WorkingListPaginationMeta extends WorkingListPagination {
     hasNextPage: boolean
 }
 
-export type WorkingListLifecycleMeta =
+type WorkingListLifecycleMeta =
     | { status: 'pending' }
     | { status: 'error'; error: WorkingListInitializationError }
     | { status: 'ready' }
@@ -108,7 +108,7 @@ export type WorkingListSelectionMeta =
       }
     | { status: 'ready'; selectedSavedListId: string }
 
-export type WorkingListActiveConfigurationMeta =
+type WorkingListActiveConfigurationMeta =
     | { status: 'unavailable' }
     | { status: 'ready' }
 
@@ -139,7 +139,7 @@ export type WorkingListSavedViewsMeta =
           isUpdating: boolean
       }
 
-export type WorkingListResultsMeta =
+type WorkingListResultsMeta =
     | { status: 'pending' }
     | { status: 'error'; error: WorkingListResultsError }
     | {
@@ -153,7 +153,7 @@ export type WorkingListMutationStatus =
     | { status: 'idle' }
     | { status: 'pending'; targetId?: string }
 
-export interface WorkingListMutationMeta {
+interface WorkingListMutationMeta {
     create: WorkingListMutationStatus
     update: WorkingListMutationStatus
     delete: WorkingListMutationStatus

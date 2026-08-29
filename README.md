@@ -162,6 +162,7 @@ publishable consumer package.
 ```sh
 pnpm typecheck
 pnpm lint
+pnpm dead-code:audit
 pnpm test
 pnpm build
 ```
@@ -169,10 +170,11 @@ pnpm build
 Turborepo runs each task in the workspaces that provide it and caches declared
 build outputs.
 
-Run `pnpm audit:exports` to inspect statically unused internal exports. This is
-currently a review audit rather than a required quality gate; see
-[Unused export analysis](docs/unused-exports.md) for its public API exemption,
-limitations, and adoption plan.
+`pnpm dead-code:audit` runs the complete Knip configuration and fails on any
+finding, including circular imports. See
+[Knip dead-code analysis](docs/unused-exports.md) for the public API exemptions
+and static-analysis limitations. Use `pnpm audit:exports` for a focused
+interactive export report.
 
 ## Real-DHIS2 browser tests
 

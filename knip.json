@@ -1,34 +1,129 @@
 {
     "$schema": "https://unpkg.com/knip@6/schema.json",
+    "include": [
+        "files",
+        "dependencies",
+        "unlisted",
+        "binaries",
+        "unresolved",
+        "exports",
+        "nsExports",
+        "types",
+        "nsTypes",
+        "enumMembers",
+        "namespaceMembers",
+        "duplicates",
+        "catalog",
+        "catalogReferences",
+        "cycles"
+    ],
+    "rules": {
+        "binaries": "error",
+        "catalog": "error",
+        "catalogReferences": "error",
+        "cycles": "error",
+        "dependencies": "error",
+        "devDependencies": "error",
+        "duplicates": "error",
+        "enumMembers": "error",
+        "exports": "error",
+        "files": "error",
+        "namespaceMembers": "error",
+        "nsExports": "error",
+        "nsTypes": "error",
+        "optionalPeerDependencies": "error",
+        "types": "error",
+        "unlisted": "error",
+        "unresolved": "error"
+    },
+    "treatConfigHintsAsErrors": true,
+    "treatTagHintsAsErrors": true,
     "workspaces": {
         ".": {
-            "entry": [
-                "e2e/specs/**/*.spec.ts",
-                "tools/oxlint/anti-slop/effect/index.ts"
-            ],
-            "project": ["e2e/**/*.ts", "tools/oxlint/**/*.ts"]
+            "entry": ["e2e/specs/**/*.spec.ts"],
+            "project": [
+                "e2e/**/*.ts",
+                "tools/**/*.ts",
+                "*.config.{js,mjs,cjs,ts,mts,cts}"
+            ]
         },
         "apps/web": {
-            "entry": ["src/AppWrapper.tsx"],
-            "project": ["src/**/*.{css,ts,tsx}"]
-        },
-        "packages/working-list": {
+            "entry": [
+                "d2.config.js",
+                "src/AppWrapper.tsx",
+                "src/workingListTranslationCatalog.ts",
+                "src/**/*.{test,spec}.{ts,tsx}",
+                "src/**/__tests__/**/*.{ts,tsx}"
+            ],
+            "project": ["src/**/*.{ts,tsx,css}"],
             "includeEntryExports": true,
             "ignoreIssues": {
-                "src/index.ts": [
+                "d2.config.js": [
                     "exports",
-                    "nsExports",
                     "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "src/AppWrapper.tsx": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "src/workingListTranslationCatalog.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
                     "nsTypes",
                     "enumMembers",
                     "namespaceMembers"
                 ]
-            },
+            }
+        },
+        "packages/*": {
+            "entry": [
+                "src/**/*.{test,spec}.{ts,tsx}",
+                "src/**/__tests__/**/*.{ts,tsx}",
+                "test/{betterResultMock,setup,styleMock}.ts",
+                "type-tests/**/*.ts"
+            ],
             "project": [
                 "src/**/*.{ts,tsx}",
                 "test/**/*.ts",
                 "type-tests/**/*.ts"
-            ]
+            ],
+            "includeEntryExports": true,
+            "ignoreDependencies": ["@tanstack/table-core"],
+            "ignoreIssues": {
+                "src/index.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "test/**": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "type-tests/**": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ]
+            }
         }
     }
 }

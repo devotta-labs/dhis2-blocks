@@ -11,5 +11,4 @@ export {
     canonicalDateToCalendarInput,
     fieldDisplayName,
     localizedField,
-    type FilterCalendarContext,
 } from './filterValueSupport'

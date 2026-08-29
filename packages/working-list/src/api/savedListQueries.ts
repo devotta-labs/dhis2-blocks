@@ -1,10 +1,5 @@
-import { queryOptions } from '@tanstack/react-query'
-import { workingListQueryKeys } from '../query/keys'
 import type { FilterParsingContext } from '../registry/valueTypes'
-import {
-    asWorkingListBoundaryError,
-    shouldRetryWorkingListRequest,
-} from './client'
+import { asWorkingListBoundaryError } from './client'
 import type { WorkingListClient } from './client'
 import type { ProgramFieldCatalog } from './metadata'
 import {
@@ -86,14 +81,3 @@ export const fetchSavedWorkingLists = async ({
         throw asWorkingListBoundaryError(error, 'Malformed saved-list response')
     }
 }
-
-export const savedWorkingListsQueryOptions = (
-    input: Omit<Parameters<typeof fetchSavedWorkingLists>[0], 'signal'>
-) =>
-    queryOptions({
-        queryKey: workingListQueryKeys.savedLists(input.programId),
-        queryFn: ({ signal }) => fetchSavedWorkingLists({ ...input, signal }),
-        staleTime: 30_000,
-        gcTime: 5 * 60_000,
-        retry: shouldRetryWorkingListRequest,
-    })

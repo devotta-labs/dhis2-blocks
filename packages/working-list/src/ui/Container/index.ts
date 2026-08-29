@@ -1,4 +1,1 @@
-export {
-    WorkingListContainer,
-    type WorkingListContainerProps,
-} from './WorkingListContainer'
+export { WorkingListContainer } from './WorkingListContainer'

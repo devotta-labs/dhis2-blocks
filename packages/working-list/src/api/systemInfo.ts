@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { workingListQueryKeys } from '../query/keys'
 import { shouldRetryWorkingListRequest, type WorkingListClient } from './client'
 
-export const WORKING_LIST_CALENDARS = [
+const WORKING_LIST_CALENDARS = [
     'coptic',
     'ethiopian',
     'gregorian',
@@ -55,10 +55,9 @@ export const WorkingListSystemInfoSchema = z
 
 export type WorkingListSystemInfo = z.infer<typeof WorkingListSystemInfoSchema>
 
-export const WORKING_LIST_SYSTEM_INFO_FIELDS =
-    'calendar,dateFormat,serverTimeZoneId'
+const WORKING_LIST_SYSTEM_INFO_FIELDS = 'calendar,dateFormat,serverTimeZoneId'
 
-export const fetchWorkingListSystemInfo = (
+const fetchWorkingListSystemInfo = (
     client: WorkingListClient,
     signal?: AbortSignal
 ) =>

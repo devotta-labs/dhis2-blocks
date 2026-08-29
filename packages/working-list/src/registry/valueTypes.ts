@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type {
     AppliedFilter,
@@ -262,10 +261,8 @@ definitions.set('GEOJSON', displayOnlyDefinition('GEOJSON'))
 definitions.set('REFERENCE', displayOnlyDefinition('REFERENCE'))
 definitions.set('TRACKER_ASSOCIATE', displayOnlyDefinition('TRACKER_ASSOCIATE'))
 
-export const valueTypeRegistry: ReadonlyMap<
-    Dhis2ValueType,
-    ValueTypeDefinition
-> = definitions
+const valueTypeRegistry: ReadonlyMap<Dhis2ValueType, ValueTypeDefinition> =
+    definitions
 
 export const getValueTypeDefinition = (
     valueType: Dhis2ValueType
@@ -277,9 +274,7 @@ export const getValueTypeDefinition = (
     return definition
 }
 
-export const getFilterEditorKind = (
-    field: WorkingListField
-): FilterEditorKind =>
+const getFilterEditorKind = (field: WorkingListField): FilterEditorKind =>
     field.optionSetId || field.options?.length
         ? 'options'
         : getValueTypeDefinition(field.valueType).editor
@@ -401,7 +396,3 @@ export const validateAppliedFilter = (
     }
     return filter
 }
-
-export const ValueTypeRegistrySchema = z.custom<
-    ReadonlyMap<Dhis2ValueType, ValueTypeDefinition>
->((value) => value instanceof Map)

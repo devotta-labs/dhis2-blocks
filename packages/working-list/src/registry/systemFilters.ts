@@ -12,8 +12,10 @@ import type {
     WorkingListField,
 } from '../domain/model'
 import { UidSchema } from '../domain/schemas'
-import type { FilterSerializationContext } from './valueTypes'
-import { getValueTypeDefinition } from './valueTypes'
+import { dateDefinition } from './dateTimeValueTypes'
+import type { FilterSerializationContext } from './valueTypeContracts'
+
+const dateValueTypeDefinition = dateDefinition('DATE')
 
 export type SystemFilterId =
     | 'enrollmentStatus'
@@ -74,7 +76,7 @@ const validateDateFilter: SystemFilterDefinition['validate'] = (filter) => {
     if (filter.value.kind !== 'dateRange') {
         throw new Error(`${filter.field.id} requires a date range`)
     }
-    getValueTypeDefinition('DATE').parseEditorValue(filter.value)
+    dateValueTypeDefinition.parseEditorValue(filter.value)
 }
 
 const validateBooleanFilter: SystemFilterDefinition['validate'] = (filter) => {
@@ -116,10 +118,7 @@ const dateParameters = ({
     before: string
     context?: FilterSerializationContext
 }): DataEngineQueryParameters => {
-    const serialized = getValueTypeDefinition('DATE').serializeQuery(
-        filter,
-        context
-    )
+    const serialized = dateValueTypeDefinition.serializeQuery(filter, context)
     const parts = serialized.split(':')
     const ge = parts.indexOf('ge')
     const le = parts.indexOf('le')

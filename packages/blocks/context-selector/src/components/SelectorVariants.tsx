@@ -1,21 +1,43 @@
 import React from 'react'
 import i18n from '@dhis2/d2-i18n'
 import type { SelectorProps } from '../types'
-import { CaptureOptionSelector } from './OptionSelector'
+import { FramedOptionSelector, MenuSelector } from './OptionSelector'
+import { lowerCaseFirst } from './internal'
 
 export type ProgramSelectorProps = SelectorProps
 
 export const ProgramSelector = ({
     label = i18n.t('Program'),
+    placeholder,
+    searchPlaceholder,
     ...props
-}: ProgramSelectorProps) => (
-    <CaptureOptionSelector
-        {...props}
-        structure="program"
-        label={label}
-        dataTest="program-selector-container"
-    />
-)
+}: ProgramSelectorProps) => {
+    const title = lowerCaseFirst(label)
+    const emptyMessage =
+        placeholder ??
+        i18n.t('Choose a {{title}}', {
+            title,
+            interpolation: { escapeValue: false },
+        })
+
+    return (
+        <MenuSelector
+            {...props}
+            label={label}
+            dataTest="program-selector-container"
+            emptyMessage={emptyMessage}
+            readOnlyEmptyMessage={emptyMessage}
+            searchPlaceholder={
+                searchPlaceholder ??
+                i18n.t('Search for a {{title}}', {
+                    title,
+                    interpolation: { escapeValue: false },
+                })
+            }
+            contentClassName="max-h-[80vh] overflow-auto pb-[4px]"
+        />
+    )
+}
 
 export type EnrollmentSelectorProps = SelectorProps
 
@@ -23,9 +45,8 @@ export const EnrollmentSelector = ({
     label = i18n.t('Enrollment'),
     ...props
 }: EnrollmentSelectorProps) => (
-    <CaptureOptionSelector
+    <FramedOptionSelector
         {...props}
-        structure="locked"
         label={label}
         dataTest="enrollment-selector-container"
     />
@@ -37,9 +58,8 @@ export const StageSelector = ({
     label = i18n.t('Stage'),
     ...props
 }: StageSelectorProps) => (
-    <CaptureOptionSelector
+    <FramedOptionSelector
         {...props}
-        structure="locked"
         label={label}
         dataTest="stage-selector-container"
     />
@@ -50,9 +70,8 @@ export interface EventSelectorProps extends Omit<SelectorProps, 'label'> {
 }
 
 export const EventSelector = ({ label, ...props }: EventSelectorProps) => (
-    <CaptureOptionSelector
+    <FramedOptionSelector
         {...props}
-        structure="locked"
         label={label}
         dataTest="event-selector-container"
     />

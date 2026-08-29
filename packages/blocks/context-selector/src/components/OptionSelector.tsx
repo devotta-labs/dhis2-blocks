@@ -3,17 +3,7 @@ import i18n from '@dhis2/d2-i18n'
 import { CircularLoader, Input, Menu, MenuDivider, MenuItem } from '@dhis2/ui'
 import type { SelectorProps } from '../types'
 import { OptionLabel } from './OptionLabel'
-import {
-    capitalizeFirst,
-    CaptureSelectorBarItem,
-    lowerCaseFirst,
-} from './internal'
-
-// SAFETY: @dhis2/ui reads ariaLabel at runtime when label is a React node, but
-// the published MenuItem declaration omits it.
-const AccessibleMenuItem = MenuItem as React.ComponentType<
-    React.ComponentProps<typeof MenuItem> & { ariaLabel?: string }
->
+import { capitalizeFirst, lowerCaseFirst, SelectorBarItem } from './internal'
 
 export interface OptionSelectorProps extends Omit<SelectorProps, 'label'> {
     label: string
@@ -27,17 +17,19 @@ const LoadingIndicator = ({ label }: { label: string }) => (
 
 const ignoreOpenChange = () => undefined
 
-interface CaptureOptionSelectorProps extends SelectorProps {
+interface MenuSelectorProps extends Omit<
+    SelectorProps,
+    'label' | 'placeholder' | 'searchPlaceholder'
+> {
     label: string
-    structure: 'program' | 'locked'
     dataTest: string
+    emptyMessage: string
+    readOnlyEmptyMessage?: string
+    searchPlaceholder: string
+    contentClassName: string
 }
 
-/**
- * Controlled, menu-based selector matching Capture's SingleLockedSelect.
- * Filtering is local UI state and appears only when the host supplies >10 items.
- */
-export const CaptureOptionSelector = ({
+export const MenuSelector = ({
     label,
     options,
     value: currentValue,
@@ -49,12 +41,13 @@ export const CaptureOptionSelector = ({
     loadingLabel,
     disabled = false,
     readOnly = false,
-    placeholder,
     searchPlaceholder,
     dataTest,
     children,
-    structure,
-}: CaptureOptionSelectorProps) => {
+    emptyMessage,
+    readOnlyEmptyMessage = '',
+    contentClassName,
+}: MenuSelectorProps) => {
     const [filter, setFilter] = useState('')
     const normalizedLabel = capitalizeFirst(label)
     const normalizedDataTest = dataTest
@@ -84,12 +77,6 @@ export const CaptureOptionSelector = ({
             option.label.toLowerCase().includes(normalizedFilter)
         )
     }, [filter, menuOptions])
-    const emptyMessage =
-        placeholder ??
-        i18n.t('Choose a {{title}}', {
-            title: lowerCaseFirst(label),
-            interpolation: { escapeValue: false },
-        })
     const value = selectedOption ? (
         <OptionLabel icon={selectedOption.icon} label={selectedOption.label} />
     ) : undefined
@@ -111,26 +98,21 @@ export const CaptureOptionSelector = ({
     }
 
     if (loading) {
-        const loader = (
-            <LoadingIndicator label={loadingLabel ?? i18n.t('Loading')} />
-        )
-        return structure === 'locked' ? (
-            <span data-test="single-locked-select">{loader}</span>
-        ) : (
-            loader
-        )
+        return <LoadingIndicator label={loadingLabel ?? i18n.t('Loading')} />
     }
 
-    const selector = (
-        <CaptureSelectorBarItem
+    return (
+        <SelectorBarItem
             disabled={disabled}
             displayOnly={displayOnly}
             label={normalizedLabel}
             value={value}
             noValueMessage={
-                interactive || (structure === 'program' && displayOnly)
+                interactive
                     ? emptyMessage
-                    : ''
+                    : displayOnly
+                      ? readOnlyEmptyMessage
+                      : ''
             }
             open={open}
             setOpen={
@@ -142,9 +124,7 @@ export const CaptureOptionSelector = ({
             dataTest={normalizedDataTest}
         >
             {interactive ? (
-                <div
-                    className={`max-h-[80vh] overflow-auto${structure === 'program' ? ' pb-[4px]' : ''}`}
-                >
+                <div className={contentClassName}>
                     <Menu>
                         {manyOptions ? (
                             <>
@@ -157,23 +137,12 @@ export const CaptureOptionSelector = ({
                                         setFilter(nextFilter ?? '')
                                     }
                                     type="text"
-                                    placeholder={
-                                        searchPlaceholder ??
-                                        i18n.t('Search for a {{title}}', {
-                                            title:
-                                                structure === 'program'
-                                                    ? lowerCaseFirst(label)
-                                                    : label,
-                                            interpolation: {
-                                                escapeValue: false,
-                                            },
-                                        })
-                                    }
+                                    placeholder={searchPlaceholder}
                                     initialFocus
                                 />
                                 {visibleOptions.length > 0 ? (
                                     visibleOptions.map((option) => (
-                                        <AccessibleMenuItem
+                                        <MenuItem
                                             key={option.value}
                                             ariaLabel={option.label}
                                             label={
@@ -201,7 +170,7 @@ export const CaptureOptionSelector = ({
                             </>
                         ) : (
                             menuOptions.map((option) => (
-                                <AccessibleMenuItem
+                                <MenuItem
                                     key={option.value}
                                     ariaLabel={option.label}
                                     label={
@@ -234,20 +203,48 @@ export const CaptureOptionSelector = ({
                     </Menu>
                 </div>
             ) : null}
-        </CaptureSelectorBarItem>
-    )
-
-    return structure === 'locked' ? (
-        <span data-test="single-locked-select">{selector}</span>
-    ) : (
-        selector
+        </SelectorBarItem>
     )
 }
 
+interface FramedOptionSelectorProps extends OptionSelectorProps {
+    dataTest: string
+}
+
+export const FramedOptionSelector = ({
+    label,
+    placeholder,
+    searchPlaceholder,
+    dataTest,
+    ...props
+}: FramedOptionSelectorProps) => (
+    <span data-test="single-locked-select">
+        <MenuSelector
+            {...props}
+            label={label}
+            dataTest={dataTest}
+            emptyMessage={
+                placeholder ??
+                i18n.t('Choose a {{title}}', {
+                    title: lowerCaseFirst(label),
+                    interpolation: { escapeValue: false },
+                })
+            }
+            searchPlaceholder={
+                searchPlaceholder ??
+                i18n.t('Search for a {{title}}', {
+                    title: label,
+                    interpolation: { escapeValue: false },
+                })
+            }
+            contentClassName="max-h-[80vh] overflow-auto"
+        />
+    </span>
+)
+
 export const OptionSelector = (props: OptionSelectorProps) => (
-    <CaptureOptionSelector
+    <FramedOptionSelector
         {...props}
-        structure="locked"
         dataTest={`${lowerCaseFirst(props.label)}-selector-container`}
     />
 )

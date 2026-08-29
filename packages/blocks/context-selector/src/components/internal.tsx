@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import React from 'react'
-import { SelectorBarItem } from '@dhis2/ui'
+import { SelectorBarItem as Dhis2SelectorBarItem } from '@dhis2/ui'
 
 interface SelectorBarItemRuntimeProps {
     children?: ReactNode
@@ -16,14 +16,12 @@ interface SelectorBarItemRuntimeProps {
     onClearSelectionClick?: () => void
 }
 
-// SAFETY: The verified runtime export is a function component. Binding creates
-// a local component with identical rendering while omitting its stale static
-// value prop-type, which rejects Capture's supported icon-plus-label node.
-const CaptureSelectorBarItem = SelectorBarItem.bind(
+// SAFETY: The runtime accepts the ReactNode value used by Capture, while the published type only accepts string.
+const SelectorBarItem = Dhis2SelectorBarItem.bind(
     null
 ) as React.ComponentType<SelectorBarItemRuntimeProps>
 
-export { CaptureSelectorBarItem }
+export { SelectorBarItem }
 
 export const capitalizeFirst = (value: string) =>
     value.length > 0 ? `${value[0].toUpperCase()}${value.slice(1)}` : value

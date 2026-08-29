@@ -82,9 +82,7 @@ state, or decide when progressive disclosure advances.
 A program-first application can initially render only
 `ProgramSelector`, then add organisation-unit, enrollment, stage, and event
 children as its own context policy makes them relevant. All values, direct
-callbacks, and metadata-derived labels are supplied by the host. See
-[Context Selector composition](docs/context-selector-composition.md) for the
-implemented contracts and a complete controlled example.
+callbacks, and metadata-derived labels are supplied by the host.
 
 ## Working List block
 
@@ -217,14 +215,10 @@ pnpm build
 Turborepo runs each task in the workspaces that provide it and caches declared
 build outputs.
 
-Unit and component tests use Vitest. See [Testing](docs/testing.md) for the
-workspace-local configuration model, environment split, and the boundary with
-the real-DHIS2 Playwright suite.
+Unit and component tests use Vitest. Real-DHIS2 browser tests use Playwright.
 
 `pnpm dead-code:audit` runs the complete Knip configuration and fails on any
-finding, including circular imports. See
-[Knip dead-code analysis](docs/unused-exports.md) for the public API exemptions
-and static-analysis limitations. Use `pnpm audit:exports` for a focused
+finding, including circular imports. Use `pnpm audit:exports` for a focused
 interactive export report.
 
 ## Real-DHIS2 browser tests

@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 import React from 'react'
-import { CaptureSelectorBarItem } from './internal'
+import { SelectorBarItem } from './internal'
 
 export interface ContextValueProps {
     label: string
@@ -9,14 +9,13 @@ export interface ContextValueProps {
     onClear?: () => void
 }
 
-/** A non-interactive selector-bar value for committed context or host actions. */
 export const ContextValue = ({
     label,
     value,
     placeholder = '',
     onClear,
 }: ContextValueProps) => (
-    <CaptureSelectorBarItem
+    <SelectorBarItem
         displayOnly
         label={label}
         value={value}

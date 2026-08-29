@@ -99,8 +99,10 @@ export const interactiveEvent: EventSelectorProps = {
     onChange: () => undefined,
 }
 
-// @ts-expect-error Event labels are metadata-derived and therefore host-owned.
-export const eventWithoutLabel: EventSelectorProps = { options }
+type IsRequired<T, K extends keyof T> =
+    Record<never, never> extends Pick<T, K> ? false : true
 
-// @ts-expect-error Generic option selectors require a host-owned label.
-export const optionWithoutLabel: OptionSelectorProps = { options }
+export const requiredLabelContracts: [
+    IsRequired<EventSelectorProps, 'label'>,
+    IsRequired<OptionSelectorProps, 'label'>,
+] = [true, true]

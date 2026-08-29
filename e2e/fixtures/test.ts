@@ -101,9 +101,6 @@ const isKnownBenignDiagnostic = (
         diagnostic.method === 'GET' &&
         /\/api(?:\/\d+)?\/icons\/[^/]+\/icon$/.test(path ?? '')
     ) {
-        // The app-platform E2E proxy is intentionally cross-origin. Plain img
-        // requests cannot carry its in-memory Basic auth, unlike a deployed
-        // same-origin DHIS2 app, so Chromium blocks only these icon responses.
         return true
     }
 

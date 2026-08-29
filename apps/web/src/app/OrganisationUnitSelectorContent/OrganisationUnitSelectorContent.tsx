@@ -37,7 +37,7 @@ interface OrganisationUnitTreeRuntimeProps {
 }
 
 const Dhis2OrganisationUnitTree = (props: OrganisationUnitTreeRuntimeProps) => {
-    // SAFETY: @dhis2/ui accepts string[] at runtime; its published declaration incorrectly types expanded as boolean.
+    // SAFETY: The runtime accepts controlled string paths while the published type incorrectly declares a boolean.
     const expanded = props.expanded as never
     return <OrganisationUnitTree {...props} expanded={expanded} />
 }
@@ -50,13 +50,6 @@ interface ControlledOrganisationUnitTreeProps {
     TreeComponent: ComponentType<OrganisationUnitTreeRuntimeProps>
 }
 
-/**
- * The selector popup is mounted and unmounted with @dhis2/ui's Layer. Keep
- * expansion controlled within each keyed tree instance so rapid expand and
- * collapse events always update from the latest state. This mirrors Capture's
- * OrgUnitTree integration and avoids the tree's uncontrolled closure losing a
- * click while nodes are loading.
- */
 const ControlledOrganisationUnitTree = ({
     visibleRoots,
     treeFilter,
@@ -86,9 +79,6 @@ const ControlledOrganisationUnitTree = ({
             handleExpand={handleExpand}
             handleCollapse={handleCollapse}
             onChange={(payload, event) => {
-                // SelectorBarItem is a button and the Layer uses a React
-                // portal. Prevent a tree selection click from bubbling back
-                // to the trigger and immediately reopening the popup.
                 event.stopPropagation()
                 event.preventDefault()
                 if (!payload.checked) {
@@ -104,7 +94,6 @@ const ControlledOrganisationUnitTree = ({
     )
 }
 
-/** Host-owned TanStack-backed tree content composed into the selector popover. */
 export const OrganisationUnitSelectorContent = ({
     roots,
     allowedPaths,

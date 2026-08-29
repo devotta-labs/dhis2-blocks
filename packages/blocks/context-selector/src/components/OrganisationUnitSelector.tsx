@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import React from 'react'
 import i18n from '@dhis2/d2-i18n'
 import { CircularLoader } from '@dhis2/ui'
-import { CaptureSelectorBarItem } from './internal'
+import { SelectorBarItem } from './internal'
 
 const ignoreOpenChange = () => undefined
 
@@ -20,10 +20,6 @@ export interface OrganisationUnitSelectorProps {
     placeholder?: string
 }
 
-/**
- * Capture-sized popup shell for a host-owned organisation-unit picker.
- * Tree data, selection state, path expansion and picker callbacks stay outside.
- */
 export const OrganisationUnitSelector = ({
     value,
     onClear,
@@ -51,7 +47,7 @@ export const OrganisationUnitSelector = ({
     const interactive = !disabled && !readOnly
 
     return (
-        <CaptureSelectorBarItem
+        <SelectorBarItem
             label={label}
             value={value}
             noValueMessage={
@@ -77,6 +73,6 @@ export const OrganisationUnitSelector = ({
                     {children}
                 </div>
             ) : null}
-        </CaptureSelectorBarItem>
+        </SelectorBarItem>
     )
 }

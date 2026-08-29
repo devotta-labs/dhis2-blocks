@@ -19,7 +19,6 @@ const OptionIconView = ({ source, color, alternativeText }: OptionIcon) => (
     </div>
 )
 
-/** Capture's 22px program/stage icon followed by a 5px label gap. */
 export const OptionLabel = ({ icon, label }: OptionLabelProps) => (
     <span className="flex items-center">
         {icon ? (

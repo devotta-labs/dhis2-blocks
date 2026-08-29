@@ -9,7 +9,6 @@ export interface UserOrganisationUnitScope {
     teiSearchOrganisationUnits?: OrganisationUnitReference[]
 }
 
-/** Capture's top-bar OrgUnitField starts from the user's capture roots. */
 export const resolveCaptureOrganisationUnitRoots = ({
     organisationUnits,
 }: UserOrganisationUnitScope): OrganisationUnitReference[] => organisationUnits
@@ -24,20 +23,13 @@ export interface OrganisationUnitScopeIntersection {
     pickerRoots: OrganisationUnitReference[]
 }
 
-/** Capture's quick selector shows every organisation unit in the user's data-entry scope. */
 export const getCaptureOrganisationUnitPickerScope = (
     roots: OrganisationUnitReference[]
 ): OrganisationUnitScopeIntersection => ({
-    // An empty filter lets @dhis2/ui load every descendant of the user's
-    // capture roots. Supplying only the root paths hides all child nodes.
     allowedPaths: [],
     pickerRoots: roots,
 })
 
-/**
- * The selectable tree is the intersection of Capture's data-entry roots and
- * the organisation units assigned to the selected program.
- */
 export const intersectOrganisationUnitScopes = (
     searchRoots: OrganisationUnitReference[],
     programOrganisationUnits: OrganisationUnitReference[]

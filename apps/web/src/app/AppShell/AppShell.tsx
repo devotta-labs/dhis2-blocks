@@ -350,8 +350,6 @@ export const AppShell = () => {
     }
 
     const updateOrgUnit = (organisationUnit: OrganisationUnitReference) => {
-        // Capture dismisses the picker immediately, even when committing the
-        // context change is deferred behind dirty-state confirmation.
         setOrgUnitSelectorOpen(false)
         setOrganisationUnitSearch('')
         setDebouncedOrganisationUnitSearch('')

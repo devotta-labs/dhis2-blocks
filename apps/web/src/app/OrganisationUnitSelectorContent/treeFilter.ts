@@ -20,11 +20,6 @@ export const getInitialOrganisationUnitExpandedPaths = (
         ])
     )
 
-/**
- * @dhis2/ui filters root IDs against `/${rootId}` before it loads their real
- * paths. Retain each visible root explicitly while keeping the full scope
- * paths that constrain the loaded tree nodes.
- */
 export const buildOrganisationUnitTreeFilter = (
     allowedPaths: string[],
     visibleRoots: OrganisationUnitReference[]

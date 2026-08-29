@@ -10,23 +10,6 @@ export interface ContextSelectorProps {
     clearDisabled?: boolean
 }
 
-type SelectorBarRuntimeProps = {
-    children: ReactNode
-    ariaLabel?: string
-    className?: string
-    dataTest?: string
-    disableClearSelections?: boolean
-    onClearSelectionClick?: () => void
-}
-
-// SAFETY: This adds the runtime-supported ariaLabel omitted by some @dhis2/ui declarations.
-const CaptureSelectorBar =
-    SelectorBar as React.ComponentType<SelectorBarRuntimeProps>
-
-/**
- * Capture-parity sticky selector row. Child visibility and ordering are owned by
- * the host; this component only supplies layout, toolbar semantics and clear-all.
- */
 export const ContextSelector = ({
     children,
     ariaLabel = i18n.t('Context selector'),
@@ -39,7 +22,7 @@ export const ContextSelector = ({
         data-test="context-selector"
         data-testid="context-selector"
     >
-        <CaptureSelectorBar
+        <SelectorBar
             ariaLabel={ariaLabel}
             className="w-full max-w-none!"
             dataTest="context-selector-bar"
@@ -47,6 +30,6 @@ export const ContextSelector = ({
             onClearSelectionClick={onClear}
         >
             {children}
-        </CaptureSelectorBar>
+        </SelectorBar>
     </nav>
 )

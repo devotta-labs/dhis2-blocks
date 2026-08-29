@@ -6,16 +6,16 @@
     "license": "BSD-3-Clause",
     "type": "module",
     "scripts": {
-        "build": "pnpm --filter @dhis2-blocks/previews build && pnpm prepare:static && next build --webpack",
+        "build": "pnpm registry:build && next build",
         "lint": "oxlint --deny-warnings app components lib tests",
-        "prepare:static": "pnpm registry:build && node scripts/copy-previews.mjs",
         "registry:build": "shadcn build registry.json --cwd ../.. --output apps/docs/public/r",
-        "start": "next dev --webpack --port 3002",
+        "dev": "portless blocks next dev",
         "test": "vitest run",
         "typecheck": "next typegen && tsc --noEmit"
     },
     "dependencies": {
         "@base-ui/react": "^1.7.0",
+        "@dhis2-blocks/working-list": "workspace:*",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "fumadocs-core": "^16.15.4",

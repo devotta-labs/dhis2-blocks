@@ -8,8 +8,7 @@
         "build": "turbo run build --filter=@dhis2-blocks/web",
         "build:docs": "turbo run build --filter=@dhis2-blocks/docs",
         "start": "turbo run start --filter=@dhis2-blocks/web",
-        "start:docs": "pnpm --filter @dhis2-blocks/docs registry:build && turbo run start --filter=@dhis2-blocks/docs --filter=@dhis2-blocks/previews",
-        "start:previews": "turbo run start --filter=@dhis2-blocks/previews",
+        "dev:docs": "pnpm --filter @dhis2-blocks/docs registry:build && turbo run dev --filter=@dhis2-blocks/docs",
         "test": "turbo run test",
         "typecheck": "turbo run typecheck",
         "deploy": "turbo run deploy --filter=@dhis2-blocks/web",
@@ -35,6 +34,7 @@
         "knip": "6.32.2",
         "oxfmt": "0.64.0",
         "oxlint": "1.79.0",
+        "portless": "^0.15.6",
         "turbo": "^2.10.10",
         "typescript": "^5.9.3",
         "zod": "^4.4.3"

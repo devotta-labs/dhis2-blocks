@@ -1,14 +1,23 @@
 import type { Metadata } from 'next'
+import {
+    DocsDescription,
+    DocsPage,
+    DocsTitle,
+} from 'fumadocs-ui/layouts/docs/page'
 
 export const metadata: Metadata = { title: 'Examples' }
 
 export default function ExamplesPage() {
     return (
-        <main className="mx-auto w-full max-w-3xl px-6 py-16">
-            <h1 className="text-3xl font-semibold tracking-tight">Examples</h1>
-            <p className="mt-3 text-muted-foreground">
+        <DocsPage
+            toc={[]}
+            breadcrumb={{ enabled: false }}
+            footer={{ enabled: false }}
+        >
+            <DocsTitle>Examples</DocsTitle>
+            <DocsDescription className="text-base">
                 Application examples will be added in a future release.
-            </p>
-        </main>
+            </DocsDescription>
+        </DocsPage>
     )
 }

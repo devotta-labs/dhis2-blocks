@@ -77,6 +77,8 @@ const isInteractiveTarget = (target: EventTarget | null) =>
 const isWorkingListPageSize = (value: number): value is WorkingListPageSize =>
     WORKING_LIST_PAGE_SIZES.some((pageSize) => pageSize === value)
 
+const minimumLoadingRowCount = WORKING_LIST_PAGE_SIZES[0]
+
 export const WorkingListTableView = ({
     model,
     visibleColumnCount,
@@ -174,6 +176,26 @@ export const WorkingListTableView = ({
                             aria-busy={isInitialLoading || isUpdating}
                             loading={isInitialLoading}
                         >
+                            {isInitialLoading &&
+                                Array.from({
+                                    length: minimumLoadingRowCount,
+                                }).map((_, index) => (
+                                    <DataTableRow
+                                        key={index}
+                                        data-testid="working-list-loading-row"
+                                        aria-hidden="true"
+                                    >
+                                        <DataTableCell
+                                            colSpan={String(
+                                                Math.max(
+                                                    visibleColumnCount,
+                                                    1
+                                                ) + (showIssuesColumn ? 1 : 0)
+                                            )}
+                                            className="h-12! p-0!"
+                                        />
+                                    </DataTableRow>
+                                ))}
                             {!isInitialLoading && model.rows.length === 0 && (
                                 <DataTableRow>
                                     <DataTableCell

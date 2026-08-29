@@ -1,6 +1,7 @@
-import { CircularLoader, NoticeBox } from '@dhis2/ui'
+import { NoticeBox } from '@dhis2/ui'
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { useWorkingListMeta } from '../../provider/WorkingListContext'
+import { WorkingListLoading } from '../Loading'
 import { useWorkingListText } from '../WorkingListText'
 
 export interface WorkingListContainerProps extends ComponentPropsWithoutRef<'article'> {}
@@ -29,14 +30,10 @@ export const WorkingListContainer = ({
                 </div>
             )}
             {lifecycle.status === 'pending' && (
-                <div
-                    className="flex min-h-48 items-center justify-center gap-3 text-[var(--colors-grey700)]"
-                    data-testid="working-list-initializing"
-                    aria-live="polite"
-                >
-                    <CircularLoader small />
-                    <p>{translate('Loading the working list…')}</p>
-                </div>
+                <WorkingListLoading
+                    label={translate('Loading the working list…')}
+                    testId="working-list-initializing"
+                />
             )}
             {lifecycle.status === 'error' && (
                 <div className="p-4" data-testid="working-list-lifecycle-error">

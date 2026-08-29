@@ -1,5 +1,6 @@
 import {
     Box,
+    CircularLoader,
     Field,
     MultiSelect,
     MultiSelectOption,
@@ -10,6 +11,9 @@ import React, { useEffect, useState } from 'react'
 import { z } from 'zod'
 import type { WorkingListClient } from '../../api/client'
 import { useWorkingListText } from '../WorkingListText'
+
+const visuallyHiddenClassName =
+    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
 const UserReferenceSchema = z
     .object({
@@ -190,7 +194,16 @@ export const OrganisationUnitFilterSelect = ({
             aria-busy={rootsQuery.isPending || selectedQuery.isPending}
         >
             {rootsQuery.isPending ? (
-                <p>{i18n.t('Loading organisation units…')}</p>
+                <div
+                    className="flex min-h-24 items-center justify-center"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <CircularLoader small />
+                    <span className={visuallyHiddenClassName}>
+                        {i18n.t('Loading organisation units…')}
+                    </span>
+                </div>
             ) : (
                 <OrganisationUnitTree
                     roots={roots.map((root) => root.id)}

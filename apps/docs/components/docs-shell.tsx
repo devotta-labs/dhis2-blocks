@@ -156,7 +156,7 @@ function DocsSidebar() {
                 </SidebarGroup>
                 <SidebarSeparator className="md:hidden" />
                 <SidebarGroup>
-                    <SidebarGroupLabel>Blocks</SidebarGroupLabel>
+                    <SidebarGroupLabel>Tracker</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {blocksNavigation.map((item) => (

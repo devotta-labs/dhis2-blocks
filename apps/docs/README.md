@@ -1,18 +1,18 @@
 # DHIS2 Blocks documentation
 
-The documentation site is a Next.js 16 and React 19 application. Its embedded
-Working List example is built separately by `apps/previews` with React 18.
+The documentation site is a Next.js 16 application. Interactive examples are
+served by Next.js routes and embedded in the documentation with iframes for
+style and layout isolation.
 
-From the repository root, start both applications with:
+From the repository root, start the documentation application with:
 
 ```bash
-pnpm start:docs
+pnpm dev:docs
 ```
 
-The docs are served at `http://localhost:3002`; the preview development server
-runs at `http://127.0.0.1:4173` and is exposed through the docs origin.
+The docs and preview routes are served from the same origin.
 
-Create a production build, including registry JSON and the static preview, with:
+Create a production build, including registry JSON, with:
 
 ```bash
 pnpm build:docs
@@ -25,8 +25,8 @@ URL and credentials are server-only. `NEXT_PUBLIC_SITE_ORIGIN` controls the
 origin shown in copyable shadcn installation commands.
 
 The defaults target the public DHIS2 development server with its public demo
-credentials. The API version and fixed programme and organisation unit are kept
-in `apps/previews/src/config.ts`.
+credentials. Preview-specific IDs and API versions live beside their preview
+components in the docs application.
 
 ## Content and registry
 

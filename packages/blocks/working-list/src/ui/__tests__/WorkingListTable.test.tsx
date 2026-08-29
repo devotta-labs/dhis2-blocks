@@ -220,6 +220,30 @@ const withActEnvironment = (run: () => void) => {
 }
 
 describe('WorkingListTable', () => {
+    it('reserves ten table rows while results are initially loading', () => {
+        withActEnvironment(() => {
+            const container = document.createElement('div')
+            document.body.appendChild(container)
+            const root = renderTable(container, {
+                isInitialLoading: true,
+            })
+
+            try {
+                expect(
+                    container.querySelectorAll(
+                        '[data-testid="working-list-loading-row"]'
+                    )
+                ).toHaveLength(10)
+                expect(container.textContent).not.toContain(
+                    'No items to display'
+                )
+            } finally {
+                act(() => root.unmount())
+                container.remove()
+            }
+        })
+    })
+
     it('renders the ascending, descending, and default states across three clicks', () => {
         withActEnvironment(() => {
             const container = document.createElement('div')

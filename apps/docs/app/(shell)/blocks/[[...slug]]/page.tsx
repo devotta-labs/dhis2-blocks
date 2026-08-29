@@ -27,10 +27,22 @@ export default async function BlockPage({ params }: PageProps) {
             toc={page.data.toc}
             breadcrumb={{ enabled: false }}
             footer={{ enabled: false }}
+            tableOfContent={{ list: { thumbBox: false } }}
+            tableOfContentPopover={{ list: { thumbBox: false } }}
         >
             <DocsTitle>{page.data.title}</DocsTitle>
-            <DocsDescription>{page.data.description}</DocsDescription>
-            <DocsBody>
+            <DocsDescription
+                className={page.data.compactIntro ? 'text-base' : undefined}
+            >
+                {page.data.description}
+            </DocsDescription>
+            <DocsBody
+                className={
+                    page.data.compactIntro
+                        ? '[&>p:first-child]:text-sm'
+                        : undefined
+                }
+            >
                 <MDX components={getMDXComponents()} />
             </DocsBody>
         </DocsPage>

@@ -64,13 +64,13 @@ const actionErrorCopy = (
 
 const SavedViewsLoading = () => (
     <div
-        className="flex min-h-[38px] items-center border-b border-[#e8edf2] px-2 pt-0 pb-2 text-xs leading-4 text-[var(--colors-grey700)]"
+        className="flex min-h-[38px] items-center gap-1 border-b border-[#e8edf2] px-2 pt-0 pb-2 text-xs leading-4 text-[var(--colors-grey700)]"
         data-testid="saved-list-bar"
+        aria-hidden="true"
     >
-        <div
-            className="h-[30px] w-[148px] rounded-2xl bg-[var(--colors-grey200)]"
-            aria-hidden="true"
-        />
+        <div className="h-[30px] w-[120px] animate-pulse rounded-2xl bg-[var(--colors-grey200)] motion-reduce:animate-none" />
+        <div className="h-[30px] w-[150px] animate-pulse rounded-2xl bg-[var(--colors-grey200)] motion-reduce:animate-none" />
+        <div className="h-[30px] w-[138px] animate-pulse rounded-2xl bg-[var(--colors-grey200)] motion-reduce:animate-none" />
     </div>
 )
 

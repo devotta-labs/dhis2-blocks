@@ -1,11 +1,7 @@
-const previewPath = '/previews/working-list/basic/index.html'
+import { Preview } from '@/components/preview'
 
 export function WorkingListPreview() {
     return (
-        <iframe
-            className="preview-frame block w-full rounded-xl bg-white"
-            src={previewPath}
-            title="Basic Working List preview"
-        />
+        <Preview slug="working-list/basic" title="Basic Working List preview" />
     )
 }

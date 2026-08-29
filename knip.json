@@ -90,7 +90,6 @@
                 "app/**/{page,layout,route}.ts",
                 "app/**/{page,layout,route}.tsx",
                 "components/mdx.tsx",
-                "scripts/*.mjs",
                 "**/*.{test,spec}.{ts,tsx}"
             ],
             "project": [
@@ -102,20 +101,6 @@
             ],
             "ignoreIssues": {
                 "components/ui/**": ["exports"]
-            }
-        },
-        "apps/previews": {
-            "entry": ["src/main.tsx"],
-            "project": ["src/**/*.{ts,tsx,css}"],
-            "ignoreIssues": {
-                "src/config.ts": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ]
             }
         },
         "packages/blocks/*": {

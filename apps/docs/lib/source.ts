@@ -8,6 +8,7 @@ const blocks = defineDocs({
         schema: z.object({
             title: z.string().min(1),
             description: z.string().min(1),
+            compactIntro: z.boolean().optional(),
         }),
     },
 })

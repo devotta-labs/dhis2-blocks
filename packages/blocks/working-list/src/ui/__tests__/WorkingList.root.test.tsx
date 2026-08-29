@@ -91,7 +91,7 @@ describe('WorkingList root state', () => {
         expect(first?.selectedSavedListId).toBe('View0000001')
         expect(first?.pagination).toEqual({ page: 2, pageSize: 25 })
         expect(second?.selectedSavedListId).toBeNull()
-        expect(second?.pagination).toEqual({ page: 1, pageSize: 15 })
+        expect(second?.pagination).toEqual({ page: 1, pageSize: 10 })
 
         act(() => first?.onSelectedSavedListChange('View0000003'))
         act(() => first?.onPaginationChange({ page: 3, pageSize: 50 }))

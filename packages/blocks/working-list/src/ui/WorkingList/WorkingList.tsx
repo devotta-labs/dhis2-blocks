@@ -16,7 +16,7 @@ import { WorkingListSavedViews } from '../SavedViews'
 import { WorkingListToolbar } from '../Toolbar'
 import { useWorkingListText } from '../WorkingListText'
 
-const DEFAULT_PAGINATION: WorkingListPagination = { page: 1, pageSize: 15 }
+const DEFAULT_PAGINATION: WorkingListPagination = { page: 1, pageSize: 10 }
 
 type ControlledViewProps = {
     viewId: string | null

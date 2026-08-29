@@ -10,15 +10,16 @@ apps/
   web/                  DHIS2 wrapper and component demo application
 packages/
   blocks/
+    context-selector/   Capture-style controlled context-selector primitives
     working-list/       Canonical Working List source and registry manifest
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
 ```
 
-The web application depends on `@dhis2-blocks/working-list` through pnpm's
-`workspace:*` protocol. The private workspace package resolves directly to its
-source entry point, so the demo, tests, and production application build all
-exercise the same canonical source.
+The web application depends on the private block workspaces through pnpm's
+`workspace:*` protocol. Each workspace package resolves directly to its source
+entry point, so the demo, tests, and production application build all exercise
+the same canonical source.
 
 ## Setup
 
@@ -44,6 +45,41 @@ pnpm build
 ```
 
 The DHIS2 application output is written below `apps/web/build`.
+
+## Context Selector block
+
+The Context Selector is a source-installed, Capture-style composition layer for
+the application context row. Install it from the GitHub registry in a project
+with Tailwind CSS enabled and a valid shadcn `components.json` configuration:
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/context-selector
+```
+
+Import the installed source through the project's configured components alias:
+
+```tsx
+import {
+    ContextSelector,
+    ContextEnrollmentSelector,
+    ContextOrganisationUnitSelector,
+    ContextProgramSelector,
+    ContextStageSelector,
+} from '@/components/context-selector'
+```
+
+`ContextSelector` owns the row's Capture-compatible layout, styling, and
+semantics. Its children are independently composable controlled controls. The
+host supplies all option data, selected values, availability state, popup
+content, and callbacks; it also chooses which controls render and in what
+order. The block does not fetch data, synchronize a router or URL, own workflow
+state, or decide when progressive disclosure advances.
+
+A program-first application can initially render only
+`ContextProgramSelector`, then add organisation-unit, enrollment, and stage
+children as its own context policy makes them relevant. See
+[Context Selector composition](docs/context-selector-composition.md) for the
+implemented contracts and a complete controlled example.
 
 ## Working List block
 
@@ -154,15 +190,14 @@ use React's reserved `key` to give each instance a stable identity:
 A supplied React key overrides the outer instance identity; changing it replaces
 that instance even when `programId` stays the same.
 
-The private `@dhis2-blocks/working-list` workspace package remains only as the
-repository's canonical development and test harness. It is not a compiled or
-publishable consumer package.
+The private block workspace packages remain only as the repository's canonical
+development and test harnesses. They are not compiled or publishable consumer
+packages.
 
 The root `registry.json` is the public registry entry point. It owns global
-metadata and composes the package-owned
-`packages/blocks/working-list/registry.json` manifest through shadcn's
-`include` mechanism. Paths declared by that package manifest are relative to
-the Working List package.
+metadata and composes each package-owned registry manifest through shadcn's
+`include` mechanism. Paths declared by a package manifest are relative to that
+package.
 
 ## Quality checks
 

@@ -122,7 +122,13 @@ export const TrackerProgramSchema = z
         displayIncidentDateLabel: OptionalStringSchema,
         trackedEntityType: LooseReferenceSchema.optional(),
         access: z
-            .object({ read: z.boolean().optional() })
+            .object({
+                read: z.boolean().optional(),
+                data: z
+                    .object({ read: z.boolean().optional() })
+                    .passthrough()
+                    .optional(),
+            })
             .passthrough()
             .optional(),
         programTrackedEntityAttributes: z.array(
@@ -137,8 +143,32 @@ const TrackerProgramSummarySchema = z
         id: z.string().min(1),
         displayName: z.string(),
         programType: z.string(),
+        style: z
+            .object({
+                color: z.string().optional(),
+                icon: z.string().optional(),
+            })
+            .passthrough()
+            .optional(),
+        organisationUnits: z
+            .array(
+                z
+                    .object({
+                        id: z.string().min(1),
+                        displayName: z.string(),
+                        path: z.string().min(1),
+                    })
+                    .passthrough()
+            )
+            .optional(),
         access: z
-            .object({ read: z.boolean().optional() })
+            .object({
+                read: z.boolean().optional(),
+                data: z
+                    .object({ read: z.boolean().optional() })
+                    .passthrough()
+                    .optional(),
+            })
             .passthrough()
             .optional(),
     })

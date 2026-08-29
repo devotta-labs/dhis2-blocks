@@ -122,6 +122,45 @@
                     "namespaceMembers"
                 ]
             }
+        },
+        "packages/blocks/context-selector": {
+            "entry": [
+                "src/**/*.{test,spec}.{ts,tsx}",
+                "src/**/__tests__/**/*.{ts,tsx}",
+                "type-tests/**/*.ts"
+            ],
+            "project": [
+                "src/**/*.{ts,tsx}",
+                "test/**/*.{ts,css}",
+                "type-tests/**/*.ts"
+            ],
+            "includeEntryExports": true,
+            "ignoreIssues": {
+                "src/index.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "test/**": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "type-tests/**": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ]
+            }
         }
     }
 }

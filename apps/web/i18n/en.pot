@@ -5,14 +5,17 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-24T15:13:04.153Z\n"
-"PO-Revision-Date: 2026-08-24T15:13:04.154Z\n"
-
-msgid "Discard the unsaved changes to this working list?"
-msgstr "Discard the unsaved changes to this working list?"
+"POT-Creation-Date: 2026-08-29T15:51:18.425Z\n"
+"PO-Revision-Date: 2026-08-29T15:51:18.426Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
+
+msgid "Working lists"
+msgstr "Working lists"
+
+msgid "Highlight data quality issues"
+msgstr "Highlight data quality issues"
 
 msgid "Could not load app context"
 msgstr "Could not load app context"
@@ -48,18 +51,6 @@ msgstr "Choose an organisation unit assigned to both you and this program."
 msgid "Choose another organisation unit"
 msgstr "Choose another organisation unit"
 
-msgid "Highlight data quality issues"
-msgstr "Highlight data quality issues"
-
-msgid "Saved views in this program"
-msgstr "Saved views in this program"
-
-msgid "Tracked entity filters"
-msgstr "Tracked entity filters"
-
-msgid "Working list results"
-msgstr "Working list results"
-
 msgid "Event selected"
 msgstr "Event selected"
 
@@ -78,20 +69,33 @@ msgstr "Close"
 msgid "Working list context"
 msgstr "Working list context"
 
-msgid "Program"
-msgstr "Program"
+msgid "No programs available."
+msgstr "No programs available."
 
-msgid "Choose a tracker program"
-msgstr "Choose a tracker program"
+msgid "Show all"
+msgstr "Show all"
 
-msgid "No programs match the search"
-msgstr "No programs match the search"
+msgid "Some programs are being filtered by the chosen organisation unit"
+msgstr "Some programs are being filtered by the chosen organisation unit"
 
-msgid "Organisation unit"
-msgstr "Organisation unit"
+msgid "Show all programs"
+msgstr "Show all programs"
 
-msgid "Working lists"
-msgstr "Working lists"
+msgid "Discard unsaved changes?"
+msgstr "Discard unsaved changes?"
+
+msgid ""
+"This event has unsaved changes. Leaving this page without saving will lose "
+"these changes. Are you sure you want to discard unsaved changes?"
+msgstr ""
+"This event has unsaved changes. Leaving this page without saving will lose "
+"these changes. Are you sure you want to discard unsaved changes?"
+
+msgid "No, cancel"
+msgstr "No, cancel"
+
+msgid "Yes, discard changes"
+msgstr "Yes, discard changes"
 
 msgid "The working list could not be loaded"
 msgstr "The working list could not be loaded"
@@ -105,8 +109,8 @@ msgstr "Technical details"
 msgid "Reload application"
 msgstr "Reload application"
 
-msgid "Select one organisation unit for this list."
-msgstr "Select one organisation unit for this list."
+msgid "Search"
+msgstr "Search"
 
 msgid "A required value is missing"
 msgstr "A required value is missing"
@@ -547,6 +551,9 @@ msgstr "Save as new working list"
 msgid "Save view"
 msgstr "Save view"
 
+msgid "Saved views in this program"
+msgstr "Saved views in this program"
+
 msgid "Scheduled"
 msgstr "Scheduled"
 
@@ -665,6 +672,9 @@ msgstr "Today"
 msgid "Tracked entity attribute"
 msgstr "Tracked entity attribute"
 
+msgid "Tracked entity filters"
+msgstr "Tracked entity filters"
+
 msgid "Try adjusting the filters or organisation unit."
 msgstr "Try adjusting the filters or organisation unit."
 
@@ -709,6 +719,9 @@ msgstr "Visited"
 
 msgid "Working list actions"
 msgstr "Working list actions"
+
+msgid "Working list results"
+msgstr "Working list results"
 
 msgid "Working list views"
 msgstr "Working list views"

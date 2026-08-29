@@ -58,7 +58,7 @@ test.describe('Capture context and generated tracker views', () => {
             }
         }
         page.on('request', countTrackerRequest)
-        await page.locator('[data-test="program-selector"]').click()
+        await page.locator('[data-test="program-selector-container"]').click()
         await chooseDhis2Option(
             page,
             '[data-test="program-selector-input"]',
@@ -68,7 +68,7 @@ test.describe('Capture context and generated tracker views', () => {
             timeout: 30_000,
         })
         await expect(
-            page.locator('[data-test="org-unit-selector"]')
+            page.locator('[data-test="org-unit-selector-container"]')
         ).toContainText('Choose an organisation unit')
         await page.waitForTimeout(300)
         expect(trackerRequests).toHaveLength(0)
@@ -100,7 +100,7 @@ test.describe('Capture context and generated tracker views', () => {
             )
         ).toBe(true)
         await expect(
-            page.locator('[data-test="org-unit-selector"]')
+            page.locator('[data-test="org-unit-selector-container"]')
         ).toContainText(ORG_UNIT_NAME)
         await expect(page).toHaveURL(new RegExp(`orgUnitId=${ORG_UNIT}`))
         await expect(page.getByTestId('working-list-table')).toBeVisible({

@@ -94,6 +94,7 @@ describe('resolved source registry', () => {
     it('composes the package-owned Working List manifest from the root', () => {
         expect(rootRegistry.items).toBeUndefined()
         expect(rootRegistry.include).toEqual([
+            'packages/blocks/context-selector/registry.json',
             'packages/blocks/working-list/registry.json',
         ])
         expect(workingListEntry).toMatchObject({

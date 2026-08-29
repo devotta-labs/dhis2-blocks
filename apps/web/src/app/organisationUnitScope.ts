@@ -1,24 +1,20 @@
-import type { OrganisationUnitReference } from './OrganisationUnitPicker'
+export interface OrganisationUnitReference {
+    id: string
+    displayName: string
+    path: string
+}
 
 export interface UserOrganisationUnitScope {
     organisationUnits: OrganisationUnitReference[]
     teiSearchOrganisationUnits?: OrganisationUnitReference[]
 }
 
-/**
- * Capture uses Tracker search organisation units when they are configured.
- * Older servers and users without a dedicated search scope fall back to the
- * user's data-capture organisation units.
- */
-export const resolveTrackerSearchRoots = ({
+/** Capture's top-bar OrgUnitField starts from the user's capture roots. */
+export const resolveCaptureOrganisationUnitRoots = ({
     organisationUnits,
-    teiSearchOrganisationUnits,
-}: UserOrganisationUnitScope): OrganisationUnitReference[] =>
-    teiSearchOrganisationUnits?.length
-        ? teiSearchOrganisationUnits
-        : organisationUnits
+}: UserOrganisationUnitScope): OrganisationUnitReference[] => organisationUnits
 
-const areOrganisationUnitPathsRelated = (left: string, right: string) =>
+export const areOrganisationUnitPathsRelated = (left: string, right: string) =>
     left === right ||
     left.startsWith(`${right}/`) ||
     right.startsWith(`${left}/`)
@@ -29,8 +25,8 @@ export interface OrganisationUnitScopeIntersection {
 }
 
 /**
- * The selectable tree is the intersection of the user's Tracker search scope
- * and the organisation units assigned to the selected program.
+ * The selectable tree is the intersection of Capture's data-entry roots and
+ * the organisation units assigned to the selected program.
  */
 export const intersectOrganisationUnitScopes = (
     searchRoots: OrganisationUnitReference[],

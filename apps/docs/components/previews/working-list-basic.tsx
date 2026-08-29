@@ -13,7 +13,7 @@ import {
     WorkingListQueryClient,
     WorkingListQueryClientProvider,
     WorkingListRuntimeProvider,
-} from '@dhis2-blocks/working-list/development'
+} from '@dhis2-blocks/working-list/preview'
 import { PreviewShell } from '@/components/previews/preview-shell'
 
 const previewConfig = {

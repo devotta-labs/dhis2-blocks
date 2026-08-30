@@ -1,0 +1,80 @@
+---
+title: Context Selector
+description: Capture-style selector bar primitives for choosing the working context.
+compactIntro: true
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs'
+import { RegistryInstallCommand } from '@/components/registry-install-command'
+import { ContextSelectorPreview } from '@/components/context-selector-preview'
+
+<Tabs className="rounded-none" items={['Preview', 'Code']}>
+    <Tab className="overflow-hidden rounded-none bg-transparent p-0">
+        <ContextSelectorPreview />
+    </Tab>
+    <Tab className="rounded-none [&>figure:only-child]:min-h-[220px] [&>figure:only-child]:rounded-none">
+
+```tsx
+<ContextSelector ariaLabel="Registration context">
+    <ProgramSelector
+        options={programOptions}
+        value={programId}
+        open={programOpen}
+        onOpenChange={setProgramOpen}
+        onChange={selectProgram}
+        onClear={clearProgram}
+    />
+    <OrganisationUnitSelector
+        value={organisationUnit?.displayName}
+        open={organisationUnitOpen}
+        onOpenChange={setOrganisationUnitOpen}
+        onClear={clearOrganisationUnit}
+    >
+        <HostOrganisationUnitTree onSelect={selectOrganisationUnit} />
+    </OrganisationUnitSelector>
+    <ClearSelections onClear={clearContext} disabled={!programId} />
+</ContextSelector>
+```
+
+    </Tab>
+
+</Tabs>
+
+## Installation
+
+<RegistryInstallCommand item="context-selector" />
+
+## Basic usage
+
+Compose the selectors your workflow needs. The host owns all state: options, committed values, and popup visibility.
+
+```tsx
+import {
+    ClearSelections,
+    ContextSelector,
+    OrganisationUnitSelector,
+    ProgramSelector,
+} from '@/components/context-selector'
+
+export const BasicContextSelector = () => (
+    <ContextSelector ariaLabel="Registration context">
+        <ProgramSelector
+            options={programOptions}
+            value={programId}
+            open={programOpen}
+            onOpenChange={setProgramOpen}
+            onChange={selectProgram}
+            onClear={clearProgram}
+        />
+        <OrganisationUnitSelector
+            value={organisationUnit?.displayName}
+            open={organisationUnitOpen}
+            onOpenChange={setOrganisationUnitOpen}
+            onClear={clearOrganisationUnit}
+        >
+            <HostOrganisationUnitTree onSelect={selectOrganisationUnit} />
+        </OrganisationUnitSelector>
+        <ClearSelections onClear={clearContext} disabled={!programId} />
+    </ContextSelector>
+)
+```

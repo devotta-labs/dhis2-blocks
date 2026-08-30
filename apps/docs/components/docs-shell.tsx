@@ -33,6 +33,7 @@ const primaryNavigation = [
 ]
 
 const blocksNavigation = [
+    { label: 'Context Selector', href: '/blocks/context-selector' },
     { label: 'Working List', href: '/blocks/working-list' },
 ]
 

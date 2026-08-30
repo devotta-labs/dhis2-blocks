@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import { ContextSelectorBasicPreviewLoader } from '@/components/previews/context-selector-basic-loader'
 import { WorkingListBasicPreviewLoader } from '@/components/previews/working-list-basic-loader'
 
 interface PreviewDefinition {
@@ -7,6 +8,13 @@ interface PreviewDefinition {
 }
 
 const previewEntries = [
+    [
+        'context-selector/basic',
+        {
+            title: 'Basic Context Selector preview',
+            component: ContextSelectorBasicPreviewLoader,
+        },
+    ],
     [
         'working-list/basic',
         {

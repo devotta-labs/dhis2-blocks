@@ -24,6 +24,7 @@
     },
     "include": [
         "next-env.d.ts",
+        "../../packages/blocks/context-selector/src/dhis2-ui-selector-bar.d.ts",
         "next.config.mjs",
         "**/*.ts",
         "**/*.tsx",

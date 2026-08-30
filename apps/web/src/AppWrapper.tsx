@@ -12,6 +12,11 @@ import './locales'
 import { ErrorBoundary } from './app/ErrorBoundary'
 import { SyncUrlWithGlobalShell } from './app/SyncUrlWithGlobalShell'
 import { ContextSelectorShowcase } from './app/ContextSelectorShowcase'
+import {
+    AuroraShowcase,
+    EditorialShowcase,
+    TerminalShowcase,
+} from './app/VariantShowcase'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -46,6 +51,30 @@ const router = createHashRouter([
         element: (
             <ErrorBoundary>
                 <ContextSelectorShowcase />
+            </ErrorBoundary>
+        ),
+    },
+    {
+        path: '/aurora',
+        element: (
+            <ErrorBoundary>
+                <AuroraShowcase />
+            </ErrorBoundary>
+        ),
+    },
+    {
+        path: '/terminal',
+        element: (
+            <ErrorBoundary>
+                <TerminalShowcase />
+            </ErrorBoundary>
+        ),
+    },
+    {
+        path: '/editorial',
+        element: (
+            <ErrorBoundary>
+                <EditorialShowcase />
             </ErrorBoundary>
         ),
     },

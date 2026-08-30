@@ -12,6 +12,12 @@
 @source '../../../../../../packages/blocks/working-list/src';
 @source '../../../packages/blocks/context-selector/src';
 @source '../../../../../../packages/blocks/context-selector/src';
+@source '../../../packages/blocks/working-list-aurora/src';
+@source '../../../../../../packages/blocks/working-list-aurora/src';
+@source '../../../packages/blocks/working-list-terminal/src';
+@source '../../../../../../packages/blocks/working-list-terminal/src';
+@source '../../../packages/blocks/working-list-editorial/src';
+@source '../../../../../../packages/blocks/working-list-editorial/src';
 
 :root {
     color: #212934;

@@ -11,6 +11,7 @@ interface ContextStatusProps {
     hasProgram: boolean
     organisationUnitId?: string
     organisationUnitIsAllowed: boolean
+    canChooseOrganisationUnit?: boolean
     onRetry: () => void
     onChooseOrganisationUnit: () => void
 }
@@ -21,6 +22,7 @@ export const ContextStatus = ({
     hasProgram,
     organisationUnitId,
     organisationUnitIsAllowed,
+    canChooseOrganisationUnit = true,
     onRetry,
     onChooseOrganisationUnit,
 }: ContextStatusProps) => {
@@ -77,17 +79,23 @@ export const ContextStatus = ({
             >
                 <h2>{i18n.t('Choose an organisation unit')}</h2>
                 <p>
-                    {i18n.t(
-                        'Select an organisation unit assigned to both you and this program.'
-                    )}
+                    {canChooseOrganisationUnit
+                        ? i18n.t(
+                              'Select an organisation unit assigned to both you and this program.'
+                          )
+                        : i18n.t(
+                              'No organisation units are available for your user account.'
+                          )}
                 </p>
-                <Button
-                    primary
-                    dataTest="choose-org-unit"
-                    onClick={onChooseOrganisationUnit}
-                >
-                    {i18n.t('Choose organisation unit')}
-                </Button>
+                {canChooseOrganisationUnit ? (
+                    <Button
+                        primary
+                        dataTest="choose-org-unit"
+                        onClick={onChooseOrganisationUnit}
+                    >
+                        {i18n.t('Choose organisation unit')}
+                    </Button>
+                ) : null}
             </main>
         )
     }
@@ -109,12 +117,14 @@ export const ContextStatus = ({
                             'Clear the selected program or choose another organisation unit.'
                         )}
                     </p>
-                    <Button
-                        dataTest="replace-invalid-org-unit"
-                        onClick={onChooseOrganisationUnit}
-                    >
-                        {i18n.t('Choose another organisation unit')}
-                    </Button>
+                    {canChooseOrganisationUnit ? (
+                        <Button
+                            dataTest="replace-invalid-org-unit"
+                            onClick={onChooseOrganisationUnit}
+                        >
+                            {i18n.t('Choose another organisation unit')}
+                        </Button>
+                    ) : null}
                 </NoticeBox>
             </main>
         )

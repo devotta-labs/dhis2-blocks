@@ -229,10 +229,9 @@ export const AppShell = () => {
                     resource: 'organisationUnits',
                     params: {
                         fields: 'id,displayName,path',
-                        paging: true,
+                        paging: false,
                         query: debouncedOrganisationUnitSearch,
                         withinUserSearchHierarchy: true,
-                        pageSize: 15,
                     },
                 },
                 OrganisationUnitsResponseSchema,
@@ -453,6 +452,13 @@ export const AppShell = () => {
                             Boolean(debouncedOrganisationUnitSearch) &&
                             organisationUnitSearchQuery.isPending
                         }
+                        searchError={
+                            Boolean(debouncedOrganisationUnitSearch) &&
+                            organisationUnitSearchQuery.isError
+                        }
+                        onSearchRetry={() =>
+                            void organisationUnitSearchQuery.refetch()
+                        }
                         onSelect={updateOrgUnit}
                     />
                 }
@@ -470,6 +476,9 @@ export const AppShell = () => {
                 hasProgram={Boolean(selectedProgramSummary)}
                 organisationUnitId={urlState.orgUnitId}
                 organisationUnitIsAllowed={selectedOrgUnitIsAllowed}
+                canChooseOrganisationUnit={
+                    organisationUnitPickerScope.pickerRoots.length > 0
+                }
                 onChooseOrganisationUnit={() => setOrgUnitSelectorOpen(true)}
                 onRetry={() => {
                     void programsQuery.refetch()
@@ -477,7 +486,7 @@ export const AppShell = () => {
                     if (selectedProgramSummary) {
                         void programOrgUnitsQuery.refetch()
                     }
-                    if (selectedProgramSummary && urlState.orgUnitId) {
+                    if (urlState.orgUnitId) {
                         void selectedOrgUnitQuery.refetch()
                     }
                 }}

@@ -1,4 +1,4 @@
-import { CircularLoader, OrganisationUnitTree } from '@dhis2/ui'
+import { Button, CircularLoader, OrganisationUnitTree } from '@dhis2/ui'
 import type { ComponentType, MouseEvent } from 'react'
 import React, { useCallback, useMemo, useState } from 'react'
 import i18n from '../../i18n'
@@ -17,6 +17,8 @@ interface OrganisationUnitSelectorContentProps {
     onSearchChange: (value: string) => void
     searchRoots?: OrganisationUnitReference[]
     searchLoading?: boolean
+    searchError?: boolean
+    onSearchRetry?: () => void
     treeKey: string
     onSelect: (organisationUnit: OrganisationUnitReference) => void
     treeComponent?: ComponentType<OrganisationUnitTreeRuntimeProps>
@@ -102,6 +104,8 @@ export const OrganisationUnitSelectorContent = ({
     onSearchChange,
     searchRoots,
     searchLoading = false,
+    searchError = false,
+    onSearchRetry,
     treeKey,
     onSelect,
     treeComponent,
@@ -138,7 +142,21 @@ export const OrganisationUnitSelectorContent = ({
                     data-test="org-unit-tree"
                     data-testid="org-unit-tree"
                 >
-                    {searchLoading ? (
+                    {searchError ? (
+                        <div
+                            className="flex w-full flex-col items-center gap-[8px] px-[16px] py-[24px] text-center text-[14px] text-[#4a5768]"
+                            data-test="org-unit-search-error"
+                        >
+                            <span>
+                                {i18n.t('Could not search organisation units')}
+                            </span>
+                            {onSearchRetry ? (
+                                <Button small secondary onClick={onSearchRetry}>
+                                    {i18n.t('Try again')}
+                                </Button>
+                            ) : null}
+                        </div>
+                    ) : searchLoading ? (
                         <CircularLoader />
                     ) : (
                         <ControlledOrganisationUnitTree

@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-29T16:46:43.207Z\n"
-"PO-Revision-Date: 2026-08-29T16:46:43.208Z\n"
+"POT-Creation-Date: 2026-10-07T15:08:14.222Z\n"
+"PO-Revision-Date: 2026-10-07T15:08:14.222Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -38,6 +38,9 @@ msgstr "Choose an organisation unit"
 
 msgid "Select an organisation unit assigned to both you and this program."
 msgstr "Select an organisation unit assigned to both you and this program."
+
+msgid "No organisation units are available for your user account."
+msgstr "No organisation units are available for your user account."
 
 msgid "Choose organisation unit"
 msgstr "Choose organisation unit"
@@ -123,6 +126,12 @@ msgstr "Reload application"
 
 msgid "Search"
 msgstr "Search"
+
+msgid "Could not search organisation units"
+msgstr "Could not search organisation units"
+
+msgid "Show more"
+msgstr "Show more"
 
 msgid "A required value is missing"
 msgstr "A required value is missing"

@@ -19,6 +19,9 @@ interface OrganisationUnitSelectorContentProps {
     searchLoading?: boolean
     searchError?: boolean
     onSearchRetry?: () => void
+    searchHasMore?: boolean
+    searchLoadingMore?: boolean
+    onSearchLoadMore?: () => void
     treeKey: string
     onSelect: (organisationUnit: OrganisationUnitReference) => void
     treeComponent?: ComponentType<OrganisationUnitTreeRuntimeProps>
@@ -106,6 +109,9 @@ export const OrganisationUnitSelectorContent = ({
     searchLoading = false,
     searchError = false,
     onSearchRetry,
+    searchHasMore = false,
+    searchLoadingMore = false,
+    onSearchLoadMore,
     treeKey,
     onSelect,
     treeComponent,
@@ -142,7 +148,9 @@ export const OrganisationUnitSelectorContent = ({
                     data-test="org-unit-tree"
                     data-testid="org-unit-tree"
                 >
-                    {searchError ? (
+                    {searchLoading ? (
+                        <CircularLoader />
+                    ) : searchError ? (
                         <div
                             className="flex w-full flex-col items-center gap-[8px] px-[16px] py-[24px] text-center text-[14px] text-[#4a5768]"
                             data-test="org-unit-search-error"
@@ -156,17 +164,30 @@ export const OrganisationUnitSelectorContent = ({
                                 </Button>
                             ) : null}
                         </div>
-                    ) : searchLoading ? (
-                        <CircularLoader />
                     ) : (
-                        <ControlledOrganisationUnitTree
-                            key={stableTreeKey}
-                            visibleRoots={visibleRoots}
-                            treeFilter={treeFilter}
-                            selected={selected}
-                            onSelect={onSelect}
-                            TreeComponent={TreeComponent}
-                        />
+                        <>
+                            <ControlledOrganisationUnitTree
+                                key={stableTreeKey}
+                                visibleRoots={visibleRoots}
+                                treeFilter={treeFilter}
+                                selected={selected}
+                                onSelect={onSelect}
+                                TreeComponent={TreeComponent}
+                            />
+                            {searchHasMore ? (
+                                <div className="flex w-full justify-center pb-[4px]">
+                                    <Button
+                                        small
+                                        secondary
+                                        loading={searchLoadingMore}
+                                        dataTest="org-unit-search-load-more"
+                                        onClick={onSearchLoadMore}
+                                    >
+                                        {i18n.t('Show more')}
+                                    </Button>
+                                </div>
+                            ) : null}
+                        </>
                     )}
                 </div>
             </div>

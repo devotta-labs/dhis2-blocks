@@ -13,7 +13,7 @@ import {
     type WorkingListResultTarget,
 } from '@dhis2-blocks/working-list'
 import { trackerProgramsQueryOptions } from '@dhis2-blocks/working-list/development'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useBlocker } from 'react-router-dom'
 import { getGuardedOrganisationUnitState } from '../contextTransitions'
@@ -216,27 +216,35 @@ export const AppShell = () => {
         retry: retryOperationalError,
     })
 
-    const organisationUnitSearchQuery = useQuery({
+    const organisationUnitSearchQuery = useInfiniteQuery({
         queryKey: [
             'working-list',
             'shell',
             'org-unit-search',
             debouncedOrganisationUnitSearch,
         ],
-        queryFn: ({ signal }) =>
+        queryFn: ({ signal, pageParam }) =>
             client.query(
                 {
                     resource: 'organisationUnits',
                     params: {
                         fields: 'id,displayName,path',
-                        paging: false,
+                        paging: true,
                         query: debouncedOrganisationUnitSearch,
                         withinUserSearchHierarchy: true,
+                        page: pageParam,
+                        pageSize: 50,
                     },
                 },
                 OrganisationUnitsResponseSchema,
                 signal
             ),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage) =>
+            lastPage.pager &&
+            lastPage.pager.page * lastPage.pager.pageSize < lastPage.pager.total
+                ? lastPage.pager.page + 1
+                : undefined,
         enabled: Boolean(
             selectedProgramSummary && debouncedOrganisationUnitSearch
         ),
@@ -444,20 +452,30 @@ export const AppShell = () => {
                         onSearchChange={setOrganisationUnitSearch}
                         searchRoots={
                             debouncedOrganisationUnitSearch
-                                ? (organisationUnitSearchQuery.data
-                                      ?.organisationUnits ?? [])
+                                ? (organisationUnitSearchQuery.data?.pages.flatMap(
+                                      (page) => page.organisationUnits
+                                  ) ?? [])
                                 : undefined
                         }
                         searchLoading={
                             Boolean(debouncedOrganisationUnitSearch) &&
-                            organisationUnitSearchQuery.isPending
+                            organisationUnitSearchQuery.isFetching &&
+                            !organisationUnitSearchQuery.data
                         }
                         searchError={
                             Boolean(debouncedOrganisationUnitSearch) &&
-                            organisationUnitSearchQuery.isError
+                            organisationUnitSearchQuery.isError &&
+                            !organisationUnitSearchQuery.data
                         }
                         onSearchRetry={() =>
                             void organisationUnitSearchQuery.refetch()
+                        }
+                        searchHasMore={organisationUnitSearchQuery.hasNextPage}
+                        searchLoadingMore={
+                            organisationUnitSearchQuery.isFetchingNextPage
+                        }
+                        onSearchLoadMore={() =>
+                            void organisationUnitSearchQuery.fetchNextPage()
                         }
                         onSelect={updateOrgUnit}
                     />

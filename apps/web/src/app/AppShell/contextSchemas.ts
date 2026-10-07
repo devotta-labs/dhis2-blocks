@@ -26,7 +26,14 @@ export const ProgramOrganisationUnitsSchema = z
 export const OrganisationUnitsResponseSchema = z
     .object({
         organisationUnits: z.array(OrganisationUnitReferenceSchema),
-        pager: z.unknown().optional(),
+        pager: z
+            .object({
+                page: z.number(),
+                pageSize: z.number(),
+                total: z.number(),
+            })
+            .passthrough()
+            .optional(),
     })
     .passthrough()
 

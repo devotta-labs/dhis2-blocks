@@ -28,10 +28,11 @@ export const buildProgramOptions = ({
 }): Option[] => {
     const compatiblePrograms = selectedOrganisationUnitPath
         ? programs.filter((program) =>
-              (program.organisationUnits ?? []).some((unit) =>
-                  selectedOrganisationUnitId
-                      ? unit.id === selectedOrganisationUnitId
-                      : unit.path === selectedOrganisationUnitPath
+              (program.organisationUnits ?? []).some(
+                  (unit) =>
+                      unit.id === selectedOrganisationUnitId ||
+                      unit.path === selectedOrganisationUnitPath ||
+                      selectedOrganisationUnitPath.startsWith(`${unit.path}/`)
               )
           )
         : programs

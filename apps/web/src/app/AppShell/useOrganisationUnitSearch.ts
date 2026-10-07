@@ -26,7 +26,10 @@ export const useOrganisationUnitSearch = ({
                         fields: 'id,displayName,path',
                         paging: true,
                         query: search,
-                        withinUserSearchHierarchy: true,
+                        // The picker only offers capture-scope units, so
+                        // search inside the user's capture hierarchy rather
+                        // than the wider Tracker search hierarchy.
+                        withinUserHierarchy: true,
                         page: pageParam,
                         pageSize: PAGE_SIZE,
                     },

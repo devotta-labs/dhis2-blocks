@@ -51,37 +51,40 @@ export const noReactEffectsRule = defineRule({
             return node
         }
 
-        const name = (
+        const names = (
             input: ESTree.Node,
             computed: boolean,
             seen = new Set<Variable>()
-        ): string | undefined => {
+        ): string[] => {
             const node = unwrap(input)
 
-            if (!computed && node.type === 'Identifier') return node.name
+            if (!computed && node.type === 'Identifier') return [node.name]
 
-            if (node.type === 'Literal') return String(node.value)
+            if (node.type === 'Literal') return [String(node.value)]
 
             if (
                 node.type === 'TemplateLiteral' &&
                 node.expressions.length === 0
-            )
-                return node.quasis[0]?.value.cooked ?? undefined
+            ) {
+                const cooked = node.quasis[0]?.value.cooked ?? undefined
+
+                return cooked === undefined ? [] : [cooked]
+            }
 
             if (node.type === 'BinaryExpression' && node.operator === '+') {
-                const left = name(node.left, true, new Set(seen))
-                const right = name(node.right, true, new Set(seen))
+                const left = names(node.left, true, new Set(seen))
+                const right = names(node.right, true, new Set(seen))
 
-                return left === undefined || right === undefined
-                    ? undefined
-                    : left + right
+                return left.flatMap((l) => right.map((r) => l + r))
             }
 
             if (computed && node.type === 'Identifier') {
                 const variable = binding(node)
 
-                if (!variable || seen.has(variable)) return undefined
+                if (!variable || seen.has(variable)) return []
                 seen.add(variable)
+
+                const found: string[] = []
 
                 for (const definition of variable.defs) {
                     if (
@@ -89,11 +92,25 @@ export const noReactEffectsRule = defineRule({
                         definition.node.type === 'VariableDeclarator' &&
                         definition.node.init
                     )
-                        return name(definition.node.init, true, seen)
+                        found.push(
+                            ...names(definition.node.init, true, new Set(seen))
+                        )
                 }
+
+                // A reassigned key may hold an effect hook even when the
+                // initializer does not.
+                for (const reference of variable.references) {
+                    if (reference.init || !reference.writeExpr) continue
+
+                    found.push(
+                        ...names(reference.writeExpr, true, new Set(seen))
+                    )
+                }
+
+                return found
             }
 
-            return undefined
+            return []
         }
 
         const value = (
@@ -150,18 +167,19 @@ export const noReactEffectsRule = defineRule({
                 node.type === 'MemberExpression' &&
                 value(node.object, new Set(seen)) === 'namespace'
             ) {
-                const member = name(node.property, node.computed)
+                const members = names(node.property, node.computed)
 
-                if (effectHooks.has(member ?? '')) return 'effect'
+                if (members.some((member) => effectHooks.has(member)))
+                    return 'effect'
 
-                if (member === 'default') return 'namespace'
+                if (members.includes('default')) return 'namespace'
             }
 
             if (
                 node.type === 'MemberExpression' &&
                 value(node.object, new Set(seen)) === 'effect' &&
-                ['call', 'apply', 'bind'].includes(
-                    name(node.property, node.computed) ?? ''
+                names(node.property, node.computed).some((member) =>
+                    ['call', 'apply', 'bind'].includes(member)
                 )
             )
                 return 'effect'
@@ -190,14 +208,16 @@ export const noReactEffectsRule = defineRule({
                     if (
                         specifier.type === 'ImportSpecifier' &&
                         specifier.importKind !== 'type' &&
-                        name(specifier.imported, false) === 'default'
+                        names(specifier.imported, false).includes('default')
                     )
                         return 'namespace'
 
                     if (
                         specifier.type === 'ImportSpecifier' &&
                         specifier.importKind !== 'type' &&
-                        effectHooks.has(name(specifier.imported, false) ?? '')
+                        names(specifier.imported, false).some((member) =>
+                            effectHooks.has(member)
+                        )
                     )
                         return 'effect'
                 }
@@ -232,11 +252,12 @@ export const noReactEffectsRule = defineRule({
                         target.name !== node.name
                     )
                         continue
-                    const member = name(property.key, property.computed)
+                    const members = names(property.key, property.computed)
 
-                    if (effectHooks.has(member ?? '')) return 'effect'
+                    if (members.some((member) => effectHooks.has(member)))
+                        return 'effect'
 
-                    if (member === 'default') return 'namespace'
+                    if (members.includes('default')) return 'namespace'
                 }
             }
 
@@ -303,7 +324,9 @@ export const noReactEffectsRule = defineRule({
                 if (
                     node.callee.type === 'MemberExpression' &&
                     value(node.callee.object) === 'effect' &&
-                    name(node.callee.property, node.callee.computed) === 'bind'
+                    names(node.callee.property, node.callee.computed).includes(
+                        'bind'
+                    )
                 ) {
                     reportEscape(node)
 
@@ -329,8 +352,8 @@ export const noReactEffectsRule = defineRule({
 
                     if (
                         node.source?.value === 'react'
-                            ? effectHooks.has(
-                                  name(specifier.local, false) ?? ''
+                            ? names(specifier.local, false).some((member) =>
+                                  effectHooks.has(member)
                               )
                             : value(specifier.local) === 'effect'
                     )

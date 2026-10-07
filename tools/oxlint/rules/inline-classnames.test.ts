@@ -17,6 +17,9 @@ tester.run('dhis2-blocks/inline-classnames', inlineClassnamesRule, {
         'function Component({ className }: Props) { return <div className={className} />; }',
         'function Component({ className }: Props) { return <div className={`p-4 ${className ?? ""}`} />; }',
         'function Component(props: Props) { return <div className={props.className} />; }',
+        'function Component(props: Props) { const className = props.className; return <div className={className} />; }',
+        'function Component(props: Props) { const className = props.className; return <div className={cn("p-4", className)} />; }',
+        'function Component(props: Props) { const alias = props.className; return <div className={alias} />; }',
         'import styles from "./styles.module.css"; <div className={styles.body} />;',
         'import { clsx as merge } from "clsx"; <div className={merge("p-4")} />;',
         'const title = "Some text"; <div title={title} />;',
@@ -79,6 +82,22 @@ tester.run('dhis2-blocks/inline-classnames', inlineClassnamesRule, {
         },
         {
             code: 'const props = { className: "p-4" }; <div className={props.className} />;',
+            errors: [error],
+        },
+        {
+            code: 'const props = { className: "p-4" }; const className = props.className; <div className={className} />;',
+            errors: [error],
+        },
+        {
+            code: 'const compact = "p-2"; cva("base", { variants: { size: { small: compact } } });',
+            errors: [error],
+        },
+        {
+            code: 'const compact = "p-2"; cva("base", { compoundVariants: [{ size: "small", class: compact }] });',
+            errors: [error],
+        },
+        {
+            code: 'const compact = "p-2"; <div className={clsx({ [compact]: selected })} />;',
             errors: [error],
         },
         {

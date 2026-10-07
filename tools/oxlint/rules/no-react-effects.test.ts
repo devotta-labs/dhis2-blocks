@@ -29,6 +29,7 @@ tester.run('dhis2-blocks/no-react-effects', noReactEffectsRule, {
         'import { useLayoutEffect as measure } from "react";\n// EFFECT: dom.layout -- Measure the committed widget before paint.\nmeasure(() => resizeWidget(), [width]);',
         'import { useInsertionEffect } from "react";\n/* EFFECT: external-widget -- Synchronize the third-party widget on mount. */\nuseInsertionEffect(connect, []);',
         'import { useEffect } from "react"; /* EFFECT: window.resize -- Subscribe after mount and remove the listener on cleanup. */ useEffect(subscribe, []);',
+        'import React from "react"; let key = "useMemo"; key = "useState"; React[key](callback);',
     ],
     invalid: [
         {
@@ -37,6 +38,10 @@ tester.run('dhis2-blocks/no-react-effects', noReactEffectsRule, {
         },
         {
             code: 'import React from "react"; const key = "useEffect"; React[key](callback);',
+            errors: [error],
+        },
+        {
+            code: 'import React from "react"; let key = "useMemo"; key = "useEffect"; React[key](callback);',
             errors: [error],
         },
         {

@@ -21,6 +21,7 @@ import { OrganisationUnitSelectorContent } from '../OrganisationUnitSelectorCont
 import {
     getCaptureOrganisationUnitPickerScope,
     isOrganisationUnitInScope,
+    isOrganisationUnitWithinRoots,
     resolveCaptureOrganisationUnitRoots,
     type OrganisationUnitReference,
 } from '../organisationUnitScope'
@@ -422,7 +423,14 @@ export const AppShell = () => {
                         searchRoots={
                             debouncedOrganisationUnitSearch
                                 ? (organisationUnitSearchQuery.data?.pages.flatMap(
-                                      (page) => page.organisationUnits
+                                      (page) =>
+                                          page.organisationUnits.filter(
+                                              (unit) =>
+                                                  isOrganisationUnitWithinRoots(
+                                                      unit,
+                                                      searchRoots
+                                                  )
+                                          )
                                   ) ?? [])
                                 : undefined
                         }
@@ -545,13 +553,29 @@ export const AppShell = () => {
                 onCancel={() => {
                     const transition = displayedTransition
                     setPendingTransition(undefined)
-                    transition?.cancel?.()
+
+                    if (transition?.cancel) {
+                        transition.cancel()
+                    } else if (externalTransitionBlocker.state === 'blocked') {
+                        // An internal transition has no cancel callback, but a
+                        // blocked POP still needs its router state released.
+                        externalTransitionBlocker.reset()
+                    }
                 }}
                 onDiscard={() => {
                     const transition = displayedTransition
                     setPendingTransition(undefined)
                     setDirty(false)
                     transition?.proceed()
+
+                    // An internal transition shadows a blocked POP; release
+                    // the leftover navigation instead of stranding it.
+                    if (
+                        pendingTransition &&
+                        externalTransitionBlocker.state === 'blocked'
+                    ) {
+                        externalTransitionBlocker.reset()
+                    }
                 }}
             />
 

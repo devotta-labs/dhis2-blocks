@@ -48,6 +48,15 @@ export const intersectOrganisationUnitScopes = (
     ),
 })
 
+export const isOrganisationUnitWithinRoots = (
+    unit: OrganisationUnitReference,
+    roots: OrganisationUnitReference[]
+) =>
+    roots.some(
+        (root) =>
+            unit.path === root.path || unit.path.startsWith(`${root.path}/`)
+    )
+
 export const isOrganisationUnitInScope = (
     selected: OrganisationUnitReference | undefined,
     searchRoots: OrganisationUnitReference[],
@@ -55,12 +64,11 @@ export const isOrganisationUnitInScope = (
 ) =>
     Boolean(
         selected &&
-        searchRoots.some(
+        isOrganisationUnitWithinRoots(selected, searchRoots) &&
+        programOrganisationUnits.some(
             (root) =>
+                selected.id === root.id ||
                 selected.path === root.path ||
                 selected.path.startsWith(`${root.path}/`)
-        ) &&
-        programOrganisationUnits.some(
-            (root) => selected.id === root.id || selected.path === root.path
         )
     )

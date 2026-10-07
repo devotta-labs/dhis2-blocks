@@ -43,6 +43,10 @@ tester.run('dhis2-blocks/no-tailwind-important', noTailwindImportantRule, {
             code: 'function getStyles() { if (ready) return "p-0!"; return "block"; } <div className={getStyles()} />;',
             errors: [error],
         },
+        {
+            code: 'function getStyles(mode) { switch (mode) { case "compact": return "p-0!"; default: return "p-2"; } } <div className={getStyles(mode)} />;',
+            errors: [error],
+        },
         { code: '<div className="!flex" />', errors: [error] },
         { code: '<div className="flex!" />', errors: [error] },
         {

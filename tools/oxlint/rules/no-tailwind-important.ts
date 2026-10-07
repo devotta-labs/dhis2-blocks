@@ -214,6 +214,12 @@ export const noTailwindImportantRule = defineRule({
                     inspect(node.alternate)
 
                     break
+                case 'SwitchStatement':
+                    for (const switchCase of node.cases)
+                        for (const statement of switchCase.consequent)
+                            inspect(statement)
+
+                    break
                 case 'TSAsExpression':
                 case 'TSSatisfiesExpression':
                 case 'TSNonNullExpression':

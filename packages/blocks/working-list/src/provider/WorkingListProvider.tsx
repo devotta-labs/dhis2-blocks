@@ -286,8 +286,9 @@ const WorkingListProviderInstance = ({
     const refreshSavedLists = useCallback(async () => {
         if (!metadata) throw new Error('Program metadata is not ready')
         const queryKey = workingListQueryKeys.savedLists(programId)
-        await queryClient.resetQueries({ queryKey })
 
+        // Refetch in place: resetting the query would drop the last
+        // successful snapshot and hide confirmed views when a refresh fails.
         const lists = await queryClient.fetchQuery({
             queryKey,
             queryFn: ({ signal }) =>

@@ -82,7 +82,7 @@ describe('Capture organisation-unit scope', () => {
                 [searchRoot],
                 [programRoot]
             )
-        ).toBe(false)
+        ).toBe(true)
         expect(
             isOrganisationUnitInScope(searchRoot, [searchRoot], [programRoot])
         ).toBe(false)

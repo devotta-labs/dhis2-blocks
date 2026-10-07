@@ -48,6 +48,36 @@ export const inlineClassnamesRule = defineRule({
             context.report({ node, messageId: 'extracted', data: { name } })
         }
 
+        const isForwardedHostClass = (
+            node: ESTree.Node | null | undefined
+        ): boolean => {
+            if (
+                node?.type !== 'MemberExpression' ||
+                !isClassName(propertyName(node.property) ?? '') ||
+                node.object.type !== 'Identifier'
+            )
+                return false
+
+            let scope: Scope | null = context.sourceCode.getScope(node.object)
+
+            while (scope) {
+                const variable = scope.set.get(node.object.name)
+
+                // A host prop arrives through a parameter; a locally defined
+                // object makes the member access extracted composition.
+                if (variable)
+                    return !variable.defs.some(
+                        (definition) =>
+                            definition.type === 'Variable' ||
+                            definition.type === 'FunctionName'
+                    )
+
+                scope = scope.upper
+            }
+
+            return true
+        }
+
         const inspectIdentifier = (node: ESTree.Node) => {
             if (node.type !== 'Identifier') return
 
@@ -62,6 +92,12 @@ export const inlineClassnamesRule = defineRule({
                             definition.type === 'Variable' ||
                             definition.type === 'FunctionName'
                         ) {
+                            if (
+                                definition.node.type === 'VariableDeclarator' &&
+                                isForwardedHostClass(definition.node.init)
+                            )
+                                continue
+
                             report(definition.name, node.name)
                         }
                     }
@@ -108,7 +144,11 @@ export const inlineClassnamesRule = defineRule({
                     inspect(node.object)
 
                     break
-                case 'CallExpression':
+                case 'CallExpression': {
+                    const isCva =
+                        node.callee.type === 'Identifier' &&
+                        node.callee.name === 'cva'
+
                     if (
                         node.callee.type === 'Identifier' &&
                         !classHelpers.has(node.callee.name)
@@ -120,6 +160,9 @@ export const inlineClassnamesRule = defineRule({
                     for (const argument of node.arguments) {
                         if (argument.type !== 'ObjectExpression')
                             inspect(argument)
+                        else if (isCva)
+                            // cva variant maps hold class strings, not conditions.
+                            inspectVariantDictionary(argument)
                         else {
                             // Class-helper dictionary values are conditions, not class strings.
                             for (const property of argument.properties) {
@@ -132,6 +175,8 @@ export const inlineClassnamesRule = defineRule({
                     }
 
                     break
+                }
+
                 case 'ArrayExpression':
                     for (const element of node.elements) inspect(element)
 
@@ -149,6 +194,32 @@ export const inlineClassnamesRule = defineRule({
             }
         }
 
+        const inspectVariantValue = (node: ESTree.Node) => {
+            if (node.type === 'ObjectExpression') {
+                inspectVariantDictionary(node)
+            } else if (node.type === 'ArrayExpression') {
+                for (const element of node.elements) {
+                    if (element) inspectVariantValue(element)
+                }
+            } else {
+                inspect(node)
+            }
+        }
+
+        const inspectVariantDictionary = (
+            node: ESTree.ObjectExpression
+        ): void => {
+            for (const property of node.properties) {
+                if (property.type === 'SpreadElement')
+                    inspect(property.argument)
+                else {
+                    if (property.computed) inspect(property.key)
+
+                    inspectVariantValue(property.value)
+                }
+            }
+        }
+
         return {
             VariableDeclarator(node) {
                 if (
@@ -156,7 +227,8 @@ export const inlineClassnamesRule = defineRule({
                     isClassName(node.id.name) &&
                     node.init &&
                     node.init.type !== 'ArrowFunctionExpression' &&
-                    node.init.type !== 'FunctionExpression'
+                    node.init.type !== 'FunctionExpression' &&
+                    !isForwardedHostClass(node.init)
                 )
                     report(node.id, node.id.name)
             },

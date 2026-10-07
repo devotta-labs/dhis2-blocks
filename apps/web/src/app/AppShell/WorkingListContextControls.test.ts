@@ -68,8 +68,20 @@ describe('buildProgramOptions', () => {
         ).toEqual([])
     })
 
-    it('does not treat ancestor or descendant assignments as exact Capture compatibility', () => {
-        for (const selectedOrganisationUnitPath of ['/root/a/child', '/root']) {
+    it('treats the assigned unit and its descendants as compatible, not ancestors or unrelated units', () => {
+        expect(
+            buildProgramOptions({
+                programs,
+                selectedOrganisationUnitPath: '/root/a/child',
+                baseUrl: 'https://play.dhis2.org/dev',
+                apiVersion: 43,
+            })
+        ).toEqual([expect.objectContaining({ value: 'program-a' })])
+
+        for (const selectedOrganisationUnitPath of [
+            '/root',
+            '/root/unrelated',
+        ]) {
             expect(
                 buildProgramOptions({
                     programs,
@@ -84,7 +96,7 @@ describe('buildProgramOptions', () => {
             buildProgramOptions({
                 programs,
                 selectedOrganisationUnitId: 'different-ou',
-                selectedOrganisationUnitPath: '/root/a',
+                selectedOrganisationUnitPath: '/root/unrelated',
                 baseUrl: 'https://play.dhis2.org/dev',
                 apiVersion: 43,
             })

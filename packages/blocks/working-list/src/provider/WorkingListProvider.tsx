@@ -28,10 +28,9 @@ import type {
     WorkingListMeta,
     WorkingListMutationStatus,
     WorkingListPagination,
-    WorkingListSavedView,
     WorkingListSavedViewsMeta,
 } from './contracts'
-import { WORKING_LIST_PAGE_SIZES } from './contracts'
+import { assertPagination, initialMeta, asSavedView } from './providerMeta'
 import { toTransportError } from './errorNormalization'
 import { useRuntimeWorkingListClient } from './engineAdapter'
 import {
@@ -42,10 +41,8 @@ import {
     useStableWorkingListActions,
     WorkingListPublicContext,
 } from './WorkingListContext'
-import {
-    createWorkingListActions,
-    type WorkingListActionRuntime,
-} from './actionCommands'
+import { createWorkingListActions } from './actionCommands'
+import type { WorkingListActionRuntime } from './actionRuntime'
 import { useWorkingListResults } from './useWorkingListResults'
 import { useWorkingListRepair } from './useWorkingListRepair'
 import { useWorkingListSelection } from './useWorkingListSelection'
@@ -54,55 +51,6 @@ import {
     WorkingListPrivateUiContext,
     type WorkingListPrivateUiContextValue,
 } from './WorkingListPrivateContext'
-
-const assertPagination = (pagination: WorkingListPagination) => {
-    if (!Number.isInteger(pagination.page) || pagination.page < 1) {
-        throw new Error(
-            `WorkingList requires pagination.page to be a positive integer; received ${String(pagination.page)}`
-        )
-    }
-
-    if (!WORKING_LIST_PAGE_SIZES.includes(pagination.pageSize)) {
-        throw new Error(
-            `WorkingList requires pagination.pageSize to be one of ${WORKING_LIST_PAGE_SIZES.join(', ')}; received ${String(pagination.pageSize)}`
-        )
-    }
-}
-
-const idleMutation = (): WorkingListMutationStatus => ({ status: 'idle' })
-
-const initialMeta = (pagination: WorkingListPagination): WorkingListMeta => ({
-    lifecycle: { status: 'pending' },
-    selection: { status: 'pending' },
-    activeConfiguration: { status: 'unavailable' },
-    savedViews: { status: 'pending', views: [] },
-    mutations: {
-        create: idleMutation(),
-        update: idleMutation(),
-        delete: idleMutation(),
-    },
-    results: { status: 'pending' },
-    dirty: false,
-    online: true,
-    pagination,
-    fields: [],
-})
-
-const asSavedView = (
-    list: NormalizedSavedWorkingList,
-    generated: boolean
-): WorkingListSavedView => ({
-    id: list.id,
-    name: list.name,
-    generated,
-    compatible: list.compatibility === 'compatible',
-    canUpdate:
-        !generated &&
-        list.sharing.access?.write === true &&
-        list.sharing.access.update === true,
-    canDelete: !generated && list.sharing.access?.delete === true,
-    canShare: !generated && list.sharing.access?.manage === true,
-})
 
 interface WorkingListProviderProps {
     children: React.ReactNode

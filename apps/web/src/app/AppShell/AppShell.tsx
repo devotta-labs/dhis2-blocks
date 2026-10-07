@@ -15,7 +15,6 @@ import {
 import { trackerProgramsQueryOptions } from '@dhis2-blocks/working-list/development'
 import { useQuery } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useBlocker } from 'react-router-dom'
 import { getGuardedOrganisationUnitState } from '../contextTransitions'
 import { DiscardChangesDialog } from '../DiscardChangesDialog'
 import { OrganisationUnitSelectorContent } from '../OrganisationUnitSelectorContent'
@@ -25,7 +24,6 @@ import {
     resolveCaptureOrganisationUnitRoots,
     type OrganisationUnitReference,
 } from '../organisationUnitScope'
-import { isGuardedAppUrlTransition, parseAppUrlState } from '../urlState'
 import { useAppUrlState } from '../useAppUrlState'
 import i18n from '../../i18n'
 import {
@@ -36,6 +34,7 @@ import {
     ProgramOrganisationUnitsSchema,
     retryOperationalError,
 } from './contextSchemas'
+import { useExternalTransitionBlocker } from './useExternalTransitionBlocker'
 import { ContextStatus } from './ContextStatus'
 import { createAppWorkingListClient } from './createAppWorkingListClient'
 import {
@@ -105,28 +104,7 @@ export const AppShell = () => {
 
     const [urlState, setUrlState] = useAppUrlState()
 
-    // Guard browser back/forward (and manual hash edits, which the router
-    // also receives as POP) against discarding unsaved working-list changes.
-    // In-app navigations confirm before writing the URL, so PUSH/REPLACE
-    // must pass through unblocked to avoid a double confirmation.
-    const externalTransitionBlocker = useBlocker(
-        ({ currentLocation, nextLocation, historyAction }) => {
-            if (historyAction !== 'POP' || !dirty) {
-                return false
-            }
-
-            try {
-                return isGuardedAppUrlTransition(
-                    parseAppUrlState(
-                        new URLSearchParams(currentLocation.search)
-                    ),
-                    parseAppUrlState(new URLSearchParams(nextLocation.search))
-                )
-            } catch {
-                return false
-            }
-        }
-    )
+    const externalTransitionBlocker = useExternalTransitionBlocker(dirty)
 
     useEffect(() => {
         if (externalTransitionBlocker.state !== 'blocked') {

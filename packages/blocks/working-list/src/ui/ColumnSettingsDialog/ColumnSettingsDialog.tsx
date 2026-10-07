@@ -29,9 +29,11 @@ export const getInitialColumnDialogOrder = (
 ) => {
     const fieldsById = new Map(fields.map((field) => [field.id, field]))
 
-    const visibleFields = visibleColumnIds
-        .map((id) => fieldsById.get(id))
-        .filter((field): field is WorkingListField => Boolean(field))
+    const visibleFields = visibleColumnIds.flatMap((id) => {
+        const field = fieldsById.get(id)
+
+        return field ? [field] : []
+    })
 
     const visibleIds = new Set(visibleFields.map((field) => field.id))
     let nextVisibleIndex = 0
@@ -49,9 +51,9 @@ export const getVisibleColumnIdsInOrder = (
 ) => {
     const visibleIds = new Set(visibleColumnIds)
 
-    return orderedFields
-        .map((field) => field.id)
-        .filter((id) => visibleIds.has(id))
+    return orderedFields.flatMap((field) =>
+        visibleIds.has(field.id) ? [field.id] : []
+    )
 }
 
 export const ColumnSettingsDialog = ({

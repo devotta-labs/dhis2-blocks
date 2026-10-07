@@ -1,10 +1,10 @@
+import { normalizeValueFilter } from './savedValueFilters'
 import type {
     AppliedFilter,
     FieldCatalog,
     FilterOperator,
     FilterValue,
     WorkingListConfiguration,
-    WorkingListField,
     WorkingListSort,
 } from '../domain/model'
 import {
@@ -14,10 +14,7 @@ import {
 import type { StaleReferenceIssue } from '../domain/staleReferences'
 import { DEFAULT_WORKING_LIST_SORT } from '../query/serialize'
 import { validateSystemFilter } from '../registry/systemFilters'
-import {
-    getValueTypeDefinition,
-    validateAppliedFilter,
-} from '../registry/valueTypes'
+import { validateAppliedFilter } from '../registry/valueTypes'
 import type { FilterParsingContext } from '../registry/valueTypes'
 import {
     fieldsForConfiguration,
@@ -32,7 +29,6 @@ import type {
     EntityQueryCriteria,
     ProgramStageQueryCriteria,
     ProgramStageWorkingList,
-    SavedValueFilter,
     TrackedEntityInstanceFilter,
 } from './schemas'
 import type {
@@ -67,58 +63,6 @@ export const getMissingIssue = (
     path,
     message: `Saved list references unavailable ${referenceId} at ${path}`,
 })
-
-const getSavedFilterOperator = (
-    filter: SavedValueFilter,
-    value: FilterValue
-): FilterOperator => {
-    if (value.kind === 'empty') {
-        return value.isEmpty ? 'empty' : 'notEmpty'
-    }
-
-    if (
-        value.kind === 'dateRange' ||
-        value.kind === 'numberRange' ||
-        value.kind === 'timeRange'
-    ) {
-        return 'range'
-    }
-
-    if (value.kind === 'options' || value.kind === 'boolean') {
-        return 'in'
-    }
-
-    if (filter.like != null) {
-        return 'like'
-    }
-
-    if (filter.sw != null) {
-        return 'startsWith'
-    }
-
-    if (filter.ew != null) {
-        return 'endsWith'
-    }
-
-    return 'equals'
-}
-
-const normalizeValueFilter = (
-    filter: SavedValueFilter,
-    field: WorkingListField,
-    parsingContext?: FilterParsingContext
-): AppliedFilter => {
-    const value = getValueTypeDefinition(field.valueType).parseSaved(
-        filter,
-        parsingContext
-    )
-
-    return {
-        field,
-        value,
-        operator: getSavedFilterOperator(filter, value),
-    }
-}
 
 const normalizeDateValue = (
     value:

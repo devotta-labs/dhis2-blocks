@@ -185,9 +185,11 @@ describe('MoreFilters keyboard focus', () => {
             )
 
             expect(
-                [...(topLevelMenu?.children ?? [])]
-                    .map((item) => item.getAttribute('data-test'))
-                    .filter(Boolean)
+                [...(topLevelMenu?.children ?? [])].flatMap((item) => {
+                    const dataTest = item.getAttribute('data-test')
+
+                    return dataTest ? [dataTest] : []
+                })
             ).toEqual([
                 'program-stage-filter-menu',
                 'stage-filter-fields-Stage000001',

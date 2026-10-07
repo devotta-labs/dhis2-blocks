@@ -52,6 +52,11 @@
                     "target": "@components/working-list/api/savedListNormalization.ts"
                 },
                 {
+                    "path": "src/api/savedValueFilters.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedValueFilters.ts"
+                },
+                {
                     "path": "src/api/savedListPayload.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/api/savedListPayload.ts"
@@ -127,9 +132,19 @@
                     "target": "@components/working-list/provider/WorkingListProvider.tsx"
                 },
                 {
+                    "path": "src/provider/providerMeta.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/providerMeta.ts"
+                },
+                {
                     "path": "src/provider/actionCommands.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/provider/actionCommands.ts"
+                },
+                {
+                    "path": "src/provider/actionRuntime.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/actionRuntime.ts"
                 },
                 {
                     "path": "src/provider/configuration.ts",
@@ -230,6 +245,11 @@
                     "path": "src/registry/transformers.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/registry/transformers.ts"
+                },
+                {
+                    "path": "src/registry/calendarFormatting.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/calendarFormatting.ts"
                 },
                 {
                     "path": "src/registry/valueTypes.ts",

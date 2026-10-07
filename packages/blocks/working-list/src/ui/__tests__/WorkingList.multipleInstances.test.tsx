@@ -153,9 +153,11 @@ describe('multiple working list instances', () => {
 
             expect(sections).toHaveLength(6)
             expect(
-                sections
-                    .filter((section) => section.hasAttribute('aria-label'))
-                    .map((section) => section.getAttribute('aria-label'))
+                sections.flatMap((section) =>
+                    section.hasAttribute('aria-label')
+                        ? [section.getAttribute('aria-label')]
+                        : []
+                )
             ).toEqual([
                 'Tracked entity filters',
                 'Working list results',

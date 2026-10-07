@@ -221,6 +221,13 @@ build outputs.
 
 Unit and component tests use Vitest. Real-DHIS2 browser tests use Playwright.
 
+Anti-slop is vendored under `tools/oxlint/anti-slop`; its upstream revision and
+local differences are recorded in that directory's `UPSTREAM.md`. All generic
+rules are enabled in `.oxlintrc.json`, including readable spacing and the
+array performance rules. `pnpm test` and `pnpm typecheck` also validate the
+vendored rules. Run `pnpm test:lint-rules` or `pnpm typecheck:lint-rules` to
+check them independently.
+
 `pnpm dead-code:audit` runs the complete Knip configuration and fails on any
 finding, including circular imports. Use `pnpm audit:exports` for a focused
 interactive export report.

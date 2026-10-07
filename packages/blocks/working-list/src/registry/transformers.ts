@@ -1,4 +1,11 @@
 import {
+    INTL_CALENDAR_BY_DHIS2,
+    pad,
+    localDateString,
+    parseClientDate,
+    type CalendarDateParts,
+} from './calendarFormatting'
+import {
     convertFromIso8601,
     convertToIso8601,
     getNowInCalendar,
@@ -24,56 +31,6 @@ import type {
 type MultiCalendarIdentifier = Parameters<typeof convertFromIso8601>[1]
 
 const DATE_VALUE_TYPES = new Set<Dhis2ValueType>(['AGE', 'DATE', 'DATETIME'])
-
-/** Official Unicode calendar identifiers for DHIS2 calendars supported by Intl. */
-const INTL_CALENDAR_BY_DHIS2 = {
-    coptic: 'coptic',
-    ethiopian: 'ethiopic',
-    gregorian: 'gregory',
-    islamic: 'islamic',
-    iso8601: 'gregory',
-    nepali: undefined,
-    persian: 'persian',
-    thai: 'buddhist',
-} satisfies Record<WorkingListCalendar, string | undefined>
-
-const pad = (value: number, length = 2) =>
-    value.toString().padStart(length, '0')
-
-const localDateString = (
-    date: { year: number; eraYear?: number; month: number; day: number },
-    systemInfo: WorkingListSystemInfo,
-    format = systemInfo.dateFormat
-) => {
-    const year =
-        systemInfo.calendar === 'ethiopian'
-            ? (date.eraYear ?? date.year)
-            : date.year
-
-    const isoOrder = `${pad(year, 4)}-${pad(date.month)}-${pad(date.day)}`
-
-    return format === 'DD-MM-YYYY'
-        ? `${pad(date.day)}-${pad(date.month)}-${pad(year, 4)}`
-        : isoOrder
-}
-
-interface CalendarDateParts {
-    year: number
-    month: number
-    day: number
-}
-
-const parseClientDate = (value: string): CalendarDateParts => {
-    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-
-    if (!match) {
-        throw new Error(`Invalid client date: ${value}`)
-    }
-
-    const [, year, month, day] = match.map(Number)
-
-    return { year, month, day }
-}
 
 /**
  * Normalises DHIS2's server calendar names to the identifiers understood by

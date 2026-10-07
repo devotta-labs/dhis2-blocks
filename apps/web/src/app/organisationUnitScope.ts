@@ -34,16 +34,13 @@ export const intersectOrganisationUnitScopes = (
     searchRoots: OrganisationUnitReference[],
     programOrganisationUnits: OrganisationUnitReference[]
 ): OrganisationUnitScopeIntersection => ({
-    allowedPaths: programOrganisationUnits
-        .filter((programUnit) =>
-            searchRoots.some((searchRoot) =>
-                areOrganisationUnitPathsRelated(
-                    programUnit.path,
-                    searchRoot.path
-                )
-            )
+    allowedPaths: programOrganisationUnits.flatMap((programUnit) =>
+        searchRoots.some((searchRoot) =>
+            areOrganisationUnitPathsRelated(programUnit.path, searchRoot.path)
         )
-        .map((unit) => unit.path),
+            ? [programUnit.path]
+            : []
+    ),
     pickerRoots: searchRoots.filter((searchRoot) =>
         programOrganisationUnits.some((programUnit) =>
             areOrganisationUnitPathsRelated(programUnit.path, searchRoot.path)

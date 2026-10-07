@@ -1,24 +1,11 @@
 import { Result } from 'better-result'
-import type { WorkingListCapabilities } from '../api/capabilities'
-import type { WorkingListClient } from '../api/client'
-import {
-    fieldsForConfiguration,
-    type ProgramFieldCatalog,
-} from '../api/metadata'
+import { fieldsForConfiguration } from '../api/metadata'
 import {
     createSavedWorkingList,
     deleteSavedWorkingList,
     replaceSavedWorkingList,
-    type NormalizedSavedWorkingList,
 } from '../api/savedLists'
-import type { TrackerProgram } from '../api/schemas'
-import type { WorkingListConfiguration as InternalConfiguration } from '../domain/model'
 import { DEFAULT_WORKING_LIST_SORT } from '../query/serialize'
-import type {
-    CellFormattingContext,
-    FilterSerializationContext,
-} from '../registry/valueTypes'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
 import {
     canCommitMutationBaseline,
     internalConfigurationFingerprint,
@@ -29,12 +16,7 @@ import {
 import type {
     AppliedFilter,
     WorkingListActionImplementation,
-    WorkingListConfiguration,
-    WorkingListDisplayRow,
-    WorkingListMeta,
     WorkingListMutationStatus,
-    WorkingListPagination,
-    WorkingListState,
 } from './contracts'
 import { WORKING_LIST_PAGE_SIZES } from './contracts'
 import { toTransportError } from './errorNormalization'
@@ -52,50 +34,7 @@ import {
     WorkingListInvalidResponseError,
 } from './errors'
 import { downloadRowsAsCsv } from './results'
-import type {
-    WorkingListProviderStore,
-    WorkingListProviderStoreState,
-} from './store'
-
-export interface WorkingListActionRuntime {
-    activeState?: WorkingListState
-    resolvedConfiguration?: InternalConfiguration
-    metadata?: ProgramFieldCatalog
-    serializationContext?: FilterSerializationContext
-    formattingContext?: CellFormattingContext
-    confirmedLists?: NormalizedSavedWorkingList[]
-    displayedLists: readonly NormalizedSavedWorkingList[]
-    effectivePagination: WorkingListPagination
-    online: boolean
-    program?: TrackerProgram
-    rows: readonly WorkingListDisplayRow[]
-}
-
-interface CreateWorkingListActionsOptions {
-    runtimeRef: { current: WorkingListActionRuntime }
-    selectionToken: { current: number }
-    capabilities: WorkingListCapabilities
-    client: WorkingListClient
-    defaultListId: string
-    hardTransition: (id: string, notify: boolean) => void
-    refreshSavedLists: () => Promise<NormalizedSavedWorkingList[]>
-    setMutation: (
-        operation: keyof WorkingListMeta['mutations'],
-        status: WorkingListMutationStatus
-    ) => void
-    stagePagination: (next: WorkingListPagination) => void
-    store: WorkingListProviderStore
-    translate: WorkingListTranslate
-    updateStore: (
-        update: (
-            current: WorkingListProviderStoreState
-        ) => Partial<WorkingListProviderStoreState>
-    ) => void
-    validateAndCommit: (
-        configuration: WorkingListConfiguration,
-        resetPage: boolean
-    ) => ReturnType<WorkingListActionImplementation['setColumns']>
-}
+import type { CreateWorkingListActionsOptions } from './actionRuntime'
 
 const idleMutation = (): WorkingListMutationStatus => ({ status: 'idle' })
 

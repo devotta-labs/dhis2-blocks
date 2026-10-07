@@ -84,10 +84,10 @@ test.describe('accessibility and keyboard feedback', () => {
             const viewportWidth = document.documentElement.clientWidth
 
             const overflowingElements = [...document.body.querySelectorAll('*')]
-                .map((element) => {
+                .flatMap((element) => {
                     const rect = element.getBoundingClientRect()
 
-                    return {
+                    const metrics = {
                         tag: element.tagName.toLowerCase(),
                         testId:
                             element.getAttribute('data-testid') ??
@@ -100,12 +100,12 @@ test.describe('accessibility and keyboard feedback', () => {
                         scrollWidth: element.scrollWidth,
                         overflowX: getComputedStyle(element).overflowX,
                     }
+
+                    return metrics.overflowX === 'visible' &&
+                        (metrics.left < -1 || metrics.right > viewportWidth + 1)
+                        ? [metrics]
+                        : []
                 })
-                .filter(
-                    ({ left, right, overflowX }) =>
-                        overflowX === 'visible' &&
-                        (left < -1 || right > viewportWidth + 1)
-                )
                 .sort((left, right) => right.right - left.right)
                 .slice(0, 10)
 

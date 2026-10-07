@@ -1,0 +1,36 @@
+---
+title: DHIS2 Blocks
+description: Reusable, source-installed UI blocks for DHIS2 applications.
+---
+
+DHIS2 Blocks is a catalog of production-grade UI blocks for DHIS2
+applications. Like shadcn/ui, blocks are distributed through a source
+registry: installation copies the canonical source into your repository,
+where it can be read, themed, and adapted in place. Nothing is published to
+npm — your project owns the code.
+
+Every block page pairs prose with live examples. Examples are ordinary React
+components that import the public block API, rendered against a real DHIS2
+instance through this site's same-origin `/dhis2` proxy. Pages and code stay
+readable without a connection; only the live previews require a backend and
+a sign-in.
+
+## Blocks
+
+- [Working List](/blocks/working-list) — a ready-to-use filtered, sortable
+  list for finding and reviewing tracker records.
+- [Context Selector](/blocks/context-selector) — Capture-style selector bar
+  primitives for choosing the working context.
+
+## Developing here
+
+This site is a Vite + React 18 application. Run the seeded backend and the
+dev server together to see live previews:
+
+```bash
+pnpm docs:up    # seeded DHIS2 2.42 on http://127.0.0.1:58080
+pnpm dev:docs   # docs on http://localhost:3002
+```
+
+See [Setup](/getting-started) for connecting an existing instance, the
+production serving story, and how to add a page or example.

@@ -1,0 +1,75 @@
+---
+title: Context Selector
+description: Capture-style selector bar primitives for choosing the working context.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="context-selector/basic" />
+
+## Installation
+
+<InstallCommand item="context-selector" />
+
+## Basic usage
+
+Compose the selectors your workflow needs inside `ContextSelector`. The host
+owns all state: options, committed values, popup visibility, and the contents
+of each popup.
+
+```tsx
+import {
+    ClearSelections,
+    ContextSelector,
+    OrganisationUnitSelector,
+    ProgramSelector,
+} from '@/components/context-selector'
+
+export const BasicContextSelector = () => (
+    <ContextSelector ariaLabel="Registration context">
+        <ProgramSelector
+            options={programOptions}
+            value={programId}
+            open={programOpen}
+            onOpenChange={setProgramOpen}
+            onChange={selectProgram}
+            onClear={clearProgram}
+        />
+        <OrganisationUnitSelector
+            value={organisationUnit?.displayName}
+            open={organisationUnitOpen}
+            onOpenChange={setOrganisationUnitOpen}
+            onClear={clearOrganisationUnit}
+        >
+            <HostOrganisationUnitTree onSelect={selectOrganisationUnit} />
+        </OrganisationUnitSelector>
+        <ClearSelections onClear={clearContext} disabled={!programId} />
+    </ContextSelector>
+)
+```
+
+## Primitives
+
+Every child is an independently composable, controlled control:
+
+- `ProgramSelector`, `EnrollmentSelector`, `StageSelector`, `EventSelector`,
+  and `OptionSelector` — Capture-shaped option menus with search,
+  placeholders, and host-supplied options.
+- `OrganisationUnitSelector` — the committed value display; its popup content
+  (tree, search results) is entirely host-owned.
+- `ContextValue` — a display-only value for context the user cannot change.
+- `ClearSelections` — the row-wide clear action, explicitly composed and
+  consumer-controlled.
+
+A program-first application can render only `ProgramSelector` and reveal the
+rest as its own context policy makes them relevant. The block never fetches
+data, synchronizes a router, or decides when progressive disclosure advances.
+
+## States
+
+All selectors share the same controlled state props — `loading`,
+`loadingLabel`, `disabled`, `readOnly`, and the `onClear` callback's
+presence. The example below drives them live:
+
+<ExampleCard slug="context-selector/states" />

@@ -1,0 +1,68 @@
+---
+title: Working List
+description: A ready-to-use list for finding and reviewing tracker records.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="working-list/default" />
+
+## Installation
+
+<InstallCommand item="working-list" />
+
+## Basic usage
+
+Compose the view switcher, toolbar controls, actions, and records table to
+fit your users' workflow. `programId` and `orgUnitId` are the only required
+props.
+
+```tsx
+import {
+    WorkingList,
+    WorkingListColumnSelector,
+    WorkingListFilterControls,
+    WorkingListTable,
+    WorkingListToolbar,
+    WorkingListToolbarActions,
+    WorkingListViewSwitcher,
+} from '@/components/working-list'
+
+export const BasicWorkingList = () => (
+    <WorkingList
+        programId="IpHINAT79UW"
+        orgUnitId="y77LiPqLMoq"
+        defaultPagination={{ page: 1, pageSize: 10 }}
+    >
+        <WorkingListViewSwitcher />
+        <WorkingListToolbar>
+            <WorkingListColumnSelector />
+            <WorkingListFilterControls />
+            <WorkingListToolbarActions />
+        </WorkingListToolbar>
+        <WorkingListTable />
+    </WorkingList>
+)
+```
+
+## Live metadata
+
+The Working List needs no fixture data — it reads programs, tracked entity
+metadata, records, filters, sorting, pagination, and saved views from the
+connected instance. This example drives `programId` from live metadata and
+the signed-in user's organisation units, so it works on any backend:
+
+<ExampleCard slug="working-list/program-picker" />
+
+## State and composition
+
+`WorkingList` runs uncontrolled by default: it owns the selected saved view
+and pagination while the host supplies `programId`, `orgUnitId`, and the
+composition. Provide `viewId` + `onViewChange` and `pagination` +
+`onPaginationChange` to control that state yourself — for example to persist
+it in the URL.
+
+Changing `programId` remounts the list through its built-in React `key`, so
+each program starts from clean uncontrolled state. Saved views are loaded
+from and written to the real server; mutations appear after a reload.

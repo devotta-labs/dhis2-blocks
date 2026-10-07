@@ -8,12 +8,14 @@ and the applications used to develop them.
 ```text
 apps/
   web/                  DHIS2 wrapper and component demo application
+  docs/                 Vite documentation site with live block previews
 packages/
   blocks/
     context-selector/   Capture-style controlled context-selector primitives
     working-list/       Canonical Working List source and registry manifest
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
+scripts/docs/           Documentation site backend lifecycle
 ```
 
 The web application depends on the private block workspaces through pnpm's
@@ -205,6 +207,51 @@ The root `registry.json` is the public registry entry point. It owns global
 metadata and composes each package-owned registry manifest through shadcn's
 `include` mechanism. Paths declared by a package manifest are relative to that
 package.
+
+## Documentation site
+
+`apps/docs` is a Vite + React 18 catalog of MDX pages and executable examples
+in the style of the shadcn documentation. Prose and code tabs render without
+a backend; live previews sign in to a real DHIS2 instance through a
+same-origin `/dhis2` proxy and are hosted by the official
+`@dhis2/app-adapter`.
+
+Run a seeded local backend (pinned to DHIS2 42 by default) and start the site:
+
+```sh
+pnpm docs:up       # seed and start DHIS2 on http://127.0.0.1:58080
+pnpm dev:docs      # serve the docs on http://localhost:3002
+```
+
+`pnpm docs:up` is a no-op when the docs backend is already running. Supported
+backend versions match the e2e matrix: `pnpm docs:up:41`, `pnpm docs:up:43`,
+and `pnpm docs:up:dev`. The docs backend uses a dedicated Compose project
+(`dhis2-blocks-docs-<version>`), so e2e cleanup cannot tear it down.
+
+`pnpm docs:down` stops the backend and keeps its data; `pnpm docs:reset`
+destroys the volumes and seeds a clean instance.
+
+Point the site at an existing development instance instead:
+
+```sh
+DOCS_DHIS2_URL=https://play.im.dhis2.org/dev pnpm dev:docs
+```
+
+For a production build, `pnpm build:docs` emits a static bundle to
+`apps/docs/dist`. The same `/dhis2` proxy then has to be provided by the
+host: either run the bundled Node server (`pnpm serve:docs`, honoring
+`DOCS_PORT` and `DOCS_DHIS2_URL`), or terminate the `/dhis2` prefix on any
+standard reverse proxy (nginx, Caddy, Traefik) in front of the static files.
+
+Pages are MDX documents under `apps/docs/src/pages` registered in
+`src/navigation.ts` and `src/App.tsx`. Each example is a single component
+under `src/examples` registered in `src/examples/registry.ts`; the Code tab
+shows the same source the preview executes, and examples marked `live` are
+wrapped in the app-adapter host at `/preview/<slug>`.
+
+`pnpm docs:e2e` runs the docs Playwright suite (`playwright.docs.config.ts`):
+catalog browsing without a backend, preview sign-in, and live Working List
+filtering, sorting, pagination, event mode, and saved-view persistence.
 
 ## Quality checks
 

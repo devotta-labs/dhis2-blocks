@@ -1,0 +1,197 @@
+@import 'tailwindcss';
+@import 'typeface-roboto';
+
+@source '../../../packages/blocks/working-list/src';
+@source '../../../packages/blocks/context-selector/src';
+
+@plugin '@tailwindcss/typography';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+}
+
+:root {
+    --background: #ffffff;
+    --foreground: #1d2129;
+    --card: #ffffff;
+    --card-foreground: #1d2129;
+    --muted: #f3f5f7;
+    --muted-foreground: #5f6b7a;
+    --accent: #eef3f8;
+    --accent-foreground: #212934;
+    --border: #d5dde5;
+    --input: #d5dde5;
+    --ring: #2c6693;
+    --primary: #2c6693;
+    --primary-foreground: #ffffff;
+    --radius: 0.5rem;
+
+    color: var(--foreground);
+    background: var(--background);
+    font-synthesis: none;
+}
+
+.dark {
+    --background: #16181d;
+    --foreground: #e8eaed;
+    --card: #1d2129;
+    --card-foreground: #e8eaed;
+    --muted: #262b35;
+    --muted-foreground: #9aa4b2;
+    --accent: #2a303b;
+    --accent-foreground: #e8eaed;
+    --border: #3a4048;
+    --input: #3a4048;
+    --ring: #6ea8d8;
+    --primary: #6ea8d8;
+    --primary-foreground: #10151c;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family:
+        Roboto,
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Helvetica,
+        Arial,
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+/* Syntax highlighting (highlight.js github theme, light + dark) */
+.hljs {
+    color: #24292e;
+}
+.hljs-comment,
+.hljs-quote {
+    color: #6a737d;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-tag,
+.hljs-type,
+.hljs-template-tag {
+    color: #d73a49;
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-literal,
+.hljs-name,
+.hljs-selector-class,
+.hljs-selector-id,
+.hljs-selector-pseudo {
+    color: #6f42c1;
+}
+.hljs-string,
+.hljs-meta .hljs-string {
+    color: #032f62;
+}
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-regexp {
+    color: #005cc5;
+}
+.hljs-built_in,
+.hljs-title,
+.hljs-section {
+    color: #005cc5;
+}
+.hljs-meta {
+    color: #735c0f;
+}
+.hljs-emphasis {
+    font-style: italic;
+}
+.hljs-strong {
+    font-weight: bold;
+}
+
+.dark .hljs {
+    color: #e1e4e8;
+}
+.dark .hljs-comment,
+.dark .hljs-quote {
+    color: #959da5;
+}
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-tag,
+.dark .hljs-type,
+.dark .hljs-template-tag {
+    color: #f47067;
+}
+.dark .hljs-attr,
+.dark .hljs-attribute,
+.dark .hljs-literal,
+.dark .hljs-name,
+.dark .hljs-selector-class,
+.dark .hljs-selector-id,
+.dark .hljs-selector-pseudo {
+    color: #b083f0;
+}
+.dark .hljs-string,
+.dark .hljs-meta .hljs-string {
+    color: #96d0ff;
+}
+.dark .hljs-number,
+.dark .hljs-symbol,
+.dark .hljs-bullet,
+.dark .hljs-regexp {
+    color: #6cb6ff;
+}
+.dark .hljs-built_in,
+.dark .hljs-title,
+.dark .hljs-section {
+    color: #6cb6ff;
+}
+.dark .hljs-meta {
+    color: #e3b341;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

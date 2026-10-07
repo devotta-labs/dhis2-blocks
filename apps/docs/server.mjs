@@ -1,4 +1,4 @@
-import { createReadStream, existsSync, statSync } from 'node:fs'
+import { createReadStream, existsSync, realpathSync, statSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { extname, join, normalize } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -18,6 +18,8 @@ import {
  * the same role — see apps/docs/README.md for an equivalent configuration.
  */
 const distDir = fileURLToPath(new URL('./dist', import.meta.url))
+
+const distDirReal = realpathSync(distDir, { throwIfNoEntry: false })
 
 const port = Number(process.env.DOCS_PORT ?? 3002)
 
@@ -50,8 +52,19 @@ const resolveStaticFile = (pathname) => {
         return undefined
     }
 
-    if (existsSync(candidate) && statSync(candidate).isFile()) {
-        return candidate
+    // The string-prefix check above stops `..` escapes; the real path check
+    // also refuses symlinks inside the build that point outside of it.
+    const candidateReal = realpathSync(candidate, { throwIfNoEntry: false })
+
+    if (
+        candidateReal === undefined ||
+        (distDirReal !== undefined && !isPathInside(distDirReal, candidateReal))
+    ) {
+        return undefined
+    }
+
+    if (existsSync(candidateReal) && statSync(candidateReal).isFile()) {
+        return candidateReal
     }
 
     return undefined

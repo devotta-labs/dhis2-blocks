@@ -12,6 +12,8 @@ import {
 
 const backend = resolveDocsBackend(process.env.DOCS_DHIS2_URL)
 
+const port = Number(process.env.DOCS_PORT ?? 3002)
+
 export default defineConfig({
     plugins: [
         {
@@ -47,11 +49,11 @@ export default defineConfig({
         },
     },
     server: {
-        port: 3002,
+        port,
         proxy: createDhis2ViteProxy(backend),
     },
     preview: {
-        port: 3002,
+        port,
         proxy: createDhis2ViteProxy(backend),
     },
 })

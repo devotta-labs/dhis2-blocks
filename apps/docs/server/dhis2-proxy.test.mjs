@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
     resolveDocsBackend,
+    resolveUpstreamPath,
     rewriteLocationHeader,
     rewriteSetCookieHeaders,
     stripDhis2Prefix,
@@ -77,6 +78,32 @@ describe('rewriteLocationHeader', () => {
                 'https://play.im.dhis2.org/dev'
             )
         ).toBe('/dhis2/dev-fork/api/ping')
+    })
+})
+
+describe('resolveUpstreamPath', () => {
+    it('strips the prefix for root deployments', () => {
+        expect(
+            resolveUpstreamPath(
+                '/dhis2/api/42/me?fields=id',
+                'http://127.0.0.1:58080'
+            )
+        ).toBe('/api/42/me?fields=id')
+    })
+
+    it('re-attaches the backend context path', () => {
+        expect(
+            resolveUpstreamPath(
+                '/dhis2/api/me',
+                'https://play.im.dhis2.org/dev'
+            )
+        ).toBe('/dev/api/me')
+    })
+
+    it('maps the bare prefix onto the context root', () => {
+        expect(
+            resolveUpstreamPath('/dhis2', 'https://play.im.dhis2.org/dev')
+        ).toBe('/dev/')
     })
 })
 

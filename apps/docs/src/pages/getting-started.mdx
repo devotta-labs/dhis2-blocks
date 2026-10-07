@@ -98,3 +98,15 @@ DOCS_DHIS2_URL=https://play.im.dhis2.org/dev pnpm dev:docs
 ```
 
 Sign in through a live preview's dialog with your own credentials.
+
+## Add a page or example
+
+Pages are MDX files under `apps/docs/src/pages/` — add the file, then list it
+in `apps/docs/src/navigation.ts` so it appears in the sidebar.
+
+Examples live in `apps/docs/src/examples/<block>/`: each is a self-contained
+React component built on the public block API. Register it in
+`apps/docs/src/examples/registry.ts` with `live: true` when it needs the
+connected DHIS2 instance or `live: false` for a standalone render — the
+preview and the Code tab are generated from the same file, so they cannot
+drift apart.

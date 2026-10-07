@@ -12,7 +12,9 @@ e2e_require_command docker
 e2e_require_command jq
 docker compose version >/dev/null
 
-if e2e_compose ps --status running --quiet 2>/dev/null | grep -q .; then
+# Only `dhis2` counts as "running": the database service can stay up from a
+# previous run while the app is stopped, and it still needs starting.
+if e2e_compose ps --status running --quiet dhis2 2>/dev/null | grep -q .; then
     echo "Docs DHIS2 stack is already running at $E2E_DHIS2_URL"
     exit 0
 fi

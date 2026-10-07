@@ -63,6 +63,8 @@ composition. Provide `viewId` + `onViewChange` and `pagination` +
 `onPaginationChange` to control that state yourself — for example to persist
 it in the URL.
 
-Changing `programId` remounts the list through its built-in React `key`, so
-each program starts from clean uncontrolled state. Saved views are loaded
+`WorkingList` keys its internal list instance by `programId`, so changing
+programs remounts the list and each program starts from clean uncontrolled
+state. The examples above additionally pass `key` on the block itself to
+remount the whole composition. Saved views are loaded
 from and written to the real server; mutations appear after a reload.

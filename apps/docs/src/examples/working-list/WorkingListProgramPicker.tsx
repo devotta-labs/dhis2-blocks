@@ -21,7 +21,7 @@ const metadataQuery = {
     programs: {
         resource: 'programs',
         params: {
-            fields: 'id,displayName',
+            fields: 'id,displayName,organisationUnits[id]',
             paging: false,
             filter: 'programType:eq:WITH_REGISTRATION',
         },
@@ -35,7 +35,11 @@ const metadataQuery = {
 const metadataSchema = z.object({
     programs: z.object({
         programs: z.array(
-            z.object({ id: z.string(), displayName: z.string() })
+            z.object({
+                id: z.string(),
+                displayName: z.string(),
+                organisationUnits: z.array(z.object({ id: z.string() })),
+            })
         ),
     }),
     me: z.object({
@@ -93,8 +97,26 @@ const WorkingListProgramPicker = () => {
         })
     )
 
-    const orgUnitId = metadata.me.organisationUnits[0]?.id
     const selectedProgramId = programId ?? options[0]?.value
+
+    // Pick a unit the selected program is actually assigned to, not just the
+    // user's first unit — otherwise the list misses records for programs that
+    // are restricted to a subset of the user's units.
+    const selectedProgram = metadata.programs.programs.find(
+        (program) => program.id === selectedProgramId
+    )
+
+    const assigned = new Set(
+        selectedProgram?.organisationUnits.map((unit) => unit.id)
+    )
+
+    const orgUnitId = (
+        assigned.size
+            ? metadata.me.organisationUnits.filter((unit) =>
+                  assigned.has(unit.id)
+              )
+            : metadata.me.organisationUnits
+    )[0]?.id
 
     return (
         <PreviewShell>

@@ -129,6 +129,18 @@ export const createDhis2ViteProxy = (target) => ({
     },
 })
 
+/**
+ * Compute the upstream request path: the local `/dhis2` prefix comes off and
+ * the backend's own context path (e.g. `/dev` in `https://host/dev`) goes on.
+ * Without this, production serving against context-path deployments would
+ * forward `/api/me` instead of `/dev/api/me`.
+ */
+export const resolveUpstreamPath = (url, target) => {
+    const basePath = new URL(target).pathname.replace(/\/$/, '')
+
+    return `${basePath}${stripDhis2Prefix(url)}`
+}
+
 const HOP_BY_HOP_HEADERS = new Set([
     'connection',
     'keep-alive',
@@ -164,7 +176,7 @@ export const proxyDhis2Request = (req, res, target) => {
         {
             hostname: backend.hostname,
             port: backend.port || (backend.protocol === 'https:' ? 443 : 80),
-            path: `${stripDhis2Prefix(req.url)}`,
+            path: resolveUpstreamPath(req.url, target),
             method: req.method,
             headers,
         },

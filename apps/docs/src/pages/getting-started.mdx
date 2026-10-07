@@ -99,8 +99,9 @@ To point the docs at an existing development instance instead:
 DOCS_DHIS2_URL=https://play.im.dhis2.org/dev pnpm dev:docs
 ```
 
-When `DOCS_DHIS2_USERNAME` and `DOCS_DHIS2_PASSWORD` are set — e.g. the
-published `admin`/`district` values in `.env.example` — the `/dhis2`
+When `DOCS_DHIS2_USERNAME` and `DOCS_DHIS2_PASSWORD` are set — e.g. copy
+`.env.example` to `.env` for the published `admin`/`district` demo values;
+both Vite and `server.mjs` load `.env` automatically — the `/dhis2`
 proxy authenticates every upstream request as that user — live previews
 load data directly with no sign-in dialog. Unset them to pass requests
 anonymously and let visitors sign in through the adapter's dialog instead.

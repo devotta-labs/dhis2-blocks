@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+    isCrossSiteWrite,
     resolveDocsAuth,
     resolveDocsBackend,
     resolveUpstreamPath,
@@ -161,5 +162,29 @@ describe('resolveDocsAuth', () => {
         expect(resolveDocsAuth({})).toBeNull()
         expect(resolveDocsAuth({ DOCS_DHIS2_USERNAME: 'admin' })).toBeNull()
         expect(resolveDocsAuth({ DOCS_DHIS2_PASSWORD: 'district' })).toBeNull()
+    })
+})
+
+describe('isCrossSiteWrite', () => {
+    it('rejects mutating verbs marked cross-site', () => {
+        expect(
+            isCrossSiteWrite('POST', { 'sec-fetch-site': 'cross-site' })
+        ).toBe(true)
+        expect(
+            isCrossSiteWrite('DELETE', { 'sec-fetch-site': 'cross-site' })
+        ).toBe(true)
+    })
+
+    it('allows reads, same-site writes, and headerless requests', () => {
+        expect(
+            isCrossSiteWrite('GET', { 'sec-fetch-site': 'cross-site' })
+        ).toBe(false)
+        expect(
+            isCrossSiteWrite('POST', { 'sec-fetch-site': 'same-origin' })
+        ).toBe(false)
+        expect(
+            isCrossSiteWrite('POST', { 'sec-fetch-site': 'same-site' })
+        ).toBe(false)
+        expect(isCrossSiteWrite('POST', {})).toBe(false)
     })
 })

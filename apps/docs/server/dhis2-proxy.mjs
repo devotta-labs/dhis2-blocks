@@ -47,6 +47,42 @@ const applyDocsAuth = (headers, auth) => {
     headers.authorization = auth
 }
 
+/**
+ * CSRF guard for mutating verbs. The proxy rewrites Origin and injects
+ * credentials (or forwards a session cookie), so a cross-site form POST
+ * would execute as the authenticated user. Browsers mark such requests
+ * `Sec-Fetch-Site: cross-site`; reject those outright. Requests without
+ * the header (older browsers, curl, server-to-server) pass through.
+ */
+export const isCrossSiteWrite = (method, headers = {}) => {
+    if (!method || ['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) {
+        return false
+    }
+
+    return headers['sec-fetch-site'] === 'cross-site'
+}
+
+/**
+ * Connect middleware enforcing the same guard inside Vite dev/preview —
+ * registered before the proxy so cross-site writes never leave the docs
+ * origin. Mirrors the check inside `proxyDhis2Request` for `server.mjs`.
+ */
+export const dhis2CsrfGuard = (req, res, next) => {
+    const path = (req.url ?? '').split('?')[0]
+
+    if (
+        (path === DHIS2_PREFIX || path.startsWith(`${DHIS2_PREFIX}/`)) &&
+        isCrossSiteWrite(req.method, req.headers)
+    ) {
+        res.statusCode = 403
+        res.end('Cross-site writes are not allowed')
+
+        return
+    }
+
+    next()
+}
+
 export const resolveDocsBackend = (value) => {
     const candidate = (value ?? '').trim() || DOCS_DEFAULT_BACKEND
 
@@ -205,6 +241,15 @@ const HOP_BY_HOP_HEADERS = new Set([
  * redirect locations back onto the same-origin prefix.
  */
 export const proxyDhis2Request = (req, res, target, env = process.env) => {
+    if (isCrossSiteWrite(req.method, req.headers)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' })
+        res.end(
+            JSON.stringify({ message: 'Cross-site writes are not allowed' })
+        )
+
+        return
+    }
+
     const backend = new URL(target)
     const transport = backend.protocol === 'https:' ? https : http
 

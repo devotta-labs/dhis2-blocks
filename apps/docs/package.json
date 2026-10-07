@@ -9,7 +9,7 @@
         "build": "vite build",
         "dev": "vite",
         "preview": "vite preview",
-        "serve": "node server.mjs",
+        "serve": "node --env-file-if-exists=.env server.mjs",
         "test": "vitest run",
         "typecheck": "tsc --noEmit",
         "lint": "oxlint --deny-warnings src server server.mjs"

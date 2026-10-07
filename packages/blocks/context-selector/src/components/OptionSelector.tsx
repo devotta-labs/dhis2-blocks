@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import i18n from '@dhis2/d2-i18n'
 import { CircularLoader, Input, Menu, MenuDivider, MenuItem } from '@dhis2/ui'
 import type { SelectorProps } from '../types'
@@ -29,6 +29,119 @@ interface MenuSelectorProps extends Omit<
     contentClassName: string
 }
 
+interface MenuSelectorContentProps {
+    options: SelectorProps['options']
+    searchPlaceholder: string
+    dataTest: string
+    contentClassName: string
+    onSelect: (value: string | undefined) => void
+    onClearSelection?: () => void
+    children?: React.ReactNode
+}
+
+const MenuSelectorContent = ({
+    options,
+    searchPlaceholder,
+    dataTest,
+    contentClassName,
+    onSelect,
+    onClearSelection,
+    children,
+}: MenuSelectorContentProps) => {
+    const [filter, setFilter] = useState('')
+    const manyOptions = options.length > 10
+
+    const visibleOptions = useMemo(() => {
+        const normalizedFilter = filter.toLowerCase()
+
+        return options.filter((option) =>
+            option.label.toLowerCase().includes(normalizedFilter)
+        )
+    }, [filter, options])
+
+    return (
+        <div className={contentClassName}>
+            <Menu>
+                {manyOptions ? (
+                    <>
+                        <div className="sticky top-0 z-[1] bg-white px-[8px] pt-[8px] pb-[4px]">
+                            <Input
+                                dense
+                                dataTest={`${dataTest}-filterinput`}
+                                value={filter}
+                                onChange={({ value: nextFilter }) =>
+                                    setFilter(nextFilter ?? '')
+                                }
+                                type="text"
+                                placeholder={searchPlaceholder}
+                                initialFocus
+                            />
+                        </div>
+                        {visibleOptions.length > 0 ? (
+                            visibleOptions.map((option) => (
+                                <MenuItem
+                                    key={option.value}
+                                    ariaLabel={option.label}
+                                    label={
+                                        <OptionLabel
+                                            icon={option.icon}
+                                            label={option.label}
+                                        />
+                                    }
+                                    value={option.value}
+                                    disabled={option.disabled}
+                                    onClick={({ value: nextValue }) =>
+                                        onSelect(nextValue)
+                                    }
+                                    suffix=""
+                                />
+                            ))
+                        ) : (
+                            <div className="flex justify-center px-[8px] py-[16px] text-[14px] text-[#4a5768]">
+                                <span>
+                                    {i18n.t('No results found for ')}
+                                    {filter}
+                                </span>
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    options.map((option) => (
+                        <MenuItem
+                            key={option.value}
+                            ariaLabel={option.label}
+                            label={
+                                <OptionLabel
+                                    icon={option.icon}
+                                    label={option.label}
+                                />
+                            }
+                            value={option.value}
+                            disabled={option.disabled}
+                            onClick={({ value: nextValue }) =>
+                                onSelect(nextValue)
+                            }
+                            suffix=""
+                        />
+                    ))
+                )}
+                {children}
+                {manyOptions && onClearSelection ? (
+                    <>
+                        <MenuDivider />
+                        <MenuItem
+                            dense
+                            onClick={onClearSelection}
+                            label={i18n.t('Clear selection')}
+                            suffix=""
+                        />
+                    </>
+                ) : null}
+            </Menu>
+        </div>
+    )
+}
+
 export const MenuSelector = ({
     label,
     options,
@@ -48,7 +161,6 @@ export const MenuSelector = ({
     readOnlyEmptyMessage = '',
     contentClassName,
 }: MenuSelectorProps) => {
-    const [filter, setFilter] = useState('')
     const normalizedLabel = capitalizeFirst(label)
     const normalizedDataTest = dataTest
 
@@ -66,23 +178,9 @@ export const MenuSelector = ({
         [options]
     )
 
-    const manyOptions = menuOptions.length > 10
     const interactive = !loading && !disabled && !readOnly
     const open = interactive && requestedOpen
     const displayOnly = !loading && !disabled && readOnly
-    useEffect(() => {
-        if (!open) {
-            setFilter('')
-        }
-    }, [open])
-
-    const visibleOptions = useMemo(() => {
-        const normalizedFilter = filter.toLowerCase()
-
-        return menuOptions.filter((option) =>
-            option.label.toLowerCase().includes(normalizedFilter)
-        )
-    }, [filter, menuOptions])
 
     const value = selectedOption ? (
         <OptionLabel icon={selectedOption.icon} label={selectedOption.label} />
@@ -132,86 +230,19 @@ export const MenuSelector = ({
             }
             dataTest={normalizedDataTest}
         >
-            {interactive ? (
-                <div className={contentClassName}>
-                    <Menu>
-                        {manyOptions ? (
-                            <>
-                                <div className="sticky top-0 z-[1] bg-white px-[8px] pt-[8px] pb-[4px]">
-                                    <Input
-                                        dense
-                                        dataTest={`${conciseDataTest}-filterinput`}
-                                        value={filter}
-                                        onChange={({ value: nextFilter }) =>
-                                            setFilter(nextFilter ?? '')
-                                        }
-                                        type="text"
-                                        placeholder={searchPlaceholder}
-                                        initialFocus
-                                    />
-                                </div>
-                                {visibleOptions.length > 0 ? (
-                                    visibleOptions.map((option) => (
-                                        <MenuItem
-                                            key={option.value}
-                                            ariaLabel={option.label}
-                                            label={
-                                                <OptionLabel
-                                                    icon={option.icon}
-                                                    label={option.label}
-                                                />
-                                            }
-                                            value={option.value}
-                                            disabled={option.disabled}
-                                            onClick={({ value: nextValue }) =>
-                                                selectOption(nextValue)
-                                            }
-                                            suffix=""
-                                        />
-                                    ))
-                                ) : (
-                                    <div className="flex justify-center px-[8px] py-[16px] text-[14px] text-[#4a5768]">
-                                        <span>
-                                            {i18n.t('No results found for ')}
-                                            {filter}
-                                        </span>
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            menuOptions.map((option) => (
-                                <MenuItem
-                                    key={option.value}
-                                    ariaLabel={option.label}
-                                    label={
-                                        <OptionLabel
-                                            icon={option.icon}
-                                            label={option.label}
-                                        />
-                                    }
-                                    value={option.value}
-                                    disabled={option.disabled}
-                                    onClick={({ value: nextValue }) =>
-                                        selectOption(nextValue)
-                                    }
-                                    suffix=""
-                                />
-                            ))
-                        )}
-                        {children}
-                        {selectedOption && manyOptions && onClear ? (
-                            <>
-                                <MenuDivider />
-                                <MenuItem
-                                    dense
-                                    onClick={clearSelection}
-                                    label={i18n.t('Clear selection')}
-                                    suffix=""
-                                />
-                            </>
-                        ) : null}
-                    </Menu>
-                </div>
+            {open ? (
+                <MenuSelectorContent
+                    options={menuOptions}
+                    searchPlaceholder={searchPlaceholder}
+                    dataTest={conciseDataTest}
+                    contentClassName={contentClassName}
+                    onSelect={selectOption}
+                    onClearSelection={
+                        selectedOption && onClear ? clearSelection : undefined
+                    }
+                >
+                    {children}
+                </MenuSelectorContent>
             ) : null}
         </SelectorBarItem>
     )

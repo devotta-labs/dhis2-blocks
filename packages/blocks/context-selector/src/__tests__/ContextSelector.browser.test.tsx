@@ -222,6 +222,29 @@ describe('ContextSelector', () => {
         await expect.element(input).toHaveValue('')
     })
 
+    it('resets the search when the host closes the popup without a selector event', async () => {
+        const view = (open: boolean) => (
+            <ContextSelector>
+                <ProgramSelector
+                    options={programs}
+                    open={open}
+                    onOpenChange={() => undefined}
+                />
+            </ContextSelector>
+        )
+
+        const screen = await render(view(true))
+        await page.getByPlaceholder('Search for a program').fill('tuberculosis')
+        await screen.rerender(view(false))
+        await screen.rerender(view(true))
+        await expect
+            .element(page.getByPlaceholder('Search for a program'))
+            .toHaveValue('')
+        await expect
+            .element(page.getByRole('menu'))
+            .toHaveTextContent('Malaria program 1')
+    })
+
     it('keeps Program as a direct SelectorBar child for arrow-key focus', async () => {
         const screen = await render(
             <ContextSelector>

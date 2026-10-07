@@ -90,6 +90,7 @@ export const useWorkingListSelection = ({
     )
 
     const previousControlledId = useRef<string>()
+    // EFFECT: WorkingListStore.selection -- Apply host-controlled selection to the vanilla store before paint, including external navigation changes.
     useLayoutEffect(() => {
         if (
             !shouldBeginControlledSelection(
@@ -107,14 +108,11 @@ export const useWorkingListSelection = ({
         }
     }, [hardTransition, selectedSavedListId, transitionId])
 
-    useEffect(() => {
-        if (
-            transitionId !== undefined &&
-            selectedSavedListId === transitionId
-        ) {
-            setTransitionId(undefined)
-        }
-    }, [selectedSavedListId, transitionId])
+    // Clear the optimistic request when the controlled host acknowledges it.
+    // This adjusts only this component's state before committing its render.
+    if (transitionId !== undefined && selectedSavedListId === transitionId) {
+        setTransitionId(undefined)
+    }
 
     const commitSelection = useCallback(
         (id: string, internal: InternalConfiguration) => {
@@ -140,6 +138,7 @@ export const useWorkingListSelection = ({
         [selectedSavedListId, updateStore]
     )
 
+    // EFFECT: WorkingListStore.selection -- Resolve a pending store selection after server lists and metadata arrive; event handlers cannot resolve unavailable data.
     useEffect(() => {
         if (!confirmedLists || !defaultList || !requestedId || !metadata) return
 
@@ -223,6 +222,7 @@ export const useWorkingListSelection = ({
 
     // Same-id passive refresh updates metadata only. It invalidates the active
     // context if the selected server resource disappears or becomes stale.
+    // EFFECT: WorkingListStore.selection -- Invalidate the active store configuration when a passive server refresh removes or changes its saved view.
     useEffect(() => {
         const active = store.getState().activeState
 

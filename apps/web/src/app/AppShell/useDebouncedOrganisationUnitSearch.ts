@@ -1,18 +1,31 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const ORGANISATION_UNIT_SEARCH_DEBOUNCE_MS = 500
 
-export const useDebouncedOrganisationUnitSearch = (value: string) => {
+export const useDebouncedOrganisationUnitSearch = () => {
+    const [value, setValue] = useState('')
     const [debouncedValue, setDebouncedValue] = useState('')
+    const timeout = useRef<number>()
 
+    // EFFECT: window.setTimeout -- Cancel the event-scheduled search timer when the selector unmounts.
     useEffect(() => {
-        const timeout = window.setTimeout(
-            () => setDebouncedValue(value),
+        return () => window.clearTimeout(timeout.current)
+    }, [])
+
+    const update = useCallback((next: string) => {
+        window.clearTimeout(timeout.current)
+        setValue(next)
+        timeout.current = window.setTimeout(
+            () => setDebouncedValue(next),
             ORGANISATION_UNIT_SEARCH_DEBOUNCE_MS
         )
+    }, [])
 
-        return () => window.clearTimeout(timeout)
-    }, [value])
+    const reset = useCallback(() => {
+        window.clearTimeout(timeout.current)
+        setValue('')
+        setDebouncedValue('')
+    }, [])
 
-    return [debouncedValue, setDebouncedValue] as const
+    return [value, debouncedValue, update, reset] as const
 }

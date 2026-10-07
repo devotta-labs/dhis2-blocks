@@ -210,6 +210,7 @@ export const useWorkingListLifecycle = ({
 
     const defaultListId = defaultWorkingListId(programId)
 
+    // EFFECT: WorkingListStore.lifecycle -- Publish asynchronously loaded metadata to the vanilla store consumed by the public hooks and action commands.
     useEffect(() => {
         updateStore((current) => ({
             meta: {

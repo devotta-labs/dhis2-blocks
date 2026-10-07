@@ -3,7 +3,6 @@ import { Result } from 'better-result'
 import React, {
     useCallback,
     useEffect,
-    useLayoutEffect,
     useMemo,
     useRef,
     useState,
@@ -11,10 +10,7 @@ import React, {
 } from 'react'
 import { shouldRetryWorkingListRequest } from '../api/client'
 import { fieldsForConfiguration } from '../api/metadata'
-import {
-    fetchSavedWorkingLists,
-    type NormalizedSavedWorkingList,
-} from '../api/savedLists'
+import { fetchSavedWorkingLists } from '../api/savedLists'
 import type { WorkingListConfiguration as InternalConfiguration } from '../domain/model'
 import { workingListQueryKeys } from '../query/keys'
 import { WorkingListTextProvider } from '../ui/WorkingListText'
@@ -129,12 +125,7 @@ const WorkingListProviderInstance = ({
         enabled: lifecycleReady,
     })
 
-    const [confirmedLists, setConfirmedLists] =
-        useState<NormalizedSavedWorkingList[]>()
-
-    useEffect(() => {
-        if (savedListsQuery.data) setConfirmedLists(savedListsQuery.data)
-    }, [savedListsQuery.data])
+    const confirmedLists = savedListsQuery.data
     const usingGeneratedLists = confirmedLists?.length === 0
 
     const displayedLists = useMemo(
@@ -151,6 +142,7 @@ const WorkingListProviderInstance = ({
         ? toTransportError(savedListsQuery.error, 'Loading saved working lists')
         : undefined
 
+    // EFFECT: WorkingListStore.savedViews -- Publish asynchronous saved-view snapshots to store subscribers and action commands, including passive refreshes.
     useEffect(() => {
         const views = displayedLists.map((list) =>
             asSavedView(list, Boolean(usingGeneratedLists))
@@ -189,14 +181,8 @@ const WorkingListProviderInstance = ({
         usingGeneratedLists,
     ])
 
-    const [stagedPagination, setStagedPagination] =
-        useState<WorkingListPagination>()
-
-    const effectivePagination = stagedPagination ?? pagination
-    useLayoutEffect(() => {
-        if (!stagedPagination) return
-        setStagedPagination(undefined)
-    }, [pagination, stagedPagination])
+    const effectivePagination = pagination
+    // EFFECT: WorkingListStore.pagination -- Synchronize host-controlled pagination with the vanilla store when props change independently of local events.
     useEffect(() => {
         updateStore((current) => ({
             meta: { ...current.meta, pagination: effectivePagination },
@@ -207,7 +193,6 @@ const WorkingListProviderInstance = ({
 
     const stagePagination = useCallback(
         (next: WorkingListPagination) => {
-            setStagedPagination(next)
             updateStore((current) => ({
                 meta: { ...current.meta, pagination: next },
             }))
@@ -245,6 +230,7 @@ const WorkingListProviderInstance = ({
         () => store.getState().activeState
     )
 
+    // EFFECT: WorkingListStore.fields -- Synchronize the active field catalog in the vanilla store when asynchronous metadata or selection changes.
     useEffect(() => {
         if (!activeState || !metadata) return
 
@@ -315,8 +301,6 @@ const WorkingListProviderInstance = ({
             staleTime: 0,
             retry: shouldRetryWorkingListRequest,
         })
-
-        setConfirmedLists(lists)
 
         return lists
     }, [client, metadata, parsingContext, programId, queryClient])

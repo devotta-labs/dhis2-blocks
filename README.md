@@ -262,6 +262,30 @@ cannot be added there. Document defaults and reduced-motion styling use inline
 Tailwind classes applied to the document root, including portal content.
 These rules have no autofix because removing styles or moving a dynamic
 expression can change behavior.
+`dhis2-blocks/no-react-effects` rejects `useEffect`, `useLayoutEffect`, and
+`useInsertionEffect` by default. Prefer render-time derived values, event
+handlers, controlled props, and `useSyncExternalStore` for subscriptions.
+A necessary effect must have a comment immediately above its individual call:
+
+```tsx
+// EFFECT: window.beforeunload -- Subscribe while dirty and remove the listener on cleanup.
+useEffect(() => {
+    // Register the listener and return its cleanup.
+}, [dirty])
+```
+
+Name the external system and explain why the synchronization requires an
+effect. Empty or TODO explanations, distant comments, function-level comments,
+and one comment covering multiple calls do not qualify. Import aliases,
+namespace/computed access, local aliases, CommonJS and dynamic imports are
+checked; re-exporting or passing effect hooks as values is rejected. The rule
+checks explicit exceptions, while reviewers assess their justification: it
+cannot prove from syntax that a described external system is genuine. Existing
+Zustand bridges remain documented exceptions; consolidating query-derived
+metadata in the store is a separate architectural improvement. Do not add an
+effect merely to copy React state, notify a parent, or respond to a user event.
+The rule has no autofix because deleting an effect can change behavior.
+
 Run `pnpm test:lint-rules` or `pnpm typecheck:lint-rules` to check the plugins
 independently. Browser tests load the production stylesheet; cascade regression
 tests also inject DHIS2's real reset.

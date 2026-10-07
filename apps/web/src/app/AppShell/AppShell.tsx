@@ -52,6 +52,7 @@ const WorkingListDirtyBridge = ({
 }) => {
     const dirty = useWorkingListMeta((meta) => meta.dirty)
 
+    // EFFECT: WorkingListStore.dirty -- Publish subscribed dirty status to the host shell, including changes from asynchronous mutations and refreshes.
     useEffect(() => onChange(dirty), [dirty, onChange])
 
     return null
@@ -74,12 +75,13 @@ export const AppShell = () => {
     const client = useMemo(() => createAppWorkingListClient(engine), [engine])
     const [programSelectorOpen, setProgramSelectorOpen] = useState(false)
     const [orgUnitSelectorOpen, setOrgUnitSelectorOpen] = useState(false)
-    const [organisationUnitSearch, setOrganisationUnitSearch] = useState('')
 
     const [
+        organisationUnitSearch,
         debouncedOrganisationUnitSearch,
-        setDebouncedOrganisationUnitSearch,
-    ] = useDebouncedOrganisationUnitSearch(organisationUnitSearch)
+        setOrganisationUnitSearch,
+        resetOrganisationUnitSearch,
+    ] = useDebouncedOrganisationUnitSearch()
 
     const [dirty, setDirty] = useState(false)
 
@@ -106,23 +108,18 @@ export const AppShell = () => {
 
     const externalTransitionBlocker = useExternalTransitionBlocker(dirty)
 
-    useEffect(() => {
-        if (externalTransitionBlocker.state !== 'blocked') {
-            return
-        }
-
-        setPendingTransition(
-            (current) =>
-                current ?? {
-                    proceed: () => {
-                        setDirty(false)
-                        setOpenedRecord(undefined)
-                        externalTransitionBlocker.proceed()
-                    },
-                    cancel: externalTransitionBlocker.reset,
-                }
-        )
-    }, [externalTransitionBlocker])
+    const displayedTransition =
+        pendingTransition ??
+        (externalTransitionBlocker.state === 'blocked'
+            ? {
+                  proceed: () => {
+                      setDirty(false)
+                      setOpenedRecord(undefined)
+                      externalTransitionBlocker.proceed()
+                  },
+                  cancel: externalTransitionBlocker.reset,
+              }
+            : undefined)
 
     const programsQuery = useQuery(
         trackerProgramsQueryOptions(client, runtimeConfig.apiVersion)
@@ -278,6 +275,7 @@ export const AppShell = () => {
     const programsAreFiltered =
         compatibleProgramOptions.length < programs.length
 
+    // EFFECT: window.beforeunload -- Subscribe while dirty and remove the browser listener when dirty changes or the shell unmounts.
     useEffect(() => {
         if (!dirty) {
             return
@@ -294,6 +292,7 @@ export const AppShell = () => {
             window.removeEventListener('beforeunload', warnBeforeUnload)
     }, [dirty])
 
+    // EFFECT: router.searchParams -- Normalize a bookmarked program after server metadata proves it inaccessible; that result arrives after navigation.
     useEffect(() => {
         if (
             !urlState.programId ||
@@ -310,8 +309,7 @@ export const AppShell = () => {
         requestTransition(() => {
             setProgramSelectorOpen(false)
             setOrgUnitSelectorOpen(false)
-            setOrganisationUnitSearch('')
-            setDebouncedOrganisationUnitSearch('')
+            resetOrganisationUnitSearch()
             setOpenedRecord(undefined)
             setDirty(false)
             setUrlState(
@@ -329,8 +327,7 @@ export const AppShell = () => {
 
     const updateOrgUnit = (organisationUnit: OrganisationUnitReference) => {
         setOrgUnitSelectorOpen(false)
-        setOrganisationUnitSearch('')
-        setDebouncedOrganisationUnitSearch('')
+        resetOrganisationUnitSearch()
         requestTransition(() => {
             const next = getGuardedOrganisationUnitState(
                 urlState,
@@ -353,8 +350,7 @@ export const AppShell = () => {
             )
 
             setOrgUnitSelectorOpen(false)
-            setOrganisationUnitSearch('')
-            setDebouncedOrganisationUnitSearch('')
+            resetOrganisationUnitSearch()
             setOpenedRecord(undefined)
             setDirty(false)
             setUrlState(next)
@@ -384,8 +380,7 @@ export const AppShell = () => {
                     requestTransition(() => {
                         setProgramSelectorOpen(false)
                         setOrgUnitSelectorOpen(false)
-                        setOrganisationUnitSearch('')
-                        setDebouncedOrganisationUnitSearch('')
+                        resetOrganisationUnitSearch()
                         setDirty(false)
                         setOpenedRecord(undefined)
                         setUrlState({})
@@ -408,8 +403,7 @@ export const AppShell = () => {
                     setOrgUnitSelectorOpen(open)
 
                     if (!open) {
-                        setOrganisationUnitSearch('')
-                        setDebouncedOrganisationUnitSearch('')
+                        resetOrganisationUnitSearch()
                     }
                 }}
                 onOrganisationUnitClear={clearOrganisationUnit}
@@ -547,14 +541,14 @@ export const AppShell = () => {
                 )}
 
             <DiscardChangesDialog
-                open={Boolean(pendingTransition)}
+                open={Boolean(displayedTransition)}
                 onCancel={() => {
-                    const transition = pendingTransition
+                    const transition = displayedTransition
                     setPendingTransition(undefined)
                     transition?.cancel?.()
                 }}
                 onDiscard={() => {
-                    const transition = pendingTransition
+                    const transition = displayedTransition
                     setPendingTransition(undefined)
                     setDirty(false)
                     transition?.proceed()

@@ -184,6 +184,7 @@ export const useWorkingListResults = ({
               ? organisationUnitLabelsQuery.error
               : undefined
 
+    // EFFECT: WorkingListStore.results -- Publish asynchronous query snapshots to the vanilla store, including background refetch and offline changes.
     useEffect(() => {
         let results: WorkingListMeta['results']
 
@@ -235,6 +236,7 @@ export const useWorkingListResults = ({
     )
 
     const previousOrgUnit = useRef(orgUnitId)
+    // EFFECT: WorkingListStore.pagination -- Reset page intent when the controlled organisation-unit context changes, including browser history navigation.
     useEffect(() => {
         if (previousOrgUnit.current === orgUnitId) return
         previousOrgUnit.current = orgUnitId

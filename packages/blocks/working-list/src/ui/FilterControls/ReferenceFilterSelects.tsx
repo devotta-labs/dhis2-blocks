@@ -6,7 +6,7 @@ import {
     OrganisationUnitTree,
 } from '@dhis2/ui'
 import { useQuery } from '@tanstack/react-query'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import type { WorkingListClient } from '../../api/client'
 import { useWorkingListText } from '../WorkingListText'
@@ -45,16 +45,13 @@ export const UserFilterSelect = ({
     onChange: (selected: string[]) => void
 }) => {
     const i18n = { t: useWorkingListText() }
-    const [search, setSearch] = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
-    useEffect(() => {
-        const timeout = window.setTimeout(
-            () => setDebouncedSearch(search.trim()),
-            250
-        )
+    const searchTimeout = useRef<number>()
 
-        return () => window.clearTimeout(timeout)
-    }, [search])
+    // EFFECT: window.setTimeout -- Cancel the event-scheduled user search timer when this field unmounts.
+    useEffect(() => {
+        return () => window.clearTimeout(searchTimeout.current)
+    }, [])
 
     const usersQuery = useQuery({
         queryKey: ['working-list', 'users', debouncedSearch],
@@ -94,7 +91,12 @@ export const UserFilterSelect = ({
                     target instanceof HTMLInputElement &&
                     target.name === 'filter'
                 ) {
-                    setSearch(target.value)
+                    const nextSearch = target.value.trim()
+                    window.clearTimeout(searchTimeout.current)
+                    searchTimeout.current = window.setTimeout(
+                        () => setDebouncedSearch(nextSearch),
+                        250
+                    )
                 }
             }}
         >

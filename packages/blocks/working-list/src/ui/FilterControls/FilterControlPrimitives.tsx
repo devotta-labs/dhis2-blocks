@@ -96,6 +96,7 @@ export const configureFilterCombobox = (
 export const useEscapeToClose = (open: boolean, onClose: () => void) => {
     const onCloseRef = useRef(onClose)
     onCloseRef.current = onClose
+    // EFFECT: document.keydown -- Subscribe while the filter is open and remove the global Escape listener on close or unmount.
     useEffect(() => {
         if (!open) {
             return

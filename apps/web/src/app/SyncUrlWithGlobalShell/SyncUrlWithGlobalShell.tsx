@@ -12,6 +12,7 @@ export const SyncUrlWithGlobalShell = ({
 }) => {
     const location = useLocation()
 
+    // EFFECT: DHIS2GlobalShell.popstate -- Publish committed router locations to the shell, including browser back and forward navigation.
     useEffect(() => {
         dispatchEvent(new PopStateEvent('popstate'))
     }, [location.key])

@@ -586,6 +586,7 @@ describe('ContextSelector', () => {
         expect(shell?.className).toContain('min-w-[min(640px,90vw)]')
         expect(shell?.className).toContain('min-h-[96px]')
         expect(shell?.className).toContain('max-h-[80vh]')
+        expect(shell?.className).toContain('max-w-[90vw]')
         expect(shell?.className).toContain('overflow-auto')
         const style = getComputedStyle(shell!)
         expect(parseFloat(style.minWidth)).toBeLessThanOrEqual(640)

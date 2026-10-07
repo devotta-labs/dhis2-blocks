@@ -74,8 +74,11 @@ A static `vite build` does not include the dev proxy. In production, serve
 instance. This repository ships a minimal Node server for that role:
 
 ```bash
-DOCS_DHIS2_URL=https://your-dhis2.example node apps/docs/server.mjs
+DOCS_DHIS2_URL=https://your-dhis2.example pnpm serve:docs
 ```
+
+The `serve` script runs `server.mjs` with Node's `--env-file-if-exists`
+flag, so the same `.env` conventions apply.
 
 ## Run the docs against a seeded backend
 

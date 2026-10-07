@@ -15,6 +15,7 @@ const WORKING_LIST_CALENDARS = [
 ] as const
 
 export type WorkingListCalendar = (typeof WORKING_LIST_CALENDARS)[number]
+
 export type WorkingListDateFormat = 'YYYY-MM-DD' | 'DD-MM-YYYY'
 
 const DateFormatSchema = z
@@ -37,6 +38,7 @@ const TimeZoneSchema = z
         (value) => {
             try {
                 new Intl.DateTimeFormat('en', { timeZone: value }).format()
+
                 return true
             } catch {
                 return false

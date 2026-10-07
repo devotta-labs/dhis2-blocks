@@ -80,6 +80,7 @@ const getHasNextPage = (
     if (apiVersion >= 42) {
         return Boolean(pager?.nextPage)
     }
+
     return recordCount === pagination.pageSize
 }
 
@@ -98,6 +99,7 @@ const reportDataQualityIssues = (
             raw: issue.raw,
         }))
     )
+
     if (details.length) {
         console.warn(
             `[working-list] ${details.length} invalid data value(s) on page ${page}`,
@@ -113,14 +115,17 @@ export const fetchWorkingListPage = async ({
 }: FetchWorkingListPageInput): Promise<WorkingListPage> => {
     const request = serializeWorkingListRequest(input)
     const { configuration } = input
+
     if (configuration.mode === 'trackedEntity') {
         const rawResponse = await client.query(
             request,
             TrackedEntitiesResponseSchema,
             signal
         )
+
         const response = normalizeTrackedEntitiesResponse(rawResponse)
         let records: NormalizedTrackedEntity[]
+
         try {
             records = response.trackedEntities.map((trackedEntity) =>
                 normalizeTrackedEntityValues(trackedEntity, input.fields, {
@@ -134,6 +139,7 @@ export const fetchWorkingListPage = async ({
                 'Malformed tracked-entity response'
             )
         }
+
         reportDataQualityIssues(
             input.pagination.page,
             records.map((record) => ({
@@ -141,6 +147,7 @@ export const fetchWorkingListPage = async ({
                 issues: record.issues,
             }))
         )
+
         return {
             mode: 'trackedEntity',
             records,
@@ -160,8 +167,10 @@ export const fetchWorkingListPage = async ({
         EventsResponseSchema,
         signal
     )
+
     const eventsResponse = normalizeEventsResponse(rawEventsResponse)
     let events: NormalizedEvent[]
+
     try {
         events = eventsResponse.events.map((event) =>
             normalizeEventValues(event, input.fields, {
@@ -172,19 +181,24 @@ export const fetchWorkingListPage = async ({
     } catch (error) {
         throw asWorkingListBoundaryError(error, 'Malformed event response')
     }
+
     const joinPlan = planTrackedEntityJoin({
         events: events.map((record) => record.event),
         programId: configuration.programId,
         pageSize: input.pagination.pageSize,
     })
+
     let trackedEntitiesById = new Map<string, NormalizedTrackedEntity>()
+
     if (joinPlan) {
         const rawJoinResponse = await client.query(
             joinPlan.request,
             TrackedEntitiesResponseSchema,
             signal
         )
+
         const joinResponse = normalizeTrackedEntitiesResponse(rawJoinResponse)
+
         try {
             trackedEntitiesById = new Map(
                 joinResponse.trackedEntities.map((trackedEntity) => {
@@ -196,6 +210,7 @@ export const fetchWorkingListPage = async ({
                             translate: input.translate,
                         }
                     )
+
                     return [normalized.trackedEntity.trackedEntity, normalized]
                 })
             )
@@ -205,9 +220,11 @@ export const fetchWorkingListPage = async ({
                 'Malformed tracked-entity join response'
             )
         }
+
         const missingIds = joinPlan.trackedEntityIds.filter(
             (id) => !trackedEntitiesById.has(id)
         )
+
         if (missingIds.length) {
             throw asWorkingListBoundaryError(
                 new Error(`Omitted IDs: ${missingIds.join(', ')}`),
@@ -215,12 +232,14 @@ export const fetchWorkingListPage = async ({
             )
         }
     }
+
     const records = events.map((event) => ({
         event,
         trackedEntity: event.event.trackedEntity
             ? trackedEntitiesById.get(event.event.trackedEntity)
             : undefined,
     }))
+
     reportDataQualityIssues(
         input.pagination.page,
         records.map((record) => ({
@@ -231,6 +250,7 @@ export const fetchWorkingListPage = async ({
             ],
         }))
     )
+
     return {
         mode: 'event',
         records,
@@ -249,6 +269,7 @@ export const workingListPageQueryOptions = (
     input: Omit<FetchWorkingListPageInput, 'signal'>
 ) => {
     const request = serializeWorkingListRequest(input)
+
     return queryOptions({
         queryKey: workingListQueryKeys.recordRequest(request),
         queryFn: ({ signal }) => fetchWorkingListPage({ ...input, signal }),

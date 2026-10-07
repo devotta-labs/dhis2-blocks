@@ -38,10 +38,13 @@ export const operatorToApi = (operator: FilterOperator) => {
         notEmpty: '!null',
         range: undefined,
     } satisfies Record<FilterOperator, string | undefined>
+
     const result = operators[operator]
+
     if (!result) {
         throw new Error(`Filter operator ${operator} has no scalar API mapping`)
     }
+
     return result
 }
 
@@ -66,10 +69,13 @@ export const apiToOperator = (
         le: 'lessThanOrEqual',
         in: 'in',
     } satisfies Record<SavedScalarApiOperator, FilterOperator>
+
     const result = operators[operator]
+
     if (!result) {
         throw new Error(`Unknown saved-list filter operator: ${operator}`)
     }
+
     return result
 }
 
@@ -82,6 +88,7 @@ export const ensureEmptyValue = (filter: AppliedFilter) => {
     if (filter.value.kind !== 'empty') {
         return undefined
     }
+
     return filter.value.isEmpty ? 'null' : '!null'
 }
 
@@ -89,6 +96,7 @@ export const serializeEmptySaved = (filter: AppliedFilter) => {
     if (filter.value.kind !== 'empty') {
         return undefined
     }
+
     return { null: filter.value.isEmpty }
 }
 
@@ -106,21 +114,26 @@ export const textOperators = (
     if (field.optionSetId || field.options?.length) {
         return ['in', ...emptyOperators(capabilities)]
     }
+
     if (field.unique) {
         return ['equals', ...emptyOperators(capabilities)]
     }
+
     const defaults: FilterOperator[] = [
         'like',
         'startsWith',
         'equals',
         'endsWith',
     ]
+
     const blocked = new Set(
         capabilities.metadataSearchOperators
             ? (field.blockedSearchOperators ?? [])
             : []
     )
+
     const available = defaults.filter((operator) => !blocked.has(operator))
+
     if (
         capabilities.metadataSearchOperators &&
         field.preferredSearchOperator &&
@@ -129,6 +142,7 @@ export const textOperators = (
         available.splice(available.indexOf(field.preferredSearchOperator), 1)
         available.unshift(field.preferredSearchOperator)
     }
+
     return [...available, ...emptyOperators(capabilities)]
 }
 
@@ -140,15 +154,19 @@ export const formatText = (
     if (value === undefined || value === null || value === '') {
         return ''
     }
+
     if (isWorkingListUserValue(value)) {
         return value.username ? `${value.name} (${value.username})` : value.name
     }
+
     if (isWorkingListFileValue(value)) {
         return field.valueType === 'FILE_RESOURCE'
             ? (context?.resolveFileResourceName?.(value.id) ?? '')
             : value.id
     }
+
     const raw = String(value)
+
     if (field.valueType === 'MULTI_TEXT') {
         return raw
             .split(',')
@@ -162,7 +180,9 @@ export const formatText = (
             )
             .join(', ')
     }
+
     const option = field.options?.find((item) => item.code === raw)
+
     return option?.displayName ?? context?.resolveDisplayName?.(raw) ?? raw
 }
 
@@ -182,20 +202,25 @@ export const textDisplay = (input: {
     context?: CellFormattingContext
 }): CellDisplayValue => {
     const { valueType, value, field, context } = input
+
     if (value === undefined || value === null || value === '') {
         return { kind: 'empty', text: '' }
     }
+
     if (valueType === 'FILE_RESOURCE') {
         const file = toFileValue(value)
         const name = context?.resolveFileResourceName?.(file.id)
+
         // Capture parity: a file whose resource name cannot be resolved
         // renders as an empty cell instead of a dead link.
         return name
             ? { kind: 'file', text: name, href: file.url }
             : { kind: 'empty', text: '' }
     }
+
     if (valueType === 'IMAGE') {
         const file = toFileValue(value)
+
         return {
             kind: 'image',
             alt: '',
@@ -203,13 +228,17 @@ export const textDisplay = (input: {
             previewHref: file.previewUrl ?? file.url,
         }
     }
+
     const text = formatText(value, field, context)
+
     if (!text) {
         return { kind: 'empty', text: '' }
     }
+
     if (valueType === 'URL') {
         try {
             const url = new URL(text)
+
             if (url.protocol === 'http:' || url.protocol === 'https:') {
                 return { kind: 'link', text, href: url.toString() }
             }
@@ -217,6 +246,7 @@ export const textDisplay = (input: {
             return { kind: 'text', text }
         }
     }
+
     if (valueType === 'ORGANISATION_UNIT') {
         return {
             kind: 'reference',
@@ -225,13 +255,16 @@ export const textDisplay = (input: {
             referenceType: 'organisationUnit',
         }
     }
+
     if (valueType === 'COORDINATE') {
         try {
             const coordinate = z
                 .tuple([z.number().finite(), z.number().finite()])
                 .safeParse(JSON.parse(String(value)))
+
             if (coordinate.success) {
                 const [longitude, latitude] = coordinate.data
+
                 return {
                     kind: 'coordinate',
                     text,
@@ -243,6 +276,7 @@ export const textDisplay = (input: {
             return { kind: 'text', text }
         }
     }
+
     return { kind: 'text', text }
 }
 
@@ -250,6 +284,7 @@ const rawValueType = (value: WorkingListRawValue) => {
     if (value === undefined) {
         return 'undefined'
     }
+
     if (
         value === null ||
         isWorkingListFileValue(value) ||
@@ -257,17 +292,21 @@ const rawValueType = (value: WorkingListRawValue) => {
     ) {
         return 'object'
     }
+
     if (z.number().safeParse(value).success) {
         return 'number'
     }
+
     if (z.boolean().safeParse(value).success) {
         return 'boolean'
     }
+
     return 'string'
 }
 
 const parseText = (value: WorkingListRawValue) => {
     const result = z.string().safeParse(value)
+
     if (!result.success) {
         throw new ValueParseError(
             'Expected a string value, received {{type}}',
@@ -276,6 +315,7 @@ const parseText = (value: WorkingListRawValue) => {
             }
         )
     }
+
     return result.data
 }
 
@@ -286,21 +326,26 @@ export const parseDhis2Uid = (
     valueType: Dhis2ValueType
 ) => {
     const parsed = parseText(value)
+
     if (!UID_PATTERN.test(parsed)) {
         throw new ValueParseError('{{valueType}} requires a DHIS2 UID', {
             valueType,
         })
     }
+
     return parsed
 }
 
 const isValidGregorianDate = (value: string) => {
     const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+
     if (!match) {
         return false
     }
+
     const [, year, month, day] = match.map(Number)
     const date = new Date(Date.UTC(year, month - 1, day))
+
     return (
         date.getUTCFullYear() === year &&
         date.getUTCMonth() === month - 1 &&
@@ -310,10 +355,13 @@ const isValidGregorianDate = (value: string) => {
 
 export const isValidTime = (value: string) => {
     const match = value.match(/^(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/)
+
     if (!match) {
         return false
     }
+
     const [, hours, minutes, seconds = '0'] = match
+
     return Number(hours) < 24 && Number(minutes) < 60 && Number(seconds) < 60
 }
 
@@ -324,6 +372,7 @@ const parseIsoDateTimeParts = (value: string) =>
 
 const isValidIsoDateTime = (value: string) => {
     const match = parseIsoDateTimeParts(value)
+
     return Boolean(
         match && isValidGregorianDate(match[1]) && isValidTime(match[2])
     )
@@ -331,6 +380,7 @@ const isValidIsoDateTime = (value: string) => {
 
 export const isValidEditorDate = (value: string) => {
     const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+
     return Boolean(
         match &&
         Number(match[2]) >= 1 &&
@@ -345,6 +395,7 @@ export const parseDateValue = (
     value: WorkingListRawValue
 ) => {
     const parsed = parseText(value)
+
     if (valueType === 'DATE' || valueType === 'AGE') {
         if (
             !isValidGregorianDate(parsed) &&
@@ -355,22 +406,27 @@ export const parseDateValue = (
                 { valueType }
             )
         }
+
         return parsed
     }
+
     if (!isValidIsoDateTime(parsed)) {
         throw new ValueParseError('DATETIME requires a valid ISO date and time')
     }
+
     return parsed
 }
 
 export const parseTimeValue = (value: WorkingListRawValue) => {
     const parsed = parseText(value)
+
     if (!isValidTime(parsed)) {
         // No colon in the message: i18next treats ':' as a namespace separator.
         throw new ValueParseError(
             'TIME requires a 24-hour time, optionally with seconds'
         )
     }
+
     return parsed
 }
 
@@ -379,6 +435,7 @@ export const parseTextValue = (
     value: WorkingListRawValue
 ) => {
     const parsed = parseText(value)
+
     switch (valueType) {
         case 'LETTER':
             if ([...parsed].length !== 1) {
@@ -386,6 +443,7 @@ export const parseTextValue = (
                     'LETTER requires exactly one character'
                 )
             }
+
             break
         case 'EMAIL':
             if (!z.email().safeParse(parsed).success) {
@@ -393,28 +451,35 @@ export const parseTextValue = (
                     'EMAIL contains an invalid email address'
                 )
             }
+
             break
         case 'URL': {
             try {
                 const url = new URL(parsed)
+
                 if (url.protocol !== 'http:' && url.protocol !== 'https:') {
                     throw new Error('Unsupported URL protocol')
                 }
             } catch {
                 throw new ValueParseError('URL contains an invalid HTTP(S) URL')
             }
+
             break
         }
+
         case 'COORDINATE': {
             let coordinateInput: unknown
+
             try {
                 coordinateInput = JSON.parse(parsed)
             } catch {
                 throw new ValueParseError('COORDINATE is not valid JSON')
             }
+
             const coordinate = z
                 .tuple([z.number().finite(), z.number().finite()])
                 .safeParse(coordinateInput)
+
             if (
                 !coordinate.success ||
                 Math.abs(coordinate.data[0]) > 180 ||
@@ -424,8 +489,10 @@ export const parseTextValue = (
                     'COORDINATE requires [longitude, latitude]'
                 )
             }
+
             break
         }
+
         case 'FILE_RESOURCE':
         case 'IMAGE':
         case 'ORGANISATION_UNIT':
@@ -442,19 +509,24 @@ export const parseTextValue = (
                     'MULTI_TEXT contains an empty option code'
                 )
             }
+
             break
         case 'GEOJSON': {
             let geoJson: unknown
+
             try {
                 geoJson = JSON.parse(parsed)
             } catch {
                 throw new ValueParseError('GEOJSON is not valid JSON')
             }
+
             if (!z.record(z.string(), z.json()).safeParse(geoJson).success) {
                 throw new ValueParseError('GEOJSON requires an object')
             }
+
             break
         }
     }
+
     return parsed
 }

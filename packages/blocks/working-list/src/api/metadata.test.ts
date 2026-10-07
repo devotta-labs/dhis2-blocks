@@ -82,11 +82,13 @@ describe('version-aware Tracker metadata catalog', () => {
                 workingListResource: { programs: [] },
             })
             .mockResolvedValueOnce({ workingListResource: program })
+
         const engine: DataEngineLike = {
             // SAFETY: The mock returns the same query envelopes as DataEngineLike in call order.
             query: query as DataEngineLike['query'],
             mutate: vi.fn().mockResolvedValue(undefined),
         }
+
         const client = createWorkingListClient(engine)
 
         await fetchTrackerPrograms(client)
@@ -108,6 +110,12 @@ describe('version-aware Tracker metadata catalog', () => {
         expect(
             query.mock.calls[0][0].workingListResource.params?.fields
         ).not.toContain('programStages')
+        expect(
+            query.mock.calls[0][0].workingListResource.params?.fields
+        ).toContain('style[color,icon]')
+        expect(
+            query.mock.calls[0][0].workingListResource.params?.fields
+        ).toContain('organisationUnits[id,displayName,path]')
         expect(query.mock.calls[1][0]).toMatchObject({
             workingListResource: {
                 id: program.id,
@@ -128,6 +136,7 @@ describe('version-aware Tracker metadata catalog', () => {
                 'minCharactersToSearch'
             )
         }
+
         expect(getProgramMetadataFields(43)).toContain(
             'preferredSearchOperator'
         )
@@ -228,6 +237,7 @@ describe('version-aware Tracker metadata catalog', () => {
             capabilities: resolveWorkingListCapabilities({ apiVersion: 41 }),
             hasSelectedOrgUnit: true,
         })
+
         const v42 = buildProgramFieldCatalog({
             program,
             capabilities: resolveWorkingListCapabilities({ apiVersion: 42 }),
@@ -285,6 +295,7 @@ describe('version-aware Tracker metadata catalog', () => {
             capabilities: resolveWorkingListCapabilities({ apiVersion: 43 }),
             hasSelectedOrgUnit: true,
         })
+
         const normalized = normalizeSavedWorkingListResource({
             resource: {
                 id: 'SavedList01',
@@ -305,6 +316,7 @@ describe('version-aware Tracker metadata catalog', () => {
         })
 
         expect(normalized.compatibility).toBe('compatible')
+
         if (normalized.compatibility === 'compatible') {
             expect(normalized.configuration.filters[0]?.field).toMatchObject({
                 id: 'eventOccurredAt',

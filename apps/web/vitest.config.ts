@@ -1,4 +1,5 @@
 import { playwright } from '@vitest/browser-playwright'
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vitest/config'
 
 const sharedProjectOptions = {
@@ -18,10 +19,12 @@ export default defineConfig({
                 },
             },
             {
+                plugins: [tailwindcss()],
                 test: {
                     ...sharedProjectOptions,
                     name: 'browser',
                     include: ['src/app/**/*.test.tsx'],
+                    setupFiles: ['./test/setup.ts'],
                     browser: {
                         enabled: true,
                         headless: true,

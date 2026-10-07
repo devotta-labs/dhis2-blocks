@@ -75,15 +75,19 @@ test.describe('accessibility and keyboard feedback', () => {
         const mainBounds = await page
             .getByTestId('working-list-main')
             .boundingBox()
+
         expect(mainBounds).not.toBeNull()
         expect(mainBounds!.x).toBeGreaterThanOrEqual(0)
         expect(mainBounds!.x + mainBounds!.width).toBeLessThanOrEqual(390)
+
         const overflowMetrics = await page.evaluate(() => {
             const viewportWidth = document.documentElement.clientWidth
+
             const overflowingElements = [...document.body.querySelectorAll('*')]
-                .map((element) => {
+                .flatMap((element) => {
                     const rect = element.getBoundingClientRect()
-                    return {
+
+                    const metrics = {
                         tag: element.tagName.toLowerCase(),
                         testId:
                             element.getAttribute('data-testid') ??
@@ -96,12 +100,12 @@ test.describe('accessibility and keyboard feedback', () => {
                         scrollWidth: element.scrollWidth,
                         overflowX: getComputedStyle(element).overflowX,
                     }
+
+                    return metrics.overflowX === 'visible' &&
+                        (metrics.left < -1 || metrics.right > viewportWidth + 1)
+                        ? [metrics]
+                        : []
                 })
-                .filter(
-                    ({ left, right, overflowX }) =>
-                        overflowX === 'visible' &&
-                        (left < -1 || right > viewportWidth + 1)
-                )
                 .sort((left, right) => right.right - left.right)
                 .slice(0, 10)
 
@@ -114,6 +118,7 @@ test.describe('accessibility and keyboard feedback', () => {
                 overflowingElements,
             }
         })
+
         expect(
             overflowMetrics.documentScrollWidth,
             JSON.stringify(overflowMetrics, null, 2)
@@ -129,11 +134,14 @@ test.describe('accessibility and keyboard feedback', () => {
         const moreFilters = page.getByTestId('more-filters-tracked-entity')
         await moreFilters.focus()
         await page.keyboard.press('Enter')
+
         const firstAvailableFilterItem = page
             .locator('[data-test^="add-filter-"]')
             .first()
+
         const firstAvailableFilterAction =
             firstAvailableFilterItem.getByRole('menuitem')
+
         await expect(firstAvailableFilterAction).toBeVisible()
         await expect(firstAvailableFilterAction).toHaveAccessibleName(/\S+/)
         await expect(firstAvailableFilterItem).toBeFocused()
@@ -144,9 +152,11 @@ test.describe('accessibility and keyboard feedback', () => {
         await expect(moreFilters).toBeFocused()
 
         const statusFilterId = 'enrollmentStatus'
+
         const filterButton = page
             .getByTestId(`filter-${statusFilterId}`)
             .getByRole('combobox')
+
         await filterButton.focus()
         await page.keyboard.press('Enter')
         await expect(
@@ -155,9 +165,11 @@ test.describe('accessibility and keyboard feedback', () => {
         await expect(
             page.locator('[data-test="dhis2-uicore-popoverarrow"]')
         ).toHaveCount(0)
+
         const filterPopoverBounds = await page
             .getByTestId(`filter-editor-${statusFilterId}`)
             .boundingBox()
+
         expect(filterPopoverBounds).not.toBeNull()
         expect(filterPopoverBounds!.x).toBeGreaterThanOrEqual(0)
         expect(
@@ -173,10 +185,12 @@ test.describe('accessibility and keyboard feedback', () => {
                 .locator('thead th')
                 .count()
         )
+
         const rowOpen = row
             .locator('td')
             .first()
             .getByTestId('row-open-WlE2eTei001')
+
         await expect(rowOpen).toHaveAttribute('type', 'button')
         await expect(rowOpen).toHaveCSS('position', 'absolute')
         await expect(rowOpen).toHaveAccessibleName(/^Open row \d+$/)
@@ -213,6 +227,7 @@ test.describe('accessibility and keyboard feedback', () => {
             .include('[data-testid="working-list-main"]')
             .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
             .analyze()
+
         expect(
             accessibility.violations.filter((violation) =>
                 ['serious', 'critical'].includes(violation.impact ?? '')

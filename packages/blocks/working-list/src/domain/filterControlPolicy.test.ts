@@ -40,10 +40,12 @@ describe('filter control policy', () => {
     it('localizes generated system labels but preserves metadata display names', () => {
         const translate = (message: string) => `translated:${message}`
         const system = localizedField(optionField('system'), translate)
+
         const metadata = localizedField(
             optionField('trackedEntityAttribute'),
             translate
         )
+
         const metadataSystem = localizedField(
             {
                 ...optionField('system'),

@@ -26,6 +26,7 @@ export const fetchSavedWorkingLists = async ({
         filter: `program.id:eq:${programId}`,
         paging: false,
     }
+
     const [trackedEntityResponse, eventResponse] = await Promise.all([
         client.query(
             {
@@ -50,6 +51,7 @@ export const fetchSavedWorkingLists = async ({
             signal
         ),
     ])
+
     try {
         return [
             ...trackedEntityResponse.trackedEntityInstanceFilters.map(

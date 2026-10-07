@@ -1,4 +1,11 @@
 import {
+    INTL_CALENDAR_BY_DHIS2,
+    pad,
+    localDateString,
+    parseClientDate,
+    type CalendarDateParts,
+} from './calendarFormatting'
+import {
     convertFromIso8601,
     convertToIso8601,
     getNowInCalendar,
@@ -24,51 +31,6 @@ import type {
 type MultiCalendarIdentifier = Parameters<typeof convertFromIso8601>[1]
 
 const DATE_VALUE_TYPES = new Set<Dhis2ValueType>(['AGE', 'DATE', 'DATETIME'])
-
-/** Official Unicode calendar identifiers for DHIS2 calendars supported by Intl. */
-const INTL_CALENDAR_BY_DHIS2 = {
-    coptic: 'coptic',
-    ethiopian: 'ethiopic',
-    gregorian: 'gregory',
-    islamic: 'islamic',
-    iso8601: 'gregory',
-    nepali: undefined,
-    persian: 'persian',
-    thai: 'buddhist',
-} satisfies Record<WorkingListCalendar, string | undefined>
-
-const pad = (value: number, length = 2) =>
-    value.toString().padStart(length, '0')
-
-const localDateString = (
-    date: { year: number; eraYear?: number; month: number; day: number },
-    systemInfo: WorkingListSystemInfo,
-    format = systemInfo.dateFormat
-) => {
-    const year =
-        systemInfo.calendar === 'ethiopian'
-            ? (date.eraYear ?? date.year)
-            : date.year
-    const isoOrder = `${pad(year, 4)}-${pad(date.month)}-${pad(date.day)}`
-    return format === 'DD-MM-YYYY'
-        ? `${pad(date.day)}-${pad(date.month)}-${pad(year, 4)}`
-        : isoOrder
-}
-
-interface CalendarDateParts {
-    year: number
-    month: number
-    day: number
-}
-
-const parseClientDate = (value: string): CalendarDateParts => {
-    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-    if (!match) {
-        throw new Error(`Invalid client date: ${value}`)
-    }
-    const [, year, month, day] = match.map(Number)
-    return { year, month, day }
-}
 
 /**
  * Normalises DHIS2's server calendar names to the identifiers understood by
@@ -117,14 +79,17 @@ export const isValidWorkingListClientDate = (
     systemInfo: Pick<WorkingListSystemInfo, 'calendar'>
 ) => {
     let parts: CalendarDateParts
+
     try {
         parts = parseClientDate(value)
     } catch {
         return false
     }
+
     if (isEpagomenalCalendar(systemInfo.calendar)) {
         return isValidEpagomenalDate(parts)
     }
+
     return validateDateString(value, {
         calendar: toMultiCalendarIdentifier(systemInfo.calendar),
         strictValidation: true,
@@ -146,6 +111,7 @@ const gregorianToJulianDay = ({ year, month, day }: CalendarDateParts) => {
     const offset = Math.floor((14 - month) / 12)
     const adjustedYear = year + 4800 - offset
     const adjustedMonth = month + 12 * offset - 3
+
     return (
         day +
         Math.floor((153 * adjustedMonth + 2) / 5) +
@@ -164,6 +130,7 @@ const julianDayToGregorian = (julianDay: number): CalendarDateParts => {
     const yearOfCentury = Math.floor((4 * dayOfCentury + 3) / 1461)
     const dayOfYear = dayOfCentury - Math.floor((1461 * yearOfCentury) / 4)
     const monthIndex = Math.floor((5 * dayOfYear + 2) / 153)
+
     return {
         day: dayOfYear - Math.floor((153 * monthIndex + 2) / 5) + 1,
         month: monthIndex + 3 - 12 * Math.floor(monthIndex / 10),
@@ -194,20 +161,25 @@ const julianDayToEpagomenal = (
 ): CalendarDateParts => {
     const epoch = EPAGOMENAL_EPOCHS[calendar]
     let year = Math.floor((4 * (julianDay - epoch) + 1463) / 1461)
+
     while (
         julianDay < epagomenalToJulianDay({ year, month: 1, day: 1 }, calendar)
     ) {
         year -= 1
     }
+
     while (
         julianDay >=
         epagomenalToJulianDay({ year: year + 1, month: 1, day: 1 }, calendar)
     ) {
         year += 1
     }
+
     const dayOfYear =
         julianDay - epagomenalToJulianDay({ year, month: 1, day: 1 }, calendar)
+
     const month = Math.floor(dayOfYear / 30) + 1
+
     return { year, month, day: (dayOfYear % 30) + 1 }
 }
 
@@ -218,10 +190,12 @@ const convertClientDateToIso = (
     if (isEpagomenalCalendar(calendar)) {
         return julianDayToGregorian(epagomenalToJulianDay(parts, calendar))
     }
+
     const converted = convertToIso8601(
         clientDateString(parts),
         toMultiCalendarIdentifier(calendar)
     )
+
     return { year: converted.year, month: converted.month, day: converted.day }
 }
 
@@ -232,10 +206,12 @@ const convertIsoDateToClient = (
     if (isEpagomenalCalendar(calendar)) {
         return julianDayToEpagomenal(gregorianToJulianDay(parts), calendar)
     }
+
     const converted = convertFromIso8601(
         clientDateString(parts),
         toMultiCalendarIdentifier(calendar)
     )
+
     return {
         year: converted.eraYear ?? converted.year,
         month: converted.month,
@@ -284,7 +260,9 @@ export const createWorkingListValueTransformers = (
         if (!DATE_VALUE_TYPES.has(valueType)) {
             return value
         }
+
         const isoDate = value.slice(0, 10)
+
         if (
             !isValidWorkingListClientDate(isoDate, {
                 calendar: 'gregorian',
@@ -292,6 +270,7 @@ export const createWorkingListValueTransformers = (
         ) {
             throw new Error(`Invalid server date: ${value}`)
         }
+
         const local = localDateString(
             convertIsoDateToClient(
                 parseClientDate(isoDate),
@@ -300,10 +279,13 @@ export const createWorkingListValueTransformers = (
             systemInfo,
             'YYYY-MM-DD'
         )
+
         if (valueType !== 'DATETIME') {
             return local
         }
+
         const time = value.match(/[T ](\d{2}:\d{2}(?::\d{2})?)/)?.[1]
+
         return time ? `${local} ${time}` : local
     }
 
@@ -311,15 +293,19 @@ export const createWorkingListValueTransformers = (
         if (!DATE_VALUE_TYPES.has(valueType)) {
             return value
         }
+
         const clientValue = serverToClient(value, valueType)
         const [datePart, timePart] = clientValue.split(' ', 2)
         const intlCalendar = INTL_CALENDAR_BY_DHIS2[systemInfo.calendar]
+
         if (intlCalendar) {
             const { year, month, day } = parseClientDate(value.slice(0, 10))
+
             const time =
                 valueType === 'DATETIME' && timePart
                     ? timePart.padEnd(8, ':00')
                     : '12:00:00'
+
             const lexicalServerValue = new Date(
                 Date.UTC(
                     Number(year),
@@ -330,6 +316,7 @@ export const createWorkingListValueTransformers = (
                     Number(time.slice(6, 8))
                 )
             )
+
             try {
                 const formatOptions: Intl.DateTimeFormatOptions = {
                     calendar: intlCalendar,
@@ -341,15 +328,18 @@ export const createWorkingListValueTransformers = (
                     // and time instead of applying a host-zone or offset shift.
                     timeZone: 'UTC',
                 }
+
                 if (valueType === 'DATETIME' && timePart) {
                     formatOptions.hour = 'numeric'
                     formatOptions.minute = '2-digit'
                     formatOptions.second = '2-digit'
                 }
+
                 const formatter = new Intl.DateTimeFormat(
                     options.locale,
                     formatOptions
                 )
+
                 if (formatter.resolvedOptions().calendar === intlCalendar) {
                     return formatter.format(lexicalServerValue)
                 }
@@ -358,8 +348,10 @@ export const createWorkingListValueTransformers = (
                 // validated DHIS2 client-format fallback below remains safe.
             }
         }
+
         const [year, month, day] = datePart.split('-').map(Number)
         const formatted = localDateString({ year, month, day }, systemInfo)
+
         return valueType === 'DATETIME' && timePart
             ? `${formatted} ${timePart}`
             : formatted
@@ -369,15 +361,19 @@ export const createWorkingListValueTransformers = (
         if (!DATE_VALUE_TYPES.has(valueType)) {
             return value
         }
+
         const [datePart, timePart] = value.trim().split(/[T ]/, 2)
         assertValidClientDate(datePart, systemInfo)
         const normalizedLocalDate = parseClientDate(datePart)
+
         const converted = convertClientDateToIso(
             normalizedLocalDate,
             systemInfo.calendar
         )
+
         const isoDate = `${pad(converted.year, 4)}-${pad(converted.month)}-${pad(converted.day)}`
         const roundTrip = convertIsoDateToClient(converted, systemInfo.calendar)
+
         if (
             clientDateString(roundTrip) !==
             clientDateString(normalizedLocalDate)
@@ -386,6 +382,7 @@ export const createWorkingListValueTransformers = (
                 `Date conversion changed ${datePart} to ${clientDateString(roundTrip)}`
             )
         }
+
         return valueType === 'DATETIME' && timePart
             ? `${isoDate}T${timePart}`
             : isoDate
@@ -400,9 +397,12 @@ export const createWorkingListValueTransformers = (
             ) {
                 throw new Error(`Invalid today override: ${options.today}`)
             }
+
             return options.today
         }
+
         const now = getNowInCalendar('iso8601', systemInfo.serverTimeZoneId)
+
         return `${pad(now.year, 4)}-${pad(now.month)}-${pad(now.day)}`
     }
 
@@ -412,12 +412,14 @@ export const createWorkingListValueTransformers = (
     const localToIso = (date: CalendarDateParts) => {
         assertValidClientDate(clientDateString(date), systemInfo)
         const converted = convertClientDateToIso(date, systemInfo.calendar)
+
         return `${pad(converted.year, 4)}-${pad(converted.month)}-${pad(converted.day)}`
     }
 
     const addIsoDays = (value: string, days: number) => {
         const date = new Date(`${value}T12:00:00Z`)
         date.setUTCDate(date.getUTCDate() + days)
+
         return date.toISOString().slice(0, 10)
     }
 
@@ -432,6 +434,7 @@ export const createWorkingListValueTransformers = (
     const lastDayOfMonth = (date: CalendarDateParts) => {
         for (let day = 32; day >= 1; day -= 1) {
             const candidate = { ...date, day }
+
             if (
                 isValidWorkingListClientDate(
                     clientDateString(candidate),
@@ -441,6 +444,7 @@ export const createWorkingListValueTransformers = (
                 return candidate
             }
         }
+
         throw new Error(
             `Could not resolve ${systemInfo.calendar} month ${date.year}-${date.month}`
         )
@@ -450,6 +454,7 @@ export const createWorkingListValueTransformers = (
         (value) => {
             const today = localToday()
             const todayIso = isoToday()
+
             if (
                 value.startBuffer !== undefined ||
                 value.endBuffer !== undefined
@@ -464,6 +469,7 @@ export const createWorkingListValueTransformers = (
                         'Relative buffers require a non-positive start and non-negative end'
                     )
                 }
+
                 return {
                     start: addIsoDays(todayIso, value.startBuffer),
                     end: addIsoDays(todayIso, value.endBuffer),
@@ -474,17 +480,22 @@ export const createWorkingListValueTransformers = (
                 ...date,
                 day: 1,
             })
+
             const endOfMonth = (date: CalendarDateParts) =>
                 lastDayOfMonth(startOfMonth(date))
+
             const firstDayOfWeek = options.firstDayOfWeek ?? 0
+
             const calendarWeekDay = new Date(
                 `${todayIso}T12:00:00Z`
             ).getUTCDay()
+
             const daysSinceWeekStart =
                 (calendarWeekDay - firstDayOfWeek + 7) % 7
 
             let start: string
             let end: string
+
             switch (value.period) {
                 case 'TODAY':
                     start = todayIso
@@ -508,6 +519,7 @@ export const createWorkingListValueTransformers = (
                     end = localToIso(endOfMonth(month))
                     break
                 }
+
                 case 'LAST_3_MONTHS': {
                     const previous = monthBefore(today)
                     const first = monthBefore(monthBefore(previous))
@@ -515,6 +527,7 @@ export const createWorkingListValueTransformers = (
                     end = localToIso(endOfMonth(previous))
                     break
                 }
+
                 case 'THIS_YEAR':
                     start = localToIso({ year: today.year, month: 1, day: 1 })
                     end = localToIso(
@@ -530,6 +543,7 @@ export const createWorkingListValueTransformers = (
                         `Unsupported relative date period: ${value.period}`
                     )
             }
+
             return { start, end }
         }
 
@@ -546,12 +560,14 @@ export const createWorkingListValueTransformers = (
         formatNumber: (value) =>
             new Intl.NumberFormat(options.locale).format(value),
     }
+
     const serializationContext: FilterSerializationContext = {
         today: isoToday(),
         toApiDate: (value) => clientToServer(value, 'DATE'),
         validateDate: (value) => assertValidClientDate(value, systemInfo),
         resolveRelativeDate,
     }
+
     const parsingContext: FilterParsingContext = {
         fromApiDate: (value) => serverToClient(value, 'DATE'),
     }

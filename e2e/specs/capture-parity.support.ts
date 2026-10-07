@@ -18,6 +18,7 @@ import {
 } from '../fixtures/test'
 
 export { AxeBuilder, expect, test }
+
 export type {
     APIRequestContext,
     Page,
@@ -26,46 +27,72 @@ export type {
     Response,
     E2ECredentials,
 }
+
 export const PROGRAM = 'WlE2ePrg001'
+
 export const PROGRAM_NAME = 'Working list E2E tracker program'
+
 export const ORG_UNIT = 'DiszpKrYNg8'
+
 export const ORG_UNIT_NAME = 'Ngelehun CHC'
+
 export const STAGE = 'WlE2eStg001'
+
 export const STAGE_NAME = 'Working list E2E programme stage'
+
 export const PRIVATE_LIST = 'WlE2eLst001'
+
 export const SHARED_LIST = 'WlE2eLst002'
+
 export const STALE_LIST = 'WlE2eLst003'
+
 export const TEXT_ATTRIBUTE = 'WlAtText001'
+
 export const INTEGER_ATTRIBUTE = 'WlAtIntg001'
+
 export const NUMBER_ATTRIBUTE = 'WlAtNumb001'
+
 export const BOOLEAN_ATTRIBUTE = 'WlAtBool001'
+
 export const MULTI_TEXT_ATTRIBUTE = 'WlAtMult001'
+
 export const EMAIL_ATTRIBUTE = 'WlAtMail001'
+
 export const PHONE_ATTRIBUTE = 'WlAtPhon001'
+
 export const GEOJSON_ATTRIBUTE = 'WlAtGeoj001'
+
 export const TEXT_DATA_ELEMENT = 'WlDeText001'
+
 export const INTEGER_DATA_ELEMENT = 'WlDeIntg001'
+
 // scripts/e2e/seed-metadata.sh writes this invalid date through SQL because
 // the tracker importer would reject it.
 export const CORRUPTED_DATE_VALUE = '2025-13-45'
+
 const TEST_PASSWORD = 'WorkingList123!'
 
 export const OWNER: E2ECredentials = {
     username: 'wl_e2e_owner',
     password: TEST_PASSWORD,
 }
+
 export const READER: E2ECredentials = {
     username: 'wl_e2e_reader',
     password: TEST_PASSWORD,
 }
+
 export const OUTSIDER: E2ECredentials = {
     username: 'wl_e2e_outsider',
     password: TEST_PASSWORD,
 }
 
 const environment = process.env
+
 export const targetMajor = Number(environment?.E2E_EXPECTED_MAJOR)
+
 export const typedRegistryTest = testFromDhis2Version(43)
+
 export const typedRegistryTestTitle =
     'uses the typed registry for numeric, boolean, and option filters while keeping unsupported values display-only @dhis2-min-43'
 
@@ -78,9 +105,11 @@ export const OrganisationUnitSchema = z
         ),
     })
     .passthrough()
+
 export const MutationResponseSchema = z
     .object({ response: z.object({ uid: z.string().optional() }).optional() })
     .passthrough()
+
 export const SavedTrackedEntityListSchema = z
     .object({
         publicAccess: z.string().optional(),
@@ -94,6 +123,7 @@ export const SavedTrackedEntityListSchema = z
         entityQueryCriteria: z.object({}).passthrough(),
     })
     .passthrough()
+
 export const SharingResponseSchema = z
     .object({
         object: z
@@ -110,6 +140,7 @@ export const SharingResponseSchema = z
             .optional(),
     })
     .passthrough()
+
 export const SavedListCollectionSchema = z
     .object({
         trackedEntityInstanceFilters: z
@@ -117,6 +148,7 @@ export const SavedListCollectionSchema = z
             .optional(),
     })
     .passthrough()
+
 export const SavedStageListSchema = z
     .object({
         publicAccess: z.string().optional(),
@@ -124,6 +156,7 @@ export const SavedStageListSchema = z
         programStage: z.object({ id: z.string().optional() }).optional(),
     })
     .passthrough()
+
 export const RepairedListSchema = z
     .object({
         entityQueryCriteria: z
@@ -134,6 +167,7 @@ export const RepairedListSchema = z
 
 export const requestUrl = (request: Request | Response) =>
     new URL(request.url())
+
 export const isTrackerResource = (
     request: Request | Response,
     resource: 'trackedEntities' | 'events'
@@ -153,16 +187,20 @@ export const waitForTrackerResponse = async (
             isTrackerResource(response, resource) &&
             matches(requestUrl(response))
     )
+
     await action()
     const response = await pending
+
     if (!response.ok()) {
         const details = await response
             .text()
             .catch(() => `${response.status()} ${response.statusText()}`)
+
         throw new Error(
             `Tracker request failed (${response.status()}): ${details}`
         )
     }
+
     return requestUrl(response)
 }
 
@@ -183,9 +221,11 @@ export const programHash = ({
         page: String(page),
         pageSize: String(pageSize),
     })
+
     if (orgUnit) {
         parameters.set('orgUnitId', ORG_UNIT)
     }
+
     return `/#/?${parameters.toString()}`
 }
 
@@ -239,6 +279,7 @@ export const openMoreActions = async (page: Page) => {
     await trigger.click()
     const download = page.locator('[data-test="download-working-list"]')
     await expect(download).toBeVisible()
+
     return download
 }
 
@@ -255,6 +296,7 @@ export const openSavedViewActions = async (page: Page, listId: string) => {
     await page.getByTestId(`working-list-view-${listId}-menu`).click()
     const menu = page.locator('[data-test="saved-view-actions-menu"]')
     await expect(menu).toBeVisible()
+
     return menu
 }
 
@@ -288,23 +330,29 @@ export const selectOrganisationUnitFromTree = async (
         const label = tree.getByText(organisationUnit.displayName, {
             exact: true,
         })
+
         await expect(label).toBeVisible()
 
         if (index === path.length - 1) {
             await label.click()
+
             return
         }
 
         const node = label.locator(
             'xpath=ancestor::*[@data-test="dhis2-uiwidgets-orgunittree-node"][1]'
         )
+
         const toggle = node.locator(
             ':scope > [data-test="dhis2-uiwidgets-orgunittree-node-toggle"]'
         )
+
         await expect(toggle).toBeVisible()
+
         const isOpen = await toggle.evaluate((element) =>
             element.classList.contains('open')
         )
+
         if (!isOpen) {
             await toggle.click()
         }
@@ -320,6 +368,7 @@ export const addFilter = async (
 ) => {
     if (scope === 'event') {
         const stageControl = page.getByTestId('filter-programStage')
+
         if ((await stageControl.count()) === 0) {
             await page.getByTestId('more-filters-tracked-entity').click()
             await page
@@ -332,6 +381,7 @@ export const addFilter = async (
                 .click()
             await expect(stageControl).toBeVisible()
         }
+
         await page.getByTestId('more-filters-tracked-entity').click()
         await page
             .locator(`[data-test="stage-filter-fields-${STAGE}"]`)
@@ -345,6 +395,7 @@ export const addFilter = async (
         await page.getByTestId('more-filters-tracked-entity').click()
         await page.locator(`[data-test="add-filter-${fieldId}"]`).click()
     }
+
     await expect(page.getByTestId(`filter-${fieldId}`)).toBeVisible()
     // Newly added filters open their editor right away.
     await expect(page.getByTestId(`filter-editor-${fieldId}`)).toBeVisible()
@@ -352,12 +403,14 @@ export const addFilter = async (
 
 export const openFilterEditor = async (page: Page, fieldId: string) => {
     const editor = page.getByTestId(`filter-editor-${fieldId}`)
+
     if (!(await editor.isVisible())) {
         await page
             .getByTestId(`filter-${fieldId}`)
             .getByRole('combobox')
             .click()
     }
+
     await expect(editor).toBeVisible()
 }
 
@@ -372,6 +425,7 @@ export const applyTextFilter = async (
     await openFilterEditor(page, fieldId)
     const editor = page.getByTestId(`filter-editor-${fieldId}`)
     await editor.getByLabel('Value').fill(value)
+
     return waitForTrackerResponse(
         page,
         resource,
@@ -394,10 +448,12 @@ export const enterStageMode = async (page: Page) => {
         () => addFilter(page, 'event', 'eventOccurredAt'),
         (url) => url.searchParams.get('programStage') === STAGE
     )
+
     await page.keyboard.press('Escape')
     await expect(page.getByTestId('filter-editor-eventOccurredAt')).toHaveCount(
         0
     )
+
     return response
 }
 
@@ -411,6 +467,7 @@ export const createApi = async (
     if (!e2eEnvironment.dhis2Url) {
         throw new Error('E2E_DHIS2_URL is required for saved-list cleanup.')
     }
+
     return playwright.request.newContext({
         baseURL: e2eEnvironment.dhis2Url,
         extraHTTPHeaders: {
@@ -428,6 +485,7 @@ export const deleteListIfPresent = async (
     if (!id) {
         return
     }
+
     const response = await api.delete(`/api/${resource}/${id}`)
     expect([200, 204, 404]).toContain(response.status())
 }

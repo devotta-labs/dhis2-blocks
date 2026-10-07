@@ -115,20 +115,28 @@ export const conflictingViewModes: WorkingListProps = {
 // not as additional names on the public entry point.
 // @ts-expect-error WorkingListActiveConfigurationMeta is private.
 export type { WorkingListActiveConfigurationMeta } from '../src'
+
 // @ts-expect-error WorkingListLifecycleMeta is private.
 export type { WorkingListLifecycleMeta } from '../src'
+
 // @ts-expect-error WorkingListMutationMeta is private.
 export type { WorkingListMutationMeta } from '../src'
+
 // @ts-expect-error WorkingListMutationStatus is private.
 export type { WorkingListMutationStatus } from '../src'
+
 // @ts-expect-error WorkingListPaginationMeta is private.
 export type { WorkingListPaginationMeta } from '../src'
+
 // @ts-expect-error WorkingListResultsMeta is private.
 export type { WorkingListResultsMeta } from '../src'
+
 // @ts-expect-error WorkingListSavedView is private.
 export type { WorkingListSavedView } from '../src'
+
 // @ts-expect-error WorkingListSavedViewsMeta is private.
 export type { WorkingListSavedViewsMeta } from '../src'
+
 // @ts-expect-error WorkingListSelectionMeta is private.
 export type { WorkingListSelectionMeta } from '../src'
 
@@ -136,6 +144,7 @@ export type { WorkingListSelectionMeta } from '../src'
 // contract and were never consumed by the repository or registry test app.
 // @ts-expect-error WorkingListPaginationProps is not a public alias.
 export type { WorkingListPaginationProps } from '../src'
+
 // @ts-expect-error WorkingListSelectionProps is not a public alias.
 export type { WorkingListSelectionProps } from '../src'
 
@@ -143,20 +152,28 @@ export type { WorkingListSelectionProps } from '../src'
 // part of the canonical entry point.
 // @ts-expect-error WorkingListProviderProps is not public.
 export type { WorkingListProviderProps } from '../src'
+
 // @ts-expect-error WorkingListContainerProps is not public.
 export type { WorkingListContainerProps } from '../src'
+
 // @ts-expect-error WorkingListSectionProps is not public.
 export type { WorkingListSectionProps } from '../src'
+
 // @ts-expect-error WorkingListDefaultProps is not public.
 export type { WorkingListDefaultProps } from '../src'
+
 // @ts-expect-error WorkingListResultsProps is not public.
 export type { WorkingListResultsProps } from '../src'
+
 // @ts-expect-error SelectSavedListError is not public.
 export type { SelectSavedListError } from '../src'
+
 // @ts-expect-error CreateSavedListError is not public.
 export type { CreateSavedListError } from '../src'
+
 // @ts-expect-error UpdateSelectedSavedListError is not public.
 export type { UpdateSelectedSavedListError } from '../src'
+
 // @ts-expect-error DeleteSavedListError is not public.
 export type { DeleteSavedListError } from '../src'
 
@@ -170,14 +187,18 @@ export const legacyControlledRootProps: WorkingListProps = {
 }
 
 declare const actions: WorkingListActions
+
 // @ts-expect-error Saved-list action aliases are not exposed.
 actions.selectSavedList('SavedList01')
 
 // @ts-expect-error The provider is owned by the root and is not a compound member.
 export const legacyProviderMember = WorkingList.Provider
+
 // @ts-expect-error The container is owned by the root and is not a compound member.
 export const legacyContainerMember = WorkingList.Container
+
 // @ts-expect-error Legacy default composition is not exposed.
 export const legacyDefaultMember = WorkingList.Default
+
 // @ts-expect-error Legacy results composition is not exposed.
 export const legacyResultsMember = WorkingList.Results

@@ -109,8 +109,10 @@ describe('calendar filter controls', () => {
         actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
         window.requestAnimationFrame = (callback) => {
             callback(0)
+
             return 1
         }
+
         window.cancelAnimationFrame = () => undefined
 
         const container = document.createElement('div')
@@ -164,11 +166,13 @@ describe('calendar filter controls', () => {
             const trigger = container.querySelector<HTMLButtonElement>(
                 '[data-testid="filter-birthday"]'
             )
+
             act(() => trigger?.click())
 
             const startInput = document.querySelector<HTMLButtonElement>(
                 '[data-test="date-range-start"]'
             )
+
             expect(startInput?.dataset.calendar).toBe('ethiopic')
             expect(startInput?.dataset.format).toBe('DD-MM-YYYY')
             expect(startInput?.dataset.date).toBe('02-01-2017')
@@ -177,6 +181,7 @@ describe('calendar filter controls', () => {
             const startClear = document.querySelector<HTMLButtonElement>(
                 '[data-test="date-range-start-clear"]'
             )
+
             expect(startClear?.getAttribute('aria-label')).toBe('Clear')
             expect(
                 document.querySelector('[data-test="date-range-end-clear"]')
@@ -196,6 +201,7 @@ describe('calendar filter controls', () => {
                     .querySelector('[data-testid="mock-popover"]')
                     ?.getAttribute('data-arrow')
             ).toBe('false')
+
             const update = document.querySelector<HTMLButtonElement>(
                 '[data-test="filter-update-birthday"]'
             )
@@ -244,8 +250,10 @@ describe('calendar filter controls', () => {
         actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
         window.requestAnimationFrame = (callback) => {
             callback(0)
+
             return 1
         }
+
         window.cancelAnimationFrame = () => undefined
 
         const container = document.createElement('div')
@@ -306,6 +314,7 @@ describe('calendar filter controls', () => {
             const popovers = [
                 ...document.querySelectorAll('[data-testid="mock-popover"]'),
             ]
+
             expect(popovers).toHaveLength(2)
             expect(
                 popovers.every(
@@ -329,6 +338,7 @@ describe('calendar filter controls', () => {
         const container = document.createElement('div')
         document.body.appendChild(container)
         const root = createRoot(container)
+
         const renderFilter = (minCharactersToSearch: number) => {
             act(() => {
                 root.render(
@@ -460,11 +470,13 @@ describe('calendar filter controls', () => {
             const update = container.querySelector<HTMLButtonElement>(
                 '[data-test="filter-update-startedOnArt"]'
             )
+
             expect(update?.disabled).toBe(true)
 
             const yes = container.querySelector<HTMLInputElement>(
                 '[data-test="true-only-yes-startedOnArt"] input'
             )
+
             act(() => yes?.click())
             expect(yes?.checked).toBe(true)
             expect(update?.disabled).toBe(false)

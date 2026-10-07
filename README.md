@@ -10,15 +10,16 @@ apps/
   web/                  DHIS2 wrapper and component demo application
 packages/
   blocks/
+    context-selector/   Capture-style controlled context-selector primitives
     working-list/       Canonical Working List source and registry manifest
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
 ```
 
-The web application depends on `@dhis2-blocks/working-list` through pnpm's
-`workspace:*` protocol. The private workspace package resolves directly to its
-source entry point, so the demo, tests, and production application build all
-exercise the same canonical source.
+The web application depends on the private block workspaces through pnpm's
+`workspace:*` protocol. Each workspace package resolves directly to its source
+entry point, so the demo, tests, and production application build all exercise
+the same canonical source.
 
 ## Setup
 
@@ -37,6 +38,9 @@ changes receive hot updates without a separate library build. By default the
 DHIS2 Application Platform opens the application at
 [http://localhost:3000](http://localhost:3000).
 
+The interactive Context Selector primitive showcase is available at
+`#/context-selector-showcase` and from the link at the bottom of the demo.
+
 The deployable application bundle is built with:
 
 ```sh
@@ -44,6 +48,45 @@ pnpm build
 ```
 
 The DHIS2 application output is written below `apps/web/build`.
+
+## Context Selector block
+
+The Context Selector is a source-installed, Capture-style composition layer for
+the application context row. Install it from the GitHub registry in a project
+with Tailwind CSS enabled and a valid shadcn `components.json` configuration:
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/context-selector
+```
+
+Import the installed source through the project's configured components alias:
+
+```tsx
+import {
+    ClearSelections,
+    ContextSelector,
+    EnrollmentSelector,
+    EventSelector,
+    OrganisationUnitSelector,
+    ProgramSelector,
+    StageSelector,
+} from '@/components/context-selector'
+```
+
+`ContextSelector` owns the row's Capture-compatible layout, styling, and
+semantics. Its children are independently composable controlled controls. The
+host supplies all option data, selected values, availability state, popup
+content, and callbacks; it also chooses which controls render and in what
+order. The block does not fetch data, synchronize a router or URL, own workflow
+state, or decide when progressive disclosure advances.
+
+Compose `ClearSelections` wherever the row-wide clear action belongs and pass
+its controlled `onClear` and `disabled` props directly.
+
+A program-first application can initially render only
+`ProgramSelector`, then add organisation-unit, enrollment, stage, and event
+children as its own context policy makes them relevant. All values, direct
+callbacks, and metadata-derived labels are supplied by the host.
 
 ## Working List block
 
@@ -154,15 +197,14 @@ use React's reserved `key` to give each instance a stable identity:
 A supplied React key overrides the outer instance identity; changing it replaces
 that instance even when `programId` stays the same.
 
-The private `@dhis2-blocks/working-list` workspace package remains only as the
-repository's canonical development and test harness. It is not a compiled or
-publishable consumer package.
+The private block workspace packages remain only as the repository's canonical
+development and test harnesses. They are not compiled or publishable consumer
+packages.
 
 The root `registry.json` is the public registry entry point. It owns global
-metadata and composes the package-owned
-`packages/blocks/working-list/registry.json` manifest through shadcn's
-`include` mechanism. Paths declared by that package manifest are relative to
-the Working List package.
+metadata and composes each package-owned registry manifest through shadcn's
+`include` mechanism. Paths declared by a package manifest are relative to that
+package.
 
 ## Quality checks
 
@@ -177,14 +219,17 @@ pnpm build
 Turborepo runs each task in the workspaces that provide it and caches declared
 build outputs.
 
-Unit and component tests use Vitest. See [Testing](docs/testing.md) for the
-workspace-local configuration model, environment split, and the boundary with
-the real-DHIS2 Playwright suite.
+Unit and component tests use Vitest. Real-DHIS2 browser tests use Playwright.
+
+Anti-slop is vendored under `tools/oxlint/anti-slop`; its upstream revision and
+local differences are recorded in that directory's `UPSTREAM.md`. All generic
+rules are enabled in `.oxlintrc.json`, including readable spacing and the
+array performance rules. `pnpm test` and `pnpm typecheck` also validate the
+vendored rules. Run `pnpm test:lint-rules` or `pnpm typecheck:lint-rules` to
+check them independently.
 
 `pnpm dead-code:audit` runs the complete Knip configuration and fails on any
-finding, including circular imports. See
-[Knip dead-code analysis](docs/unused-exports.md) for the public API exemptions
-and static-analysis limitations. Use `pnpm audit:exports` for a focused
+finding, including circular imports. Use `pnpm audit:exports` for a focused
 interactive export report.
 
 ## Real-DHIS2 browser tests

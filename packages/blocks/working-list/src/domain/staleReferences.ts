@@ -50,6 +50,7 @@ export const validateConfigurationReferences = (
     }
 ): ReferenceValidationResult => {
     const issues: StaleReferenceIssue[] = []
+
     if (configuration.programId !== expectedProgramId) {
         issues.push({
             kind: 'programMismatch',
@@ -58,6 +59,7 @@ export const validateConfigurationReferences = (
             message: `Saved list belongs to program ${configuration.programId}, not ${expectedProgramId}`,
         })
     }
+
     if (
         configuration.mode === 'event' &&
         !readableProgramStageIds.has(configuration.programStageId)
@@ -69,8 +71,10 @@ export const validateConfigurationReferences = (
             message: `Program stage ${configuration.programStageId} no longer exists or is inaccessible`,
         })
     }
+
     configuration.filters.forEach((filter, index) => {
         const current = fields.get(filter.field.id)
+
         if (!current) {
             issues.push({
                 kind: 'missingFilterField',
@@ -78,8 +82,10 @@ export const validateConfigurationReferences = (
                 path: `filters.${index}.field`,
                 message: `Filter field ${filter.field.id} no longer exists`,
             })
+
             return
         }
+
         if (
             current.source !== filter.field.source ||
             current.valueType !== filter.field.valueType
@@ -91,6 +97,7 @@ export const validateConfigurationReferences = (
                 message: `Filter field ${filter.field.id} changed type or source`,
             })
         }
+
         if (current.scope === 'event' && configuration.mode !== 'event') {
             issues.push({
                 kind: 'scopeMismatch',
@@ -99,6 +106,7 @@ export const validateConfigurationReferences = (
                 message: `Event field ${filter.field.id} cannot be used in tracked-entity mode`,
             })
         }
+
         if (
             configuration.mode === 'event' &&
             current.source === 'eventDataElement' &&
@@ -114,6 +122,7 @@ export const validateConfigurationReferences = (
     })
     configuration.columns.forEach((columnId, index) => {
         const field = fields.get(columnId)
+
         if (!field) {
             issues.push({
                 kind: 'missingColumn',
@@ -142,6 +151,7 @@ export const validateConfigurationReferences = (
         }
     })
     const sortField = fields.get(configuration.sort.fieldId)
+
     if (!sortField) {
         issues.push({
             kind: 'missingSortField',
@@ -168,6 +178,7 @@ export const validateConfigurationReferences = (
             message: `Sort field ${sortField.id} does not belong to stage ${configuration.programStageId}`,
         })
     }
+
     return issues.length ? { compatible: false, issues } : { compatible: true }
 }
 
@@ -199,15 +210,18 @@ export const repairConfigurationReferences = ({
     const decisionsByPath = new Map(
         decisions.map((decision) => [decision.path, decision])
     )
+
     if (decisionsByPath.size !== decisions.length) {
         throw new Error('A repair plan cannot contain duplicate paths')
     }
+
     const blocking = issues.filter(
         (issue) =>
             issue.kind === 'programMismatch' ||
             issue.kind === 'missingProgramStage' ||
             !decisionsByPath.has(issue.path)
     )
+
     if (blocking.length) {
         return { status: 'blocked', issues: blocking }
     }
@@ -218,15 +232,18 @@ export const repairConfigurationReferences = ({
         columns: [...configuration.columns],
         sort: { ...configuration.sort },
     }
+
     const invalidDecisions: StaleReferenceIssue[] = []
     const removedFilterIndexes = new Set<number>()
     const removedColumnIndexes = new Set<number>()
 
     for (const issue of issues) {
         const decision = decisionsByPath.get(issue.path)
+
         if (!decision) {
             continue
         }
+
         if (
             issue.kind === 'missingFilterField' ||
             issue.kind === 'fieldChanged' ||
@@ -237,10 +254,12 @@ export const repairConfigurationReferences = ({
         ) {
             const match = issue.path.match(/^filters\.(\d+)\./)
             const index = match ? Number(match[1]) : -1
+
             if (index < 0 || index >= candidate.filters.length) {
                 invalidDecisions.push(issue)
                 continue
             }
+
             if (decision.action === 'remove') {
                 removedFilterIndexes.add(index)
             } else if (decision.action === 'replaceFilter') {
@@ -248,8 +267,10 @@ export const repairConfigurationReferences = ({
             } else {
                 invalidDecisions.push(issue)
             }
+
             continue
         }
+
         if (
             issue.kind === 'missingColumn' ||
             (issue.kind === 'programStageFieldMismatch' &&
@@ -257,10 +278,12 @@ export const repairConfigurationReferences = ({
         ) {
             const match = issue.path.match(/^columns\.(\d+)$/)
             const index = match ? Number(match[1]) : -1
+
             if (index < 0 || index >= candidate.columns.length) {
                 invalidDecisions.push(issue)
                 continue
             }
+
             if (decision.action === 'remove') {
                 removedColumnIndexes.add(index)
             } else if (decision.action === 'replaceColumn') {
@@ -268,8 +291,10 @@ export const repairConfigurationReferences = ({
             } else {
                 invalidDecisions.push(issue)
             }
+
             continue
         }
+
         if (
             (issue.kind === 'missingSortField' ||
                 issue.kind === 'programStageFieldMismatch') &&
@@ -279,18 +304,21 @@ export const repairConfigurationReferences = ({
             candidate.sort = decision.sort
             continue
         }
+
         invalidDecisions.push(issue)
     }
 
     if (invalidDecisions.length) {
         return { status: 'blocked', issues: invalidDecisions }
     }
+
     candidate.filters = candidate.filters.filter(
         (_filter, index) => !removedFilterIndexes.has(index)
     )
     candidate.columns = candidate.columns.filter(
         (_column, index) => !removedColumnIndexes.has(index)
     )
+
     if (!candidate.columns.length) {
         return {
             status: 'blocked',
@@ -305,7 +333,9 @@ export const repairConfigurationReferences = ({
             ],
         }
     }
+
     const parsedResult = WorkingListConfigurationSchema.safeParse(candidate)
+
     if (!parsedResult.success) {
         return {
             status: 'blocked',
@@ -321,6 +351,7 @@ export const repairConfigurationReferences = ({
             ],
         }
     }
+
     const parsed = {
         ...parsedResult.data,
         filters: parsedResult.data.filters.map((filter) => ({
@@ -328,9 +359,12 @@ export const repairConfigurationReferences = ({
             field: metadata.fields.get(filter.field.id) ?? filter.field,
         })),
     }
+
     const validation = validateConfigurationReferences(parsed, metadata)
+
     if ('issues' in validation) {
         return { status: 'blocked', issues: validation.issues }
     }
+
     return { status: 'repaired', configuration: parsed }
 }

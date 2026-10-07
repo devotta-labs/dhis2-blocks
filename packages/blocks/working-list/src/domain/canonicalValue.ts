@@ -28,10 +28,13 @@ export const canonicalizeValue = (value: CanonicalValue): CanonicalValue => {
     if (Array.isArray(value)) {
         return value.map(canonicalizeValue)
     }
+
     const record = CanonicalRecordSchema.safeParse(value)
+
     if (!record.success) {
         return value
     }
+
     return Object.fromEntries(
         Object.entries(record.data)
             .filter(([, entry]) => entry !== undefined)

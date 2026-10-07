@@ -15,7 +15,9 @@ export const visibleEventFiltersAfterStageChange = ({
         Boolean(stageId) &&
         (configuration.mode !== 'event' ||
             configuration.programStageId !== stageId)
+
     const nextIds = stageChanged ? [] : visibleFilterIds
+
     return addedFilterId && !nextIds.includes(addedFilterId)
         ? [...nextIds, addedFilterId]
         : nextIds

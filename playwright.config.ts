@@ -1,8 +1,11 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const environment = process.env
+
 const targetVersion = environment?.E2E_VERSION_SLUG ?? 'dev'
+
 const appUrl = environment?.E2E_APP_URL ?? 'http://localhost:59444'
+
 const artifactRoot = `e2e/artifacts/${targetVersion}`
 
 export default defineConfig({

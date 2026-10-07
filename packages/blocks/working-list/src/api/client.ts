@@ -79,7 +79,9 @@ export const asWorkingListBoundaryError = (cause: unknown, context: string) => {
     if (cause instanceof WorkingListBoundaryError) {
         return cause
     }
+
     const detail = cause instanceof Error ? cause.message : String(cause)
+
     return new WorkingListBoundaryError(`${context}: ${detail}`, cause)
 }
 
@@ -92,6 +94,7 @@ const RequestFailureSchema = z
 
 const getErrorStatus = (cause: unknown) => {
     const candidate = RequestFailureSchema.safeParse(cause)
+
     return candidate.success
         ? (candidate.data.status ?? candidate.data.response?.status)
         : undefined
@@ -113,10 +116,13 @@ export const shouldRetryWorkingListRequest = (
     ) {
         return false
     }
+
     const status = getErrorStatus(cause)
+
     if (status !== undefined && status < 500) {
         return false
     }
+
     return true
 }
 
@@ -140,10 +146,12 @@ export const createWorkingListClient = (
                 signal ? { signal } : undefined
             )
         )
+
         return schema.parse(response[RESULT_KEY])
     },
     async mutate<T>(mutation: DataEngineMutation, schema: ZodType<T>) {
         const response = await engine.mutate(mutation)
+
         return schema.parse(response)
     },
 })

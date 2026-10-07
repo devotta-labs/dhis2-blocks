@@ -42,27 +42,33 @@ const tableFieldsFor = (
                   (stage) => stage.id === configuration.programStageId
               )
             : undefined
+
     const stageDataElementIds = new Set(
         currentStage?.programStageDataElements.map(
             (binding) => binding.dataElement.id
         ) ?? []
     )
+
     return fields.filter((field) => {
         if (field.columnable === false) {
             return false
         }
+
         if (field.source === 'trackedEntityAttribute') {
             return true
         }
+
         if (field.source === 'eventDataElement') {
             return (
                 configuration.mode === 'event' &&
                 stageDataElementIds.has(field.id)
             )
         }
+
         if (['createdAt', 'programOwnerId'].includes(field.id)) {
             return true
         }
+
         return (
             configuration.mode === 'event' &&
             [
@@ -78,6 +84,7 @@ const tableFieldsFor = (
 
 const SelectionLoading = () => {
     const translate = useWorkingListText()
+
     return (
         <div
             className="flex min-h-48 items-center justify-center gap-[var(--spacers-dp12)] text-[var(--colors-grey700)]"
@@ -101,6 +108,7 @@ const ReadyResults = ({
     const metadata = useWorkingListMeta((meta) => meta.fieldCatalog)
     const configuration = useWorkingListState((state) => state.configuration)
     const actions = useWorkingListActions()
+
     const {
         program,
         formattingContext,
@@ -112,6 +120,7 @@ const ReadyResults = ({
     if (!program || !metadata || !formattingContext) {
         throw new Error('WorkingListTable requires resolved metadata.')
     }
+
     const tableFields = useMemo(
         () =>
             tableFieldsFor(
@@ -121,18 +130,22 @@ const ReadyResults = ({
             ),
         [configuration, metadata, program]
     )
+
     const commit = <TValue, TError>(result: Result<TValue, TError>) => {
         if (Result.isError(result)) {
             throw result.error
         }
     }
+
     const openRow = (row: WorkingListDisplayRow) => {
         const target = resultTargets.get(row.id)
+
         if (!target) {
             throw new Error(
                 `Working list row ${row.id} has no result target to open.`
             )
         }
+
         onRowClick?.(target)
     }
 
@@ -207,10 +220,12 @@ const IncompatibleSelection = () => {
     const { selectedList, repair, privateActions } = useWorkingListPrivateUi()
     const [dialogOpen, setDialogOpen] = useState(false)
     const [repairError, setRepairError] = useState<string>()
+
     const incompatibleList =
         selectedList?.compatibility === 'incompatible'
             ? selectedList
             : undefined
+
     const canRepair = repair?.canRepair === true
     const repairPending = repair?.isPending === true
     const repairable = canRepair || repairPending
@@ -293,9 +308,11 @@ const WorkingListResultsContent = ({
 }: Pick<WorkingListTableProps, 'onRowClick' | 'dataQualityMode'>) => {
     const translate = useWorkingListText()
     const selection = useWorkingListMeta((meta) => meta.selection)
+
     const activeConfiguration = useWorkingListMeta(
         (meta) => meta.activeConfiguration
     )
+
     const actions = useWorkingListActions()
 
     return (
@@ -324,6 +341,7 @@ const WorkingListResultsContent = ({
                                 dataTest="use-default-working-list"
                                 onClick={() => {
                                     const result = actions.clearViewSelection()
+
                                     if (Result.isError(result)) {
                                         throw result.error
                                     }

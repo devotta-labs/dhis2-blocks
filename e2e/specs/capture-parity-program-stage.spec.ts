@@ -41,6 +41,7 @@ test.describe('Capture programme-stage joint data strategy', () => {
         )
 
         await addFilter(page, 'event', TEXT_DATA_ELEMENT)
+
         const combined = await applyTextFilter(
             page,
             TEXT_DATA_ELEMENT,
@@ -48,6 +49,7 @@ test.describe('Capture programme-stage joint data strategy', () => {
             'events',
             'filter'
         )
+
         expect(combined.searchParams.getAll('filterAttributes')).toEqual([
             `${TEXT_ATTRIBUTE}:like:Alpha person 01`,
         ])
@@ -64,7 +66,9 @@ test.describe('Capture programme-stage joint data strategy', () => {
             () => page.getByTestId(`sort-${TEXT_ATTRIBUTE}`).click(),
             (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:asc`
         )
+
         expect(attributeSort.searchParams.getAll('order')).toHaveLength(1)
+
         const dataSort = await waitForTrackerResponse(
             page,
             'events',
@@ -74,6 +78,7 @@ test.describe('Capture programme-stage joint data strategy', () => {
                     .get('order')
                     ?.startsWith(`${INTEGER_DATA_ELEMENT}:`) === true
         )
+
         const dataOrder = dataSort.searchParams.getAll('order')
         expect(dataOrder).toHaveLength(1)
         expect(dataOrder[0]).toMatch(
@@ -82,18 +87,22 @@ test.describe('Capture programme-stage joint data strategy', () => {
 
         await openFilterEditor(page, 'eventOccurredAt')
         const dateEditor = page.getByTestId('filter-editor-eventOccurredAt')
+
         const startDate = dateEditor
             .locator('[data-test="date-range-start"]')
             .locator('input')
+
         const endDate = dateEditor
             .locator('[data-test="date-range-end"]')
             .locator('input')
+
         await startDate.click()
         await expect(page.locator('[data-test="calendar"]')).toBeVisible()
         await startDate.fill('2025-02-01')
         await endDate.click()
         await expect(page.locator('[data-test="calendar"]')).toBeVisible()
         await endDate.fill('2025-02-01')
+
         const dateRequest = await waitForTrackerResponse(
             page,
             'events',
@@ -103,6 +112,7 @@ test.describe('Capture programme-stage joint data strategy', () => {
                     .click(),
             (url) => url.searchParams.get('occurredAfter') === '2025-02-01'
         )
+
         expect(dateRequest.searchParams.get('occurredBefore')).toBe(
             '2025-02-01'
         )

@@ -42,6 +42,7 @@ describe('WorkingListProvider controlled selection', () => {
         const queryClient = new QueryClient({
             defaultOptions: { queries: { retry: false } },
         })
+
         const firstSelectionChange = vi.fn()
         const secondSelectionChange = vi.fn()
         const paginationChange = vi.fn()
@@ -53,8 +54,10 @@ describe('WorkingListProvider controlled selection', () => {
             observedSelections.push(
                 useWorkingListMeta((meta) => meta.selection)
             )
+
             return null
         }
+
         const renderProvider = (
             selectedSavedListId: string | null,
             onSelectedSavedListChange: (id: string) => void,
@@ -77,6 +80,7 @@ describe('WorkingListProvider controlled selection', () => {
         const screen = await render(
             renderProvider('SavedList01', firstSelectionChange)
         )
+
         expect(observedSelections.at(-1)).toEqual({
             status: 'pending',
             requestedSavedListId: 'SavedList01',
@@ -127,6 +131,7 @@ describe('WorkingListProvider controlled selection', () => {
             const queryClient = new QueryClient({
                 defaultOptions: { queries: { retry: false } },
             })
+
             const selectionChange = vi.fn()
             const paginationChange = vi.fn()
             const observedSelections: WorkingListSelectionMeta[] = []
@@ -135,6 +140,7 @@ describe('WorkingListProvider controlled selection', () => {
                 observedSelections.push(
                     useWorkingListMeta((meta) => meta.selection)
                 )
+
                 return null
             }
 

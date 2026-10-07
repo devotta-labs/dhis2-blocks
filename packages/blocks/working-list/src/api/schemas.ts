@@ -122,7 +122,13 @@ export const TrackerProgramSchema = z
         displayIncidentDateLabel: OptionalStringSchema,
         trackedEntityType: LooseReferenceSchema.optional(),
         access: z
-            .object({ read: z.boolean().optional() })
+            .object({
+                read: z.boolean().optional(),
+                data: z
+                    .object({ read: z.boolean().optional() })
+                    .passthrough()
+                    .optional(),
+            })
             .passthrough()
             .optional(),
         programTrackedEntityAttributes: z.array(
@@ -137,8 +143,32 @@ const TrackerProgramSummarySchema = z
         id: z.string().min(1),
         displayName: z.string(),
         programType: z.string(),
+        style: z
+            .object({
+                color: z.string().optional(),
+                icon: z.string().optional(),
+            })
+            .passthrough()
+            .optional(),
+        organisationUnits: z
+            .array(
+                z
+                    .object({
+                        id: z.string().min(1),
+                        displayName: z.string(),
+                        path: z.string().min(1),
+                    })
+                    .passthrough()
+            )
+            .optional(),
         access: z
-            .object({ read: z.boolean().optional() })
+            .object({
+                read: z.boolean().optional(),
+                data: z
+                    .object({ read: z.boolean().optional() })
+                    .passthrough()
+                    .optional(),
+            })
             .passthrough()
             .optional(),
     })
@@ -331,10 +361,12 @@ export const DateFilterContentsSchema = z
     .superRefine((value, context) => {
         const addIssue = (message: string) =>
             context.addIssue({ code: 'custom', message })
+
         if (value.type === 'ABSOLUTE') {
             if (!value.startDate && !value.endDate) {
                 addIssue('An absolute date filter requires a start or end date')
             }
+
             if (
                 value.period != null ||
                 value.startBuffer != null ||
@@ -344,19 +376,25 @@ export const DateFilterContentsSchema = z
                     'An absolute date filter cannot contain relative fields'
                 )
             }
+
             return
         }
+
         if (value.startDate != null || value.endDate != null) {
             addIssue('A relative date filter cannot contain absolute dates')
         }
+
         const hasPeriod = value.period != null
+
         const hasBothBuffers =
             value.startBuffer != null && value.endBuffer != null
+
         if (hasPeriod === hasBothBuffers) {
             addIssue(
                 'A relative date filter requires one period or both buffers'
             )
         }
+
         if (
             hasBothBuffers &&
             (value.startBuffer! > 0 || value.endBuffer! < 0)
@@ -386,6 +424,7 @@ const SavedValueFilterSchema = z
         const references = [value.attribute, value.dataItem].filter(
             (item) => item != null
         )
+
         if (references.length !== 1) {
             context.addIssue({
                 code: 'custom',
@@ -393,6 +432,7 @@ const SavedValueFilterSchema = z
                     'A saved value filter requires exactly one attribute or data item',
             })
         }
+
         const scalarValues = [
             value.eq,
             value.sw,
@@ -401,18 +441,21 @@ const SavedValueFilterSchema = z
             value.ge,
             value.le,
         ].filter((item) => item != null)
+
         const families = [
             scalarValues.length > 0,
             value.in != null,
             value.null != null,
             value.dateFilter != null,
         ].filter(Boolean)
+
         if (families.length !== 1) {
             context.addIssue({
                 code: 'custom',
                 message: 'A saved value filter requires one value family',
             })
         }
+
         if (
             scalarValues.length > 1 &&
             !(value.ge != null && value.le != null && scalarValues.length === 2)
@@ -422,6 +465,7 @@ const SavedValueFilterSchema = z
                 message: 'A saved scalar filter contains conflicting operators',
             })
         }
+
         if (value.in != null && !value.in.length) {
             context.addIssue({
                 code: 'custom',
@@ -530,16 +574,23 @@ export const DeleteMutationResponseSchema = z.union([
 ])
 
 export type TrackerProgram = z.infer<typeof TrackerProgramSchema>
+
 export type TrackedEntity = z.infer<typeof TrackedEntitySchema>
+
 export type TrackerEvent = z.infer<typeof EventSchema>
+
 export type EntityQueryCriteria = z.infer<typeof EntityQueryCriteriaSchema>
+
 export type ProgramStageQueryCriteria = z.infer<
     typeof ProgramStageQueryCriteriaSchema
 >
+
 export type SavedValueFilter = z.infer<typeof SavedValueFilterSchema>
+
 export type TrackedEntityInstanceFilter = z.infer<
     typeof TrackedEntityInstanceFilterSchema
 >
+
 export type ProgramStageWorkingList = z.infer<
     typeof ProgramStageWorkingListSchema
 >

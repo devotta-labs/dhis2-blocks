@@ -13,9 +13,11 @@ const filter = (
     value: FilterValue
 ): AppliedFilter => {
     const definition = getSystemFilterDefinition(id)
+
     if (!definition) {
         throw new Error(`Missing ${id}`)
     }
+
     return { field: definition.field, operator, value }
 }
 
@@ -150,9 +152,11 @@ describe('system filter registry', () => {
         'preserves DATE validation and query serialization for %s',
         (id, after, before) => {
             const definition = getSystemFilterDefinition(id)
+
             if (!definition) {
                 throw new Error(`Missing ${id}`)
             }
+
             const appliedFilter = filter(id, 'range', {
                 kind: 'dateRange',
                 mode: 'absolute',

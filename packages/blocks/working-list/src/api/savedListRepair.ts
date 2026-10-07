@@ -45,6 +45,7 @@ const unsupportedFilterIssues = (
     configuration.filters.flatMap((filter, index) => {
         try {
             validateAppliedFilter(filter, metadata.capabilities)
+
             return []
         } catch (error) {
             return [
@@ -66,6 +67,7 @@ const cloneSavedResource = (
 ) => {
     if (list.resource === 'trackedEntityInstanceFilters') {
         const raw = TrackedEntityInstanceFilterSchema.parse(list.raw)
+
         const criteria: EntityQueryCriteria = raw.entityQueryCriteria
             ? {
                   ...raw.entityQueryCriteria,
@@ -78,13 +80,16 @@ const cloneSavedResource = (
                       : undefined,
               }
             : {}
+
         return {
             type: 'trackedEntityInstanceFilters' as const,
             criteria,
             raw: { ...raw, entityQueryCriteria: criteria },
         }
     }
+
     const raw = ProgramStageWorkingListSchema.parse(list.raw)
+
     const criteria: ProgramStageQueryCriteria = raw.programStageQueryCriteria
         ? {
               ...raw.programStageQueryCriteria,
@@ -101,6 +106,7 @@ const cloneSavedResource = (
                   : undefined,
           }
         : {}
+
     return {
         type: 'programStageWorkingLists' as const,
         criteria,
@@ -130,23 +136,29 @@ const repairRawFilter = ({
     if (decision.action === 'remove') {
         return undefined
     }
+
     if (decision.action !== 'replaceFilter') {
         throw new Error('A stale saved filter requires remove or replaceFilter')
     }
+
     const currentField = fields.get(decision.filter.field.id)
+
     if (!currentField || currentField.source !== expectedSource) {
         throw new Error(
             `Replacement filter ${decision.filter.field.id} has the wrong source`
         )
     }
+
     const filter = validateAppliedFilter(
         { ...decision.filter, field: currentField },
         metadata.capabilities,
         serializationContext
     )
+
     const serialized = getValueTypeDefinition(
         currentField.valueType
     ).serializeSaved(filter, serializationContext)
+
     const knownKeys = new Set([
         'attribute',
         'dataItem',
@@ -160,9 +172,11 @@ const repairRawFilter = ({
         'null',
         'dateFilter',
     ])
+
     const additionalFields = Object.fromEntries(
         Object.entries(savedFilter).filter(([key]) => !knownKeys.has(key))
     )
+
     return expectedSource === 'trackedEntityAttribute'
         ? {
               ...additionalFields,
@@ -200,6 +214,7 @@ export const repairSavedWorkingList = ({
             metadata,
             list.candidateConfiguration
         )
+
         const result = repairConfigurationReferences({
             configuration: list.candidateConfiguration,
             issues: list.issues,
@@ -210,20 +225,25 @@ export const repairSavedWorkingList = ({
                 readableProgramStageIds: metadata.readableProgramStageIds,
             },
         })
+
         if (result.status === 'blocked') {
             return result
         }
+
         const unsupported = unsupportedFilterIssues(
             result.configuration,
             metadata
         )
+
         if (unsupported.length) {
             return { status: 'blocked', issues: unsupported }
         }
+
         const repairedFields = fieldsForConfiguration(
             metadata,
             result.configuration
         )
+
         return {
             status: 'repaired',
             configuration: result.configuration,
@@ -242,21 +262,25 @@ export const repairSavedWorkingList = ({
     const decisionsByPath = new Map(
         decisions.map((decision) => [decision.path, decision])
     )
+
     if (decisionsByPath.size !== decisions.length) {
         throw new Error('A repair plan cannot contain duplicate paths')
     }
+
     const unresolved = list.issues.find(
         (issue) =>
             issue.kind === 'programMismatch' ||
             issue.kind === 'missingProgramStage' ||
             !decisionsByPath.has(issue.path)
     )
+
     if (unresolved) {
         return blockedRepair(unresolved)
     }
 
     const cloned = cloneSavedResource(list)
     const criteria = cloned.criteria
+
     const fields = fieldsForProgramStage(
         metadata,
         cloned.type === 'programStageWorkingLists'
@@ -266,21 +290,27 @@ export const repairSavedWorkingList = ({
 
     for (const issue of list.issues) {
         const decision = decisionsByPath.get(issue.path)
+
         if (!decision) {
             return blockedRepair(issue)
         }
+
         const attributeMatch = issue.path.match(
             /^attributeValueFilters\.(\d+)\.attribute$/
         )
+
         const dataMatch = issue.path.match(/^dataFilters\.(\d+)\.dataItem$/)
         const columnMatch = issue.path.match(/^displayColumnOrder\.(\d+)$/)
+
         if (attributeMatch) {
             const index = Number(attributeMatch[1])
             const filters = criteria.attributeValueFilters
             const savedFilter = filters?.[index]
+
             if (!savedFilter) {
                 return blockedRepair(issue)
             }
+
             try {
                 const repaired = repairRawFilter({
                     savedFilter,
@@ -290,6 +320,7 @@ export const repairSavedWorkingList = ({
                     fields,
                     serializationContext,
                 })
+
                 if (repaired) {
                     filters[index] = repaired
                 } else {
@@ -303,16 +334,20 @@ export const repairSavedWorkingList = ({
                         error instanceof Error ? error.message : String(error),
                 })
             }
+
             continue
         }
+
         if (dataMatch && cloned.type === 'programStageWorkingLists') {
             const stageCriteria = cloned.criteria
             const index = Number(dataMatch[1])
             const filters = stageCriteria.dataFilters
             const savedFilter = filters?.[index]
+
             if (!savedFilter) {
                 return blockedRepair(issue)
             }
+
             try {
                 const repaired = repairRawFilter({
                     savedFilter,
@@ -322,6 +357,7 @@ export const repairSavedWorkingList = ({
                     fields,
                     serializationContext,
                 })
+
                 if (repaired) {
                     filters[index] = repaired
                 } else {
@@ -335,47 +371,61 @@ export const repairSavedWorkingList = ({
                         error instanceof Error ? error.message : String(error),
                 })
             }
+
             continue
         }
+
         if (columnMatch && criteria.displayColumnOrder) {
             const index = Number(columnMatch[1])
+
             if (decision.action === 'remove') {
                 delete criteria.displayColumnOrder[index]
             } else if (decision.action === 'replaceColumn') {
                 const field = fields.get(decision.fieldId)
+
                 if (!field) {
                     return blockedRepair(issue)
                 }
+
                 criteria.displayColumnOrder[index] = field.apiName ?? field.id
             } else {
                 return blockedRepair(issue)
             }
+
             continue
         }
+
         if (issue.path === 'order') {
             if (decision.action === 'remove') {
                 criteria.order = undefined
             } else if (decision.action === 'replaceSort') {
                 const field = fields.get(decision.sort.fieldId)
+
                 if (!field) {
                     return blockedRepair(issue)
                 }
+
                 criteria.order = `${field.apiName ?? field.id}:${decision.sort.direction}`
             } else {
                 return blockedRepair(issue)
             }
+
             continue
         }
+
         return blockedRepair(issue)
     }
 
     criteria.attributeValueFilters =
         criteria.attributeValueFilters?.filter(Boolean)
+
     if (cloned.type === 'programStageWorkingLists') {
         cloned.criteria.dataFilters =
             cloned.criteria.dataFilters?.filter(Boolean)
     }
+
     criteria.displayColumnOrder = criteria.displayColumnOrder?.filter(Boolean)
+
     if (criteria.displayColumnOrder && !criteria.displayColumnOrder.length) {
         return {
             status: 'blocked',
@@ -398,13 +448,16 @@ export const repairSavedWorkingList = ({
         metadata,
         parsingContext,
     })
+
     if (normalized.compatibility === 'incompatible') {
         return { status: 'blocked', issues: normalized.issues }
     }
+
     const normalizedFields = fieldsForConfiguration(
         metadata,
         normalized.configuration
     )
+
     return {
         status: 'repaired',
         configuration: normalized.configuration,

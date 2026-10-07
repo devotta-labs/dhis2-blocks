@@ -30,7 +30,6 @@ import {
     AppRuntimeConfigSchema,
     CurrentUserSchema,
     OrganisationUnitReferenceSchema,
-    OrganisationUnitsResponseSchema,
     ProgramOrganisationUnitsSchema,
     retryOperationalError,
 } from './contextSchemas'
@@ -44,6 +43,7 @@ import {
 import { RecordDetailsModal } from './RecordDetailsModal'
 import { WorkingListContextControls } from './WorkingListContextControls'
 import { useDebouncedOrganisationUnitSearch } from './useDebouncedOrganisationUnitSearch'
+import { useOrganisationUnitSearch } from './useOrganisationUnitSearch'
 
 const WorkingListDirtyBridge = ({
     onChange,
@@ -208,33 +208,10 @@ export const AppShell = () => {
         retry: retryOperationalError,
     })
 
-    const organisationUnitSearchQuery = useQuery({
-        queryKey: [
-            'working-list',
-            'shell',
-            'org-unit-search',
-            debouncedOrganisationUnitSearch,
-        ],
-        queryFn: ({ signal }) =>
-            client.query(
-                {
-                    resource: 'organisationUnits',
-                    params: {
-                        fields: 'id,displayName,path',
-                        paging: false,
-                        query: debouncedOrganisationUnitSearch,
-                        withinUserSearchHierarchy: true,
-                    },
-                },
-                OrganisationUnitsResponseSchema,
-                signal
-            ),
-        enabled: Boolean(
-            selectedProgramSummary && debouncedOrganisationUnitSearch
-        ),
-        staleTime: 5 * 60 * 1000,
-        gcTime: 30 * 60 * 1000,
-        retry: retryOperationalError,
+    const organisationUnitSearchQuery = useOrganisationUnitSearch({
+        client,
+        search: debouncedOrganisationUnitSearch,
+        enabled: Boolean(selectedProgramSummary),
     })
 
     const searchRoots = useMemo(
@@ -450,20 +427,33 @@ export const AppShell = () => {
                         onSearchChange={setOrganisationUnitSearch}
                         searchRoots={
                             debouncedOrganisationUnitSearch
-                                ? (organisationUnitSearchQuery.data
-                                      ?.organisationUnits ?? [])
+                                ? (organisationUnitSearchQuery.data?.pages.flatMap(
+                                      (page) => page.organisationUnits
+                                  ) ?? [])
                                 : undefined
                         }
                         searchLoading={
                             Boolean(debouncedOrganisationUnitSearch) &&
-                            organisationUnitSearchQuery.isPending
+                            organisationUnitSearchQuery.isFetching &&
+                            !organisationUnitSearchQuery.data
                         }
                         searchError={
                             Boolean(debouncedOrganisationUnitSearch) &&
-                            organisationUnitSearchQuery.isError
+                            organisationUnitSearchQuery.isError &&
+                            !organisationUnitSearchQuery.data
                         }
                         onSearchRetry={() =>
                             void organisationUnitSearchQuery.refetch()
+                        }
+                        searchHasMore={organisationUnitSearchQuery.hasNextPage}
+                        searchLoadingMore={
+                            organisationUnitSearchQuery.isFetchingNextPage
+                        }
+                        searchLoadMoreError={
+                            organisationUnitSearchQuery.isFetchNextPageError
+                        }
+                        onSearchLoadMore={() =>
+                            void organisationUnitSearchQuery.fetchNextPage()
                         }
                         onSelect={updateOrgUnit}
                     />

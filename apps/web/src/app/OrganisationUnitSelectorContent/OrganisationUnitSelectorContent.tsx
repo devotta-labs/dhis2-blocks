@@ -19,6 +19,10 @@ interface OrganisationUnitSelectorContentProps {
     searchLoading?: boolean
     searchError?: boolean
     onSearchRetry?: () => void
+    searchHasMore?: boolean
+    searchLoadingMore?: boolean
+    searchLoadMoreError?: boolean
+    onSearchLoadMore?: () => void
     treeKey: string
     onSelect: (organisationUnit: OrganisationUnitReference) => void
     treeComponent?: ComponentType<OrganisationUnitTreeRuntimeProps>
@@ -111,6 +115,10 @@ export const OrganisationUnitSelectorContent = ({
     searchLoading = false,
     searchError = false,
     onSearchRetry,
+    searchHasMore = false,
+    searchLoadingMore = false,
+    searchLoadMoreError = false,
+    onSearchLoadMore,
     treeKey,
     onSelect,
     treeComponent,
@@ -123,7 +131,11 @@ export const OrganisationUnitSelectorContent = ({
         [allowedPaths, visibleRoots]
     )
 
-    const stableTreeKey = `${treeKey}-${visibleRoots.map((root) => root.id).join('-')}`
+    // Keep the key stable while search pages append so expanded branches
+    // survive; remount only when the term or the browse-mode root set changes.
+    const stableTreeKey = searchRoots
+        ? treeKey
+        : `${treeKey}-${visibleRoots.map((root) => root.id).join('-')}`
 
     return (
         <div className="z-0 h-full w-full rounded-[3px] border border-[#e8edf2] bg-white">
@@ -144,12 +156,14 @@ export const OrganisationUnitSelectorContent = ({
                     className={
                         searchLoading
                             ? 'm-[4px] flex h-[calc(100vh-48px)] items-center justify-center'
-                            : 'flex min-h-[42px] max-w-[100vw] bg-white p-[4px] pt-[8px]'
+                            : 'flex min-h-[42px] max-w-[100vw] flex-col bg-white p-[4px] pt-[8px]'
                     }
                     data-test="org-unit-tree"
                     data-testid="org-unit-tree"
                 >
-                    {searchError ? (
+                    {searchLoading ? (
+                        <CircularLoader />
+                    ) : searchError ? (
                         <div
                             className="flex w-full flex-col items-center gap-[8px] px-[16px] py-[24px] text-center text-[14px] text-[#4a5768]"
                             data-test="org-unit-search-error"
@@ -163,17 +177,45 @@ export const OrganisationUnitSelectorContent = ({
                                 </Button>
                             ) : null}
                         </div>
-                    ) : searchLoading ? (
-                        <CircularLoader />
                     ) : (
-                        <ControlledOrganisationUnitTree
-                            key={stableTreeKey}
-                            visibleRoots={visibleRoots}
-                            treeFilter={treeFilter}
-                            selected={selected}
-                            onSelect={onSelect}
-                            TreeComponent={TreeComponent}
-                        />
+                        <>
+                            <ControlledOrganisationUnitTree
+                                key={stableTreeKey}
+                                visibleRoots={visibleRoots}
+                                treeFilter={treeFilter}
+                                selected={selected}
+                                onSelect={onSelect}
+                                TreeComponent={TreeComponent}
+                            />
+                            {searchLoadMoreError ? (
+                                <div className="flex w-full items-center justify-center gap-[8px] pb-[4px] text-[14px] text-[#4a5768]">
+                                    <span>
+                                        {i18n.t(
+                                            'Could not load more organisation units'
+                                        )}
+                                    </span>
+                                    <Button
+                                        small
+                                        secondary
+                                        onClick={onSearchLoadMore}
+                                    >
+                                        {i18n.t('Try again')}
+                                    </Button>
+                                </div>
+                            ) : searchHasMore ? (
+                                <div className="flex w-full justify-center pb-[4px]">
+                                    <Button
+                                        small
+                                        secondary
+                                        loading={searchLoadingMore}
+                                        dataTest="org-unit-search-load-more"
+                                        onClick={onSearchLoadMore}
+                                    >
+                                        {i18n.t('Show more')}
+                                    </Button>
+                                </div>
+                            ) : null}
+                        </>
                     )}
                 </div>
             </div>

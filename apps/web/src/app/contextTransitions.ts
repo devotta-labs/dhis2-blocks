@@ -11,5 +11,6 @@ export const getGuardedOrganisationUnitState = (
 
     const next = { ...current }
     delete next.orgUnitId
+
     return orgUnitId ? { ...next, orgUnitId, page: 1 } : { ...next, page: 1 }
 }

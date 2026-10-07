@@ -4,8 +4,11 @@ import { render } from 'vitest-browser-react'
 import { OrganisationUnitSelectorContent } from '../OrganisationUnitSelectorContent'
 
 const ROOT_ID = 'RootUnit001'
+
 const CHILD_ID = 'ChildUnit01'
+
 const ROOT_PATH = `/${ROOT_ID}`
+
 const CHILD_PATH = `${ROOT_PATH}/${CHILD_ID}`
 
 const TestOrganisationUnitTree = ({

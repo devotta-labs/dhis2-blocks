@@ -61,6 +61,7 @@ const assertPagination = (pagination: WorkingListPagination) => {
             `WorkingList requires pagination.page to be a positive integer; received ${String(pagination.page)}`
         )
     }
+
     if (!WORKING_LIST_PAGE_SIZES.includes(pagination.pageSize)) {
         throw new Error(
             `WorkingList requires pagination.pageSize to be one of ${WORKING_LIST_PAGE_SIZES.join(', ')}; received ${String(pagination.pageSize)}`
@@ -129,6 +130,7 @@ const WorkingListProviderInstance = ({
     const [store] = useState<WorkingListProviderStore>(() =>
         createWorkingListProviderStore(initialMeta(pagination))
     )
+
     const updateStore = useCallback(
         (
             update: (
@@ -154,6 +156,7 @@ const WorkingListProviderInstance = ({
         defaultListId,
         lifecycleReady,
     } = useWorkingListLifecycle({ client, programId, updateStore })
+
     const effectiveSelectedSavedListId = resolveSelectedSavedListId(
         selectedSavedListId,
         defaultListId
@@ -163,6 +166,7 @@ const WorkingListProviderInstance = ({
         queryKey: workingListQueryKeys.savedLists(programId),
         queryFn: ({ signal }) => {
             if (!metadata) throw new Error('Program metadata is not ready')
+
             return fetchSavedWorkingLists({
                 client,
                 programId,
@@ -176,12 +180,15 @@ const WorkingListProviderInstance = ({
         retry: shouldRetryWorkingListRequest,
         enabled: lifecycleReady,
     })
+
     const [confirmedLists, setConfirmedLists] =
         useState<NormalizedSavedWorkingList[]>()
+
     useEffect(() => {
         if (savedListsQuery.data) setConfirmedLists(savedListsQuery.data)
     }, [savedListsQuery.data])
     const usingGeneratedLists = confirmedLists?.length === 0
+
     const displayedLists = useMemo(
         () =>
             confirmedLists
@@ -195,11 +202,14 @@ const WorkingListProviderInstance = ({
     const savedViewsError = savedListsQuery.error
         ? toTransportError(savedListsQuery.error, 'Loading saved working lists')
         : undefined
+
     useEffect(() => {
         const views = displayedLists.map((list) =>
             asSavedView(list, Boolean(usingGeneratedLists))
         )
+
         let savedViews: WorkingListSavedViewsMeta
+
         if (savedViewsError) {
             savedViews = {
                 status: 'error',
@@ -218,6 +228,7 @@ const WorkingListProviderInstance = ({
                 isUpdating: savedListsQuery.isFetching,
             }
         }
+
         updateStore((current) => ({
             meta: { ...current.meta, savedViews },
         }))
@@ -232,6 +243,7 @@ const WorkingListProviderInstance = ({
 
     const [stagedPagination, setStagedPagination] =
         useState<WorkingListPagination>()
+
     const effectivePagination = stagedPagination ?? pagination
     useLayoutEffect(() => {
         if (!stagedPagination) return
@@ -244,6 +256,7 @@ const WorkingListProviderInstance = ({
     }, [effectivePagination, updateStore])
     const onPaginationChangeRef = useRef(onPaginationChange)
     onPaginationChangeRef.current = onPaginationChange
+
     const stagePagination = useCallback(
         (next: WorkingListPagination) => {
             setStagedPagination(next)
@@ -278,27 +291,34 @@ const WorkingListProviderInstance = ({
         (notify: () => void) => store.subscribe(notify),
         [store]
     )
+
     const activeState = useSyncExternalStore(
         subscribe,
         () => store.getState().activeState
     )
+
     useEffect(() => {
         if (!activeState || !metadata) return
+
         const fields = Array.from(
             fieldsForConfiguration(metadata, activeState.configuration).values()
         )
+
         updateStore((current) => ({
             meta: { ...current.meta, fields },
         }))
     }, [activeState, metadata, updateStore])
+
     const resolvedConfiguration = useSyncExternalStore(
         subscribe,
         () => store.getState().resolvedConfiguration
     )
+
     const selectionMeta = useSyncExternalStore(
         subscribe,
         () => store.getState().meta.selection
     )
+
     const mutationMeta = useSyncExternalStore(
         subscribe,
         () => store.getState().meta.mutations
@@ -333,6 +353,7 @@ const WorkingListProviderInstance = ({
         if (!metadata) throw new Error('Program metadata is not ready')
         const queryKey = workingListQueryKeys.savedLists(programId)
         await queryClient.resetQueries({ queryKey })
+
         const lists = await queryClient.fetchQuery({
             queryKey,
             queryFn: ({ signal }) =>
@@ -346,7 +367,9 @@ const WorkingListProviderInstance = ({
             staleTime: 0,
             retry: shouldRetryWorkingListRequest,
         })
+
         setConfirmedLists(lists)
+
         return lists
     }, [client, metadata, parsingContext, programId, queryClient])
 
@@ -366,6 +389,7 @@ const WorkingListProviderInstance = ({
             })),
         [updateStore]
     )
+
     const runtimeRef = useRef<WorkingListActionRuntime>({
         activeState,
         resolvedConfiguration,
@@ -379,6 +403,7 @@ const WorkingListProviderInstance = ({
         program,
         rows,
     })
+
     runtimeRef.current = {
         activeState,
         resolvedConfiguration,
@@ -412,6 +437,7 @@ const WorkingListProviderInstance = ({
                     results: { status: 'pending' },
                 },
             }))
+
             if (resetPage) {
                 stagePagination({
                     page: 1,
@@ -428,17 +454,21 @@ const WorkingListProviderInstance = ({
             resetPage: boolean
         ) => {
             const runtime = runtimeRef.current
+
             if (!runtime.metadata || !runtime.activeState) {
                 throw new Error('Working List configuration is unavailable')
             }
+
             const resolved = resolvePublicConfiguration({
                 configuration,
                 programId,
                 metadata: runtime.metadata,
                 serializationContext: runtime.serializationContext,
             })
+
             if (resolved.isErr()) return resolved
             commitConfiguration(configuration, resolved.value, resetPage)
+
             return Result.ok()
         },
         [commitConfiguration, programId]
@@ -475,6 +505,7 @@ const WorkingListProviderInstance = ({
             validateAndCommit,
         ]
     )
+
     const actions = useStableWorkingListActions(currentActions)
 
     const selectedId =
@@ -482,7 +513,9 @@ const WorkingListProviderInstance = ({
         (selectionMeta.status === 'error'
             ? selectionMeta.requestedSavedListId
             : requestedId)
+
     const selectedList = displayedLists.find((list) => list.id === selectedId)
+
     const { privateActions, repairComputation, repairPending } =
         useWorkingListRepair({
             selectedId,
@@ -507,7 +540,9 @@ const WorkingListProviderInstance = ({
         Object.values(mutationMeta).some(
             (mutation) => mutation.status === 'pending'
         ) || repairPending
+
     const publicContext = useMemo(() => ({ store, actions }), [actions, store])
+
     const privateContext = useMemo<WorkingListPrivateUiContextValue>(
         () => ({
             store,

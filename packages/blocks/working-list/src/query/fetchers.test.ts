@@ -114,6 +114,7 @@ describe('working-list page fetching with lenient data values', () => {
         if (page.mode !== 'trackedEntity') {
             throw new Error('unexpected mode')
         }
+
         expect(page.records).toHaveLength(2)
         const [first, second] = page.records
         expect(first.values[integerAttribute.id]).toEqual({
@@ -209,10 +210,12 @@ describe('working-list next-page capability semantics', () => {
                 pager: { page: 1, pageSize: 2, total: 99 },
             })
         )
+
         const page = await fetchWorkingListPage({
             ...base,
             pagination: { page: 1, pageSize: 2 },
         })
+
         expect(page.hasNextPage).toBe(false)
 
         const withNext = await fetchWorkingListPage({
@@ -227,6 +230,7 @@ describe('working-list next-page capability semantics', () => {
             }),
             pagination: { page: 1, pageSize: 2 },
         })
+
         expect(withNext.hasNextPage).toBe(true)
     })
 
@@ -241,6 +245,7 @@ describe('working-list next-page capability semantics', () => {
             capabilities: resolveWorkingListCapabilities({ apiVersion: 41 }),
             pagination: { page: 1, pageSize: 2 },
         })
+
         expect(page.hasNextPage).toBe(true)
 
         const oversized = await fetchWorkingListPage({
@@ -253,6 +258,7 @@ describe('working-list next-page capability semantics', () => {
             capabilities: resolveWorkingListCapabilities({ apiVersion: 41 }),
             pagination: { page: 1, pageSize: 1 },
         })
+
         expect(oversized.hasNextPage).toBe(false)
     })
 })

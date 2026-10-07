@@ -17,6 +17,7 @@ export const fieldDisplayName = (
     if (field.displayNameIsMetadata) {
         return field.displayName
     }
+
     const labels = new Map([
         ['enrollmentStatus', translate('Enrollment status')],
         ['enrolledAt', translate('Enrollment date')],
@@ -32,6 +33,7 @@ export const fieldDisplayName = (
         ['programOwnerId', translate('Owner organisation unit')],
         ['eventOrgUnit', translate('Event organisation unit')],
     ])
+
     return labels.get(field.id) ?? field.displayName
 }
 
@@ -43,6 +45,7 @@ export const optionDisplayName = (
     if (field.source !== 'system') {
         return option.displayName
     }
+
     switch (option.code) {
         case 'ACTIVE':
             return translate('Active')

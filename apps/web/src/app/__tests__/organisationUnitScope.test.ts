@@ -63,6 +63,7 @@ describe('Capture organisation-unit scope', () => {
 
     it('intersects Capture roots with the selected program scope', () => {
         const outsideProgram = unit('outside', '/root/outside')
+
         const intersection = intersectOrganisationUnitScopes(
             [searchRoot, outsideProgram],
             [programRoot]

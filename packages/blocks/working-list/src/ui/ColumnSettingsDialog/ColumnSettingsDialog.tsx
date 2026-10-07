@@ -28,9 +28,11 @@ export const getInitialColumnDialogOrder = (
     visibleColumnIds: string[]
 ) => {
     const fieldsById = new Map(fields.map((field) => [field.id, field]))
+
     const visibleFields = visibleColumnIds
         .map((id) => fieldsById.get(id))
         .filter((field): field is WorkingListField => Boolean(field))
+
     const visibleIds = new Set(visibleFields.map((field) => field.id))
     let nextVisibleIndex = 0
 
@@ -46,6 +48,7 @@ export const getVisibleColumnIdsInOrder = (
     visibleColumnIds: string[]
 ) => {
     const visibleIds = new Set(visibleColumnIds)
+
     return orderedFields
         .map((field) => field.id)
         .filter((id) => visibleIds.has(id))
@@ -59,14 +62,18 @@ export const ColumnSettingsDialog = ({
     onClose,
 }: ColumnSettingsDialogProps) => {
     const translate = useWorkingListText()
+
     const fieldIds = useMemo(
         () => new Set(fields.map((field) => field.id)),
         [fields]
     )
+
     const [draftSelected, setDraftSelected] = useState(() =>
         visibleColumnIds.filter((id) => fieldIds.has(id))
     )
+
     const [showValidationError, setShowValidationError] = useState(false)
+
     const options = useMemo(
         () =>
             fields.map((field) => ({
@@ -83,6 +90,7 @@ export const ColumnSettingsDialog = ({
     }) => {
         const validSelected = nextSelected.filter((id) => fieldIds.has(id))
         setDraftSelected(validSelected)
+
         if (validSelected.length > 0) {
             setShowValidationError(false)
         }
@@ -91,8 +99,10 @@ export const ColumnSettingsDialog = ({
     const save = () => {
         if (draftSelected.length === 0) {
             setShowValidationError(true)
+
             return
         }
+
         onChange(draftSelected)
         onClose()
     }

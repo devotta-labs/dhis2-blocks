@@ -70,6 +70,7 @@ export const useWorkingListRepair = ({
     retryOrganisationUnitLabels,
 }: UseWorkingListRepairOptions) => {
     const [repairPending, setRepairPending] = useState(false)
+
     const repairComputation = useMemo(() => {
         if (
             !metadata ||
@@ -78,7 +79,9 @@ export const useWorkingListRepair = ({
         ) {
             return undefined
         }
+
         const plan = createSavedListRepairPlan(selectedList, metadata)
+
         const result = repairSavedWorkingList({
             list: selectedList,
             decisions: plan.decisions,
@@ -87,12 +90,14 @@ export const useWorkingListRepair = ({
             parsingContext,
             serializationContext,
         })
+
         const expectedResource =
             result.status === 'repaired'
                 ? result.configuration.mode === 'event'
                     ? 'programStageWorkingLists'
                     : 'trackedEntityInstanceFilters'
                 : undefined
+
         return {
             plan,
             result,
@@ -141,6 +146,7 @@ export const useWorkingListRepair = ({
                         })
                     )
                 }
+
                 if (!selectedId || !selectedList || !metadata) {
                     return Result.err(
                         new NoSelectedSavedListError({
@@ -149,9 +155,11 @@ export const useWorkingListRepair = ({
                         })
                     )
                 }
+
                 if (selectedList.compatibility === 'compatible') {
                     return Result.ok()
                 }
+
                 if (
                     selectedList.sharing.access?.write !== true ||
                     selectedList.sharing.access.update !== true
@@ -164,6 +172,7 @@ export const useWorkingListRepair = ({
                         })
                     )
                 }
+
                 if (
                     !repairComputation ||
                     repairComputation.result.status !== 'repaired'
@@ -176,11 +185,14 @@ export const useWorkingListRepair = ({
                         })
                     )
                 }
+
                 const repaired = repairComputation.result.configuration
+
                 const expectedResource =
                     repaired.mode === 'event'
                         ? 'programStageWorkingLists'
                         : 'trackedEntityInstanceFilters'
+
                 if (expectedResource !== selectedList.resource) {
                     return Result.err(
                         new IncompatibleSavedListError({
@@ -190,7 +202,9 @@ export const useWorkingListRepair = ({
                         })
                     )
                 }
+
                 setRepairPending(true)
+
                 try {
                     await replaceSavedWorkingList({
                         client,
@@ -205,9 +219,11 @@ export const useWorkingListRepair = ({
                         serializationContext,
                     })
                     const lists = await refreshSavedLists()
+
                     const confirmed = lists.find(
                         (list) => list.id === selectedId
                     )
+
                     if (
                         !confirmed ||
                         confirmed.compatibility !== 'compatible' ||
@@ -222,6 +238,7 @@ export const useWorkingListRepair = ({
                             })
                         )
                     }
+
                     if (
                         isCurrentSelection(
                             latestRequestedIdRef.current,
@@ -230,6 +247,7 @@ export const useWorkingListRepair = ({
                     ) {
                         commitSelection(selectedId, confirmed.configuration)
                     }
+
                     return Result.ok()
                 } catch (cause) {
                     return Result.err(

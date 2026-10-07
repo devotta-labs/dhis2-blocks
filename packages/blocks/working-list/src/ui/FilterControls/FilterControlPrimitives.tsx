@@ -34,6 +34,7 @@ export const StrictCalendarInput = (props: StrictCalendarInputProps) => {
     const { CalendarInput: CalendarInputComponent } = useContext(
         FilterControlsComponentsContext
     )
+
     return <CalendarInputComponent {...props} />
 }
 
@@ -41,6 +42,7 @@ export const FilterPopover = (props: React.ComponentProps<typeof Popover>) => {
     const { Popover: PopoverComponent } = useContext(
         FilterControlsComponentsContext
     )
+
     return <PopoverComponent {...props} />
 }
 
@@ -48,6 +50,7 @@ export const focusFirstControl = (element: HTMLElement | null) => {
     if (!element) {
         return
     }
+
     requestAnimationFrame(() =>
         element
             .querySelector<HTMLElement>(
@@ -61,6 +64,7 @@ export const focusFirstAvailableFilter = (element: HTMLElement | null) => {
     if (!element) {
         return
     }
+
     requestAnimationFrame(() =>
         element
             .querySelector<HTMLElement>('[data-test^="add-filter-"]')
@@ -96,13 +100,16 @@ export const useEscapeToClose = (open: boolean, onClose: () => void) => {
         if (!open) {
             return
         }
+
         const dismiss = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 event.preventDefault()
                 onCloseRef.current()
             }
         }
+
         document.addEventListener('keydown', dismiss)
+
         return () => document.removeEventListener('keydown', dismiss)
     }, [open])
 }

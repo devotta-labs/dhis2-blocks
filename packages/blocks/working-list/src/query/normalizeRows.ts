@@ -94,13 +94,16 @@ const dataValueCell = (
     }
 ): WorkingListCellValue => {
     const { field, required, translate } = context
+
     if (raw === undefined || raw === '') {
         return required
             ? missingRequiredCell(translate)
             : { valid: true, value: undefined }
     }
+
     if (!field) {
         const parsed = ParsedTrackerScalarSchema.safeParse(raw)
+
         return parsed.success
             ? { valid: true, value: parsed.data }
             : {
@@ -109,19 +112,24 @@ const dataValueCell = (
                   message: translate('The value has an unsupported type'),
               }
     }
+
     try {
         const parsed = ParsedTrackerScalarSchema.parse(
             getValueTypeDefinition(field.valueType).parseServerValue(raw)
         )
+
         if (field.options?.length && parsed !== '') {
             const knownCodes = new Set(
                 field.options.map((option) => option.code)
             )
+
             const values =
                 field.valueType === 'MULTI_TEXT'
                     ? String(parsed).split(',')
                     : [String(parsed)]
+
             const unknown = values.find((item) => !knownCodes.has(item))
+
             if (unknown !== undefined) {
                 return {
                     valid: false,
@@ -132,6 +140,7 @@ const dataValueCell = (
                 }
             }
         }
+
         return { valid: true, value: parsed }
     } catch (error) {
         return {
@@ -157,11 +166,14 @@ const trackerFileUrls = (input: {
 }): Pick<WorkingListFileValue, 'url' | 'previewUrl'> => {
     const { record, fieldId, valueType } = input
     const kind = valueType === 'IMAGE' ? 'image' : 'file'
+
     if (record.type === 'trackedEntity') {
         const program = record.programId
             ? `?program=${encodeURIComponent(record.programId)}`
             : ''
+
         const base = `/api/tracker/trackedEntities/${encodeURIComponent(record.trackedEntityId)}/attributes/${encodeURIComponent(fieldId)}/${kind}`
+
         return valueType === 'IMAGE'
             ? {
                   url: `${base}${program}`,
@@ -169,7 +181,9 @@ const trackerFileUrls = (input: {
               }
             : { url: `${base}${program}` }
     }
+
     const base = `/api/tracker/events/${encodeURIComponent(record.eventId)}/dataValues/${encodeURIComponent(fieldId)}/${kind}`
+
     return valueType === 'IMAGE'
         ? { url: base, previewUrl: `${base}?dimension=small` }
         : { url: base }
@@ -182,6 +196,7 @@ const withFileValue = (
     record: FileUrlRecordContext
 ): WorkingListCellValue => {
     const fileId = cell.valid ? z.string().min(1).safeParse(cell.value) : null
+
     if (
         !field ||
         (field.valueType !== 'FILE_RESOURCE' && field.valueType !== 'IMAGE') ||
@@ -189,6 +204,7 @@ const withFileValue = (
     ) {
         return cell
     }
+
     return {
         valid: true,
         value: {
@@ -235,6 +251,7 @@ export const normalizeTrackedEntityValues = (
 ): NormalizedTrackedEntity => {
     const translate = options.translate ?? defaultTranslate
     const values: Record<string, WorkingListCellValue> = {}
+
     const recordContext: FileUrlRecordContext = {
         type: 'trackedEntity',
         trackedEntityId: trackedEntity.trackedEntity,
@@ -253,6 +270,7 @@ export const normalizeTrackedEntityValues = (
             recordContext
         )
     }
+
     for (const field of fields.values()) {
         if (
             field.source === 'trackedEntityAttribute' &&
@@ -276,14 +294,17 @@ export const normalizeTrackedEntityValues = (
             : undefined,
     }
     const ownerField = fields.get('programOwnerId')
+
     const owners = trackedEntity.programOwners.map((programOwner) =>
         String(parseSystemValue(programOwner.orgUnit, ownerField))
     )
+
     const ownerIndex = options.programId
         ? trackedEntity.programOwners.findIndex(
               (owner) => owner.program === options.programId
           )
         : -1
+
     values.programOwnerId = {
         valid: true,
         value: ownerIndex >= 0 ? owners[ownerIndex] : owners[0],
@@ -316,6 +337,7 @@ export const normalizeEventValues = (
 
     const requiredInStage = (field: WorkingListField) =>
         Boolean(stageId && field.requiredInStageIds?.includes(stageId))
+
     const recordContext: FileUrlRecordContext = {
         type: 'event',
         eventId: event.event,
@@ -333,6 +355,7 @@ export const normalizeEventValues = (
             recordContext
         )
     }
+
     for (const field of fields.values()) {
         if (
             field.source === 'eventDataElement' &&

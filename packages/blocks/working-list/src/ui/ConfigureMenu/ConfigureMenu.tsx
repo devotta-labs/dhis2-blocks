@@ -41,11 +41,15 @@ export const ConfigureMenu = ({
     const [nameError, setNameError] = useState<string>()
     const [saveMenuOpen, setSaveMenuOpen] = useState(false)
     const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+
     const persistedSelection =
         selectedView && !selectedView.generated ? selectedView : undefined
+
     const canUpdate =
         persistedSelection?.compatible === true && persistedSelection.canUpdate
+
     const locked = !online || busy
+
     const openSaveAs = () => {
         setSaveMenuOpen(false)
         setName('')
@@ -81,6 +85,7 @@ export const ConfigureMenu = ({
                                     label={i18n.t('Save changes to this view')}
                                     onClick={() => {
                                         setSaveMenuOpen(false)
+
                                         if (dirty && canUpdate) {
                                             onUpdate()
                                         }
@@ -145,15 +150,19 @@ export const ConfigureMenu = ({
                         onSubmit={(event) => {
                             event.preventDefault()
                             const nextName = name.trim()
+
                             if (!nextName || busy) {
                                 return
                             }
+
                             setNameError(undefined)
                             void onSaveAs(nextName).then((error) => {
                                 if (error) {
                                     setNameError(error)
+
                                     return
                                 }
+
                                 setNameDialogOpen(false)
                             })
                         }}

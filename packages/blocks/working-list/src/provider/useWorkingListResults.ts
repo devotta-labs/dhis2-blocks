@@ -83,7 +83,9 @@ export const useWorkingListResults = ({
         metadata && resolvedConfiguration
             ? fieldsForConfiguration(metadata, resolvedConfiguration)
             : metadata?.fields
+
     const previousResultOrgUnitRef = useRef(orgUnitId)
+
     const pageQuery = useQuery({
         ...(resolvedConfiguration && fields
             ? workingListPageQueryOptions({
@@ -109,8 +111,10 @@ export const useWorkingListResults = ({
               }),
         enabled: Boolean(resolvedConfiguration && fields),
     })
+
     const pageData = pageQuery.data
     const rows = useMemo(() => toDisplayRows(pageData), [pageData])
+
     const organisationUnitIds = useMemo(
         () =>
             pageData && fields
@@ -118,27 +122,33 @@ export const useWorkingListResults = ({
                 : [],
         [fields, pageData]
     )
+
     const organisationUnitLabelsQuery = useQuery({
         ...organisationUnitLabelsQueryOptions(client, organisationUnitIds),
         enabled: Boolean(pageData) && organisationUnitIds.length > 0,
     })
+
     const fileResourceIds = useMemo(
         () =>
             pageData && fields ? collectFileResourceIds(pageData, fields) : [],
         [fields, pageData]
     )
+
     const fileResourceNamesQuery = useQuery({
         ...fileResourceNamesQueryOptions(client, fileResourceIds),
         enabled: Boolean(pageData) && fileResourceIds.length > 0,
     })
+
     const organisationUnitLabelsReady =
         organisationUnitIds.length === 0 ||
         organisationUnitLabelsQuery.data !== undefined ||
         organisationUnitLabelsQuery.isSuccess
+
     const fileResourceNamesReady =
         fileResourceIds.length === 0 ||
         fileResourceNamesQuery.isSuccess ||
         fileResourceNamesQuery.isError
+
     const displayTransformers = useMemo(
         () =>
             systemInfo
@@ -163,7 +173,9 @@ export const useWorkingListResults = ({
             translate,
         ]
     )
+
     const formattingContext = displayTransformers?.formattingContext
+
     const resultsError =
         pageQuery.error && !(pageData && !online)
             ? pageQuery.error
@@ -171,8 +183,10 @@ export const useWorkingListResults = ({
                 organisationUnitLabelsQuery.data === undefined
               ? organisationUnitLabelsQuery.error
               : undefined
+
     useEffect(() => {
         let results: WorkingListMeta['results']
+
         if (!resolvedConfiguration) {
             results = { status: 'pending' }
         } else if (resultsError) {
@@ -194,6 +208,7 @@ export const useWorkingListResults = ({
                     fileResourceNamesQuery.isFetching,
             }
         }
+
         updateStore((current) => ({ meta: { ...current.meta, results } }))
     }, [
         fileResourceNamesQuery.isFetching,

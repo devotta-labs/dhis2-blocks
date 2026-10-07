@@ -68,15 +68,19 @@ const invalidCellText = (
     cellValue: Extract<WorkingListCellValue, { valid: false }>
 ) => {
     const raw = cellValue.raw
+
     if (raw === undefined || raw === null || raw === '') {
         return ''
     }
+
     const scalar = InvalidCellScalarSchema.safeParse(raw)
+
     return scalar.success ? String(scalar.data) : '-'
 }
 
 const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
     const t = useWorkingListText()
+
     return (
         <Tooltip
             content={
@@ -105,6 +109,7 @@ const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
 
 const CellValue = ({ display }: { display: CellDisplayValue }) => {
     const t = useWorkingListText()
+
     switch (display.kind) {
         case 'empty':
             return null
@@ -204,6 +209,7 @@ export const WorkingListDataTable = ({
 }: WorkingListDataTableProps) => {
     const translate = useWorkingListText()
     const showIssuesColumn = dataQualityMode === 'highlighted'
+
     const columns = useMemo(() => {
         const fieldColumns = allFields.map((field) =>
             columnHelper.accessor((row) => row.values[field.id], {
@@ -212,9 +218,11 @@ export const WorkingListDataTable = ({
                 enableSorting: true,
                 cell: (context) => {
                     const cellValue = context.row.original.values[field.id]
+
                     if (cellValue && !cellValue.valid) {
                         return <>{invalidCellText(cellValue)}</>
                     }
+
                     return (
                         <CellValue
                             display={getCellDisplayValue(
@@ -227,9 +235,11 @@ export const WorkingListDataTable = ({
                 },
             })
         )
+
         if (!showIssuesColumn) {
             return columnHelper.columns(fieldColumns)
         }
+
         return columnHelper.columns([
             ...fieldColumns,
             columnHelper.display({
@@ -255,6 +265,7 @@ export const WorkingListDataTable = ({
                 : visibleColumnIds,
         [showIssuesColumn, visibleColumnIds]
     )
+
     const columnVisibility = useMemo<ColumnVisibilityState>(
         () =>
             Object.fromEntries(
@@ -265,10 +276,12 @@ export const WorkingListDataTable = ({
             ),
         [allFields, visibleColumnIds]
     )
+
     const sorting = useMemo<SortingState>(
         () => [{ id: sort.fieldId, desc: sort.direction === 'desc' }],
         [sort]
     )
+
     const pagination = useMemo<PaginationState>(
         () => ({ pageIndex: page - 1, pageSize }),
         [page, pageSize]

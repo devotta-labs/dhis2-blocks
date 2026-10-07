@@ -18,9 +18,11 @@ export const WorkingListPublicContext =
 
 const usePublicContext = () => {
     const context = useContext(WorkingListPublicContext)
+
     if (!context) {
         throw new Error('Working List hooks must be used within WorkingList.')
     }
+
     return context
 }
 
@@ -28,12 +30,14 @@ export const useWorkingListState = <TSelected,>(
     selector: (state: WorkingListState) => TSelected
 ): TSelected => {
     const { store } = usePublicContext()
+
     return useStore(store, (snapshot) => {
         if (!snapshot.activeState) {
             throw new Error(
                 'useWorkingListState requires a ready active configuration. Select active-configuration readiness through useWorkingListMeta before mounting the stateful consumer.'
             )
         }
+
         return selector(snapshot.activeState)
     })
 }
@@ -42,6 +46,7 @@ export const useWorkingListMeta = <TSelected,>(
     selector: (meta: WorkingListMeta) => TSelected
 ): TSelected => {
     const { store } = usePublicContext()
+
     return useStore(store, (snapshot) => selector(snapshot.meta))
 }
 
@@ -53,6 +58,7 @@ export const useStableWorkingListActions = (
 ): WorkingListActions => {
     const currentRef = useRef(current)
     currentRef.current = current
+
     return useMemo(
         () => ({
             setFilter: (filter) => currentRef.current.setFilter(filter),

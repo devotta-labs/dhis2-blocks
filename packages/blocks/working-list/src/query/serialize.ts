@@ -39,12 +39,14 @@ const mergeParameters = (
         if (value === undefined) {
             continue
         }
+
         if (
             target[key] !== undefined &&
             JSON.stringify(target[key]) !== JSON.stringify(value)
         ) {
             throw new Error(`Conflicting system filters both set ${key}`)
         }
+
         target[key] = value
     }
 }
@@ -71,11 +73,13 @@ export const serializeWorkingListRequest = ({
     const configuration = WorkingListConfigurationSchema.parse(rawConfiguration)
     const pagination = WorkingListPaginationSchema.parse(rawPagination)
     const parsedContext = WorkingListContextSchema.parse(context)
+
     if (parsedContext.programId !== configuration.programId) {
         throw new Error(
             `Working-list context program ${parsedContext.programId} does not match configuration program ${configuration.programId}`
         )
     }
+
     if (!capabilities.supported) {
         throw new Error(`DHIS2 API ${capabilities.apiVersion} is not supported`)
     }
@@ -93,14 +97,18 @@ export const serializeWorkingListRequest = ({
 
     const filters: string[] = []
     const filterAttributes: string[] = []
+
     for (const filter of configuration.filters) {
         const currentField = fields.get(filter.field.id)
+
         if (!currentField) {
             throw new Error(`Unknown filter field ${filter.field.id}`)
         }
+
         if (currentField.source !== filter.field.source) {
             throw new Error(`Filter field ${filter.field.id} changed source`)
         }
+
         if (
             currentField.valueType !== filter.field.valueType ||
             currentField.scope !== filter.field.scope
@@ -109,11 +117,13 @@ export const serializeWorkingListRequest = ({
                 `Filter field ${filter.field.id} changed definition`
             )
         }
+
         if (currentField.scope === 'event' && configuration.mode !== 'event') {
             throw new Error(
                 `Event field ${currentField.id} cannot filter tracked entities`
             )
         }
+
         if (
             configuration.mode === 'event' &&
             currentField.source === 'eventDataElement' &&
@@ -125,12 +135,16 @@ export const serializeWorkingListRequest = ({
                 `Event data element ${currentField.id} does not belong to stage ${configuration.programStageId}`
             )
         }
+
         const currentFilter = { ...filter, field: currentField }
+
         if (filter.field.source === 'system') {
             const definition = getSystemFilterDefinition(filter.field.id)
+
             if (!definition) {
                 throw new Error(`Unknown system filter ${filter.field.id}`)
             }
+
             validateSystemFilter(currentFilter)
             mergeParameters(
                 params,
@@ -142,20 +156,24 @@ export const serializeWorkingListRequest = ({
             )
             continue
         }
+
         const validated = validateAppliedFilter(
             currentFilter,
             capabilities,
             serializationContext
         )
+
         const expression = `${validated.field.apiName ?? validated.field.id}:${getValueTypeDefinition(
             validated.field.valueType
         ).serializeQuery(validated, serializationContext)}`
+
         if (validated.field.source === 'eventDataElement') {
             if (configuration.mode !== 'event') {
                 throw new Error(
                     `Event data element ${validated.field.id} cannot filter tracked entities`
                 )
             }
+
             filters.push(expression)
         } else if (configuration.mode === 'event') {
             filterAttributes.push(expression)
@@ -167,26 +185,32 @@ export const serializeWorkingListRequest = ({
     if (filters.length) {
         params.filter = filters
     }
+
     if (configuration.mode === 'event' && filterAttributes.length) {
         params.filterAttributes = filterAttributes
     }
 
     if (configuration.mode === 'trackedEntity') {
         params.fields = TRACKED_ENTITY_LIST_FIELDS
+
         return { resource: 'tracker/trackedEntities', params }
     }
 
     params.programStage = configuration.programStageId
     params.fields = EVENT_LIST_FIELDS
+
     if (params.status === 'SCHEDULE' && params.scheduledAfter === undefined) {
         const serverToday = today ?? serializationContext?.today
+
         if (!serverToday) {
             throw new Error(
                 'Scheduled event requests require today in the server time zone'
             )
         }
+
         params.scheduledAfter = serverToday
     }
+
     return { resource: 'tracker/events', params }
 }
 
@@ -211,9 +235,11 @@ export const planTrackedEntityJoin = ({
                 .filter((id): id is string => Boolean(id))
         ),
     ]
+
     if (!trackedEntityIds.length) {
         return null
     }
+
     return {
         trackedEntityIds,
         request: {

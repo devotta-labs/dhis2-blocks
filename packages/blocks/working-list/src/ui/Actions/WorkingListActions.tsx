@@ -94,23 +94,29 @@ const ActionsControl = () => {
                   (view) => view.id === selection.selectedSavedListId
               )
             : undefined
+
     const saveAs = async (name: string) => {
         setSaveError(undefined)
         const result = await actions.createView(name)
+
         return Result.isError(result)
             ? saveErrorCopy(result.error, translate)
             : undefined
     }
+
     const update = async () => {
         setSaveError(undefined)
         const result = await actions.updateSelectedView()
+
         if (Result.isError(result)) {
             setSaveError(saveErrorCopy(result.error, translate))
         }
     }
+
     const download = () => {
         setDownloadError(undefined)
         const result = actions.downloadVisibleRows()
+
         if (Result.isError(result)) {
             setDownloadError(downloadErrorCopy(result.error, translate))
         }
@@ -162,6 +168,7 @@ export const WorkingListToolbarActions = ({
     ...props
 }: WorkingListToolbarActionsProps) => {
     const translate = useWorkingListText()
+
     const ready = useWorkingListMeta(
         (meta) => meta.activeConfiguration.status === 'ready'
     )

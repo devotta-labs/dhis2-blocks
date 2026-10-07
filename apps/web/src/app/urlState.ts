@@ -41,24 +41,30 @@ export const parseAppUrlState = (parameters: URLSearchParams): AppUrlState => {
             if (!parameters.has(key)) {
                 return []
             }
+
             const [value] = SingleUrlParameterSchema.parse(
                 parameters.getAll(key)
             )
+
             return [[key, value]]
         })
     )
+
     return WorkingListUrlStateSchema.parse(candidate)
 }
 
 export const serializeAppUrlState = (state: AppUrlState) => {
     const validated = WorkingListUrlStateSchema.parse(state)
     const parameters = new URLSearchParams()
+
     for (const key of ALLOWED_KEYS) {
         const value = validated[key]
+
         if (value !== undefined) {
             parameters.set(key, String(value))
         }
     }
+
     return parameters.toString()
 }
 

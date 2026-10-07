@@ -41,9 +41,11 @@ const dateContents = (
         filter,
         serializationContext
     )
+
     if (!serialized.dateFilter) {
         throw new Error(`${filter.field.id} did not serialize to a dateFilter`)
     }
+
     return DateFilterContentsSchema.parse(serialized.dateFilter)
 }
 
@@ -58,8 +60,10 @@ const commonCriteriaPayload = (
         ),
         order: `${fields.get(configuration.sort.fieldId)?.apiName ?? configuration.sort.fieldId}:${configuration.sort.direction}`,
     }
+
     const attributeValueFilters: SavedValueFilter[] = []
     const dataFilters: SavedValueFilter[] = []
+
     for (const filter of configuration.filters) {
         if (filter.field.source === 'trackedEntityAttribute') {
             attributeValueFilters.push({
@@ -70,6 +74,7 @@ const commonCriteriaPayload = (
             })
             continue
         }
+
         if (filter.field.source === 'eventDataElement') {
             dataFilters.push({
                 ...getValueTypeDefinition(
@@ -79,6 +84,7 @@ const commonCriteriaPayload = (
             })
             continue
         }
+
         switch (filter.field.id) {
             case 'enrollmentStatus':
                 criteria.enrollmentStatus =
@@ -114,10 +120,12 @@ const commonCriteriaPayload = (
             case 'eventAssignedUser':
                 if (filter.value.kind === 'assignee') {
                     criteria.assignedUserMode = filter.value.mode
+
                     if (filter.value.userIds?.length) {
                         criteria.assignedUsers = filter.value.userIds
                     }
                 }
+
                 break
             case 'eventStatus':
                 criteria.eventStatus =
@@ -141,12 +149,15 @@ const commonCriteriaPayload = (
                 break
         }
     }
+
     if (attributeValueFilters.length) {
         criteria.attributeValueFilters = attributeValueFilters
     }
+
     if (dataFilters.length) {
         criteria.dataFilters = dataFilters
     }
+
     return criteria
 }
 
@@ -159,22 +170,29 @@ const writableSharing = (sharing?: SavedListSharing): SavedListSharing => {
             userGroupAccesses: [],
         }
     }
+
     const writable: SavedListSharing = {}
+
     if (sharing.publicAccess !== undefined) {
         writable.publicAccess = sharing.publicAccess
     }
+
     if (sharing.externalAccess !== undefined) {
         writable.externalAccess = sharing.externalAccess
     }
+
     if (sharing.user !== undefined) {
         writable.user = { ...sharing.user }
     }
+
     if (sharing.userAccesses !== undefined) {
         writable.userAccesses = [...sharing.userAccesses]
     }
+
     if (sharing.userGroupAccesses !== undefined) {
         writable.userGroupAccesses = [...sharing.userGroupAccesses]
     }
+
     return writable
 }
 
@@ -244,6 +262,7 @@ const mergeDateFilterExtensions = (
     if (!existing || !next) {
         return next
     }
+
     return {
         ...unknownFields(existing, DATE_FILTER_KEYS),
         ...next,
@@ -257,26 +276,33 @@ const mergeSavedFilterExtensions = (
     if (!nextFilters) {
         return nextFilters
     }
+
     const previous = existingFilters ?? []
+
     return nextFilters.map((next) => {
         const reference = next.attribute ?? next.dataItem
+
         const existing = previous.find(
             (candidate) =>
                 (candidate.attribute ?? candidate.dataItem) === reference
         )
+
         if (!existing) {
             return next
         }
+
         const merged: SavedValueFilter = {
             ...unknownFields(existing, SAVED_VALUE_FILTER_KEYS),
             ...next,
         }
+
         if (next.dateFilter) {
             merged.dateFilter = mergeDateFilterExtensions(
                 existing.dateFilter,
                 next.dateFilter
             )
         }
+
         return merged
     })
 }
@@ -289,14 +315,17 @@ const mergeCriteriaExtensions = (
     if (!existing) {
         return next
     }
+
     const knownKeys =
         resource === 'trackedEntityInstanceFilters'
             ? ENTITY_CRITERIA_KEYS
             : STAGE_CRITERIA_KEYS
+
     const merged: WritableSavedCriteria = {
         ...unknownFields(existing, knownKeys),
         ...next,
     }
+
     const dateKeys = [
         'enrollmentCreatedDate',
         'enrollmentIncidentDate',
@@ -305,17 +334,21 @@ const mergeCriteriaExtensions = (
         'eventOccurredAt',
         'eventScheduledAt',
     ] as const
+
     for (const key of dateKeys) {
         if (next[key] !== undefined) {
             merged[key] = mergeDateFilterExtensions(existing[key], next[key])
         }
     }
+
     const filterKeys = ['attributeValueFilters', 'dataFilters'] as const
+
     for (const key of filterKeys) {
         if (next[key] !== undefined) {
             merged[key] = mergeSavedFilterExtensions(existing[key], next[key])
         }
     }
+
     return merged
 }
 
@@ -338,13 +371,16 @@ export const buildSavedListPayload = ({
     existingResource?: TrackedEntityInstanceFilter | ProgramStageWorkingList
 }) => {
     const parsedName = z.string().trim().min(1).parse(name)
+
     const parsedConfiguration =
         WorkingListConfigurationSchema.parse(configuration)
+
     const missingFieldIds = [
         ...parsedConfiguration.columns,
         parsedConfiguration.sort.fieldId,
         ...parsedConfiguration.filters.map((filter) => filter.field.id),
     ].filter((id) => !fields.has(id))
+
     if (missingFieldIds.length) {
         throw new StaleWorkingListError(
             [...new Set(missingFieldIds)].map((id) =>
@@ -352,15 +388,18 @@ export const buildSavedListPayload = ({
             )
         )
     }
+
     const validatedConfiguration: WorkingListConfiguration = {
         ...parsedConfiguration,
         filters: parsedConfiguration.filters.map((filter) => {
             const currentField = fields.get(filter.field.id)
+
             if (!currentField) {
                 throw new StaleWorkingListError([
                     getMissingIssue(filter.field.id, 'configuration.filters'),
                 ])
             }
+
             if (
                 parsedConfiguration.mode === 'event' &&
                 currentField.source === 'eventDataElement' &&
@@ -372,6 +411,7 @@ export const buildSavedListPayload = ({
                     `Event data element ${currentField.id} does not belong to stage ${parsedConfiguration.programStageId}`
                 )
             }
+
             return validateAppliedFilter(
                 { ...filter, field: currentField },
                 capabilities,
@@ -379,17 +419,20 @@ export const buildSavedListPayload = ({
             )
         }),
     }
+
     if (validatedConfiguration.mode === 'event') {
         for (const fieldId of [
             ...validatedConfiguration.columns,
             validatedConfiguration.sort.fieldId,
         ]) {
             const field = fields.get(fieldId)
+
             if (!field) {
                 throw new StaleWorkingListError([
                     getMissingIssue(fieldId, 'configuration.columns'),
                 ])
             }
+
             if (
                 field.source === 'eventDataElement' &&
                 !field.programStageIds?.includes(
@@ -402,12 +445,15 @@ export const buildSavedListPayload = ({
             }
         }
     }
+
     const resource: SavedListResource =
         validatedConfiguration.mode === 'trackedEntity'
             ? 'trackedEntityInstanceFilters'
             : 'programStageWorkingLists'
+
     const existingIsStage =
         existingResource !== undefined && 'programStage' in existingResource
+
     if (
         existingResource &&
         (existingResource.program.id !== validatedConfiguration.programId ||
@@ -417,6 +463,7 @@ export const buildSavedListPayload = ({
             'Existing saved-list resource does not match the replacement configuration'
         )
     }
+
     const common: SavedListPayloadBase = {
         name: parsedName,
         program: { id: validatedConfiguration.programId },
@@ -425,9 +472,11 @@ export const buildSavedListPayload = ({
                 (existingResource ? getSharing(existingResource) : undefined)
         ),
     }
+
     if (existingResource?.sortOrder !== undefined) {
         common.sortOrder = existingResource.sortOrder
     }
+
     const existingCriteria = existingResource
         ? resource === 'programStageWorkingLists'
             ? ProgramStageWorkingListSchema.parse(existingResource)
@@ -435,6 +484,7 @@ export const buildSavedListPayload = ({
             : TrackedEntityInstanceFilterSchema.parse(existingResource)
                   .entityQueryCriteria
         : undefined
+
     const criteria = mergeCriteriaExtensions(
         existingCriteria,
         commonCriteriaPayload(
@@ -444,6 +494,7 @@ export const buildSavedListPayload = ({
         ),
         resource
     )
+
     return validatedConfiguration.mode === 'trackedEntity'
         ? {
               resource: 'trackedEntityInstanceFilters' as const,

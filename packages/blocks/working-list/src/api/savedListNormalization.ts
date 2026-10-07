@@ -75,6 +75,7 @@ const getSavedFilterOperator = (
     if (value.kind === 'empty') {
         return value.isEmpty ? 'empty' : 'notEmpty'
     }
+
     if (
         value.kind === 'dateRange' ||
         value.kind === 'numberRange' ||
@@ -82,18 +83,23 @@ const getSavedFilterOperator = (
     ) {
         return 'range'
     }
+
     if (value.kind === 'options' || value.kind === 'boolean') {
         return 'in'
     }
+
     if (filter.like != null) {
         return 'like'
     }
+
     if (filter.sw != null) {
         return 'startsWith'
     }
+
     if (filter.ew != null) {
         return 'endsWith'
     }
+
     return 'equals'
 }
 
@@ -106,6 +112,7 @@ const normalizeValueFilter = (
         filter,
         parsingContext
     )
+
     return {
         field,
         value,
@@ -122,6 +129,7 @@ const normalizeDateValue = (
     if (!value) {
         throw new Error('Cannot normalize an absent date filter')
     }
+
     return value.type === 'ABSOLUTE'
         ? {
               kind: 'dateRange',
@@ -157,9 +165,11 @@ const systemFilter = (
     }
 ) => {
     const field = fields.get(id)
+
     if (!field) {
         throw new StaleWorkingListError([getMissingIssue(id, id)])
     }
+
     return validateSystemFilter({ field, operator, value })
 }
 
@@ -169,6 +179,7 @@ const normalizeCommonCriteria = (
     parsingContext?: FilterParsingContext
 ) => {
     const filters: AppliedFilter[] = []
+
     if (criteria.enrollmentStatus) {
         filters.push(
             systemFilter(fields, {
@@ -181,6 +192,7 @@ const normalizeCommonCriteria = (
             })
         )
     }
+
     if (criteria.followUp != null) {
         filters.push(
             systemFilter(fields, {
@@ -196,6 +208,7 @@ const normalizeCommonCriteria = (
             })
         )
     }
+
     if (criteria.assignedUserMode) {
         filters.push(
             systemFilter(fields, {
@@ -209,6 +222,7 @@ const normalizeCommonCriteria = (
             })
         )
     }
+
     for (const [index, savedFilter] of (
         criteria.attributeValueFilters ?? []
     ).entries()) {
@@ -217,7 +231,9 @@ const normalizeCommonCriteria = (
                 `attributeValueFilters.${index} is missing attribute`
             )
         }
+
         const field = fields.get(savedFilter.attribute)
+
         if (!field) {
             throw new StaleWorkingListError([
                 getMissingIssue(
@@ -226,6 +242,7 @@ const normalizeCommonCriteria = (
                 ),
             ])
         }
+
         if (!field.filterable) {
             throw new StaleWorkingListError([
                 getMissingIssue(
@@ -235,8 +252,10 @@ const normalizeCommonCriteria = (
                 ),
             ])
         }
+
         filters.push(normalizeValueFilter(savedFilter, field, parsingContext))
     }
+
     return filters
 }
 
@@ -247,6 +266,7 @@ const normalizeColumns = (
 ) =>
     (displayColumnOrder ?? defaults).map((id, index) => {
         const field = findField(fields, id)
+
         if (!field) {
             throw new StaleWorkingListError([
                 getMissingIssue(
@@ -256,6 +276,7 @@ const normalizeColumns = (
                 ),
             ])
         }
+
         return field.id
     })
 
@@ -266,18 +287,23 @@ const normalizeSort = (
     if (!order) {
         return { ...DEFAULT_WORKING_LIST_SORT }
     }
+
     const separator = order.lastIndexOf(':')
     const rawId = separator >= 0 ? order.slice(0, separator) : order
     const direction = separator >= 0 ? order.slice(separator + 1) : 'asc'
+
     if (direction !== 'asc' && direction !== 'desc') {
         throw new Error(`Invalid saved sort direction: ${direction}`)
     }
+
     const field = findField(fields, rawId)
+
     if (!field) {
         throw new StaleWorkingListError([
             getMissingIssue(rawId, 'order', 'missingSortField'),
         ])
     }
+
     return { fieldId: field.id, direction }
 }
 
@@ -293,11 +319,13 @@ const normalizeTrackedEntityResource = ({
     parsingContext?: FilterParsingContext
 }): WorkingListConfiguration => {
     const criteria = resource.entityQueryCriteria ?? {}
+
     const filters = normalizeCommonCriteria(
         criteria,
         metadata.fields,
         parsingContext
     )
+
     if (criteria.enrollmentCreatedDate) {
         filters.push(
             systemFilter(metadata.fields, {
@@ -310,6 +338,7 @@ const normalizeTrackedEntityResource = ({
             })
         )
     }
+
     if (criteria.enrollmentIncidentDate) {
         filters.push(
             systemFilter(metadata.fields, {
@@ -322,6 +351,7 @@ const normalizeTrackedEntityResource = ({
             })
         )
     }
+
     return {
         mode: 'trackedEntity',
         programId,
@@ -347,6 +377,7 @@ const normalizeEventResource = ({
     parsingContext?: FilterParsingContext
 }): WorkingListConfiguration => {
     const programStageId = resource.programStage.id
+
     if (!metadata.readableProgramStageIds.has(programStageId)) {
         throw new StaleWorkingListError([
             getMissingIssue(
@@ -356,9 +387,11 @@ const normalizeEventResource = ({
             ),
         ])
     }
+
     const fields = fieldsForProgramStage(metadata, programStageId)
     const criteria = resource.programStageQueryCriteria ?? {}
     const filters = normalizeCommonCriteria(criteria, fields, parsingContext)
+
     if (criteria.enrolledAt) {
         filters.push(
             systemFilter(fields, {
@@ -368,6 +401,7 @@ const normalizeEventResource = ({
             })
         )
     }
+
     if (criteria.enrollmentOccurredAt) {
         filters.push(
             systemFilter(fields, {
@@ -380,6 +414,7 @@ const normalizeEventResource = ({
             })
         )
     }
+
     if (criteria.eventStatus) {
         filters.push(
             systemFilter(fields, {
@@ -392,6 +427,7 @@ const normalizeEventResource = ({
             })
         )
     }
+
     if (criteria.eventOccurredAt) {
         filters.push(
             systemFilter(fields, {
@@ -404,6 +440,7 @@ const normalizeEventResource = ({
             })
         )
     }
+
     if (criteria.eventScheduledAt) {
         filters.push(
             systemFilter(fields, {
@@ -416,13 +453,16 @@ const normalizeEventResource = ({
             })
         )
     }
+
     if (criteria.assignedUserMode) {
         const index = filters.findIndex(
             (filter) => filter.field.id === 'assignedUser'
         )
+
         if (index >= 0) {
             filters.splice(index, 1)
         }
+
         filters.push(
             systemFilter(fields, {
                 id: 'eventAssignedUser',
@@ -435,11 +475,14 @@ const normalizeEventResource = ({
             })
         )
     }
+
     for (const [index, savedFilter] of (criteria.dataFilters ?? []).entries()) {
         if (!savedFilter.dataItem) {
             throw new Error(`dataFilters.${index} is missing dataItem`)
         }
+
         const field = fields.get(savedFilter.dataItem)
+
         if (!field) {
             throw new StaleWorkingListError([
                 getMissingIssue(
@@ -448,6 +491,7 @@ const normalizeEventResource = ({
                 ),
             ])
         }
+
         if (!field.filterable) {
             throw new StaleWorkingListError([
                 getMissingIssue(
@@ -457,8 +501,10 @@ const normalizeEventResource = ({
                 ),
             ])
         }
+
         filters.push(normalizeValueFilter(savedFilter, field, parsingContext))
     }
+
     return {
         mode: 'event',
         programId,
@@ -496,11 +542,13 @@ export const normalizeSavedWorkingListResource = ({
                   type: 'programStageWorkingLists' as const,
                   resource: ProgramStageWorkingListSchema.parse(resource),
               }
+
     if (parsed.resource.program.id !== programId) {
         throw new Error(
             `Saved list ${parsed.resource.id} belongs to program ${parsed.resource.program.id}, not ${programId}`
         )
     }
+
     const base: SavedListBase = {
         id: parsed.resource.id,
         name: parsed.resource.displayName,
@@ -508,6 +556,7 @@ export const normalizeSavedWorkingListResource = ({
         sortOrder: parsed.resource.sortOrder,
         sharing: getSharing(parsed.resource),
     }
+
     try {
         const configuration =
             parsed.type === 'trackedEntityInstanceFilters'
@@ -523,11 +572,13 @@ export const normalizeSavedWorkingListResource = ({
                       metadata,
                       parsingContext,
                   })
+
         const references = validateConfigurationReferences(configuration, {
             expectedProgramId: programId,
             fields: fieldsForConfiguration(metadata, configuration),
             readableProgramStageIds: metadata.readableProgramStageIds,
         })
+
         if ('issues' in references) {
             return {
                 ...base,
@@ -537,10 +588,12 @@ export const normalizeSavedWorkingListResource = ({
                 candidateConfiguration: configuration,
             }
         }
+
         const unsupportedFilters = configuration.filters.flatMap(
             (filter, index) => {
                 try {
                     validateAppliedFilter(filter, metadata.capabilities)
+
                     return []
                 } catch (error) {
                     return [
@@ -557,6 +610,7 @@ export const normalizeSavedWorkingListResource = ({
                 }
             }
         )
+
         if (unsupportedFilters.length) {
             return {
                 ...base,
@@ -566,6 +620,7 @@ export const normalizeSavedWorkingListResource = ({
                 candidateConfiguration: configuration,
             }
         }
+
         return {
             ...base,
             compatibility: 'compatible',
@@ -581,6 +636,7 @@ export const normalizeSavedWorkingListResource = ({
                 raw: parsed.resource,
             }
         }
+
         throw error
     }
 }

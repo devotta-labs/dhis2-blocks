@@ -1,4 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
+
 /**
  * Literal extraction markers for the reusable UI. Runtime rendering uses the
  * injectable translation context; d2-app-scripts currently only discovers

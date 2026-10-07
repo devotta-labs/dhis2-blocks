@@ -52,6 +52,7 @@ const TestSection = ({
     children: ReactNode
 }) => {
     const headingId = useId()
+
     return (
         <section
             data-testid="working-list-section"
@@ -124,8 +125,10 @@ describe('multiple working list instances', () => {
         actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
         window.requestAnimationFrame = (callback) => {
             callback(0)
+
             return 1
         }
+
         window.cancelAnimationFrame = () => undefined
 
         const container = document.createElement('div')
@@ -147,6 +150,7 @@ describe('multiple working list instances', () => {
                     '[data-testid="working-list-section"]'
                 ),
             ]
+
             expect(sections).toHaveLength(6)
             expect(
                 sections
@@ -186,11 +190,13 @@ describe('multiple working list instances', () => {
                 'Saved views in this program',
                 'Saved views in this program',
             ])
+
             const resultViews = [
                 ...container.querySelectorAll<HTMLElement>(
                     '[data-testid="working-list-results"]'
                 ),
             ]
+
             expect(resultViews).toHaveLength(2)
             resultViews.forEach((results) => {
                 expect(results.tagName).toBe('DIV')
@@ -201,6 +207,7 @@ describe('multiple working list instances', () => {
             const menuButtons = container.querySelectorAll<HTMLButtonElement>(
                 '[data-testid="working-list-view-saved-view-menu"]'
             )
+
             expect(menuButtons).toHaveLength(2)
             const menuIds: string[] = []
             menuButtons.forEach((button) => {

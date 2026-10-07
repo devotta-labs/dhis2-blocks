@@ -4,6 +4,7 @@ import { OrganisationUnitSelectorContent } from '../OrganisationUnitSelectorCont
 
 const Harness = () => {
     const [search, setSearch] = useState('')
+
     return (
         <OrganisationUnitSelectorContent
             roots={[]}
@@ -22,12 +23,15 @@ describe('Capture-style organisation-unit field', () => {
         const screen = await render(<Harness />)
         const input = screen.getByPlaceholder('Search')
         await expect.element(input).toBeVisible()
+
         const initialInputBorderColor = getComputedStyle(
             input.element()
         ).borderColor
+
         const initialInputBoxShadow = getComputedStyle(
             input.element()
         ).boxShadow
+
         await input.fill('Ngelehun')
         await expect.element(input).toHaveValue('Ngelehun')
 
@@ -38,9 +42,11 @@ describe('Capture-style organisation-unit field', () => {
         const headerStyle = getComputedStyle(searchHeader!)
         const inputStyle = getComputedStyle(input.element())
         const treeStyle = getComputedStyle(tree)
+
         const loader = tree.querySelector<HTMLElement>(
             '[data-test="dhis2-uicore-circularloader"]'
         )
+
         const loaderStyle = getComputedStyle(loader!)
 
         expect(fieldStyle.borderWidth).toBe('1px')

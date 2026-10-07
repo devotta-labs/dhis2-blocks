@@ -13,6 +13,7 @@ import {
 import React, { useState } from 'react'
 
 type SelectorMode = 'interactive' | 'loading' | 'disabled' | 'readOnly'
+
 type SelectorName =
     | 'program'
     | 'organisationUnit'
@@ -77,26 +78,32 @@ export const ContextSelectorShowcase = () => {
     const [selectorSet, setSelectorSet] = useState<'primary' | 'related'>(
         'primary'
     )
+
     const [mode, setMode] = useState<SelectorMode>('interactive')
     const [clearable, setClearable] = useState(true)
+
     const [values, setValues] =
         useState<Partial<Record<SelectorName, string>>>(initialValues)
+
     const [openSelector, setOpenSelector] = useState<SelectorName>()
 
     const updateValue = (name: SelectorName, value?: string) => {
         setValues((current) => ({ ...current, [name]: value }))
     }
+
     const openProps = (name: SelectorName) => ({
         open: openSelector === name,
         onOpenChange: (open: boolean) =>
             setOpenSelector(open ? name : undefined),
     })
+
     const stateProps = {
         loading: mode === 'loading',
         loadingLabel: 'Loading context options',
         disabled: mode === 'disabled',
         readOnly: mode === 'readOnly',
     }
+
     const clear = (name: SelectorName) =>
         clearable ? () => updateValue(name) : undefined
 
@@ -270,9 +277,11 @@ export const ContextSelectorShowcase = () => {
                                 value={mode}
                                 onChange={(event) => {
                                     const nextMode = event.target.value
+
                                     if (isSelectorMode(nextMode)) {
                                         setMode(nextMode)
                                     }
+
                                     setOpenSelector(undefined)
                                 }}
                             >

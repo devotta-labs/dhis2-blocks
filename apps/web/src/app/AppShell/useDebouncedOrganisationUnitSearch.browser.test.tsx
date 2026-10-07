@@ -4,6 +4,7 @@ import { useDebouncedOrganisationUnitSearch } from './useDebouncedOrganisationUn
 
 const Harness = () => {
     const [search, setSearch] = useState('')
+
     const [debouncedSearch, setDebouncedSearch] =
         useDebouncedOrganisationUnitSearch(search)
 

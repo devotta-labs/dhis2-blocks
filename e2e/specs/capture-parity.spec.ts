@@ -37,10 +37,13 @@ test.describe('Capture context and generated tracker views', () => {
                 },
             }
         )
+
         expect(organisationUnitResponse.ok()).toBe(true)
+
         const organisationUnit = OrganisationUnitSchema.parse(
             await organisationUnitResponse.json()
         )
+
         expect(organisationUnit).toMatchObject({
             id: ORG_UNIT,
             displayName: ORG_UNIT_NAME,
@@ -52,11 +55,13 @@ test.describe('Capture context and generated tracker views', () => {
         })
 
         const trackerRequests: URL[] = []
+
         const countTrackerRequest = (request: Request) => {
             if (isTrackerResource(request, 'trackedEntities')) {
                 trackerRequests.push(requestUrl(request))
             }
         }
+
         page.on('request', countTrackerRequest)
         await page.locator('[data-test="program-selector-container"]').click()
         await page.getByText(PROGRAM_NAME, { exact: true }).last().click()
@@ -85,6 +90,7 @@ test.describe('Capture context and generated tracker views', () => {
                 url.searchParams.get('orgUnitMode') === 'SELECTED' &&
                 url.searchParams.get('orgUnits') === ORG_UNIT
         )
+
         await selectedRequest
         page.off('request', countTrackerRequest)
         expect(trackerRequests.length).toBeGreaterThan(0)
@@ -102,18 +108,23 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(page.getByTestId('working-list-table')).toBeVisible({
             timeout: 30_000,
         })
+
         const contextBounds = await page.evaluate(() => {
             const app = document.querySelector<HTMLElement>(
                 '[data-testid="working-list-app"]'
             )
+
             const bar = document.querySelector<HTMLElement>(
                 '[data-testid="context-selector"]'
             )
+
             if (!app || !bar) {
                 return undefined
             }
+
             const appRect = app.getBoundingClientRect()
             const barRect = bar.getBoundingClientRect()
+
             return {
                 appLeft: appRect.left,
                 appRight: appRect.right,
@@ -121,13 +132,16 @@ test.describe('Capture context and generated tracker views', () => {
                 barRight: barRect.right,
             }
         })
+
         expect(contextBounds).toBeDefined()
         expect(contextBounds!.barLeft).toBeCloseTo(contextBounds!.appLeft, 0)
         expect(contextBounds!.barRight).toBeCloseTo(contextBounds!.appRight, 0)
+
         const documentHeading = page.getByRole('heading', {
             level: 1,
             name: 'Working lists',
         })
+
         await expect(documentHeading).toBeAttached()
         await expect(documentHeading).toHaveCSS('position', 'absolute')
     })
@@ -154,12 +168,14 @@ test.describe('Capture context and generated tracker views', () => {
 
         const statusParameter =
             targetMajor === 41 ? 'programStatus' : 'enrollmentStatus'
+
         const completed = await waitForTrackerResponse(
             page,
             'trackedEntities',
             () => savedViewButton(page, 'completed').click(),
             (url) => url.searchParams.get(statusParameter) === 'COMPLETED'
         )
+
         expect(completed.searchParams.get('page')).toBe('1')
         await expect(resultRows(page)).toHaveCount(6)
 
@@ -177,16 +193,19 @@ test.describe('Capture context and generated tracker views', () => {
     }) => {
         const statusParameter =
             targetMajor === 41 ? 'programStatus' : 'enrollmentStatus'
+
         const parameters = new URLSearchParams({
             programId: PROGRAM,
             orgUnitId: ORG_UNIT,
         })
+
         const initialQuery = await waitForTrackerResponse(
             page,
             'trackedEntities',
             () => page.goto(`/#/?${parameters.toString()}`),
             (url) => !url.searchParams.has(statusParameter)
         )
+
         expect(initialQuery.searchParams.has('filter')).toBe(false)
         // An absent URL selection is controlled null. The provider resolves
         // it to the generated default without echoing an external selection
@@ -209,6 +228,7 @@ test.describe('Capture context and generated tracker views', () => {
             () => page.reload(),
             (url) => !url.searchParams.has(statusParameter)
         )
+
         expect(reloadedQuery.searchParams.has('filter')).toBe(false)
         await expect(page).not.toHaveURL(/selectedTemplateId=/)
         await expect(
@@ -226,11 +246,13 @@ test.describe('Capture context and generated tracker views', () => {
     }) => {
         const missingTemplateId = 'WlMissing01'
         const trackerRequests: URL[] = []
+
         const captureTrackerRequest = (request: Request) => {
             if (isTrackerResource(request, 'trackedEntities')) {
                 trackerRequests.push(requestUrl(request))
             }
         }
+
         page.on('request', captureTrackerRequest)
 
         try {
@@ -262,6 +284,7 @@ test.describe('Capture context and generated tracker views', () => {
                     url.searchParams.get('orgUnits') === ORG_UNIT &&
                     !url.searchParams.has('filter')
             )
+
             expect(defaultQuery.searchParams.get('page')).toBe('1')
             await expect(page).toHaveURL(
                 new RegExp(`selectedTemplateId=${PROGRAM}-default`)
@@ -281,6 +304,7 @@ test.describe('Capture context and generated tracker views', () => {
         await openWorkingList(page)
         const activeView = savedViewButton(page, 'active')
         await expect(activeView).toHaveAttribute('aria-current', 'true')
+
         const statusParameter =
             targetMajor === 41 ? 'programStatus' : 'enrollmentStatus'
 
@@ -290,6 +314,7 @@ test.describe('Capture context and generated tracker views', () => {
             () => activeView.click(),
             (url) => !url.searchParams.has(statusParameter)
         )
+
         expect(deselectedQuery.searchParams.get('page')).toBe('1')
         await expect(activeView).not.toHaveAttribute('aria-current', 'true')
         // Deselection selects the synthetic default template so the
@@ -308,12 +333,14 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(page).toHaveURL(
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
         )
+
         const reloadedQuery = await waitForTrackerResponse(
             page,
             'trackedEntities',
             () => page.reload(),
             (url) => !url.searchParams.has(statusParameter)
         )
+
         expect(reloadedQuery.searchParams.has('filter')).toBe(false)
         await expect(page).toHaveURL(
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
@@ -333,11 +360,13 @@ test.describe('Capture context and generated tracker views', () => {
         const editor = page.getByTestId(`filter-editor-${TEXT_ATTRIBUTE}`)
 
         let trackerRequests = 0
+
         const countTrackerRequest = (request: Request) => {
             if (isTrackerResource(request, 'trackedEntities')) {
                 trackerRequests += 1
             }
         }
+
         page.on('request', countTrackerRequest)
         await editor.getByLabel('Value').fill('Alpha person 01')
         await page.waitForTimeout(400)
@@ -356,6 +385,7 @@ test.describe('Capture context and generated tracker views', () => {
                     .getAll('filter')
                     .includes(`${TEXT_ATTRIBUTE}:like:Alpha person 01`)
         )
+
         page.off('request', countTrackerRequest)
         expect(filtered.searchParams.get('page')).toBe('1')
         await expect(
@@ -363,19 +393,24 @@ test.describe('Capture context and generated tracker views', () => {
         ).toBeVisible()
 
         await openFilterEditor(page, TEXT_ATTRIBUTE)
+
         const operator = page.locator(
             `[data-test="filter-operator-${TEXT_ATTRIBUTE}"]`
         )
+
         await operator
             .locator('[data-test="dhis2-uicore-select-input"]')
             .click()
+
         if (targetMajor === 41) {
             await expect(
                 page.getByText('Is empty', { exact: true })
             ).toHaveCount(0)
             await page.keyboard.press('Escape')
+
             return
         }
+
         await page.getByText('Is empty', { exact: true }).click()
         await waitForTrackerResponse(
             page,

@@ -116,9 +116,11 @@ export const createWorkingListActions = ({
 }: CreateWorkingListActionsOptions): WorkingListActionImplementation => ({
     setFilter(filter: AppliedFilter) {
         const runtime = runtimeRef.current
+
         if (!runtime.activeState)
             throw new Error('Working List configuration is unavailable')
         const filters = runtime.activeState.configuration.filters
+
         return validateAndCommit(
             {
                 ...runtime.activeState.configuration,
@@ -133,12 +135,15 @@ export const createWorkingListActions = ({
     },
     removeFilter(fieldId) {
         const runtime = runtimeRef.current
+
         if (!runtime.activeState || !runtime.metadata)
             throw new Error('Working List configuration is unavailable')
+
         const fields = fieldsForConfiguration(
             runtime.metadata,
             runtime.activeState.configuration
         )
+
         if (!fields.has(fieldId)) {
             return Result.err(
                 new UnknownFieldError({
@@ -147,12 +152,14 @@ export const createWorkingListActions = ({
                 })
             )
         }
+
         if (
             !runtime.activeState.configuration.filters.some(
                 (filter) => filter.fieldId === fieldId
             )
         )
             return Result.ok()
+
         return validateAndCommit(
             {
                 ...runtime.activeState.configuration,
@@ -165,8 +172,10 @@ export const createWorkingListActions = ({
     },
     setColumns(fieldIds) {
         const runtime = runtimeRef.current
+
         if (!runtime.activeState)
             throw new Error('Working List configuration is unavailable')
+
         return validateAndCommit(
             {
                 ...runtime.activeState.configuration,
@@ -177,8 +186,10 @@ export const createWorkingListActions = ({
     },
     setSort(sort) {
         const runtime = runtimeRef.current
+
         if (!runtime.activeState)
             throw new Error('Working List configuration is unavailable')
+
         return validateAndCommit(
             { ...runtime.activeState.configuration, sort },
             true
@@ -186,8 +197,10 @@ export const createWorkingListActions = ({
     },
     setProgramStage(programStageId) {
         const runtime = runtimeRef.current
+
         if (!runtime.activeState || !runtime.metadata)
             throw new Error('Working List configuration is unavailable')
+
         if (
             programStageId !== undefined &&
             !runtime.metadata.readableProgramStageIds.has(programStageId)
@@ -199,24 +212,30 @@ export const createWorkingListActions = ({
                 })
             )
         }
+
         const current = runtime.activeState.configuration
+
         if (
             (current.mode === 'event' ? current.programStageId : undefined) ===
             programStageId
         )
             return Result.ok()
+
         const filters = current.filters.filter((filter) => {
             const field = runtime.metadata?.fields.get(filter.fieldId)
+
             return (
                 field?.scope === 'trackedEntity' &&
                 (!programStageId || field.id !== 'assignedUser')
             )
         })
+
         const columns = programStageId
             ? (runtime.metadata.defaultEventColumnsByStage.get(
                   programStageId
               ) ?? runtime.metadata.defaultTrackedEntityColumns)
             : runtime.metadata.defaultTrackedEntityColumns
+
         const candidate = programStageId
             ? {
                   mode: 'event' as const,
@@ -231,6 +250,7 @@ export const createWorkingListActions = ({
                   columns: [...columns],
                   sort: { ...DEFAULT_WORKING_LIST_SORT },
               }
+
         return validateAndCommit(candidate, true)
     },
     setPage(page) {
@@ -241,10 +261,12 @@ export const createWorkingListActions = ({
                 })
             )
         }
+
         stagePagination({
             page,
             pageSize: runtimeRef.current.effectivePagination.pageSize,
         })
+
         return Result.ok()
     },
     setPageSize(pageSize) {
@@ -255,7 +277,9 @@ export const createWorkingListActions = ({
                 })
             )
         }
+
         stagePagination({ page: 1, pageSize })
+
         return Result.ok()
     },
     selectView(id) {
@@ -266,23 +290,28 @@ export const createWorkingListActions = ({
                 })
             )
         hardTransition(id, true)
+
         return Result.ok()
     },
     clearViewSelection() {
         hardTransition(defaultListId, true)
+
         return Result.ok()
     },
     async createView(name) {
         const runtime = runtimeRef.current
+
         if (!runtime.online)
             return Result.err(
                 new OfflineMutationError({
                     message: 'Working lists cannot be created while offline',
                 })
             )
+
         if (!runtime.resolvedConfiguration || !runtime.metadata)
             throw new Error('Working List configuration is unavailable')
         const trimmed = name.trim()
+
         if (!trimmed)
             return Result.err(
                 new InvalidConfigurationError({
@@ -291,9 +320,11 @@ export const createWorkingListActions = ({
             )
         setMutation('create', { status: 'pending' })
         const selectionVersion = selectionToken.current
+
         try {
             const snapshot = runtime.resolvedConfiguration
             const fields = fieldsForConfiguration(runtime.metadata, snapshot)
+
             const id = await createSavedWorkingList({
                 client,
                 name: trimmed,
@@ -302,8 +333,10 @@ export const createWorkingListActions = ({
                 capabilities,
                 serializationContext: runtime.serializationContext,
             })
+
             const lists = await refreshSavedLists()
             const confirmed = lists.find((list) => list.id === id)
+
             if (!confirmed || confirmed.compatibility !== 'compatible') {
                 return Result.err(
                     new WorkingListInvalidResponseError({
@@ -312,9 +345,11 @@ export const createWorkingListActions = ({
                     })
                 )
             }
+
             if (selectionToken.current === selectionVersion) {
                 hardTransition(id, true)
             }
+
             return Result.ok({ viewId: id })
         } catch (cause) {
             return Result.err(
@@ -326,6 +361,7 @@ export const createWorkingListActions = ({
     },
     async updateSelectedView() {
         const runtime = runtimeRef.current
+
         if (!runtime.online)
             return Result.err(
                 new OfflineMutationError({
@@ -333,12 +369,14 @@ export const createWorkingListActions = ({
                 })
             )
         const id = runtime.activeState?.selectedSavedListId
+
         if (!id || !runtime.resolvedConfiguration || !runtime.metadata)
             return Result.err(
                 new NoSelectedSavedListError({
                     message: 'No persisted saved working list is selected',
                 })
             )
+
         if (
             id === defaultListId ||
             runtime.displayedLists.some(
@@ -355,9 +393,11 @@ export const createWorkingListActions = ({
                 })
             )
         }
+
         const list = runtime.confirmedLists?.find(
             (candidate) => candidate.id === id
         )
+
         if (!list)
             return Result.err(
                 new SavedListNotFoundError({
@@ -365,6 +405,7 @@ export const createWorkingListActions = ({
                     message: `Saved working list ${id} was not found`,
                 })
             )
+
         if (list.compatibility !== 'compatible')
             return Result.err(
                 new IncompatibleSavedListError({
@@ -373,6 +414,7 @@ export const createWorkingListActions = ({
                         'Repair this saved working list before updating it',
                 })
             )
+
         if (
             list.sharing.access?.write !== true ||
             list.sharing.access.update !== true
@@ -384,10 +426,12 @@ export const createWorkingListActions = ({
                     message: `Update access to ${id} is required`,
                 })
             )
+
         const expectedResource =
             runtime.resolvedConfiguration.mode === 'event'
                 ? 'programStageWorkingLists'
                 : 'trackedEntityInstanceFilters'
+
         if (list.resource !== expectedResource)
             return Result.err(
                 new InvalidConfigurationError({
@@ -395,6 +439,7 @@ export const createWorkingListActions = ({
                 })
             )
         setMutation('update', { status: 'pending', targetId: id })
+
         try {
             const snapshot = runtime.resolvedConfiguration
             const fields = fieldsForConfiguration(runtime.metadata, snapshot)
@@ -412,6 +457,7 @@ export const createWorkingListActions = ({
             })
             const lists = await refreshSavedLists()
             const confirmed = lists.find((candidate) => candidate.id === id)
+
             if (
                 !confirmed ||
                 confirmed.compatibility !== 'compatible' ||
@@ -425,6 +471,7 @@ export const createWorkingListActions = ({
                     })
                 )
             }
+
             const publicSnapshot = toPublicConfiguration(snapshot)
             updateStore((current) => {
                 if (
@@ -439,12 +486,14 @@ export const createWorkingListActions = ({
                 ) {
                     return {}
                 }
+
                 return {
                     baselineFingerprint:
                         publicConfigurationFingerprint(publicSnapshot),
                     meta: { ...current.meta, dirty: false },
                 }
             })
+
             return Result.ok()
         } catch (cause) {
             return Result.err(
@@ -456,15 +505,18 @@ export const createWorkingListActions = ({
     },
     async deleteView(id) {
         const runtime = runtimeRef.current
+
         if (!runtime.online)
             return Result.err(
                 new OfflineMutationError({
                     message: 'Working lists cannot be deleted while offline',
                 })
             )
+
         const list = runtime.confirmedLists?.find(
             (candidate) => candidate.id === id
         )
+
         if (!list)
             return Result.err(
                 new SavedListNotFoundError({
@@ -472,6 +524,7 @@ export const createWorkingListActions = ({
                     message: `Saved working list ${id} was not found`,
                 })
             )
+
         if (list.sharing.access?.delete !== true)
             return Result.err(
                 new SavedListPermissionError({
@@ -481,9 +534,11 @@ export const createWorkingListActions = ({
                 })
             )
         setMutation('delete', { status: 'pending', targetId: id })
+
         try {
             await deleteSavedWorkingList(client, list.resource, id)
             const lists = await refreshSavedLists()
+
             if (lists.some((candidate) => candidate.id === id)) {
                 return Result.err(
                     new WorkingListInvalidResponseError({
@@ -492,6 +547,7 @@ export const createWorkingListActions = ({
                     })
                 )
             }
+
             if (
                 isCurrentSelection(
                     store.getState().activeState?.selectedSavedListId,
@@ -500,6 +556,7 @@ export const createWorkingListActions = ({
             ) {
                 hardTransition(defaultListId, true)
             }
+
             return Result.ok()
         } catch (cause) {
             return Result.err(
@@ -511,6 +568,7 @@ export const createWorkingListActions = ({
     },
     downloadVisibleRows(): Result<void, DownloadVisibleRowsError> {
         const runtime = runtimeRef.current
+
         if (
             !runtime.activeState ||
             !runtime.resolvedConfiguration ||
@@ -525,11 +583,13 @@ export const createWorkingListActions = ({
                 })
             )
         }
+
         try {
             const fields = fieldsForConfiguration(
                 runtime.metadata,
                 runtime.resolvedConfiguration
             )
+
             downloadRowsAsCsv({
                 rows: runtime.rows,
                 columns: runtime.activeState.configuration.columns,
@@ -538,6 +598,7 @@ export const createWorkingListActions = ({
                 translate,
                 fileName: `${runtime.program.displayName}-working-list.csv`,
             })
+
             return Result.ok()
         } catch (cause) {
             return Result.err(

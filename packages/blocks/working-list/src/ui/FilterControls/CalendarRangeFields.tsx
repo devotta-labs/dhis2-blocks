@@ -29,25 +29,31 @@ export const CalendarRangeFields = ({
 }) => {
     const translate = useWorkingListText()
     const calendar = toMultiCalendarIdentifier(calendarContext.calendar)
+
     const [startValidation, setStartValidation] =
         useState<CalendarValidationFeedback>()
+
     const [endValidation, setEndValidation] =
         useState<CalendarValidationFeedback>()
+
     const handleSelection = (
         payload: z.input<typeof CalendarSelectionSchema>,
         otherValue: string | undefined,
         position: 'start' | 'end'
     ) => {
         const selection = CalendarSelectionSchema.parse(payload)
+
         if (position === 'start') {
             setStartValidation(selection?.validation)
         } else {
             setEndValidation(selection?.validation)
         }
+
         const selected = calendarInputDateToCanonical(
             selection?.calendarDateString,
             calendarContext.dateFormat
         )
+
         onChange(
             position === 'start' ? selected : otherValue,
             position === 'end' ? selected : otherValue
@@ -61,6 +67,7 @@ export const CalendarRangeFields = ({
     const clearButton = (position: 'start' | 'end') => {
         const validation =
             position === 'start' ? startValidation : endValidation
+
         return (
             <button
                 type="button"

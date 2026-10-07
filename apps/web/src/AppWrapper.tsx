@@ -27,6 +27,7 @@ const queryClient = new QueryClient({
 
 const RedirectToRoot = () => {
     const location = useLocation()
+
     return <Navigate to={{ pathname: '/', search: location.search }} replace />
 }
 

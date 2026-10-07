@@ -4,6 +4,7 @@ import type { ESTree, SourceCode, Variable } from "@oxlint/plugins";
 import {
   arrayMethodTarget,
   isKnownArrayExpression,
+  isKnownNestedArrayExpression,
   resolveArrayBinding,
   unwrapArrayExpression,
 } from "../shared/array-method.ts";
@@ -27,7 +28,7 @@ function enclosingReducer(node: ESTree.Node) {
       const firstParameter = callback.params[0];
       const accumulator = firstParameter?.type === "AssignmentPattern" ? firstParameter.left : firstParameter;
       if (accumulator?.type !== "Identifier") return null;
-      return { callback, accumulator, initialValue: owner.arguments[1] };
+      return { callback, accumulator, initialValue: owner.arguments[1], receiver: method.object };
     }
     parent = parent.parent;
   }
@@ -97,9 +98,11 @@ export const noReduceAccumulatorCopyRule = defineRule({
           const source = node.arguments[0];
           copiesAccumulator = source !== undefined && isAccumulator(source);
         } else if (["concat", "slice", "toSpliced", "toSorted", "toReversed", "with"].includes(method.name)) {
-          const initialValue = reducer.initialValue;
-          const arrayAccumulator = initialValue !== undefined &&
-            isKnownArrayExpression(context.sourceCode, initialValue);
+          // Without a seed the accumulator is the first element; it is an array
+          // only when every element of the receiver is provably an array.
+          const arrayAccumulator = reducer.initialValue !== undefined
+            ? isKnownArrayExpression(context.sourceCode, reducer.initialValue)
+            : isKnownNestedArrayExpression(context.sourceCode, reducer.receiver);
           copiesAccumulator = arrayAccumulator && isAccumulator(method.object);
         }
         if (copiesAccumulator) context.report({ node, messageId: "accumulatorCopy" });

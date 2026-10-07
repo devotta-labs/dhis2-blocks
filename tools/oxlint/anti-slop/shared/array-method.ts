@@ -56,6 +56,73 @@ function isArrayAnnotation(type: ESTree.TSType): boolean {
   );
 }
 
+function tupleElementIsArray(element: ESTree.TSTupleElement): boolean {
+  let current: ESTree.TSTupleElement = element;
+  while (
+    current.type === "TSOptionalType" ||
+    current.type === "TSRestType" ||
+    current.type === "TSNamedTupleMember"
+  ) {
+    current = current.type === "TSNamedTupleMember" ? current.elementType : current.typeAnnotation;
+  }
+  return isArrayAnnotation(current);
+}
+
+function isNestedArrayAnnotation(type: ESTree.TSType): boolean {
+  if (type.type === "TSParenthesizedType") return isNestedArrayAnnotation(type.typeAnnotation);
+  if (type.type === "TSTypeOperator" && type.operator === "readonly") {
+    return isNestedArrayAnnotation(type.typeAnnotation);
+  }
+  if (type.type === "TSArrayType") return isArrayAnnotation(type.elementType);
+  if (type.type === "TSTupleType") {
+    return type.elementTypes.length > 0 && type.elementTypes.every(tupleElementIsArray);
+  }
+  if (
+    type.type === "TSTypeReference" && type.typeName.type === "Identifier" &&
+    (type.typeName.name === "Array" || type.typeName.name === "ReadonlyArray")
+  ) {
+    const element = type.typeArguments?.params[0];
+    return element !== undefined && isArrayAnnotation(element);
+  }
+  return false;
+}
+
+/** Recognize expressions whose elements are provably arrays, for unseeded reduce accumulators. */
+export function isKnownNestedArrayExpression(
+  sourceCode: SourceCode,
+  node: ESTree.Node,
+  visited = new Set<Variable>(),
+): boolean {
+  node = unwrapArrayExpression(node);
+  if (node.type === "ArrayExpression") {
+    return node.elements.length > 0 && node.elements.every(element => {
+      if (element === null) return false;
+      return element.type === "SpreadElement"
+        ? isKnownNestedArrayExpression(sourceCode, element.argument)
+        : isKnownArrayExpression(sourceCode, element);
+    });
+  }
+  if (node.type !== "Identifier") return false;
+  const variable = resolveArrayBinding(sourceCode, node);
+  if (variable === null || visited.has(variable)) return false;
+  visited.add(variable);
+  if (variable.references.some(reference => reference.isWrite() && !reference.init)) return false;
+  for (const identifier of variable.identifiers) {
+    const annotation = identifier.typeAnnotation?.typeAnnotation;
+    if (annotation !== undefined) return isNestedArrayAnnotation(annotation);
+  }
+  for (const definition of variable.defs) {
+    if (
+      definition.type === "Variable" && definition.node.type === "VariableDeclarator" &&
+      definition.node.id.type === "Identifier" && definition.node.init !== null &&
+      definition.node.parent.type === "VariableDeclaration" && definition.node.parent.kind === "const"
+    ) {
+      return isKnownNestedArrayExpression(sourceCode, definition.node.init, visited);
+    }
+  }
+  return false;
+}
+
 /** Recognize local array evidence; unknown receivers and iterator pipelines are deliberately excluded. */
 export function isKnownArrayExpression(
   sourceCode: SourceCode,

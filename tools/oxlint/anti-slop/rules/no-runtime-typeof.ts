@@ -1,6 +1,8 @@
 import { defineRule } from "@oxlint/plugins";
 
-import type { ESTree } from "@oxlint/plugins";
+import { resolveArrayBinding, unwrapArrayExpression } from "../shared/array-method.ts";
+
+import type { ESTree, SourceCode } from "@oxlint/plugins";
 
 type RuntimeFunction = ESTree.ArrowFunctionExpression | ESTree.Function;
 
@@ -24,12 +26,18 @@ function isInsideTypeGuard(node: ESTree.Node): boolean {
 }
 
 /** Return whether typeof safely probes for the existence of a possibly absent binding. */
-function isExistenceProbe(node: ESTree.UnaryExpression): boolean {
+function isExistenceProbe(sourceCode: SourceCode, node: ESTree.UnaryExpression): boolean {
 	const parent = node.parent;
 	if (parent.type !== "BinaryExpression") return false;
 	if (!["===", "!==", "==", "!="].includes(parent.operator)) return false;
 	const other = parent.left === node ? parent.right : parent.left;
-	return other.type === "Literal" && other.value === "undefined";
+	if (other.type !== "Literal" || other.value !== "undefined") return false;
+	const operand = unwrapArrayExpression(node.argument);
+	if (operand.type === "Identifier") {
+		// Declared parameters and locals are present; only unresolved globals may be absent.
+		return resolveArrayBinding(sourceCode, operand) === null;
+	}
+	return operand.type === "MemberExpression";
 }
 
 /** Disallow runtime typeof checks that narrow unparsed values instead of decoding them. */
@@ -66,7 +74,7 @@ export const noRuntimeTypeofRule = defineRule({
 					option.allowInTypeGuards === true;
 				if (
 					node.operator === "typeof" &&
-					!isExistenceProbe(node) &&
+					!isExistenceProbe(context.sourceCode, node) &&
 					(!allowInTypeGuards || !isInsideTypeGuard(node))
 				) {
 					context.report({ node, messageId: "runtimeTypeof" });

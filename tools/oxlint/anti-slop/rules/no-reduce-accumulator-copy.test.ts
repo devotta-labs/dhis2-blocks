@@ -26,6 +26,9 @@ tester.run("anti-slop/no-reduce-accumulator-copy", noReduceAccumulatorCopyRule, 
     "items.reduce((acc, item) => { let alias = acc; alias = item; return Object.assign({}, alias); }, {});",
     "items.reduce((acc, item) => [...acc, item], []);", // Owned by the native rule.
     "items.reduce((acc, item) => ({ ...acc, [item.id]: item }), {});",
+    "items.reduce((acc, item) => acc.concat(item));", // Unseeded with unprovable element type.
+    "const nums: number[] = [1]; nums.reduce((acc, item) => acc.concat(item));",
+    "const rest: number[] = []; const mixed = [[1], ...rest]; mixed.reduce((acc, item) => acc.concat(item));",
   ],
   invalid: [
     { code: "items.reduce((acc, item) => Object.assign({}, acc, { [item.id]: item }), {});", errors: [error] },
@@ -48,5 +51,10 @@ tester.run("anti-slop/no-reduce-accumulator-copy", noReduceAccumulatorCopyRule, 
     { code: "items.reduce((acc, item) => acc.toSorted(), []);", errors: [error] },
     { code: "items.reduce((acc, item) => acc.toReversed(), []);", errors: [error] },
     { code: "items.reduce((acc, item) => acc.with(0, item), []);", errors: [error] },
+    { code: "const chunks: number[][] = [[1], [2]]; chunks.reduce((acc, item) => acc.concat(item));", errors: [error] },
+    { code: "[[1], [2], [3]].reduce((acc, item) => acc.concat(item));", errors: [error] },
+    { code: "const chunks = [[1], [2]]; chunks.reduce((acc, item) => acc.slice());", errors: [error] },
+    { code: "const unit = [1]; const nested = [unit, unit]; nested.reduce((acc, item) => acc.concat(item));", errors: [error] },
+    { code: "const rest: number[][] = []; const nested = [[1], ...rest]; nested.reduce((acc, item) => acc.concat(item));", errors: [error] },
   ],
 });

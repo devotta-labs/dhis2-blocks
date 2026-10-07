@@ -57,6 +57,11 @@ function enclosingTypeScope(node: ESTree.Node): TypeScope {
 	return node;
 }
 
+function declaredTypeScope(node: ESTree.Node): TypeScope {
+	// A named class expression's name is visible only within the expression itself.
+	return node.type === "ClassExpression" ? node : enclosingTypeScope(node);
+}
+
 function declaredTypeBinding(node: ESTree.Node): {
 	readonly alias: ESTree.TSTypeAliasDeclaration | null;
 	readonly name: string;
@@ -91,7 +96,7 @@ function collectTypeBindings(
 	const declared = declaredTypeBinding(node);
 	if (declared !== null) {
 		const bindings = bindingsByName.get(declared.name) ?? [];
-		bindings.push({ ...declared, scope: enclosingTypeScope(node) });
+		bindings.push({ ...declared, scope: declaredTypeScope(node) });
 		bindingsByName.set(declared.name, bindings);
 		if (declared.alias !== null) aliases.push(declared.alias);
 	}

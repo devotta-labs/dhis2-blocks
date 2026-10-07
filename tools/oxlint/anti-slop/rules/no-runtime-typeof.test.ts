@@ -12,6 +12,7 @@ tester.run("anti-slop/no-runtime-typeof", noRuntimeTypeofRule, {
 		'const hasStorage = typeof localStorage !== "undefined";',
 		'if (typeof globalThis.crypto === "undefined") throw new Error("no crypto");',
 		'const missing = "undefined" === typeof process;',
+		'const config = {}; if (typeof config.option === "undefined") loadDefault();',
 		"const value = input;",
 		{
 			code: 'function isString(value: unknown): value is string { return typeof value === "string"; }',
@@ -29,6 +30,11 @@ tester.run("anti-slop/no-runtime-typeof", noRuntimeTypeofRule, {
 	invalid: [
 		{ code: 'if (typeof input === "string") use(input);', errors: [error] },
 		{ code: "if (typeof input === undefined) use(input);", errors: [error] },
+		{
+			code: 'function read(payload: unknown) { if (typeof payload === "undefined") return; }',
+			errors: [error],
+		},
+		{ code: 'const input = "x"; const missing = typeof input === "undefined";', errors: [error] },
 		{
 			code: 'function isString(value: unknown): value is string { return typeof value === "string"; }',
 			errors: [error],

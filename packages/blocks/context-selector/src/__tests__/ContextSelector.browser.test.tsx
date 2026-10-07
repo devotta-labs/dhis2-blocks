@@ -582,12 +582,14 @@ describe('ContextSelector', () => {
         const picker = page.getByTestId('host-picker')
         await expect.element(picker).toBeVisible()
         const shell = picker.element().parentElement
-        expect(shell?.className).toContain('min-w-[640px]')
+        // Capture parity min-width, capped at the viewport for narrow screens.
+        expect(shell?.className).toContain('min-w-[min(640px,90vw)]')
         expect(shell?.className).toContain('min-h-[96px]')
         expect(shell?.className).toContain('max-h-[80vh]')
+        expect(shell?.className).toContain('max-w-[90vw]')
         expect(shell?.className).toContain('overflow-auto')
         const style = getComputedStyle(shell!)
-        expect(style.minWidth).toBe('640px')
+        expect(parseFloat(style.minWidth)).toBeLessThanOrEqual(640)
         expect(style.minHeight).toBe('96px')
         expect(parseFloat(style.maxHeight)).toBeCloseTo(
             window.innerHeight * 0.8,

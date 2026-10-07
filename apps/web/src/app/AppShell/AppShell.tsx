@@ -120,17 +120,16 @@ export const AppShell = () => {
         if (externalTransitionBlocker.state !== 'blocked') {
             return
         }
-        setPendingTransition(
-            (current) =>
-                current ?? {
-                    proceed: () => {
-                        setDirty(false)
-                        setOpenedRecord(undefined)
-                        externalTransitionBlocker.proceed()
-                    },
-                    cancel: externalTransitionBlocker.reset,
-                }
-        )
+        // The latest guarded navigation wins; its reset must always be wired
+        // so canceling the dialog restores the popped history entry.
+        setPendingTransition({
+            proceed: () => {
+                setDirty(false)
+                setOpenedRecord(undefined)
+                externalTransitionBlocker.proceed()
+            },
+            cancel: externalTransitionBlocker.reset,
+        })
     }, [externalTransitionBlocker])
 
     const programsQuery = useQuery(

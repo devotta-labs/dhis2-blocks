@@ -69,7 +69,7 @@ export const OrganisationUnitSelector = ({
             dataTest="org-unit-selector-container"
         >
             {interactive ? (
-                <div className="min-h-[96px] min-w-[640px] max-w-[90vw] max-h-[80vh] overflow-auto">
+                <div className="min-h-[96px] min-w-[min(640px,90vw)] max-h-[80vh] overflow-auto">
                     {children}
                 </div>
             ) : null}

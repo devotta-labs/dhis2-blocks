@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+    resolveDocsAuth,
     resolveDocsBackend,
     resolveUpstreamPath,
     rewriteLocationHeader,
@@ -143,5 +144,22 @@ describe('resolveDocsBackend', () => {
         expect(() => resolveDocsBackend('not-a-url')).toThrow(
             /Invalid DOCS_DHIS2_URL/
         )
+    })
+})
+
+describe('resolveDocsAuth', () => {
+    it('returns a Basic header for configured credentials', () => {
+        expect(
+            resolveDocsAuth({
+                DOCS_DHIS2_USERNAME: 'admin',
+                DOCS_DHIS2_PASSWORD: 'district',
+            })
+        ).toBe(`Basic ${Buffer.from('admin:district').toString('base64')}`)
+    })
+
+    it('passes requests anonymously when either value is missing', () => {
+        expect(resolveDocsAuth({})).toBeNull()
+        expect(resolveDocsAuth({ DOCS_DHIS2_USERNAME: 'admin' })).toBeNull()
+        expect(resolveDocsAuth({ DOCS_DHIS2_PASSWORD: 'district' })).toBeNull()
     })
 })

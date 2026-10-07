@@ -64,8 +64,10 @@ export default defineConfig({
 ```
 
 Forward the full DHIS2 path space — authentication endpoints, metadata,
-tracker data, icons — and keep credentials out of the bundle: users sign in
-with their own account through the adapter's dialog.
+tracker data, icons — and keep credentials out of the bundle: either users
+sign in with their own account through the adapter's dialog, or the proxy
+injects a demo account upstream (see `DOCS_DHIS2_USERNAME`/`DOCS_DHIS2_PASSWORD`
+below).
 
 A static `vite build` does not include the dev proxy. In production, serve
 `dist/` behind any standard reverse proxy that maps `/dhis2` to your DHIS2
@@ -97,7 +99,13 @@ To point the docs at an existing development instance instead:
 DOCS_DHIS2_URL=https://play.im.dhis2.org/dev pnpm dev:docs
 ```
 
-Sign in through a live preview's dialog with your own credentials.
+When `DOCS_DHIS2_USERNAME` and `DOCS_DHIS2_PASSWORD` are set — e.g. the
+published `admin`/`district` values in `.env.example` — the `/dhis2`
+proxy authenticates every upstream request as that user — live previews
+load data directly with no sign-in dialog. Unset them to pass requests
+anonymously and let visitors sign in through the adapter's dialog instead.
+Only use the injected account against demo or play instances; it grants
+every visitor whatever the account can do.
 
 ## Add a page or example
 

@@ -17,15 +17,8 @@ type BrowserDiagnostic = {
 }
 
 type DocsFixtures = {
-    dhis2Credentials: { username: string; password: string }
     page: Page
 }
-
-const environment = process.env
-
-const username = environment?.E2E_DHIS2_USERNAME ?? 'admin'
-
-const password = environment?.E2E_DHIS2_PASSWORD ?? 'district'
 
 const urlPath = (value?: string) => {
     if (!value) {
@@ -135,36 +128,13 @@ const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
 }
 
 /**
- * Signs in through the app-adapter dialog inside a docs live preview. The
- * server field is hidden — previews are pinned to the same-origin `/dhis2`
- * proxy — so only credentials are required.
+ * Opens a standalone preview route. The docs server injects demo
+ * credentials into every proxied request (DOCS_DHIS2_USERNAME/
+ * DOCS_DHIS2_PASSWORD), so previews are already signed in — no dialog
+ * appears and the list renders straight to live data.
  */
-export const signInToDocsPreview = async (
-    page: Page,
-    credentials: { username: string; password: string } = {
-        username,
-        password,
-    }
-) => {
-    const signInDialog = page.getByRole('dialog')
-    await signInDialog
-        .getByRole('heading', { name: 'Please sign in' })
-        .waitFor({ timeout: 30_000 })
-
-    await signInDialog
-        .getByRole('textbox', { name: 'Username' })
-        .fill(credentials.username)
-    await signInDialog
-        .getByRole('textbox', { name: 'Password' })
-        .fill(credentials.password)
-    await signInDialog.getByRole('button', { name: 'Sign in' }).click()
-    await signInDialog.waitFor({ state: 'hidden', timeout: 30_000 })
-}
-
-/** Opens a standalone preview route and completes the sign-in flow. */
 export const openLivePreview = async (page: Page, slug: string) => {
     await page.goto(`/preview/${slug}`)
-    await signInToDocsPreview(page)
     await expect(page.getByTestId('working-list-main')).toBeVisible({
         timeout: 30_000,
     })
@@ -177,7 +147,6 @@ export const resultRows = (page: Page) =>
     page.locator('[data-testid^="working-list-row-"]')
 
 export const test = base.extend<DocsFixtures>({
-    dhis2Credentials: [{ username, password }, { option: true }],
     page: async ({ page }, use, testInfo) => {
         const diagnostics: BrowserDiagnostic[] = []
 

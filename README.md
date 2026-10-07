@@ -212,9 +212,12 @@ package.
 
 `apps/docs` is a Vite + React 18 catalog of MDX pages and executable examples
 in the style of the shadcn documentation. Prose and code tabs render without
-a backend; live previews sign in to a real DHIS2 instance through a
+a backend; live previews reach a real DHIS2 instance through a
 same-origin `/dhis2` proxy and are hosted by the official
-`@dhis2/app-adapter`.
+`@dhis2/app-adapter`. The proxy injects the published `admin`/`district`
+demo credentials (`DOCS_DHIS2_USERNAME`/`DOCS_DHIS2_PASSWORD`) into every
+upstream request, so previews load authenticated with no sign-in dialog —
+unset them to pass requests anonymously.
 
 Run a seeded local backend (pinned to DHIS2 42 by default) and start the site:
 
@@ -250,7 +253,7 @@ shows the same source the preview executes, and examples marked `live` are
 wrapped in the app-adapter host at `/preview/<slug>`.
 
 `pnpm docs:e2e` runs the docs Playwright suite (`playwright.docs.config.ts`):
-catalog browsing without a backend, preview sign-in, and live Working List
+catalog browsing without a backend and live Working List
 filtering, sorting, pagination, event mode, and saved-view persistence.
 
 ## Quality checks

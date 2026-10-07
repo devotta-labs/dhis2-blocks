@@ -1,12 +1,6 @@
 import { request as playwrightRequest, type Page } from '@playwright/test'
 import { z } from 'zod'
-import {
-    expect,
-    openLivePreview,
-    resultRows,
-    signInToDocsPreview,
-    test,
-} from './fixtures'
+import { expect, openLivePreview, resultRows, test } from './fixtures'
 
 /**
  * Live Working List preview coverage. Everything below runs against real
@@ -29,10 +23,8 @@ const ProgramMetadataSchema = z.object({
 })
 
 const getProgramMetadata = async () => {
-    // A standalone request context keeps its own cookie jar: page.request
-    // shares the browser context's cookies, and DHIS2 answers Basic auth
-    // with a session cookie that would sign the UI in before the adapter's
-    // sign-in dialog is exercised.
+    // A standalone request context keeps its own cookie jar so this probe
+    // stays independent of the browser session.
     const api = await playwrightRequest.newContext({
         baseURL: process.env.DOCS_APP_URL ?? 'http://localhost:3002',
     })
@@ -106,17 +98,19 @@ const tableBody = (page: Page) =>
     page.locator('[data-testid="working-list-table"] tbody')
 
 test.describe('live Working List preview', () => {
-    test('signs in through the preview and loads live metadata and records', async ({
+    test('loads live metadata and records with no sign-in flow', async ({
         page,
     }) => {
         await page.goto('/preview/working-list/default')
 
-        await signInToDocsPreview(page)
-
-        // Real metadata and records arrived through the /dhis2 proxy.
+        // The proxy injects demo credentials upstream, so the adapter never
+        // renders its sign-in dialog and data arrives immediately.
         await expect(page.getByTestId('working-list-main')).toBeVisible({
             timeout: 30_000,
         })
+        await expect(
+            page.getByRole('heading', { name: 'Please sign in' })
+        ).not.toBeVisible()
         await expect(tableBody(page)).toHaveAttribute('aria-busy', 'false', {
             timeout: 30_000,
         })

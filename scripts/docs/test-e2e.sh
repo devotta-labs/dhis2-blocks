@@ -12,6 +12,8 @@ e2e_require_command pgrep
 e2e_require_command pnpm
 
 DOCS_APP_PORT="${DOCS_PORT:-3002}"
+export E2E_DHIS2_USERNAME="${E2E_DHIS2_USERNAME:-admin}"
+export E2E_DHIS2_PASSWORD="${E2E_DHIS2_PASSWORD:-district}"
 DOCS_APP_URL="${E2E_APP_URL:-http://localhost:${DOCS_APP_PORT}}"
 
 docs_pid=''
@@ -63,7 +65,12 @@ echo "Building and serving the documentation site at $DOCS_APP_URL"
 (
     cd "$E2E_REPO_ROOT/apps/docs"
     pnpm build
-    exec env "DOCS_DHIS2_URL=$E2E_DHIS2_URL" pnpm preview --port "$DOCS_APP_PORT" --strictPort --host localhost
+    # The previews authenticate upstream through the injected demo
+    # credentials, so the suite asserts data loads with no sign-in flow.
+    exec env "DOCS_DHIS2_URL=$E2E_DHIS2_URL" \
+        "DOCS_DHIS2_USERNAME=$E2E_DHIS2_USERNAME" \
+        "DOCS_DHIS2_PASSWORD=$E2E_DHIS2_PASSWORD" \
+        pnpm preview --port "$DOCS_APP_PORT" --strictPort --host localhost
 ) >"$docs_log" 2>&1 &
 docs_pid=$!
 
@@ -85,8 +92,6 @@ done
 export E2E_VERSION_SLUG E2E_EXPECTED_MAJOR
 export E2E_DHIS2_URL E2E_APP_URL
 export DOCS_APP_URL
-export E2E_DHIS2_USERNAME="${E2E_DHIS2_USERNAME:-admin}"
-export E2E_DHIS2_PASSWORD="${E2E_DHIS2_PASSWORD:-district}"
 
 cd "$E2E_REPO_ROOT"
 pnpm exec playwright test --config playwright.docs.config.ts

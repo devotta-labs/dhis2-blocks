@@ -9,7 +9,7 @@ root command does not assume that applications use Vite, React, or DHIS2.
 
 Each current workspace owns an explicit `vitest.config.ts`:
 
-- `packages/working-list` runs pure TypeScript tests in a fast Node project and
+- `packages/blocks/working-list` runs pure TypeScript tests in a fast Node project and
   all React component tests in Chromium Browser Mode through the Playwright
   provider. Component tests use `vitest-browser-react`, semantic browser
   locators, and browser-backed user interactions where the behavior is

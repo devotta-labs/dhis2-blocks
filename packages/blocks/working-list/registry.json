@@ -1,0 +1,483 @@
+{
+    "$schema": "https://ui.shadcn.com/schema/registry.json",
+    "items": [
+        {
+            "name": "working-list",
+            "type": "registry:block",
+            "title": "DHIS2 Working List",
+            "description": "A composable React 18 Working List block for DHIS2 tracker programs.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@2.1.2",
+                "@dhis2/ui@^10.17.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "@tanstack/react-query@^5.101.4",
+                "@tanstack/react-table@^9.1.2",
+                "better-result@^3.0.1",
+                "react@^18.3.1",
+                "react-dom@^18.3.1",
+                "zod@^4.4.3",
+                "zustand@^5.0.15"
+            ],
+            "files": [
+                {
+                    "path": "src/api/capabilities.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/capabilities.ts"
+                },
+                {
+                    "path": "src/api/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/client.ts"
+                },
+                {
+                    "path": "src/api/metadata.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/metadata.ts"
+                },
+                {
+                    "path": "src/api/savedLists.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedLists.ts"
+                },
+                {
+                    "path": "src/api/savedListContracts.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedListContracts.ts"
+                },
+                {
+                    "path": "src/api/savedListNormalization.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedListNormalization.ts"
+                },
+                {
+                    "path": "src/api/savedListPayload.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedListPayload.ts"
+                },
+                {
+                    "path": "src/api/savedListQueries.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedListQueries.ts"
+                },
+                {
+                    "path": "src/api/savedListRepair.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedListRepair.ts"
+                },
+                {
+                    "path": "src/api/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/schemas.ts"
+                },
+                {
+                    "path": "src/api/systemInfo.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/systemInfo.ts"
+                },
+                {
+                    "path": "src/domain/canonicalValue.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/canonicalValue.ts"
+                },
+                {
+                    "path": "src/domain/filterControlPolicy.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/filterControlPolicy.ts"
+                },
+                {
+                    "path": "src/domain/model.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/model.ts"
+                },
+                {
+                    "path": "src/domain/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/schemas.ts"
+                },
+                {
+                    "path": "src/domain/staleReferences.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/staleReferences.ts"
+                },
+                {
+                    "path": "src/domain/visibleEventFilters.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/visibleEventFilters.ts"
+                },
+                {
+                    "path": "src/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/index.ts"
+                },
+                {
+                    "path": "src/provider/WorkingListContext.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/WorkingListContext.tsx"
+                },
+                {
+                    "path": "src/provider/WorkingListPrivateContext.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/WorkingListPrivateContext.tsx"
+                },
+                {
+                    "path": "src/provider/WorkingListProvider.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/WorkingListProvider.tsx"
+                },
+                {
+                    "path": "src/provider/actionCommands.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/actionCommands.ts"
+                },
+                {
+                    "path": "src/provider/configuration.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/configuration.ts"
+                },
+                {
+                    "path": "src/provider/contracts.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/contracts.ts"
+                },
+                {
+                    "path": "src/provider/engineAdapter.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/engineAdapter.ts"
+                },
+                {
+                    "path": "src/provider/errorNormalization.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/errorNormalization.ts"
+                },
+                {
+                    "path": "src/provider/errors.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/errors.ts"
+                },
+                {
+                    "path": "src/provider/repair.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/repair.ts"
+                },
+                {
+                    "path": "src/provider/results.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/results.ts"
+                },
+                {
+                    "path": "src/provider/store.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/store.ts"
+                },
+                {
+                    "path": "src/provider/useWorkingListLifecycle.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/useWorkingListLifecycle.ts"
+                },
+                {
+                    "path": "src/provider/useWorkingListRepair.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/useWorkingListRepair.ts"
+                },
+                {
+                    "path": "src/provider/useWorkingListResults.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/useWorkingListResults.ts"
+                },
+                {
+                    "path": "src/provider/useWorkingListSelection.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/useWorkingListSelection.ts"
+                },
+                {
+                    "path": "src/query/fetchers.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/query/fetchers.ts"
+                },
+                {
+                    "path": "src/query/fileResourceLabels.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/query/fileResourceLabels.ts"
+                },
+                {
+                    "path": "src/query/keys.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/query/keys.ts"
+                },
+                {
+                    "path": "src/query/normalizeRows.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/query/normalizeRows.ts"
+                },
+                {
+                    "path": "src/query/referenceLabels.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/query/referenceLabels.ts"
+                },
+                {
+                    "path": "src/query/serialize.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/query/serialize.ts"
+                },
+                {
+                    "path": "src/registry/systemFilters.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/systemFilters.ts"
+                },
+                {
+                    "path": "src/registry/transformers.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/transformers.ts"
+                },
+                {
+                    "path": "src/registry/valueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/valueTypes.ts"
+                },
+                {
+                    "path": "src/registry/dateTimeValueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/dateTimeValueTypes.ts"
+                },
+                {
+                    "path": "src/registry/textAndNumericValueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/textAndNumericValueTypes.ts"
+                },
+                {
+                    "path": "src/registry/valueTypeContracts.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/valueTypeContracts.ts"
+                },
+                {
+                    "path": "src/registry/valueTypeShared.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/valueTypeShared.ts"
+                },
+                {
+                    "path": "src/ui/Actions/WorkingListActions.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Actions/WorkingListActions.tsx"
+                },
+                {
+                    "path": "src/ui/Actions/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Actions/index.ts"
+                },
+                {
+                    "path": "src/ui/ColumnSettingsDialog/ColumnSettingsDialog.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/ColumnSettingsDialog/ColumnSettingsDialog.tsx"
+                },
+                {
+                    "path": "src/ui/ColumnSettingsDialog/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/ColumnSettingsDialog/index.ts"
+                },
+                {
+                    "path": "src/ui/Columns/Columns.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Columns/Columns.tsx"
+                },
+                {
+                    "path": "src/ui/Columns/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Columns/index.ts"
+                },
+                {
+                    "path": "src/ui/ConfigureMenu/ConfigureMenu.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/ConfigureMenu/ConfigureMenu.tsx"
+                },
+                {
+                    "path": "src/ui/ConfigureMenu/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/ConfigureMenu/index.ts"
+                },
+                {
+                    "path": "src/ui/Container/WorkingListContainer.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Container/WorkingListContainer.tsx"
+                },
+                {
+                    "path": "src/ui/Container/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Container/index.ts"
+                },
+                {
+                    "path": "src/ui/FilterControls/CalendarRangeFields.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/CalendarRangeFields.tsx"
+                },
+                {
+                    "path": "src/ui/FilterControls/FilterButton.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/FilterButton.tsx"
+                },
+                {
+                    "path": "src/ui/FilterControls/FilterControlPrimitives.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/FilterControlPrimitives.tsx"
+                },
+                {
+                    "path": "src/ui/FilterControls/FilterControls.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/FilterControls.tsx"
+                },
+                {
+                    "path": "src/ui/FilterControls/FilterEditorValue.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/FilterEditorValue.tsx"
+                },
+                {
+                    "path": "src/ui/FilterControls/MoreFilters.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/MoreFilters.tsx"
+                },
+                {
+                    "path": "src/ui/FilterControls/ProgramStageControl.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/ProgramStageControl.tsx"
+                },
+                {
+                    "path": "src/ui/FilterControls/ReferenceFilterSelects.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/ReferenceFilterSelects.tsx"
+                },
+                {
+                    "path": "src/ui/FilterControls/filterValueSupport.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/filterValueSupport.ts"
+                },
+                {
+                    "path": "src/ui/FilterControls/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/index.ts"
+                },
+                {
+                    "path": "src/ui/Filters/Filters.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Filters/Filters.tsx"
+                },
+                {
+                    "path": "src/ui/Filters/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Filters/index.ts"
+                },
+                {
+                    "path": "src/ui/Results/WorkingListResults.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Results/WorkingListResults.tsx"
+                },
+                {
+                    "path": "src/ui/Results/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Results/index.ts"
+                },
+                {
+                    "path": "src/ui/SavedListBar/SavedListBar.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/SavedListBar/SavedListBar.tsx"
+                },
+                {
+                    "path": "src/ui/SavedListBar/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/SavedListBar/index.ts"
+                },
+                {
+                    "path": "src/ui/SavedViews/WorkingListSavedViews.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/SavedViews/WorkingListSavedViews.tsx"
+                },
+                {
+                    "path": "src/ui/SavedViews/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/SavedViews/index.ts"
+                },
+                {
+                    "path": "src/ui/Toolbar/WorkingListToolbar.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Toolbar/WorkingListToolbar.tsx"
+                },
+                {
+                    "path": "src/ui/Toolbar/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Toolbar/index.ts"
+                },
+                {
+                    "path": "src/ui/WorkingList/WorkingList.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/WorkingList.tsx"
+                },
+                {
+                    "path": "src/ui/WorkingList/dialogs/WorkingListRepairDialog/WorkingListRepairDialog.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/dialogs/WorkingListRepairDialog/WorkingListRepairDialog.tsx"
+                },
+                {
+                    "path": "src/ui/WorkingList/dialogs/WorkingListRepairDialog/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/dialogs/WorkingListRepairDialog/index.ts"
+                },
+                {
+                    "path": "src/ui/WorkingList/dialogs/WorkingListSharingDialog/WorkingListSharingDialog.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/dialogs/WorkingListSharingDialog/WorkingListSharingDialog.tsx"
+                },
+                {
+                    "path": "src/ui/WorkingList/dialogs/WorkingListSharingDialog/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/dialogs/WorkingListSharingDialog/index.ts"
+                },
+                {
+                    "path": "src/ui/WorkingList/dialogs/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/dialogs/index.ts"
+                },
+                {
+                    "path": "src/ui/WorkingList/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/index.ts"
+                },
+                {
+                    "path": "src/ui/WorkingListTable/WorkingListTable.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingListTable/WorkingListTable.tsx"
+                },
+                {
+                    "path": "src/ui/WorkingListTable/WorkingListTableView.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingListTable/WorkingListTableView.tsx"
+                },
+                {
+                    "path": "src/ui/WorkingListTable/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingListTable/index.ts"
+                },
+                {
+                    "path": "src/ui/WorkingListText/WorkingListText.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingListText/WorkingListText.tsx"
+                },
+                {
+                    "path": "src/ui/WorkingListText/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingListText/index.ts"
+                },
+                {
+                    "path": "src/ui/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/index.ts"
+                },
+                {
+                    "path": "src/ui/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/types.ts"
+                }
+            ],
+            "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs."
+        }
+    ]
+}

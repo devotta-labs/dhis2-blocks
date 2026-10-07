@@ -1,6 +1,6 @@
 packages:
     - apps/*
-    - packages/*
+    - packages/blocks/*
 
 onlyBuiltDependencies:
     - '@dhis2/cli-helpers-engine'

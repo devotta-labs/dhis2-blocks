@@ -9,7 +9,8 @@ and the applications used to develop them.
 apps/
   web/                  DHIS2 wrapper and component demo application
 packages/
-  working-list/         Canonical Working List source and test harness
+  blocks/
+    working-list/       Canonical Working List source and registry manifest
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
 ```
@@ -156,6 +157,12 @@ that instance even when `programId` stays the same.
 The private `@dhis2-blocks/working-list` workspace package remains only as the
 repository's canonical development and test harness. It is not a compiled or
 publishable consumer package.
+
+The root `registry.json` is the public registry entry point. It owns global
+metadata and composes the package-owned
+`packages/blocks/working-list/registry.json` manifest through shadcn's
+`include` mechanism. Paths declared by that package manifest are relative to
+the Working List package.
 
 ## Quality checks
 

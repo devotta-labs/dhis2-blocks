@@ -55,11 +55,15 @@ trap 'exit 143' TERM
 artifact_dir="$(e2e_artifact_dir)"
 docs_log="$artifact_dir/docs-server.log"
 
+# The tests hit $DOCS_APP_URL exactly: without a free port the preview would
+# silently move to the next one while a stale server keeps answering 3002.
+e2e_assert_port_free "$DOCS_APP_PORT"
+
 echo "Building and serving the documentation site at $DOCS_APP_URL"
 (
     cd "$E2E_REPO_ROOT/apps/docs"
     pnpm build
-    exec env "DOCS_DHIS2_URL=$E2E_DHIS2_URL" pnpm preview --port "$DOCS_APP_PORT" --host localhost
+    exec env "DOCS_DHIS2_URL=$E2E_DHIS2_URL" pnpm preview --port "$DOCS_APP_PORT" --strictPort --host localhost
 ) >"$docs_log" 2>&1 &
 docs_pid=$!
 

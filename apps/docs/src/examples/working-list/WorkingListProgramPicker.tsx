@@ -99,9 +99,11 @@ const WorkingListProgramPicker = () => {
 
     const selectedProgramId = programId ?? options[0]?.value
 
-    // Pick a unit the selected program is actually assigned to, not just the
-    // user's first unit — otherwise the list misses records for programs that
-    // are restricted to a subset of the user's units.
+    // Prefer a unit the selected program is actually assigned to, not just
+    // the user's first unit — otherwise the list misses records for programs
+    // restricted to a subset of the user's units. When none of the user's
+    // units qualify (e.g. an admin holding only the root unit), fall back to
+    // the first user unit so the example still renders.
     const selectedProgram = metadata.programs.programs.find(
         (program) => program.id === selectedProgramId
     )
@@ -110,12 +112,12 @@ const WorkingListProgramPicker = () => {
         selectedProgram?.organisationUnits.map((unit) => unit.id)
     )
 
+    const userUnits = metadata.me.organisationUnits
+
+    const assignedUserUnits = userUnits.filter((unit) => assigned.has(unit.id))
+
     const orgUnitId = (
-        assigned.size
-            ? metadata.me.organisationUnits.filter((unit) =>
-                  assigned.has(unit.id)
-              )
-            : metadata.me.organisationUnits
+        assignedUserUnits.length ? assignedUserUnits : userUnits
     )[0]?.id
 
     return (

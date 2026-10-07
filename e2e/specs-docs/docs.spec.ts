@@ -71,7 +71,9 @@ test.describe('documentation catalog', () => {
             'iframe[title="Registration context"]'
         )
 
-        await expect(preview.getByLabel('Registration context')).toBeVisible({
+        await expect(
+            preview.getByRole('toolbar', { name: 'Registration context' })
+        ).toBeVisible({
             timeout: 30_000,
         })
         await expect(

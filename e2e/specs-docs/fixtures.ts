@@ -79,6 +79,49 @@ const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
     }
 
     if (
+        diagnostic.kind === 'http' &&
+        diagnostic.status === 401 &&
+        /\/api(?:\/\d+)?\/(me|system\/info|loginConfig|userSettings)$/.test(
+            path ?? ''
+        )
+    ) {
+        // Signed-out previews probe these endpoints before the adapter shows
+        // its sign-in dialog — the 401 is the expected trigger.
+        return true
+    }
+
+    if (
+        diagnostic.kind === 'console' &&
+        diagnostic.message.includes('401') &&
+        /\/api(?:\/\d+)?\/(me|system\/info|loginConfig|userSettings)$/.test(
+            path ?? ''
+        )
+    ) {
+        return true
+    }
+
+    if (
+        diagnostic.kind === 'requestfailed' &&
+        diagnostic.message === 'net::ERR_ABORTED' &&
+        diagnostic.method === 'GET' &&
+        /\/api(?:\/\d+)?\/(me|system\/info|loginConfig|userSettings)$/.test(
+            path ?? ''
+        )
+    ) {
+        // Navigating between examples aborts the adapter's bootstrap reads,
+        // and React StrictMode remounts do the same under the dev server.
+        return true
+    }
+
+    if (
+        diagnostic.kind === 'console' &&
+        diagnostic.message.includes('AbortError: signal is aborted')
+    ) {
+        // The aborted request above surfaces in the console too.
+        return true
+    }
+
+    if (
         diagnostic.kind === 'requestfailed' &&
         diagnostic.message === 'net::ERR_BLOCKED_BY_ORB' &&
         diagnostic.method === 'GET' &&

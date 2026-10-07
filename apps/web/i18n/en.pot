@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-07T15:08:14.222Z\n"
-"PO-Revision-Date: 2026-10-07T15:08:14.222Z\n"
+"POT-Creation-Date: 2026-10-07T15:21:47.237Z\n"
+"PO-Revision-Date: 2026-10-07T15:21:47.237Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -129,6 +129,9 @@ msgstr "Search"
 
 msgid "Could not search organisation units"
 msgstr "Could not search organisation units"
+
+msgid "Could not load more organisation units"
+msgstr "Could not load more organisation units"
 
 msgid "Show more"
 msgstr "Show more"

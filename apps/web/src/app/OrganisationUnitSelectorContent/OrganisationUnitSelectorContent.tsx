@@ -21,6 +21,7 @@ interface OrganisationUnitSelectorContentProps {
     onSearchRetry?: () => void
     searchHasMore?: boolean
     searchLoadingMore?: boolean
+    searchLoadMoreError?: boolean
     onSearchLoadMore?: () => void
     treeKey: string
     onSelect: (organisationUnit: OrganisationUnitReference) => void
@@ -111,6 +112,7 @@ export const OrganisationUnitSelectorContent = ({
     onSearchRetry,
     searchHasMore = false,
     searchLoadingMore = false,
+    searchLoadMoreError = false,
     onSearchLoadMore,
     treeKey,
     onSelect,
@@ -122,7 +124,11 @@ export const OrganisationUnitSelectorContent = ({
         () => buildOrganisationUnitTreeFilter(allowedPaths, visibleRoots),
         [allowedPaths, visibleRoots]
     )
-    const stableTreeKey = `${treeKey}-${visibleRoots.map((root) => root.id).join('-')}`
+    // Keep the key stable while search pages append so expanded branches
+    // survive; remount only when the term or the browse-mode root set changes.
+    const stableTreeKey = searchRoots
+        ? treeKey
+        : `${treeKey}-${visibleRoots.map((root) => root.id).join('-')}`
 
     return (
         <div className="z-0 h-full w-full rounded-[3px] border border-[#e8edf2] bg-white">
@@ -143,7 +149,7 @@ export const OrganisationUnitSelectorContent = ({
                     className={
                         searchLoading
                             ? 'm-[4px] flex h-[calc(100vh-48px)] items-center justify-center'
-                            : 'flex min-h-[42px] max-w-[100vw] bg-white p-[4px] pt-[8px]'
+                            : 'flex min-h-[42px] max-w-[100vw] flex-col bg-white p-[4px] pt-[8px]'
                     }
                     data-test="org-unit-tree"
                     data-testid="org-unit-tree"
@@ -174,7 +180,22 @@ export const OrganisationUnitSelectorContent = ({
                                 onSelect={onSelect}
                                 TreeComponent={TreeComponent}
                             />
-                            {searchHasMore ? (
+                            {searchLoadMoreError ? (
+                                <div className="flex w-full items-center justify-center gap-[8px] pb-[4px] text-[14px] text-[#4a5768]">
+                                    <span>
+                                        {i18n.t(
+                                            'Could not load more organisation units'
+                                        )}
+                                    </span>
+                                    <Button
+                                        small
+                                        secondary
+                                        onClick={onSearchLoadMore}
+                                    >
+                                        {i18n.t('Try again')}
+                                    </Button>
+                                </div>
+                            ) : searchHasMore ? (
                                 <div className="flex w-full justify-center pb-[4px]">
                                     <Button
                                         small

@@ -13,7 +13,7 @@ import {
     type WorkingListResultTarget,
 } from '@dhis2-blocks/working-list'
 import { trackerProgramsQueryOptions } from '@dhis2-blocks/working-list/development'
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useBlocker } from 'react-router-dom'
 import { getGuardedOrganisationUnitState } from '../contextTransitions'
@@ -32,7 +32,6 @@ import {
     AppRuntimeConfigSchema,
     CurrentUserSchema,
     OrganisationUnitReferenceSchema,
-    OrganisationUnitsResponseSchema,
     ProgramOrganisationUnitsSchema,
     retryOperationalError,
 } from './contextSchemas'
@@ -45,6 +44,7 @@ import {
 import { RecordDetailsModal } from './RecordDetailsModal'
 import { WorkingListContextControls } from './WorkingListContextControls'
 import { useDebouncedOrganisationUnitSearch } from './useDebouncedOrganisationUnitSearch'
+import { useOrganisationUnitSearch } from './useOrganisationUnitSearch'
 
 const WorkingListDirtyBridge = ({
     onChange,
@@ -216,41 +216,10 @@ export const AppShell = () => {
         retry: retryOperationalError,
     })
 
-    const organisationUnitSearchQuery = useInfiniteQuery({
-        queryKey: [
-            'working-list',
-            'shell',
-            'org-unit-search',
-            debouncedOrganisationUnitSearch,
-        ],
-        queryFn: ({ signal, pageParam }) =>
-            client.query(
-                {
-                    resource: 'organisationUnits',
-                    params: {
-                        fields: 'id,displayName,path',
-                        paging: true,
-                        query: debouncedOrganisationUnitSearch,
-                        withinUserSearchHierarchy: true,
-                        page: pageParam,
-                        pageSize: 50,
-                    },
-                },
-                OrganisationUnitsResponseSchema,
-                signal
-            ),
-        initialPageParam: 1,
-        getNextPageParam: (lastPage) =>
-            lastPage.pager &&
-            lastPage.pager.page * lastPage.pager.pageSize < lastPage.pager.total
-                ? lastPage.pager.page + 1
-                : undefined,
-        enabled: Boolean(
-            selectedProgramSummary && debouncedOrganisationUnitSearch
-        ),
-        staleTime: 5 * 60 * 1000,
-        gcTime: 30 * 60 * 1000,
-        retry: retryOperationalError,
+    const organisationUnitSearchQuery = useOrganisationUnitSearch({
+        client,
+        search: debouncedOrganisationUnitSearch,
+        enabled: Boolean(selectedProgramSummary),
     })
 
     const searchRoots = useMemo(
@@ -473,6 +442,9 @@ export const AppShell = () => {
                         searchHasMore={organisationUnitSearchQuery.hasNextPage}
                         searchLoadingMore={
                             organisationUnitSearchQuery.isFetchingNextPage
+                        }
+                        searchLoadMoreError={
+                            organisationUnitSearchQuery.isFetchNextPageError
                         }
                         onSearchLoadMore={() =>
                             void organisationUnitSearchQuery.fetchNextPage()

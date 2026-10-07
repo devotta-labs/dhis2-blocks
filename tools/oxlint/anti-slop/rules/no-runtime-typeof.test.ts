@@ -13,6 +13,8 @@ tester.run("anti-slop/no-runtime-typeof", noRuntimeTypeofRule, {
 		'if (typeof globalThis.crypto === "undefined") throw new Error("no crypto");',
 		'const missing = "undefined" === typeof process;',
 		'const config = {}; if (typeof config.option === "undefined") loadDefault();',
+		'declare const optionalSDK: { init(): void }; if (typeof optionalSDK !== "undefined") optionalSDK.init();',
+		'export {}; declare global { const plugin: { run(): void } } if (typeof plugin === "undefined") throw new Error();',
 		"const value = input;",
 		{
 			code: 'function isString(value: unknown): value is string { return typeof value === "string"; }',

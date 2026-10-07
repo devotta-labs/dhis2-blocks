@@ -2,7 +2,7 @@ import { defineRule } from "@oxlint/plugins";
 
 import { resolveArrayBinding, unwrapArrayExpression } from "../shared/array-method.ts";
 
-import type { ESTree, SourceCode } from "@oxlint/plugins";
+import type { ESTree, SourceCode, Variable } from "@oxlint/plugins";
 
 type RuntimeFunction = ESTree.ArrowFunctionExpression | ESTree.Function;
 
@@ -25,6 +25,21 @@ function isInsideTypeGuard(node: ESTree.Node): boolean {
 	return false;
 }
 
+/** Return whether every definition is ambient, emitting no runtime binding. */
+function isAmbientOnlyVariable(variable: Variable): boolean {
+	return (
+		variable.defs.length > 0 &&
+		variable.defs.every(definition => {
+			let current: ESTree.Node | null = definition.node;
+			while (current !== null) {
+				if ("declare" in current && current.declare === true) return true;
+				current = current.parent;
+			}
+			return false;
+		})
+	);
+}
+
 /** Return whether typeof safely probes for the existence of a possibly absent binding. */
 function isExistenceProbe(sourceCode: SourceCode, node: ESTree.UnaryExpression): boolean {
 	const parent = node.parent;
@@ -34,8 +49,10 @@ function isExistenceProbe(sourceCode: SourceCode, node: ESTree.UnaryExpression):
 	if (other.type !== "Literal" || other.value !== "undefined") return false;
 	const operand = unwrapArrayExpression(node.argument);
 	if (operand.type === "Identifier") {
-		// Declared parameters and locals are present; only unresolved globals may be absent.
-		return resolveArrayBinding(sourceCode, operand) === null;
+		const variable = resolveArrayBinding(sourceCode, operand);
+		// Declared parameters and locals are present; unresolved or ambient-only
+		// bindings may still be absent at runtime.
+		return variable === null || isAmbientOnlyVariable(variable);
 	}
 	return operand.type === "MemberExpression";
 }

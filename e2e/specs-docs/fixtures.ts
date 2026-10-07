@@ -44,10 +44,13 @@ const urlPath = (value?: string) => {
 const bootstrapApiPath =
     /\/api(?:\/\d+)?\/(me|system\/info|loginConfig|userSettings)$/
 
-const isKnownBenignDiagnostic = (
-    diagnostic: BrowserDiagnostic,
-    diagnostics: BrowserDiagnostic[]
-) => {
+const isAbortedBootstrapRead = (diagnostic: BrowserDiagnostic) =>
+    diagnostic.kind === 'requestfailed' &&
+    diagnostic.message === 'net::ERR_ABORTED' &&
+    diagnostic.method === 'GET' &&
+    bootstrapApiPath.test(urlPath(diagnostic.url) ?? '')
+
+const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
     const path = urlPath(diagnostic.url ?? diagnostic.location?.url)
 
     if (
@@ -104,30 +107,9 @@ const isKnownBenignDiagnostic = (
         return true
     }
 
-    if (
-        diagnostic.kind === 'requestfailed' &&
-        diagnostic.message === 'net::ERR_ABORTED' &&
-        diagnostic.method === 'GET' &&
-        bootstrapApiPath.test(path ?? '')
-    ) {
+    if (isAbortedBootstrapRead(diagnostic)) {
         // Navigating between examples aborts the adapter's bootstrap reads,
         // and React StrictMode remounts do the same under the dev server.
-        return true
-    }
-
-    if (
-        diagnostic.kind === 'console' &&
-        diagnostic.message.includes('AbortError: signal is aborted') &&
-        diagnostics.some(
-            (other) =>
-                other.kind === 'requestfailed' &&
-                other.message === 'net::ERR_ABORTED' &&
-                other.method === 'GET' &&
-                bootstrapApiPath.test(urlPath(other.url) ?? '')
-        )
-    ) {
-        // The console AbortError is only benign when a bootstrap read was
-        // actually aborted — unrelated AbortErrors still surface.
         return true
     }
 
@@ -250,9 +232,26 @@ export const test = base.extend<DocsFixtures>({
         page.off('requestfailed', onRequestFailed)
         page.off('response', onResponse)
 
-        const unexpectedDiagnostics = diagnostics.filter(
-            (diagnostic) => !isKnownBenignDiagnostic(diagnostic, diagnostics)
-        )
+        // Each aborted bootstrap read surfaces a console AbortError too —
+        // allow one console error per aborted request so an unrelated abort
+        // later in the test is still reported.
+        let consoleAbortAllowance = diagnostics.filter(
+            isAbortedBootstrapRead
+        ).length
+
+        const unexpectedDiagnostics = diagnostics.filter((diagnostic) => {
+            if (
+                diagnostic.kind === 'console' &&
+                diagnostic.message.includes('AbortError: signal is aborted') &&
+                consoleAbortAllowance > 0
+            ) {
+                consoleAbortAllowance -= 1
+
+                return false
+            }
+
+            return !isKnownBenignDiagnostic(diagnostic)
+        })
 
         if (unexpectedDiagnostics.length > 0) {
             await testInfo.attach('browser-network-console-diagnostics', {

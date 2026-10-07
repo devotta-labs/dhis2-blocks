@@ -158,10 +158,18 @@ describe('resolveDocsAuth', () => {
         ).toBe(`Basic ${Buffer.from('admin:district').toString('base64')}`)
     })
 
-    it('passes requests anonymously when either value is missing', () => {
-        expect(resolveDocsAuth({})).toBeNull()
-        expect(resolveDocsAuth({ DOCS_DHIS2_USERNAME: 'admin' })).toBeNull()
-        expect(resolveDocsAuth({ DOCS_DHIS2_PASSWORD: 'district' })).toBeNull()
+    it('falls back to the published demo account by default', () => {
+        expect(resolveDocsAuth({})).toBe(
+            `Basic ${Buffer.from('admin:district').toString('base64')}`
+        )
+        expect(resolveDocsAuth({ DOCS_DHIS2_USERNAME: 'another' })).toBe(
+            `Basic ${Buffer.from('another:district').toString('base64')}`
+        )
+    })
+
+    it('passes requests anonymously when injection is disabled', () => {
+        expect(resolveDocsAuth({ DOCS_DHIS2_ANONYMOUS: '1' })).toBeNull()
+        expect(resolveDocsAuth({ DOCS_DHIS2_ANONYMOUS: 'true' })).toBeNull()
     })
 })
 

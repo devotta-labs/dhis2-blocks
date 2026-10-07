@@ -15,13 +15,13 @@ import workingListProgramPickerSource from './working-list/WorkingListProgramPic
  * `live: true` examples render inside the shared DHIS2 adapter host and
  * require a reachable backend; `live: false` examples render standalone.
  */
-interface ExampleDefinition {
+export interface ExampleDefinition {
     slug: string
     title: string
     live: boolean
     Component: LazyExoticComponent<ComponentType>
     source: string
-    defaultHeight: number
+    minHeight: number
 }
 
 const examples = [
@@ -31,7 +31,7 @@ const examples = [
         live: true,
         Component: lazy(() => import('./working-list/WorkingListDefault')),
         source: workingListDefaultSource,
-        defaultHeight: 730,
+        minHeight: 730,
     },
     {
         slug: 'working-list/program-picker',
@@ -41,7 +41,7 @@ const examples = [
             () => import('./working-list/WorkingListProgramPicker')
         ),
         source: workingListProgramPickerSource,
-        defaultHeight: 730,
+        minHeight: 730,
     },
     {
         slug: 'context-selector/basic',
@@ -51,7 +51,7 @@ const examples = [
             () => import('./context-selector/ContextSelectorBasic')
         ),
         source: contextSelectorBasicSource,
-        defaultHeight: 220,
+        minHeight: 220,
     },
     {
         slug: 'context-selector/states',
@@ -61,7 +61,7 @@ const examples = [
             () => import('./context-selector/ContextSelectorStates')
         ),
         source: contextSelectorStatesSource,
-        defaultHeight: 340,
+        minHeight: 340,
     },
 ] as const satisfies readonly ExampleDefinition[]
 

@@ -13,21 +13,25 @@ export const DHIS2_PREFIX = '/dhis2'
 
 const DOCS_DEFAULT_BACKEND = 'http://127.0.0.1:58080'
 
+const DOCS_DEMO_USERNAME = 'admin'
+
+const DOCS_DEMO_PASSWORD = 'district'
+
 /**
- * Optional demo credentials. When `DOCS_DHIS2_USERNAME` and
- * `DOCS_DHIS2_PASSWORD` are set, every proxied request is authenticated
- * upstream as that account — live previews render data with no sign-in
- * flow. Demo and play instances all publish `admin`/`district`, so the
- * docs site can ship the same defaults. When unset, requests pass through
- * anonymously and the adapter shows its sign-in dialog.
+ * Injected upstream credentials. Every DHIS2 demo and play instance
+ * publishes `admin`/`district`, so the docs proxy authenticates as that
+ * account out of the box — live previews always render an active session
+ * with no sign-in flow. `DOCS_DHIS2_USERNAME`/`DOCS_DHIS2_PASSWORD`
+ * override the account; `DOCS_DHIS2_ANONYMOUS=1` disables injection so
+ * requests pass through anonymously and the adapter shows its dialog.
  */
 export const resolveDocsAuth = (env = process.env) => {
-    const username = env.DOCS_DHIS2_USERNAME?.trim()
-    const password = env.DOCS_DHIS2_PASSWORD
-
-    if (!username || !password) {
+    if (['1', 'true', 'yes'].includes(env.DOCS_DHIS2_ANONYMOUS ?? '')) {
         return null
     }
+
+    const username = env.DOCS_DHIS2_USERNAME?.trim() || DOCS_DEMO_USERNAME
+    const password = env.DOCS_DHIS2_PASSWORD || DOCS_DEMO_PASSWORD
 
     return `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
 }

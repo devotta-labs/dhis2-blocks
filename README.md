@@ -215,9 +215,10 @@ in the style of the shadcn documentation. Prose and code tabs render without
 a backend; live previews reach a real DHIS2 instance through a
 same-origin `/dhis2` proxy and are hosted by the official
 `@dhis2/app-adapter`. The proxy injects the published `admin`/`district`
-demo credentials (`DOCS_DHIS2_USERNAME`/`DOCS_DHIS2_PASSWORD`) into every
-upstream request, so previews load authenticated with no sign-in dialog —
-unset them to pass requests anonymously.
+demo credentials into every upstream request by default, so previews load
+authenticated with no sign-in dialog — override via
+`DOCS_DHIS2_USERNAME`/`DOCS_DHIS2_PASSWORD`, or set
+`DOCS_DHIS2_ANONYMOUS=1` to pass requests anonymously.
 
 Run a seeded local backend (pinned to DHIS2 42 by default) and start the site:
 

@@ -7,9 +7,10 @@ import { PreviewLoading, PreviewShell } from './PreviewShell'
 /**
  * Standalone preview route (`/preview/*`).
  *
- * Documentation pages embed this route in a same-origin iframe and link to it
- * for full-screen viewing. Rendering happens here — never inline in a docs
- * page — so DHIS2 global CSS, fonts, portals, and dialogs stay contained.
+ * The full-screen target for each example card's "Open full screen" link;
+ * documentation pages render the same component inline via `ExampleSurface`,
+ * so this route and the cards share component, adapter, and query cache
+ * semantics.
  */
 export const PreviewRoot = () => {
     const { '*': slug } = useParams()

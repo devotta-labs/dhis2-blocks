@@ -66,18 +66,14 @@ test.describe('documentation catalog', () => {
         ).toBeVisible()
 
         // The registration-context example is controlled sample data, so it
-        // renders inside its iframe even while signed out or offline.
-        const preview = page.frameLocator(
-            'iframe[title="Registration context"]'
-        )
-
+        // renders inline in the page even while signed out or offline.
         await expect(
-            preview.getByRole('toolbar', { name: 'Registration context' })
+            page.getByRole('toolbar', { name: 'Registration context' })
         ).toBeVisible({
             timeout: 30_000,
         })
         await expect(
-            preview.getByText('Malaria case registration')
+            page.getByText('Malaria case registration').first()
         ).toBeVisible()
     })
 

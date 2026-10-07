@@ -102,14 +102,15 @@ To point the docs at an existing development instance instead:
 DOCS_DHIS2_URL=https://play.im.dhis2.org/dev pnpm dev:docs
 ```
 
-When `DOCS_DHIS2_USERNAME` and `DOCS_DHIS2_PASSWORD` are set — e.g. copy
-`.env.example` to `.env` for the published `admin`/`district` demo values;
-both Vite and `server.mjs` load `.env` automatically — the `/dhis2`
-proxy authenticates every upstream request as that user — live previews
-load data directly with no sign-in dialog. Unset them to pass requests
-anonymously and let visitors sign in through the adapter's dialog instead.
-Only use the injected account against demo or play instances; it grants
-every visitor whatever the account can do.
+The `/dhis2` proxy authenticates every upstream request out of the box as
+the published `admin`/`district` demo account — every DHIS2 demo and play
+instance ships those credentials, so live previews always load data
+directly with no sign-in dialog. `DOCS_DHIS2_USERNAME`/`DOCS_DHIS2_PASSWORD`
+override the account (set them in `.env` — both Vite and `server.mjs` load
+it automatically), and `DOCS_DHIS2_ANONYMOUS=1` disables injection to pass
+requests anonymously and show the adapter's sign-in dialog instead. Only
+point the injected account at demo or play instances; it grants every
+visitor whatever the account can do.
 
 ## Add a page or example
 

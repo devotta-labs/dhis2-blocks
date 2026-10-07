@@ -1,97 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { getExample, type ExampleSlug } from '../examples/registry'
+import { ExampleSurface } from '../preview/ExampleSurface'
 import { CodeBlock } from './CodeBlock'
-
-const contentSelector = '.docs-preview-shell'
 
 /**
  * Preview/Code card for a registered example.
  *
- * The preview is rendered by the `/preview/:slug` route inside a same-origin
- * iframe, which keeps DHIS2 global styles, fonts, portals, and dialogs out of
- * the documentation DOM. The Code tab renders the raw example module — the
- * exact source the preview executes.
+ * The preview mounts inline inside the page (same DOM and providers as the
+ * standalone `/preview/:slug` route), so the card reads as part of the
+ * documentation rather than an embedded frame; its reserved height means
+ * loading never reshapes it. The Code tab renders the raw example module —
+ * the exact source the preview executes.
  */
 export const ExampleCard = ({ slug }: { slug: ExampleSlug }) => {
     const example = getExample(slug)
 
     const [tab, setTab] = useState<'preview' | 'code'>('preview')
-    const frameRef = useRef<HTMLIFrameElement>(null)
-
-    const observersRef = useRef<{
-        resize?: ResizeObserver
-        mutation?: MutationObserver
-        content?: Element | null
-    }>({})
-
-    const syncFrameHeight = useCallback(() => {
-        const frame = frameRef.current
-        const previewDocument = frame?.contentDocument
-
-        if (!frame || !previewDocument) {
-            return
-        }
-
-        const content = previewDocument.querySelector(contentSelector)
-
-        const height = content
-            ? content.getBoundingClientRect().height
-            : previewDocument.documentElement.scrollHeight
-
-        frame.style.height = `${Math.ceil(height)}px`
-    }, [])
-
-    const handleLoad = useCallback(() => {
-        const previewDocument = frameRef.current?.contentDocument
-        const observers = observersRef.current
-
-        observers.resize?.disconnect()
-        observers.mutation?.disconnect()
-        observers.content = null
-
-        if (!previewDocument?.body) {
-            return
-        }
-
-        const resizeObserver = new ResizeObserver(syncFrameHeight)
-
-        const observeContent = () => {
-            const content = previewDocument.querySelector(contentSelector)
-
-            if (content === observers.content) {
-                syncFrameHeight()
-
-                return
-            }
-
-            resizeObserver.disconnect()
-            observers.content = content
-
-            if (content) {
-                resizeObserver.observe(content)
-            }
-
-            syncFrameHeight()
-        }
-
-        observers.resize = resizeObserver
-        observers.mutation = new MutationObserver(observeContent)
-        observers.mutation.observe(previewDocument.body, {
-            childList: true,
-            subtree: true,
-        })
-
-        observeContent()
-        syncFrameHeight()
-    }, [syncFrameHeight])
-
-    useEffect(
-        () => () => {
-            observersRef.current.resize?.disconnect()
-            observersRef.current.mutation?.disconnect()
-        },
-        []
-    )
 
     if (!example) {
         return null
@@ -147,14 +71,7 @@ export const ExampleCard = ({ slug }: { slug: ExampleSlug }) => {
             </div>
 
             <div role="tabpanel" hidden={tab !== 'preview'}>
-                <iframe
-                    ref={frameRef}
-                    src={`/preview/${example.slug}`}
-                    title={example.title}
-                    onLoad={handleLoad}
-                    className="block w-full bg-background"
-                    style={{ height: example.defaultHeight }}
-                />
+                <ExampleSurface example={example} />
             </div>
 
             <div role="tabpanel" hidden={tab !== 'code'}>

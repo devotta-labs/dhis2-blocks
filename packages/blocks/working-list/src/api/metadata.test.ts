@@ -108,6 +108,12 @@ describe('version-aware Tracker metadata catalog', () => {
         expect(
             query.mock.calls[0][0].workingListResource.params?.fields
         ).not.toContain('programStages')
+        expect(
+            query.mock.calls[0][0].workingListResource.params?.fields
+        ).toContain('style[color,icon]')
+        expect(
+            query.mock.calls[0][0].workingListResource.params?.fields
+        ).toContain('organisationUnits[id,displayName,path]')
         expect(query.mock.calls[1][0]).toMatchObject({
             workingListResource: {
                 id: program.id,

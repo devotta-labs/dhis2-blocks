@@ -95,6 +95,15 @@ const isKnownBenignDiagnostic = (
         return true
     }
 
+    if (
+        diagnostic.kind === 'requestfailed' &&
+        diagnostic.message === 'net::ERR_BLOCKED_BY_ORB' &&
+        diagnostic.method === 'GET' &&
+        /\/api(?:\/\d+)?\/icons\/[^/]+\/icon$/.test(path ?? '')
+    ) {
+        return true
+    }
+
     return (
         allowOfflineRequestFailures &&
         diagnostic.kind === 'requestfailed' &&

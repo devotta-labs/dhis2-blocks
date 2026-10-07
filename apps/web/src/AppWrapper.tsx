@@ -11,6 +11,7 @@ import './index.css'
 import './locales'
 import { ErrorBoundary } from './app/ErrorBoundary'
 import { SyncUrlWithGlobalShell } from './app/SyncUrlWithGlobalShell'
+import { ContextSelectorShowcase } from './app/ContextSelectorShowcase'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -37,6 +38,14 @@ const router = createHashRouter([
                 <SyncUrlWithGlobalShell>
                     <App />
                 </SyncUrlWithGlobalShell>
+            </ErrorBoundary>
+        ),
+    },
+    {
+        path: '/context-selector-showcase',
+        element: (
+            <ErrorBoundary>
+                <ContextSelectorShowcase />
             </ErrorBoundary>
         ),
     },

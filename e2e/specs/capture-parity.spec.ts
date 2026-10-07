@@ -58,17 +58,13 @@ test.describe('Capture context and generated tracker views', () => {
             }
         }
         page.on('request', countTrackerRequest)
-        await page.locator('[data-test="program-selector"]').click()
-        await chooseDhis2Option(
-            page,
-            '[data-test="program-selector-input"]',
-            PROGRAM_NAME
-        )
+        await page.locator('[data-test="program-selector-container"]').click()
+        await page.getByText(PROGRAM_NAME, { exact: true }).last().click()
         await expect(page.getByTestId('org-unit-empty-state')).toBeVisible({
             timeout: 30_000,
         })
         await expect(
-            page.locator('[data-test="org-unit-selector"]')
+            page.locator('[data-test="org-unit-selector-container"]')
         ).toContainText('Choose an organisation unit')
         await page.waitForTimeout(300)
         expect(trackerRequests).toHaveLength(0)
@@ -100,7 +96,7 @@ test.describe('Capture context and generated tracker views', () => {
             )
         ).toBe(true)
         await expect(
-            page.locator('[data-test="org-unit-selector"]')
+            page.locator('[data-test="org-unit-selector-container"]')
         ).toContainText(ORG_UNIT_NAME)
         await expect(page).toHaveURL(new RegExp(`orgUnitId=${ORG_UNIT}`))
         await expect(page.getByTestId('working-list-table')).toBeVisible({
@@ -111,7 +107,7 @@ test.describe('Capture context and generated tracker views', () => {
                 '[data-testid="working-list-app"]'
             )
             const bar = document.querySelector<HTMLElement>(
-                '[data-testid="context-selector-bar"]'
+                '[data-testid="context-selector"]'
             )
             if (!app || !bar) {
                 return undefined

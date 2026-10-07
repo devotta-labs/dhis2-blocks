@@ -32,7 +32,8 @@ export const getProgramMetadataFields = (apiVersion: number) =>
         'programStages[id,displayName,displayExecutionDateLabel,displayDueDateLabel,hideDueDate,enableUserAssignment,access,programStageDataElements[displayInReports,compulsory,dataElement[id,displayName,displayFormName,valueType,optionSet[id,displayName,options[id,code,displayName]]]]]',
     ].join(',')
 
-export const PROGRAM_SUMMARY_FIELDS = 'id,displayName,programType,access'
+export const PROGRAM_SUMMARY_FIELDS =
+    'id,displayName,programType,access,style[color,icon],organisationUnits[id,displayName,path]'
 
 export const fetchTrackerProgram = (
     client: WorkingListClient,

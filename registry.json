@@ -2,5 +2,8 @@
     "$schema": "https://ui.shadcn.com/schema/registry.json",
     "name": "dhis2-blocks",
     "homepage": "https://github.com/devotta-labs/dhis2-blocks",
-    "include": ["packages/blocks/working-list/registry.json"]
+    "include": [
+        "packages/blocks/context-selector/registry.json",
+        "packages/blocks/working-list/registry.json"
+    ]
 }

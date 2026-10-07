@@ -1,9 +1,20 @@
-import type { OrganisationUnitReference } from '../OrganisationUnitPicker'
 import {
+    areOrganisationUnitPathsRelated,
+    getCaptureOrganisationUnitPickerScope,
     intersectOrganisationUnitScopes,
     isOrganisationUnitInScope,
-    resolveTrackerSearchRoots,
+    resolveCaptureOrganisationUnitRoots,
+    type OrganisationUnitReference,
 } from '../organisationUnitScope'
+
+describe('areOrganisationUnitPathsRelated', () => {
+    it('matches the same unit and either ancestor direction without prefix collisions', () => {
+        expect(areOrganisationUnitPathsRelated('/a/b', '/a/b')).toBe(true)
+        expect(areOrganisationUnitPathsRelated('/a/b/c', '/a/b')).toBe(true)
+        expect(areOrganisationUnitPathsRelated('/a/b', '/a/b/c')).toBe(true)
+        expect(areOrganisationUnitPathsRelated('/a/bb', '/a/b')).toBe(false)
+    })
+})
 
 const unit = (id: string, path: string): OrganisationUnitReference => ({
     id,
@@ -11,35 +22,46 @@ const unit = (id: string, path: string): OrganisationUnitReference => ({
     path,
 })
 
-describe('Tracker organisation-unit scope', () => {
+describe('Capture organisation-unit scope', () => {
     const captureRoot = unit('capture', '/root/capture')
     const searchRoot = unit('search', '/root/capture/search')
     const programRoot = unit('program', '/root/capture/search/program')
 
-    it('prefers configured Tracker search organisation units', () => {
+    it('uses Capture data-entry roots even when Tracker search roots differ', () => {
         expect(
-            resolveTrackerSearchRoots({
+            resolveCaptureOrganisationUnitRoots({
                 organisationUnits: [captureRoot],
                 teiSearchOrganisationUnits: [searchRoot],
             })
-        ).toEqual([searchRoot])
+        ).toEqual([captureRoot])
     })
 
-    it('falls back to capture organisation units when no search roots exist', () => {
+    it('uses capture organisation units when no search roots exist', () => {
         expect(
-            resolveTrackerSearchRoots({
+            resolveCaptureOrganisationUnitRoots({
                 organisationUnits: [captureRoot],
                 teiSearchOrganisationUnits: [],
             })
         ).toEqual([captureRoot])
         expect(
-            resolveTrackerSearchRoots({
+            resolveCaptureOrganisationUnitRoots({
                 organisationUnits: [captureRoot],
             })
         ).toEqual([captureRoot])
     })
 
-    it('intersects Tracker search roots with the selected program scope', () => {
+    it('keeps the full user scope in the quick selector regardless of program assignments', () => {
+        const outsideProgram = unit('outside', '/root/outside')
+
+        expect(
+            getCaptureOrganisationUnitPickerScope([searchRoot, outsideProgram])
+        ).toEqual({
+            allowedPaths: [],
+            pickerRoots: [searchRoot, outsideProgram],
+        })
+    })
+
+    it('intersects Capture roots with the selected program scope', () => {
         const outsideProgram = unit('outside', '/root/outside')
         const intersection = intersectOrganisationUnitScopes(
             [searchRoot, outsideProgram],
@@ -51,12 +73,18 @@ describe('Tracker organisation-unit scope', () => {
             pickerRoots: [searchRoot],
         })
         expect(
+            isOrganisationUnitInScope(programRoot, [searchRoot], [programRoot])
+        ).toBe(true)
+        expect(
             isOrganisationUnitInScope(
-                unit('selected', `${programRoot.path}/selected`),
+                unit('descendant', `${programRoot.path}/descendant`),
                 [searchRoot],
                 [programRoot]
             )
-        ).toBe(true)
+        ).toBe(false)
+        expect(
+            isOrganisationUnitInScope(searchRoot, [searchRoot], [programRoot])
+        ).toBe(false)
         expect(
             isOrganisationUnitInScope(
                 outsideProgram,

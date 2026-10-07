@@ -5,14 +5,17 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-24T15:13:04.153Z\n"
-"PO-Revision-Date: 2026-08-24T15:13:04.154Z\n"
-
-msgid "Discard the unsaved changes to this working list?"
-msgstr "Discard the unsaved changes to this working list?"
+"POT-Creation-Date: 2026-10-07T15:21:47.237Z\n"
+"PO-Revision-Date: 2026-10-07T15:21:47.237Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
+
+msgid "Working lists"
+msgstr "Working lists"
+
+msgid "Highlight data quality issues"
+msgstr "Highlight data quality issues"
 
 msgid "Could not load app context"
 msgstr "Could not load app context"
@@ -36,29 +39,20 @@ msgstr "Choose an organisation unit"
 msgid "Select an organisation unit assigned to both you and this program."
 msgstr "Select an organisation unit assigned to both you and this program."
 
+msgid "No organisation units are available for your user account."
+msgstr "No organisation units are available for your user account."
+
 msgid "Choose organisation unit"
 msgstr "Choose organisation unit"
 
-msgid "Organisation unit is outside the available scope"
-msgstr "Organisation unit is outside the available scope"
+msgid "Selected program is invalid for selected organisation unit"
+msgstr "Selected program is invalid for selected organisation unit"
 
-msgid "Choose an organisation unit assigned to both you and this program."
-msgstr "Choose an organisation unit assigned to both you and this program."
+msgid "Clear the selected program or choose another organisation unit."
+msgstr "Clear the selected program or choose another organisation unit."
 
 msgid "Choose another organisation unit"
 msgstr "Choose another organisation unit"
-
-msgid "Highlight data quality issues"
-msgstr "Highlight data quality issues"
-
-msgid "Saved views in this program"
-msgstr "Saved views in this program"
-
-msgid "Tracked entity filters"
-msgstr "Tracked entity filters"
-
-msgid "Working list results"
-msgstr "Working list results"
 
 msgid "Event selected"
 msgstr "Event selected"
@@ -81,17 +75,42 @@ msgstr "Working list context"
 msgid "Program"
 msgstr "Program"
 
-msgid "Choose a tracker program"
-msgstr "Choose a tracker program"
+msgid "Choose a program"
+msgstr "Choose a program"
 
-msgid "No programs match the search"
-msgstr "No programs match the search"
+msgid "Search for a program"
+msgstr "Search for a program"
+
+msgid "No programs available."
+msgstr "No programs available."
+
+msgid "Show all"
+msgstr "Show all"
+
+msgid "Some programs are being filtered by the chosen organisation unit"
+msgstr "Some programs are being filtered by the chosen organisation unit"
+
+msgid "Show all programs"
+msgstr "Show all programs"
 
 msgid "Organisation unit"
 msgstr "Organisation unit"
 
-msgid "Working lists"
-msgstr "Working lists"
+msgid "Discard unsaved changes?"
+msgstr "Discard unsaved changes?"
+
+msgid ""
+"This event has unsaved changes. Leaving this page without saving will lose "
+"these changes. Are you sure you want to discard unsaved changes?"
+msgstr ""
+"This event has unsaved changes. Leaving this page without saving will lose "
+"these changes. Are you sure you want to discard unsaved changes?"
+
+msgid "No, cancel"
+msgstr "No, cancel"
+
+msgid "Yes, discard changes"
+msgstr "Yes, discard changes"
 
 msgid "The working list could not be loaded"
 msgstr "The working list could not be loaded"
@@ -105,8 +124,17 @@ msgstr "Technical details"
 msgid "Reload application"
 msgstr "Reload application"
 
-msgid "Select one organisation unit for this list."
-msgstr "Select one organisation unit for this list."
+msgid "Search"
+msgstr "Search"
+
+msgid "Could not search organisation units"
+msgstr "Could not search organisation units"
+
+msgid "Could not load more organisation units"
+msgstr "Could not load more organisation units"
+
+msgid "Show more"
+msgstr "Show more"
 
 msgid "A required value is missing"
 msgstr "A required value is missing"
@@ -547,6 +575,9 @@ msgstr "Save as new working list"
 msgid "Save view"
 msgstr "Save view"
 
+msgid "Saved views in this program"
+msgstr "Saved views in this program"
+
 msgid "Scheduled"
 msgstr "Scheduled"
 
@@ -665,6 +696,9 @@ msgstr "Today"
 msgid "Tracked entity attribute"
 msgstr "Tracked entity attribute"
 
+msgid "Tracked entity filters"
+msgstr "Tracked entity filters"
+
 msgid "Try adjusting the filters or organisation unit."
 msgstr "Try adjusting the filters or organisation unit."
 
@@ -709,6 +743,9 @@ msgstr "Visited"
 
 msgid "Working list actions"
 msgstr "Working list actions"
+
+msgid "Working list results"
+msgstr "Working list results"
 
 msgid "Working list views"
 msgstr "Working list views"
@@ -766,11 +803,3 @@ msgstr "TRUE_ONLY accepts only true"
 msgctxt "INTERVAL requires a value from zero to one"
 msgid "UNIT"
 msgstr "UNIT_INTERVAL requires a value from zero to one"
-
-msgctxt "Application title"
-msgid "__MANIFEST_APP_TITLE"
-msgstr "@dhis2-blocks/web"
-
-msgctxt "Application description"
-msgid "__MANIFEST_APP_DESCRIPTION"
-msgstr "DHIS2 wrapper application for developing Working List blocks"

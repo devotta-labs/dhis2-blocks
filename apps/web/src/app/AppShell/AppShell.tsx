@@ -1,5 +1,5 @@
 import { useConfig, useDataEngine } from '@dhis2/app-runtime'
-import { Button, CircularLoader, NoticeBox, Switch } from '@dhis2/ui'
+import { Switch } from '@dhis2/ui'
 import {
     WorkingList,
     WorkingListColumnSelector,
@@ -16,56 +16,35 @@ import { trackerProgramsQueryOptions } from '@dhis2-blocks/working-list/developm
 import { useQuery } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useBlocker } from 'react-router-dom'
-import { z, ZodError } from 'zod'
-import { ContextSelectorBar } from '../ContextSelectorBar'
 import { getGuardedOrganisationUnitState } from '../contextTransitions'
+import { DiscardChangesDialog } from '../DiscardChangesDialog'
+import { OrganisationUnitSelectorContent } from '../OrganisationUnitSelectorContent'
 import {
-    OrganisationUnitPicker,
-    type OrganisationUnitReference,
-} from '../OrganisationUnitPicker'
-import {
-    intersectOrganisationUnitScopes,
+    getCaptureOrganisationUnitPickerScope,
     isOrganisationUnitInScope,
-    resolveTrackerSearchRoots,
+    resolveCaptureOrganisationUnitRoots,
+    type OrganisationUnitReference,
 } from '../organisationUnitScope'
 import { isGuardedAppUrlTransition, parseAppUrlState } from '../urlState'
 import { useAppUrlState } from '../useAppUrlState'
 import i18n from '../../i18n'
+import {
+    AppRuntimeConfigSchema,
+    CurrentUserSchema,
+    OrganisationUnitReferenceSchema,
+    ProgramOrganisationUnitsSchema,
+    retryOperationalError,
+} from './contextSchemas'
+import { ContextStatus } from './ContextStatus'
 import { createAppWorkingListClient } from './createAppWorkingListClient'
+import {
+    buildProgramOptions,
+    hasCaptureProgramDataReadAccess,
+} from './programOptions'
 import { RecordDetailsModal } from './RecordDetailsModal'
-
-const contextStateClassName =
-    'mx-auto mt-4 flex min-h-[220px] w-full min-w-0 max-w-[1440px] flex-col items-center justify-center gap-3 px-6 text-center text-[#405261] [@media(max-width:900px)]:px-3 [&_h2]:text-[20px] [&_h2]:font-medium [&_h2]:text-[#17212b] [&_p]:m-0 [&_p]:max-w-[560px]'
-
-const OrganisationUnitReferenceSchema = z
-    .object({
-        id: z.string().min(1),
-        displayName: z.string().min(1),
-        path: z.string().min(1),
-    })
-    .passthrough()
-
-const CurrentUserSchema = z
-    .object({
-        organisationUnits: z.array(OrganisationUnitReferenceSchema),
-        teiSearchOrganisationUnits: z
-            .array(OrganisationUnitReferenceSchema)
-            .optional(),
-    })
-    .passthrough()
-
-const ProgramOrganisationUnitsSchema = z
-    .object({
-        organisationUnits: z.array(OrganisationUnitReferenceSchema),
-    })
-    .passthrough()
-
-const AppRuntimeConfigSchema = z
-    .object({ apiVersion: z.coerce.number().int().positive() })
-    .passthrough()
-
-const retryOperationalError = (failureCount: number, error: Error) =>
-    !(error instanceof ZodError) && failureCount < 2
+import { WorkingListContextControls } from './WorkingListContextControls'
+import { useDebouncedOrganisationUnitSearch } from './useDebouncedOrganisationUnitSearch'
+import { useOrganisationUnitSearch } from './useOrganisationUnitSearch'
 
 const WorkingListDirtyBridge = ({
     onChange,
@@ -78,6 +57,11 @@ const WorkingListDirtyBridge = ({
     return null
 }
 
+interface PendingTransition {
+    proceed: () => void
+    cancel?: () => void
+}
+
 export const AppShell = () => {
     const engine = useDataEngine()
     const config = useConfig()
@@ -86,19 +70,29 @@ export const AppShell = () => {
         [config]
     )
     const client = useMemo(() => createAppWorkingListClient(engine), [engine])
-    const [orgUnitPickerOpen, setOrgUnitPickerOpen] = useState(false)
+    const [programSelectorOpen, setProgramSelectorOpen] = useState(false)
+    const [orgUnitSelectorOpen, setOrgUnitSelectorOpen] = useState(false)
+    const [organisationUnitSearch, setOrganisationUnitSearch] = useState('')
+    const [
+        debouncedOrganisationUnitSearch,
+        setDebouncedOrganisationUnitSearch,
+    ] = useDebouncedOrganisationUnitSearch(organisationUnitSearch)
     const [dirty, setDirty] = useState(false)
+    const [pendingTransition, setPendingTransition] =
+        useState<PendingTransition>()
     const [openedRecord, setOpenedRecord] = useState<WorkingListResultTarget>()
     const [dataQualityMode, setDataQualityMode] =
         useState<WorkingListDataQualityMode>('hidden')
-    const confirmDiscard = useCallback(() => {
-        if (!dirty) {
-            return true
-        }
-        return window.confirm(
-            i18n.t('Discard the unsaved changes to this working list?')
-        )
-    }, [dirty])
+    const requestTransition = useCallback(
+        (proceed: () => void) => {
+            if (dirty) {
+                setPendingTransition({ proceed })
+            } else {
+                proceed()
+            }
+        },
+        [dirty]
+    )
     const [urlState, setUrlState] = useAppUrlState()
 
     // Guard browser back/forward (and manual hash edits, which the router
@@ -126,14 +120,18 @@ export const AppShell = () => {
         if (externalTransitionBlocker.state !== 'blocked') {
             return
         }
-        if (confirmDiscard()) {
-            setDirty(false)
-            setOpenedRecord(undefined)
-            externalTransitionBlocker.proceed()
-        } else {
-            externalTransitionBlocker.reset()
-        }
-    }, [confirmDiscard, externalTransitionBlocker])
+        setPendingTransition(
+            (current) =>
+                current ?? {
+                    proceed: () => {
+                        setDirty(false)
+                        setOpenedRecord(undefined)
+                        externalTransitionBlocker.proceed()
+                    },
+                    cancel: externalTransitionBlocker.reset,
+                }
+        )
+    }, [externalTransitionBlocker])
 
     const programsQuery = useQuery(
         trackerProgramsQueryOptions(client, runtimeConfig.apiVersion)
@@ -162,7 +160,7 @@ export const AppShell = () => {
             (programsQuery.data?.programs ?? []).filter(
                 (program) =>
                     program.programType === 'WITH_REGISTRATION' &&
-                    program.access?.read !== false
+                    hasCaptureProgramDataReadAccess(program)
             ),
         [programsQuery.data]
     )
@@ -212,23 +210,29 @@ export const AppShell = () => {
                 OrganisationUnitReferenceSchema,
                 signal
             ),
-        enabled: Boolean(selectedProgramSummary && urlState.orgUnitId),
+        enabled: Boolean(urlState.orgUnitId),
         staleTime: 60 * 60 * 1000,
         gcTime: 2 * 60 * 60 * 1000,
         retry: retryOperationalError,
     })
 
+    const organisationUnitSearchQuery = useOrganisationUnitSearch({
+        client,
+        search: debouncedOrganisationUnitSearch,
+        enabled: Boolean(selectedProgramSummary),
+    })
+
     const searchRoots = useMemo(
         () =>
             currentUserQuery.data
-                ? resolveTrackerSearchRoots(currentUserQuery.data)
+                ? resolveCaptureOrganisationUnitRoots(currentUserQuery.data)
                 : [],
         [currentUserQuery.data]
     )
     const programOrgUnits = programOrgUnitsQuery.data?.organisationUnits ?? []
-    const organisationUnitScope = useMemo(
-        () => intersectOrganisationUnitScopes(searchRoots, programOrgUnits),
-        [programOrgUnits, searchRoots]
+    const organisationUnitPickerScope = useMemo(
+        () => getCaptureOrganisationUnitPickerScope(searchRoots),
+        [searchRoots]
     )
     const selectedOrgUnitIsAllowed = useMemo(
         () =>
@@ -239,6 +243,42 @@ export const AppShell = () => {
             ),
         [programOrgUnits, searchRoots, selectedOrgUnitQuery.data]
     )
+    const compatibleProgramOptions = useMemo(
+        () =>
+            buildProgramOptions({
+                programs,
+                selectedOrganisationUnitId: selectedOrgUnitQuery.data?.id,
+                selectedOrganisationUnitPath: selectedOrgUnitQuery.data?.path,
+                baseUrl: runtimeConfig.baseUrl,
+                apiVersion: runtimeConfig.apiVersion,
+            }),
+        [
+            programs,
+            runtimeConfig,
+            selectedOrgUnitQuery.data?.id,
+            selectedOrgUnitQuery.data?.path,
+        ]
+    )
+    const programOptions = useMemo(
+        () =>
+            buildProgramOptions({
+                programs,
+                selectedOrganisationUnitId: selectedOrgUnitQuery.data?.id,
+                selectedOrganisationUnitPath: selectedOrgUnitQuery.data?.path,
+                preservedProgramId: selectedProgramSummary?.id,
+                baseUrl: runtimeConfig.baseUrl,
+                apiVersion: runtimeConfig.apiVersion,
+            }),
+        [
+            programs,
+            runtimeConfig,
+            selectedOrgUnitQuery.data?.id,
+            selectedOrgUnitQuery.data?.path,
+            selectedProgramSummary?.id,
+        ]
+    )
+    const programsAreFiltered =
+        compatibleProgramOptions.length < programs.length
 
     useEffect(() => {
         if (!dirty) {
@@ -261,207 +301,186 @@ export const AppShell = () => {
         ) {
             return
         }
-        setUrlState({})
-    }, [programs, programsQuery.isPending, setUrlState, urlState.programId])
+        setUrlState({ orgUnitId: urlState.orgUnitId })
+    }, [programs, programsQuery.isPending, setUrlState, urlState])
 
     const updateProgram = (programId: string) => {
-        if (!confirmDiscard()) {
-            return
-        }
-        setOpenedRecord(undefined)
-        setDirty(false)
-        setUrlState(programId ? { programId, page: 1, pageSize: 15 } : {})
+        requestTransition(() => {
+            setProgramSelectorOpen(false)
+            setOrgUnitSelectorOpen(false)
+            setOrganisationUnitSearch('')
+            setDebouncedOrganisationUnitSearch('')
+            setOpenedRecord(undefined)
+            setDirty(false)
+            setUrlState(
+                programId
+                    ? {
+                          programId,
+                          orgUnitId: urlState.orgUnitId,
+                          page: 1,
+                          pageSize: 15,
+                      }
+                    : { orgUnitId: urlState.orgUnitId }
+            )
+        })
     }
 
     const updateOrgUnit = (organisationUnit: OrganisationUnitReference) => {
-        const next = getGuardedOrganisationUnitState(
-            urlState,
-            organisationUnit.id,
-            confirmDiscard
-        )
-        if (next === urlState) {
-            return
-        }
-        setOpenedRecord(undefined)
-        setDirty(false)
-        setUrlState(next)
+        setOrgUnitSelectorOpen(false)
+        setOrganisationUnitSearch('')
+        setDebouncedOrganisationUnitSearch('')
+        requestTransition(() => {
+            const next = getGuardedOrganisationUnitState(
+                urlState,
+                organisationUnit.id,
+                () => true
+            )
+            setOpenedRecord(undefined)
+            setDirty(false)
+            setUrlState(next)
+        })
+    }
+
+    const clearOrganisationUnit = () => {
+        requestTransition(() => {
+            const next = getGuardedOrganisationUnitState(
+                urlState,
+                undefined,
+                () => true
+            )
+            setOrgUnitSelectorOpen(false)
+            setOrganisationUnitSearch('')
+            setDebouncedOrganisationUnitSearch('')
+            setOpenedRecord(undefined)
+            setDirty(false)
+            setUrlState(next)
+        })
     }
 
     const loading =
         programsQuery.isPending ||
         currentUserQuery.isPending ||
-        Boolean(
-            selectedProgramSummary &&
-            (programOrgUnitsQuery.isPending ||
-                (urlState.orgUnitId && selectedOrgUnitQuery.isPending))
-        )
+        Boolean(selectedProgramSummary && programOrgUnitsQuery.isPending) ||
+        Boolean(urlState.orgUnitId && selectedOrgUnitQuery.isPending)
     const shellError =
         programsQuery.error ??
         currentUserQuery.error ??
         (selectedProgramSummary ? programOrgUnitsQuery.error : undefined) ??
-        (selectedProgramSummary && urlState.orgUnitId
-            ? selectedOrgUnitQuery.error
-            : undefined)
+        (urlState.orgUnitId ? selectedOrgUnitQuery.error : undefined)
 
     return (
         <div
             className="min-h-screen w-full min-w-0 max-w-full pb-10"
             data-testid="working-list-app"
         >
-            <ContextSelectorBar
-                programs={programs}
-                selectedProgram={selectedProgramSummary}
-                selectedOrgUnitName={selectedOrgUnitQuery.data?.displayName}
-                programsLoading={programsQuery.isPending}
-                orgUnitDisabled={
-                    !selectedProgramSummary || currentUserQuery.isPending
-                }
-                onClearAll={() => {
-                    if (confirmDiscard()) {
+            <WorkingListContextControls
+                clearDisabled={!selectedProgramSummary && !urlState.orgUnitId}
+                onClear={() =>
+                    requestTransition(() => {
+                        setProgramSelectorOpen(false)
+                        setOrgUnitSelectorOpen(false)
+                        setOrganisationUnitSearch('')
+                        setDebouncedOrganisationUnitSearch('')
                         setDirty(false)
                         setOpenedRecord(undefined)
                         setUrlState({})
-                    }
-                }}
-                onClearOrgUnit={() => {
-                    const next = getGuardedOrganisationUnitState(
-                        urlState,
-                        undefined,
-                        confirmDiscard
-                    )
-                    if (next === urlState) {
-                        return
-                    }
-                    setOpenedRecord(undefined)
-                    setDirty(false)
-                    setUrlState(next)
-                }}
-                onOpenOrgUnit={() => setOrgUnitPickerOpen(true)}
+                    })
+                }
+                programOptions={programOptions}
+                programValue={selectedProgramSummary?.id}
+                programOpen={programSelectorOpen}
+                onProgramOpenChange={setProgramSelectorOpen}
                 onProgramChange={updateProgram}
+                onProgramClear={() => updateProgram('')}
+                programLoading={programsQuery.isPending}
+                programLoadingLabel={i18n.t('Loading tracker programs…')}
+                programsAreFiltered={programsAreFiltered}
+                onShowAllPrograms={clearOrganisationUnit}
+                showOrganisationUnit={Boolean(selectedProgramSummary)}
+                organisationUnitValue={selectedOrgUnitQuery.data?.displayName}
+                organisationUnitOpen={orgUnitSelectorOpen}
+                onOrganisationUnitOpenChange={(open) => {
+                    setOrgUnitSelectorOpen(open)
+                    if (!open) {
+                        setOrganisationUnitSearch('')
+                        setDebouncedOrganisationUnitSearch('')
+                    }
+                }}
+                onOrganisationUnitClear={clearOrganisationUnit}
+                organisationUnitLoading={currentUserQuery.isPending}
+                organisationUnitDisabled={
+                    organisationUnitPickerScope.pickerRoots.length === 0
+                }
+                organisationUnitContent={
+                    <OrganisationUnitSelectorContent
+                        roots={organisationUnitPickerScope.pickerRoots}
+                        allowedPaths={organisationUnitPickerScope.allowedPaths}
+                        selected={selectedOrgUnitQuery.data}
+                        searchValue={organisationUnitSearch}
+                        treeKey={debouncedOrganisationUnitSearch || 'initial'}
+                        onSearchChange={setOrganisationUnitSearch}
+                        searchRoots={
+                            debouncedOrganisationUnitSearch
+                                ? (organisationUnitSearchQuery.data?.pages.flatMap(
+                                      (page) => page.organisationUnits
+                                  ) ?? [])
+                                : undefined
+                        }
+                        searchLoading={
+                            Boolean(debouncedOrganisationUnitSearch) &&
+                            organisationUnitSearchQuery.isFetching &&
+                            !organisationUnitSearchQuery.data
+                        }
+                        searchError={
+                            Boolean(debouncedOrganisationUnitSearch) &&
+                            organisationUnitSearchQuery.isError &&
+                            !organisationUnitSearchQuery.data
+                        }
+                        onSearchRetry={() =>
+                            void organisationUnitSearchQuery.refetch()
+                        }
+                        searchHasMore={organisationUnitSearchQuery.hasNextPage}
+                        searchLoadingMore={
+                            organisationUnitSearchQuery.isFetchingNextPage
+                        }
+                        searchLoadMoreError={
+                            organisationUnitSearchQuery.isFetchNextPageError
+                        }
+                        onSearchLoadMore={() =>
+                            void organisationUnitSearchQuery.fetchNextPage()
+                        }
+                        onSelect={updateOrgUnit}
+                    />
+                }
             />
+            <h1
+                className="absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!"
+                data-testid="working-list-heading"
+            >
+                {i18n.t('Working lists')}
+            </h1>
 
-            <OrganisationUnitPicker
-                open={orgUnitPickerOpen}
-                roots={organisationUnitScope.pickerRoots}
-                allowedPaths={organisationUnitScope.allowedPaths}
-                selected={selectedOrgUnitQuery.data}
-                onChange={updateOrgUnit}
-                onClose={() => setOrgUnitPickerOpen(false)}
+            <ContextStatus
+                loading={loading}
+                error={shellError}
+                hasProgram={Boolean(selectedProgramSummary)}
+                organisationUnitId={urlState.orgUnitId}
+                organisationUnitIsAllowed={selectedOrgUnitIsAllowed}
+                canChooseOrganisationUnit={
+                    organisationUnitPickerScope.pickerRoots.length > 0
+                }
+                onChooseOrganisationUnit={() => setOrgUnitSelectorOpen(true)}
+                onRetry={() => {
+                    void programsQuery.refetch()
+                    void currentUserQuery.refetch()
+                    if (selectedProgramSummary) {
+                        void programOrgUnitsQuery.refetch()
+                    }
+                    if (urlState.orgUnitId) {
+                        void selectedOrgUnitQuery.refetch()
+                    }
+                }}
             />
-
-            {loading && (
-                <main
-                    className={contextStateClassName}
-                    data-testid="app-context-loading"
-                    aria-live="polite"
-                >
-                    <CircularLoader small />
-                    <p>{i18n.t('Loading tracker programs…')}</p>
-                </main>
-            )}
-
-            {!loading && shellError && (
-                <main
-                    className={contextStateClassName}
-                    data-testid="app-context-error"
-                >
-                    <NoticeBox
-                        error
-                        title={i18n.t('Could not load app context')}
-                    >
-                        <p>
-                            {shellError instanceof Error
-                                ? shellError.message
-                                : String(shellError)}
-                        </p>
-                        <Button
-                            onClick={() => {
-                                void programsQuery.refetch()
-                                void currentUserQuery.refetch()
-                                if (selectedProgramSummary) {
-                                    void programOrgUnitsQuery.refetch()
-                                }
-                                if (
-                                    selectedProgramSummary &&
-                                    urlState.orgUnitId
-                                ) {
-                                    void selectedOrgUnitQuery.refetch()
-                                }
-                            }}
-                        >
-                            {i18n.t('Try again')}
-                        </Button>
-                    </NoticeBox>
-                </main>
-            )}
-
-            {!loading && !shellError && !selectedProgramSummary && (
-                <main
-                    className={contextStateClassName}
-                    data-testid="program-empty-state"
-                >
-                    <h2>{i18n.t('Choose a program to start')}</h2>
-                    <p>
-                        {i18n.t(
-                            'Working lists query tracked entities and program-stage events for the selected tracker program.'
-                        )}
-                    </p>
-                </main>
-            )}
-
-            {!loading &&
-                !shellError &&
-                selectedProgramSummary &&
-                !urlState.orgUnitId && (
-                    <main
-                        className={contextStateClassName}
-                        data-testid="org-unit-empty-state"
-                    >
-                        <h2>{i18n.t('Choose an organisation unit')}</h2>
-                        <p>
-                            {i18n.t(
-                                'Select an organisation unit assigned to both you and this program.'
-                            )}
-                        </p>
-                        <Button
-                            primary
-                            dataTest="choose-org-unit"
-                            onClick={() => setOrgUnitPickerOpen(true)}
-                        >
-                            {i18n.t('Choose organisation unit')}
-                        </Button>
-                    </main>
-                )}
-
-            {!loading &&
-                !shellError &&
-                selectedProgramSummary &&
-                urlState.orgUnitId &&
-                !selectedOrgUnitIsAllowed && (
-                    <main
-                        className={contextStateClassName}
-                        data-testid="invalid-org-unit-context"
-                    >
-                        <NoticeBox
-                            error
-                            title={i18n.t(
-                                'Organisation unit is outside the available scope'
-                            )}
-                        >
-                            <p>
-                                {i18n.t(
-                                    'Choose an organisation unit assigned to both you and this program.'
-                                )}
-                            </p>
-                            <Button
-                                dataTest="replace-invalid-org-unit"
-                                onClick={() => setOrgUnitPickerOpen(true)}
-                            >
-                                {i18n.t('Choose another organisation unit')}
-                            </Button>
-                        </NoticeBox>
-                    </main>
-                )}
 
             {!loading &&
                 !shellError &&
@@ -522,12 +541,36 @@ export const AppShell = () => {
                     </main>
                 )}
 
+            <DiscardChangesDialog
+                open={Boolean(pendingTransition)}
+                onCancel={() => {
+                    const transition = pendingTransition
+                    setPendingTransition(undefined)
+                    transition?.cancel?.()
+                }}
+                onDiscard={() => {
+                    const transition = pendingTransition
+                    setPendingTransition(undefined)
+                    setDirty(false)
+                    transition?.proceed()
+                }}
+            />
+
             {openedRecord && (
                 <RecordDetailsModal
                     record={openedRecord}
                     onClose={() => setOpenedRecord(undefined)}
                 />
             )}
+
+            <footer className="mx-auto mt-8 flex w-full max-w-[1440px] justify-end px-6 [@media(max-width:900px)]:px-3">
+                <a
+                    className="text-xs text-[#6c7787] underline-offset-2 hover:text-[#147cd7] hover:underline"
+                    href="#/context-selector-showcase"
+                >
+                    Context Selector showcase
+                </a>
+            </footer>
         </div>
     )
 }

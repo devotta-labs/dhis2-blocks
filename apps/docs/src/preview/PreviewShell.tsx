@@ -1,7 +1,10 @@
 import type { ComponentProps } from 'react'
 
+// `isolate` gives the preview its own stacking context: DHIS2 chrome such as
+// the Context Selector's z-1000 navigation then stacks inside the card and
+// can never paint over the documentation header.
 export const previewShellClassName =
-    'docs-preview-shell mx-auto min-h-[360px] w-full max-w-[1440px] p-6 [font-family:Roboto,Helvetica,Arial,sans-serif] max-[900px]:p-3'
+    'docs-preview-shell isolate mx-auto min-h-[360px] w-full max-w-[1440px] p-6 [font-family:Roboto,Helvetica,Arial,sans-serif] max-[900px]:p-3'
 
 export const PreviewShell = ({
     className,

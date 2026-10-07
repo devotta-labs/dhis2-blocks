@@ -60,9 +60,7 @@
                 "src/**/*.{test,spec}.{ts,tsx}",
                 "src/**/__tests__/**/*.{ts,tsx}"
             ],
-            "project": [
-                "src/**/*.{ts,tsx,css}"
-            ],
+            "project": ["src/**/*.{ts,tsx,css}"],
             "includeEntryExports": true,
             "ignoreIssues": {
                 "d2.config.js": [
@@ -92,9 +90,7 @@
             }
         },
         "apps/docs": {
-            "entry": [
-                "server/**/*.test.mjs"
-            ],
+            "entry": ["server/**/*.test.mjs"],
             "project": [
                 "src/**/*.{ts,tsx,css}",
                 "server/**/*.mjs",
@@ -103,12 +99,8 @@
                 "src/**/*.mdx"
             ],
             "ignoreIssues": {
-                "src/components/ExampleCard.tsx": [
-                    "exports"
-                ],
-                "src/components/InstallCommand.tsx": [
-                    "exports"
-                ]
+                "src/components/ExampleCard.tsx": ["exports"],
+                "src/components/InstallCommand.tsx": ["exports"]
             }
         },
         "packages/blocks/*": {

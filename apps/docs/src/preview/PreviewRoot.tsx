@@ -5,14 +5,14 @@ import { LivePreviewHost } from './LivePreviewHost'
 import { PreviewLoading, PreviewShell } from './PreviewShell'
 
 /**
- * Standalone preview route (`/preview/:slug`).
+ * Standalone preview route (`/preview/*`).
  *
  * Documentation pages embed this route in a same-origin iframe and link to it
  * for full-screen viewing. Rendering happens here — never inline in a docs
  * page — so DHIS2 global CSS, fonts, portals, and dialogs stay contained.
  */
 export const PreviewRoot = () => {
-    const { slug } = useParams<{ slug: string }>()
+    const { '*': slug } = useParams()
     const example = slug ? getExample(slug) : undefined
 
     if (!example) {

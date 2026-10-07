@@ -63,7 +63,7 @@ const router = createBrowserRouter([
         ],
     },
     {
-        path: '/preview/:slug',
+        path: '/preview/*',
         element: <PreviewRoot />,
     },
     {

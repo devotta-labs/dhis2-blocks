@@ -32,8 +32,11 @@ export default defineConfig({
     },
     resolve: {
         // Workspace blocks resolve to their source entry points; dedupe keeps
-        // a single React/Query runtime inside the preview host.
-        dedupe: ['react', 'react-dom', '@tanstack/react-query'],
+        // a single React runtime inside the preview host. @tanstack/react-query
+        // must NOT be deduped: the DHIS2 data engine needs v4 (its useQuery
+        // onSuccess/onError callbacks were removed in v5) while the blocks use
+        // v5 — the two providers coexist inside the adapter.
+        dedupe: ['react', 'react-dom'],
     },
     optimizeDeps: {
         esbuildOptions: {

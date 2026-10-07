@@ -10,8 +10,9 @@ import { useState } from 'react'
  * server version and API version, loads the current user and locale, renders
  * the sign-in dialog when credentials are needed, and reloads the frame when
  * the authenticated identity changes — which also discards the query cache
- * below. `REACT_APP_DHIS2_BASE_URL` pins the base URL to the same-origin
- * `/dhis2` proxy, so the host never talks to an arbitrary server.
+ * below. The adapter's data engine strips leading slashes when joining
+ * paths, so `url` carries the absolute same-origin `/dhis2` prefix —
+ * the host still never talks to an arbitrary server.
  */
 const createQueryClient = () =>
     new QueryClient({
@@ -33,7 +34,7 @@ export const LivePreviewHost = ({ children }: { children: ReactNode }) => {
         <AppAdapter
             appName="DHIS2 Blocks documentation"
             appVersion="1.0.0"
-            url="/dhis2"
+            url={`${window.location.origin}/dhis2`}
             pwaEnabled={false}
         >
             <QueryClientProvider client={queryClient}>

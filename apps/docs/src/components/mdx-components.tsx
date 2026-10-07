@@ -1,4 +1,4 @@
-import type { Props as MDXProviderProps } from '@mdx-js/react'
+import type { MDXComponents } from 'mdx/types.js'
 import type { AnchorHTMLAttributes } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -22,6 +22,6 @@ const DocsLink = ({
     )
 }
 
-export const mdxComponents: NonNullable<MDXProviderProps['components']> = {
+export const mdxComponents: MDXComponents = {
     a: DocsLink,
 }

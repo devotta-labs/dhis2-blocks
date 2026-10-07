@@ -207,7 +207,7 @@ export const DocsShell = () => {
                     </div>
                 )}
 
-                <main className="min-w-0 flex-1 px-4 py-8 md:pl-72 md:pr-8 lg:px-12">
+                <main className="min-w-0 flex-1 px-4 py-8 md:pl-72 md:pr-8 lg:pr-12">
                     <Outlet />
                 </main>
             </div>

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
     resolveDocsBackend,
     rewriteLocationHeader,
+    rewriteSetCookieHeaders,
     stripDhis2Prefix,
 } from './dhis2-proxy.mjs'
 
@@ -49,6 +50,53 @@ describe('rewriteLocationHeader', () => {
         expect(rewriteLocationHeader('https://example.com/x', target)).toBe(
             'https://example.com/x'
         )
+    })
+
+    it('strips the backend context path from relative redirects', () => {
+        expect(
+            rewriteLocationHeader(
+                '/dev/login/',
+                'https://play.im.dhis2.org/dev'
+            )
+        ).toBe('/dhis2/login/')
+    })
+
+    it('strips the backend context path from absolute redirects', () => {
+        expect(
+            rewriteLocationHeader(
+                'https://play.im.dhis2.org/dev/api/programs?paging=false',
+                'https://play.im.dhis2.org/dev'
+            )
+        ).toBe('/dhis2/api/programs?paging=false')
+    })
+
+    it('does not strip partial context path matches', () => {
+        expect(
+            rewriteLocationHeader(
+                '/dev-fork/api/ping',
+                'https://play.im.dhis2.org/dev'
+            )
+        ).toBe('/dhis2/dev-fork/api/ping')
+    })
+})
+
+describe('rewriteSetCookieHeaders', () => {
+    it('re-roots the cookie path so /dhis2 requests send it', () => {
+        expect(
+            rewriteSetCookieHeaders([
+                'JSESSIONID=ABC; Path=/dev; Secure; HttpOnly; SameSite=lax',
+            ])
+        ).toEqual(['JSESSIONID=ABC; Path=/; Secure; HttpOnly; SameSite=lax'])
+    })
+
+    it('adds a root path when none is declared', () => {
+        expect(rewriteSetCookieHeaders(['TOKEN=1; HttpOnly'])).toEqual([
+            'TOKEN=1; HttpOnly; Path=/',
+        ])
+    })
+
+    it('leaves a missing header untouched', () => {
+        expect(rewriteSetCookieHeaders(undefined)).toBeUndefined()
     })
 })
 

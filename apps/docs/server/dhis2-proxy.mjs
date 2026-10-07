@@ -38,7 +38,9 @@ export const stripDhis2Prefix = (url) => {
 /**
  * Point redirect responses back at the same-origin prefix. DHIS2 answers some
  * requests (legacy login, expired sessions) with `Location` headers that are
- * relative to its own root or absolute on its own origin.
+ * relative to its own root or absolute on its own origin. Backends deployed
+ * under a context path (e.g. `https://host/dev`) include it in the location,
+ * so the backend path prefix is stripped before adding the local prefix.
  */
 export const rewriteLocationHeader = (location, target) => {
     if (!location) {
@@ -46,18 +48,26 @@ export const rewriteLocationHeader = (location, target) => {
     }
 
     const backend = new URL(target)
+    const basePath = backend.pathname.replace(/\/$/, '')
+
+    const stripBasePath = (path) =>
+        basePath && path.startsWith(`${basePath}/`)
+            ? path.slice(basePath.length)
+            : path === basePath
+              ? '/'
+              : path
 
     if (location.startsWith('/')) {
-        return location.startsWith(DHIS2_PREFIX)
-            ? location
-            : `${DHIS2_PREFIX}${location}`
+        const path = stripBasePath(location)
+
+        return path.startsWith(DHIS2_PREFIX) ? path : `${DHIS2_PREFIX}${path}`
     }
 
     try {
         const resolved = new URL(location)
 
         if (resolved.origin === backend.origin) {
-            return `${DHIS2_PREFIX}${resolved.pathname}${resolved.search}${resolved.hash}`
+            return `${DHIS2_PREFIX}${stripBasePath(resolved.pathname)}${resolved.search}${resolved.hash}`
         }
     } catch {
         return location
@@ -65,6 +75,18 @@ export const rewriteLocationHeader = (location, target) => {
 
     return location
 }
+
+/**
+ * Session cookies are scoped to the backend's own path (e.g. `Path=/dev`).
+ * Browsers would never send them on `/dhis2` requests, so every Set-Cookie
+ * path is rewritten to `/` on this origin.
+ */
+export const rewriteSetCookieHeaders = (cookies) =>
+    cookies?.map((cookie) =>
+        /;\s*path=/i.test(cookie)
+            ? cookie.replace(/;\s*path=[^;]*/i, '; Path=/')
+            : `${cookie}; Path=/`
+    )
 
 /** Vite `server.proxy`/`preview.proxy` entry for the same-origin prefix. */
 export const createDhis2ViteProxy = (target) => ({
@@ -74,6 +96,17 @@ export const createDhis2ViteProxy = (target) => ({
         secure: false,
         rewrite: (path) => stripDhis2Prefix(path),
         configure: (proxy) => {
+            // DHIS2's CORS layer answers requests carrying a foreign Origin
+            // with an empty 200 (and no session cookie). Requests through this
+            // prefix are backend-native, so Origin/Referer are rewritten to
+            // the backend's own origin — never arbitrary third-party origins.
+            proxy.on('proxyReq', (proxyReq) => {
+                const backend = new URL(target)
+
+                proxyReq.setHeader('origin', backend.origin)
+                proxyReq.setHeader('referer', `${backend.origin}/`)
+            })
+
             proxy.on('proxyRes', (proxyRes) => {
                 const location = proxyRes.headers.location
 
@@ -82,6 +115,14 @@ export const createDhis2ViteProxy = (target) => ({
                         location,
                         target
                     )
+                }
+
+                const cookies = rewriteSetCookieHeaders(
+                    proxyRes.headers['set-cookie']
+                )
+
+                if (cookies) {
+                    proxyRes.headers['set-cookie'] = cookies
                 }
             })
         },
@@ -108,7 +149,12 @@ export const proxyDhis2Request = (req, res, target) => {
     const backend = new URL(target)
     const transport = backend.protocol === 'https:' ? https : http
 
-    const headers = { ...req.headers, host: backend.host }
+    const headers = {
+        ...req.headers,
+        host: backend.host,
+        origin: backend.origin,
+        referer: `${backend.origin}/`,
+    }
 
     for (const header of HOP_BY_HOP_HEADERS) {
         delete headers[header]
@@ -134,6 +180,14 @@ export const proxyDhis2Request = (req, res, target) => {
                     responseHeaders.location,
                     target
                 )
+            }
+
+            const cookies = rewriteSetCookieHeaders(
+                responseHeaders['set-cookie']
+            )
+
+            if (cookies) {
+                responseHeaders['set-cookie'] = cookies
             }
 
             res.writeHead(

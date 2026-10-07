@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom'
 import App from './App'
 import './index.css'
+import './applyApplicationTheme'
 import './locales'
 import { ErrorBoundary } from './app/ErrorBoundary'
 import { SyncUrlWithGlobalShell } from './app/SyncUrlWithGlobalShell'

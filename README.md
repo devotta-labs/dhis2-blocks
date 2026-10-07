@@ -251,9 +251,17 @@ exclamation marks in class content. Put punctuation in the rendered text.
 `dhis2-blocks/inline-classnames` also requires class strings and composition
 at their use site: inline conditional strings, templates, and class-helper calls
 are allowed; extracted constants, arrays, maps, and local class-returning
-functions are rejected. Forwarded host props and imported CSS-module names
-remain supported. These rules have no autofix because removing a modifier or
-moving a dynamic expression can change behavior.
+functions are rejected. Forwarded host props remain supported.
+`dhis2-blocks/no-stylesheets` rejects CSS and preprocessor imports, re-exports,
+dynamic imports, stylesheet URLs, and embedded style elements. Its only import
+exception is the production Tailwind compiler entry, loaded for side effects.
+`pnpm lint:stylesheets` also rejects tracked and non-ignored untracked stylesheet
+files anywhere in the repository and restricts that entry to Tailwind compiler
+imports and source directives. Custom selectors, declarations, and at-rules
+cannot be added there. Document defaults and reduced-motion styling use inline
+Tailwind classes applied to the document root, including portal content.
+These rules have no autofix because removing styles or moving a dynamic
+expression can change behavior.
 Run `pnpm test:lint-rules` or `pnpm typecheck:lint-rules` to check the plugins
 independently. Browser tests load the production stylesheet; cascade regression
 tests also inject DHIS2's real reset.

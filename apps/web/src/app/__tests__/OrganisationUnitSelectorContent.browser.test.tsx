@@ -56,6 +56,21 @@ describe('Capture-style organisation-unit field', () => {
         expect(headerStyle.padding).toBe('8px')
         expect(headerStyle.backgroundColor).toBe('rgb(248, 249, 250)')
         expect(inputStyle.height).toBe('40px')
+        expect(inputStyle.boxSizing).toBe('border-box')
+        expect(inputStyle.padding).toBe('12px 11px 10px')
+        expect(inputStyle.fontSize).toBe('14px')
+        expect(inputStyle.color).toBe('rgb(33, 41, 52)')
+        // Chromium computes hidden overflow on single-line inputs as clip.
+        expect(inputStyle.overflow).toBe('clip')
+        expect(inputStyle.textOverflow).toBe('ellipsis')
+
+        const placeholderStyle = getComputedStyle(
+            input.element(),
+            '::placeholder'
+        )
+
+        expect(placeholderStyle.color).toBe('rgb(108, 119, 135)')
+        expect(placeholderStyle.opacity).toBe('1')
         expect(inputStyle.borderWidth).toBe('1px')
         expect(initialInputBorderColor).toBe('rgb(160, 173, 186)')
         expect(inputStyle.borderRadius).toBe('3px')

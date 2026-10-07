@@ -7,7 +7,6 @@ import {
     buildOrganisationUnitTreeFilter,
     getInitialOrganisationUnitExpandedPaths,
 } from './treeFilter'
-import styles from './OrganisationUnitSelectorContent.module.css'
 
 interface OrganisationUnitSelectorContentProps {
     roots: OrganisationUnitReference[]
@@ -141,7 +140,7 @@ export const OrganisationUnitSelectorContent = ({
         <div className="z-0 h-full w-full rounded-[3px] border border-[#e8edf2] bg-white">
             <div className="rounded-t-[3px] bg-[#f8f9fa] p-[8px]">
                 <input
-                    className={styles.searchInput}
+                    className="box-border h-[40px] w-full overflow-hidden rounded-[3px] border border-[#a0adba] px-[11px] pt-[12px] pb-[10px] text-[14px] text-[#212934] [box-shadow:inset_0_0_1px_0_rgba(48,54,60,0.1)] text-ellipsis outline-none placeholder:text-[#6c7787] placeholder:opacity-100 focus:border-[#147cd7] focus:[box-shadow:inset_0_0_0_2px_#147cd7]"
                     data-test="org-unit-search-input"
                     type="text"
                     value={searchValue}

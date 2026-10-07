@@ -59,6 +59,7 @@
         "anti-slop/no-reduce-accumulator-copy": "error",
         "anti-slop/require-readable-spacing": "error",
         "dhis2-blocks/no-tailwind-important": "error",
-        "dhis2-blocks/inline-classnames": "error"
+        "dhis2-blocks/inline-classnames": "error",
+        "dhis2-blocks/no-stylesheets": "error"
     }
 }

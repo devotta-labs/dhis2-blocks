@@ -2,9 +2,6 @@ import { Button, CircularLoader, NoticeBox } from '@dhis2/ui'
 import React from 'react'
 import i18n from '../../i18n'
 
-const contextStateClassName =
-    'mx-auto mt-4 flex min-h-[220px] w-full min-w-0 max-w-[1440px] flex-col items-center justify-center gap-3 px-6 text-center text-[#405261] [@media(max-width:900px)]:px-3 [&_h2]:text-[20px] [&_h2]:font-medium [&_h2]:text-[#17212b] [&_p]:m-0 [&_p]:max-w-[560px]'
-
 interface ContextStatusProps {
     loading: boolean
     error: unknown
@@ -29,7 +26,7 @@ export const ContextStatus = ({
     if (loading) {
         return (
             <main
-                className={contextStateClassName}
+                className="mx-auto mt-4 flex min-h-[220px] w-full min-w-0 max-w-[1440px] flex-col items-center justify-center gap-3 px-6 text-center text-[#405261] [@media(max-width:900px)]:px-3 [&_h2]:text-[20px] [&_h2]:font-medium [&_h2]:text-[#17212b] [&_p]:m-0 [&_p]:max-w-[560px]"
                 data-testid="app-context-loading"
                 aria-live="polite"
             >
@@ -42,7 +39,7 @@ export const ContextStatus = ({
     if (error) {
         return (
             <main
-                className={contextStateClassName}
+                className="mx-auto mt-4 flex min-h-[220px] w-full min-w-0 max-w-[1440px] flex-col items-center justify-center gap-3 px-6 text-center text-[#405261] [@media(max-width:900px)]:px-3 [&_h2]:text-[20px] [&_h2]:font-medium [&_h2]:text-[#17212b] [&_p]:m-0 [&_p]:max-w-[560px]"
                 data-testid="app-context-error"
             >
                 <NoticeBox error title={i18n.t('Could not load app context')}>
@@ -58,7 +55,7 @@ export const ContextStatus = ({
     if (!hasProgram) {
         return (
             <main
-                className={contextStateClassName}
+                className="mx-auto mt-4 flex min-h-[220px] w-full min-w-0 max-w-[1440px] flex-col items-center justify-center gap-3 px-6 text-center text-[#405261] [@media(max-width:900px)]:px-3 [&_h2]:text-[20px] [&_h2]:font-medium [&_h2]:text-[#17212b] [&_p]:m-0 [&_p]:max-w-[560px]"
                 data-testid="program-empty-state"
             >
                 <h2>{i18n.t('Choose a program to start')}</h2>
@@ -74,7 +71,7 @@ export const ContextStatus = ({
     if (!organisationUnitId) {
         return (
             <main
-                className={contextStateClassName}
+                className="mx-auto mt-4 flex min-h-[220px] w-full min-w-0 max-w-[1440px] flex-col items-center justify-center gap-3 px-6 text-center text-[#405261] [@media(max-width:900px)]:px-3 [&_h2]:text-[20px] [&_h2]:font-medium [&_h2]:text-[#17212b] [&_p]:m-0 [&_p]:max-w-[560px]"
                 data-testid="org-unit-empty-state"
             >
                 <h2>{i18n.t('Choose an organisation unit')}</h2>
@@ -103,7 +100,7 @@ export const ContextStatus = ({
     if (!organisationUnitIsAllowed) {
         return (
             <main
-                className={contextStateClassName}
+                className="mx-auto mt-4 flex min-h-[220px] w-full min-w-0 max-w-[1440px] flex-col items-center justify-center gap-3 px-6 text-center text-[#405261] [@media(max-width:900px)]:px-3 [&_h2]:text-[20px] [&_h2]:font-medium [&_h2]:text-[#17212b] [&_p]:m-0 [&_p]:max-w-[560px]"
                 data-testid="invalid-program-context"
             >
                 <NoticeBox

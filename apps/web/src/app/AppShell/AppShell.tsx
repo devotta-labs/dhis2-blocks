@@ -459,10 +459,7 @@ export const AppShell = () => {
                     />
                 }
             />
-            <h1
-                className="absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!"
-                data-testid="working-list-heading"
-            >
+            <h1 className="sr-only" data-testid="working-list-heading">
                 {i18n.t('Working lists')}
             </h1>
 

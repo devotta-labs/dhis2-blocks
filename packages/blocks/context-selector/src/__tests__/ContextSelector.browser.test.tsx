@@ -282,7 +282,7 @@ describe('ContextSelector', () => {
             1
         )
         expect(getComputedStyle(menu!).paddingBottom).toBe('4px')
-        const filterContainer = filter.closest('.sticky\\!')
+        const filterContainer = filter.closest('.sticky')
         expect(getComputedStyle(filterContainer!).position).toBe('sticky')
         expect(getComputedStyle(filterContainer!).paddingTop).toBe('8px')
         expect(getComputedStyle(filterContainer!).paddingRight).toBe('8px')

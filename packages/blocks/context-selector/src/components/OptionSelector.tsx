@@ -137,18 +137,19 @@ export const MenuSelector = ({
                     <Menu>
                         {manyOptions ? (
                             <>
-                                <Input
-                                    dense
-                                    className="sticky! top-0 z-[1] bg-white px-[8px] pt-[8px] pb-[4px]"
-                                    dataTest={`${conciseDataTest}-filterinput`}
-                                    value={filter}
-                                    onChange={({ value: nextFilter }) =>
-                                        setFilter(nextFilter ?? '')
-                                    }
-                                    type="text"
-                                    placeholder={searchPlaceholder}
-                                    initialFocus
-                                />
+                                <div className="sticky top-0 z-[1] bg-white px-[8px] pt-[8px] pb-[4px]">
+                                    <Input
+                                        dense
+                                        dataTest={`${conciseDataTest}-filterinput`}
+                                        value={filter}
+                                        onChange={({ value: nextFilter }) =>
+                                            setFilter(nextFilter ?? '')
+                                        }
+                                        type="text"
+                                        placeholder={searchPlaceholder}
+                                        initialFocus
+                                    />
+                                </div>
                                 {visibleOptions.length > 0 ? (
                                     visibleOptions.map((option) => (
                                         <MenuItem

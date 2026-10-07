@@ -6,18 +6,13 @@ import {
     ModalActions,
     ModalContent,
     ModalTitle,
-    Popover,
+    Layer,
+    Popper,
 } from '@dhis2/ui'
 import { IconMore16 } from '@dhis2/ui-icons'
 import React, { useId, useState } from 'react'
 import type { WorkingListSavedView } from '../../provider/contracts'
 import { useWorkingListText } from '../WorkingListText'
-
-const visuallyHiddenClassName =
-    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
-
-const pillButtonClassName =
-    'cursor-pointer border-0 bg-transparent [font:inherit] text-[inherit] focus-visible:[outline:3px_solid_rgb(20_124_215_/_35%)] focus-visible:outline-offset-[-2px]'
 
 interface SavedListBarProps {
     lists: readonly WorkingListSavedView[]
@@ -127,7 +122,7 @@ export const SavedListBar = ({
                             >
                                 <button
                                     type="button"
-                                    className={`${pillButtonClassName} px-[11px] py-[5px] ${selected ? '[&:hover]:bg-[#076b62] [&:hover]:text-white' : '[&:hover]:bg-[#eaf3fa] [&:hover]:text-[#1d5280]'}`}
+                                    className={`cursor-pointer border-0 bg-transparent [font:inherit] text-[inherit] focus-visible:[outline:3px_solid_rgb(20_124_215_/_35%)] focus-visible:outline-offset-[-2px] px-[11px] py-[5px] ${selected ? '[&:hover]:bg-[#076b62] [&:hover]:text-white' : '[&:hover]:bg-[#eaf3fa] [&:hover]:text-[#1d5280]'}`}
                                     aria-current={selected ? 'true' : undefined}
                                     title={
                                         incompatible
@@ -149,9 +144,7 @@ export const SavedListBar = ({
                                                 *
                                             </span>
                                             <span
-                                                className={
-                                                    visuallyHiddenClassName
-                                                }
+                                                className="sr-only"
                                                 data-testid="working-list-dirty-label"
                                             >
                                                 {i18n.t('Unsaved changes')}
@@ -162,7 +155,7 @@ export const SavedListBar = ({
                                 {hasMenu && (
                                     <button
                                         type="button"
-                                        className={`${pillButtonClassName} relative inline-flex w-7 items-center justify-center px-1.5 py-0 before:absolute before:top-1/2 before:left-0 before:h-4 before:w-px before:-translate-y-1/2 before:content-[''] [&_svg]:block ${selected ? 'before:bg-[rgb(255_255_255_/_35%)] [&:hover]:bg-[#076b62] [&:hover]:text-white' : 'before:bg-[#c4cdd5] [&:hover]:bg-[#eaf3fa] [&:hover]:text-[#1d5280]'}`}
+                                        className={`cursor-pointer border-0 bg-transparent [font:inherit] text-[inherit] focus-visible:[outline:3px_solid_rgb(20_124_215_/_35%)] focus-visible:outline-offset-[-2px] relative inline-flex w-7 items-center justify-center px-1.5 py-0 before:absolute before:top-1/2 before:left-0 before:h-4 before:w-px before:-translate-y-1/2 before:content-[''] [&_svg]:block ${selected ? 'before:bg-[rgb(255_255_255_/_35%)] [&:hover]:bg-[#076b62] [&:hover]:text-white' : 'before:bg-[#c4cdd5] [&:hover]:bg-[#eaf3fa] [&:hover]:text-[#1d5280]'}`}
                                         data-saved-view-menu
                                         data-testid={`working-list-view-${list.id}-menu`}
                                         aria-label={i18n.t(
@@ -204,67 +197,67 @@ export const SavedListBar = ({
             </div>
 
             {openMenu && (
-                <Popover
-                    placement="bottom-start"
-                    reference={openMenu.reference}
-                    className="rounded-none! bg-transparent! shadow-none!"
-                    onClickOutside={() => closeMenu()}
-                >
-                    <div
-                        ref={focusFirstMenuItem}
-                        id={actionsMenuId}
-                        className="w-max"
+                <Layer onBackdropClick={() => closeMenu()}>
+                    <Popper
+                        placement="bottom-start"
+                        reference={openMenu.reference}
                     >
-                        <FlyoutMenu
-                            dense
-                            dataTest="saved-view-actions-menu"
-                            closeMenu={() => closeMenu()}
+                        <div
+                            ref={focusFirstMenuItem}
+                            id={actionsMenuId}
+                            className="w-max"
                         >
-                            {selectedId === openMenu.list.id &&
-                                dirty &&
-                                openMenu.list.compatible &&
-                                openMenu.list.canUpdate && (
+                            <FlyoutMenu
+                                dense
+                                dataTest="saved-view-actions-menu"
+                                closeMenu={() => closeMenu()}
+                            >
+                                {selectedId === openMenu.list.id &&
+                                    dirty &&
+                                    openMenu.list.compatible &&
+                                    openMenu.list.canUpdate && (
+                                        <MenuItem
+                                            dataTest="update-saved-view"
+                                            disabled={savedListLocked}
+                                            label={i18n.t(
+                                                'Save changes to this view'
+                                            )}
+                                            onClick={() => {
+                                                const list = openMenu.list
+                                                closeMenu()
+                                                onUpdate(list)
+                                            }}
+                                        />
+                                    )}
+                                {openMenu.list.canShare && (
                                     <MenuItem
-                                        dataTest="update-saved-view"
+                                        dataTest="share-saved-view"
                                         disabled={savedListLocked}
-                                        label={i18n.t(
-                                            'Save changes to this view'
-                                        )}
+                                        label={i18n.t('Manage sharing')}
                                         onClick={() => {
                                             const list = openMenu.list
                                             closeMenu()
-                                            onUpdate(list)
+                                            onShare(list)
                                         }}
                                     />
                                 )}
-                            {openMenu.list.canShare && (
-                                <MenuItem
-                                    dataTest="share-saved-view"
-                                    disabled={savedListLocked}
-                                    label={i18n.t('Manage sharing')}
-                                    onClick={() => {
-                                        const list = openMenu.list
-                                        closeMenu()
-                                        onShare(list)
-                                    }}
-                                />
-                            )}
-                            {openMenu.list.canDelete && (
-                                <MenuItem
-                                    destructive
-                                    dataTest="delete-saved-view"
-                                    disabled={savedListLocked}
-                                    label={i18n.t('Delete view')}
-                                    onClick={() => {
-                                        const list = openMenu.list
-                                        closeMenu(false)
-                                        setDeleteList(list)
-                                    }}
-                                />
-                            )}
-                        </FlyoutMenu>
-                    </div>
-                </Popover>
+                                {openMenu.list.canDelete && (
+                                    <MenuItem
+                                        destructive
+                                        dataTest="delete-saved-view"
+                                        disabled={savedListLocked}
+                                        label={i18n.t('Delete view')}
+                                        onClick={() => {
+                                            const list = openMenu.list
+                                            closeMenu(false)
+                                            setDeleteList(list)
+                                        }}
+                                    />
+                                )}
+                            </FlyoutMenu>
+                        </div>
+                    </Popper>
+                </Layer>
             )}
 
             {deleteList && (

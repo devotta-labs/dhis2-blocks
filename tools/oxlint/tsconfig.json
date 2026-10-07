@@ -1,0 +1,5 @@
+{
+    "extends": "./anti-slop/tsconfig.json",
+    "include": ["index.ts", "rules/*.ts"],
+    "exclude": ["rules/*.test.ts"]
+}

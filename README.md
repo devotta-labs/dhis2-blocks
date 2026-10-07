@@ -124,6 +124,23 @@ The installed components own their styling through Tailwind utility classes;
 the block does not require a separate stylesheet import. Adjust the import path
 above if the project's components alias differs from `@/components`.
 
+DHIS2 injects unlayered CSS. With Tailwind v4, import its parts without cascade
+layers, as in `apps/web/src/index.css`, so normal utilities can override the
+host reset. Exclude the `container` utility: DHIS2 uses that class internally
+for selector bars, and Tailwind's responsive width would constrain them.
+
+```css
+@import 'tailwindcss/theme.css';
+@import 'tailwindcss/preflight.css';
+@import 'tailwindcss/utilities.css';
+
+@source not inline("container");
+```
+
+Apply layout utilities to elements owned by the block, and use the UI
+component's props or positioning primitives instead of undoing its surface.
+Do not add `!` modifiers to resolve a styling conflict.
+
 Render `WorkingList` beneath the DHIS2 app-runtime provider and a TanStack
 `QueryClientProvider`. The minimal complete composition is:
 
@@ -225,8 +242,21 @@ Anti-slop is vendored under `tools/oxlint/anti-slop`; its upstream revision and
 local differences are recorded in that directory's `UPSTREAM.md`. All generic
 rules are enabled in `.oxlintrc.json`, including readable spacing and the
 array performance rules. `pnpm test` and `pnpm typecheck` also validate the
-vendored rules. Run `pnpm test:lint-rules` or `pnpm typecheck:lint-rules` to
-check them independently.
+vendored rules and the repository's own plugin under `tools/oxlint`.
+`dhis2-blocks/no-tailwind-important` rejects exclamation marks in class strings,
+including class props, constants, templates, conditional expressions, common
+class helpers, and DOM class assignments. This includes both `!utility` and
+`utility!`, arbitrary declarations containing `!important`, and literal
+exclamation marks in class content. Put punctuation in the rendered text.
+`dhis2-blocks/inline-classnames` also requires class strings and composition
+at their use site: inline conditional strings, templates, and class-helper calls
+are allowed; extracted constants, arrays, maps, and local class-returning
+functions are rejected. Forwarded host props and imported CSS-module names
+remain supported. These rules have no autofix because removing a modifier or
+moving a dynamic expression can change behavior.
+Run `pnpm test:lint-rules` or `pnpm typecheck:lint-rules` to check the plugins
+independently. Browser tests load the production stylesheet; cascade regression
+tests also inject DHIS2's real reset.
 
 `pnpm dead-code:audit` runs the complete Knip configuration and fails on any
 finding, including circular imports. Use `pnpm audit:exports` for a focused

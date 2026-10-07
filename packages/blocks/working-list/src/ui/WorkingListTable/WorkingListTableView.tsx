@@ -14,9 +14,6 @@ import {
 } from '../../provider/contracts'
 import { useWorkingListText } from '../WorkingListText'
 
-const visuallyHiddenClassName =
-    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
-
 export interface WorkingListTableHeaderView {
     id: string
     fieldId: string
@@ -183,16 +180,21 @@ export const WorkingListTableView = ({
                                                 (showIssuesColumn ? 1 : 0)
                                         )}
                                         align="center"
-                                        className="min-w-[140px] py-10!"
+                                        className="min-w-[140px]"
                                     >
-                                        <strong className="mb-1 block font-medium">
-                                            {i18n.t('No items to display')}
-                                        </strong>
-                                        <span className="block">
-                                            {i18n.t(
-                                                'Try adjusting the filters or organisation unit.'
-                                            )}
-                                        </span>
+                                        <div
+                                            className="py-[26px]"
+                                            data-testid="working-list-empty-state"
+                                        >
+                                            <strong className="mb-1 block font-medium">
+                                                {i18n.t('No items to display')}
+                                            </strong>
+                                            <span className="block">
+                                                {i18n.t(
+                                                    'Try adjusting the filters or organisation unit.'
+                                                )}
+                                            </span>
+                                        </div>
                                     </DataTableCell>
                                 </DataTableRow>
                             )}
@@ -263,9 +265,7 @@ export const WorkingListTableView = ({
                                                 {index === 0 && interactive && (
                                                     <button
                                                         type="button"
-                                                        className={
-                                                            visuallyHiddenClassName
-                                                        }
+                                                        className="sr-only"
                                                         data-testid={`row-open-${row.id}`}
                                                         onClick={() =>
                                                             openRow(

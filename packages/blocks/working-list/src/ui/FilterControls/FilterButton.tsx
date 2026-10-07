@@ -309,7 +309,7 @@ const FilterEditor = ({
         <form
             ref={focusFirstControl}
             id={id}
-            className="box-border w-[min(380px,calc(100vw_-_32px))] min-w-0 max-w-[calc(100vw_-_32px)] p-[16px] [&>*+*]:mt-[12px] [&>*]:box-border [&>*]:min-w-0 [&>*]:max-w-full [&_[data-test]]:box-border [&_[data-test]]:min-w-0 [&_[data-test]]:max-w-full [&_[data-testid^=filter-value-]]:box-border [&_[data-testid^=filter-value-]]:min-w-0 [&_[data-testid^=filter-value-]]:max-w-full [&_:is(input,select,textarea)]:box-border [&_:is(input,select,textarea)]:min-w-0 [&_:is(input,select,textarea)]:max-w-full [&_h3]:[margin:0_0_12px]! [&_h3]:text-[#17212b] [&_h3]:[font-size:16px]! [&_h3]:[font-weight:500]!"
+            className="box-border w-[min(380px,calc(100vw_-_32px))] min-w-0 max-w-[calc(100vw_-_32px)] p-[16px] [&>*+*]:mt-[12px] [&>*]:box-border [&>*]:min-w-0 [&>*]:max-w-full [&_[data-test]]:box-border [&_[data-test]]:min-w-0 [&_[data-test]]:max-w-full [&_[data-testid^=filter-value-]]:box-border [&_[data-testid^=filter-value-]]:min-w-0 [&_[data-testid^=filter-value-]]:max-w-full [&_:is(input,select,textarea)]:box-border [&_:is(input,select,textarea)]:min-w-0 [&_:is(input,select,textarea)]:max-w-full"
             data-testid={`filter-editor-${field.id}`}
             role="dialog"
             aria-label={fieldDisplayName(field, translate)}
@@ -318,7 +318,9 @@ const FilterEditor = ({
                 apply()
             }}
         >
-            <h3>{fieldDisplayName(field, translate)}</h3>
+            <h3 className="m-0 mb-[12px] text-[16px] font-medium text-[#17212b]">
+                {fieldDisplayName(field, translate)}
+            </h3>
             {!isTrueOnly && operators.length > 1 && (
                 <SingleSelectField
                     dense

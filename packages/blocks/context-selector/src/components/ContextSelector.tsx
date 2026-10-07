@@ -20,7 +20,7 @@ export const ContextSelector = ({
     >
         <SelectorBar
             ariaLabel={ariaLabel}
-            className="w-full max-w-none!"
+            className="w-full"
             dataTest="context-selector-bar"
         >
             {children}

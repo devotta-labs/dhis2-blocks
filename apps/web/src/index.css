@@ -7,6 +7,9 @@
 @import 'tailwindcss/preflight.css';
 @import 'tailwindcss/utilities.css';
 
+/* DHIS2 uses .container for components, not a responsive page-width utility. */
+@source not inline("container");
+
 /* The DHIS2 dev shell copies this stylesheet into .d2/shell/src/D2App. */
 @source '../../../packages/blocks/working-list/src';
 @source '../../../../../../packages/blocks/working-list/src';

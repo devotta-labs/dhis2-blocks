@@ -42,7 +42,8 @@
         ".": {
             "entry": [
                 "e2e/specs/**/*.spec.ts",
-                "tools/oxlint/anti-slop/rules/*.test.ts"
+                "tools/oxlint/anti-slop/rules/*.test.ts",
+                "tools/oxlint/rules/*.test.ts"
             ],
             "project": [
                 "e2e/**/*.ts",
@@ -95,7 +96,7 @@
             ],
             "project": [
                 "src/**/*.{ts,tsx}",
-                "test/**/*.ts",
+                "test/**/*.{ts,css}",
                 "type-tests/**/*.ts"
             ],
             "includeEntryExports": true,

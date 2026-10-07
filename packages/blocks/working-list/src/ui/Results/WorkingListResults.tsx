@@ -20,9 +20,6 @@ import type { WorkingListDataQualityMode } from '../types'
 import { WorkingListDataTable } from '../WorkingListTable'
 import { useWorkingListText } from '../WorkingListText'
 
-const visuallyHiddenClassName =
-    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
-
 export interface WorkingListTableProps extends Omit<
     ComponentPropsWithoutRef<'section'>,
     'children'
@@ -169,7 +166,7 @@ const ReadyResults = ({
     return (
         <>
             <div
-                className={visuallyHiddenClassName}
+                className="sr-only"
                 role="status"
                 aria-live="polite"
                 data-testid="working-list-results-announcement"
@@ -263,7 +260,7 @@ const IncompatibleSelection = () => {
                             </Button>
                             {repairPending && (
                                 <span
-                                    className={visuallyHiddenClassName}
+                                    className="sr-only"
                                     role="status"
                                     aria-live="polite"
                                 >

@@ -39,7 +39,15 @@ const urlPath = (value?: string) => {
     }
 }
 
-const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
+// Paths the adapter's bootstrap probes before sign-in. The list is shared
+// with the AbortError exemption below so both stay in sync.
+const bootstrapApiPath =
+    /\/api(?:\/\d+)?\/(me|system\/info|loginConfig|userSettings)$/
+
+const isKnownBenignDiagnostic = (
+    diagnostic: BrowserDiagnostic,
+    diagnostics: BrowserDiagnostic[]
+) => {
     const path = urlPath(diagnostic.url ?? diagnostic.location?.url)
 
     if (
@@ -81,9 +89,7 @@ const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
     if (
         diagnostic.kind === 'http' &&
         diagnostic.status === 401 &&
-        /\/api(?:\/\d+)?\/(me|system\/info|loginConfig|userSettings)$/.test(
-            path ?? ''
-        )
+        bootstrapApiPath.test(path ?? '')
     ) {
         // Signed-out previews probe these endpoints before the adapter shows
         // its sign-in dialog — the 401 is the expected trigger.
@@ -93,9 +99,7 @@ const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
     if (
         diagnostic.kind === 'console' &&
         diagnostic.message.includes('401') &&
-        /\/api(?:\/\d+)?\/(me|system\/info|loginConfig|userSettings)$/.test(
-            path ?? ''
-        )
+        bootstrapApiPath.test(path ?? '')
     ) {
         return true
     }
@@ -104,9 +108,7 @@ const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
         diagnostic.kind === 'requestfailed' &&
         diagnostic.message === 'net::ERR_ABORTED' &&
         diagnostic.method === 'GET' &&
-        /\/api(?:\/\d+)?\/(me|system\/info|loginConfig|userSettings)$/.test(
-            path ?? ''
-        )
+        bootstrapApiPath.test(path ?? '')
     ) {
         // Navigating between examples aborts the adapter's bootstrap reads,
         // and React StrictMode remounts do the same under the dev server.
@@ -115,9 +117,17 @@ const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
 
     if (
         diagnostic.kind === 'console' &&
-        diagnostic.message.includes('AbortError: signal is aborted')
+        diagnostic.message.includes('AbortError: signal is aborted') &&
+        diagnostics.some(
+            (other) =>
+                other.kind === 'requestfailed' &&
+                other.message === 'net::ERR_ABORTED' &&
+                other.method === 'GET' &&
+                bootstrapApiPath.test(urlPath(other.url) ?? '')
+        )
     ) {
-        // The aborted request above surfaces in the console too.
+        // The console AbortError is only benign when a bootstrap read was
+        // actually aborted — unrelated AbortErrors still surface.
         return true
     }
 
@@ -241,7 +251,7 @@ export const test = base.extend<DocsFixtures>({
         page.off('response', onResponse)
 
         const unexpectedDiagnostics = diagnostics.filter(
-            (diagnostic) => !isKnownBenignDiagnostic(diagnostic)
+            (diagnostic) => !isKnownBenignDiagnostic(diagnostic, diagnostics)
         )
 
         if (unexpectedDiagnostics.length > 0) {

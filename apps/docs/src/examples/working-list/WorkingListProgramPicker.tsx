@@ -116,9 +116,14 @@ const WorkingListProgramPicker = () => {
 
     const assignedUserUnits = userUnits.filter((unit) => assigned.has(unit.id))
 
-    const orgUnitId = (
-        assignedUserUnits.length ? assignedUserUnits : userUnits
-    )[0]?.id
+    // SELECTED org-unit mode only returns records at the chosen unit, so a
+    // root-only user (admin on the demo data) gets nothing from their own
+    // units — fall back to a unit the program is assigned to where the
+    // enrollments actually live.
+    const orgUnitId =
+        assignedUserUnits[0]?.id ??
+        selectedProgram?.organisationUnits[0]?.id ??
+        userUnits[0]?.id
 
     return (
         <PreviewShell>

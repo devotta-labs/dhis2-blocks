@@ -201,6 +201,9 @@ export const useWorkingListSelection = ({
 
     const selectSavedList = useCallback((id: string) => {
         selectionGenerationRef.current += 1
+        // Mark the optimistic request as counted so the render that applies
+        // it does not advance the generation a second time.
+        lastRequestedIdRef.current = id
         setDraft(undefined)
         setTransition({ id, from: selectedSavedListIdRef.current })
         onSelectionChangeRef.current(id)

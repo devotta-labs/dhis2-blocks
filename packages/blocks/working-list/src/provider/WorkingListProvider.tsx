@@ -306,6 +306,9 @@ const WorkingListProviderInstance = ({
                       }
                     : undefined,
                 resolvedConfiguration: baseline?.configuration,
+                // The new selection's query has not returned; downloads must
+                // not pair the old rows with the new columns.
+                results: { status: 'pending' },
             }
 
             stagePagination({

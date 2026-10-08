@@ -28,6 +28,7 @@ const {
     mockEngine,
     mockUseQuery,
     mockCreateSavedWorkingList,
+    mockDownloadRowsAsCsv,
     mockFetchSavedWorkingLists,
     mockLifecycle,
     mockState,
@@ -49,11 +50,14 @@ const {
         },
         mockUseQuery: vi.fn(),
         mockCreateSavedWorkingList: vi.fn(),
+        mockDownloadRowsAsCsv: vi.fn(),
         mockFetchSavedWorkingLists: vi.fn(),
         mockLifecycle: { current: {} },
         mockState: {
             // SAFETY: the test swaps the saved-list set per case; it starts empty.
             lists: [] as NormalizedSavedWorkingList[],
+            // SAFETY: a test sets a WorkingListPage when the scenario needs ready results.
+            recordsPage: undefined as unknown,
             pendingQuery,
         },
     }
@@ -80,6 +84,11 @@ vi.mock('../api/savedLists', async (importOriginal) => ({
 
 vi.mock('./useWorkingListLifecycle', () => ({
     useWorkingListLifecycle: () => mockLifecycle.current,
+}))
+
+vi.mock('./results', async (importOriginal) => ({
+    ...(await importOriginal()),
+    downloadRowsAsCsv: (...args: unknown[]) => mockDownloadRowsAsCsv(...args),
 }))
 
 const nameField = {
@@ -153,8 +162,6 @@ const readyLifecycle = {
     online: true,
     translate: (message: string) => message,
     locale: 'en',
-    program: undefined,
-    systemInfo: undefined,
     capabilities: metadata.capabilities,
     metadata,
     parsingContext: undefined,
@@ -165,12 +172,25 @@ const readyLifecycle = {
     defaultListId,
     lifecycle: { status: 'ready' },
     lifecycleReady: true,
+    program: {
+        id: programId,
+        displayName: 'Test Program',
+        programTrackedEntityAttributes: [],
+        programStages: [],
+    },
+    systemInfo: {
+        calendar: 'gregorian',
+        dateFormat: 'YYYY-MM-DD',
+        serverTimeZoneId: 'UTC',
+    },
 }
 
 describe('WorkingListProvider actions', () => {
     beforeEach(() => {
         mockLifecycle.current = readyLifecycle
         mockState.lists = [listA, listB]
+        mockState.recordsPage = undefined
+        mockDownloadRowsAsCsv.mockClear()
         mockFetchSavedWorkingLists.mockImplementation(
             async () => mockState.lists
         )
@@ -189,6 +209,23 @@ describe('WorkingListProvider actions', () => {
                         isFetching: false,
                         isPending: false,
                         isSuccess: true,
+                        refetch: vi.fn(),
+                    }
+                }
+
+                if (
+                    queryKey?.[0] === 'working-list' &&
+                    queryKey?.[1] === 'records'
+                ) {
+                    const data = mockState.recordsPage
+
+                    return {
+                        data,
+                        error: null,
+                        isError: false,
+                        isFetching: false,
+                        isPending: !data,
+                        isSuccess: Boolean(data),
                         refetch: vi.fn(),
                     }
                 }
@@ -338,6 +375,96 @@ describe('WorkingListProvider actions', () => {
             selectedSavedListId: listA.id,
         })
         expect(observedDirty.at(-1)).toBe(true)
+
+        queryClient.clear()
+    })
+
+    it('selects the created view when creation follows a same-event selection', async () => {
+        const {
+            observedActions,
+            observedSelections,
+            selectionChange,
+            queryClient,
+        } = await renderProvider()
+
+        const actions = observedActions.at(-1)
+
+        let resolveCreate!: (id: string) => void
+        mockCreateSavedWorkingList.mockImplementation(
+            () =>
+                new Promise<string>((resolve) => {
+                    resolveCreate = resolve
+                })
+        )
+
+        // One event: switch to B, then start a create. The render that
+        // applies B is the acknowledgement of that selection, not a new
+        // transition, so it must not invalidate the pending create.
+        actions?.selectView(listB.id)
+        const createPromise = actions?.createView('Copy')
+
+        await vi.waitFor(() => {
+            expect(observedSelections.at(-1)).toEqual({
+                status: 'ready',
+                selectedSavedListId: listB.id,
+            })
+        })
+
+        mockState.lists = [listA, listB, createdList]
+        resolveCreate(createdList.id)
+
+        const createResult = await createPromise
+        expect(createResult && Result.isOk(createResult)).toBe(true)
+
+        await vi.waitFor(() => {
+            expect(selectionChange).toHaveBeenCalledWith(createdList.id)
+        })
+        await vi.waitFor(() => {
+            expect(observedSelections.at(-1)).toEqual({
+                status: 'ready',
+                selectedSavedListId: createdList.id,
+            })
+        })
+
+        queryClient.clear()
+    })
+
+    it('does not download stale rows for a selection committed in the same event', async () => {
+        mockState.recordsPage = {
+            mode: 'trackedEntity',
+            records: [
+                {
+                    trackedEntity: {
+                        trackedEntity: 'TE00001',
+                        attributes: [],
+                        programOwners: [],
+                    },
+                    values: {
+                        [nameField.id]: { valid: true, value: 'Ada' },
+                    },
+                    issues: [],
+                },
+            ],
+            page: 1,
+            pageSize: 15,
+            hasNextPage: false,
+        }
+
+        const { observedActions, queryClient } = await renderProvider()
+
+        const actions = observedActions.at(-1)
+
+        await vi.waitFor(() => {
+            expect(actions?.downloadVisibleRows().isOk()).toBe(true)
+        })
+        expect(mockDownloadRowsAsCsv).toHaveBeenCalledTimes(1)
+
+        // A download issued right after changing the view must wait for the
+        // new view's results instead of exporting the previous rows.
+        actions?.selectView(listB.id)
+        const download = actions?.downloadVisibleRows()
+        expect(download && download.isErr()).toBe(true)
+        expect(mockDownloadRowsAsCsv).toHaveBeenCalledTimes(1)
 
         queryClient.clear()
     })

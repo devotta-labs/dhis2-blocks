@@ -9,8 +9,8 @@ import { PreviewLoading, PreviewShell } from './PreviewShell'
  *
  * The full-screen target for each example card's "Open full screen" link;
  * documentation pages render the same component inline via `ExampleSurface`,
- * so this route and the cards share component, adapter, and query cache
- * semantics.
+ * so this route and the cards share component, adapter, fallback, and query
+ * cache semantics.
  */
 export const PreviewRoot = () => {
     const { '*': slug } = useParams()
@@ -32,11 +32,17 @@ export const PreviewRoot = () => {
         )
     }
 
+    const Fallback = example.Fallback ?? PreviewLoading
+
     const content = (
-        <Suspense fallback={<PreviewLoading />}>
+        <Suspense fallback={<Fallback />}>
             <example.Component />
         </Suspense>
     )
 
-    return example.live ? <LivePreviewHost>{content}</LivePreviewHost> : content
+    return example.live ? (
+        <LivePreviewHost fallback={<Fallback />}>{content}</LivePreviewHost>
+    ) : (
+        content
+    )
 }

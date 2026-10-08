@@ -8,11 +8,16 @@ import { PreviewSpinner, previewShellClassName } from './PreviewShell'
  *
  * The example mounts inside the documentation page itself — same DOM, same
  * query providers, same adapter — so the preview reads as part of the page
- * rather than an embedded frame. `minHeight` reserves the loaded height up
- * front, so data arriving never reshapes the card. DHIS2 dialogs and
- * popovers portal to `document.body`, which lets them overlay the page
- * exactly as they do on the standalone `/preview/:slug` route.
+ * rather than an embedded frame. `minHeight` reserves space while loading;
+ * the surface grows with its content. It owns the inline padding and
+ * constrains the adapter to the card instead of the browser viewport.
+ * DHIS2 dialogs and popovers still portal to `document.body`.
+ *
+ * The example's `Fallback` covers every phase before it renders — the
+ * adapter starting the session and the lazy example chunk loading — so the
+ * card keeps one placeholder until the example takes over.
  */
+
 export const ExampleSurface = ({
     example,
     className,
@@ -20,21 +25,29 @@ export const ExampleSurface = ({
     example: ExampleDefinition
     className?: string
 }) => {
+    const Fallback = example.Fallback ?? PreviewSpinner
+
     const content = (
-        <Suspense fallback={<PreviewSpinner />}>
+        <Suspense fallback={<Fallback />}>
             <example.Component />
         </Suspense>
     )
 
     return (
         <div
-            className={[previewShellClassName, className]
+            className={[
+                'docs-preview-surface relative min-w-0',
+                previewShellClassName,
+                className,
+            ]
                 .filter(Boolean)
                 .join(' ')}
             style={{ minHeight: example.minHeight }}
         >
             {example.live ? (
-                <LivePreviewHost>{content}</LivePreviewHost>
+                <LivePreviewHost fallback={<Fallback />}>
+                    {content}
+                </LivePreviewHost>
             ) : (
                 content
             )}

@@ -94,6 +94,30 @@ textarea {
     font: inherit;
 }
 
+/* The adapter defaults to a full viewport even in plugin mode. Inline
+   examples follow their card's width and content height instead. Keep these
+   overrides unlayered so they take precedence over the adapter's styled-jsx. */
+div.docs-preview-surface div.app-shell-adapter,
+div.docs-preview-surface div.pluginBoundary {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+}
+
+div.docs-preview-surface div.app-shell-app {
+    flex: none;
+    min-width: 0;
+    height: auto;
+    overflow: visible;
+}
+
+/* The surface supplies spacing; the example shell only pads standalone views. */
+.docs-preview-surface .docs-preview-shell {
+    max-width: none;
+    min-height: 0;
+    padding: 0;
+}
+
 /* Syntax highlighting (highlight.js github theme, light + dark) */
 .hljs {
     color: #24292e;

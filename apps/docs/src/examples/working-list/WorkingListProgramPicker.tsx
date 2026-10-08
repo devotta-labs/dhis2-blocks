@@ -9,6 +9,7 @@ import {
 import { useState } from 'react'
 import { z } from 'zod'
 import { PreviewShell } from '../../preview/PreviewShell'
+import { WorkingListProgramPickerFallback } from './WorkingListFallbacks'
 
 /**
  * Metadata-driven Working List.
@@ -54,16 +55,9 @@ const WorkingListProgramPicker = () => {
     const [programId, setProgramId] = useState<string | undefined>()
     const [menuOpen, setMenuOpen] = useState(false)
 
+    // Keep the preview's loading placeholder up while metadata loads.
     if (loading) {
-        return (
-            <PreviewShell className="flex items-center justify-center">
-                <span
-                    className="size-5 animate-spin rounded-full border-2 border-[#d5dde5] border-t-[#2c6693] motion-reduce:animate-none"
-                    aria-hidden="true"
-                />
-                <span className="sr-only">Loading metadata…</span>
-            </PreviewShell>
-        )
+        return <WorkingListProgramPickerFallback />
     }
 
     if (error) {

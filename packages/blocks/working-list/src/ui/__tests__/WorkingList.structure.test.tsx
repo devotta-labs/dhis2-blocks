@@ -8,7 +8,6 @@ import type {
 } from '../../provider/contracts'
 import { WorkingListPublicContext } from '../../provider/WorkingListContext'
 import { WorkingListInitializationError } from '../../provider/errors'
-import { createWorkingListProviderStore } from '../../provider/store'
 import { WorkingListContainer } from '../Container'
 import { WorkingListTable } from '../Results'
 import { WorkingListToolbar } from '../Toolbar'
@@ -55,13 +54,13 @@ const meta = (lifecycle: WorkingListMeta['lifecycle']): WorkingListMeta => ({
 
 describe('WorkingList structural components', () => {
     it('provides localized accessible defaults and forwards native props', async () => {
-        const store = createWorkingListProviderStore(
-            meta({ status: 'pending' })
-        )
+        const snapshot = { meta: meta({ status: 'pending' }) }
 
         const screen = await render(
             <WorkingListTextProvider translate={(message) => message}>
-                <WorkingListPublicContext.Provider value={{ store, actions }}>
+                <WorkingListPublicContext.Provider
+                    value={{ snapshot, actions }}
+                >
                     <WorkingListViewSwitcher
                         className="views-class"
                         data-consumer="views"
@@ -130,19 +129,19 @@ describe('WorkingList structural components', () => {
     })
 
     it('keeps lifecycle loading and fatal errors at the outer container', async () => {
-        const store = createWorkingListProviderStore(
-            meta({ status: 'pending' })
-        )
-
-        const screen = await render(
+        const renderContainer = (lifecycle: WorkingListMeta['lifecycle']) => (
             <WorkingListTextProvider translate={(message) => message}>
-                <WorkingListPublicContext.Provider value={{ store, actions }}>
+                <WorkingListPublicContext.Provider
+                    value={{ snapshot: { meta: meta(lifecycle) }, actions }}
+                >
                     <WorkingListContainer>
                         <span data-testid="composed-child">Child</span>
                     </WorkingListContainer>
                 </WorkingListPublicContext.Provider>
             </WorkingListTextProvider>
         )
+
+        const screen = await render(renderContainer({ status: 'pending' }))
 
         await expect
             .element(screen.getByTestId('working-list-initializing'))
@@ -156,17 +155,14 @@ describe('WorkingList structural components', () => {
             screen.container.querySelector('[data-testid="composed-child"]')
         ).not.toBeNull()
 
-        store.setState((current) => ({
-            meta: {
-                ...current.meta,
-                lifecycle: {
-                    status: 'error',
-                    error: new WorkingListInitializationError({
-                        message: 'Failed to initialize',
-                    }),
-                },
-            },
-        }))
+        await screen.rerender(
+            renderContainer({
+                status: 'error',
+                error: new WorkingListInitializationError({
+                    message: 'Failed to initialize',
+                }),
+            })
+        )
         await expect
             .element(screen.getByTestId('working-list-lifecycle-error'))
             .toBeVisible()

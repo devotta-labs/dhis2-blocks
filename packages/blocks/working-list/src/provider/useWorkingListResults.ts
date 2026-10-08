@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type { WorkingListClient } from '../api/client'
 import {
@@ -33,10 +33,6 @@ import type {
 } from './contracts'
 import { toResultsError } from './errorNormalization'
 import { toDisplayRows, toPaginationMeta, toResultTargets } from './results'
-import type {
-    WorkingListProviderStore,
-    WorkingListProviderStoreState,
-} from './store'
 
 interface UseWorkingListResultsOptions {
     client: WorkingListClient
@@ -52,13 +48,6 @@ interface UseWorkingListResultsOptions {
     locale: string
     translate: WorkingListTranslate
     online: boolean
-    stagePagination: (next: WorkingListPagination) => void
-    store: WorkingListProviderStore
-    updateStore: (
-        update: (
-            current: WorkingListProviderStoreState
-        ) => Partial<WorkingListProviderStoreState>
-    ) => void
 }
 
 export const useWorkingListResults = ({
@@ -75,16 +64,11 @@ export const useWorkingListResults = ({
     locale,
     translate,
     online,
-    stagePagination,
-    store,
-    updateStore,
 }: UseWorkingListResultsOptions) => {
     const fields =
         metadata && resolvedConfiguration
             ? fieldsForConfiguration(metadata, resolvedConfiguration)
             : metadata?.fields
-
-    const previousResultOrgUnitRef = useRef(orgUnitId)
 
     const pageQuery = useQuery({
         ...(resolvedConfiguration && fields
@@ -92,13 +76,7 @@ export const useWorkingListResults = ({
                   client,
                   context: { programId, orgUnitId },
                   configuration: resolvedConfiguration,
-                  pagination:
-                      previousResultOrgUnitRef.current === orgUnitId
-                          ? effectivePagination
-                          : {
-                                page: 1,
-                                pageSize: effectivePagination.pageSize,
-                            },
+                  pagination: effectivePagination,
                   capabilities,
                   fields,
                   serializationContext,
@@ -184,45 +162,42 @@ export const useWorkingListResults = ({
               ? organisationUnitLabelsQuery.error
               : undefined
 
-    // EFFECT: WorkingListStore.results -- Publish asynchronous query snapshots to the vanilla store, including background refetch and offline changes.
-    useEffect(() => {
-        let results: WorkingListMeta['results']
+    const pageIsUpdating = pageQuery.isFetching && !pageQuery.isPending
 
-        if (!resolvedConfiguration) {
-            results = { status: 'pending' }
-        } else if (resultsError) {
-            results = { status: 'error', error: toResultsError(resultsError) }
-        } else if (
+    const results = useMemo<WorkingListMeta['results']>(() => {
+        if (!resolvedConfiguration) return { status: 'pending' }
+
+        if (resultsError) {
+            return { status: 'error', error: toResultsError(resultsError) }
+        }
+
+        if (
             !pageData ||
             !organisationUnitLabelsReady ||
             !fileResourceNamesReady
         ) {
-            results = { status: 'pending' }
-        } else {
-            results = {
-                status: 'ready',
-                rows,
-                pagination: toPaginationMeta(pageData, rows.length),
-                isUpdating:
-                    (pageQuery.isFetching && !pageQuery.isPending) ||
-                    organisationUnitLabelsQuery.isFetching ||
-                    fileResourceNamesQuery.isFetching,
-            }
+            return { status: 'pending' }
         }
 
-        updateStore((current) => ({ meta: { ...current.meta, results } }))
+        return {
+            status: 'ready',
+            rows,
+            pagination: toPaginationMeta(pageData, rows.length),
+            isUpdating:
+                pageIsUpdating ||
+                organisationUnitLabelsQuery.isFetching ||
+                fileResourceNamesQuery.isFetching,
+        }
     }, [
         fileResourceNamesQuery.isFetching,
         fileResourceNamesReady,
         organisationUnitLabelsQuery.isFetching,
         organisationUnitLabelsReady,
         pageData,
-        pageQuery.isFetching,
-        pageQuery.isPending,
+        pageIsUpdating,
         resolvedConfiguration,
         resultsError,
         rows,
-        updateStore,
     ])
 
     const resultTargets = useMemo(
@@ -235,23 +210,12 @@ export const useWorkingListResults = ({
         [configuration, pageData, programId]
     )
 
-    const previousOrgUnit = useRef(orgUnitId)
-    // EFFECT: WorkingListStore.pagination -- Reset page intent when the controlled organisation-unit context changes, including browser history navigation.
-    useEffect(() => {
-        if (previousOrgUnit.current === orgUnitId) return
-        previousOrgUnit.current = orgUnitId
-        previousResultOrgUnitRef.current = orgUnitId
-        stagePagination({
-            page: 1,
-            pageSize: store.getState().meta.pagination.pageSize,
-        })
-    }, [orgUnitId, stagePagination, store])
-
     return {
         pageQuery,
         organisationUnitLabelsQuery,
         formattingContext,
         resultTargets,
+        results,
         rows,
     }
 }

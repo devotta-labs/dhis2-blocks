@@ -18,12 +18,9 @@ import type {
     WorkingListPagination,
     WorkingListState,
 } from './contracts'
-import type {
-    WorkingListProviderStore,
-    WorkingListProviderStoreState,
-} from './store'
 
 export interface WorkingListActionRuntime {
+    requestedId: string
     activeState?: WorkingListState
     resolvedConfiguration?: InternalConfiguration
     metadata?: ProgramFieldCatalog
@@ -35,28 +32,22 @@ export interface WorkingListActionRuntime {
     online: boolean
     program?: TrackerProgram
     rows: readonly WorkingListDisplayRow[]
+    results: WorkingListMeta['results']
 }
 
 export interface CreateWorkingListActionsOptions {
     runtimeRef: { current: WorkingListActionRuntime }
-    selectionToken: { current: number }
     capabilities: WorkingListCapabilities
     client: WorkingListClient
     defaultListId: string
-    hardTransition: (id: string, notify: boolean) => void
+    selectSavedList: (id: string) => void
     refreshSavedLists: () => Promise<NormalizedSavedWorkingList[]>
     setMutation: (
         operation: keyof WorkingListMeta['mutations'],
         status: WorkingListMutationStatus
     ) => void
     stagePagination: (next: WorkingListPagination) => void
-    store: WorkingListProviderStore
     translate: WorkingListTranslate
-    updateStore: (
-        update: (
-            current: WorkingListProviderStoreState
-        ) => Partial<WorkingListProviderStoreState>
-    ) => void
     validateAndCommit: (
         configuration: WorkingListConfiguration,
         resetPage: boolean

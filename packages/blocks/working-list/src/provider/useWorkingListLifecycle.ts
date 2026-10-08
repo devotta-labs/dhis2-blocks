@@ -1,7 +1,7 @@
 import { useConfig, useOnlineStatus } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { z } from 'zod'
 import {
     detectMetadataFeatures,
@@ -20,8 +20,8 @@ import {
 import { workingListSystemInfoQueryOptions } from '../api/systemInfo'
 import { createWorkingListValueTransformers } from '../registry/transformers'
 import { defaultWorkingListTranslate } from '../ui/WorkingListText'
+import type { WorkingListMeta } from './contracts'
 import { WorkingListInitializationError } from './errors'
-import type { WorkingListProviderStoreState } from './store'
 
 const RuntimeConfigSchema = z
     .object({ apiVersion: z.coerce.number().int().positive() })
@@ -30,17 +30,11 @@ const RuntimeConfigSchema = z
 interface UseWorkingListLifecycleOptions {
     client: WorkingListClient
     programId: string
-    updateStore: (
-        update: (
-            current: WorkingListProviderStoreState
-        ) => Partial<WorkingListProviderStoreState>
-    ) => void
 }
 
 export const useWorkingListLifecycle = ({
     client,
     programId,
-    updateStore,
 }: UseWorkingListLifecycleOptions) => {
     const config = useConfig()
 
@@ -210,34 +204,15 @@ export const useWorkingListLifecycle = ({
 
     const defaultListId = defaultWorkingListId(programId)
 
-    // EFFECT: WorkingListStore.lifecycle -- Publish asynchronously loaded metadata to the vanilla store consumed by the public hooks and action commands.
-    useEffect(() => {
-        updateStore((current) => ({
-            meta: {
-                ...current.meta,
-                lifecycle: lifecycleError
-                    ? { status: 'error', error: lifecycleError }
-                    : lifecycleReady
-                      ? { status: 'ready' }
-                      : { status: 'pending' },
-                online,
-                program,
-                systemInfo,
-                capabilities,
-                fieldCatalog: metadata,
-                fields: metadata ? [...metadata.fields.values()] : [],
-            },
-        }))
-    }, [
-        capabilities,
-        lifecycleError,
-        lifecycleReady,
-        metadata,
-        online,
-        program,
-        systemInfo,
-        updateStore,
-    ])
+    const lifecycle = useMemo<WorkingListMeta['lifecycle']>(
+        () =>
+            lifecycleError
+                ? { status: 'error', error: lifecycleError }
+                : lifecycleReady
+                  ? { status: 'ready' }
+                  : { status: 'pending' },
+        [lifecycleError, lifecycleReady]
+    )
 
     return {
         online,
@@ -253,6 +228,7 @@ export const useWorkingListLifecycle = ({
         defaultList,
         generatedLists,
         defaultListId,
+        lifecycle,
         lifecycleReady,
     }
 }

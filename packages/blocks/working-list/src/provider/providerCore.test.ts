@@ -3,11 +3,9 @@ import type { ProgramFieldCatalog } from '../api/metadata'
 import type { WorkingListConfiguration as InternalConfiguration } from '../domain/model'
 import type { WorkingListPage } from '../query/fetchers'
 import {
-    canCommitMutationBaseline,
     isCurrentSelection,
     resolvePublicConfiguration,
     resolveSelectedSavedListId,
-    shouldBeginControlledSelection,
     toPublicConfiguration,
 } from './configuration'
 import { toDisplayRows, toResultTargets, visibleRowsAsCsv } from './results'
@@ -166,22 +164,6 @@ describe('provider results normalization', () => {
 })
 
 describe('provider selection and mutation completion guards', () => {
-    const configuration = {
-        mode: 'trackedEntity' as const,
-        filters: [],
-        columns: [textField.id],
-        sort: { fieldId: textField.id, direction: 'asc' as const },
-    }
-
-    it('starts a hard transition for the initial controlled selection', () => {
-        expect(shouldBeginControlledSelection(undefined, 'SavedList01')).toBe(
-            true
-        )
-        expect(
-            shouldBeginControlledSelection('SavedList01', 'SavedList01')
-        ).toBe(false)
-    })
-
     it('resolves null and blank selections to the generated default ID', () => {
         expect(resolveSelectedSavedListId(null, 'Program0001-default')).toBe(
             'Program0001-default'
@@ -195,36 +177,6 @@ describe('provider selection and mutation completion guards', () => {
         expect(resolveSelectedSavedListId('SavedList01', 'ignored')).toBe(
             'SavedList01'
         )
-    })
-
-    it('does not commit an update baseline after selection or configuration changed', () => {
-        expect(
-            canCommitMutationBaseline({
-                currentSelectedId: 'SavedList01',
-                currentConfiguration: configuration,
-                submittedSelectedId: 'SavedList01',
-                submittedConfiguration: configuration,
-            })
-        ).toBe(true)
-        expect(
-            canCommitMutationBaseline({
-                currentSelectedId: 'SavedList02',
-                currentConfiguration: configuration,
-                submittedSelectedId: 'SavedList01',
-                submittedConfiguration: configuration,
-            })
-        ).toBe(false)
-        expect(
-            canCommitMutationBaseline({
-                currentSelectedId: 'SavedList01',
-                currentConfiguration: {
-                    ...configuration,
-                    columns: [],
-                },
-                submittedSelectedId: 'SavedList01',
-                submittedConfiguration: configuration,
-            })
-        ).toBe(false)
     })
 
     it('rejects delete or repair completion after selection changed', () => {

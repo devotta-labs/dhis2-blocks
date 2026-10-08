@@ -120,6 +120,37 @@ describe('WorkingList root state', () => {
         act(() => root.unmount())
     })
 
+    it('starts uncontrolled pagination from the first page when the org unit changes', () => {
+        const container = document.createElement('div')
+        const root = createRoot(container)
+
+        const renderInstance = (orgUnitId: string) => (
+            <WorkingList
+                programId="Program0001"
+                orgUnitId={orgUnitId}
+                defaultPagination={{ page: 2, pageSize: 25 }}
+            >
+                <span>Content</span>
+            </WorkingList>
+        )
+
+        act(() => root.render(renderInstance('OrgUnit00001')))
+        act(() =>
+            observedProviders.at(-1)?.onPaginationChange({
+                page: 4,
+                pageSize: 50,
+            })
+        )
+        act(() => root.render(renderInstance('OrgUnit00002')))
+
+        expect(observedProviders.at(-1)?.pagination).toEqual({
+            page: 1,
+            pageSize: 50,
+        })
+
+        act(() => root.unmount())
+    })
+
     it('uses a caller-provided React key to replace a same-program instance', () => {
         const container = document.createElement('div')
         const root = createRoot(container)

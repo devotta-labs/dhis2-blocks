@@ -17,8 +17,7 @@
                 "better-result@^3.0.1",
                 "react@^18.3.1",
                 "react-dom@^18.3.1",
-                "zod@^4.4.3",
-                "zustand@^5.0.15"
+                "zod@^4.4.3"
             ],
             "files": [
                 {
@@ -180,11 +179,6 @@
                     "path": "src/provider/results.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/provider/results.ts"
-                },
-                {
-                    "path": "src/provider/store.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list/provider/store.ts"
                 },
                 {
                     "path": "src/provider/useWorkingListLifecycle.ts",

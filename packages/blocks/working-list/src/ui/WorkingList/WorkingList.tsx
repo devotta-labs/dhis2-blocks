@@ -31,6 +31,10 @@ type UncontrolledViewProps = {
 }
 
 type ControlledPaginationProps = {
+    /**
+     * Rendered as given. The list resets the page for its own commands; a
+     * host that changes `orgUnitId` or `viewId` resets `page` alongside it.
+     */
     pagination: WorkingListPagination
     onPaginationChange(next: WorkingListPagination): void
     defaultPagination?: never
@@ -91,6 +95,21 @@ const WorkingListRootInstance = (props: WorkingListProps) => {
     const selectedViewId: string | null = viewControlled
         ? (props.viewId ?? null)
         : localViewId
+
+    // Uncontrolled pages belong to one org unit and view; a host change to
+    // either starts the new result set from its first page.
+    const [paginationScope, setPaginationScope] = useState({
+        orgUnitId,
+        selectedViewId,
+    })
+
+    if (
+        paginationScope.orgUnitId !== orgUnitId ||
+        paginationScope.selectedViewId !== selectedViewId
+    ) {
+        setPaginationScope({ orgUnitId, selectedViewId })
+        setLocalPagination((current) => ({ ...current, page: 1 }))
+    }
 
     const pagination: WorkingListPagination = paginationControlled
         ? (props.pagination ?? localPagination)

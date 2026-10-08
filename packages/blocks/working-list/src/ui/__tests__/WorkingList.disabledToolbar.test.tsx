@@ -6,7 +6,6 @@ import type {
     WorkingListMeta,
 } from '../../provider/contracts'
 import { WorkingListPublicContext } from '../../provider/WorkingListContext'
-import { createWorkingListProviderStore } from '../../provider/store'
 import { WorkingListToolbarActions } from '../Actions'
 import { WorkingListColumnSelector } from '../Columns'
 import { WorkingListFilterControls } from '../Filters'
@@ -51,11 +50,11 @@ const unavailableMeta: WorkingListMeta = {
 
 describe('working-list unavailable toolbar', () => {
     it('keeps familiar configuration controls visible and disabled', async () => {
-        const store = createWorkingListProviderStore(unavailableMeta)
-
         const screen = await render(
             <WorkingListTextProvider translate={(message) => message}>
-                <WorkingListPublicContext.Provider value={{ store, actions }}>
+                <WorkingListPublicContext.Provider
+                    value={{ snapshot: { meta: unavailableMeta }, actions }}
+                >
                     <WorkingListToolbar>
                         <WorkingListColumnSelector
                             className="consumer-columns"

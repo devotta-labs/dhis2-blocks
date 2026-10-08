@@ -32,11 +32,6 @@ export const internalConfigurationFingerprint = (
         canonicalizeValue(WorkingListConfigurationSchema.parse(configuration))
     )
 
-export const shouldBeginControlledSelection = (
-    previousId: string | undefined,
-    nextId: string
-) => previousId !== nextId
-
 export const resolveSelectedSavedListId = (
     selectedSavedListId: string | null,
     defaultListId: string
@@ -49,22 +44,6 @@ export const isCurrentSelection = (
     currentId: string | undefined,
     expectedId: string
 ) => currentId === expectedId
-
-export const canCommitMutationBaseline = ({
-    currentSelectedId,
-    currentConfiguration,
-    submittedSelectedId,
-    submittedConfiguration,
-}: {
-    currentSelectedId: string | undefined
-    currentConfiguration: WorkingListConfiguration | undefined
-    submittedSelectedId: string
-    submittedConfiguration: WorkingListConfiguration
-}) =>
-    currentSelectedId === submittedSelectedId &&
-    currentConfiguration !== undefined &&
-    publicConfigurationFingerprint(currentConfiguration) ===
-        publicConfigurationFingerprint(submittedConfiguration)
 
 export const toPublicConfiguration = (
     configuration: InternalConfiguration

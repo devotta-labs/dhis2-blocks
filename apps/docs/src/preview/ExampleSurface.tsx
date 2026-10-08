@@ -13,7 +13,7 @@ import { PreviewSpinner, previewShellClassName } from './PreviewShell'
  * constrains the adapter to the card instead of the browser viewport.
  * DHIS2 dialogs and popovers still portal to `document.body`.
  *
- * The example's `Fallback` covers every phase before it renders — the
+ * The example's `Placeholder` covers every phase before it renders — the
  * adapter starting the session and the lazy example chunk loading — so the
  * card keeps one placeholder until the example takes over.
  */
@@ -25,10 +25,10 @@ export const ExampleSurface = ({
     example: ExampleDefinition
     className?: string
 }) => {
-    const Fallback = example.Fallback ?? PreviewSpinner
+    const Placeholder = example.Placeholder ?? PreviewSpinner
 
     const content = (
-        <Suspense fallback={<Fallback />}>
+        <Suspense fallback={<Placeholder />}>
             <example.Component />
         </Suspense>
     )
@@ -45,7 +45,7 @@ export const ExampleSurface = ({
             style={{ minHeight: example.minHeight }}
         >
             {example.live ? (
-                <LivePreviewHost fallback={<Fallback />}>
+                <LivePreviewHost placeholder={<Placeholder />}>
                     {content}
                 </LivePreviewHost>
             ) : (

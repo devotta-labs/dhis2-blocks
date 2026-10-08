@@ -2,9 +2,9 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
 import {
-    WorkingListDefaultFallback,
-    WorkingListProgramPickerFallback,
-} from './working-list/WorkingListFallbacks'
+    WorkingListDefaultPlaceholder,
+    WorkingListProgramPickerPlaceholder,
+} from './working-list/WorkingListPlaceholders'
 import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
 
@@ -19,7 +19,7 @@ import workingListProgramPickerSource from './working-list/WorkingListProgramPic
  * `live: true` examples render inside the shared DHIS2 adapter host and
  * require a reachable backend; `live: false` examples render standalone.
  *
- * `Fallback` is shown until the example renders — while its code loads and,
+ * `Placeholder` is shown until the example renders — while its code loads and,
  * for live examples, while the adapter starts the DHIS2 session. Shape it
  * like the example's own loading state so the preview never changes layout
  * between owners; without one, a generic spinner is used.
@@ -31,7 +31,7 @@ export interface ExampleDefinition {
     Component: LazyExoticComponent<ComponentType>
     source: string
     minHeight: number
-    Fallback?: ComponentType
+    Placeholder?: ComponentType
 }
 
 const examples = [
@@ -42,7 +42,7 @@ const examples = [
         Component: lazy(() => import('./working-list/WorkingListDefault')),
         source: workingListDefaultSource,
         minHeight: 730,
-        Fallback: WorkingListDefaultFallback,
+        Placeholder: WorkingListDefaultPlaceholder,
     },
     {
         slug: 'working-list/program-picker',
@@ -53,7 +53,7 @@ const examples = [
         ),
         source: workingListProgramPickerSource,
         minHeight: 730,
-        Fallback: WorkingListProgramPickerFallback,
+        Placeholder: WorkingListProgramPickerPlaceholder,
     },
     {
         slug: 'context-selector/basic',

@@ -9,7 +9,7 @@ import {
 import { useState } from 'react'
 import { z } from 'zod'
 import { PreviewShell } from '../../preview/PreviewShell'
-import { WorkingListProgramPickerFallback } from './WorkingListFallbacks'
+import { WorkingListProgramPickerPlaceholder } from './WorkingListPlaceholders'
 
 /**
  * Metadata-driven Working List.
@@ -57,7 +57,7 @@ const WorkingListProgramPicker = () => {
 
     // Keep the preview's loading placeholder up while metadata loads.
     if (loading) {
-        return <WorkingListProgramPickerFallback />
+        return <WorkingListProgramPickerPlaceholder />
     }
 
     if (error) {

@@ -15,7 +15,7 @@ import { useCallback, useLayoutEffect, useState } from 'react'
  * the host still never talks to an arbitrary server.
  *
  * Previews always run in plugin mode: no DHIS2 header bar and no page-wide
- * loading mask, so the docs own the loading UI. `fallback` shows while the
+ * loading mask, so the docs own the loading UI. `placeholder` shows while the
  * adapter starts the session (it renders nothing meanwhile); pass the same
  * placeholder the example suspends with, and the hand-over is invisible.
  */
@@ -33,8 +33,8 @@ const createQueryClient = () =>
     })
 
 const SessionReady = ({ onReady }: { onReady: () => void }) => {
-    // Layout effect: the outer fallback is removed before the browser paints
-    // the example's own fallback in its place.
+    // Layout effect: the outer placeholder is removed before the browser paints
+    // the example's own placeholder in its place.
     useLayoutEffect(onReady, [onReady])
 
     return null
@@ -42,10 +42,10 @@ const SessionReady = ({ onReady }: { onReady: () => void }) => {
 
 export const LivePreviewHost = ({
     children,
-    fallback,
+    placeholder,
 }: {
     children: ReactNode
-    fallback: ReactNode
+    placeholder: ReactNode
 }) => {
     const [queryClient] = useState(createQueryClient)
     const [sessionReady, setSessionReady] = useState(false)
@@ -53,7 +53,7 @@ export const LivePreviewHost = ({
 
     return (
         <>
-            {!sessionReady && fallback}
+            {!sessionReady && placeholder}
             <AppAdapter
                 appName="DHIS2 Blocks documentation"
                 appVersion="1.0.0"

@@ -153,13 +153,13 @@ const WorkingListPlaceholder = ({
     </div>
 )
 
-export const WorkingListDefaultFallback = () => (
+export const WorkingListDefaultPlaceholder = () => (
     <PreviewShell>
         <WorkingListPlaceholder toolbarControls />
     </PreviewShell>
 )
 
-export const WorkingListProgramPickerFallback = () => (
+export const WorkingListProgramPickerPlaceholder = () => (
     <PreviewShell>
         <div className="mb-4 w-full max-w-sm">
             <Bar className="block h-10 w-[218px] rounded-[3px]" />

@@ -12,6 +12,7 @@ import {
     type WorkingListDisplayRow,
     type WorkingListPageSize,
 } from '../../provider/contracts'
+import { SkeletonBlock } from '../Skeleton'
 import { useWorkingListText } from '../WorkingListText'
 
 const visuallyHiddenClassName =
@@ -76,6 +77,137 @@ const isInteractiveTarget = (target: EventTarget | null) =>
 
 const isWorkingListPageSize = (value: number): value is WorkingListPageSize =>
     WORKING_LIST_PAGE_SIZES.some((pageSize) => pageSize === value)
+
+const skeletonCellWidths = [
+    'w-[46%]',
+    'w-[62%]',
+    'w-[34%]',
+    'w-[54%]',
+    'w-[40%]',
+]
+
+const skeletonCellWidth = (row: number, column: number) =>
+    skeletonCellWidths[(row * 3 + column) % skeletonCellWidths.length]
+
+// One placeholder row per expected record, built from the same table cells
+// as real rows so the body keeps its final height while results load.
+const SkeletonRows = ({
+    columnCount,
+    rowCount,
+}: {
+    columnCount: number
+    rowCount: number
+}) =>
+    Array.from({ length: rowCount }, (_, row) => (
+        <DataTableRow key={row} dataTest="working-list-skeleton-row">
+            {Array.from({ length: columnCount }, (_, column) => (
+                <DataTableCell key={column} className="min-w-[140px]">
+                    <SkeletonBlock
+                        className={`h-3.5 rounded-[3px] ${skeletonCellWidth(row, column)}`}
+                    />
+                </DataTableCell>
+            ))}
+        </DataTableRow>
+    ))
+
+const PaginationFooter = ({
+    page,
+    pageSize,
+    pageLength,
+    hasNextPage,
+    disabled,
+    onPageChange,
+    onPageSizeChange,
+}: {
+    page: number
+    pageSize: WorkingListPageSize
+    pageLength: number
+    hasNextPage: boolean
+    disabled: boolean
+    onPageChange: (page: number) => void
+    onPageSizeChange: (pageSize: WorkingListPageSize) => void
+}) => (
+    <div className="flex min-h-14 w-full min-w-0 max-w-full items-center justify-end px-3 py-2 [&_[data-test='dhis2-uicore-select-input']_>_:last-child]:[margin-block-start:0]">
+        <Pagination
+            dataTest="working-list-pagination"
+            page={page}
+            pageSize={pageSize}
+            pageLength={pageLength}
+            pageSizes={WORKING_LIST_PAGE_SIZES.map(String)}
+            isLastPage={!hasNextPage}
+            hidePageSelect
+            hidePageSummary
+            disabled={disabled}
+            onPageChange={onPageChange}
+            onPageSizeChange={(nextPageSize) => {
+                if (!isWorkingListPageSize(nextPageSize)) {
+                    throw new Error(
+                        `Unsupported working-list page size: ${nextPageSize}`
+                    )
+                }
+
+                onPageSizeChange(nextPageSize)
+            }}
+        />
+    </div>
+)
+
+const ignorePaginationChange = () => {}
+
+/**
+ * Results placeholder for when the columns are not known yet (initializing,
+ * or switching saved lists). It mirrors the loaded table — header, one row
+ * per page slot, pagination — so real data replaces it without a jump.
+ */
+export const WorkingListTableSkeleton = ({
+    pageSize,
+    columnCount = 4,
+}: {
+    pageSize: WorkingListPageSize
+    columnCount?: number
+}) => (
+    <div
+        className="w-full min-w-0 max-w-full"
+        data-testid="working-list-results-skeleton"
+        aria-hidden="true"
+    >
+        <div className="w-full min-w-0 max-w-full overflow-x-hidden">
+            <div className="min-w-[680px]">
+                <DataTable>
+                    <DataTableHead>
+                        <DataTableRow>
+                            {Array.from(
+                                { length: columnCount },
+                                (_, column) => (
+                                    <DataTableCell key={column} tag="th">
+                                        <SkeletonBlock
+                                            className={`h-3 rounded-[3px] ${column % 2 === 0 ? 'w-24' : 'w-20'}`}
+                                        />
+                                    </DataTableCell>
+                                )
+                            )}
+                        </DataTableRow>
+                    </DataTableHead>
+                    <DataTableBody>
+                        <SkeletonRows
+                            columnCount={columnCount}
+                            rowCount={pageSize}
+                        />
+                    </DataTableBody>
+                </DataTable>
+            </div>
+        </div>
+        <PaginationFooter
+            page={1}
+            pageSize={pageSize}
+            pageLength={0}
+            hasNextPage={false}
+            disabled
+            onPageChange={ignorePaginationChange}
+            onPageSizeChange={ignorePaginationChange}
+        />
+    </div>
+)
 
 export const WorkingListTableView = ({
     model,
@@ -173,8 +305,16 @@ export const WorkingListTableView = ({
                         </DataTableHead>
                         <DataTableBody
                             aria-busy={isInitialLoading || isUpdating}
-                            loading={isInitialLoading}
                         >
+                            {isInitialLoading && (
+                                <SkeletonRows
+                                    columnCount={
+                                        Math.max(visibleColumnCount, 1) +
+                                        (showIssuesColumn ? 1 : 0)
+                                    }
+                                    rowCount={pageSize}
+                                />
+                            )}
                             {!isInitialLoading && model.rows.length === 0 && (
                                 <DataTableRow>
                                     <DataTableCell
@@ -293,29 +433,15 @@ export const WorkingListTableView = ({
                     </DataTable>
                 </div>
             </div>
-            <div className="flex min-h-14 w-full min-w-0 max-w-full items-center justify-end px-3 py-2 [&_[data-test='dhis2-uicore-select-input']_>_:last-child]:[margin-block-start:0]">
-                <Pagination
-                    dataTest="working-list-pagination"
-                    page={page}
-                    pageSize={pageSize}
-                    pageLength={model.rows.length}
-                    pageSizes={WORKING_LIST_PAGE_SIZES.map(String)}
-                    isLastPage={!hasNextPage}
-                    hidePageSelect
-                    hidePageSummary
-                    disabled={isInitialLoading}
-                    onPageChange={onPageChange}
-                    onPageSizeChange={(nextPageSize) => {
-                        if (!isWorkingListPageSize(nextPageSize)) {
-                            throw new Error(
-                                `Unsupported working-list page size: ${nextPageSize}`
-                            )
-                        }
-
-                        onPageSizeChange(nextPageSize)
-                    }}
-                />
-            </div>
+            <PaginationFooter
+                page={page}
+                pageSize={pageSize}
+                pageLength={model.rows.length}
+                hasNextPage={hasNextPage}
+                disabled={isInitialLoading}
+                onPageChange={onPageChange}
+                onPageSizeChange={onPageSizeChange}
+            />
         </div>
     )
 }

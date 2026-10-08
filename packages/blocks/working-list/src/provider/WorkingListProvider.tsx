@@ -278,13 +278,22 @@ const WorkingListProviderInstance = ({
 
     const transitionTo = useCallback(
         (id: string) => {
+            const current = runtimeRef.current
+
+            // Commit the page reset before notifying the host of the
+            // selection: the host resolves each URL write against the
+            // still-current params, so a later write cannot resurrect the
+            // previous selection.
+            stagePagination({
+                page: 1,
+                pageSize: current.effectivePagination.pageSize,
+            })
+
             selectSavedList(id)
 
             // React batches the transition; mirror the post-render selection
             // so commands issued in the same event compose on the newly
             // selected list instead of the stale one.
-            const current = runtimeRef.current
-
             const { baseline } = resolveSelection({
                 requestedId: id,
                 defaultList: current.defaultList,
@@ -310,11 +319,6 @@ const WorkingListProviderInstance = ({
                 // not pair the old rows with the new columns.
                 results: { status: 'pending' },
             }
-
-            stagePagination({
-                page: 1,
-                pageSize: current.effectivePagination.pageSize,
-            })
         },
         [defaultListId, selectSavedList, stagePagination]
     )

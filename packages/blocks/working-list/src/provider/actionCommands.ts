@@ -253,6 +253,7 @@ export const createWorkingListActions = ({
             )
         setMutation('create', { status: 'pending' })
         const requestedId = runtime.requestedId
+        const selectionGeneration = runtime.selectionGeneration.current
 
         try {
             const snapshot = runtime.resolvedConfiguration
@@ -279,8 +280,15 @@ export const createWorkingListActions = ({
                 )
             }
 
+            // Selecting the created view is only safe when no selection
+            // transition intervened — including a round trip back to the
+            // same id, which matching ids alone cannot detect.
+            const finishedRuntime = runtimeRef.current
+
             if (
-                isCurrentSelection(runtimeRef.current.requestedId, requestedId)
+                isCurrentSelection(finishedRuntime.requestedId, requestedId) &&
+                finishedRuntime.selectionGeneration.current ===
+                    selectionGeneration
             ) {
                 selectSavedList(id)
             }

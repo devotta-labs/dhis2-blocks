@@ -9,6 +9,7 @@ import { WorkingListTextProvider } from '../ui/WorkingListText'
 import {
     resolveSelectedSavedListId,
     resolvePublicConfiguration,
+    toPublicConfiguration,
 } from './configuration'
 import type {
     WorkingListConfiguration,
@@ -29,7 +30,10 @@ import { createWorkingListActions } from './actionCommands'
 import type { WorkingListActionRuntime } from './actionRuntime'
 import { useWorkingListResults } from './useWorkingListResults'
 import { useWorkingListRepair } from './useWorkingListRepair'
-import { useWorkingListSelection } from './useWorkingListSelection'
+import {
+    resolveSelection,
+    useWorkingListSelection,
+} from './useWorkingListSelection'
 import { useWorkingListLifecycle } from './useWorkingListLifecycle'
 import {
     WorkingListPrivateUiContext,
@@ -165,6 +169,7 @@ const WorkingListProviderInstance = ({
         activeState,
         resolvedConfiguration,
         dirty,
+        selectionGeneration,
         setDraft,
         selectSavedList,
     } = useWorkingListSelection({
@@ -259,6 +264,8 @@ const WorkingListProviderInstance = ({
         formattingContext,
         confirmedLists,
         displayedLists,
+        defaultList,
+        selectionGeneration,
         effectivePagination,
         online,
         program,
@@ -272,12 +279,41 @@ const WorkingListProviderInstance = ({
     const transitionTo = useCallback(
         (id: string) => {
             selectSavedList(id)
+
+            // React batches the transition; mirror the post-render selection
+            // so commands issued in the same event compose on the newly
+            // selected list instead of the stale one.
+            const current = runtimeRef.current
+
+            const { baseline } = resolveSelection({
+                requestedId: id,
+                defaultList: current.defaultList,
+                confirmedLists: current.confirmedLists,
+                defaultListId,
+                metadata: current.metadata,
+                displayedLists: current.displayedLists,
+            })
+
+            runtimeRef.current = {
+                ...current,
+                requestedId: id,
+                activeState: baseline
+                    ? {
+                          selectedSavedListId: id,
+                          configuration: toPublicConfiguration(
+                              baseline.configuration
+                          ),
+                      }
+                    : undefined,
+                resolvedConfiguration: baseline?.configuration,
+            }
+
             stagePagination({
                 page: 1,
-                pageSize: runtimeRef.current.effectivePagination.pageSize,
+                pageSize: current.effectivePagination.pageSize,
             })
         },
-        [selectSavedList, stagePagination]
+        [defaultListId, selectSavedList, stagePagination]
     )
 
     const validateAndCommit = useCallback(
@@ -302,6 +338,20 @@ const WorkingListProviderInstance = ({
                 configuration,
                 resolved: resolved.value,
             })
+
+            // React batches setDraft; keep the runtime synchronously current
+            // so back-to-back commands in one event compose on the candidate
+            // just committed instead of the last render's configuration.
+            runtimeRef.current = {
+                ...current,
+                activeState: {
+                    selectedSavedListId:
+                        current.activeState.selectedSavedListId,
+                    configuration,
+                },
+                resolvedConfiguration: resolved.value,
+                results: { status: 'pending' },
+            }
 
             if (resetPage) {
                 stagePagination({

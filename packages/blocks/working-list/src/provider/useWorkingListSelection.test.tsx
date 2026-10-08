@@ -194,4 +194,29 @@ describe('useWorkingListSelection', () => {
         await rerender({ selectedSavedListId: listA.id, lists: [listA, listB] })
         expect(result.current.requestedId).toBe(listA.id)
     })
+
+    it('bumps the selection generation on optimistic and host transitions', async () => {
+        const { result, rerender, act } = await renderSelection({
+            selectedSavedListId: listA.id,
+            lists: [listA, listB],
+        })
+
+        const initial = result.current.selectionGeneration.current
+
+        await act(() => result.current.selectSavedList(listB.id))
+        expect(result.current.selectionGeneration.current).toBeGreaterThan(
+            initial
+        )
+
+        const afterOptimistic = result.current.selectionGeneration.current
+
+        // A round trip back to the same id still counts as transitions.
+        await rerender({ selectedSavedListId: listB.id, lists: [listA, listB] })
+        await rerender({ selectedSavedListId: listA.id, lists: [listA, listB] })
+
+        expect(result.current.requestedId).toBe(listA.id)
+        expect(result.current.selectionGeneration.current).toBeGreaterThan(
+            afterOptimistic
+        )
+    })
 })

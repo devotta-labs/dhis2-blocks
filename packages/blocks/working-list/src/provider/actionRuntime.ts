@@ -28,6 +28,11 @@ export interface WorkingListActionRuntime {
     formattingContext?: CellFormattingContext
     confirmedLists?: NormalizedSavedWorkingList[]
     displayedLists: readonly NormalizedSavedWorkingList[]
+    defaultList?: Extract<
+        NormalizedSavedWorkingList,
+        { compatibility: 'compatible' }
+    >
+    selectionGeneration: { current: number }
     effectivePagination: WorkingListPagination
     online: boolean
     program?: TrackerProgram

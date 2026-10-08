@@ -40,7 +40,7 @@ interface UseWorkingListSelectionOptions {
     displayedLists: readonly NormalizedSavedWorkingList[]
 }
 
-const resolveSelection = ({
+export const resolveSelection = ({
     requestedId,
     defaultList,
     confirmedLists,
@@ -130,6 +130,16 @@ export const useWorkingListSelection = ({
             ? transition.id
             : selectedSavedListId
 
+    // Count every transition — optimistic and host-driven — so async
+    // mutations can tell whether the selection moved since they started.
+    const selectionGenerationRef = useRef(0)
+    const lastRequestedIdRef = useRef(requestedId)
+
+    if (lastRequestedIdRef.current !== requestedId) {
+        lastRequestedIdRef.current = requestedId
+        selectionGenerationRef.current += 1
+    }
+
     const { meta: selection, baseline } = useMemo(
         () =>
             resolveSelection({
@@ -190,6 +200,7 @@ export const useWorkingListSelection = ({
     )
 
     const selectSavedList = useCallback((id: string) => {
+        selectionGenerationRef.current += 1
         setDraft(undefined)
         setTransition({ id, from: selectedSavedListIdRef.current })
         onSelectionChangeRef.current(id)
@@ -201,6 +212,7 @@ export const useWorkingListSelection = ({
         activeState,
         resolvedConfiguration: activeDraft?.resolved ?? baseline?.configuration,
         dirty,
+        selectionGeneration: selectionGenerationRef,
         setDraft,
         selectSavedList,
     }

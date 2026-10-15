@@ -90,14 +90,17 @@ function CodeBlockCopyButton({
     onClick,
     ...props
 }: React.ComponentProps<typeof Button> & { value: string }) {
-    const [copied, setCopied] = React.useState(false)
+    // Track the copied text so a changed `value` (e.g. switching package
+    // manager) cannot leave the button claiming an uncopied value was copied.
+    const [copiedValue, setCopiedValue] = React.useState<string | null>(null)
+    const copied = copiedValue === value
 
     React.useEffect(() => {
         if (!copied) {
             return
         }
 
-        const timeout = setTimeout(() => setCopied(false), 2000)
+        const timeout = setTimeout(() => setCopiedValue(null), 2000)
         return () => clearTimeout(timeout)
     }, [copied])
 
@@ -112,9 +115,14 @@ function CodeBlockCopyButton({
                 className={cn(className)}
                 onClick={(event) => {
                     onClick?.(event)
+                    // Clipboard API is missing in insecure contexts; leave the
+                    // block usable rather than throwing on click.
+                    if (!navigator.clipboard?.writeText) {
+                        return
+                    }
                     navigator.clipboard
                         .writeText(value)
-                        .then(() => setCopied(true))
+                        .then(() => setCopiedValue(value))
                         .catch(() => {})
                 }}
                 {...props}

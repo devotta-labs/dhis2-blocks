@@ -17,9 +17,17 @@ const useScrollToHash = () => {
             return
         }
 
-        document
-            .getElementById(decodeURIComponent(hash.slice(1)))
-            ?.scrollIntoView()
+        // A malformed percent escape makes decodeURIComponent throw; leave the
+        // page up instead of failing it.
+        let id: string
+
+        try {
+            id = decodeURIComponent(hash.slice(1))
+        } catch {
+            return
+        }
+
+        document.getElementById(id)?.scrollIntoView()
     }, [hash])
 }
 

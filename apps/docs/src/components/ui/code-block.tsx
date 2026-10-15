@@ -92,17 +92,19 @@ function CodeBlockCopyButton({
 }: React.ComponentProps<typeof Button> & { value: string }) {
     // Track the copied text so a changed `value` (e.g. switching package
     // manager) cannot leave the button claiming an uncopied value was copied.
+    // The expiry runs on `copiedValue`, not `copied`, so the confirmation dies
+    // two seconds after the copy even if `value` changed in between.
     const [copiedValue, setCopiedValue] = React.useState<string | null>(null)
     const copied = copiedValue === value
 
     React.useEffect(() => {
-        if (!copied) {
+        if (copiedValue === null) {
             return
         }
 
         const timeout = setTimeout(() => setCopiedValue(null), 2000)
         return () => clearTimeout(timeout)
-    }, [copied])
+    }, [copiedValue])
 
     return (
         <>

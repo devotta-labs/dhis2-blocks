@@ -247,11 +247,16 @@ host: either run the bundled Node server (`pnpm serve:docs`, honoring
 `DOCS_PORT` and `DOCS_DHIS2_URL`), or terminate the `/dhis2` prefix on any
 standard reverse proxy (nginx, Caddy, Traefik) in front of the static files.
 
+The site is written for developers and coding agents installing the blocks
+into their own projects; repository setup like the commands above belongs in
+this README, not on the site.
+
 Pages are MDX documents under `apps/docs/src/pages` registered in
 `src/navigation.ts` and `src/App.tsx`. Each example is a single component
 under `src/examples` registered in `src/examples/registry.ts`; the Code tab
-shows the same source the preview executes, and examples marked `live` are
-wrapped in the app-adapter host at `/preview/<slug>`.
+shows the same source the preview executes, so examples import blocks from
+`@/components/<block>` as an installed project would. Examples marked `live`
+are wrapped in the app-adapter host at `/preview/<slug>`.
 
 `pnpm docs:e2e` runs the docs Playwright suite (`playwright.docs.config.ts`):
 catalog browsing without a backend and live Working List

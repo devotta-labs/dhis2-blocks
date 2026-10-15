@@ -2,15 +2,15 @@ import { Suspense } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getExample } from '../examples/registry'
 import { LivePreviewHost } from './LivePreviewHost'
-import { PreviewLoading, PreviewShell } from './PreviewShell'
+import { PreviewShell, PreviewSpinner } from './PreviewShell'
 
 /**
  * Standalone preview route (`/preview/*`).
  *
  * The full-screen target for each example card's "Open full screen" link;
  * documentation pages render the same component inline via `ExampleSurface`,
- * so this route and the cards share component, adapter, and query cache
- * semantics.
+ * so this route and the cards share component, adapter, placeholder, and query
+ * cache semantics.
  */
 export const PreviewRoot = () => {
     const { '*': slug } = useParams()
@@ -32,11 +32,26 @@ export const PreviewRoot = () => {
         )
     }
 
+    const Placeholder = example.Placeholder ?? PreviewSpinner
+
+    // The shell sits inside the adapter so the adapter keeps the full viewport.
+    const placeholder = (
+        <PreviewShell>
+            <Placeholder />
+        </PreviewShell>
+    )
+
     const content = (
-        <Suspense fallback={<PreviewLoading />}>
-            <example.Component />
+        <Suspense fallback={placeholder}>
+            <PreviewShell>
+                <example.Component />
+            </PreviewShell>
         </Suspense>
     )
 
-    return example.live ? <LivePreviewHost>{content}</LivePreviewHost> : content
+    return example.live ? (
+        <LivePreviewHost placeholder={placeholder}>{content}</LivePreviewHost>
+    ) : (
+        content
+    )
 }

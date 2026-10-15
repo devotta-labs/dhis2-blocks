@@ -1,0 +1,118 @@
+---
+title: Installation
+description: Install a block with the shadcn CLI.
+---
+
+import {
+    AddPackagesCommand,
+    InstallCommand,
+    ShadcnCommand,
+} from '../components/InstallCommand'
+import { Steps } from '../components/Steps'
+
+These steps start from an app created with the DHIS2 `create-app` CLI. The
+shadcn CLI copies a block's source into your app and installs the npm
+packages it uses.
+
+<Steps>
+
+### Set up Tailwind CSS
+
+Skip this step if your app already uses Tailwind CSS v4. Otherwise, install
+Tailwind and its Vite plugin:
+
+<AddPackagesCommand packages="tailwindcss @tailwindcss/vite" dev />
+
+Add the plugin to `viteConfigExtensions.mts`:
+
+```ts
+// viteConfigExtensions.mts
+import path from 'path'
+import tailwindcss from '@tailwindcss/vite'
+import { defineConfig, ConfigEnv } from 'vite'
+
+const viteConfig = defineConfig(async (configEnv: ConfigEnv) => {
+    const { mode } = configEnv
+    return {
+        clearScreen: mode !== 'development',
+        resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
+        plugins: [tailwindcss()],
+    }
+})
+
+export default viteConfig
+```
+
+Create `src/index.css` and import it at the top of `src/App.tsx` with
+`import './index.css'`:
+
+```css
+/* src/index.css */
+@import 'tailwindcss' important;
+```
+
+DHIS2 adds a global CSS reset to every app. The `important` flag lets
+Tailwind's utility classes override it, so blocks look the way they are
+designed.
+
+### Initialize shadcn
+
+Skip this step if your app already has a `components.json`.
+
+The shadcn CLI recognizes a Vite project by its `vite.config` file. Rename
+`viteConfigExtensions.mts` to `vite.config.mts` and point `d2.config.js` at
+the new name:
+
+```js
+// d2.config.js
+viteConfigExtensions: './vite.config.mts',
+```
+
+Then run:
+
+<ShadcnCommand args="init" />
+
+The CLI asks for a component library and a preset. Blocks don't depend on
+either, so pick what suits the rest of your app.
+
+### Add a block
+
+<InstallCommand item="working-list" />
+
+This installs the Working List. Each [block page](/blocks/working-list) shows
+its own command.
+
+### Use the block
+
+Import the block from your components folder:
+
+```tsx
+import {
+    WorkingList,
+    WorkingListTable,
+    WorkingListToolbar,
+    WorkingListFilterControls,
+    WorkingListViewSwitcher,
+} from '@/components/working-list'
+
+export const ChildProgrammeList = () => (
+    <WorkingList programId="IpHINAT79UW" orgUnitId="y77LiPqLMoq">
+        <WorkingListViewSwitcher />
+        <WorkingListToolbar>
+            <WorkingListFilterControls />
+        </WorkingListToolbar>
+        <WorkingListTable />
+    </WorkingList>
+)
+```
+
+Program `IpHINAT79UW` and organisation unit `y77LiPqLMoq` exist on the DHIS2
+demo database; use IDs from your own instance otherwise. Each
+[block page](/blocks/working-list) documents its full API.
+
+</Steps>
+
+## Updating a block
+
+Run the same `add` command again. The CLI asks before it overwrites your
+files, so commit your own changes first and review the diff afterwards.

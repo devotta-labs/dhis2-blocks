@@ -1,52 +1,92 @@
-import { useMemo, useState } from 'react'
-import { CopyButton } from './CopyButton'
+import { useState } from 'react'
+import { useHighlightedCode } from '../hooks/use-highlighted-code'
+import { Button } from './ui/button'
+import {
+    CodeBlock,
+    CodeBlockActions,
+    CodeBlockContent,
+    CodeBlockCopyButton,
+    CodeBlockHeader,
+    CodeBlockLine,
+} from './ui/code-block'
 
 const packageManagers = ['pnpm', 'npm', 'yarn', 'bun'] as const
 
 type PackageManager = (typeof packageManagers)[number]
 
-const getCommands = (item: string) => ({
-    pnpm: `pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/${item}`,
-    npm: `npx shadcn@latest add devotta-labs/dhis2-blocks/${item}`,
-    yarn: `yarn dlx shadcn@latest add devotta-labs/dhis2-blocks/${item}`,
-    bun: `bunx --bun shadcn@latest add devotta-labs/dhis2-blocks/${item}`,
-})
+type Commands = Record<PackageManager, string>
 
-export const InstallCommand = ({ item }: { item: string }) => {
-    const commands = useMemo(() => getCommands(item), [item])
+type Block = 'context-selector' | 'working-list'
+
+const PackageManagerCommand = ({ commands }: { commands: Commands }) => {
     const [manager, setManager] = useState<PackageManager>('pnpm')
+    const lines = useHighlightedCode(commands[manager], 'bash')
 
     return (
-        <figure className="not-prose relative my-4 overflow-hidden rounded-lg border border-border bg-muted">
-            <div className="flex items-center border-b border-border px-3">
+        <CodeBlock className="not-prose my-4">
+            <CodeBlockHeader>
                 <div className="flex items-center gap-1">
                     {packageManagers.map((name) => (
-                        <button
+                        <Button
                             key={name}
-                            type="button"
+                            variant="ghost"
+                            size="xs"
+                            aria-pressed={manager === name}
                             onClick={() => setManager(name)}
-                            className={[
-                                'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
-                                manager === name
-                                    ? 'bg-background text-foreground'
-                                    : 'text-muted-foreground hover:text-foreground',
-                            ].join(' ')}
+                            className="aria-pressed:bg-muted aria-pressed:text-foreground"
                         >
                             {name}
-                        </button>
+                        </Button>
                     ))}
                 </div>
-
-                <div className="ml-auto">
-                    <CopyButton value={commands[manager]} />
-                </div>
-            </div>
-
-            <div className="overflow-x-auto px-4 py-3">
-                <pre className="font-mono text-sm leading-6">
-                    <code>{commands[manager]}</code>
-                </pre>
-            </div>
-        </figure>
+                <CodeBlockActions>
+                    <CodeBlockCopyButton value={commands[manager]} />
+                </CodeBlockActions>
+            </CodeBlockHeader>
+            <CodeBlockContent>
+                {lines.map((line, index) => (
+                    <CodeBlockLine key={index}>{line}</CodeBlockLine>
+                ))}
+            </CodeBlockContent>
+        </CodeBlock>
     )
 }
+
+/** Adds npm packages to the project, as dev dependencies when `dev` is set. */
+export const AddPackagesCommand = ({
+    packages,
+    dev = false,
+}: {
+    packages: string
+    dev?: boolean
+}) => {
+    const flag = dev ? ' -D' : ''
+
+    return (
+        <PackageManagerCommand
+            commands={{
+                pnpm: `pnpm add${flag} ${packages}`,
+                npm: `npm install${flag} ${packages}`,
+                yarn: `yarn add${flag} ${packages}`,
+                bun: `bun add${flag} ${packages}`,
+            }}
+        />
+    )
+}
+
+/** A shadcn CLI command, shown for each package manager. */
+export const ShadcnCommand = ({ args }: { args: string }) => (
+    <PackageManagerCommand
+        commands={{
+            pnpm: `pnpm dlx shadcn@latest ${args}`,
+            npm: `npx shadcn@latest ${args}`,
+            yarn: `yarn dlx shadcn@latest ${args}`,
+            bun: `bunx --bun shadcn@latest ${args}`,
+        }}
+    />
+)
+
+/** `shadcn add` for a block: copies its source and installs its dependencies. */
+export const InstallCommand = ({ item }: { item: Block }) => (
+    <ShadcnCommand args={`add devotta-labs/dhis2-blocks/${item}`} />
+)

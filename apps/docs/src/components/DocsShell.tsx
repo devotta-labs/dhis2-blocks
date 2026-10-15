@@ -46,6 +46,32 @@ const ThemeIcon = ({ dark }: { dark: boolean }) =>
         </svg>
     )
 
+const SidebarLink = ({
+    title,
+    href,
+    onNavigate,
+}: {
+    title: string
+    href: string
+    onNavigate?: () => void
+}) => (
+    <NavLink
+        to={href}
+        end={href === '/'}
+        onClick={onNavigate}
+        className={({ isActive }) =>
+            [
+                '-ml-px block border-l-2 py-1.5 pr-2 pl-4 text-sm transition-colors',
+                isActive
+                    ? 'border-primary font-medium text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground',
+            ].join(' ')
+        }
+    >
+        {title}
+    </NavLink>
+)
+
 const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
     <nav aria-label="Documentation" className="flex flex-col gap-6 px-1">
         {docsNavigation.map((group) => (
@@ -57,21 +83,7 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
                 <ul className="flex flex-col gap-0.5 border-l border-border">
                     {group.items.map((item) => (
                         <li key={item.href}>
-                            <NavLink
-                                to={item.href}
-                                end={item.href === '/'}
-                                onClick={onNavigate}
-                                className={({ isActive }) =>
-                                    [
-                                        '-ml-px block border-l-2 py-1.5 pr-2 pl-4 text-sm transition-colors',
-                                        isActive
-                                            ? 'border-primary font-medium text-foreground'
-                                            : 'border-transparent text-muted-foreground hover:text-foreground',
-                                    ].join(' ')
-                                }
-                            >
-                                {item.title}
-                            </NavLink>
+                            <SidebarLink {...item} onNavigate={onNavigate} />
                         </li>
                     ))}
                 </ul>
@@ -140,7 +152,7 @@ export const DocsShell = () => {
                         className="ml-5 hidden items-center gap-5 md:flex"
                     >
                         <NavLink
-                            to="/getting-started"
+                            to="/installation"
                             className={({ isActive }) =>
                                 [
                                     'text-sm transition-colors',

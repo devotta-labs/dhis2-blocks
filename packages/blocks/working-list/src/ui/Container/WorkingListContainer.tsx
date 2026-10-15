@@ -1,9 +1,12 @@
-import { CircularLoader, NoticeBox } from '@dhis2/ui'
+import { NoticeBox } from '@dhis2/ui'
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { useWorkingListMeta } from '../../provider/WorkingListContext'
 import { useWorkingListText } from '../WorkingListText'
 
 export interface WorkingListContainerProps extends ComponentPropsWithoutRef<'article'> {}
+
+const visuallyHiddenClassName =
+    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
 export const WorkingListContainer = ({
     children,
@@ -13,7 +16,10 @@ export const WorkingListContainer = ({
     const translate = useWorkingListText()
     const lifecycle = useWorkingListMeta((meta) => meta.lifecycle)
     const online = useWorkingListMeta((meta) => meta.online)
-    const blocked = lifecycle.status !== 'ready'
+    // While initializing, the composed parts stay visible and render their
+    // own skeletons in place, so loading never swaps the layout out.
+    const pending = lifecycle.status === 'pending'
+    const failed = lifecycle.status === 'error'
 
     return (
         <div className="w-full min-w-0" data-testid="working-list-main">
@@ -28,17 +34,17 @@ export const WorkingListContainer = ({
                     )}
                 </div>
             )}
-            {lifecycle.status === 'pending' && (
-                <div
-                    className="flex min-h-48 items-center justify-center gap-3 text-[var(--colors-grey700)]"
+            {pending && (
+                <span
+                    className={visuallyHiddenClassName}
                     data-testid="working-list-initializing"
+                    role="status"
                     aria-live="polite"
                 >
-                    <CircularLoader small />
-                    <p>{translate('Loading the working list…')}</p>
-                </div>
+                    {translate('Loading the working list…')}
+                </span>
             )}
-            {lifecycle.status === 'error' && (
+            {failed && (
                 <div className="p-4" data-testid="working-list-lifecycle-error">
                     <NoticeBox
                         error
@@ -52,9 +58,10 @@ export const WorkingListContainer = ({
             )}
             <article
                 {...props}
-                className={`w-full min-w-0 max-w-full overflow-visible rounded-[4px] border border-[#d5dde5] bg-white shadow-[0_1px_2px_rgb(33_41_52_/_8%)]${blocked ? ' hidden' : ''}${className ? ` ${className}` : ''}`}
+                className={`w-full min-w-0 max-w-full overflow-visible rounded-[4px] border border-[#d5dde5] bg-white shadow-[0_1px_2px_rgb(33_41_52_/_8%)]${failed ? ' hidden' : ''}${className ? ` ${className}` : ''}`}
                 data-testid="working-list"
-                hidden={blocked}
+                aria-busy={pending || undefined}
+                hidden={failed}
             >
                 {children}
             </article>

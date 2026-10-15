@@ -1,6 +1,10 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
+import {
+    WorkingListDefaultPlaceholder,
+    WorkingListProgramPickerPlaceholder,
+} from './working-list/WorkingListPlaceholders'
 import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
 
@@ -10,10 +14,17 @@ import workingListProgramPickerSource from './working-list/WorkingListProgramPic
  * Every entry is one self-contained React component that exercises the public
  * block API. The same module powers the rendered preview and the Code tab:
  * `source` is the raw example file itself, so the documentation can never
- * drift from what is executed.
+ * drift from what is executed. Readers copy that source into their own
+ * projects, so examples import blocks from `@/components/<block>` (aliased to
+ * the workspace source) and leave layout chrome to the preview hosts.
  *
  * `live: true` examples render inside the shared DHIS2 adapter host and
  * require a reachable backend; `live: false` examples render standalone.
+ *
+ * `Placeholder` is shown until the example renders — while its code loads and,
+ * for live examples, while the adapter starts the DHIS2 session. Shape it
+ * like the example's own loading state so the preview never changes layout
+ * between owners; without one, a generic spinner is used.
  */
 export interface ExampleDefinition {
     slug: string
@@ -22,6 +33,7 @@ export interface ExampleDefinition {
     Component: LazyExoticComponent<ComponentType>
     source: string
     minHeight: number
+    Placeholder?: ComponentType
 }
 
 const examples = [
@@ -32,6 +44,7 @@ const examples = [
         Component: lazy(() => import('./working-list/WorkingListDefault')),
         source: workingListDefaultSource,
         minHeight: 730,
+        Placeholder: WorkingListDefaultPlaceholder,
     },
     {
         slug: 'working-list/program-picker',
@@ -42,6 +55,7 @@ const examples = [
         ),
         source: workingListProgramPickerSource,
         minHeight: 730,
+        Placeholder: WorkingListProgramPickerPlaceholder,
     },
     {
         slug: 'context-selector/basic',
@@ -67,5 +81,5 @@ const examples = [
 
 export type ExampleSlug = (typeof examples)[number]['slug']
 
-export const getExample = (slug: string) =>
+export const getExample = (slug: string): ExampleDefinition | undefined =>
     examples.find((example) => example.slug === slug)

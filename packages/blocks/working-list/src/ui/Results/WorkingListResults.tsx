@@ -1,4 +1,4 @@
-import { Button, CircularLoader, NoticeBox } from '@dhis2/ui'
+import { Button, NoticeBox } from '@dhis2/ui'
 import { Result } from 'better-result'
 import React, { useMemo, useState, type ComponentPropsWithoutRef } from 'react'
 import { fieldsForConfiguration } from '../../api/metadata'
@@ -17,7 +17,10 @@ import type {
 } from '../../provider/contracts'
 import { WorkingListRepairDialog } from '../WorkingList/dialogs'
 import type { WorkingListDataQualityMode } from '../types'
-import { WorkingListDataTable } from '../WorkingListTable'
+import {
+    WorkingListDataTable,
+    WorkingListTableSkeleton,
+} from '../WorkingListTable'
 import { useWorkingListText } from '../WorkingListText'
 
 const visuallyHiddenClassName =
@@ -84,15 +87,25 @@ const tableFieldsFor = (
 
 const SelectionLoading = () => {
     const translate = useWorkingListText()
+    const pageSize = useWorkingListMeta((meta) => meta.pagination.pageSize)
+
+    // While the list initializes, the container already announces loading.
+    const initializing = useWorkingListMeta(
+        (meta) => meta.lifecycle.status === 'pending'
+    )
 
     return (
-        <div
-            className="flex min-h-48 items-center justify-center gap-[var(--spacers-dp12)] text-[var(--colors-grey700)]"
-            data-testid="working-list-selection-loading"
-            aria-live="polite"
-        >
-            <CircularLoader small />
-            <p>{translate('Loading the selected working list…')}</p>
+        <div data-testid="working-list-selection-loading">
+            {!initializing && (
+                <span
+                    className={visuallyHiddenClassName}
+                    role="status"
+                    aria-live="polite"
+                >
+                    {translate('Loading the selected working list…')}
+                </span>
+            )}
+            <WorkingListTableSkeleton pageSize={pageSize} />
         </div>
     )
 }

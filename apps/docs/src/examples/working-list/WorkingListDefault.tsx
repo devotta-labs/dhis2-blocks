@@ -6,33 +6,29 @@ import {
     WorkingListToolbar,
     WorkingListToolbarActions,
     WorkingListViewSwitcher,
-} from '@dhis2-blocks/working-list'
-import { PreviewShell } from '../../preview/PreviewShell'
+} from '@/components/working-list'
 
 /**
- * The complete Working List against live DHIS2 tracker data.
+ * The complete Working List.
  *
- * `IpHINAT79UW` (Child Programme) and `y77LiPqLMoq` (Ngelehun CHC) ship with
- * the Sierra Leone demo database — which the repository's documented backend
- * also seeds — so the example works on a fresh local stack and on any public
- * demo instance.
+ * `IpHINAT79UW` (Child Programme) and `y77LiPqLMoq` (Ngelehun CHC) exist in
+ * the DHIS2 Sierra Leone demo database. Replace them with a program and
+ * organisation unit from your own instance.
  */
 const WorkingListDefault = () => (
-    <PreviewShell>
-        <WorkingList
-            programId="IpHINAT79UW"
-            orgUnitId="y77LiPqLMoq"
-            defaultPagination={{ page: 1, pageSize: 10 }}
-        >
-            <WorkingListViewSwitcher />
-            <WorkingListToolbar>
-                <WorkingListColumnSelector />
-                <WorkingListFilterControls />
-                <WorkingListToolbarActions />
-            </WorkingListToolbar>
-            <WorkingListTable />
-        </WorkingList>
-    </PreviewShell>
+    <WorkingList
+        programId="IpHINAT79UW"
+        orgUnitId="y77LiPqLMoq"
+        defaultPagination={{ page: 1, pageSize: 10 }}
+    >
+        <WorkingListViewSwitcher />
+        <WorkingListToolbar>
+            <WorkingListColumnSelector />
+            <WorkingListFilterControls />
+            <WorkingListToolbarActions />
+        </WorkingListToolbar>
+        <WorkingListTable />
+    </WorkingList>
 )
 
 export default WorkingListDefault

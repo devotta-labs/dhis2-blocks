@@ -1,36 +1,42 @@
 ---
 title: DHIS2 Blocks
-description: Reusable, source-installed UI blocks for DHIS2 applications.
+description: Production-ready UI blocks you copy into your DHIS2 application.
 ---
 
-DHIS2 Blocks is a catalog of production-grade UI blocks for DHIS2
-applications. Like shadcn/ui, blocks are distributed through a source
-registry: installation copies the canonical source into your repository,
-where it can be read, themed, and adapted in place. Nothing is published to
-npm — your project owns the code.
+DHIS2 Blocks is a collection of UI blocks for DHIS2 web applications. Like
+shadcn/ui, blocks are not an npm package: the shadcn CLI copies each block's
+source into your project, where you can read, restyle, and change it like the
+rest of your code.
 
-Every block page pairs prose with live examples. Examples are ordinary React
-components that import the public block API, rendered against a real DHIS2
-instance through this site's same-origin `/dhis2` proxy. Pages and code stay
-readable without a connection; only the live previews require a backend,
-and the built-in demo credentials sign them in automatically.
+Every page shows a live example you can try, the code behind it, and the
+command that installs the block.
 
 ## Blocks
 
-- [Working List](/blocks/working-list) — a ready-to-use filtered, sortable
-  list for finding and reviewing tracker records.
-- [Context Selector](/blocks/context-selector) — Capture-style selector bar
-  primitives for choosing the working context.
+- [Working List](/blocks/working-list) — a filtered, sortable list for finding
+  and reviewing tracker records, with saved views.
+- [Context Selector](/blocks/context-selector) — the Capture-style bar for
+  choosing a program, organisation unit, and the rest of the working context.
 
-## Developing here
+## Get started
 
-This site is a Vite + React 18 application. Run the seeded backend and the
-dev server together to see live previews:
+1. Create an app with the DHIS2 `create-app` CLI, or open one you already
+   have.
+2. Set up Tailwind CSS and shadcn, then add a block:
 
-```bash
-pnpm docs:up    # seeded DHIS2 2.42 on http://127.0.0.1:58080
-pnpm dev:docs   # docs on http://localhost:3002
-```
+    ```bash
+    pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list
+    ```
 
-See [Setup](/getting-started) for connecting an existing instance, the
-production serving story, and how to add a page or example.
+3. Import it from your components folder and render it.
+
+[Installation](/installation) walks through every step.
+
+## Using an AI coding agent
+
+The commands and code on these pages are complete and can be followed as
+written. A prompt such as _"Install the DHIS2 Blocks Working List from
+`devotta-labs/dhis2-blocks/working-list` with the shadcn CLI and render it for
+program `IpHINAT79UW` in organisation unit `y77LiPqLMoq`"_ gives an agent
+everything it needs. After installation, the block's source in your
+project is the most accurate reference for its API.

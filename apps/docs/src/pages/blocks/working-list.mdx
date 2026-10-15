@@ -1,6 +1,6 @@
 ---
 title: Working List
-description: A ready-to-use list for finding and reviewing tracker records.
+description: A filtered, sortable list for finding and reviewing tracker records.
 ---
 
 import { ExampleCard } from '../../components/ExampleCard'
@@ -12,10 +12,10 @@ import { InstallCommand } from '../../components/InstallCommand'
 
 <InstallCommand item="working-list" />
 
-## Basic usage
+## Usage
 
-Compose the view switcher, toolbar controls, actions, and records table to
-fit your users' workflow. `programId` and `orgUnitId` are the only required
+Pass the tracker program and organisation unit to show, then compose the
+parts your users need. `programId` and `orgUnitId` are the only required
 props.
 
 ```tsx
@@ -29,42 +29,140 @@ import {
     WorkingListViewSwitcher,
 } from '@/components/working-list'
 
-export const BasicWorkingList = () => (
-    <WorkingList
-        programId="IpHINAT79UW"
-        orgUnitId="y77LiPqLMoq"
-        defaultPagination={{ page: 1, pageSize: 10 }}
-    >
+export const ChildProgrammeList = () => (
+    <WorkingList programId="IpHINAT79UW" orgUnitId="y77LiPqLMoq">
         <WorkingListViewSwitcher />
         <WorkingListToolbar>
             <WorkingListColumnSelector />
             <WorkingListFilterControls />
             <WorkingListToolbarActions />
         </WorkingListToolbar>
-        <WorkingListTable />
+        <WorkingListTable onRowClick={(record) => openRecord(record)} />
     </WorkingList>
 )
 ```
 
-## Live metadata
+Everything else comes from your DHIS2 instance: the program's attributes and
+data elements, the records, and the saved views your users can see. Filters,
+sorting, column choices, and pagination work out of the box.
 
-The Working List needs no fixture data — it reads programs, tracked entity
-metadata, records, filters, sorting, pagination, and saved views from the
-connected instance. This example drives `programId` from live metadata and
-the signed-in user's organisation units, so it works on any backend:
+## Choose the program at runtime
+
+Most apps let the user pick the program. This example loads the tracker
+programs and the user's organisation units from the API and passes the
+selection to the list:
 
 <ExampleCard slug="working-list/program-picker" />
 
-## State and composition
+Passing `key={programId}` makes React create a fresh list for each program,
+so a view or page from one program never carries over to the next.
 
-`WorkingList` runs uncontrolled by default: it owns the selected saved view
-and pagination while the host supplies `programId`, `orgUnitId`, and the
-composition. Provide `viewId` + `onViewChange` and `pagination` +
-`onPaginationChange` to control that state yourself — for example to persist
-it in the URL.
+## Opening a record
 
-`WorkingList` keys its internal list instance by `programId`, so changing
-programs remounts the list and each program starts from clean uncontrolled
-state. The examples above additionally pass `key` on the block itself to
-remount the whole composition. Saved views are loaded
-from and written to the real server; mutations appear after a reload.
+Without `onRowClick`, rows are read-only. With it, rows open on click and on
+Enter, and your callback receives the record to open:
+
+```ts
+type WorkingListResultTarget =
+    | { mode: 'trackedEntity'; programId: string; trackedEntityId: string }
+    | {
+          mode: 'event'
+          programId: string
+          programStageId: string
+          eventId: string
+          enrollmentId?: string
+          trackedEntityId?: string
+      }
+```
+
+Use it to navigate to your own record page or to open the record in the
+Capture app.
+
+## Saved views and pagination
+
+By default the list manages its own state. It starts on the program's default
+view, page 1, with 15 rows per page. Change the starting values with
+`defaultViewId` and `defaultPagination`, and use `onViewChange` or
+`onPaginationChange` to be notified of changes:
+
+```tsx
+<WorkingList
+    programId={programId}
+    orgUnitId={orgUnitId}
+    defaultPagination={{ page: 1, pageSize: 25 }}
+    onViewChange={rememberLastView}
+>
+    {/* … */}
+</WorkingList>
+```
+
+To keep this state yourself — for example in the URL — pass the value and its
+callback together. Views and pagination can be controlled independently:
+
+```tsx
+<WorkingList
+    programId={programId}
+    orgUnitId={orgUnitId}
+    viewId={viewId}
+    onViewChange={setViewId}
+    pagination={pagination}
+    onPaginationChange={setPagination}
+>
+    {/* … */}
+</WorkingList>
+```
+
+Saved views are stored on the DHIS2 server, so views users create, update,
+or delete in your app also apply wherever else they use those views.
+
+## API reference
+
+### WorkingList
+
+- `programId: string` — **required.** The tracker or event program to list.
+- `orgUnitId: string` — **required.** The organisation unit to list records
+  for.
+- `defaultViewId?: string | null` — the saved view to start on. Defaults to
+  the program's default view.
+- `viewId?: string | null` — controlled saved view. Requires `onViewChange`.
+- `onViewChange?: (id: string) => void` — called when the user switches view.
+- `defaultPagination?: WorkingListPagination` — the starting page. Defaults
+  to `{ page: 1, pageSize: 15 }`.
+- `pagination?: WorkingListPagination` — controlled page. Requires
+  `onPaginationChange`.
+- `onPaginationChange?: (next: WorkingListPagination) => void` — called when
+  the page or page size changes.
+
+`WorkingListPagination` is `{ page: number; pageSize: 10 | 15 | 25 | 50 | 100 }`;
+the allowed sizes are exported as `WORKING_LIST_PAGE_SIZES`. `WorkingList`
+also accepts the props of an `<article>` element, such as `className`.
+
+### WorkingListTable
+
+- `onRowClick?: (target: WorkingListResultTarget) => void` — makes rows open
+  on click and Enter.
+- `dataQualityMode?: 'hidden' | 'highlighted'` — whether invalid values are
+  highlighted. Rows with invalid values are shown either way.
+
+### Other parts
+
+- `WorkingListViewSwitcher` — the saved views bar.
+- `WorkingListToolbar` — the container for the controls below.
+- `WorkingListColumnSelector` — show, hide, and reorder columns.
+- `WorkingListFilterControls` — filters for the program's fields.
+- `WorkingListToolbarActions` — save the current view, plus a menu with the
+  other view actions and download.
+
+All parts accept `className` and the props of their HTML element. Each part
+has a translated accessible name by default; pass `aria-label` to change it.
+
+### Hooks
+
+For your own parts rendered inside `WorkingList`:
+
+- `useWorkingListState()` — the selected view and its current filters,
+  columns, and sorting.
+- `useWorkingListMeta()` — loading status, program metadata, saved views,
+  rows, and pagination.
+- `useWorkingListActions()` — change filters, columns, sorting, pagination,
+  and views, or download the visible rows.

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { getExample, type ExampleSlug } from '../examples/registry'
 import { ExampleSurface } from '../preview/ExampleSurface'
-import { CodeBlock } from './CodeBlock'
+import { HighlightedCodeBlock } from './HighlightedCodeBlock'
 
 /**
  * Preview/Code card for a registered example.
@@ -75,10 +75,11 @@ export const ExampleCard = ({ slug }: { slug: ExampleSlug }) => {
             </div>
 
             <div role="tabpanel" hidden={tab !== 'code'}>
-                <CodeBlock
+                <HighlightedCodeBlock
                     code={example.source}
                     language="tsx"
-                    className="rounded-none border-0 border-t border-border"
+                    className="rounded-none border-0 border-t"
+                    contentClassName="max-h-[640px]"
                 />
             </div>
         </div>

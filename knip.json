@@ -91,6 +91,10 @@
         },
         "apps/docs": {
             "entry": ["server/**/*.test.mjs"],
+            "ignoreDependencies": [
+                "@dhis2-blocks/context-selector",
+                "@dhis2-blocks/working-list"
+            ],
             "project": [
                 "src/**/*.{ts,tsx,css}",
                 "server/**/*.mjs",
@@ -100,7 +104,9 @@
             ],
             "ignoreIssues": {
                 "src/components/ExampleCard.tsx": ["exports"],
-                "src/components/InstallCommand.tsx": ["exports"]
+                "src/components/InstallCommand.tsx": ["exports"],
+                "src/components/ui/**": ["exports"],
+                "src/lib/highlighter.tsx": ["exports"]
             }
         },
         "packages/blocks/*": {

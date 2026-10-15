@@ -54,7 +54,12 @@ const router = createBrowserRouter([
         element: <DocsShell />,
         children: [
             docRoute('/', './pages/index.mdx'),
-            docRoute('/getting-started', './pages/getting-started.mdx'),
+            docRoute('/installation', './pages/installation.mdx'),
+            // The former name of the installation page.
+            {
+                path: '/getting-started',
+                element: <Navigate to="/installation" replace />,
+            },
             docRoute('/blocks/working-list', './pages/blocks/working-list.mdx'),
             docRoute(
                 '/blocks/context-selector',

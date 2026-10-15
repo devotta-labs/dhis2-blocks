@@ -1,4 +1,4 @@
-import { Button, NoticeBox } from '@dhis2/ui'
+import { Button, DropdownButton, FlyoutMenu, NoticeBox } from '@dhis2/ui'
 import { IconMore16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
@@ -194,15 +194,18 @@ export const WorkingListToolbarActions = ({
                     >
                         {actionCopy.controls.saveView(translate)}
                     </Button>
-                    <Button
+                    {/* A dropdown like the live control, so the chevron
+                        does not shift the actions when it resolves. */}
+                    <DropdownButton
                         secondary
                         small
                         icon={<IconMore16 />}
                         dataTest="working-list-options"
                         disabled
+                        component={<FlyoutMenu dense />}
                     >
                         {actionCopy.controls.more(translate)}
-                    </Button>
+                    </DropdownButton>
                 </div>
             )}
         </div>

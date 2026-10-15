@@ -13,6 +13,9 @@
         ".roo/**",
         ".windsurf/**",
         "apps/docs/dist/**",
+        "apps/docs/src/components/ui/**",
+        "apps/docs/src/hooks/use-highlighted-code.ts",
+        "apps/docs/src/lib/highlighter.tsx",
         "tools/oxlint/anti-slop/**"
     ],
     "jsPlugins": [

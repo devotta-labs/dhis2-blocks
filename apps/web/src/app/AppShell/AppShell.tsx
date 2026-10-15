@@ -53,7 +53,7 @@ const WorkingListDirtyBridge = ({
 }) => {
     const dirty = useWorkingListMeta((meta) => meta.dirty)
 
-    // EFFECT: WorkingListStore.dirty -- Publish subscribed dirty status to the host shell, including changes from asynchronous mutations and refreshes.
+    // EFFECT: WorkingList.meta.dirty -- Mirror the list-owned dirty flag into the shell, whose navigation guards and discard dialog live above the list provider.
     useEffect(() => onChange(dirty), [dirty, onChange])
 
     return null

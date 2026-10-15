@@ -7,11 +7,8 @@ import {
 } from '../api/savedLists'
 import { DEFAULT_WORKING_LIST_SORT } from '../query/serialize'
 import {
-    canCommitMutationBaseline,
     internalConfigurationFingerprint,
     isCurrentSelection,
-    publicConfigurationFingerprint,
-    toPublicConfiguration,
 } from './configuration'
 import type {
     AppliedFilter,
@@ -40,17 +37,14 @@ const idleMutation = (): WorkingListMutationStatus => ({ status: 'idle' })
 
 export const createWorkingListActions = ({
     runtimeRef,
-    selectionToken,
     capabilities,
     client,
     defaultListId,
-    hardTransition,
+    selectSavedList,
     refreshSavedLists,
     setMutation,
     stagePagination,
-    store,
     translate,
-    updateStore,
     validateAndCommit,
 }: CreateWorkingListActionsOptions): WorkingListActionImplementation => ({
     setFilter(filter: AppliedFilter) {
@@ -228,12 +222,12 @@ export const createWorkingListActions = ({
                     message: 'A saved-list id is required',
                 })
             )
-        hardTransition(id, true)
+        selectSavedList(id)
 
         return Result.ok()
     },
     clearViewSelection() {
-        hardTransition(defaultListId, true)
+        selectSavedList(defaultListId)
 
         return Result.ok()
     },
@@ -258,7 +252,8 @@ export const createWorkingListActions = ({
                 })
             )
         setMutation('create', { status: 'pending' })
-        const selectionVersion = selectionToken.current
+        const requestedId = runtime.requestedId
+        const selectionGeneration = runtime.selectionGeneration.current
 
         try {
             const snapshot = runtime.resolvedConfiguration
@@ -285,8 +280,17 @@ export const createWorkingListActions = ({
                 )
             }
 
-            if (selectionToken.current === selectionVersion) {
-                hardTransition(id, true)
+            // Selecting the created view is only safe when no selection
+            // transition intervened — including a round trip back to the
+            // same id, which matching ids alone cannot detect.
+            const finishedRuntime = runtimeRef.current
+
+            if (
+                isCurrentSelection(finishedRuntime.requestedId, requestedId) &&
+                finishedRuntime.selectionGeneration.current ===
+                    selectionGeneration
+            ) {
+                selectSavedList(id)
             }
 
             return Result.ok({ viewId: id })
@@ -411,28 +415,6 @@ export const createWorkingListActions = ({
                 )
             }
 
-            const publicSnapshot = toPublicConfiguration(snapshot)
-            updateStore((current) => {
-                if (
-                    !canCommitMutationBaseline({
-                        currentSelectedId:
-                            current.activeState?.selectedSavedListId,
-                        currentConfiguration:
-                            current.activeState?.configuration,
-                        submittedSelectedId: id,
-                        submittedConfiguration: publicSnapshot,
-                    })
-                ) {
-                    return {}
-                }
-
-                return {
-                    baselineFingerprint:
-                        publicConfigurationFingerprint(publicSnapshot),
-                    meta: { ...current.meta, dirty: false },
-                }
-            })
-
             return Result.ok()
         } catch (cause) {
             return Result.err(
@@ -487,13 +469,8 @@ export const createWorkingListActions = ({
                 )
             }
 
-            if (
-                isCurrentSelection(
-                    store.getState().activeState?.selectedSavedListId,
-                    id
-                )
-            ) {
-                hardTransition(defaultListId, true)
+            if (isCurrentSelection(runtimeRef.current.requestedId, id)) {
+                selectSavedList(defaultListId)
             }
 
             return Result.ok()
@@ -514,7 +491,7 @@ export const createWorkingListActions = ({
             !runtime.metadata ||
             !runtime.formattingContext ||
             !runtime.program ||
-            store.getState().meta.results.status !== 'ready'
+            runtime.results.status !== 'ready'
         ) {
             return Result.err(
                 new DownloadVisibleRowsError({

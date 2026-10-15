@@ -38,7 +38,7 @@ vi.mock('@tanstack/react-query', async (importOriginal) => ({
 }))
 
 describe('WorkingListProvider controlled selection', () => {
-    it('hard-transitions immediately and keeps public actions stable across prop changes', async () => {
+    it('follows controlled props without rewriting host pagination and keeps public actions stable', async () => {
         const queryClient = new QueryClient({
             defaultOptions: { queries: { retry: false } },
         })
@@ -85,20 +85,12 @@ describe('WorkingListProvider controlled selection', () => {
             status: 'pending',
             requestedSavedListId: 'SavedList01',
         })
-        expect(paginationChange).toHaveBeenCalledWith({
-            page: 1,
-            pageSize: 15,
-        })
         const initialActions = observedActions.at(-1)
 
-        paginationChange.mockClear()
         await screen.rerender(
             renderProvider('SavedList01', firstSelectionChange, 'OrgUnit00002')
         )
-        expect(paginationChange).toHaveBeenCalledWith({
-            page: 1,
-            pageSize: 15,
-        })
+        expect(paginationChange).not.toHaveBeenCalled()
 
         await screen.rerender(
             renderProvider('SavedList02', secondSelectionChange)
@@ -109,9 +101,15 @@ describe('WorkingListProvider controlled selection', () => {
         })
         expect(observedActions.at(-1)).toBe(initialActions)
 
+        expect(paginationChange).not.toHaveBeenCalled()
+
         observedActions.at(-1)?.selectView('SavedList03')
         expect(firstSelectionChange).not.toHaveBeenCalled()
         expect(secondSelectionChange).toHaveBeenCalledWith('SavedList03')
+        expect(paginationChange).toHaveBeenCalledWith({
+            page: 1,
+            pageSize: 15,
+        })
         await vi.waitFor(() => {
             expect(observedSelections.at(-1)).toEqual({
                 status: 'pending',
@@ -164,10 +162,7 @@ describe('WorkingListProvider controlled selection', () => {
                 requestedSavedListId: 'Program0001-default',
             })
             expect(selectionChange).not.toHaveBeenCalled()
-            expect(paginationChange).toHaveBeenCalledWith({
-                page: 1,
-                pageSize: 15,
-            })
+            expect(paginationChange).not.toHaveBeenCalled()
 
             queryClient.clear()
         }

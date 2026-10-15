@@ -20,7 +20,6 @@ import type {
     WorkingListNetworkError,
 } from './errors'
 import type { WorkingListActions, WorkingListResultTarget } from './contracts'
-import type { WorkingListProviderStore } from './store'
 
 interface WorkingListPrivateCalendarContext {
     calendar: WorkingListSystemInfo['calendar']
@@ -37,7 +36,6 @@ export interface WorkingListPrivateActions {
 }
 
 export interface WorkingListPrivateUiContextValue {
-    store: WorkingListProviderStore
     actions: WorkingListActions
     privateActions: WorkingListPrivateActions
     client: WorkingListClient

@@ -23,23 +23,10 @@ export const assertPagination = (pagination: WorkingListPagination) => {
 
 const idleMutation = (): WorkingListMutationStatus => ({ status: 'idle' })
 
-export const initialMeta = (
-    pagination: WorkingListPagination
-): WorkingListMeta => ({
-    lifecycle: { status: 'pending' },
-    selection: { status: 'pending' },
-    activeConfiguration: { status: 'unavailable' },
-    savedViews: { status: 'pending', views: [] },
-    mutations: {
-        create: idleMutation(),
-        update: idleMutation(),
-        delete: idleMutation(),
-    },
-    results: { status: 'pending' },
-    dirty: false,
-    online: true,
-    pagination,
-    fields: [],
+export const idleMutations = (): WorkingListMeta['mutations'] => ({
+    create: idleMutation(),
+    update: idleMutation(),
+    delete: idleMutation(),
 })
 
 export const asSavedView = (

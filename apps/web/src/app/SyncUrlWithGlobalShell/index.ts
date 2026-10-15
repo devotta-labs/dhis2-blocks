@@ -1,1 +1,0 @@
-export { SyncUrlWithGlobalShell } from './SyncUrlWithGlobalShell'

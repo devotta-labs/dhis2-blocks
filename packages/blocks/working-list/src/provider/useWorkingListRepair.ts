@@ -11,15 +11,11 @@ import {
     replaceSavedWorkingList,
     type NormalizedSavedWorkingList,
 } from '../api/savedLists'
-import type { WorkingListConfiguration as InternalConfiguration } from '../domain/model'
 import type {
     FilterParsingContext,
     FilterSerializationContext,
 } from '../registry/valueTypes'
-import {
-    internalConfigurationFingerprint,
-    isCurrentSelection,
-} from './configuration'
+import { internalConfigurationFingerprint } from './configuration'
 import { toTransportError } from './errorNormalization'
 import {
     IncompatibleSavedListError,
@@ -43,8 +39,6 @@ interface UseWorkingListRepairOptions {
     capabilities: WorkingListCapabilities
     client: WorkingListClient
     refreshSavedLists: () => Promise<NormalizedSavedWorkingList[]>
-    latestRequestedIdRef: { current?: string }
-    commitSelection: (id: string, configuration: InternalConfiguration) => void
     retrySavedViews: () => Promise<object>
     retryPage: () => Promise<object>
     organisationUnitLabelsError: unknown
@@ -62,8 +56,6 @@ export const useWorkingListRepair = ({
     capabilities,
     client,
     refreshSavedLists,
-    latestRequestedIdRef,
-    commitSelection,
     retrySavedViews,
     retryPage,
     organisationUnitLabelsError,
@@ -239,15 +231,6 @@ export const useWorkingListRepair = ({
                         )
                     }
 
-                    if (
-                        isCurrentSelection(
-                            latestRequestedIdRef.current,
-                            selectedId
-                        )
-                    ) {
-                        commitSelection(selectedId, confirmed.configuration)
-                    }
-
                     return Result.ok()
                 } catch (cause) {
                     return Result.err(
@@ -264,7 +247,6 @@ export const useWorkingListRepair = ({
         [
             capabilities,
             client,
-            commitSelection,
             metadata,
             online,
             organisationUnitLabelsError,

@@ -1,15 +1,18 @@
 import React, { createContext, useContext, useMemo, useRef } from 'react'
-import { useStore } from 'zustand'
 import type {
     WorkingListActions,
     WorkingListActionImplementation,
     WorkingListMeta,
     WorkingListState,
 } from './contracts'
-import type { WorkingListProviderStore } from './store'
+
+export interface WorkingListSnapshot {
+    activeState?: WorkingListState
+    meta: WorkingListMeta
+}
 
 interface WorkingListPublicContextValue {
-    store: WorkingListProviderStore
+    snapshot: WorkingListSnapshot
     actions: WorkingListActions
 }
 
@@ -29,26 +32,20 @@ const usePublicContext = () => {
 export const useWorkingListState = <TSelected,>(
     selector: (state: WorkingListState) => TSelected
 ): TSelected => {
-    const { store } = usePublicContext()
+    const { activeState } = usePublicContext().snapshot
 
-    return useStore(store, (snapshot) => {
-        if (!snapshot.activeState) {
-            throw new Error(
-                'useWorkingListState requires a ready active configuration. Select active-configuration readiness through useWorkingListMeta before mounting the stateful consumer.'
-            )
-        }
+    if (!activeState) {
+        throw new Error(
+            'useWorkingListState requires a ready active configuration. Select active-configuration readiness through useWorkingListMeta before mounting the stateful consumer.'
+        )
+    }
 
-        return selector(snapshot.activeState)
-    })
+    return selector(activeState)
 }
 
 export const useWorkingListMeta = <TSelected,>(
     selector: (meta: WorkingListMeta) => TSelected
-): TSelected => {
-    const { store } = usePublicContext()
-
-    return useStore(store, (snapshot) => selector(snapshot.meta))
-}
+): TSelected => selector(usePublicContext().snapshot.meta)
 
 export const useWorkingListActions = (): WorkingListActions =>
     usePublicContext().actions

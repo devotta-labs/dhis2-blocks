@@ -1,6 +1,10 @@
+import http from 'node:http'
+import { createServer as createViteServer } from 'vite'
 import { describe, expect, it } from 'vitest'
 import {
+    createDhis2ViteProxy,
     isCrossSiteWrite,
+    proxyDhis2Request,
     resolveDocsAuth,
     resolveDocsBackend,
     resolveDocsCookies,
@@ -9,6 +13,78 @@ import {
     rewriteSetCookieHeaders,
     stripDhis2Prefix,
 } from './dhis2-proxy.mjs'
+
+const listen = (server) =>
+    new Promise((resolve) =>
+        server.listen(0, '127.0.0.1', () =>
+            resolve(`http://127.0.0.1:${server.address().port}`)
+        )
+    )
+
+describe.each(['node', 'vite'])('%s proxy header isolation', (transport) => {
+    it.each([false, true])(
+        'isolates browser credentials with anonymous mode %s',
+        async (anonymous) => {
+            const backend = http.createServer((req, res) => {
+                res.setHeader('content-type', 'application/json')
+                res.end(JSON.stringify(req.headers))
+            })
+            const target = await listen(backend)
+            const env = { DOCS_DHIS2_ANONYMOUS: anonymous ? '1' : '0' }
+            const proxy =
+                transport === 'node'
+                    ? http.createServer((req, res) =>
+                          proxyDhis2Request(req, res, target, env)
+                      )
+                    : await createViteServer({
+                          configFile: false,
+                          logLevel: 'silent',
+                          server: {
+                              host: '127.0.0.1',
+                              port: 0,
+                              proxy: createDhis2ViteProxy(target, env),
+                          },
+                      })
+
+            try {
+                let origin
+
+                if (transport === 'node') {
+                    origin = await listen(proxy)
+                } else {
+                    await proxy.listen()
+                    origin = `http://127.0.0.1:${proxy.httpServer.address().port}`
+                }
+
+                const response = await fetch(`${origin}/dhis2/api/me`, {
+                    headers: {
+                        cookie: 'docs_session=private; JSESSIONID=dhis-session; analytics=id; XSRF-TOKEN=csrf',
+                        authorization: 'Basic browser',
+                    },
+                })
+                const headers = await response.json()
+
+                expect(response.status).toBe(200)
+                expect(headers.cookie).toBe(
+                    anonymous
+                        ? 'JSESSIONID=dhis-session; XSRF-TOKEN=csrf'
+                        : undefined
+                )
+                expect(headers.authorization).toBe(
+                    anonymous ? 'Basic browser' : resolveDocsAuth({})
+                )
+            } finally {
+                if (transport === 'node') {
+                    await proxy[Symbol.asyncDispose]()
+                } else {
+                    await proxy.close()
+                }
+
+                await backend[Symbol.asyncDispose]()
+            }
+        }
+    )
+})
 
 describe('resolveDocsCookies', () => {
     it('forwards only DHIS2 session and CSRF cookies', () => {

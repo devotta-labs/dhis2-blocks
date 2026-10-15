@@ -2,7 +2,6 @@ import type { OrganisationUnitReference } from '../organisationUnitScope'
 
 export const getOrganisationUnitAncestorPaths = (path?: string) => {
     const segments = path?.split('/').filter(Boolean) ?? []
-
     return segments.map(
         (_, index) => `/${segments.slice(0, index + 1).join('/')}`
     )

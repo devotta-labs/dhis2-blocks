@@ -24,14 +24,11 @@ test.describe('Capture context and generated tracker views', () => {
         await openWorkingList(page)
 
         await addFilter(page, 'tracked-entity', NUMBER_ATTRIBUTE)
-
         const numberEditor = page.getByTestId(
             `filter-editor-${NUMBER_ATTRIBUTE}`
         )
-
         await numberEditor.getByLabel('Minimum').fill('2.5')
         await numberEditor.getByLabel('Maximum').fill('4.5')
-
         const numberRequest = await waitForTrackerResponse(
             page,
             'trackedEntities',
@@ -44,21 +41,17 @@ test.describe('Capture context and generated tracker views', () => {
                     .getAll('filter')
                     .includes(`${NUMBER_ATTRIBUTE}:ge:2.5:le:4.5`)
         )
-
         expect(numberRequest.searchParams.getAll('filter')).toContain(
             `${NUMBER_ATTRIBUTE}:ge:2.5:le:4.5`
         )
 
         await addFilter(page, 'tracked-entity', BOOLEAN_ATTRIBUTE)
-
         const booleanEditor = page.getByTestId(
             `filter-editor-${BOOLEAN_ATTRIBUTE}`
         )
-
         await expect(booleanEditor.getByLabel('Yes')).not.toBeChecked()
         await expect(booleanEditor.getByLabel('No')).not.toBeChecked()
         await booleanEditor.getByLabel('Yes').check()
-
         const booleanRequest = await waitForTrackerResponse(
             page,
             'trackedEntities',
@@ -71,7 +64,6 @@ test.describe('Capture context and generated tracker views', () => {
                     .getAll('filter')
                     .includes(`${BOOLEAN_ATTRIBUTE}:eq:true`)
         )
-
         expect(booleanRequest.searchParams.getAll('filter')).toEqual(
             expect.arrayContaining([
                 `${NUMBER_ATTRIBUTE}:ge:2.5:le:4.5`,
@@ -80,11 +72,9 @@ test.describe('Capture context and generated tracker views', () => {
         )
 
         await addFilter(page, 'tracked-entity', MULTI_TEXT_ATTRIBUTE)
-
         const optionEditor = page.getByTestId(
             `filter-editor-${MULTI_TEXT_ATTRIBUTE}`
         )
-
         await optionEditor
             .getByTestId(`filter-value-${MULTI_TEXT_ATTRIBUTE}`)
             .locator('[data-test="dhis2-uicore-multiselect"]')
@@ -94,7 +84,6 @@ test.describe('Capture context and generated tracker views', () => {
             .filter({ hasText: 'Alpha' })
             .click()
         await page.keyboard.press('Escape')
-
         const optionRequest = await waitForTrackerResponse(
             page,
             'trackedEntities',
@@ -109,7 +98,6 @@ test.describe('Capture context and generated tracker views', () => {
                     .getAll('filter')
                     .includes(`${MULTI_TEXT_ATTRIBUTE}:in:ALPHA`)
         )
-
         expect(optionRequest.searchParams.getAll('filter')).toEqual(
             expect.arrayContaining([
                 `${NUMBER_ATTRIBUTE}:ge:2.5:le:4.5`,
@@ -131,13 +119,11 @@ test.describe('Capture context and generated tracker views', () => {
             const header = page
                 .getByTestId(`sort-${fieldId}`)
                 .locator('xpath=ancestor::th')
-
             const columnIndex = await header.evaluate((element) =>
                 Array.from(element.parentElement?.children ?? []).indexOf(
                     element
                 )
             )
-
             expect(columnIndex).toBeGreaterThanOrEqual(0)
             const cell = matchingRow.locator('td').nth(columnIndex)
             await expect(cell).toHaveText(value)
@@ -156,11 +142,9 @@ test.describe('Capture context and generated tracker views', () => {
         const geoJsonHeader = page
             .getByTestId(`sort-${GEOJSON_ATTRIBUTE}`)
             .locator('xpath=ancestor::th')
-
         const geoJsonColumnIndex = await geoJsonHeader.evaluate((header) =>
             Array.from(header.parentElement?.children ?? []).indexOf(header)
         )
-
         expect(geoJsonColumnIndex).toBeGreaterThanOrEqual(0)
         await expect(
             matchingRow.locator('td').nth(geoJsonColumnIndex)
@@ -219,7 +203,6 @@ test.describe('Capture context and generated tracker views', () => {
             .include('[data-testid="working-list-main"]')
             .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
             .analyze()
-
         expect(
             accessibility.violations.filter((violation) =>
                 ['serious', 'critical'].includes(violation.impact ?? '')
@@ -242,7 +225,6 @@ test.describe('Capture context and generated tracker views', () => {
             () => page.getByTestId(`sort-${TEXT_ATTRIBUTE}`).click(),
             (url) => url.searchParams.get('order') === `${TEXT_ATTRIBUTE}:asc`
         )
-
         expect(firstSort.searchParams.getAll('order')).toEqual([
             `${TEXT_ATTRIBUTE}:asc`,
         ])
@@ -256,7 +238,6 @@ test.describe('Capture context and generated tracker views', () => {
                     .get('order')
                     ?.startsWith(`${INTEGER_ATTRIBUTE}:`) === true
         )
-
         const replacementOrder = replacementSort.searchParams.getAll('order')
         expect(replacementOrder).toHaveLength(1)
         expect(replacementOrder[0]).toMatch(
@@ -271,15 +252,12 @@ test.describe('Capture context and generated tracker views', () => {
         await uiButton(page, 'configure-columns').click()
         const settings = page.getByTestId('column-settings')
         await expect(settings).toBeVisible()
-
         const pickedColumns = settings.locator(
             '[data-test="column-settings-transfer-pickedoptions"]'
         )
-
         const booleanColumn = pickedColumns.locator(
             `[data-value="${BOOLEAN_ATTRIBUTE}"]`
         )
-
         await booleanColumn.click()
         await settings
             .locator(
@@ -293,7 +271,6 @@ test.describe('Capture context and generated tracker views', () => {
             .evaluateAll((options) =>
                 options.map((option) => option.getAttribute('data-value'))
             )
-
         const initialIntegerIndex = initialPickedIds.indexOf(INTEGER_ATTRIBUTE)
         const initialTextIndex = initialPickedIds.indexOf(TEXT_ATTRIBUTE)
         const moveCount = initialIntegerIndex - initialTextIndex
@@ -301,15 +278,12 @@ test.describe('Capture context and generated tracker views', () => {
         await pickedColumns
             .locator(`[data-value="${INTEGER_ATTRIBUTE}"]`)
             .click()
-
         const moveUp = settings.locator(
             '[data-test="column-settings-transfer-reorderingactions-buttonmoveup"]'
         )
-
         for (let move = 0; move < moveCount; move += 1) {
             await moveUp.click()
         }
-
         await expect
             .poll(async () => {
                 const orderedIds = await pickedColumns
@@ -319,7 +293,6 @@ test.describe('Capture context and generated tracker views', () => {
                             option.getAttribute('data-value')
                         )
                     )
-
                 return (
                     orderedIds.indexOf(INTEGER_ATTRIBUTE) <
                     orderedIds.indexOf(TEXT_ATTRIBUTE)
@@ -331,12 +304,10 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(page.getByTestId(`sort-${BOOLEAN_ATTRIBUTE}`)).toHaveCount(
             0
         )
-
         const headers = await page
             .getByTestId('working-list-table')
             .locator('thead th')
             .allTextContents()
-
         expect(headers[0]).toContain('E2E integer attribute')
         await expect(page.getByTestId('filter-enrollmentStatus')).toContainText(
             'Active'

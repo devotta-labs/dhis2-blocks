@@ -45,7 +45,6 @@ interface OrganisationUnitTreeRuntimeProps {
 const Dhis2OrganisationUnitTree = (props: OrganisationUnitTreeRuntimeProps) => {
     // SAFETY: The runtime accepts controlled string paths while the published type incorrectly declares a boolean.
     const expanded = props.expanded as never
-
     return <OrganisationUnitTree {...props} expanded={expanded} />
 }
 
@@ -67,13 +66,11 @@ const ControlledOrganisationUnitTree = ({
     const [expanded, setExpanded] = useState(() =>
         getInitialOrganisationUnitExpandedPaths(visibleRoots, selected?.path)
     )
-
     const handleExpand = useCallback(({ path }: { path: string }) => {
         setExpanded((current) =>
             current.includes(path) ? current : [...current, path]
         )
     }, [])
-
     const handleCollapse = useCallback(({ path }: { path: string }) => {
         setExpanded((current) => current.filter((item) => item !== path))
     }, [])
@@ -90,11 +87,9 @@ const ControlledOrganisationUnitTree = ({
             onChange={(payload, event) => {
                 event.stopPropagation()
                 event.preventDefault()
-
                 if (!payload.checked) {
                     return
                 }
-
                 onSelect({
                     id: payload.id,
                     displayName: payload.displayName,
@@ -125,12 +120,10 @@ export const OrganisationUnitSelectorContent = ({
 }: OrganisationUnitSelectorContentProps) => {
     const TreeComponent = treeComponent ?? Dhis2OrganisationUnitTree
     const visibleRoots = searchRoots ?? roots
-
     const treeFilter = useMemo(
         () => buildOrganisationUnitTreeFilter(allowedPaths, visibleRoots),
         [allowedPaths, visibleRoots]
     )
-
     // Keep the key stable while search pages append so expanded branches
     // survive; remount only when the term or the browse-mode root set changes.
     const stableTreeKey = searchRoots

@@ -47,7 +47,6 @@ const renderDialog = (
             </WorkingListTextProvider>
         )
     })
-
     return { container, onChange, onClose, root }
 }
 
@@ -108,22 +107,18 @@ describe('column settings dialog', () => {
             expect(document.body.textContent).not.toContain(
                 'Choose visible columns'
             )
-
             const filterInput = document.querySelector<HTMLInputElement>(
                 '[data-test="column-settings-transfer-filter-input"] input'
             )
-
             expect(filterInput).not.toBeNull()
             expect(filterInput?.placeholder).toBe('Filter')
 
             const source = document.querySelector(
                 '[data-test="column-settings-transfer-sourceoptions"]'
             )
-
             const picked = document.querySelector(
                 '[data-test="column-settings-transfer-pickedoptions"]'
             )
-
             expect(source?.textContent).toContain('Column B')
             expect(source?.textContent).toContain('Column D')
             expect(source?.textContent).not.toContain('Column C')
@@ -132,7 +127,6 @@ describe('column settings dialog', () => {
                 HTMLInputElement.prototype,
                 'value'
             )?.set
-
             act(() => {
                 setInputValue?.call(filterInput, 'Column D')
                 filterInput?.dispatchEvent(
@@ -163,9 +157,7 @@ describe('column settings dialog', () => {
                     `[data-test="column-settings-transfer-actions-${action}"]`
                 )
             )
-
             expect(actionButtons.every(Boolean)).toBe(true)
-
             for (const button of actionButtons) {
                 expect(button?.textContent).toBe('')
                 expect(button?.className).toContain('icon-only')
@@ -182,11 +174,9 @@ describe('column settings dialog', () => {
             const cancel = document.querySelector<HTMLButtonElement>(
                 '[data-test="column-settings-cancel"]'
             )
-
             const save = document.querySelector<HTMLButtonElement>(
                 '[data-test="column-settings-done"]'
             )
-
             expect(cancel?.textContent).toBe('Cancel')
             expect(save?.textContent).toBe('Save column configuration')
             expect(save?.className).toContain('primary')
@@ -209,11 +199,9 @@ describe('column settings dialog', () => {
             const sourceB = document.querySelector<HTMLElement>(
                 '[data-test="column-settings-transfer-sourceoptions"] [data-value="b"]'
             )
-
             const addSelected = document.querySelector<HTMLButtonElement>(
                 '[data-test="column-settings-transfer-actions-addindividual"]'
             )
-
             act(() => sourceB?.click())
             act(() => addSelected?.click())
             expect(onChange).not.toHaveBeenCalled()
@@ -221,11 +209,9 @@ describe('column settings dialog', () => {
             const pickedA = document.querySelector<HTMLElement>(
                 '[data-test="column-settings-transfer-pickedoptions"] [data-value="a"]'
             )
-
             const moveUp = document.querySelector<HTMLButtonElement>(
                 '[data-test="column-settings-transfer-reorderingactions-buttonmoveup"]'
             )
-
             expect(moveUp?.getAttribute('aria-label')).toBe(
                 'Move selected items up'
             )
@@ -236,7 +222,6 @@ describe('column settings dialog', () => {
             const save = document.querySelector<HTMLButtonElement>(
                 '[data-test="column-settings-done"]'
             )
-
             act(() => save?.click())
             expect(onChange).toHaveBeenCalledTimes(1)
             expect(onChange).toHaveBeenCalledWith(['a', 'c', 'b'])
@@ -252,13 +237,11 @@ describe('column settings dialog', () => {
             const onlyPickedOption = document.querySelector<HTMLElement>(
                 '[data-test="column-settings-transfer-pickedoptions"] [data-value="c"]'
             )
-
             expect(onlyPickedOption?.className).not.toContain('disabled')
 
             const removeAll = document.querySelector<HTMLButtonElement>(
                 '[data-test="column-settings-transfer-actions-removeall"]'
             )
-
             act(() => removeAll?.click())
             expect(onChange).not.toHaveBeenCalled()
             expect(
@@ -271,7 +254,6 @@ describe('column settings dialog', () => {
             const save = document.querySelector<HTMLButtonElement>(
                 '[data-test="column-settings-done"]'
             )
-
             act(() => save?.click())
             expect(onChange).not.toHaveBeenCalled()
             expect(onClose).not.toHaveBeenCalled()
@@ -282,11 +264,9 @@ describe('column settings dialog', () => {
             const sourceA = document.querySelector<HTMLElement>(
                 '[data-test="column-settings-transfer-sourceoptions"] [data-value="a"]'
             )
-
             const addSelected = document.querySelector<HTMLButtonElement>(
                 '[data-test="column-settings-transfer-actions-addindividual"]'
             )
-
             act(() => sourceA?.click())
             act(() => addSelected?.click())
             expect(document.querySelector('[role="alert"]')).toBeNull()

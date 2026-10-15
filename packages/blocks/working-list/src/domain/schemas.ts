@@ -9,9 +9,7 @@ import {
 export const UidSchema = z.string().regex(/^[A-Za-z][A-Za-z0-9]{10}$/)
 
 export const Dhis2ValueTypeSchema = z.enum(DHIS2_VALUE_TYPES)
-
 const FilterOperatorSchema = z.enum(FILTER_OPERATORS)
-
 const FilterSourceSchema = z.enum(FILTER_SOURCES)
 
 const WorkingListFieldSchema = z
@@ -100,7 +98,6 @@ const RelativeDateFilterValueSchema = z
                     value.endBuffer === undefined
                 )
             }
-
             return (
                 value.startBuffer !== undefined &&
                 value.startBuffer <= 0 &&
@@ -158,7 +155,6 @@ const AssigneeFilterValueSchema = z
                 path: ['userIds'],
             })
         }
-
         if (value.mode !== 'PROVIDED' && value.userIds?.length) {
             context.addIssue({
                 code: 'custom',

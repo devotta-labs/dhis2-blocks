@@ -23,7 +23,6 @@ const programs: Option[] = Array.from({ length: 11 }, (_, index) => ({
 describe('ContextSelector', () => {
     it('owns Capture sticky toolbar semantics and composes clear-all', async () => {
         const onClear = vi.fn()
-
         const screen = await render(
             <ContextSelector ariaLabel="Registration context">
                 <ContextValue label="Program" value="Malaria" />
@@ -34,7 +33,6 @@ describe('ContextSelector', () => {
         const navigation = screen.getByRole('navigation', {
             name: 'Registration context',
         })
-
         await expect.element(navigation).toBeVisible()
         await expect
             .element(
@@ -46,18 +44,14 @@ describe('ContextSelector', () => {
         expect(navigation.element().className).toContain('z-[1000]')
         expect(navigation.element().className).toContain('w-full')
         const navigationStyle = getComputedStyle(navigation.element())
-
         const toolbar = screen
             .getByRole('toolbar', {
                 name: 'Registration context',
             })
             .element()
-
         const controls = toolbar.querySelector<HTMLElement>('.controls')
-
         const selectorItem =
             screen.container.querySelector<HTMLElement>('.selector-bar-item')
-
         expect(navigationStyle.position).toBe('sticky')
         expect(navigationStyle.top).toBe('0px')
         expect(navigationStyle.zIndex).toBe('1000')
@@ -88,7 +82,6 @@ describe('ContextSelector', () => {
         const clearSelections = screen.container.querySelector<HTMLElement>(
             '[data-test="clear-selections"]'
         )
-
         expect(getComputedStyle(clearSelections!).display).toBe('flex')
         expect(getComputedStyle(clearSelections!).alignItems).toBe('center')
         expect(getComputedStyle(clearSelections!).height).toBe('40px')
@@ -111,7 +104,6 @@ describe('ContextSelector', () => {
 
     it('disables the composed clear-all action when requested by the host', async () => {
         const onClear = vi.fn()
-
         const screen = await render(
             <ContextSelector>
                 <ContextValue label="Program" value="Malaria" />
@@ -190,7 +182,6 @@ describe('ContextSelector', () => {
     it('resets the Capture program filter whenever the controlled popup closes', async () => {
         const Harness = () => {
             const [open, setOpen] = useState(true)
-
             return (
                 <>
                     <button type="button" onClick={() => setOpen(false)}>
@@ -210,7 +201,6 @@ describe('ContextSelector', () => {
                 </>
             )
         }
-
         await render(<Harness />)
 
         const input = page.getByPlaceholder('Search for a program')
@@ -235,11 +225,9 @@ describe('ContextSelector', () => {
         )
 
         const controls = screen.container.querySelector('.controls')
-
         const program = screen.container.querySelector(
             '[data-test="program-selector-container"]'
         )
-
         expect(controls?.firstElementChild).toBe(program)
     })
 
@@ -270,7 +258,6 @@ describe('ContextSelector', () => {
         const icon = document.querySelector<HTMLDivElement>(
             '[data-test="program-selector-container"] [title="Malaria icon"]'
         )
-
         const menu = page.getByRole('menu').element().parentElement
         const filter = page.getByPlaceholder('Search for a program').element()
         expect(icon).not.toBeNull()
@@ -292,7 +279,6 @@ describe('ContextSelector', () => {
 
     it('keeps display-only values clearable without opening a menu', async () => {
         const onClear = vi.fn()
-
         const screen = await render(
             <ContextSelector>
                 <ProgramSelector
@@ -307,13 +293,10 @@ describe('ContextSelector', () => {
         const item = screen.container.querySelector(
             '[data-test="program-selector-container"]'
         )
-
         expect(item?.className).not.toContain('openable')
-
         const clear = screen.container.querySelector<HTMLElement>(
             '[data-test="program-selector-container-clear-icon"]'
         )
-
         expect(clear).not.toBeNull()
         clear?.click()
         expect(onClear).toHaveBeenCalledOnce()
@@ -345,7 +328,6 @@ describe('ContextSelector', () => {
         const disabled = screen.container.querySelector<HTMLButtonElement>(
             '[data-test="program-selector-container"]'
         )
-
         const loading = screen.getByLabelText('Loading stages').element()
         expect(disabled?.disabled).toBe(true)
         expect(getComputedStyle(disabled!).height).toBe('40px')
@@ -359,7 +341,6 @@ describe('ContextSelector', () => {
         const onChange = vi.fn()
         const onClear = vi.fn()
         const onOpenChange = vi.fn()
-
         const screen = await render(
             <ContextSelector>
                 <ProgramSelector
@@ -394,7 +375,6 @@ describe('ContextSelector', () => {
     it('applies disabled before read-only, open, and clear props', async () => {
         const onClear = vi.fn()
         const onOpenChange = vi.fn()
-
         const screen = await render(
             <ContextSelector>
                 <ProgramSelector
@@ -412,7 +392,6 @@ describe('ContextSelector', () => {
         const item = screen.container.querySelector<HTMLButtonElement>(
             '[data-test="program-selector-container"]'
         )
-
         expect(item?.disabled).toBe(true)
         expect(
             screen.container.querySelector(
@@ -449,7 +428,6 @@ describe('ContextSelector', () => {
 
     it('keeps a read-only event clearable without opening its menu', async () => {
         const onClear = vi.fn()
-
         const screen = await render(
             <ContextSelector>
                 <EventSelector
@@ -466,16 +444,13 @@ describe('ContextSelector', () => {
         const item = screen.container.querySelector(
             '[data-test="event-selector-container"]'
         )
-
         expect(item?.className).not.toContain('openable')
         await expect
             .element(page.getByText('Date of consultation'))
             .toBeVisible()
-
         const clear = screen.container.querySelector<HTMLElement>(
             '[data-test="event-selector-container-clear-icon"]'
         )
-
         expect(clear).not.toBeNull()
         clear?.click()
         expect(onClear).toHaveBeenCalledOnce()
@@ -543,6 +518,29 @@ describe('ContextSelector', () => {
         expect(onOpenChange).toHaveBeenCalledWith(false)
     })
 
+    it('renders ContextValue as a non-selectable, optionally clearable value', async () => {
+        const onClear = vi.fn()
+        const screen = await render(
+            <ContextSelector>
+                <ContextValue
+                    label="Tracked entity"
+                    value="Person"
+                    onClear={onClear}
+                />
+            </ContextSelector>
+        )
+
+        const item = screen.container.querySelector('.selector-bar-item')
+        expect(item?.className).not.toContain('openable')
+        await expect.element(page.getByText('Person')).toBeVisible()
+        const clear = screen.container.querySelector<HTMLElement>(
+            '[data-test$="-clear-icon"]'
+        )
+        expect(clear).not.toBeNull()
+        clear?.click()
+        expect(onClear).toHaveBeenCalledOnce()
+    })
+
     it('keeps locked selector menus unpadded and shows Capture read-only OU text', async () => {
         const onClear = vi.fn()
         await render(
@@ -570,5 +568,33 @@ describe('ContextSelector', () => {
             )
         ).toBeNull()
         expect(onClear).not.toHaveBeenCalled()
+    })
+
+    it('provides the Capture organisation-unit popup geometry to host children', async () => {
+        await render(
+            <ContextSelector>
+                <OrganisationUnitSelector open onOpenChange={() => undefined}>
+                    <div data-testid="host-picker">Host tree</div>
+                </OrganisationUnitSelector>
+            </ContextSelector>
+        )
+
+        const picker = page.getByTestId('host-picker')
+        await expect.element(picker).toBeVisible()
+        const shell = picker.element().parentElement
+        // Capture parity min-width, capped at the viewport for narrow screens.
+        expect(shell?.className).toContain('min-w-[min(640px,90vw)]')
+        expect(shell?.className).toContain('min-h-[96px]')
+        expect(shell?.className).toContain('max-h-[80vh]')
+        expect(shell?.className).toContain('max-w-[90vw]')
+        expect(shell?.className).toContain('overflow-auto')
+        const style = getComputedStyle(shell!)
+        expect(parseFloat(style.minWidth)).toBeLessThanOrEqual(640)
+        expect(style.minHeight).toBe('96px')
+        expect(parseFloat(style.maxHeight)).toBeCloseTo(
+            window.innerHeight * 0.8,
+            1
+        )
+        expect(style.overflow).toBe('auto')
     })
 })

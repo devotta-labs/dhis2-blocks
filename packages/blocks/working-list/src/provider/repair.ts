@@ -24,7 +24,6 @@ export const createSavedListRepairPlan = (
     metadata: ProgramFieldCatalog
 ): SavedListRepairPlan => {
     const candidate = list.candidateConfiguration
-
     const invalidColumnPaths = new Set(
         list.issues
             .filter(
@@ -35,18 +34,15 @@ export const createSavedListRepairPlan = (
             )
             .map((issue) => issue.path)
     )
-
     const validColumnCount = candidate
         ? candidate.columns.filter(
               (_column, index) => !invalidColumnPaths.has(`columns.${index}`)
           ).length
         : 0
-
     const rawProgramStageId =
         list.resource === 'programStageWorkingLists'
             ? ProgramStageWorkingListSchema.parse(list.raw).programStage.id
             : undefined
-
     const defaults =
         candidate?.mode === 'event'
             ? (metadata.defaultEventColumnsByStage.get(
@@ -56,18 +52,15 @@ export const createSavedListRepairPlan = (
               ? (metadata.defaultEventColumnsByStage.get(rawProgramStageId) ??
                 [])
               : metadata.defaultTrackedEntityColumns
-
     const fields = candidate
         ? fieldsForConfiguration(metadata, candidate)
         : fieldsForProgramStage(metadata, rawProgramStageId)
-
     const fallbackColumn = defaults.find((id) => fields.has(id))
     let replacementColumnUsed = false
     const decisions: StaleReferenceRepairDecision[] = []
 
     for (const issue of list.issues) {
         const path = issue.path
-
         if (
             issue.kind === 'missingFilterField' ||
             issue.kind === 'fieldChanged' ||
@@ -81,7 +74,6 @@ export const createSavedListRepairPlan = (
             decisions.push({ path, action: 'remove' })
             continue
         }
-
         if (
             issue.kind === 'missingColumn' ||
             (issue.kind === 'programStageFieldMismatch' &&
@@ -102,10 +94,8 @@ export const createSavedListRepairPlan = (
             } else {
                 decisions.push({ path, action: 'remove' })
             }
-
             continue
         }
-
         if (
             (issue.kind === 'missingSortField' ||
                 issue.kind === 'programStageFieldMismatch') &&
@@ -114,7 +104,6 @@ export const createSavedListRepairPlan = (
             const fieldId = fields.has(DEFAULT_WORKING_LIST_SORT.fieldId)
                 ? DEFAULT_WORKING_LIST_SORT.fieldId
                 : fallbackColumn
-
             if (fieldId) {
                 decisions.push({
                     path,

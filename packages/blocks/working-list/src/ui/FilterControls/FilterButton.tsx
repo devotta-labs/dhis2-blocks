@@ -71,11 +71,9 @@ export const FilterButton = ({
     const translate = useWorkingListText()
     const i18n = { t: translate }
     const editorId = useId()
-
     const [buttonElement, setButtonElement] = useState<HTMLDivElement | null>(
         null
     )
-
     const [open, setOpen] = useState(defaultOpen ?? false)
     const summary = summaryForFilter(filter, translate)
     const displayPrefix = prefix ?? fieldDisplayName(field, translate)
@@ -92,7 +90,6 @@ export const FilterButton = ({
         )
         setOpen(nextOpen)
     }
-
     const close = () => {
         setEditorOpen(false)
         requestAnimationFrame(() =>
@@ -103,7 +100,6 @@ export const FilterButton = ({
                 ?.focus()
         )
     }
-
     useEscapeToClose(open, close)
 
     return (
@@ -130,10 +126,8 @@ export const FilterButton = ({
                 if (disabled) {
                     return
                 }
-
                 const target =
                     event.target instanceof Element ? event.target : null
-
                 if (
                     !target?.closest(
                         `[data-test="filter-${field.id}-select-clear"]`
@@ -141,7 +135,6 @@ export const FilterButton = ({
                 ) {
                     return
                 }
-
                 // A click outside closes the editor popover on mouse-down.
                 // Clear before that dismissal can consume the subsequent click.
                 event.preventDefault()
@@ -153,18 +146,14 @@ export const FilterButton = ({
                 if (disabled) {
                     return
                 }
-
                 const target =
                     event.target instanceof Element ? event.target : null
-
                 const select = target?.closest(
                     `[data-test="filter-${field.id}-select"]`
                 )
-
                 if (!select && target !== event.currentTarget) {
                     return
                 }
-
                 if (
                     target?.closest(
                         `[data-test="filter-${field.id}-select-clear"]`
@@ -172,7 +161,6 @@ export const FilterButton = ({
                 ) {
                     return
                 }
-
                 event.preventDefault()
                 event.stopPropagation()
                 setEditorOpen(!open)
@@ -181,10 +169,8 @@ export const FilterButton = ({
                 if (disabled) {
                     return
                 }
-
                 const target =
                     event.target instanceof Element ? event.target : null
-
                 if (
                     ['Enter', ' ', 'ArrowDown'].includes(event.key) &&
                     target?.closest(
@@ -274,14 +260,12 @@ const FilterEditor = ({
     const isTrueOnly = definition.editor === 'trueOnly'
     const initialOperator = filter?.operator ?? operators[0] ?? 'equals'
     const [operator, setOperator] = useState<FilterOperator>(initialOperator)
-
     const [value, setValue] = useState<FilterValue>(
         filter?.value ??
             (isTrueOnly
                 ? { kind: 'boolean', values: [] }
                 : defaultValue(field, definition.editor))
     )
-
     const [error, setError] = useState<string>()
 
     const trueOnlyHasValue = value.kind === 'trueOnly' || value.kind === 'empty'
@@ -293,7 +277,6 @@ const FilterEditor = ({
                 capabilities,
                 validationContext
             )
-
             setError(undefined)
             onApply(next)
         } catch {
@@ -335,7 +318,6 @@ const FilterEditor = ({
                                     isEmpty: parsed === 'empty',
                                 }
                             }
-
                             return current.kind === 'empty'
                                 ? defaultValue(field, definition.editor)
                                 : current

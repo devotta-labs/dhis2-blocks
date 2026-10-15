@@ -99,12 +99,10 @@ describe('stale working-list references', () => {
             columns: [attribute.id],
             sort: { fieldId: 'MissingSort1', direction: 'asc' },
         }
-
         const validation = validateConfigurationReferences(
             configuration,
             metadata
         )
-
         if (!('issues' in validation)) {
             throw new Error('Expected stale references')
         }
@@ -142,12 +140,10 @@ describe('stale working-list references', () => {
             columns: [attribute.id],
             sort: { fieldId: 'createdAt', direction: 'desc' },
         }
-
         const validation = validateConfigurationReferences(
             configuration,
             metadata
         )
-
         if (!('issues' in validation)) {
             throw new Error('Expected stale references')
         }
@@ -174,7 +170,6 @@ describe('stale working-list references', () => {
             displayName: 'Current program label',
             displayNameIsMetadata: true as const,
         }
-
         const repairMetadata = {
             ...metadata,
             fields: new Map([
@@ -182,7 +177,6 @@ describe('stale working-list references', () => {
                 [metadataField.id, metadataField] as const,
             ]),
         }
-
         const configuration: WorkingListConfiguration = {
             mode: 'trackedEntity',
             programId: 'Program0001',
@@ -218,7 +212,6 @@ describe('stale working-list references', () => {
         })
 
         expect(result.status).toBe('repaired')
-
         if (result.status === 'repaired') {
             expect(result.configuration.filters[0]?.field).toEqual(
                 metadataField

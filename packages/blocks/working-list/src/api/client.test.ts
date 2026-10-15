@@ -40,7 +40,6 @@ describe('validated DataEngine-like client', () => {
             query: vi.fn().mockResolvedValue({ wrongKey: {} }),
             mutate: vi.fn(),
         }
-
         const malformedResource: DataEngineLike = {
             query: vi.fn().mockResolvedValue({
                 workingListResource: { id: 'Result00001' },

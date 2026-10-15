@@ -51,21 +51,17 @@ export const MenuSelector = ({
     const [filter, setFilter] = useState('')
     const normalizedLabel = capitalizeFirst(label)
     const normalizedDataTest = dataTest
-
     const conciseDataTest = normalizedDataTest.replace(
         /-selector-container$/,
         ''
     )
-
     const selectedOption = options.find(
         (option) => option.value === currentValue
     )
-
     const menuOptions = useMemo(
         () => options.filter((option) => !option.excludeFromMenu),
         [options]
     )
-
     const manyOptions = menuOptions.length > 10
     const interactive = !loading && !disabled && !readOnly
     const open = interactive && requestedOpen
@@ -75,15 +71,12 @@ export const MenuSelector = ({
             setFilter('')
         }
     }, [open])
-
     const visibleOptions = useMemo(() => {
         const normalizedFilter = filter.toLowerCase()
-
         return menuOptions.filter((option) =>
             option.label.toLowerCase().includes(normalizedFilter)
         )
     }, [filter, menuOptions])
-
     const value = selectedOption ? (
         <OptionLabel icon={selectedOption.icon} label={selectedOption.label} />
     ) : undefined
@@ -92,7 +85,6 @@ export const MenuSelector = ({
         if (!interactive || !valueToSelect) {
             return
         }
-
         onChange?.(valueToSelect)
         onOpenChange?.(false)
     }
@@ -101,7 +93,6 @@ export const MenuSelector = ({
         if (!interactive || !onClear) {
             return
         }
-
         onOpenChange?.(false)
         onClear()
     }

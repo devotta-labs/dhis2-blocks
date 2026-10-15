@@ -23,13 +23,11 @@ describe('useStableWorkingListActions', () => {
     it('keeps the public object and dispatchers stable while using current handlers', async () => {
         const firstHandlers = createActions()
         const secondHandlers = createActions()
-
         const { result, rerender, act } = await renderHook(
             (props?: { current: WorkingListActions }) =>
                 useStableWorkingListActions(props?.current ?? firstHandlers),
             { initialProps: { current: firstHandlers } }
         )
-
         const first = result.current
         await rerender({ current: secondHandlers })
         const second = result.current
@@ -46,7 +44,6 @@ describe('useStableWorkingListActions', () => {
         let createdViewId: string | undefined
         await act(async () => {
             const createResult = await second.createView('New view')
-
             if (Result.isOk(createResult)) {
                 createdViewId = createResult.value.viewId
             }

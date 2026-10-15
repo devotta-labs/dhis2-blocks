@@ -22,7 +22,6 @@ vi.mock('../../provider/WorkingListProvider', () => ({
         props: ObservedProviderProps & { children: React.ReactNode }
     ) => {
         observedProviders.push(props)
-
         return <>{props.children}</>
     },
 }))
@@ -86,11 +85,9 @@ describe('WorkingList root state', () => {
         const first = observedProviders.find(
             (provider) => provider.orgUnitId === 'OrgUnit00001'
         )
-
         const second = observedProviders.find(
             (provider) => provider.orgUnitId === 'OrgUnit00002'
         )
-
         expect(first?.selectedSavedListId).toBe('View0000001')
         expect(first?.pagination).toEqual({ page: 2, pageSize: 25 })
         expect(second?.selectedSavedListId).toBeNull()
@@ -102,11 +99,9 @@ describe('WorkingList root state', () => {
         const updatedFirst = observedProviders
             .filter((provider) => provider.orgUnitId === 'OrgUnit00001')
             .at(-1)
-
         const updatedSecond = observedProviders
             .filter((provider) => provider.orgUnitId === 'OrgUnit00002')
             .at(-1)
-
         expect(updatedFirst?.selectedSavedListId).toBe('View0000003')
         expect(updatedFirst?.pagination).toEqual({ page: 3, pageSize: 50 })
         expect(updatedSecond?.selectedSavedListId).toBeNull()
@@ -123,7 +118,6 @@ describe('WorkingList root state', () => {
     it('uses a caller-provided React key to replace a same-program instance', () => {
         const container = document.createElement('div')
         const root = createRoot(container)
-
         const renderInstance = (key: string) => (
             <WorkingList
                 key={key}
@@ -186,7 +180,6 @@ describe('WorkingList root state', () => {
         const controlled = observedProviders.find(
             (provider) => provider.programId === 'Program0001'
         )
-
         act(() => controlled?.onSelectedSavedListChange('Controlled02'))
         act(() => controlled?.onPaginationChange({ page: 5, pageSize: 50 }))
 
@@ -204,7 +197,6 @@ describe('WorkingList root state', () => {
     it('resets uncontrolled state when the program changes and forwards root props', () => {
         const container = document.createElement('div')
         const root = createRoot(container)
-
         const renderProgram = (programId: string) => (
             <WorkingList
                 programId={programId}
@@ -240,7 +232,6 @@ describe('WorkingList root state', () => {
         const consoleError = vi
             .spyOn(console, 'error')
             .mockImplementation(() => undefined)
-
         const viewContainer = document.createElement('div')
         const viewRoot = createRoot(viewContainer)
         const paginationContainer = document.createElement('div')

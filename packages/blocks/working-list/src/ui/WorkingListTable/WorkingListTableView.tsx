@@ -256,7 +256,6 @@ export const WorkingListTableView = ({
                                                 </DataTableCell>
                                             )
                                         }
-
                                         return (
                                             <DataTableCell
                                                 key={header.id}
@@ -340,7 +339,6 @@ export const WorkingListTableView = ({
                                 const highlightIssues =
                                     showIssuesColumn &&
                                     row.original.issues.length > 0
-
                                 const openRowFromCell = (
                                     event: React.MouseEvent<HTMLTableCellElement>
                                 ) => {
@@ -351,7 +349,6 @@ export const WorkingListTableView = ({
                                         openRow(row.original)
                                     }
                                 }
-
                                 return (
                                     <DataTableRow
                                         key={row.id}

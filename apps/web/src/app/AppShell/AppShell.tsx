@@ -15,6 +15,7 @@ import {
 import { trackerProgramsQueryOptions } from '@dhis2-blocks/working-list/development'
 import { useQuery } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useBlocker } from 'react-router-dom'
 import { getGuardedOrganisationUnitState } from '../contextTransitions'
 import { DiscardChangesDialog } from '../DiscardChangesDialog'
 import { OrganisationUnitSelectorContent } from '../OrganisationUnitSelectorContent'
@@ -24,6 +25,7 @@ import {
     resolveCaptureOrganisationUnitRoots,
     type OrganisationUnitReference,
 } from '../organisationUnitScope'
+import { isGuardedAppUrlTransition, parseAppUrlState } from '../urlState'
 import { useAppUrlState } from '../useAppUrlState'
 import i18n from '../../i18n'
 import {
@@ -33,7 +35,6 @@ import {
     ProgramOrganisationUnitsSchema,
     retryOperationalError,
 } from './contextSchemas'
-import { useExternalTransitionBlocker } from './useExternalTransitionBlocker'
 import { ContextStatus } from './ContextStatus'
 import { createAppWorkingListClient } from './createAppWorkingListClient'
 import {
@@ -53,7 +54,6 @@ const WorkingListDirtyBridge = ({
     const dirty = useWorkingListMeta((meta) => meta.dirty)
 
     useEffect(() => onChange(dirty), [dirty, onChange])
-
     return null
 }
 
@@ -65,32 +65,24 @@ interface PendingTransition {
 export const AppShell = () => {
     const engine = useDataEngine()
     const config = useConfig()
-
     const runtimeConfig = useMemo(
         () => AppRuntimeConfigSchema.parse(config),
         [config]
     )
-
     const client = useMemo(() => createAppWorkingListClient(engine), [engine])
     const [programSelectorOpen, setProgramSelectorOpen] = useState(false)
     const [orgUnitSelectorOpen, setOrgUnitSelectorOpen] = useState(false)
     const [organisationUnitSearch, setOrganisationUnitSearch] = useState('')
-
     const [
         debouncedOrganisationUnitSearch,
         setDebouncedOrganisationUnitSearch,
     ] = useDebouncedOrganisationUnitSearch(organisationUnitSearch)
-
     const [dirty, setDirty] = useState(false)
-
     const [pendingTransition, setPendingTransition] =
         useState<PendingTransition>()
-
     const [openedRecord, setOpenedRecord] = useState<WorkingListResultTarget>()
-
     const [dataQualityMode, setDataQualityMode] =
         useState<WorkingListDataQualityMode>('hidden')
-
     const requestTransition = useCallback(
         (proceed: () => void) => {
             if (dirty) {
@@ -101,27 +93,43 @@ export const AppShell = () => {
         },
         [dirty]
     )
-
     const [urlState, setUrlState] = useAppUrlState()
 
-    const externalTransitionBlocker = useExternalTransitionBlocker(dirty)
-
+    // Guard browser back/forward (and manual hash edits, which the router
+    // also receives as POP) against discarding unsaved working-list changes.
+    // In-app navigations confirm before writing the URL, so PUSH/REPLACE
+    // must pass through unblocked to avoid a double confirmation.
+    const externalTransitionBlocker = useBlocker(
+        ({ currentLocation, nextLocation, historyAction }) => {
+            if (historyAction !== 'POP' || !dirty) {
+                return false
+            }
+            try {
+                return isGuardedAppUrlTransition(
+                    parseAppUrlState(
+                        new URLSearchParams(currentLocation.search)
+                    ),
+                    parseAppUrlState(new URLSearchParams(nextLocation.search))
+                )
+            } catch {
+                return false
+            }
+        }
+    )
     useEffect(() => {
         if (externalTransitionBlocker.state !== 'blocked') {
             return
         }
-
-        setPendingTransition(
-            (current) =>
-                current ?? {
-                    proceed: () => {
-                        setDirty(false)
-                        setOpenedRecord(undefined)
-                        externalTransitionBlocker.proceed()
-                    },
-                    cancel: externalTransitionBlocker.reset,
-                }
-        )
+        // The latest guarded navigation wins; its reset must always be wired
+        // so canceling the dialog restores the popped history entry.
+        setPendingTransition({
+            proceed: () => {
+                setDirty(false)
+                setOpenedRecord(undefined)
+                externalTransitionBlocker.proceed()
+            },
+            cancel: externalTransitionBlocker.reset,
+        })
     }, [externalTransitionBlocker])
 
     const programsQuery = useQuery(
@@ -155,7 +163,6 @@ export const AppShell = () => {
             ),
         [programsQuery.data]
     )
-
     const selectedProgramSummary = programs.find(
         (program) => program.id === urlState.programId
     )
@@ -221,14 +228,11 @@ export const AppShell = () => {
                 : [],
         [currentUserQuery.data]
     )
-
     const programOrgUnits = programOrgUnitsQuery.data?.organisationUnits ?? []
-
     const organisationUnitPickerScope = useMemo(
         () => getCaptureOrganisationUnitPickerScope(searchRoots),
         [searchRoots]
     )
-
     const selectedOrgUnitIsAllowed = useMemo(
         () =>
             isOrganisationUnitInScope(
@@ -238,7 +242,6 @@ export const AppShell = () => {
             ),
         [programOrgUnits, searchRoots, selectedOrgUnitQuery.data]
     )
-
     const compatibleProgramOptions = useMemo(
         () =>
             buildProgramOptions({
@@ -255,7 +258,6 @@ export const AppShell = () => {
             selectedOrgUnitQuery.data?.path,
         ]
     )
-
     const programOptions = useMemo(
         () =>
             buildProgramOptions({
@@ -274,7 +276,6 @@ export const AppShell = () => {
             selectedProgramSummary?.id,
         ]
     )
-
     const programsAreFiltered =
         compatibleProgramOptions.length < programs.length
 
@@ -282,14 +283,11 @@ export const AppShell = () => {
         if (!dirty) {
             return
         }
-
         const warnBeforeUnload = (event: BeforeUnloadEvent) => {
             event.preventDefault()
             event.returnValue = ''
         }
-
         window.addEventListener('beforeunload', warnBeforeUnload)
-
         return () =>
             window.removeEventListener('beforeunload', warnBeforeUnload)
     }, [dirty])
@@ -302,7 +300,6 @@ export const AppShell = () => {
         ) {
             return
         }
-
         setUrlState({ orgUnitId: urlState.orgUnitId })
     }, [programs, programsQuery.isPending, setUrlState, urlState])
 
@@ -337,7 +334,6 @@ export const AppShell = () => {
                 organisationUnit.id,
                 () => true
             )
-
             setOpenedRecord(undefined)
             setDirty(false)
             setUrlState(next)
@@ -351,7 +347,6 @@ export const AppShell = () => {
                 undefined,
                 () => true
             )
-
             setOrgUnitSelectorOpen(false)
             setOrganisationUnitSearch('')
             setDebouncedOrganisationUnitSearch('')
@@ -366,7 +361,6 @@ export const AppShell = () => {
         currentUserQuery.isPending ||
         Boolean(selectedProgramSummary && programOrgUnitsQuery.isPending) ||
         Boolean(urlState.orgUnitId && selectedOrgUnitQuery.isPending)
-
     const shellError =
         programsQuery.error ??
         currentUserQuery.error ??
@@ -406,7 +400,6 @@ export const AppShell = () => {
                 organisationUnitOpen={orgUnitSelectorOpen}
                 onOrganisationUnitOpenChange={(open) => {
                     setOrgUnitSelectorOpen(open)
-
                     if (!open) {
                         setOrganisationUnitSearch('')
                         setDebouncedOrganisationUnitSearch('')
@@ -479,11 +472,9 @@ export const AppShell = () => {
                 onRetry={() => {
                     void programsQuery.refetch()
                     void currentUserQuery.refetch()
-
                     if (selectedProgramSummary) {
                         void programOrgUnitsQuery.refetch()
                     }
-
                     if (urlState.orgUnitId) {
                         void selectedOrgUnitQuery.refetch()
                     }

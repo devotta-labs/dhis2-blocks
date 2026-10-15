@@ -7,8 +7,8 @@
     "scripts": {
         "build": "turbo run build --filter=@dhis2-blocks/web",
         "start": "turbo run start --filter=@dhis2-blocks/web",
-        "test": "pnpm test:lint-rules && turbo run test",
-        "typecheck": "pnpm typecheck:lint-rules && turbo run typecheck",
+        "test": "turbo run test",
+        "typecheck": "turbo run typecheck",
         "deploy": "turbo run deploy --filter=@dhis2-blocks/web",
         "dead-code:audit": "knip",
         "lint": "oxlint --deny-warnings . && oxfmt --check .",
@@ -31,9 +31,7 @@
         "docs:up:dev": "bash scripts/docs/up.sh dev",
         "docs:down": "bash scripts/docs/down.sh",
         "docs:reset": "bash scripts/docs/reset.sh 42",
-        "docs:e2e": "bash scripts/docs/test-e2e.sh 42",
-        "test:lint-rules": "node tools/oxlint/anti-slop/test.mjs",
-        "typecheck:lint-rules": "tsc --project tools/oxlint/anti-slop/tsconfig.json --noEmit"
+        "docs:e2e": "bash scripts/docs/test-e2e.sh 42"
     },
     "devDependencies": {
         "@axe-core/playwright": "^4.13.0",

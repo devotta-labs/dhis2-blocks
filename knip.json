@@ -43,8 +43,7 @@
             "entry": [
                 "e2e/specs/**/*.spec.ts",
                 "e2e/specs-docs/**/*.spec.ts",
-                "playwright.docs.config.ts",
-                "tools/oxlint/anti-slop/rules/*.test.ts"
+                "playwright.docs.config.ts"
             ],
             "project": [
                 "e2e/**/*.ts",
@@ -187,10 +186,5 @@
                 ]
             }
         }
-    },
-    "ignoreIssues": {
-        "tools/oxlint/anti-slop/vendor/eslint-stylistic/padding-line-options.d.ts": [
-            "types"
-        ]
     }
 }

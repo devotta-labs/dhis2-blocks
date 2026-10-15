@@ -36,17 +36,26 @@ export const resolveDocsAuth = (env = process.env) => {
     return `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
 }
 
-/**
- * Apply injected credentials to a forwarded header map. The injected auth
- * wins over anything the browser sent so every visitor sees the same
- * authenticated preview.
- */
+export const resolveDocsCookies = (cookie) =>
+    cookie
+        ?.split(';')
+        .map((part) => part.trim())
+        .filter((part) => /^(JSESSIONID|XSRF-TOKEN)=/.test(part))
+        .join('; ') || undefined
+
 const applyDocsAuth = (headers, auth) => {
+    const cookie = resolveDocsCookies(headers.cookie)
+
+    delete headers.cookie
+
     if (!auth) {
+        if (cookie) {
+            headers.cookie = cookie
+        }
+
         return
     }
 
-    delete headers.cookie
     delete headers.authorization
     headers.authorization = auth
 }
@@ -180,16 +189,22 @@ export const createDhis2ViteProxy = (target, env = process.env) => {
                 // with an empty 200 (and no session cookie). Requests through this
                 // prefix are backend-native, so Origin/Referer are rewritten to
                 // the backend's own origin — never arbitrary third-party origins.
-                proxy.on('proxyReq', (proxyReq) => {
+                proxy.on('proxyReq', (proxyReq, req) => {
                     const backend = new URL(target)
 
                     proxyReq.setHeader('origin', backend.origin)
                     proxyReq.setHeader('referer', `${backend.origin}/`)
+                    proxyReq.removeHeader('cookie')
 
                     if (docsAuth) {
-                        proxyReq.removeHeader('cookie')
                         proxyReq.removeHeader('authorization')
                         proxyReq.setHeader('authorization', docsAuth)
+                    } else {
+                        const cookie = resolveDocsCookies(req.headers.cookie)
+
+                        if (cookie) {
+                            proxyReq.setHeader('cookie', cookie)
+                        }
                     }
                 })
 

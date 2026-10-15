@@ -81,12 +81,10 @@ export const WorkingListPrivateUiContext =
 
 export const useWorkingListPrivateUi = (): WorkingListPrivateUiContextValue => {
     const context = useContext(WorkingListPrivateUiContext)
-
     if (!context) {
         throw new Error(
             'useWorkingListPrivateUi must be used within WorkingList.'
         )
     }
-
     return context
 }

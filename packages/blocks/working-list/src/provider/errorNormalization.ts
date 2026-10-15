@@ -16,7 +16,6 @@ const RequestFailureSchema = z
 
 const getRequestErrorStatus = (cause: unknown) => {
     const parsed = RequestFailureSchema.safeParse(cause)
-
     return parsed.success
         ? (parsed.data.status ??
               parsed.data.response?.status ??
@@ -31,7 +30,6 @@ export const toTransportError = (cause: unknown, operation: string) => {
     ) {
         return cause
     }
-
     if (
         cause instanceof ZodError ||
         cause instanceof WorkingListBoundaryError
@@ -42,9 +40,7 @@ export const toTransportError = (cause: unknown, operation: string) => {
             cause,
         })
     }
-
     const status = getRequestErrorStatus(cause)
-
     return new WorkingListNetworkError({
         operation,
         message:

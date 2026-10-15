@@ -67,9 +67,7 @@ describe('provider public configuration façade', () => {
             programId: 'Program0001',
             metadata,
         })
-
         expect(resolved.isOk()).toBe(true)
-
         if (resolved.isOk()) {
             expect(resolved.value.programId).toBe('Program0001')
             expect(resolved.value.filters[0].field).toEqual(textField)

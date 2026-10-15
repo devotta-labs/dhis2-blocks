@@ -33,7 +33,6 @@ interface WorkingListRepairPreview {
 }
 
 const filterPath = /^(filters|attributeValueFilters|dataFilters)\./
-
 const columnPath = /^(columns|displayColumnOrder)\./
 
 const referenceDetails = (
@@ -45,12 +44,10 @@ const referenceDetails = (
     translate: WorkingListTranslate
 ) => {
     const filterIndex = issue.path.match(/^filters\.(\d+)\./)?.[1]
-
     const savedField =
         filterIndex == null
             ? undefined
             : list.candidateConfiguration?.filters[Number(filterIndex)]?.field
-
     if (
         issue.path.startsWith('attributeValueFilters.') ||
         savedField?.source === 'trackedEntityAttribute'
@@ -60,7 +57,6 @@ const referenceDetails = (
             kind: translate('Tracked entity attribute'),
         }
     }
-
     if (
         issue.path.startsWith('dataFilters.') ||
         savedField?.source === 'eventDataElement'
@@ -70,14 +66,12 @@ const referenceDetails = (
             kind: translate('Data element'),
         }
     }
-
     if (savedField?.source === 'system') {
         return {
             id: issue.referenceId,
             kind: translate('System field'),
         }
     }
-
     if (
         columnPath.test(issue.path) ||
         issue.path === 'sort.fieldId' ||
@@ -85,7 +79,6 @@ const referenceDetails = (
     ) {
         return { id: issue.referenceId, kind: translate('Unknown') }
     }
-
     return { id: issue.referenceId, kind: translate('Unknown') }
 }
 
@@ -96,25 +89,20 @@ const repairAction = (
     if (decision.action === 'remove' && filterPath.test(decision.path)) {
         return translate('Remove')
     }
-
     if (decision.action === 'remove' && columnPath.test(decision.path)) {
         return translate('Remove')
     }
-
     if (decision.action === 'replaceColumn') {
         return translate('Replace with default')
     }
-
     if (decision.action === 'replaceSort') {
         return translate('Replace with default')
     }
-
     if (decision.action === 'replaceFilter') {
         return translate('Replace with {{replacement}}', {
             replacement: decision.filter.field.id,
         })
     }
-
     return translate('Remove')
 }
 
@@ -152,16 +140,12 @@ export const WorkingListRepairDialog = ({
     }
 
     const issueByPath = new Map(list.issues.map((issue) => [issue.path, issue]))
-
     const details = preview.decisions.flatMap((decision) => {
         const issue = issueByPath.get(decision.path)
-
         if (!issue) {
             return []
         }
-
         const { id, kind } = referenceDetails(list, issue, i18n.t)
-
         return [
             {
                 path: decision.path,
@@ -171,7 +155,6 @@ export const WorkingListRepairDialog = ({
             },
         ]
     })
-
     return (
         <Modal
             position="middle"

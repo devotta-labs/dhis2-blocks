@@ -36,7 +36,6 @@ const collectValueOrganisationUnits = (
         const organisationUnitId = cell.valid
             ? z.string().min(1).safeParse(cell.value)
             : null
-
         if (
             fields.get(fieldId)?.valueType === 'ORGANISATION_UNIT' &&
             organisationUnitId?.success
@@ -62,7 +61,6 @@ export const collectOrganisationUnitIds = (
     fields: FieldCatalog
 ): string[] => {
     const result = new Set<string>()
-
     if (page.mode === 'trackedEntity') {
         page.records.forEach((record) =>
             collectTrackedEntityOrganisationUnits(result, record, fields)
@@ -71,7 +69,6 @@ export const collectOrganisationUnitIds = (
         page.records.forEach(({ event, trackedEntity }) => {
             result.add(event.event.orgUnit)
             collectValueOrganisationUnits(result, event.values, fields)
-
             if (trackedEntity) {
                 collectTrackedEntityOrganisationUnits(
                     result,
@@ -81,7 +78,6 @@ export const collectOrganisationUnitIds = (
             }
         })
     }
-
     return [...result].sort()
 }
 
@@ -95,11 +91,9 @@ const fetchOrganisationUnitLabels = async ({
     signal?: AbortSignal
 }): Promise<ReadonlyMap<string, OrganisationUnitLabel>> => {
     const uniqueIds = [...new Set(ids)].sort()
-
     if (!uniqueIds.length) {
         return new Map()
     }
-
     const response = await client.query(
         {
             resource: 'organisationUnits',
@@ -112,7 +106,6 @@ const fetchOrganisationUnitLabels = async ({
         OrganisationUnitLabelsResponseSchema,
         signal
     )
-
     return new Map(
         response.organisationUnits.map((organisationUnit) => [
             organisationUnit.id,

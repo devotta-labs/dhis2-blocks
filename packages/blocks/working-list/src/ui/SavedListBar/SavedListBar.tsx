@@ -40,7 +40,6 @@ const focusFirstMenuItem = (element: HTMLElement | null) => {
     if (!element) {
         return
     }
-
     requestAnimationFrame(() => {
         requestAnimationFrame(() =>
             element
@@ -65,30 +64,24 @@ export const SavedListBar = ({
     const actionsMenuId = useId()
     const [openMenu, setOpenMenu] = useState<OpenMenu>()
     const [deleteList, setDeleteList] = useState<WorkingListSavedView>()
-
     const generatedListName = (list: WorkingListSavedView) => {
         if (!list.generated) {
             return list.name
         }
-
         const names = new Map([
             ['active', i18n.t('Active enrollments')],
             ['completed', i18n.t('Completed enrollments')],
             ['cancelled', i18n.t('Cancelled enrollments')],
         ])
-
         return names.get(list.id) ?? list.name
     }
-
     const savedListLocked = !online || busy
-
     const closeMenu = (restoreFocus = true) => {
         if (restoreFocus) {
             openMenu?.reference
                 .querySelector<HTMLButtonElement>('[data-saved-view-menu]')
                 ?.focus()
         }
-
         setOpenMenu(undefined)
     }
 
@@ -102,17 +95,13 @@ export const SavedListBar = ({
                     {lists.map((list) => {
                         const selected = selectedId === list.id
                         const incompatible = !list.compatible
-
                         const canUpdate =
                             selected && dirty && !incompatible && list.canUpdate
-
                         const canShare = list.canShare
                         const canDelete = list.canDelete
-
                         const hasMenu =
                             !list.generated &&
                             (canUpdate || canShare || canDelete)
-
                         const name = generatedListName(list)
 
                         return (
@@ -182,11 +171,9 @@ export const SavedListBar = ({
                                             const reference =
                                                 event.currentTarget
                                                     .parentElement
-
                                             if (!reference) {
                                                 return
                                             }
-
                                             setOpenMenu((current) =>
                                                 current?.list.id === list.id
                                                     ? undefined

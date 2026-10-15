@@ -38,21 +38,16 @@ export const MoreFilters = ({
 }: MoreFiltersProps) => {
     const translate = useWorkingListText()
     const i18n = { t: translate }
-
     const [buttonElement, setButtonElement] = useState<HTMLDivElement | null>(
         null
     )
-
     const [open, setOpen] = useState(false)
-
     const [openSubMenu, setOpenSubMenu] = useState<
         'program-stages' | 'stage-fields' | null
     >(null)
-
     const available = fields.filter(
         (field) => field.filterable && !visibleFilterIds.includes(field.id)
     )
-
     const stages = useMemo(
         () =>
             program?.programStages.filter(
@@ -60,9 +55,7 @@ export const MoreFilters = ({
             ) ?? [],
         [program]
     )
-
     const menuStage = stages.find((stage) => stage.id === selectedStageId)
-
     const availableStageFields = eventFields.filter(
         (field) =>
             field.filterable &&
@@ -80,9 +73,7 @@ export const MoreFilters = ({
             buttonElement?.querySelector<HTMLButtonElement>('button')?.focus()
         )
     }
-
     useEscapeToClose(open, close)
-
     if (!available.length && !stages.length && !availableStageFields.length) {
         return null
     }
@@ -131,11 +122,9 @@ export const MoreFilters = ({
                         }}
                         onMouseOver={(event) => {
                             const target = event.target
-
                             if (!(target instanceof Element)) {
                                 return
                             }
-
                             if (
                                 target.closest(
                                     '[data-test="program-stage-filter-menu"]'
@@ -171,11 +160,9 @@ export const MoreFilters = ({
                                     {stages.map((stage) => {
                                         const disabled =
                                             Boolean(selectedStageId)
-
                                         const lockMessage = i18n.t(
                                             'Can only filter using one program stage.'
                                         )
-
                                         const label = disabled ? (
                                             <Tooltip
                                                 dataTest={`stage-lock-tooltip-${stage.id}`}
@@ -202,7 +189,6 @@ export const MoreFilters = ({
                                         ) : (
                                             stage.displayName
                                         )
-
                                         return (
                                             <MenuItem
                                                 key={stage.id}

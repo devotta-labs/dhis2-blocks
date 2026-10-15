@@ -42,7 +42,6 @@ const renderControls = async ({
 describe('WorkingListContextControls program scope actions', () => {
     it('offers to clear the organisation unit when no program is compatible', async () => {
         const onShowAllPrograms = vi.fn()
-
         const screen = await renderControls({
             programOptions: [],
             programsAreFiltered: true,
@@ -52,11 +51,9 @@ describe('WorkingListContextControls program scope actions', () => {
         await expect
             .element(screen.getByText('No programs available.'))
             .toBeVisible()
-
         const warning = screen
             .getByText('No programs available.')
             .element().parentElement
-
         expect(getComputedStyle(warning!).display).toBe('flex')
         expect(getComputedStyle(warning!).alignItems).toBe('center')
         expect(getComputedStyle(warning!).gap).toBe('8px')
@@ -72,7 +69,6 @@ describe('WorkingListContextControls program scope actions', () => {
 
     it('explains partial filtering and offers the Capture show-all action', async () => {
         const onShowAllPrograms = vi.fn()
-
         const screen = await renderControls({
             programOptions: [{ value: 'program-a', label: 'Program A' }],
             programsAreFiltered: true,
@@ -86,13 +82,11 @@ describe('WorkingListContextControls program scope actions', () => {
                 )
             )
             .toBeVisible()
-
         const warning = screen
             .getByText(
                 'Some programs are being filtered by the chosen organisation unit'
             )
             .element().parentElement
-
         expect(getComputedStyle(warning!).display).toBe('flex')
         expect(getComputedStyle(warning!).alignItems).toBe('center')
         expect(getComputedStyle(warning!).gap).toBe('8px')
@@ -108,7 +102,6 @@ describe('WorkingListContextControls program scope actions', () => {
 
     it('keeps clear-all enabled when only the hidden organisation-unit context remains', async () => {
         const onClear = vi.fn()
-
         const screen = await renderControls({
             programOptions: [],
             programsAreFiltered: true,
@@ -120,7 +113,6 @@ describe('WorkingListContextControls program scope actions', () => {
         const clearAll = screen.getByRole('button', {
             name: 'Clear selections',
         })
-
         await expect.element(clearAll).toBeEnabled()
         await clearAll.click()
         expect(onClear).toHaveBeenCalledOnce()

@@ -102,13 +102,10 @@ const DirtyTransitionHarness = () => {
 
 const IncompatibleContextHarness = () => {
     const [program, setProgram] = useState<string | undefined>('Program0001')
-
     const [organisationUnit, setOrganisationUnit] = useState<
         string | undefined
     >('OrgUnit0001')
-
     const [programOpen, setProgramOpen] = useState(false)
-
     const programOptions = organisationUnit
         ? program
             ? [
@@ -169,7 +166,6 @@ const DirtyOrganisationUnitHarness = () => {
     const [organisationUnit, setOrganisationUnit] = useState('Organisation A')
     const [dirty, setDirty] = useState(true)
     const [pendingTransition, setPendingTransition] = useState<() => void>()
-
     const requestTransition = (proceed: () => void) => {
         if (dirty) {
             setPendingTransition(() => proceed)
@@ -237,7 +233,6 @@ describe('working-list context-selector integration', () => {
         const organisationUnitSelector = screen.getByRole('button', {
             name: /Organisation unit/,
         })
-
         await expect.element(organisationUnitSelector).toBeVisible()
         await organisationUnitSelector.click()
         await screen

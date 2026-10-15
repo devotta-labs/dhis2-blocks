@@ -22,12 +22,10 @@ describe('buildOrganisationUnitTreeFilter', () => {
 
     it('retains nested user and server-search roots alongside full scope paths', () => {
         const allowedPaths = ['/global/district/facility/program-child']
-
         const nestedUserRoot = organisationUnit(
             'facility',
             '/global/district/facility'
         )
-
         const searchResultRoot = organisationUnit(
             'program-child',
             '/global/district/facility/program-child'

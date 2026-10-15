@@ -42,14 +42,12 @@ interface RenderBarOptions {
 
 const renderBar = async (options: RenderBarOptions = {}) => {
     const lists = options.lists ?? [generatedList]
-
     const callbacks = {
         onSelect: vi.fn(),
         onUpdate: vi.fn(),
         onShare: vi.fn(),
         onDelete: vi.fn(),
     }
-
     const screen = await render(
         <WorkingListTextProvider
             translate={(message, values) =>
@@ -80,9 +78,7 @@ const openOwnedListMenu = async (
     const trigger = screen.getByRole('button', {
         name: 'Actions for My working list',
     })
-
     await trigger.click()
-
     return trigger
 }
 
@@ -92,12 +88,10 @@ describe('SavedListBar', () => {
             lists: [ownedList],
             selectedId: ownedList.id,
         })
-
         const selectButton = screen.getByRole('button', {
             name: 'My working list',
             exact: true,
         })
-
         await expect
             .element(selectButton)
             .toHaveAttribute('aria-current', 'true')
@@ -132,11 +126,9 @@ describe('SavedListBar', () => {
             selectedId: ownedList.id,
             dirty: true,
         })
-
         const indicator = screen.container.querySelector<HTMLElement>(
             '[data-testid="working-list-dirty-indicator"]'
         )
-
         expect(indicator?.textContent).toBe('*')
         expect(indicator?.getAttribute('aria-hidden')).toBe('true')
         expect(
@@ -146,7 +138,6 @@ describe('SavedListBar', () => {
         ).toBe('Unsaved changes')
 
         await openOwnedListMenu(screen)
-
         for (const name of [
             'Save changes to this view',
             'Manage sharing',
@@ -201,7 +192,6 @@ describe('SavedListBar', () => {
             selectedId: generatedList.id,
             dirty: true,
         })
-
         expect(
             generated.screen.container.querySelector('[data-saved-view-menu]')
         ).toBeNull()
@@ -222,7 +212,6 @@ describe('SavedListBar', () => {
         })
 
         await openOwnedListMenu(screen)
-
         for (const name of [
             'Save changes to this view',
             'Manage sharing',

@@ -43,28 +43,22 @@ export const useWorkingListLifecycle = ({
     updateStore,
 }: UseWorkingListLifecycleOptions) => {
     const config = useConfig()
-
     const runtimeConfig = useMemo(
         () => RuntimeConfigSchema.safeParse(config),
         [config]
     )
-
     const apiVersion = runtimeConfig.success
         ? runtimeConfig.data.apiVersion
         : 41
-
     const { online } = useOnlineStatus()
     const translate = defaultWorkingListTranslate
     const locale = i18n.language ?? globalThis.navigator?.language ?? 'en'
     const systemInfoQuery = useQuery(workingListSystemInfoQueryOptions(client))
-
     const programQuery = useQuery(
         trackerProgramQueryOptions(client, programId, apiVersion)
     )
-
     const program = programQuery.data
     const systemInfo = systemInfoQuery.data
-
     const capabilities = useMemo(
         () =>
             resolveWorkingListCapabilities({
@@ -75,7 +69,6 @@ export const useWorkingListLifecycle = ({
             }),
         [apiVersion, program]
     )
-
     const metadataResolution = useMemo(() => {
         if (
             !program ||
@@ -84,7 +77,6 @@ export const useWorkingListLifecycle = ({
         ) {
             return {}
         }
-
         try {
             return {
                 metadata: buildProgramFieldCatalog({
@@ -102,7 +94,6 @@ export const useWorkingListLifecycle = ({
             }
         }
     }, [capabilities, program, programId])
-
     const metadata = metadataResolution.metadata
 
     const lifecycleError = useMemo(() => {
@@ -113,33 +104,28 @@ export const useWorkingListLifecycle = ({
                 cause: runtimeConfig.error,
             })
         }
-
         if (!capabilities.supported) {
             return new WorkingListInitializationError({
                 message: `DHIS2 API version ${apiVersion} is unsupported; Working List requires version 41 or newer`,
             })
         }
-
         if (systemInfoQuery.error) {
             return new WorkingListInitializationError({
                 message: 'DHIS2 system information could not be loaded',
                 cause: systemInfoQuery.error,
             })
         }
-
         if (programQuery.error) {
             return new WorkingListInitializationError({
                 message: `Program ${programId} metadata could not be loaded`,
                 cause: programQuery.error,
             })
         }
-
         if (program && program.programType !== 'WITH_REGISTRATION') {
             return new WorkingListInitializationError({
                 message: `Program ${programId} is not a tracker program with registration`,
             })
         }
-
         return metadataResolution.error
     }, [
         apiVersion,
@@ -151,7 +137,6 @@ export const useWorkingListLifecycle = ({
         runtimeConfig,
         systemInfoQuery.error,
     ])
-
     const lifecycleReady = Boolean(
         program && systemInfo && metadata && !lifecycleError
     )
@@ -168,10 +153,8 @@ export const useWorkingListLifecycle = ({
                 : undefined,
         [locale, systemInfo, translate]
     )
-
     const parsingContext = valueTransformers?.parsingContext
     const serializationContext = valueTransformers?.serializationContext
-
     const calendarContext = useMemo(
         () =>
             systemInfo
@@ -195,7 +178,6 @@ export const useWorkingListLifecycle = ({
                 : undefined,
         [metadata, programId]
     )
-
     const generatedLists = useMemo(
         () =>
             metadata
@@ -207,7 +189,6 @@ export const useWorkingListLifecycle = ({
                 : [],
         [metadata, programId]
     )
-
     const defaultListId = defaultWorkingListId(programId)
 
     useEffect(() => {

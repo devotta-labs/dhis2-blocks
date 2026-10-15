@@ -10,5 +10,4 @@ export {
     type WorkingListTableProps,
     type WorkingListViewSwitcherProps,
 } from './WorkingList'
-
 export type { WorkingListToolbarProps } from '../Toolbar'

@@ -52,10 +52,8 @@ export const UserFilterSelect = ({
             () => setDebouncedSearch(search.trim()),
             250
         )
-
         return () => window.clearTimeout(timeout)
     }, [search])
-
     const usersQuery = useQuery({
         queryKey: ['working-list', 'users', debouncedSearch],
         queryFn: ({ signal }) =>
@@ -67,7 +65,6 @@ export const UserFilterSelect = ({
                             fields: 'id,displayName,username',
                             pageSize: 50,
                         }
-
                         return debouncedSearch
                             ? { ...params, query: debouncedSearch }
                             : params
@@ -79,7 +76,6 @@ export const UserFilterSelect = ({
         placeholderData: (previous) => previous,
         staleTime: 60_000,
     })
-
     const users = usersQuery.data?.users ?? []
     const knownIds = new Set(users.map((user) => user.id))
 
@@ -89,7 +85,6 @@ export const UserFilterSelect = ({
             data-testid="assignee-user-selector"
             onChangeCapture={(event) => {
                 const target = event.target
-
                 if (
                     target instanceof HTMLInputElement &&
                     target.name === 'filter'
@@ -152,7 +147,6 @@ export const OrganisationUnitFilterSelect = ({
     onChange: (id: string) => void
 }) => {
     const i18n = { t: useWorkingListText() }
-
     const rootsQuery = useQuery({
         queryKey: ['working-list', 'filter-organisation-unit-roots'],
         queryFn: ({ signal }) =>
@@ -168,7 +162,6 @@ export const OrganisationUnitFilterSelect = ({
             ),
         staleTime: 60 * 60_000,
     })
-
     const selectedQuery = useQuery({
         queryKey: ['working-list', 'filter-organisation-unit', selectedId],
         queryFn: ({ signal }) =>
@@ -184,7 +177,6 @@ export const OrganisationUnitFilterSelect = ({
         enabled: Boolean(selectedId),
         staleTime: 60 * 60_000,
     })
-
     const roots = rootsQuery.data?.organisationUnits ?? []
 
     if (rootsQuery.error || selectedQuery.error) {

@@ -2,19 +2,13 @@ import { test, expect } from '../fixtures/test'
 import { z } from 'zod'
 
 const SEEDED_PROGRAM = 'WlE2ePrg001'
-
 const SEEDED_STAGE = 'WlE2eStg001'
-
 const SEEDED_ORG_UNIT = 'DiszpKrYNg8'
-
 const SEEDED_TRACKED_ENTITY = 'WlE2eTei001'
-
 const SEEDED_EVENT = 'WlE2eEvt001'
-
 const environment = process.env
 
 const ServerInfoSchema = z.object({ version: z.string().min(1) }).passthrough()
-
 const SeededProgramSchema = z
     .object({
         id: z.string(),
@@ -43,7 +37,6 @@ test.describe('real DHIS2 server contract', () => {
         const response = await dhis2.get(
             '/api/system/info?fields=version,revision,buildTime'
         )
-
         expect(response.ok()).toBe(true)
 
         const info = ServerInfoSchema.parse(await response.json())
@@ -58,7 +51,6 @@ test.describe('real DHIS2 server contract', () => {
             const major = Number(
                 info.version.replace(/^2\./, '').match(/^\d+/)?.[0]
             )
-
             expect(major).toBeGreaterThan(43)
         }
     })
@@ -69,7 +61,6 @@ test.describe('real DHIS2 server contract', () => {
         const response = await dhis2.get(
             `/api/programs/${SEEDED_PROGRAM}?fields=id,programType,programTrackedEntityAttributes[trackedEntityAttribute[id,valueType]],programStages[id,programStageDataElements[dataElement[id,valueType]]]`
         )
-
         expect(response.ok()).toBe(true)
 
         const program = SeededProgramSchema.parse(await response.json())
@@ -120,7 +111,6 @@ test.describe('real DHIS2 server contract', () => {
                 fields: 'trackedEntity,attributes[attribute,value]',
             },
         })
-
         expect(response.ok()).toBe(true)
         expect(await response.text()).toContain(SEEDED_TRACKED_ENTITY)
     })
@@ -140,7 +130,6 @@ test.describe('real DHIS2 server contract', () => {
                 fields: 'event,trackedEntity,dataValues[dataElement,value]',
             },
         })
-
         expect(response.ok()).toBe(true)
         expect(await response.text()).toContain(SEEDED_EVENT)
     })
@@ -157,7 +146,6 @@ test.describe('real DHIS2 server contract', () => {
                 },
             }
         )
-
         const stageLists = await dhis2.get('/api/programStageWorkingLists', {
             params: {
                 filter: `program.id:eq:${SEEDED_PROGRAM}`,

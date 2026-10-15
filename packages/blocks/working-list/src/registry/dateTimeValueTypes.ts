@@ -20,7 +20,6 @@ const defaultToApiDate = (value: string) => value.slice(0, 10)
 const addUtcDays = (date: Date, days: number) => {
     const result = new Date(date)
     result.setUTCDate(result.getUTCDate() + days)
-
     return result
 }
 
@@ -37,7 +36,6 @@ const defaultResolveRelativeDate = (
     const today = new Date(
         `${(todayValue ?? isoDate(new Date())).slice(0, 10)}T12:00:00Z`
     )
-
     if (value.startBuffer !== undefined || value.endBuffer !== undefined) {
         return {
             start:
@@ -50,9 +48,7 @@ const defaultResolveRelativeDate = (
                     : undefined,
         }
     }
-
     const startOfWeek = addUtcDays(today, -today.getUTCDay())
-
     switch (value.period) {
         case 'TODAY':
             return { start: isoDate(today), end: isoDate(today) }
@@ -63,10 +59,8 @@ const defaultResolveRelativeDate = (
             }
         case 'LAST_WEEK': {
             const start = addUtcDays(startOfWeek, -7)
-
             return { start: isoDate(start), end: isoDate(addUtcDays(start, 6)) }
         }
-
         case 'THIS_MONTH':
             return {
                 start: isoDate(
@@ -133,25 +127,21 @@ const parseDateEditorValue = (
     value: FilterValue
 ) => {
     const parsed = FilterValueSchema.parse(value)
-
     if (parsed.kind !== 'dateRange' && parsed.kind !== 'empty') {
         throw new Error(`${valueType} expects a date range or empty value`)
     }
-
     if (parsed.kind === 'dateRange' && parsed.mode === 'absolute') {
         for (const boundary of [parsed.start, parsed.end]) {
             if (boundary !== undefined && !isValidEditorDate(boundary)) {
                 throw new Error('An absolute date boundary requires YYYY-MM-DD')
             }
         }
-
         if (parsed.start && parsed.end && parsed.start > parsed.end) {
             throw new Error(
                 'An absolute date range start cannot exceed its end'
             )
         }
     }
-
     return parsed
 }
 
@@ -168,38 +158,30 @@ export const dateDefinition = (
     },
     format(value, _field, context) {
         const stringValue = z.string().safeParse(value)
-
         if (!stringValue.success || !stringValue.data) {
             return ''
         }
-
         const parsedValue = stringValue.data
         const transformed = context?.formatDate?.(parsedValue, valueType)
-
         if (transformed !== undefined) {
             return transformed
         }
-
         const date = new Date(
             valueType === 'DATE' || valueType === 'AGE'
                 ? `${parsedValue.slice(0, 10)}T00:00:00Z`
                 : parsedValue
         )
-
         if (Number.isNaN(date.getTime())) {
             return parsedValue
         }
-
         const options: Intl.DateTimeFormatOptions =
             valueType === 'DATETIME'
                 ? { dateStyle: 'medium', timeStyle: 'short' }
                 : { dateStyle: 'medium', timeZone: 'UTC' }
-
         return new Intl.DateTimeFormat(context?.locale, options).format(date)
     },
     display(value, field, context) {
         const text = this.format(value, field, context)
-
         return text ? { kind: 'text', text } : { kind: 'empty', text: '' }
     },
     operators(_field, capabilities) {
@@ -207,23 +189,18 @@ export const dateDefinition = (
     },
     serializeQuery(filter, context) {
         const empty = ensureEmptyValue(filter)
-
         if (empty) {
             return empty
         }
-
         if (filter.value.kind !== 'dateRange') {
             throw new Error(`${valueType} expects a date range filter`)
         }
-
         const toApiDate = context?.toApiDate ?? defaultToApiDate
-
         const range =
             filter.value.mode === 'absolute'
                 ? { start: filter.value.start, end: filter.value.end }
                 : (context?.resolveRelativeDate?.(filter.value) ??
                   defaultResolveRelativeDate(filter.value, context?.today))
-
         return [
             range.start
                 ? `ge:${escapeFilterValue(toApiDate(range.start))}`
@@ -237,17 +214,13 @@ export const dateDefinition = (
     },
     serializeSaved(filter, context) {
         const empty = serializeEmptySaved(filter)
-
         if (empty) {
             return empty
         }
-
         if (filter.value.kind !== 'dateRange') {
             throw new Error(`${valueType} expects a date range filter`)
         }
-
         const toApiDate = context?.toApiDate ?? defaultToApiDate
-
         return {
             dateFilter:
                 filter.value.mode === 'absolute'
@@ -270,15 +243,12 @@ export const dateDefinition = (
     },
     parseSaved(filter, context) {
         const empty = parseEmptySaved(filter)
-
         if (empty) {
             return empty
         }
-
         if (!filter.dateFilter) {
             throw new Error(`Saved ${valueType} filter has no dateFilter`)
         }
-
         const value = FilterValueSchema.parse(
             filter.dateFilter.type === 'ABSOLUTE'
                 ? {
@@ -303,30 +273,25 @@ export const dateDefinition = (
                       endBuffer: filter.dateFilter.endBuffer,
                   }
         )
-
         return parseDateEditorValue(valueType, value)
     },
 })
 
 const parseTimeEditorValue = (value: FilterValue) => {
     const parsed = FilterValueSchema.parse(value)
-
     if (parsed.kind !== 'timeRange' && parsed.kind !== 'empty') {
         throw new Error('TIME expects a time range or empty value')
     }
-
     if (parsed.kind === 'timeRange') {
         for (const boundary of [parsed.min, parsed.max]) {
             if (boundary !== undefined && !isValidTime(boundary)) {
                 throw new Error('A time boundary requires HH:mm')
             }
         }
-
         if (parsed.min && parsed.max && parsed.min > parsed.max) {
             throw new Error('A time range minimum cannot exceed its maximum')
         }
     }
-
     return parsed
 }
 
@@ -340,15 +305,12 @@ export const timeDefinition: ValueTypeDefinition = {
     },
     serializeQuery(filter) {
         const empty = ensureEmptyValue(filter)
-
         if (empty) {
             return empty
         }
-
         if (filter.value.kind !== 'timeRange') {
             throw new Error('TIME expects a time range filter')
         }
-
         return [
             filter.value.min
                 ? `ge:${escapeFilterValue(filter.value.min)}`
@@ -362,24 +324,19 @@ export const timeDefinition: ValueTypeDefinition = {
     },
     serializeSaved(filter) {
         const empty = serializeEmptySaved(filter)
-
         if (empty) {
             return empty
         }
-
         if (filter.value.kind !== 'timeRange') {
             throw new Error('TIME expects a time range filter')
         }
-
         return { ge: filter.value.min, le: filter.value.max }
     },
     parseSaved(filter) {
         const empty = parseEmptySaved(filter)
-
         if (empty) {
             return empty
         }
-
         return parseTimeEditorValue(
             FilterValueSchema.parse({
                 kind: 'timeRange',

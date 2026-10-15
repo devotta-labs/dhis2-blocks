@@ -33,14 +33,11 @@ export const ProgramStageControl = ({
 }: ProgramStageControlProps) => {
     const i18n = { t: useWorkingListText() }
     const editorId = useId()
-
     const [buttonElement, setButtonElement] = useState<HTMLDivElement | null>(
         null
     )
-
     const [open, setOpen] = useState(defaultOpen ?? false)
     const [draft, setDraft] = useState(selectedStageId ?? '')
-
     const stages = useMemo(
         () =>
             program.programStages.filter(
@@ -48,7 +45,6 @@ export const ProgramStageControl = ({
             ),
         [program.programStages]
     )
-
     const selectedName = stages.find(
         (stage) => stage.id === selectedStageId
     )?.displayName
@@ -67,7 +63,6 @@ export const ProgramStageControl = ({
         )
         setOpen(nextOpen)
     }
-
     const close = () => {
         setEditorOpen(false)
         requestAnimationFrame(() =>
@@ -78,7 +73,6 @@ export const ProgramStageControl = ({
                 ?.focus()
         )
     }
-
     useEscapeToClose(open, close)
 
     return (
@@ -105,10 +99,8 @@ export const ProgramStageControl = ({
                 if (disabled) {
                     return
                 }
-
                 const target =
                     event.target instanceof Element ? event.target : null
-
                 if (
                     !target?.closest(
                         '[data-test="filter-programStage-select-clear"]'
@@ -116,7 +108,6 @@ export const ProgramStageControl = ({
                 ) {
                     return
                 }
-
                 event.preventDefault()
                 event.stopPropagation()
                 onRemove()
@@ -125,18 +116,14 @@ export const ProgramStageControl = ({
                 if (disabled) {
                     return
                 }
-
                 const target =
                     event.target instanceof Element ? event.target : null
-
                 const select = target?.closest(
                     '[data-test="filter-programStage-select"]'
                 )
-
                 if (!select && target !== event.currentTarget) {
                     return
                 }
-
                 if (
                     target?.closest(
                         '[data-test="filter-programStage-select-clear"]'
@@ -144,7 +131,6 @@ export const ProgramStageControl = ({
                 ) {
                     return
                 }
-
                 event.preventDefault()
                 event.stopPropagation()
                 setDraft(selectedStageId ?? '')
@@ -154,10 +140,8 @@ export const ProgramStageControl = ({
                 if (disabled) {
                     return
                 }
-
                 const target =
                     event.target instanceof Element ? event.target : null
-
                 if (
                     ['Enter', ' ', 'ArrowDown'].includes(event.key) &&
                     target?.closest(
@@ -213,11 +197,9 @@ export const ProgramStageControl = ({
                             aria-label={i18n.t('Program stage')}
                             onSubmit={(event) => {
                                 event.preventDefault()
-
                                 if (!draft) {
                                     return
                                 }
-
                                 onChange(draft)
                                 close()
                             }}

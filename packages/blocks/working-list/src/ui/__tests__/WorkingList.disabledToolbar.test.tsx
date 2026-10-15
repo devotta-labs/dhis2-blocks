@@ -52,7 +52,6 @@ const unavailableMeta: WorkingListMeta = {
 describe('working-list unavailable toolbar', () => {
     it('keeps familiar configuration controls visible and disabled', async () => {
         const store = createWorkingListProviderStore(unavailableMeta)
-
         const screen = await render(
             <WorkingListTextProvider translate={(message) => message}>
                 <WorkingListPublicContext.Provider value={{ store, actions }}>
@@ -73,28 +72,22 @@ describe('working-list unavailable toolbar', () => {
                 </WorkingListPublicContext.Provider>
             </WorkingListTextProvider>
         )
-
         const toolbar = screen.getByRole('toolbar', {
             name: 'Working list controls',
         })
-
         await expect.element(toolbar).toBeVisible()
-
         for (const name of ['Columns', 'Filter', 'Save view', 'More']) {
             await expect
                 .element(screen.getByRole('button', { name }))
                 .toBeDisabled()
         }
-
         expect(
             screen.container.querySelector('[data-consumer="columns"]')
                 ?.className
         ).toBe('consumer-columns')
-
         const filterControls = screen.container.querySelector(
             '[data-consumer="filters"]'
         )
-
         expect(filterControls?.className).toContain('consumer-filters')
         expect(filterControls?.className).toContain('gap-1')
         expect(filterControls?.className).not.toContain('gap-2')

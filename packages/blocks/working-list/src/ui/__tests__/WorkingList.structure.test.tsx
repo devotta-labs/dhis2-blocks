@@ -58,7 +58,6 @@ describe('WorkingList structural components', () => {
         const store = createWorkingListProviderStore(
             meta({ status: 'pending' })
         )
-
         const screen = await render(
             <WorkingListTextProvider translate={(message) => message}>
                 <WorkingListPublicContext.Provider value={{ store, actions }}>
@@ -87,11 +86,9 @@ describe('WorkingList structural components', () => {
                 })
             )
             .toBeVisible()
-
         const viewSwitcher = screen.container.querySelector<HTMLElement>(
             '[data-testid="working-list-view-switcher"]'
         )
-
         const heading = viewSwitcher?.querySelector('h2')
         expect(viewSwitcher?.getAttribute('aria-labelledby')).toBe(heading?.id)
         expect(viewSwitcher?.className).toBe('views-class')
@@ -102,11 +99,9 @@ describe('WorkingList structural components', () => {
                 screen.getByRole('toolbar', { name: 'Working list controls' })
             )
             .toBeVisible()
-
         const toolbar = screen.container.querySelector<HTMLElement>(
             '[data-testid="working-list-toolbar"]'
         )
-
         expect(toolbar?.className).toContain('toolbar-class')
         expect(toolbar?.className).toContain('items-center')
         expect(toolbar?.className).not.toContain('items-start')
@@ -119,11 +114,9 @@ describe('WorkingList structural components', () => {
                 screen.getByRole('region', { name: 'Working list results' })
             )
             .toBeVisible()
-
         const table = screen.container.querySelector<HTMLElement>(
             '[data-testid="working-list-table-section"]'
         )
-
         expect(table?.tagName).toBe('SECTION')
         expect(table?.className).toBe('table-class')
         expect(table?.dataset.consumer).toBe('table')
@@ -133,7 +126,6 @@ describe('WorkingList structural components', () => {
         const store = createWorkingListProviderStore(
             meta({ status: 'pending' })
         )
-
         const screen = await render(
             <WorkingListTextProvider translate={(message) => message}>
                 <WorkingListPublicContext.Provider value={{ store, actions }}>

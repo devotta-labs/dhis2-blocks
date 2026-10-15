@@ -94,9 +94,7 @@ export const canonicalDateToCalendarInput = (
     if (!value || format === 'YYYY-MM-DD') {
         return value
     }
-
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
-
     return match ? `${match[3]}-${match[2]}-${match[1]}` : value
 }
 
@@ -107,12 +105,9 @@ export const calendarInputDateToCanonical = (
     if (!value || format === 'YYYY-MM-DD') {
         return value || undefined
     }
-
     const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value)
-
     return match ? `${match[3]}-${match[2]}-${match[1]}` : value
 }
-
 export const defaultValue = (
     field: WorkingListField,
     editor: FilterEditorKind
@@ -120,11 +115,9 @@ export const defaultValue = (
     if (field.id === 'assignedUser' || field.id === 'eventAssignedUser') {
         return { kind: 'assignee', mode: 'CURRENT' }
     }
-
     if (field.options?.length) {
         return { kind: 'options', values: [] }
     }
-
     switch (editor) {
         case 'numberRange':
             return { kind: 'numberRange' }
@@ -148,21 +141,16 @@ export const summaryForFilter = (
     translate: WorkingListTranslate
 ) => {
     const i18n = { t: translate }
-
     if (!filter) {
         return undefined
     }
-
     const { value } = filter
-
     if (value.kind === 'empty') {
         return value.isEmpty ? i18n.t('Empty') : i18n.t('Not empty')
     }
-
     if (value.kind === 'text') {
         return value.value
     }
-
     if (value.kind === 'options') {
         return value.values
             .map((code) =>
@@ -170,7 +158,6 @@ export const summaryForFilter = (
                     const option = filter.field.options?.find(
                         (candidate) => candidate.code === code
                     )
-
                     return option
                         ? optionDisplayName(filter.field, option, translate)
                         : code
@@ -178,37 +165,29 @@ export const summaryForFilter = (
             )
             .join(', ')
     }
-
     if (value.kind === 'boolean') {
         return value.values
             .map((item) => (item ? i18n.t('Yes') : i18n.t('No')))
             .join(', ')
     }
-
     if (value.kind === 'trueOnly') {
         return i18n.t('Yes')
     }
-
     if (value.kind === 'organisationUnit') {
         return value.id
     }
-
     if (value.kind === 'assignee') {
         if (value.mode === 'CURRENT') {
             return i18n.t('Current user')
         }
-
         if (value.mode === 'NONE') {
             return i18n.t('Unassigned')
         }
-
         if (value.mode === 'ANY') {
             return i18n.t('Any assigned user')
         }
-
         return value.userIds?.join(', ') || i18n.t('Selected users')
     }
-
     if (value.kind === 'dateRange') {
         if (value.mode === 'relative') {
             switch (value.period) {
@@ -233,15 +212,12 @@ export const summaryForFilter = (
                     })
             }
         }
-
         return [value.start, value.end].filter(Boolean).join(' – ')
     }
-
     if (value.kind === 'numberRange' || value.kind === 'timeRange') {
         return [value.min, value.max]
             .filter((item) => item !== undefined)
             .join(' – ')
     }
-
     return undefined
 }

@@ -78,7 +78,6 @@ export const toPublicConfiguration = (
         columns: [...configuration.columns],
         sort: { ...configuration.sort },
     }
-
     return configuration.mode === 'event'
         ? {
               mode: 'event',
@@ -95,7 +94,6 @@ const resolveFilter = (
     fields: FieldCatalog = metadata.fields
 ): Result<InternalFilter, ConfigurationCommandError> => {
     const field = fields.get(filter.fieldId)
-
     if (!field) {
         return Result.err(
             new UnknownFieldError({
@@ -104,7 +102,6 @@ const resolveFilter = (
             })
         )
     }
-
     try {
         return Result.ok(
             validateAppliedFilter(
@@ -138,7 +135,6 @@ export const resolvePublicConfiguration = ({
 }): Result<InternalConfiguration, ConfigurationCommandError> => {
     const fields = fieldsForConfiguration(metadata, configuration)
     const filters: InternalFilter[] = []
-
     for (const filter of configuration.filters) {
         const resolved = resolveFilter(
             filter,
@@ -146,14 +142,11 @@ export const resolvePublicConfiguration = ({
             serializationContext,
             fields
         )
-
         if (resolved.isErr()) {
             return resolved
         }
-
         filters.push(resolved.value)
     }
-
     const candidate =
         configuration.mode === 'event'
             ? {
@@ -166,9 +159,7 @@ export const resolvePublicConfiguration = ({
                   programId,
                   filters,
               }
-
     const parsed = WorkingListConfigurationSchema.safeParse(candidate)
-
     if (!parsed.success) {
         return Result.err(
             new InvalidConfigurationError({
@@ -178,13 +169,11 @@ export const resolvePublicConfiguration = ({
             })
         )
     }
-
     const references = validateConfigurationReferences(parsed.data, {
         expectedProgramId: programId,
         fields,
         readableProgramStageIds: metadata.readableProgramStageIds,
     })
-
     if (!references.compatible) {
         return Result.err(
             new InvalidConfigurationError({
@@ -194,6 +183,5 @@ export const resolvePublicConfiguration = ({
             })
         )
     }
-
     return Result.ok(parsed.data)
 }

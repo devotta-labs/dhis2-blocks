@@ -13,7 +13,6 @@ export const ProgramSelector = ({
     ...props
 }: ProgramSelectorProps) => {
     const title = lowerCaseFirst(label)
-
     const emptyMessage =
         placeholder ??
         i18n.t('Choose a {{title}}', {

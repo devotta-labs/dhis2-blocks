@@ -25,9 +25,7 @@ type WorkingListFixtures = {
 }
 
 const environment = process.env
-
 const username = environment?.E2E_DHIS2_USERNAME ?? 'admin'
-
 const password = environment?.E2E_DHIS2_PASSWORD ?? 'district'
 
 export type E2ECredentials = {
@@ -45,7 +43,6 @@ const urlPath = (value?: string) => {
     if (!value) {
         return undefined
     }
-
     try {
         return new URL(value).pathname
     } catch {
@@ -58,7 +55,6 @@ const isKnownBenignDiagnostic = (
     allowOfflineRequestFailures: boolean
 ) => {
     const path = urlPath(diagnostic.url ?? diagnostic.location?.url)
-
     if (
         diagnostic.kind === 'http' &&
         diagnostic.status === 404 &&
@@ -124,7 +120,6 @@ const signInToApp = async (
     await signInDialog
         .waitFor({ state: 'visible', timeout: 5_000 })
         .catch(() => undefined)
-
     if (!(await signInDialog.isVisible())) {
         return
     }
@@ -133,7 +128,6 @@ const signInToApp = async (
         .getByRole('heading', { name: 'Please sign in' })
         .waitFor()
     const serverUrl = e2eEnvironment.proxyUrl ?? e2eEnvironment.dhis2Url
-
     if (!serverUrl) {
         throw new Error(
             'E2E_PROXY_URL or E2E_DHIS2_URL is required to sign in.'
@@ -156,7 +150,6 @@ export const test = base.extend<WorkingListFixtures>({
     e2eCredentials: [{ username, password }, { option: true }],
     dhis2: async ({ playwright }, use) => {
         const baseURL = environment?.E2E_DHIS2_URL
-
         if (!baseURL) {
             throw new Error(
                 'E2E_DHIS2_URL is required. Start a target with scripts/e2e/up.sh first.'
@@ -191,14 +184,12 @@ export const test = base.extend<WorkingListFixtures>({
                 })
             }
         }
-
         const onPageError = (error: Error) => {
             diagnostics.push({
                 kind: 'pageerror',
                 message: error.stack ?? error.message,
             })
         }
-
         const onRequestFailed = (request: Request) => {
             diagnostics.push({
                 kind: 'requestfailed',
@@ -208,7 +199,6 @@ export const test = base.extend<WorkingListFixtures>({
                 url: request.url(),
             })
         }
-
         const onResponse = (response: Response) => {
             if (response.status() >= 400) {
                 diagnostics.push({
@@ -226,7 +216,6 @@ export const test = base.extend<WorkingListFixtures>({
         page.on('response', onResponse)
 
         const response = await page.goto('/')
-
         if (!response?.ok()) {
             throw new Error(
                 `The app shell returned HTTP ${response?.status() ?? 'unknown'} at ${page.url()}`
@@ -249,7 +238,6 @@ export const test = base.extend<WorkingListFixtures>({
                     allowOfflineRequestFailures
                 )
         )
-
         if (
             unexpectedDiagnostics.length > 0 ||
             testInfo.status !== testInfo.expectedStatus
@@ -269,7 +257,6 @@ export const test = base.extend<WorkingListFixtures>({
                 contentType: 'application/json',
             })
         }
-
         if (unexpectedDiagnostics.length > 0) {
             throw new Error(
                 `Unexpected browser/network diagnostics:\n${JSON.stringify(unexpectedDiagnostics, null, 2)}`
@@ -280,7 +267,6 @@ export const test = base.extend<WorkingListFixtures>({
 
 export const testFromDhis2Version = (minimumVersion: number) => {
     const targetMajor = Number(environment?.E2E_EXPECTED_MAJOR)
-
     return !Number.isFinite(targetMajor) || targetMajor >= minimumVersion
         ? test
         : test.skip

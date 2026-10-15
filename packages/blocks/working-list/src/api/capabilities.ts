@@ -21,7 +21,6 @@ export const detectMetadataFeatures = (
     program: TrackerProgram
 ): MetadataFeaturePresence => {
     const bindings = program.programTrackedEntityAttributes
-
     return {
         preferredSearchOperator: bindings.some(
             (binding) =>
@@ -58,7 +57,6 @@ export const resolveWorkingListCapabilities = ({
         metadataFeatures?.preferredSearchOperator ||
         metadataFeatures?.blockedSearchOperators
     )
-
     const minimumSearchLength = Boolean(metadataFeatures?.minimumSearchLength)
     const emptyValueFilters = apiVersion >= 42
 
@@ -81,7 +79,6 @@ export const resolveWorkingListCapabilities = ({
             ) {
                 return false
             }
-
             if (
                 !emptyValueFilters &&
                 ['COORDINATE', 'FILE_RESOURCE', 'IMAGE', 'URL'].includes(
@@ -90,7 +87,6 @@ export const resolveWorkingListCapabilities = ({
             ) {
                 return false
             }
-
             return true
         },
     }

@@ -69,35 +69,27 @@ interface WorkingListTableScenario {
 
 const cellContent = (row: WorkingListDisplayRow, field: WorkingListField) => {
     const cell = row.values[field.id]
-
     if (!cell) {
         return null
     }
-
     if (!cell.valid) {
         if (cell.raw === undefined || cell.raw === null || cell.raw === '') {
             return null
         }
-
         const scalar = TestCellScalarSchema.safeParse(cell.raw)
-
         return scalar.success ? String(scalar.data) : '-'
     }
-
     if (cell.value === undefined) {
         return null
     }
-
     if (field.valueType === 'URL') {
         const href = z.string().url().parse(cell.value)
-
         return (
             <a href={href} rel="noreferrer noopener" target="_blank">
                 {href}
             </a>
         )
     }
-
     return String(TestCellScalarSchema.parse(cell.value))
 }
 
@@ -105,7 +97,6 @@ const createViewModel = (
     scenario: WorkingListTableScenario
 ): WorkingListTableViewModel => {
     const showIssues = scenario.dataQualityMode === 'highlighted'
-
     const headers: WorkingListTableHeaderView[] = fields.map((field) => ({
         id: field.id,
         fieldId: field.id,
@@ -126,7 +117,6 @@ const createViewModel = (
                         : 'asc',
             }),
     }))
-
     if (showIssues) {
         headers.push({
             id: '__dataQuality',
@@ -138,7 +128,6 @@ const createViewModel = (
             onToggleSorting: () => undefined,
         })
     }
-
     return {
         headerGroups: [{ id: 'header', headers }],
         rows: scenario.rows.map((row, displayIndex) => ({
@@ -196,7 +185,6 @@ const renderTable = (
         onSortChange: () => undefined,
         ...props,
     }
-
     const root = createRoot(container)
     act(() => {
         root.render(
@@ -217,7 +205,6 @@ const renderTable = (
             </WorkingListTextProvider>
         )
     })
-
     return root
 }
 
@@ -225,7 +212,6 @@ const withActEnvironment = (run: () => void) => {
     const actEnvironment = globalThis
     const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
     actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
-
     try {
         run()
     } finally {
@@ -239,7 +225,6 @@ describe('WorkingListTable', () => {
             const container = document.createElement('div')
             document.body.appendChild(container)
             const root = createRoot(container)
-
             const sortFields: WorkingListField[] = [
                 ...fields,
                 {
@@ -251,13 +236,11 @@ describe('WorkingListTable', () => {
                     filterable: true,
                 },
             ]
-
             const SortingHarness = () => {
                 const [sort, setSort] = useState<WorkingListSort>({
                     fieldId: 'createdAt',
                     direction: 'desc',
                 })
-
                 return (
                     <WorkingListTextProvider translate={translate}>
                         <WorkingListDataTable
@@ -281,11 +264,9 @@ describe('WorkingListTable', () => {
 
             try {
                 act(() => root.render(<SortingHarness />))
-
                 const sortButton = container.querySelector<HTMLButtonElement>(
                     '[data-testid="sort-firstName"]'
                 )
-
                 const header = sortButton?.closest('th')
 
                 expect(sortButton?.textContent).toContain('↕')
@@ -314,7 +295,6 @@ describe('WorkingListTable', () => {
             const container = document.createElement('div')
             document.body.appendChild(container)
             const onRowOpen = vi.fn()
-
             const root = renderTable(container, {
                 rows: [
                     {
@@ -338,14 +318,11 @@ describe('WorkingListTable', () => {
                 const table = container.querySelector(
                     '[data-testid="working-list-table"]'
                 )
-
                 const row = container.querySelector<HTMLTableRowElement>(
                     '[data-testid="working-list-row-tei-1"]'
                 )
-
                 const website = row?.querySelector<HTMLAnchorElement>('a')
                 const firstNameCell = row?.querySelectorAll('td')[1]
-
                 const openRowButton = row?.querySelector<HTMLButtonElement>(
                     '[data-testid="row-open-tei-1"]'
                 )
@@ -415,7 +392,6 @@ describe('WorkingListTable', () => {
         withActEnvironment(() => {
             const container = document.createElement('div')
             document.body.appendChild(container)
-
             const root = renderTable(container, {
                 rows: [
                     {
@@ -434,7 +410,6 @@ describe('WorkingListTable', () => {
                 const row = container.querySelector<HTMLTableRowElement>(
                     '[data-testid="working-list-row-tei-static"]'
                 )
-
                 const firstCell = row?.querySelector<HTMLTableCellElement>('td')
 
                 expect(row?.className).not.toContain('cursor-pointer')
@@ -486,7 +461,6 @@ describe('WorkingListTable', () => {
         withActEnvironment(() => {
             const container = document.createElement('div')
             document.body.appendChild(container)
-
             const root = renderTable(container, {
                 rows: [rowWithIssues],
                 dataQualityMode: 'hidden',
@@ -496,7 +470,6 @@ describe('WorkingListTable', () => {
                 const row = container.querySelector<HTMLTableRowElement>(
                     '[data-testid="working-list-row-tei-2"]'
                 )
-
                 expect(row).not.toBeNull()
                 expect(row?.hasAttribute('data-invalid')).toBe(false)
                 expect(
@@ -521,7 +494,6 @@ describe('WorkingListTable', () => {
         withActEnvironment(() => {
             const container = document.createElement('div')
             document.body.appendChild(container)
-
             const root = renderTable(container, {
                 rows: [rowWithIssues],
                 dataQualityMode: 'highlighted',
@@ -531,7 +503,6 @@ describe('WorkingListTable', () => {
                 const row = container.querySelector<HTMLTableRowElement>(
                     '[data-testid="working-list-row-tei-2"]'
                 )
-
                 expect(row?.getAttribute('data-invalid')).toBe('true')
                 const cells = row?.querySelectorAll('td')
                 expect(cells?.[1].textContent).toBe('###')
@@ -540,11 +511,9 @@ describe('WorkingListTable', () => {
                 expect(headerCells[headerCells.length - 1]?.textContent).toBe(
                     'Data quality'
                 )
-
                 const marker = container.querySelector(
                     '[data-testid="row-issues-tei-2"]'
                 )
-
                 expect(marker?.getAttribute('aria-label')).toBe(
                     'Row has 2 data quality issues'
                 )

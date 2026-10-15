@@ -70,13 +70,10 @@ export const WorkingListSavedViews = () => {
     const dirty = useWorkingListMeta((meta) => meta.dirty)
     const online = useWorkingListMeta((meta) => meta.online)
     const actions = useWorkingListActions()
-
     const { displayedLists, mutationBusy, privateActions } =
         useWorkingListPrivateUi()
-
     const [pendingSelection, setPendingSelection] =
         useState<WorkingListSavedView>()
-
     const [sharingList, setSharingList] = useState<NormalizedSavedWorkingList>()
     const [sharingError, setSharingError] = useState<string>()
     const [actionError, setActionError] = useState<SavedViewActionError>()
@@ -88,52 +85,40 @@ export const WorkingListSavedViews = () => {
 
     const applySelection = (view: WorkingListSavedView) => {
         setActionError(undefined)
-
         const result =
             view.id === selectedId
                 ? actions.clearViewSelection()
                 : actions.selectView(view.id)
-
         if (Result.isError(result)) {
             setActionError(result.error)
         }
     }
-
     const requestSelection = (view: WorkingListSavedView) => {
         if (dirty) {
             setPendingSelection(view)
-
             return
         }
-
         applySelection(view)
     }
-
     const updateSelected = async () => {
         setActionError(undefined)
         const result = await actions.updateSelectedView()
-
         if (Result.isError(result)) {
             setActionError(result.error)
         }
     }
-
     const deleteView = async (view: WorkingListSavedView) => {
         setActionError(undefined)
         const result = await actions.deleteView(view.id)
-
         if (Result.isError(result)) {
             setActionError(result.error)
         }
     }
-
     const shareView = (view: WorkingListSavedView) => {
         const internal = displayedLists.find((list) => list.id === view.id)
-
         if (!internal) {
             throw new Error(`Saved working list ${view.id} is unavailable.`)
         }
-
         setSharingError(undefined)
         setSharingList(internal)
     }
@@ -246,7 +231,6 @@ export const WorkingListSavedViews = () => {
                 onError={setSharingError}
                 onSave={async () => {
                     setSharingError(undefined)
-
                     try {
                         await privateActions.sharingSaved()
                         setSharingList(undefined)

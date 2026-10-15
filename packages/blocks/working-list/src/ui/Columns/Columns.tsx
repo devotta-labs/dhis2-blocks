@@ -26,33 +26,27 @@ const tableFieldsFor = (
                   (stage) => stage.id === configuration.programStageId
               )
             : undefined
-
     const stageDataElementIds = new Set(
         currentStage?.programStageDataElements.map(
             (binding) => binding.dataElement.id
         ) ?? []
     )
-
     return fields.filter((field) => {
         if (field.columnable === false) {
             return false
         }
-
         if (field.source === 'trackedEntityAttribute') {
             return true
         }
-
         if (field.source === 'eventDataElement') {
             return (
                 configuration.mode === 'event' &&
                 stageDataElementIds.has(field.id)
             )
         }
-
         if (['createdAt', 'programOwnerId'].includes(field.id)) {
             return true
         }
-
         return (
             configuration.mode === 'event' &&
             [
@@ -80,7 +74,6 @@ const ColumnsControl = () => {
             'WorkingListColumnSelector requires resolved program metadata.'
         )
     }
-
     const fields = [...fieldsForConfiguration(metadata, configuration).values()]
     const tableFields = tableFieldsFor(fields, program, configuration)
 
@@ -103,7 +96,6 @@ const ColumnsControl = () => {
                     disabled={mutationBusy}
                     onChange={(columns) => {
                         const result = actions.setColumns(columns)
-
                         if (Result.isError(result)) {
                             throw result.error
                         }
@@ -125,7 +117,6 @@ export const WorkingListColumnSelector = ({
     ...props
 }: WorkingListColumnSelectorProps) => {
     const translate = useWorkingListText()
-
     const ready = useWorkingListMeta(
         (meta) => meta.activeConfiguration.status === 'ready'
     )

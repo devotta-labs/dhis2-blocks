@@ -42,7 +42,6 @@ export const collectFileResourceIds = (
     fields: FieldCatalog
 ): string[] => {
     const result = new Set<string>()
-
     if (page.mode === 'trackedEntity') {
         page.records.forEach((record) =>
             collectValueFileResources(result, record.values, fields)
@@ -50,13 +49,11 @@ export const collectFileResourceIds = (
     } else {
         page.records.forEach(({ event, trackedEntity }) => {
             collectValueFileResources(result, event.values, fields)
-
             if (trackedEntity) {
                 collectValueFileResources(result, trackedEntity.values, fields)
             }
         })
     }
-
     return [...result].sort()
 }
 
@@ -70,7 +67,6 @@ export const fetchFileResourceNames = async ({
     signal?: AbortSignal
 }): Promise<ReadonlyMap<string, string>> => {
     const uniqueIds = [...new Set(ids)].sort()
-
     const entries = await Promise.all(
         uniqueIds.map(async (id) => {
             try {
@@ -83,25 +79,21 @@ export const fetchFileResourceNames = async ({
                     FileResourceSchema,
                     signal
                 )
-
                 return [resource.id, resource.displayName] as const
             } catch (error) {
                 if (signal?.aborted) {
                     throw error
                 }
-
                 // Capture parity: a missing file resource blanks its cell
                 // instead of failing the page.
                 console.warn(
                     `[working-list] file resource ${id} could not be resolved`,
                     error
                 )
-
                 return undefined
             }
         })
     )
-
     return new Map(entries.filter((entry) => entry !== undefined))
 }
 

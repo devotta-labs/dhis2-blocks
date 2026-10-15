@@ -113,7 +113,6 @@ describe('Capture-style working-list value transformers', () => {
                 locale: 'en-GB',
                 today: '2024-05-23',
             })
-
             const expected = new Intl.DateTimeFormat('en-GB', {
                 calendar: intlCalendar,
                 day: '2-digit',
@@ -139,9 +138,7 @@ describe('Capture-style working-list value transformers', () => {
                 locale,
                 today: '2024-05-23',
             })
-
         const lexicalDate = new Date(Date.UTC(2024, 4, 23, 23, 30))
-
         const expected = (locale: string) =>
             new Intl.DateTimeFormat(locale, {
                 calendar: 'ethiopic',
@@ -158,7 +155,6 @@ describe('Capture-style working-list value transformers', () => {
             '2024-05-23T23:30:00.000-11:00',
             'DATETIME'
         )
-
         const enGb = createTransformers('en-GB').serverToView(
             '2024-05-23T23:30:00.000-11:00',
             'DATETIME'
@@ -279,11 +275,9 @@ describe('Capture-style working-list value transformers', () => {
             expect(transformers.serverToClient('2024-05-23', 'DATE')).toBe(
                 clientDate
             )
-
             const month = transformers.resolveRelativeDate({
                 period: 'THIS_MONTH',
             })
-
             expect(transformers.serverToClient(month.start!, 'DATE')).toMatch(
                 /-09-01$/
             )

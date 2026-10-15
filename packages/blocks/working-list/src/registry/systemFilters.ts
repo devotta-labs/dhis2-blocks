@@ -47,7 +47,6 @@ const optionValue = (value: FilterValue) => {
     if (value.kind !== 'options' || value.values.length !== 1) {
         throw new Error('System status filters require exactly one option')
     }
-
     return value.values[0]
 }
 
@@ -67,7 +66,6 @@ const optionValidator =
     (filter) => {
         validateOperator(filter, ['in'])
         const value = optionValue(filter.value)
-
         if (!allowedValues.has(value)) {
             throw new Error(`${value} is not valid for ${filter.field.id}`)
         }
@@ -75,17 +73,14 @@ const optionValidator =
 
 const validateDateFilter: SystemFilterDefinition['validate'] = (filter) => {
     validateOperator(filter, ['range'])
-
     if (filter.value.kind !== 'dateRange') {
         throw new Error(`${filter.field.id} requires a date range`)
     }
-
     dateValueTypeDefinition.parseEditorValue(filter.value)
 }
 
 const validateBooleanFilter: SystemFilterDefinition['validate'] = (filter) => {
     validateOperator(filter, ['equals'])
-
     if (filter.value.kind !== 'boolean' || filter.value.values.length !== 1) {
         throw new Error(`${filter.field.id} requires exactly one boolean`)
     }
@@ -93,11 +88,9 @@ const validateBooleanFilter: SystemFilterDefinition['validate'] = (filter) => {
 
 const validateAssigneeFilter: SystemFilterDefinition['validate'] = (filter) => {
     validateOperator(filter, ['equals'])
-
     if (filter.value.kind !== 'assignee') {
         throw new Error('Assigned-user filters require an assignee value')
     }
-
     if (
         filter.value.mode === 'PROVIDED' &&
         (!filter.value.userIds?.length ||
@@ -109,7 +102,6 @@ const validateAssigneeFilter: SystemFilterDefinition['validate'] = (filter) => {
             'PROVIDED assigned-user filters require valid DHIS2 user UIDs'
         )
     }
-
     if (filter.value.mode !== 'PROVIDED' && filter.value.userIds?.length) {
         throw new Error('Only PROVIDED assigned-user filters accept users')
     }
@@ -130,7 +122,6 @@ const dateParameters = ({
     const parts = serialized.split(':')
     const ge = parts.indexOf('ge')
     const le = parts.indexOf('le')
-
     return {
         [after]: ge >= 0 ? parts[ge + 1] : undefined,
         [before]: le >= 0 ? parts[le + 1] : undefined,
@@ -141,7 +132,6 @@ const assigneeParameters = (filter: AppliedFilter) => {
     if (filter.value.kind !== 'assignee') {
         throw new Error('Assigned-user filters require an assignee value')
     }
-
     return {
         assignedUserMode: filter.value.mode,
         assignedUsers:
@@ -192,7 +182,6 @@ const eventStatusOptions = [
 ]
 
 const knownEnrollmentStatuses = new Set<string>(TRACKER_ENROLLMENT_STATUSES)
-
 const knownEventStatuses = new Set<string>(TRACKER_EVENT_STATUSES)
 
 if (
@@ -214,7 +203,6 @@ if (
 const enrollmentStatuses = new Set(
     enrollmentStatusOptions.map((option) => option.code)
 )
-
 const eventStatuses = new Set(eventStatusOptions.map((option) => option.code))
 
 const definitions: SystemFilterDefinition[] = [
@@ -296,7 +284,6 @@ const definitions: SystemFilterDefinition[] = [
             ) {
                 throw new Error('Follow-up requires exactly one boolean value')
             }
-
             return { followUp: filter.value.values[0] }
         },
     },
@@ -421,17 +408,13 @@ export const getSystemFilterOperators = (
 
 export const validateSystemFilter = (filter: AppliedFilter) => {
     const definition = getSystemFilterDefinition(filter.field.id)
-
     if (!definition) {
         throw new Error(`Unknown system filter ${filter.field.id}`)
     }
-
     if (filter.field.source !== 'system') {
         throw new Error(`${filter.field.id} is not a system filter`)
     }
-
     definition.validate(filter)
-
     return filter
 }
 

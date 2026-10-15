@@ -3,11 +3,27 @@ import {
     isCrossSiteWrite,
     resolveDocsAuth,
     resolveDocsBackend,
+    resolveDocsCookies,
     resolveUpstreamPath,
     rewriteLocationHeader,
     rewriteSetCookieHeaders,
     stripDhis2Prefix,
 } from './dhis2-proxy.mjs'
+
+describe('resolveDocsCookies', () => {
+    it('forwards only DHIS2 session and CSRF cookies', () => {
+        expect(
+            resolveDocsCookies(
+                'docs_session=private; JSESSIONID=dhis-session; analytics=id; XSRF-TOKEN=csrf'
+            )
+        ).toBe('JSESSIONID=dhis-session; XSRF-TOKEN=csrf')
+    })
+
+    it('drops unrelated cookies rather than sending an empty cookie header', () => {
+        expect(resolveDocsCookies('docs_session=private')).toBeUndefined()
+        expect(resolveDocsCookies(undefined)).toBeUndefined()
+    })
+})
 
 describe('stripDhis2Prefix', () => {
     it('removes the prefix while preserving the remaining path and query', () => {

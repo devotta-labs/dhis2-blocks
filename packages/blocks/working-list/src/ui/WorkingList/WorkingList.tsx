@@ -65,51 +65,40 @@ const WorkingListRootInstance = (props: WorkingListProps) => {
         onPaginationChange,
         ...rest
     } = props
-
     const [localViewId, setLocalViewId] = useState<string | null>(
         defaultViewId ?? null
     )
-
     const [localPagination, setLocalPagination] =
         useState<WorkingListPagination>(defaultPagination ?? DEFAULT_PAGINATION)
-
     const viewControlled = 'viewId' in props
     const paginationControlled = 'pagination' in props
-
     if (viewControlled && !props.onViewChange) {
         throw new Error(
             'WorkingList requires onViewChange when viewId is controlled.'
         )
     }
-
     if (paginationControlled && !onPaginationChange) {
         throw new Error(
             'WorkingList requires onPaginationChange when pagination is controlled.'
         )
     }
-
     const selectedViewId: string | null = viewControlled
         ? (props.viewId ?? null)
         : localViewId
-
     const pagination: WorkingListPagination = paginationControlled
         ? (props.pagination ?? localPagination)
         : localPagination
-
     const handleViewChange = useCallback(
         (id: string) => {
             if (viewControlled) {
                 props.onViewChange?.(id)
-
                 return
             }
-
             setLocalViewId(id)
             props.onViewChange?.(id)
         },
         [props, viewControlled]
     )
-
     const handlePaginationChange = useCallback(
         (next: WorkingListPagination) => {
             if (!paginationControlled) setLocalPagination(next)
@@ -166,7 +155,6 @@ export const WorkingListViewSwitcher = ({
 }: WorkingListViewSwitcherProps) => {
     const translate = useWorkingListText()
     const headingId = useId()
-
     const accessibleHeading =
         heading ?? translate('Saved views in this program')
 
@@ -200,5 +188,4 @@ export {
     WorkingListToolbar,
     WorkingListToolbarActions,
 }
-
 export type { WorkingListTableProps }

@@ -35,7 +35,6 @@ export const buildProgramOptions = ({
               )
           )
         : programs
-
     const preservedProgram = preservedProgramId
         ? programs.find(
               (program) =>
@@ -43,7 +42,6 @@ export const buildProgramOptions = ({
                   !compatiblePrograms.includes(program)
           )
         : undefined
-
     const availablePrograms = preservedProgram
         ? [preservedProgram, ...compatiblePrograms]
         : compatiblePrograms
@@ -60,11 +58,9 @@ export const buildProgramOptions = ({
                   }
                 : undefined,
         }
-
         if (program === preservedProgram) {
             option.excludeFromMenu = true
         }
-
         return option
     })
 }

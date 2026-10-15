@@ -10,7 +10,6 @@ export const useDebouncedOrganisationUnitSearch = (value: string) => {
             () => setDebouncedValue(value),
             ORGANISATION_UNIT_SEARCH_DEBOUNCE_MS
         )
-
         return () => window.clearTimeout(timeout)
     }, [value])
 

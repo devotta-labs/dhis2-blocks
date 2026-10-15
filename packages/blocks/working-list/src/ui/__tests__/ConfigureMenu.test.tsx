@@ -27,7 +27,6 @@ const renderMenu = async ({
     const onDownload = vi.fn()
     const onSaveAs = vi.fn(async () => undefined)
     const onUpdate = vi.fn()
-
     const screen = await render(
         <WorkingListTextProvider translate={(message) => message}>
             <ConfigureMenu
@@ -66,11 +65,9 @@ describe('working-list actions', () => {
         await page.getByRole('button', { name: 'Cancel' }).click()
 
         await screen.getByRole('button', { name: 'More' }).click()
-
         const download = page.getByRole('menuitem', {
             name: 'Download data…',
         })
-
         await expect.element(download).toBeVisible()
         await download.click()
         expect(onDownload).toHaveBeenCalledTimes(1)
@@ -97,11 +94,9 @@ describe('working-list actions', () => {
             screen.container.querySelector('[data-test="working-list-options"]')
         ).toBeNull()
         await screen.getByRole('button', { name: 'Save view' }).click()
-
         const update = page.getByRole('menuitem', {
             name: 'Save changes to this view',
         })
-
         await expect.element(update).toBeEnabled()
         await expect
             .element(page.getByRole('menuitem', { name: 'Create new view…' }))

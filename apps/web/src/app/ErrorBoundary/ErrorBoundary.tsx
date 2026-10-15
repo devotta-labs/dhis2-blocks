@@ -28,7 +28,6 @@ export class ErrorBoundary extends Component<
 
     render() {
         const { error } = this.state
-
         if (!error) {
             return this.props.children
         }

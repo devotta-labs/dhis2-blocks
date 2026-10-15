@@ -83,7 +83,6 @@ export const useWorkingListSelection = ({
                 page: 1,
                 pageSize: store.getState().meta.pagination.pageSize,
             })
-
             if (notify) onSelectionChangeRef.current(id)
         },
         [stagePagination, store, updateStore]
@@ -99,9 +98,7 @@ export const useWorkingListSelection = ({
         ) {
             return
         }
-
         previousControlledId.current = selectedSavedListId
-
         if (selectedSavedListId && selectedSavedListId !== transitionId) {
             hardTransition(selectedSavedListId, false)
         }
@@ -132,7 +129,6 @@ export const useWorkingListSelection = ({
                     results: { status: 'pending' },
                 },
             }))
-
             if (selectedSavedListId === id) {
                 setTransitionId(undefined)
             }
@@ -142,24 +138,19 @@ export const useWorkingListSelection = ({
 
     useEffect(() => {
         if (!confirmedLists || !defaultList || !requestedId || !metadata) return
-
         if (latestRequestedIdRef.current !== requestedId) return
         const current = store.getState()
-
         if (
             current.activeState?.selectedSavedListId === requestedId &&
             current.meta.selection.status === 'ready'
         ) {
             return
         }
-
         const token = selectionToken.current
-
         const target =
             requestedId === defaultListId
                 ? defaultList
                 : displayedLists.find((list) => list.id === requestedId)
-
         if (!target) {
             updateStore((current) => ({
                 activeState: undefined,
@@ -179,10 +170,8 @@ export const useWorkingListSelection = ({
                     results: { status: 'pending' },
                 },
             }))
-
             return
         }
-
         if (target.compatibility === 'incompatible') {
             updateStore((current) => ({
                 activeState: undefined,
@@ -202,10 +191,8 @@ export const useWorkingListSelection = ({
                     results: { status: 'pending' },
                 },
             }))
-
             return
         }
-
         if (token === selectionToken.current) {
             commitSelection(requestedId, target.configuration)
         }
@@ -225,13 +212,10 @@ export const useWorkingListSelection = ({
     // context if the selected server resource disappears or becomes stale.
     useEffect(() => {
         const active = store.getState().activeState
-
         if (!active || !confirmedLists) return
         const id = active.selectedSavedListId
-
         if (id === defaultListId) return
         const refreshed = displayedLists.find((list) => list.id === id)
-
         if (!refreshed || refreshed.compatibility === 'incompatible') {
             hardTransition(id, false)
         }

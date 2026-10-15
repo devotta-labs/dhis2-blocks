@@ -30,21 +30,16 @@ const visibleFiltersForConfiguration = (
 ) => {
     const tracker: string[] = []
     const event: string[] = []
-
     for (const filter of configuration.filters) {
         const field = fields.get(filter.fieldId)
-
         if (!field) {
             continue
         }
-
         const ids = field.scope === 'event' ? event : tracker
-
         if (!ids.includes(filter.fieldId)) {
             ids.push(filter.fieldId)
         }
     }
-
     return { tracker, event }
 }
 
@@ -55,7 +50,6 @@ const withAppliedFilterIds = (
     scope: WorkingListField['scope']
 ) => {
     const ids = [...visibleIds]
-
     for (const filter of configuration.filters) {
         if (
             fields.get(filter.fieldId)?.scope === scope &&
@@ -64,7 +58,6 @@ const withAppliedFilterIds = (
             ids.push(filter.fieldId)
         }
     }
-
     return ids
 }
 
@@ -72,7 +65,6 @@ const FiltersControl = () => {
     const translate = useWorkingListText()
     const configuration = useWorkingListState((state) => state.configuration)
     const actions = useWorkingListActions()
-
     const {
         client,
         program,
@@ -95,55 +87,45 @@ const FiltersControl = () => {
         configuration,
         activeFields
     )
-
     const [visibleTrackerFilterIds, setVisibleTrackerFilterIds] = useState(
         initialVisible.tracker
     )
-
     const [visibleEventFilterIds, setVisibleEventFilterIds] = useState(
         initialVisible.event
     )
-
     const [autoOpenFilterId, setAutoOpenFilterId] = useState<string>()
 
     const fields = [...activeFields.values()]
-
     const trackerFilterFields = fields.filter(
         (field) => field.scope === 'trackedEntity' && field.filterable
     )
-
     const allEventFilterFields = fields.filter(
         (field) =>
             field.scope === 'event' &&
             field.id !== 'programStage' &&
             field.filterable
     )
-
     const currentStage =
         configuration.mode === 'event'
             ? program.programStages.find(
                   (stage) => stage.id === configuration.programStageId
               )
             : undefined
-
     const stageFieldIds = new Set(
         currentStage?.programStageDataElements.map(
             (binding) => binding.dataElement.id
         ) ?? []
     )
-
     const eventFilterFields = allEventFilterFields.filter(
         (field) =>
             field.source !== 'eventDataElement' || stageFieldIds.has(field.id)
     )
-
     const trackerChipIds = withAppliedFilterIds(
         visibleTrackerFilterIds,
         configuration,
         activeFields,
         'trackedEntity'
     )
-
     const eventChipIds = withAppliedFilterIds(
         visibleEventFilterIds,
         configuration,
@@ -156,38 +138,29 @@ const FiltersControl = () => {
         operator: filter.operator,
         value: filter.value,
     })
-
     const resolvedFilter = (field: WorkingListField) => {
         const filter = configuration.filters.find(
             (candidate) => candidate.fieldId === field.id
         )
-
         return filter ? { ...filter, field } : undefined
     }
-
     const applyFilter = (filter: ResolvedAppliedFilter) => {
         const result = actions.setFilter(compactFilter(filter))
-
         if (Result.isError(result)) {
             throw result.error
         }
     }
-
     const resetFilter = (fieldId: string) => {
         const result = actions.removeFilter(fieldId)
-
         if (Result.isError(result)) {
             throw result.error
         }
     }
-
     const enterStage = (stageId?: string, addedFilterId?: string) => {
         const result = actions.setProgramStage(stageId)
-
         if (Result.isError(result)) {
             throw result.error
         }
-
         setVisibleEventFilterIds((visibleFilterIds) =>
             visibleEventFiltersAfterStageChange({
                 configuration,
@@ -197,7 +170,6 @@ const FiltersControl = () => {
             })
         )
     }
-
     const clearAutoOpen = (fieldId: string) =>
         setAutoOpenFilterId((openId) =>
             openId === fieldId ? undefined : openId
@@ -230,11 +202,9 @@ const FiltersControl = () => {
             <div className="contents">
                 {trackerChipIds.map((fieldId) => {
                     const field = activeFields.get(fieldId)
-
                     if (!field?.filterable) {
                         return null
                     }
-
                     return (
                         <FilterButton
                             key={field.id}
@@ -269,11 +239,9 @@ const FiltersControl = () => {
                     />
                     {eventChipIds.map((fieldId) => {
                         const field = activeFields.get(fieldId)
-
                         if (!field || !eventFilterFields.includes(field)) {
                             return null
                         }
-
                         return (
                             <FilterButton
                                 key={field.id}
@@ -313,7 +281,6 @@ export const WorkingListFilterControls = ({
     ...props
 }: WorkingListFilterControlsProps) => {
     const translate = useWorkingListText()
-
     const ready = useWorkingListMeta(
         (meta) => meta.activeConfiguration.status === 'ready'
     )

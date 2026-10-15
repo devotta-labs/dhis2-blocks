@@ -252,7 +252,6 @@ describe('value formatting and filtering contracts', () => {
     it('round-trips a saved absolute date through transformer hooks', () => {
         const dateField = field('DATE')
         const definition = getValueTypeDefinition('DATE')
-
         const filter = {
             field: dateField,
             operator: 'range' as const,
@@ -263,7 +262,6 @@ describe('value formatting and filtering contracts', () => {
                 end: '2083-01-02',
             },
         }
-
         const saved = definition.serializeSaved(filter, {
             toApiDate: (value) =>
                 value === '2083-01-01' ? '2026-04-14' : '2026-04-15',

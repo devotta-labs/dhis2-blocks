@@ -34,12 +34,10 @@ const openTrackerSharingDialog = async (
     const originalConsoleError = await page.evaluateHandle(
         () => globalThis.console.error
     )
-
     await page.evaluate(() => {
         const originalError = globalThis.console.error
         globalThis.console.error = (...args) => {
             const message = args.map(String).join(' ')
-
             const isKnownUiTypeWarning =
                 message.includes(
                     'Invalid prop `type` of value `trackedEntityInstanceFilter`'
@@ -82,7 +80,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
         await expect
             .poll(() => {
                 const hashQuery = new URL(page.url()).hash.split('?')[1]
-
                 return new URLSearchParams(hashQuery).get('page')
             })
             .toBe('2')
@@ -96,14 +93,12 @@ test.describe('owner pagination and saved-list lifecycle', () => {
         await expect
             .poll(() => {
                 const hashQuery = new URL(page.url()).hash.split('?')[1]
-
                 return new URLSearchParams(hashQuery).get('page')
             })
             .toBe('1')
         await expect(
             page.getByTestId('working-list-row-WlE2eTei001')
         ).toBeVisible()
-
         const resized = await waitForTrackerResponse(
             page,
             'trackedEntities',
@@ -117,7 +112,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 url.searchParams.get('page') === '1' &&
                 url.searchParams.get('pageSize') === '15'
         )
-
         expect(resized.searchParams.has('totalPages')).toBe(false)
         await expect(resultRows(page)).toHaveCount(15)
     })
@@ -129,7 +123,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
         const ownerApi = await createApi(playwright, OWNER)
         const readerApi = await createApi(playwright, READER)
         let createdId: string | undefined
-
         try {
             await openWorkingList(page, { template: PRIVATE_LIST })
             await waitForTrackerResponse(
@@ -146,7 +139,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             await page
                 .locator('[data-test="working-list-name-input"] input')
                 .fill('E2E browser tracker lifecycle')
-
             const createResponsePromise = page.waitForResponse(
                 (response) =>
                     response.request().method() === 'POST' &&
@@ -154,21 +146,17 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                         '/trackedEntityInstanceFilters'
                     )
             )
-
             const selectionNavigation = page.waitForURL(
                 (url) =>
                     url.hash.includes('selectedTemplateId=') &&
                     !url.hash.includes(`selectedTemplateId=${PRIVATE_LIST}`)
             )
-
             await page.locator('[data-test="working-list-name-submit"]').click()
             const createResponse = await createResponsePromise
             expect(createResponse.ok(), await createResponse.text()).toBe(true)
-
             const createBody = MutationResponseSchema.parse(
                 await createResponse.json()
             )
-
             createdId = createBody.response?.uid
             expect(createdId).toBeTruthy()
             await selectionNavigation
@@ -184,13 +172,10 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     },
                 }
             )
-
             expect(savedResponse.ok()).toBe(true)
-
             const saved = SavedTrackedEntityListSchema.parse(
                 await savedResponse.json()
             )
-
             expect(saved.sharing?.public ?? saved.publicAccess).toBe('--------')
             expect(saved.access).toMatchObject({ write: true, update: true })
             expect(saved.entityQueryCriteria).not.toHaveProperty('page')
@@ -215,11 +200,9 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             await expect(
                 page.locator('[data-test="save-as-working-list"]')
             ).toBeVisible()
-
             const cleanUpdateAction = page
                 .locator('[data-test="update-working-list"]')
                 .getByRole('menuitem')
-
             await expect(cleanUpdateAction).toBeDisabled()
             expect(cleanUpdateRequests).toEqual([])
             await page.keyboard.press('Escape')
@@ -248,7 +231,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             await expect(
                 dirtyOptions.locator('[data-test="update-saved-view"]')
             ).toBeVisible()
-
             const updateResponse = page.waitForResponse(
                 (response) =>
                     response.request().method() === 'PUT' &&
@@ -256,7 +238,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                         `/trackedEntityInstanceFilters/${createdId}`
                     )
             )
-
             await dirtyOptions
                 .locator('[data-test="update-saved-view"]')
                 .getByRole('menuitem')
@@ -272,7 +253,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     exact: true,
                 }),
             })
-
             await openTrackerSharingDialog(page, createdId!, sharingDialog)
             await sharingDialog.getByPlaceholder('Search').fill(READER.username)
             await page
@@ -280,13 +260,11 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 .filter({ hasText: 'Working list Reader' })
                 .click()
             const addAccessForm = sharingDialog.locator('form')
-
             const accessLevelField = page
                 .locator('[data-test="dhis2-uiwidgets-singleselectfield"]')
                 .filter({
                     has: page.getByText('Access level', { exact: true }),
                 })
-
             await accessLevelField
                 .locator('[data-test="dhis2-uicore-select-input"]')
                 .click()
@@ -303,7 +281,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                         'trackedEntityInstanceFilter' &&
                     requestUrl(response).searchParams.get('id') === createdId
             )
-
             await addAccessForm
                 .getByRole('button', { name: 'Give access' })
                 .click()
@@ -316,13 +293,10 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     id: createdId!,
                 },
             })
-
             expect(sharingAfterGrant.ok()).toBe(true)
-
             const grantedObject = SharingResponseSchema.parse(
                 await sharingAfterGrant.json()
             )
-
             expect(grantedObject.object?.userAccesses).toContainEqual(
                 expect.objectContaining({
                     id: 'WlE2eUsr002',
@@ -341,15 +315,12 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                             },
                         }
                     )
-
                     if (!response.ok()) {
                         return false
                     }
-
                     const body = SavedListCollectionSchema.parse(
                         await response.json()
                     )
-
                     return body.trackedEntityInstanceFilters?.some(
                         (list) => list.id === createdId
                     )
@@ -357,22 +328,17 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 .toBe(true)
 
             await openTrackerSharingDialog(page, createdId!, sharingDialog)
-
             const readerAccessRow = sharingDialog.locator('.wrapper').filter({
                 has: page.getByText('Working list Reader', {
                     exact: true,
                 }),
             })
-
             await expect(readerAccessRow).toBeVisible()
-
             const readerAccessSelect = readerAccessRow.locator(
                 '[data-test="dhis2-uicore-select-input"]'
             )
-
             await expect(readerAccessSelect).not.toHaveClass(/disabled/)
             await readerAccessSelect.click()
-
             const revokeResponse = page.waitForResponse(
                 (response) =>
                     response.request().method() === 'PUT' &&
@@ -381,7 +347,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                         'trackedEntityInstanceFilter' &&
                     requestUrl(response).searchParams.get('id') === createdId
             )
-
             await page.getByText('Remove access', { exact: true }).click()
             expect((await revokeResponse).ok()).toBe(true)
             await expect(sharingDialog).toHaveCount(0)
@@ -392,13 +357,10 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     id: createdId!,
                 },
             })
-
             expect(sharingAfterRevoke.ok()).toBe(true)
-
             const revokedObject = SharingResponseSchema.parse(
                 await sharingAfterRevoke.json()
             )
-
             expect(
                 revokedObject.object?.userAccesses?.some(
                     (entry) => entry.id === 'WlE2eUsr002'
@@ -416,15 +378,12 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                             },
                         }
                     )
-
                     if (!response.ok()) {
                         return false
                     }
-
                     const body = SavedListCollectionSchema.parse(
                         await response.json()
                     )
-
                     return body.trackedEntityInstanceFilters?.some(
                         (list) => list.id === createdId
                     )
@@ -432,7 +391,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 .toBe(false)
 
             await chooseSavedViewAction(page, createdId!, 'delete-saved-view')
-
             const deleteResponse = page.waitForResponse(
                 (response) =>
                     response.request().method() === 'DELETE' &&
@@ -440,7 +398,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                         `/trackedEntityInstanceFilters/${createdId}`
                     )
             )
-
             await page
                 .locator('[data-test="delete-saved-view-confirm"]')
                 .click()

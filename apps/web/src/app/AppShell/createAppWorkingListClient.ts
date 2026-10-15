@@ -22,11 +22,8 @@ const DataEngineValueSchema: z.ZodType<WorkingListEngineValue> = z.lazy(() =>
         z.record(z.string(), DataEngineValueSchema),
     ])
 )
-
 const DataEngineResultSchema = z.record(z.string(), DataEngineValueSchema)
-
 const MutationDataSchema = z.record(z.string(), z.json())
-
 const RuntimeQueryParameterSchema = z.union([
     z.string(),
     z.number(),
@@ -48,7 +45,6 @@ const toRuntimeQuery = (query: DataEngineQuery) =>
                       )
                   )
                 : undefined
-
             return [
                 key,
                 {
@@ -65,16 +61,13 @@ const toRuntimeMutation = (mutation: DataEngineMutation) => {
         if (!mutation.id) {
             throw new Error('A delete mutation requires an id')
         }
-
         return {
             resource: mutation.resource,
             id: mutation.id,
             type: mutation.type,
         } as const
     }
-
     const data = MutationDataSchema.parse(mutation.data)
-
     if (mutation.type === 'create') {
         return {
             resource: mutation.resource,
@@ -82,11 +75,9 @@ const toRuntimeMutation = (mutation: DataEngineMutation) => {
             data,
         } as const
     }
-
     if (!mutation.id) {
         throw new Error(`${mutation.type} mutation requires an id`)
     }
-
     return {
         resource: mutation.resource,
         id: mutation.id,
@@ -105,6 +96,5 @@ export const createAppWorkingListClient = (
             ),
         mutate: (mutation) => engine.mutate(toRuntimeMutation(mutation)),
     }
-
     return createWorkingListClient(dataEngine)
 }

@@ -34,11 +34,9 @@ const systemFields = [
     ...systemColumnFields,
     ...['enrollmentStatus', 'enrolledAt', 'enrollmentOccurredAt'].map((id) => {
         const definition = getSystemFilterDefinition(id)
-
         if (!definition) {
             throw new Error(`Missing ${id}`)
         }
-
         return definition.field
     }),
 ]
@@ -164,11 +162,9 @@ describe('saved-list payloads', () => {
             configuration,
             raw: savedResource,
         })
-
         if (normalized.compatibility !== 'compatible') {
             throw new Error('Expected a compatible list')
         }
-
         expect(
             buildSavedListPayload({
                 name: normalized.name,
@@ -372,9 +368,7 @@ describe('explicit stale saved-list repair', () => {
             programId: 'Program0001',
             metadata,
         })
-
         expect(list.compatibility).toBe('incompatible')
-
         if (list.compatibility !== 'incompatible') {
             throw new Error('Expected an incompatible list')
         }
@@ -412,7 +406,6 @@ describe('explicit stale saved-list repair', () => {
             programId: 'Program0001',
             metadata,
         })
-
         if (list.compatibility !== 'incompatible') {
             throw new Error('Expected an incompatible list')
         }

@@ -36,7 +36,6 @@ describe('MoreFilters keyboard focus', () => {
         document.body.appendChild(container)
         const root = createRoot(container)
         const onAddStageFilter = vi.fn()
-
         const eventField: WorkingListField = {
             id: 'DataElement01',
             displayName: 'Result',
@@ -45,7 +44,6 @@ describe('MoreFilters keyboard focus', () => {
             valueType: 'TEXT',
             filterable: true,
         }
-
         const program: TrackerProgram = {
             id: 'Program0001',
             displayName: 'Program',
@@ -70,10 +68,8 @@ describe('MoreFilters keyboard focus', () => {
         const StageFilterHarness = () => {
             const [selectedStageId, setSelectedStageId] =
                 React.useState<string>()
-
             const [selectedEventField, setSelectedEventField] =
                 React.useState<WorkingListField>()
-
             const selectedStage = program.programStages.find(
                 (stage) => stage.id === selectedStageId
             )
@@ -166,7 +162,6 @@ describe('MoreFilters keyboard focus', () => {
             const trigger = container.querySelector<HTMLButtonElement>(
                 '[data-testid="more-filters-tracked-entity"]'
             )
-
             expect(trigger?.getAttribute('aria-expanded')).toBe('false')
             expect(
                 container.querySelector('[data-testid="filter-programStage"]')
@@ -179,17 +174,13 @@ describe('MoreFilters keyboard focus', () => {
             ).toContain('dense')
 
             act(() => trigger?.click())
-
             const topLevelMenu = document.querySelector(
                 '[data-test="more-filters-menu-tracked-entity"]'
             )
-
             expect(
-                [...(topLevelMenu?.children ?? [])].flatMap((item) => {
-                    const dataTest = item.getAttribute('data-test')
-
-                    return dataTest ? [dataTest] : []
-                })
+                [...(topLevelMenu?.children ?? [])]
+                    .map((item) => item.getAttribute('data-test'))
+                    .filter(Boolean)
             ).toEqual([
                 'program-stage-filter-menu',
                 'stage-filter-fields-Stage000001',
@@ -205,15 +196,12 @@ describe('MoreFilters keyboard focus', () => {
                         new MouseEvent('mouseover', { bubbles: true })
                     )
             })
-
             const lockedStage = document.querySelector<HTMLElement>(
                 '[data-test="select-filter-stage-Stage000002"] [role="menuitem"]'
             )
-
             const selectedStageItem = document.querySelector<HTMLElement>(
                 '[data-test="select-filter-stage-Stage000001"] [role="menuitem"]'
             )
-
             for (const [stageName, stageItem] of [
                 ['Visit', selectedStageItem],
                 ['Follow-up', lockedStage],
@@ -228,13 +216,11 @@ describe('MoreFilters keyboard focus', () => {
                         )
                 ).not.toBeNull()
             }
-
             const selectedStageTooltip = selectedStageItem
                 ?.closest('[role="presentation"]')
                 ?.querySelector<HTMLElement>(
                     '[tabindex="0"][aria-label*="Can only filter using one program stage."]'
                 )
-
             act(() => {
                 selectedStageTooltip?.dispatchEvent(
                     new MouseEvent('mouseover', { bubbles: true })
@@ -281,7 +267,6 @@ describe('MoreFilters keyboard focus', () => {
             const clearStage = container.querySelector<HTMLElement>(
                 '[data-test="filter-programStage-select-clear"]'
             )
-
             expect(clearStage).not.toBeNull()
             act(() => {
                 clearStage?.dispatchEvent(

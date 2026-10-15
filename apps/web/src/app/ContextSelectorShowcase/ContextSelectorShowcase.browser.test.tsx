@@ -21,7 +21,6 @@ describe.sequential('ContextSelectorShowcase', () => {
                 })
             )
             .toBeVisible()
-
         for (const dataTest of [
             'program-selector-container',
             'org-unit-selector-container',
@@ -30,7 +29,6 @@ describe.sequential('ContextSelectorShowcase', () => {
                 screen.container.querySelector(`[data-test="${dataTest}"]`)
             ).not.toBeNull()
         }
-
         await screen
             .getByRole('button', {
                 name: /Program.*Malaria case registration/,
@@ -73,7 +71,6 @@ describe.sequential('ContextSelectorShowcase', () => {
         await screen
             .getByLabelText('Visible selectors')
             .selectOptions('related')
-
         for (const dataTest of [
             'enrollment-selector-container',
             'stage-selector-container',
@@ -84,7 +81,6 @@ describe.sequential('ContextSelectorShowcase', () => {
                 screen.container.querySelector(`[data-test="${dataTest}"]`)
             ).not.toBeNull()
         }
-
         await expect
             .element(screen.getByText('Category', { exact: true }))
             .toBeVisible()
@@ -142,11 +138,9 @@ describe.sequential('ContextSelectorShowcase', () => {
             .getByText('Category', { exact: true })
             .element()
             .closest('.selector-bar-item')
-
         const categoryClear = categoryItem?.querySelector<HTMLElement>(
             '[data-test$="-clear-icon"]'
         )
-
         expect(categoryClear).not.toBeNull()
         categoryClear?.click()
         await expect.element(screen.getByText('No category')).toBeVisible()
@@ -164,15 +158,12 @@ describe.sequential('ContextSelectorShowcase', () => {
         ).toHaveLength(2)
 
         await state.selectOptions('disabled')
-
         const disabledProgram = screen.container.querySelector(
             '[data-test="program-selector-container"]'
         )
-
         if (!(disabledProgram instanceof HTMLElement)) {
             throw new Error('Expected the disabled program selector to render')
         }
-
         disabledProgram.click()
         expect(screen.getByPlaceholder('Search programs').query()).toBeNull()
 

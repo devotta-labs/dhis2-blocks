@@ -78,7 +78,6 @@ describe('file resource name resolution', () => {
             ]),
             fields
         )
-
         expect(ids).toEqual(['FileRes0001'])
     })
 
@@ -86,20 +85,17 @@ describe('file resource name resolution', () => {
         const warn = vi
             .spyOn(console, 'warn')
             .mockImplementation(() => undefined)
-
         const query = vi.fn(
             async <T>(request: ResourceRequest, schema: ZodType<T>) => {
                 if (request.id === 'Missing0001') {
                     throw new Error('404 Not Found')
                 }
-
                 return schema.parse({
                     id: request.id,
                     displayName: `${request.id}.pdf`,
                 })
             }
         )
-
         const client: WorkingListClient = {
             // SAFETY: The generic schema argument validates every value returned by this fake.
             query: query as WorkingListClient['query'],
@@ -115,7 +111,6 @@ describe('file resource name resolution', () => {
                 client,
                 ids: ['FileRes0001', 'Missing0001', 'FileRes0001'],
             })
-
             expect(query).toHaveBeenCalledTimes(2)
             expect(query).toHaveBeenCalledWith(
                 {

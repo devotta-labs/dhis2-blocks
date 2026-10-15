@@ -35,7 +35,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
     }) => {
         const ownerApi = await createApi(playwright, OWNER)
         let createdId: string | undefined
-
         try {
             await openWorkingList(page, { template: PRIVATE_LIST })
             await enterStageMode(page)
@@ -43,7 +42,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             await page
                 .locator('[data-test="working-list-name-input"] input')
                 .fill('E2E browser stage lifecycle')
-
             const createResponsePromise = page.waitForResponse(
                 (response) =>
                     response.request().method() === 'POST' &&
@@ -51,21 +49,17 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                         '/programStageWorkingLists'
                     )
             )
-
             const selectionNavigation = page.waitForURL(
                 (url) =>
                     url.hash.includes('selectedTemplateId=') &&
                     !url.hash.includes(`selectedTemplateId=${PRIVATE_LIST}`)
             )
-
             await page.locator('[data-test="working-list-name-submit"]').click()
             const createResponse = await createResponsePromise
             expect(createResponse.ok(), await createResponse.text()).toBe(true)
-
             const createBody = MutationResponseSchema.parse(
                 await createResponse.json()
             )
-
             createdId = createBody.response?.uid
             expect(createdId).toBeTruthy()
             await selectionNavigation
@@ -86,7 +80,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 page.locator('[data-test="save-as-working-list"]')
             ).toBeVisible()
             await page.keyboard.press('Escape')
-
             const saved = await ownerApi.get(
                 `/api/programStageWorkingLists/${createdId}`,
                 {
@@ -95,20 +88,16 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     },
                 }
             )
-
             expect(saved.ok()).toBe(true)
-
             const savedStageList = SavedStageListSchema.parse(
                 await saved.json()
             )
-
             expect(
                 savedStageList.sharing?.public ?? savedStageList.publicAccess
             ).toBe('--------')
             expect(savedStageList.programStage?.id).toBe(STAGE)
 
             await chooseSavedViewAction(page, createdId!, 'delete-saved-view')
-
             const deleteResponse = page.waitForResponse(
                 (response) =>
                     response.request().method() === 'DELETE' &&
@@ -116,7 +105,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                         `/programStageWorkingLists/${createdId}`
                     )
             )
-
             await page
                 .locator('[data-test="delete-saved-view-confirm"]')
                 .click()
@@ -137,7 +125,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
         playwright,
     }) => {
         const ownerApi = await createApi(playwright, OWNER)
-
         const staleDefinition = {
             id: STALE_LIST,
             name: 'E2E stale metadata list',
@@ -151,15 +138,12 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 attributeValueFilters: [],
             },
         }
-
         const trackerRequests: URL[] = []
-
         const captureTrackerRequest = (request: Request) => {
             if (isTrackerResource(request, 'trackedEntities')) {
                 trackerRequests.push(requestUrl(request))
             }
         }
-
         page.on('request', captureTrackerRequest)
 
         try {
@@ -176,18 +160,14 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             expect(trackerRequests).toHaveLength(0)
 
             await page.locator('[data-test="repair-working-list"]').click()
-
             const repairDialog = page.locator(
                 '[data-test="repair-working-list-dialog"]'
             )
-
             await expect(repairDialog).toBeVisible()
-
             const missingColumnRepair = page
                 .getByTestId('repair-working-list-preview')
                 .getByRole('row')
                 .filter({ hasText: 'WlMissing01' })
-
             await expect(missingColumnRepair).toContainText(
                 'Replace with default'
             )
@@ -199,7 +179,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                         `/trackedEntityInstanceFilters/${STALE_LIST}`
                     )
             )
-
             const repairedQuery = waitForTrackerResponse(
                 page,
                 'trackedEntities',
@@ -211,12 +190,10 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                     url.searchParams.get('orgUnitMode') === 'SELECTED' &&
                     url.searchParams.get('orgUnits') === ORG_UNIT
             )
-
             const [saveResponse, repairedUrl] = await Promise.all([
                 savedRepair,
                 repairedQuery,
             ])
-
             expect(saveResponse.ok(), await saveResponse.text()).toBe(true)
             expect(repairedUrl.searchParams.get('order')).toBe(
                 `${TEXT_ATTRIBUTE}:asc`
@@ -231,13 +208,10 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 `/api/trackedEntityInstanceFilters/${STALE_LIST}`,
                 { params: { fields: 'id,entityQueryCriteria' } }
             )
-
             expect(repairedResponse.ok()).toBe(true)
-
             const repaired = RepairedListSchema.parse(
                 await repairedResponse.json()
             )
-
             expect(repaired.entityQueryCriteria?.displayColumnOrder).toContain(
                 TEXT_ATTRIBUTE
             )
@@ -246,12 +220,10 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             ).not.toContain('WlMissing01')
         } finally {
             page.off('request', captureTrackerRequest)
-
             const restoreResponse = await ownerApi.put(
                 `/api/trackedEntityInstanceFilters/${STALE_LIST}`,
                 { data: staleDefinition }
             )
-
             expect(restoreResponse.ok(), await restoreResponse.text()).toBe(
                 true
             )

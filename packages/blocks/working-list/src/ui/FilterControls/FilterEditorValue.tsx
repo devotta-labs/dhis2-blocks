@@ -43,13 +43,11 @@ export const EditorValue = ({
 }) => {
     const translate = useWorkingListText()
     const i18n = { t: translate }
-
     if (field.id === 'assignedUser' || field.id === 'eventAssignedUser') {
         const assignee =
             value.kind === 'assignee'
                 ? value
                 : ({ kind: 'assignee', mode: 'CURRENT' } as const)
-
         return (
             <div className="[&>*+*]:mt-[12px]">
                 <SingleSelectField
@@ -101,7 +99,6 @@ export const EditorValue = ({
 
     if (field.options?.length) {
         const values = value.kind === 'options' ? value.values : []
-
         // Tracker supports multiple option-set values on capable servers, but
         // Capture's system status filters are intentionally single-valued.
         if (usesMultipleOptionSelection(field, capabilities)) {
@@ -126,7 +123,6 @@ export const EditorValue = ({
                 </MultiSelectField>
             )
         }
-
         return (
             <SingleSelectField
                 dense
@@ -151,7 +147,6 @@ export const EditorValue = ({
 
     if (editor === 'boolean') {
         const values = value.kind === 'boolean' ? value.values : []
-
         return (
             <div
                 className="flex flex-wrap items-center gap-[8px]"
@@ -191,7 +186,6 @@ export const EditorValue = ({
             value.kind === 'dateRange'
                 ? value
                 : { kind: 'dateRange', mode: 'absolute' }
-
         return (
             <div className="min-w-0 max-w-full [&>*+*]:mt-[12px]">
                 <SingleSelectField
@@ -345,13 +339,11 @@ export const EditorValue = ({
             </div>
         )
     }
-
     if (editor === 'numberRange') {
         const range =
             value.kind === 'numberRange'
                 ? value
                 : { kind: 'numberRange' as const }
-
         return (
             <RangeFields
                 type="number"
@@ -369,11 +361,9 @@ export const EditorValue = ({
             />
         )
     }
-
     if (editor === 'timeRange') {
         const range =
             value.kind === 'timeRange' ? value : { kind: 'timeRange' as const }
-
         return (
             <RangeFields
                 type="time"
@@ -387,10 +377,8 @@ export const EditorValue = ({
             />
         )
     }
-
     if (editor === 'organisationUnit') {
         const id = value.kind === 'organisationUnit' ? value.id : ''
-
         return (
             <OrganisationUnitFilterSelect
                 client={client}
@@ -401,15 +389,12 @@ export const EditorValue = ({
             />
         )
     }
-
     const text = value.kind === 'text' ? value.value : ''
-
     const minimumCharacters =
         field.minCharactersToSearch !== undefined &&
         field.minCharactersToSearch > 0
             ? field.minCharactersToSearch
             : undefined
-
     return (
         <label className="flex flex-col gap-[5px] [&>span]:text-[12px] [&>span]:[font-weight:500] [&>span]:text-[#36454f] [&_input]:box-border [&_input]:h-[32px] [&_input]:w-full [&_input]:rounded-[3px] [&_input]:bg-[#fff] [&_input]:text-[14px] [&_input]:leading-[16px] [&_input]:text-[#212934] [&_input]:outline-none [&_input]:[border:1px_solid_#a9b7c4] [&_input]:[padding:7px_8px] [&_input:hover]:border-[#6c7785] [&_input:focus]:border-[#147cd7] [&_input:focus]:[box-shadow:0_0_0_2px_rgb(20_124_215_/_20%)] [&_small]:text-[12px] [&_small]:text-[#6c7785]">
             <span>{i18n.t('Value')}</span>

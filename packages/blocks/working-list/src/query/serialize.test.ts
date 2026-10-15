@@ -33,11 +33,9 @@ const dataElement: WorkingListField = {
 
 const systemField = (id: string) => {
     const definition = getSystemFilterDefinition(id)
-
     if (!definition) {
         throw new Error(`Missing test system field ${id}`)
     }
-
     return definition.field
 }
 
@@ -156,7 +154,6 @@ describe('Tracker working-list request serialization', () => {
 
     it('defaults scheduled events from the DHIS2 server time zone at midnight', () => {
         vi.useFakeTimers().setSystemTime(new Date('2026-08-18T10:30:00.000Z'))
-
         try {
             const transformers = createWorkingListValueTransformers({
                 systemInfo: {
@@ -165,7 +162,6 @@ describe('Tracker working-list request serialization', () => {
                     serverTimeZoneId: 'Pacific/Kiritimati',
                 },
             })
-
             const request = serializeWorkingListRequest({
                 context: {
                     programId: 'Program0001',

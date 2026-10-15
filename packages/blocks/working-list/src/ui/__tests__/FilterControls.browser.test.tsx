@@ -17,7 +17,6 @@ const field: WorkingListField = {
 describe('MoreFilters real-browser keyboard focus', () => {
     it('activates a menu item and restores its trigger after Enter and Escape', async () => {
         const onAdd = vi.fn()
-
         const screen = await render(
             <WorkingListTextProvider translate={(message) => message}>
                 <MoreFilters
@@ -28,17 +27,14 @@ describe('MoreFilters real-browser keyboard focus', () => {
                 />
             </WorkingListTextProvider>
         )
-
         const trigger = screen.getByRole('button', { name: 'Filter' })
 
         await trigger.click()
         const firstItem = page.getByRole('menuitem', { name: 'Follow up' })
         await expect.element(firstItem).toBeVisible()
-
         const focusTarget = document.querySelector<HTMLElement>(
             '[data-test="add-filter-followUp"]'
         )
-
         expect(focusTarget?.hasAttribute('tabindex')).toBe(true)
         await expect.poll(() => document.activeElement).toBe(focusTarget)
 

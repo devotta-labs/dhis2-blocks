@@ -69,7 +69,6 @@ describe('metadata-aware row normalization', () => {
             ]),
             fields
         )
-
         expect(normalized.values[integerField.id]).toEqual({
             valid: true,
             value: 4,
@@ -93,7 +92,6 @@ describe('metadata-aware row normalization', () => {
             ]),
             fields
         )
-
         expect(normalized.values[integerField.id]).toEqual({
             valid: false,
             raw: '-1',
@@ -117,7 +115,6 @@ describe('metadata-aware row normalization', () => {
             ]),
             fields
         )
-
         expect(normalized.values[multiField.id]).toEqual({
             valid: false,
             raw: 'A,MISSING',
@@ -145,7 +142,6 @@ describe('metadata-aware row normalization', () => {
             record([{ attribute: requiredField.id, value: '' }]),
             fields
         )
-
         expect(empty.values[requiredField.id]).toEqual({
             valid: false,
             raw: undefined,
@@ -162,7 +158,6 @@ describe('metadata-aware row normalization', () => {
                     `#${message}|${JSON.stringify(values ?? null)}`,
             }
         )
-
         expect(normalized.values[integerField.id]).toMatchObject({
             valid: false,
             message:
@@ -178,7 +173,6 @@ describe('metadata-aware row normalization', () => {
             ]),
             fields
         )
-
         expect(normalized.values.FutureFld01).toEqual({
             valid: true,
             value: 'future',
@@ -210,7 +204,6 @@ describe('metadata-aware row normalization', () => {
             valueType: 'FILE_RESOURCE',
             filterable: false,
         }
-
         const imageField: WorkingListField = {
             id: 'ImageAttr01',
             displayName: 'Photo',
@@ -219,13 +212,11 @@ describe('metadata-aware row normalization', () => {
             valueType: 'IMAGE',
             filterable: false,
         }
-
         const fileFields: FieldCatalog = new Map([
             ...fields,
             [fileField.id, fileField],
             [imageField.id, imageField],
         ])
-
         const normalized = normalizeTrackedEntityValues(
             record([
                 { attribute: fileField.id, value: 'FileRes0001' },
@@ -235,7 +226,6 @@ describe('metadata-aware row normalization', () => {
             fileFields,
             { programId: 'Program0001' }
         )
-
         expect(normalized.values[fileField.id]).toEqual({
             valid: true,
             value: {
@@ -262,7 +252,6 @@ describe('metadata-aware row normalization', () => {
             fileFields,
             { programId: 'Program0001' }
         )
-
         expect(invalid.values[fileField.id]).toEqual({
             valid: false,
             raw: 'not a uid',
@@ -283,7 +272,6 @@ describe('metadata-aware row normalization', () => {
             fields,
             { programId: 'ProgramBbb1' }
         )
-
         expect(normalized.values.programOwnerId).toEqual({
             valid: true,
             value: 'OrgUnitBbb1',
@@ -302,7 +290,6 @@ describe('metadata-aware event normalization', () => {
         programStageIds: ['StageAaaaa1'],
         requiredInStageIds: ['StageAaaaa1'],
     }
-
     const optionalDataElement: WorkingListField = {
         id: 'DataElem002',
         displayName: 'Notes',
@@ -312,14 +299,12 @@ describe('metadata-aware event normalization', () => {
         filterable: true,
         programStageIds: ['StageAaaaa1'],
     }
-
     const eventFields: FieldCatalog = new Map(
         [stageDataElement, optionalDataElement].map((field) => [
             field.id,
             field,
         ])
     )
-
     const event = (dataValues: TrackerEvent['dataValues']): TrackerEvent => ({
         event: 'EventAaaaa1',
         program: 'Program0001',
@@ -334,7 +319,6 @@ describe('metadata-aware event normalization', () => {
             event([{ dataElement: stageDataElement.id, value: 'oops' }]),
             eventFields
         )
-
         expect(normalized.values[stageDataElement.id]).toEqual({
             valid: false,
             raw: 'oops',
@@ -372,7 +356,6 @@ describe('metadata-aware event normalization', () => {
             },
             eventFields
         )
-
         expect(normalized.values[stageDataElement.id]).toBeUndefined()
         expect(normalized.issues).toEqual([])
     })
@@ -387,7 +370,6 @@ describe('metadata-aware event normalization', () => {
             filterable: false,
             programStageIds: ['StageAaaaa1'],
         }
-
         const eventImageElement: WorkingListField = {
             id: 'ImageDe0001',
             displayName: 'Photo',
@@ -397,13 +379,11 @@ describe('metadata-aware event normalization', () => {
             filterable: false,
             programStageIds: ['StageAaaaa1'],
         }
-
         const fileEventFields: FieldCatalog = new Map([
             ...eventFields,
             [eventFileElement.id, eventFileElement],
             [eventImageElement.id, eventImageElement],
         ])
-
         const normalized = normalizeEventValues(
             event([
                 { dataElement: eventFileElement.id, value: 'FileRes0001' },
@@ -411,7 +391,6 @@ describe('metadata-aware event normalization', () => {
             ]),
             fileEventFields
         )
-
         expect(normalized.values[eventFileElement.id]).toEqual({
             valid: true,
             value: {
@@ -444,7 +423,6 @@ describe('metadata-aware event normalization', () => {
             },
             eventFields
         )
-
         expect(normalized.values.eventAssignedUser).toEqual({
             valid: true,
             value: {
@@ -463,7 +441,6 @@ describe('metadata-aware event normalization', () => {
             },
             eventFields
         )
-
         expect(nameless.values.eventAssignedUser).toMatchObject({
             valid: true,
             value: { id: 'User0000001', name: 'jtraore' },
@@ -485,12 +462,10 @@ describe('metadata-aware event normalization', () => {
             valueType: 'ORGANISATION_UNIT',
             filterable: false,
         }
-
         const strictFields: FieldCatalog = new Map([
             ...eventFields,
             [eventOrgUnitField.id, eventOrgUnitField],
         ])
-
         expect(() =>
             normalizeEventValues(
                 {

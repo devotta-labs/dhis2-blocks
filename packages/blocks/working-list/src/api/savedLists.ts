@@ -17,13 +17,9 @@ export type {
     NormalizedSavedWorkingList,
     SavedListResource,
 } from './savedListContracts'
-
 export { normalizeSavedWorkingListResource } from './savedListNormalization'
-
 export { buildSavedListPayload } from './savedListPayload'
-
 export { fetchSavedWorkingLists } from './savedListQueries'
-
 export { repairSavedWorkingList } from './savedListRepair'
 
 export const createSavedWorkingList = async ({
@@ -33,18 +29,14 @@ export const createSavedWorkingList = async ({
     client: WorkingListClient
 }) => {
     const payload = buildSavedListPayload(input)
-
     const response = await client.mutate(
         { resource: payload.resource, type: 'create', data: payload.data },
         MutationResponseSchema
     )
-
     const id = response.response?.uid
-
     if (!id) {
         throw new Error('Create saved-list response did not contain a UID')
     }
-
     return id
 }
 
@@ -63,13 +55,11 @@ export const replaceSavedWorkingList = async ({
         input.configuration.mode === 'trackedEntity'
             ? 'trackedEntityInstanceFilters'
             : 'programStageWorkingLists'
-
     if (expectedResource !== resource) {
         throw new Error(
             `Cannot replace ${resource} with ${expectedResource} configuration`
         )
     }
-
     const currentResource =
         existingResource ??
         (await client.query(
@@ -87,24 +77,20 @@ export const replaceSavedWorkingList = async ({
                 ? TrackedEntityInstanceFilterSchema
                 : ProgramStageWorkingListSchema
         ))
-
     if (currentResource.id !== id) {
         throw new Error(
             `Loaded saved-list ${currentResource.id} while replacing ${id}`
         )
     }
-
     const payload = buildSavedListPayload({
         ...input,
         existingResource: currentResource,
     })
-
     if (payload.resource !== resource) {
         throw new Error(
             `Cannot replace ${resource} with ${payload.resource} configuration`
         )
     }
-
     await client.mutate(
         {
             resource,
@@ -171,11 +157,9 @@ export const createGeneratedDefaultLists = ({
     fields: FieldCatalog
 }): NormalizedSavedWorkingList[] => {
     const statusField = fields.get('enrollmentStatus')
-
     if (!statusField) {
         return []
     }
-
     return [
         [
             'active',

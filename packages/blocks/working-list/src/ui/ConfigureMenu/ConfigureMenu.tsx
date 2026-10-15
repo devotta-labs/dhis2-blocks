@@ -12,6 +12,7 @@ import {
 import { IconMore16 } from '@dhis2/ui-icons'
 import React, { useState } from 'react'
 import type { WorkingListSavedView } from '../../provider/contracts'
+import { Button as ToolbarButton } from '../primitives/Button'
 import { useWorkingListText } from '../WorkingListText'
 
 interface ConfigureMenuProps {
@@ -99,15 +100,15 @@ export const ConfigureMenu = ({
                     </DropdownButton>
                 ) : (
                     <>
-                        <Button
-                            secondary
-                            small
-                            dataTest="save-working-list"
+                        <ToolbarButton
+                            variant="secondary"
+                            size="small"
+                            data-test="save-working-list"
                             disabled={locked}
                             onClick={openSaveAs}
                         >
                             {i18n.t('Save view')}
-                        </Button>
+                        </ToolbarButton>
                         <DropdownButton
                             secondary
                             small

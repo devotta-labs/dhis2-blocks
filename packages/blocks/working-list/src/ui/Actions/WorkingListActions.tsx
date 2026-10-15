@@ -1,4 +1,4 @@
-import { Button, NoticeBox } from '@dhis2/ui'
+import { NoticeBox } from '@dhis2/ui'
 import { IconMore16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
@@ -13,6 +13,7 @@ import {
 } from '../../provider/WorkingListContext'
 import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
 import { ConfigureMenu } from '../ConfigureMenu'
+import { Button } from '../primitives/Button'
 import {
     useWorkingListText,
     type WorkingListTranslate,
@@ -180,20 +181,20 @@ export const WorkingListToolbarActions = ({
                     data-testid="working-list-actions"
                 >
                     <Button
-                        secondary
-                        small
-                        dataTest="save-working-list"
+                        variant="secondary"
+                        size="small"
+                        data-test="save-working-list"
                         disabled
                     >
                         {actionCopy.controls.saveView(translate)}
                     </Button>
                     <Button
-                        secondary
-                        small
-                        icon={<IconMore16 />}
-                        dataTest="working-list-options"
+                        variant="secondary"
+                        size="small"
+                        data-test="working-list-options"
                         disabled
                     >
+                        <IconMore16 />
                         {actionCopy.controls.more(translate)}
                     </Button>
                 </div>

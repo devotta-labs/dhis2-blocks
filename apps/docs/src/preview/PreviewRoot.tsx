@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getExample } from '../examples/registry'
 import { LivePreviewHost } from './LivePreviewHost'
-import { PreviewLoading, PreviewShell } from './PreviewShell'
+import { PreviewShell, PreviewSpinner } from './PreviewShell'
 
 /**
  * Standalone preview route (`/preview/*`).
@@ -32,18 +32,25 @@ export const PreviewRoot = () => {
         )
     }
 
-    const Placeholder = example.Placeholder ?? PreviewLoading
+    const Placeholder = example.Placeholder ?? PreviewSpinner
+
+    // The shell sits inside the adapter so the adapter keeps the full viewport.
+    const placeholder = (
+        <PreviewShell>
+            <Placeholder />
+        </PreviewShell>
+    )
 
     const content = (
-        <Suspense fallback={<Placeholder />}>
-            <example.Component />
+        <Suspense fallback={placeholder}>
+            <PreviewShell>
+                <example.Component />
+            </PreviewShell>
         </Suspense>
     )
 
     return example.live ? (
-        <LivePreviewHost placeholder={<Placeholder />}>
-            {content}
-        </LivePreviewHost>
+        <LivePreviewHost placeholder={placeholder}>{content}</LivePreviewHost>
     ) : (
         content
     )

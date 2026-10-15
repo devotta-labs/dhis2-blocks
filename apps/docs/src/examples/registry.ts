@@ -14,7 +14,9 @@ import workingListProgramPickerSource from './working-list/WorkingListProgramPic
  * Every entry is one self-contained React component that exercises the public
  * block API. The same module powers the rendered preview and the Code tab:
  * `source` is the raw example file itself, so the documentation can never
- * drift from what is executed.
+ * drift from what is executed. Readers copy that source into their own
+ * projects, so examples import blocks from `@/components/<block>` (aliased to
+ * the workspace source) and leave layout chrome to the preview hosts.
  *
  * `live: true` examples render inside the shared DHIS2 adapter host and
  * require a reachable backend; `live: false` examples render standalone.

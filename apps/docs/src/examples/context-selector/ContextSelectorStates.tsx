@@ -7,16 +7,14 @@ import {
     OptionSelector,
     StageSelector,
     type Option,
-} from '@dhis2-blocks/context-selector'
+} from '@/components/context-selector'
 import { useState } from 'react'
-import { PreviewShell } from '../../preview/PreviewShell'
 
 /**
- * Every selector primitive and every shared state.
+ * Every selector and every shared state.
  *
- * The state controls below drive the block's controlled `loading`,
- * `disabled`, `readOnly`, and clearable props — the same props a host
- * application owns when a workflow becomes unavailable.
+ * The controls below toggle the `loading`, `disabled`, `readOnly`, and
+ * `onClear` props that every selector accepts.
  */
 const enrollmentOptions: readonly Option[] = [
     { value: 'active', label: 'Active enrollment · 14 Mar 2026' },
@@ -86,7 +84,7 @@ const ContextSelectorStates = () => {
         clearable ? () => updateValue(name) : undefined
 
     return (
-        <PreviewShell className="min-h-0 p-0">
+        <>
             <ContextSelector ariaLabel="Selector states">
                 <EnrollmentSelector
                     options={enrollmentOptions}
@@ -172,7 +170,7 @@ const ContextSelectorStates = () => {
                     Reset sample values
                 </button>
             </div>
-        </PreviewShell>
+        </>
     )
 }
 

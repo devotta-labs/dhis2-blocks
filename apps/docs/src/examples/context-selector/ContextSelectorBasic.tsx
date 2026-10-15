@@ -4,16 +4,14 @@ import {
     OrganisationUnitSelector,
     ProgramSelector,
     type Option,
-} from '@dhis2-blocks/context-selector'
+} from '@/components/context-selector'
 import { useState } from 'react'
-import { PreviewShell } from '../../preview/PreviewShell'
 
 /**
- * Registration context with controlled sample data.
+ * Registration context with sample data.
  *
- * The Context Selector block is presentational: the host owns every option,
- * committed value, and open state. No DHIS2 connection is needed for this
- * example — that is why it also renders when offline or signed out.
+ * Your app owns every option, selected value, and open menu. Replace the
+ * sample programs and organisation units with data from your DHIS2 instance.
  */
 const programOptions: readonly Option[] = [
     { value: 'malaria', label: 'Malaria case registration' },
@@ -48,7 +46,7 @@ const ContextSelectorBasic = () => {
     })
 
     return (
-        <PreviewShell className="min-h-0 p-0">
+        <>
             <ContextSelector ariaLabel="Registration context">
                 <ProgramSelector
                     options={programOptions}
@@ -88,7 +86,7 @@ const ContextSelectorBasic = () => {
                     disabled={!programId && !organisationUnit}
                 />
             </ContextSelector>
-        </PreviewShell>
+        </>
     )
 }
 

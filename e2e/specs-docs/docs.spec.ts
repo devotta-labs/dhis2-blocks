@@ -77,10 +77,18 @@ test.describe('documentation catalog', () => {
         ).toBeVisible()
     })
 
-    test('documents setup, proxying, and adding examples', async ({ page }) => {
+    test('documents installation', async ({ page }) => {
         await page.goto('/getting-started')
 
-        await expect(page.getByRole('heading', { name: 'Setup' })).toBeVisible()
-        await expect(page.getByText('/dhis2').first()).toBeVisible()
+        await expect(page).toHaveURL(/\/installation$/)
+        await expect(
+            page.getByRole('heading', { name: 'Installation', exact: true })
+        ).toBeVisible()
+        await expect(
+            page.getByRole('heading', { name: 'Initialize shadcn' })
+        ).toBeVisible()
+        await expect(
+            page.getByText('add devotta-labs/dhis2-blocks/working-list').first()
+        ).toBeVisible()
     })
 })

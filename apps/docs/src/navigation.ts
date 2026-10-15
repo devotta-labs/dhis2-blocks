@@ -1,11 +1,11 @@
-interface NavigationItem {
+interface NavigationLink {
     title: string
     href: string
 }
 
 interface NavigationGroup {
     title: string
-    items: readonly NavigationItem[]
+    items: readonly NavigationLink[]
 }
 
 export const docsNavigation: readonly NavigationGroup[] = [
@@ -13,7 +13,7 @@ export const docsNavigation: readonly NavigationGroup[] = [
         title: 'Getting started',
         items: [
             { title: 'Introduction', href: '/' },
-            { title: 'Setup', href: '/getting-started' },
+            { title: 'Installation', href: '/installation' },
         ],
     },
     {

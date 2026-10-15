@@ -12,7 +12,6 @@ import {
     IconMore16,
     Pagination,
 } from '@dhis2/ui'
-import { PreviewShell } from '../../preview/PreviewShell'
 
 /**
  * Loading placeholders for the Working List examples.
@@ -154,16 +153,14 @@ const WorkingListPlaceholder = ({
 )
 
 export const WorkingListDefaultPlaceholder = () => (
-    <PreviewShell>
-        <WorkingListPlaceholder toolbarControls />
-    </PreviewShell>
+    <WorkingListPlaceholder toolbarControls />
 )
 
 export const WorkingListProgramPickerPlaceholder = () => (
-    <PreviewShell>
+    <>
         <div className="mb-4 w-full max-w-sm">
             <Bar className="block h-10 w-[218px] rounded-[3px]" />
         </div>
         <WorkingListPlaceholder toolbarControls={false} />
-    </PreviewShell>
+    </>
 )

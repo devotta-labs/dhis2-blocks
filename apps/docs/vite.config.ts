@@ -1,7 +1,6 @@
 import mdx from '@mdx-js/rollup'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import rehypeHighlight from 'rehype-highlight'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { defineConfig, loadEnv } from 'vite'
@@ -26,7 +25,6 @@ export default defineConfig(({ mode }) => {
                 ...mdx({
                     providerImportSource: '@mdx-js/react',
                     remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter],
-                    rehypePlugins: [rehypeHighlight],
                 }),
             },
             react({ include: /\.(mdx|md|jsx|js|tsx|ts)$/ }),
@@ -49,6 +47,14 @@ export default defineConfig(({ mode }) => {
             'process.env.REACT_APP_DHIS2_BASE_URL': JSON.stringify('/dhis2'),
         },
         resolve: {
+            // Examples import blocks the way an installed project does
+            // (`@/components/<block>`); here that path is the workspace source.
+            alias: [
+                {
+                    find: /^@\/components\/(context-selector|working-list)$/,
+                    replacement: '@dhis2-blocks/$1',
+                },
+            ],
             // Workspace blocks resolve to their source entry points; dedupe keeps
             // a single React runtime inside the preview host. @tanstack/react-query
             // must NOT be deduped: the DHIS2 data engine needs v4 (its useQuery

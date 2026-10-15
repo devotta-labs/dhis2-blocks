@@ -1,22 +1,21 @@
 import { useDataQuery } from '@dhis2/app-runtime'
-import { ProgramSelector, type Option } from '@dhis2-blocks/context-selector'
+import { ProgramSelector, type Option } from '@/components/context-selector'
 import {
     WorkingList,
     WorkingListTable,
     WorkingListToolbar,
     WorkingListViewSwitcher,
-} from '@dhis2-blocks/working-list'
+} from '@/components/working-list'
 import { useState } from 'react'
 import { z } from 'zod'
-import { PreviewShell } from '../../preview/PreviewShell'
 import { WorkingListProgramPickerPlaceholder } from './WorkingListPlaceholders'
 
 /**
- * Metadata-driven Working List.
+ * Working List with a program picker.
  *
- * Programs and the signed-in user's organisation units come from the live
- * API, so the example is usable on any DHIS2 instance — not only the seeded
- * demo. Changing the program remounts the list through React's `key`.
+ * Tracker programs and the signed-in user's organisation units are loaded
+ * from the API, so this works on any DHIS2 instance. `key={programId}` gives
+ * each program a fresh list.
  */
 const metadataQuery = {
     programs: {
@@ -55,18 +54,16 @@ const WorkingListProgramPicker = () => {
     const [programId, setProgramId] = useState<string | undefined>()
     const [menuOpen, setMenuOpen] = useState(false)
 
-    // Keep the preview's loading placeholder up while metadata loads.
+    // Replace with your app's loading state.
     if (loading) {
         return <WorkingListProgramPickerPlaceholder />
     }
 
     if (error) {
         return (
-            <PreviewShell>
-                <p className="text-sm text-[#a03030]">
-                    Could not load program metadata: {error.message}
-                </p>
-            </PreviewShell>
+            <p className="text-sm text-[#a03030]">
+                Could not load program metadata: {error.message}
+            </p>
         )
     }
 
@@ -74,11 +71,9 @@ const WorkingListProgramPicker = () => {
 
     if (!parsed.success) {
         return (
-            <PreviewShell>
-                <p className="text-sm text-[#a03030]">
-                    Unexpected metadata response from the server.
-                </p>
-            </PreviewShell>
+            <p className="text-sm text-[#a03030]">
+                Unexpected metadata response from the server.
+            </p>
         )
     }
 
@@ -93,11 +88,8 @@ const WorkingListProgramPicker = () => {
 
     const selectedProgramId = programId ?? options[0]?.value
 
-    // Prefer a unit the selected program is actually assigned to, not just
-    // the user's first unit — otherwise the list misses records for programs
-    // restricted to a subset of the user's units. When none of the user's
-    // units qualify (e.g. an admin holding only the root unit), fall back to
-    // the first user unit so the example still renders.
+    // Prefer one of the user's units that the program is assigned to;
+    // records only exist in units the program is assigned to.
     const selectedProgram = metadata.programs.programs.find(
         (program) => program.id === selectedProgramId
     )
@@ -110,17 +102,15 @@ const WorkingListProgramPicker = () => {
 
     const assignedUserUnits = userUnits.filter((unit) => assigned.has(unit.id))
 
-    // SELECTED org-unit mode only returns records at the chosen unit, so a
-    // root-only user (admin on the demo data) gets nothing from their own
-    // units — fall back to a unit the program is assigned to where the
-    // enrollments actually live.
+    // The list shows records in the selected unit only, so a user assigned
+    // only to the root unit falls back to one of the program's own units.
     const orgUnitId =
         assignedUserUnits[0]?.id ??
         selectedProgram?.organisationUnits[0]?.id ??
         userUnits[0]?.id
 
     return (
-        <PreviewShell>
+        <>
             <div className="mb-4 w-full max-w-sm">
                 <ProgramSelector
                     options={options}
@@ -149,7 +139,7 @@ const WorkingListProgramPicker = () => {
                     this user.
                 </p>
             )}
-        </PreviewShell>
+        </>
     )
 }
 

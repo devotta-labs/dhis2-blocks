@@ -18,6 +18,10 @@ import { useWorkingListText } from '../WorkingListText'
 const visuallyHiddenClassName =
     'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
+// Reserve the native scrollbar gutter before the columns are known.
+const tableScrollClassName =
+    'w-full min-w-0 max-w-full overflow-x-scroll [contain:layout] [overscroll-behavior-inline:contain]'
+
 export interface WorkingListTableHeaderView {
     id: string
     fieldId: string
@@ -171,7 +175,7 @@ export const WorkingListTableSkeleton = ({
         data-testid="working-list-results-skeleton"
         aria-hidden="true"
     >
-        <div className="w-full min-w-0 max-w-full overflow-x-hidden">
+        <div className={tableScrollClassName}>
             <div className="min-w-[680px]">
                 <DataTable>
                     <DataTableHead>
@@ -234,7 +238,7 @@ export const WorkingListTableView = ({
             data-testid="working-list-results"
         >
             <div
-                className="w-full min-w-0 max-w-full overflow-x-auto [contain:layout] [overscroll-behavior-inline:contain]"
+                className={tableScrollClassName}
                 data-testid="working-list-table-scroll"
             >
                 <div className="min-w-[680px]" data-testid="working-list-table">

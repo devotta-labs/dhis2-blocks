@@ -95,7 +95,7 @@ const WorkingListPlaceholder = ({
             <div className="flex min-w-0 max-w-full items-center gap-1 border-b border-[#e8edf2] px-2 py-3 [@media(max-width:560px)]:flex-col [@media(max-width:560px)]:items-stretch">
                 {toolbarControls && <ToolbarControls />}
             </div>
-            <div className="w-full min-w-0 max-w-full overflow-x-hidden">
+            <div className="w-full min-w-0 max-w-full overflow-x-scroll [contain:layout] [overscroll-behavior-inline:contain]">
                 <div className="min-w-[680px]">
                     <DataTable>
                         <DataTableHead>

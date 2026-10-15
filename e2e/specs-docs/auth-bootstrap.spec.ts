@@ -72,4 +72,49 @@ test.describe('preview authentication bootstrap', () => {
         ).toBeVisible()
         await expect(page.getByTestId('working-list-main')).toHaveCount(0)
     })
+
+    for (const failure of ['network', 'unavailable', 'unauthorized']) {
+        test(`keeps inline docs usable after a ${failure} failure and retries`, async ({
+            page,
+        }) => {
+            await page.route('**/dhis2/**', (route) => {
+                if (failure === 'network') {
+                    return route.abort('failed')
+                }
+
+                const status = failure === 'unauthorized' ? 401 : 503
+                return route.fulfill({
+                    status,
+                    contentType: 'application/json',
+                    body: JSON.stringify({ httpStatusCode: status }),
+                })
+            })
+
+            await page.goto('/blocks/working-list')
+            await expect(
+                page.getByText('Live preview unavailable.', { exact: true })
+            ).toHaveCount(2)
+            await expect(
+                page.getByRole('heading', { name: 'Please sign in' })
+            ).toHaveCount(0)
+
+            await page.getByRole('tab', { name: 'code' }).first().click()
+            await expect(page.locator('pre code').first()).toBeVisible()
+            await page.getByRole('tab', { name: 'preview' }).first().click()
+            await page.unroute('**/dhis2/**')
+            for (const surface of await page
+                .locator('.docs-preview-surface')
+                .all()) {
+                await surface
+                    .getByRole('button', { name: 'Retry preview' })
+                    .click()
+                await expect(
+                    surface.locator('[data-testid^="working-list-row-"]')
+                ).toHaveCount(10, { timeout: 30_000 })
+            }
+            await expect(
+                page.getByText('Live preview unavailable.', { exact: true })
+            ).toHaveCount(0)
+        })
+    }
 })

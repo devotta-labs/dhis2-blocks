@@ -9,6 +9,7 @@ declare module '@dhis2/app-adapter' {
         direction?: 'ltr' | 'rtl' | 'auto'
         pwaEnabled?: boolean
         plugin?: boolean
+        connectionErrorFallback?: ReactNode
         loginApp?: boolean
         children?: ReactNode
     }

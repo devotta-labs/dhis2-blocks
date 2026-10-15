@@ -45,7 +45,10 @@ export const ExampleSurface = ({
             style={{ minHeight: example.minHeight }}
         >
             {example.live ? (
-                <LivePreviewHost placeholder={<Placeholder />}>
+                <LivePreviewHost
+                    placeholder={<Placeholder />}
+                    signInUrl={`/preview/${example.slug}`}
+                >
                     {content}
                 </LivePreviewHost>
             ) : (

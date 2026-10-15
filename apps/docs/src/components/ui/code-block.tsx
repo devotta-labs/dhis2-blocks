@@ -90,15 +90,21 @@ function CodeBlockCopyButton({
     onClick,
     ...props
 }: React.ComponentProps<typeof Button> & { value: string }) {
-    // Track the copied text so a changed `value` (e.g. switching package
-    // manager) cannot leave the button claiming an uncopied value was copied.
-    // The expiry runs on `copiedValue`, not `copied`, so the confirmation dies
-    // two seconds after the copy even if `value` changed in between.
-    const [copiedValue, setCopiedValue] = React.useState<string | null>(null)
-    const copied = copiedValue === value
+    // Track the copied text plus a per-copy token: comparing text keeps a
+    // changed `value` (e.g. switching package manager) from claiming Copied,
+    // and a fresh token restarts the expiry when the same command is copied
+    // again. The timer runs on `copiedValue`, not `copied`, so the
+    // confirmation dies two seconds after the copy even if `value` changed
+    // in between.
+    const [copiedValue, setCopiedValue] = React.useState<{
+        text: string
+        token: number
+    } | null>(null)
+    const copied = copiedValue?.text === value
+    const copyToken = React.useRef(0)
 
     React.useEffect(() => {
-        if (copiedValue === null) {
+        if (!copiedValue) {
             return
         }
 
@@ -124,7 +130,13 @@ function CodeBlockCopyButton({
                     }
                     navigator.clipboard
                         .writeText(value)
-                        .then(() => setCopiedValue(value))
+                        .then(() => {
+                            copyToken.current += 1
+                            setCopiedValue({
+                                text: value,
+                                token: copyToken.current,
+                            })
+                        })
                         .catch(() => {})
                 }}
                 {...props}

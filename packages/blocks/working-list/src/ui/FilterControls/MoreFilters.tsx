@@ -82,6 +82,7 @@ export const MoreFilters = ({
                         <Button
                             variant="secondary"
                             size="sm"
+                            className="h-8"
                             data-test={`more-filters-${scope}`}
                             data-testid={`more-filters-${scope}`}
                         />

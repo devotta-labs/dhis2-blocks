@@ -72,6 +72,7 @@ export const ConfigureMenu = ({
                                 <Button
                                     variant="secondary"
                                     size="sm"
+                                    className="h-8"
                                     data-test="save-working-list"
                                 />
                             }
@@ -105,6 +106,7 @@ export const ConfigureMenu = ({
                         <Button
                             variant="secondary"
                             size="sm"
+                            className="h-8"
                             data-test="save-working-list"
                             disabled={locked}
                             onClick={openSaveAs}
@@ -117,6 +119,7 @@ export const ConfigureMenu = ({
                                     <Button
                                         variant="secondary"
                                         size="sm"
+                                        className="h-8"
                                         data-test="working-list-options"
                                     />
                                 }

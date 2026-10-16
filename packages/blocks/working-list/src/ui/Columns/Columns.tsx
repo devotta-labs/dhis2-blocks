@@ -82,6 +82,7 @@ const ColumnsControl = () => {
             <Button
                 variant="secondary"
                 size="sm"
+                className="h-8"
                 data-test="configure-columns"
                 disabled={mutationBusy}
                 onClick={() => setDialogOpen(true)}
@@ -133,6 +134,7 @@ export const WorkingListColumnSelector = ({
                 <Button
                     variant="secondary"
                     size="sm"
+                    className="h-8"
                     data-test="configure-columns"
                     disabled
                 >

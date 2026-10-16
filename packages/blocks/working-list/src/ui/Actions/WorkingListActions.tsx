@@ -186,6 +186,7 @@ export const WorkingListToolbarActions = ({
                     <Button
                         variant="secondary"
                         size="sm"
+                        className="h-8"
                         data-test="save-working-list"
                         disabled
                     >
@@ -194,6 +195,7 @@ export const WorkingListToolbarActions = ({
                     <Button
                         variant="secondary"
                         size="sm"
+                        className="h-8"
                         data-test="working-list-options"
                         disabled
                     >

@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-07T15:21:47.237Z\n"
-"PO-Revision-Date: 2026-10-07T15:21:47.237Z\n"
+"POT-Creation-Date: 2026-10-16T12:05:43.129Z\n"
+"PO-Revision-Date: 2026-10-16T12:05:43.129Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -136,6 +136,9 @@ msgstr "Could not load more organisation units"
 msgid "Show more"
 msgstr "Show more"
 
+msgid "A network error stopped the request. Check the connection and try again."
+msgstr "A network error stopped the request. Check the connection and try again."
+
 msgid "A required value is missing"
 msgstr "A required value is missing"
 
@@ -197,6 +200,13 @@ msgid "Cancelled enrollments"
 msgstr "Cancelled enrollments"
 
 msgid ""
+"Changing the saved view will discard the unsaved changes to this working "
+"list."
+msgstr ""
+"Changing the saved view will discard the unsaved changes to this working "
+"list."
+
+msgid ""
 "Choose visible columns and arrange their display order. Active filters are "
 "not affected."
 msgstr ""
@@ -256,8 +266,23 @@ msgstr "Configure"
 msgid "Configure columns"
 msgstr "Configure columns"
 
+msgid "Configure table columns"
+msgstr "Configure table columns"
+
 msgid "Contains"
 msgstr "Contains"
+
+msgid "Could not change the working list"
+msgstr "Could not change the working list"
+
+msgid "Could not download data"
+msgstr "Could not download data"
+
+msgid "Could not load the working list"
+msgstr "Could not load the working list"
+
+msgid "Could not refresh saved views"
+msgstr "Could not refresh saved views"
 
 msgid "Create new view…"
 msgstr "Create new view…"
@@ -315,6 +340,9 @@ msgstr "Delete view?"
 
 msgid "Delete working list?"
 msgstr "Delete working list?"
+
+msgid "Discard changes"
+msgstr "Discard changes"
 
 msgid "Done"
 msgstr "Done"
@@ -421,6 +449,12 @@ msgstr "Loading organisation units…"
 msgid "Loading the selected working list…"
 msgstr "Loading the selected working list…"
 
+msgid "Loading the working list…"
+msgstr "Loading the working list…"
+
+msgid "Loading working list results…"
+msgstr "Loading working list results…"
+
 msgid "Match"
 msgstr "Match"
 
@@ -526,6 +560,15 @@ msgstr "Rename"
 msgid "Rename working list"
 msgstr "Rename working list"
 
+msgid "Repair this working list before saving changes to it."
+msgstr "Repair this working list before saving changes to it."
+
+msgid "Repairing this saved list…"
+msgstr "Repairing this saved list…"
+
+msgid "Repairing…"
+msgstr "Repairing…"
+
 msgid "Report date"
 msgstr "Report date"
 
@@ -556,6 +599,9 @@ msgstr "Save"
 msgid "Save changes to this view"
 msgstr "Save changes to this view"
 
+msgid "Save column configuration"
+msgstr "Save column configuration"
+
 msgid ""
 "Save this mode change as a new working list instead of replacing a "
 "different resource type."
@@ -578,6 +624,9 @@ msgstr "Save view"
 msgid "Saved views in this program"
 msgstr "Saved views in this program"
 
+msgid "Saved working lists could not be loaded. Check the connection and try again."
+msgstr "Saved working lists could not be loaded. Check the connection and try again."
+
 msgid "Scheduled"
 msgstr "Scheduled"
 
@@ -589,6 +638,12 @@ msgstr "Search users"
 
 msgid "Search columns"
 msgstr "Search columns"
+
+msgid "Select a saved working list before updating it."
+msgstr "Select a saved working list before updating it."
+
+msgid "Selected columns"
+msgstr "Selected columns"
 
 msgid "Selected users"
 msgstr "Selected users"
@@ -643,6 +698,9 @@ msgstr "Starts with"
 msgid "System field"
 msgstr "System field"
 
+msgid "The current working list configuration cannot be saved."
+msgstr "The current working list configuration cannot be saved."
+
 msgid "The filter value is invalid. Review the value and try again."
 msgstr "The filter value is invalid. Review the value and try again."
 
@@ -653,11 +711,46 @@ msgstr ""
 "The list was created, but the server has not returned it yet. No records "
 "will be queried until it is available."
 
+msgid "The results are still loading. Try the download again once they have loaded."
+msgstr "The results are still loading. Try the download again once they have loaded."
+
 msgid "The saved working list could not be reloaded"
 msgstr "The saved working list could not be reloaded"
 
+msgid "The saved working list could not be repaired."
+msgstr "The saved working list could not be repaired."
+
+msgid "The selected working list could not be applied."
+msgstr "The selected working list could not be applied."
+
+msgid ""
+"The selected working list may no longer exist, or you may no longer have "
+"access. No records will be queried while it is selected."
+msgstr ""
+"The selected working list may no longer exist, or you may no longer have "
+"access. No records will be queried while it is selected."
+
+msgid "The server returned an unexpected response."
+msgstr "The server returned an unexpected response."
+
 msgid "The value has an unsupported type"
 msgstr "The value has an unsupported type"
+
+msgid "The working list could not be found. It may have been deleted."
+msgstr "The working list could not be found. It may have been deleted."
+
+msgid "The working list could not be initialized for this program."
+msgstr "The working list could not be initialized for this program."
+
+msgid ""
+"The working list results could not be loaded. Check the connection and try "
+"again."
+msgstr ""
+"The working list results could not be loaded. Check the connection and try "
+"again."
+
+msgid "This action is unavailable while offline."
+msgstr "This action is unavailable while offline."
 
 msgid "This month"
 msgstr "This month"
@@ -673,6 +766,9 @@ msgstr "This view is unavailable"
 
 msgid "This week"
 msgstr "This week"
+
+msgid "This working list is unavailable"
+msgstr "This working list is unavailable"
 
 msgid "This year"
 msgstr "This year"
@@ -708,6 +804,9 @@ msgstr "Unassigned"
 msgid "Unavailable"
 msgstr "Unavailable"
 
+msgid "Unknown"
+msgstr "Unknown"
+
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
@@ -720,8 +819,14 @@ msgstr "Update"
 msgid "Update saved list"
 msgstr "Update saved list"
 
+msgid "Updating working list results…"
+msgstr "Updating working list results…"
+
 msgid "URL contains an invalid HTTP(S) URL"
 msgstr "URL contains an invalid HTTP(S) URL"
+
+msgid "Use the default working list"
+msgstr "Use the default working list"
 
 msgid "Users"
 msgstr "Users"
@@ -743,6 +848,9 @@ msgstr "Visited"
 
 msgid "Working list actions"
 msgstr "Working list actions"
+
+msgid "Working list controls"
+msgstr "Working list controls"
 
 msgid "Working list results"
 msgstr "Working list results"
@@ -779,6 +887,16 @@ msgstr "{{valueType}} requires an integer"
 
 msgid "“{{name}}” will be permanently deleted."
 msgstr "“{{name}}” will be permanently deleted."
+
+msgid ""
+"You are offline. Cached results remain available; server actions are "
+"disabled."
+msgstr ""
+"You are offline. Cached results remain available; server actions are "
+"disabled."
+
+msgid "You do not have permission to make this change."
+msgstr "You do not have permission to make this change."
 
 msgctxt "NEGATIVE requires a value less than zero"
 msgid "INTEGER"

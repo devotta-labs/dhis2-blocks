@@ -5,6 +5,9 @@ import i18n from '@dhis2/d2-i18n'
  * literal `i18n.t` calls. This function is intentionally never invoked.
  */
 export const workingListTranslationCatalog = () => [
+    i18n.t(
+        'A network error stopped the request. Check the connection and try again.'
+    ),
     i18n.t('A required value is missing'),
     i18n.t(
         'A required part of this list is no longer available. The program metadata may have changed, or you may no longer have access. Select another list, or use the list menu for more options.'
@@ -25,6 +28,9 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Can only filter using one program stage.'),
     i18n.t('Cancelled'),
     i18n.t('Cancelled enrollments'),
+    i18n.t(
+        'Changing the saved view will discard the unsaved changes to this working list.'
+    ),
     i18n.t(
         'Choose visible columns and arrange their display order. Active filters are not affected.'
     ),
@@ -47,7 +53,12 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Completed enrollments'),
     i18n.t('Configure'),
     i18n.t('Configure columns'),
+    i18n.t('Configure table columns'),
     i18n.t('Contains'),
+    i18n.t('Could not change the working list'),
+    i18n.t('Could not download data'),
+    i18n.t('Could not load the working list'),
+    i18n.t('Could not refresh saved views'),
     i18n.t('Create new view…'),
     i18n.t('COORDINATE is not valid JSON'),
     i18n.t('COORDINATE requires [longitude, latitude]'),
@@ -67,6 +78,8 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Delete view'),
     i18n.t('Delete view?'),
     i18n.t('Delete working list?'),
+    i18n.t('Discard changes'),
+    i18n.t('Discard unsaved changes?'),
     i18n.t('Done'),
     i18n.t('Download data…'),
     i18n.t('EMAIL contains an invalid email address'),
@@ -105,6 +118,8 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Less than'),
     i18n.t('Loading organisation units…'),
     i18n.t('Loading the selected working list…'),
+    i18n.t('Loading the working list…'),
+    i18n.t('Loading working list results…'),
     i18n.t('Match'),
     i18n.t('Manage sharing'),
     i18n.t('Maximum'),
@@ -141,6 +156,9 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Reordering {{column}} cancelled.'),
     i18n.t('Rename'),
     i18n.t('Rename working list'),
+    i18n.t('Repair this working list before saving changes to it.'),
+    i18n.t('Repairing this saved list…'),
+    i18n.t('Repairing…'),
     i18n.t('Report date'),
     i18n.t('Repair'),
     i18n.t('Repair this saved list?'),
@@ -151,6 +169,7 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Row has {{count}} data quality issues'),
     i18n.t('Save'),
     i18n.t('Save changes to this view'),
+    i18n.t('Save column configuration'),
     i18n.t(
         'Save this mode change as a new working list instead of replacing a different resource type.'
     ),
@@ -159,10 +178,15 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Save as new working list'),
     i18n.t('Save view'),
     i18n.t('Saved views in this program'),
+    i18n.t(
+        'Saved working lists could not be loaded. Check the connection and try again.'
+    ),
     i18n.t('Scheduled'),
     i18n.t('Scheduled date'),
     i18n.t('Search users'),
     i18n.t('Search columns'),
+    i18n.t('Select a saved working list before updating it.'),
+    i18n.t('Selected columns'),
     i18n.t('Selected users'),
     i18n.t('Select at least one visible column'),
     i18n.t('Sharing and access'),
@@ -182,17 +206,34 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Start buffer'),
     i18n.t('Starts with'),
     i18n.t('System field'),
+    i18n.t('The current working list configuration cannot be saved.'),
     i18n.t('The filter value is invalid. Review the value and try again.'),
     i18n.t(
         'The list was created, but the server has not returned it yet. No records will be queried until it is available.'
     ),
+    i18n.t(
+        'The results are still loading. Try the download again once they have loaded.'
+    ),
     i18n.t('The saved working list could not be reloaded'),
+    i18n.t('The saved working list could not be repaired.'),
+    i18n.t('The selected working list could not be applied.'),
+    i18n.t(
+        'The selected working list may no longer exist, or you may no longer have access. No records will be queried while it is selected.'
+    ),
+    i18n.t('The server returned an unexpected response.'),
     i18n.t('The value has an unsupported type'),
+    i18n.t('The working list could not be found. It may have been deleted.'),
+    i18n.t('The working list could not be initialized for this program.'),
+    i18n.t(
+        'The working list results could not be loaded. Check the connection and try again.'
+    ),
+    i18n.t('This action is unavailable while offline.'),
     i18n.t('This month'),
     i18n.t('This saved list is unavailable'),
     i18n.t('This saved list has unavailable settings'),
     i18n.t('This view is unavailable'),
     i18n.t('This week'),
+    i18n.t('This working list is unavailable'),
     i18n.t('This year'),
     i18n.t('TIME requires a 24-hour time, optionally with seconds'),
     i18n.t('To'),
@@ -208,11 +249,14 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Unassigned'),
     i18n.t('UNIT_INTERVAL requires a value from zero to one'),
     i18n.t('Unavailable'),
+    i18n.t('Unknown'),
     i18n.t('Unsaved changes'),
     i18n.t('Unsupported DHIS2 version'),
     i18n.t('Update'),
     i18n.t('Update saved list'),
+    i18n.t('Updating working list results…'),
     i18n.t('URL contains an invalid HTTP(S) URL'),
+    i18n.t('Use the default working list'),
     i18n.t('Users'),
     i18n.t('Value'),
     i18n.t('Values'),
@@ -220,6 +264,7 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Visible columns'),
     i18n.t('Visited'),
     i18n.t('Working list actions'),
+    i18n.t('Working list controls'),
     i18n.t('Working list results'),
     i18n.t('Working list views'),
     i18n.t('Working lists require DHIS2 41 or newer.'),
@@ -232,4 +277,8 @@ export const workingListTranslationCatalog = () => [
     i18n.t('{{valueType}} requires a valid YYYY-MM-DD date'),
     i18n.t('{{valueType}} requires an integer'),
     i18n.t('“{{name}}” will be permanently deleted.'),
+    i18n.t(
+        'You are offline. Cached results remain available; server actions are disabled.'
+    ),
+    i18n.t('You do not have permission to make this change.'),
 ]

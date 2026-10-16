@@ -1,4 +1,4 @@
-import { IconWarningFilled16 } from '@dhis2/ui'
+import { IconWarningFilled16 } from '@dhis2/ui-icons'
 import {
     columnOrderingFeature,
     columnVisibilityFeature,

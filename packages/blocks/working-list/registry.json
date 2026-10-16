@@ -451,6 +451,11 @@
                     "target": "@components/working-list/ui/WorkingList/index.ts"
                 },
                 {
+                    "path": "src/ui/WorkingListTable/WorkingListPagination.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingListTable/WorkingListPagination.tsx"
+                },
+                {
                     "path": "src/ui/WorkingListTable/WorkingListTable.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/WorkingListTable/WorkingListTable.tsx"
@@ -569,6 +574,11 @@
                     "path": "src/ui/primitives/switch.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/primitives/switch.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/table.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/table.tsx"
                 },
                 {
                     "path": "src/ui/primitives/textarea.tsx",

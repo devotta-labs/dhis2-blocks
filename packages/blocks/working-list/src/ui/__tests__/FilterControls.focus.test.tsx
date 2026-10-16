@@ -1,5 +1,5 @@
 import React from 'react'
-import { page } from 'vitest/browser'
+import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { resolveWorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
@@ -230,5 +230,47 @@ describe('MoreFilters keyboard focus', () => {
                 )
             )
             .toBeNull()
+    })
+
+    it('lands on the first field and arrows on from there', async () => {
+        const second: WorkingListField = {
+            ...field,
+            id: 'inactive',
+            displayName: 'Inactive',
+        }
+        const program: TrackerProgram = {
+            id: 'Program0001',
+            displayName: 'Program',
+            programType: 'WITH_REGISTRATION',
+            programTrackedEntityAttributes: [],
+            programStages: [
+                {
+                    id: 'Stage000001',
+                    displayName: 'Visit',
+                    programStageDataElements: [],
+                },
+            ],
+        }
+        const screen = await render(
+            <WorkingListTextProvider translate={(message) => message}>
+                <MoreFilters
+                    fields={[field, second]}
+                    visibleFilterIds={[]}
+                    scope="tracked-entity"
+                    program={program}
+                    onAdd={vi.fn()}
+                />
+            </WorkingListTextProvider>
+        )
+
+        screen.getByRole('button', { name: 'Filter' }).element().focus()
+        await userEvent.keyboard('{Enter}')
+        await expect
+            .element(page.getByRole('menuitem', { name: 'Follow up' }))
+            .toHaveFocus()
+        await userEvent.keyboard('{ArrowDown}')
+        await expect
+            .element(page.getByRole('menuitem', { name: 'Inactive' }))
+            .toHaveFocus()
     })
 })

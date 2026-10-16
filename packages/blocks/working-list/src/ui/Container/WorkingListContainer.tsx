@@ -1,6 +1,5 @@
-import { Alert, AlertDescription, AlertTitle } from '../primitives/alert'
+import { ErrorAlert } from '../primitives/alert'
 import { Spinner } from '../primitives/spinner'
-import { IconErrorFilled24 } from '@dhis2/ui-icons'
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { useWorkingListMeta } from '../../provider/WorkingListContext'
 import { useWorkingListText } from '../WorkingListText'
@@ -42,17 +41,13 @@ export const WorkingListContainer = ({
             )}
             {lifecycle.status === 'error' && (
                 <div className="p-4" data-testid="working-list-lifecycle-error">
-                    <Alert variant="destructive">
-                        <IconErrorFilled24 />
-                        <AlertTitle>
-                            {translate('Could not load the working list')}
-                        </AlertTitle>
-                        <AlertDescription>
-                            {translate(
-                                'The working list could not be initialized for this program.'
-                            )}
-                        </AlertDescription>
-                    </Alert>
+                    <ErrorAlert
+                        title={translate('Could not load the working list')}
+                    >
+                        {translate(
+                            'The working list could not be initialized for this program.'
+                        )}
+                    </ErrorAlert>
                 </div>
             )}
             <article

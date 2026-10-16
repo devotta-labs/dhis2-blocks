@@ -1,3 +1,4 @@
+import { IconErrorFilled24 } from '@dhis2/ui-icons'
 import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 import { cn } from './cn'
@@ -76,4 +77,21 @@ function AlertAction({ className, ...props }: React.ComponentProps<'div'>) {
     )
 }
 
-export { Alert, AlertTitle, AlertDescription, AlertAction }
+/** A destructive Alert with the @dhis2/ui error icon: the NoticeBox `error` stand-in. */
+function ErrorAlert({
+    title,
+    children,
+    ...props
+}: Omit<React.ComponentProps<'div'>, 'title'> & { title: React.ReactNode }) {
+    return (
+        <Alert variant="destructive" {...props}>
+            <IconErrorFilled24 />
+            <AlertTitle>{title}</AlertTitle>
+            {children !== undefined && (
+                <AlertDescription>{children}</AlertDescription>
+            )}
+        </Alert>
+    )
+}
+
+export { Alert, AlertTitle, AlertDescription, AlertAction, ErrorAlert }

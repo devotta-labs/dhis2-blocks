@@ -131,6 +131,13 @@ export const ComboboxField = ({
             <ComboboxEmpty>
                 {loading ? <Spinner className="size-4" /> : noMatchText}
             </ComboboxEmpty>
+            {/* A new search keeps the previous results listed until it
+                resolves, so show that it is still loading above them. */}
+            {loading && items.length > 0 && (
+                <div className="flex justify-center px-6 py-2">
+                    <Spinner className="size-4" />
+                </div>
+            )}
             <ComboboxList>
                 {(value: string) => (
                     <ComboboxItem

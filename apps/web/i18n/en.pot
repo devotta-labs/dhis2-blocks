@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-07T15:21:47.237Z\n"
-"PO-Revision-Date: 2026-10-07T15:21:47.237Z\n"
+"POT-Creation-Date: 2026-10-16T12:02:02.871Z\n"
+"PO-Revision-Date: 2026-10-16T12:02:02.872Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -54,6 +54,9 @@ msgstr "Clear the selected program or choose another organisation unit."
 msgid "Choose another organisation unit"
 msgstr "Choose another organisation unit"
 
+msgid "Close"
+msgstr "Close"
+
 msgid "Event selected"
 msgstr "Event selected"
 
@@ -65,9 +68,6 @@ msgstr "Event ID"
 
 msgid "Tracked entity ID"
 msgstr "Tracked entity ID"
-
-msgid "Close"
-msgstr "Close"
 
 msgid "Working list context"
 msgstr "Working list context"
@@ -228,6 +228,21 @@ msgstr "Clear {{filter}} filter"
 
 msgid "Column"
 msgstr "Column"
+
+msgid "Items per page"
+msgstr "Items per page"
+
+msgid "Next"
+msgstr "Next"
+
+msgid "Pagination"
+msgstr "Pagination"
+
+msgid "Previous"
+msgstr "Previous"
+
+msgid "Remove {{label}}"
+msgstr "Remove {{label}}"
 
 msgid "{{column}} dropped."
 msgstr "{{column}} dropped."
@@ -758,6 +773,9 @@ msgstr "Working lists require a tracker program with registration."
 
 msgid "Yes"
 msgstr "Yes"
+
+msgid "{{count}} selected"
+msgstr "{{count}} selected"
 
 msgid "{{filterName}}{{escape}}"
 msgstr "{{filterName}}{{escape}}"

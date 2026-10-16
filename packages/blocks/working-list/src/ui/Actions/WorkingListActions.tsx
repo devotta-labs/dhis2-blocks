@@ -1,7 +1,7 @@
-import { Alert, AlertDescription, AlertTitle } from '../primitives/alert'
+import { ErrorAlert } from '../primitives/alert'
 import { Button } from '../primitives/button'
 import { DropdownMenuTriggerArrow } from '../primitives/dropdown-menu'
-import { IconErrorFilled24, IconMore16 } from '@dhis2/ui-icons'
+import { IconMore16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
 import type {
@@ -132,24 +132,18 @@ const ActionsControl = () => {
             />
             {saveError && (
                 <div data-testid="working-list-save-error">
-                    <Alert variant="destructive">
-                        <IconErrorFilled24 />
-                        <AlertTitle>
-                            {actionCopy.noticeTitles.save(translate)}
-                        </AlertTitle>
-                        <AlertDescription>{saveError}</AlertDescription>
-                    </Alert>
+                    <ErrorAlert title={actionCopy.noticeTitles.save(translate)}>
+                        {saveError}
+                    </ErrorAlert>
                 </div>
             )}
             {downloadError && (
                 <div data-testid="working-list-download-error">
-                    <Alert variant="destructive">
-                        <IconErrorFilled24 />
-                        <AlertTitle>
-                            {actionCopy.noticeTitles.download(translate)}
-                        </AlertTitle>
-                        <AlertDescription>{downloadError}</AlertDescription>
-                    </Alert>
+                    <ErrorAlert
+                        title={actionCopy.noticeTitles.download(translate)}
+                    >
+                        {downloadError}
+                    </ErrorAlert>
                 </div>
             )}
         </div>

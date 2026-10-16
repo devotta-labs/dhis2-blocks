@@ -35,9 +35,6 @@ import {
     type WorkingListTableViewModel,
 } from './WorkingListTableView'
 
-const visuallyHiddenClassName =
-    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
-
 const tableFeatureSet = tableFeatures({
     columnOrderingFeature,
     columnVisibilityFeature,
@@ -239,9 +236,7 @@ export const WorkingListDataTable = ({
             columnHelper.display({
                 id: DATA_QUALITY_COLUMN_ID,
                 header: () => (
-                    <span className={visuallyHiddenClassName}>
-                        {translate('Data quality')}
-                    </span>
+                    <span className="sr-only">{translate('Data quality')}</span>
                 ),
                 enableSorting: false,
                 cell: (context) =>

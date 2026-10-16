@@ -1,5 +1,4 @@
-import { Alert, AlertDescription, AlertTitle } from '../../../primitives/alert'
-import { IconErrorFilled24 } from '@dhis2/ui-icons'
+import { ErrorAlert } from '../../../primitives/alert'
 import { SharingDialog } from '@dhis2/ui'
 import React, { type ComponentProps, type ComponentType } from 'react'
 import {
@@ -40,13 +39,9 @@ export const WorkingListSharingDialog = ({
     return (
         <>
             {error && (
-                <Alert variant="destructive">
-                    <IconErrorFilled24 />
-                    <AlertTitle>
-                        {i18n.t('Could not update sharing')}
-                    </AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
+                <ErrorAlert title={i18n.t('Could not update sharing')}>
+                    {error}
+                </ErrorAlert>
             )}
             {list && (
                 <SharingDialogCompat

@@ -1,4 +1,4 @@
-import { Alert, AlertDescription, AlertTitle } from '../primitives/alert'
+import { ErrorAlert } from '../primitives/alert'
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -9,7 +9,6 @@ import {
     AlertDialogTitle,
 } from '../primitives/alert-dialog'
 import { Button } from '../primitives/button'
-import { IconErrorFilled24 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState } from 'react'
 import type { NormalizedSavedWorkingList } from '../../api/savedLists'
@@ -156,28 +155,24 @@ export const WorkingListSavedViews = () => {
             )}
             {savedViews.status === 'error' && (
                 <div className="p-4" data-testid="saved-working-lists-error">
-                    <Alert variant="destructive">
-                        <IconErrorFilled24 />
-                        <AlertTitle>
-                            {translate('Could not load saved working lists')}
-                        </AlertTitle>
-                        <AlertDescription>
-                            <p>
-                                {translate(
-                                    'Saved working lists could not be loaded. Check the connection and try again.'
-                                )}
-                            </p>
-                            <Button
-                                variant="outline"
-                                data-test="retry-saved-working-lists"
-                                onClick={() =>
-                                    void privateActions.retrySavedViews()
-                                }
-                            >
-                                {translate('Try again')}
-                            </Button>
-                        </AlertDescription>
-                    </Alert>
+                    <ErrorAlert
+                        title={translate('Could not load saved working lists')}
+                    >
+                        <p>
+                            {translate(
+                                'Saved working lists could not be loaded. Check the connection and try again.'
+                            )}
+                        </p>
+                        <Button
+                            variant="outline"
+                            data-test="retry-saved-working-lists"
+                            onClick={() =>
+                                void privateActions.retrySavedViews()
+                            }
+                        >
+                            {translate('Try again')}
+                        </Button>
+                    </ErrorAlert>
                 </div>
             )}
             {savedViews.status === 'ready' && (
@@ -196,15 +191,11 @@ export const WorkingListSavedViews = () => {
 
             {actionError && (
                 <div data-testid="working-list-view-action-error">
-                    <Alert variant="destructive">
-                        <IconErrorFilled24 />
-                        <AlertTitle>
-                            {translate('Could not change the working list')}
-                        </AlertTitle>
-                        <AlertDescription>
-                            {actionErrorCopy(actionError, translate)}
-                        </AlertDescription>
-                    </Alert>
+                    <ErrorAlert
+                        title={translate('Could not change the working list')}
+                    >
+                        {actionErrorCopy(actionError, translate)}
+                    </ErrorAlert>
                 </div>
             )}
 

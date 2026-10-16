@@ -22,9 +22,6 @@ import { toggleVariants } from '../primitives/toggle'
 import { ToggleGroup, ToggleGroupItem } from '../primitives/toggle-group'
 import { useWorkingListText } from '../WorkingListText'
 
-const visuallyHiddenClassName =
-    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
-
 interface SavedListBarProps {
     lists: readonly WorkingListSavedView[]
     selectedId?: string
@@ -128,9 +125,7 @@ export const SavedListBar = ({
                                                 *
                                             </span>
                                             <span
-                                                className={
-                                                    visuallyHiddenClassName
-                                                }
+                                                className="sr-only"
                                                 data-testid="working-list-dirty-label"
                                             >
                                                 {i18n.t('Unsaved changes')}

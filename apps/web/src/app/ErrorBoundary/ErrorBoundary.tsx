@@ -1,10 +1,4 @@
-import {
-    Alert,
-    AlertDescription,
-    AlertTitle,
-    Button,
-} from '@dhis2-blocks/working-list/primitives'
-import { IconErrorFilled24 } from '@dhis2/ui-icons'
+import { ErrorAlert, Button } from '@dhis2-blocks/working-list/primitives'
 import React, { Component, type ErrorInfo, type ReactNode } from 'react'
 import i18n from '../../i18n'
 
@@ -40,30 +34,26 @@ export class ErrorBoundary extends Component<
 
         return (
             <main className="grid min-h-[min(100vh,640px)] w-full min-w-0 max-w-full place-items-center p-6">
-                <Alert variant="destructive">
-                    <IconErrorFilled24 />
-                    <AlertTitle>
-                        {i18n.t('The working list could not be loaded')}
-                    </AlertTitle>
-                    <AlertDescription>
-                        <p>
-                            {i18n.t(
-                                'Application data did not match the expected contract.'
-                            )}
-                        </p>
-                        <details className="max-h-60 max-w-[min(680px,calc(100vw-80px))] overflow-auto whitespace-pre-wrap rounded-[3px] border border-[#ffcdd2] bg-[#fff5f5] p-3 text-[#5d1f1f] [font:12px/1.5_ui-monospace,SFMono-Regular,Menlo,monospace]">
-                            <summary>{i18n.t('Technical details')}</summary>
-                            <pre>{error.message}</pre>
-                        </details>
-                        <Button
-                            variant="outline"
-                            className="justify-self-center"
-                            onClick={() => window.location.reload()}
-                        >
-                            {i18n.t('Reload application')}
-                        </Button>
-                    </AlertDescription>
-                </Alert>
+                <ErrorAlert
+                    title={i18n.t('The working list could not be loaded')}
+                >
+                    <p>
+                        {i18n.t(
+                            'Application data did not match the expected contract.'
+                        )}
+                    </p>
+                    <details className="max-h-60 max-w-[min(680px,calc(100vw-80px))] overflow-auto whitespace-pre-wrap rounded-[3px] border border-[#ffcdd2] bg-[#fff5f5] p-3 text-[#5d1f1f] [font:12px/1.5_ui-monospace,SFMono-Regular,Menlo,monospace]">
+                        <summary>{i18n.t('Technical details')}</summary>
+                        <pre>{error.message}</pre>
+                    </details>
+                    <Button
+                        variant="outline"
+                        className="justify-self-center"
+                        onClick={() => window.location.reload()}
+                    >
+                        {i18n.t('Reload application')}
+                    </Button>
+                </ErrorAlert>
             </main>
         )
     }

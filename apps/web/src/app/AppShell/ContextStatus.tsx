@@ -1,11 +1,8 @@
 import {
-    Alert,
-    AlertDescription,
-    AlertTitle,
+    ErrorAlert,
     Button,
     Spinner,
 } from '@dhis2-blocks/working-list/primitives'
-import { IconErrorFilled24 } from '@dhis2/ui-icons'
 import React from 'react'
 import i18n from '../../i18n'
 
@@ -52,22 +49,14 @@ export const ContextStatus = ({
                 className={contextStateClassName}
                 data-testid="app-context-error"
             >
-                <Alert variant="destructive">
-                    <IconErrorFilled24 />
-                    <AlertTitle>
-                        {i18n.t('Could not load app context')}
-                    </AlertTitle>
-                    <AlertDescription>
-                        <p>
-                            {error instanceof Error
-                                ? error.message
-                                : String(error)}
-                        </p>
-                        <Button variant="outline" onClick={onRetry}>
-                            {i18n.t('Try again')}
-                        </Button>
-                    </AlertDescription>
-                </Alert>
+                <ErrorAlert title={i18n.t('Could not load app context')}>
+                    <p>
+                        {error instanceof Error ? error.message : String(error)}
+                    </p>
+                    <Button variant="outline" onClick={onRetry}>
+                        {i18n.t('Try again')}
+                    </Button>
+                </ErrorAlert>
             </main>
         )
     }
@@ -122,30 +111,26 @@ export const ContextStatus = ({
                 className={contextStateClassName}
                 data-testid="invalid-program-context"
             >
-                <Alert variant="destructive">
-                    <IconErrorFilled24 />
-                    <AlertTitle>
+                <ErrorAlert
+                    title={i18n.t(
+                        'Selected program is invalid for selected organisation unit'
+                    )}
+                >
+                    <p>
                         {i18n.t(
-                            'Selected program is invalid for selected organisation unit'
+                            'Clear the selected program or choose another organisation unit.'
                         )}
-                    </AlertTitle>
-                    <AlertDescription>
-                        <p>
-                            {i18n.t(
-                                'Clear the selected program or choose another organisation unit.'
-                            )}
-                        </p>
-                        {canChooseOrganisationUnit ? (
-                            <Button
-                                variant="outline"
-                                data-test="replace-invalid-org-unit"
-                                onClick={onChooseOrganisationUnit}
-                            >
-                                {i18n.t('Choose another organisation unit')}
-                            </Button>
-                        ) : null}
-                    </AlertDescription>
-                </Alert>
+                    </p>
+                    {canChooseOrganisationUnit ? (
+                        <Button
+                            variant="outline"
+                            data-test="replace-invalid-org-unit"
+                            onClick={onChooseOrganisationUnit}
+                        >
+                            {i18n.t('Choose another organisation unit')}
+                        </Button>
+                    ) : null}
+                </ErrorAlert>
             </main>
         )
     }

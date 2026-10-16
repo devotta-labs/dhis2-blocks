@@ -1,6 +1,6 @@
 import { CalendarInput } from '@dhis2/ui'
 import { IconChevronDown16 } from '@dhis2/ui-icons'
-import React, { createContext, useContext, useRef } from 'react'
+import React, { createContext, useContext, useEffect, useRef } from 'react'
 import { cn } from '../primitives/cn'
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover'
 import { SelectClearIcon, selectTriggerVariants } from '../primitives/select'
@@ -81,6 +81,13 @@ export const FilterChip = ({
     children: React.ReactNode
 }) => {
     const anchor = useRef<HTMLDivElement>(null)
+    // Disabling closes the editor for good, so it doesn't reappear by itself
+    // once the chip is enabled again.
+    useEffect(() => {
+        if (disabled && open) {
+            onOpenChange(false)
+        }
+    }, [disabled, open, onOpenChange])
     return (
         <Popover
             open={open && !disabled}

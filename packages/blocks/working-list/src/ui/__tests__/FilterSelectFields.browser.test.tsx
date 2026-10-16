@@ -35,12 +35,16 @@ const options = [
 
 const ControlledCombobox = ({
     multiple,
+    initialValues = [],
+    loading,
     onSearchChange,
 }: {
     multiple?: boolean
+    initialValues?: string[]
+    loading?: boolean
     onSearchChange?: (search: string) => void
 }) => {
-    const [values, setValues] = useState<string[]>([])
+    const [values, setValues] = useState<string[]>(initialValues)
     return (
         <WorkingListTextProvider translate={(message) => message}>
             <ComboboxField
@@ -50,6 +54,7 @@ const ControlledCombobox = ({
                 options={options}
                 filterPlaceholder="Search values"
                 noMatchText="No values match"
+                loading={loading}
                 onSearchChange={onSearchChange}
                 onChange={setValues}
             />
@@ -125,6 +130,33 @@ describe('filter select fields', () => {
         await expect
             .element(screen.getByRole('combobox', { name: 'Values' }))
             .toHaveTextContent('Inconclusive')
+    })
+
+    it('lists every option when a single-value combobox reopens with a value', async () => {
+        const screen = await render(
+            <ControlledCombobox initialValues={['INC']} />
+        )
+
+        await screen.getByRole('combobox', { name: 'Values' }).click()
+        for (const name of ['Positive', 'Negative', 'Inconclusive']) {
+            await expect
+                .element(page.getByRole('option', { name }))
+                .toBeVisible()
+        }
+    })
+
+    it('shows loading above results that are still listed', async () => {
+        const screen = await render(
+            <ControlledCombobox multiple loading onSearchChange={vi.fn()} />
+        )
+
+        await screen.getByRole('combobox', { name: 'Values' }).click()
+        await expect
+            .element(page.getByRole('option', { name: 'Positive' }))
+            .toBeVisible()
+        await expect
+            .element(page.getByRole('status', { name: 'Loading' }))
+            .toBeVisible()
     })
 
     it('hands the search to the caller when it filters remotely', async () => {

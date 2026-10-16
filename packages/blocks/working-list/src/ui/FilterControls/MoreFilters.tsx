@@ -1,6 +1,6 @@
 import { Button } from '../primitives/button'
 import { IconFilter16 } from '@dhis2/ui-icons'
-import React, { useId, useMemo, useState } from 'react'
+import React, { useEffect, useId, useMemo, useState } from 'react'
 import type { TrackerProgram } from '../../api/schemas'
 import type { WorkingListField } from '../../domain/model'
 import {
@@ -47,6 +47,13 @@ export const MoreFilters = ({
     const i18n = { t: translate }
     const lockMessageId = useId()
     const [open, setOpen] = useState(false)
+    // Disabling closes the menu for good, so it doesn't reappear by itself
+    // once the button is enabled again.
+    useEffect(() => {
+        if (disabled) {
+            setOpen(false)
+        }
+    }, [disabled])
     const available = fields.filter(
         (field) => field.filterable && !visibleFilterIds.includes(field.id)
     )

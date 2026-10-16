@@ -1,4 +1,4 @@
-export { Alert, AlertDescription, AlertTitle } from './alert'
+export { Alert, AlertDescription, AlertTitle, ErrorAlert } from './alert'
 export {
     AlertDialog,
     AlertDialogAction,

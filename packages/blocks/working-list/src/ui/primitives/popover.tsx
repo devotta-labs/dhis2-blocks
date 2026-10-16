@@ -3,6 +3,7 @@
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover'
 import * as React from 'react'
 import { cn } from './cn'
+import { dhis2PortalRoot } from './portal-root'
 
 function Popover({ ...props }: PopoverPrimitive.Root.Props) {
     return <PopoverPrimitive.Root data-slot="popover" {...props} />
@@ -20,13 +21,6 @@ const PopoverTrigger = React.forwardRef<
     />
 ))
 PopoverTrigger.displayName = 'PopoverTrigger'
-
-// @dhis2/ui popups (Select, CalendarInput, …) portal into this node with
-// `z-index: auto` and stack by DOM order. Rendering here, also without a
-// z-index, lets a DHIS2 popup opened from inside the popover paint above it,
-// exactly as it did inside a @dhis2/ui Popover.
-const dhis2PortalRoot = () =>
-    document.getElementById('dhis2-portal-root') ?? undefined
 
 /**
  * shadcn PopoverContent restyled to match @dhis2/ui Popover (`arrow={false}`):

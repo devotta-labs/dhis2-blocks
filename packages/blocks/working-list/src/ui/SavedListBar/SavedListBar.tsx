@@ -1,8 +1,16 @@
 import { Button } from '../primitives/button'
-import { Modal, ModalActions, ModalContent, ModalTitle } from '@dhis2/ui'
 import { IconMore16 } from '@dhis2/ui-icons'
 import React, { useRef, useState } from 'react'
 import type { WorkingListSavedView } from '../../provider/contracts'
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '../primitives/alert-dialog'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -197,26 +205,29 @@ export const SavedListBar = ({
             </div>
 
             {deleteList && (
-                <Modal
-                    small
-                    position="middle"
-                    onClose={() => setDeleteList(undefined)}
+                <AlertDialog
+                    open
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setDeleteList(undefined)
+                        }
+                    }}
                 >
-                    <ModalTitle>{i18n.t('Delete view?')}</ModalTitle>
-                    <ModalContent>
-                        {i18n.t('“{{name}}” will be permanently deleted.', {
-                            name: deleteList.name,
-                        })}
-                    </ModalContent>
-                    <ModalActions>
-                        <div className="flex flex-wrap items-center justify-end gap-2">
-                            <Button
-                                variant="outline"
-                                data-test="delete-saved-view-cancel"
-                                onClick={() => setDeleteList(undefined)}
-                            >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                {i18n.t('Delete view?')}
+                            </AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <AlertDialogDescription>
+                            {i18n.t('“{{name}}” will be permanently deleted.', {
+                                name: deleteList.name,
+                            })}
+                        </AlertDialogDescription>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel data-test="delete-saved-view-cancel">
                                 {i18n.t('Cancel')}
-                            </Button>
+                            </AlertDialogCancel>
                             <Button
                                 variant="destructive"
                                 data-test="delete-saved-view-confirm"
@@ -228,9 +239,9 @@ export const SavedListBar = ({
                             >
                                 {i18n.t('Delete')}
                             </Button>
-                        </div>
-                    </ModalActions>
-                </Modal>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             )}
         </>
     )

@@ -1,11 +1,13 @@
-import { Button } from '@dhis2-blocks/working-list/primitives'
 import {
-    ButtonStrip,
-    Modal,
-    ModalActions,
-    ModalContent,
-    ModalTitle,
-} from '@dhis2/ui'
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    Button,
+} from '@dhis2-blocks/working-list/primitives'
 import React from 'react'
 import i18n from '../../i18n'
 
@@ -20,30 +22,35 @@ export const DiscardChangesDialog = ({
     onCancel,
     onDiscard,
 }: DiscardChangesDialogProps) => {
-    if (!open) {
-        return null
-    }
-
     return (
-        <Modal hide={!open} onClose={onCancel} small>
-            <ModalTitle>{i18n.t('Discard unsaved changes?')}</ModalTitle>
-            <ModalContent>
-                <div style={{ margin: '5px 0' }}>
+        <AlertDialog
+            open={open}
+            onOpenChange={(nextOpen) => {
+                if (!nextOpen) {
+                    onCancel()
+                }
+            }}
+        >
+            <AlertDialogContent position="top">
+                <AlertDialogHeader>
+                    <AlertDialogTitle>
+                        {i18n.t('Discard unsaved changes?')}
+                    </AlertDialogTitle>
+                </AlertDialogHeader>
+                <AlertDialogDescription className="my-[5px]">
                     {i18n.t(
                         'This event has unsaved changes. Leaving this page without saving will lose these changes. Are you sure you want to discard unsaved changes?'
                     )}
-                </div>
-            </ModalContent>
-            <ModalActions>
-                <ButtonStrip end>
-                    <Button variant="secondary" onClick={onCancel}>
+                </AlertDialogDescription>
+                <AlertDialogFooter>
+                    <AlertDialogCancel variant="secondary">
                         {i18n.t('No, cancel')}
-                    </Button>
+                    </AlertDialogCancel>
                     <Button variant="destructive" onClick={onDiscard}>
                         {i18n.t('Yes, discard changes')}
                     </Button>
-                </ButtonStrip>
-            </ModalActions>
-        </Modal>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     )
 }

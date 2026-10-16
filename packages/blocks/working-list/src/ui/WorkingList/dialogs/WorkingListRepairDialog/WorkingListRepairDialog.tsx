@@ -1,9 +1,5 @@
 import { Button } from '../../../primitives/button'
 import {
-    Modal,
-    ModalActions,
-    ModalContent,
-    ModalTitle,
     Table,
     TableBody,
     TableCell,
@@ -14,6 +10,13 @@ import {
 } from '@dhis2/ui'
 import React from 'react'
 import type { NormalizedSavedWorkingList } from '../../../../api/savedLists'
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '../../../primitives/dialog'
 import type { WorkingListConfiguration } from '../../../../domain/model'
 import type {
     StaleReferenceIssue,
@@ -156,48 +159,59 @@ export const WorkingListRepairDialog = ({
         ]
     })
     return (
-        <Modal
-            position="middle"
-            dataTest="repair-working-list-dialog"
-            onClose={onClose}
+        <Dialog
+            open
+            onOpenChange={(nextOpen) => {
+                if (!nextOpen) {
+                    onClose()
+                }
+            }}
         >
-            <ModalTitle>{i18n.t('Repair this saved list?')}</ModalTitle>
-            <ModalContent className="text-[14px]">
-                <p className="m-0 text-[var(--colors-grey700)]">
-                    {i18n.t(
-                        'Some metadata changed, was removed, or is no longer accessible.'
-                    )}
-                </p>
-                <div
-                    className="[margin:16px_0]"
-                    data-testid="repair-working-list-preview"
-                >
-                    <Table suppressZebraStriping>
-                        <TableHead>
-                            <TableRowHead>
-                                <TableCellHead dense>
-                                    {i18n.t('Reference')}
-                                </TableCellHead>
-                                <TableCellHead dense>
-                                    {i18n.t('Proposed repair')}
-                                </TableCellHead>
-                            </TableRowHead>
-                        </TableHead>
-                        <TableBody>
-                            {details.map(({ path, id, kind, action }) => (
-                                <TableRow key={path} suppressZebraStriping>
-                                    <TableCell dense>
-                                        {id} ({kind})
-                                    </TableCell>
-                                    <TableCell dense>{action}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+            <DialogContent
+                position="middle"
+                data-test="repair-working-list-dialog"
+                closeLabel={i18n.t('Close')}
+            >
+                <DialogHeader>
+                    <DialogTitle>
+                        {i18n.t('Repair this saved list?')}
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="min-h-0 flex-1 overflow-y-auto text-[14px]">
+                    <p className="m-0 text-[var(--colors-grey700)]">
+                        {i18n.t(
+                            'Some metadata changed, was removed, or is no longer accessible.'
+                        )}
+                    </p>
+                    <div
+                        className="[margin:16px_0]"
+                        data-testid="repair-working-list-preview"
+                    >
+                        <Table suppressZebraStriping>
+                            <TableHead>
+                                <TableRowHead>
+                                    <TableCellHead dense>
+                                        {i18n.t('Reference')}
+                                    </TableCellHead>
+                                    <TableCellHead dense>
+                                        {i18n.t('Proposed repair')}
+                                    </TableCellHead>
+                                </TableRowHead>
+                            </TableHead>
+                            <TableBody>
+                                {details.map(({ path, id, kind, action }) => (
+                                    <TableRow key={path} suppressZebraStriping>
+                                        <TableCell dense>
+                                            {id} ({kind})
+                                        </TableCell>
+                                        <TableCell dense>{action}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
-            </ModalContent>
-            <ModalActions>
-                <div className="flex flex-wrap items-center justify-end gap-2">
+                <DialogFooter>
                     <Button
                         variant="outline"
                         data-test="repair-working-list-cancel"
@@ -212,8 +226,8 @@ export const WorkingListRepairDialog = ({
                     >
                         {i18n.t('Repair')}
                     </Button>
-                </div>
-            </ModalActions>
-        </Modal>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     )
 }

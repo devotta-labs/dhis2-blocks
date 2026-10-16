@@ -1,9 +1,15 @@
 import { Button } from '../primitives/button'
 import { Spinner } from '../primitives/spinner'
-import { Modal, ModalActions, ModalContent, ModalTitle } from '@dhis2/ui'
 import { IconMore16 } from '@dhis2/ui-icons'
 import React, { useId, useState } from 'react'
 import type { WorkingListSavedView } from '../../provider/contracts'
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '../primitives/dialog'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -132,11 +138,11 @@ export const ConfigureMenu = ({
                 )}
             </div>
 
-            {nameDialogOpen && (
-                <Modal
-                    small
+            <Dialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
+                <DialogContent
+                    size="sm"
                     position="middle"
-                    onClose={() => setNameDialogOpen(false)}
+                    closeLabel={i18n.t('Close')}
                 >
                     <form
                         className="flex min-w-0 flex-col"
@@ -156,10 +162,12 @@ export const ConfigureMenu = ({
                             })
                         }}
                     >
-                        <ModalTitle>
-                            {i18n.t('Save as new working list')}
-                        </ModalTitle>
-                        <ModalContent>
+                        <DialogHeader>
+                            <DialogTitle>
+                                {i18n.t('Save as new working list')}
+                            </DialogTitle>
+                        </DialogHeader>
+                        <div>
                             <Field data-test="working-list-name-input">
                                 <FieldLabel htmlFor={nameInputId}>
                                     {i18n.t('Name')}
@@ -182,38 +190,34 @@ export const ConfigureMenu = ({
                                     {nameError}
                                 </p>
                             )}
-                        </ModalContent>
-                        <ModalActions>
-                            <div className="flex flex-wrap items-center justify-end gap-2">
-                                <Button
-                                    variant="outline"
-                                    type="button"
-                                    data-test="working-list-name-cancel"
-                                    onClick={() => setNameDialogOpen(false)}
-                                >
-                                    {i18n.t('Cancel')}
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    type="submit"
-                                    data-test="working-list-name-submit"
-                                    disabled={
-                                        !name.trim() || busy || createPending
-                                    }
-                                >
-                                    {createPending && (
-                                        <Spinner
-                                            data-icon="inline-start"
-                                            className="size-4"
-                                        />
-                                    )}
-                                    {i18n.t('Save')}
-                                </Button>
-                            </div>
-                        </ModalActions>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                variant="outline"
+                                type="button"
+                                data-test="working-list-name-cancel"
+                                onClick={() => setNameDialogOpen(false)}
+                            >
+                                {i18n.t('Cancel')}
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                type="submit"
+                                data-test="working-list-name-submit"
+                                disabled={!name.trim() || busy || createPending}
+                            >
+                                {createPending && (
+                                    <Spinner
+                                        data-icon="inline-start"
+                                        className="size-4"
+                                    />
+                                )}
+                                {i18n.t('Save')}
+                            </Button>
+                        </DialogFooter>
                     </form>
-                </Modal>
-            )}
+                </DialogContent>
+            </Dialog>
         </>
     )
 }

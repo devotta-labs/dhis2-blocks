@@ -1,5 +1,11 @@
-import { Button } from '@dhis2-blocks/working-list/primitives'
-import { Modal, ModalActions, ModalContent, ModalTitle } from '@dhis2/ui'
+import {
+    Button,
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@dhis2-blocks/working-list/primitives'
 import type { WorkingListResultTarget } from '@dhis2-blocks/working-list'
 import React from 'react'
 import i18n from '../../i18n'
@@ -11,13 +17,22 @@ export const RecordDetailsModal = ({
     record: WorkingListResultTarget
     onClose: () => void
 }) => (
-    <Modal small position="middle" onClose={onClose}>
-        <ModalTitle>
-            {record.mode === 'event'
-                ? i18n.t('Event selected')
-                : i18n.t('Tracked entity selected')}
-        </ModalTitle>
-        <ModalContent>
+    <Dialog
+        open
+        onOpenChange={(open) => {
+            if (!open) {
+                onClose()
+            }
+        }}
+    >
+        <DialogContent size="sm" position="middle" closeLabel={i18n.t('Close')}>
+            <DialogHeader>
+                <DialogTitle>
+                    {record.mode === 'event'
+                        ? i18n.t('Event selected')
+                        : i18n.t('Tracked entity selected')}
+                </DialogTitle>
+            </DialogHeader>
             <dl className="m-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-2 [&_dd]:m-0 [&_dd]:[overflow-wrap:anywhere] [&_dt]:font-medium [&_dt]:text-[#5f6b7a]">
                 {record.mode === 'event' && (
                     <>
@@ -32,9 +47,9 @@ export const RecordDetailsModal = ({
                         : (record.trackedEntityId ?? '—')}
                 </dd>
             </dl>
-        </ModalContent>
-        <ModalActions>
-            <Button onClick={onClose}>{i18n.t('Close')}</Button>
-        </ModalActions>
-    </Modal>
+            <DialogFooter>
+                <Button onClick={onClose}>{i18n.t('Close')}</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 )

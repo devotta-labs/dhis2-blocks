@@ -1,7 +1,15 @@
 import { Alert, AlertDescription, AlertTitle } from '../primitives/alert'
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '../primitives/alert-dialog'
 import { Button } from '../primitives/button'
 import { IconErrorFilled24 } from '@dhis2/ui-icons'
-import { Modal, ModalActions, ModalContent, ModalTitle } from '@dhis2/ui'
 import { Result } from 'better-result'
 import React, { useState } from 'react'
 import type { NormalizedSavedWorkingList } from '../../api/savedLists'
@@ -201,28 +209,29 @@ export const WorkingListSavedViews = () => {
             )}
 
             {pendingSelection && (
-                <Modal
-                    small
-                    position="middle"
-                    onClose={() => setPendingSelection(undefined)}
+                <AlertDialog
+                    open
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setPendingSelection(undefined)
+                        }
+                    }}
                 >
-                    <ModalTitle>
-                        {translate('Discard unsaved changes?')}
-                    </ModalTitle>
-                    <ModalContent>
-                        {translate(
-                            'Changing the saved view will discard the unsaved changes to this working list.'
-                        )}
-                    </ModalContent>
-                    <ModalActions>
-                        <div className="flex flex-wrap items-center justify-end gap-2">
-                            <Button
-                                variant="outline"
-                                data-test="discard-saved-view-change-cancel"
-                                onClick={() => setPendingSelection(undefined)}
-                            >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                {translate('Discard unsaved changes?')}
+                            </AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <AlertDialogDescription>
+                            {translate(
+                                'Changing the saved view will discard the unsaved changes to this working list.'
+                            )}
+                        </AlertDialogDescription>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel data-test="discard-saved-view-change-cancel">
                                 {translate('Cancel')}
-                            </Button>
+                            </AlertDialogCancel>
                             <Button
                                 variant="destructive"
                                 data-test="discard-saved-view-change-confirm"
@@ -234,9 +243,9 @@ export const WorkingListSavedViews = () => {
                             >
                                 {translate('Discard changes')}
                             </Button>
-                        </div>
-                    </ModalActions>
-                </Modal>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             )}
 
             <WorkingListSharingDialog

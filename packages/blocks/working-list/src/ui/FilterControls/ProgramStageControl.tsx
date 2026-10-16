@@ -7,7 +7,6 @@ import {
     FilterPopover,
     configureFilterCombobox,
     focusFirstControl,
-    useEscapeToClose,
 } from './FilterControlPrimitives'
 
 interface ProgramStageControlProps {
@@ -59,8 +58,11 @@ export const ProgramStageControl = ({
         )
         setOpen(nextOpen)
     }
-    const close = () => {
+    const close = (restoreFocus = true) => {
         setEditorOpen(false)
+        if (!restoreFocus) {
+            return
+        }
         requestAnimationFrame(() =>
             buttonElement
                 ?.querySelector<HTMLElement>(
@@ -69,7 +71,6 @@ export const ProgramStageControl = ({
                 ?.focus()
         )
     }
-    useEscapeToClose(open, close)
 
     return (
         <div
@@ -177,11 +178,8 @@ export const ProgramStageControl = ({
             </SingleSelect>
             {open && !disabled && buttonElement && (
                 <FilterPopover
-                    arrow={false}
-                    maxWidth={400}
-                    placement="bottom-start"
-                    reference={buttonElement}
-                    onClickOutside={close}
+                    anchor={buttonElement}
+                    onDismiss={(reason) => close(reason === 'escape')}
                 >
                     <div className="box-border w-[min(400px,calc(100vw_-_16px))] min-w-0 max-w-[calc(100vw_-_16px)] [contain:layout]">
                         <form

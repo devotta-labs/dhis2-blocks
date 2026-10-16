@@ -25,7 +25,6 @@ import {
     FilterPopover,
     configureFilterCombobox,
     focusFirstControl,
-    useEscapeToClose,
 } from './FilterControlPrimitives'
 import { EditorValue } from './FilterEditorValue'
 import {
@@ -87,8 +86,11 @@ export const FilterButton = ({
         )
         setOpen(nextOpen)
     }
-    const close = () => {
+    const close = (restoreFocus = true) => {
         setEditorOpen(false)
+        if (!restoreFocus) {
+            return
+        }
         requestAnimationFrame(() =>
             buttonElement
                 ?.querySelector<HTMLElement>(
@@ -97,7 +99,6 @@ export const FilterButton = ({
                 ?.focus()
         )
     }
-    useEscapeToClose(open, close)
 
     return (
         <div
@@ -202,11 +203,8 @@ export const FilterButton = ({
             </SingleSelect>
             {open && !disabled && buttonElement && (
                 <FilterPopover
-                    arrow={false}
-                    maxWidth={400}
-                    placement="bottom-start"
-                    reference={buttonElement}
-                    onClickOutside={close}
+                    anchor={buttonElement}
+                    onDismiss={(reason) => close(reason === 'escape')}
                 >
                     <div className="box-border w-[min(400px,calc(100vw_-_16px))] min-w-0 max-w-[calc(100vw_-_16px)] [contain:layout]">
                         <FilterEditor

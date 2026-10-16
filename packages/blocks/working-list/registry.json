@@ -516,6 +516,11 @@
                     "target": "@components/working-list/ui/primitives/label.tsx"
                 },
                 {
+                    "path": "src/ui/primitives/popover.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/popover.tsx"
+                },
+                {
                     "path": "src/ui/primitives/separator.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/primitives/separator.tsx"

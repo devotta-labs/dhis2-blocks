@@ -49,22 +49,24 @@ const TestCalendarInput = (props: StrictCalendarInputProps) =>
         props.validationText ?? props.dataTest
     )
 
-const TestPopover = ({
-    arrow,
-    children,
-}: {
-    arrow?: boolean
-    children: React.ReactNode
-}) =>
-    React.createElement(
-        'div',
-        { 'data-testid': 'mock-popover', 'data-arrow': String(arrow) },
-        children
-    )
+// The filter editors open below-start of their chip with no arrow, as the
+// @dhis2/ui Popover they replaced did with `arrow={false}`.
+const expectEditorPopover = (editorTestId: string) => {
+    const popups = [
+        ...document.querySelectorAll('[data-slot="popover-content"]'),
+    ]
+    expect(popups).toHaveLength(1)
+    const [popup] = popups
+    expect(
+        popup?.querySelector(`[data-testid="${editorTestId}"]`)
+    ).not.toBeNull()
+    expect(popup?.getAttribute('data-side')).toBe('bottom')
+    expect(popup?.getAttribute('data-align')).toBe('start')
+    expect(popup?.querySelector('[data-slot="popover-arrow"]')).toBeNull()
+}
 
 const testComponents = {
     CalendarInput: TestCalendarInput,
-    Popover: TestPopover,
 }
 
 const unusedClient: WorkingListClient = {
@@ -190,11 +192,7 @@ describe('calendar filter controls', () => {
                 document.querySelector('[data-test="date-range-start-clear"]')
             ).toBeNull()
 
-            expect(
-                document
-                    .querySelector('[data-testid="mock-popover"]')
-                    ?.getAttribute('data-arrow')
-            ).toBe('false')
+            expectEditorPopover('filter-editor-birthday')
             const update = document.querySelector<HTMLButtonElement>(
                 '[data-test="filter-update-birthday"]'
             )
@@ -235,7 +233,7 @@ describe('calendar filter controls', () => {
         }
     })
 
-    it('disables arrows on program-stage popovers', () => {
+    it('opens the program-stage editor below its chip without an arrow', () => {
         const actEnvironment = globalThis
         const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
         const originalRequestAnimationFrame = window.requestAnimationFrame
@@ -289,15 +287,7 @@ describe('calendar filter controls', () => {
                     ?.click()
             )
 
-            const popovers = [
-                ...document.querySelectorAll('[data-testid="mock-popover"]'),
-            ]
-            expect(popovers).toHaveLength(1)
-            expect(
-                popovers.every(
-                    (popover) => popover.getAttribute('data-arrow') === 'false'
-                )
-            ).toBe(true)
+            expectEditorPopover('filter-editor-programStage')
         } finally {
             act(() => root.unmount())
             container.remove()
@@ -354,11 +344,11 @@ describe('calendar filter controls', () => {
 
         try {
             renderFilter(0)
-            expect(container.textContent).not.toContain(
+            expect(document.body.textContent).not.toContain(
                 'Enter at least 0 characters'
             )
             expect(
-                container
+                document
                     .querySelector<HTMLInputElement>(
                         '[data-testid="filter-editor-name"] input'
                     )
@@ -366,11 +356,11 @@ describe('calendar filter controls', () => {
             ).toBeNull()
 
             renderFilter(3)
-            expect(container.textContent).toContain(
+            expect(document.body.textContent).toContain(
                 'Enter at least {{count}} characters'
             )
             expect(
-                container
+                document
                     .querySelector<HTMLInputElement>(
                         '[data-testid="filter-editor-name"] input'
                     )
@@ -429,26 +419,26 @@ describe('calendar filter controls', () => {
             })
 
             expect(
-                container.querySelector(
+                document.querySelector(
                     '[data-test="filter-operator-startedOnArt"]'
                 )
             ).toBeNull()
-            expect(container.textContent).not.toContain(
+            expect(document.body.textContent).not.toContain(
                 'Only records with a true value will match.'
             )
-            expect(container.textContent).toContain('Is empty')
-            expect(container.textContent).toContain('Is not empty')
-            expect(container.textContent).toContain('Yes')
+            expect(document.body.textContent).toContain('Is empty')
+            expect(document.body.textContent).toContain('Is not empty')
+            expect(document.body.textContent).toContain('Yes')
             expect(
-                container.querySelector('[data-test="true-only-divider"]')
+                document.querySelector('[data-test="true-only-divider"]')
             ).not.toBeNull()
 
-            const update = container.querySelector<HTMLButtonElement>(
+            const update = document.querySelector<HTMLButtonElement>(
                 '[data-test="filter-update-startedOnArt"]'
             )
             expect(update?.disabled).toBe(true)
 
-            const yes = container.querySelector<HTMLInputElement>(
+            const yes = document.querySelector<HTMLInputElement>(
                 '[data-test="true-only-yes-startedOnArt"] input'
             )
             act(() => yes?.click())

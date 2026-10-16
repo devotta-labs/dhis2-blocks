@@ -37,7 +37,10 @@ export const ContextStatus = ({
                 data-testid="app-context-loading"
                 aria-live="polite"
             >
-                <Spinner className="size-6 border-4" />
+                <Spinner
+                    aria-label={i18n.t('Loading')}
+                    className="size-6 border-4"
+                />
                 <p>{i18n.t('Loading tracker programs…')}</p>
             </main>
         )

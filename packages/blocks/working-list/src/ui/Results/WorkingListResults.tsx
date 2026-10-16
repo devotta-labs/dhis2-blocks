@@ -83,7 +83,10 @@ const SelectionLoading = () => {
             data-testid="working-list-selection-loading"
             aria-live="polite"
         >
-            <Spinner className="size-6 border-4" />
+            <Spinner
+                aria-label={translate('Loading')}
+                className="size-6 border-4"
+            />
             <p>{translate('Loading the selected working list…')}</p>
         </div>
     )
@@ -245,6 +248,7 @@ const IncompatibleSelection = () => {
                             >
                                 {repairPending && (
                                     <Spinner
+                                        aria-label={translate('Loading')}
                                         data-icon="inline-start"
                                         className="size-4"
                                     />

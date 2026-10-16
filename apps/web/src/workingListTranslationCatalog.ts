@@ -109,6 +109,7 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Last week'),
     i18n.t('Latitude {{latitude}}, longitude {{longitude}}'),
     i18n.t('Less than'),
+    i18n.t('Loading'),
     i18n.t('Loading organisation units…'),
     i18n.t('Loading the selected working list…'),
     i18n.t('Match'),

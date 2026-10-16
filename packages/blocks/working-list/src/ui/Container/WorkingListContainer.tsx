@@ -35,7 +35,10 @@ export const WorkingListContainer = ({
                     data-testid="working-list-initializing"
                     aria-live="polite"
                 >
-                    <Spinner className="size-6 border-4" />
+                    <Spinner
+                        aria-label={translate('Loading')}
+                        className="size-6 border-4"
+                    />
                     <p>{translate('Loading the working list…')}</p>
                 </div>
             )}

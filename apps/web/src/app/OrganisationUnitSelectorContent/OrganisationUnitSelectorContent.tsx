@@ -156,7 +156,10 @@ export const OrganisationUnitSelectorContent = ({
                     data-testid="org-unit-tree"
                 >
                     {searchLoading ? (
-                        <Spinner className="size-12 border-6" />
+                        <Spinner
+                            aria-label={i18n.t('Loading')}
+                            className="size-12 border-6"
+                        />
                     ) : searchError ? (
                         <div
                             className="flex w-full flex-col items-center gap-[8px] px-[16px] py-[24px] text-center text-[14px] text-[#4a5768]"
@@ -211,6 +214,7 @@ export const OrganisationUnitSelectorContent = ({
                                     >
                                         {searchLoadingMore && (
                                             <Spinner
+                                                aria-label={i18n.t('Loading')}
                                                 data-icon="inline-start"
                                                 className="size-4"
                                             />

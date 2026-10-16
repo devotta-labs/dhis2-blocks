@@ -586,6 +586,16 @@
                     "target": "@components/working-list/ui/primitives/textarea.tsx"
                 },
                 {
+                    "path": "src/ui/primitives/toggle.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/toggle.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/toggle-group.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/toggle-group.tsx"
+                },
+                {
                     "path": "src/ui/primitives/tooltip.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/primitives/tooltip.tsx"

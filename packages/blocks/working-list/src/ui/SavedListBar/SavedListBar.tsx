@@ -17,13 +17,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '../primitives/dropdown-menu'
+import { cn } from '../primitives/cn'
+import { toggleVariants } from '../primitives/toggle'
+import { ToggleGroup, ToggleGroupItem } from '../primitives/toggle-group'
 import { useWorkingListText } from '../WorkingListText'
 
 const visuallyHiddenClassName =
     'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
-
-const pillButtonClassName =
-    'cursor-pointer border-0 bg-transparent [font:inherit] text-[inherit] focus-visible:[outline:3px_solid_rgb(20_124_215_/_35%)] focus-visible:outline-offset-[-2px]'
 
 interface SavedListBarProps {
     lists: readonly WorkingListSavedView[]
@@ -68,10 +68,15 @@ export const SavedListBar = ({
     return (
         <>
             <div
-                className="flex min-w-0 flex-col gap-2 border-b border-[#e8edf2] px-2 pt-0 pb-2"
+                className="flex min-w-0 flex-col gap-2 border-b border-border px-2 pt-0 pb-2"
                 data-testid="saved-list-bar"
             >
-                <div className="flex min-w-0 max-w-full flex-wrap items-center gap-1">
+                <ToggleGroup
+                    className="min-w-0 max-w-full"
+                    variant="outline"
+                    size="sm"
+                    value={selectedId ? [selectedId] : []}
+                >
                     {lists.map((list) => {
                         const selected = selectedId === list.id
                         const incompatible = !list.compatible
@@ -87,11 +92,7 @@ export const SavedListBar = ({
                         return (
                             <span
                                 key={list.id}
-                                className={
-                                    selected
-                                        ? 'inline-flex min-h-[30px] items-stretch overflow-hidden rounded-2xl border border-transparent bg-[#087f73] text-[13px] leading-[18px] font-medium text-white'
-                                        : 'inline-flex min-h-[30px] items-stretch overflow-hidden rounded-2xl border border-transparent bg-[#f3f5f7] text-[13px] leading-[18px] font-medium text-[#405261]'
-                                }
+                                className="inline-flex"
                                 data-testid={`working-list-view-${list.id}`}
                                 ref={(element) => {
                                     if (element) {
@@ -104,10 +105,9 @@ export const SavedListBar = ({
                                     }
                                 }}
                             >
-                                <button
-                                    type="button"
-                                    className={`${pillButtonClassName} px-[11px] py-[5px] ${selected ? '[&:hover]:bg-[#076b62] [&:hover]:text-white' : '[&:hover]:bg-[#eaf3fa] [&:hover]:text-[#1d5280]'}`}
-                                    aria-current={selected ? 'true' : undefined}
+                                <ToggleGroupItem
+                                    value={list.id}
+                                    className={cn(hasMenu && 'rounded-r-none')}
                                     title={
                                         incompatible
                                             ? i18n.t('This view is unavailable')
@@ -122,7 +122,7 @@ export const SavedListBar = ({
                                         <>
                                             <span
                                                 aria-hidden="true"
-                                                className="ml-1 font-bold"
+                                                className="-ml-1 font-bold"
                                                 data-testid="working-list-dirty-indicator"
                                             >
                                                 *
@@ -137,11 +137,20 @@ export const SavedListBar = ({
                                             </span>
                                         </>
                                     )}
-                                </button>
+                                </ToggleGroupItem>
                                 {hasMenu && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger
-                                            className={`${pillButtonClassName} relative inline-flex w-7 items-center justify-center px-1.5 py-0 before:absolute before:top-1/2 before:left-0 before:h-4 before:w-px before:-translate-y-1/2 before:content-[''] [&_svg]:block ${selected ? 'before:bg-[rgb(255_255_255_/_35%)] [&:hover]:bg-[#076b62] [&:hover]:text-white' : 'before:bg-[#c4cdd5] [&:hover]:bg-[#eaf3fa] [&:hover]:text-[#1d5280]'}`}
+                                            // Mirrors the toggle's pressed look so the pill reads as one.
+                                            data-pressed={
+                                                selected ? '' : undefined
+                                            }
+                                            className={toggleVariants({
+                                                variant: 'outline',
+                                                size: 'sm',
+                                                className:
+                                                    'w-7 rounded-l-none border-l-0 px-0',
+                                            })}
                                             data-saved-view-menu
                                             data-testid={`working-list-view-${list.id}-menu`}
                                             aria-label={i18n.t(
@@ -201,7 +210,7 @@ export const SavedListBar = ({
                             </span>
                         )
                     })}
-                </div>
+                </ToggleGroup>
             </div>
 
             {deleteList && (

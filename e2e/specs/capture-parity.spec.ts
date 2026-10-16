@@ -137,7 +137,7 @@ test.describe('Capture context and generated tracker views', () => {
     }) => {
         await openWorkingList(page)
         await expect(savedViewButton(page, 'active')).toHaveAttribute(
-            'aria-current',
+            'aria-pressed',
             'true'
         )
         await expect(resultRows(page)).toHaveCount(8)
@@ -194,7 +194,7 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(page).not.toHaveURL(/selectedTemplateId=/)
         await expect(
             page.locator(
-                '[data-testid^="working-list-view-"] button[aria-current="true"]'
+                '[data-testid^="working-list-view-"] button[aria-pressed="true"]'
             )
         ).toHaveCount(0)
         await expect(
@@ -213,7 +213,7 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(page).not.toHaveURL(/selectedTemplateId=/)
         await expect(
             page.locator(
-                '[data-testid^="working-list-view-"] button[aria-current="true"]'
+                '[data-testid^="working-list-view-"] button[aria-pressed="true"]'
             )
         ).toHaveCount(0)
         await expect(page.getByTestId('working-list-table')).toBeVisible({
@@ -280,7 +280,7 @@ test.describe('Capture context and generated tracker views', () => {
     }) => {
         await openWorkingList(page)
         const activeView = savedViewButton(page, 'active')
-        await expect(activeView).toHaveAttribute('aria-current', 'true')
+        await expect(activeView).toHaveAttribute('aria-pressed', 'true')
         const statusParameter =
             targetMajor === 41 ? 'programStatus' : 'enrollmentStatus'
 
@@ -291,7 +291,7 @@ test.describe('Capture context and generated tracker views', () => {
             (url) => !url.searchParams.has(statusParameter)
         )
         expect(deselectedQuery.searchParams.get('page')).toBe('1')
-        await expect(activeView).not.toHaveAttribute('aria-current', 'true')
+        await expect(activeView).not.toHaveAttribute('aria-pressed', 'true')
         // Deselection selects the synthetic default template so the
         // preference survives a reload.
         await expect(page).toHaveURL(
@@ -300,11 +300,11 @@ test.describe('Capture context and generated tracker views', () => {
 
         // React Query can satisfy this recently loaded query from cache.
         await activeView.click()
-        await expect(activeView).toHaveAttribute('aria-current', 'true')
+        await expect(activeView).toHaveAttribute('aria-pressed', 'true')
         await expect(page).toHaveURL(/selectedTemplateId=active/)
 
         await activeView.click()
-        await expect(activeView).not.toHaveAttribute('aria-current', 'true')
+        await expect(activeView).not.toHaveAttribute('aria-pressed', 'true')
         await expect(page).toHaveURL(
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
         )
@@ -319,7 +319,7 @@ test.describe('Capture context and generated tracker views', () => {
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
         )
         await expect(savedViewButton(page, 'active')).not.toHaveAttribute(
-            'aria-current',
+            'aria-pressed',
             'true'
         )
     })

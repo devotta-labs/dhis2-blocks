@@ -209,7 +209,7 @@ export const openWorkingList = async (
     })
     await expect(
         savedViewButton(page, options.template ?? 'active')
-    ).toHaveAttribute('aria-current', 'true', { timeout: 30_000 })
+    ).toHaveAttribute('aria-pressed', 'true', { timeout: 30_000 })
     await expect(
         page.getByTestId('working-list-selection-loading')
     ).toHaveCount(0)

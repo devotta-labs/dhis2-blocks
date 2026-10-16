@@ -181,7 +181,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             expect(saved.entityQueryCriteria).not.toHaveProperty('page')
             expect(saved.entityQueryCriteria).not.toHaveProperty('pageSize')
             await expect(savedViewButton(page, createdId!)).toHaveAttribute(
-                'aria-current',
+                'aria-pressed',
                 'true'
             )
             await expect(page).toHaveURL(

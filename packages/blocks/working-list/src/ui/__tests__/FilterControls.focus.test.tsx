@@ -1,5 +1,6 @@
-import React, { act } from 'react'
-import { createRoot } from 'react-dom/client'
+import React from 'react'
+import { page } from 'vitest/browser'
+import { render } from 'vitest-browser-react'
 import { resolveWorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
 import type { TrackerProgram } from '../../api/schemas'
@@ -27,14 +28,7 @@ const unusedClient: WorkingListClient = {
 }
 
 describe('MoreFilters keyboard focus', () => {
-    it('selects a stage row before adding a prefixed stage data-element filter', () => {
-        const actEnvironment = globalThis
-        const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
-        actEnvironment.IS_REACT_ACT_ENVIRONMENT = true
-        vi.useFakeTimers()
-        const container = document.createElement('div')
-        document.body.appendChild(container)
-        const root = createRoot(container)
+    it('selects a stage row before adding a prefixed stage data-element filter', async () => {
         const onAddStageFilter = vi.fn()
         const eventField: WorkingListField = {
             id: 'DataElement01',
@@ -122,165 +116,116 @@ describe('MoreFilters keyboard focus', () => {
             )
         }
 
-        try {
-            act(() => {
-                root.render(
-                    <WorkingListTextProvider translate={(message) => message}>
-                        <StageFilterHarness />
-                    </WorkingListTextProvider>
-                )
-            })
-            act(() => {
-                container
-                    .querySelector<HTMLButtonElement>(
-                        '[data-testid="more-filters-tracked-entity"]'
-                    )
-                    ?.click()
-            })
-            act(() => {
-                document
-                    .querySelector<HTMLElement>(
-                        '[data-test="program-stage-filter-menu"] [role="menuitem"]'
-                    )
-                    ?.dispatchEvent(
-                        new MouseEvent('mouseover', { bubbles: true })
-                    )
-            })
-            expect(
-                document.querySelector(
-                    '[data-test="select-filter-stage-Stage000001"]'
-                )
-            ).not.toBeNull()
-            act(() => {
-                document
-                    .querySelector<HTMLElement>(
-                        '[data-test="select-filter-stage-Stage000001"] [role="menuitem"]'
-                    )
-                    ?.click()
-            })
-
-            const trigger = container.querySelector<HTMLButtonElement>(
-                '[data-testid="more-filters-tracked-entity"]'
+        const screen = await render(
+            <WorkingListTextProvider translate={(message) => message}>
+                <StageFilterHarness />
+            </WorkingListTextProvider>
+        )
+        const menuItem = (dataTest: string) =>
+            page.elementLocator(
+                document.querySelector<HTMLElement>(
+                    `[data-test="${dataTest}"][role="menuitem"]`
+                )!
             )
-            expect(trigger?.getAttribute('aria-expanded')).toBe('false')
-            expect(
-                container.querySelector('[data-testid="filter-programStage"]')
-                    ?.textContent
-            ).toContain('Visit')
-            expect(
-                container.querySelector(
-                    '[data-test="filter-programStage-select"] [tabindex]'
-                )?.className
-            ).toContain('dense')
-
-            act(() => trigger?.click())
-            const topLevelMenu = document.querySelector(
-                '[data-test="more-filters-menu-tracked-entity"]'
-            )
-            expect(
-                [...(topLevelMenu?.children ?? [])]
-                    .map((item) => item.getAttribute('data-test'))
-                    .filter(Boolean)
-            ).toEqual([
-                'program-stage-filter-menu',
-                'stage-filter-fields-Stage000001',
-                'filter-scope-divider',
-                'add-filter-followUp',
-            ])
-            act(() => {
-                document
-                    .querySelector<HTMLElement>(
-                        '[data-test="program-stage-filter-menu"] [role="menuitem"]'
+        const openSubmenu = async (dataTest: string) => {
+            await expect
+                .poll(() =>
+                    document.querySelector(
+                        `[data-test="${dataTest}"][role="menuitem"]`
                     )
-                    ?.dispatchEvent(
-                        new MouseEvent('mouseover', { bubbles: true })
-                    )
-            })
-            const lockedStage = document.querySelector<HTMLElement>(
-                '[data-test="select-filter-stage-Stage000002"] [role="menuitem"]'
-            )
-            const selectedStageItem = document.querySelector<HTMLElement>(
-                '[data-test="select-filter-stage-Stage000001"] [role="menuitem"]'
-            )
-            for (const [stageName, stageItem] of [
-                ['Visit', selectedStageItem],
-                ['Follow-up', lockedStage],
-            ] as const) {
-                expect(stageItem?.getAttribute('aria-disabled')).toBe('true')
-                expect(stageItem?.getAttribute('aria-label')).toBe(stageName)
-                expect(
-                    stageItem
-                        ?.closest('[role="presentation"]')
-                        ?.querySelector(
-                            '[tabindex="0"][aria-label*="Can only filter using one program stage."]'
-                        )
-                ).not.toBeNull()
-            }
-            const selectedStageTooltip = selectedStageItem
-                ?.closest('[role="presentation"]')
-                ?.querySelector<HTMLElement>(
-                    '[tabindex="0"][aria-label*="Can only filter using one program stage."]'
                 )
-            act(() => {
-                selectedStageTooltip?.dispatchEvent(
-                    new MouseEvent('mouseover', { bubbles: true })
-                )
-                vi.advanceTimersByTime(201)
-            })
-            expect(
-                document.querySelector(
-                    '[data-test="stage-lock-tooltip-Stage000001-content"]'
-                )?.textContent
-            ).toBe('Can only filter using one program stage.')
-
-            act(() => {
-                document
-                    .querySelector<HTMLElement>(
-                        '[data-test="stage-filter-fields-Stage000001"] [role="menuitem"]'
-                    )
-                    ?.dispatchEvent(
-                        new MouseEvent('mouseover', { bubbles: true })
-                    )
-            })
-            expect(
-                document.querySelector(
-                    '[data-test="add-stage-filter-Stage000001-DataElement01"]'
-                )
-            ).not.toBeNull()
-            act(() => {
-                document
-                    .querySelector<HTMLElement>(
-                        '[data-test="add-stage-filter-Stage000001-DataElement01"] [role="menuitem"]'
-                    )
-                    ?.click()
-            })
-            expect(onAddStageFilter).toHaveBeenCalledWith(
-                'Stage000001',
-                'DataElement01'
-            )
-            expect(trigger?.getAttribute('aria-expanded')).toBe('false')
-            expect(
-                container.querySelector('[data-testid="filter-DataElement01"]')
-                    ?.textContent
-            ).toContain('Visit / Result:')
-
-            const clearStage = container.querySelector<HTMLElement>(
-                '[data-test="filter-programStage-select-clear"]'
-            )
-            expect(clearStage).not.toBeNull()
-            act(() => {
-                clearStage?.dispatchEvent(
-                    new MouseEvent('mousedown', { bubbles: true })
-                )
-            })
-            expect(
-                container.querySelector('[data-testid="filter-programStage"]')
-            ).toBeNull()
-        } finally {
-            act(() => root.unmount())
-            container.remove()
-            vi.useRealTimers()
-            actEnvironment.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment
+                .not.toBeNull()
+            await menuItem(dataTest).click()
         }
+        const trigger = screen.getByTestId('more-filters-tracked-entity')
+
+        await trigger.click()
+        await openSubmenu('program-stage-filter-menu')
+        await openSubmenu('select-filter-stage-Stage000001')
+
+        await expect.element(trigger).toHaveAttribute('aria-expanded', 'false')
+        await expect
+            .element(screen.getByTestId('filter-programStage'))
+            .toHaveTextContent('Visit')
+        expect(
+            screen.container.querySelector(
+                '[data-test="filter-programStage-select"] [tabindex]'
+            )?.className
+        ).toContain('dense')
+
+        await trigger.click()
+        const topLevelMenu = page.getByRole('menu')
+        await expect.element(topLevelMenu).toBeVisible()
+        expect(
+            [...topLevelMenu.element().children]
+                .map((item) => item.getAttribute('data-test'))
+                .filter(Boolean)
+        ).toEqual([
+            'program-stage-filter-menu',
+            'stage-filter-fields-Stage000001',
+            'filter-scope-divider',
+            'add-filter-followUp',
+        ])
+
+        await openSubmenu('program-stage-filter-menu')
+        await expect
+            .poll(() =>
+                document.querySelector(
+                    '[data-test="select-filter-stage-Stage000002"]'
+                )
+            )
+            .not.toBeNull()
+        for (const [stageName, stageId] of [
+            ['Visit', 'Stage000001'],
+            ['Follow-up', 'Stage000002'],
+        ] as const) {
+            const stageItem = menuItem(`select-filter-stage-${stageId}`)
+            await expect
+                .element(stageItem)
+                .toHaveAttribute('aria-disabled', 'true')
+            await expect.element(stageItem).toHaveAccessibleName(stageName)
+            await expect
+                .element(stageItem)
+                .toHaveAccessibleDescription(
+                    'Can only filter using one program stage.'
+                )
+            await expect.element(stageItem).toHaveAttribute('tabindex')
+        }
+
+        await menuItem('select-filter-stage-Stage000001').hover()
+        await expect
+            .poll(
+                () =>
+                    document.querySelector(
+                        '[data-test="stage-lock-tooltip-Stage000001-content"]'
+                    )?.textContent
+            )
+            .toBe('Can only filter using one program stage.')
+
+        await openSubmenu('stage-filter-fields-Stage000001')
+        await openSubmenu('add-stage-filter-Stage000001-DataElement01')
+        expect(onAddStageFilter).toHaveBeenCalledWith(
+            'Stage000001',
+            'DataElement01'
+        )
+        await expect.element(trigger).toHaveAttribute('aria-expanded', 'false')
+        await expect
+            .element(screen.getByTestId('filter-DataElement01'))
+            .toHaveTextContent('Visit / Result:')
+
+        const clearStage = screen.container.querySelector<HTMLElement>(
+            '[data-test="filter-programStage-select-clear"]'
+        )
+        expect(clearStage).not.toBeNull()
+        clearStage?.dispatchEvent(
+            new MouseEvent('mousedown', { bubbles: true })
+        )
+        await expect
+            .poll(() =>
+                screen.container.querySelector(
+                    '[data-testid="filter-programStage"]'
+                )
+            )
+            .toBeNull()
     })
 })

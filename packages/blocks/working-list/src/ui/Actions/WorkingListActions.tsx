@@ -1,5 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from '../primitives/alert'
 import { Button } from '../primitives/button'
+import { DropdownMenuTriggerArrow } from '../primitives/dropdown-menu'
 import { IconErrorFilled24, IconMore16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
@@ -198,6 +199,7 @@ export const WorkingListToolbarActions = ({
                     >
                         <IconMore16 />
                         {actionCopy.controls.more(translate)}
+                        <DropdownMenuTriggerArrow />
                     </Button>
                 </div>
             )}

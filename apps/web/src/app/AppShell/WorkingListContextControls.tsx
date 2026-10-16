@@ -1,4 +1,4 @@
-import { Button } from '@dhis2-blocks/working-list/primitives'
+import { Button, Separator } from '@dhis2-blocks/working-list/primitives'
 import {
     ClearSelections,
     ContextSelector,
@@ -6,7 +6,6 @@ import {
     ProgramSelector,
     type Option,
 } from '@dhis2-blocks/context-selector'
-import { MenuDivider } from '@dhis2/ui'
 import type { ReactNode } from 'react'
 import React from 'react'
 import i18n from '../../i18n'
@@ -89,7 +88,7 @@ export const WorkingListContextControls = ({
                     </div>
                 ) : programsAreFiltered ? (
                     <>
-                        <MenuDivider />
+                        <Separator className="my-2" />
                         <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
                             <span>
                                 {i18n.t(

@@ -7,7 +7,6 @@ import type { AppliedFilter, WorkingListField } from '../../domain/model'
 import {
     FilterButton,
     FilterControlsComponentProvider,
-    MoreFilters,
     ProgramStageControl,
     calendarInputDateToCanonical,
     canonicalDateToCalendarInput,
@@ -236,7 +235,7 @@ describe('calendar filter controls', () => {
         }
     })
 
-    it('disables arrows on filter menus and program-stage popovers', () => {
+    it('disables arrows on program-stage popovers', () => {
         const actEnvironment = globalThis
         const originalActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT
         const originalRequestAnimationFrame = window.requestAnimationFrame
@@ -259,12 +258,6 @@ describe('calendar filter controls', () => {
                         <FilterControlsComponentProvider
                             components={testComponents}
                         >
-                            <MoreFilters
-                                fields={[field]}
-                                visibleFilterIds={[]}
-                                scope="tracked-entity"
-                                onAdd={vi.fn()}
-                            />
                             <ProgramStageControl
                                 program={TrackerProgramSchema.parse({
                                     id: 'program',
@@ -291,13 +284,6 @@ describe('calendar filter controls', () => {
             act(() =>
                 container
                     .querySelector<HTMLButtonElement>(
-                        '[data-testid="more-filters-tracked-entity"]'
-                    )
-                    ?.click()
-            )
-            act(() =>
-                container
-                    .querySelector<HTMLButtonElement>(
                         '[data-testid="filter-programStage"]'
                     )
                     ?.click()
@@ -306,7 +292,7 @@ describe('calendar filter controls', () => {
             const popovers = [
                 ...document.querySelectorAll('[data-testid="mock-popover"]'),
             ]
-            expect(popovers).toHaveLength(2)
+            expect(popovers).toHaveLength(1)
             expect(
                 popovers.every(
                     (popover) => popover.getAttribute('data-arrow') === 'false'

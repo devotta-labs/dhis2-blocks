@@ -57,15 +57,13 @@ export const focusFirstControl = (element: HTMLElement | null) => {
     )
 }
 
+// Opening "More filters" lands on the first field rather than the stage
+// submenus above it.
 export const focusFirstAvailableFilter = (element: HTMLElement | null) => {
     if (!element) {
         return
     }
-    requestAnimationFrame(() =>
-        element
-            .querySelector<HTMLElement>('[data-test^="add-filter-"]')
-            ?.focus()
-    )
+    requestAnimationFrame(() => element.focus())
 }
 
 export const configureFilterCombobox = (

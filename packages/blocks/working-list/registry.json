@@ -496,6 +496,11 @@
                     "target": "@components/working-list/ui/primitives/checkbox.tsx"
                 },
                 {
+                    "path": "src/ui/primitives/dropdown-menu.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/dropdown-menu.tsx"
+                },
+                {
                     "path": "src/ui/primitives/field.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/primitives/field.tsx"
@@ -509,6 +514,11 @@
                     "path": "src/ui/primitives/label.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/primitives/label.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/separator.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/separator.tsx"
                 },
                 {
                     "path": "src/ui/primitives/spinner.tsx",
@@ -622,6 +632,7 @@
                     "radius-sm": "3px",
                     "radius-md": "4px",
                     "radius-lg": "4px",
+                    "shadow-popover": "0 4px 12px rgba(12, 14, 16, 0.15), 0 0 0 1px rgba(12, 14, 16, 0.05)",
                     "font-sans": "Roboto, Helvetica, Arial, sans-serif"
                 }
             }

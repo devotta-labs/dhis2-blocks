@@ -1,17 +1,16 @@
 import { Button } from '../primitives/button'
 import { Spinner } from '../primitives/spinner'
-import {
-    DropdownButton,
-    FlyoutMenu,
-    MenuItem,
-    Modal,
-    ModalActions,
-    ModalContent,
-    ModalTitle,
-} from '@dhis2/ui'
+import { Modal, ModalActions, ModalContent, ModalTitle } from '@dhis2/ui'
 import { IconMore16 } from '@dhis2/ui-icons'
 import React, { useId, useState } from 'react'
 import type { WorkingListSavedView } from '../../provider/contracts'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuTriggerArrow,
+} from '../primitives/dropdown-menu'
 import { Field, FieldLabel } from '../primitives/field'
 import { Input } from '../primitives/input'
 import { useWorkingListText } from '../WorkingListText'
@@ -42,15 +41,12 @@ export const ConfigureMenu = ({
     const [name, setName] = useState('')
     const nameInputId = useId()
     const [nameError, setNameError] = useState<string>()
-    const [saveMenuOpen, setSaveMenuOpen] = useState(false)
-    const [moreMenuOpen, setMoreMenuOpen] = useState(false)
     const persistedSelection =
         selectedView && !selectedView.generated ? selectedView : undefined
     const canUpdate =
         persistedSelection?.compatible === true && persistedSelection.canUpdate
     const locked = !online || busy
     const openSaveAs = () => {
-        setSaveMenuOpen(false)
         setName('')
         setNameError(undefined)
         setNameDialogOpen(true)
@@ -61,45 +57,43 @@ export const ConfigureMenu = ({
             <div
                 className="ml-auto flex flex-shrink-0 items-center gap-1"
                 data-testid="working-list-actions"
-                onKeyDownCapture={(event) => {
-                    if (event.key === 'Escape') {
-                        setSaveMenuOpen(false)
-                        setMoreMenuOpen(false)
-                    }
-                }}
             >
                 {persistedSelection ? (
-                    <DropdownButton
-                        secondary
-                        small
-                        dataTest="save-working-list"
-                        open={saveMenuOpen}
-                        disabled={locked}
-                        onClick={({ open }) => setSaveMenuOpen(open)}
-                        component={
-                            <FlyoutMenu dense>
-                                <MenuItem
-                                    dataTest="update-working-list"
-                                    disabled={!canUpdate || !dirty || locked}
-                                    label={i18n.t('Save changes to this view')}
-                                    onClick={() => {
-                                        setSaveMenuOpen(false)
-                                        if (dirty && canUpdate) {
-                                            onUpdate()
-                                        }
-                                    }}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            disabled={locked}
+                            render={
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    data-test="save-working-list"
                                 />
-                                <MenuItem
-                                    dataTest="save-as-working-list"
-                                    disabled={locked}
-                                    label={i18n.t('Create new view…')}
-                                    onClick={openSaveAs}
-                                />
-                            </FlyoutMenu>
-                        }
-                    >
-                        {i18n.t('Save view')}
-                    </DropdownButton>
+                            }
+                        >
+                            {i18n.t('Save view')}
+                            <DropdownMenuTriggerArrow />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem
+                                data-test="update-working-list"
+                                disabled={!canUpdate || !dirty || locked}
+                                onClick={() => {
+                                    if (dirty && canUpdate) {
+                                        onUpdate()
+                                    }
+                                }}
+                            >
+                                {i18n.t('Save changes to this view')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                data-test="save-as-working-list"
+                                disabled={locked}
+                                onClick={openSaveAs}
+                            >
+                                {i18n.t('Create new view…')}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 ) : (
                     <>
                         <Button
@@ -111,28 +105,29 @@ export const ConfigureMenu = ({
                         >
                             {i18n.t('Save view')}
                         </Button>
-                        <DropdownButton
-                            secondary
-                            small
-                            icon=<IconMore16 />
-                            dataTest="working-list-options"
-                            open={moreMenuOpen}
-                            onClick={({ open }) => setMoreMenuOpen(open)}
-                            component={
-                                <FlyoutMenu dense>
-                                    <MenuItem
-                                        dataTest="download-working-list"
-                                        label={i18n.t('Download data…')}
-                                        onClick={() => {
-                                            setMoreMenuOpen(false)
-                                            onDownload()
-                                        }}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger
+                                render={
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        data-test="working-list-options"
                                     />
-                                </FlyoutMenu>
-                            }
-                        >
-                            {i18n.t('More')}
-                        </DropdownButton>
+                                }
+                            >
+                                <IconMore16 />
+                                {i18n.t('More')}
+                                <DropdownMenuTriggerArrow />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem
+                                    data-test="download-working-list"
+                                    onClick={onDownload}
+                                >
+                                    {i18n.t('Download data…')}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </>
                 )}
             </div>

@@ -98,5 +98,8 @@
     --radius-md: 4px;
     --radius-lg: 4px;
 
+    --shadow-popover:
+        0 4px 12px rgba(12, 14, 16, 0.15), 0 0 0 1px rgba(12, 14, 16, 0.05);
+
     --font-sans: Roboto, Helvetica, Arial, sans-serif;
 }

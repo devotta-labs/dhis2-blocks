@@ -1,10 +1,5 @@
 import { Button } from '../primitives/button'
-import {
-    MenuDivider,
-    SingleSelect,
-    SingleSelectField,
-    SingleSelectOption,
-} from '@dhis2/ui'
+import { SingleSelect, SingleSelectField, SingleSelectOption } from '@dhis2/ui'
 import React, { useId, useState } from 'react'
 import { z } from 'zod'
 import type { WorkingListCapabilities } from '../../api/capabilities'
@@ -24,6 +19,7 @@ import {
 } from '../../registry/valueTypes'
 import { Checkbox } from '../primitives/checkbox'
 import { Label } from '../primitives/label'
+import { Separator } from '../primitives/separator'
 import { useWorkingListText } from '../WorkingListText'
 import {
     FilterPopover,
@@ -386,7 +382,10 @@ const FilterEditor = ({
                     )}
                     {(operators.includes('empty') ||
                         operators.includes('notEmpty')) && (
-                        <MenuDivider dataTest="true-only-divider" />
+                        <Separator
+                            className="my-2"
+                            data-test="true-only-divider"
+                        />
                     )}
                     <Label
                         data-test={`true-only-yes-${field.id}`}

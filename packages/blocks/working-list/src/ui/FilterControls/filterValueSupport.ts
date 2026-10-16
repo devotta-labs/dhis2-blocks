@@ -4,7 +4,6 @@ import type {
     WorkingListDateFormat,
 } from '../../api/systemInfo'
 import {
-    RELATIVE_DATE_PERIODS,
     type AppliedFilter,
     type FilterOperator,
     type FilterValue,
@@ -51,8 +50,6 @@ export const translatedOperator = (
             return translate('Is not empty')
     }
 }
-
-export const RelativeDatePeriodSchema = z.enum(RELATIVE_DATE_PERIODS)
 
 export const CalendarSelectionSchema = z.union([
     z.null(),

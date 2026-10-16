@@ -72,27 +72,21 @@ const openEditor = async (field: WorkingListField) => {
 }
 
 describe('filter editor popover stacking', () => {
-    it('keeps a @dhis2/ui select opened inside the editor above it', async () => {
+    it('keeps a select opened inside the editor above it', async () => {
         await renderFilter(textField)
         await openEditor(textField)
 
-        const operatorSelect = document.querySelector(
-            `[data-test="filter-operator-${textField.id}"] [data-test="dhis2-uicore-select-input"]`
-        )
-        expect(operatorSelect).not.toBeNull()
-        await userEvent.click(operatorSelect!)
+        await editor(textField).getByRole('combobox', { name: 'Match' }).click()
 
-        const option = page.getByText('Is empty', { exact: true })
+        const option = page.getByRole('option', { name: 'Is empty' })
         await expect.element(option).toBeVisible()
         expect(paintsOnTop(option.element())).toBe(true)
 
         await option.click()
         await expect.element(editor(textField)).toBeVisible()
-        expect(
-            document.querySelector(
-                `[data-test="filter-operator-${textField.id}"]`
-            )?.textContent
-        ).toContain('Is empty')
+        await expect
+            .element(editor(textField).getByRole('combobox', { name: 'Match' }))
+            .toHaveTextContent('Is empty')
     })
 
     it('keeps the @dhis2/ui CalendarInput popup above the editor', async () => {

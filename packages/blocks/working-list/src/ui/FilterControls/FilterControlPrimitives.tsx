@@ -1,6 +1,9 @@
 import { CalendarInput } from '@dhis2/ui'
-import React, { createContext, useContext } from 'react'
-import { Popover, PopoverContent } from '../primitives/popover'
+import { IconChevronDown16 } from '@dhis2/ui-icons'
+import React, { createContext, useContext, useRef } from 'react'
+import { cn } from '../primitives/cn'
+import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover'
+import { SelectClearIcon, selectTriggerVariants } from '../primitives/select'
 
 // CalendarInput supports this at runtime (and documents it in PropTypes), but
 // @dhis2/ui 10.11 omits the prop from its declaration bundle.
@@ -44,61 +47,99 @@ const eventElement = (event: Event | undefined) => {
 }
 
 /**
- * The filter editor popup, anchored under its filter chip.
+ * A filter chip ("Prefix: value ⓧ ⌄") that opens its editor in a popover,
+ * styled like the dense @dhis2/ui select Capture uses for filters.
  *
- * The editors still contain @dhis2/ui popups (Select menus, CalendarInput)
- * that portal outside this popover. Presses, focus moves and Escape inside
- * one of those layers belong to that popup, so they don't dismiss the editor;
- * neither does a press on the chip, which toggles the editor itself.
+ * The trigger keeps Capture's semantics: a combobox whose popup is a dialog.
+ * The clear button sits beside it rather than inside it.
+ *
+ * Editors can contain @dhis2/ui CalendarInput, whose calendar portals outside
+ * the popover. Presses, focus moves and Escape inside a DHIS2 layer belong to
+ * that popup, so they don't dismiss the editor.
  */
-export const FilterPopover = ({
-    anchor,
-    onDismiss,
+export const FilterChip = ({
+    dataTest,
+    testId,
+    prefix,
+    value,
+    clearLabel,
+    disabled = false,
+    open,
+    onOpenChange,
+    onClear,
     children,
 }: {
-    anchor: HTMLElement
-    onDismiss: (reason: 'escape' | 'outside') => void
+    dataTest: string
+    testId: string
+    prefix: string
+    value: string
+    clearLabel: string
+    disabled?: boolean
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    onClear: () => void
     children: React.ReactNode
-}) => (
-    <Popover
-        open
-        onOpenChange={(open, details) => {
-            if (open) {
-                return
-            }
-            const element = eventElement(details.event)
-            if (
-                element?.closest('[data-test="dhis2-uicore-layer"]') ||
-                (element && anchor.contains(element))
-            ) {
-                details.cancel()
-                return
-            }
-            onDismiss(details.reason === 'escape-key' ? 'escape' : 'outside')
-        }}
-    >
-        <PopoverContent
-            anchor={anchor}
-            align="start"
-            initialFocus={false}
-            finalFocus={false}
-            className="w-auto max-w-[400px] gap-0 p-0"
+}) => {
+    const anchor = useRef<HTMLDivElement>(null)
+    return (
+        <Popover
+            open={open && !disabled}
+            onOpenChange={(nextOpen, details) => {
+                const element = eventElement(details.event)
+                if (
+                    !nextOpen &&
+                    element?.closest('[data-test="dhis2-uicore-layer"]')
+                ) {
+                    details.cancel()
+                    return
+                }
+                onOpenChange(nextOpen)
+            }}
         >
-            {children}
-        </PopoverContent>
-    </Popover>
-)
-
-export const focusFirstControl = (element: HTMLElement | null) => {
-    if (!element) {
-        return
-    }
-    requestAnimationFrame(() =>
-        element
-            .querySelector<HTMLElement>(
-                'input, button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-            )
-            ?.focus()
+            <div
+                ref={anchor}
+                className="relative w-fit min-w-0 max-w-full"
+                data-test={`${dataTest}-select`}
+                data-testid={testId}
+            >
+                <PopoverTrigger
+                    role="combobox"
+                    data-size="sm"
+                    disabled={disabled}
+                    className={cn(
+                        selectTriggerVariants({ size: 'sm' }),
+                        'w-auto max-w-full gap-0'
+                    )}
+                >
+                    <span className="shrink-0 pe-3 text-grey-600">
+                        {prefix}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{value}</span>
+                    {/* Room for the clear button laid over the trigger. */}
+                    <span aria-hidden="true" className="w-7 shrink-0" />
+                    <span className="ms-0.5 flex text-grey-900">
+                        <IconChevronDown16 />
+                    </span>
+                </PopoverTrigger>
+                <button
+                    type="button"
+                    aria-label={clearLabel}
+                    data-test={`${dataTest}-select-clear`}
+                    disabled={disabled}
+                    className="absolute end-[22px] top-1/2 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent p-0 text-grey-500 hover:bg-grey-200 hover:text-grey-800 focus-visible:outline-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:hover:bg-transparent [&_svg]:fill-current"
+                    onClick={onClear}
+                >
+                    <SelectClearIcon />
+                </button>
+            </div>
+            <PopoverContent
+                anchor={anchor}
+                align="start"
+                className="w-auto max-w-[400px] gap-0 p-0"
+            >
+                {children}
+            </PopoverContent>
+        </Popover>
     )
 }
 
@@ -109,25 +150,4 @@ export const focusFirstAvailableFilter = (element: HTMLElement | null) => {
         return
     }
     requestAnimationFrame(() => element.focus())
-}
-
-export const configureFilterCombobox = (
-    root: HTMLElement | null,
-    selector: string,
-    open: boolean,
-    controls: string,
-    label: string,
-    clearSelector: string,
-    clearLabel: string
-) => {
-    const combobox = root?.querySelector<HTMLElement>(selector)
-    combobox?.setAttribute('role', 'combobox')
-    combobox?.setAttribute('aria-expanded', String(open))
-    combobox?.setAttribute('aria-haspopup', 'dialog')
-    combobox?.setAttribute('aria-controls', controls)
-    combobox?.setAttribute('aria-label', label)
-    root?.querySelector<HTMLElement>(clearSelector)?.setAttribute(
-        'aria-label',
-        clearLabel
-    )
 }

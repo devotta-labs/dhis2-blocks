@@ -147,11 +147,14 @@ describe('MoreFilters keyboard focus', () => {
         await expect
             .element(screen.getByTestId('filter-programStage'))
             .toHaveTextContent('Visit')
+        // The chip uses the dense (32px) select size, as Capture's does.
         expect(
-            screen.container.querySelector(
-                '[data-test="filter-programStage-select"] [tabindex]'
-            )?.className
-        ).toContain('dense')
+            screen.container
+                .querySelector(
+                    '[data-test="filter-programStage-select"] [role="combobox"]'
+                )
+                ?.getAttribute('data-size')
+        ).toBe('sm')
 
         await trigger.click()
         const topLevelMenu = page.getByRole('menu')
@@ -213,13 +216,13 @@ describe('MoreFilters keyboard focus', () => {
             .element(screen.getByTestId('filter-DataElement01'))
             .toHaveTextContent('Visit / Result:')
 
-        const clearStage = screen.container.querySelector<HTMLElement>(
-            '[data-test="filter-programStage-select-clear"]'
-        )
-        expect(clearStage).not.toBeNull()
-        clearStage?.dispatchEvent(
-            new MouseEvent('mousedown', { bubbles: true })
-        )
+        const clearStage = screen
+            .getByTestId('filter-programStage')
+            .getByRole('button', { name: 'Clear {{filter}} filter' })
+        await expect
+            .element(clearStage)
+            .toHaveAttribute('data-test', 'filter-programStage-select-clear')
+        await clearStage.click()
         await expect
             .poll(() =>
                 screen.container.querySelector(

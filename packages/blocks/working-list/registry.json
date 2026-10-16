@@ -336,6 +336,11 @@
                     "target": "@components/working-list/ui/FilterControls/FilterEditorValue.tsx"
                 },
                 {
+                    "path": "src/ui/FilterControls/FilterSelectFields.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/FilterSelectFields.tsx"
+                },
+                {
                     "path": "src/ui/FilterControls/MoreFilters.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/FilterControls/MoreFilters.tsx"
@@ -496,6 +501,11 @@
                     "target": "@components/working-list/ui/primitives/checkbox.tsx"
                 },
                 {
+                    "path": "src/ui/primitives/combobox.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/combobox.tsx"
+                },
+                {
                     "path": "src/ui/primitives/dropdown-menu.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/primitives/dropdown-menu.tsx"
@@ -504,6 +514,11 @@
                     "path": "src/ui/primitives/field.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/primitives/field.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/input-group.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/input-group.tsx"
                 },
                 {
                     "path": "src/ui/primitives/input.tsx",
@@ -521,6 +536,11 @@
                     "target": "@components/working-list/ui/primitives/popover.tsx"
                 },
                 {
+                    "path": "src/ui/primitives/select.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/select.tsx"
+                },
+                {
                     "path": "src/ui/primitives/separator.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/primitives/separator.tsx"
@@ -534,6 +554,11 @@
                     "path": "src/ui/primitives/switch.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/primitives/switch.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/textarea.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/textarea.tsx"
                 },
                 {
                     "path": "src/ui/primitives/tooltip.tsx",

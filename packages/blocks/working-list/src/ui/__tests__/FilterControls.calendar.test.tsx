@@ -163,7 +163,7 @@ describe('calendar filter controls', () => {
             })
 
             const trigger = container.querySelector<HTMLButtonElement>(
-                '[data-testid="filter-birthday"]'
+                '[data-testid="filter-birthday"] [role="combobox"]'
             )
             act(() => trigger?.click())
 
@@ -282,7 +282,7 @@ describe('calendar filter controls', () => {
             act(() =>
                 container
                     .querySelector<HTMLButtonElement>(
-                        '[data-testid="filter-programStage"]'
+                        '[data-testid="filter-programStage"] [role="combobox"]'
                     )
                     ?.click()
             )
@@ -350,7 +350,7 @@ describe('calendar filter controls', () => {
             expect(
                 document
                     .querySelector<HTMLInputElement>(
-                        '[data-testid="filter-editor-name"] input'
+                        '[data-testid="filter-editor-name"] label input'
                     )
                     ?.getAttribute('minlength')
             ).toBeNull()
@@ -362,7 +362,7 @@ describe('calendar filter controls', () => {
             expect(
                 document
                     .querySelector<HTMLInputElement>(
-                        '[data-testid="filter-editor-name"] input'
+                        '[data-testid="filter-editor-name"] label input'
                     )
                     ?.getAttribute('minlength')
             ).toBe('3')

@@ -109,8 +109,10 @@ export const FilterChip = ({
                 data-test={`${dataTest}-select`}
                 data-testid={testId}
             >
+                {/* A combobox doesn't take its name from its contents. */}
                 <PopoverTrigger
                     role="combobox"
+                    aria-label={`${prefix} ${value}`}
                     data-size="sm"
                     disabled={disabled}
                     className={cn(

@@ -7,7 +7,7 @@ import {
     type Request,
     TEXT_ATTRIBUTE,
     addFilter,
-    chooseDhis2Option,
+    chooseSelectOption,
     expect,
     isTrackerResource,
     openFilterEditor,
@@ -18,6 +18,7 @@ import {
     resultRows,
     savedViewButton,
     selectOrganisationUnitFromTree,
+    selectTrigger,
     targetMajor,
     test,
     uiButton,
@@ -363,20 +364,20 @@ test.describe('Capture context and generated tracker views', () => {
         ).toBeVisible()
 
         await openFilterEditor(page, TEXT_ATTRIBUTE)
-        const operator = page.locator(
+        await selectTrigger(
+            page,
             `[data-test="filter-operator-${TEXT_ATTRIBUTE}"]`
-        )
-        await operator
-            .locator('[data-test="dhis2-uicore-select-input"]')
-            .click()
+        ).click()
+        const isEmpty = page.getByRole('option', {
+            name: 'Is empty',
+            exact: true,
+        })
         if (targetMajor === 41) {
-            await expect(
-                page.getByText('Is empty', { exact: true })
-            ).toHaveCount(0)
+            await expect(isEmpty).toHaveCount(0)
             await page.keyboard.press('Escape')
             return
         }
-        await page.getByText('Is empty', { exact: true }).click()
+        await isEmpty.click()
         await waitForTrackerResponse(
             page,
             'trackedEntities',
@@ -392,7 +393,7 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(resultRows(page)).toHaveCount(1)
 
         await openFilterEditor(page, TEXT_ATTRIBUTE)
-        await chooseDhis2Option(
+        await chooseSelectOption(
             page,
             `[data-test="filter-operator-${TEXT_ATTRIBUTE}"]`,
             'Is not empty'

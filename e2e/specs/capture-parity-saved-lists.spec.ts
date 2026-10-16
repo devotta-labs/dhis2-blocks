@@ -10,12 +10,13 @@ import {
     SavedTrackedEntityListSchema,
     SharingResponseSchema,
     TEXT_ATTRIBUTE,
-    chooseDhis2Option,
+    chooseSelectOption,
     chooseSaveViewOption,
     chooseSavedViewAction,
     createApi,
     deleteListIfPresent,
     expect,
+    menuItem,
     openSavedViewActions,
     openWorkingList,
     requestUrl,
@@ -103,7 +104,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             page,
             'trackedEntities',
             () =>
-                chooseDhis2Option(
+                chooseSelectOption(
                     page,
                     '[data-test="working-list-pagination-pagesize-select"]',
                     '15'
@@ -197,12 +198,8 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 }
             })
             await uiButton(page, 'save-working-list').click()
-            await expect(
-                page.locator('[data-test="save-as-working-list"]')
-            ).toBeVisible()
-            const cleanUpdateAction = page
-                .locator('[data-test="update-working-list"]')
-                .getByRole('menuitem')
+            await expect(menuItem(page, 'save-as-working-list')).toBeVisible()
+            const cleanUpdateAction = menuItem(page, 'update-working-list')
             await expect(cleanUpdateAction).toBeDisabled()
             expect(cleanUpdateRequests).toEqual([])
             await page.keyboard.press('Escape')
@@ -238,10 +235,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                         `/trackedEntityInstanceFilters/${createdId}`
                     )
             )
-            await dirtyOptions
-                .locator('[data-test="update-saved-view"]')
-                .getByRole('menuitem')
-                .click()
+            await menuItem(dirtyOptions, 'update-saved-view').click()
             expect((await updateResponse).ok()).toBe(true)
             await expect(
                 page.getByTestId('working-list-dirty-indicator')

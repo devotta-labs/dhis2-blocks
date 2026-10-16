@@ -1,8 +1,9 @@
 'use client'
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
-import { IconCheckmark16, IconChevronDown16 } from '@dhis2/ui-icons'
+import { IconChevronDown16 } from '@dhis2/ui-icons'
 import * as React from 'react'
+import { CheckboxCheckmark, checkboxBoxVariants } from './checkbox'
 import { cn } from './cn'
 import {
     InputGroup,
@@ -172,11 +173,22 @@ const ComboboxItem = React.forwardRef<
                 </ComboboxPrimitive.ItemIndicator>
             </span>
         ) : (
-            <span className="me-1.5 flex size-[14px] shrink-0 items-center justify-center rounded-[2px] border-2 border-grey-800 bg-white text-white group-data-selected/combobox-item:border-teal-900 group-data-selected/combobox-item:bg-teal-500 [&_svg]:size-3 [&_svg]:fill-current">
-                <ComboboxPrimitive.ItemIndicator>
-                    <IconCheckmark16 />
-                </ComboboxPrimitive.ItemIndicator>
-            </span>
+            // Kept mounted so the empty box shows on unselected options; the
+            // indicator has no data-checked/data-disabled of its own, so map
+            // them from the item's state and props.
+            <ComboboxPrimitive.ItemIndicator
+                keepMounted
+                className={cn(checkboxBoxVariants({ size: 'dense' }), 'me-1.5')}
+                render={(indicatorProps, state) => (
+                    <span
+                        {...indicatorProps}
+                        data-checked={state.selected ? '' : undefined}
+                        data-disabled={props.disabled ? '' : undefined}
+                    />
+                )}
+            >
+                <CheckboxCheckmark size="dense" />
+            </ComboboxPrimitive.ItemIndicator>
         )}
         {children}
     </ComboboxPrimitive.Item>

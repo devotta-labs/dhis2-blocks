@@ -192,19 +192,22 @@ export const WorkingListTableView = ({
                                     : undefined
                             }
                         >
-                            {isInitialLoading && model.rows.length === 0 && (
-                                // Gives the loading ring a body to sit in
-                                // before the first page of rows arrives.
-                                <TableRow aria-hidden="true">
-                                    <TableCell
-                                        colSpan={
-                                            Math.max(visibleColumnCount, 1) +
-                                            (showIssuesColumn ? 1 : 0)
-                                        }
-                                        className="h-32"
-                                    />
-                                </TableRow>
-                            )}
+                            {isInitialLoading &&
+                                model.rows.length === 0 && (
+                                    // Gives the loading ring a body to sit in
+                                    // before the first page of rows arrives.
+                                    <TableRow aria-hidden="true">
+                                        <TableCell
+                                            colSpan={
+                                                Math.max(
+                                                    visibleColumnCount,
+                                                    1
+                                                ) + (showIssuesColumn ? 1 : 0)
+                                            }
+                                            className="h-32"
+                                        />
+                                    </TableRow>
+                                )}
                             {!isInitialLoading && model.rows.length === 0 && (
                                 <TableRow>
                                     <TableCell

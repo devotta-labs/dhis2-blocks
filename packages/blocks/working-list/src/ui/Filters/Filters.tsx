@@ -296,8 +296,7 @@ export const WorkingListFilterControls = ({
             ) : (
                 <Button
                     variant="secondary"
-                    size="sm"
-                    className="h-8"
+                    size="field-dense"
                     data-test="more-filters-tracked-entity"
                     disabled
                 >

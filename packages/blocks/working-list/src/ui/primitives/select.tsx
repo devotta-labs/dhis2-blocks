@@ -41,7 +41,7 @@ const selectTriggerVariants = cva(
         variants: {
             size: {
                 default: 'min-h-10 py-1.5 ps-3 pe-1.5',
-                sm: 'min-h-8 py-0.5 ps-2 pe-1',
+                sm: 'min-h-(--field-height-dense) py-0.5 ps-2 pe-1',
             },
         },
         defaultVariants: {

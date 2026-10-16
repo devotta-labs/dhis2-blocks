@@ -81,8 +81,7 @@ const ColumnsControl = () => {
         <div className="flex flex-none items-center">
             <Button
                 variant="secondary"
-                size="sm"
-                className="h-8"
+                size="field-dense"
                 data-test="configure-columns"
                 disabled={mutationBusy}
                 onClick={() => setDialogOpen(true)}
@@ -133,8 +132,7 @@ export const WorkingListColumnSelector = ({
             ) : (
                 <Button
                     variant="secondary"
-                    size="sm"
-                    className="h-8"
+                    size="field-dense"
                     data-test="configure-columns"
                     disabled
                 >

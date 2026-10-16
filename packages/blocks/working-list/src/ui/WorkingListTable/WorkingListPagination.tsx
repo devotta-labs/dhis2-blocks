@@ -48,7 +48,7 @@ export const WorkingListPagination = ({
             data-test="working-list-pagination"
             className="flex w-full flex-wrap items-center gap-y-1"
         >
-            <div className="me-3 flex min-h-8 grow items-center">
+            <div className="me-3 flex min-h-(--field-height-dense) grow items-center">
                 <Select
                     items={pageSizeItems}
                     value={pageSize}
@@ -79,11 +79,11 @@ export const WorkingListPagination = ({
                     </SelectContent>
                 </Select>
             </div>
-            <div className="flex min-h-8 shrink-0 items-center gap-1">
+            <div className="flex min-h-(--field-height-dense) shrink-0 items-center gap-1">
                 <Button
                     variant="secondary"
-                    size="sm"
-                    className="h-8 ps-0"
+                    size="field-dense"
+                    className="ps-0"
                     data-test="working-list-pagination-page-previous"
                     disabled={disabled || page <= 1}
                     onClick={() => onPageChange(page - 1)}
@@ -95,8 +95,8 @@ export const WorkingListPagination = ({
                 </Button>
                 <Button
                     variant="secondary"
-                    size="sm"
-                    className="h-8 pe-0"
+                    size="field-dense"
+                    className="pe-0"
                     data-test="working-list-pagination-page-next"
                     disabled={disabled || !hasNextPage}
                     onClick={() => onPageChange(page + 1)}

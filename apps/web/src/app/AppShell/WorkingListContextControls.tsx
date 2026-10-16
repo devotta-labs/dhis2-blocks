@@ -1,3 +1,4 @@
+import { Button } from '@dhis2-blocks/working-list/primitives'
 import {
     ClearSelections,
     ContextSelector,
@@ -5,7 +6,7 @@ import {
     ProgramSelector,
     type Option,
 } from '@dhis2-blocks/context-selector'
-import { Button, MenuDivider } from '@dhis2/ui'
+import { MenuDivider } from '@dhis2/ui'
 import type { ReactNode } from 'react'
 import React from 'react'
 import i18n from '../../i18n'
@@ -78,9 +79,9 @@ export const WorkingListContextControls = ({
                     <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
                         <span>{i18n.t('No programs available.')}</span>
                         <Button
-                            small
-                            secondary
-                            dataTest="program-selector-no-programs"
+                            variant="secondary"
+                            size="sm"
+                            data-test="program-selector-no-programs"
                             onClick={onShowAllPrograms}
                         >
                             {i18n.t('Show all')}
@@ -95,7 +96,11 @@ export const WorkingListContextControls = ({
                                     'Some programs are being filtered by the chosen organisation unit'
                                 )}
                             </span>
-                            <Button small secondary onClick={onShowAllPrograms}>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={onShowAllPrograms}
+                            >
                                 {i18n.t('Show all programs')}
                             </Button>
                         </div>

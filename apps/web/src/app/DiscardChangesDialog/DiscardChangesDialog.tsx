@@ -1,5 +1,5 @@
+import { Button } from '@dhis2-blocks/working-list/primitives'
 import {
-    Button,
     ButtonStrip,
     Modal,
     ModalActions,
@@ -36,10 +36,10 @@ export const DiscardChangesDialog = ({
             </ModalContent>
             <ModalActions>
                 <ButtonStrip end>
-                    <Button onClick={onCancel} secondary>
+                    <Button variant="secondary" onClick={onCancel}>
                         {i18n.t('No, cancel')}
                     </Button>
-                    <Button onClick={onDiscard} destructive>
+                    <Button variant="destructive" onClick={onDiscard}>
                         {i18n.t('Yes, discard changes')}
                     </Button>
                 </ButtonStrip>

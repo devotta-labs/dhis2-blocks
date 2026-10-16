@@ -12,7 +12,7 @@ import {
 import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
 import type { WorkingListConfiguration } from '../../provider/contracts'
 import { ColumnSettingsDialog } from '../ColumnSettingsDialog'
-import { Button } from '../primitives/Button'
+import { Button } from '../primitives/button'
 import { useWorkingListText } from '../WorkingListText'
 
 const tableFieldsFor = (
@@ -81,7 +81,7 @@ const ColumnsControl = () => {
         <div className="flex flex-none items-center">
             <Button
                 variant="secondary"
-                size="small"
+                size="sm"
                 data-test="configure-columns"
                 disabled={mutationBusy}
                 onClick={() => setDialogOpen(true)}
@@ -132,7 +132,7 @@ export const WorkingListColumnSelector = ({
             ) : (
                 <Button
                     variant="secondary"
-                    size="small"
+                    size="sm"
                     data-test="configure-columns"
                     disabled
                 >

@@ -1,11 +1,7 @@
-import {
-    Button,
-    Modal,
-    ModalActions,
-    ModalContent,
-    ModalTitle,
-    NoticeBox,
-} from '@dhis2/ui'
+import { Alert, AlertDescription, AlertTitle } from '../primitives/alert'
+import { Button } from '../primitives/button'
+import { IconErrorFilled24 } from '@dhis2/ui-icons'
+import { Modal, ModalActions, ModalContent, ModalTitle } from '@dhis2/ui'
 import { Result } from 'better-result'
 import React, { useState } from 'react'
 import type { NormalizedSavedWorkingList } from '../../api/savedLists'
@@ -152,24 +148,28 @@ export const WorkingListSavedViews = () => {
             )}
             {savedViews.status === 'error' && (
                 <div className="p-4" data-testid="saved-working-lists-error">
-                    <NoticeBox
-                        error
-                        title={translate('Could not load saved working lists')}
-                    >
-                        <p>
-                            {translate(
-                                'Saved working lists could not be loaded. Check the connection and try again.'
-                            )}
-                        </p>
-                        <Button
-                            dataTest="retry-saved-working-lists"
-                            onClick={() =>
-                                void privateActions.retrySavedViews()
-                            }
-                        >
-                            {translate('Try again')}
-                        </Button>
-                    </NoticeBox>
+                    <Alert variant="destructive">
+                        <IconErrorFilled24 />
+                        <AlertTitle>
+                            {translate('Could not load saved working lists')}
+                        </AlertTitle>
+                        <AlertDescription>
+                            <p>
+                                {translate(
+                                    'Saved working lists could not be loaded. Check the connection and try again.'
+                                )}
+                            </p>
+                            <Button
+                                variant="outline"
+                                data-test="retry-saved-working-lists"
+                                onClick={() =>
+                                    void privateActions.retrySavedViews()
+                                }
+                            >
+                                {translate('Try again')}
+                            </Button>
+                        </AlertDescription>
+                    </Alert>
                 </div>
             )}
             {savedViews.status === 'ready' && (
@@ -188,12 +188,15 @@ export const WorkingListSavedViews = () => {
 
             {actionError && (
                 <div data-testid="working-list-view-action-error">
-                    <NoticeBox
-                        error
-                        title={translate('Could not change the working list')}
-                    >
-                        {actionErrorCopy(actionError, translate)}
-                    </NoticeBox>
+                    <Alert variant="destructive">
+                        <IconErrorFilled24 />
+                        <AlertTitle>
+                            {translate('Could not change the working list')}
+                        </AlertTitle>
+                        <AlertDescription>
+                            {actionErrorCopy(actionError, translate)}
+                        </AlertDescription>
+                    </Alert>
                 </div>
             )}
 
@@ -214,14 +217,15 @@ export const WorkingListSavedViews = () => {
                     <ModalActions>
                         <div className="flex flex-wrap items-center justify-end gap-2">
                             <Button
-                                dataTest="discard-saved-view-change-cancel"
+                                variant="outline"
+                                data-test="discard-saved-view-change-cancel"
                                 onClick={() => setPendingSelection(undefined)}
                             >
                                 {translate('Cancel')}
                             </Button>
                             <Button
-                                destructive
-                                dataTest="discard-saved-view-change-confirm"
+                                variant="destructive"
+                                data-test="discard-saved-view-change-confirm"
                                 onClick={() => {
                                     const target = pendingSelection
                                     setPendingSelection(undefined)

@@ -8,18 +8,19 @@
             "description": "A composable React 18 Working List block for DHIS2 tracker programs.",
             "dependencies": [
                 "@base-ui/react@^1.9.0",
+                "better-result@^3.0.1",
+                "class-variance-authority@^0.7.1",
+                "clsx@^2.1.1",
                 "@dhis2/app-runtime@^3.15.1",
                 "@dhis2/d2-i18n@1.2.0",
                 "@dhis2/multi-calendar-dates@2.1.2",
-                "@dhis2/ui@^10.17.0",
                 "@dhis2/ui-icons@^10.17.0",
+                "@dhis2/ui@^10.17.0",
+                "react-dom@^18.3.1",
+                "react@^18.3.1",
+                "tailwind-merge@^3.7.0",
                 "@tanstack/react-query@^5.101.4",
                 "@tanstack/react-table@^9.1.2",
-                "better-result@^3.0.1",
-                "clsx@^2.1.1",
-                "react@^18.3.1",
-                "react-dom@^18.3.1",
-                "tailwind-merge@^3.7.0",
                 "zod@^4.4.3",
                 "zustand@^5.0.15"
             ],
@@ -480,17 +481,150 @@
                     "target": "@components/working-list/ui/types.ts"
                 },
                 {
-                    "path": "src/ui/primitives/Button.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/primitives/Button.tsx"
-                },
-                {
                     "path": "src/ui/primitives/cn.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/primitives/cn.ts"
+                },
+                {
+                    "path": "src/ui/primitives/alert.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/alert.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/checkbox.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/checkbox.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/field.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/field.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/input.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/input.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/label.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/label.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/spinner.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/spinner.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/switch.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/switch.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/tooltip.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/tooltip.tsx"
+                },
+                {
+                    "path": "src/ui/primitives/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/index.ts"
+                },
+                {
+                    "path": "src/ui/primitives/button.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/primitives/button.tsx"
                 }
             ],
-            "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs."
+            "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs.",
+            "cssVars": {
+                "theme": {
+                    "color-white": "#ffffff",
+                    "color-black": "#000000",
+                    "color-grey-050": "#fbfcfd",
+                    "color-grey-100": "#f8f9fa",
+                    "color-grey-200": "#f3f5f7",
+                    "color-grey-300": "#e8edf2",
+                    "color-grey-400": "#d5dde5",
+                    "color-grey-500": "#a0adba",
+                    "color-grey-600": "#6c7787",
+                    "color-grey-700": "#4a5768",
+                    "color-grey-800": "#404b5a",
+                    "color-grey-900": "#212934",
+                    "color-blue-050": "#f5fbff",
+                    "color-blue-100": "#e3f2fd",
+                    "color-blue-200": "#c5e3fc",
+                    "color-blue-300": "#90caf9",
+                    "color-blue-400": "#42a5f5",
+                    "color-blue-500": "#2196f3",
+                    "color-blue-600": "#147cd7",
+                    "color-blue-700": "#1565c0",
+                    "color-blue-800": "#0d47a1",
+                    "color-blue-900": "#093371",
+                    "color-teal-050": "#f1f9f9",
+                    "color-teal-100": "#e0f2f1",
+                    "color-teal-200": "#b2dfdb",
+                    "color-teal-300": "#4db6ac",
+                    "color-teal-400": "#009688",
+                    "color-teal-500": "#00897b",
+                    "color-teal-600": "#00796b",
+                    "color-teal-700": "#00695c",
+                    "color-teal-800": "#004d40",
+                    "color-teal-900": "#00332b",
+                    "color-red-050": "#fff5f6",
+                    "color-red-100": "#ffe5e8",
+                    "color-red-200": "#ffcdd2",
+                    "color-red-300": "#e57373",
+                    "color-red-400": "#f44336",
+                    "color-red-500": "#d32f2f",
+                    "color-red-600": "#c62828",
+                    "color-red-700": "#b71c1c",
+                    "color-red-800": "#891515",
+                    "color-red-900": "#330202",
+                    "color-yellow-050": "#fff8e1",
+                    "color-yellow-100": "#ffecb3",
+                    "color-yellow-200": "#ffe082",
+                    "color-yellow-300": "#ffc324",
+                    "color-yellow-400": "#ffa902",
+                    "color-yellow-500": "#ff9302",
+                    "color-yellow-600": "#ff8302",
+                    "color-yellow-700": "#e56408",
+                    "color-yellow-800": "#bb460d",
+                    "color-yellow-900": "#6f3205",
+                    "color-green-050": "#f4fbf4",
+                    "color-green-100": "#e8f5e9",
+                    "color-green-200": "#c8e6c9",
+                    "color-green-300": "#a5d6a7",
+                    "color-green-400": "#4caf50",
+                    "color-green-500": "#43a047",
+                    "color-green-600": "#388e3c",
+                    "color-green-700": "#2e7d32",
+                    "color-green-800": "#1b5e20",
+                    "color-green-900": "#103713",
+                    "color-background": "#ffffff",
+                    "color-foreground": "#212934",
+                    "color-card": "#ffffff",
+                    "color-card-foreground": "#212934",
+                    "color-popover": "#ffffff",
+                    "color-popover-foreground": "#212934",
+                    "color-primary": "#1565c0",
+                    "color-primary-foreground": "#ffffff",
+                    "color-secondary": "#f3f5f7",
+                    "color-secondary-foreground": "#212934",
+                    "color-muted": "#f3f5f7",
+                    "color-muted-foreground": "#4a5768",
+                    "color-accent": "#f3f5f7",
+                    "color-accent-foreground": "#212934",
+                    "color-destructive": "#b71c1c",
+                    "color-border": "#e8edf2",
+                    "color-input": "#a0adba",
+                    "color-ring": "#147cd7",
+                    "radius-sm": "3px",
+                    "radius-md": "4px",
+                    "radius-lg": "4px",
+                    "font-sans": "Roboto, Helvetica, Arial, sans-serif"
+                }
+            }
         }
     ]
 }

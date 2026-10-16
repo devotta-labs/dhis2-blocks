@@ -1,4 +1,4 @@
-import { IconWarningFilled16, Tooltip } from '@dhis2/ui'
+import { IconWarningFilled16 } from '@dhis2/ui'
 import {
     columnOrderingFeature,
     columnVisibilityFeature,
@@ -28,6 +28,7 @@ import {
 } from '../../registry/valueTypes'
 import { fieldDisplayName, localizedField } from '../FilterControls'
 import type { WorkingListDataQualityMode } from '../types'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip'
 import { useWorkingListText } from '../WorkingListText'
 import {
     WorkingListTableView,
@@ -78,8 +79,22 @@ const invalidCellText = (
 const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
     const t = useWorkingListText()
     return (
-        <Tooltip
-            content={
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <span
+                        className="inline-flex items-center text-[#b93d2e]"
+                        role="img"
+                        data-testid={`row-issues-${row.id}`}
+                        aria-label={t('Row has {{count}} data quality issues', {
+                            count: row.issues.length,
+                        })}
+                    />
+                }
+            >
+                <IconWarningFilled16 />
+            </TooltipTrigger>
+            <TooltipContent>
                 <ul className="m-0 pl-4">
                     {row.issues.map((issue) => (
                         <li key={`${issue.fieldId}-${issue.message}`}>
@@ -87,18 +102,7 @@ const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
                         </li>
                     ))}
                 </ul>
-            }
-        >
-            <span
-                className="inline-flex items-center text-[#b93d2e]"
-                role="img"
-                data-testid={`row-issues-${row.id}`}
-                aria-label={t('Row has {{count}} data quality issues', {
-                    count: row.issues.length,
-                })}
-            >
-                <IconWarningFilled16 />
-            </span>
+            </TooltipContent>
         </Tooltip>
     )
 }

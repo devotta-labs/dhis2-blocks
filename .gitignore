@@ -13,3 +13,4 @@ e2e/artifacts
 
 # Local Claude Code state (agent worktrees, launch config)
 .claude/
+.vitest-attachments/

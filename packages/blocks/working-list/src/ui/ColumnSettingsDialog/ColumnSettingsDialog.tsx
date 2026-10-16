@@ -1,5 +1,5 @@
+import { Button } from '../primitives/button'
 import {
-    Button,
     Modal,
     ModalActions,
     ModalContent,
@@ -137,12 +137,15 @@ export const ColumnSettingsDialog = ({
             </ModalContent>
             <ModalActions>
                 <div className="flex gap-2">
-                    <Button dataTest="column-settings-cancel" onClick={onClose}>
+                    <Button
+                        variant="outline"
+                        data-test="column-settings-cancel"
+                        onClick={onClose}
+                    >
                         {translate('Cancel')}
                     </Button>
                     <Button
-                        primary
-                        dataTest="column-settings-done"
+                        data-test="column-settings-done"
                         disabled={disabled}
                         onClick={save}
                     >

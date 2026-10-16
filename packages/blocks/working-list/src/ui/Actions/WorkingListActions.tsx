@@ -1,5 +1,6 @@
-import { NoticeBox } from '@dhis2/ui'
-import { IconMore16 } from '@dhis2/ui-icons'
+import { Alert, AlertDescription, AlertTitle } from '../primitives/alert'
+import { Button } from '../primitives/button'
+import { IconErrorFilled24, IconMore16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
 import type {
@@ -13,7 +14,6 @@ import {
 } from '../../provider/WorkingListContext'
 import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
 import { ConfigureMenu } from '../ConfigureMenu'
-import { Button } from '../primitives/Button'
 import {
     useWorkingListText,
     type WorkingListTranslate,
@@ -131,22 +131,24 @@ const ActionsControl = () => {
             />
             {saveError && (
                 <div data-testid="working-list-save-error">
-                    <NoticeBox
-                        error
-                        title={actionCopy.noticeTitles.save(translate)}
-                    >
-                        {saveError}
-                    </NoticeBox>
+                    <Alert variant="destructive">
+                        <IconErrorFilled24 />
+                        <AlertTitle>
+                            {actionCopy.noticeTitles.save(translate)}
+                        </AlertTitle>
+                        <AlertDescription>{saveError}</AlertDescription>
+                    </Alert>
                 </div>
             )}
             {downloadError && (
                 <div data-testid="working-list-download-error">
-                    <NoticeBox
-                        error
-                        title={actionCopy.noticeTitles.download(translate)}
-                    >
-                        {downloadError}
-                    </NoticeBox>
+                    <Alert variant="destructive">
+                        <IconErrorFilled24 />
+                        <AlertTitle>
+                            {actionCopy.noticeTitles.download(translate)}
+                        </AlertTitle>
+                        <AlertDescription>{downloadError}</AlertDescription>
+                    </Alert>
                 </div>
             )}
         </div>
@@ -182,7 +184,7 @@ export const WorkingListToolbarActions = ({
                 >
                     <Button
                         variant="secondary"
-                        size="small"
+                        size="sm"
                         data-test="save-working-list"
                         disabled
                     >
@@ -190,7 +192,7 @@ export const WorkingListToolbarActions = ({
                     </Button>
                     <Button
                         variant="secondary"
-                        size="small"
+                        size="sm"
                         data-test="working-list-options"
                         disabled
                     >

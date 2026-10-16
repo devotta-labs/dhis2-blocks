@@ -1,5 +1,4 @@
 import {
-    Checkbox,
     MultiSelectField,
     MultiSelectOption,
     SingleSelectField,
@@ -12,6 +11,8 @@ import type { WorkingListClient } from '../../api/client'
 import { usesMultipleOptionSelection } from '../../domain/filterControlPolicy'
 import type { FilterValue, WorkingListField } from '../../domain/model'
 import type { FilterEditorKind } from '../../registry/valueTypes'
+import { Checkbox } from '../primitives/checkbox'
+import { Label } from '../primitives/label'
 import { useWorkingListText } from '../WorkingListText'
 import { CalendarRangeFields } from './CalendarRangeFields'
 import {
@@ -153,30 +154,34 @@ export const EditorValue = ({
                 role="group"
                 aria-label={i18n.t('Values')}
             >
-                <Checkbox
-                    label={i18n.t('Yes')}
-                    checked={values.includes(true)}
-                    onChange={({ checked }) =>
-                        onChange({
-                            kind: 'boolean',
-                            values: checked
-                                ? [...values.filter((item) => !item), true]
-                                : values.filter((item) => !item),
-                        })
-                    }
-                />
-                <Checkbox
-                    label={i18n.t('No')}
-                    checked={values.includes(false)}
-                    onChange={({ checked }) =>
-                        onChange({
-                            kind: 'boolean',
-                            values: checked
-                                ? [...values.filter(Boolean), false]
-                                : values.filter(Boolean),
-                        })
-                    }
-                />
+                <Label className="cursor-pointer">
+                    <Checkbox
+                        checked={values.includes(true)}
+                        onCheckedChange={(checked) =>
+                            onChange({
+                                kind: 'boolean',
+                                values: checked
+                                    ? [...values.filter((item) => !item), true]
+                                    : values.filter((item) => !item),
+                            })
+                        }
+                    />
+                    {i18n.t('Yes')}
+                </Label>
+                <Label className="cursor-pointer">
+                    <Checkbox
+                        checked={values.includes(false)}
+                        onCheckedChange={(checked) =>
+                            onChange({
+                                kind: 'boolean',
+                                values: checked
+                                    ? [...values.filter(Boolean), false]
+                                    : values.filter(Boolean),
+                            })
+                        }
+                    />
+                    {i18n.t('No')}
+                </Label>
             </div>
         )
     }

@@ -1,4 +1,6 @@
-import { CircularLoader, NoticeBox } from '@dhis2/ui'
+import { Alert, AlertDescription, AlertTitle } from '../primitives/alert'
+import { Spinner } from '../primitives/spinner'
+import { IconErrorFilled24 } from '@dhis2/ui-icons'
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { useWorkingListMeta } from '../../provider/WorkingListContext'
 import { useWorkingListText } from '../WorkingListText'
@@ -34,20 +36,23 @@ export const WorkingListContainer = ({
                     data-testid="working-list-initializing"
                     aria-live="polite"
                 >
-                    <CircularLoader small />
+                    <Spinner className="size-6 border-4" />
                     <p>{translate('Loading the working list…')}</p>
                 </div>
             )}
             {lifecycle.status === 'error' && (
                 <div className="p-4" data-testid="working-list-lifecycle-error">
-                    <NoticeBox
-                        error
-                        title={translate('Could not load the working list')}
-                    >
-                        {translate(
-                            'The working list could not be initialized for this program.'
-                        )}
-                    </NoticeBox>
+                    <Alert variant="destructive">
+                        <IconErrorFilled24 />
+                        <AlertTitle>
+                            {translate('Could not load the working list')}
+                        </AlertTitle>
+                        <AlertDescription>
+                            {translate(
+                                'The working list could not be initialized for this program.'
+                            )}
+                        </AlertDescription>
+                    </Alert>
                 </div>
             )}
             <article

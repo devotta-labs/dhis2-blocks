@@ -1,10 +1,5 @@
-import {
-    Button,
-    Modal,
-    ModalActions,
-    ModalContent,
-    ModalTitle,
-} from '@dhis2/ui'
+import { Button } from '@dhis2-blocks/working-list/primitives'
+import { Modal, ModalActions, ModalContent, ModalTitle } from '@dhis2/ui'
 import type { WorkingListResultTarget } from '@dhis2-blocks/working-list'
 import React from 'react'
 import i18n from '../../i18n'
@@ -39,9 +34,7 @@ export const RecordDetailsModal = ({
             </dl>
         </ModalContent>
         <ModalActions>
-            <Button primary onClick={onClose}>
-                {i18n.t('Close')}
-            </Button>
+            <Button onClick={onClose}>{i18n.t('Close')}</Button>
         </ModalActions>
     </Modal>
 )

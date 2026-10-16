@@ -1,5 +1,5 @@
+import { Button } from '../../../primitives/button'
 import {
-    Button,
     Modal,
     ModalActions,
     ModalContent,
@@ -199,14 +199,14 @@ export const WorkingListRepairDialog = ({
             <ModalActions>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                     <Button
-                        dataTest="repair-working-list-cancel"
+                        variant="outline"
+                        data-test="repair-working-list-cancel"
                         onClick={onClose}
                     >
                         {i18n.t('Cancel')}
                     </Button>
                     <Button
-                        primary
-                        dataTest="repair-working-list-confirm"
+                        data-test="repair-working-list-confirm"
                         disabled={!canRepair}
                         onClick={() => onRepair(list, repairedConfiguration)}
                     >

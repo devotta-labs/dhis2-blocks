@@ -4,6 +4,7 @@
  * resets using their normal selector specificity.
  */
 @import 'tailwindcss/theme.css';
+@import '@dhis2-blocks/working-list/theme.css';
 @import 'tailwindcss/preflight.css';
 @import 'tailwindcss/utilities.css';
 

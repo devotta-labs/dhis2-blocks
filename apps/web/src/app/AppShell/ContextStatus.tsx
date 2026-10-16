@@ -1,4 +1,11 @@
-import { Button, CircularLoader, NoticeBox } from '@dhis2/ui'
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+    Button,
+    Spinner,
+} from '@dhis2-blocks/working-list/primitives'
+import { IconErrorFilled24 } from '@dhis2/ui-icons'
 import React from 'react'
 import i18n from '../../i18n'
 
@@ -33,7 +40,7 @@ export const ContextStatus = ({
                 data-testid="app-context-loading"
                 aria-live="polite"
             >
-                <CircularLoader small />
+                <Spinner className="size-6 border-4" />
                 <p>{i18n.t('Loading tracker programs…')}</p>
             </main>
         )
@@ -45,12 +52,22 @@ export const ContextStatus = ({
                 className={contextStateClassName}
                 data-testid="app-context-error"
             >
-                <NoticeBox error title={i18n.t('Could not load app context')}>
-                    <p>
-                        {error instanceof Error ? error.message : String(error)}
-                    </p>
-                    <Button onClick={onRetry}>{i18n.t('Try again')}</Button>
-                </NoticeBox>
+                <Alert variant="destructive">
+                    <IconErrorFilled24 />
+                    <AlertTitle>
+                        {i18n.t('Could not load app context')}
+                    </AlertTitle>
+                    <AlertDescription>
+                        <p>
+                            {error instanceof Error
+                                ? error.message
+                                : String(error)}
+                        </p>
+                        <Button variant="outline" onClick={onRetry}>
+                            {i18n.t('Try again')}
+                        </Button>
+                    </AlertDescription>
+                </Alert>
             </main>
         )
     }
@@ -89,8 +106,7 @@ export const ContextStatus = ({
                 </p>
                 {canChooseOrganisationUnit ? (
                     <Button
-                        primary
-                        dataTest="choose-org-unit"
+                        data-test="choose-org-unit"
                         onClick={onChooseOrganisationUnit}
                     >
                         {i18n.t('Choose organisation unit')}
@@ -106,26 +122,30 @@ export const ContextStatus = ({
                 className={contextStateClassName}
                 data-testid="invalid-program-context"
             >
-                <NoticeBox
-                    error
-                    title={i18n.t(
-                        'Selected program is invalid for selected organisation unit'
-                    )}
-                >
-                    <p>
+                <Alert variant="destructive">
+                    <IconErrorFilled24 />
+                    <AlertTitle>
                         {i18n.t(
-                            'Clear the selected program or choose another organisation unit.'
+                            'Selected program is invalid for selected organisation unit'
                         )}
-                    </p>
-                    {canChooseOrganisationUnit ? (
-                        <Button
-                            dataTest="replace-invalid-org-unit"
-                            onClick={onChooseOrganisationUnit}
-                        >
-                            {i18n.t('Choose another organisation unit')}
-                        </Button>
-                    ) : null}
-                </NoticeBox>
+                    </AlertTitle>
+                    <AlertDescription>
+                        <p>
+                            {i18n.t(
+                                'Clear the selected program or choose another organisation unit.'
+                            )}
+                        </p>
+                        {canChooseOrganisationUnit ? (
+                            <Button
+                                variant="outline"
+                                data-test="replace-invalid-org-unit"
+                                onClick={onChooseOrganisationUnit}
+                            >
+                                {i18n.t('Choose another organisation unit')}
+                            </Button>
+                        ) : null}
+                    </AlertDescription>
+                </Alert>
             </main>
         )
     }

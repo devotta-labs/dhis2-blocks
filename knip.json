@@ -91,8 +91,8 @@
                 "type-tests/**/*.ts"
             ],
             "project": [
-                "src/**/*.{ts,tsx}",
-                "test/**/*.ts",
+                "src/**/*.{ts,tsx,css}",
+                "test/**/*.{ts,css}",
                 "type-tests/**/*.ts"
             ],
             "includeEntryExports": true,
@@ -120,7 +120,8 @@
                     "nsTypes",
                     "enumMembers",
                     "namespaceMembers"
-                ]
+                ],
+                "src/ui/primitives/**": ["exports", "types"]
             }
         },
         "packages/blocks/context-selector": {

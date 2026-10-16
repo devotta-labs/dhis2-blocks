@@ -1,8 +1,8 @@
+import { Button } from '../primitives/button'
+import { Spinner } from '../primitives/spinner'
 import {
-    Button,
     DropdownButton,
     FlyoutMenu,
-    InputField,
     MenuItem,
     Modal,
     ModalActions,
@@ -10,9 +10,10 @@ import {
     ModalTitle,
 } from '@dhis2/ui'
 import { IconMore16 } from '@dhis2/ui-icons'
-import React, { useState } from 'react'
+import React, { useId, useState } from 'react'
 import type { WorkingListSavedView } from '../../provider/contracts'
-import { Button as ToolbarButton } from '../primitives/Button'
+import { Field, FieldLabel } from '../primitives/field'
+import { Input } from '../primitives/input'
 import { useWorkingListText } from '../WorkingListText'
 
 interface ConfigureMenuProps {
@@ -39,6 +40,7 @@ export const ConfigureMenu = ({
     const i18n = { t: useWorkingListText() }
     const [nameDialogOpen, setNameDialogOpen] = useState(false)
     const [name, setName] = useState('')
+    const nameInputId = useId()
     const [nameError, setNameError] = useState<string>()
     const [saveMenuOpen, setSaveMenuOpen] = useState(false)
     const [moreMenuOpen, setMoreMenuOpen] = useState(false)
@@ -100,19 +102,19 @@ export const ConfigureMenu = ({
                     </DropdownButton>
                 ) : (
                     <>
-                        <ToolbarButton
+                        <Button
                             variant="secondary"
-                            size="small"
+                            size="sm"
                             data-test="save-working-list"
                             disabled={locked}
                             onClick={openSaveAs}
                         >
                             {i18n.t('Save view')}
-                        </ToolbarButton>
+                        </Button>
                         <DropdownButton
                             secondary
                             small
-                            icon={<IconMore16 />}
+                            icon=<IconMore16 />
                             dataTest="working-list-options"
                             open={moreMenuOpen}
                             onClick={({ open }) => setMoreMenuOpen(open)}
@@ -163,13 +165,20 @@ export const ConfigureMenu = ({
                             {i18n.t('Save as new working list')}
                         </ModalTitle>
                         <ModalContent>
-                            <InputField
-                                required
-                                dataTest="working-list-name-input"
-                                label={i18n.t('Name')}
-                                value={name}
-                                onChange={({ value }) => setName(value ?? '')}
-                            />
+                            <Field data-test="working-list-name-input">
+                                <FieldLabel htmlFor={nameInputId}>
+                                    {i18n.t('Name')}
+                                    <span aria-hidden="true">*</span>
+                                </FieldLabel>
+                                <Input
+                                    id={nameInputId}
+                                    required
+                                    value={name}
+                                    onChange={(event) =>
+                                        setName(event.target.value)
+                                    }
+                                />
+                            </Field>
                             {nameError && (
                                 <p
                                     role="alert"
@@ -182,19 +191,27 @@ export const ConfigureMenu = ({
                         <ModalActions>
                             <div className="flex flex-wrap items-center justify-end gap-2">
                                 <Button
+                                    variant="outline"
                                     type="button"
-                                    dataTest="working-list-name-cancel"
+                                    data-test="working-list-name-cancel"
                                     onClick={() => setNameDialogOpen(false)}
                                 >
                                     {i18n.t('Cancel')}
                                 </Button>
                                 <Button
-                                    secondary
-                                    loading={createPending}
+                                    variant="secondary"
                                     type="submit"
-                                    dataTest="working-list-name-submit"
-                                    disabled={!name.trim() || busy}
+                                    data-test="working-list-name-submit"
+                                    disabled={
+                                        !name.trim() || busy || createPending
+                                    }
                                 >
+                                    {createPending && (
+                                        <Spinner
+                                            data-icon="inline-start"
+                                            className="size-4"
+                                        />
+                                    )}
                                     {i18n.t('Save')}
                                 </Button>
                             </div>

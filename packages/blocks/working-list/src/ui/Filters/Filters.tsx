@@ -1,4 +1,4 @@
-import { Button } from '@dhis2/ui'
+import { Button } from '../primitives/button'
 import { IconFilter16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
@@ -295,12 +295,12 @@ export const WorkingListFilterControls = ({
                 <FiltersControl />
             ) : (
                 <Button
-                    secondary
-                    small
-                    icon={<IconFilter16 />}
-                    dataTest="more-filters-tracked-entity"
+                    variant="secondary"
+                    size="sm"
+                    data-test="more-filters-tracked-entity"
                     disabled
                 >
+                    <IconFilter16 />
                     {translate('Filter')}
                 </Button>
             )}

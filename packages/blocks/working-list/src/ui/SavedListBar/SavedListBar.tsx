@@ -1,5 +1,5 @@
+import { Button } from '../primitives/button'
 import {
-    Button,
     FlyoutMenu,
     MenuItem,
     Modal,
@@ -269,14 +269,15 @@ export const SavedListBar = ({
                     <ModalActions>
                         <div className="flex flex-wrap items-center justify-end gap-2">
                             <Button
-                                dataTest="delete-saved-view-cancel"
+                                variant="outline"
+                                data-test="delete-saved-view-cancel"
                                 onClick={() => setDeleteList(undefined)}
                             >
                                 {i18n.t('Cancel')}
                             </Button>
                             <Button
-                                destructive
-                                dataTest="delete-saved-view-confirm"
+                                variant="destructive"
+                                data-test="delete-saved-view-confirm"
                                 disabled={savedListLocked}
                                 onClick={() => {
                                     onDelete(deleteList)

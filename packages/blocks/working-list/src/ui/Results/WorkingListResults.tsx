@@ -1,4 +1,7 @@
-import { Button, CircularLoader, NoticeBox } from '@dhis2/ui'
+import { Alert, AlertDescription, AlertTitle } from '../primitives/alert'
+import { Button } from '../primitives/button'
+import { Spinner } from '../primitives/spinner'
+import { IconErrorFilled24 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useMemo, useState, type ComponentPropsWithoutRef } from 'react'
 import { fieldsForConfiguration } from '../../api/metadata'
@@ -84,7 +87,7 @@ const SelectionLoading = () => {
             data-testid="working-list-selection-loading"
             aria-live="polite"
         >
-            <CircularLoader small />
+            <Spinner className="size-6 border-4" />
             <p>{translate('Loading the selected working list…')}</p>
         </div>
     )
@@ -139,16 +142,25 @@ const ReadyResults = ({
     if (results.status === 'error') {
         return (
             <div className="p-4" data-testid="results-error">
-                <NoticeBox error title={translate('Could not load results')}>
-                    <p>
-                        {translate(
-                            'The working list results could not be loaded. Check the connection and try again.'
-                        )}
-                    </p>
-                    <Button onClick={() => void privateActions.retryResults()}>
-                        {translate('Try again')}
-                    </Button>
-                </NoticeBox>
+                <Alert variant="destructive">
+                    <IconErrorFilled24 />
+                    <AlertTitle>
+                        {translate('Could not load results')}
+                    </AlertTitle>
+                    <AlertDescription>
+                        <p>
+                            {translate(
+                                'The working list results could not be loaded. Check the connection and try again.'
+                            )}
+                        </p>
+                        <Button
+                            variant="outline"
+                            onClick={() => void privateActions.retryResults()}
+                        >
+                            {translate('Try again')}
+                        </Button>
+                    </AlertDescription>
+                </Alert>
             </div>
         )
     }
@@ -218,47 +230,56 @@ const IncompatibleSelection = () => {
     return (
         <>
             <div className="p-4" data-testid="stale-list-panel">
-                <NoticeBox
-                    error
-                    title={translate(
-                        'This saved list has unavailable settings'
-                    )}
-                >
-                    <p>
-                        {repairable
-                            ? translate(
-                                  'Some filters, columns, or sorting options are no longer available. Repair lets you review the proposed changes before updating the list.'
-                              )
-                            : translate(
-                                  'Some parts of this list are no longer available. Ask someone who can edit the list to repair it, or select another list.'
-                              )}
-                    </p>
-                    {repairable && (
-                        <div className="mt-2">
-                            <Button
-                                small
-                                dataTest="repair-working-list"
-                                disabled={repairPending}
-                                loading={repairPending}
-                                onClick={() => setDialogOpen(true)}
-                            >
-                                {repairPending
-                                    ? translate('Repairing…')
-                                    : translate('Repair')}
-                            </Button>
-                            {repairPending && (
-                                <span
-                                    className={visuallyHiddenClassName}
-                                    role="status"
-                                    aria-live="polite"
+                <Alert variant="destructive">
+                    <IconErrorFilled24 />
+                    <AlertTitle>
+                        {translate('This saved list has unavailable settings')}
+                    </AlertTitle>
+                    <AlertDescription>
+                        <p>
+                            {repairable
+                                ? translate(
+                                      'Some filters, columns, or sorting options are no longer available. Repair lets you review the proposed changes before updating the list.'
+                                  )
+                                : translate(
+                                      'Some parts of this list are no longer available. Ask someone who can edit the list to repair it, or select another list.'
+                                  )}
+                        </p>
+                        {repairable && (
+                            <div className="mt-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    data-test="repair-working-list"
+                                    disabled={repairPending}
+                                    onClick={() => setDialogOpen(true)}
                                 >
-                                    {translate('Repairing this saved list…')}
-                                </span>
-                            )}
-                        </div>
-                    )}
-                    {repairError && <p role="alert">{repairError}</p>}
-                </NoticeBox>
+                                    {repairPending && (
+                                        <Spinner
+                                            data-icon="inline-start"
+                                            className="size-4"
+                                        />
+                                    )}
+                                    {repairPending
+                                        ? translate('Repairing…')
+                                        : translate('Repair')}
+                                </Button>
+                                {repairPending && (
+                                    <span
+                                        className={visuallyHiddenClassName}
+                                        role="status"
+                                        aria-live="polite"
+                                    >
+                                        {translate(
+                                            'Repairing this saved list…'
+                                        )}
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                        {repairError && <p role="alert">{repairError}</p>}
+                    </AlertDescription>
+                </Alert>
             </div>
             <WorkingListRepairDialog
                 open={dialogOpen}
@@ -309,29 +330,32 @@ const WorkingListResultsContent = ({
                         className="p-4"
                         data-testid="unavailable-working-list-error"
                     >
-                        <NoticeBox
-                            error
-                            title={translate(
-                                'This working list is unavailable'
-                            )}
-                        >
-                            <p>
-                                {translate(
-                                    'The selected working list may no longer exist, or you may no longer have access. No records will be queried while it is selected.'
-                                )}
-                            </p>
-                            <Button
-                                dataTest="use-default-working-list"
-                                onClick={() => {
-                                    const result = actions.clearViewSelection()
-                                    if (Result.isError(result)) {
-                                        throw result.error
-                                    }
-                                }}
-                            >
-                                {translate('Use the default working list')}
-                            </Button>
-                        </NoticeBox>
+                        <Alert variant="destructive">
+                            <IconErrorFilled24 />
+                            <AlertTitle>
+                                {translate('This working list is unavailable')}
+                            </AlertTitle>
+                            <AlertDescription>
+                                <p>
+                                    {translate(
+                                        'The selected working list may no longer exist, or you may no longer have access. No records will be queried while it is selected.'
+                                    )}
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    data-test="use-default-working-list"
+                                    onClick={() => {
+                                        const result =
+                                            actions.clearViewSelection()
+                                        if (Result.isError(result)) {
+                                            throw result.error
+                                        }
+                                    }}
+                                >
+                                    {translate('Use the default working list')}
+                                </Button>
+                            </AlertDescription>
+                        </Alert>
                     </div>
                 ))}
             {selection.status === 'ready' &&

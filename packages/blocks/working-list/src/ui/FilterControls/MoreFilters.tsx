@@ -1,4 +1,5 @@
-import { Button, Menu, MenuDivider, MenuItem, Tooltip } from '@dhis2/ui'
+import { Button } from '../primitives/button'
+import { Menu, MenuDivider, MenuItem, Tooltip } from '@dhis2/ui'
 import { IconFilter16 } from '@dhis2/ui-icons'
 import React, { useMemo, useState } from 'react'
 import type { TrackerProgram } from '../../api/schemas'
@@ -81,10 +82,9 @@ export const MoreFilters = ({
     return (
         <div ref={setButtonElement} className="relative min-w-0 max-w-full">
             <Button
-                secondary
-                small
-                icon={<IconFilter16 />}
-                dataTest={`more-filters-${scope}`}
+                variant="secondary"
+                size="sm"
+                data-test={`more-filters-${scope}`}
                 data-testid={`more-filters-${scope}`}
                 disabled={disabled}
                 aria-expanded={open && !disabled}
@@ -95,6 +95,7 @@ export const MoreFilters = ({
                     }
                 }}
             >
+                <IconFilter16 />
                 {i18n.t('Filter')}
             </Button>
             {open && !disabled && buttonElement && (

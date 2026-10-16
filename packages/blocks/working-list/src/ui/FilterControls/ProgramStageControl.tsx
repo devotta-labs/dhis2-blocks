@@ -1,9 +1,5 @@
-import {
-    Button,
-    SingleSelect,
-    SingleSelectField,
-    SingleSelectOption,
-} from '@dhis2/ui'
+import { Button } from '../primitives/button'
+import { SingleSelect, SingleSelectField, SingleSelectOption } from '@dhis2/ui'
 import React, { useId, useMemo, useState } from 'react'
 import type { TrackerProgram } from '../../api/schemas'
 import { useWorkingListText } from '../WorkingListText'
@@ -222,18 +218,18 @@ export const ProgramStageControl = ({
                             </SingleSelectField>
                             <div className="flex flex-wrap gap-[8px] pt-[12px] [border-top:1px_solid_#e8edf2]">
                                 <Button
-                                    primary
-                                    small
+                                    size="sm"
                                     type="submit"
-                                    dataTest="filter-update-programStage"
+                                    data-test="filter-update-programStage"
                                     disabled={!draft}
                                 >
                                     {i18n.t('Update')}
                                 </Button>
                                 <Button
-                                    small
+                                    variant="outline"
+                                    size="sm"
                                     type="button"
-                                    dataTest="filter-reset-programStage"
+                                    data-test="filter-reset-programStage"
                                     onClick={() => {
                                         onChange(undefined)
                                         close()

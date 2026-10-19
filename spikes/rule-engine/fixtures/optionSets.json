@@ -1,0 +1,94 @@
+{
+  "optionSets": [
+    {
+      "name": "Plurality assessed",
+      "options": [
+        {
+          "code": "0",
+          "name": "Not assessed",
+          "displayName": "Not assessed",
+          "id": "brXKCwTjvzf"
+        },
+        {
+          "code": "1",
+          "name": "Singleton",
+          "displayName": "Singleton",
+          "id": "vxzCWBGF299"
+        },
+        {
+          "code": "2",
+          "name": "Twins",
+          "displayName": "Twins",
+          "id": "d9AwQyXrPkg"
+        },
+        {
+          "code": "3",
+          "name": "Triplets",
+          "displayName": "Triplets",
+          "id": "oaORpUNL7Ul"
+        },
+        {
+          "code": "4",
+          "name": "Quadruplets",
+          "displayName": "Quadruplets",
+          "id": "A8gGYO2aCcJ"
+        },
+        {
+          "code": "5",
+          "name": "Five fetuses",
+          "displayName": "Five fetuses",
+          "id": "NJ4aa2O38TO"
+        },
+        {
+          "code": "6",
+          "name": "Six fetuses",
+          "displayName": "Six fetuses",
+          "id": "DLipgXFGbBn"
+        }
+      ],
+      "id": "bVOfVD9sJFP"
+    },
+    {
+      "name": "Pregnancy outcome",
+      "options": [
+        {
+          "code": "1",
+          "name": "Live birth",
+          "displayName": "Live birth",
+          "id": "PPd9Ch1kJhG"
+        },
+        {
+          "code": "0",
+          "name": "Stillbirth",
+          "displayName": "Stillbirth",
+          "id": "gQuVrCDl0zI"
+        },
+        {
+          "code": "2",
+          "name": "Termination of pregnancy",
+          "displayName": "Termination of pregnancy",
+          "id": "Vh0ZLdC5dWK"
+        }
+      ],
+      "id": "C3F7ypzeLiS"
+    },
+    {
+      "name": "Yes NoneKnown",
+      "options": [
+        {
+          "code": "true",
+          "name": "Yes",
+          "displayName": "Yes",
+          "id": "l8S7SjnQ58G"
+        },
+        {
+          "code": "false",
+          "name": "None known",
+          "displayName": "None known",
+          "id": "rexqxNDqUKg"
+        }
+      ],
+      "id": "R3ShQczKnI9"
+    }
+  ]
+}

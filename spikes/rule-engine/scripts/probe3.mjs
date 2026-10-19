@@ -1,0 +1,23 @@
+import * as E from '@dhis2/rule-engine'
+const t = (l, f) => { try { console.log(l, String(f())) } catch (e) { console.log(l, 'THREW', e.message?.split('\n')[0]) } }
+t('LocalDate yyyy-mm-dd', () => E.RuleLocalDate.parse('2026-03-12'))
+t('LocalDate datetime', () => E.RuleLocalDate.parse('2026-03-12T12:05:00.000'))
+t('Instant no Z', () => E.RuleInstant.parse('2026-03-12T12:05:00.000'))
+t('Instant Z', () => E.RuleInstant.parse('2026-03-12T12:05:00.000Z'))
+t('event status VISITED', () => E.RuleEventStatus.valueOf('VISITED').name)
+const eng = new E.RuleEngineJs(false)
+const sup = new E.RuleSupplementaryDataJs([], [], new Map())
+const v = (n, de, ty) => new E.RuleVariableJs(E.RuleVariableType.DATAELEMENT_CURRENT_EVENT, n, true, [], de, ty, null)
+const ev = (dvs, d = '2026-03-12') => new E.RuleEventJs('ev1', 'st1', 'S', E.RuleEventStatus.ACTIVE, E.RuleLocalDate.parse(d), E.RuleInstant.now(), null, null, null, 'ou', null, Object.entries(dvs).map(([k, x]) => new E.RuleDataValue(k, x)))
+const run = (l, cond, vars, dvs, data = null) => console.log(l, eng.evaluateEvent(ev(dvs), null, [], new E.RuleEngineContextJs([new E.RuleJs(cond, [new E.RuleActionJs(data, 'SHOWWARNING', new Map([['content', 'x']]), null)], 'r', 'R')], vars, sup, new Map())).map(e => `fired data=${e.data}`))
+const T = E.RuleValueType
+run('!== Yes (value No):', "#{x} !== 'Yes'", [v('x', 'de', T.TEXT)], { de: 'No' })
+run('!== Yes (value Yes):', "#{x} !== 'Yes'", [v('x', 'de', T.TEXT)], { de: 'Yes' })
+run('!bool false:', '!#{b}', [v('b', 'de', T.BOOLEAN)], { de: 'false' })
+run('!bool empty:', '!#{b}', [v('b', 'de', T.BOOLEAN)], {})
+run('!bool true:', '!#{b}', [v('b', 'de', T.BOOLEAN)], { de: 'true' })
+run('date var datetime value:', "d2:weeksBetween(#{d}, V{event_date}) > 0", [v('d', 'de', T.DATE)], { de: '2026-01-01T00:00:00.000' }, 'd2:weeksBetween(#{d}, V{event_date})')
+run('date var date value:', "d2:weeksBetween(#{d}, V{event_date}) > 0", [v('d', 'de', T.DATE)], { de: '2026-01-01' }, 'd2:weeksBetween(#{d}, V{event_date})')
+run('number "1.0":', "#{n} == 1", [v('n', 'de', T.NUMERIC)], { de: '1.0' }, '#{n}')
+run('hasValue empty string:', "d2:hasValue('x')", [v('x', 'de', T.TEXT)], { de: '' })
+run('text var typed as NUMERIC, value abc:', "#{n} > 1", [v('n', 'de', T.NUMERIC)], { de: 'abc' })

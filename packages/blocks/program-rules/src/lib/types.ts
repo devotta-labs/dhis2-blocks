@@ -167,9 +167,13 @@ export interface RuleEffects {
     hiddenOptions: Map<string, Set<string>>
     /** fieldId → hidden and shown option group ids */
     optionGroups: Map<string, RuleOptionGroupEffects>
+    /** fieldId → the rule actions behind its hiddenOptions and optionGroups entries */
+    optionAttributions: Map<string, Attribution[]>
     displayTexts: RuleDisplayItem[]
     keyValuePairs: RuleDisplayItem[]
     hiddenProgramStages: Set<string>
+    /** programStageId → the rule actions that hid it */
+    programStageAttributions: Map<string, Attribution[]>
 }
 
 // ---- Context ---------------------------------------------------------------

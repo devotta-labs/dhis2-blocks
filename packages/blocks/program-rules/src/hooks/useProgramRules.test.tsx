@@ -1,4 +1,4 @@
-import { CustomDataProvider } from '@dhis2/app-runtime'
+import { CustomDataProvider, FetchError } from '@dhis2/app-runtime'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
@@ -9,6 +9,7 @@ import {
     rmnchInput,
     rmnchResponses,
 } from '../../test/rmnch'
+import { programRulesQueryKeys } from './queryKeys'
 import {
     useProgramRules,
     type ProgramRulesInput,
@@ -29,14 +30,22 @@ interface RawRules {
 }
 type Responses = Omit<typeof rmnchResponses, 'rules'> & { rules: RawRules }
 
-const serve = (responses: Responses, failing: ReadonlyArray<string> = []) => {
+const serve = (
+    responses: Responses,
+    initiallyFailing: ReadonlyArray<string> = []
+) => {
     const requests: string[] = []
+    const failing = [...initiallyFailing]
     const resource =
         <T,>(name: string, body: () => T) =>
         async () => {
             requests.push(name)
             if (failing.includes(name)) {
-                throw new Error(`${name} failed`)
+                // An access error, so the hook's retry policy doesn't retry it.
+                throw new FetchError({
+                    type: 'access',
+                    message: `${name} failed`,
+                })
             }
             // Served as it would arrive over the wire: plain JSON, no `undefined` members.
             return z.json().parse(JSON.parse(JSON.stringify(body())))
@@ -74,7 +83,7 @@ const serve = (responses: Responses, failing: ReadonlyArray<string> = []) => {
             </QueryClientProvider>
         </CustomDataProvider>
     )
-    return { requests, wrapper }
+    return { requests, wrapper, failing, queryClient }
 }
 
 const currentEvent = (values: Record<string, string | null> = {}) =>
@@ -226,6 +235,59 @@ describe('useProgramRules', () => {
         expect(result.current.status).toBe('error')
         expect(result.current.error).toBeInstanceOf(Error)
         expect(result.current.effects).toBeUndefined()
+    })
+
+    it('stays ready when a background refetch fails', async () => {
+        const { requests, wrapper, failing, queryClient } =
+            serve(rmnchResponses)
+        const { result } = await renderHook(
+            () => useProgramRules(options({ event: currentEvent() })),
+            { wrapper }
+        )
+        await settle(() => result.current.status)
+        failing.push('tracker/enrollments', 'programRules')
+        const before = requests.length
+        await queryClient.invalidateQueries({
+            queryKey: programRulesQueryKeys.all,
+        })
+        await expect.poll(() => requests.length).toBeGreaterThan(before)
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        expect(result.current.status).toBe('ready')
+        expect(result.current.error).toBeUndefined()
+        expect(result.current.effects).toBeDefined()
+    })
+
+    it('recovers when a failed enrollment request is no longer needed', async () => {
+        const { wrapper } = serve(rmnchResponses, ['tracker/enrollments'])
+        const { result, rerender } = await renderHook(
+            (props?: { input: ProgramRulesInput }) =>
+                useProgramRules(
+                    options(props?.input ?? { event: currentEvent() })
+                ),
+            { wrapper, initialProps: { input: { event: currentEvent() } } }
+        )
+        await settle(() => result.current.status)
+        expect(result.current.status).toBe('error')
+        await rerender({ input: rmnchInput() })
+        await expect.poll(() => result.current.status).toBe('ready')
+    })
+
+    it('keeps the engine module out of the query cache', async () => {
+        const { wrapper, queryClient } = serve(rmnchResponses)
+        const { result } = await renderHook(
+            () => useProgramRules(options(rmnchInput())),
+            { wrapper }
+        )
+        await settle(() => result.current.status)
+        expect(result.current.status).toBe('ready')
+        // A persisted cache would restore the module as {} and never reload it.
+        expect(
+            queryClient
+                .getQueryCache()
+                .getAll()
+                .map((query) => JSON.stringify(query.queryKey))
+                .filter((key) => key.includes('engine'))
+        ).toEqual([])
     })
 
     it('does nothing while disabled', async () => {

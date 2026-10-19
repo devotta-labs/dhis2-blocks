@@ -26,6 +26,8 @@ export default defineConfig({
                         enabled: true,
                         headless: true,
                         provider: playwright(),
+                        // Hook tests render nothing, so failure screenshots are blank noise.
+                        screenshotFailures: false,
                         instances: [{ browser: 'chromium' }],
                     },
                 },

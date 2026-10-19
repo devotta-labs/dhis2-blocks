@@ -102,6 +102,8 @@ interface RuleEffects {
     displayTexts: RuleDisplayItem[]
     keyValuePairs: RuleDisplayItem[]
     hiddenProgramStages: Set<string>
+    optionAttributions: Map<string, Attribution[]> // fieldId → the actions behind hiddenOptions/optionGroups
+    programStageAttributions: Map<string, Attribution[]> // stageId → the actions that hid it
 }
 ```
 
@@ -128,7 +130,7 @@ useProgramRules({
     optionGroupOptions: Map<string, Set<string>>
 }
 loadRuleEngine(): Promise<RuleEngineModule> // preload the engine earlier if you like
-programRulesQueryKeys // React Query keys, e.g. invalidate programRulesQueryKeys.enrollment(id, true) after a save
+programRulesQueryKeys // React Query keys for invalidation
 ```
 
 How the hook behaves:
@@ -140,6 +142,11 @@ How the hook behaves:
   only when the rules read other events) only when the rules need them and `input` doesn't carry them.
 - Evaluation runs again only when the **content** of `input` changes. Pass committed values (on blur, or on
   change for selects and dates), not every keystroke.
+- **After saving an event, invalidate `programRulesQueryKeys.enrollment(enrollmentId)`** (the prefix of both
+  cached forms). Otherwise the next event opened within a minute is evaluated against the old `otherEvents`.
+- A failed background refetch keeps the last good data and `status: 'ready'`; `error` is reported only when a
+  needed request has nothing to show. The engine module is held outside React Query's cache, so a persisted
+  query cache can't restore it as an empty object.
 - `status` is `loading` until effects exist (also while `enabled` is `false`, when nothing is fetched), and
   `error` when a request, the context build or evaluation fails.
 

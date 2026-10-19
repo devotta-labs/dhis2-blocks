@@ -25,9 +25,11 @@ const emptyEffects = (): RuleEffects => ({
     messages: new Map(),
     hiddenOptions: new Map(),
     optionGroups: new Map(),
+    optionAttributions: new Map(),
     displayTexts: [],
     keyValuePairs: [],
     hiddenProgramStages: new Set(),
+    programStageAttributions: new Map(),
 })
 
 const push = <T>(map: Map<string, T[]>, key: string, value: T) => {
@@ -128,6 +130,7 @@ export const evaluateEventRules = (
                             action.option.code,
                         ])
                     )
+                    push(effects.optionAttributions, field, by)
                 }
                 break
             case 'HIDEOPTIONGROUP':
@@ -135,6 +138,7 @@ export const evaluateEventRules = (
                     optionGroupsOf(effects, field).hidden.add(
                         action.optionGroup.id
                     )
+                    push(effects.optionAttributions, field, by)
                 }
                 break
             case 'SHOWOPTIONGROUP':
@@ -142,6 +146,7 @@ export const evaluateEventRules = (
                     optionGroupsOf(effects, field).shown.add(
                         action.optionGroup.id
                     )
+                    push(effects.optionAttributions, field, by)
                 }
                 break
             case 'DISPLAYTEXT':
@@ -153,6 +158,11 @@ export const evaluateEventRules = (
             case 'HIDEPROGRAMSTAGE':
                 if (action.programStageId !== undefined) {
                     effects.hiddenProgramStages.add(action.programStageId)
+                    push(
+                        effects.programStageAttributions,
+                        action.programStageId,
+                        by
+                    )
                 }
                 break
             default:
@@ -162,7 +172,7 @@ export const evaluateEventRules = (
     return effects
 }
 
-/** Every rule action that hid, required, assigned or messaged a field, once each. */
+/** Every rule action that hid, required, assigned, messaged or filtered the options of a field, once each. */
 export const explainField = (
     effects: RuleEffects,
     fieldId: string
@@ -173,6 +183,7 @@ export const explainField = (
         ...(effects.mandatoryFields.get(fieldId) ?? []),
         ...(assigned === undefined ? [] : [assigned.by]),
         ...(effects.messages.get(fieldId) ?? []).map((message) => message.by),
+        ...(effects.optionAttributions.get(fieldId) ?? []),
     ]
     return [...new Map(all.map((by) => [by.actionId, by])).values()]
 }

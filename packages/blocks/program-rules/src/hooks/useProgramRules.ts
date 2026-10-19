@@ -19,7 +19,7 @@ import {
 import { shouldRetryProgramRulesRequest, useProgramRulesClient } from './client'
 import { fetchRuleEnrollment } from './enrollment'
 import { inputContentKey } from './inputKey'
-import { loadRuleEngine } from './loadRuleEngine'
+import { useRuleEngine } from './loadRuleEngine'
 import { fetchOrgUnitGroups, fetchProgramRulesMetadata } from './metadata'
 import { programRulesQueryKeys } from './queryKeys'
 
@@ -96,14 +96,7 @@ export const useProgramRules = ({
 }: UseProgramRulesOptions): UseProgramRulesResult => {
     const client = useProgramRulesClient()
 
-    const engineQuery = useQuery({
-        queryKey: programRulesQueryKeys.engine(),
-        queryFn: loadRuleEngine,
-        enabled,
-        staleTime: Infinity,
-        gcTime: Infinity,
-        retry: false,
-    })
+    const ruleEngine = useRuleEngine(enabled)
     const metadataQuery = useQuery({
         queryKey: programRulesQueryKeys.metadata(programId),
         queryFn: ({ signal }) =>
@@ -112,7 +105,7 @@ export const useProgramRules = ({
         staleTime: HOUR,
         retry: shouldRetryProgramRulesRequest,
     })
-    const engine = engineQuery.data
+    const engine = ruleEngine.engine
 
     const stageMetadata = useMemo(() => {
         const metadata = metadataQuery.data
@@ -204,14 +197,22 @@ export const useProgramRules = ({
     )
     const effects = evaluation?.isOk() ? evaluation.value : undefined
 
+    // A query only fails the hook while it is needed and has nothing to show:
+    // a failed background refetch keeps the last good data, and so do we.
+    const failure = (
+        query: { data?: unknown; error: Error | null },
+        needed: boolean
+    ) =>
+        needed && query.data === undefined
+            ? (query.error ?? undefined)
+            : undefined
     const error =
-        engineQuery.error ??
-        metadataQuery.error ??
-        groupsQuery.error ??
-        enrollmentQuery.error ??
+        ruleEngine.error ??
+        failure(metadataQuery, true) ??
+        failure(groupsQuery, groups.length > 0) ??
+        failure(enrollmentQuery, fetchEnrollment) ??
         (builtContext?.isErr() ? builtContext.error : undefined) ??
-        (evaluation?.isErr() ? evaluation.error : undefined) ??
-        undefined
+        (evaluation?.isErr() ? evaluation.error : undefined)
 
     const explain = useCallback(
         (fieldId: string) =>
@@ -229,7 +230,7 @@ export const useProgramRules = ({
         effects,
         invalidRules: context?.invalidRules ?? NO_INVALID_RULES,
         explain,
-        error: error ?? undefined,
+        error,
         graph: context?.graph,
         optionGroupOptions: context?.optionGroupOptions ?? NO_OPTION_GROUPS,
     }

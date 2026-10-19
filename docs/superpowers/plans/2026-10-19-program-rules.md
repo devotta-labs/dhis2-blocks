@@ -10,6 +10,12 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-19-event-form-design.md` (§5, §6, §8, §9, §14). Binding findings: spike report `docs/superpowers/spikes/2026-10-19-rule-engine.md` on branch `claude/rule-engine-spike-ebc4d9` (§3 API findings, §4 pitfalls, §5 recommendation).
 
+> **Layout changed during execution.** At the event-form session's request the items now install into
+> `@components/program-rules/<path under src>`, with the lib entry at `src/index.ts` (internals `src/lib/`), the
+> hook entry at `src/use-program-rules.ts` (internals `src/hooks/`) and relative imports inside the package. Other
+> blocks import `@/registry/program-rules/index` and `@/registry/program-rules/use-program-rules`. The
+> `@lib/`/`@hooks/` layout and `src/lib/index.ts`/`src/hooks/index.ts` below are superseded; see the package README.
+
 ## Global Constraints
 
 - One engine: `@dhis2/rule-engine` only, pinned `3.8.6`. The lib uses `import type` only; the hook is the only place that does `import('@dhis2/rule-engine')`.

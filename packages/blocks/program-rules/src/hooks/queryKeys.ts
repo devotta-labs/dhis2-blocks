@@ -1,6 +1,5 @@
 export const programRulesQueryKeys = {
     all: ['program-rules'] as const,
-    engine: () => [...programRulesQueryKeys.all, 'engine'] as const,
     metadata: (programId: string) =>
         [...programRulesQueryKeys.all, 'metadata', programId] as const,
     orgUnitGroups: (groups: ReadonlyArray<string>) =>
@@ -9,11 +8,18 @@ export const programRulesQueryKeys = {
             'org-unit-groups',
             [...groups].sort(),
         ] as const,
-    enrollment: (enrollmentId: string, withEvents: boolean) =>
-        [
-            ...programRulesQueryKeys.all,
-            'enrollment',
-            enrollmentId,
-            withEvents ? 'with-events' : 'without-events',
-        ] as const,
+    /** Without `withEvents`, the prefix of both cached forms: invalidate it after saving an event. */
+    enrollment: (enrollmentId: string, withEvents?: boolean) =>
+        withEvents === undefined
+            ? ([
+                  ...programRulesQueryKeys.all,
+                  'enrollment',
+                  enrollmentId,
+              ] as const)
+            : ([
+                  ...programRulesQueryKeys.all,
+                  'enrollment',
+                  enrollmentId,
+                  withEvents ? 'with-events' : 'without-events',
+              ] as const),
 }

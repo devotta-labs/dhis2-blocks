@@ -79,6 +79,11 @@ describe('evaluateEventRules on RMNCH', () => {
         expect(effects.hiddenProgramStages).toEqual(
             new Set([RMNCH.postpartumStage])
         )
+        expect(
+            effects.programStageAttributions
+                .get(RMNCH.postpartumStage)
+                ?.map((by) => by.ruleName)
+        ).toEqual(['Hide postpartum followup'])
         expect(effects.keyValuePairs).toContainEqual({
             location: 'feedback',
             label: '# 1. Score 1',
@@ -183,6 +188,9 @@ describe('evaluateEventRules on a synthetic program', () => {
             ])
         )
         expect(effects.keyValuePairs).toEqual([])
+        expect(
+            effects.optionAttributions.get('o')?.map((by) => by.actionId)
+        ).toEqual(['hideOption', 'hideGroup', 'showGroup'])
     })
 
     it('keeps evaluating the other rules when one reads an unknown variable', () => {
@@ -287,6 +295,12 @@ describe('explainField', () => {
                             type: 'SETMANDATORYFIELD',
                             dataElementId: 'x',
                         },
+                        {
+                            id: 'option',
+                            type: 'HIDEOPTION',
+                            dataElementId: 'x',
+                            option: { id: 'o1', code: 'A' },
+                        },
                     ]),
                 ],
             })
@@ -296,6 +310,7 @@ describe('explainField', () => {
             'mandatory',
             'assign',
             'warn',
+            'option',
         ])
         expect(explainField(effects, 'z')).toEqual([])
     })

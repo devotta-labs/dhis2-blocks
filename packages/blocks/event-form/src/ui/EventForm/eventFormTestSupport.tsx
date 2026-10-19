@@ -191,8 +191,13 @@ export const formLevelRule = (
     ],
 })
 
-export interface RenderOptions extends ServeOptions {
+/** The props a test can change on a mounted form. */
+export interface FormProps {
     eventId?: string
+    enrollmentId?: string
+}
+
+export interface RenderOptions extends ServeOptions, FormProps {
     writer?: EventWriter
     /** Shared by forms rendered one after another; a fresh one by default. */
     queryClient?: QueryClient
@@ -216,16 +221,16 @@ export const renderEventForm = async (options: RenderOptions = {}) => {
             <EventFormActions />
         </>
     )
-    const screen = await render(
+    const tree = (props: FormProps) => (
         <CustomDataProvider data={data}>
             <QueryClientProvider client={queryClient}>
                 <EventFormTextProvider translate={interpolate}>
                     <EventForm
                         programId={RMNCH.programId}
                         programStageId={RMNCH.stageId}
-                        enrollmentId={RMNCH.enrollmentId}
+                        enrollmentId={props.enrollmentId ?? RMNCH.enrollmentId}
                         orgUnitId={RMNCH.orgUnitId}
-                        eventId={options.eventId}
+                        eventId={props.eventId}
                         writer={options.writer}
                         onSaved={onSaved}
                         onCancel={onCancel}
@@ -237,15 +242,46 @@ export const renderEventForm = async (options: RenderOptions = {}) => {
             </QueryClientProvider>
         </CustomDataProvider>
     )
-    await expect
-        .poll(() => probe.rules?.status, { timeout: 15_000 })
-        .toBe('ready')
-    return { screen, probe, payloads, onSaved, onCancel, queryClient }
+    const screen = await render(tree(options))
+    const ready = () =>
+        expect
+            .poll(() => probe.rules?.status, { timeout: 15_000 })
+            .toBe('ready')
+    await ready()
+    /** Renders the same form again with other props, as a host would. */
+    const rerender = async (props: FormProps) => {
+        await screen.rerender(tree(props))
+        await ready()
+    }
+    return { screen, probe, payloads, onSaved, onCancel, queryClient, rerender }
 }
+
+export const UID = /^[A-Za-z][A-Za-z0-9]{10}$/
+
+export const saveButton = () =>
+    page.getByRole('button', { name: 'Save', exact: true })
+
+/** app-runtime's FetchError for a 409 with an import report. */
+export const conflict = (
+    errorReports: { message: string; args: string[] }[]
+): Error =>
+    Object.assign(new Error('Conflict'), {
+        type: 'access',
+        details: {
+            httpStatus: 'Conflict',
+            httpStatusCode: 409,
+            status: 'ERROR',
+            message: 'Import failed',
+            response: { status: 'ERROR', validationReport: { errorReports } },
+        },
+    })
 
 /** The toggle group or radio group of a field. */
 export const answerGroup = (id: string) =>
     page.getByRole('group', { name: labelOf(id), exact: true })
+
+export const answerSmokingYes = () =>
+    answerGroup(RMNCH.smoking).getByRole('button', { name: 'Yes' }).click()
 
 export const textbox = (id: string) =>
     page.getByRole('textbox', { name: labelOf(id), exact: true })

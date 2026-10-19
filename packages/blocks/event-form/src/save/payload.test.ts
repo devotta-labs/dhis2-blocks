@@ -16,7 +16,10 @@ describe('buildEventPayload', () => {
             context: { occurredAt: '2026-03-12', orgUnitId: 'm7fBMpmVpSM' },
             effective: { vANAXwtLwcT: '20', NPZPVg2rVh4: 'false' },
             initialStored: {},
-            noteDraft: '  Mother attended with partner  ',
+            note: {
+                note: 'Nt0abcdefgh',
+                value: 'Mother attended with partner',
+            },
             isNew: true,
         })
         expect(payload).toStrictEqual({
@@ -34,13 +37,18 @@ describe('buildEventPayload', () => {
                         { dataElement: 'vANAXwtLwcT', value: '20' },
                         { dataElement: 'NPZPVg2rVh4', value: 'false' },
                     ],
-                    notes: [{ value: 'Mother attended with partner' }],
+                    notes: [
+                        {
+                            note: 'Nt0abcdefgh',
+                            value: 'Mother attended with partner',
+                        },
+                    ],
                 },
             ],
         })
     })
 
-    it('sends a cleared value as null on edit', () => {
+    it('sends only changed values, and cleared ones as null, on edit', () => {
         const payload = buildEventPayload({
             ...RMNCH,
             status: 'COMPLETED',
@@ -49,9 +57,8 @@ describe('buildEventPayload', () => {
                 orgUnitId: 'm7fBMpmVpSM',
                 geometry: { type: 'Point', coordinates: [-11.5, 8.5] },
             },
-            effective: { b: '2' },
-            initialStored: { a: '1', b: '2' },
-            noteDraft: '   ',
+            effective: { b: '2', c: '4', d: '5' },
+            initialStored: { a: '1', b: '2', c: '3' },
             isNew: false,
         })
         expect(payload).toStrictEqual({
@@ -65,8 +72,10 @@ describe('buildEventPayload', () => {
                     status: 'COMPLETED',
                     occurredAt: '2026-03-12',
                     geometry: { type: 'Point', coordinates: [-11.5, 8.5] },
+                    // b is unchanged, so it is not sent: a value someone else changed is kept.
                     dataValues: [
-                        { dataElement: 'b', value: '2' },
+                        { dataElement: 'c', value: '4' },
+                        { dataElement: 'd', value: '5' },
                         { dataElement: 'a', value: null },
                     ],
                     notes: [],
@@ -82,8 +91,34 @@ describe('buildEventPayload', () => {
             context: {},
             effective: {},
             initialStored: { a: '1' },
-            noteDraft: '',
             isNew: true,
+        })
+        expect(payload.events[0].dataValues).toEqual([])
+    })
+
+    it('sends every effective value for a new event', () => {
+        const payload = buildEventPayload({
+            ...RMNCH,
+            status: 'ACTIVE',
+            context: {},
+            effective: { a: '1', b: '2' },
+            initialStored: { a: '1' },
+            isNew: true,
+        })
+        expect(payload.events[0].dataValues).toEqual([
+            { dataElement: 'a', value: '1' },
+            { dataElement: 'b', value: '2' },
+        ])
+    })
+
+    it('an unchanged edit sends no values', () => {
+        const payload = buildEventPayload({
+            ...RMNCH,
+            status: 'ACTIVE',
+            context: {},
+            effective: { a: '1', orphan: 'kept' },
+            initialStored: { a: '1', orphan: 'kept' },
+            isNew: false,
         })
         expect(payload.events[0].dataValues).toEqual([])
     })
@@ -93,9 +128,9 @@ describe('buildEventPayload', () => {
             ...RMNCH,
             status: 'ACTIVE',
             context: { occurredAt: '2026-03-12' },
-            effective: { b: '2' },
+            effective: { b: '3' },
             initialStored: { a: '1', b: '2' },
-            noteDraft: 'n',
+            note: { note: 'Nt0abcdefgh', value: 'n' },
             isNew: false,
         })
         expect(JSON.parse(JSON.stringify(payload))).toStrictEqual(payload)

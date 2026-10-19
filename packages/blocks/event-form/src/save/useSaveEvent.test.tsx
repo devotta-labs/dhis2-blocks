@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import React, { type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
-import { createEventFormStore } from '../state/store'
+import { createEventFormStore, selectNote } from '../state/store'
 import { buildEventPayload } from './payload'
 import { generateUid } from './uid'
 import { registerEventFormMutations, useSaveEvent } from './useSaveEvent'
@@ -39,7 +39,7 @@ const payloadFor = (eventId: string) => {
         context: state.context,
         effective: state.stored,
         initialStored: state.initialStored,
-        noteDraft: state.noteDraft,
+        note: selectNote(state),
         isNew: state.isNew,
     })
 }

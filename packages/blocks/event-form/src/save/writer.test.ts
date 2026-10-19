@@ -1,4 +1,5 @@
 import { Result } from 'better-result'
+import { z } from 'zod'
 import {
     createEventFormClient,
     type DataEngineLike,
@@ -16,7 +17,6 @@ const payload = buildEventPayload({
     context: { occurredAt: '2026-03-12', orgUnitId: 'm7fBMpmVpSM' },
     effective: { de0FEHSIoxh: 'OLD_CODE', vANAXwtLwcT: '20' },
     initialStored: {},
-    noteDraft: '',
     isNew: true,
 })
 
@@ -304,10 +304,20 @@ describe('online event writer', () => {
         })
     })
 
-    it('maps a fetch rejection to network', async () => {
-        const { write } = writerFor(rejecting(new TypeError('Failed to fetch')))
+    it('maps a failure that is not app-runtime network error to unknown, so it is not retried as one', async () => {
+        // app-runtime wraps a rejected fetch in a FetchError of type network (below); anything
+        // else without an HTTP status is a fault here, which a retry or an outbox cannot fix.
+        const invalid = z.object({ events: z.array(z.string()) }).safeParse({})
+        const { write } = writerFor(rejecting(invalid.error ?? new Error()))
         const result = await write(payload)
-        expect(result.isErr() && result.error.kind).toBe('network')
+        expect(result.isErr() && result.error.kind).toBe('unknown')
+
+        const thrown = writerFor(rejecting(new TypeError('x is undefined')))
+        const typeError = await thrown.write(payload)
+        expect(typeError.isErr() && typeError.error).toEqual({
+            kind: 'unknown',
+            message: expect.stringContaining('x is undefined'),
+        })
     })
 
     it('maps an app-runtime network FetchError to network', async () => {

@@ -17,6 +17,7 @@ import type {
     TrackerEvent,
 } from '../../api/schemas'
 import { useEventFormClient } from '../../api/runtimeClient'
+import type { EventNote } from '../../save/payload'
 import { generateUid } from '../../save/uid'
 import {
     eventFormMutationKeys,
@@ -178,14 +179,10 @@ export const EventFormProvider = ({
     // Notes saved by this form, shown until the event, refetched, lists them itself.
     const [sessionNotes, setSessionNotes] = useState<TrackerEvent['notes']>([])
     const onNoteSaved = useCallback(
-        (value: string) =>
+        ({ note, value }: EventNote) =>
             setSessionNotes((saved) => [
                 ...saved,
-                {
-                    note: `saved-${saved.length}`,
-                    value,
-                    storedAt: new Date().toISOString(),
-                },
+                { note, value, storedAt: new Date().toISOString() },
             ]),
         []
     )
@@ -264,7 +261,7 @@ export const EventFormProvider = ({
             ...loadedNotes,
             ...sessionNotes.filter(
                 (saved) =>
-                    !loadedNotes.some((loaded) => loaded.value === saved.value)
+                    !loadedNotes.some((loaded) => loaded.note === saved.note)
             ),
         ],
         [loadedNotes, sessionNotes]

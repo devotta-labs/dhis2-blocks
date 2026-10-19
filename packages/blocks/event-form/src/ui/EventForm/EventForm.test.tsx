@@ -142,10 +142,9 @@ describe('EventForm with RMNCH program rules', () => {
                 value: null,
             })
         }
-        expect(valueSent(payloads, RMNCH.chronic)).toEqual({
-            dataElement: RMNCH.chronic,
-            value: 'false',
-        })
+        // Unchanged values are not sent: the event keeps them as they are.
+        expect(valueSent(payloads, RMNCH.chronic)).toBeUndefined()
+        expect(lastEvent(payloads).dataValues).toHaveLength(7)
         // The form now holds what was saved: clean, and nothing left for the notice.
         await expect.element(notice).not.toBeInTheDocument()
         expect(probe.state?.dirty).toBe(false)

@@ -29,6 +29,8 @@ const SMOKING = { id: 'sWoqcoByYmD', label: 'WHOMCH Smoking' }
 
 const ADMIN = { username: 'admin', password: 'district' }
 
+const UID = /^[A-Za-z][A-Za-z0-9]{10}$/
+
 const EnrollmentListSchema = z.object({
     enrollments: z.array(z.object({ enrollment: z.string() })),
 })
@@ -42,6 +44,21 @@ const StoredEventSchema = z.object({
     dataValues: z.array(
         z.object({ dataElement: z.string(), value: z.string().nullish() })
     ),
+    notes: z.array(z.object({ note: z.string(), value: z.string() })),
+})
+const PostedEventSchema = z.object({
+    events: z.tuple([
+        z.object({
+            event: z.string(),
+            dataValues: z.array(
+                z.object({
+                    dataElement: z.string(),
+                    value: z.string().nullable(),
+                })
+            ),
+            notes: z.array(z.object({ note: z.string(), value: z.string() })),
+        }),
+    ]),
 })
 
 const demoHash = (parameters: Record<string, string>) =>
@@ -137,7 +154,7 @@ const personOf = async (api: APIRequestContext, enrollmentId: string) => {
 
 const readEvent = async (api: APIRequestContext, eventId: string) => {
     const response = await api.get(`/api/tracker/events/${eventId}`, {
-        params: { fields: 'event,status,enrollment,dataValues' },
+        params: { fields: 'event,status,enrollment,dataValues,notes' },
     })
     expect(response.ok()).toBe(true)
     return StoredEventSchema.parse(await response.json())
@@ -167,19 +184,36 @@ const saveAndCaptureImport = async (page: Page, button: Locator) => {
     return request
 }
 
+const postedEvent = (request: Request) =>
+    PostedEventSchema.parse(request.postDataJSON()).events[0]
+
+const saveButton = (page: Page) =>
+    page.getByRole('button', { name: 'Save', exact: true })
+
+const savedNotice = (page: Page) =>
+    page.getByTestId('event-form-notice').getByText('Saved', { exact: true })
+
 test.describe.serial('event form demo', () => {
     let enrollmentId: string
     let eventId: string
+    // A second visit the server should have refused; deleted too, should it have been taken.
+    let rejectedEventId: string | undefined
 
     test.afterAll(async ({ playwright }) => {
-        if (!eventId) {
+        const events = [eventId, rejectedEventId].filter(Boolean)
+        if (events.length === 0) {
             return
         }
         // Keep the enrollment reusable: the stage takes one visit only.
         const api = await createApi(playwright, ADMIN)
+        // Per object: the refused visit was never created, and must not stop the delete.
         await api.post('/api/tracker', {
-            params: { importStrategy: 'DELETE', async: false },
-            data: { events: [{ event: eventId }] },
+            params: {
+                importStrategy: 'DELETE',
+                atomicMode: 'OBJECT',
+                async: false,
+            },
+            data: { events: events.map((event) => ({ event })) },
         })
         await api.dispose()
     })
@@ -276,6 +310,117 @@ test.describe.serial('event form demo', () => {
         expect(valueOf(stored, CHRONIC.id)).toBe('true')
         expect(valueOf(stored, GESTATIONAL_AGE.id)).toBe('10')
         expect(stored.status).toBe('ACTIVE')
+    })
+
+    test('clears a follow-up a rule hides, on the server too', async ({
+        page,
+        dhis2,
+    }) => {
+        expect(eventId).toBeTruthy()
+        // A full load each time, so the form opens on the event as the server has it now.
+        const openEvent = async () => {
+            await page.goto(
+                demoHash({
+                    enrollmentId,
+                    programStageId: STAGE,
+                    eventId,
+                    view: 'form',
+                })
+            )
+            await page.reload()
+            await expect(textbox(page, LMP.label)).toBeVisible()
+        }
+
+        // Chronic conditions is Yes, so its follow-ups show: answer one, with a note.
+        await openEvent()
+        await answerGroup(page, CHRONIC_FOLLOW_UP.label)
+            .getByRole('button', { name: 'Yes' })
+            .click()
+        await page
+            .getByLabel('Notes about this event')
+            .fill('Follow-up answered')
+        const answered = await saveAndCaptureImport(page, saveButton(page))
+        await expect(savedNotice(page)).toBeVisible()
+        const sent = postedEvent(answered)
+        // An edit sends what changed only.
+        expect(sent.dataValues).toEqual([
+            { dataElement: CHRONIC_FOLLOW_UP.id, value: 'true' },
+        ])
+        expect(sent.notes).toEqual([
+            { note: expect.stringMatching(UID), value: 'Follow-up answered' },
+        ])
+        const afterAnswer = await readEvent(dhis2, eventId)
+        expect(valueOf(afterAnswer, CHRONIC_FOLLOW_UP.id)).toBe('true')
+        expect(afterAnswer.notes).toEqual([
+            expect.objectContaining(sent.notes[0]),
+        ])
+
+        // The same save again, as a retry after a lost response or an outbox replay would send
+        // it: the event is imported, and its note is not added twice.
+        const replay = await dhis2.post('/api/tracker', {
+            params: {
+                importStrategy: 'CREATE_AND_UPDATE',
+                atomicMode: 'OBJECT',
+                async: false,
+            },
+            data: answered.postDataJSON(),
+        })
+        expect(replay.ok()).toBe(true)
+        expect((await readEvent(dhis2, eventId)).notes).toHaveLength(1)
+
+        // Chronic conditions No: the rule hides the follow-ups, and the save clears the answer.
+        await openEvent()
+        await answerGroup(page, CHRONIC.label)
+            .getByRole('button', { name: 'No' })
+            .click()
+        await expect(
+            formPanel(page).getByText(CHRONIC_FOLLOW_UP.label, { exact: true })
+        ).toHaveCount(0)
+        const cleared = await saveAndCaptureImport(page, saveButton(page))
+        await expect(savedNotice(page)).toBeVisible()
+        expect(postedEvent(cleared).dataValues).toContainEqual({
+            dataElement: CHRONIC_FOLLOW_UP.id,
+            value: null,
+        })
+
+        const stored = await readEvent(dhis2, eventId)
+        expect(valueOf(stored, CHRONIC.id)).toBe('false')
+        expect(
+            stored.dataValues.map(({ dataElement }) => dataElement)
+        ).not.toContain(CHRONIC_FOLLOW_UP.id)
+        // Values the edits did not touch are kept.
+        expect(valueOf(stored, SMOKING.id)).toBe('true')
+        expect(valueOf(stored, GESTATIONAL_AGE.id)).toBe('10')
+    })
+
+    test('shows the server rejecting a second visit to a stage that is not repeatable', async ({
+        page,
+        dhis2,
+    }) => {
+        expect(eventId).toBeTruthy()
+        // A new event for the enrollment that already has its one first visit.
+        await page.goto(
+            demoHash({ enrollmentId, programStageId: STAGE, view: 'form' })
+        )
+        await answerGroup(page, SMOKING.label)
+            .getByRole('button', { name: 'Yes' })
+            .click()
+        const request = await saveAndCaptureImport(page, saveButton(page))
+        rejectedEventId = postedEvent(request).event
+
+        const saveError = page.getByTestId('event-form-save-error')
+        await expect(saveError).toBeVisible()
+        await expect(saveError).toContainText('The event could not be saved')
+        await expect(saveError).toContainText(/repeatable/i)
+        // The form stays open with the answers, and nothing was created.
+        await expect(
+            answerGroup(page, SMOKING.label).getByRole('button', {
+                name: 'Yes',
+            })
+        ).toHaveAttribute('aria-pressed', 'true')
+        await expect(savedNotice(page)).toHaveCount(0)
+        const lookup = await dhis2.get(`/api/tracker/events/${rejectedEventId}`)
+        expect(lookup.status()).toBe(404)
     })
 
     test('has no axe violations', async ({ page }) => {

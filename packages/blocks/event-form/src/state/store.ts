@@ -1,6 +1,8 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { TrackerEvent } from '../api/schemas'
 import type { Values } from '../model/overlay'
+import type { EventNote } from '../save/payload'
+import { generateUid } from '../save/uid'
 
 export type EventStatus = TrackerEvent['status']
 
@@ -33,6 +35,11 @@ export interface EventFormStoreState {
     context: EventContext
     initialContext: EventContext
     noteDraft: string
+    /**
+     * The new note's uid, made when it is first typed and kept until it is saved or discarded,
+     * so a retried save sends the same note again rather than a second one.
+     */
+    noteId: string | undefined
     status: EventStatus
     /** The furthest action the user has tried; drives when errors are shown. */
     attempt: 'none' | 'save' | 'complete'
@@ -81,6 +88,16 @@ export const selectDirty = (state: EventFormStoreState) =>
     !sameContext(state.context, state.initialContext) ||
     state.noteDraft.trim() !== ''
 
+/** The note a save sends: the trimmed draft under its uid, or nothing when the draft is blank. */
+export const selectNote = (
+    state: Pick<EventFormStoreState, 'noteDraft' | 'noteId'>
+): EventNote | undefined => {
+    const value = state.noteDraft.trim()
+    return value === '' || state.noteId === undefined
+        ? undefined
+        : { note: state.noteId, value }
+}
+
 const ATTEMPT_RANK = { none: 0, save: 1, complete: 2 } as const
 
 export const createEventFormStore = (
@@ -100,6 +117,7 @@ export const createEventFormStore = (
         context: opened.context,
         initialContext: opened.context,
         noteDraft: '',
+        noteId: undefined,
         status: opened.status,
         attempt: 'none',
         fieldErrors: {},
@@ -129,7 +147,13 @@ export const createEventFormStore = (
                     },
                 }
             }),
-        setNoteDraft: (noteDraft) => set({ noteDraft }),
+        setNoteDraft: (noteDraft) =>
+            set((state) => ({
+                noteDraft,
+                noteId:
+                    state.noteId ??
+                    (noteDraft.trim() === '' ? undefined : generateUid()),
+            })),
         setStatus: (status) => set({ status }),
         markAttempt: (kind) =>
             set((state) =>
@@ -147,6 +171,7 @@ export const createEventFormStore = (
                 context: saved.context,
                 initialContext: saved.context,
                 noteDraft: '',
+                noteId: undefined,
                 status: saved.status,
                 attempt: 'none',
                 fieldErrors: {},
@@ -157,6 +182,7 @@ export const createEventFormStore = (
                 stored: opened.stored,
                 context: opened.context,
                 noteDraft: '',
+                noteId: undefined,
                 status: opened.status,
                 attempt: 'none',
                 fieldErrors: {},

@@ -7,13 +7,15 @@ import type { StageMetadata } from '../../api/schemas'
 import type { FormModel } from '../../model/buildFormModel'
 import type { Values } from '../../model/overlay'
 import { validateForm } from '../../model/validate'
-import { buildEventPayload } from '../../save/payload'
+import { buildEventPayload, type EventNote } from '../../save/payload'
 import { useSaveEvent } from '../../save/useSaveEvent'
 import type { EventWriter, SaveError, SaveOutcome } from '../../save/writer'
 import {
     selectDirty,
+    selectNote,
     type EventFormStore,
     type EventFormStoreState,
+    type EventStatus,
 } from '../../state/store'
 import type { EventFormCommands } from './EventFormContext'
 import { CONTEXT_FIELD_IDS, isScheduled } from './initialState'
@@ -46,23 +48,30 @@ interface SaveArgs {
     writer: EventWriter | undefined
     target: SaveTarget
     /** A note went out with a successful save. */
-    onNoteSaved(note: string): void
+    onNoteSaved(note: EventNote): void
     onSavingChange(saving: boolean): void
     latest: RefObject<LatestForm | null>
     callbacks: RefObject<SaveCallbacks | null>
     container: RefObject<HTMLElement | null>
 }
 
-/** Context fields a save needs: a report date (unless the event is still scheduled) and an org unit. */
-const contextFailures = ({
-    context,
-    status,
-}: Pick<EventFormStoreState, 'context' | 'status'>): string[] => [
+/**
+ * Context fields a save needs: an org unit, and a report date unless the event stays scheduled.
+ * `status` is the one the save sends, so completing a scheduled event needs a report date.
+ */
+const contextFailures = (
+    context: EventFormStoreState['context'],
+    status: EventStatus
+): string[] => [
     ...(context.occurredAt === undefined && !isScheduled(status)
         ? [CONTEXT_FIELD_IDS.occurredAt]
         : []),
     ...(context.orgUnitId === undefined ? [CONTEXT_FIELD_IDS.orgUnitId] : []),
 ]
+
+/** The status a save sends: COMPLETED when completing, else the event's own. */
+const targetStatusOf = (status: EventStatus, isCompleting: boolean) =>
+    isCompleting ? 'COMPLETED' : status
 
 /**
  * What blocks the action: context fields first, then `validateForm` (field and form-level rule
@@ -74,7 +83,13 @@ export const validateEventForm = (
     options: { strategy: SaveTarget['strategy']; isCompleting: boolean }
 ) => {
     const result = validateForm(model, options)
-    const failedFieldIds = [...contextFailures(state), ...result.failedFieldIds]
+    const failedFieldIds = [
+        ...contextFailures(
+            state.context,
+            targetStatusOf(state.status, options.isCompleting)
+        ),
+        ...result.failedFieldIds,
+    ]
     return {
         isValid: failedFieldIds.length === 0 && result.formErrors.length === 0,
         failedFieldIds,
@@ -108,6 +123,36 @@ const warnsOnComplete = (model: FormModel) =>
             !field.hidden && field.messages.warningOnComplete !== undefined
     ) ||
     model.formMessages.some((message) => message.kind === 'warningOnComplete')
+
+type ValidationError = Extract<SaveError, { kind: 'validation' }>
+
+/**
+ * Server errors stay on a question only when it is shown. An error about a hidden question, or
+ * one the stage no longer has, becomes a form error, so it is never reported as "marked on its
+ * question" while no question shows it.
+ */
+const placeOnShownFields = (
+    error: ValidationError,
+    model: FormModel
+): ValidationError => {
+    const fieldErrors: Record<string, string> = {}
+    const unplaced: string[] = []
+    for (const [id, message] of Object.entries(error.fieldErrors)) {
+        const field = model.fields.get(id)
+        if (field !== undefined && !field.hidden) {
+            fieldErrors[id] = message
+        } else {
+            unplaced.push(
+                field === undefined ? message : `${field.label}: ${message}`
+            )
+        }
+    }
+    return {
+        kind: 'validation',
+        fieldErrors,
+        formErrors: [...error.formErrors, ...unplaced],
+    }
+}
 
 const asSaveError = (cause: unknown): SaveError => ({
     kind: 'unknown',
@@ -173,7 +218,8 @@ export const useEventFormSave = ({
                 setPending('complete')
                 return
             }
-            const status = isCompleting ? 'COMPLETED' : state.status
+            const status = targetStatusOf(state.status, isCompleting)
+            const note = selectNote(state)
             const payload = buildEventPayload({
                 eventId: state.eventId,
                 programId,
@@ -184,7 +230,7 @@ export const useEventFormSave = ({
                 context: state.context,
                 effective: form.effective,
                 initialStored: state.initialStored,
-                noteDraft: state.noteDraft,
+                ...(note !== undefined && { note }),
                 isNew: state.isNew,
             })
             inFlight.current = true
@@ -196,15 +242,17 @@ export const useEventFormSave = ({
             inFlight.current = false
             onSavingChange(false)
             if (result.isErr()) {
-                setSaveError(result.error)
                 if (result.error.kind === 'validation') {
-                    store.getState().setFieldErrors(result.error.fieldErrors)
-                    setFocusAfterSave(Object.keys(result.error.fieldErrors))
+                    const error = placeOnShownFields(result.error, form.model)
+                    setSaveError(error)
+                    store.getState().setFieldErrors(error.fieldErrors)
+                    setFocusAfterSave(Object.keys(error.fieldErrors))
+                } else {
+                    setSaveError(result.error)
                 }
                 return
             }
-            const note = state.noteDraft.trim()
-            if (note !== '') {
+            if (note !== undefined) {
                 onNoteSaved(note)
             }
             store.getState().markSaved({
@@ -228,6 +276,10 @@ export const useEventFormSave = ({
             save: () => submit('save', false),
             complete: () => submit('complete', false),
             cancel: () => {
+                // A save in flight ends in onSaved or an error; cancelling under it would do both.
+                if (inFlight.current) {
+                    return
+                }
                 if (selectDirty(store.getState())) {
                     setPending('discard')
                 } else {

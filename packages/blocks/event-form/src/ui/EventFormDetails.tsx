@@ -66,7 +66,8 @@ export const EventFormDetails = ({ className }: { className?: string }) => {
     const { readOnly } = useEventFormFieldContext()
     const context = useStore(store, (state) => state.context)
     const status = useStore(store, (state) => state.status)
-    const showErrors = useStore(store, (state) => state.attempt !== 'none')
+    const attempt = useStore(store, (state) => state.attempt)
+    const showErrors = attempt !== 'none'
     const commitDate = useContextCommit('occurredAt')
     const commitOrgUnit = useContextCommit('orgUnitId')
     const commitGeometry = useContextCommit('geometry')
@@ -79,10 +80,11 @@ export const EventFormDetails = ({ className }: { className?: string }) => {
                 label: dateLabel,
                 kind: 'date',
                 value: context.occurredAt,
-                required: !isScheduled(status),
+                // A scheduled event needs one only once it is completed.
+                required: !isScheduled(status) || attempt === 'complete',
                 showErrors,
             }),
-        [dateLabel, context.occurredAt, status, showErrors]
+        [dateLabel, context.occurredAt, status, attempt, showErrors]
     )
     const orgUnitLabel = translate('Organisation unit')
     const orgUnit = useMemo(

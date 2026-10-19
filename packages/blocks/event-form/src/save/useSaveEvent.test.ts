@@ -18,7 +18,6 @@ const payload = buildEventPayload({
     context: { occurredAt: '2026-03-12', orgUnitId: 'm7fBMpmVpSM' },
     effective: { a: '1' },
     initialStored: {},
-    noteDraft: '',
     isNew: true,
 })
 

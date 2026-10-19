@@ -169,3 +169,40 @@ export const useOutboxWriter = (outbox: {
         }
     }, [client, outbox])
 }
+
+// The root README's composition example, as `createElement` calls: it compiles against the
+// public surface, with every name it uses defined and every binding used.
+interface CaptureEventProps {
+    enrollmentId: string
+    orgUnitId: string
+    navigate: (to: string) => void
+}
+export const CaptureEvent = ({
+    enrollmentId,
+    orgUnitId,
+    navigate,
+}: CaptureEventProps) =>
+    React.createElement(EventForm, {
+        programId: 'WSGAb5XwJ3Y',
+        programStageId: 'WZbXY0S00lP',
+        enrollmentId,
+        orgUnitId,
+        onSaved: ({ eventId, outcome }) =>
+            navigate(outcome === 'queued' ? '/events' : `/events/${eventId}`),
+        onCancel: () => navigate('/events'),
+        children: [
+            React.createElement(EventFormDetails, { key: 'details' }),
+            React.createElement(EventFormFeedback, { key: 'feedback' }),
+            React.createElement(EventFormSections, { key: 'sections' }),
+            React.createElement(EventFormNotes, { key: 'notes' }),
+            React.createElement(EventFormActions, { key: 'actions' }),
+        ],
+    })
+// A new note carries its client-generated uid.
+export const noteHasUid =
+    assert<
+        Equal<
+            EventPayload['events'][0]['notes'][number],
+            { note: string; value: string }
+        >
+    >()

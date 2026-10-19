@@ -12,7 +12,13 @@ interface TrackerEventPayload {
     occurredAt?: string
     geometry?: { type: 'Point'; coordinates: [number, number] }
     dataValues: { dataElement: string; value: string | null }[]
-    notes: { value: string }[]
+    notes: EventNote[]
+}
+
+/** A new note. Its client-generated uid makes a repeated save add it once. */
+export interface EventNote {
+    note: string
+    value: string
 }
 
 export interface EventPayload {
@@ -30,7 +36,8 @@ export interface BuildEventPayloadArgs {
     /** Stored values with rule effects applied. */
     effective: Values
     initialStored: Values
-    noteDraft: string
+    /** The new note, if one was typed. */
+    note?: EventNote
     isNew: boolean
 }
 
@@ -40,8 +47,10 @@ const DATE_PART = /^\d{4}-\d{2}-\d{2}/
 const toDate = (value: string) => DATE_PART.exec(value)?.[0] ?? value
 
 /**
- * A plain JSON tracker payload. On edit, a value the user or a rule cleared is sent as
- * `null` so the importer deletes it; on create there is nothing to delete.
+ * A plain JSON tracker payload. A new event carries every effective value. An edit carries only
+ * the values that differ from what the event was opened with, and a value the user or a rule
+ * cleared as `null` so the importer deletes it: values nobody touched here (changed elsewhere
+ * since, or no longer in the stage) are left as the server has them.
  */
 export const buildEventPayload = (
     args: BuildEventPayloadArgs
@@ -49,7 +58,12 @@ export const buildEventPayload = (
     const { context, effective, initialStored } = args
     const dataValues: TrackerEventPayload['dataValues'] = Object.entries(
         effective
-    ).map(([dataElement, value]) => ({ dataElement, value }))
+    )
+        .filter(
+            ([dataElement, value]) =>
+                args.isNew || initialStored[dataElement] !== value
+        )
+        .map(([dataElement, value]) => ({ dataElement, value }))
     if (!args.isNew) {
         for (const dataElement of Object.keys(initialStored)) {
             if (!(dataElement in effective)) {
@@ -57,7 +71,6 @@ export const buildEventPayload = (
             }
         }
     }
-    const note = args.noteDraft.trim()
     return {
         events: [
             {
@@ -79,7 +92,7 @@ export const buildEventPayload = (
                     geometry: context.geometry,
                 }),
                 dataValues,
-                notes: note === '' ? [] : [{ value: note }],
+                notes: args.note === undefined ? [] : [args.note],
             },
         ],
     }

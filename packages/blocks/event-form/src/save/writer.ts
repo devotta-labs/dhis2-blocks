@@ -68,11 +68,10 @@ const toSaveError = (
                     : mapped.formErrors,
         }
     }
-    // app-runtime reports an HTTP failure as `access` or `unknown`; a status says the server answered.
-    if (
-        type === 'network' ||
-        (error.status === undefined && type === undefined)
-    ) {
+    // app-runtime wraps a rejected fetch in a FetchError of type `network`, and an HTTP failure
+    // as `access` or `unknown`. Anything else (a ZodError, a bug) is no connection problem: it is
+    // `unknown`, so an outbox does not queue it to fail again.
+    if (type === 'network') {
         return {
             kind: 'network',
             message: (failure.success && failure.data.message) || error.message,

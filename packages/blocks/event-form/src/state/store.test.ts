@@ -1,4 +1,6 @@
-import { createEventFormStore, selectDirty } from './store'
+import { createEventFormStore, selectDirty, selectNote } from './store'
+
+const UID = /^[A-Za-z][A-Za-z0-9]{10}$/
 
 const open = () =>
     createEventFormStore({
@@ -41,6 +43,47 @@ describe('event form store', () => {
         expect(selectDirty(store.getState())).toBe(true)
         store.getState().setNoteDraft('   ')
         expect(selectDirty(store.getState())).toBe(false)
+    })
+
+    it('a note gets its uid when first typed and keeps it while it is edited', () => {
+        const store = open()
+        expect(store.getState().noteId).toBeUndefined()
+        expect(selectNote(store.getState())).toBeUndefined()
+        store.getState().setNoteDraft('   ')
+        expect(store.getState().noteId).toBeUndefined()
+
+        store.getState().setNoteDraft('c')
+        const noteId = store.getState().noteId
+        expect(noteId).toMatch(UID)
+        store.getState().setNoteDraft('  called the clinic ')
+        expect(store.getState().noteId).toBe(noteId)
+        expect(selectNote(store.getState())).toEqual({
+            note: noteId,
+            value: 'called the clinic',
+        })
+        // Emptied, the note is not sent, but a note typed again is the same note.
+        store.getState().setNoteDraft('')
+        expect(selectNote(store.getState())).toBeUndefined()
+        store.getState().setNoteDraft('again')
+        expect(store.getState().noteId).toBe(noteId)
+    })
+
+    it('a saved or discarded note leaves the next note a new uid', () => {
+        const store = open()
+        store.getState().setNoteDraft('first')
+        const first = store.getState().noteId
+        store.getState().markSaved({
+            stored: { a: '1', b: '2' },
+            context: {},
+            status: 'ACTIVE',
+        })
+        expect(store.getState().noteId).toBeUndefined()
+        store.getState().setNoteDraft('second')
+        const second = store.getState().noteId
+        expect(second).toMatch(UID)
+        expect(second).not.toBe(first)
+        store.getState().reset()
+        expect(store.getState().noteId).toBeUndefined()
     })
 
     it('a context change makes it dirty and reverting does not', () => {

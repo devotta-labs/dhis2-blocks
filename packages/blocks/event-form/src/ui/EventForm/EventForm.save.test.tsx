@@ -8,33 +8,17 @@ import {
 import type { EventWriter } from '../../save/writer'
 import {
     answerGroup,
+    answerSmokingYes,
+    conflict,
     formLevelRule,
     lastEvent,
     RMNCH,
     renderEventForm,
+    saveButton,
     testQueryClient,
     today,
+    UID,
 } from './eventFormTestSupport'
-
-const UID = /^[A-Za-z][A-Za-z0-9]{10}$/
-
-const saveButton = () => page.getByRole('button', { name: 'Save', exact: true })
-
-const answerSmokingYes = () =>
-    answerGroup(RMNCH.smoking).getByRole('button', { name: 'Yes' }).click()
-
-/** app-runtime's FetchError for a 409 with an import report. */
-const conflict = (errorReports: { message: string; args: string[] }[]): Error =>
-    Object.assign(new Error('Conflict'), {
-        type: 'access',
-        details: {
-            httpStatus: 'Conflict',
-            httpStatusCode: 409,
-            status: 'ERROR',
-            message: 'Import failed',
-            response: { status: 'ERROR', validationReport: { errorReports } },
-        },
-    })
 
 describe('saving an EventForm', () => {
     it('Save on a new event posts the payload and calls onSaved with saved', async () => {
@@ -60,7 +44,7 @@ describe('saving an EventForm', () => {
             status: 'ACTIVE',
             occurredAt: today(),
             dataValues: [{ dataElement: RMNCH.smoking, value: 'true' }],
-            notes: [{ value: 'First visit' }],
+            notes: [{ note: expect.stringMatching(UID), value: 'First visit' }],
         })
         expect(onSaved).toHaveBeenCalledWith({
             eventId: event.event,
@@ -154,7 +138,7 @@ describe('saving an EventForm', () => {
     })
 
     it('server field error appears on the field', async () => {
-        const { onSaved, probe } = await renderEventForm({
+        const { onSaved, probe, payloads } = await renderEventForm({
             eventId: RMNCH.eventId,
             importEvent: async () => {
                 throw conflict([
@@ -169,6 +153,10 @@ describe('saving an EventForm', () => {
                 ])
             },
         })
+        // An edit sends what changed, and the server rejects what it was sent.
+        await answerGroup(RMNCH.smoking)
+            .getByRole('button', { name: 'No' })
+            .click()
 
         await saveButton().click()
 
@@ -183,15 +171,28 @@ describe('saving an EventForm', () => {
             .toBeVisible()
         await expect
             .element(
+                page
+                    .getByTestId('event-form-save-error')
+                    .getByText('They are marked on their questions', {
+                        exact: false,
+                    })
+            )
+            .toBeVisible()
+        await expect
+            .element(
                 answerGroup(RMNCH.smoking).getByRole('button', { name: 'Yes' })
             )
             .toHaveFocus()
         expect(onSaved).not.toHaveBeenCalled()
         expect(probe.state?.saveError?.kind).toBe('validation')
+        expect(lastEvent(payloads).dataValues).toContainEqual({
+            dataElement: RMNCH.smoking,
+            value: 'false',
+        })
 
         // Answering the field again clears its server error.
         await answerGroup(RMNCH.smoking)
-            .getByRole('button', { name: 'No' })
+            .getByRole('button', { name: 'Yes' })
             .click()
         await expect.element(message).not.toBeInTheDocument()
     })
@@ -268,6 +269,39 @@ describe('saving an EventForm', () => {
         // RMNCH blocks entry into completed events.
         await expect.poll(() => probe.state?.readOnlyReason).toBe('completed')
         await expect.element(saveButton()).not.toBeInTheDocument()
+    })
+
+    it('Complete on a scheduled event needs a report date', async () => {
+        const { payloads, onSaved, probe } = await renderEventForm({
+            eventId: RMNCH.eventId,
+            event: ({ occurredAt: _occurred, ...event }) => ({
+                ...event,
+                status: 'SCHEDULE',
+            }),
+        })
+        const complete = page.getByRole('button', {
+            name: 'Complete',
+            exact: true,
+        })
+        // Saving a scheduled event keeps it scheduled, so it needs no report date.
+        expect(probe.state?.validation.isValid).toBe(true)
+
+        await complete.click()
+        await expect
+            .poll(() => probe.state?.validation.failedFieldIds)
+            .toContain('__occurredAt')
+        expect(payloads).toHaveLength(0)
+        const reportDate = page.getByRole('textbox', { name: 'Date of visit' })
+        await expect.element(reportDate).toHaveFocus()
+
+        await userEvent.fill(reportDate, '2026-03-14')
+        await userEvent.tab()
+        await complete.click()
+        await expect.poll(() => onSaved.mock.calls.length).toBe(1)
+        expect(lastEvent(payloads)).toMatchObject({
+            status: 'COMPLETED',
+            occurredAt: '2026-03-14',
+        })
     })
 })
 

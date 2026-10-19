@@ -43,7 +43,9 @@ export interface EventFormProps {
  * the DHIS2 app-runtime provider and a React Query `QueryClientProvider` above it.
  */
 export const EventForm = (props: EventFormProps) => {
-    const { programId, programStageId, eventId, className } = props
+    const { programId, programStageId, enrollmentId, orgUnitId, eventId } =
+        props
+    const { className } = props
     const translate = useEventFormText()
     const stage = useStageMetadata(programId, programStageId)
     const event = useTrackerEvent(eventId)
@@ -92,7 +94,9 @@ export const EventForm = (props: EventFormProps) => {
     }
     return (
         <EventFormProvider
-            key={`${programId}/${programStageId}/${eventId ?? 'new'}`}
+            // A new form for another enrollment or org unit starts empty, under a new uid: one
+            // person's draft must never be saved into another's record.
+            key={`${programId}/${programStageId}/${enrollmentId}/${eventId ?? `new@${orgUnitId}`}`}
             {...props}
             metadata={stage.data}
             event={event.data}

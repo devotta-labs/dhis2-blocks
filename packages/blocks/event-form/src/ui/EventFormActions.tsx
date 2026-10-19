@@ -118,6 +118,7 @@ export const EventFormActions = ({ className }: { className?: string }) => {
                 <Button
                     type="button"
                     variant="outline"
+                    disabled={state.saving}
                     onClick={actions.cancel}
                 >
                     {translate('Cancel')}

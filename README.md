@@ -239,14 +239,28 @@ import {
     EventFormSections,
 } from '@/components/event-form'
 
-export const CaptureEvent = ({ enrollmentId, orgUnitId, navigate }: Props) => (
+interface CaptureEventProps {
+    enrollmentId: string
+    orgUnitId: string
+    /** The host's router, for example react-router's `useNavigate()`. */
+    navigate: (to: string) => void
+}
+
+export const CaptureEvent = ({
+    enrollmentId,
+    orgUnitId,
+    navigate,
+}: CaptureEventProps) => (
     <EventForm
         programId="WSGAb5XwJ3Y"
         programStageId="WZbXY0S00lP"
         enrollmentId={enrollmentId}
         orgUnitId={orgUnitId}
-        onSaved={({ eventId, outcome }) => navigate(`/events/${eventId}`)}
-        onCancel={() => navigate(-1)}
+        // A queued event is not on the server yet, so there is no page to open for it.
+        onSaved={({ eventId, outcome }) =>
+            navigate(outcome === 'queued' ? '/events' : `/events/${eventId}`)
+        }
+        onCancel={() => navigate('/events')}
     >
         <EventFormDetails />
         <EventFormFeedback />
@@ -302,14 +316,23 @@ The payload is plain JSON, `{ events: [event] }` with exactly one event, and
 | `status`                  | `EventStatus`                                      | `COMPLETED` when completing.                   |
 | `occurredAt`              | `string`                                           | `yyyy-MM-dd`; omitted when none is set.        |
 | `geometry`                | `{ type: 'Point'; coordinates: [number, number] }` | Only for a stage that captures a point.        |
-| `dataValues`              | `{ dataElement: string; value: string \| null }[]` | `null` clears a value on an edit.              |
-| `notes`                   | `{ value: string }[]`                              | The new note, if one was typed.                |
+| `dataValues`              | `{ dataElement: string; value: string \| null }[]` | See below.                                     |
+| `notes`                   | `{ note: string; value: string }[]`                | The new note, if one was typed, with its UID.  |
+
+A new event carries every value it has. An edit carries only the values that
+differ from the event as it was opened (or last saved), with `null` for each value that was
+cleared (by the user or by a program rule), so values the form did not change
+stay as the server has them. The note's UID is client-generated when the note
+is first typed and kept until the save succeeds, so a repeated save adds the
+note once.
 
 `saved` means the server has the event; `queued` means the writer stored it to
 send later (for example in an offline outbox), so the event is not on the
 server yet and the host should say so. A failure is a `SaveError`:
 `validation` (with the server's `fieldErrors` keyed by data element and
-`formErrors`), `network` or `unknown`.
+`formErrors`), `network` (the request did not reach the server, so it is
+safe to retry or queue) or `unknown` (anything else, such as a server error or
+a payload the client rejected).
 
 The `writer` prop is scoped to that form: it never becomes the QueryClient's
 default. Without it the form uses the online writer, which posts to `/tracker`

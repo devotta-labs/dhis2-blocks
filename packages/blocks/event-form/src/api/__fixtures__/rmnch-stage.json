@@ -1,0 +1,976 @@
+{
+    "programType": "WITH_REGISTRATION",
+    "trackedEntityType": {
+        "id": "nEenWmSyUEp"
+    },
+    "categoryCombo": {
+        "id": "bjDvmb4bfuf",
+        "isDefault": true
+    },
+    "displayName": "WHO RMNCH Tracker",
+    "id": "WSGAb5XwJ3Y",
+    "programStages": [
+        {
+            "programStageDataElements": [
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "WHOMCH Penicillin given",
+                        "displayDescription": "For syphilis: Give benzathine benzylpenicillin; 2,4 million units in 5 ml IM, as two injections at separate sites. If allergic to penicillin, give erythromycin 500 mg (2x250 mg tablets) every 6 hours for 15 days.",
+                        "optionSetValue": false,
+                        "id": "OhcR0fpFcWa"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 0,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Antihypertensive drug given according to national guidelines",
+                        "displayDescription": "Accepted antihypertensiv drugs include hydralazine, alpha methyldopa, beta blockers (incl labetolol) and nifedipine.",
+                        "optionSetValue": false,
+                        "id": "cKBSkBB3Mt4"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 1,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "None",
+                                    "sortOrder": 1,
+                                    "displayName": "No ARV medication plan",
+                                    "id": "ENETOHGjmqb"
+                                },
+                                {
+                                    "code": "Ongoing",
+                                    "sortOrder": 2,
+                                    "displayName": "Ongoing ARV treatment",
+                                    "id": "dNgtjuMPdfI"
+                                },
+                                {
+                                    "code": "Initiated",
+                                    "sortOrder": 3,
+                                    "displayName": "ARV medication initiated",
+                                    "id": "izO4RwIbL0r"
+                                }
+                            ],
+                            "id": "R3mpvjqJ81H"
+                        },
+                        "displayFormName": "WHOMCH Ongoing or initiated ARV regimen",
+                        "displayDescription": "Appropriate antiretroviral regimen according to local protocol should be used.",
+                        "optionSetValue": true,
+                        "id": "nhW3SZX9JaN"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 2,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Calcium supplements given ",
+                        "displayDescription": "In areas where dietary calcium intake is low, calcium supplementation during pregnancy (1.5-2.0 elemental calcium/day) is strongly recommended, moderate quality-evidence.",
+                        "optionSetValue": false,
+                        "id": "PKZPVfAJfHD"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 3,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Negative",
+                                    "sortOrder": 1,
+                                    "displayName": "Negative",
+                                    "id": "R7O031O2brW"
+                                },
+                                {
+                                    "code": "Positive",
+                                    "sortOrder": 2,
+                                    "displayName": "Positive",
+                                    "id": "wrD98kfvt90"
+                                },
+                                {
+                                    "code": "Not performed",
+                                    "sortOrder": 3,
+                                    "displayName": "Not performed",
+                                    "id": "hXmq4IJwz1k"
+                                }
+                            ],
+                            "id": "J7nRCGjOtRa"
+                        },
+                        "displayFormName": "HIV test result",
+                        "optionSetValue": true,
+                        "id": "Itl05OEupgQ"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 4,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Malaria prophylaxis given in second trimester",
+                        "displayDescription": "DD.MM.YYYY since LMP > 14 weeks, Antimalarial tratment according to national policies. From Essential Interventions: \"Give 3 tablets of sulfadoxine-pyrimethamine (500 mg + 25 mg pyrimethamine sulfadoxine) at the beginning of the second AND the third trimester to all women according to national policy. (Alternatively Chloroquine 150 mg for 3 days: 4+4+2 OR Chloroquin 100 mg for 3 days: 6+6+3).",
+                        "optionSetValue": false,
+                        "id": "MHW5v2Iljtw"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 6,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "WHOMCH Date of last TT dose",
+                        "displayDescription": "DD.MM.YYYY",
+                        "optionSetValue": false,
+                        "id": "r3BqzOPxAjp"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 7,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Diastolic blood pressure",
+                        "optionSetValue": false,
+                        "id": "dyYdfamSY2Z"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 8,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Eclamptic convulsions",
+                        "optionSetValue": false,
+                        "id": "w7enwqzx90I"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 9,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Erythromycin given for 10 days attributable to pPROM",
+                        "optionSetValue": false,
+                        "id": "rHgrmXfa57b"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 10,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Clinical signs of extreme pallor",
+                        "optionSetValue": false,
+                        "id": "EyfTU3ibMmJ"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 11,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Cephalic",
+                                    "sortOrder": 1,
+                                    "displayName": "Cephalic",
+                                    "id": "p6m8put1O81"
+                                },
+                                {
+                                    "code": "Breech",
+                                    "sortOrder": 2,
+                                    "displayName": "Breech",
+                                    "id": "tgieMFOTq6u"
+                                },
+                                {
+                                    "code": "Trasverse",
+                                    "sortOrder": 3,
+                                    "displayName": "Trasverse",
+                                    "id": "wWWU3mqQIN7"
+                                },
+                                {
+                                    "code": "Unknown",
+                                    "sortOrder": 4,
+                                    "displayName": "Unknown",
+                                    "id": "J30k1mAW0nk"
+                                },
+                                {
+                                    "code": "Notchecked",
+                                    "sortOrder": 5,
+                                    "displayName": "Not checked",
+                                    "id": "E3ihc9hc8HF"
+                                }
+                            ],
+                            "id": "g80kErVQ9nn"
+                        },
+                        "displayFormName": "WHOMCH Fetal presentation",
+                        "optionSetValue": true,
+                        "id": "vPdXnmGWzfy"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 12,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "PERCENTAGE",
+                        "displayFormName": "WHOMCH Haematocrit value",
+                        "displayDescription": "Screening for anemia",
+                        "optionSetValue": false,
+                        "id": "X8HbdaoS9LN"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 13,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Hemoglobin value",
+                        "displayDescription": "Screening for anemia.",
+                        "optionSetValue": false,
+                        "id": "vANAXwtLwcT"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 14,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "Date of first day of LMP",
+                        "optionSetValue": false,
+                        "id": "w4ky6EkVahL"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 15,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Low-dose acetylsalicylic acid given as first option method of preventative therapy",
+                        "displayDescription": "Low-dose Acetylsalicylic acid (aspirin 75 mg daily) is strongly recommended with moderate-quality evidence for the prevention of pre-eclampsia in women at high risk.",
+                        "optionSetValue": false,
+                        "id": "OSuxnldV4Ug"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 16,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "0",
+                                    "sortOrder": 1,
+                                    "displayName": "Not assessed",
+                                    "id": "brXKCwTjvzf"
+                                },
+                                {
+                                    "code": "1",
+                                    "sortOrder": 2,
+                                    "displayName": "Singleton",
+                                    "id": "vxzCWBGF299"
+                                },
+                                {
+                                    "code": "2",
+                                    "sortOrder": 3,
+                                    "displayName": "Twins",
+                                    "id": "d9AwQyXrPkg"
+                                },
+                                {
+                                    "code": "3",
+                                    "sortOrder": 4,
+                                    "displayName": "Triplets",
+                                    "id": "oaORpUNL7Ul"
+                                },
+                                {
+                                    "code": "4",
+                                    "sortOrder": 5,
+                                    "displayName": "Quadruplets",
+                                    "id": "A8gGYO2aCcJ"
+                                },
+                                {
+                                    "code": "5",
+                                    "sortOrder": 6,
+                                    "displayName": "Five fetuses",
+                                    "id": "NJ4aa2O38TO"
+                                },
+                                {
+                                    "code": "6",
+                                    "sortOrder": 7,
+                                    "displayName": "Six fetuses",
+                                    "id": "DLipgXFGbBn"
+                                }
+                            ],
+                            "id": "bVOfVD9sJFP"
+                        },
+                        "displayFormName": "Assess for plurality",
+                        "optionSetValue": true,
+                        "id": "PN6HcGjTraL"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 17,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_ZERO_OR_POSITIVE",
+                        "displayFormName": "WHOMCH Proteinuria (concentration mg/dL)",
+                        "optionSetValue": false,
+                        "id": "dpiyZz8bkVE"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 18,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Proteinuria (urinstix)",
+                        "optionSetValue": false,
+                        "id": "a7XjFEuZuKE"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 19,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Recurrent eclamptic seizures",
+                        "optionSetValue": false,
+                        "id": "vTEkiy8F3yj"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 20,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Negative",
+                                    "sortOrder": 1,
+                                    "displayName": "Negative",
+                                    "id": "R7O031O2brW"
+                                },
+                                {
+                                    "code": "Positive",
+                                    "sortOrder": 2,
+                                    "displayName": "Positive",
+                                    "id": "wrD98kfvt90"
+                                },
+                                {
+                                    "code": "Not performed",
+                                    "sortOrder": 3,
+                                    "displayName": "Not performed",
+                                    "id": "hXmq4IJwz1k"
+                                }
+                            ],
+                            "id": "J7nRCGjOtRa"
+                        },
+                        "displayFormName": "WHOMCH RPR test",
+                        "optionSetValue": true,
+                        "id": "AAaJGnWR5js"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 21,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Slept under ITN (insecticide treated bednet)",
+                        "displayDescription": "Promote use of bednet dipped in insecticide every 6 months to prevent malaria.",
+                        "optionSetValue": false,
+                        "id": "ytV9rX4ADnn"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 22,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Smoking cessation counselling provided ",
+                        "displayDescription": "Counselling and behavioural interventions on smoking cessation.",
+                        "optionSetValue": false,
+                        "id": "Ok9OQpitjQr"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 23,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Smoking",
+                        "optionSetValue": false,
+                        "id": "sWoqcoByYmD"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 24,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Systolic blood pressure",
+                        "optionSetValue": false,
+                        "id": "M4HEOoEFTAT"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 25,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH MgSO4 injection given",
+                        "optionSetValue": false,
+                        "id": "lcaG1Pnh27I"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 26,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "WHOMCH Ultrasound estimate of due date",
+                        "optionSetValue": false,
+                        "id": "DecmCMPDPdS"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 27,
+                    "allowFutureDate": true
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Daily iron and folic acid treatment for moderate anemia",
+                        "displayDescription": "Revise birth plan so as to deliver in a facility with blood transfusion services. Give double dose of iron (1 tablet twice daily=120 mg iron + 400 microg folic acid in total) for 3 months. Counsel on compliance with treatment. Give appropriate oral antimalarial.",
+                        "optionSetValue": false,
+                        "id": "RxVNLSeTjto"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 28,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Daily iron and folic acid treatment for severe anemia",
+                        "optionSetValue": false,
+                        "id": "nB4Ui3ckmUi"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 29,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Daily iron and folic acid supplements given",
+                        "displayDescription": "If prevalence of anaemia <40%, dosage required is: (60 mg iron+400 mg folic acid) for 6 months, if prevalence of anaemia is >40%, dosage required is: (60 mg iron+400 mg folic acid) for 6 months and continuing 3 months PPC.",
+                        "optionSetValue": false,
+                        "id": "Kb6kZzUCJi1"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 30,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "HIV counselling provided  to the HIV-negative woman",
+                        "displayDescription": "Counsel on safe sex inclusive correct and consistent use of condoms to prevent HIV-infection.",
+                        "optionSetValue": false,
+                        "id": "jRo4KlnCKeX"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 31,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "Erythromycin given",
+                        "displayDescription": "Encourage the woman to bring her sexual partner for treatment (he can choose between erythromycin OR tetracycllin 2x250 mg tablets every 6 hours for 15 days OR doxylin 100 mg every 12 hours for 15 days, counsel on consistent use of condoms to prevent new infection. Plan to treat the baby,",
+                        "optionSetValue": false,
+                        "id": "Js57E09s9fh"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 32,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "true",
+                                    "sortOrder": 1,
+                                    "displayName": "Yes",
+                                    "id": "l8S7SjnQ58G"
+                                },
+                                {
+                                    "code": "false",
+                                    "sortOrder": 2,
+                                    "displayName": "None known",
+                                    "id": "rexqxNDqUKg"
+                                }
+                            ],
+                            "id": "R3ShQczKnI9"
+                        },
+                        "displayFormName": "WHOMCH Allergies (drugs and/or severe food allergies)",
+                        "optionSetValue": true,
+                        "id": "QFX1FLWBwtq"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 33,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "true",
+                                    "sortOrder": 1,
+                                    "displayName": "Yes",
+                                    "id": "l8S7SjnQ58G"
+                                },
+                                {
+                                    "code": "false",
+                                    "sortOrder": 2,
+                                    "displayName": "None known",
+                                    "id": "rexqxNDqUKg"
+                                }
+                            ],
+                            "id": "R3ShQczKnI9"
+                        },
+                        "displayFormName": "A: Penicillin allergy",
+                        "optionSetValue": true,
+                        "id": "E6QaDtrQP5e"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 34,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "true",
+                                    "sortOrder": 1,
+                                    "displayName": "Yes",
+                                    "id": "l8S7SjnQ58G"
+                                },
+                                {
+                                    "code": "false",
+                                    "sortOrder": 2,
+                                    "displayName": "None known",
+                                    "id": "rexqxNDqUKg"
+                                }
+                            ],
+                            "id": "R3ShQczKnI9"
+                        },
+                        "displayFormName": "A: Other medicine allergy",
+                        "optionSetValue": true,
+                        "id": "dpOtt7HUQXa"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 35,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "A: Other medicine allergy specified",
+                        "optionSetValue": false,
+                        "id": "VSmOcdK3v7y"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 36,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "true",
+                                    "sortOrder": 1,
+                                    "displayName": "Yes",
+                                    "id": "l8S7SjnQ58G"
+                                },
+                                {
+                                    "code": "false",
+                                    "sortOrder": 2,
+                                    "displayName": "None known",
+                                    "id": "rexqxNDqUKg"
+                                }
+                            ],
+                            "id": "R3ShQczKnI9"
+                        },
+                        "displayFormName": "A: Other severe allergy",
+                        "optionSetValue": true,
+                        "id": "ZbDPeYzWsh2"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 37,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "A: Other severe allergy specified",
+                        "optionSetValue": false,
+                        "id": "zk4Eui7Jhtr"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 38,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Chronic conditions",
+                        "optionSetValue": false,
+                        "id": "de0FEHSIoxh"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 39,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "CC: Chronic hypertension",
+                        "optionSetValue": false,
+                        "id": "UQ2Zo8CruPB"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 40,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "CC: Autoimmune disease",
+                        "optionSetValue": false,
+                        "id": "zzGNbeMnTd6"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 41,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "CC: Diabetes",
+                        "optionSetValue": false,
+                        "id": "Q1x1HIhuwFN"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 42,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "CC: HIV Positive",
+                        "optionSetValue": false,
+                        "id": "VFffa31SKjH"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 43,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "CC: Renal disease",
+                        "optionSetValue": false,
+                        "id": "sdchiIXIcCf"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 44,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "CC: Other chronic condition",
+                        "optionSetValue": false,
+                        "id": "xPTngRLQTnu"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 45,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "CC: Other chronic condition specified",
+                        "optionSetValue": false,
+                        "id": "Mh7nK8UKoZP"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 46,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "WHOMCH Medication",
+                        "optionSetValue": false,
+                        "id": "fNnOPQj83jz"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 47,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Use of insecticide treate bednet(ITN) is promoted",
+                        "optionSetValue": false,
+                        "id": "NPZPVg2rVh4"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 48,
+                    "allowFutureDate": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER",
+                        "displayFormName": "Gestational age at visit",
+                        "optionSetValue": false,
+                        "id": "roKuXYfw1BW"
+                    },
+                    "compulsory": false,
+                    "sortOrder": 49,
+                    "allowFutureDate": false
+                }
+            ],
+            "executionDateLabel": "Date of visit",
+            "validationStrategy": "ON_COMPLETE",
+            "featureType": "NONE",
+            "blockEntryForm": true,
+            "sortOrder": 2,
+            "displayName": "First antenatal care visit",
+            "id": "WZbXY0S00lP",
+            "repeatable": false,
+            "programStageSections": [
+                {
+                    "dataElements": [
+                        {
+                            "id": "de0FEHSIoxh"
+                        },
+                        {
+                            "id": "Q1x1HIhuwFN"
+                        },
+                        {
+                            "id": "UQ2Zo8CruPB"
+                        },
+                        {
+                            "id": "zzGNbeMnTd6"
+                        },
+                        {
+                            "id": "VFffa31SKjH"
+                        },
+                        {
+                            "id": "sdchiIXIcCf"
+                        },
+                        {
+                            "id": "xPTngRLQTnu"
+                        },
+                        {
+                            "id": "Mh7nK8UKoZP"
+                        },
+                        {
+                            "id": "QFX1FLWBwtq"
+                        },
+                        {
+                            "id": "E6QaDtrQP5e"
+                        },
+                        {
+                            "id": "dpOtt7HUQXa"
+                        },
+                        {
+                            "id": "VSmOcdK3v7y"
+                        },
+                        {
+                            "id": "ZbDPeYzWsh2"
+                        },
+                        {
+                            "id": "zk4Eui7Jhtr"
+                        },
+                        {
+                            "id": "fNnOPQj83jz"
+                        }
+                    ],
+                    "sortOrder": 1,
+                    "displayName": "Pre-existing conditions",
+                    "id": "EzhVeTS7vx4"
+                },
+                {
+                    "dataElements": [
+                        {
+                            "id": "w4ky6EkVahL"
+                        },
+                        {
+                            "id": "roKuXYfw1BW"
+                        },
+                        {
+                            "id": "DecmCMPDPdS"
+                        },
+                        {
+                            "id": "r3BqzOPxAjp"
+                        },
+                        {
+                            "id": "sWoqcoByYmD"
+                        },
+                        {
+                            "id": "ytV9rX4ADnn"
+                        },
+                        {
+                            "id": "M4HEOoEFTAT"
+                        },
+                        {
+                            "id": "dyYdfamSY2Z"
+                        },
+                        {
+                            "id": "PN6HcGjTraL"
+                        },
+                        {
+                            "id": "vPdXnmGWzfy"
+                        },
+                        {
+                            "id": "EyfTU3ibMmJ"
+                        }
+                    ],
+                    "sortOrder": 2,
+                    "displayName": "Current pregnancy",
+                    "id": "SyzhZewrUHP"
+                },
+                {
+                    "dataElements": [
+                        {
+                            "id": "dpiyZz8bkVE"
+                        },
+                        {
+                            "id": "a7XjFEuZuKE"
+                        },
+                        {
+                            "id": "X8HbdaoS9LN"
+                        },
+                        {
+                            "id": "vANAXwtLwcT"
+                        },
+                        {
+                            "id": "Itl05OEupgQ"
+                        },
+                        {
+                            "id": "AAaJGnWR5js"
+                        }
+                    ],
+                    "sortOrder": 3,
+                    "displayName": "Lab/testing",
+                    "id": "AyWdV7K24Ih"
+                },
+                {
+                    "dataElements": [
+                        {
+                            "id": "w7enwqzx90I"
+                        },
+                        {
+                            "id": "lcaG1Pnh27I"
+                        },
+                        {
+                            "id": "vTEkiy8F3yj"
+                        },
+                        {
+                            "id": "OhcR0fpFcWa"
+                        },
+                        {
+                            "id": "cKBSkBB3Mt4"
+                        },
+                        {
+                            "id": "nhW3SZX9JaN"
+                        },
+                        {
+                            "id": "MHW5v2Iljtw"
+                        },
+                        {
+                            "id": "OSuxnldV4Ug"
+                        },
+                        {
+                            "id": "Ok9OQpitjQr"
+                        },
+                        {
+                            "id": "RxVNLSeTjto"
+                        },
+                        {
+                            "id": "nB4Ui3ckmUi"
+                        },
+                        {
+                            "id": "Kb6kZzUCJi1"
+                        },
+                        {
+                            "id": "jRo4KlnCKeX"
+                        },
+                        {
+                            "id": "Js57E09s9fh"
+                        },
+                        {
+                            "id": "rHgrmXfa57b"
+                        },
+                        {
+                            "id": "PKZPVfAJfHD"
+                        },
+                        {
+                            "id": "NPZPVg2rVh4"
+                        }
+                    ],
+                    "sortOrder": 4,
+                    "displayName": "Management",
+                    "id": "tR4D0m1d5A5"
+                }
+            ]
+        }
+    ]
+}

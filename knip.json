@@ -179,6 +179,37 @@
                 ]
             }
         },
+        "packages/blocks/event-form": {
+            "entry": ["src/**/*.test.{ts,tsx}", "type-tests/**/*.ts"],
+            "project": [
+                "src/**/*.{ts,tsx}",
+                "test/**/*.{ts,css}",
+                "type-tests/**/*.ts"
+            ],
+            "includeEntryExports": true,
+            "ignoreDependencies": [
+                "@dhis2-blocks/ui",
+                "@dhis2-blocks/program-rules"
+            ],
+            "ignoreIssues": {
+                "test/**": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "type-tests/**": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ]
+            }
+        },
         "packages/blocks/program-rules": {
             "entry": ["src/**/*.test.{ts,tsx}", "type-tests/**/*.ts"],
             "project": [

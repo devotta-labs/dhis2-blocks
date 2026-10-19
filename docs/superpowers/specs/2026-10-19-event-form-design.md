@@ -13,7 +13,7 @@ slices, rules epics, converters, save epics and HOCs.
 
 This design ships that idea as a production block in `dhis2-blocks`, for **an external team that wants
 something Capture-like without Capture's cruft**. The point is to leave Capture's problems behind: no redux,
-no epics, no render foundation, no HOC stacks, no form-format value quirks. Only the *ideas* from the
+no epics, no render foundation, no HOC stacks, no form-format value quirks. Only the _ideas_ from the
 prototype come across, not its code.
 
 It is also a chance to do program rules a better way: rule effects as a pure derivation of values, from the
@@ -67,12 +67,12 @@ official engine, explainable, instead of an async pipeline that writes effect sl
 
 ## 6. Registry items
 
-| Item | Type | Contents | Depends on |
-|---|---|---|---|
-| shared primitives (one item per primitive, plus the theme) | `registry:ui` / style | DHIS2-styled shadcn components moved out of Working List, plus any new ones this block needs | none |
-| `program-rules` | `registry:lib` | Pure: metadata → engine context, evaluation, effect normalisation, dependency graph, explanations. No React. | none |
-| `use-program-rules` | `registry:hook` | `useProgramRules(...)`: fetches rule metadata and context with React Query, memoises evaluation | `program-rules` |
-| `event-form` | `registry:block` | Model, value-type registry, fields, sections, details card, notes, actions, save | `use-program-rules`, primitives |
+| Item                                                       | Type                  | Contents                                                                                                     | Depends on                      |
+| ---------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| shared primitives (one item per primitive, plus the theme) | `registry:ui` / style | DHIS2-styled shadcn components moved out of Working List, plus any new ones this block needs                 | none                            |
+| `program-rules`                                            | `registry:lib`        | Pure: metadata → engine context, evaluation, effect normalisation, dependency graph, explanations. No React. | none                            |
+| `use-program-rules`                                        | `registry:hook`       | `useProgramRules(...)`: fetches rule metadata and context with React Query, memoises evaluation              | `program-rules`                 |
+| `event-form`                                               | `registry:block`      | Model, value-type registry, fields, sections, details card, notes, actions, save                             | `use-program-rules`, primitives |
 
 Blocks reference primitives through `registryDependencies`, so a consumer installs one set that both blocks
 share. The primitives keep standard shadcn names but **install into a folder of their own**
@@ -137,15 +137,15 @@ Flat, root-prefixed composition as in Working List (names indicative):
   rule-mandatory empty fields. Hidden fields are skipped.
 - **Rule-driven data changes are an overlay, not writes.** Stored values are only what the user (or the loaded
   event) set. Rule clears (a hidden field) and ASSIGNs are computed on top: `effective = overlay(stored,
-  effects)`. Rules never write into stored values, so:
-  - a field hidden and then shown again gets its value back;
-  - opening an existing event never makes it dirty on its own. If the overlay would clear or change stored
-    values, the form shows a notice ("2 values will be changed by program rules when you save") listing
-    them, and the affected fields say why;
-  - assigned fields say "Calculated by a program rule"; cleared fields are listed in that notice since the
-    field itself is hidden;
-  - on save, the **effective** values are sent (cleared values sent as cleared), so the server agrees with
-    what the user was shown.
+effects)`. Rules never write into stored values, so:
+    - a field hidden and then shown again gets its value back;
+    - opening an existing event never makes it dirty on its own. If the overlay would clear or change stored
+      values, the form shows a notice ("2 values will be changed by program rules when you save") listing
+      them, and the affected fields say why;
+    - assigned fields say "Calculated by a program rule"; cleared fields are listed in that notice since the
+      field itself is hidden;
+    - on save, the **effective** values are sent (cleared values sent as cleared), so the server agrees with
+      what the user was shown.
 
 ## 9. Program rules
 
@@ -177,11 +177,11 @@ if the spike (§16) shows full evaluation is too slow.
 
 - **Dependency graph.** From each rule's condition and action expressions, find the variables and fields it
   reads and the fields it writes (ASSIGN chains included). Used for:
-  - *explanations*: each effect records rule id, name, condition and action, and the graph says which
-    answers fed it;
-  - *pruned re-evaluation*: re-run only the rules affected by a change. This is only enabled once a
-    differential test proves pruned results equal full evaluation over generated fixtures and real
-    metadata (RMNCH and the Sierra Leone programs). Until then, full evaluation is memoised per input.
+    - _explanations_: each effect records rule id, name, condition and action, and the graph says which
+      answers fed it;
+    - _pruned re-evaluation_: re-run only the rules affected by a change. This is only enabled once a
+      differential test proves pruned results equal full evaluation over generated fixtures and real
+      metadata (RMNCH and the Sierra Leone programs). Until then, full evaluation is memoised per input.
 - **Rules inspector.** A dev-facing view or hook output that lists, for a field, which rules touched it and
   why. Helps app builders debug their own program configuration.
 
@@ -215,23 +215,23 @@ if the spike (§16) shows full evaluation is too slow.
 
 ## 12. UI with standard shadcn components
 
-| Need | Component |
-|---|---|
-| Question label, description, error | `Field`, `FieldLabel`, `FieldDescription`, `FieldError` |
-| Section | `FieldSet` + `FieldLegend` |
-| Text, numbers, phone, email, URL, percentage | `Input` / `InputGroup` (addon for `%`) |
-| Long text, notes | `Textarea` |
-| Yes/No, small option sets (≤ 5) | `RadioGroup` or `ToggleGroup` |
-| Larger option sets, multi-select | `Select` / `Combobox` (multi) |
-| True-only | `Checkbox` |
-| Date, date & time, age | `Popover` + a calendar on `@dhis2/multi-calendar-dates` |
-| Org unit | tree in a `Popover` |
-| Details card | `Card` |
-| Rule messages, display texts | `Alert` and field messages |
-| Unsaved changes on cancel | `AlertDialog` |
+| Need                                         | Component                                               |
+| -------------------------------------------- | ------------------------------------------------------- |
+| Question label, description, error           | `Field`, `FieldLabel`, `FieldDescription`, `FieldError` |
+| Section                                      | `FieldSet` + `FieldLegend`                              |
+| Text, numbers, phone, email, URL, percentage | `Input` / `InputGroup` (addon for `%`)                  |
+| Long text, notes                             | `Textarea`                                              |
+| Yes/No, small option sets (≤ 5)              | `RadioGroup` or `ToggleGroup`                           |
+| Larger option sets, multi-select             | `Select` / `Combobox` (multi)                           |
+| True-only                                    | `Checkbox`                                              |
+| Date, date & time, age                       | `Popover` + a calendar on `@dhis2/multi-calendar-dates` |
+| Org unit                                     | tree in a `Popover`                                     |
+| Details card                                 | `Card`                                                  |
+| Rule messages, display texts                 | `Alert` and field messages                              |
+| Unsaved changes on cancel                    | `AlertDialog`                                           |
 
 Component depth from `EventForm` to an input element should stay in single digits, measured in a test.
-*Counted* as components authored in this block and its primitives on the path from `EventForm` to the
+_Counted_ as components authored in this block and its primitives on the path from `EventForm` to the
 element; Base UI internals and context providers don't count (my call).
 
 ## 13. Value types in v1
@@ -249,7 +249,7 @@ also exports a capability check, so a host can decide in advance whether to use 
 - **Unit (vitest, node)**: value-type registry, model build and structural sharing, validation matrix
   (strategy × completing × rule messages × mandatory), effect normalisation, dependency graph, payload
   building, writer outcomes.
-- **Rules**: fixtures from real metadata (RMNCH *First antenatal care visit*: HIDEFIELD chains, ASSIGN
+- **Rules**: fixtures from real metadata (RMNCH _First antenatal care visit_: HIDEFIELD chains, ASSIGN
   gestational age, SHOWERROR/SHOWWARNING, DISPLAYTEXT) with expected effects. The pruned-vs-full differential
   test in §9.2.
 - **Browser (vitest browser project)**: fields per value type, keyboard use, re-render counts on a large

@@ -35,6 +35,7 @@
 ### Task 1: Install check harness (fails until Task 5)
 
 **Files:**
+
 - Create: `tools/registry/installCheck.ts`
 - Create: `tools/registry/consumer/` (template: `package.json`, `tsconfig.json`, `components.json`, `index.html`, `vite.config.ts`, `src/index.css`, `src/main.tsx`, `src/host.tsx`)
 - Modify: `package.json` (root script `"registry:check": "node --experimental-strip-types tools/registry/installCheck.ts"`)
@@ -42,6 +43,7 @@
 - Modify: `knip.json` (root workspace `project` already covers `tools/**/*.ts`; add `tools/registry/consumer/**` to `ignore`)
 
 **Interfaces:**
+
 - Produces: `pnpm registry:check`, which exits 0 only if every assertion below holds. Later tasks use it as their end-to-end gate.
 
 - [ ] **Step 1: Write the consumer template**
@@ -51,6 +53,7 @@
 - [ ] **Step 2: Write `installCheck.ts`**
 
 In order, failing fast with a clear message per assertion:
+
 1. `shadcn@4.22.1 build registry.json --output <tmp>/r`.
 2. Rewrite every `devotta-labs/dhis2-blocks/<name>` string in `<tmp>/r/*.json` to `http://127.0.0.1:<port>/<name>.json`, then serve `<tmp>/r` with `node:http` on a free port.
 3. Copy the consumer template to `<tmp>/app`, `pnpm install`, then `shadcn@4.22.1 add http://127.0.0.1:<port>/working-list.json http://127.0.0.1:<port>/context-selector.json -y`.
@@ -76,6 +79,7 @@ git commit -m "test: add a registry install check against a throwaway consumer a
 ### Task 2: `@dhis2-blocks/ui` workspace package
 
 **Files:**
+
 - Move: `packages/blocks/working-list/src/ui/primitives/*` → `packages/blocks/ui/src/` (`git mv`; delete `index.ts`)
 - Create: `packages/blocks/ui/package.json`, `tsconfig.json`, `tsconfig.test.json`, `vitest.config.ts` (copy Working List's, browser project only), `test/setup.ts`, `test/styles.css`
 - Modify: every Working List file importing `../primitives/...` or `../../../primitives/...` (22 specifiers across ~25 files) to `@/registry/dhis2/ui/<file>`
@@ -87,6 +91,7 @@ git commit -m "test: add a registry install check against a throwaway consumer a
 - Modify: `knip.json` (`packages/blocks/ui` workspace: entry `src/*.{ts,tsx}`, `includeEntryExports: false`, same test/type-test ignores as the other blocks; drop `src/ui/primitives/**` ignore from the blocks glob)
 
 **Interfaces:**
+
 - Produces: package `@dhis2-blocks/ui` with explicit exports `"./<file>": "./src/<file>.tsx"` (or `.ts` for `cn`, `portal-root`) for each of the 23 primitive files, plus `"./theme.css": "./src/theme.css"`. Dependencies: `@base-ui/react ^1.9.0`, `@dhis2/ui-icons ^10.17.0`, `class-variance-authority ^0.7.1`, `clsx ^2.1.1`, `tailwind-merge ^3.7.0`; peers `react`/`react-dom ^18.3.1`.
 - Produces: in-repo specifier `@/registry/dhis2/ui/<file>` resolving to `packages/blocks/ui/src/<file>` in Working List (tsc, vitest) and `apps/web` (tsc, Vite/d2 build).
 
@@ -111,26 +116,34 @@ git commit -m "refactor: move working list primitives into a shared ui package"
 ### Task 3: Namespace the theme
 
 **Files:**
+
 - Modify: `packages/blocks/ui/src/theme.css`
 - Modify: class names in `packages/blocks/ui/src/*.tsx`, `packages/blocks/working-list/src/**/*.tsx`, `apps/web/src/**/*.tsx` (~245 token utilities in ~24 files)
 - Create: `packages/blocks/ui/src/theme.test.ts`
 
 **Interfaces:**
+
 - Produces: utilities `bg-dhis2-primary`, `text-dhis2-grey-700`, `border-dhis2-input`, `ring-dhis2-ring`, `rounded-dhis2-sm`, `shadow-dhis2-popover`, `font-dhis2`, `min-h-(--dhis2-field-height-dense)` and so on. Later blocks use these names.
 
 - [ ] **Step 1: Write the failing tests** in `theme.test.ts` (node project):
 
 ```ts
 test('every theme token is namespaced', () => {
-    const tokens = readThemeTokens()            // names declared inside @theme in theme.css
+    const tokens = readThemeTokens() // names declared inside @theme in theme.css
     expect(tokens.length).toBeGreaterThan(80)
-    for (const name of tokens) expect(name).toMatch(/^--(color|radius|shadow|font)-dhis2(-|$)|^--dhis2-/)
+    for (const name of tokens)
+        expect(name).toMatch(
+            /^--(color|radius|shadow|font)-dhis2(-|$)|^--dhis2-/
+        )
 })
 test('theme does not reset the host palette', () => {
     expect(readThemeCss()).not.toMatch(/--color-\*\s*:\s*initial/)
 })
 test('no block or app source uses an un-namespaced DHIS2 token utility', () => {
-    const hits = scanSources(['packages/blocks/*/src', 'apps/web/src'], LEGACY_TOKEN_UTILITY)
+    const hits = scanSources(
+        ['packages/blocks/*/src', 'apps/web/src'],
+        LEGACY_TOKEN_UTILITY
+    )
     expect(hits).toEqual([])
 })
 ```
@@ -169,6 +182,7 @@ git commit -m "refactor: namespace DHIS2 design tokens so blocks don't restyle t
 ### Task 4: Registry items for the primitives
 
 **Files:**
+
 - Create: `packages/blocks/ui/scripts/buildUiRegistry.ts` (pure function plus a CLI entry that writes `registry.json`)
 - Create: `packages/blocks/ui/registry.json` (generated, committed)
 - Create: `packages/blocks/ui/scripts/buildUiRegistry.test.ts`
@@ -176,16 +190,19 @@ git commit -m "refactor: namespace DHIS2 design tokens so blocks don't restyle t
 - Modify: root `registry.json` (`include` gains `packages/blocks/ui/registry.json`)
 
 **Interfaces:**
+
 - Consumes: `packages/blocks/ui/src/*`, `packages/blocks/ui/package.json` dependency versions.
 - Produces: `buildUiRegistry(packageDir: string): RegistryManifest` returning `{ $schema, items }` with:
-  - item `dhis2-theme`: `type: "registry:theme"`, `cssVars.theme` = every token declared in `theme.css` (name without leading `--`, value verbatim), no files;
-  - one item per source file (`button`, `cn`, `portal-root`, …): `type: "registry:ui"`, file `{ path: "src/<file>", type: "registry:ui", target: "@components/dhis2/ui/<file>" }`, `dependencies` = external packages it imports (bare `react`/`react-dom` excluded) at the versions in `package.json`, `registryDependencies` = `devotta-labs/dhis2-blocks/<sibling>` for each `./sibling` import, plus `devotta-labs/dhis2-blocks/dhis2-theme`, sorted.
+    - item `dhis2-theme`: `type: "registry:theme"`, `cssVars.theme` = every token declared in `theme.css` (name without leading `--`, value verbatim), no files;
+    - one item per source file (`button`, `cn`, `portal-root`, …): `type: "registry:ui"`, file `{ path: "src/<file>", type: "registry:ui", target: "@components/dhis2/ui/<file>" }`, `dependencies` = external packages it imports (bare `react`/`react-dom` excluded) at the versions in `package.json`, `registryDependencies` = `devotta-labs/dhis2-blocks/<sibling>` for each `./sibling` import, plus `devotta-labs/dhis2-blocks/dhis2-theme`, sorted.
 
 - [ ] **Step 1: Write the failing tests**
 
 ```ts
 test('committed registry.json equals the generated manifest', () => {
-    expect(readJson('packages/blocks/ui/registry.json')).toEqual(buildUiRegistry(UI_DIR))
+    expect(readJson('packages/blocks/ui/registry.json')).toEqual(
+        buildUiRegistry(UI_DIR)
+    )
 })
 test('combobox depends on its siblings and the theme', () => {
     const combobox = item('combobox')
@@ -196,11 +213,18 @@ test('combobox depends on its siblings and the theme', () => {
         'devotta-labs/dhis2-blocks/input-group',
         'devotta-labs/dhis2-blocks/select',
     ])
-    expect(combobox.dependencies).toEqual(['@base-ui/react@^1.9.0', '@dhis2/ui-icons@^10.17.0'])
+    expect(combobox.dependencies).toEqual([
+        '@base-ui/react@^1.9.0',
+        '@dhis2/ui-icons@^10.17.0',
+    ])
 })
 test('theme item carries every theme.css token', () => {
-    expect(item('dhis2-theme').cssVars.theme['color-dhis2-primary']).toBe('#1565c0')
-    expect(Object.keys(item('dhis2-theme').cssVars.theme)).toHaveLength(readThemeTokens().length)
+    expect(item('dhis2-theme').cssVars.theme['color-dhis2-primary']).toBe(
+        '#1565c0'
+    )
+    expect(Object.keys(item('dhis2-theme').cssVars.theme)).toHaveLength(
+        readThemeTokens().length
+    )
 })
 ```
 
@@ -225,11 +249,13 @@ git commit -m "feat: publish the DHIS2 ui primitives as registry items"
 ### Task 5: Working List consumes the shared items
 
 **Files:**
+
 - Modify: `packages/blocks/working-list/registry.json` (remove the `cssVars` block; add `registryDependencies`; drop `dependencies` no longer imported by Working List's own files)
 - Create: `packages/blocks/working-list/src/registry.manifest.test.ts`
 - Modify: `README.md` (Working List and Context Selector install sections: the primitives install to `components/dhis2/ui/`, the theme is namespaced; add a short "UI primitives" section listing `devotta-labs/dhis2-blocks/<primitive>` installs)
 
 **Interfaces:**
+
 - Consumes: item names from Task 4.
 
 - [ ] **Step 1: Write the failing test**
@@ -237,12 +263,18 @@ git commit -m "feat: publish the DHIS2 ui primitives as registry items"
 ```ts
 test('every shared primitive Working List imports is a registry dependency', () => {
     const imported = importedSpecifiers('packages/blocks/working-list/src')
-        .filter(s => s.startsWith('@/registry/dhis2/ui/'))
-        .map(s => `devotta-labs/dhis2-blocks/${s.split('/').pop()}`)
-    expect(workingListItem().registryDependencies).toEqual([...new Set(imported)].sort())
+        .filter((s) => s.startsWith('@/registry/dhis2/ui/'))
+        .map((s) => `devotta-labs/dhis2-blocks/${s.split('/').pop()}`)
+    expect(workingListItem().registryDependencies).toEqual(
+        [...new Set(imported)].sort()
+    )
 })
 test('every non-test source file is shipped', () => {
-    expect(workingListItem().files.map(f => f.path).sort()).toEqual(nonTestSourceFiles().sort())
+    expect(
+        workingListItem()
+            .files.map((f) => f.path)
+            .sort()
+    ).toEqual(nonTestSourceFiles().sort())
 })
 test('Working List ships no theme of its own', () => {
     expect(workingListItem().cssVars).toBeUndefined()

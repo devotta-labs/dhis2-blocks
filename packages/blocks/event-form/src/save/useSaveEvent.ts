@@ -23,12 +23,15 @@ export const registerEventFormMutations = (
     })
 }
 
-/** The save mutation. Its `mutationFn` comes from `registerEventFormMutations`. */
-export const useSaveEvent = (): UseMutationResult<
-    SaveResult,
-    Error,
-    EventPayload
-> =>
+/**
+ * The save mutation. Without a `writer` its `mutationFn` is the default from
+ * `registerEventFormMutations`. A `writer` serves this observer only: it never becomes the
+ * QueryClient's default, so other forms and a host-registered writer are unaffected.
+ */
+export const useSaveEvent = (
+    writer?: EventWriter
+): UseMutationResult<SaveResult, Error, EventPayload> =>
     useMutation<SaveResult, Error, EventPayload>({
         mutationKey: eventFormMutationKeys.save,
+        ...(writer !== undefined && { mutationFn: writer }),
     })

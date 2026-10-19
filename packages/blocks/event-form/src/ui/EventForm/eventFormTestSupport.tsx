@@ -169,18 +169,40 @@ const StateProbe = ({ probe }: { probe: Probe }) => {
     return null
 }
 
+export const testQueryClient = () =>
+    new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+/** A program rule with one action and no field: its message is about the whole event. */
+export const formLevelRule = (
+    kind: 'SHOWERROR' | 'ERRORONCOMPLETE',
+    content: string
+) => ({
+    id: `form${kind.slice(0, 7)}`,
+    name: `Form-level ${kind}`,
+    displayName: `Form-level ${kind}`,
+    condition: 'true',
+    programRuleActions: [
+        {
+            id: `act${kind.slice(0, 8)}`,
+            programRuleActionType: kind,
+            content,
+            displayContent: content,
+        },
+    ],
+})
+
 export interface RenderOptions extends ServeOptions {
     eventId?: string
     writer?: EventWriter
+    /** Shared by forms rendered one after another; a fresh one by default. */
+    queryClient?: QueryClient
     /** What to render inside EventForm; the full composition by default. */
     children?: ReactNode
 }
 
 export const renderEventForm = async (options: RenderOptions = {}) => {
     const { data, payloads } = serve(options)
-    const queryClient = new QueryClient({
-        defaultOptions: { queries: { retry: false } },
-    })
+    const queryClient = options.queryClient ?? testQueryClient()
     const probe: Probe = {}
     const onSaved = vi.fn()
     const onCancel = vi.fn()

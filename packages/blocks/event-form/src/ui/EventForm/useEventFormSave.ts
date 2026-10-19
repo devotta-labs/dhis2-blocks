@@ -1,7 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
-import type { RuleEffects } from '@/registry/program-rules/index'
 import { programRulesQueryKeys } from '@/registry/program-rules/use-program-rules'
 import { eventFormKeys } from '../../api/queries'
 import type { StageMetadata } from '../../api/schemas'
@@ -10,7 +9,7 @@ import type { Values } from '../../model/overlay'
 import { validateForm } from '../../model/validate'
 import { buildEventPayload } from '../../save/payload'
 import { useSaveEvent } from '../../save/useSaveEvent'
-import type { SaveError, SaveOutcome } from '../../save/writer'
+import type { EventWriter, SaveError, SaveOutcome } from '../../save/writer'
 import {
     selectDirty,
     type EventFormStore,
@@ -23,7 +22,6 @@ import { CONTEXT_FIELD_IDS, isScheduled } from './initialState'
 export interface LatestForm {
     model: FormModel
     effective: Values
-    effects: RuleEffects | undefined
     readOnly: boolean
 }
 
@@ -44,6 +42,8 @@ export type PendingConfirmation = 'complete' | 'discard'
 
 interface SaveArgs {
     store: EventFormStore
+    /** This form's writer; the QueryClient's default writer when absent. */
+    writer: EventWriter | undefined
     target: SaveTarget
     /** A note went out with a successful save. */
     onNoteSaved(note: string): void
@@ -54,7 +54,7 @@ interface SaveArgs {
 }
 
 /** Context fields a save needs: a report date (unless the event is still scheduled) and an org unit. */
-export const contextFailures = ({
+const contextFailures = ({
     context,
     status,
 }: Pick<EventFormStoreState, 'context' | 'status'>): string[] => [
@@ -63,6 +63,24 @@ export const contextFailures = ({
         : []),
     ...(context.orgUnitId === undefined ? [CONTEXT_FIELD_IDS.orgUnitId] : []),
 ]
+
+/**
+ * What blocks the action: context fields first, then `validateForm` (field and form-level rule
+ * messages, by the stage's strategy). The same check drives the actions and the public state.
+ */
+export const validateEventForm = (
+    model: FormModel,
+    state: Pick<EventFormStoreState, 'context' | 'status'>,
+    options: { strategy: SaveTarget['strategy']; isCompleting: boolean }
+) => {
+    const result = validateForm(model, options)
+    const failedFieldIds = [...contextFailures(state), ...result.failedFieldIds]
+    return {
+        isValid: failedFieldIds.length === 0 && result.formErrors.length === 0,
+        failedFieldIds,
+        formErrors: result.formErrors,
+    }
+}
 
 const FOCUSABLE =
     'input:not([disabled]), textarea:not([disabled]), button:not([disabled]), [role=radio]:not([data-disabled]), [tabindex]:not([tabindex="-1"])'
@@ -84,14 +102,12 @@ const focusFirstField = (
     field.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true })
 }
 
-const warnsOnComplete = (model: FormModel, effects: RuleEffects | undefined) =>
+const warnsOnComplete = (model: FormModel) =>
     [...model.fields.values()].some(
         (field) =>
             !field.hidden && field.messages.warningOnComplete !== undefined
     ) ||
-    (effects?.messages.get('form') ?? []).some(
-        (message) => message.kind === 'warningOnComplete'
-    )
+    model.formMessages.some((message) => message.kind === 'warningOnComplete')
 
 const asSaveError = (cause: unknown): SaveError => ({
     kind: 'unknown',
@@ -111,9 +127,10 @@ export const useEventFormSave = ({
     container,
     onNoteSaved,
     onSavingChange,
+    writer,
 }: SaveArgs) => {
     const queryClient = useQueryClient()
-    const mutation = useSaveEvent()
+    const mutation = useSaveEvent(writer)
     const mutate = useRef(mutation.mutateAsync)
     mutate.current = mutation.mutateAsync
     const inFlight = useRef(false)
@@ -143,20 +160,16 @@ export const useEventFormSave = ({
             store.getState().markAttempt(kind)
             const state = store.getState()
             const isCompleting = kind === 'complete'
-            const failed = [
-                ...contextFailures(state),
-                ...validateForm(form.model, { strategy, isCompleting })
-                    .failedFieldIds,
-            ]
-            if (failed.length > 0) {
-                focusFirstField(container.current, failed)
+            const validation = validateEventForm(form.model, state, {
+                strategy,
+                isCompleting,
+            })
+            if (!validation.isValid) {
+                // A form-level rule error has no field to focus; the actions show it instead.
+                focusFirstField(container.current, validation.failedFieldIds)
                 return
             }
-            if (
-                isCompleting &&
-                !confirmed &&
-                warnsOnComplete(form.model, form.effects)
-            ) {
+            if (isCompleting && !confirmed && warnsOnComplete(form.model)) {
                 setPending('complete')
                 return
             }

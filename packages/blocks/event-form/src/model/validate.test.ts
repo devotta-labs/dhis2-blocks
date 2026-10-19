@@ -120,7 +120,7 @@ describe('validateForm', () => {
                 strategy: 'ON_UPDATE_AND_INSERT',
                 isCompleting: true,
             })
-        ).toEqual({ isValid: true, failedFieldIds: [] })
+        ).toEqual({ isValid: true, failedFieldIds: [], formErrors: [] })
     })
 
     it('does not block on a mandatory unsupported field that has a value', () => {
@@ -142,5 +142,59 @@ describe('validateForm', () => {
                 isCompleting: true,
             }).isValid
         ).toBe(true)
+    })
+
+    describe('form-level rule messages', () => {
+        const withFormMessage = (
+            kind: 'error' | 'errorOnComplete' | 'warningOnComplete'
+        ) => {
+            const effects = emptyEffects()
+            effects.messages.set('form', [
+                { kind, text: 'About the whole event', by: attribution() },
+            ])
+            return buildFormModel(undefined, {
+                metadata: stageMetadata([dataElement('a')]),
+                effective: {},
+                stored: {},
+                effects,
+                optionGroupOptions: new Map(),
+                fieldErrors: {},
+                showAllErrors: false,
+                isCompleting: false,
+            })
+        }
+        const FORM_CASES: [
+            'error' | 'errorOnComplete' | 'warningOnComplete',
+            Strategy,
+            boolean,
+            boolean,
+        ][] = [
+            ['error', 'NONE', false, false],
+            ['error', 'NONE', true, false],
+            ['error', 'ON_COMPLETE', false, false],
+            ['error', 'ON_COMPLETE', true, true],
+            ['error', 'ON_UPDATE_AND_INSERT', false, true],
+            ['error', 'ON_UPDATE_AND_INSERT', true, true],
+            ['errorOnComplete', 'ON_COMPLETE', false, false],
+            ['errorOnComplete', 'ON_COMPLETE', true, true],
+            ['errorOnComplete', 'ON_UPDATE_AND_INSERT', false, false],
+            ['errorOnComplete', 'ON_UPDATE_AND_INSERT', true, true],
+            ['errorOnComplete', 'NONE', true, false],
+            ['warningOnComplete', 'ON_UPDATE_AND_INSERT', true, false],
+        ]
+        it.each(FORM_CASES)(
+            'a form-level %s under %s, completing=%s, blocks: %s',
+            (kind, strategy, isCompleting, blocks) => {
+                const result = validateForm(withFormMessage(kind), {
+                    strategy,
+                    isCompleting,
+                })
+                expect(result.failedFieldIds).toEqual([])
+                expect(
+                    result.formErrors.map((message) => message.text)
+                ).toEqual(blocks ? ['About the whole event'] : [])
+                expect(result.isValid).toBe(!blocks)
+            }
+        )
     })
 })

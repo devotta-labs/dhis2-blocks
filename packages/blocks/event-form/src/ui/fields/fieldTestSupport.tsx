@@ -70,6 +70,7 @@ export const baseField = (extra: Partial<FieldModel> = {}): FieldModel => ({
 export const modelOf = (...fields: FieldModel[]) => ({
     sections: [],
     fields: new Map(fields.map((field) => [field.id, field])),
+    formMessages: [],
 })
 
 export const attribution = {

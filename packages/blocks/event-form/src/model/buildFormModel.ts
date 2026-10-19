@@ -64,7 +64,11 @@ export interface SectionModel {
 export interface FormModel {
     sections: SectionModel[]
     fields: Map<string, FieldModel>
+    /** Rule messages about the whole event rather than one field. */
+    formMessages: RuleMessage[]
 }
+
+const NO_MESSAGES: RuleMessage[] = []
 
 export interface BuildFormModelInput {
     metadata: StageMetadata
@@ -400,7 +404,16 @@ export const buildFormModel = (
         return shared(previousSections.get(section.id), next, sameSection)
     })
 
-    if (prev !== undefined && isSameModel(prev, sections, fields)) {
+    const nextMessages = effects?.messages.get('form') ?? NO_MESSAGES
+    const formMessages =
+        prev !== undefined && sameRuleMessages(prev.formMessages, nextMessages)
+            ? prev.formMessages
+            : nextMessages
+    if (
+        prev !== undefined &&
+        formMessages === prev.formMessages &&
+        isSameModel(prev, sections, fields)
+    ) {
         return prev
     }
     // Section lists subscribe to the array, so it is kept when no section changed.
@@ -408,7 +421,11 @@ export const buildFormModel = (
         prev !== undefined &&
         prev.sections.length === sections.length &&
         prev.sections.every((section, index) => section === sections[index])
-    return { sections: sameSections ? prev.sections : sections, fields }
+    return {
+        sections: sameSections ? prev.sections : sections,
+        fields,
+        formMessages,
+    }
 }
 
 const isSameModel = (

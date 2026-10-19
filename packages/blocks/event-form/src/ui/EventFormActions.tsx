@@ -63,15 +63,38 @@ export const EventFormActions = ({ className }: { className?: string }) => {
             {state.saveError !== undefined && (
                 <SaveErrorAlert error={state.saveError} translate={translate} />
             )}
-            {state.attempt !== 'none' && !state.validation.isValid && (
-                <Alert variant="warning" data-testid="event-form-invalid">
-                    <AlertDescription>
-                        {translate(
-                            'Some answers need attention before the event can be saved.'
+            {state.attempt !== 'none' &&
+                state.validation.formErrors.length > 0 && (
+                    <ErrorAlert
+                        title={translate(
+                            'Program rules found problems with this event'
                         )}
-                    </AlertDescription>
-                </Alert>
-            )}
+                        data-testid="event-form-rule-errors"
+                    >
+                        <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+                            {state.validation.formErrors.map(
+                                (message, index) => (
+                                    <li
+                                        key={`${message.by.actionId}-${index}`}
+                                        title={message.by.ruleName}
+                                    >
+                                        {message.text}
+                                    </li>
+                                )
+                            )}
+                        </ul>
+                    </ErrorAlert>
+                )}
+            {state.attempt !== 'none' &&
+                state.validation.failedFieldIds.length > 0 && (
+                    <Alert variant="warning" data-testid="event-form-invalid">
+                        <AlertDescription>
+                            {translate(
+                                'Some answers need attention before the event can be saved.'
+                            )}
+                        </AlertDescription>
+                    </Alert>
+                )}
             <div className="flex flex-wrap gap-2">
                 {!locked && (
                     <Button

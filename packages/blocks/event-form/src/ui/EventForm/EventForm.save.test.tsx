@@ -1,12 +1,18 @@
 import { Result } from 'better-result'
 import { page, userEvent } from 'vitest/browser'
 import type { EventPayload } from '../../save/payload'
+import {
+    eventFormMutationKeys,
+    registerEventFormMutations,
+} from '../../save/useSaveEvent'
 import type { EventWriter } from '../../save/writer'
 import {
     answerGroup,
+    formLevelRule,
     lastEvent,
     RMNCH,
     renderEventForm,
+    testQueryClient,
     today,
 } from './eventFormTestSupport'
 
@@ -262,5 +268,126 @@ describe('saving an EventForm', () => {
         // RMNCH blocks entry into completed events.
         await expect.poll(() => probe.state?.readOnlyReason).toBe('completed')
         await expect.element(saveButton()).not.toBeInTheDocument()
+    })
+})
+
+describe('the writer an EventForm saves with', () => {
+    const queuedWriter =
+        (writes: string[]): EventWriter =>
+        async ({ events }) => {
+            writes.push(events[0].event)
+            return Result.ok({ outcome: 'queued' })
+        }
+
+    it('a writer prop serves its own form only: a later form without one posts to /tracker', async () => {
+        const queryClient = testQueryClient()
+        const queued: string[] = []
+        const writer = queuedWriter(queued)
+        const first = await renderEventForm({ queryClient, writer })
+        await answerSmokingYes()
+        await saveButton().click()
+        await expect.poll(() => first.onSaved.mock.calls.length).toBe(1)
+        expect(first.onSaved).toHaveBeenCalledWith(
+            expect.objectContaining({ outcome: 'queued' })
+        )
+        expect(first.payloads).toHaveLength(0)
+        expect(
+            queryClient.getMutationDefaults(eventFormMutationKeys.save)
+                .mutationFn
+        ).not.toBe(writer)
+        await first.screen.unmount()
+
+        const second = await renderEventForm({ queryClient })
+        await answerSmokingYes()
+        await saveButton().click()
+        await expect.poll(() => second.onSaved.mock.calls.length).toBe(1)
+        expect(second.onSaved).toHaveBeenCalledWith(
+            expect.objectContaining({ outcome: 'saved' })
+        )
+        // The online default was registered by the first form, so it posts through the first
+        // form's data engine; an app has one engine, so it is the same /tracker either way.
+        expect([...first.payloads, ...second.payloads]).toHaveLength(1)
+        expect(queued).toHaveLength(1)
+    })
+
+    it('a form without a writer prop uses the writer the host registered, and keeps it', async () => {
+        const queryClient = testQueryClient()
+        const hostWrites: string[] = []
+        const hostWriter = queuedWriter(hostWrites)
+        registerEventFormMutations(queryClient, hostWriter)
+        const { onSaved, payloads } = await renderEventForm({ queryClient })
+        await answerSmokingYes()
+        await saveButton().click()
+
+        await expect.poll(() => onSaved.mock.calls.length).toBe(1)
+        expect(onSaved).toHaveBeenCalledWith(
+            expect.objectContaining({ outcome: 'queued' })
+        )
+        expect(hostWrites).toHaveLength(1)
+        expect(payloads).toHaveLength(0)
+        expect(
+            queryClient.getMutationDefaults(eventFormMutationKeys.save)
+                .mutationFn
+        ).toBe(hostWriter)
+    })
+})
+
+describe('form-level program rule errors', () => {
+    const ruleErrors = () => page.getByTestId('event-form-rule-errors')
+
+    it('a form-level error blocks Save under ON_UPDATE_AND_INSERT', async () => {
+        const { payloads, probe } = await renderEventForm({
+            stage: (stage) => ({
+                ...stage,
+                programStages: stage.programStages.map((programStage) => ({
+                    ...programStage,
+                    validationStrategy: 'ON_UPDATE_AND_INSERT',
+                })),
+            }),
+            rules: (rules) => ({
+                programRules: [
+                    ...rules.programRules,
+                    formLevelRule('SHOWERROR', 'This event is not allowed'),
+                ],
+            }),
+        })
+        await answerSmokingYes()
+        await saveButton().click()
+
+        await expect
+            .element(ruleErrors().getByText('This event is not allowed'))
+            .toBeVisible()
+        expect(payloads).toHaveLength(0)
+        expect(probe.state?.validation.isValid).toBe(false)
+        expect(probe.state?.validation.failedFieldIds).toEqual([])
+    })
+
+    it('a form-level error on complete blocks Complete but not Save', async () => {
+        const { payloads, onSaved } = await renderEventForm({
+            rules: (rules) => ({
+                programRules: [
+                    ...rules.programRules,
+                    formLevelRule(
+                        'ERRORONCOMPLETE',
+                        'Record the outcome before completing'
+                    ),
+                ],
+            }),
+        })
+        await answerSmokingYes()
+        await page
+            .getByRole('button', { name: 'Complete', exact: true })
+            .click()
+
+        await expect
+            .element(
+                ruleErrors().getByText('Record the outcome before completing')
+            )
+            .toBeVisible()
+        expect(payloads).toHaveLength(0)
+
+        await saveButton().click()
+        await expect.poll(() => onSaved.mock.calls.length).toBe(1)
+        expect(lastEvent(payloads).status).toBe('ACTIVE')
     })
 })

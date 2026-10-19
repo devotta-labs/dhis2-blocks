@@ -2,6 +2,7 @@ import { createContext, useContext, useSyncExternalStore } from 'react'
 import type {
     Attribution,
     InvalidRule,
+    RuleMessage,
     RuleDependencyGraph,
     RuleEffects,
 } from '@/registry/program-rules/index'
@@ -141,7 +142,12 @@ export interface EventFormState {
     attempt: 'none' | 'save' | 'complete'
     saving: boolean
     /** Validation for the action last attempted (Save, unless Complete was tried). */
-    validation: { isValid: boolean; failedFieldIds: string[] }
+    validation: {
+        isValid: boolean
+        failedFieldIds: string[]
+        /** Rule errors about the whole event that block the action. */
+        formErrors: RuleMessage[]
+    }
     /** Why the last save failed; cleared by the next attempt. */
     saveError?: SaveError
 }

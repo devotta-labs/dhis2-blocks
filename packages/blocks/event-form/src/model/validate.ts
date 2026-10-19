@@ -1,3 +1,4 @@
+import type { RuleMessage } from '@/registry/program-rules/index'
 import type { StageMetadata } from '../api/schemas'
 import type { FormModel } from './buildFormModel'
 
@@ -6,6 +7,8 @@ type ValidationStrategy = StageMetadata['stage']['validationStrategy']
 interface ValidationResult {
     isValid: boolean
     failedFieldIds: string[]
+    /** Rule messages about the whole event that block, by the same rules as a field's. */
+    formErrors: RuleMessage[]
 }
 
 /**
@@ -16,7 +19,8 @@ interface ValidationResult {
  * Everything is value-type errors, rule errors, rule errors-on-complete (when completing) and
  * empty required fields, whether required by metadata or by a rule. Hidden fields are skipped.
  * A required unsupported field that is empty cannot be answered in this form, so it blocks
- * completing under every strategy.
+ * completing under every strategy. Rule messages about the whole event block exactly as a field's
+ * rule messages do: an error on a full check, an error-on-complete on a full check when completing.
  */
 export const validateForm = (
     model: FormModel,
@@ -44,5 +48,16 @@ export const validateForm = (
             failedFieldIds.push(id)
         }
     }
-    return { isValid: failedFieldIds.length === 0, failedFieldIds }
+    const formErrors = fullCheck
+        ? model.formMessages.filter(
+              (message) =>
+                  message.kind === 'error' ||
+                  (isCompleting && message.kind === 'errorOnComplete')
+          )
+        : []
+    return {
+        isValid: failedFieldIds.length === 0 && formErrors.length === 0,
+        failedFieldIds,
+        formErrors,
+    }
 }

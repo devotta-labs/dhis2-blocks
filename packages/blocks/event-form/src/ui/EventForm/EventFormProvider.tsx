@@ -17,7 +17,6 @@ import type {
     TrackerEvent,
 } from '../../api/schemas'
 import { useEventFormClient } from '../../api/runtimeClient'
-import { validateForm } from '../../model/validate'
 import { generateUid } from '../../save/uid'
 import {
     eventFormMutationKeys,
@@ -52,8 +51,8 @@ import {
 } from './initialState'
 import { useEventFormModel } from './useEventFormModel'
 import {
-    contextFailures,
     useEventFormSave,
+    validateEventForm,
     type LatestForm,
     type SaveCallbacks,
 } from './useEventFormSave'
@@ -76,14 +75,16 @@ export interface EventFormProviderProps extends SaveCallbacks {
 
 const NO_NOTES: TrackerEvent['notes'] = []
 
-/** Registers the writer as the save mutation's default; a host-registered writer is kept. */
-const useWriterRegistration = (writer: EventWriter | undefined) => {
+/**
+ * Makes the online writer the save mutation's default when the QueryClient has none, so a
+ * persisted save can resume after a reload. A writer the host registered is kept, and a `writer`
+ * prop is passed to this form's mutation only (see `useSaveEvent`), never registered.
+ */
+const useDefaultWriter = () => {
     const queryClient = useQueryClient()
     const client = useEventFormClient()
     useEffect(() => {
-        if (writer !== undefined) {
-            registerEventFormMutations(queryClient, writer)
-        } else if (
+        if (
             queryClient.getMutationDefaults(eventFormMutationKeys.save)
                 .mutationFn === undefined
         ) {
@@ -92,7 +93,7 @@ const useWriterRegistration = (writer: EventWriter | undefined) => {
                 createOnlineEventWriter(client)
             )
         }
-    }, [queryClient, client, writer])
+    }, [queryClient, client])
 }
 
 const readOnlyReasonOf = (
@@ -142,7 +143,7 @@ export const EventFormProvider = ({
         )
     )
     const [scheduledAt] = useState(() => event?.scheduledAt)
-    useWriterRegistration(writer)
+    useDefaultWriter()
 
     const { model, effective, rules } = useEventFormModel({
         store,
@@ -170,7 +171,7 @@ export const EventFormProvider = ({
     const readOnly = readOnlyReason !== undefined || saving
 
     const latest = useRef<LatestForm | null>(null)
-    latest.current = { model, effective, effects: rules.effects, readOnly }
+    latest.current = { model, effective, readOnly }
     const callbacks = useRef<SaveCallbacks | null>(null)
     callbacks.current = { onSaved, onCancel }
     const container = useRef<HTMLDivElement>(null)
@@ -202,6 +203,7 @@ export const EventFormProvider = ({
         container,
         onNoteSaved,
         onSavingChange: setSaving,
+        writer,
     })
 
     const [source] = useState(() => createFormModelSource(model))
@@ -279,17 +281,18 @@ export const EventFormProvider = ({
         [store, save.commands, commitContext, sectionHeadingId, stage, notes]
     )
 
-    const validation = useMemo(() => {
-        const result = validateForm(model, {
-            strategy: validationStrategy,
-            isCompleting: attempt === 'complete',
-        })
-        const failedFieldIds = [
-            ...contextFailures({ context, status }),
-            ...result.failedFieldIds,
-        ]
-        return { isValid: failedFieldIds.length === 0, failedFieldIds }
-    }, [model, validationStrategy, attempt, context, status])
+    const validation = useMemo(
+        () =>
+            validateEventForm(
+                model,
+                { context, status },
+                {
+                    strategy: validationStrategy,
+                    isCompleting: attempt === 'complete',
+                }
+            ),
+        [model, validationStrategy, attempt, context, status]
+    )
 
     const publicValue = useMemo(() => {
         const state: EventFormState = {

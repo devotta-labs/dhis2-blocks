@@ -26,6 +26,7 @@
 - Payloads are plain JSON: no Dates, functions or classes.
 - Every user-facing string goes through the block's translate context (pattern: Working List `WorkingListText`), and is listed in `apps/web/src/eventFormTranslationCatalog.ts`.
 - Component depth from `EventForm` to an input element stays under 10, counting only components from this block and `dhis2/ui`.
+- Styling uses only `dhis2`-namespaced utilities (`bg-dhis2-grey-200`), never `var(--colors-*)` arbitrary values.
 - No `@dhis2/ui` components except `CalendarInput` (dates, like Working List's `StrictCalendarInput`) and `OrganisationUnitTree`. Ruling for speed: spec §12 allowed a custom shadcn calendar; reusing the calendar Working List already uses keeps non-Gregorian calendars correct now.
 - Supported value types (spec §13): TEXT, LONG_TEXT, LETTER, EMAIL, PHONE_NUMBER, URL, NUMBER, INTEGER, INTEGER_POSITIVE, INTEGER_NEGATIVE, INTEGER_ZERO_OR_POSITIVE, PERCENTAGE, UNIT_INTERVAL, BOOLEAN, TRUE_ONLY, DATE, DATETIME, TIME, AGE, COORDINATE, ORGANISATION_UNIT, option sets, MULTI_TEXT with an option set. Everything else renders read-only as "not supported".
 - DHIS2 for e2e: version 43 only.
@@ -331,8 +332,12 @@ Widget notes:
     - every non-test `src` file, targeting `@components/event-form/<path>`;
     - `registryDependencies`: each `devotta-labs/dhis2-blocks/<primitive>` it imports, plus `devotta-labs/dhis2-blocks/use-program-rules`;
     - `dependencies` from its imports.
-- Create: `packages/blocks/event-form/src/registry.manifest.test.ts`, the same three checks as Working List's.
+- Create: `packages/blocks/event-form/src/registry.manifest.test.ts`, the same checks as Working List's, built on the shared helper `tools/registry/manifest.ts`. Don't copy the import-scanning logic.
 - Modify: `tools/registry/installCheck.ts` and the consumer template to also install `event-form` and render `<EventForm>` in `main.tsx`.
+- Modify: turn the consumer template into a **shadcn-initialised host**: shadcn's init CSS (its own `@theme inline` and `:root` variables) plus a sentinel `src/components/ui/button.tsx` and `src/lib/utils.ts`.
+    - Assert the sentinel files are byte-identical after install, and that the `index.css` diff only adds `dhis2`-named lines.
+    - This replaces assertion 4 (no `components/ui`) and the parts of assertion 6 that are wrong for a real shadcn host.
+    - Decouple assertion 9 from Button's link variant by asserting the declared `--color-dhis2-primary` token too.
 - Modify: `README.md` with an Event Form section: install, minimal composition, the props table, the writer contract and its `saved` / `queued` outcomes, and the rules-overlay behaviour in two sentences.
 - Create: `apps/web/src/eventFormTranslationCatalog.ts`, and add it to the knip entries like the Working List catalog.
 

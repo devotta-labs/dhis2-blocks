@@ -8,8 +8,10 @@ import type { Values } from './overlay'
 import {
     answerChoices,
     getValueTypeSpec,
+    unsupportedReason,
     type AnswerChoice,
     type InputMode,
+    type UnsupportedReason,
     type ValueError,
     type WidgetKind,
 } from './valueTypes'
@@ -24,6 +26,8 @@ export interface FieldModel {
     value?: string
     /** Present for choice, select and multiSelect kinds. */
     choices?: AnswerChoice[]
+    /** Present for choice and select kinds when the stage asks for radio buttons. */
+    radioLayout?: 'vertical' | 'horizontal'
     /** Not editable: calculated by a rule, or an unsupported value type. */
     disabled: boolean
     /** Set when a rule assigns this field's value. */
@@ -45,6 +49,8 @@ export interface FieldModel {
         ruleErrors: RuleMessage[]
     }
     unsupported: boolean
+    /** Present when `unsupported`: no widget for the value type, or nothing to pick from. */
+    unsupportedReason?: UnsupportedReason
 }
 
 export interface SectionModel {
@@ -188,6 +194,20 @@ const messagesOf = (
     }
 }
 
+const RADIO_LAYOUTS = new Map(
+    Object.entries({
+        VERTICAL_RADIOBUTTONS: 'vertical',
+        HORIZONTAL_RADIOBUTTONS: 'horizontal',
+    } satisfies Record<string, 'vertical' | 'horizontal'>)
+)
+
+const radioLayoutOf = (
+    meta: DataElementMeta
+): FieldModel['radioLayout'] | undefined => {
+    const renderType = meta.renderType?.desktop ?? meta.renderType?.mobile
+    return renderType === undefined ? undefined : RADIO_LAYOUTS.get(renderType)
+}
+
 const buildField = (
     meta: DataElementMeta,
     hidden: boolean,
@@ -200,6 +220,11 @@ const buildField = (
     const assignedBy = hidden
         ? undefined
         : effects?.assignedValues.get(meta.id)?.by
+    const radioLayout =
+        spec.kind === 'choice' || spec.kind === 'select'
+            ? radioLayoutOf(meta)
+            : undefined
+    const reason = unsupportedReason(meta)
     const required =
         meta.compulsory || (effects?.mandatoryFields.has(meta.id) ?? false)
     return {
@@ -220,6 +245,7 @@ const buildField = (
                 optionGroupOptions
             ),
         }),
+        ...(radioLayout !== undefined && { radioLayout }),
         disabled: unsupported || assignedBy !== undefined,
         ...(assignedBy !== undefined && { assignedBy }),
         required,
@@ -233,6 +259,7 @@ const buildField = (
             ? { ruleErrors: [] }
             : messagesOf(meta.id, effects, input.fieldErrors[meta.id]),
         unsupported,
+        ...(reason !== undefined && { unsupportedReason: reason }),
     }
 }
 
@@ -291,12 +318,14 @@ const sameField = (a: FieldModel, b: FieldModel): boolean =>
     a.inputMode === b.inputMode &&
     a.value === b.value &&
     sameChoices(a.choices, b.choices) &&
+    a.radioLayout === b.radioLayout &&
     a.disabled === b.disabled &&
     sameAttribution(a.assignedBy, b.assignedBy) &&
     a.required === b.required &&
     a.requiredMissing === b.requiredMissing &&
     a.hidden === b.hidden &&
     a.unsupported === b.unsupported &&
+    a.unsupportedReason === b.unsupportedReason &&
     a.messages.error === b.messages.error &&
     a.messages.warning === b.messages.warning &&
     a.messages.errorOnComplete === b.messages.errorOnComplete &&

@@ -3,6 +3,7 @@ import {
     answerChoices,
     getValueTypeSpec,
     isSupportedValueType,
+    unsupportedReason,
     type InputMode,
     type ValueError,
 } from './valueTypes'
@@ -170,6 +171,18 @@ describe('widget kinds', () => {
         expect(
             isSupportedValueType(meta('MULTI_TEXT', { options: optionsOf(1) }))
         ).toBe(true)
+    })
+
+    it('tells an unsupported value type from an option set with nothing to pick', () => {
+        expect(unsupportedReason(meta('TEXT'))).toBeUndefined()
+        expect(unsupportedReason(meta('FILE_RESOURCE'))).toBe('valueType')
+        expect(unsupportedReason(meta('FILE_RESOURCE', { options: [] }))).toBe(
+            'valueType'
+        )
+        expect(unsupportedReason(meta('TEXT', { options: [] }))).toBe(
+            'noOptions'
+        )
+        expect(unsupportedReason(meta('MULTI_TEXT'))).toBe('noOptions')
     })
 
     it('suggests an input mode for typed text', () => {

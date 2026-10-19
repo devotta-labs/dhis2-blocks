@@ -30,6 +30,8 @@ export interface ValueTypeSpec {
     validate(value: string): ValueError | null
 }
 
+export type UnsupportedReason = 'valueType' | 'noOptions'
+
 export interface AnswerChoice {
     value: string
     label: string
@@ -390,6 +392,19 @@ export const answerChoices = (meta: DataElementMeta): AnswerChoice[] => {
         value: option.code,
         label: option.label,
     }))
+}
+
+/**
+ * Why a data element has no widget: its value type is not handled here, or its value type is
+ * (a multi-select, or an option set) but no options are available to pick from.
+ */
+export const unsupportedReason = (
+    meta: DataElementMeta
+): UnsupportedReason | undefined => {
+    if (kindOf(meta) !== 'unsupported') {
+        return undefined
+    }
+    return KINDS.has(meta.valueType) ? 'noOptions' : 'valueType'
 }
 
 export const isSupportedValueType = (meta: DataElementMeta): boolean =>

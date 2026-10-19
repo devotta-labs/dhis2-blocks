@@ -457,6 +457,48 @@ describe('buildFormModel', () => {
                 value: 'x',
             })
             expect(field?.choices).toBeUndefined()
+            expect(field?.unsupportedReason).toBe('noOptions')
+        })
+
+        it('reads a radio render type as the radio layout', () => {
+            const layout = (desktop?: string, mobile?: string) =>
+                choiceField({
+                    options: options('x', 'y'),
+                    renderType: {
+                        ...(desktop !== undefined && { desktop }),
+                        ...(mobile !== undefined && { mobile }),
+                    },
+                })?.radioLayout
+            expect(layout('VERTICAL_RADIOBUTTONS')).toBe('vertical')
+            expect(layout('HORIZONTAL_RADIOBUTTONS')).toBe('horizontal')
+            expect(layout(undefined, 'HORIZONTAL_RADIOBUTTONS')).toBe(
+                'horizontal'
+            )
+            expect(layout('DROPDOWN')).toBeUndefined()
+            expect(
+                choiceField({ options: options('x', 'y') })?.radioLayout
+            ).toBeUndefined()
+        })
+
+        it('replaces the field when only the radio layout changes', () => {
+            const input = (desktop: string) =>
+                baseInput(
+                    stageMetadata([
+                        dataElement('a', {
+                            options: options('x', 'y'),
+                            renderType: { desktop },
+                        }),
+                    ])
+                )
+            const first = buildFormModel(
+                undefined,
+                input('VERTICAL_RADIOBUTTONS')
+            )
+            const second = buildFormModel(
+                first,
+                input('HORIZONTAL_RADIOBUTTONS')
+            )
+            expect(second.fields.get('a')).not.toBe(first.fields.get('a'))
         })
     })
 
@@ -473,6 +515,7 @@ describe('buildFormModel', () => {
             unsupported: true,
             disabled: true,
             value: 'file',
+            unsupportedReason: 'valueType',
         })
     })
 

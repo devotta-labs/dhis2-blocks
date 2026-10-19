@@ -12,6 +12,7 @@ import './locales'
 import { ErrorBoundary } from './app/ErrorBoundary'
 import { SyncUrlWithGlobalShell } from './app/SyncUrlWithGlobalShell'
 import { ContextSelectorShowcase } from './app/ContextSelectorShowcase'
+import { EventFormDemo } from './app/EventFormDemo'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -46,6 +47,14 @@ const router = createHashRouter([
         element: (
             <ErrorBoundary>
                 <ContextSelectorShowcase />
+            </ErrorBoundary>
+        ),
+    },
+    {
+        path: '/event-form',
+        element: (
+            <ErrorBoundary>
+                <EventFormDemo />
             </ErrorBoundary>
         ),
     },

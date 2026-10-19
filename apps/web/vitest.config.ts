@@ -8,6 +8,9 @@ const resolve = {
         '@/registry/dhis2/ui': fileURLToPath(
             new URL('../../packages/blocks/ui/src', import.meta.url)
         ),
+        '@/registry/program-rules': fileURLToPath(
+            new URL('../../packages/blocks/program-rules/src', import.meta.url)
+        ),
     },
 }
 

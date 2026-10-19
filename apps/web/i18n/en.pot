@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-19T21:36:04.963Z\n"
-"PO-Revision-Date: 2026-10-19T21:36:04.963Z\n"
+"POT-Creation-Date: 2026-10-19T22:06:59.392Z\n"
+"PO-Revision-Date: 2026-10-19T22:06:59.393Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -126,6 +126,71 @@ msgstr "Technical details"
 
 msgid "Reload application"
 msgstr "Reload application"
+
+msgid "Could not load the enrollment"
+msgstr "Could not load the enrollment"
+
+msgid "Enrollment"
+msgstr "Enrollment"
+
+msgid "Edit event"
+msgstr "Edit event"
+
+msgid "New event"
+msgstr "New event"
+
+msgid "Event form context"
+msgstr "Event form context"
+
+msgid "Choose an enrollment"
+msgstr "Choose an enrollment"
+
+msgid "Loading enrollments…"
+msgstr "Loading enrollments…"
+
+msgid "Stage"
+msgstr "Stage"
+
+msgid "Choose a stage"
+msgstr "Choose a stage"
+
+msgid "Loading stages…"
+msgstr "Loading stages…"
+
+msgid "Event form"
+msgstr "Event form"
+
+msgid "Focus mode"
+msgstr "Focus mode"
+
+msgid "Saved on this device"
+msgstr "Saved on this device"
+
+msgid "Saved"
+msgstr "Saved"
+
+msgid "Dismiss"
+msgstr "Dismiss"
+
+msgid ""
+"Choose a program and an organisation unit, then an enrollment, to list its "
+"events and edit them with the event form."
+msgstr ""
+"Choose a program and an organisation unit, then an enrollment, to list its "
+"events and edit them with the event form."
+
+msgid ""
+"Click an event to edit it, or use New event to add one to the chosen "
+"enrollment."
+msgstr ""
+"Click an event to edit it, or use New event to add one to the chosen "
+"enrollment."
+
+msgid "Choose a stage to list its events. Click an event to edit it."
+msgstr "Choose a stage to list its events. Click an event to edit it."
+
+msgid "Back to Working List"
+msgstr "Back to Working List"
 
 msgid "Search"
 msgstr "Search"
@@ -857,9 +922,6 @@ msgstr "Specific dates"
 msgid "Specific users"
 msgstr "Specific users"
 
-msgid "Stage"
-msgstr "Stage"
-
 msgid "Stage filters"
 msgstr "Stage filters"
 
@@ -1029,3 +1091,11 @@ msgstr "TRUE_ONLY accepts only true"
 msgctxt "INTERVAL requires a value from zero to one"
 msgid "UNIT"
 msgstr "UNIT_INTERVAL requires a value from zero to one"
+
+msgctxt "Application title"
+msgid "__MANIFEST_APP_TITLE"
+msgstr "@dhis2-blocks/web"
+
+msgctxt "Application description"
+msgid "__MANIFEST_APP_DESCRIPTION"
+msgstr "DHIS2 wrapper application for developing Working List blocks"

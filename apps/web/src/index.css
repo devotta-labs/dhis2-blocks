@@ -13,6 +13,8 @@
 @source '../../../../../../packages/blocks/ui/src';
 @source '../../../packages/blocks/working-list/src';
 @source '../../../../../../packages/blocks/working-list/src';
+@source '../../../packages/blocks/event-form/src';
+@source '../../../../../../packages/blocks/event-form/src';
 @source '../../../packages/blocks/context-selector/src';
 @source '../../../../../../packages/blocks/context-selector/src';
 

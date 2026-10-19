@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { parseThemeTokens } from '../scripts/buildUiRegistry.ts'
 
 const REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url))
 const THIS_FILE = fileURLToPath(import.meta.url)
@@ -26,12 +27,8 @@ const LEGACY_TOKEN_UTILITY = new RegExp(
 
 const readThemeCss = () => readFileSync(THEME_CSS, 'utf8')
 
-const readThemeTokens = () => {
-    const css = readThemeCss()
-    const start = css.indexOf('@theme {')
-    const block = css.slice(start, css.indexOf('\n}', start))
-    return [...block.matchAll(/^\s*(--[\w*-]+)\s*:/gm)].map((match) => match[1])
-}
+const readThemeTokens = () =>
+    parseThemeTokens(readThemeCss()).map(([name]) => name)
 
 const SOURCE_FILE = /\.(?:ts|tsx|css)$/
 
@@ -78,9 +75,7 @@ test('every theme token is namespaced', () => {
     const tokens = readThemeTokens()
     expect(tokens.length).toBeGreaterThan(80)
     for (const name of tokens)
-        expect(name).toMatch(
-            /^--(color|radius|shadow|font)-dhis2(-|$)|^--dhis2-/
-        )
+        expect(name).toMatch(/^(color|radius|shadow|font)-dhis2(-|$)|^dhis2-/)
 })
 
 test('theme does not reset the host palette', () => {

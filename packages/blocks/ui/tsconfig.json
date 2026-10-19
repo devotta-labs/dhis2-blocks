@@ -8,8 +8,9 @@
         "target": "ESNext",
         "module": "esnext",
         "moduleResolution": "node",
-        "noEmit": true
+        "noEmit": true,
+        "allowImportingTsExtensions": true
     },
-    "include": ["src/**/*.ts", "src/**/*.tsx"],
-    "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
+    "include": ["src/**/*.ts", "src/**/*.tsx", "scripts/**/*.ts"],
+    "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "scripts/**/*.test.ts"]
 }

@@ -48,7 +48,7 @@ export const WorkingListPagination = ({
             data-test="working-list-pagination"
             className="flex w-full flex-wrap items-center gap-y-1"
         >
-            <div className="me-3 flex min-h-(--field-height-dense) grow items-center">
+            <div className="me-3 flex min-h-(--dhis2-field-height-dense) grow items-center">
                 <Select
                     items={pageSizeItems}
                     value={pageSize}
@@ -65,7 +65,10 @@ export const WorkingListPagination = ({
                         className="w-auto gap-0"
                         data-test="working-list-pagination-pagesize-select"
                     >
-                        <span aria-hidden="true" className="pe-3 text-grey-600">
+                        <span
+                            aria-hidden="true"
+                            className="pe-3 text-dhis2-grey-600"
+                        >
                             {pageSizeLabel}
                         </span>
                         <SelectValue className="flex-none" />
@@ -79,7 +82,7 @@ export const WorkingListPagination = ({
                     </SelectContent>
                 </Select>
             </div>
-            <div className="flex min-h-(--field-height-dense) shrink-0 items-center gap-1">
+            <div className="flex min-h-(--dhis2-field-height-dense) shrink-0 items-center gap-1">
                 <Button
                     variant="secondary"
                     size="field-dense"

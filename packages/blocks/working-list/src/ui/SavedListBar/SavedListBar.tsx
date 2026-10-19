@@ -65,7 +65,7 @@ export const SavedListBar = ({
     return (
         <>
             <div
-                className="flex min-w-0 flex-col gap-2 border-b border-border px-2 pt-0 pb-2"
+                className="flex min-w-0 flex-col gap-2 border-b border-dhis2-border px-2 pt-0 pb-2"
                 data-testid="saved-list-bar"
             >
                 <ToggleGroup

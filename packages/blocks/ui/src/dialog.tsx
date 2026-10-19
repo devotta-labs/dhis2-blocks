@@ -54,7 +54,7 @@ function DialogOverlay({
     return (
         <DialogPrimitive.Backdrop
             data-slot="dialog-overlay"
-            className={cn('fixed inset-0 bg-overlay', className)}
+            className={cn('fixed inset-0 bg-dhis2-overlay', className)}
             {...props}
         />
     )
@@ -62,7 +62,7 @@ function DialogOverlay({
 
 /** The @dhis2/ui Modal card, shared with AlertDialogContent. */
 const dialogContentVariants = cva(
-    'fixed left-1/2 flex max-h-[calc(100vh-128px)] max-w-[calc(100vw-128px)] -translate-x-1/2 flex-col rounded-sm bg-white p-6 text-grey-900 shadow-card outline-none',
+    'fixed left-1/2 flex max-h-[calc(100vh-128px)] max-w-[calc(100vw-128px)] -translate-x-1/2 flex-col rounded-dhis2-sm bg-white p-6 text-dhis2-grey-900 shadow-dhis2-card outline-none',
     {
         variants: {
             size: {
@@ -113,7 +113,7 @@ function DialogContent({
                     <DialogPrimitive.Close
                         data-slot="dialog-close"
                         aria-label={closeLabel}
-                        className="absolute end-0 top-0 flex cursor-pointer rounded-sm border-0 bg-transparent px-1 pt-1 pb-0 text-grey-700 outline-none hover:bg-grey-200 hover:text-grey-900 focus-visible:bg-grey-200 focus-visible:outline-3 focus-visible:outline-ring active:bg-grey-300 [&_svg]:fill-current"
+                        className="absolute end-0 top-0 flex cursor-pointer rounded-dhis2-sm border-0 bg-transparent px-1 pt-1 pb-0 text-dhis2-grey-700 outline-none hover:bg-dhis2-grey-200 hover:text-dhis2-grey-900 focus-visible:bg-dhis2-grey-200 focus-visible:outline-3 focus-visible:outline-dhis2-ring active:bg-dhis2-grey-300 [&_svg]:fill-current"
                     >
                         <IconCross16 />
                     </DialogPrimitive.Close>
@@ -167,7 +167,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
         <DialogPrimitive.Title
             data-slot="dialog-title"
             className={cn(
-                'm-0 text-xl leading-6 font-medium text-grey-900',
+                'm-0 text-xl leading-6 font-medium text-dhis2-grey-900',
                 className
             )}
             {...props}
@@ -183,7 +183,7 @@ function DialogDescription({
         <DialogPrimitive.Description
             data-slot="dialog-description"
             className={cn(
-                'm-0 text-grey-900 *:[a]:underline *:[a]:underline-offset-3',
+                'm-0 text-dhis2-grey-900 *:[a]:underline *:[a]:underline-offset-3',
                 className
             )}
             {...props}

@@ -1,0 +1,9 @@
+# The consumer is its own throwaway project; esbuild's postinstall must run
+# under both pnpm 10 (onlyBuiltDependencies) and pnpm 11 (allowBuilds).
+packages: []
+
+onlyBuiltDependencies:
+    - esbuild
+
+allowBuilds:
+    esbuild: true

@@ -41,6 +41,7 @@
     "workspaces": {
         ".": {
             "entry": ["e2e/specs/**/*.spec.ts"],
+            "ignore": ["tools/registry/consumer/**"],
             "project": [
                 "e2e/**/*.ts",
                 "tools/**/*.ts",

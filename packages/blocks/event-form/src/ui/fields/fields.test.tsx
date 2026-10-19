@@ -35,6 +35,17 @@ describe('text fields', () => {
         expect(commit).toHaveBeenLastCalledWith('f1', undefined)
     })
 
+    it('whitespace-only text is empty: it commits undefined, or nothing if already empty', async () => {
+        const { commit } = await mount(baseField({ value: 'old' }))
+        await userEvent.fill(textbox(), '   ')
+        await userEvent.tab()
+        expect(commit).toHaveBeenCalledTimes(1)
+        expect(commit).toHaveBeenLastCalledWith('f1', undefined)
+        await userEvent.fill(textbox(), '  ')
+        await userEvent.tab()
+        expect(commit).toHaveBeenCalledTimes(1)
+    })
+
     it('does not commit when the text did not change', async () => {
         const { commit } = await mount(baseField({ value: 'same' }))
         await textbox().click()

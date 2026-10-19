@@ -1,10 +1,5 @@
 import React, { useState } from 'react'
-import {
-    InputGroup,
-    InputGroupAddon,
-    InputGroupInput,
-    InputGroupText,
-} from '@/registry/dhis2/ui/input-group'
+import { Input } from '@/registry/dhis2/ui/input'
 import { useEventFormText } from '../EventFormText'
 import { FieldShell, type FieldWidgetProps } from './FieldShell'
 
@@ -92,19 +87,17 @@ export const CoordinateField = ({
         setError(undefined)
     }
 
+    // A plain labelled input: wrapping it in an InputGroup would add two levels of components.
     const input = (
         part: keyof Draft,
         label: string,
         control: { describedBy?: string; invalid?: true }
     ) => (
-        <InputGroup className="min-w-40 flex-1">
-            <InputGroupAddon>
-                <InputGroupText>{label}</InputGroupText>
-            </InputGroupAddon>
-            <InputGroupInput
+        <label className="flex min-w-40 flex-1 flex-col gap-0.5 text-xs text-dhis2-grey-700">
+            {label}
+            <Input
                 type="text"
                 inputMode="decimal"
-                aria-label={label}
                 aria-describedby={control.describedBy}
                 aria-invalid={control.invalid}
                 disabled={disabled}
@@ -116,7 +109,7 @@ export const CoordinateField = ({
                     }
                 }}
             />
-        </InputGroup>
+        </label>
     )
 
     return (

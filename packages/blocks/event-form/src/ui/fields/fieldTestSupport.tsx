@@ -16,6 +16,7 @@ import {
 import { EventFormField } from '../EventFormField'
 import * as eventFormField from '../EventFormField'
 import { EventFormTextProvider } from '../EventFormText'
+import * as calendarInputBoundary from './CalendarInputBoundary'
 import * as clearValueButton from './ClearValueButton'
 import * as fieldShell from './FieldShell'
 import * as textField from './TextField'
@@ -225,6 +226,7 @@ const OWN_COMPONENTS = new Set<unknown>(
     [
         eventFormField,
         fieldShell,
+        calendarInputBoundary,
         clearValueButton,
         textField,
         longTextField,

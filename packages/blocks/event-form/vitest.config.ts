@@ -14,6 +14,13 @@ const resolve = {
     },
 }
 
+// One copy of React for @dhis2/ui's pre-bundled dependencies and the tests. Without it a cold Vite
+// cache can re-optimise them mid-run, which leaves two Reacts ("Invalid hook call").
+const browserResolve = {
+    ...resolve,
+    dedupe: ['react', 'react-dom'],
+}
+
 const sharedProjectOptions = {
     globals: true,
     passWithNoTests: false,
@@ -33,7 +40,10 @@ export default defineConfig({
             },
             {
                 plugins: [tailwindcss()],
-                resolve,
+                resolve: browserResolve,
+                optimizeDeps: {
+                    include: ['@dhis2/ui', '@dhis2/app-runtime'],
+                },
                 test: {
                     ...sharedProjectOptions,
                     name: 'browser',

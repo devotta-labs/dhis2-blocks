@@ -74,6 +74,45 @@ describe('date fields', () => {
             </CalendarInputProvider>
         )
 
+        it('falls back to a text input when the real calendar input cannot render, and commits ISO', async () => {
+            // No stub: @dhis2/ui's CalendarInput throws for Ethiopian in this browser.
+            const { commit } = await mount(baseField({ kind: 'date' }), {
+                calendar: ethiopian,
+            })
+            const fallback = page.getByTestId('date-text-fallback')
+            await expect.element(fallback).toBeVisible()
+            await userEvent.fill(fallback, '2018-07-04')
+            await userEvent.tab()
+            expect(commit).toHaveBeenCalledTimes(1)
+            expect(commit).toHaveBeenCalledWith('f1', '2026-03-13')
+            // The stored ISO date is shown in the Ethiopian calendar.
+            await expect.element(fallback).toHaveValue('2018-07-04')
+        })
+
+        it('the fallback input rejects a missing day, commits on Enter and clears', async () => {
+            const { commit } = await mount(
+                baseField({ kind: 'date', value: '2026-03-13' }),
+                { calendar: ethiopian }
+            )
+            const fallback = page.getByTestId('date-text-fallback')
+            await expect.element(fallback).toHaveValue('2018-07-04')
+            await userEvent.fill(fallback, '2018-13-06')
+            await userEvent.tab()
+            expect(commit).not.toHaveBeenCalled()
+            await expect
+                .element(page.getByText('Enter a valid date'))
+                .toBeVisible()
+            await userEvent.fill(fallback, '2018-07-05')
+            await userEvent.keyboard('{Enter}')
+            expect(commit).toHaveBeenLastCalledWith('f1', '2026-03-14')
+            await expect
+                .element(page.getByText('Enter a valid date'))
+                .not.toBeInTheDocument()
+            await userEvent.fill(fallback, '')
+            await userEvent.tab()
+            expect(commit).toHaveBeenLastCalledWith('f1', undefined)
+        })
+
         it('Ethiopian calendar date commits ISO', async () => {
             const { commit } = await mount(baseField({ kind: 'date' }), {
                 calendar: ethiopian,

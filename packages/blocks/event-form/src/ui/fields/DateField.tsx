@@ -2,11 +2,14 @@ import { CalendarInput } from '@dhis2/ui'
 import React, {
     createContext,
     useContext,
+    useEffect,
     useLayoutEffect,
     useRef,
     useState,
 } from 'react'
+import { Input } from '@/registry/dhis2/ui/input'
 import { useEventFormFieldContext } from '../EventForm/EventFormContext'
+import { CalendarInputBoundary } from './CalendarInputBoundary'
 import {
     calendarDateToIso,
     calendarInputDateToCanonical,
@@ -19,6 +22,7 @@ import {
     type ControlProps,
     type FieldWidgetProps,
 } from './FieldShell'
+import { useTypedValue } from './useTypedValue'
 
 type CalendarInputComponent = React.ComponentType<
     React.ComponentProps<typeof CalendarInput>
@@ -50,17 +54,48 @@ interface CalendarSelection {
 }
 
 /**
- * A date in the system calendar, shown in the instance's date format and stored as an ISO date.
- * It commits as soon as a date is picked or a typed one is finished, and an empty text commits
- * `undefined`. A typed date that does not exist is reported through `onError` and not committed.
+ * Stands in for the calendar input when it cannot render: a text input for `yyyy-MM-dd` in the
+ * system calendar, committed as an ISO date on blur or Enter.
  */
-export const DatePicker = ({
+const DateTextInput = ({
     control,
     value,
     disabled,
     onChange,
     onError,
-}: {
+}: DatePickerProps) => {
+    const { calendar } = useEventFormFieldContext()
+    const typed = useTypedValue({
+        value,
+        onCommit: onChange,
+        validate: (text) =>
+            calendarDateToIso(text, calendar.calendar) === undefined
+                ? 'Enter a valid date'
+                : undefined,
+        format: (iso) => isoToCalendarDate(iso, calendar.calendar) ?? iso,
+        parse: (text) => calendarDateToIso(text, calendar.calendar) ?? text,
+    })
+    useEffect(() => onError(typed.error), [typed.error, onError])
+    return (
+        <Input
+            {...control}
+            type="text"
+            data-testid="date-text-fallback"
+            placeholder="YYYY-MM-DD"
+            disabled={disabled}
+            value={typed.text}
+            onChange={(event) => typed.onChange(event.target.value)}
+            onBlur={typed.onBlur}
+            onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                    typed.onEnter()
+                }
+            }}
+        />
+    )
+}
+
+interface DatePickerProps {
     control: ControlProps
     /** ISO date. */
     value: string | undefined
@@ -68,7 +103,16 @@ export const DatePicker = ({
     onChange(iso: string | undefined): void
     /** An untranslated error key, or `undefined` when the text is fine. */
     onError(error: string | undefined): void
-}) => {
+}
+
+/**
+ * A date in the system calendar, shown in the instance's date format and stored as an ISO date.
+ * If the calendar input cannot render, a plain text input takes its place.
+ * It commits as soon as a date is picked or a typed one is finished, and an empty text commits
+ * `undefined`. A typed date that does not exist is reported through `onError` and not committed.
+ */
+export const DatePicker = (props: DatePickerProps) => {
+    const { control, value, disabled, onChange, onError } = props
     const { calendar } = useEventFormFieldContext()
     const CalendarInputComponent = useContext(CalendarInputContext)
     const wrapper = useRef<HTMLDivElement>(null)
@@ -126,18 +170,23 @@ export const DatePicker = ({
 
     return (
         <div ref={wrapper} className="w-full max-w-72">
-            <CalendarInputComponent
-                name={control.id}
-                label=""
-                calendar={toMultiCalendarIdentifier(calendar.calendar)}
-                format={calendar.dateFormat}
-                date={canonicalDateToCalendarInput(local, calendar.dateFormat)}
-                disabled={disabled}
-                error={invalid === true}
-                inputWidth="100%"
-                width="min(320px, calc(100vw - 64px))"
-                onDateSelect={handleSelect}
-            />
+            <CalendarInputBoundary fallback={<DateTextInput {...props} />}>
+                <CalendarInputComponent
+                    name={control.id}
+                    label=""
+                    calendar={toMultiCalendarIdentifier(calendar.calendar)}
+                    format={calendar.dateFormat}
+                    date={canonicalDateToCalendarInput(
+                        local,
+                        calendar.dateFormat
+                    )}
+                    disabled={disabled}
+                    error={invalid === true}
+                    inputWidth="100%"
+                    width="min(320px, calc(100vw - 64px))"
+                    onDateSelect={handleSelect}
+                />
+            </CalendarInputBoundary>
         </div>
     )
 }

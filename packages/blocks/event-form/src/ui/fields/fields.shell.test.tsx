@@ -369,61 +369,65 @@ describe('field subscriptions', () => {
     })
 })
 
+const MAX_DEPTH = 6
+
+/** One entry per widget kind: the element that takes the user's input, and what to render. */
+const DEPTH_CASES: [string, FieldModel, string, MountOptions?][] = [
+    ['text', baseField(), 'input'],
+    ['number', baseField({ kind: 'number', inputMode: 'decimal' }), 'input'],
+    ['longText', baseField({ kind: 'longText' }), 'textarea'],
+    ['choice', baseField({ kind: 'choice', choices: yesNo }), 'button'],
+    [
+        'radio',
+        baseField({ kind: 'choice', radioLayout: 'vertical', choices: yesNo }),
+        '[role=radio]',
+    ],
+    ['select', baseField({ kind: 'select', choices: manyChoices }), 'button'],
+    [
+        'multiSelect',
+        baseField({ kind: 'multiSelect', choices: manyChoices }),
+        '[role=combobox]',
+    ],
+    ['trueOnly', baseField({ kind: 'trueOnly' }), '[role=checkbox]'],
+    ['date', baseField({ kind: 'date' }), 'input'],
+    ['dateTime (date)', baseField({ kind: 'dateTime' }), 'input[type=text]'],
+    ['dateTime (time)', baseField({ kind: 'dateTime' }), 'input[type=time]'],
+    ['time', baseField({ kind: 'time' }), 'input'],
+    ['age', baseField({ kind: 'age' }), 'input'],
+    ['coordinate (latitude)', baseField({ kind: 'coordinate' }), 'input'],
+    [
+        'orgUnit',
+        baseField({ kind: 'orgUnit' }),
+        '[role=combobox]',
+        { orgUnitRoots: ['ouRoot00001'], wrap: withOrgUnits },
+    ],
+    [
+        'unsupported',
+        baseField({
+            kind: 'unsupported',
+            unsupported: true,
+            unsupportedReason: 'valueType',
+            disabled: true,
+            value: 'x',
+        }),
+        '[role=group] p',
+    ],
+]
+
 describe('component depth', () => {
-    const depthOf = async (field: FieldModel, selector: string) => {
-        const { screen } = await mount(field)
-        const element = screen.container.querySelector(selector)
-        expect(element, selector).not.toBeNull()
-        const depth = depthTo(found(element))
-        await screen.unmount()
-        return depth
-    }
-
-    it('depth from EventFormField to input is ≤ 5 own components', async () => {
-        const typed: [string, FieldModel, string][] = [
-            ['text', baseField(), 'input'],
-            [
-                'number',
-                baseField({ kind: 'number', inputMode: 'decimal' }),
-                'input',
-            ],
-            ['longText', baseField({ kind: 'longText' }), 'textarea'],
-            ['time', baseField({ kind: 'time' }), 'input'],
-            ['trueOnly', baseField({ kind: 'trueOnly' }), '[role=checkbox]'],
-            ['date', baseField({ kind: 'date' }), 'input'],
-        ]
-        for (const [name, field, selector] of typed) {
-            expect(await depthOf(field, selector), name).toBeLessThanOrEqual(5)
+    it(`depth from EventFormField to the input is ≤ ${MAX_DEPTH} own components for every kind`, async () => {
+        const depths = new Map<string, number>()
+        for (const [name, field, selector, options] of DEPTH_CASES) {
+            const { screen } = await mount(field, options)
+            depths.set(
+                name,
+                depthTo(found(screen.container.querySelector(selector)))
+            )
+            await screen.unmount()
         }
-    })
-
-    it('stays in single digits for the compound widgets', async () => {
-        const compound: [string, FieldModel, string][] = [
-            ['choice', baseField({ kind: 'choice', choices: yesNo }), 'button'],
-            [
-                'radio',
-                baseField({
-                    kind: 'choice',
-                    radioLayout: 'vertical',
-                    choices: yesNo,
-                }),
-                '[role=radio]',
-            ],
-            [
-                'select',
-                baseField({ kind: 'select', choices: manyChoices }),
-                'button',
-            ],
-            [
-                'multiSelect',
-                baseField({ kind: 'multiSelect', choices: manyChoices }),
-                '[role=combobox]',
-            ],
-            ['coordinate', baseField({ kind: 'coordinate' }), 'input'],
-            ['dateTime', baseField({ kind: 'dateTime' }), 'input[type=time]'],
-        ]
-        for (const [name, field, selector] of compound) {
-            expect(await depthOf(field, selector), name).toBeLessThanOrEqual(9)
-        }
+        // EventForm, EventFormSections and EventFormSection add three above EventFormField, and
+        // the whole path has to stay under 10.
+        expect([...depths].filter(([, depth]) => depth > MAX_DEPTH)).toEqual([])
+        expect(depths.size).toBe(DEPTH_CASES.length)
     })
 })

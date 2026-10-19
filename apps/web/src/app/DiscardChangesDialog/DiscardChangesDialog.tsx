@@ -6,8 +6,8 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-    Button,
-} from '@dhis2-blocks/working-list/primitives'
+} from '@dhis2-blocks/ui/alert-dialog'
+import { Button } from '@dhis2-blocks/ui/button'
 import React from 'react'
 import i18n from '../../i18n'
 

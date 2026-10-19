@@ -1,4 +1,5 @@
-import { Button, Separator } from '@dhis2-blocks/working-list/primitives'
+import { Button } from '@dhis2-blocks/ui/button'
+import { Separator } from '@dhis2-blocks/ui/separator'
 import {
     ClearSelections,
     ContextSelector,

@@ -1,4 +1,4 @@
-import { Button } from '../primitives/button'
+import { Button } from '@/registry/dhis2/ui/button'
 import { IconFilter16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'

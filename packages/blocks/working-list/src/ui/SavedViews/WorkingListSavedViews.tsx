@@ -1,4 +1,4 @@
-import { ErrorAlert } from '../primitives/alert'
+import { ErrorAlert } from '@/registry/dhis2/ui/alert'
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -7,8 +7,8 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '../primitives/alert-dialog'
-import { Button } from '../primitives/button'
+} from '@/registry/dhis2/ui/alert-dialog'
+import { Button } from '@/registry/dhis2/ui/button'
 import { Result } from 'better-result'
 import React, { useState } from 'react'
 import type { NormalizedSavedWorkingList } from '../../api/savedLists'

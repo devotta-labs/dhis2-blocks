@@ -1,4 +1,4 @@
-import { Button } from '../primitives/button'
+import { Button } from '@/registry/dhis2/ui/button'
 import { IconFilter16 } from '@dhis2/ui-icons'
 import React, { useEffect, useId, useMemo, useState } from 'react'
 import type { TrackerProgram } from '../../api/schemas'
@@ -12,8 +12,12 @@ import {
     DropdownMenuSubContent,
     DropdownMenuSubTrigger,
     DropdownMenuTrigger,
-} from '../primitives/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip'
+} from '@/registry/dhis2/ui/dropdown-menu'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/registry/dhis2/ui/tooltip'
 import { useWorkingListText } from '../WorkingListText'
 import { focusFirstAvailableFilter } from './FilterControlPrimitives'
 import { fieldDisplayName } from './filterValueSupport'

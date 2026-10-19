@@ -8,7 +8,11 @@
         "target": "ESNext",
         "module": "esnext",
         "moduleResolution": "node",
-        "noEmit": true
+        "noEmit": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/registry/dhis2/ui/*": ["../ui/src/*"]
+        }
     },
     "include": ["src/**/*.ts", "src/**/*.tsx", "type-tests/**/*.ts"],
     "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]

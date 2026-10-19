@@ -3,7 +3,7 @@ import type {
     WorkingListDisplayRow,
     WorkingListPageSize,
 } from '../../provider/contracts'
-import { cn } from '../primitives/cn'
+import { cn } from '@/registry/dhis2/ui/cn'
 import {
     Table,
     TableBody,
@@ -11,7 +11,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '../primitives/table'
+} from '@/registry/dhis2/ui/table'
 import { SkeletonBlock } from '../Skeleton'
 import { useWorkingListText } from '../WorkingListText'
 import { WorkingListPagination } from './WorkingListPagination'

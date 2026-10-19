@@ -12,15 +12,15 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '../primitives/alert-dialog'
-import { Button } from '../primitives/button'
+} from '@/registry/dhis2/ui/alert-dialog'
+import { Button } from '@/registry/dhis2/ui/button'
 import {
     Dialog,
     DialogContent,
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '../primitives/dialog'
+} from '@/registry/dhis2/ui/dialog'
 import { WorkingListTextProvider } from '../WorkingListText'
 
 /** True when `element` is what a click at its centre would actually hit. */

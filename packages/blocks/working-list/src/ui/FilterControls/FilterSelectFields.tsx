@@ -1,5 +1,5 @@
 import React, { useId, useMemo } from 'react'
-import { cn } from '../primitives/cn'
+import { cn } from '@/registry/dhis2/ui/cn'
 import {
     Combobox,
     ComboboxChip,
@@ -12,8 +12,8 @@ import {
     ComboboxTrigger,
     ComboboxValue,
     useComboboxAnchor,
-} from '../primitives/combobox'
-import { Field, FieldLabel } from '../primitives/field'
+} from '@/registry/dhis2/ui/combobox'
+import { Field, FieldLabel } from '@/registry/dhis2/ui/field'
 import {
     Select,
     SelectContent,
@@ -21,8 +21,8 @@ import {
     SelectTrigger,
     SelectValue,
     selectTriggerVariants,
-} from '../primitives/select'
-import { Spinner } from '../primitives/spinner'
+} from '@/registry/dhis2/ui/select'
+import { Spinner } from '@/registry/dhis2/ui/spinner'
 import { useWorkingListText } from '../WorkingListText'
 
 export interface SelectFieldOption<Value extends string = string> {

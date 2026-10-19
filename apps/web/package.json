@@ -15,6 +15,7 @@
     },
     "dependencies": {
         "@dhis2-blocks/context-selector": "workspace:*",
+        "@dhis2-blocks/ui": "workspace:*",
         "@dhis2-blocks/working-list": "workspace:*",
         "@dhis2/app-runtime": "^3.15.1",
         "@dhis2/d2-i18n": "1.2.0",

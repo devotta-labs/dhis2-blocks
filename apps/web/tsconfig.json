@@ -8,7 +8,11 @@
         "esModuleInterop": true,
         "target": "ESNext",
         "module": "esnext",
-        "moduleResolution": "bundler"
+        "moduleResolution": "bundler",
+        "baseUrl": ".",
+        "paths": {
+            "@/registry/dhis2/ui/*": ["../../packages/blocks/ui/src/*"]
+        }
     },
     "include": ["src", "types"],
     "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]

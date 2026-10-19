@@ -24,6 +24,11 @@
                     "target": "@lib/program-rules/index.ts"
                 },
                 {
+                    "path": "src/lib/scanExpression.ts",
+                    "type": "registry:lib",
+                    "target": "@lib/program-rules/scanExpression.ts"
+                },
+                {
                     "path": "src/lib/types.ts",
                     "type": "registry:lib",
                     "target": "@lib/program-rules/types.ts"

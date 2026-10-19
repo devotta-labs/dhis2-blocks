@@ -4,6 +4,7 @@
     "private": true,
     "description": "Shared DHIS2-styled shadcn primitives for DHIS2 blocks",
     "license": "BSD-3-Clause",
+    "type": "module",
     "exports": {
         "./alert-dialog": "./src/alert-dialog.tsx",
         "./alert": "./src/alert.tsx",
@@ -32,6 +33,7 @@
     },
     "scripts": {
         "test": "vitest run",
+        "registry:write": "node --experimental-strip-types scripts/buildUiRegistry.ts && oxfmt registry.json",
         "test:browser": "vitest run --project browser",
         "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json --noEmit",
         "lint": "oxlint --deny-warnings src"

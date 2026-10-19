@@ -80,7 +80,7 @@ function DropdownMenuContent({
                 <MenuPrimitive.Popup
                     data-slot="dropdown-menu-content"
                     className={cn(
-                        'z-[2000] max-h-(--available-height) max-w-[380px] min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-sm bg-popover py-1 text-popover-foreground shadow-popover outline-none',
+                        'z-[2000] max-h-(--available-height) max-w-[380px] min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-dhis2-sm bg-dhis2-popover py-1 text-dhis2-popover-foreground shadow-dhis2-popover outline-none',
                         className
                     )}
                     {...props}
@@ -106,7 +106,7 @@ function DropdownMenuLabel({
             data-slot="dropdown-menu-label"
             data-inset={inset}
             className={cn(
-                'px-3 pt-2 pb-1 text-[13px] leading-4 font-medium text-grey-700 data-inset:pl-9',
+                'px-3 pt-2 pb-1 text-[13px] leading-4 font-medium text-dhis2-grey-700 data-inset:pl-9',
                 className
             )}
             {...props}
@@ -115,7 +115,7 @@ function DropdownMenuLabel({
 }
 
 const menuItemClasses =
-    "relative flex min-h-8 cursor-pointer items-center gap-2 bg-popover px-3 py-2 text-sm leading-4 text-grey-900 outline-none select-none data-highlighted:bg-grey-200 active:bg-grey-300 focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-ring data-inset:pl-9 data-disabled:cursor-not-allowed data-disabled:bg-popover data-disabled:text-grey-500 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4"
+    "relative flex min-h-8 cursor-pointer items-center gap-2 bg-dhis2-popover px-3 py-2 text-sm leading-4 text-dhis2-grey-900 outline-none select-none data-highlighted:bg-dhis2-grey-200 active:bg-dhis2-grey-300 focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring data-inset:pl-9 data-disabled:cursor-not-allowed data-disabled:bg-dhis2-popover data-disabled:text-dhis2-grey-500 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4"
 
 const DropdownMenuItem = React.forwardRef<
     HTMLElement,
@@ -132,7 +132,7 @@ const DropdownMenuItem = React.forwardRef<
         className={cn(
             'group/dropdown-menu-item',
             menuItemClasses,
-            'data-[variant=destructive]:text-red-700 data-[variant=destructive]:data-highlighted:bg-red-050 data-[variant=destructive]:active:bg-red-100 data-[variant=destructive]:*:[svg]:text-red-600',
+            'data-[variant=destructive]:text-dhis2-red-700 data-[variant=destructive]:data-highlighted:bg-dhis2-red-050 data-[variant=destructive]:active:bg-dhis2-red-100 data-[variant=destructive]:*:[svg]:text-dhis2-red-600',
             className
         )}
         {...props}
@@ -158,7 +158,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
         data-inset={inset}
         className={cn(
             menuItemClasses,
-            'pe-1 data-popup-open:bg-grey-300',
+            'pe-1 data-popup-open:bg-dhis2-grey-300',
             className
         )}
         {...props}
@@ -266,7 +266,7 @@ function DropdownMenuSeparator({
     return (
         <MenuPrimitive.Separator
             data-slot="dropdown-menu-separator"
-            className={cn('my-1 h-px bg-border', className)}
+            className={cn('my-1 h-px bg-dhis2-border', className)}
             {...props}
         />
     )
@@ -280,7 +280,7 @@ function DropdownMenuShortcut({
         <span
             data-slot="dropdown-menu-shortcut"
             className={cn(
-                'ms-auto ps-2 text-[13px] text-grey-600 group-data-disabled/dropdown-menu-item:text-grey-500',
+                'ms-auto ps-2 text-[13px] text-dhis2-grey-600 group-data-disabled/dropdown-menu-item:text-dhis2-grey-500',
                 className
             )}
             {...props}

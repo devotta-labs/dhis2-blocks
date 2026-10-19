@@ -48,7 +48,7 @@ function AlertDialogOverlay({
     return (
         <AlertDialogPrimitive.Backdrop
             data-slot="alert-dialog-overlay"
-            className={cn('fixed inset-0 bg-overlay', className)}
+            className={cn('fixed inset-0 bg-dhis2-overlay', className)}
             {...props}
         />
     )
@@ -117,7 +117,7 @@ function AlertDialogMedia({
         <div
             data-slot="alert-dialog-media"
             className={cn(
-                "inline-flex size-12 items-center justify-center rounded-sm bg-grey-200 [&_svg]:fill-current *:[svg:not([class*='size-'])]:size-6",
+                "inline-flex size-12 items-center justify-center rounded-dhis2-sm bg-dhis2-grey-200 [&_svg]:fill-current *:[svg:not([class*='size-'])]:size-6",
                 className
             )}
             {...props}
@@ -133,7 +133,7 @@ function AlertDialogTitle({
         <AlertDialogPrimitive.Title
             data-slot="alert-dialog-title"
             className={cn(
-                'm-0 text-xl leading-6 font-medium text-grey-900',
+                'm-0 text-xl leading-6 font-medium text-dhis2-grey-900',
                 className
             )}
             {...props}
@@ -149,7 +149,7 @@ function AlertDialogDescription({
         <AlertDialogPrimitive.Description
             data-slot="alert-dialog-description"
             className={cn(
-                'm-0 text-grey-900 *:[a]:underline *:[a]:underline-offset-3',
+                'm-0 text-dhis2-grey-900 *:[a]:underline *:[a]:underline-offset-3',
                 className
             )}
             {...props}

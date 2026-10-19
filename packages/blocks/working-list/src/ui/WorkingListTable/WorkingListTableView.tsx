@@ -83,19 +83,25 @@ const SortIndicator = ({ sorted }: { sorted: false | 'asc' | 'desc' }) => (
         aria-hidden="true"
         data-slot="sort-indicator"
         data-direction={sorted || 'none'}
-        className="ms-0.5 flex size-6 shrink-0 items-center justify-center rounded-md group-hover/sort:bg-grey-400 group-focus-visible/sort:bg-grey-400 group-disabled/sort:bg-transparent"
+        className="ms-0.5 flex size-6 shrink-0 items-center justify-center rounded-dhis2-md group-hover/sort:bg-dhis2-grey-400 group-focus-visible/sort:bg-dhis2-grey-400 group-disabled/sort:bg-transparent"
     >
         <svg viewBox="0 0 16 16" className="size-4">
             {/* DHIS2 names these "top" and "bottom" by stacking order, not
                 by direction: ascending highlights the down-pointing one. */}
             <polygon
                 points="4 9 12 9 8 14"
-                className={sorted === 'asc' ? 'fill-blue-700' : 'fill-grey-500'}
+                className={
+                    sorted === 'asc'
+                        ? 'fill-dhis2-blue-700'
+                        : 'fill-dhis2-grey-500'
+                }
             />
             <polygon
                 points="4 7 12 7 8 2"
                 className={
-                    sorted === 'desc' ? 'fill-blue-700' : 'fill-grey-500'
+                    sorted === 'desc'
+                        ? 'fill-dhis2-blue-700'
+                        : 'fill-dhis2-grey-500'
                 }
             />
         </svg>
@@ -253,7 +259,7 @@ export const WorkingListTableView = ({
                                             >
                                                 <button
                                                     type="button"
-                                                    className="group/sort flex min-h-6 w-full cursor-pointer items-center border-0 bg-transparent p-0 text-left text-[inherit] [font-weight:inherit] outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring/35 disabled:cursor-default"
+                                                    className="group/sort flex min-h-6 w-full cursor-pointer items-center border-0 bg-transparent p-0 text-left text-[inherit] [font-weight:inherit] outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-dhis2-ring/35 disabled:cursor-default"
                                                     data-testid={`sort-${header.fieldId}`}
                                                     disabled={
                                                         !header.canSort ||
@@ -344,7 +350,7 @@ export const WorkingListTableView = ({
                                                     // press states, as in
                                                     // DataTable.
                                                     highlightIssues &&
-                                                        'bg-red-050 group-hover/table-row:bg-red-050 group-active/table-row:bg-red-050'
+                                                        'bg-dhis2-red-050 group-hover/table-row:bg-dhis2-red-050 group-active/table-row:bg-dhis2-red-050'
                                                 )}
                                                 data-test={
                                                     cell.isDataQuality

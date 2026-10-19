@@ -21,7 +21,7 @@ function Table({ className, ...props }: React.ComponentProps<'table'>) {
             <table
                 data-slot="table"
                 className={cn(
-                    'w-full border-separate border-spacing-0 border border-grey-300 text-sm',
+                    'w-full border-separate border-spacing-0 border border-dhis2-grey-300 text-sm',
                     className
                 )}
                 {...props}
@@ -64,7 +64,7 @@ function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
         <tr
             data-slot="table-row"
             className={cn(
-                'group/table-row data-[state=selected]:*:bg-teal-100',
+                'group/table-row data-[state=selected]:*:bg-dhis2-teal-100',
                 className
             )}
             {...props}
@@ -77,7 +77,7 @@ function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
         <th
             data-slot="table-head"
             className={cn(
-                'border-b border-grey-300 bg-grey-200 px-3 py-2 text-left align-top text-[13px] font-normal text-grey-800 last:border-e',
+                'border-b border-dhis2-grey-300 bg-dhis2-grey-200 px-3 py-2 text-left align-top text-[13px] font-normal text-dhis2-grey-800 last:border-e',
                 className
             )}
             {...props}
@@ -90,7 +90,7 @@ function TableCell({ className, ...props }: React.ComponentProps<'td'>) {
         <td
             data-slot="table-cell"
             className={cn(
-                'border-b border-grey-300 bg-white px-3 py-3.5 align-middle text-sm text-grey-900 group-hover/table-row:bg-grey-100 group-active/table-row:bg-grey-200',
+                'border-b border-dhis2-grey-300 bg-white px-3 py-3.5 align-middle text-sm text-dhis2-grey-900 group-hover/table-row:bg-dhis2-grey-100 group-active/table-row:bg-dhis2-grey-200',
                 className
             )}
             {...props}
@@ -105,7 +105,7 @@ function TableCaption({
     return (
         <caption
             data-slot="table-caption"
-            className={cn('mt-4 text-sm text-grey-700', className)}
+            className={cn('mt-4 text-sm text-dhis2-grey-700', className)}
             {...props}
         />
     )

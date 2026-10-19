@@ -4,9 +4,15 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
     test: {
-        // The primitives have no component tests of their own yet.
-        passWithNoTests: true,
         projects: [
+            {
+                test: {
+                    globals: true,
+                    name: 'node',
+                    environment: 'node',
+                    include: ['src/**/*.test.ts'],
+                },
+            },
             {
                 plugins: [tailwindcss()],
                 test: {

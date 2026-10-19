@@ -6,6 +6,7 @@ import {
     type EventFormClient,
 } from './client'
 import {
+    CaptureOrgUnitsSchema,
     ProgramResponseSchema,
     SystemCalendarSchema,
     toStageMetadata,
@@ -22,6 +23,7 @@ export const eventFormKeys = {
     event: (eventId: string) =>
         [...eventFormKeys.all, 'event', eventId] as const,
     systemInfo: () => [...eventFormKeys.all, 'system-info'] as const,
+    captureOrgUnits: () => [...eventFormKeys.all, 'capture-org-units'] as const,
 }
 
 export const STAGE_METADATA_FIELDS =
@@ -31,6 +33,8 @@ const TRACKER_EVENT_FIELDS =
     'event,program,programStage,enrollment,orgUnit,status,occurredAt,scheduledAt,geometry,dataValues[dataElement,value],notes'
 
 const SYSTEM_CALENDAR_FIELDS = 'calendar,dateFormat'
+
+const CAPTURE_ORG_UNITS_FIELDS = 'organisationUnits[id]'
 
 const MINUTE = 60_000
 
@@ -77,6 +81,16 @@ export const fetchSystemCalendar = (
             params: { fields: SYSTEM_CALENDAR_FIELDS },
         },
         SystemCalendarSchema,
+        signal
+    )
+
+export const fetchCaptureOrgUnits = (
+    client: EventFormClient,
+    signal?: AbortSignal
+): Promise<Result<string[], EventFormApiError>> =>
+    client.query(
+        { resource: 'me', params: { fields: CAPTURE_ORG_UNITS_FIELDS } },
+        CaptureOrgUnitsSchema,
         signal
     )
 
@@ -127,6 +141,10 @@ export const trackerEventQueryOptions = (
                 ? skipToken
                 : ({ signal }) =>
                       unwrapOrThrow(fetchTrackerEvent(client, eventId, signal)),
+        // The form snapshots the event when it opens. A refetch behind it (window focus, a stale
+        // timer) would not change what is being edited, so only an explicit invalidation refetches.
+        staleTime: Number.POSITIVE_INFINITY,
+        refetchOnWindowFocus: false,
         retry: shouldRetryEventFormRequest,
     })
 
@@ -142,5 +160,19 @@ export const systemCalendarQueryOptions = (client: EventFormClient) =>
             unwrapOrThrow(fetchSystemCalendar(client, signal)),
         staleTime: Number.POSITIVE_INFINITY,
         gcTime: Number.POSITIVE_INFINITY,
+        retry: shouldRetryEventFormRequest,
+    })
+
+export const captureOrgUnitsQueryOptions = (client: EventFormClient) =>
+    queryOptions<
+        string[],
+        EventFormApiError,
+        string[],
+        ReturnType<typeof eventFormKeys.captureOrgUnits>
+    >({
+        queryKey: eventFormKeys.captureOrgUnits(),
+        queryFn: ({ signal }) =>
+            unwrapOrThrow(fetchCaptureOrgUnits(client, signal)),
+        staleTime: 30 * MINUTE,
         retry: shouldRetryEventFormRequest,
     })

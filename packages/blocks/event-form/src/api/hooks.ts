@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import {
+    captureOrgUnitsQueryOptions,
     stageMetadataQueryOptions,
     systemCalendarQueryOptions,
     trackerEventQueryOptions,
@@ -16,3 +17,7 @@ export const useTrackerEvent = (eventId: string | undefined) =>
 
 export const useSystemCalendar = () =>
     useQuery(systemCalendarQueryOptions(useEventFormClient()))
+
+/** The organisation units the user captures data for. */
+export const useCaptureOrgUnits = () =>
+    useQuery(captureOrgUnitsQueryOptions(useEventFormClient()))

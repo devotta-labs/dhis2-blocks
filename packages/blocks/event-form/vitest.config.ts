@@ -42,7 +42,14 @@ export default defineConfig({
                 plugins: [tailwindcss()],
                 resolve: browserResolve,
                 optimizeDeps: {
-                    include: ['@dhis2/ui', '@dhis2/app-runtime'],
+                    // Pre-bundled up front: one discovered mid-run reloads the page and breaks that test file.
+                    include: [
+                        '@dhis2/ui',
+                        '@dhis2/app-runtime',
+                        'zustand',
+                        '@base-ui/react/alert-dialog',
+                        '@dhis2-blocks/program-rules > @dhis2/rule-engine',
+                    ],
                 },
                 test: {
                     ...sharedProjectOptions,

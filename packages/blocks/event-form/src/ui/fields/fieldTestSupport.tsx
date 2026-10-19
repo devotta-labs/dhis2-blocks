@@ -221,8 +221,8 @@ const fiberOf = (element: Element): FiberLike | undefined => {
     return entry?.[1] as FiberLike | undefined
 }
 
-/** Every component this block and its primitives export, whatever way React wraps it. */
-const OWN_COMPONENTS = new Set<unknown>(
+/** Every component the field widgets and primitives export, whatever way React wraps it. */
+export const OWN_COMPONENTS = new Set<unknown>(
     [
         eventFormField,
         fieldShell,

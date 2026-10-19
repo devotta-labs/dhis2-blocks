@@ -187,10 +187,7 @@
                 "type-tests/**/*.ts"
             ],
             "includeEntryExports": true,
-            "ignoreDependencies": [
-                "@dhis2-blocks/ui",
-                "@dhis2-blocks/program-rules"
-            ],
+            "ignoreDependencies": ["@dhis2-blocks/ui"],
             "ignoreIssues": {
                 "test/**": [
                     "exports",

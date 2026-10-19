@@ -1,0 +1,266 @@
+import { Result } from 'better-result'
+import { page, userEvent } from 'vitest/browser'
+import type { EventPayload } from '../../save/payload'
+import type { EventWriter } from '../../save/writer'
+import {
+    answerGroup,
+    lastEvent,
+    RMNCH,
+    renderEventForm,
+    today,
+} from './eventFormTestSupport'
+
+const UID = /^[A-Za-z][A-Za-z0-9]{10}$/
+
+const saveButton = () => page.getByRole('button', { name: 'Save', exact: true })
+
+const answerSmokingYes = () =>
+    answerGroup(RMNCH.smoking).getByRole('button', { name: 'Yes' }).click()
+
+/** app-runtime's FetchError for a 409 with an import report. */
+const conflict = (errorReports: { message: string; args: string[] }[]): Error =>
+    Object.assign(new Error('Conflict'), {
+        type: 'access',
+        details: {
+            httpStatus: 'Conflict',
+            httpStatusCode: 409,
+            status: 'ERROR',
+            message: 'Import failed',
+            response: { status: 'ERROR', validationReport: { errorReports } },
+        },
+    })
+
+describe('saving an EventForm', () => {
+    it('Save on a new event posts the payload and calls onSaved with saved', async () => {
+        const { payloads, onSaved, probe } = await renderEventForm()
+        await answerSmokingYes()
+        await userEvent.fill(
+            page.getByLabelText('Notes about this event'),
+            'First visit'
+        )
+        expect(probe.state?.dirty).toBe(true)
+
+        await saveButton().click()
+
+        await expect.poll(() => onSaved.mock.calls.length).toBe(1)
+        const event = lastEvent(payloads)
+        expect(event.event).toMatch(UID)
+        expect(event).toEqual({
+            event: event.event,
+            program: RMNCH.programId,
+            programStage: RMNCH.stageId,
+            enrollment: RMNCH.enrollmentId,
+            orgUnit: RMNCH.orgUnitId,
+            status: 'ACTIVE',
+            occurredAt: today(),
+            dataValues: [{ dataElement: RMNCH.smoking, value: 'true' }],
+            notes: [{ value: 'First visit' }],
+        })
+        expect(onSaved).toHaveBeenCalledWith({
+            eventId: event.event,
+            outcome: 'saved',
+        })
+        expect(probe.state?.dirty).toBe(false)
+        expect(probe.state?.isNew).toBe(false)
+        await expect
+            .element(page.getByLabelText('Notes about this event'))
+            .toHaveValue('')
+        // The saved note is listed, though there is no event to refetch it from.
+        await expect
+            .element(
+                page.getByRole('listitem').filter({ hasText: 'First visit' })
+            )
+            .toBeVisible()
+    })
+
+    it('queued writer calls onSaved with queued', async () => {
+        const writes: EventPayload[] = []
+        const writer: EventWriter = async (payload) => {
+            writes.push(payload)
+            return Result.ok({ outcome: 'queued' })
+        }
+        const { onSaved, payloads } = await renderEventForm({ writer })
+        await answerSmokingYes()
+        await saveButton().click()
+
+        await expect.poll(() => onSaved.mock.calls.length).toBe(1)
+        expect(onSaved).toHaveBeenCalledWith({
+            eventId: writes[0]?.events[0].event,
+            outcome: 'queued',
+        })
+        // The writer replaced the online one: nothing reached the server.
+        expect(payloads).toHaveLength(0)
+    })
+
+    it('a double click posts once, and a retry after a network error posts the same event uid', async () => {
+        const writes: string[] = []
+        let release: () => void = () => undefined
+        let outcome: 'network' | 'saved' = 'network'
+        const writer: EventWriter = async ({ events }) => {
+            writes.push(events[0].event)
+            await new Promise<void>((resolve) => {
+                release = resolve
+            })
+            return outcome === 'network'
+                ? Result.err({ kind: 'network', message: 'Failed to fetch' })
+                : Result.ok({ outcome: 'saved' })
+        }
+        const { onSaved, probe } = await renderEventForm({ writer })
+        await answerSmokingYes()
+
+        await saveButton().click()
+        await expect.poll(() => writes.length).toBe(1)
+        await expect.element(saveButton()).toBeDisabled()
+        // Nothing can be answered while the save is in flight.
+        await expect
+            .element(
+                answerGroup(RMNCH.smoking).getByRole('button', { name: 'No' })
+            )
+            .toBeDisabled()
+        saveButton().element().dispatchEvent(new MouseEvent('click'))
+        await probe.actions?.save()
+        expect(writes).toHaveLength(1)
+
+        release()
+        await expect
+            .element(page.getByText('Failed to fetch', { exact: false }))
+            .toBeVisible()
+        expect(onSaved).not.toHaveBeenCalled()
+        expect(probe.state?.dirty).toBe(true)
+
+        outcome = 'saved'
+        await saveButton().click()
+        await expect.poll(() => writes.length).toBe(2)
+        release()
+        await expect.poll(() => onSaved.mock.calls.length).toBe(1)
+        expect(writes[1]).toBe(writes[0])
+        expect(writes[0]).toBe(probe.state?.eventId)
+
+        // Saving again after the event exists updates it under the same uid.
+        await answerGroup(RMNCH.smoking)
+            .getByRole('button', { name: 'Yes' })
+            .click()
+        await saveButton().click()
+        await expect.poll(() => writes.length).toBe(3)
+        release()
+        await expect.poll(() => onSaved.mock.calls.length).toBe(2)
+        expect(writes[2]).toBe(writes[0])
+    })
+
+    it('server field error appears on the field', async () => {
+        const { onSaved, probe } = await renderEventForm({
+            eventId: RMNCH.eventId,
+            importEvent: async () => {
+                throw conflict([
+                    {
+                        message: "Value 'RETIRED' is not a valid option",
+                        args: ['RETIRED', RMNCH.smoking],
+                    },
+                    {
+                        message: 'Event is outside the expiry period',
+                        args: [],
+                    },
+                ])
+            },
+        })
+
+        await saveButton().click()
+
+        const message = page.getByText("Value 'RETIRED' is not a valid option")
+        await expect.element(message).toBeVisible()
+        await expect
+            .element(
+                page
+                    .getByTestId('event-form-save-error')
+                    .getByText('Event is outside the expiry period')
+            )
+            .toBeVisible()
+        await expect
+            .element(
+                answerGroup(RMNCH.smoking).getByRole('button', { name: 'Yes' })
+            )
+            .toHaveFocus()
+        expect(onSaved).not.toHaveBeenCalled()
+        expect(probe.state?.saveError?.kind).toBe('validation')
+
+        // Answering the field again clears its server error.
+        await answerGroup(RMNCH.smoking)
+            .getByRole('button', { name: 'No' })
+            .click()
+        await expect.element(message).not.toBeInTheDocument()
+    })
+
+    it('Cancel with changes asks to discard', async () => {
+        const { onCancel, probe } = await renderEventForm()
+        const cancel = page.getByRole('button', { name: 'Cancel', exact: true })
+
+        await cancel.click()
+        expect(onCancel).toHaveBeenCalledTimes(1)
+
+        await answerSmokingYes()
+        await cancel.click()
+        const dialog = page.getByRole('alertdialog')
+        await expect.element(dialog.getByText('Discard changes?')).toBeVisible()
+        await dialog.getByRole('button', { name: 'Keep editing' }).click()
+        await expect.element(dialog).not.toBeInTheDocument()
+        expect(onCancel).toHaveBeenCalledTimes(1)
+        expect(probe.state?.dirty).toBe(true)
+
+        await cancel.click()
+        await page
+            .getByRole('alertdialog')
+            .getByRole('button', { name: 'Discard' })
+            .click()
+        expect(onCancel).toHaveBeenCalledTimes(2)
+        expect(probe.state?.dirty).toBe(false)
+    })
+
+    it('Complete posts COMPLETED and, with a warning on complete, asks first', async () => {
+        const { payloads, onSaved, probe } = await renderEventForm({
+            eventId: RMNCH.eventId,
+            rules: (rules) => ({
+                programRules: [
+                    ...rules.programRules,
+                    {
+                        id: 'warnComplet',
+                        name: 'Warn when completing',
+                        displayName: 'Warn when completing',
+                        condition: 'true',
+                        programRuleActions: [
+                            {
+                                id: 'warnAction1',
+                                programRuleActionType: 'WARNINGONCOMPLETE',
+                                dataElement: { id: RMNCH.smoking },
+                                content: 'Check smoking before completing',
+                                displayContent:
+                                    'Check smoking before completing',
+                            },
+                        ],
+                    },
+                ],
+            }),
+        })
+        const complete = page.getByRole('button', {
+            name: 'Complete',
+            exact: true,
+        })
+
+        await complete.click()
+        const dialog = page.getByRole('alertdialog')
+        await expect.element(dialog.getByText('Complete anyway?')).toBeVisible()
+        await dialog.getByRole('button', { name: 'Go back' }).click()
+        expect(payloads).toHaveLength(0)
+
+        await complete.click()
+        await page
+            .getByRole('alertdialog')
+            .getByRole('button', { name: 'Complete anyway' })
+            .click()
+
+        await expect.poll(() => onSaved.mock.calls.length).toBe(1)
+        expect(lastEvent(payloads).status).toBe('COMPLETED')
+        // RMNCH blocks entry into completed events.
+        await expect.poll(() => probe.state?.readOnlyReason).toBe('completed')
+        await expect.element(saveButton()).not.toBeInTheDocument()
+    })
+})

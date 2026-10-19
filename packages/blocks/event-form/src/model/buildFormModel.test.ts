@@ -87,6 +87,20 @@ describe('buildFormModel', () => {
         expect(second.sections[0]).toBe(first.sections[0])
     })
 
+    it('keeps the sections array when only a field value changed', () => {
+        const metadata = threeFields()
+        const first = buildFormModel(
+            undefined,
+            baseInput(metadata, { effective: { a: '1' } })
+        )
+        const second = buildFormModel(
+            first,
+            baseInput(metadata, { effective: { a: '2' } })
+        )
+        expect(second).not.toBe(first)
+        expect(second.sections).toBe(first.sections)
+    })
+
     it('returns the previous model when nothing changed', () => {
         const metadata = threeFields()
         const first = buildFormModel(undefined, baseInput(metadata))

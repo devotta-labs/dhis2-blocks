@@ -403,7 +403,12 @@ export const buildFormModel = (
     if (prev !== undefined && isSameModel(prev, sections, fields)) {
         return prev
     }
-    return { sections, fields }
+    // Section lists subscribe to the array, so it is kept when no section changed.
+    const sameSections =
+        prev !== undefined &&
+        prev.sections.length === sections.length &&
+        prev.sections.every((section, index) => section === sections[index])
+    return { sections: sameSections ? prev.sections : sections, fields }
 }
 
 const isSameModel = (

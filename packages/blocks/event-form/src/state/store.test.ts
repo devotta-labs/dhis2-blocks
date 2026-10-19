@@ -115,4 +115,42 @@ describe('event form store', () => {
         expect(state.status).toBe('ACTIVE')
         expect(selectDirty(state)).toBe(false)
     })
+
+    it('markSaved makes what was saved the new opened state', () => {
+        const store = createEventFormStore({
+            eventId: 'Abcdefghijk',
+            isNew: true,
+            stored: {},
+            context: { occurredAt: '2026-03-12' },
+            status: 'ACTIVE',
+        })
+        store.getState().commitValue('a', '1')
+        store.getState().commitValue('hidden', 'x')
+        store.getState().setNoteDraft('a note')
+        store.getState().markAttempt('complete')
+        store.getState().setFieldErrors({ a: 'bad' })
+        store.getState().markSaved({
+            stored: { a: '1' },
+            context: { occurredAt: '2026-03-12', orgUnitId: 'm7fBMpmVpSM' },
+            status: 'COMPLETED',
+        })
+        const saved = store.getState()
+        expect(saved.isNew).toBe(false)
+        expect(saved.stored).toEqual({ a: '1' })
+        expect(saved.initialStored).toEqual({ a: '1' })
+        expect(saved.context).toEqual({
+            occurredAt: '2026-03-12',
+            orgUnitId: 'm7fBMpmVpSM',
+        })
+        expect(saved.status).toBe('COMPLETED')
+        expect(saved.noteDraft).toBe('')
+        expect(saved.attempt).toBe('none')
+        expect(saved.fieldErrors).toEqual({})
+        expect(selectDirty(saved)).toBe(false)
+
+        store.getState().commitValue('a', '2')
+        store.getState().reset()
+        expect(store.getState().stored).toEqual({ a: '1' })
+        expect(store.getState().status).toBe('COMPLETED')
+    })
 })

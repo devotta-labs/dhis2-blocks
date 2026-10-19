@@ -44,7 +44,18 @@ export interface EventFormStoreState {
     setStatus(status: EventStatus): void
     markAttempt(kind: 'save' | 'complete'): void
     setFieldErrors(errors: Readonly<Record<string, string>>): void
+    /**
+     * After a successful save: what was sent becomes the opened state, as if the event had been
+     * loaded again. `stored` is the effective values the server now holds.
+     */
+    markSaved(saved: SavedEvent): void
     reset(): void
+}
+
+interface SavedEvent {
+    stored: Values
+    context: EventContext
+    status: EventStatus
 }
 
 export type EventFormStore = StoreApi<EventFormStoreState>
@@ -75,7 +86,8 @@ const ATTEMPT_RANK = { none: 0, save: 1, complete: 2 } as const
 export const createEventFormStore = (
     init: EventFormStoreInit
 ): EventFormStore => {
-    const opened = {
+    // What `reset` returns to; a successful save replaces it.
+    let opened: SavedEvent = {
         stored: init.stored,
         context: init.context,
         status: init.status,
@@ -126,6 +138,20 @@ export const createEventFormStore = (
                     : state
             ),
         setFieldErrors: (fieldErrors) => set({ fieldErrors }),
+        markSaved: (saved) => {
+            opened = saved
+            set({
+                isNew: false,
+                stored: saved.stored,
+                initialStored: saved.stored,
+                context: saved.context,
+                initialContext: saved.context,
+                noteDraft: '',
+                status: saved.status,
+                attempt: 'none',
+                fieldErrors: {},
+            })
+        },
         reset: () =>
             set({
                 stored: opened.stored,

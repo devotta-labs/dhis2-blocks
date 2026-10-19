@@ -1,3 +1,40 @@
+import type { QueryClient } from '@tanstack/react-query'
+import { Result } from 'better-result'
+import React from 'react'
+import {
+    canUseEventForm,
+    createOnlineEventWriter,
+    EventForm,
+    EventFormActions,
+    EventFormDetails,
+    EventFormFeedback,
+    EventFormField,
+    EventFormNotes,
+    EventFormSection,
+    EventFormSectionNav,
+    EventFormSections,
+    EventFormTextProvider,
+    eventFormMutationKeys,
+    registerEventFormMutations,
+    useEventFormActions,
+    useEventFormRules,
+    useEventFormState,
+    type EventFormCommands,
+    type EventFormProps,
+    type EventFormReadOnlyReason,
+    type EventFormRules,
+    type EventFormSavedResult,
+    type EventFormSectionProps,
+    type EventFormState,
+    type EventFormTranslate,
+    type EventPayload,
+    type EventStatus,
+    type EventWriter,
+    type RuleChange,
+    type SaveError,
+    type SaveOutcome,
+    type Values,
+} from '../src'
 import type { EventFormApiError } from '../src/api/client'
 import {
     useStageMetadata,
@@ -60,3 +97,47 @@ export const eventQuery = useTrackerEvent(undefined)
 export const calendarQuery = useSystemCalendar()
 export const queryErrorIsTyped =
     assert<Equal<typeof stageQuery.error, EventFormApiError | null>>()
+
+// The block's public entry point.
+declare const eventFormProps: EventFormProps
+export const formElement = React.createElement(EventForm, eventFormProps)
+export const parts = [
+    EventFormDetails,
+    EventFormSectionNav,
+    EventFormSections,
+    EventFormNotes,
+    EventFormFeedback,
+    EventFormActions,
+    EventFormTextProvider,
+]
+export const section = React.createElement(EventFormSection, {
+    id: 'EzhVeTS7vx4',
+} satisfies EventFormSectionProps)
+export const field = React.createElement(EventFormField, { id: 'de0FEHSIoxh' })
+export const savedOutcome: EventFormSavedResult['outcome'] = 'queued'
+// @ts-expect-error onSaved reports saved or queued, nothing else.
+export const unknownOutcome: EventFormSavedResult['outcome'] = 'failed'
+
+export const readState = (): EventFormState => useEventFormState()
+export const readCommands = (): EventFormCommands => useEventFormActions()
+export const readRules = (): EventFormRules => useEventFormRules()
+export const readOnlyReason: EventFormReadOnlyReason = 'skipped'
+export const dirtyIsBoolean = assert<Equal<EventFormState['dirty'], boolean>>()
+export const valuesAreStrings =
+    assert<Equal<Values, Readonly<Record<string, string>>>>()
+export const changeKinds =
+    assert<Equal<RuleChange['kind'], 'cleared' | 'assigned'>>()
+export const translate: EventFormTranslate = (message) => message
+export const statuses: EventStatus = 'SCHEDULE'
+
+export const queuedWriter: EventWriter = async (payload: EventPayload) =>
+    payload.events[0].dataValues.length >= 0
+        ? Result.ok({ outcome: 'queued' satisfies SaveOutcome })
+        : Result.err({ kind: 'unknown', message: 'never' } satisfies SaveError)
+export const registerWriter = (queryClient: QueryClient) => {
+    registerEventFormMutations(queryClient, queuedWriter)
+    return queryClient.getMutationDefaults(eventFormMutationKeys.save)
+}
+export const onlineWriter: typeof createOnlineEventWriter =
+    createOnlineEventWriter
+export const capability = canUseEventForm(metadata)

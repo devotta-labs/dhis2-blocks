@@ -297,3 +297,10 @@ export const SystemCalendarSchema = z.object({
 })
 
 export type SystemCalendar = z.infer<typeof SystemCalendarSchema>
+
+/** The organisation units the user captures data for: the roots of the organisation unit picker. */
+export const CaptureOrgUnitsSchema = z
+    .object({
+        organisationUnits: z.array(z.object({ id: z.string() })).default([]),
+    })
+    .transform(({ organisationUnits }) => organisationUnits.map(({ id }) => id))

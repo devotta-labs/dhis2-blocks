@@ -10,6 +10,7 @@ import {
 } from './client'
 import {
     eventFormKeys,
+    fetchCaptureOrgUnits,
     fetchStageMetadata,
     fetchSystemCalendar,
     fetchTrackerEvent,
@@ -124,6 +125,20 @@ describe('fetchers', () => {
         })
     })
 
+    it("requests the user's capture organisation units", async () => {
+        const { engine, calls } = engineReturning({
+            organisationUnits: [{ id: 'ImspTQPwCqd' }, { id: 'O6uvpzGd5pu' }],
+        })
+        const result = await fetchCaptureOrgUnits(createEventFormClient(engine))
+        expect(calls[0]?.[0]).toEqual({
+            eventFormResource: {
+                resource: 'me',
+                params: { fields: 'organisationUnits[id]' },
+            },
+        })
+        expect(result.unwrap()).toEqual(['ImspTQPwCqd', 'O6uvpzGd5pu'])
+    })
+
     it('returns invalid-response for a malformed event', async () => {
         const { engine } = engineReturning({ event: 'x' })
         const result = await fetchTrackerEvent(
@@ -165,6 +180,16 @@ describe('query options', () => {
         await expect(
             new QueryClient().fetchQuery(options)
         ).rejects.toBeInstanceOf(EventFormApiError)
+    })
+
+    it('a loaded event is not refetched behind the form', () => {
+        const { engine } = engineReturning(undefined)
+        const options = trackerEventQueryOptions(
+            createEventFormClient(engine),
+            'Evahwp3zrQ4'
+        )
+        expect(options.staleTime).toBe(Number.POSITIVE_INFINITY)
+        expect(options.refetchOnWindowFocus).toBe(false)
     })
 
     it('never refetches the system calendar', () => {

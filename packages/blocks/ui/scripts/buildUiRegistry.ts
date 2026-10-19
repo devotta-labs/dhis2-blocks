@@ -1,16 +1,18 @@
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, extname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import {
+    HOST_PACKAGES,
+    importedSpecifiers,
+    isRelative,
+    packageName,
+} from '../../../../tools/registry/manifest.ts'
 
 const SCHEMA = 'https://ui.shadcn.com/schema/registry.json'
 const ADDRESS_PREFIX = 'devotta-labs/dhis2-blocks/'
 const TARGET_PREFIX = '@components/dhis2/ui/'
 const THEME_ITEM = 'dhis2-theme'
 const SOURCE_FILE = /^(?!.*\.test\.tsx?$).*\.tsx?$/
-// Provided by the consumer app, never installed by an item.
-const HOST_PACKAGES = new Set(['react', 'react-dom'])
-const IMPORT_SPECIFIER =
-    /(?:\b(?:import|export)\s[^'"]*?\bfrom|\bimport)\s*['"]([^'"]+)['"]/g
 
 type RegistryItem = {
     name: string
@@ -38,13 +40,6 @@ export const parseThemeTokens = (css: string): [string, string][] => {
     ])
 }
 
-// `@base-ui/react/button` installs with `@base-ui/react`.
-const packageName = (specifier: string) =>
-    specifier
-        .split('/')
-        .slice(0, specifier.startsWith('@') ? 2 : 1)
-        .join('/')
-
 const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'))
 
 const buildItem = (
@@ -54,15 +49,14 @@ const buildItem = (
     source: string
 ): RegistryItem => {
     const name = basename(file, extname(file))
-    const specifiers = [...source.matchAll(IMPORT_SPECIFIER)].map(
-        (match) => match[1]
-    )
     const external = new Set<string>()
     const registryDependencies = new Set([ADDRESS_PREFIX + THEME_ITEM])
-    for (const specifier of specifiers) {
-        if (specifier.startsWith('./')) {
-            const sibling = specifier.slice(2)
-            if (!siblings.has(sibling)) {
+    for (const specifier of importedSpecifiers(source)) {
+        if (isRelative(specifier)) {
+            const sibling = specifier.startsWith('./')
+                ? specifier.slice(2)
+                : undefined
+            if (sibling === undefined || !siblings.has(sibling)) {
                 throw new Error(
                     `${file} imports ${specifier}, which is not a registry item`
                 )

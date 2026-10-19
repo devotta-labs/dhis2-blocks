@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseThemeTokens } from '../scripts/buildUiRegistry.ts'
@@ -42,18 +42,22 @@ const sourceFiles = (directory: string): string[] =>
     })
 
 // Roots are repo-relative; a `*` segment matches every directory at that level.
+// A match without the rest of the path (a block with no `src/`) is skipped.
 const expandRoot = (root: string): string[] =>
-    root.split('/').reduce<string[]>(
-        (directories, segment) =>
-            segment === '*'
-                ? directories.flatMap((directory) =>
-                      readdirSync(directory, { withFileTypes: true })
-                          .filter((entry) => entry.isDirectory())
-                          .map((entry) => join(directory, entry.name))
-                  )
-                : directories.map((directory) => join(directory, segment)),
-        [REPO_ROOT]
-    )
+    root
+        .split('/')
+        .reduce<string[]>(
+            (directories, segment) =>
+                segment === '*'
+                    ? directories.flatMap((directory) =>
+                          readdirSync(directory, { withFileTypes: true })
+                              .filter((entry) => entry.isDirectory())
+                              .map((entry) => join(directory, entry.name))
+                      )
+                    : directories.map((directory) => join(directory, segment)),
+            [REPO_ROOT]
+        )
+        .filter(existsSync)
 
 const scanSources = (roots: string[], pattern: RegExp) =>
     roots

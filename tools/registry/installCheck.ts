@@ -11,6 +11,7 @@ import {
 } from 'node:fs'
 import { createServer } from 'node:http'
 import type { Server } from 'node:http'
+import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, relative } from 'node:path'
 
@@ -62,14 +63,19 @@ const listFiles = (directory: string): string[] =>
             : [join(directory, entry.name)]
     )
 
-const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'))
+type BuiltItem = { files: { target: string }[] }
+
+// SAFETY: Callers name the shape of the registry JSON files this check reads.
+const readJson = <T>(path: string): T =>
+    JSON.parse(readFileSync(path, 'utf8')) as T
 
 const listen = (server: Server): Promise<number> =>
     new Promise((resolve, reject) => {
         server.once('error', reject)
         server.listen(0, '127.0.0.1', () => {
-            const address = server.address()
-            if (address === null || !('port' in address)) {
+            // SAFETY: Listening on a host and port binds a TCP socket, so the address is never a pipe path.
+            const address = server.address() as AddressInfo | null
+            if (address === null) {
                 reject(new Error('Registry server has no TCP address'))
                 return
             }
@@ -91,11 +97,15 @@ const serveDirectory = (directory: string): Server =>
         response.end()
     })
 
-const builtItems = (registryDirectory: string) =>
+const builtItems = (registryDirectory: string): BuiltItem[] =>
     readdirSync(registryDirectory)
         .filter((file) => file.endsWith('.json'))
-        .map((file) => readJson(join(registryDirectory, file)))
-        .filter((item) => Array.isArray(item.files))
+        .map((file) =>
+            readJson<{ files?: BuiltItem['files'] }>(
+                join(registryDirectory, file)
+            )
+        )
+        .filter((item): item is BuiltItem => Array.isArray(item.files))
 
 const declarationValues = (css: string, token: string): string[] =>
     [...css.matchAll(new RegExp(`${token}:([^;}]+)`, 'g'))].map((match) =>
@@ -231,7 +241,7 @@ const checkInstall = async (workDirectory: string): Promise<void> => {
         built.flatMap((item) =>
             item.files
                 .map((file) => file.target)
-                .filter((target) => String(target).startsWith(UI_TARGET_PREFIX))
+                .filter((target) => target.startsWith(UI_TARGET_PREFIX))
                 .map((target) => target.slice(UI_TARGET_PREFIX.length))
         )
     )
@@ -309,8 +319,16 @@ const main = async (): Promise<void> => {
         console.log('\nregistry:check passed: all 9 assertions hold')
     } catch (error) {
         failed = true
+        // An assertion's message says it all; anything else is a bug in the
+        // check or its tooling, so keep the stack.
         console.error(
-            `\n${error instanceof Error ? error.message : String(error)}`
+            `\n${
+                error instanceof AssertionError
+                    ? error.message
+                    : error instanceof Error
+                      ? (error.stack ?? error.message)
+                      : String(error)
+            }`
         )
     } finally {
         if (keep) {

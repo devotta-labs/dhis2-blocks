@@ -1,5 +1,11 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import {
+    HOST_PACKAGES,
+    importedSpecifiers,
+    isRelative,
+    packageName,
+} from '../../../../tools/registry/manifest.ts'
 
 const PACKAGE_DIR = join(import.meta.dirname, '..')
 const SOURCE_DIR = join(PACKAGE_DIR, 'src')
@@ -7,15 +13,11 @@ const ADDRESS_PREFIX = 'devotta-labs/dhis2-blocks/'
 const SHARED_UI_PREFIX = '@/registry/dhis2/ui/'
 // Working List uses dhis2 tokens directly, beyond what the primitives pull in.
 const THEME_ITEM = `${ADDRESS_PREFIX}dhis2-theme`
-// Provided by the consumer app, never installed by an item.
-const HOST_PACKAGES = new Set(['react', 'react-dom'])
 // Repository-only: the demo entry point and a test-environment declaration.
 const NOT_SHIPPED = new Set([
     'src/development.ts',
     'src/ui/reactActEnvironment.d.ts',
 ])
-const IMPORT_SPECIFIER =
-    /(?:\b(?:import|export)\s[^'"]*?\bfrom|\bimport)\s*['"]([^'"]+)['"]/g
 
 const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'))
 
@@ -36,24 +38,13 @@ const nonTestSourceFiles = (): string[] =>
         .map((file) => relative(PACKAGE_DIR, file))
         .filter((file) => !/\.test\.tsx?$/.test(file) && !NOT_SHIPPED.has(file))
 
-const importedSpecifiers = (): string[] =>
+const shippedSpecifiers = (): string[] =>
     nonTestSourceFiles().flatMap((file) =>
-        [
-            ...readFileSync(join(PACKAGE_DIR, file), 'utf8').matchAll(
-                IMPORT_SPECIFIER
-            ),
-        ].map((match) => match[1])
+        importedSpecifiers(readFileSync(join(PACKAGE_DIR, file), 'utf8'))
     )
 
-// `zustand/vanilla` installs with `zustand`; `@dhis2/ui` is scoped.
-const packageName = (specifier: string) =>
-    specifier
-        .split('/')
-        .slice(0, specifier.startsWith('@') ? 2 : 1)
-        .join('/')
-
 test('every shared primitive Working List imports is a registry dependency', () => {
-    const imported = importedSpecifiers()
+    const imported = shippedSpecifiers()
         .filter((specifier) => specifier.startsWith(SHARED_UI_PREFIX))
         .map((specifier) => ADDRESS_PREFIX + specifier.split('/').pop())
     expect(imported.length).toBeGreaterThan(0)
@@ -76,10 +67,10 @@ test('dependencies are exactly the packages the shipped source imports', () => {
         ...readJson(join(PACKAGE_DIR, 'package.json')).dependencies,
     }
     const external = new Set(
-        importedSpecifiers()
+        shippedSpecifiers()
             .filter(
                 (specifier) =>
-                    !specifier.startsWith('.') &&
+                    !isRelative(specifier) &&
                     !specifier.startsWith('@/') &&
                     !HOST_PACKAGES.has(packageName(specifier))
             )

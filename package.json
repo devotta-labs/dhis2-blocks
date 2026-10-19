@@ -13,6 +13,7 @@
         "dead-code:audit": "knip",
         "lint": "oxlint --deny-warnings . && oxfmt --check .",
         "audit:exports": "knip --exports",
+        "registry:check": "node --experimental-strip-types tools/registry/installCheck.ts",
         "format": "oxfmt --write .",
         "e2e": "bash scripts/e2e/run-version.sh dev",
         "e2e:41": "bash scripts/e2e/run-version.sh 41",

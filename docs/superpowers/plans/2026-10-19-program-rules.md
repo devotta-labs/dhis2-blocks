@@ -161,10 +161,12 @@ programRulesQueryKeys                                // for invalidation
 ### Task 1: Package scaffold, public surface, registry items, install-check extension
 
 **Files:**
+
 - Create: `packages/blocks/program-rules/{package.json,tsconfig.json,tsconfig.test.json,vitest.config.ts,registry.json,README.md}`, `type-tests/public-surface.ts`, `src/lib/{index.ts,types.ts}`, `src/hooks/index.ts` (stubs that typecheck), `test/fixtures/**` (copied), `test/rmnch.ts`
 - Modify: `registry.json` (include), `tools/registry/installCheck.ts` (add both items to `shadcn add`), `tools/registry/consumer/src/main.tsx` (type-level use of both), `knip.json` only if knip needs it
 
 **Interfaces:**
+
 - Produces: every type in "Public API"; in-repo specifiers `@/registry/dhis2/lib/program-rules` and `@/registry/dhis2/hooks/use-program-rules` (tsconfig `paths` + vitest `resolve.alias`).
 
 - [ ] **Step 1:** Write `package.json` copying working-list's scripts and versions. Dependencies: `@dhis2/rule-engine@3.8.6`, `@dhis2/app-runtime`, `@tanstack/react-query`, `better-result`, `zod`. Dev: as working-list minus Tailwind/ui-only packages. `exports`: `"."` → `src/lib/index.ts`, `"./hooks"` → `src/hooks/index.ts`. `pnpm install`.
@@ -180,14 +182,15 @@ programRulesQueryKeys                                // for invalidation
 **Files:** Create `src/lib/scanExpression.ts`, Test `src/lib/scanExpression.test.ts`
 
 **Interfaces:**
+
 - Produces: `scanExpression(expression: string): ExpressionReferences` with `ExpressionReferences = { variables: string[]; programVariables: string[]; constants: string[]; orgUnitGroups: string[] }`, each deduplicated in first-seen order.
 
 - [ ] **Step 1: Write the failing tests**
-  - `#{lmp}`, `A{mobile}`, `d2:hasValue('lmp')`, `d2:countIfValue("x", 1)` → variables `['lmp','mobile','x']` (order of appearance);
-  - `V{event_date}` → programVariables `['event_date']`; `C{Gfd3ppDfq8E}` → constants;
-  - `d2:inOrgUnitGroup('MCHP')` → orgUnitGroups `['MCHP']`, not a variable;
-  - quoted names in other functions (`d2:validatePattern(A{x}, 'abc')`) do not count;
-  - differential: for every condition and action `data` in RMNCH and `large/bundle.json`, `variables` equals the set of `new ExpressionJs(x, mode).collectProgramRuleVariableNames()` and `programVariables` equals `collectProgramVariablesNames()`, skipping expressions the parser rejects. `ExpressionJs` is loaded from `expression-parser.mjs` next to the resolved `@dhis2/rule-engine` entry (`createRequire(import.meta.url).resolve`), test-only.
+    - `#{lmp}`, `A{mobile}`, `d2:hasValue('lmp')`, `d2:countIfValue("x", 1)` → variables `['lmp','mobile','x']` (order of appearance);
+    - `V{event_date}` → programVariables `['event_date']`; `C{Gfd3ppDfq8E}` → constants;
+    - `d2:inOrgUnitGroup('MCHP')` → orgUnitGroups `['MCHP']`, not a variable;
+    - quoted names in other functions (`d2:validatePattern(A{x}, 'abc')`) do not count;
+    - differential: for every condition and action `data` in RMNCH and `large/bundle.json`, `variables` equals the set of `new ExpressionJs(x, mode).collectProgramRuleVariableNames()` and `programVariables` equals `collectProgramVariablesNames()`, skipping expressions the parser rejects. `ExpressionJs` is loaded from `expression-parser.mjs` next to the resolved `@dhis2/rule-engine` entry (`createRequire(import.meta.url).resolve`), test-only.
 - [ ] **Step 2:** Run `pnpm --filter @dhis2-blocks/program-rules exec vitest run --project node src/lib/scanExpression.test.ts` → FAIL.
 - [ ] **Step 3:** Implement with regexes: `#\{([^}]+)\}`, `A\{([^}]+)\}`, `V\{([^}]+)\}`, `C\{([^}]+)\}`, and `d2:(hasValue|count|countIfValue|countIfZeroPos|countIfCondition|maxValue|minValue|lastEventDate)\(\s*(['"])(.+?)\2` for quoted variable names, `d2:inOrgUnitGroup\(\s*(['"])(.+?)\1` for groups. Widen the function list only as the differential test demands.
 - [ ] **Step 4:** Run → PASS. Commit `feat: scan rule expressions for the variables they read`.
@@ -197,15 +200,16 @@ programRulesQueryKeys                                // for invalidation
 **Files:** Create `src/lib/valueTypes.ts`, `src/lib/buildInput.ts`, Test `src/lib/buildInput.test.ts`
 
 **Interfaces:**
+
 - Produces: `ruleValueType(engine, valueType?: string): RuleValueType`; `normaliseValue(value: string | undefined, valueType?: string): string | null`; `toLocalDate(engine, value?: string): RuleLocalDate | null` (never throws); `toInstant(engine, value?: string): RuleInstant | null`; `buildEngineInput(engine, context, input): { event: RuleEventJs; enrollment: RuleEnrollmentJs | null; otherEvents: RuleEventJs[] }`. `context` needs only `stageNames: Map<stageId, name>`, `valueTypes: Map<fieldId, valueType>` and `programName` (internal fields on `RuleContext`).
 
 - [ ] **Step 1: Write the failing tests** (one per spike §4 pitfall that lives in input mapping; tests use the real engine module):
-  - pitfall 1: `occurredAt: '2026-03-12T12:05:00.000'` → `eventDate.toString() === '2026-03-12'`; `createdAt` without offset parses (gets `Z`); a DATETIME value `'2026-03-12T10:00'` through a DATE-typed field becomes `'2026-03-12'`; AGE likewise;
-  - Review Focus 1: `occurredAt: '2026-1'` and a DATE value `'2026-1'` → event date `null`, value dropped, no throw;
-  - pitfall 2: `dataValues: { a: '', b: 'x' }` and attributes `{ c: '' }` → only `b` reaches the engine;
-  - pitfall 9: `ruleValueType` maps NUMBER/INTEGER*/PERCENTAGE/UNIT_INTERVAL → NUMERIC, BOOLEAN/TRUE_ONLY → BOOLEAN, DATE/DATETIME/AGE → DATE, else TEXT;
-  - pitfall 11: `otherEvents` containing the current event id is filtered out;
-  - unknown status → ACTIVE; missing enrollment → `null`; `occurredAt` missing on enrollment falls back to `enrolledAt`.
+    - pitfall 1: `occurredAt: '2026-03-12T12:05:00.000'` → `eventDate.toString() === '2026-03-12'`; `createdAt` without offset parses (gets `Z`); a DATETIME value `'2026-03-12T10:00'` through a DATE-typed field becomes `'2026-03-12'`; AGE likewise;
+    - Review Focus 1: `occurredAt: '2026-1'` and a DATE value `'2026-1'` → event date `null`, value dropped, no throw;
+    - pitfall 2: `dataValues: { a: '', b: 'x' }` and attributes `{ c: '' }` → only `b` reaches the engine;
+    - pitfall 9: `ruleValueType` maps NUMBER/INTEGER*/PERCENTAGE/UNIT_INTERVAL → NUMERIC, BOOLEAN/TRUE_ONLY → BOOLEAN, DATE/DATETIME/AGE → DATE, else TEXT;
+    - pitfall 11: `otherEvents` containing the current event id is filtered out;
+    - unknown status → ACTIVE; missing enrollment → `null`; `occurredAt` missing on enrollment falls back to `enrolledAt`.
 - [ ] **Step 2:** Run → FAIL. **Step 3:** Implement, porting `adapter.ts`'s `buildEvent`/`buildEnrollment`/`normaliseValue`; wrap `RuleLocalDate.parse` in better-result `Result.try` and map failure to `null`; validate a date string with `/^\d{4}-\d{2}-\d{2}/` before cutting to 10 chars. **Step 4:** Run → PASS. Commit `feat: map event rule input to rule engine objects`.
 
 ### Task 4: Context build, validation and dependency graph
@@ -213,25 +217,26 @@ programRulesQueryKeys                                // for invalidation
 **Files:** Create `src/lib/buildContext.ts`, `src/lib/dependencyGraph.ts`, Test `src/lib/buildContext.test.ts`, `src/lib/dependencyGraph.test.ts`, test helper `test/rmnch.ts`
 
 **Interfaces:**
+
 - Consumes: `scanExpression` (Task 2), `ruleValueType`/`normaliseValue` (Task 3).
 - Produces: `buildRuleContext(engine, metadata): RuleContext` as in Public API; `buildDependencyGraph(rules: OrderedRule[], variables): { graph: RuleDependencyGraph; actionReads: Map<actionId, string[]> }` where `OrderedRule` is the metadata rule with invalid parts removed, in evaluation order. `test/rmnch.ts` exports `rmnchMetadata(): ProgramRulesMetadata` (built with Task 5's `parseProgramRulesMetadata` once it exists; until then a local mapping) and `rmnchInput(values?: Record<string, string | null>): EventRuleInput` (current event `Evahwp3zrQ4`, its enrollment and 7 other events).
 
 - [ ] **Step 1: Write the failing context tests** (spike §4 pitfalls that live in the context):
-  - pitfall 3: RMNCH `invalidRules` has exactly the 3 `!==` rules (`ruleId`, `ruleName`, `expression` = condition, `message` starting `expected name`), and `context.rules` has 15 rules;
-  - an action with `data: 'd2:unknownFn(1)'` yields an `InvalidRule` with `actionId`, and its rule stays with its other actions;
-  - type-check-only failures (`!#{chronicconditions}`, `d2:weeksBetween(#{lmp},V{event_date})`) are **not** invalid;
-  - pitfall 4: a variable whose `displayName` differs from `name` is registered under `name` (evaluate a rule on `#{name}`);
-  - pitfall 5: `useCodeForOptionSet: false` makes `#{v}` the option name; `true` the code;
-  - pitfall 6: constants `{ id: 'Gfd3ppDfq8E', value: 5.0 }` → `C{Gfd3ppDfq8E} == 5` true;
-  - pitfall 7: an ASSIGN with `content: '#{a}'` and `dataElementId` equal to `a`'s backing field yields one content action; with a different field, a content and a field action, both carrying `id` and `ruleId` in `values`;
-  - pitfall 8: every converted action has `attributeType` (`DATA_ELEMENT`, `TRACKED_ENTITY_ATTRIBUTE` or `UNKNOWN`);
-  - pitfall 10: `orgUnitGroups: [{ id: 'g1', code: 'MCHP', orgUnitIds: ['ou1'] }]` → `d2:inOrgUnitGroup('MCHP')` and `('g1')` both true for an event at `ou1`;
-  - requirements: RMNCH → `{ enrollment: true, otherEvents: true, orgUnitGroups: [] }`; a program with one `#{x} > 1` rule on a `DATAELEMENT_CURRENT_EVENT` variable → `{ enrollment: false, otherEvents: false, orgUnitGroups: [] }`; `d2:inOrgUnitGroup('MCHP')` → `orgUnitGroups: ['MCHP']`.
+    - pitfall 3: RMNCH `invalidRules` has exactly the 3 `!==` rules (`ruleId`, `ruleName`, `expression` = condition, `message` starting `expected name`), and `context.rules` has 15 rules;
+    - an action with `data: 'd2:unknownFn(1)'` yields an `InvalidRule` with `actionId`, and its rule stays with its other actions;
+    - type-check-only failures (`!#{chronicconditions}`, `d2:weeksBetween(#{lmp},V{event_date})`) are **not** invalid;
+    - pitfall 4: a variable whose `displayName` differs from `name` is registered under `name` (evaluate a rule on `#{name}`);
+    - pitfall 5: `useCodeForOptionSet: false` makes `#{v}` the option name; `true` the code;
+    - pitfall 6: constants `{ id: 'Gfd3ppDfq8E', value: 5.0 }` → `C{Gfd3ppDfq8E} == 5` true;
+    - pitfall 7: an ASSIGN with `content: '#{a}'` and `dataElementId` equal to `a`'s backing field yields one content action; with a different field, a content and a field action, both carrying `id` and `ruleId` in `values`;
+    - pitfall 8: every converted action has `attributeType` (`DATA_ELEMENT`, `TRACKED_ENTITY_ATTRIBUTE` or `UNKNOWN`);
+    - pitfall 10: `orgUnitGroups: [{ id: 'g1', code: 'MCHP', orgUnitIds: ['ou1'] }]` → `d2:inOrgUnitGroup('MCHP')` and `('g1')` both true for an event at `ou1`;
+    - requirements: RMNCH → `{ enrollment: true, otherEvents: true, orgUnitGroups: [] }`; a program with one `#{x} > 1` rule on a `DATAELEMENT_CURRENT_EVENT` variable → `{ enrollment: false, otherEvents: false, orgUnitGroups: [] }`; `d2:inOrgUnitGroup('MCHP')` → `orgUnitGroups: ['MCHP']`.
 - [ ] **Step 2: Write the failing graph tests**:
-  - RMNCH "Hide all fields for chronic conditions": `readsVariables ['chronicconditions']`, `readsFields ['de0FEHSIoxh']`, `writesFields` = the 6 follow-ups;
-  - "Calculate gestational age": `readsFields ['w4ky6EkVahL']`, `readsProgramVariables ['event_date']`, `writesFields ['roKuXYfw1BW']`;
-  - chain: rule A (priority 1) assigns `#{calc}` (CALCULATED_VALUE) from `#{lmp}`; rule B (priority 2) reads `#{calc}` → B's `readsFields` includes lmp's field; with B at priority 0 it does not;
-  - `fieldReaders.get('de0FEHSIoxh')` contains the chronic rule; `fieldWriters.get('roKuXYfw1BW')` contains the gestational-age rule.
+    - RMNCH "Hide all fields for chronic conditions": `readsVariables ['chronicconditions']`, `readsFields ['de0FEHSIoxh']`, `writesFields` = the 6 follow-ups;
+    - "Calculate gestational age": `readsFields ['w4ky6EkVahL']`, `readsProgramVariables ['event_date']`, `writesFields ['roKuXYfw1BW']`;
+    - chain: rule A (priority 1) assigns `#{calc}` (CALCULATED_VALUE) from `#{lmp}`; rule B (priority 2) reads `#{calc}` → B's `readsFields` includes lmp's field; with B at priority 0 it does not;
+    - `fieldReaders.get('de0FEHSIoxh')` contains the chronic rule; `fieldWriters.get('roKuXYfw1BW')` contains the gestational-age rule.
 - [ ] **Step 3:** Run → FAIL. **Step 4:** Implement. Order rules by `priority ?? Infinity`, stable. Validate each condition with `validate` and each action `data` with `validateDataFieldExpression` against a store of every variable name (`DataItemJs(name, itemValueType)`); invalid iff `!valid && !/^\d+ error\(s\), \d+ warning\(s\)$/.test(errorMessage)`. Convert actions as in the spike's `buildActions`, adding `ruleId`/`id` to `values`. `requirements.enrollment = needsEnrollment || needsAttributes`, `otherEvents = needsAllEvents` from `analyzeContextRequirements`. Attribution objects are built once here and reused by every evaluation. **Step 5:** Run → PASS. Commit `feat: build the rule context with validation and a dependency graph`.
 
 ### Task 5: Evaluation and effect normalisation
@@ -239,19 +244,20 @@ programRulesQueryKeys                                // for invalidation
 **Files:** Create `src/lib/evaluate.ts`, Test `src/lib/evaluate.test.ts`; finish `src/lib/index.ts`
 
 **Interfaces:**
+
 - Consumes: `buildEngineInput` (Task 3), `RuleContext` (Task 4).
 - Produces: `evaluateEventRules`, `explainField` per Public API.
 
 - [ ] **Step 1: Write the failing tests** on RMNCH via `rmnchInput`:
-  - chronic `'false'` → `hiddenFields` has the 6 follow-ups, each `[{ ruleId, ruleName, actionId, condition: '!#{chronicconditions}', readsFields: ['de0FEHSIoxh'] }]`; `'true'` → none of them;
-  - LMP `'2026-01-01'` → `assignedValues.get('roKuXYfw1BW')` = `{ value: '10', by.ruleId: 'KRMEVVbex0q' }`;
-  - LMP `'2026-04-01'` → `messages.get('w4ky6EkVahL')` contains `{ kind: 'error', text: 'LMP date entered is after the date of the antenatal care visit.' }` (text = `displayContent` and evaluated `data` joined by a space, trimmed);
-  - no LMP → no assignment, no LMP error;
-  - baseline → `hiddenProgramStages` has the postpartum stage `bbKtnxRZKEP`; DISPLAYTEXT and DISPLAYKEYVALUEPAIR land in `displayTexts`/`keyValuePairs` with `location` defaulting to `'feedback'`;
-  - synthetic context: HIDESECTION, SETMANDATORYFIELD, HIDEOPTION (code from `option.code`), HIDEOPTIONGROUP/SHOWOPTIONGROUP, WARNINGONCOMPLETE/ERRORONCOMPLETE, a message without a field → key `'form'`, and SENDMESSAGE ignored;
-  - Review Focus 2: a context with a rule on `#{nope}` and a valid HIDEFIELD rule still returns the HIDEFIELD;
-  - attribution identity: two evaluations return the same `Attribution` object for the same action;
-  - `explainField(effects, 'w4ky6EkVahL')` returns the error's attribution once, deduplicated by `actionId`.
+    - chronic `'false'` → `hiddenFields` has the 6 follow-ups, each `[{ ruleId, ruleName, actionId, condition: '!#{chronicconditions}', readsFields: ['de0FEHSIoxh'] }]`; `'true'` → none of them;
+    - LMP `'2026-01-01'` → `assignedValues.get('roKuXYfw1BW')` = `{ value: '10', by.ruleId: 'KRMEVVbex0q' }`;
+    - LMP `'2026-04-01'` → `messages.get('w4ky6EkVahL')` contains `{ kind: 'error', text: 'LMP date entered is after the date of the antenatal care visit.' }` (text = `displayContent` and evaluated `data` joined by a space, trimmed);
+    - no LMP → no assignment, no LMP error;
+    - baseline → `hiddenProgramStages` has the postpartum stage `bbKtnxRZKEP`; DISPLAYTEXT and DISPLAYKEYVALUEPAIR land in `displayTexts`/`keyValuePairs` with `location` defaulting to `'feedback'`;
+    - synthetic context: HIDESECTION, SETMANDATORYFIELD, HIDEOPTION (code from `option.code`), HIDEOPTIONGROUP/SHOWOPTIONGROUP, WARNINGONCOMPLETE/ERRORONCOMPLETE, a message without a field → key `'form'`, and SENDMESSAGE ignored;
+    - Review Focus 2: a context with a rule on `#{nope}` and a valid HIDEFIELD rule still returns the HIDEFIELD;
+    - attribution identity: two evaluations return the same `Attribution` object for the same action;
+    - `explainField(effects, 'w4ky6EkVahL')` returns the error's attribution once, deduplicated by `actionId`.
 - [ ] **Step 2:** Run → FAIL. **Step 3:** Implement. Create one `RuleEngineJs` per context (stored as an opaque handle). Map each `RuleEffectJs` by `values.get('id')` to the context's `Attribution`; skip effects with no known action. Later ASSIGNs to the same field overwrite earlier ones. **Step 4:** Run → PASS. Commit `feat: evaluate event rules into attributed effects`.
 
 ### Task 6: The `useProgramRules` hook
@@ -259,10 +265,12 @@ programRulesQueryKeys                                // for invalidation
 **Files:** Create `src/hooks/{loadRuleEngine.ts,client.ts,metadata.ts,enrollment.ts,queryKeys.ts,inputKey.ts,useProgramRules.ts}`, finish `src/hooks/index.ts`; Test `src/hooks/metadata.test.ts`, `src/hooks/inputKey.test.ts` (node), `src/hooks/useProgramRules.test.tsx` (browser)
 
 **Interfaces:**
+
 - Consumes: the lib through `@/registry/dhis2/lib/program-rules`.
 - Produces: Public API hook section. Internals: `parseProgramRulesMetadata(raw: { rules, variables, constants, program, me }): ProgramRulesMetadata` (zod; also used by `test/rmnch.ts`), `fetchProgramRulesMetadata(client, programId, signal)`, `fetchOrgUnitGroups(client, idsOrCodes, signal)`, `fetchRuleEnrollment(client, enrollmentId, { events: boolean }, signal): { enrollment: RuleEnrollmentInput; events: RuleEventInput[] }`, `inputContentKey(input: ProgramRulesInput): string`.
 
 Requests (one `engine.query` for the first five, run in parallel by app-runtime):
+
 - `programRules?filter=program.id:eq:<id>&paging=false&fields=id,name,displayName,condition,priority,programStage[id],programRuleActions[id,programRuleActionType,content,displayContent,data,location,dataElement[id],trackedEntityAttribute[id],programStageSection[id],programStage[id],option[id,code],optionGroup[id,options[code]]]`
 - `programRuleVariables?filter=program.id:eq:<id>&paging=false&fields=id,name,programRuleVariableSourceType,useCodeForOptionSet,valueType,programStage[id],dataElement[id,valueType,optionSet[id,options[code,name]]],trackedEntityAttribute[id,valueType,optionSet[id,options[code,name]]]`
 - `constants?paging=false&fields=id,value`
@@ -273,13 +281,13 @@ Requests (one `engine.query` for the first five, run in parallel by app-runtime)
 
 - [ ] **Step 1: Write the failing node tests:** `parseProgramRulesMetadata` on the RMNCH fixture (with option sets inlined into the variables) gives 18 rules, 29-ish variables (assert the fixture's exact count), option sets deduplicated, `user.roleIds` length 13; a payload missing `programRuleActionType` throws a `ZodError`; `inputContentKey` is equal for inputs that differ only in key order and differs when one value changes.
 - [ ] **Step 2: Write the failing browser tests** with `renderHook` from `vitest-browser-react`, a `QueryClientProvider` (retry off) and app-runtime's `CustomDataProvider` serving the RMNCH fixture per resource, counting requests per resource:
-  - RMNCH with `enrollmentId` and no `input.enrollment` → `loading` then `ready`; chronic `'false'` hides the 6 follow-ups; one `tracker/enrollments` request; `explain('xPTngRLQTnu')` names the chronic rule; `invalidRules.length === 3`;
-  - host passes `input.enrollment` and `otherEvents` → no `tracker/enrollments` request;
-  - Review Focus 3: zero rules → `ready`, empty effects, no enrollment request;
-  - Review Focus 4: rules need the enrollment but no `enrollmentId` → `ready`, no request;
-  - Review Focus 5: rerender with a structurally equal new `input` object → same `effects` object;
-  - `programRules` resource responds with an error → `status: 'error'`, `error` set;
-  - `enabled: false` → `loading`, no requests.
+    - RMNCH with `enrollmentId` and no `input.enrollment` → `loading` then `ready`; chronic `'false'` hides the 6 follow-ups; one `tracker/enrollments` request; `explain('xPTngRLQTnu')` names the chronic rule; `invalidRules.length === 3`;
+    - host passes `input.enrollment` and `otherEvents` → no `tracker/enrollments` request;
+    - Review Focus 3: zero rules → `ready`, empty effects, no enrollment request;
+    - Review Focus 4: rules need the enrollment but no `enrollmentId` → `ready`, no request;
+    - Review Focus 5: rerender with a structurally equal new `input` object → same `effects` object;
+    - `programRules` resource responds with an error → `status: 'error'`, `error` set;
+    - `enabled: false` → `loading`, no requests.
 - [ ] **Step 3:** Run → FAIL. **Step 4:** Implement. `loadRuleEngine` caches `import('@dhis2/rule-engine')` in a module-level promise and clears it on rejection. The engine is a `useQuery` (`staleTime/gcTime: Infinity`) started on mount, in parallel with the metadata query (`staleTime` 1 h, `retry` as working-list's `shouldRetry…`). Context = `useMemo(Result.try(() => buildRuleContext(engine, filteredMetadata)))`, where rules are filtered to `!programStageId || === programStageId`; rebuilt once org unit groups arrive. Evaluation = `useMemo` keyed on `[context, inputContentKey(input), fetched enrollment data]`, also via `Result.try`. `status` is `error` if any query or `Result` failed, `ready` when effects exist, else `loading`. **Step 5:** Run → PASS. Commit `feat: add the useProgramRules hook`.
 
 ### Task 7: Docs, full verification, install check

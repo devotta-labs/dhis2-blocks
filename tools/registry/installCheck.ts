@@ -210,6 +210,8 @@ const checkInstall = async (workDirectory: string): Promise<void> => {
                 'add',
                 `${origin}/working-list.json`,
                 `${origin}/context-selector.json`,
+                `${origin}/program-rules.json`,
+                `${origin}/use-program-rules.json`,
                 '-y',
             ],
             appDirectory

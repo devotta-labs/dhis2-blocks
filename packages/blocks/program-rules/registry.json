@@ -1,0 +1,59 @@
+{
+    "$schema": "https://ui.shadcn.com/schema/registry.json",
+    "items": [
+        {
+            "name": "program-rules",
+            "type": "registry:lib",
+            "title": "DHIS2 program rules",
+            "description": "Pure DHIS2 program rules: metadata to a @dhis2/rule-engine context, attributed effects for an event, and a dependency graph. No React.",
+            "dependencies": ["@dhis2/rule-engine@3.8.6"],
+            "files": [
+                {
+                    "path": "src/lib/buildContext.ts",
+                    "type": "registry:lib",
+                    "target": "@lib/program-rules/buildContext.ts"
+                },
+                {
+                    "path": "src/lib/evaluate.ts",
+                    "type": "registry:lib",
+                    "target": "@lib/program-rules/evaluate.ts"
+                },
+                {
+                    "path": "src/lib/index.ts",
+                    "type": "registry:lib",
+                    "target": "@lib/program-rules/index.ts"
+                },
+                {
+                    "path": "src/lib/types.ts",
+                    "type": "registry:lib",
+                    "target": "@lib/program-rules/types.ts"
+                }
+            ]
+        },
+        {
+            "name": "use-program-rules",
+            "type": "registry:hook",
+            "title": "useProgramRules",
+            "description": "React hook that fetches DHIS2 program rule metadata with React Query, lazy-loads the rule engine and memoises rule effects for an event.",
+            "dependencies": ["@dhis2/rule-engine@3.8.6"],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/program-rules"],
+            "files": [
+                {
+                    "path": "src/hooks/index.ts",
+                    "type": "registry:hook",
+                    "target": "@hooks/use-program-rules/index.ts"
+                },
+                {
+                    "path": "src/hooks/loadRuleEngine.ts",
+                    "type": "registry:hook",
+                    "target": "@hooks/use-program-rules/loadRuleEngine.ts"
+                },
+                {
+                    "path": "src/hooks/useProgramRules.ts",
+                    "type": "registry:hook",
+                    "target": "@hooks/use-program-rules/useProgramRules.ts"
+                }
+            ]
+        }
+    ]
+}

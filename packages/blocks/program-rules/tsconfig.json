@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "skipLibCheck": true,
+        "allowJs": false,
+        "jsx": "react",
+        "esModuleInterop": true,
+        "target": "ESNext",
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "noEmit": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/registry/dhis2/lib/program-rules": ["./src/lib/index.ts"]
+        }
+    },
+    "include": ["src/**/*.ts", "src/**/*.tsx", "type-tests/**/*.ts"],
+    "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
+}

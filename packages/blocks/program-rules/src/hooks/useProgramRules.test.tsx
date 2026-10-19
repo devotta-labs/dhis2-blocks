@@ -15,7 +15,19 @@ import {
     type UseProgramRulesOptions,
 } from './useProgramRules'
 
-type Responses = typeof rmnchResponses
+interface RawRules {
+    programRules: ReadonlyArray<{
+        id: string
+        name: string
+        condition: string
+        programRuleActions: ReadonlyArray<{
+            id: string
+            programRuleActionType: string
+            dataElement?: { id: string }
+        }>
+    }>
+}
+type Responses = Omit<typeof rmnchResponses, 'rules'> & { rules: RawRules }
 
 const serve = (responses: Responses, failing: ReadonlyArray<string> = []) => {
     const requests: string[] = []

@@ -31,7 +31,11 @@ import type {
     UseProgramRulesOptions,
     UseProgramRulesResult,
 } from '../src/use-program-rules'
-import { loadRuleEngine, useProgramRules } from '../src/use-program-rules'
+import {
+    loadRuleEngine,
+    programRulesQueryKeys,
+    useProgramRules,
+} from '../src/use-program-rules'
 
 export type SupportedProgramRulesTypes = [
     Attribution,
@@ -120,3 +124,7 @@ export const statuses: UseProgramRulesResult['status'][] = [
 ]
 // @ts-expect-error There is no idle status.
 export const idle: UseProgramRulesResult['status'] = 'idle'
+
+// Hosts invalidate rule data with the exported keys.
+export const ruleQueryKey: readonly string[] = programRulesQueryKeys.all
+export const metadataKey = programRulesQueryKeys.metadata('WSGAb5XwJ3Y')

@@ -1,5 +1,6 @@
 import type { RuleEnrollmentInput, RuleEventInput } from '../index'
 import { z } from 'zod'
+import type { ProgramRulesClient } from './client'
 
 const ValueSchema = z.string().optional()
 
@@ -84,3 +85,27 @@ export const toRuleEnrollmentData = (
     },
     events: response.events.map(toEvent),
 })
+
+const EVENT_FIELDS =
+    'event,programStage,status,occurredAt,scheduledAt,createdAt,completedAt,orgUnit,dataValues[dataElement,value]'
+
+export const fetchRuleEnrollment = async (
+    client: ProgramRulesClient,
+    enrollmentId: string,
+    withEvents: boolean,
+    signal?: AbortSignal
+): Promise<RuleEnrollmentData> => {
+    const fields = `enrollment,status,enrolledAt,occurredAt,orgUnit,attributes[attribute,value]${withEvents ? `,events[${EVENT_FIELDS}]` : ''}`
+    const response = await client.query(
+        {
+            enrollment: {
+                resource: 'tracker/enrollments',
+                id: enrollmentId,
+                params: { fields },
+            },
+        },
+        z.object({ enrollment: RuleEnrollmentResponseSchema }),
+        signal
+    )
+    return toRuleEnrollmentData(response.enrollment)
+}

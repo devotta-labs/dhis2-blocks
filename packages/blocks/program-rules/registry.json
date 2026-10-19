@@ -58,7 +58,14 @@
             "type": "registry:hook",
             "title": "useProgramRules",
             "description": "React hook that fetches DHIS2 program rule metadata with React Query, lazy-loads the rule engine and memoises rule effects for an event.",
-            "dependencies": ["@dhis2/rule-engine@3.8.6", "zod@^4.4.3"],
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/rule-engine@3.8.6",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "react@^18.3.1",
+                "zod@^4.4.3"
+            ],
             "registryDependencies": ["devotta-labs/dhis2-blocks/program-rules"],
             "files": [
                 {
@@ -67,9 +74,19 @@
                     "target": "@components/program-rules/use-program-rules.ts"
                 },
                 {
+                    "path": "src/hooks/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/client.ts"
+                },
+                {
                     "path": "src/hooks/enrollment.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/hooks/enrollment.ts"
+                },
+                {
+                    "path": "src/hooks/inputKey.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/inputKey.ts"
                 },
                 {
                     "path": "src/hooks/loadRuleEngine.ts",
@@ -80,6 +97,11 @@
                     "path": "src/hooks/metadata.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/hooks/metadata.ts"
+                },
+                {
+                    "path": "src/hooks/queryKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/queryKeys.ts"
                 },
                 {
                     "path": "src/hooks/useProgramRules.ts",

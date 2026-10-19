@@ -1,9 +1,11 @@
+import type { ProgramRulesClient } from './client'
 import type {
     ProgramRuleActionMetadata,
     ProgramRuleMetadata,
     ProgramRulesMetadata,
     ProgramRuleVariableMetadata,
     RuleOptionSetMetadata,
+    RuleOrgUnitGroupMetadata,
 } from '../index'
 import { z } from 'zod'
 
@@ -159,4 +161,92 @@ export const toProgramRulesMetadata = (
             groupIds: response.me.userGroups.map((group) => group.id),
         },
     }
+}
+
+const ACTION_FIELDS =
+    'id,programRuleActionType,content,displayContent,data,location,dataElement[id],trackedEntityAttribute[id],programStageSection[id],programStage[id],option[id,code],optionGroup[id,options[code]]'
+const SOURCE_FIELD = 'id,valueType,optionSet[id,options[code,name]]'
+
+export const fetchProgramRulesMetadata = async (
+    client: ProgramRulesClient,
+    programId: string,
+    signal?: AbortSignal
+): Promise<ProgramRulesMetadata> =>
+    toProgramRulesMetadata(
+        await client.query(
+            {
+                rules: {
+                    resource: 'programRules',
+                    params: {
+                        filter: `program.id:eq:${programId}`,
+                        paging: false,
+                        fields: `id,name,displayName,condition,priority,programStage[id],programRuleActions[${ACTION_FIELDS}]`,
+                    },
+                },
+                variables: {
+                    resource: 'programRuleVariables',
+                    params: {
+                        filter: `program.id:eq:${programId}`,
+                        paging: false,
+                        fields: `id,name,programRuleVariableSourceType,useCodeForOptionSet,valueType,programStage[id],dataElement[${SOURCE_FIELD}],trackedEntityAttribute[${SOURCE_FIELD}]`,
+                    },
+                },
+                constants: {
+                    resource: 'constants',
+                    params: { paging: false, fields: 'id,value' },
+                },
+                program: {
+                    resource: 'programs',
+                    id: programId,
+                    params: { fields: 'id,name,programStages[id,name]' },
+                },
+                me: {
+                    resource: 'me',
+                    params: { fields: 'userRoles[id],userGroups[id]' },
+                },
+            },
+            ProgramRulesResponseSchema,
+            signal
+        )
+    )
+
+const OrgUnitGroupsResponseSchema = z.object({
+    groups: z.object({
+        organisationUnitGroups: z.array(
+            z.object({
+                id: z.string(),
+                code: z.string().optional(),
+                organisationUnits: z.array(RefSchema).default([]),
+            })
+        ),
+    }),
+})
+
+/** The groups `d2:inOrgUnitGroup` names (by id or code), with their members. */
+export const fetchOrgUnitGroups = async (
+    client: ProgramRulesClient,
+    groups: ReadonlyArray<string>,
+    signal?: AbortSignal
+): Promise<RuleOrgUnitGroupMetadata[]> => {
+    const list = `[${groups.join(',')}]`
+    const response = await client.query(
+        {
+            groups: {
+                resource: 'organisationUnitGroups',
+                params: {
+                    paging: false,
+                    rootJunction: 'OR',
+                    filter: [`id:in:${list}`, `code:in:${list}`],
+                    fields: 'id,code,organisationUnits[id]',
+                },
+            },
+        },
+        OrgUnitGroupsResponseSchema,
+        signal
+    )
+    return response.groups.organisationUnitGroups.map((group) => ({
+        id: group.id,
+        code: group.code,
+        orgUnitIds: group.organisationUnits.map((orgUnit) => orgUnit.id),
+    }))
 }

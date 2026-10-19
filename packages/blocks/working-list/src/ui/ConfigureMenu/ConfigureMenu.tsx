@@ -1,5 +1,5 @@
-import { Button } from '../primitives/button'
-import { Spinner } from '../primitives/spinner'
+import { Button } from '@/registry/dhis2/ui/button'
+import { Spinner } from '@/registry/dhis2/ui/spinner'
 import { IconMore16 } from '@dhis2/ui-icons'
 import React, { useId, useState } from 'react'
 import type { WorkingListSavedView } from '../../provider/contracts'
@@ -9,16 +9,16 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '../primitives/dialog'
+} from '@/registry/dhis2/ui/dialog'
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
     DropdownMenuTriggerArrow,
-} from '../primitives/dropdown-menu'
-import { Field, FieldLabel } from '../primitives/field'
-import { Input } from '../primitives/input'
+} from '@/registry/dhis2/ui/dropdown-menu'
+import { Field, FieldLabel } from '@/registry/dhis2/ui/field'
+import { Input } from '@/registry/dhis2/ui/input'
 import { useWorkingListText } from '../WorkingListText'
 
 interface ConfigureMenuProps {

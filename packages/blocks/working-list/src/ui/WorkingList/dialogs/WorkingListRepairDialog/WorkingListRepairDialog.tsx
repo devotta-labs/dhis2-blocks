@@ -1,4 +1,4 @@
-import { Button } from '../../../primitives/button'
+import { Button } from '@/registry/dhis2/ui/button'
 import {
     Table,
     TableBody,
@@ -16,7 +16,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '../../../primitives/dialog'
+} from '@/registry/dhis2/ui/dialog'
 import type { WorkingListConfiguration } from '../../../../domain/model'
 import type {
     StaleReferenceIssue,

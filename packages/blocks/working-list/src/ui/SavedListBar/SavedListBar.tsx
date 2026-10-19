@@ -1,4 +1,4 @@
-import { Button } from '../primitives/button'
+import { Button } from '@/registry/dhis2/ui/button'
 import { IconMore16 } from '@dhis2/ui-icons'
 import React, { useRef, useState } from 'react'
 import type { WorkingListSavedView } from '../../provider/contracts'
@@ -10,16 +10,16 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '../primitives/alert-dialog'
+} from '@/registry/dhis2/ui/alert-dialog'
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from '../primitives/dropdown-menu'
-import { cn } from '../primitives/cn'
-import { toggleVariants } from '../primitives/toggle'
-import { ToggleGroup, ToggleGroupItem } from '../primitives/toggle-group'
+} from '@/registry/dhis2/ui/dropdown-menu'
+import { cn } from '@/registry/dhis2/ui/cn'
+import { toggleVariants } from '@/registry/dhis2/ui/toggle'
+import { ToggleGroup, ToggleGroupItem } from '@/registry/dhis2/ui/toggle-group'
 import { useWorkingListText } from '../WorkingListText'
 
 interface SavedListBarProps {

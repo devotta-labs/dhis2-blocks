@@ -1,4 +1,4 @@
-import { ErrorAlert } from '../../../primitives/alert'
+import { ErrorAlert } from '@/registry/dhis2/ui/alert'
 import { SharingDialog } from '@dhis2/ui'
 import React, { type ComponentProps, type ComponentType } from 'react'
 import {

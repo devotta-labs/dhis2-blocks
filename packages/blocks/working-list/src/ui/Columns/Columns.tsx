@@ -12,7 +12,7 @@ import {
 import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
 import type { WorkingListConfiguration } from '../../provider/contracts'
 import { ColumnSettingsDialog } from '../ColumnSettingsDialog'
-import { Button } from '../primitives/button'
+import { Button } from '@/registry/dhis2/ui/button'
 import { useWorkingListText } from '../WorkingListText'
 
 const tableFieldsFor = (

@@ -153,6 +153,21 @@
             ]
         },
         {
+            "name": "card",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "src/card.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/card.tsx"
+                }
+            ]
+        },
+        {
             "name": "checkbox",
             "type": "registry:ui",
             "dependencies": [
@@ -340,6 +355,22 @@
                     "path": "src/portal-root.ts",
                     "type": "registry:ui",
                     "target": "@components/dhis2/ui/portal-root.ts"
+                }
+            ]
+        },
+        {
+            "name": "radio-group",
+            "type": "registry:ui",
+            "dependencies": ["@base-ui/react@^1.9.0"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "src/radio-group.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/radio-group.tsx"
                 }
             ]
         },

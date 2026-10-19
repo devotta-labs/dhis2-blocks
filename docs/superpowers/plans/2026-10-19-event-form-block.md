@@ -13,11 +13,11 @@
 ## Preconditions
 
 - Plan `2026-10-19-shared-ui-primitives.md` is complete: `@dhis2-blocks/ui`, per-primitive registry items, namespaced theme, and `pnpm registry:check` all exist.
-- The program-rules branch is merged into `jc/feat/event-form` (**ask the user before merging**). It provides `@dhis2-blocks/program-rules`, with `@/registry/program-rules/index` (lib) and `@/registry/program-rules/use-program-rules` (hook). Read that package's README and `type-tests/public-surface.ts` for the exact types. This plan uses: `useProgramRules({ programId, programStageId, enrollmentId?, input, enabled? }) → { status, effects?, invalidRules, explain(fieldId), error? }`, `RuleEffects`, `Attribution`, `RuleMessage`, `EventRuleInput`.
+- The program-rules branch has been merged into `jc/feat/event-form` **by the user** (agents never merge, rebase or open PRs). It provides `@dhis2-blocks/program-rules`, with `@/registry/program-rules/index` (lib) and `@/registry/program-rules/use-program-rules` (hook). Read that package's README and `type-tests/public-surface.ts` for the exact types. This plan uses: `useProgramRules({ programId, programStageId, enrollmentId?, input, enabled? }) → { status, effects?, invalidRules, explain(fieldId), error? }`, `RuleEffects`, `Attribution`, `RuleMessage`, `EventRuleInput`.
 
 ## Global Constraints
 
-- Commits: one per task, unsigned (`git -c commit.gpgsign=false commit`), ending with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Never push or merge without the user.
+- Commits: one per task, unsigned (`git -c commit.gpgsign=false commit`), ending with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Never push, merge, rebase onto other branches or open pull requests.
 - Flat, root-prefixed public names: `EventForm`, `EventFormDetails`, `EventFormSectionNav`, `EventFormSections`, `EventFormSection`, `EventFormField`, `EventFormNotes`, `EventFormFeedback`, `EventFormActions`, `useEventFormState`, `useEventFormActions`, `useEventFormRules`.
 - Values are held in tracker API format (strings). Empty values are absent from the map, never `''`.
 - Rule changes are an overlay, never written into stored values. Opening an existing event never makes it dirty. Save sends the effective values, with cleared values sent as `null` on edit.

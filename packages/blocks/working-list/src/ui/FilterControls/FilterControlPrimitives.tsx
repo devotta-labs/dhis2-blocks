@@ -1,9 +1,16 @@
 import { CalendarInput } from '@dhis2/ui'
 import { IconChevronDown16 } from '@dhis2/ui-icons'
 import React, { createContext, useContext, useEffect, useRef } from 'react'
-import { cn } from '../primitives/cn'
-import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover'
-import { SelectClearIcon, selectTriggerVariants } from '../primitives/select'
+import { cn } from '@/registry/dhis2/ui/cn'
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/registry/dhis2/ui/popover'
+import {
+    SelectClearIcon,
+    selectTriggerVariants,
+} from '@/registry/dhis2/ui/select'
 
 // CalendarInput supports this at runtime (and documents it in PropTypes), but
 // @dhis2/ui 10.11 omits the prop from its declaration bundle.

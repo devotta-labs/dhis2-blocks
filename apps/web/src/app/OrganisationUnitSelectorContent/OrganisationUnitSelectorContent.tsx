@@ -1,4 +1,5 @@
-import { Button, Spinner } from '@dhis2-blocks/working-list/primitives'
+import { Button } from '@dhis2-blocks/ui/button'
+import { Spinner } from '@dhis2-blocks/ui/spinner'
 import { OrganisationUnitTree } from '@dhis2/ui'
 import type { ComponentType, MouseEvent } from 'react'
 import React, { useCallback, useMemo, useState } from 'react'

@@ -1,5 +1,5 @@
-import { ErrorAlert } from '../primitives/alert'
-import { Spinner } from '../primitives/spinner'
+import { ErrorAlert } from '@/registry/dhis2/ui/alert'
+import { Spinner } from '@/registry/dhis2/ui/spinner'
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { useWorkingListMeta } from '../../provider/WorkingListContext'
 import { useWorkingListText } from '../WorkingListText'

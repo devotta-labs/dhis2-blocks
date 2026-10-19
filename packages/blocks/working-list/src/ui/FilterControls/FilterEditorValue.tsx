@@ -9,8 +9,8 @@ import {
     type WorkingListField,
 } from '../../domain/model'
 import type { FilterEditorKind } from '../../registry/valueTypes'
-import { Checkbox } from '../primitives/checkbox'
-import { Label } from '../primitives/label'
+import { Checkbox } from '@/registry/dhis2/ui/checkbox'
+import { Label } from '@/registry/dhis2/ui/label'
 import {
     useWorkingListText,
     type WorkingListTranslate,

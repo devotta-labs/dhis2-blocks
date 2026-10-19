@@ -1,6 +1,15 @@
 import tailwindcss from '@tailwindcss/vite'
 import { playwright } from '@vitest/browser-playwright'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
+
+const resolve = {
+    alias: {
+        '@/registry/dhis2/ui': fileURLToPath(
+            new URL('../ui/src', import.meta.url)
+        ),
+    },
+}
 
 const sharedProjectOptions = {
     globals: true,
@@ -11,6 +20,7 @@ export default defineConfig({
     test: {
         projects: [
             {
+                resolve,
                 test: {
                     ...sharedProjectOptions,
                     name: 'node',
@@ -20,6 +30,7 @@ export default defineConfig({
             },
             {
                 plugins: [tailwindcss()],
+                resolve,
                 test: {
                     ...sharedProjectOptions,
                     name: 'browser',

@@ -4,14 +4,14 @@ import {
     WORKING_LIST_PAGE_SIZES,
     type WorkingListPageSize,
 } from '../../provider/contracts'
-import { Button } from '../primitives/button'
+import { Button } from '@/registry/dhis2/ui/button'
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '../primitives/select'
+} from '@/registry/dhis2/ui/select'
 import { useWorkingListText } from '../WorkingListText'
 
 const pageSizeItems = WORKING_LIST_PAGE_SIZES.map((size) => ({

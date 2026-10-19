@@ -325,6 +325,11 @@ export const buildRuleContext = (
         programName: metadata.programName,
         rules,
         ruleInfo,
+        actionMetadata: new Map(
+            valid.flatMap((rule) =>
+                rule.actions.map((action) => [action.id, action] as const)
+            )
+        ),
         graph,
         invalidRules,
         requirements: {

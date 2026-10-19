@@ -116,7 +116,10 @@ export const buildDependencyGraph = (
             writesVariables,
             writesSections: union(
                 rule.actions.map((action) =>
-                    action.sectionId === undefined ? [] : [action.sectionId]
+                    action.type === 'HIDESECTION' &&
+                    action.sectionId !== undefined
+                        ? [action.sectionId]
+                        : []
                 )
             ),
             writesProgramStages: union(

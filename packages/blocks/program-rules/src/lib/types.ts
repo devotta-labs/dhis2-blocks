@@ -231,6 +231,8 @@ export interface RuleContext {
     /** Converted rules, invalid ones and invalid actions removed. */
     rules: ReadonlyArray<Engine.RuleJs>
     ruleInfo: Map<string, RuleInfo>
+    /** actionId → the action's metadata, for effect text and option codes */
+    actionMetadata: Map<string, ProgramRuleActionMetadata>
     graph: RuleDependencyGraph
     invalidRules: InvalidRule[]
     requirements: RuleContextRequirements

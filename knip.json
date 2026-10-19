@@ -45,6 +45,7 @@
                 "e2e/specs-docs/**/*.spec.ts",
                 "playwright.docs.config.ts"
             ],
+            "ignore": ["tools/registry/consumer/**"],
             "project": [
                 "e2e/**/*.ts",
                 "tools/**/*.ts",

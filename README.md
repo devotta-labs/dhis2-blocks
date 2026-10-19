@@ -11,6 +11,7 @@ apps/
 packages/
   blocks/
     context-selector/   Capture-style controlled context-selector primitives
+    ui/                 Shared DHIS2-styled shadcn primitives and theme
     working-list/       Canonical Working List source and registry manifest
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
@@ -124,6 +125,12 @@ The installed components own their styling through Tailwind utility classes;
 the block does not require a separate stylesheet import. Adjust the import path
 above if the project's components alias differs from `@/components`.
 
+The install also pulls in the shared UI primitives the block uses, copied to
+`components/dhis2/ui/` (never `components/ui/`), plus the `dhis2-theme` item.
+The theme is namespaced (`bg-dhis2-primary`, `border-dhis2-input`,
+`rounded-dhis2-sm`, and so on) and does not override Tailwind's defaults, so it
+does not restyle the rest of the host application.
+
 Render `WorkingList` beneath the DHIS2 app-runtime provider and a TanStack
 `QueryClientProvider`. The minimal complete composition is:
 
@@ -205,6 +212,33 @@ The root `registry.json` is the public registry entry point. It owns global
 metadata and composes each package-owned registry manifest through shadcn's
 `include` mechanism. Paths declared by a package manifest are relative to that
 package.
+
+## UI primitives
+
+The shared DHIS2-styled shadcn primitives live in `packages/blocks/ui` and are
+published as one registry item per file, so a project can install only what it
+needs. They install to `components/dhis2/ui/` under the configured
+`aliases.components` directory, keep the standard shadcn file and export names,
+and depend on the `dhis2-theme` item, which is installed automatically:
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/button
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/dialog
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/dhis2-theme
+```
+
+Available items: `alert`, `alert-dialog`, `button`, `checkbox`, `cn`,
+`combobox`, `dhis2-theme`, `dialog`, `dropdown-menu`, `field`, `input`,
+`input-group`, `label`, `popover`, `portal-root`, `select`, `separator`,
+`spinner`, `switch`, `table`, `textarea`, `toggle`, `toggle-group`, and
+`tooltip`. Items that import siblings (for example `combobox` imports `select`
+and `input-group`) install them too.
+
+Every design token is namespaced (`--color-dhis2-*`, `--radius-dhis2-*`,
+`--shadow-dhis2-*`, `--font-dhis2`), so utilities such as `bg-dhis2-primary` or
+`text-dhis2-grey-700` coexist with the host application's own Tailwind theme
+and never replace it. Run `pnpm registry:check` to verify the published items
+install and build in a throwaway consumer app.
 
 ## Quality checks
 

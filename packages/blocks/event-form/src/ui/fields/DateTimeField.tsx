@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Input } from '@/registry/dhis2/ui/input'
 import { useEventFormText } from '../EventFormText'
-import { DatePicker } from './DateField'
+import { renderDatePicker, useDatePicker } from './DateField'
 import { FieldShell, type FieldWidgetProps } from './FieldShell'
 
 interface Parts {
@@ -51,6 +51,12 @@ export const DateTimeField = ({
         }
     }
 
+    const picker = useDatePicker({
+        value: parts.date,
+        onChange: (date) => update({ date }),
+        onError: setDateError,
+    })
+
     const missing =
         left && dateError === undefined
             ? parts.date === undefined && parts.time !== undefined
@@ -75,13 +81,7 @@ export const DateTimeField = ({
                     onFocus={() => setLeft(false)}
                 >
                     <div className="min-w-0 flex-1 basis-48">
-                        <DatePicker
-                            control={control}
-                            value={parts.date}
-                            disabled={disabled}
-                            onChange={(date) => update({ date })}
-                            onError={setDateError}
-                        />
+                        {renderDatePicker(picker, control, disabled)}
                     </div>
                     <Input
                         type="time"

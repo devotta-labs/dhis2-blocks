@@ -6,6 +6,7 @@ import React, {
     useLayoutEffect,
     useRef,
     useState,
+    type RefObject,
 } from 'react'
 import { Input } from '@/registry/dhis2/ui/input'
 import { useEventFormFieldContext } from '../EventForm/EventFormContext'
@@ -53,74 +54,29 @@ interface CalendarSelection {
     calendarDateString?: string | null
 }
 
-/**
- * Stands in for the calendar input when it cannot render: a text input for `yyyy-MM-dd` in the
- * system calendar, committed as an ISO date on blur or Enter.
- */
-const DateTextInput = ({
-    control,
-    value,
-    disabled,
-    onChange,
-    onError,
-}: DatePickerProps) => {
-    const { calendar } = useEventFormFieldContext()
-    const typed = useTypedValue({
-        value,
-        onCommit: onChange,
-        validate: (text) =>
-            calendarDateToIso(text, calendar.calendar) === undefined
-                ? 'Enter a valid date'
-                : undefined,
-        format: (iso) => isoToCalendarDate(iso, calendar.calendar) ?? iso,
-        parse: (text) => calendarDateToIso(text, calendar.calendar) ?? text,
-    })
-    useEffect(() => onError(typed.error), [typed.error, onError])
-    return (
-        <Input
-            {...control}
-            type="text"
-            data-testid="date-text-fallback"
-            placeholder="YYYY-MM-DD"
-            disabled={disabled}
-            value={typed.text}
-            onChange={(event) => typed.onChange(event.target.value)}
-            onBlur={typed.onBlur}
-            onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                    typed.onEnter()
-                }
-            }}
-        />
-    )
-}
-
-interface DatePickerProps {
-    control: ControlProps
+interface DatePickerOptions {
     /** ISO date. */
     value: string | undefined
-    disabled: boolean
     onChange(iso: string | undefined): void
     /** An untranslated error key, or `undefined` when the text is fine. */
     onError(error: string | undefined): void
 }
 
 /**
- * A date in the system calendar, shown in the instance's date format and stored as an ISO date.
- * If the calendar input cannot render, a plain text input takes its place.
- * It commits as soon as a date is picked or a typed one is finished, and an empty text commits
- * `undefined`. A typed date that does not exist is reported through `onError` and not committed.
+ * CalendarInput gives its input an id but no other attributes, so the label, description and
+ * invalid state are set on the input directly. Renders nothing.
  */
-export const DatePicker = (props: DatePickerProps) => {
-    const { control, value, disabled, onChange, onError } = props
-    const { calendar } = useEventFormFieldContext()
-    const CalendarInputComponent = useContext(CalendarInputContext)
-    const wrapper = useRef<HTMLDivElement>(null)
+const InputAttributes = ({
+    wrapper,
+    control,
+}: {
+    wrapper: RefObject<HTMLDivElement | null>
+    control: ControlProps
+}) => {
     const invalid = control['aria-invalid']
     const describedBy = control['aria-describedby']
-
-    // CalendarInput gives its input an id but no other attributes, so the description and the
-    // invalid state are set on the input directly.
+    const labelledBy = control['aria-labelledby']
+    const required = control['aria-required']
     useLayoutEffect(() => {
         const input = wrapper.current?.querySelector('input')
         if (!input) {
@@ -132,14 +88,42 @@ export const DatePicker = (props: DatePickerProps) => {
                 : input.setAttribute(name, attribute)
         set('aria-describedby', describedBy)
         set('aria-invalid', invalid === undefined ? undefined : 'true')
-        set('aria-labelledby', control['aria-labelledby'])
-        set('aria-required', control['aria-required'] ? 'true' : undefined)
-    }, [describedBy, invalid, control])
+        set('aria-labelledby', labelledBy)
+        set('aria-required', required ? 'true' : undefined)
+    }, [wrapper, describedBy, invalid, labelledBy, required])
+    return null
+}
 
-    const local =
-        value === undefined
-            ? undefined
-            : isoToCalendarDate(value, calendar.calendar)
+/**
+ * The state of a date in the system calendar, shown in the instance's date format and stored as an
+ * ISO date. It commits as soon as a date is picked or a typed one is finished, and an empty text
+ * commits `undefined`. A typed date that does not exist is reported through `onError` and not
+ * committed.
+ *
+ * It is a hook and `renderDatePicker` a plain function, not one component, so a widget reaches
+ * the input through as few components as possible (the depth budget counts every one).
+ */
+export const useDatePicker = ({
+    value,
+    onChange,
+    onError,
+}: DatePickerOptions) => {
+    const { calendar } = useEventFormFieldContext()
+    const CalendarInputComponent = useContext(CalendarInputContext)
+    const wrapper = useRef<HTMLDivElement>(null)
+
+    // What is typed when the calendar input cannot render.
+    const typed = useTypedValue({
+        value,
+        onCommit: onChange,
+        validate: (text) =>
+            calendarDateToIso(text, calendar.calendar) === undefined
+                ? 'Enter a valid date'
+                : undefined,
+        format: (iso) => isoToCalendarDate(iso, calendar.calendar) ?? iso,
+        parse: (text) => calendarDateToIso(text, calendar.calendar) ?? text,
+    })
+    useEffect(() => onError(typed.error), [typed.error, onError])
 
     const handleSelect = (selection: CalendarSelection | null) => {
         const text = selection?.calendarDateString
@@ -168,23 +152,63 @@ export const DatePicker = (props: DatePickerProps) => {
         }
     }
 
+    const local =
+        value === undefined
+            ? undefined
+            : isoToCalendarDate(value, calendar.calendar)
+    return {
+        wrapper,
+        CalendarInputComponent,
+        calendar,
+        date: canonicalDateToCalendarInput(local, calendar.dateFormat),
+        handleSelect,
+        typed,
+    }
+}
+
+/**
+ * The calendar input. If it throws while rendering (its Ethiopian calendar does in some
+ * browsers), a text input for `yyyy-MM-dd` in the system calendar takes its place.
+ */
+export const renderDatePicker = (
+    picker: ReturnType<typeof useDatePicker>,
+    control: ControlProps,
+    disabled: boolean
+) => {
+    const { CalendarInputComponent, calendar, typed } = picker
     return (
-        <div ref={wrapper} className="w-full max-w-72">
-            <CalendarInputBoundary fallback={<DateTextInput {...props} />}>
+        <div ref={picker.wrapper} className="w-full max-w-72">
+            <InputAttributes wrapper={picker.wrapper} control={control} />
+            <CalendarInputBoundary
+                fallback={
+                    <Input
+                        {...control}
+                        type="text"
+                        data-testid="date-text-fallback"
+                        placeholder="YYYY-MM-DD"
+                        disabled={disabled}
+                        value={typed.text}
+                        onChange={(event) => typed.onChange(event.target.value)}
+                        onBlur={typed.onBlur}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                                typed.onEnter()
+                            }
+                        }}
+                    />
+                }
+            >
                 <CalendarInputComponent
                     name={control.id}
                     label=""
                     calendar={toMultiCalendarIdentifier(calendar.calendar)}
                     format={calendar.dateFormat}
-                    date={canonicalDateToCalendarInput(
-                        local,
-                        calendar.dateFormat
-                    )}
+                    date={picker.date}
                     disabled={disabled}
-                    error={invalid === true}
+                    error={control['aria-invalid'] === true}
                     inputWidth="100%"
                     width="min(320px, calc(100vw - 64px))"
-                    onDateSelect={handleSelect}
+                    onDateSelect={picker.handleSelect}
                 />
             </CalendarInputBoundary>
         </div>
@@ -193,17 +217,14 @@ export const DatePicker = (props: DatePickerProps) => {
 
 export const DateField = ({ field, onCommit, disabled }: FieldWidgetProps) => {
     const [error, setError] = useState<string>()
+    const picker = useDatePicker({
+        value: field.value,
+        onChange: onCommit,
+        onError: setError,
+    })
     return (
         <FieldShell field={field} localError={error}>
-            {(control) => (
-                <DatePicker
-                    control={control}
-                    value={field.value}
-                    disabled={disabled}
-                    onChange={onCommit}
-                    onError={setError}
-                />
-            )}
+            {(control) => renderDatePicker(picker, control, disabled)}
         </FieldShell>
     )
 }

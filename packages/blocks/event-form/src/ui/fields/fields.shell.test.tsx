@@ -401,6 +401,15 @@ const DEPTH_CASES: [string, FieldModel, string, MountOptions?][] = [
         '[role=combobox]',
         { orgUnitRoots: ['ouRoot00001'], wrap: withOrgUnits },
     ],
+    // The real CalendarInput throws for the Ethiopian calendar, so these take the fallback input.
+    ...(['date', 'dateTime', 'age'] as const).map(
+        (kind): [string, FieldModel, string, MountOptions] => [
+            `${kind} (fallback)`,
+            baseField({ kind }),
+            '[data-testid=date-text-fallback]',
+            { calendar: { calendar: 'ethiopian', dateFormat: 'YYYY-MM-DD' } },
+        ]
+    ),
     [
         'unsupported',
         baseField({

@@ -289,9 +289,12 @@ const checkInstall = async (workDirectory: string): Promise<void> => {
         '--radius-sm',
         themeDefault(appDirectory, '--radius-sm')
     )
+    // Tailwind emits only the utilities the installed source uses, and the
+    // installed `@theme inline` block resolves the token to its value, so check
+    // a DHIS2 utility that the installed primitives really use.
     assertUtilityValue(
         emitted,
-        'bg-dhis2-primary',
+        'text-dhis2-primary',
         '--color-dhis2-primary',
         '#1565c0'
     )

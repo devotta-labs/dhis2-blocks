@@ -181,7 +181,11 @@
         },
         "packages/blocks/program-rules": {
             "entry": ["src/**/*.test.{ts,tsx}", "type-tests/**/*.ts"],
-            "project": ["src/**/*.{ts,tsx}", "type-tests/**/*.ts"],
+            "project": [
+                "src/**/*.{ts,tsx}",
+                "test/**/*.ts",
+                "type-tests/**/*.ts"
+            ],
             "includeEntryExports": true,
             "ignoreIssues": {
                 "test/**": [

@@ -22,6 +22,11 @@
                     "target": "@lib/program-rules/buildInput.ts"
                 },
                 {
+                    "path": "src/lib/dependencyGraph.ts",
+                    "type": "registry:lib",
+                    "target": "@lib/program-rules/dependencyGraph.ts"
+                },
+                {
                     "path": "src/lib/evaluate.ts",
                     "type": "registry:lib",
                     "target": "@lib/program-rules/evaluate.ts"
@@ -53,9 +58,14 @@
             "type": "registry:hook",
             "title": "useProgramRules",
             "description": "React hook that fetches DHIS2 program rule metadata with React Query, lazy-loads the rule engine and memoises rule effects for an event.",
-            "dependencies": ["@dhis2/rule-engine@3.8.6"],
+            "dependencies": ["@dhis2/rule-engine@3.8.6", "zod@^4.4.3"],
             "registryDependencies": ["devotta-labs/dhis2-blocks/program-rules"],
             "files": [
+                {
+                    "path": "src/hooks/enrollment.ts",
+                    "type": "registry:hook",
+                    "target": "@hooks/use-program-rules/enrollment.ts"
+                },
                 {
                     "path": "src/hooks/index.ts",
                     "type": "registry:hook",
@@ -65,6 +75,11 @@
                     "path": "src/hooks/loadRuleEngine.ts",
                     "type": "registry:hook",
                     "target": "@hooks/use-program-rules/loadRuleEngine.ts"
+                },
+                {
+                    "path": "src/hooks/metadata.ts",
+                    "type": "registry:hook",
+                    "target": "@hooks/use-program-rules/metadata.ts"
                 },
                 {
                     "path": "src/hooks/useProgramRules.ts",

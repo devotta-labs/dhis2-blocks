@@ -13,7 +13,7 @@ function Spinner({ className, ...props }: React.ComponentProps<'span'>) {
             role="status"
             aria-label="Loading"
             className={cn(
-                'inline-block size-4 shrink-0 animate-spin rounded-full border-2 border-grey-600/15 border-b-blue-600',
+                'inline-block size-4 shrink-0 animate-spin rounded-full border-2 border-dhis2-grey-600/15 border-b-dhis2-blue-600',
                 className
             )}
             {...props}

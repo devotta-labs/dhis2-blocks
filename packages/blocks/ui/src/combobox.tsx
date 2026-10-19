@@ -40,7 +40,7 @@ const ComboboxTrigger = React.forwardRef<
         {...props}
     >
         {children}
-        <span className="ms-auto flex shrink-0 ps-0.5 text-grey-900">
+        <span className="ms-auto flex shrink-0 ps-0.5 text-dhis2-grey-900">
             <IconChevronDown16 />
         </span>
     </ComboboxPrimitive.Trigger>
@@ -55,7 +55,10 @@ const ComboboxClear = React.forwardRef<
         ref={ref}
         data-slot="combobox-clear"
         render={<InputGroupButton variant="ghost" size="icon-xs" />}
-        className={cn('text-grey-500 hover:text-grey-800', className)}
+        className={cn(
+            'text-dhis2-grey-500 hover:text-dhis2-grey-800',
+            className
+        )}
         {...props}
     >
         <SelectClearIcon />
@@ -126,7 +129,7 @@ function ComboboxContent({
                     data-slot="combobox-content"
                     data-chips={!!anchor}
                     className={cn(
-                        'group/combobox-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-32 origin-(--transform-origin) overflow-hidden rounded-sm border border-grey-200 bg-popover text-popover-foreground shadow-popover *:data-[slot=input-group]:m-2 *:data-[slot=input-group]:mb-1 *:data-[slot=input-group]:h-(--field-height-dense)',
+                        'group/combobox-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-32 origin-(--transform-origin) overflow-hidden rounded-dhis2-sm border border-dhis2-grey-200 bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover *:data-[slot=input-group]:m-2 *:data-[slot=input-group]:mb-1 *:data-[slot=input-group]:h-(--dhis2-field-height-dense)',
                         className
                     )}
                     {...props}
@@ -162,13 +165,13 @@ const ComboboxItem = React.forwardRef<
         data-slot="combobox-item"
         data-indicator={indicator}
         className={cn(
-            'group/combobox-item relative flex w-full cursor-pointer items-center py-2 ps-1.5 pe-3 text-sm leading-normal text-grey-900 outline-none select-none data-highlighted:bg-grey-200 data-selected:bg-teal-050 data-disabled:cursor-not-allowed data-disabled:text-grey-500 data-disabled:data-highlighted:bg-transparent data-[indicator=checkbox]:py-2.5 data-[indicator=checkbox]:ps-[15px] data-[indicator=checkbox]:pe-3 data-[indicator=checkbox]:leading-4 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+            'group/combobox-item relative flex w-full cursor-pointer items-center py-2 ps-1.5 pe-3 text-sm leading-normal text-dhis2-grey-900 outline-none select-none data-highlighted:bg-dhis2-grey-200 data-selected:bg-dhis2-teal-050 data-disabled:cursor-not-allowed data-disabled:text-dhis2-grey-500 data-disabled:data-highlighted:bg-transparent data-[indicator=checkbox]:py-2.5 data-[indicator=checkbox]:ps-[15px] data-[indicator=checkbox]:pe-3 data-[indicator=checkbox]:leading-4 [&_svg]:pointer-events-none [&_svg]:shrink-0',
             className
         )}
         {...props}
     >
         {indicator === 'check' ? (
-            <span className="me-1.5 flex size-4 shrink-0 text-teal-700 [&_svg]:fill-current">
+            <span className="me-1.5 flex size-4 shrink-0 text-dhis2-teal-700 [&_svg]:fill-current">
                 <ComboboxPrimitive.ItemIndicator>
                     <SelectCheckmark />
                 </ComboboxPrimitive.ItemIndicator>
@@ -214,7 +217,7 @@ function ComboboxLabel({
         <ComboboxPrimitive.GroupLabel
             data-slot="combobox-label"
             className={cn(
-                'px-3 pt-2 pb-1 text-[13px] leading-4 font-medium text-grey-700',
+                'px-3 pt-2 pb-1 text-[13px] leading-4 font-medium text-dhis2-grey-700',
                 className
             )}
             {...props}
@@ -237,7 +240,7 @@ function ComboboxEmpty({ className, ...props }: ComboboxPrimitive.Empty.Props) {
         <ComboboxPrimitive.Empty
             data-slot="combobox-empty"
             className={cn(
-                'hidden w-full justify-center px-6 py-2 text-center text-[13px] leading-4 text-grey-700 group-data-empty/combobox-content:flex',
+                'hidden w-full justify-center px-6 py-2 text-center text-[13px] leading-4 text-dhis2-grey-700 group-data-empty/combobox-content:flex',
                 className
             )}
             {...props}
@@ -252,7 +255,7 @@ function ComboboxSeparator({
     return (
         <ComboboxPrimitive.Separator
             data-slot="combobox-separator"
-            className={cn('my-1 h-px bg-border', className)}
+            className={cn('my-1 h-px bg-dhis2-border', className)}
             {...props}
         />
     )
@@ -288,7 +291,7 @@ function ComboboxChip({
         <ComboboxPrimitive.Chip
             data-slot="combobox-chip"
             className={cn(
-                'inline-flex h-6 w-fit items-center rounded-2xl bg-grey-200 text-[13px] leading-[15px] whitespace-nowrap text-grey-900 outline-none has-disabled:pointer-events-none has-disabled:cursor-not-allowed has-disabled:opacity-30',
+                'inline-flex h-6 w-fit items-center rounded-2xl bg-dhis2-grey-200 text-[13px] leading-[15px] whitespace-nowrap text-dhis2-grey-900 outline-none has-disabled:pointer-events-none has-disabled:cursor-not-allowed has-disabled:opacity-30',
                 className
             )}
             {...props}
@@ -297,7 +300,7 @@ function ComboboxChip({
             {showRemove && (
                 <ComboboxPrimitive.ChipRemove
                     aria-label={removeLabel}
-                    className="-ms-2 me-1 flex size-5 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-grey-600 hover:bg-grey-400 [&_svg]:fill-current"
+                    className="-ms-2 me-1 flex size-5 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-dhis2-grey-600 hover:bg-dhis2-grey-400 [&_svg]:fill-current"
                     data-slot="combobox-chip-remove"
                 >
                     <svg

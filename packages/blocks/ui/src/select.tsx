@@ -36,12 +36,12 @@ function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
 
 /** The @dhis2/ui select input box, shared with the Combobox trigger. */
 const selectTriggerVariants = cva(
-    "flex w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 rounded-sm border border-input bg-white text-left text-sm leading-4 whitespace-nowrap text-grey-900 shadow-[inset_0_0_1px_0_rgb(48_54_60/0.1)] outline-none focus-visible:border-ring focus-visible:shadow-[inset_0_0_0_2px_var(--color-ring)] data-popup-open:border-ring data-popup-open:shadow-[inset_0_0_0_2px_var(--color-ring)] disabled:cursor-not-allowed disabled:bg-grey-100 disabled:text-grey-600 aria-invalid:border-red-500 data-placeholder:text-grey-600 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
+    "flex w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 rounded-dhis2-sm border border-dhis2-input bg-white text-left text-sm leading-4 whitespace-nowrap text-dhis2-grey-900 shadow-[inset_0_0_1px_0_rgb(48_54_60/0.1)] outline-none focus-visible:border-dhis2-ring focus-visible:shadow-[inset_0_0_0_2px_var(--color-dhis2-ring)] data-popup-open:border-dhis2-ring data-popup-open:shadow-[inset_0_0_0_2px_var(--color-dhis2-ring)] disabled:cursor-not-allowed disabled:bg-dhis2-grey-100 disabled:text-dhis2-grey-600 aria-invalid:border-dhis2-red-500 data-placeholder:text-dhis2-grey-600 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
     {
         variants: {
             size: {
                 default: 'min-h-10 py-1.5 ps-3 pe-1.5',
-                sm: 'min-h-(--field-height-dense) py-0.5 ps-2 pe-1',
+                sm: 'min-h-(--dhis2-field-height-dense) py-0.5 ps-2 pe-1',
             },
         },
         defaultVariants: {
@@ -68,7 +68,7 @@ const SelectTrigger = React.forwardRef<
     >
         {children}
         <SelectPrimitive.Icon
-            render={<span className="ms-0.5 flex text-grey-900" />}
+            render={<span className="ms-0.5 flex text-dhis2-grey-900" />}
         >
             <IconChevronDown16 />
         </SelectPrimitive.Icon>
@@ -104,7 +104,7 @@ function SelectContent({
                     data-slot="select-content"
                     data-align-trigger={alignItemWithTrigger}
                     className={cn(
-                        'relative isolate z-[2000] max-h-[min(280px,var(--available-height))] w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-sm border border-grey-200 bg-popover text-popover-foreground shadow-popover',
+                        'relative isolate z-[2000] max-h-[min(280px,var(--available-height))] w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-dhis2-sm border border-dhis2-grey-200 bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover',
                         className
                     )}
                     {...props}
@@ -126,7 +126,7 @@ function SelectLabel({
         <SelectPrimitive.GroupLabel
             data-slot="select-label"
             className={cn(
-                'px-3 pt-2 pb-1 text-[13px] leading-4 font-medium text-grey-700',
+                'px-3 pt-2 pb-1 text-[13px] leading-4 font-medium text-dhis2-grey-700',
                 className
             )}
             {...props}
@@ -158,12 +158,12 @@ const SelectItem = React.forwardRef<HTMLDivElement, SelectPrimitive.Item.Props>(
             ref={ref}
             data-slot="select-item"
             className={cn(
-                'relative flex w-full cursor-pointer items-center py-2 ps-1.5 pe-3 text-sm leading-normal text-grey-900 outline-none select-none data-highlighted:bg-grey-200 data-selected:bg-teal-050 data-disabled:cursor-not-allowed data-disabled:text-grey-500 data-disabled:data-highlighted:bg-transparent [&_svg]:pointer-events-none [&_svg]:shrink-0',
+                'relative flex w-full cursor-pointer items-center py-2 ps-1.5 pe-3 text-sm leading-normal text-dhis2-grey-900 outline-none select-none data-highlighted:bg-dhis2-grey-200 data-selected:bg-dhis2-teal-050 data-disabled:cursor-not-allowed data-disabled:text-dhis2-grey-500 data-disabled:data-highlighted:bg-transparent [&_svg]:pointer-events-none [&_svg]:shrink-0',
                 className
             )}
             {...props}
         >
-            <span className="me-1.5 flex size-4 shrink-0 text-teal-700 [&_svg]:fill-current">
+            <span className="me-1.5 flex size-4 shrink-0 text-dhis2-teal-700 [&_svg]:fill-current">
                 <SelectPrimitive.ItemIndicator>
                     <SelectCheckmark />
                 </SelectPrimitive.ItemIndicator>
@@ -183,7 +183,10 @@ function SelectSeparator({
     return (
         <SelectPrimitive.Separator
             data-slot="select-separator"
-            className={cn('pointer-events-none my-1 h-px bg-border', className)}
+            className={cn(
+                'pointer-events-none my-1 h-px bg-dhis2-border',
+                className
+            )}
             {...props}
         />
     )
@@ -197,7 +200,7 @@ function SelectScrollUpButton({
         <SelectPrimitive.ScrollUpArrow
             data-slot="select-scroll-up-button"
             className={cn(
-                'top-0 z-10 flex w-full cursor-default items-center justify-center bg-popover py-1 [&_svg]:fill-current',
+                'top-0 z-10 flex w-full cursor-default items-center justify-center bg-dhis2-popover py-1 [&_svg]:fill-current',
                 className
             )}
             {...props}
@@ -215,7 +218,7 @@ function SelectScrollDownButton({
         <SelectPrimitive.ScrollDownArrow
             data-slot="select-scroll-down-button"
             className={cn(
-                'bottom-0 z-10 flex w-full cursor-default items-center justify-center bg-popover py-1 [&_svg]:fill-current',
+                'bottom-0 z-10 flex w-full cursor-default items-center justify-center bg-dhis2-popover py-1 [&_svg]:fill-current',
                 className
             )}
             {...props}

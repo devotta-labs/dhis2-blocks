@@ -52,7 +52,7 @@ function PopoverContent({
                 <PopoverPrimitive.Popup
                     data-slot="popover-content"
                     className={cn(
-                        'flex w-72 max-w-[360px] origin-(--transform-origin) flex-col gap-4 rounded-md bg-popover p-4 text-sm text-popover-foreground shadow-popover outline-hidden',
+                        'flex w-72 max-w-[360px] origin-(--transform-origin) flex-col gap-4 rounded-dhis2-md bg-dhis2-popover p-4 text-sm text-dhis2-popover-foreground shadow-dhis2-popover outline-hidden',
                         className
                     )}
                     {...props}
@@ -89,7 +89,7 @@ function PopoverDescription({
     return (
         <PopoverPrimitive.Description
             data-slot="popover-description"
-            className={cn('text-grey-700', className)}
+            className={cn('text-dhis2-grey-700', className)}
             {...props}
         />
     )

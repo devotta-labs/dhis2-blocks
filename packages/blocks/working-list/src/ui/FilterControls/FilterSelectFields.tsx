@@ -211,12 +211,12 @@ export const ComboboxField = ({
                     ref={anchor}
                     className={cn(
                         selectTriggerVariants({ size: 'sm' }),
-                        'relative cursor-default pe-6 has-[>[data-slot=combobox-trigger]:focus-visible]:border-ring has-[>[data-slot=combobox-trigger]:focus-visible]:shadow-[inset_0_0_0_2px_var(--color-ring)] has-[>[data-slot=combobox-trigger][data-popup-open]]:border-ring has-[>[data-slot=combobox-trigger][data-popup-open]]:shadow-[inset_0_0_0_2px_var(--color-ring)]'
+                        'relative cursor-default pe-6 has-[>[data-slot=combobox-trigger]:focus-visible]:border-dhis2-ring has-[>[data-slot=combobox-trigger]:focus-visible]:shadow-[inset_0_0_0_2px_var(--color-dhis2-ring)] has-[>[data-slot=combobox-trigger][data-popup-open]]:border-dhis2-ring has-[>[data-slot=combobox-trigger][data-popup-open]]:shadow-[inset_0_0_0_2px_var(--color-dhis2-ring)]'
                     )}
                 >
                     <ComboboxTrigger
                         id={triggerId}
-                        className="absolute inset-0 flex cursor-pointer items-center rounded-sm border-0 bg-transparent pe-1 outline-none"
+                        className="absolute inset-0 flex cursor-pointer items-center rounded-dhis2-sm border-0 bg-transparent pe-1 outline-none"
                     />
                     {collapsed ? (
                         <span className="pointer-events-none relative flex-1">

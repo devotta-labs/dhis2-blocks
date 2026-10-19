@@ -1,0 +1,338 @@
+{
+    "programRules": [
+        {
+            "name": "Calculate gestational age from LMP",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "ASSIGN",
+                    "dataElement": { "id": "roKuXYfw1BW" },
+                    "data": "d2:weeksBetween(#{lmp},V{event_date})",
+                    "id": "oWFO8OtGZDX"
+                }
+            ],
+            "condition": "d2:hasValue('lmp')",
+            "priority": 1,
+            "displayName": "Calculate gestational age from LMP",
+            "id": "KRMEVVbex0q"
+        },
+        {
+            "name": "Check mobile number",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "SHOWWARNING",
+                    "content": "Valid mobile number can not contain 555",
+                    "displayContent": "Valid mobile number can not contain 555",
+                    "id": "vBtnt6XvYXO",
+                    "trackedEntityAttribute": { "id": "Agywv2JGwuq" }
+                }
+            ],
+            "condition": "d2:validatePattern(A{mobile} ,'.*555.*')",
+            "displayName": "Check mobile number",
+            "id": "IdrDtQmRGrv"
+        },
+        {
+            "name": "Check that address is on valid format",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "SHOWWARNING",
+                    "programStageSection": { "id": "EzhVeTS7vx4" },
+                    "content": "Please enter a street name followed by a number",
+                    "displayContent": "Please enter a street name followed by a number",
+                    "id": "nI9mPOEvHXU",
+                    "trackedEntityAttribute": { "id": "VqEFza8wbwA" }
+                }
+            ],
+            "condition": "d2:hasValue('streetAddress') && !d2:validatePattern(A{streetAddress},'[\\\\w ]+ \\\\d+')",
+            "displayName": "Check that address is on valid format",
+            "id": "jZ6TKNCRhdt"
+        },
+        {
+            "name": "Check that birthdate is within usual range in registration",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "SHOWWARNING",
+                    "programStageSection": { "id": "EzhVeTS7vx4" },
+                    "content": "The womans age is outside the normal range. With the birthdate entered, the age would be:",
+                    "data": "d2:yearsBetween(A{born},V{current_date})",
+                    "displayContent": "The womans age is outside the normal range. With the birthdate entered, the age would be:",
+                    "id": "FBn9BggFMPK",
+                    "trackedEntityAttribute": { "id": "gHGyrwKPzej" }
+                }
+            ],
+            "condition": "(d2:yearsBetween(A{born},V{current_date}) < 12) ||  (d2:yearsBetween(A{born},V{current_date}) > 50)",
+            "displayName": "Check that birthdate is within usual range in registration",
+            "id": "RtCIjfyRB9L"
+        },
+        {
+            "name": "Check that clinical estimate of due is aligned with LMP date",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "SHOWWARNING",
+                    "dataElement": { "id": "YKXci7Sm0Zq" },
+                    "programStageSection": { "id": "EzhVeTS7vx4" },
+                    "content": "The clinically estimated due date is less than 250 days after LMP date",
+                    "displayContent": "The clinically estimated due date is less than 250 days after LMP date",
+                    "id": "tAiSv1t9qpL"
+                },
+                {
+                    "programRuleActionType": "SHOWWARNING",
+                    "dataElement": { "id": "w4ky6EkVahL" },
+                    "programStageSection": { "id": "EzhVeTS7vx4" },
+                    "content": "The LMP date entered is less than 250 days before the clinically estimated due date.",
+                    "displayContent": "The LMP date entered is less than 250 days before the clinically estimated due date.",
+                    "id": "PBSFvWH2j4K"
+                }
+            ],
+            "condition": "d2:hasValue('lmp') && d2:hasValue('duedateclinical') && (d2:daysBetween(#{lmp},#{duedateclinical}) < 250) ",
+            "displayName": "Check that clinical estimate of due is aligned with LMP date",
+            "id": "NkpU28ZlfVh"
+        },
+        {
+            "name": "Check that LMP date given is before event date",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "SHOWERROR",
+                    "dataElement": { "id": "w4ky6EkVahL" },
+                    "programStageSection": { "id": "EzhVeTS7vx4" },
+                    "content": "LMP date entered is after the date of the antenatal care visit.",
+                    "displayContent": "LMP date entered is after the date of the antenatal care visit.",
+                    "id": "yKMX3B7kqbg"
+                }
+            ],
+            "condition": "d2:hasValue('lmp') && d2:daysBetween(#{lmp},V{event_date}) <= 0",
+            "displayName": "Check that LMP date given is before event date",
+            "id": "hpO8g3CRAeC"
+        },
+        {
+            "name": "Diastolic blood pressure feedback",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "DISPLAYTEXT",
+                    "location": "feedback",
+                    "data": "\"###### *Feedback* \\n\\n Title text \\n\\n |Column A|Column B|\\n|---|---|\\n|Content A|Content B|\"",
+                    "id": "mZWrCVWJBj9"
+                },
+                {
+                    "programRuleActionType": "DISPLAYTEXT",
+                    "location": "feedback",
+                    "content": "Headers",
+                    "data": "\"\\n# Header 1\\n## Header 2\\n### Header 3\\n#### Header 4\\n##### Header 5\\n###### Header 6\"",
+                    "displayContent": "Headers",
+                    "id": "Fx2WSgHd7cI"
+                },
+                {
+                    "programRuleActionType": "DISPLAYKEYVALUEPAIR",
+                    "location": "feedback",
+                    "content": "*Title*",
+                    "data": "'\\n**Expression** for value'",
+                    "displayContent": "*Title*",
+                    "id": "VxigXzAly96"
+                },
+                {
+                    "programRuleActionType": "DISPLAYKEYVALUEPAIR",
+                    "location": "feedback",
+                    "content": "# 1. Score 1",
+                    "data": "d2:concatenate(#{diastolicbloodpressure},'%')",
+                    "displayContent": "# 1. Score 1",
+                    "id": "unoQyECc6z7"
+                }
+            ],
+            "condition": "#{diastolicbloodpressure} > 0",
+            "displayName": "Diastolic blood pressure feedback",
+            "id": "DzbxYtgmTO0"
+        },
+        {
+            "name": "Hide all fields for chronic conitions unless the w",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "xPTngRLQTnu" },
+                    "id": "actonrw1060"
+                },
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "sdchiIXIcCf" },
+                    "id": "actonrw1059"
+                },
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "VFffa31SKjH" },
+                    "id": "actonrw1058"
+                },
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "Q1x1HIhuwFN" },
+                    "id": "actonrw1057"
+                },
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "zzGNbeMnTd6" },
+                    "id": "actonrw1056"
+                },
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "UQ2Zo8CruPB" },
+                    "id": "actonrw1055"
+                }
+            ],
+            "condition": "!#{chronicconditions}",
+            "displayName": "Hide all fields for chronic conitions unless the w",
+            "id": "ruleonr1055"
+        },
+        {
+            "name": "Hide field for -other chronic conditions specified",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "Mh7nK8UKoZP" },
+                    "id": "actonrw1061"
+                }
+            ],
+            "condition": "!#{otherchronicconditionexists}",
+            "displayName": "Hide field for -other chronic conditions specified",
+            "id": "ruleonr1061"
+        },
+        {
+            "name": "Hide field for treatment of aspirin",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "OSuxnldV4Ug" },
+                    "programStageSection": { "id": "EzhVeTS7vx4" },
+                    "content": "The field for treatment with acetylcalecylic acid was blanked, because the patient is no longer eligable for this treatment according to the guidelines.",
+                    "displayContent": "The field for treatment with acetylcalecylic acid was blanked, because the patient is no longer eligable for this treatment according to the guidelines.",
+                    "id": "nQHSEdViAlu"
+                }
+            ],
+            "condition": "(#{plurality} == 'Singleton'  || #{plurality} == 'Not assessed' || #{plurality} == '') && (#{diastolicbloodpressure} <= 90) &&  !#{renaldisease} && !#{chronichypertension}  && !#{autoimmunedisease} && !#{diabetes}",
+            "displayName": "Hide field for treatment of aspirin",
+            "id": "HTKIQDVMu0K"
+        },
+        {
+            "name": "Hide fields to specify other medicine allergy if a",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "VSmOcdK3v7y" },
+                    "id": "actonrw1065"
+                }
+            ],
+            "condition": "#{othermedicineallergyexists}  !== 'Yes'",
+            "displayName": "Hide fields to specify other medicine allergy if a",
+            "id": "ruleonr1065"
+        },
+        {
+            "name": "Hide fields to specify other severe allergy if ans",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "zk4Eui7Jhtr" },
+                    "id": "actonrw1066"
+                }
+            ],
+            "condition": "#{othersevereallergyexists}  !== 'Yes'",
+            "displayName": "Hide fields to specify other severe allergy if ans",
+            "id": "ruleonr1066"
+        },
+        {
+            "name": "Hide fields to specyfy allergies unless the woman ",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "ZbDPeYzWsh2" },
+                    "id": "actonrw1064"
+                },
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "dpOtt7HUQXa" },
+                    "id": "actonrw1063"
+                },
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "E6QaDtrQP5e" },
+                    "id": "actonrw1062"
+                }
+            ],
+            "condition": "#{allergies} !== 'Yes'",
+            "displayName": "Hide fields to specyfy allergies unless the woman ",
+            "id": "ruleonr1062"
+        },
+        {
+            "name": "Hide postpartum followup",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "HIDEPROGRAMSTAGE",
+                    "programStageSection": { "id": "EzhVeTS7vx4" },
+                    "programStage": { "id": "bbKtnxRZKEP" },
+                    "id": "hQuM6JLPOuD"
+                }
+            ],
+            "condition": "#{currentProgranancyOutcome}  != 'Live birth'",
+            "displayName": "Hide postpartum followup",
+            "id": "xOm49QX4Nsc"
+        },
+        {
+            "name": "Hide smoking cessation if not smoking",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "HIDEFIELD",
+                    "dataElement": { "id": "Ok9OQpitjQr" },
+                    "programStageSection": { "id": "EzhVeTS7vx4" },
+                    "content": "Smoking cessation counselling field is blanked, because the woman is no longer a registered smoker.",
+                    "displayContent": "Smoking cessation counselling field is blanked, because the woman is no longer a registered smoker.",
+                    "id": "hLOEPUPseEv"
+                }
+            ],
+            "condition": "!#{smoking}",
+            "displayName": "Hide smoking cessation if not smoking",
+            "id": "tO1D62oB0tq"
+        },
+        {
+            "name": "Show current gestational age (w+d)",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "DISPLAYKEYVALUEPAIR",
+                    "location": "indicators",
+                    "content": "Gest. age",
+                    "data": "d2:concatenate(d2:weeksBetween(#{lmp}, V{current_date}), '+', d2:modulus(d2:daysBetween(#{lmp}, V{current_date}), 7))",
+                    "displayContent": "Gest. age",
+                    "id": "cZPGCpHkl7x"
+                }
+            ],
+            "condition": "!d2:hasValue('currentProgranancyOutcome') && d2:hasValue('lmp') && d2:weeksBetween(#{lmp},V{current_date}) < 50",
+            "displayName": "Show current gestational age (w+d)",
+            "id": "zPHL03IEWvD"
+        },
+        {
+            "name": "Show feedback if the woman is registered with medicine allergy",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "DISPLAYTEXT",
+                    "location": "feedback",
+                    "content": "Medicine allergy: ",
+                    "data": "#{othermedicineallergy}",
+                    "displayContent": "Medicine allergy: ",
+                    "id": "yRqMFO2T3eb"
+                }
+            ],
+            "condition": "#{othermedicineallergyexists} == 'Yes'",
+            "displayName": "Show feedback if the woman is registered with medicine allergy",
+            "id": "OfWLsxH5ylF"
+        },
+        {
+            "name": "Show feedback if woman is registered with penicillin allergy",
+            "programRuleActions": [
+                {
+                    "programRuleActionType": "DISPLAYTEXT",
+                    "location": "feedback",
+                    "content": "Penicillin allergy",
+                    "displayContent": "Penicillin allergy",
+                    "id": "jlchLk7spuu"
+                }
+            ],
+            "condition": "#{penicillinAllergy} == 'Yes'",
+            "displayName": "Show feedback if woman is registered with penicillin allergy",
+            "id": "atg8LQkfZpd"
+        }
+    ]
+}

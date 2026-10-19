@@ -1,0 +1,114 @@
+{
+    "$schema": "https://ui.shadcn.com/schema/registry.json",
+    "items": [
+        {
+            "name": "program-rules",
+            "type": "registry:lib",
+            "title": "DHIS2 program rules",
+            "description": "Pure DHIS2 program rules: metadata to a @dhis2/rule-engine context, attributed effects for an event, and a dependency graph. No React.",
+            "dependencies": [
+                "@dhis2/rule-engine@3.8.6",
+                "better-result@^3.0.1"
+            ],
+            "files": [
+                {
+                    "path": "src/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/index.ts"
+                },
+                {
+                    "path": "src/lib/buildContext.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/buildContext.ts"
+                },
+                {
+                    "path": "src/lib/buildInput.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/buildInput.ts"
+                },
+                {
+                    "path": "src/lib/dependencyGraph.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/dependencyGraph.ts"
+                },
+                {
+                    "path": "src/lib/evaluate.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/evaluate.ts"
+                },
+                {
+                    "path": "src/lib/scanExpression.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/scanExpression.ts"
+                },
+                {
+                    "path": "src/lib/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/types.ts"
+                },
+                {
+                    "path": "src/lib/valueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/valueTypes.ts"
+                }
+            ]
+        },
+        {
+            "name": "use-program-rules",
+            "type": "registry:hook",
+            "title": "useProgramRules",
+            "description": "React hook that fetches DHIS2 program rule metadata with React Query, lazy-loads the rule engine and memoises rule effects for an event.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/rule-engine@3.8.6",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "react@^18.3.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/program-rules"],
+            "files": [
+                {
+                    "path": "src/use-program-rules.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/use-program-rules.ts"
+                },
+                {
+                    "path": "src/hooks/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/client.ts"
+                },
+                {
+                    "path": "src/hooks/enrollment.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/enrollment.ts"
+                },
+                {
+                    "path": "src/hooks/inputKey.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/inputKey.ts"
+                },
+                {
+                    "path": "src/hooks/loadRuleEngine.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/loadRuleEngine.ts"
+                },
+                {
+                    "path": "src/hooks/metadata.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/metadata.ts"
+                },
+                {
+                    "path": "src/hooks/queryKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/queryKeys.ts"
+                },
+                {
+                    "path": "src/hooks/useProgramRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRules.ts"
+                }
+            ]
+        }
+    ]
+}

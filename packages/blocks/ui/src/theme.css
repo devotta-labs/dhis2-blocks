@@ -5,7 +5,9 @@
  * shadcn primitives use (bg-dhis2-primary, border-dhis2-input,
  * ring-dhis2-ring, …), rounded-dhis2-*, shadow-dhis2-*, font-dhis2 and
  * --dhis2-field-height-dense. white and black are Tailwind's own.
- * Keep in sync with the working-list registry item's cssVars.
+ * registry.json's dhis2-theme item is generated from this block: after editing
+ * it, run `pnpm --filter @dhis2-blocks/ui registry:write` (the registry
+ * equality test fails until you do).
  */
 @theme {
     --color-dhis2-grey-050: #fbfcfd;

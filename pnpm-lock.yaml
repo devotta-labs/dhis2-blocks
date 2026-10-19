@@ -22,6 +22,9 @@ importers:
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
       knip:
         specifier: 6.32.2
         version: 6.32.2

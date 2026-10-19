@@ -239,20 +239,22 @@ import {
     EventFormSections,
 } from '@/components/event-form'
 
-;<EventForm
-    programId="WSGAb5XwJ3Y"
-    programStageId="WZbXY0S00lP"
-    enrollmentId={enrollmentId}
-    orgUnitId={orgUnitId}
-    onSaved={({ eventId, outcome }) => navigate(`/events/${eventId}`)}
-    onCancel={() => navigate(-1)}
->
-    <EventFormDetails />
-    <EventFormFeedback />
-    <EventFormSections />
-    <EventFormNotes />
-    <EventFormActions />
-</EventForm>
+export const CaptureEvent = ({ enrollmentId, orgUnitId, navigate }: Props) => (
+    <EventForm
+        programId="WSGAb5XwJ3Y"
+        programStageId="WZbXY0S00lP"
+        enrollmentId={enrollmentId}
+        orgUnitId={orgUnitId}
+        onSaved={({ eventId, outcome }) => navigate(`/events/${eventId}`)}
+        onCancel={() => navigate(-1)}
+    >
+        <EventFormDetails />
+        <EventFormFeedback />
+        <EventFormSections />
+        <EventFormNotes />
+        <EventFormActions />
+    </EventForm>
+)
 ```
 
 | Prop              | Type                                                          | Notes                                                                    |
@@ -286,12 +288,28 @@ type EventWriter = (
 ) => Promise<Result<{ outcome: 'saved' | 'queued' }, SaveError>>
 ```
 
-The payload is plain JSON (`{ events: [...] }`) and `Result` is
-[`better-result`](https://github.com/dmmulroy/better-result). `saved` means the
-server has the event; `queued` means the writer stored it to send later (for
-example in an offline outbox), so the event is not on the server yet and the
-host should say so. A failure is a `SaveError`: `validation` (with the server's
-`fieldErrors` keyed by data element and `formErrors`), `network` or `unknown`.
+The payload is plain JSON, `{ events: [event] }` with exactly one event, and
+`Result` is [`better-result`](https://github.com/dmmulroy/better-result). An
+`EventPayload` event has these fields:
+
+| Field                     | Type                                               | Notes                                          |
+| ------------------------- | -------------------------------------------------- | ---------------------------------------------- |
+| `event`                   | `string`                                           | Client-generated UID.                          |
+| `program`, `programStage` | `string`                                           |                                                |
+| `enrollment`              | `string`                                           |                                                |
+| `trackedEntity`           | `string`                                           | Only when the `trackedEntityId` prop is given. |
+| `orgUnit`                 | `string`                                           | Omitted when none is set.                      |
+| `status`                  | `EventStatus`                                      | `COMPLETED` when completing.                   |
+| `occurredAt`              | `string`                                           | `yyyy-MM-dd`; omitted when none is set.        |
+| `geometry`                | `{ type: 'Point'; coordinates: [number, number] }` | Only for a stage that captures a point.        |
+| `dataValues`              | `{ dataElement: string; value: string \| null }[]` | `null` clears a value on an edit.              |
+| `notes`                   | `{ value: string }[]`                              | The new note, if one was typed.                |
+
+`saved` means the server has the event; `queued` means the writer stored it to
+send later (for example in an offline outbox), so the event is not on the
+server yet and the host should say so. A failure is a `SaveError`:
+`validation` (with the server's `fieldErrors` keyed by data element and
+`formErrors`), `network` or `unknown`.
 
 The `writer` prop is scoped to that form: it never becomes the QueryClient's
 default. Without it the form uses the online writer, which posts to `/tracker`
@@ -306,9 +324,42 @@ import { registerEventFormMutations } from '@/components/event-form'
 registerEventFormMutations(queryClient, myWriter)
 ```
 
-`createOnlineEventWriter` and `eventFormMutationKeys` are exported as well.
-`EventFormTextProvider` replaces the
-`@dhis2/d2-i18n` translation with your own `translate(message, values)`.
+The online writer is exported, so a host can wrap it. `useEventFormClient()`
+returns the client over the app-runtime data engine, and
+`createOnlineEventWriter(client)` builds the writer from it. (`createEventFormClient(engine)`
+builds a client from any engine with the `DataEngineLike` shape.) An outbox-style
+writer tries online first and queues on a network failure:
+
+```tsx
+import {
+    createOnlineEventWriter,
+    useEventFormClient,
+    type EventPayload,
+    type EventWriter,
+} from '@/components/event-form'
+import { Result } from 'better-result'
+import { useMemo } from 'react'
+
+const useOutboxWriter = (outbox: { add(payload: EventPayload): void }) => {
+    const client = useEventFormClient()
+    return useMemo<EventWriter>(() => {
+        const online = createOnlineEventWriter(client)
+        return async (payload) => {
+            const result = await online(payload)
+            if (result.isErr() && result.error.kind === 'network') {
+                outbox.add(payload)
+                return Result.ok({ outcome: 'queued' })
+            }
+            return result
+        }
+    }, [client, outbox])
+}
+```
+
+Pass the result as the `writer` prop, or register it with
+`registerEventFormMutations(queryClient, writer)`. `eventFormMutationKeys` is
+exported too. `EventFormTextProvider` replaces the `@dhis2/d2-i18n` translation
+with your own `translate(message, values)`.
 
 ### Program rules
 
@@ -316,7 +367,9 @@ Rule effects are an overlay on the answers: a rule that assigns or clears a
 value changes what the form shows and what is saved, never the stored answers,
 so opening an existing event never makes it dirty and the overlay lifts when
 the rule stops applying. Save sends the effective values, with cleared values
-as `null` on an edit, and a rule error blocks the save while a rule warning
+as `null` on an edit. What a rule error blocks depends on the stage's
+validation strategy: `ON_UPDATE_AND_INSERT` blocks both Save and Complete,
+`ON_COMPLETE` blocks only Complete, and `NONE` blocks neither. A rule warning
 asks before completing.
 
 ## UI primitives

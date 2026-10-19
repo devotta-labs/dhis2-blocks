@@ -31,6 +31,12 @@ export {
     useEventFormState,
 } from './ui/hooks'
 
+export {
+    createEventFormClient,
+    type DataEngineLike,
+    type EventFormClient,
+} from './api/client'
+export { useEventFormClient } from './api/runtimeClient'
 export { canUseEventForm } from './model/capability'
 export type { RuleChange, Values } from './model/overlay'
 export type { EventPayload } from './save/payload'

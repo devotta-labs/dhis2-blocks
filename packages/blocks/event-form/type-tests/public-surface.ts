@@ -3,6 +3,7 @@ import { Result } from 'better-result'
 import React from 'react'
 import {
     canUseEventForm,
+    createEventFormClient,
     createOnlineEventWriter,
     EventForm,
     EventFormActions,
@@ -17,8 +18,11 @@ import {
     eventFormMutationKeys,
     registerEventFormMutations,
     useEventFormActions,
+    useEventFormClient,
     useEventFormRules,
     useEventFormState,
+    type DataEngineLike,
+    type EventFormClient,
     type EventFormCommands,
     type EventFormProps,
     type EventFormReadOnlyReason,
@@ -141,3 +145,27 @@ export const registerWriter = (queryClient: QueryClient) => {
 export const onlineWriter: typeof createOnlineEventWriter =
     createOnlineEventWriter
 export const capability = canUseEventForm(metadata)
+// A host builds the online writer from the app-runtime data engine through the hook;
+// `createEventFormClient` takes any structural engine.
+export const hostClient = (): EventFormClient => useEventFormClient()
+export const hostWriter = (): EventWriter =>
+    createOnlineEventWriter(hostClient())
+export const engineIsStructural = (engine: DataEngineLike): EventFormClient =>
+    createEventFormClient(engine)
+// The README's outbox-style writer compiles against the public surface.
+export const useOutboxWriter = (outbox: {
+    add(payload: EventPayload): void
+}) => {
+    const client = useEventFormClient()
+    return React.useMemo<EventWriter>(() => {
+        const online = createOnlineEventWriter(client)
+        return async (payload) => {
+            const result = await online(payload)
+            if (result.isErr() && result.error.kind === 'network') {
+                outbox.add(payload)
+                return Result.ok({ outcome: 'queued' })
+            }
+            return result
+        }
+    }, [client, outbox])
+}

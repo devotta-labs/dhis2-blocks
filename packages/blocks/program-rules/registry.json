@@ -6,12 +6,20 @@
             "type": "registry:lib",
             "title": "DHIS2 program rules",
             "description": "Pure DHIS2 program rules: metadata to a @dhis2/rule-engine context, attributed effects for an event, and a dependency graph. No React.",
-            "dependencies": ["@dhis2/rule-engine@3.8.6"],
+            "dependencies": [
+                "@dhis2/rule-engine@3.8.6",
+                "better-result@^3.0.1"
+            ],
             "files": [
                 {
                     "path": "src/lib/buildContext.ts",
                     "type": "registry:lib",
                     "target": "@lib/program-rules/buildContext.ts"
+                },
+                {
+                    "path": "src/lib/buildInput.ts",
+                    "type": "registry:lib",
+                    "target": "@lib/program-rules/buildInput.ts"
                 },
                 {
                     "path": "src/lib/evaluate.ts",
@@ -32,6 +40,11 @@
                     "path": "src/lib/types.ts",
                     "type": "registry:lib",
                     "target": "@lib/program-rules/types.ts"
+                },
+                {
+                    "path": "src/lib/valueTypes.ts",
+                    "type": "registry:lib",
+                    "target": "@lib/program-rules/valueTypes.ts"
                 }
             ]
         },

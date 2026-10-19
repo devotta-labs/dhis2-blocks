@@ -213,6 +213,112 @@ metadata and composes each package-owned registry manifest through shadcn's
 `include` mechanism. Paths declared by a package manifest are relative to that
 package.
 
+## Event Form block
+
+The Event Form creates or edits one tracker event of a program stage, with the
+program's rules applied. It is a source-installed registry block like the
+others, and it pulls in the shared UI primitives, the `dhis2-theme` item and
+`use-program-rules` (which brings the program-rules lib). Install it in a
+project with Tailwind CSS enabled and a valid shadcn `components.json`:
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/event-form
+```
+
+Render it beneath the DHIS2 app-runtime provider and a TanStack Query
+`QueryClientProvider`. The parts go in `children`, so the host lays the form
+out, and the host owns navigation: the block never routes.
+
+```tsx
+import {
+    EventForm,
+    EventFormActions,
+    EventFormDetails,
+    EventFormFeedback,
+    EventFormNotes,
+    EventFormSections,
+} from '@/components/event-form'
+
+;<EventForm
+    programId="WSGAb5XwJ3Y"
+    programStageId="WZbXY0S00lP"
+    enrollmentId={enrollmentId}
+    orgUnitId={orgUnitId}
+    onSaved={({ eventId, outcome }) => navigate(`/events/${eventId}`)}
+    onCancel={() => navigate(-1)}
+>
+    <EventFormDetails />
+    <EventFormFeedback />
+    <EventFormSections />
+    <EventFormNotes />
+    <EventFormActions />
+</EventForm>
+```
+
+| Prop              | Type                                                          | Notes                                                                    |
+| ----------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `programId`       | `string`                                                      | Required.                                                                |
+| `programStageId`  | `string`                                                      | Required. The stage whose data elements and sections the form shows.     |
+| `enrollmentId`    | `string`                                                      | Required. The enrollment a new event belongs to.                         |
+| `orgUnitId`       | `string`                                                      | Required. The org unit of a new event; an existing event keeps its own.  |
+| `eventId`         | `string`                                                      | Omit to create a new event; the block generates its UID on the client.   |
+| `trackedEntityId` | `string`                                                      | Sent with the event when given.                                          |
+| `writer`          | `EventWriter`                                                 | Saves this form's event. See the writer contract below.                  |
+| `onSaved`         | `(result: { eventId; outcome: 'saved' \| 'queued' }) => void` | Required. Called after a successful save or complete.                    |
+| `onCancel`        | `() => void`                                                  | Required. Called on Cancel, after asking when there are unsaved changes. |
+| `children`        | `ReactNode`                                                   | Required. The form parts.                                                |
+| `className`       | `string`                                                      | Class for the loading and error states.                                  |
+
+Parts: `EventFormDetails` (report date, organisation unit and, for a stage that
+captures a point, the coordinate), `EventFormSectionNav`, `EventFormSections`
+(or `EventFormSection id` and `EventFormField id` to lay out sections and
+questions yourself), `EventFormNotes`, `EventFormFeedback` (rule texts that
+belong to no question) and `EventFormActions` (Save, Complete and Cancel). Read
+the form with `useEventFormState()`, drive it with `useEventFormActions()`
+(`save`, `complete`, `cancel`, `reset`) and ask why a value changed with
+`useEventFormRules()`.
+
+### Writer contract
+
+```ts
+type EventWriter = (
+    payload: EventPayload
+) => Promise<Result<{ outcome: 'saved' | 'queued' }, SaveError>>
+```
+
+The payload is plain JSON (`{ events: [...] }`) and `Result` is
+[`better-result`](https://github.com/dmmulroy/better-result). `saved` means the
+server has the event; `queued` means the writer stored it to send later (for
+example in an offline outbox), so the event is not on the server yet and the
+host should say so. A failure is a `SaveError`: `validation` (with the server's
+`fieldErrors` keyed by data element and `formErrors`), `network` or `unknown`.
+
+The `writer` prop is scoped to that form: it never becomes the QueryClient's
+default. Without it the form uses the online writer, which posts to `/tracker`
+with `importStrategy=CREATE_AND_UPDATE` and `atomicMode=OBJECT`, waits for the
+import report and only reports `saved` when the event was imported. A host can
+instead register one default writer for every form, so a persisted mutation
+resumes after a reload:
+
+```ts
+import { registerEventFormMutations } from '@/components/event-form'
+
+registerEventFormMutations(queryClient, myWriter)
+```
+
+`createOnlineEventWriter` and `eventFormMutationKeys` are exported as well.
+`EventFormTextProvider` replaces the
+`@dhis2/d2-i18n` translation with your own `translate(message, values)`.
+
+### Program rules
+
+Rule effects are an overlay on the answers: a rule that assigns or clears a
+value changes what the form shows and what is saved, never the stored answers,
+so opening an existing event never makes it dirty and the overlay lifts when
+the rule stops applying. Save sends the effective values, with cleared values
+as `null` on an edit, and a rule error blocks the save while a rule warning
+asks before completing.
+
 ## UI primitives
 
 The shared DHIS2-styled shadcn primitives live in `packages/blocks/ui` and are

@@ -53,6 +53,7 @@
                 "d2.config.js",
                 "src/AppWrapper.tsx",
                 "src/workingListTranslationCatalog.ts",
+                "src/eventFormTranslationCatalog.ts",
                 "src/**/*.{test,spec}.{ts,tsx}",
                 "src/**/__tests__/**/*.{ts,tsx}"
             ],
@@ -76,6 +77,14 @@
                     "namespaceMembers"
                 ],
                 "src/workingListTranslationCatalog.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "src/eventFormTranslationCatalog.ts": [
                     "exports",
                     "types",
                     "nsExports",

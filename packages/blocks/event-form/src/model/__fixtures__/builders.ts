@@ -1,4 +1,7 @@
-import type { Attribution, RuleEffects } from '@/registry/program-rules/index'
+import type {
+    Attribution,
+    RuleEffects,
+} from '@/registry/program-rules/use-program-rules'
 import {
     DEFAULT_SECTION_ID,
     type DataElementMeta,

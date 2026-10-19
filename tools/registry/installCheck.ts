@@ -20,6 +20,11 @@ const REPO_ROOT = join(import.meta.dirname, '..', '..')
 const CONSUMER_TEMPLATE = join(import.meta.dirname, 'consumer')
 const UI_TARGET_PREFIX = '@components/dhis2/ui/'
 const UI_INSTALL_DIR = join('src', 'components', 'dhis2', 'ui')
+// Files a shadcn-initialised host owns. The install must leave them alone.
+const HOST_SENTINELS = [
+    join('src', 'components', 'ui', 'button.tsx'),
+    join('src', 'lib', 'utils.ts'),
+]
 const GITHUB_ADDRESS = /devotta-labs\/dhis2-blocks\/([a-z0-9-]+)/g
 
 class AssertionError extends Error {}
@@ -164,16 +169,18 @@ const assertUtilityValue = (
     }
 }
 
-const FORBIDDEN_CSS: [string, RegExp][] = [
-    ['--color-*: initial', /--color-\*\s*:\s*initial/g],
-    [
-        'un-namespaced palette token',
-        /--color-(?:grey|blue|teal|red|yellow|green)-\d{3}\s*:/g,
-    ],
-    ['un-namespaced --color-primary', /--color-primary\s*:/g],
-    ['un-namespaced --radius-*', /--radius-(?:sm|md|lg)\s*:/g],
-    ['un-namespaced --shadow-*', /--shadow-(?:popover|card)\s*:/g],
-]
+// A stylesheet as comparable entries: every custom-property declaration and
+// every at-rule statement (`@import`, `@source`, `@apply`, …), whitespace
+// normalised, so reformatting does not read as a change.
+const cssEntries = (css: string): string[] =>
+    [...css.matchAll(/(--[\w*-]+\s*:[^;}]+|@[a-z-]+[^;{}]*;)/g)].map((match) =>
+        match[1]
+            .replace(/\s+/g, ' ')
+            .replace(/\s*:\s*/, ': ')
+            .replace(/;$/, '')
+            .replace(/"/g, "'")
+            .trim()
+    )
 
 const checkInstall = async (workDirectory: string): Promise<void> => {
     const registryOutput = join(workDirectory, 'r')
@@ -189,6 +196,9 @@ const checkInstall = async (workDirectory: string): Promise<void> => {
     if (built.length === 0) {
         fail(1, 'shadcn build produced no item JSON')
     }
+
+    const hostSentinels: { file: string; content: Buffer }[] = []
+    let hostCss = ''
 
     step('2. Serve the built registry over HTTP')
     const server = serveDirectory(registryOutput)
@@ -211,6 +221,13 @@ const checkInstall = async (workDirectory: string): Promise<void> => {
 
         step('3. Install the items into a throwaway consumer app')
         cpSync(CONSUMER_TEMPLATE, appDirectory, { recursive: true })
+        hostSentinels.push(
+            ...HOST_SENTINELS.map((file) => ({
+                file,
+                content: readFileSync(join(appDirectory, file)),
+            }))
+        )
+        hostCss = readFileSync(join(appDirectory, 'src', 'index.css'), 'utf8')
         await run('pnpm', ['install', '--no-frozen-lockfile'], appDirectory)
         await run(
             'pnpm',
@@ -219,6 +236,7 @@ const checkInstall = async (workDirectory: string): Promise<void> => {
                 SHADCN,
                 'add',
                 `${origin}/working-list.json`,
+                `${origin}/event-form.json`,
                 `${origin}/context-selector.json`,
                 `${origin}/program-rules.json`,
                 `${origin}/use-program-rules.json`,
@@ -230,11 +248,25 @@ const checkInstall = async (workDirectory: string): Promise<void> => {
         server.close()
     }
 
-    step('4. No files land in components/ui')
-    if (existsSync(join(appDirectory, 'src', 'components', 'ui'))) {
+    step('4. The shadcn host keeps its own components/ui and lib/utils.ts')
+    for (const { file, content } of hostSentinels) {
+        const installed = join(appDirectory, file)
+        if (
+            !existsSync(installed) ||
+            !content.equals(readFileSync(installed))
+        ) {
+            fail(4, `${file} is not byte-identical to the host's own copy`)
+        }
+    }
+    const uiOwnFiles = listFiles(join(appDirectory, 'src', 'components', 'ui'))
+        .map((file) =>
+            relative(join(appDirectory, 'src', 'components', 'ui'), file)
+        )
+        .filter((file) => file !== 'button.tsx')
+    if (uiOwnFiles.length > 0) {
         fail(
             4,
-            'src/components/ui exists; primitives must install to src/components/dhis2/ui'
+            `src/components/ui gained ${uiOwnFiles.join(', ')}; primitives must install to src/components/dhis2/ui`
         )
     }
 
@@ -256,15 +288,21 @@ const checkInstall = async (workDirectory: string): Promise<void> => {
         fail(5, `unlisted files in ${UI_INSTALL_DIR}: ${strays.join(', ')}`)
     }
 
-    step('6. index.css carries only namespaced DHIS2 tokens')
+    step('6. index.css keeps the host CSS and only adds dhis2-named lines')
     const css = readFileSync(join(appDirectory, 'src', 'index.css'), 'utf8')
-    const violations = FORBIDDEN_CSS.flatMap(([label, pattern]) =>
-        [...css.matchAll(pattern)].map((match) => `${label}: ${match[0]}`)
+    const removed = cssEntries(hostCss).filter(
+        (entry) => !cssEntries(css).includes(entry)
     )
-    if (violations.length > 0) {
+    if (removed.length > 0) {
+        fail(6, `src/index.css lost host CSS:\n  ${removed.join('\n  ')}`)
+    }
+    const added = cssEntries(css).filter(
+        (entry) => !cssEntries(hostCss).includes(entry) && !/dhis2/.test(entry)
+    )
+    if (added.length > 0) {
         fail(
             6,
-            `src/index.css has ${violations.length} forbidden declaration(s):\n  ${violations.join('\n  ')}`
+            `src/index.css gained ${added.length} line(s) that are not dhis2-named:\n  ${added.join('\n  ')}`
         )
     }
 
@@ -282,7 +320,20 @@ const checkInstall = async (workDirectory: string): Promise<void> => {
     step('8. tsc --noEmit')
     await run('pnpm', ['exec', 'tsc', '--noEmit'], appDirectory)
 
-    step('9. vite build keeps Tailwind defaults and DHIS2 tokens')
+    step('9. vite build keeps the host and Tailwind tokens and adds DHIS2 ones')
+    // The host's own `--radius-sm` (from shadcn's init CSS) must win over
+    // Tailwind's default, and the DHIS2 token must be declared next to it.
+    const hostRadius = declarationValues(hostCss, '--radius-sm')
+    if (hostRadius.length !== 1) {
+        throw new Error('The consumer template must declare --radius-sm once')
+    }
+    if (
+        !declarationValues(css, '--color-dhis2-primary')
+            .map(normalizeCssValue)
+            .includes('#1565c0')
+    ) {
+        fail(9, 'src/index.css does not declare --color-dhis2-primary: #1565c0')
+    }
     await run('pnpm', ['exec', 'vite', 'build'], appDirectory)
     const assets = join(appDirectory, 'dist', 'assets')
     const emitted = readdirSync(assets)
@@ -295,15 +346,9 @@ const checkInstall = async (workDirectory: string): Promise<void> => {
         '--color-blue-500',
         themeDefault(appDirectory, '--color-blue-500')
     )
-    assertUtilityValue(
-        emitted,
-        'rounded-sm',
-        '--radius-sm',
-        themeDefault(appDirectory, '--radius-sm')
-    )
-    // Tailwind emits only the utilities the installed source uses, and the
-    // installed `@theme inline` block resolves the token to its value, so check
-    // a DHIS2 utility that the installed primitives really use.
+    assertUtilityValue(emitted, 'rounded-sm', '--radius-sm', hostRadius[0])
+    // The host itself uses `text-dhis2-primary`, so this holds whatever the
+    // installed items use.
     assertUtilityValue(
         emitted,
         'text-dhis2-primary',

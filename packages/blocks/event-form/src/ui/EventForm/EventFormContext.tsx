@@ -5,8 +5,8 @@ import type {
     RuleMessage,
     RuleDependencyGraph,
     RuleEffects,
-} from '@/registry/program-rules/index'
-import type { ProgramRulesStatus } from '@/registry/program-rules/use-program-rules'
+    ProgramRulesStatus,
+} from '@/registry/program-rules/use-program-rules'
 import type { SystemCalendar, TrackerEvent } from '../../api/schemas'
 import type {
     FieldModel,

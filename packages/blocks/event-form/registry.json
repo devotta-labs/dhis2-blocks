@@ -8,12 +8,31 @@
             "description": "Create and edit a tracker event for one program stage, with program rules applied.",
             "dependencies": [
                 "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@2.1.2",
+                "@dhis2/ui@^10.17.0",
                 "@tanstack/react-query@^5.101.4",
                 "better-result@^3.0.1",
                 "zod@^4.4.3",
                 "zustand@^5.0.15"
             ],
             "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/alert-dialog",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/card",
+                "devotta-labs/dhis2-blocks/checkbox",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/combobox",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/field",
+                "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/popover",
+                "devotta-labs/dhis2-blocks/radio-group",
+                "devotta-labs/dhis2-blocks/select",
+                "devotta-labs/dhis2-blocks/spinner",
+                "devotta-labs/dhis2-blocks/textarea",
+                "devotta-labs/dhis2-blocks/toggle-group",
                 "devotta-labs/dhis2-blocks/use-program-rules"
             ],
             "files": [
@@ -41,6 +60,266 @@
                     "path": "src/api/schemas.ts",
                     "type": "registry:file",
                     "target": "@components/event-form/api/schemas.ts"
+                },
+                {
+                    "path": "src/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/index.ts"
+                },
+                {
+                    "path": "src/model/buildFormModel.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/model/buildFormModel.ts"
+                },
+                {
+                    "path": "src/model/capability.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/model/capability.ts"
+                },
+                {
+                    "path": "src/model/overlay.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/model/overlay.ts"
+                },
+                {
+                    "path": "src/model/validate.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/model/validate.ts"
+                },
+                {
+                    "path": "src/model/valueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/model/valueTypes.ts"
+                },
+                {
+                    "path": "src/save/importReport.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/save/importReport.ts"
+                },
+                {
+                    "path": "src/save/payload.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/save/payload.ts"
+                },
+                {
+                    "path": "src/save/uid.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/save/uid.ts"
+                },
+                {
+                    "path": "src/save/useSaveEvent.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/save/useSaveEvent.ts"
+                },
+                {
+                    "path": "src/save/writer.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/save/writer.ts"
+                },
+                {
+                    "path": "src/state/store.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/state/store.ts"
+                },
+                {
+                    "path": "src/ui/EventForm/EventForm.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventForm/EventForm.tsx"
+                },
+                {
+                    "path": "src/ui/EventForm/EventFormContext.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventForm/EventFormContext.tsx"
+                },
+                {
+                    "path": "src/ui/EventForm/EventFormProvider.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventForm/EventFormProvider.tsx"
+                },
+                {
+                    "path": "src/ui/EventForm/initialState.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventForm/initialState.ts"
+                },
+                {
+                    "path": "src/ui/EventForm/useEventFormModel.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventForm/useEventFormModel.ts"
+                },
+                {
+                    "path": "src/ui/EventForm/useEventFormSave.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventForm/useEventFormSave.ts"
+                },
+                {
+                    "path": "src/ui/EventFormActions.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormActions.tsx"
+                },
+                {
+                    "path": "src/ui/EventFormDetails.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormDetails.tsx"
+                },
+                {
+                    "path": "src/ui/EventFormDialogs.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormDialogs.tsx"
+                },
+                {
+                    "path": "src/ui/EventFormFeedback.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormFeedback.tsx"
+                },
+                {
+                    "path": "src/ui/EventFormField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormField.tsx"
+                },
+                {
+                    "path": "src/ui/EventFormNotes.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormNotes.tsx"
+                },
+                {
+                    "path": "src/ui/EventFormRuleNotice.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormRuleNotice.tsx"
+                },
+                {
+                    "path": "src/ui/EventFormSection.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormSection.tsx"
+                },
+                {
+                    "path": "src/ui/EventFormSectionNav.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormSectionNav.tsx"
+                },
+                {
+                    "path": "src/ui/EventFormSections.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormSections.tsx"
+                },
+                {
+                    "path": "src/ui/EventFormStatusNotice.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormStatusNotice.tsx"
+                },
+                {
+                    "path": "src/ui/EventFormText/EventFormText.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormText/EventFormText.tsx"
+                },
+                {
+                    "path": "src/ui/EventFormText/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormText/index.ts"
+                },
+                {
+                    "path": "src/ui/fields/AgeField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/AgeField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/CalendarInputBoundary.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/CalendarInputBoundary.tsx"
+                },
+                {
+                    "path": "src/ui/fields/ChoiceField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/ChoiceField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/ClearValueButton.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/ClearValueButton.tsx"
+                },
+                {
+                    "path": "src/ui/fields/CoordinateField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/CoordinateField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/DateField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/DateField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/DateTimeField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/DateTimeField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/FieldShell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/FieldShell.tsx"
+                },
+                {
+                    "path": "src/ui/fields/LongTextField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/LongTextField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/MultiSelectField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/MultiSelectField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/NumberField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/NumberField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/OrgUnitField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/OrgUnitField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/SelectField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/SelectField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/TextField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/TextField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/TimeField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/TimeField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/TrueOnlyField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/TrueOnlyField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/UnsupportedField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/UnsupportedField.tsx"
+                },
+                {
+                    "path": "src/ui/fields/calendar.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/calendar.ts"
+                },
+                {
+                    "path": "src/ui/fields/choices.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/choices.ts"
+                },
+                {
+                    "path": "src/ui/fields/useTypedValue.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/fields/useTypedValue.ts"
+                },
+                {
+                    "path": "src/ui/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/hooks.ts"
                 }
             ]
         }

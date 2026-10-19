@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-16T12:06:08.651Z\n"
-"PO-Revision-Date: 2026-10-16T12:06:08.651Z\n"
+"POT-Creation-Date: 2026-10-19T21:36:04.963Z\n"
+"PO-Revision-Date: 2026-10-19T21:36:04.963Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -139,6 +139,235 @@ msgstr "Could not load more organisation units"
 msgid "Show more"
 msgstr "Show more"
 
+msgid "1 value will be changed by program rules when you save"
+msgstr "1 value will be changed by program rules when you save"
+
+msgid "About this event"
+msgstr "About this event"
+
+msgid "Calculated by a program rule"
+msgstr "Calculated by a program rule"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Clear"
+msgstr "Clear"
+
+msgid "Complete"
+msgstr "Complete"
+
+msgid "Complete anyway"
+msgstr "Complete anyway"
+
+msgid "Complete anyway?"
+msgstr "Complete anyway?"
+
+msgid "Coordinate"
+msgstr "Coordinate"
+
+msgid "Discard"
+msgstr "Discard"
+
+msgid "Discard changes?"
+msgstr "Discard changes?"
+
+msgid "Enter a date"
+msgstr "Enter a date"
+
+msgid "Enter a latitude"
+msgstr "Enter a latitude"
+
+msgid "Enter a latitude between -90 and 90"
+msgstr "Enter a latitude between -90 and 90"
+
+msgid "Enter a longitude"
+msgstr "Enter a longitude"
+
+msgid "Enter a longitude between -180 and 180"
+msgstr "Enter a longitude between -180 and 180"
+
+msgid "Enter a number"
+msgstr "Enter a number"
+
+msgid "Enter a number between 0 and 1"
+msgstr "Enter a number between 0 and 1"
+
+msgid "Enter a percentage between 0 and 100"
+msgstr "Enter a percentage between 0 and 100"
+
+msgid "Enter a single letter"
+msgstr "Enter a single letter"
+
+msgid "Enter a time"
+msgstr "Enter a time"
+
+msgid "Enter a valid coordinate"
+msgstr "Enter a valid coordinate"
+
+msgid "Enter a valid date"
+msgstr "Enter a valid date"
+
+msgid "Enter a valid date and time"
+msgstr "Enter a valid date and time"
+
+msgid "Enter a valid email address"
+msgstr "Enter a valid email address"
+
+msgid "Enter a valid phone number"
+msgstr "Enter a valid phone number"
+
+msgid "Enter a valid time"
+msgstr "Enter a valid time"
+
+msgid "Enter a valid URL"
+msgstr "Enter a valid URL"
+
+msgid "Enter a value in the required format"
+msgstr "Enter a value in the required format"
+
+msgid "Enter a whole number"
+msgstr "Enter a whole number"
+
+msgid "Enter a whole number greater than zero"
+msgstr "Enter a whole number greater than zero"
+
+msgid "Enter a whole number less than zero"
+msgstr "Enter a whole number less than zero"
+
+msgid "Enter a whole number of zero or more"
+msgstr "Enter a whole number of zero or more"
+
+msgid "Feedback"
+msgstr "Feedback"
+
+msgid "Go back"
+msgstr "Go back"
+
+msgid "Keep editing"
+msgstr "Keep editing"
+
+msgid "Latitude"
+msgstr "Latitude"
+
+msgid "Loading program rules"
+msgstr "Loading program rules"
+
+msgid "Longitude"
+msgstr "Longitude"
+
+msgid "No"
+msgstr "No"
+
+msgid "No options are available for this field"
+msgstr "No options are available for this field"
+
+msgid "No options match"
+msgstr "No options match"
+
+msgid "Notes"
+msgstr "Notes"
+
+msgid "Notes about this event"
+msgstr "Notes about this event"
+
+msgid "Only Yes can be selected"
+msgstr "Only Yes can be selected"
+
+msgid "Program rules could not be loaded, so the form cannot be edited"
+msgstr "Program rules could not be loaded, so the form cannot be edited"
+
+msgid "Program rules found problems with this event"
+msgstr "Program rules found problems with this event"
+
+msgid "Program rules have warnings for completing this event."
+msgstr "Program rules have warnings for completing this event."
+
+msgid "Remove {{label}}"
+msgstr "Remove {{label}}"
+
+msgid "Report date"
+msgstr "Report date"
+
+msgid "Rule"
+msgstr "Rule"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Sections"
+msgstr "Sections"
+
+msgid "Select a valid organisation unit"
+msgstr "Select a valid organisation unit"
+
+msgid "Select an organisation unit"
+msgstr "Select an organisation unit"
+
+msgid "Select Yes or No"
+msgstr "Select Yes or No"
+
+msgid "Show less"
+msgstr "Show less"
+
+msgid "Some answers need attention before the event can be saved."
+msgstr "Some answers need attention before the event can be saved."
+
+msgid "The changes you made to this event will be lost."
+msgstr "The changes you made to this event will be lost."
+
+msgid "The event could not be loaded"
+msgstr "The event could not be loaded"
+
+msgid "The event could not be saved"
+msgstr "The event could not be saved"
+
+msgid "The event could not be saved. Check the connection and try again."
+msgstr "The event could not be saved. Check the connection and try again."
+
+msgid "The server rejected some answers. They are marked on their questions."
+msgstr "The server rejected some answers. They are marked on their questions."
+
+msgid ""
+"This event is completed, and this stage does not allow editing completed "
+"events."
+msgstr ""
+"This event is completed, and this stage does not allow editing completed "
+"events."
+
+msgid "This event was skipped, so it cannot be edited."
+msgstr "This event was skipped, so it cannot be edited."
+
+msgid "This field is required"
+msgstr "This field is required"
+
+msgid "This program stage cannot be captured with this form"
+msgstr "This program stage cannot be captured with this form"
+
+msgid "This value type is not supported here"
+msgstr "This value type is not supported here"
+
+msgid "Value"
+msgstr "Value"
+
+msgid "Yes"
+msgstr "Yes"
+
+msgid "{{count}} values will be changed by program rules when you save"
+msgstr "{{count}} values will be changed by program rules when you save"
+
+msgid "{{label}} (time)"
+msgstr "{{label}} (time)"
+
+msgid "{{label}} will be cleared by the rule \"{{rule}}\""
+msgstr "{{label}} will be cleared by the rule \"{{rule}}\""
+
+msgid "{{label}} will be set to {{value}} by the rule \"{{rule}}\""
+msgstr "{{label}} will be set to {{value}} by the rule \"{{rule}}\""
+
+msgid "{{years}} years, {{months}} months, {{days}} days"
+msgstr "{{years}} years, {{months}} months, {{days}} days"
+
 msgid "A required value is missing"
 msgstr "A required value is missing"
 
@@ -187,9 +416,6 @@ msgstr "Available columns"
 msgid "Between"
 msgstr "Between"
 
-msgid "Cancel"
-msgstr "Cancel"
-
 msgid "Can only filter using one program stage."
 msgstr "Can only filter using one program stage."
 
@@ -220,9 +446,6 @@ msgstr ""
 "Choose which columns are visible and drag them into the order you want. "
 "Active filters are not affected."
 
-msgid "Clear"
-msgstr "Clear"
-
 msgid "Clear filter"
 msgstr "Clear filter"
 
@@ -243,9 +466,6 @@ msgstr "Pagination"
 
 msgid "Previous"
 msgstr "Previous"
-
-msgid "Remove {{label}}"
-msgstr "Remove {{label}}"
 
 msgid "{{column}} dropped."
 msgstr "{{column}} dropped."
@@ -487,9 +707,6 @@ msgstr "No users match"
 msgid "No values match"
 msgstr "No values match"
 
-msgid "No"
-msgstr "No"
-
 msgid "Not empty"
 msgstr "Not empty"
 
@@ -544,9 +761,6 @@ msgstr "Rename"
 msgid "Rename working list"
 msgstr "Rename working list"
 
-msgid "Report date"
-msgstr "Report date"
-
 msgid "Repair"
 msgstr "Repair"
 
@@ -567,9 +781,6 @@ msgstr "Row actions"
 
 msgid "Row has {{count}} data quality issues"
 msgstr "Row has {{count}} data quality issues"
-
-msgid "Save"
-msgstr "Save"
 
 msgid "Save changes to this view"
 msgstr "Save changes to this view"
@@ -744,9 +955,6 @@ msgstr "URL contains an invalid HTTP(S) URL"
 msgid "Users"
 msgstr "Users"
 
-msgid "Value"
-msgstr "Value"
-
 msgid "Values"
 msgstr "Values"
 
@@ -773,9 +981,6 @@ msgstr "Working lists require DHIS2 41 or newer."
 
 msgid "Working lists require a tracker program with registration."
 msgstr "Working lists require a tracker program with registration."
-
-msgid "Yes"
-msgstr "Yes"
 
 msgid "{{count}} selected"
 msgstr "{{count}} selected"

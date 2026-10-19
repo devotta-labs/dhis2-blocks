@@ -2,7 +2,7 @@ import type {
     Attribution,
     RuleEffects,
     RuleMessage,
-} from '@/registry/program-rules/index'
+} from '@/registry/program-rules/use-program-rules'
 import type { DataElementMeta, StageMetadata } from '../api/schemas'
 import type { Values } from './overlay'
 import {

@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { ContextSelector } from '@/components/context-selector'
+import { EventForm } from '@/components/event-form'
 import { WorkingList } from '@/components/working-list'
 import { Host } from './host'
 import { evaluate, useRules } from './rules'
@@ -16,6 +17,16 @@ if (root !== null) {
             <WorkingList programId="program" orgUnitId="orgUnit">
                 {null}
             </WorkingList>
+            <EventForm
+                programId="program"
+                programStageId="stage"
+                enrollmentId="enrollment"
+                orgUnitId="orgUnit"
+                onSaved={() => undefined}
+                onCancel={() => undefined}
+            >
+                {null}
+            </EventForm>
         </>
     )
 }

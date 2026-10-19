@@ -1,4 +1,4 @@
-import type { RuleMessage } from '@/registry/program-rules/index'
+import type { RuleMessage } from '@/registry/program-rules/use-program-rules'
 import type { StageMetadata } from '../api/schemas'
 import type { FormModel } from './buildFormModel'
 

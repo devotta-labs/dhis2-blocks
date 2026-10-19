@@ -19,13 +19,14 @@ npx shadcn@latest add devotta-labs/dhis2-blocks/use-program-rules   # pulls prog
 ## In this repo
 
 The lib's entry is `src/index.ts` (internals in `src/lib/`); the hook's entry is `src/use-program-rules.ts`
-(internals in `src/hooks/`). Files target `@components/program-rules/<path under src>`. Other blocks import
-them with specifiers the shadcn installer rewrites to the installed files:
+(internals in `src/hooks/`). Files target `@components/program-rules/<path under src>`. The shadcn installer
+rewrites a registry import (`@/registry/...`) to the installed file by file name, so another block must import
+program rules with a specifier whose file name is unique among the installed items:
 
-| Specifier                                    | Resolves to (repo)                                       |
-| -------------------------------------------- | -------------------------------------------------------- |
-| `@/registry/program-rules/index`             | `packages/blocks/program-rules/src/index.ts`             |
-| `@/registry/program-rules/use-program-rules` | `packages/blocks/program-rules/src/use-program-rules.ts` |
+| Specifier                                    | Resolves to (repo)                                       | Use from another block                                                  |
+| -------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `@/registry/program-rules/use-program-rules` | `packages/blocks/program-rules/src/use-program-rules.ts` | Yes. It also re-exports the lib types a hook consumer reads.            |
+| `@/registry/program-rules/index`             | `packages/blocks/program-rules/src/index.ts`             | No. Every item has an `index.ts`, so the installer picks the wrong one. |
 
 A consuming package maps `@/registry/program-rules/*` to `packages/blocks/program-rules/src/*` with a
 TypeScript `paths` entry and a Vite/Vitest `resolve.alias`. Inside this package imports are relative.

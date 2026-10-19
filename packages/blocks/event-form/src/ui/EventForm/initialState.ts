@@ -1,4 +1,4 @@
-import type { RuleEventInput } from '@/registry/program-rules/index'
+import type { RuleEventInput } from '@/registry/program-rules/use-program-rules'
 import type { TrackerEvent } from '../../api/schemas'
 import type { Values } from '../../model/overlay'
 import type {

@@ -1,4 +1,7 @@
-import type { Attribution, RuleEffects } from '@/registry/program-rules/index'
+import type {
+    Attribution,
+    RuleEffects,
+} from '@/registry/program-rules/use-program-rules'
 
 /** Field id to value, in tracker API format. Empty values are absent, never ''. */
 export type Values = Readonly<Record<string, string>>

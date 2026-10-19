@@ -108,6 +108,85 @@ describe('online event writer', () => {
         })
     })
 
+    it('treats a 200 with status OK but error reports as a validation failure', async () => {
+        const { write } = writerFor(async () => ({
+            status: 'OK',
+            stats: { created: 0, updated: 0, deleted: 0, ignored: 1, total: 1 },
+            validationReport: {
+                errorReports: [
+                    {
+                        message: 'Value OLD_CODE is not a valid option',
+                        args: ['de0FEHSIoxh'],
+                        uid: 'Evahwp3zrQ4',
+                    },
+                    { message: 'about the event', uid: 'Evahwp3zrQ4' },
+                ],
+            },
+        }))
+        const result = await write(payload)
+        expect(result.isErr() && result.error).toEqual({
+            kind: 'validation',
+            fieldErrors: {
+                de0FEHSIoxh: 'Value OLD_CODE is not a valid option',
+            },
+            formErrors: ['about the event'],
+        })
+    })
+
+    it('finds the report of a 200 under response', async () => {
+        const { write } = writerFor(async () => ({
+            httpStatus: 'OK',
+            response: {
+                status: 'WARNING',
+                validationReport: {
+                    errorReports: [
+                        { message: 'nested', args: ['de0FEHSIoxh'] },
+                    ],
+                },
+            },
+        }))
+        const result = await write(payload)
+        expect(result.isErr() && result.error).toMatchObject({
+            kind: 'validation',
+            fieldErrors: { de0FEHSIoxh: 'nested' },
+        })
+    })
+
+    it('treats a 200 with status ERROR and no validation report as unknown', async () => {
+        const { write } = writerFor(async () => ({
+            status: 'ERROR',
+            message: 'Import blew up',
+            stats: { created: 0, updated: 0, deleted: 0, ignored: 0, total: 0 },
+        }))
+        const result = await write(payload)
+        expect(result.isErr() && result.error).toEqual({
+            kind: 'unknown',
+            message: 'Import blew up',
+        })
+    })
+
+    it('treats a 200 with an ignored event and no reports as unknown', async () => {
+        const { write } = writerFor(async () => ({
+            status: 'OK',
+            stats: { created: 0, updated: 0, deleted: 0, ignored: 1, total: 1 },
+        }))
+        const result = await write(payload)
+        expect(result.isErr() && result.error).toEqual({
+            kind: 'unknown',
+            message: expect.stringContaining('1 ignored'),
+        })
+    })
+
+    it('treats a 200 with a warning and nothing ignored as saved', async () => {
+        const { write } = writerFor(async () => ({
+            status: 'WARNING',
+            stats: { created: 1, updated: 0, deleted: 0, ignored: 0, total: 1 },
+            validationReport: { errorReports: [], warningReports: [{}] },
+        }))
+        const result = await write(payload)
+        expect(result).toEqual(Result.ok({ outcome: 'saved' }))
+    })
+
     it('maps a 409 with an errorReport naming a data element to a field error', async () => {
         const { write } = writerFor(
             rejecting(

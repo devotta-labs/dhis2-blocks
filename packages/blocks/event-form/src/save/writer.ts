@@ -1,7 +1,11 @@
 import { Result } from 'better-result'
 import { z } from 'zod'
 import type { EventFormApiError, EventFormClient } from '../api/client'
-import { mapImportReport, parseImportReport } from './importReport'
+import {
+    mapImportReport,
+    parseImportReport,
+    parseImportResponse,
+} from './importReport'
 import type { EventPayload } from './payload'
 
 export type SaveError =
@@ -77,7 +81,7 @@ const toSaveError = (
     return { kind: 'unknown', message: serverMessage }
 }
 
-/** Posts the event to `/tracker` and waits for the import report. A 200 whose report is an ERROR is a failure too. */
+/** Posts the event to `/tracker` and waits for the import report. A 200 is only `saved` when the import report shows the event was imported. */
 export const createOnlineEventWriter =
     (client: EventFormClient): EventWriter =>
     async (payload) => {
@@ -91,16 +95,25 @@ export const createOnlineEventWriter =
         if (result.isErr()) {
             return Result.err(toSaveError(result.error, dataElementIds))
         }
-        const report = parseImportReport(z.json().safeParse(result.value).data)
-        if (report?.status === 'ERROR') {
+        // With atomicMode=OBJECT a 200 can still mean the event was rejected.
+        const report = parseImportResponse(
+            z.json().safeParse(result.value).data
+        )
+        const errorReports = report?.validationReport?.errorReports ?? []
+        if (report !== undefined && errorReports.length > 0) {
             const { fieldErrors, formErrors } = mapImportReport(
                 report,
                 dataElementIds
             )
+            return Result.err({ kind: 'validation', fieldErrors, formErrors })
+        }
+        const ignored = report?.stats?.ignored ?? 0
+        if (report?.status === 'ERROR' || ignored > 0) {
             return Result.err({
-                kind: 'validation',
-                fieldErrors,
-                formErrors,
+                kind: 'unknown',
+                message:
+                    report?.message ??
+                    `The server did not import the event (status ${report?.status ?? 'unknown'}, ${ignored} ignored)`,
             })
         }
         return Result.ok({ outcome: 'saved' })

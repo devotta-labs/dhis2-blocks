@@ -7,6 +7,8 @@ const ErrorReportSchema = z.looseObject({
 
 const ImportReportSchema = z.looseObject({
     status: z.string().optional(),
+    message: z.string().optional(),
+    stats: z.looseObject({ ignored: z.number().default(0) }).optional(),
     validationReport: z
         .looseObject({ errorReports: z.array(ErrorReportSchema).default([]) })
         .optional(),
@@ -34,6 +36,28 @@ export const parseImportReport = (
     return nested.success && nested.data.response.validationReport
         ? nested.data.response
         : undefined
+}
+
+/**
+ * The import report of a 200 response, wherever DHIS2 put it, even when it has no
+ * `validationReport`. The one with error reports wins, then the one with stats.
+ */
+export const parseImportResponse = (
+    body: ResponseBody | undefined
+): ImportReport | undefined => {
+    const direct = ImportReportSchema.safeParse(body)
+    const nested = z
+        .looseObject({ response: ImportReportSchema })
+        .safeParse(body)
+    const candidates = [
+        direct.success ? direct.data : undefined,
+        nested.success ? nested.data.response : undefined,
+    ]
+    return (
+        candidates.find((report) => report?.validationReport) ??
+        candidates.find((report) => report?.stats) ??
+        candidates.find((report) => report?.status)
+    )
 }
 
 export interface MappedImportReport {

@@ -142,6 +142,20 @@ describe('widget kinds', () => {
         ).toBe('multiSelect')
     })
 
+    it('treats an empty option set as unsupported, since no answer could be given', () => {
+        expect(getValueTypeSpec(meta('TEXT', { options: [] })).kind).toBe(
+            'unsupported'
+        )
+        expect(getValueTypeSpec(meta('MULTI_TEXT', { options: [] })).kind).toBe(
+            'unsupported'
+        )
+        expect(isSupportedValueType(meta('TEXT', { options: [] }))).toBe(false)
+        // BOOLEAN's choices come from the type, not an option set.
+        expect(getValueTypeSpec(meta('BOOLEAN', { options: [] })).kind).toBe(
+            'choice'
+        )
+    })
+
     it('keeps unsupported value types unsupported even with an option set', () => {
         expect(
             getValueTypeSpec(meta('FILE_RESOURCE', { options: optionsOf(2) }))

@@ -331,10 +331,16 @@ const kindOf = (meta: DataElementMeta): WidgetKind => {
         return base
     }
     if (meta.valueType === 'MULTI_TEXT') {
-        return meta.options === undefined ? 'unsupported' : 'multiSelect'
+        return meta.options === undefined || meta.options.length === 0
+            ? 'unsupported'
+            : 'multiSelect'
     }
     if (meta.valueType === 'BOOLEAN' || meta.options === undefined) {
         return base
+    }
+    // An option set without options leaves nothing to pick, and free text would be rejected.
+    if (meta.options.length === 0) {
+        return 'unsupported'
     }
     return meta.options.length > MAX_INLINE_CHOICES ? 'select' : 'choice'
 }

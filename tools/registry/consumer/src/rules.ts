@@ -3,8 +3,11 @@ import {
     evaluateEventRules,
     type ProgramRulesMetadata,
     type RuleEffects,
-} from '@/lib/program-rules'
-import { loadRuleEngine, useProgramRules } from '@/hooks/use-program-rules'
+} from '@/components/program-rules'
+import {
+    loadRuleEngine,
+    useProgramRules,
+} from '@/components/program-rules/use-program-rules'
 
 // Type-level use only: the check compiles and bundles this file, never runs it.
 export const evaluate = async (

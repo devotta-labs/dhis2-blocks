@@ -8,11 +8,7 @@
         "target": "ESNext",
         "module": "esnext",
         "moduleResolution": "bundler",
-        "noEmit": true,
-        "baseUrl": ".",
-        "paths": {
-            "@/registry/dhis2/lib/program-rules": ["./src/lib/index.ts"]
-        }
+        "noEmit": true
     },
     "include": ["src/**/*.ts", "src/**/*.tsx", "type-tests/**/*.ts"],
     "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]

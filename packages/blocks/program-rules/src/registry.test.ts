@@ -24,11 +24,16 @@ const packageDirectory = join(import.meta.dirname, '..')
 const registry = RegistrySchema.parse(
     JSON.parse(readFileSync(join(packageDirectory, 'registry.json'), 'utf8'))
 )
-const shippedFiles = (directory: string) =>
-    readdirSync(join(packageDirectory, 'src', directory))
-        .filter((file) => file.endsWith('.ts') && !file.includes('.test.'))
-        .map((file) => `src/${directory}/${file}`)
-        .sort()
+const shippedFiles = (entry: string, directory: string) =>
+    [
+        `src/${entry}`,
+        ...readdirSync(join(packageDirectory, 'src', directory))
+            .filter((file) => file.endsWith('.ts') && !file.includes('.test.'))
+            .map((file) => `src/${directory}/${file}`),
+    ].sort()
+// Both items install side by side, so their relative imports keep working.
+const target = (path: string) =>
+    path.replace(/^src\//, '@components/program-rules/')
 const item = (name: string) => {
     const found = registry.items.find((candidate) => candidate.name === name)
     if (found === undefined) {
@@ -38,38 +43,35 @@ const item = (name: string) => {
 }
 
 describe('registry.json', () => {
-    it('ships every lib file as the program-rules lib', () => {
+    it('ships the lib entry and lib files as the program-rules lib', () => {
         const lib = item('program-rules')
         expect(lib.type).toBe('registry:lib')
         expect(lib.files.map((file) => file.path).sort()).toEqual(
-            shippedFiles('lib')
+            shippedFiles('index.ts', 'lib')
         )
         for (const file of lib.files) {
             expect(file).toEqual({
                 path: file.path,
-                type: 'registry:lib',
-                target: file.path.replace('src/lib/', '@lib/program-rules/'),
+                type: 'registry:file',
+                target: target(file.path),
             })
         }
     })
 
-    it('ships every hook file as the use-program-rules hook', () => {
+    it('ships the hook entry and hook files as the use-program-rules hook', () => {
         const hook = item('use-program-rules')
         expect(hook.type).toBe('registry:hook')
         expect(hook.registryDependencies).toEqual([
             'devotta-labs/dhis2-blocks/program-rules',
         ])
         expect(hook.files.map((file) => file.path).sort()).toEqual(
-            shippedFiles('hooks')
+            shippedFiles('use-program-rules.ts', 'hooks')
         )
         for (const file of hook.files) {
             expect(file).toEqual({
                 path: file.path,
-                type: 'registry:hook',
-                target: file.path.replace(
-                    'src/hooks/',
-                    '@hooks/use-program-rules/'
-                ),
+                type: 'registry:file',
+                target: target(file.path),
             })
         }
     })

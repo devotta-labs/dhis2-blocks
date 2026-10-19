@@ -5,8 +5,8 @@
     "description": "DHIS2 program rules as a pure derivation, with an engine adapter and a React hook",
     "license": "BSD-3-Clause",
     "exports": {
-        ".": "./src/lib/index.ts",
-        "./hooks": "./src/hooks/index.ts"
+        ".": "./src/index.ts",
+        "./use-program-rules": "./src/use-program-rules.ts"
     },
     "scripts": {
         "test": "vitest run",

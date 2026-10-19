@@ -1,4 +1,4 @@
-import type { RuleEngineModule } from '@/registry/dhis2/lib/program-rules'
+import type { RuleEngineModule } from '../index'
 
 let pending: Promise<RuleEngineModule> | undefined
 

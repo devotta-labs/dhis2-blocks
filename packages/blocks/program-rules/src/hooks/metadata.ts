@@ -4,7 +4,7 @@ import type {
     ProgramRulesMetadata,
     ProgramRuleVariableMetadata,
     RuleOptionSetMetadata,
-} from '@/registry/dhis2/lib/program-rules'
+} from '../index'
 import { z } from 'zod'
 
 const RefSchema = z.object({ id: z.string() })

@@ -5,7 +5,7 @@ import type {
     RuleEffects,
     RuleEnrollmentInput,
     RuleEventInput,
-} from '@/registry/dhis2/lib/program-rules'
+} from '../index'
 
 export interface ProgramRulesInput {
     event: RuleEventInput

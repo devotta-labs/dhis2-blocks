@@ -23,15 +23,15 @@ import type {
     RuleOptionGroupEffects,
     RuleOptionSetMetadata,
     RuleOrgUnitGroupMetadata,
-} from '../src/lib'
-import { buildRuleContext, evaluateEventRules, explainField } from '../src/lib'
+} from '../src'
+import { buildRuleContext, evaluateEventRules, explainField } from '../src'
 import type {
     ProgramRulesInput,
     ProgramRulesStatus,
     UseProgramRulesOptions,
     UseProgramRulesResult,
-} from '../src/hooks'
-import { loadRuleEngine, useProgramRules } from '../src/hooks'
+} from '../src/use-program-rules'
+import { loadRuleEngine, useProgramRules } from '../src/use-program-rules'
 
 export type SupportedProgramRulesTypes = [
     Attribution,

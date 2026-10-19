@@ -12,44 +12,44 @@
             ],
             "files": [
                 {
+                    "path": "src/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/index.ts"
+                },
+                {
                     "path": "src/lib/buildContext.ts",
-                    "type": "registry:lib",
-                    "target": "@lib/program-rules/buildContext.ts"
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/buildContext.ts"
                 },
                 {
                     "path": "src/lib/buildInput.ts",
-                    "type": "registry:lib",
-                    "target": "@lib/program-rules/buildInput.ts"
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/buildInput.ts"
                 },
                 {
                     "path": "src/lib/dependencyGraph.ts",
-                    "type": "registry:lib",
-                    "target": "@lib/program-rules/dependencyGraph.ts"
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/dependencyGraph.ts"
                 },
                 {
                     "path": "src/lib/evaluate.ts",
-                    "type": "registry:lib",
-                    "target": "@lib/program-rules/evaluate.ts"
-                },
-                {
-                    "path": "src/lib/index.ts",
-                    "type": "registry:lib",
-                    "target": "@lib/program-rules/index.ts"
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/evaluate.ts"
                 },
                 {
                     "path": "src/lib/scanExpression.ts",
-                    "type": "registry:lib",
-                    "target": "@lib/program-rules/scanExpression.ts"
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/scanExpression.ts"
                 },
                 {
                     "path": "src/lib/types.ts",
-                    "type": "registry:lib",
-                    "target": "@lib/program-rules/types.ts"
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/types.ts"
                 },
                 {
                     "path": "src/lib/valueTypes.ts",
-                    "type": "registry:lib",
-                    "target": "@lib/program-rules/valueTypes.ts"
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/valueTypes.ts"
                 }
             ]
         },
@@ -62,29 +62,29 @@
             "registryDependencies": ["devotta-labs/dhis2-blocks/program-rules"],
             "files": [
                 {
-                    "path": "src/hooks/enrollment.ts",
-                    "type": "registry:hook",
-                    "target": "@hooks/use-program-rules/enrollment.ts"
+                    "path": "src/use-program-rules.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/use-program-rules.ts"
                 },
                 {
-                    "path": "src/hooks/index.ts",
-                    "type": "registry:hook",
-                    "target": "@hooks/use-program-rules/index.ts"
+                    "path": "src/hooks/enrollment.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/enrollment.ts"
                 },
                 {
                     "path": "src/hooks/loadRuleEngine.ts",
-                    "type": "registry:hook",
-                    "target": "@hooks/use-program-rules/loadRuleEngine.ts"
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/loadRuleEngine.ts"
                 },
                 {
                     "path": "src/hooks/metadata.ts",
-                    "type": "registry:hook",
-                    "target": "@hooks/use-program-rules/metadata.ts"
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/metadata.ts"
                 },
                 {
                     "path": "src/hooks/useProgramRules.ts",
-                    "type": "registry:hook",
-                    "target": "@hooks/use-program-rules/useProgramRules.ts"
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRules.ts"
                 }
             ]
         }

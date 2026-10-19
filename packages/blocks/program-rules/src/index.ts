@@ -1,5 +1,5 @@
-export { buildRuleContext } from './buildContext'
-export { evaluateEventRules, explainField } from './evaluate'
+export { buildRuleContext } from './lib/buildContext'
+export { evaluateEventRules, explainField } from './lib/evaluate'
 export type {
     Attribution,
     EventRuleInput,
@@ -25,4 +25,4 @@ export type {
     RuleOptionGroupEffects,
     RuleOptionSetMetadata,
     RuleOrgUnitGroupMetadata,
-} from './types'
+} from './lib/types'

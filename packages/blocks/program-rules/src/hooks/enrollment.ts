@@ -1,7 +1,4 @@
-import type {
-    RuleEnrollmentInput,
-    RuleEventInput,
-} from '@/registry/dhis2/lib/program-rules'
+import type { RuleEnrollmentInput, RuleEventInput } from '../index'
 import { z } from 'zod'
 
 const ValueSchema = z.string().optional()

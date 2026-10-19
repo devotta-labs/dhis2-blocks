@@ -3,10 +3,14 @@
 DHIS2 program rules as a pure derivation: `effects = evaluate(context, input)`, using only the official
 engine, [`@dhis2/rule-engine`](https://github.com/dhis2/dhis2-rule-engine). Two shadcn registry items:
 
-| Item                | Type            | Installs to                | What it does                                                                                                     |
-| ------------------- | --------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `program-rules`     | `registry:lib`  | `lib/program-rules/`       | Metadata → engine context, evaluation of one event, attributed effects, dependency graph. No React, no fetching. |
-| `use-program-rules` | `registry:hook` | `hooks/use-program-rules/` | `useProgramRules(...)`: fetches metadata and context data with React Query, lazy-loads the engine, memoises.     |
+| Item                | Type            | Entry                                           | What it does                                                                                                     |
+| ------------------- | --------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `program-rules`     | `registry:lib`  | `components/program-rules/index.ts`             | Metadata → engine context, evaluation of one event, attributed effects, dependency graph. No React, no fetching. |
+| `use-program-rules` | `registry:hook` | `components/program-rules/use-program-rules.ts` | `useProgramRules(...)`: fetches metadata and context data with React Query, lazy-loads the engine, memoises.     |
+
+Both install into `components/program-rules/` (lib internals in `lib/`, hook internals in `hooks/`), so the
+hook reaches the lib with relative imports. The hook needs a React Query `QueryClientProvider` and the DHIS2
+app-runtime provider above it, nothing else.
 
 ```sh
 npx shadcn@latest add devotta-labs/dhis2-blocks/use-program-rules   # pulls program-rules too
@@ -14,16 +18,17 @@ npx shadcn@latest add devotta-labs/dhis2-blocks/use-program-rules   # pulls prog
 
 ## In this repo
 
-Source lives in `src/lib` (the lib) and `src/hooks` (the hook). Other blocks import them with the specifiers
-the shadcn installer rewrites to the installed location:
+The lib's entry is `src/index.ts` (internals in `src/lib/`); the hook's entry is `src/use-program-rules.ts`
+(internals in `src/hooks/`). Files target `@components/program-rules/<path under src>`. Other blocks import
+them with specifiers the shadcn installer rewrites to the installed files:
 
-| Specifier                                  | Resolves to (repo)   | Installed as                |
-| ------------------------------------------ | -------------------- | --------------------------- |
-| `@/registry/dhis2/lib/program-rules`       | `src/lib/index.ts`   | `@/lib/program-rules`       |
-| `@/registry/dhis2/hooks/use-program-rules` | `src/hooks/index.ts` | `@/hooks/use-program-rules` |
+| Specifier                                    | Resolves to (repo)                                       |
+| -------------------------------------------- | -------------------------------------------------------- |
+| `@/registry/program-rules/index`             | `packages/blocks/program-rules/src/index.ts`             |
+| `@/registry/program-rules/use-program-rules` | `packages/blocks/program-rules/src/use-program-rules.ts` |
 
-A consuming package maps them with TypeScript `paths` and a Vite/Vitest `resolve.alias`, as
-`tsconfig.json` and `vitest.config.ts` here do for the lib.
+A consuming package maps `@/registry/program-rules/*` to `packages/blocks/program-rules/src/*` with a
+TypeScript `paths` entry and a Vite/Vitest `resolve.alias`. Inside this package imports are relative.
 
 ## Lib API
 

@@ -117,7 +117,7 @@ export const ObservationCardsDemo = () => {
                         </p>
                     </div>
                     <a
-                        className="text-sm font-medium text-[#147cd7] underline-offset-2 hover:underline"
+                        className="text-sm font-medium text-dhis2-primary underline-offset-2 hover:underline"
                         href="#/"
                     >
                         {i18n.t('Back to Working List')}
@@ -171,7 +171,7 @@ export const ObservationCardsDemo = () => {
                         {preset.suggestedTrackedEntityId ? (
                             <p className="m-0">
                                 <Link
-                                    className="font-medium text-[#147cd7] underline-offset-2 hover:underline"
+                                    className="font-medium text-dhis2-primary underline-offset-2 hover:underline"
                                     to={{
                                         search: buildSearch(
                                             preset.id,

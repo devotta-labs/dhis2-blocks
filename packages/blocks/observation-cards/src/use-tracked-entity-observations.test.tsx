@@ -60,9 +60,11 @@ type JsonValue =
     | { [key: string]: JsonValue }
 type Resolver = () => JsonValue
 type Resolvers = Record<
-    'programs' | 'dataElements' | 'tracker/events',
+    'programs' | 'dataElements' | 'tracker/events' | 'tracker/enrollments',
     Resolver
 >
+
+const enrollmentsResponse = { enrollments: [{ enrollment: 'enr1' }] }
 
 const setup = (overrides: Partial<Resolvers> = {}) => {
     const calls: Array<{ resource: string; id?: string }> = []
@@ -70,6 +72,7 @@ const setup = (overrides: Partial<Resolvers> = {}) => {
         programs: () => stagesResponse,
         dataElements: () => dataElementsResponse,
         'tracker/events': () => eventsResponse,
+        'tracker/enrollments': () => enrollmentsResponse,
         ...overrides,
     } satisfies Resolvers
     const data: CustomData = {}
@@ -94,13 +97,14 @@ const setup = (overrides: Partial<Resolvers> = {}) => {
 
 const render = (
     wrapper: ReturnType<typeof setup>['wrapper'],
-    dataElementIds: string[] = [WEIGHT, TEMP]
+    dataElementIds: string[] = [WEIGHT, TEMP],
+    { trackedEntityId = 'te1', programId = 'prog1' } = {}
 ) =>
     renderHook(
         () =>
             useTrackedEntityObservations({
-                trackedEntityId: 'te1',
-                programId: 'prog1',
+                trackedEntityId,
+                programId,
                 dataElementIds,
             }),
         { wrapper }
@@ -181,7 +185,40 @@ describe('useTrackedEntityObservations', () => {
         expect(missing.error.message).toContain(TEMP)
     })
 
-    it('makes three requests in parallel per person, keyed by observation-cards', async () => {
+    it('a person with no visible enrollment makes every get() an error', async () => {
+        const { wrapper } = setup({
+            'tracker/enrollments': () => ({ enrollments: [] }),
+        })
+        const { result } = await render(wrapper)
+
+        await settled(result)
+
+        expect(result.current.status).toBe('error')
+        expect(result.current.error?.message).toBe(
+            'This person has no visible enrollment in this program'
+        )
+        for (const id of [WEIGHT, TEMP]) {
+            expect(result.current.get(id).status).toBe('error')
+        }
+    })
+
+    it.each([
+        { trackedEntityId: '', programId: 'prog1' },
+        { trackedEntityId: '   ', programId: 'prog1' },
+        { trackedEntityId: 'te1', programId: '' },
+    ])('makes no request and stays pending for %o', async (ids) => {
+        const { calls, wrapper } = setup()
+        const { result } = await render(wrapper, [WEIGHT], ids)
+
+        // Long enough for an enabled query to have started.
+        await new Promise((resolve) => setTimeout(resolve, 50))
+
+        expect(calls).toEqual([])
+        expect(result.current.status).toBe('pending')
+        expect(result.current.get(WEIGHT)).toEqual({ status: 'pending' })
+    })
+
+    it('makes four requests in parallel per person, keyed by observation-cards', async () => {
         const { calls, queryClient, wrapper } = setup()
         const { result } = await render(wrapper, [TEMP, WEIGHT, TEMP])
 
@@ -190,6 +227,7 @@ describe('useTrackedEntityObservations', () => {
         expect(calls.map((c) => c.resource).sort()).toEqual([
             'dataElements',
             'programs',
+            'tracker/enrollments',
             'tracker/events',
         ])
         expect(calls.find((c) => c.resource === 'programs')?.id).toBe('prog1')
@@ -202,9 +240,10 @@ describe('useTrackedEntityObservations', () => {
                 ['observation-cards', 'stages', 'prog1'],
                 ['observation-cards', 'dataElements', [TEMP, WEIGHT].sort()],
                 ['observation-cards', 'events', 'te1', 'prog1'],
+                ['observation-cards', 'enrollments', 'te1', 'prog1'],
             ])
         )
-        expect(keys).toHaveLength(3)
+        expect(keys).toHaveLength(4)
     })
 
     it('keeps get() stable while the data is unchanged', async () => {

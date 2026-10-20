@@ -129,7 +129,7 @@ describe('TrendCard', () => {
         expect(
             container.querySelector('[data-slot="badge"]')?.textContent
         ).toBe('Normal')
-        expect(text).toContain('▲ 6 since 2026-03-08')
+        expect(text).toContain('▲ up 6 since 2026-03-08')
         expect(text).toContain('Recorded 2026-03-12 · Antenatal visit')
         expect(text).not.toContain('hidden by your access')
         expect(container.querySelector('[data-slot="chart"]')).not.toBeNull()
@@ -143,8 +143,27 @@ describe('TrendCard', () => {
                 )}
             />
         )
-        expect(container.textContent).toContain('▼ 2.5 since 2026-03-01')
+        expect(container.textContent).toContain('▼ down 2.5 since 2026-03-01')
         expect(container.textContent).not.toContain('-2.5')
+    })
+
+    it('says the direction in words for screen readers and hides the glyph', async () => {
+        const { container } = await render(
+            <TrendCard
+                observation={success(
+                    makeSeries([makePoint(1, 10), makePoint(5, 12)])
+                )}
+            />
+        )
+        const glyph = [
+            ...container.querySelectorAll('[aria-hidden="true"]'),
+        ].find((element) => element.textContent === '▲')
+        expect(glyph).toBeDefined()
+        expect(
+            [...container.querySelectorAll('.sr-only')].map(
+                (element) => element.textContent
+            )
+        ).toContain('up')
     })
 
     it('no change between readings says so', async () => {

@@ -63,6 +63,7 @@ export interface StageMetadata {
 
 export interface TrackerEventRecord {
     event: string
+    trackedEntity?: string
     programStage: string
     status: string
     occurredAt?: string

@@ -87,13 +87,13 @@ the change since the previous reading, and a sparkline.
 `LatestValueCard` shows the last recorded value of a data element: a number,
 option, yes/no, date or text.
 
-| Prop           | Type                | Notes                                                               |
-| -------------- | ------------------- | ------------------------------------------------------------------- |
-| observation    | `ObservationResult` | Required. From `observations.get(id)`.                              |
-| label          | `string`            | Overrides the data element's own label.                             |
-| unit           | `string`            | Shown after a numeric value.                                        |
-| staleAfterDays | `number`            | Mutes the card and adds a note once the reading is older than this. |
-| className      | `string`            | Merged onto the card.                                               |
+| Prop           | Type                | Notes                                                                   |
+| -------------- | ------------------- | ----------------------------------------------------------------------- |
+| observation    | `ObservationResult` | Required. From `observations.get(id)`.                                  |
+| label          | `string`            | Overrides the data element's own label.                                 |
+| unit           | `string`            | Shown after a numeric value.                                            |
+| staleAfterDays | `number`            | Greys the value and adds a warning once the reading is older than this. |
+| className      | `string`            | Merged onto the card.                                                   |
 
 `LegendBadge` and `Sparkline` are exported for hosts that compose their own
 card. `LegendBadge` takes a `legend` or `option` from a series; `Sparkline`
@@ -121,5 +121,24 @@ state.
 - When a program stage that captures the data element is not data-readable by
   the current user, some visits may be missing, and the card says "Some visits are hidden by your access".
 - Dates display in the instance's calendar.
+
+## Access and limits
+
+- The hook makes no request until both `trackedEntityId` and `programId` are
+  non-empty (after trimming); until then every result is pending.
+- It also asks for one of the person's enrollments in the program. If the
+  current user can see none (ownership, sharing, or the person was never
+  enrolled), every result is an error ("This person has no visible enrollment
+  in this program"), never an empty "Never recorded" card.
+- Events are read in pages of 200, in a stable order, up to 50 pages. A person
+  with more events than that gets an error rather than a silently shortened
+  history. An event repeated across pages counts once.
+
+## Stale readings
+
+With `staleAfterDays` set, a `LatestValueCard` whose latest reading is older
+than that many days keeps its recorded date, greys the value, keeps a border,
+and adds a warning note with an icon: "Out of date: last recorded over 180
+days ago". The card carries `data-tone="stale"` for hosts that style it further.
 
 All user-facing text goes through `@dhis2/d2-i18n`.

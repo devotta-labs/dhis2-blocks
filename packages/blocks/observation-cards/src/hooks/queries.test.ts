@@ -5,8 +5,10 @@ import {
     type DataEngineValue,
 } from './client'
 import {
+    EVENTS_MAX_PAGES,
     EVENTS_PAGE_SIZE,
     fetchDataElements,
+    fetchEnrollment,
     fetchEvents,
     fetchStages,
 } from './queries'
@@ -118,6 +120,155 @@ describe('fetchEvents', () => {
 
         expect(Result.isError(result)).toBe(true)
     })
+
+    it('asks for the tracked entity and a stable order', async () => {
+        const { engine, query } = engineReturning([{ events: [] }])
+
+        await fetchEvents(createObservationsClient(engine), subject)
+
+        expect(requestOf(query, 0)).toMatchObject({
+            params: {
+                fields: 'event,trackedEntity,programStage,status,occurredAt,createdAt,dataValues[dataElement,value]',
+                order: 'occurredAt:asc,createdAt:asc',
+            },
+        })
+    })
+
+    it('drops events that belong to another tracked entity', async () => {
+        const [own, other, unstated] = eventsOf(3)
+        const { engine } = engineReturning([
+            {
+                events: [
+                    { ...own, trackedEntity: 'te1' },
+                    { ...other, trackedEntity: 'someoneElse' },
+                    unstated,
+                ],
+            },
+        ])
+
+        const result = await fetchEvents(
+            createObservationsClient(engine),
+            subject
+        )
+
+        expect(
+            Result.isOk(result) && result.value.map((event) => event.event)
+        ).toEqual(['e0', 'e2'])
+    })
+
+    it('counts an event repeated across pages once', async () => {
+        const firstPage = eventsOf(EVENTS_PAGE_SIZE)
+        const { engine, query } = engineReturning([
+            { events: firstPage },
+            { events: [firstPage[EVENTS_PAGE_SIZE - 1], ...eventsOf(2, 500)] },
+        ])
+
+        const result = await fetchEvents(
+            createObservationsClient(engine),
+            subject
+        )
+
+        expect(query).toHaveBeenCalledTimes(2)
+        const ids = Result.isOk(result) ? result.value.map((e) => e.event) : []
+        expect(ids).toHaveLength(EVENTS_PAGE_SIZE + 2)
+        expect(new Set(ids).size).toBe(ids.length)
+    })
+
+    it(`is an error, not a truncated list, past ${EVENTS_MAX_PAGES} full pages`, async () => {
+        const query = vi
+            .fn<DataEngineLike['query']>()
+            .mockImplementation(async (request) => {
+                const page = Number(
+                    Object.values(request)[0]?.params?.page ?? 0
+                )
+                return {
+                    observationsResource: {
+                        events: eventsOf(
+                            EVENTS_PAGE_SIZE,
+                            page * EVENTS_PAGE_SIZE
+                        ),
+                    },
+                }
+            })
+
+        const result = await fetchEvents(
+            createObservationsClient({ query }),
+            subject
+        )
+
+        expect(EVENTS_MAX_PAGES).toBe(50)
+        expect(query).toHaveBeenCalledTimes(EVENTS_MAX_PAGES)
+        expect(Result.isError(result) && result.error.message).toContain(
+            'Too many events'
+        )
+    })
+})
+
+describe('fetchEnrollment', () => {
+    const subject = { trackedEntityId: 'te1', programId: 'p1' }
+
+    it('asks for one enrollment of the person in the program', async () => {
+        const { engine, query } = engineReturning([
+            { enrollments: [{ enrollment: 'en1' }] },
+        ])
+
+        const result = await fetchEnrollment(
+            createObservationsClient(engine),
+            subject
+        )
+
+        expect(requestOf(query, 0)).toEqual({
+            resource: 'tracker/enrollments',
+            params: {
+                trackedEntity: 'te1',
+                program: 'p1',
+                fields: 'enrollment',
+                pageSize: 1,
+            },
+        })
+        expect(Result.isOk(result) && result.value).toBe('en1')
+    })
+
+    it('reads the legacy instances envelope', async () => {
+        const { engine } = engineReturning([
+            { instances: [{ enrollment: 'en1' }] },
+        ])
+
+        const result = await fetchEnrollment(
+            createObservationsClient(engine),
+            subject
+        )
+
+        expect(Result.isOk(result) && result.value).toBe('en1')
+    })
+
+    it('is an error when the person has no visible enrollment', async () => {
+        const { engine } = engineReturning([{ enrollments: [] }])
+
+        const result = await fetchEnrollment(
+            createObservationsClient(engine),
+            subject
+        )
+
+        expect(Result.isError(result) && result.error.message).toBe(
+            'This person has no visible enrollment in this program'
+        )
+    })
+
+    it('returns an error result on HTTP failure', async () => {
+        const query = vi
+            .fn<DataEngineLike['query']>()
+            .mockRejectedValue(new Error('Forbidden'))
+
+        const result = await fetchEnrollment(
+            createObservationsClient({ query }),
+            subject
+        )
+
+        expect(Result.isError(result) && result.error.message).toContain(
+            'Forbidden'
+        )
+    })
 })
 
 describe('fetchDataElements', () => {
@@ -135,6 +286,20 @@ describe('fetchDataElements', () => {
             resource: 'dataElements',
             params: { filter: 'id:in:[a,b,c]', paging: false },
         })
+    })
+
+    it('asks for translated option and legend names', async () => {
+        const { engine, query } = engineReturning([{ dataElements: [] }])
+
+        await fetchDataElements(createObservationsClient(engine), ['a'])
+
+        const fields = String(requestOf(query, 0)?.params?.fields)
+        expect(fields).toContain(
+            'options[code,displayName~rename(name),style[color]]'
+        )
+        expect(fields).toContain(
+            'legends[displayName~rename(name),color,startValue,endValue]'
+        )
     })
 
     it('makes no request for an empty id list', async () => {

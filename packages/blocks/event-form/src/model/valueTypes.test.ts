@@ -40,7 +40,12 @@ const CASES: [valueType: string, valid: string[], invalid: string[]][] = [
     ['PHONE_NUMBER', ['+232 76 123456'], ['abc']],
     ['URL', ['https://dhis2.org'], ['dhis2']],
     ['DATE', ['2026-03-12'], ['2026-13-01', '2026-02-30']],
-    ['DATETIME', ['2026-03-12T10:30:00.000'], ['2026-03-12', 'nope']],
+    [
+        'DATETIME',
+        // 2.44 returns stored date-times with a UTC suffix.
+        ['2026-03-12T10:30:00.000', '1998-02-28T14:50:00.000Z'],
+        ['2026-03-12', 'nope', '2026-03-12T10:30:00.000X'],
+    ],
     ['TIME', ['10:30'], ['25:00']],
     ['AGE', ['2020-01-01'], ['abc']],
     ['COORDINATE', ['[-11.2,8.4]'], ['[200,8]']],

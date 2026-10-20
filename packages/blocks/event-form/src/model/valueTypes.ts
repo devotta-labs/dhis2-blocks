@@ -50,8 +50,9 @@ type Validator = (value: string) => ValueError | null
 const INTEGER = /^-?\d+$/
 const NUMBER = /^-?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/
+// The server may add a UTC or offset suffix (2.44 returns `…T14:50:00.000Z`).
 const DATE_TIME =
-    /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?$/
+    /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:?\d{2})?$/
 const TIME = /^(\d{2}):(\d{2})$/
 const COORDINATE = /^\[\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\]$/
 const EMAIL = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/

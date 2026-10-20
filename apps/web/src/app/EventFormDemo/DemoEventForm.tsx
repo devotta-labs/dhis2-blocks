@@ -57,9 +57,11 @@ export const DemoEventForm = ({
             <div className="flex flex-col gap-4">
                 <EventFormDetails />
                 <EventFormFeedback />
-                <div className="grid items-start gap-6 md:grid-cols-[200px_minmax(0,1fr)]">
-                    <EventFormSectionNav />
-                    <div className="flex flex-col gap-4">
+                {/* Flex, not a fixed grid: the nav renders nothing for a stage with fewer
+                    than two visible sections, and the sections must then fill the row. */}
+                <div className="flex flex-col gap-6 md:flex-row md:items-start">
+                    <EventFormSectionNav className="md:w-50 md:shrink-0" />
+                    <div className="flex min-w-0 flex-1 flex-col gap-4">
                         <EventFormSections />
                         <EventFormNotes />
                     </div>

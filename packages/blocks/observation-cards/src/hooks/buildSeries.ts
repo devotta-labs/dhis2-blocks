@@ -27,7 +27,7 @@ const HAS_ZONE = /(Z|[+-]\d{2}(:?\d{2})?)$/i
  * strings are read as UTC so they order consistently with zoned strings.
  * Returns NaN when the string is not a date.
  */
-const toInstant = (iso: string): number => {
+export const toInstant = (iso: string): number => {
     if (DATE_ONLY.test(iso)) {
         return Date.parse(`${iso}T00:00:00Z`)
     }

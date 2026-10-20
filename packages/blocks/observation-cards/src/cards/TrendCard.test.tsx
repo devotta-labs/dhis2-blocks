@@ -251,6 +251,31 @@ describe('TrendCard', () => {
         expect(container.querySelector('[data-slot="badge"]')).toBeNull()
     })
 
+    it('shows an apostrophe and an ampersand in the stage name literally', async () => {
+        const { container } = await render(
+            <TrendCard
+                observation={success(
+                    makeSeries([makePoint(1, 10, "Child's visit & labour")])
+                )}
+            />
+        )
+        expect(container.textContent).toContain(
+            "Recorded 2026-03-01 · Child's visit & labour"
+        )
+        expect(container.textContent).not.toContain('&#39;')
+        expect(container.textContent).not.toContain('&amp;')
+    })
+
+    it('rounds the value to two decimals', async () => {
+        const { container } = await render(
+            <TrendCard
+                observation={success(makeSeries([makePoint(1, 71.456)]))}
+            />
+        )
+        expect(container.textContent).toContain('71.46')
+        expect(container.textContent).not.toContain('71.456')
+    })
+
     it('has no axe violations in the normal state', async () => {
         const { container } = await render(
             <TrendCard

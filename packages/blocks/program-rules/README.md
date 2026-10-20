@@ -179,3 +179,31 @@ How the hook behaves:
 - **Not covered.** No pruned re-evaluation (full evaluation of RMNCH takes about 5 ms at 4× CPU throttle).
   `d2:inOrgUnitGroup(#{var})` with a group computed at runtime is not prefetched. Server-side actions (send or
   schedule message, create event) produce no effect.
+
+## Differences from Capture
+
+[`captureParity.test.ts`](../event-form/src/model/captureParity.test.ts) runs RMNCH visits, small synthetic programs
+and the large generated program through this lib with Event Form's overlay and two passes, and through a
+re-implementation of how DHIS2 Capture (capture-app `c40f022`) turns the same engine's effects into form state. Rule
+conversion and engine input are shared, so only what happens after the engine is compared. The two agree on every RMNCH
+case (including the stored visit's two-step hide chain), `DATAELEMENT_NEWEST_EVENT_PROGRAM`, ASSIGN chains across
+priorities, hidden sections and option filtering.
+
+Capture runs the rules once per field change. It writes every ASSIGN into the form values and blanks each HIDEFIELD
+target with a `null` ASSIGN. It never re-runs on its own writes, so it settles only over later changes, and a value it
+cleared stays cleared even when the field shows again. Event Form runs exactly two passes and never writes stored
+values. Each difference is an `it.fails` case in
+[`captureParity.differences.test.ts`](../event-form/src/model/captureParity.differences.test.ts):
+
+| Case                                                         | Capture                                                              | Event Form                                                    | Who is right                                                                         |
+| ------------------------------------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| ASSIGN into a hidden field                                   | Saves the value: an ASSIGN beats the blank                           | Drops it: the hidden field wins                               | Capture. A hidden calculated value is a common pattern.                              |
+| Hide chain three fields deep                                 | Hides and clears the third field, one run per change                 | Stops after two passes; the third field stays, with its value | Capture                                                                              |
+| Mutual hide (A hides B, B hides A, both answered)            | Shows both, empty                                                    | Shows both with their answers, which would hide each other    | Capture is consistent; Event Form shows values its effects were not computed from    |
+| HIDEFIELD on a compulsory field, or with SETMANDATORYFIELD   | Keeps it visible and required (and blanks it on every run)           | Hides it, and it is no longer required                        | Capture keeps the field reachable; its blanking is not worth copying                 |
+| SHOWERROR or ERRORONCOMPLETE on a hidden field               | Blocks validation; the completion dialog lists the error on complete | Dropped with the field                                        | A trade-off: Event Form is easier to use, Capture closer to what the server enforces |
+| ASSIGN of a code outside the field's option set              | Assigns nothing (clears the field)                                   | Saves the code and offers it as a choice                      | Capture                                                                              |
+| ASSIGN to a data element of another stage                    | Ignored                                                              | In the effective values and the save payload                  | Capture                                                                              |
+| ASSIGN of a number the engine writes as `03` or `5.0`        | Normalised by value type (`3`, `5`)                                  | Saved as written                                              | Capture, though both are valid numbers                                               |
+| HIDEOPTION of the chosen option                              | Removed from the list; the value stays                               | Kept in the list                                              | Event Form, on purpose: the field never looks blank while it holds a value           |
+| Right after a change (a chain that needs the cleared values) | Shows effects computed before its own clears until the next change   | Shows both passes' result at once                             | Event Form                                                                           |

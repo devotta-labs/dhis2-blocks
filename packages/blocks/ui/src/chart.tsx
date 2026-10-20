@@ -103,9 +103,10 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 ${prefix} [data-chart=${id}] {
 ${colorConfig
     .map(([key, itemConfig]) => {
-        const color =
-            itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ??
-            itemConfig.color
+        // SAFETY: `theme` comes from Object.entries(THEMES), whose keys are exactly those of `itemConfig.theme`.
+        const themeColor =
+            itemConfig.theme?.[theme as keyof typeof itemConfig.theme]
+        const color = themeColor ?? itemConfig.color
         return color ? `  --color-${key}: ${color};` : null
     })
     .join('\n')}
@@ -159,7 +160,7 @@ function ChartTooltipContent({
         const key = `${labelKey ?? item?.dataKey ?? item?.name ?? 'value'}`
         const itemConfig = getPayloadConfigFromPayload(config, item, key)
         const value =
-            !labelKey && typeof label === 'string'
+            !labelKey && isString(label)
                 ? (config[label]?.label ?? label)
                 : itemConfig?.label
 
@@ -212,6 +213,11 @@ function ChartTooltipContent({
                         )
                         const indicatorColor =
                             color ?? item.payload?.fill ?? item.color
+                        // SAFETY: React's CSSProperties has no index signature for custom properties; the browser accepts them.
+                        const indicatorStyle = {
+                            '--indicator-bg': indicatorColor,
+                            '--indicator-border': indicatorColor,
+                        } as React.CSSProperties
 
                         return (
                             <div
@@ -256,14 +262,7 @@ function ChartTooltipContent({
                                                                     'dashed',
                                                         }
                                                     )}
-                                                    style={
-                                                        {
-                                                            '--indicator-bg':
-                                                                indicatorColor,
-                                                            '--indicator-border':
-                                                                indicatorColor,
-                                                        } as React.CSSProperties
-                                                    }
+                                                    style={indicatorStyle}
                                                 />
                                             )
                                         )}
@@ -286,8 +285,7 @@ function ChartTooltipContent({
                                             </div>
                                             {item.value != null && (
                                                 <span className="font-mono font-medium text-dhis2-foreground tabular-nums">
-                                                    {typeof item.value ===
-                                                    'number'
+                                                    {isNumber(item.value)
                                                         ? item.value.toLocaleString()
                                                         : String(item.value)}
                                                 </span>
@@ -364,37 +362,46 @@ function ChartLegendContent({
     )
 }
 
+/** A primitive string. `String(value) === value` holds for no other kind of value. */
+const isString = <Value,>(value: Value): value is Value & string =>
+    String(value) === value
+
+/** A primitive number, NaN included. */
+const isNumber = <Value,>(value: Value): value is Value & number =>
+    Object.is(Number(value), value)
+
+/** A non-null object: `Object(value)` is the value itself only for objects. */
+const isObject = <Value,>(value: Value): value is Value & object =>
+    Object(value) === value
+
+/** A Recharts tooltip or legend item, which may nest the data row it came from. */
+type PayloadItem = { readonly payload?: object }
+
+/** The value of an own field of a payload item or row, if it has one. */
+const fieldOf = (item: PayloadItem | undefined, field: string) =>
+    Object.entries(item ?? {}).find(([name]) => name === field)?.[1]
+
+/** The config for a Recharts payload item, found by `key` on the item or its nested payload. */
 function getPayloadConfigFromPayload(
     config: ChartConfig,
-    payload: unknown,
+    payload: PayloadItem | undefined,
     key: string
 ) {
-    if (typeof payload !== 'object' || payload === null) {
+    if (payload === undefined) {
         return undefined
     }
 
-    const payloadPayload =
-        'payload' in payload &&
-        typeof payload.payload === 'object' &&
-        payload.payload !== null
-            ? payload.payload
-            : undefined
+    const nested = fieldOf(payload, 'payload')
+    const payloadPayload = isObject(nested) ? nested : undefined
 
     let configLabelKey: string = key
 
-    if (
-        key in payload &&
-        typeof payload[key as keyof typeof payload] === 'string'
-    ) {
-        configLabelKey = payload[key as keyof typeof payload] as string
-    } else if (
-        payloadPayload &&
-        key in payloadPayload &&
-        typeof payloadPayload[key as keyof typeof payloadPayload] === 'string'
-    ) {
-        configLabelKey = payloadPayload[
-            key as keyof typeof payloadPayload
-        ] as string
+    const ownLabelKey = fieldOf(payload, key)
+    const nestedLabelKey = fieldOf(payloadPayload, key)
+    if (isString(ownLabelKey)) {
+        configLabelKey = ownLabelKey
+    } else if (isString(nestedLabelKey)) {
+        configLabelKey = nestedLabelKey
     }
 
     return configLabelKey in config ? config[configLabelKey] : config[key]

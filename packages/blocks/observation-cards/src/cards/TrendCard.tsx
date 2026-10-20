@@ -8,7 +8,13 @@ import { LegendBadge } from './LegendBadge'
 import { ObservationCardFrame } from './ObservationCardFrame'
 import { Sparkline } from './Sparkline'
 import { useFormatDate } from './calendar'
-import { displayValue, formatNumber, isTrendType, legendFor } from './format'
+import {
+    NO_ESCAPE,
+    displayValue,
+    formatNumber,
+    isTrendType,
+    legendFor,
+} from './format'
 
 export interface TrendCardProps {
     observation: ObservationResult
@@ -20,9 +26,6 @@ export interface TrendCardProps {
     maxPoints?: number
     className?: string
 }
-
-// React escapes text itself, so i18next must not escape it a second time.
-const NO_ESCAPE = { escapeValue: false }
 
 /** The change since the previous reading, or nothing when there is no earlier one. */
 const changeText = (

@@ -24,6 +24,9 @@ const LATEST_ONLY_TYPES = new Set([
     'DATE',
 ])
 
+/** React escapes text itself, so i18next must not escape interpolated values a second time. */
+export const NO_ESCAPE = { escapeValue: false }
+
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 /** Types whose readings can be plotted and compared. */

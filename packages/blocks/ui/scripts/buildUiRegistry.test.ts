@@ -57,7 +57,7 @@ test('every source file is an item and tests are not', () => {
     )
     expect(names).toContain('button')
     expect(names).toContain('portal-root')
-    expect(names).toHaveLength(26)
+    expect(names).toHaveLength(29)
     expect(names).not.toContain('cn.test')
     expect(names).not.toContain('theme.test')
 })

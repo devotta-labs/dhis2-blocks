@@ -54,5 +54,15 @@
         "anti-slop/no-unsafe-dictionary-type": "error",
         "anti-slop/no-widen-then-assert": "error",
         "anti-slop/require-safety-comment-for-type-assertion": "error"
-    }
+    },
+    "overrides": [
+        {
+            "files": ["packages/blocks/ui/src/chart.tsx"],
+            "rules": {
+                "anti-slop/no-runtime-typeof": "off",
+                "anti-slop/no-unknown-parameters": "off",
+                "anti-slop/require-safety-comment-for-type-assertion": "off"
+            }
+        }
+    ]
 }

@@ -66,8 +66,6 @@ export const eventFormTranslationCatalog = () => [
     i18n.t('Select a valid organisation unit'),
     i18n.t('Select an organisation unit'),
     i18n.t('Select Yes or No'),
-    i18n.t('Show less'),
-    i18n.t('Show more'),
     i18n.t('Some answers need attention before the event can be saved.'),
     i18n.t('The changes you made to this event will be lost.'),
     i18n.t('The event could not be loaded'),

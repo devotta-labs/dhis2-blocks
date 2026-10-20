@@ -1,18 +1,10 @@
-import React, {
-    useId,
-    useLayoutEffect,
-    useRef,
-    useState,
-    type ReactNode,
-} from 'react'
-import { Button } from '@/registry/dhis2/ui/button'
-import { cn } from '@/registry/dhis2/ui/cn'
+import React, { useId, type ReactNode } from 'react'
+import { Field, FieldError, FieldLabel } from '@/registry/dhis2/ui/field'
 import {
-    Field,
-    FieldDescription,
-    FieldError,
-    FieldLabel,
-} from '@/registry/dhis2/ui/field'
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/registry/dhis2/ui/popover'
 import type { FieldModel } from '../../model/buildFormModel'
 import { useEventFormText } from '../EventFormText'
 
@@ -34,49 +26,31 @@ export interface ControlProps {
 }
 
 /**
- * The description, clamped to two lines. "Show more" appears only when the text is cut off, and
- * stays (as "Show less") once it is expanded.
+ * The label of a field with a description: a popover trigger with a dotted underline, so a long
+ * description doesn't push the form apart. It stands in for `FieldLabel` (the control is named
+ * through `aria-labelledby`), which keeps the trigger within the form's component-depth budget.
  */
-const ClampedDescription = ({ id, text }: { id: string; text: string }) => {
-    const translate = useEventFormText()
-    const wrapper = useRef<HTMLDivElement>(null)
-    const [expanded, setExpanded] = useState(false)
-    const [clamped, setClamped] = useState(false)
-    useLayoutEffect(() => {
-        const paragraph = wrapper.current?.firstElementChild
-        if (!paragraph || expanded) {
-            return
-        }
-        const measure = () =>
-            setClamped(paragraph.scrollHeight > paragraph.clientHeight + 1)
-        measure()
-        const observer = new ResizeObserver(measure)
-        observer.observe(paragraph)
-        return () => observer.disconnect()
-    }, [text, expanded])
-    return (
-        <div ref={wrapper} className="flex flex-col items-start">
-            <FieldDescription
-                id={id}
-                className={cn(!expanded && 'line-clamp-2')}
-            >
-                {text}
-            </FieldDescription>
-            {clamped && (
-                <Button
-                    type="button"
-                    variant="link"
-                    aria-expanded={expanded}
-                    aria-controls={id}
-                    className="h-auto p-0 text-sm"
-                    onClick={() => setExpanded((current) => !current)}
-                >
-                    {expanded ? translate('Show less') : translate('Show more')}
-                </Button>
-            )}
-        </div>
-    )
-}
+const DescribedLabel = ({
+    id,
+    label,
+    description,
+}: {
+    id: string
+    label: string
+    description: string
+}) => (
+    <Popover>
+        <PopoverTrigger
+            id={id}
+            className="w-fit cursor-help rounded-dhis2-sm text-start text-sm leading-snug text-dhis2-grey-900 underline decoration-dhis2-grey-600 decoration-dotted underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-dhis2-ring"
+        >
+            {label}
+        </PopoverTrigger>
+        <PopoverContent align="start" sideOffset={4}>
+            <p className="m-0 whitespace-pre-line">{description}</p>
+        </PopoverContent>
+    </Popover>
+)
 
 type MessageSource = 'rule' | 'value'
 
@@ -170,9 +144,17 @@ export const FieldShell = ({
     return (
         <Field data-field-id={field.id} data-invalid={invalid || undefined}>
             <div className="flex items-baseline gap-1">
-                <FieldLabel id={labelId} htmlFor={controlId}>
-                    {field.label}
-                </FieldLabel>
+                {field.description === undefined ? (
+                    <FieldLabel id={labelId} htmlFor={controlId}>
+                        {field.label}
+                    </FieldLabel>
+                ) : (
+                    <DescribedLabel
+                        id={labelId}
+                        label={field.label}
+                        description={field.description}
+                    />
+                )}
                 {field.required && (
                     <span aria-hidden="true" className="text-dhis2-red-500">
                         *
@@ -180,10 +162,10 @@ export const FieldShell = ({
                 )}
             </div>
             {field.description !== undefined && (
-                <ClampedDescription
-                    id={descriptionId}
-                    text={field.description}
-                />
+                // Not shown inline (the label's popover shows it), but still read with the control.
+                <span id={descriptionId} hidden>
+                    {field.description}
+                </span>
             )}
             {children({
                 id: controlId,

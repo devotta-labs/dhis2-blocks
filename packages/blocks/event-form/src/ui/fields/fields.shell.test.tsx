@@ -203,30 +203,30 @@ describe('field shell', () => {
         ).toBe('Pick one answer')
     })
 
-    it('offers Show more only when the description is clamped', async () => {
-        const long = Array.from({ length: 80 }, (_, i) => `word${i}`).join(' ')
-        await mount(
-            [
-                baseField({
-                    id: 'short',
-                    label: 'Short',
-                    description: 'Brief.',
-                }),
-                baseField({ id: 'long', label: 'Long', description: long }),
-            ],
-            {
-                wrap: (children) => (
-                    <div style={{ width: 280 }}>{children}</div>
-                ),
-            }
-        )
-        const buttons = page.getByRole('button', { name: /Show (more|less)/ })
-        expect(buttons.elements()).toHaveLength(1)
-        const toggle = buttons.first()
-        await expect.element(toggle).toHaveAttribute('aria-expanded', 'false')
-        await toggle.click()
-        await expect.element(toggle).toHaveAttribute('aria-expanded', 'true')
-        await expect.element(toggle).toHaveTextContent('Show less')
+    it('opens the description in a popover from a dotted label', async () => {
+        await mount([
+            baseField({
+                id: 'described',
+                label: 'Described',
+                description: 'Enter the weight in kg',
+            }),
+            baseField({ id: 'plain', label: 'Plain' }),
+        ])
+        // Only a field with a description gets the dotted trigger.
+        expect(
+            page.getByRole('button', { name: 'Plain' }).elements()
+        ).toHaveLength(0)
+        const trigger = page.getByRole('button', { name: 'Described' })
+        await expect.element(trigger).toHaveClass(/decoration-dotted/)
+        // The description is not shown inline, and the label still names the input.
+        expect(page.getByRole('dialog').elements()).toHaveLength(0)
+        await expect
+            .element(page.getByRole('textbox', { name: 'Described' }))
+            .toBeVisible()
+        await trigger.click()
+        await expect
+            .element(page.getByRole('dialog'))
+            .toHaveTextContent('Enter the weight in kg')
     })
 
     it('tags rule messages Rule and value errors Value', async () => {

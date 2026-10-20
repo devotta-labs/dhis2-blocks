@@ -106,6 +106,54 @@ describe('the same outcome as Capture', () => {
         expectParity(scenario, { A: 'a', C: 'c' })
     })
 
+    it('an ASSIGN into a hidden field is saved, and the field stays hidden', () => {
+        // Capture: "assignValueEffects has precedence over blank a hidden field". A calculated
+        // value that is stored but not shown is a common DHIS2 pattern.
+        const scenario = synthetic([
+            rule('r', 'true', [hide('X'), assign('X', "'calculated'")]),
+        ])
+        const view = oursView(scenario, { A: 'a', X: 'typed' })
+        expect(view.visible).not.toContain('X')
+        expect(view.values.X).toBe('calculated')
+        expectParity(scenario, { A: 'a' })
+        expectParity(scenario, { A: 'a', X: 'typed' })
+    })
+
+    it('an ASSIGN of a code outside the option set clears the field', () => {
+        const scenario = synthetic(
+            [rule('r', 'true', [assign('X', "'unsure'")])],
+            [dataElement('X', { options: YES_NO })]
+        )
+        expect(oursView(scenario, { X: 'yes' }).values.X).toBeUndefined()
+        expectParity(scenario, {})
+        expectParity(scenario, { X: 'yes' })
+    })
+
+    it('a MULTI_TEXT ASSIGN is saved only when every part is an option code', () => {
+        const multiText = (value: string) =>
+            synthetic(
+                [rule('r', 'true', [assign('X', `'${value}'`)])],
+                [
+                    dataElement('X', {
+                        valueType: 'MULTI_TEXT',
+                        options: YES_NO,
+                    }),
+                ]
+            )
+        expect(oursView(multiText('yes,no'), {}).values.X).toBe('yes,no')
+        expect(oursView(multiText('yes,unsure'), {}).values.X).toBeUndefined()
+        expectParity(multiText('yes,no'), {})
+        expectParity(multiText('yes,unsure'), { X: 'no' })
+    })
+
+    it('an ASSIGN to a data element of another stage is dropped', () => {
+        const scenario = synthetic([
+            rule('r', 'true', [assign('ELSEWHERE', "'x'")]),
+        ])
+        expect(oursView(scenario, { A: 'a' }).values).toEqual({ A: 'a' })
+        expectParity(scenario, { A: 'a' })
+    })
+
     it('a hidden section hides its fields and keeps their values', () => {
         const scenario = synthetic(
             [

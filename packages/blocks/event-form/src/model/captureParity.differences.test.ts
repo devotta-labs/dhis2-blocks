@@ -57,19 +57,6 @@ const settled =
  */
 const differences: Difference[] = [
     {
-        // Capture is right: a calculated value that is stored but not shown is a common DHIS2
-        // pattern (Capture: "assignValueEffects has precedence over blank a hidden field"). Here
-        // the hidden field wins (`overlay`), so the value is never saved.
-        name: 'an ASSIGN into a hidden field is saved',
-        differ: ['values'],
-        views: settled(
-            synthetic([
-                rule('r', 'true', [hide('X'), assign('X', "'calculated'")]),
-            ]),
-            { A: 'a' }
-        ),
-    },
-    {
         // Capture is consistent: it ends where its rules, run on the values it shows, change
         // nothing. Here pass 1 hides both and clears them; pass 2 reads both empty and hides
         // neither, so both are shown again with their stored answers, which, evaluated, hide each
@@ -169,30 +156,6 @@ const differences: Difference[] = [
                     },
                 ]),
             ]),
-            { A: 'a' }
-        ),
-    },
-    {
-        // Capture is right: it assigns nothing (clears the field) when the value is not one of
-        // the field's option codes. Here the code is saved, and offered as a choice, though the
-        // server rejects a value outside the option set.
-        name: 'an ASSIGN of a code outside the option set',
-        differ: ['values', 'options'],
-        views: settled(
-            synthetic(
-                [rule('r', 'true', [assign('X', "'unsure'")])],
-                [dataElement('X', { options: YES_NO })]
-            ),
-            {}
-        ),
-    },
-    {
-        // Capture is right: it drops effects on fields outside the stage. Here `overlay` puts the
-        // value into the effective values, so the save sends a data value the stage lacks.
-        name: 'an ASSIGN to a data element of another stage',
-        differ: ['values'],
-        views: settled(
-            synthetic([rule('r', 'true', [assign('ELSEWHERE', "'x'")])]),
             { A: 'a' }
         ),
     },

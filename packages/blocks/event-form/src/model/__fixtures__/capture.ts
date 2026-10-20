@@ -81,9 +81,12 @@ export const oursView = (
     const second = evaluateEventRules(
         engine,
         context,
-        withValues(input, overlay(stored, first).effective)
+        withValues(
+            input,
+            overlay(stored, first, metadata.dataElements).effective
+        )
     )
-    const { effective } = overlay(stored, second)
+    const { effective } = overlay(stored, second, metadata.dataElements)
     const model = buildFormModel(undefined, {
         metadata,
         effective,

@@ -102,8 +102,8 @@ export const useEventFormModel = ({
         input: firstInput,
     })
     const firstEffective = useMemo(
-        () => overlay(stored, first.effects).effective,
-        [stored, first.effects]
+        () => overlay(stored, first.effects, metadata.dataElements).effective,
+        [stored, first.effects, metadata.dataElements]
     )
     const second = useProgramRules({
         programId,
@@ -114,8 +114,8 @@ export const useEventFormModel = ({
     const effects = second.effects
 
     const { effective, ruleChanges } = useMemo(
-        () => overlay(stored, effects),
-        [stored, effects]
+        () => overlay(stored, effects, metadata.dataElements),
+        [stored, effects, metadata.dataElements]
     )
     const fieldErrors = useMemo(
         () => fieldErrorsOf(metadata, effective, serverErrors),

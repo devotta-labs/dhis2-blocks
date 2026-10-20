@@ -256,6 +256,20 @@ describe('buildFormModel', () => {
         expect(model.fields.get('a')?.hidden).toBe(false)
     })
 
+    it('hidden field with an assigned value stays hidden and holds the value', () => {
+        const effects = emptyEffects()
+        effects.hiddenFields.set('b', [attribution('hide')])
+        effects.assignedValues.set('b', { value: 'v', by: attribution('set') })
+        const model = buildFormModel(
+            undefined,
+            baseInput(threeFields(), { effects, effective: { b: 'v' } })
+        )
+        expect(model.sections[0].fieldIds).toEqual(['a', 'c'])
+        const field = model.fields.get('b')
+        expect(field).toMatchObject({ hidden: true, value: 'v' })
+        expect(field?.assignedBy).toBeUndefined()
+    })
+
     it('hidden section is hidden and lists no fields', () => {
         const metadata = stageMetadata(
             [dataElement('a'), dataElement('b'), dataElement('c')],

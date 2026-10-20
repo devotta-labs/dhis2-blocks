@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { act } from 'react'
-import { createRoot } from 'react-dom/client'
+import { createRoot, type Root } from 'react-dom/client'
 import { Line, LineChart } from 'recharts'
-import { ChartContainer, type ChartConfig } from './chart'
+import { ChartContainer, ChartTooltipContent, type ChartConfig } from './chart'
 
 declare global {
     var IS_REACT_ACT_ENVIRONMENT: boolean | undefined
@@ -15,17 +15,22 @@ const config = {
 describe('chart container', () => {
     const original = globalThis.IS_REACT_ACT_ENVIRONMENT
 
+    let container: HTMLDivElement
+    let root: Root
+
     beforeEach(() => {
         globalThis.IS_REACT_ACT_ENVIRONMENT = true
+        container = document.createElement('div')
+        document.body.appendChild(container)
+        root = createRoot(container)
     })
     afterEach(() => {
+        act(() => root.unmount())
+        container.remove()
         globalThis.IS_REACT_ACT_ENVIRONMENT = original
     })
 
     it('exposes each series colour as a --color-<key> variable on the chart', () => {
-        const container = document.createElement('div')
-        document.body.appendChild(container)
-        const root = createRoot(container)
         act(() => {
             root.render(
                 <ChartContainer config={config} className="h-24 w-48">
@@ -49,8 +54,32 @@ describe('chart container', () => {
         expect(
             getComputedStyle(chart).getPropertyValue('--color-value').trim()
         ).not.toBe('')
+    })
 
-        act(() => root.unmount())
-        container.remove()
+    it('labels a tooltip row from the config and formats numbers', () => {
+        act(() => {
+            root.render(
+                <ChartContainer config={config}>
+                    <div>
+                        <ChartTooltipContent
+                            active
+                            label="value"
+                            payload={[
+                                {
+                                    graphicalItemId: 'value',
+                                    dataKey: 'value',
+                                    name: 'value',
+                                    value: 1234.5,
+                                    payload: { visit: 'a', value: 1234.5 },
+                                },
+                            ]}
+                        />
+                    </div>
+                </ChartContainer>
+            )
+        })
+
+        expect(container.textContent).toContain('Value')
+        expect(container.textContent).toContain('1,234.5')
     })
 })

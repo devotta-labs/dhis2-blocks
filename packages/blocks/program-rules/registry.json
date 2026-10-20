@@ -104,6 +104,11 @@
                     "target": "@components/program-rules/hooks/queryKeys.ts"
                 },
                 {
+                    "path": "src/hooks/useProgramRuleContext.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRuleContext.ts"
+                },
+                {
                     "path": "src/hooks/useProgramRules.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/hooks/useProgramRules.ts"

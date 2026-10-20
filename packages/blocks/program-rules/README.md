@@ -130,6 +130,12 @@ useProgramRules({
     graph?: RuleDependencyGraph
     optionGroupOptions: Map<string, Set<string>>
 }
+useProgramRuleContext({ programId: string, programStageId: string, enabled?: boolean }): {
+    status: 'loading' | 'ready' | 'error'
+    metadata?: ProgramRulesMetadata // rules limited to the stage
+    context?: RuleContext // graph, invalidRules, requirements; no event needed
+    error?: Error
+}
 loadRuleEngine(): Promise<RuleEngineModule> // preload the engine earlier if you like
 programRulesQueryKeys // React Query keys for invalidation
 ```
@@ -139,6 +145,9 @@ How the hook behaves:
 - On mount it starts `import('@dhis2/rule-engine')` (once per app) and, in parallel, one app-runtime query for
   rules, variables (with their option sets), constants, program stages and the user's roles and groups.
 - Rules for other program stages are dropped before the context is built.
+- `useProgramRuleContext` is the same fetching and context build without an event, for tools that inspect a
+  stage's rules (its dependency graph, invalid rules, data requirements). It shares its queries with
+  `useProgramRules`.
 - It fetches the org unit groups named by `d2:inOrgUnitGroup(...)`, and `tracker/enrollments/{id}` (with events
   only when the rules read other events) only when the rules need them and `input` doesn't carry them.
 - Evaluation runs again only when the **content** of `input` changes. Pass committed values (on blur, or on

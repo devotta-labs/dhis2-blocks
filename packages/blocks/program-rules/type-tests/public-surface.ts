@@ -28,12 +28,15 @@ import { buildRuleContext, evaluateEventRules, explainField } from '../src'
 import type {
     ProgramRulesInput,
     ProgramRulesStatus,
+    UseProgramRuleContextOptions,
+    UseProgramRuleContextResult,
     UseProgramRulesOptions,
     UseProgramRulesResult,
 } from '../src/use-program-rules'
 import {
     loadRuleEngine,
     programRulesQueryKeys,
+    useProgramRuleContext,
     useProgramRules,
 } from '../src/use-program-rules'
 
@@ -64,6 +67,8 @@ export type SupportedProgramRulesTypes = [
     RuleOrgUnitGroupMetadata,
     ProgramRulesInput,
     ProgramRulesStatus,
+    UseProgramRuleContextOptions,
+    UseProgramRuleContextResult,
     UseProgramRulesOptions,
     UseProgramRulesResult,
 ]
@@ -116,6 +121,13 @@ export const useEventRules = (): UseProgramRulesResult =>
         enrollmentId: 'PE6abx7Zhn0',
         input: { event },
     })
+
+// The graph, invalid rules and requirements need no event.
+export const useStageGraph = (): RuleDependencyGraph | undefined =>
+    useProgramRuleContext({
+        programId: 'WSGAb5XwJ3Y',
+        programStageId: 'WZbXY0S00lP',
+    }).context?.graph
 
 export const statuses: UseProgramRulesResult['status'][] = [
     'loading',

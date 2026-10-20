@@ -2,26 +2,24 @@ import { useQuery } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import { useCallback, useMemo } from 'react'
 import {
-    buildRuleContext,
     evaluateEventRules,
     explainField,
     type Attribution,
     type InvalidRule,
-    type ProgramRulesMetadata,
-    type RuleContext,
     type RuleDependencyGraph,
     type RuleEffects,
-    type RuleEngineModule,
     type RuleEnrollmentInput,
     type RuleEventInput,
-    type RuleOrgUnitGroupMetadata,
 } from '../index'
-import { shouldRetryProgramRulesRequest, useProgramRulesClient } from './client'
+import { shouldRetryProgramRulesRequest } from './client'
 import { fetchRuleEnrollment } from './enrollment'
 import { inputContentKey } from './inputKey'
-import { useRuleEngine } from './loadRuleEngine'
-import { fetchOrgUnitGroups, fetchProgramRulesMetadata } from './metadata'
 import { programRulesQueryKeys } from './queryKeys'
+import {
+    asError,
+    neededFailure,
+    useStageRuleContext,
+} from './useProgramRuleContext'
 
 export interface ProgramRulesInput {
     event: RuleEventInput
@@ -53,34 +51,8 @@ export interface UseProgramRulesResult {
     optionGroupOptions: Map<string, Set<string>>
 }
 
-const HOUR = 60 * 60_000
 const NO_INVALID_RULES: InvalidRule[] = []
 const NO_OPTION_GROUPS = new Map<string, Set<string>>()
-const NO_GROUPS: string[] = []
-
-const asError = (cause: unknown): Error =>
-    cause instanceof Error ? cause : new Error(String(cause))
-
-const buildContext = (
-    engine: RuleEngineModule | undefined,
-    metadata: ProgramRulesMetadata | undefined,
-    orgUnitGroups?: ReadonlyArray<RuleOrgUnitGroupMetadata>
-) =>
-    engine === undefined || metadata === undefined
-        ? undefined
-        : Result.try({
-              try: () =>
-                  buildRuleContext(
-                      engine,
-                      orgUnitGroups === undefined
-                          ? metadata
-                          : { ...metadata, orgUnitGroups }
-                  ),
-              catch: asError,
-          })
-
-const okContext = (built: ReturnType<typeof buildContext>) =>
-    built?.isOk() ? built.value : undefined
 
 /**
  * Program rule effects for one event. Starts loading the rule engine on
@@ -94,55 +66,12 @@ export const useProgramRules = ({
     input,
     enabled = true,
 }: UseProgramRulesOptions): UseProgramRulesResult => {
-    const client = useProgramRulesClient()
-
-    const ruleEngine = useRuleEngine(enabled)
-    const metadataQuery = useQuery({
-        queryKey: programRulesQueryKeys.metadata(programId),
-        queryFn: ({ signal }) =>
-            fetchProgramRulesMetadata(client, programId, signal),
-        enabled,
-        staleTime: HOUR,
-        retry: shouldRetryProgramRulesRequest,
-    })
-    const engine = ruleEngine.engine
-
-    const stageMetadata = useMemo(() => {
-        const metadata = metadataQuery.data
-        return (
-            metadata && {
-                ...metadata,
-                rules: metadata.rules.filter(
-                    (rule) =>
-                        rule.programStageId === undefined ||
-                        rule.programStageId === programStageId
-                ),
-            }
-        )
-    }, [metadataQuery.data, programStageId])
-
-    const baseContext = useMemo(
-        () => buildContext(engine, stageMetadata),
-        [engine, stageMetadata]
-    )
-    const groups =
-        okContext(baseContext)?.requirements.orgUnitGroups ?? NO_GROUPS
-    const groupsQuery = useQuery({
-        queryKey: programRulesQueryKeys.orgUnitGroups(groups),
-        queryFn: ({ signal }) => fetchOrgUnitGroups(client, groups, signal),
-        enabled: enabled && groups.length > 0,
-        staleTime: HOUR,
-        retry: shouldRetryProgramRulesRequest,
-    })
-    const groupedContext = useMemo(
-        () =>
-            groupsQuery.data === undefined
-                ? undefined
-                : buildContext(engine, stageMetadata, groupsQuery.data),
-        [engine, stageMetadata, groupsQuery.data]
-    )
-    const builtContext = groups.length > 0 ? groupedContext : baseContext
-    const context: RuleContext | undefined = okContext(builtContext)
+    const {
+        client,
+        engine,
+        context,
+        error: contextError,
+    } = useStageRuleContext({ programId, programStageId, enabled })
 
     const needs = context?.requirements
     const needsEnrollment =
@@ -199,19 +128,9 @@ export const useProgramRules = ({
 
     // A query only fails the hook while it is needed and has nothing to show:
     // a failed background refetch keeps the last good data, and so do we.
-    const failure = (
-        query: { data?: unknown; error: Error | null },
-        needed: boolean
-    ) =>
-        needed && query.data === undefined
-            ? (query.error ?? undefined)
-            : undefined
     const error =
-        ruleEngine.error ??
-        failure(metadataQuery, true) ??
-        failure(groupsQuery, groups.length > 0) ??
-        failure(enrollmentQuery, fetchEnrollment) ??
-        (builtContext?.isErr() ? builtContext.error : undefined) ??
+        contextError ??
+        neededFailure(enrollmentQuery, fetchEnrollment) ??
         (evaluation?.isErr() ? evaluation.error : undefined)
 
     const explain = useCallback(

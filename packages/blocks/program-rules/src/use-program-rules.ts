@@ -1,5 +1,10 @@
 export { loadRuleEngine } from './hooks/loadRuleEngine'
 export { programRulesQueryKeys } from './hooks/queryKeys'
+export { useProgramRuleContext } from './hooks/useProgramRuleContext'
+export type {
+    UseProgramRuleContextOptions,
+    UseProgramRuleContextResult,
+} from './hooks/useProgramRuleContext'
 export { useProgramRules } from './hooks/useProgramRules'
 export type {
     ProgramRulesInput,
@@ -13,6 +18,8 @@ export type {
 export type {
     Attribution,
     InvalidRule,
+    ProgramRulesMetadata,
+    RuleContext,
     RuleDependencyGraph,
     RuleEffects,
     RuleEventInput,

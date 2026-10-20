@@ -97,6 +97,7 @@ export const EventFormDemo = () => {
 
     const [openSelector, setOpenSelector] = useState<OpenSelector>()
     const [focusMode, setFocusMode] = useState(false)
+    const [rulesLens, setRulesLens] = useState(false)
     const [notice, setNotice] = useState<EventFormSavedResult['outcome']>()
 
     const programsQuery = useQuery(
@@ -206,6 +207,7 @@ export const EventFormDemo = () => {
                 eventId={urlState.eventId}
                 onSaved={handleSaved}
                 onCancel={backToList}
+                rulesLens={rulesLens}
             />
         ) : null
 
@@ -322,6 +324,13 @@ export const EventFormDemo = () => {
                                 onCheckedChange={setFocusMode}
                             />
                             {i18n.t('Focus mode')}
+                        </Label>
+                        <Label>
+                            <Switch
+                                checked={rulesLens}
+                                onCheckedChange={setRulesLens}
+                            />
+                            {i18n.t('Show rules')}
                         </Label>
                         <DropdownMenu>
                             <DropdownMenuTrigger

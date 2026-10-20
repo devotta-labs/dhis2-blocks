@@ -10,6 +10,7 @@ import {
     rmnchResponses,
 } from '../../test/rmnch'
 import { programRulesQueryKeys } from './queryKeys'
+import { useProgramRuleContext } from './useProgramRuleContext'
 import {
     useProgramRules,
     type ProgramRulesInput,
@@ -302,5 +303,52 @@ describe('useProgramRules', () => {
         await new Promise((resolve) => setTimeout(resolve, 200))
         expect(result.current.status).toBe('loading')
         expect(requests).toEqual([])
+    })
+})
+
+describe('useProgramRuleContext', () => {
+    it('builds the stage graph without an event or an enrollment', async () => {
+        const { requests, wrapper } = serve(rmnchResponses)
+        const { result } = await renderHook(
+            () =>
+                useProgramRuleContext({
+                    programId: RMNCH.programId,
+                    programStageId: RMNCH.stageId,
+                }),
+            { wrapper }
+        )
+        expect(result.current.status).toBe('loading')
+        await settle(() => result.current.status)
+        expect(result.current.error?.message).toBeUndefined()
+        const { context, metadata } = result.current
+        expect(context?.invalidRules).toHaveLength(3)
+        expect(context?.requirements.enrollment).toBe(true)
+        expect(context?.graph.fieldWriters.get(RMNCH.gestationalAge)).toEqual([
+            'KRMEVVbex0q',
+        ])
+        expect(context?.graph.fieldReaders.get(RMNCH.chronic)).toHaveLength(1)
+        expect(
+            metadata?.rules.every(
+                (rule) =>
+                    rule.programStageId === undefined ||
+                    rule.programStageId === RMNCH.stageId
+            )
+        ).toBe(true)
+        expect(requests).not.toContain('tracker/enrollments')
+    })
+
+    it('reports a failed metadata request', async () => {
+        const { wrapper } = serve(rmnchResponses, ['programRuleVariables'])
+        const { result } = await renderHook(
+            () =>
+                useProgramRuleContext({
+                    programId: RMNCH.programId,
+                    programStageId: RMNCH.stageId,
+                }),
+            { wrapper }
+        )
+        await settle(() => result.current.status)
+        expect(result.current.status).toBe('error')
+        expect(result.current.context).toBeUndefined()
     })
 })

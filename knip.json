@@ -165,6 +165,44 @@
                 ]
             }
         },
+        "packages/blocks/observation-cards": {
+            "entry": ["src/**/*.{test,spec}.{ts,tsx}"],
+            "project": ["src/**/*.{ts,tsx,css}", "test/**/*.{ts,css}"],
+            "includeEntryExports": true,
+            "ignoreDependencies": [
+                "@dhis2-blocks/ui",
+                "@dhis2/app-runtime",
+                "@dhis2/d2-i18n",
+                "@dhis2/multi-calendar-dates",
+                "@tanstack/react-query",
+                "better-result",
+                "recharts",
+                "zod",
+                "@types/react",
+                "@types/react-dom",
+                "react",
+                "react-dom",
+                "vitest-browser-react"
+            ],
+            "ignoreIssues": {
+                "src/index.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "test/**": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ]
+            }
+        },
         "packages/blocks/context-selector": {
             "entry": [
                 "src/**/*.{test,spec}.{ts,tsx}",

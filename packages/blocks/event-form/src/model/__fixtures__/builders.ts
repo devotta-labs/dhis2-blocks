@@ -8,6 +8,7 @@ import {
     type Section,
     type StageMetadata,
 } from '../../api/schemas'
+import type { BuildFormModelInput } from '../buildFormModel'
 
 export const attribution = (ruleId = 'rule1'): Attribution => ({
     ruleId,
@@ -72,3 +73,25 @@ export const stageMetadata = (
     dataElements: new Map(elements.map((element) => [element.id, element])),
     hasCategoryCombo: extra.hasCategoryCombo ?? false,
 })
+
+/** A form model input with nothing in it but the metadata, and the given overrides. */
+export const baseInput = (
+    metadata: StageMetadata,
+    extra: Partial<BuildFormModelInput> = {}
+): BuildFormModelInput => ({
+    metadata,
+    effective: {},
+    stored: {},
+    effects: emptyEffects(),
+    optionGroupOptions: new Map(),
+    fieldErrors: {},
+    showAllErrors: false,
+    isCompleting: false,
+    ...extra,
+})
+
+export const options = (...codes: string[]) =>
+    codes.map((code) => ({ id: `id-${code}`, code, label: `Label ${code}` }))
+
+export const threeFields = () =>
+    stageMetadata([dataElement('a'), dataElement('b'), dataElement('c')])

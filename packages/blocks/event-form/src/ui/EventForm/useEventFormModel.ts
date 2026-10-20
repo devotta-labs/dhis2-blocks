@@ -97,8 +97,8 @@ export const useEventFormModel = ({
     const first = evaluate(stored)
     const firstEffects = first?.isOk() ? first.value : undefined
     const firstEffective = useMemo(
-        () => overlay(stored, firstEffects).effective,
-        [stored, firstEffects]
+        () => overlay(stored, firstEffects, metadata.dataElements).effective,
+        [stored, firstEffects, metadata.dataElements]
     )
     // Without the first pass's effects there is nothing to lay over, so no second pass.
     const second =
@@ -112,8 +112,8 @@ export const useEventFormModel = ({
     const error = evaluator.error ?? evaluationError
 
     const { effective, ruleChanges } = useMemo(
-        () => overlay(stored, effects),
-        [stored, effects]
+        () => overlay(stored, effects, metadata.dataElements),
+        [stored, effects, metadata.dataElements]
     )
     const fieldErrors = useMemo(
         () => fieldErrorsOf(metadata, effective, serverErrors),

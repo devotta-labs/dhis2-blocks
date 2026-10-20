@@ -178,22 +178,6 @@
                     "nsTypes",
                     "enumMembers",
                     "namespaceMembers"
-                ],
-                "src/use-tracked-entity-observations.ts": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ],
-                "test/**": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
                 ]
             }
         },

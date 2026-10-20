@@ -1,0 +1,120 @@
+{
+    "$schema": "https://ui.shadcn.com/schema/registry.json",
+    "items": [
+        {
+            "name": "use-tracked-entity-observations",
+            "type": "registry:hook",
+            "title": "useTrackedEntityObservations",
+            "description": "React hook that reads a tracked entity's latest and historical values for chosen data elements across a program's events, with legend and option metadata, using React Query. Read-only.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "zod@^4.4.3"
+            ],
+            "files": [
+                {
+                    "path": "src/use-tracked-entity-observations.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/use-tracked-entity-observations.ts"
+                },
+                {
+                    "path": "src/hooks/buildSeries.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/hooks/buildSeries.ts"
+                },
+                {
+                    "path": "src/hooks/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/hooks/client.ts"
+                },
+                {
+                    "path": "src/hooks/queries.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/hooks/queries.ts"
+                },
+                {
+                    "path": "src/hooks/queryKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/hooks/queryKeys.ts"
+                },
+                {
+                    "path": "src/hooks/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/hooks/schemas.ts"
+                },
+                {
+                    "path": "src/hooks/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/hooks/types.ts"
+                }
+            ],
+            "docs": "Call useTrackedEntityObservations once with the tracked entity, program and data element ids, beneath the DHIS2 app-runtime and TanStack Query providers. Read each data element with observations.get(id)."
+        },
+        {
+            "name": "observation-cards",
+            "type": "registry:block",
+            "title": "DHIS2 Observation Cards",
+            "description": "Read-only React 18 cards for a tracked entity's observations: a trend card with legend badge and sparkline, and a latest-value card.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@2.1.2",
+                "recharts@^3.8.0",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/badge",
+                "devotta-labs/dhis2-blocks/card",
+                "devotta-labs/dhis2-blocks/chart",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/skeleton",
+                "devotta-labs/dhis2-blocks/use-tracked-entity-observations"
+            ],
+            "files": [
+                {
+                    "path": "src/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/index.ts"
+                },
+                {
+                    "path": "src/cards/LatestValueCard.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/cards/LatestValueCard.tsx"
+                },
+                {
+                    "path": "src/cards/LegendBadge.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/cards/LegendBadge.tsx"
+                },
+                {
+                    "path": "src/cards/ObservationCardFrame.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/cards/ObservationCardFrame.tsx"
+                },
+                {
+                    "path": "src/cards/Sparkline.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/cards/Sparkline.tsx"
+                },
+                {
+                    "path": "src/cards/TrendCard.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/cards/TrendCard.tsx"
+                },
+                {
+                    "path": "src/cards/calendar.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/cards/calendar.ts"
+                },
+                {
+                    "path": "src/cards/format.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/cards/format.ts"
+                }
+            ],
+            "docs": "Call useTrackedEntityObservations once and pass observations.get(dataElementId) to each card as its observation prop. Render beneath the DHIS2 app-runtime and TanStack Query providers."
+        }
+    ]
+}

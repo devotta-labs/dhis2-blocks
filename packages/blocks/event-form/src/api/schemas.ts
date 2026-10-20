@@ -269,9 +269,23 @@ export const TrackerEventSchema = z.object({
     occurredAt: z.string().optional(),
     scheduledAt: z.string().optional(),
     geometry: GeometrySchema.optional(),
+    // DHIS2 2.44 returns an empty data value as `{ dataElement }` with no
+    // `value`; empty values are absent from the form, so they are dropped here.
     dataValues: z
-        .array(z.object({ dataElement: z.string(), value: z.string() }))
-        .default([]),
+        .array(
+            z.object({
+                dataElement: z.string(),
+                value: z.string().nullish(),
+            })
+        )
+        .default([])
+        .transform((dataValues) =>
+            dataValues.flatMap(({ dataElement, value }) =>
+                value === undefined || value === null
+                    ? []
+                    : [{ dataElement, value }]
+            )
+        ),
     notes: z.array(NoteSchema).default([]),
 })
 

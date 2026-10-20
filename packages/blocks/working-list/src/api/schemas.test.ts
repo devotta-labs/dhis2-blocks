@@ -60,6 +60,25 @@ describe('Tracker collection response boundaries', () => {
         ).toEqual([event])
     })
 
+    it('drops data values the server returns without a value', () => {
+        // DHIS2 2.44 returns an empty data value as { dataElement } with no value.
+        const parsed = EventsResponseSchema.parse({
+            events: [
+                {
+                    ...event,
+                    dataValues: [
+                        { dataElement: 'DataElem001', value: '12' },
+                        { dataElement: 'DataElem002' },
+                        { dataElement: 'DataElem003', value: null },
+                    ],
+                },
+            ],
+        })
+        expect(normalizeEventsResponse(parsed).events[0]?.dataValues).toEqual([
+            { dataElement: 'DataElem001', value: '12' },
+        ])
+    })
+
     it('does not let valid legacy data hide a malformed canonical event key', () => {
         expect(() =>
             EventsResponseSchema.parse({

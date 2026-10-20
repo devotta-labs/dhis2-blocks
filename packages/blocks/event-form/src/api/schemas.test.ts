@@ -229,6 +229,25 @@ describe('TrackerEventSchema', () => {
         ])
     })
 
+    it('drops data values the server returns without a value', () => {
+        // DHIS2 2.44 returns an empty data value as { dataElement } with no value.
+        const event = TrackerEventSchema.parse({
+            event: 'Tmpempty001',
+            program: 'WSGAb5XwJ3Y',
+            programStage: STAGE_ID,
+            orgUnit: 'm7fBMpmVpSM',
+            status: 'ACTIVE',
+            dataValues: [
+                { dataElement: 'w4ky6EkVahL', value: '2020-04-03' },
+                { dataElement: 'VFffa31SKjH' },
+                { dataElement: 'sdchiIXIcCf', value: null },
+            ],
+        })
+        expect(event.dataValues).toEqual([
+            { dataElement: 'w4ky6EkVahL', value: '2020-04-03' },
+        ])
+    })
+
     it('rejects an unknown status', () => {
         expect(
             TrackerEventSchema.safeParse({ ...eventFixture, status: 'DONE' })

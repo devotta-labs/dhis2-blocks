@@ -246,12 +246,24 @@ export const normalizeTrackedEntitiesResponse = (
     }
 }
 
-const EventDataValueSchema = z
-    .object({
-        dataElement: z.string().min(1),
-        value: z.union([z.string(), z.number(), z.boolean()]),
-    })
-    .passthrough()
+const EventDataValueValueSchema = z.union([z.string(), z.number(), z.boolean()])
+
+// DHIS2 2.44 returns an empty data value as `{ dataElement }` with no `value`;
+// such entries carry no data, so they are dropped at the boundary.
+const EventDataValuesSchema = z
+    .array(
+        z
+            .object({
+                dataElement: z.string().min(1),
+                value: EventDataValueValueSchema.nullish(),
+            })
+            .passthrough()
+    )
+    .transform((dataValues) =>
+        dataValues.flatMap(({ value, ...rest }) =>
+            value === undefined || value === null ? [] : [{ ...rest, value }]
+        )
+    )
 
 export const TRACKER_EVENT_STATUSES = [
     'ACTIVE',
@@ -296,7 +308,7 @@ const EventSchema = z
             .passthrough()
             .nullable()
             .optional(),
-        dataValues: z.array(EventDataValueSchema),
+        dataValues: EventDataValuesSchema,
     })
     .passthrough()
 

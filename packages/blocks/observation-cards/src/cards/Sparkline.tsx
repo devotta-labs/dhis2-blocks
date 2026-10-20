@@ -54,6 +54,7 @@ export function Sparkline({
             ? i18n.t('1 reading on {{date}}, latest {{latest}}', {
                   date: formatDate(first.occurredAt),
                   latest: displayValue(series, last, formatDate),
+                  interpolation: { escapeValue: false },
               })
             : i18n.t(
                   '{{count}} readings from {{from}} to {{to}}, latest {{latest}}',
@@ -62,6 +63,7 @@ export function Sparkline({
                       from: formatDate(first.occurredAt),
                       to: formatDate(last.occurredAt),
                       latest: displayValue(series, last, formatDate),
+                      interpolation: { escapeValue: false },
                   }
               )
 

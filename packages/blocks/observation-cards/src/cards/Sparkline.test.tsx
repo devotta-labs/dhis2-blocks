@@ -103,6 +103,34 @@ describe('Sparkline', () => {
         expect(container.querySelector('[data-slot="chart"]')).toBeNull()
     })
 
+    it('writes an apostrophe and an ampersand in the summary literally', async () => {
+        const { container } = await render(
+            <Sparkline
+                series={{
+                    ...makeSeries([makePoint(1, 1), makePoint(2, 2)]),
+                    options: [
+                        { code: '1', name: 'Mother & child' },
+                        { code: '2', name: "Child's choice" },
+                    ],
+                }}
+            />
+        )
+        const summary = container.querySelector('.sr-only')?.textContent
+        expect(summary).toContain("latest Child's choice")
+        expect(summary).not.toContain('&#39;')
+        const single = await render(
+            <Sparkline
+                series={{
+                    ...makeSeries([makePoint(1, 1)]),
+                    options: [{ code: '1', name: "Mother & child's" }],
+                }}
+            />
+        )
+        expect(
+            single.container.querySelector('.sr-only')?.textContent
+        ).toContain("latest Mother & child's")
+    })
+
     it('has no axe violations', async () => {
         const { container } = await render(
             <Sparkline

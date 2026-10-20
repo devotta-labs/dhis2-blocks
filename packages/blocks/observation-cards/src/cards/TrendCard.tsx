@@ -21,6 +21,9 @@ export interface TrendCardProps {
     className?: string
 }
 
+// React escapes text itself, so i18next must not escape it a second time.
+const NO_ESCAPE = { escapeValue: false }
+
 /** The change since the previous reading, or nothing when there is no earlier one. */
 const changeText = (
     series: ObservationSeries,
@@ -33,12 +36,23 @@ const changeText = (
     const date = formatDate(previous.occurredAt)
     // A change that rounds to nothing would otherwise read "▲ 0".
     if (Math.round(change * 100) === 0) {
-        return i18n.t('No change since {{date}}', { date })
+        return i18n.t('No change since {{date}}', {
+            date,
+            interpolation: NO_ESCAPE,
+        })
     }
     const amount = formatNumber(Math.abs(change))
     return change > 0
-        ? i18n.t('▲ {{change}} since {{date}}', { change: amount, date })
-        : i18n.t('▼ {{change}} since {{date}}', { change: amount, date })
+        ? i18n.t('▲ {{change}} since {{date}}', {
+              change: amount,
+              date,
+              interpolation: NO_ESCAPE,
+          })
+        : i18n.t('▼ {{change}} since {{date}}', {
+              change: amount,
+              date,
+              interpolation: NO_ESCAPE,
+          })
 }
 
 /** A numeric observation: latest value, legend, change since the previous reading and a sparkline. */
@@ -118,6 +132,7 @@ export function TrendCard({
                         {i18n.t('Recorded {{date}} · {{stage}}', {
                             date: formatDate(latest.occurredAt),
                             stage: latest.source.programStageName,
+                            interpolation: NO_ESCAPE,
                         })}
                     </span>
                     {partialNote ? <span>{partialNote}</span> : null}

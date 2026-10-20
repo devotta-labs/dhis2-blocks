@@ -167,6 +167,9 @@ importers:
       '@dhis2-blocks/context-selector':
         specifier: workspace:*
         version: link:../../packages/blocks/context-selector
+      '@dhis2-blocks/observation-cards':
+        specifier: workspace:*
+        version: link:../../packages/blocks/observation-cards
       '@dhis2-blocks/ui':
         specifier: workspace:*
         version: link:../../packages/blocks/ui

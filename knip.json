@@ -171,19 +171,20 @@
             "includeEntryExports": true,
             "ignoreDependencies": [
                 "@dhis2-blocks/ui",
-                "@dhis2/app-runtime",
                 "@dhis2/d2-i18n",
                 "@dhis2/multi-calendar-dates",
-                "@tanstack/react-query",
-                "recharts",
-                "@types/react",
-                "@types/react-dom",
-                "react",
-                "react-dom",
-                "vitest-browser-react"
+                "recharts"
             ],
             "ignoreIssues": {
                 "src/index.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "src/use-tracked-entity-observations.ts": [
                     "exports",
                     "types",
                     "nsExports",

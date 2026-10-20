@@ -9,13 +9,10 @@ import { observationQueryKeys } from './hooks/queryKeys'
 import type { ObservationSeries } from './hooks/types'
 
 export type {
-    DataElementMetadata,
     ObservationLegend,
     ObservationOption,
     ObservationPoint,
     ObservationSeries,
-    StageMetadata,
-    TrackerEventRecord,
 } from './hooks/types'
 
 export type ObservationResult =

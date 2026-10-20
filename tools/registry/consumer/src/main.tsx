@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { ContextSelector } from '@/components/context-selector'
+import { TrendCard } from '@/components/observation-cards'
 import { WorkingList } from '@/components/working-list'
 import { Host } from './host'
 import './index.css'
@@ -14,6 +15,7 @@ if (root !== null) {
             <WorkingList programId="program" orgUnitId="orgUnit">
                 {null}
             </WorkingList>
+            <TrendCard observation={{ status: 'pending' }} />
         </>
     )
 }

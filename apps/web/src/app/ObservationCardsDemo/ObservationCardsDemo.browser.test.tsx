@@ -16,8 +16,8 @@ type JsonValue =
 type Resolver = () => JsonValue
 
 const HAEMOGLOBIN = 'vANAXwtLwcT'
-const BLOOD_GROUP = 'sWoqcoByYmD'
-const NEXT_STEP = 'EyfTU3ibMmJ'
+const SMOKING = 'sWoqcoByYmD'
+const EXTREME_PALLOR = 'EyfTU3ibMmJ'
 
 const stagesResponse = {
     programStages: [
@@ -27,8 +27,8 @@ const stagesResponse = {
             access: { data: { read: true } },
             programStageDataElements: [
                 { dataElement: { id: HAEMOGLOBIN } },
-                { dataElement: { id: BLOOD_GROUP } },
-                { dataElement: { id: NEXT_STEP } },
+                { dataElement: { id: SMOKING } },
+                { dataElement: { id: EXTREME_PALLOR } },
             ],
         },
     ],
@@ -37,8 +37,12 @@ const stagesResponse = {
 const dataElementsResponse = {
     dataElements: [
         { id: HAEMOGLOBIN, displayName: 'Haemoglobin', valueType: 'NUMBER' },
-        { id: BLOOD_GROUP, displayName: 'Blood group', valueType: 'TEXT' },
-        { id: NEXT_STEP, displayName: 'Next step', valueType: 'TEXT' },
+        { id: SMOKING, displayName: 'WHOMCH Smoking', valueType: 'BOOLEAN' },
+        {
+            id: EXTREME_PALLOR,
+            displayName: 'WHOMCH Extreme pallor',
+            valueType: 'BOOLEAN',
+        },
     ],
 }
 
@@ -51,7 +55,7 @@ const eventsResponse = {
             occurredAt: '2026-03-01T00:00:00.000',
             dataValues: [
                 { dataElement: HAEMOGLOBIN, value: '10.5' },
-                { dataElement: BLOOD_GROUP, value: 'O+' },
+                { dataElement: SMOKING, value: 'true' },
             ],
         },
         {
@@ -61,11 +65,13 @@ const eventsResponse = {
             occurredAt: '2026-03-12T00:00:00.000',
             dataValues: [
                 { dataElement: HAEMOGLOBIN, value: '11.2' },
-                { dataElement: NEXT_STEP, value: 'Refer to hospital' },
+                { dataElement: EXTREME_PALLOR, value: 'false' },
             ],
         },
     ],
 }
+
+const enrollmentsResponse = { enrollments: [{ enrollment: 'enr1' }] }
 
 const LocationProbe = () => {
     const location = useLocation()
@@ -75,7 +81,13 @@ const LocationProbe = () => {
 const renderDemo = async (
     url: string,
     resolvers: Partial<
-        Record<'programs' | 'dataElements' | 'tracker/events', Resolver>
+        Record<
+            | 'programs'
+            | 'dataElements'
+            | 'tracker/events'
+            | 'tracker/enrollments',
+            Resolver
+        >
     > = {}
 ) => {
     const calls: Array<{ resource: string; id?: string }> = []
@@ -83,6 +95,7 @@ const renderDemo = async (
         programs: () => stagesResponse,
         dataElements: () => dataElementsResponse,
         'tracker/events': () => eventsResponse,
+        'tracker/enrollments': () => enrollmentsResponse,
         ...resolvers,
     }
     const data: CustomData = {}
@@ -126,11 +139,13 @@ describe('ObservationCardsDemo', () => {
         await expect.element(haemoglobin).toHaveTextContent('11.2')
         await expect.element(haemoglobin).toHaveTextContent('g/dL')
         await expect
-            .element(screen.getByRole('group', { name: 'Blood group' }))
-            .toHaveTextContent('O+')
+            .element(screen.getByRole('group', { name: 'WHOMCH Smoking' }))
+            .toHaveTextContent('Yes')
         await expect
-            .element(screen.getByRole('group', { name: 'Next step' }))
-            .toHaveTextContent('Refer to hospital')
+            .element(
+                screen.getByRole('group', { name: 'WHOMCH Extreme pallor' })
+            )
+            .toHaveTextContent('No')
         expect(screen.getByRole('group').elements()).toHaveLength(3)
 
         // The hook runs once for the union of the preset's ids.

@@ -22,7 +22,10 @@ export interface ObservationCardFrameProps {
     state?: 'content' | 'pending' | 'error' | 'empty'
     /** A note under the body. */
     footer?: React.ReactNode
-    /** `stale` mutes the card for a reading that is out of date. */
+    /**
+     * `stale` marks a reading that is out of date: the body is greyed and the
+     * card keeps a border. The card's own footer carries the warning note.
+     */
     tone?: 'default' | 'stale'
     className?: string
     children?: React.ReactNode
@@ -69,7 +72,12 @@ export function ObservationCardFrame({
                 ) : null}
                 {badge}
             </CardHeader>
-            <CardContent className="flex min-w-0 flex-col gap-2">
+            <CardContent
+                className={cn(
+                    'flex min-w-0 flex-col gap-2',
+                    tone === 'stale' && 'text-dhis2-grey-600'
+                )}
+            >
                 {pending ? (
                     <>
                         <span className="sr-only">{i18n.t('Loading')}</span>

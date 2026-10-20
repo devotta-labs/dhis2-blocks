@@ -9,6 +9,8 @@ const resolve = {
             new URL('../ui/src', import.meta.url)
         ),
     },
+    // One React for the app, the blocks and Recharts.
+    dedupe: ['react', 'react-dom'],
 }
 
 const sharedProjectOptions = {
@@ -31,6 +33,9 @@ export default defineConfig({
             {
                 plugins: [tailwindcss()],
                 resolve,
+                // Pre-bundled up front: discovering Recharts mid-run on a cold
+                // cache reloads the browser and fails the first test files.
+                optimizeDeps: { include: ['recharts'] },
                 test: {
                     ...sharedProjectOptions,
                     name: 'browser',

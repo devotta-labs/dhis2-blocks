@@ -1,4 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
+import { IconWarningFilled16 } from '@dhis2/ui-icons'
 import React from 'react'
 import type { ObservationResult } from '../use-tracked-entity-observations'
 import { LegendBadge } from './LegendBadge'
@@ -19,13 +20,34 @@ export interface LatestValueCardProps {
     label?: string
     /** Shown after a numeric value, such as `kg`. */
     unit?: string
-    /** Mutes the card and adds a note once the latest reading is older than this many days. */
+    /**
+     * Once the latest reading is older than this many days, greys the value
+     * and adds an "Out of date" warning note. Off when unset.
+     */
     staleAfterDays?: number
     className?: string
 }
 
 /** Read per render so tests can stub the clock. */
 const now = () => new Date()
+
+/**
+ * One key per English plural form: d2-app-scripts cannot extract `count`
+ * plurals, so the form is picked here. `count` still reaches i18next for a
+ * translation that defines its own plural forms.
+ */
+const staleNote = (days: number): string =>
+    days === 1
+        ? i18n.t('Out of date: last recorded over {{count}} day ago', {
+              count: days,
+              interpolation: NO_ESCAPE,
+          })
+        : i18n.t('Out of date: last recorded over {{count}} days ago', {
+              count: days,
+              interpolation: NO_ESCAPE,
+          })
+
+const TEXT_TYPES = new Set(['TEXT', 'LONG_TEXT'])
 
 /** The last recorded value of a data element: a number, option, yes/no, date or text. */
 export function LatestValueCard({
@@ -96,7 +118,8 @@ export function LatestValueCard({
         isOption || latest.numericValue === undefined
             ? undefined
             : legendFor(series.legends, latest.numericValue)
-    const showUnit = !isOption && unit
+    const showUnit = !isOption && latest.numericValue !== undefined && unit
+    const isText = !isOption && TEXT_TYPES.has(series.valueType)
 
     return (
         <ObservationCardFrame
@@ -112,12 +135,18 @@ export function LatestValueCard({
                             interpolation: NO_ESCAPE,
                         })}
                     </span>
-                    {stale ? (
-                        <span>
-                            {i18n.t('Last recorded over {{days}} days ago', {
-                                days: staleAfterDays,
-                                interpolation: NO_ESCAPE,
-                            })}
+                    {stale && staleAfterDays !== undefined ? (
+                        <span
+                            data-slot="stale-note"
+                            className="inline-flex items-center gap-1 font-medium text-dhis2-yellow-800"
+                        >
+                            <span
+                                aria-hidden="true"
+                                className="inline-flex shrink-0 [&_svg]:size-3.5"
+                            >
+                                <IconWarningFilled16 />
+                            </span>
+                            {staleNote(staleAfterDays)}
                         </span>
                     ) : null}
                     {partialNote ? <span>{partialNote}</span> : null}
@@ -132,7 +161,14 @@ export function LatestValueCard({
                 />
             ) : (
                 <p className="flex items-baseline gap-1">
-                    <span className="text-3xl leading-none font-semibold break-words">
+                    <span
+                        data-slot="observation-value"
+                        className={
+                            isText
+                                ? 'line-clamp-3 text-base break-words'
+                                : 'text-3xl leading-none font-semibold break-words'
+                        }
+                    >
                         {displayValue(series, latest, formatDate)}
                     </span>
                     {showUnit ? (

@@ -234,6 +234,19 @@ describe('LatestValueCard', () => {
         expect(text).toContain('Recorded 2026-03-12')
     })
 
+    it('no unit after a value that is not a number', async () => {
+        const { container } = await render(
+            <LatestValueCard
+                unit="kg"
+                observation={success(
+                    makeSeries([makePoint('true')], { valueType: 'BOOLEAN' })
+                )}
+            />
+        )
+        expect(container.textContent).toContain('Yes')
+        expect(container.textContent).not.toContain('kg')
+    })
+
     it('BOOLEAN true shows Yes', async () => {
         const { container } = await render(
             <LatestValueCard
@@ -256,7 +269,7 @@ describe('LatestValueCard', () => {
         expect(container.textContent).toContain('2026-01-05')
     })
 
-    it('text value shows the text as plain large text with no badge', async () => {
+    it('text value shows the text as plain text with no badge', async () => {
         const { container } = await render(
             <LatestValueCard
                 observation={success(makeSeries([makePoint('Mild anaemia')]))}
@@ -264,6 +277,43 @@ describe('LatestValueCard', () => {
         )
         expect(container.textContent).toContain('Mild anaemia')
         expect(container.querySelector('[data-slot="badge"]')).toBeNull()
+    })
+
+    it.each(['TEXT', 'LONG_TEXT'])(
+        '%s renders at body size, clamped to three lines',
+        async (valueType) => {
+            const { container } = await render(
+                <LatestValueCard
+                    observation={success(
+                        makeSeries(
+                            [makePoint('Refer to the district hospital')],
+                            {
+                                valueType,
+                            }
+                        )
+                    )}
+                />
+            )
+            const value = container.querySelector(
+                '[data-slot="observation-value"]'
+            )
+            expect(value?.classList).toContain('text-base')
+            expect(value?.classList).toContain('line-clamp-3')
+            expect(value?.classList).not.toContain('text-3xl')
+        }
+    )
+
+    it('a number keeps the large size', async () => {
+        const { container } = await render(
+            <LatestValueCard
+                observation={success(
+                    makeSeries([makePoint('16')], { valueType: 'NUMBER' })
+                )}
+            />
+        )
+        const value = container.querySelector('[data-slot="observation-value"]')
+        expect(value?.classList).toContain('text-3xl')
+        expect(value?.classList).not.toContain('line-clamp-3')
     })
 
     it('stale point has the stale style and an "over {n} days ago" note', async () => {
@@ -281,8 +331,42 @@ describe('LatestValueCard', () => {
                 ?.getAttribute('data-tone')
         ).toBe('stale')
         expect(container.textContent).toContain(
-            'Last recorded over 30 days ago'
+            'Out of date: last recorded over 30 days ago'
         )
+    })
+
+    it('stale point mutes the value and shows the note as a warning', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(NOW)
+        const { container } = await render(
+            <LatestValueCard
+                staleAfterDays={30}
+                observation={success(makeSeries([makePoint('O+')]))}
+            />
+        )
+        expect(
+            container.querySelector('[data-slot="card-content"]')?.classList
+        ).toContain('text-dhis2-grey-600')
+        const note = container.querySelector('[data-slot="stale-note"]')
+        expect(note?.classList).toContain('text-dhis2-yellow-800')
+        expect(note?.querySelector('[aria-hidden="true"] svg')).not.toBeNull()
+        expect(note?.textContent).toBe(
+            'Out of date: last recorded over 30 days ago'
+        )
+    })
+
+    it('a one-day threshold reads "1 day"', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(NOW)
+        const { container } = await render(
+            <LatestValueCard
+                staleAfterDays={1}
+                observation={success(makeSeries([makePoint('O+')]))}
+            />
+        )
+        expect(
+            container.querySelector('[data-slot="stale-note"]')?.textContent
+        ).toBe('Out of date: last recorded over 1 day ago')
     })
 
     it('a recent point is not stale', async () => {
@@ -299,7 +383,11 @@ describe('LatestValueCard', () => {
                 .querySelector('[data-slot="card"]')
                 ?.getAttribute('data-tone')
         ).toBe('default')
-        expect(container.textContent).not.toContain('Last recorded over')
+        expect(container.textContent).not.toContain('Out of date')
+        expect(container.querySelector('[data-slot="stale-note"]')).toBeNull()
+        expect(
+            container.querySelector('[data-slot="card-content"]')?.classList
+        ).not.toContain('text-dhis2-grey-600')
     })
 
     it('not stale without staleAfterDays', async () => {
@@ -315,7 +403,7 @@ describe('LatestValueCard', () => {
                 .querySelector('[data-slot="card"]')
                 ?.getAttribute('data-tone')
         ).toBe('default')
-        expect(container.textContent).not.toContain('Last recorded over')
+        expect(container.textContent).not.toContain('Out of date')
     })
 
     it('unsupported type shows "This value type can\'t be shown here"', async () => {

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { z } from 'zod'
 import {
     DataElementsResponseSchema,
+    EnrollmentsResponseSchema,
     EventsResponseSchema,
     ProgramStagesResponseSchema,
 } from './schemas'
@@ -58,6 +59,59 @@ describe('EventsResponseSchema', () => {
 
         expect(record?.dataValues).toEqual([])
         expect(record?.occurredAt).toBeUndefined()
+    })
+
+    it('skips a null or missing value instead of failing the response', () => {
+        const [record] = EventsResponseSchema.parse({
+            events: [
+                {
+                    event: 'e1',
+                    programStage: 's1',
+                    status: 'ACTIVE',
+                    dataValues: [
+                        { dataElement: 'de1', value: null },
+                        { dataElement: 'de2' },
+                        { dataElement: 'de3', value: '7' },
+                    ],
+                },
+            ],
+        })
+
+        expect(record?.dataValues).toEqual([{ dataElement: 'de3', value: '7' }])
+    })
+
+    it('keeps the tracked entity an event reports', () => {
+        const [record] = EventsResponseSchema.parse({
+            instances: [
+                {
+                    event: 'e1',
+                    trackedEntity: 'te1',
+                    programStage: 's1',
+                    status: 'ACTIVE',
+                },
+            ],
+        })
+
+        expect(record?.trackedEntity).toBe('te1')
+    })
+})
+
+describe('EnrollmentsResponseSchema', () => {
+    it('reads both the enrollments and the legacy instances envelope', () => {
+        const enrollments = [{ enrollment: 'en1' }]
+
+        expect(EnrollmentsResponseSchema.parse({ enrollments })).toEqual(
+            enrollments
+        )
+        expect(
+            EnrollmentsResponseSchema.parse({ instances: enrollments })
+        ).toEqual(enrollments)
+    })
+
+    it('rejects a body with neither envelope key', () => {
+        expect(EnrollmentsResponseSchema.safeParse({ pager: {} }).success).toBe(
+            false
+        )
     })
 })
 

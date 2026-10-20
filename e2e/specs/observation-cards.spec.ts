@@ -17,6 +17,9 @@ const PREVIOUS_VISIT = '2025-05-20'
 const FIRST_VISIT = '2024-03-04'
 const INTAKE_STAGE = 'Observation cards E2E intake'
 const FOLLOW_UP_STAGE = 'Observation cards E2E follow-up'
+// Fixed so staleness (the seeded preset sets 180 days) never drifts with the
+// real date: smoking (2024-03-04) is stale, the latest visit (2025-08-12) not.
+const DEMO_NOW = new Date('2025-09-01T00:00:00Z')
 
 const RMNCH_PROGRAM = 'WSGAb5XwJ3Y'
 const RMNCH_HAEMOGLOBIN = 'vANAXwtLwcT'
@@ -31,6 +34,7 @@ const card = (page: Page, label: string) =>
     page.getByRole('group', { name: label, exact: true })
 
 const openSeededPerson = async (page: Page) => {
+    await page.clock.setFixedTime(DEMO_NOW)
     await page.goto(demoUrl('seeded', SEEDED_PERSON))
     await expect(card(page, SYSTOLIC)).toBeVisible({ timeout: 30_000 })
 }
@@ -70,7 +74,8 @@ const DataElementLabelSchema = z
     })
     .passthrough()
     .transform(
-        (dataElement) => dataElement.displayFormName ?? dataElement.displayName
+        // `||` as the hook does: an empty form name falls back too.
+        (dataElement) => dataElement.displayFormName || dataElement.displayName
     )
 
 const isNumeric = (value: string) =>
@@ -135,9 +140,12 @@ test.describe('observation cards', () => {
         await expect(systolic.getByText('142', { exact: true })).toBeVisible()
         await expect(systolic.getByText('mmHg', { exact: true })).toBeVisible()
         await expect(systolic.getByText('High', { exact: true })).toBeVisible()
-        await expect(
-            systolic.getByText(`▲ 6 since ${PREVIOUS_VISIT}`, { exact: true })
-        ).toBeVisible()
+        // The glyph is hidden from screen readers, which hear "up" instead.
+        const change = systolic.getByText(`▲ up 6 since ${PREVIOUS_VISIT}`, {
+            exact: true,
+        })
+        await expect(change).toBeVisible()
+        await expect(change.locator('[aria-hidden="true"]')).toHaveText('▲')
         await expect(
             systolic.getByText(
                 `5 readings from ${FIRST_VISIT} to ${LATEST_VISIT}, latest 142`,
@@ -192,6 +200,16 @@ test.describe('observation cards', () => {
         await expect(pallor.getByText('Yes', { exact: true })).toHaveCount(0)
     })
 
+    test('extreme pallor, recorded at the latest visit, is not stale', async ({
+        page,
+    }) => {
+        await openSeededPerson(page)
+        const pallor = card(page, EXTREME_PALLOR)
+
+        await expect(pallor).toHaveAttribute('data-tone', 'default')
+        await expect(pallor.getByText(/^Out of date/)).toHaveCount(0)
+    })
+
     test('smoking status is stale', async ({ page }) => {
         await openSeededPerson(page)
         const smoking = card(page, SMOKING_STATUS)
@@ -206,7 +224,7 @@ test.describe('observation cards', () => {
             })
         ).toBeVisible()
         await expect(
-            smoking.getByText('Last recorded over 180 days ago', {
+            smoking.getByText('Out of date: last recorded over 180 days ago', {
                 exact: true,
             })
         ).toBeVisible()

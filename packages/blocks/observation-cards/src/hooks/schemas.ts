@@ -101,21 +101,31 @@ export const ProgramStagesResponseSchema = z
         }))
     )
 
+const DataValueSchema = z
+    .object({ dataElement: z.string(), value: z.string().nullish() })
+    .passthrough()
+
 const EventSchema = z
     .object({
         event: z.string().min(1),
+        trackedEntity: z.string().optional(),
         programStage: z.string(),
         status: z.string(),
         // Kept as received; buildSeries parses them.
         occurredAt: z.string().optional(),
         createdAt: z.string().optional(),
+        // A value without a value is skipped, so one bad entry cannot fail
+        // the whole response.
         dataValues: z
-            .array(
-                z
-                    .object({ dataElement: z.string(), value: z.string() })
-                    .passthrough()
-            )
-            .default([]),
+            .array(DataValueSchema)
+            .default([])
+            .transform((dataValues) =>
+                dataValues.flatMap(({ dataElement, value }) =>
+                    value === null || value === undefined
+                        ? []
+                        : [{ dataElement, value }]
+                )
+            ),
     })
     .passthrough()
 
@@ -137,4 +147,29 @@ export const EventsResponseSchema = z
     .transform(
         (response): TrackerEventRecord[] =>
             response.events ?? response.instances ?? []
+    )
+
+const EnrollmentSchema = z
+    .object({ enrollment: z.string().min(1) })
+    .passthrough()
+
+/** Current servers return `enrollments`; 2.41 returns the legacy `instances`. */
+export const EnrollmentsResponseSchema = z
+    .object({
+        enrollments: z.array(EnrollmentSchema).optional(),
+        instances: z.array(EnrollmentSchema).optional(),
+    })
+    .passthrough()
+    .superRefine((value, context) => {
+        if (!value.enrollments && !value.instances) {
+            context.addIssue({
+                code: 'custom',
+                message:
+                    'Tracker response requires enrollments or legacy instances',
+            })
+        }
+    })
+    .transform(
+        (response): { enrollment: string }[] =>
+            response.enrollments ?? response.instances ?? []
     )

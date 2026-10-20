@@ -1,3 +1,5 @@
+// Runs in the browser project: format.ts takes toInstant from the hook entry,
+// which loads the app-runtime, and that reads localStorage on import.
 import {
     displayValue,
     formatNumber,

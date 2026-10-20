@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-20T15:11:16.557Z\n"
-"PO-Revision-Date: 2026-10-20T15:11:16.557Z\n"
+"POT-Creation-Date: 2026-10-20T19:14:55.311Z\n"
+"PO-Revision-Date: 2026-10-20T19:14:55.311Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -169,6 +169,9 @@ msgstr "Could not load more organisation units"
 msgid "Show more"
 msgstr "Show more"
 
+msgid "{{change}} since {{date}}"
+msgstr "{{change}} since {{date}}"
+
 msgid "{{count}} readings from {{from}} to {{to}}, latest {{latest}}"
 msgstr "{{count}} readings from {{from}} to {{to}}, latest {{latest}}"
 
@@ -178,8 +181,8 @@ msgstr "1 reading on {{date}}, latest {{latest}}"
 msgid "Couldn't load this value"
 msgstr "Couldn't load this value"
 
-msgid "Last recorded over {{days}} days ago"
-msgstr "Last recorded over {{days}} days ago"
+msgid "down"
+msgstr "down"
 
 msgid "Never recorded"
 msgstr "Never recorded"
@@ -189,6 +192,12 @@ msgstr "No"
 
 msgid "No change since {{date}}"
 msgstr "No change since {{date}}"
+
+msgid "Out of date: last recorded over {{count}} day ago"
+msgstr "Out of date: last recorded over {{count}} day ago"
+
+msgid "Out of date: last recorded over {{count}} days ago"
+msgstr "Out of date: last recorded over {{count}} days ago"
 
 msgid "Recorded {{date}} · {{stage}}"
 msgstr "Recorded {{date}} · {{stage}}"
@@ -202,14 +211,11 @@ msgstr "This value type can't be shown as a trend"
 msgid "This value type can't be shown here"
 msgstr "This value type can't be shown here"
 
+msgid "up"
+msgstr "up"
+
 msgid "Yes"
 msgstr "Yes"
-
-msgid "▲ {{change}} since {{date}}"
-msgstr "▲ {{change}} since {{date}}"
-
-msgid "▼ {{change}} since {{date}}"
-msgstr "▼ {{change}} since {{date}}"
 
 msgid "A required value is missing"
 msgstr "A required value is missing"

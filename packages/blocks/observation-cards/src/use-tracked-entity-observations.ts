@@ -4,9 +4,17 @@ import { Result } from 'better-result'
 import { useMemo } from 'react'
 import { buildSeries } from './hooks/buildSeries'
 import { createObservationsClient } from './hooks/client'
-import { fetchDataElements, fetchEvents, fetchStages } from './hooks/queries'
+import {
+    fetchDataElements,
+    fetchEnrollment,
+    fetchEvents,
+    fetchStages,
+} from './hooks/queries'
 import { observationQueryKeys } from './hooks/queryKeys'
 import type { ObservationSeries } from './hooks/types'
+
+/** Parses a DHIS2 date or date-time to epoch milliseconds, as the hook orders them. */
+export { toInstant } from './hooks/buildSeries'
 
 export type {
     ObservationLegend,
@@ -49,6 +57,12 @@ export const useTrackedEntityObservations = ({
     const engine = useDataEngine()
     const client = useMemo(() => createObservationsClient(engine), [engine])
 
+    const teId = trackedEntityId.trim()
+    const progId = programId.trim()
+    // Nothing to ask for yet: every query waits, so the result stays pending.
+    const enabled = teId !== '' && progId !== ''
+    const subject = { trackedEntityId: teId, programId: progId }
+
     // Sorted and deduped so the order of ids never triggers a refetch.
     const idsKey = [...new Set(dataElementIds)].sort().join(',')
     const sortedIds = useMemo(
@@ -56,42 +70,42 @@ export const useTrackedEntityObservations = ({
         [idsKey]
     )
 
-    const [stages, dataElements, events] = useQueries({
+    const [stages, dataElements, events, enrollment] = useQueries({
         queries: [
             {
-                queryKey: observationQueryKeys.stages(programId),
+                queryKey: observationQueryKeys.stages(progId),
                 queryFn: async ({ signal }) =>
-                    unwrap(await fetchStages(client, programId, signal)),
+                    unwrap(await fetchStages(client, progId, signal)),
+                enabled,
             },
             {
                 queryKey: observationQueryKeys.dataElements(sortedIds),
                 queryFn: async ({ signal }) =>
                     unwrap(await fetchDataElements(client, sortedIds, signal)),
+                enabled,
             },
             {
-                queryKey: observationQueryKeys.events(
-                    trackedEntityId,
-                    programId
-                ),
+                queryKey: observationQueryKeys.events(teId, progId),
                 queryFn: async ({ signal }) =>
-                    unwrap(
-                        await fetchEvents(
-                            client,
-                            { trackedEntityId, programId },
-                            signal
-                        )
-                    ),
+                    unwrap(await fetchEvents(client, subject, signal)),
+                enabled,
+            },
+            {
+                // No visible enrollment means no access, never "nothing recorded".
+                queryKey: observationQueryKeys.enrollments(teId, progId),
+                queryFn: async ({ signal }) =>
+                    unwrap(await fetchEnrollment(client, subject, signal)),
+                enabled,
             },
         ],
     })
 
-    const failure = [stages, dataElements, events].find(
-        (query) => query.status === 'error'
-    )
+    const queries = [stages, dataElements, events, enrollment]
+    const failure = queries.find((query) => query.status === 'error')
     const status: TrackedEntityObservations['status'] =
         failure !== undefined
             ? 'error'
-            : stages.isPending || dataElements.isPending || events.isPending
+            : queries.some((query) => query.isPending)
               ? 'pending'
               : 'success'
     const error = failure?.error ?? undefined

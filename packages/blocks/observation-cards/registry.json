@@ -60,6 +60,7 @@
                 "@dhis2/app-runtime@^3.15.1",
                 "@dhis2/d2-i18n@1.2.0",
                 "@dhis2/multi-calendar-dates@2.1.2",
+                "@dhis2/ui-icons@^10.17.0",
                 "recharts@^3.8.0",
                 "zod@^4.4.3"
             ],

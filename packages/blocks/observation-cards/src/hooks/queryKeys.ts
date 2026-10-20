@@ -6,4 +6,6 @@ export const observationQueryKeys = {
         [ROOT, 'dataElements', sortedIds] as const,
     events: (trackedEntityId: string, programId: string) =>
         [ROOT, 'events', trackedEntityId, programId] as const,
+    enrollments: (trackedEntityId: string, programId: string) =>
+        [ROOT, 'enrollments', trackedEntityId, programId] as const,
 }

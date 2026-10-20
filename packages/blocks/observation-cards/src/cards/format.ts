@@ -1,10 +1,10 @@
 import i18n from '@dhis2/d2-i18n'
-import { toInstant } from '../hooks/buildSeries'
-import type {
-    ObservationLegend,
-    ObservationOption,
-    ObservationPoint,
-    ObservationSeries,
+import {
+    toInstant,
+    type ObservationLegend,
+    type ObservationOption,
+    type ObservationPoint,
+    type ObservationSeries,
 } from '../use-tracked-entity-observations'
 
 const TREND_TYPES = new Set([

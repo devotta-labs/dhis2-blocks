@@ -577,6 +577,12 @@ export const AppShell = () => {
                 >
                     Event Form demo
                 </a>
+                <a
+                    className="text-xs text-[#6c7787] underline-offset-2 hover:text-[#147cd7] hover:underline"
+                    href="#/program-rules-graph"
+                >
+                    Program rules graph
+                </a>
             </footer>
         </div>
     )

@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-19T22:06:59.392Z\n"
-"PO-Revision-Date: 2026-10-19T22:06:59.393Z\n"
+"POT-Creation-Date: 2026-10-20T07:43:29.042Z\n"
+"PO-Revision-Date: 2026-10-20T07:43:29.043Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -163,6 +163,9 @@ msgstr "Event form"
 msgid "Focus mode"
 msgstr "Focus mode"
 
+msgid "Show rules"
+msgstr "Show rules"
+
 msgid "Saved on this device"
 msgstr "Saved on this device"
 
@@ -192,6 +195,160 @@ msgstr "Choose a stage to list its events. Click an event to edit it."
 msgid "Back to Working List"
 msgstr "Back to Working List"
 
+msgid "now"
+msgstr "now"
+
+msgid "Condition met now"
+msgstr "Condition met now"
+
+msgid "Not met now"
+msgstr "Not met now"
+
+msgid "Expression"
+msgstr "Expression"
+
+msgid "empty"
+msgstr "empty"
+
+msgid "Yes"
+msgstr "Yes"
+
+msgid "No"
+msgstr "No"
+
+msgid "the event"
+msgstr "the event"
+
+msgid "Hidden"
+msgstr "Hidden"
+
+msgid "Calculated"
+msgstr "Calculated"
+
+msgid "Required by a rule"
+msgstr "Required by a rule"
+
+msgid "Rule error"
+msgstr "Rule error"
+
+msgid "Rule warning"
+msgstr "Rule warning"
+
+msgid "Options limited"
+msgstr "Options limited"
+
+msgid "Would hide it when"
+msgstr "Would hide it when"
+
+msgid "Would calculate it when"
+msgstr "Would calculate it when"
+
+msgid "Would make it required when"
+msgstr "Would make it required when"
+
+msgid "Would limit its options when"
+msgstr "Would limit its options when"
+
+msgid "Would show a message when"
+msgstr "Would show a message when"
+
+msgid "Would change it when"
+msgstr "Would change it when"
+
+msgid "Hid {{targets}}"
+msgstr "Hid {{targets}}"
+
+msgid "Showed {{targets}}"
+msgstr "Showed {{targets}}"
+
+msgid "Hid the section {{targets}}"
+msgstr "Hid the section {{targets}}"
+
+msgid "Showed the section {{targets}}"
+msgstr "Showed the section {{targets}}"
+
+msgid "Set {{targets}} to {{value}}"
+msgstr "Set {{targets}} to {{value}}"
+
+msgid "Stopped calculating {{targets}}"
+msgstr "Stopped calculating {{targets}}"
+
+msgid "Made {{targets}} required"
+msgstr "Made {{targets}} required"
+
+msgid "Made {{targets}} optional"
+msgstr "Made {{targets}} optional"
+
+msgid "Cleared the error on {{targets}}"
+msgstr "Cleared the error on {{targets}}"
+
+msgid "Cleared the warning on {{targets}}"
+msgstr "Cleared the warning on {{targets}}"
+
+msgid "Limited the options of {{targets}}"
+msgstr "Limited the options of {{targets}}"
+
+msgid "Restored the options of {{targets}}"
+msgstr "Restored the options of {{targets}}"
+
+msgid "What the rules did"
+msgstr "What the rules did"
+
+msgid "Clear"
+msgstr "Clear"
+
+msgid ""
+"Answer a question to see what the program rules do. Click a tag on a field "
+"to see why."
+msgstr ""
+"Answer a question to see what the program rules do. Click a tag on a field "
+"to see why."
+
+msgid "Already in effect"
+msgstr "Already in effect"
+
+msgid "Rules re-evaluated"
+msgstr "Rules re-evaluated"
+
+msgid "{{field}} set to {{value}}"
+msgstr "{{field}} set to {{value}}"
+
+msgid "1 rule is skipped because it doesn't parse"
+msgstr "1 rule is skipped because it doesn't parse"
+
+msgid "Hidden by {{rule}}"
+msgstr "Hidden by {{rule}}"
+
+msgid "Calculated by {{rule}}"
+msgstr "Calculated by {{rule}}"
+
+msgid "Required by {{rule}}"
+msgstr "Required by {{rule}}"
+
+msgid "Message from {{rule}}"
+msgstr "Message from {{rule}}"
+
+msgid "Options limited by {{rule}}"
+msgstr "Options limited by {{rule}}"
+
+msgid "Changed by {{rule}}"
+msgstr "Changed by {{rule}}"
+
+msgid "Rules that read this answer"
+msgstr "Rules that read this answer"
+
+msgid "{{rule}} → {{fields}}"
+msgstr "{{rule}} → {{fields}}"
+
+msgid "Rules can change this"
+msgstr "Rules can change this"
+
+msgid "Controls 1 field"
+msgstr "Controls 1 field"
+
+msgid "Could not load the rules lens"
+msgstr "Could not load the rules lens"
+
 msgid "Search"
 msgstr "Search"
 
@@ -204,6 +361,140 @@ msgstr "Could not load more organisation units"
 msgid "Show more"
 msgstr "Show more"
 
+msgid "None"
+msgstr "None"
+
+msgid "Rules in evaluation order"
+msgstr "Rules in evaluation order"
+
+msgid ""
+"Priority ascending, rules without a priority last. An assignment only feeds "
+"the rules after it. Select a node to follow its chain."
+msgstr ""
+"Priority ascending, rules without a priority last. An assignment only feeds "
+"the rules after it. Select a node to follow its chain."
+
+msgid "P{{priority}}"
+msgstr "P{{priority}}"
+
+msgid "All rules"
+msgstr "All rules"
+
+msgid "Rule #{{order}}"
+msgstr "Rule #{{order}}"
+
+msgid "Rule #{{order}} · priority {{priority}}"
+msgstr "Rule #{{order}} · priority {{priority}}"
+
+msgid "Condition"
+msgstr "Condition"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Reads"
+msgstr "Reads"
+
+msgid "Also depends on, through earlier assignments"
+msgstr "Also depends on, through earlier assignments"
+
+msgid "Other inputs"
+msgstr "Other inputs"
+
+msgid "Field"
+msgstr "Field"
+
+msgid "Calculated variable"
+msgstr "Calculated variable"
+
+msgid "Section"
+msgstr "Section"
+
+msgid "Program stage"
+msgstr "Program stage"
+
+msgid "Read by"
+msgstr "Read by"
+
+msgid "Assigned by"
+msgstr "Assigned by"
+
+msgid "Written by"
+msgstr "Written by"
+
+msgid "Checks a field it reads"
+msgstr "Checks a field it reads"
+
+msgid "Could not load the program rules"
+msgstr "Could not load the program rules"
+
+msgid "Loading program rules…"
+msgstr "Loading program rules…"
+
+msgid "{{rules}} rules, {{fields}} fields, {{invalid}} invalid"
+msgstr "{{rules}} rules, {{fields}} fields, {{invalid}} invalid"
+
+msgid "This stage has no program rules the engine can run."
+msgstr "This stage has no program rules the engine can run."
+
+msgid "Program rules graph context"
+msgstr "Program rules graph context"
+
+msgid "Loading programs…"
+msgstr "Loading programs…"
+
+msgid "Program rules graph"
+msgstr "Program rules graph"
+
+msgid "Could not load the program"
+msgstr "Could not load the program"
+
+msgid "Choose a stage. Rules for other stages are left out."
+msgstr "Choose a stage. Rules for other stages are left out."
+
+msgid "Data requirements"
+msgstr "Data requirements"
+
+msgid "Other events"
+msgstr "Other events"
+
+msgid "Org unit groups"
+msgstr "Org unit groups"
+
+msgid ""
+"The engine cannot parse these expressions. A bad condition leaves the rule "
+"out of the graph; a bad action expression leaves out only that action."
+msgstr ""
+"The engine cannot parse these expressions. A bad condition leaves the rule "
+"out of the graph; a bad action expression leaves out only that action."
+
+msgid "Action {{id}}"
+msgstr "Action {{id}}"
+
+msgid "reads · {{types}}"
+msgstr "reads · {{types}}"
+
+msgid "Program rules dependency graph"
+msgstr "Program rules dependency graph"
+
+msgid "Assigns"
+msgstr "Assigns"
+
+msgid "Hides or shows"
+msgstr "Hides or shows"
+
+msgid "Makes mandatory"
+msgstr "Makes mandatory"
+
+msgid "Shows an error"
+msgstr "Shows an error"
+
+msgid "Shows a warning"
+msgstr "Shows a warning"
+
+msgid "Other action"
+msgstr "Other action"
+
 msgid "1 value will be changed by program rules when you save"
 msgstr "1 value will be changed by program rules when you save"
 
@@ -215,9 +506,6 @@ msgstr "Calculated by a program rule"
 
 msgid "Cancel"
 msgstr "Cancel"
-
-msgid "Clear"
-msgstr "Clear"
 
 msgid "Complete"
 msgstr "Complete"
@@ -321,9 +609,6 @@ msgstr "Loading program rules"
 msgid "Longitude"
 msgstr "Longitude"
 
-msgid "No"
-msgstr "No"
-
 msgid "No options are available for this field"
 msgstr "No options are available for this field"
 
@@ -414,9 +699,6 @@ msgstr "This value type is not supported here"
 
 msgid "Value"
 msgstr "Value"
-
-msgid "Yes"
-msgstr "Yes"
 
 msgid "{{count}} values will be changed by program rules when you save"
 msgstr "{{count}} values will be changed by program rules when you save"
@@ -789,9 +1071,6 @@ msgstr "Owner organisation unit"
 
 msgid "PERCENTAGE requires a value from zero to 100"
 msgstr "PERCENTAGE requires a value from zero to 100"
-
-msgid "Program stage"
-msgstr "Program stage"
 
 msgid "Registration date"
 msgstr "Registration date"

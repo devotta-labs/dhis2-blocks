@@ -72,8 +72,10 @@ const ProgramLabelsSchema = z
     })
     .passthrough()
 
-interface ProgramLabels extends GraphLabels {
+export interface ProgramLabels extends GraphLabels {
     stages: { id: string; name: string }[]
+    /** programStageId → the data elements of the stage */
+    stageFields: Map<string, Set<string>>
 }
 
 const formName = (named: z.infer<typeof NamedSchema>) =>
@@ -95,6 +97,16 @@ const toProgramLabels = (
             id: stage.id,
             name: stage.displayName,
         })),
+        stageFields: new Map(
+            stages.map((stage) => [
+                stage.id,
+                new Set(
+                    (stage.programStageDataElements ?? []).map(
+                        (p) => p.dataElement.id
+                    )
+                ),
+            ])
+        ),
         fields: new Map(
             [...dataElements, ...attributes].map((field) => [
                 field.id,
@@ -114,7 +126,7 @@ const toProgramLabels = (
 
 /**
  * Stage, data element, attribute and section names for a program. The rule
- * metadata speaks in ids; these make the graph readable.
+ * metadata speaks in ids; these make the graph and the rules lens readable.
  */
 export const useProgramLabels = (client: Client, programId?: string) =>
     useQuery({

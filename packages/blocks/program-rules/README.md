@@ -37,11 +37,18 @@ TypeScript `paths` entry and a Vite/Vitest `resolve.alias`. Inside this package 
 buildRuleContext(engine: RuleEngineModule, metadata: ProgramRulesMetadata): RuleContext
 evaluateEventRules(engine: RuleEngineModule, context: RuleContext, input: EventRuleInput): RuleEffects
 explainField(effects: RuleEffects, fieldId: string): Attribution[]
+scanExpression(expression: string): ExpressionReferences // names read, deduplicated, by kind
+expressionReferences(expression: string): ExpressionReference[] // every reference with its span, in order
+assignedVariable(action: ProgramRuleActionMetadata): string | undefined // the variable an ASSIGN writes
 ```
 
 `engine` is the `@dhis2/rule-engine` module itself. The lib only imports its types, so the ~214 KB (gzip)
 engine never enters an initial bundle. Build the context once per program and stage; evaluation is pure and
 synchronous.
+
+`expressionReferences` is the one reading of expression syntax the lib has: the dependency graph is built from
+it, and a test checks it against the engine's own parser on real and generated metadata. Anything that shows or
+analyses expressions (a condition display, a graph view) should use it rather than a regex of its own.
 
 The exact types are in [`src/lib/types.ts`](src/lib/types.ts) (exported from `src/index.ts`). The ones a form reads:
 
@@ -130,6 +137,21 @@ useProgramRules({
     graph?: RuleDependencyGraph
     optionGroupOptions: Map<string, Set<string>>
 }
+useProgramRuleEvaluator({
+    programId: string,
+    programStageId: string,
+    enrollmentId?: string,
+    enrollment?: RuleEnrollmentInput,
+    otherEvents?: ReadonlyArray<RuleEventInput>,
+    enabled?: boolean,
+}): {
+    status: 'loading' | 'ready' | 'error'
+    evaluate?(event: RuleEventInput): Result<RuleEffects, Error> // memoised on the event's content
+    invalidRules: InvalidRule[]
+    error?: Error
+    graph?: RuleDependencyGraph
+    optionGroupOptions: Map<string, Set<string>>
+}
 useProgramRuleContext({ programId: string, programStageId: string, enabled?: boolean }): {
     status: 'loading' | 'ready' | 'error'
     metadata?: ProgramRulesMetadata // rules limited to the stage
@@ -148,6 +170,9 @@ How the hook behaves:
 - `useProgramRuleContext` is the same fetching and context build without an event, for tools that inspect a
   stage's rules (its dependency graph, invalid rules, data requirements). It shares its queries with
   `useProgramRules`.
+- `useProgramRules` is `useProgramRuleEvaluator` run on one event. Use the evaluator to evaluate several
+  events, or one event several times (the Event Form's two passes), against a single context: `evaluate` keeps
+  its last few results by event content, so a repeated event returns the same result object.
 - It fetches the org unit groups named by `d2:inOrgUnitGroup(...)`, and `tracker/enrollments/{id}` (with events
   only when the rules read other events) only when the rules need them and `input` doesn't carry them.
 - Evaluation runs again only when the **content** of `input` changes. Pass committed values (on blur, or on

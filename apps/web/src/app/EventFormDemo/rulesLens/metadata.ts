@@ -1,82 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
-import { z } from 'zod'
+import { useProgramRuleContext } from '@/registry/program-rules/use-program-rules'
+import { useMemo } from 'react'
 import type { createAppWorkingListClient } from '../../AppShell/createAppWorkingListClient'
-import { retryOperationalError } from '../../AppShell/contextSchemas'
+import {
+    useProgramLabels,
+    type ProgramLabels,
+} from '../../ProgramRulesGraph/useProgramRulesGraphData'
 
 type Client = ReturnType<typeof createAppWorkingListClient>
-
-const Reference = z.object({ id: z.string().min(1) }).passthrough()
-const Labelled = Reference.extend({ displayFormName: z.string().optional() })
-
-const StageSchema = z
-    .object({
-        programStageSections: z
-            .array(
-                Reference.extend({
-                    displayName: z.string().optional(),
-                    sortOrder: z.number().optional(),
-                    dataElements: z.array(Reference).default([]),
-                })
-            )
-            .default([]),
-        programStageDataElements: z
-            .array(
-                z
-                    .object({
-                        sortOrder: z.number().optional(),
-                        dataElement: Labelled,
-                    })
-                    .passthrough()
-            )
-            .default([]),
-    })
-    .passthrough()
-
-const ProgramSchema = z
-    .object({
-        programTrackedEntityAttributes: z
-            .array(z.object({ trackedEntityAttribute: Labelled }).passthrough())
-            .default([]),
-    })
-    .passthrough()
-
-const RulesSchema = z
-    .object({
-        programRules: z.array(
-            Reference.extend({
-                displayName: z.string(),
-                condition: z.string().optional(),
-                programRuleActions: z
-                    .array(
-                        z
-                            .object({ programRuleActionType: z.string() })
-                            .passthrough()
-                    )
-                    .default([]),
-            })
-        ),
-    })
-    .passthrough()
-
-const VariablesSchema = z
-    .object({
-        programRuleVariables: z.array(
-            z
-                .object({
-                    name: z.string(),
-                    dataElement: Reference.optional(),
-                    trackedEntityAttribute: Reference.optional(),
-                })
-                .passthrough()
-        ),
-    })
-    .passthrough()
-
-interface LensSection {
-    id: string
-    name?: string
-    fieldIds: string[]
-}
 
 interface LensRule {
     name: string
@@ -85,137 +15,62 @@ interface LensRule {
 }
 
 export interface LensMetadata {
-    /** The stage's sections in form order; one unnamed section for fields outside any. */
-    sections: LensSection[]
-    /** Data element and program attribute labels by id. */
-    labels: Map<string, string>
-    /** Every rule of the program, so a rule that is not acting still has a name. */
+    /** Field, section and stage names, shared with the rules graph. */
+    labels: ProgramLabels
+    /** The stage's rules that the engine runs, so a rule that is not acting still has a name. */
     rules: Map<string, LensRule>
     /** Program rule variable name → the field it reads. */
     variables: Map<string, string>
 }
 
-const bySortOrder = (a: { sortOrder?: number }, b: { sortOrder?: number }) =>
-    (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
-
 /**
- * The metadata the lens needs and the rule hook does not give: field labels, the stage's
- * sections, rule names, conditions and action types, and which field each variable reads.
+ * What the lens needs beyond the form's rule effects: the stage's rule metadata, from the same
+ * queries the form's rules use, and the program's labels, from the same query as the rules graph.
+ * The sections come from the form itself.
  */
 export const useLensMetadata = (
     client: Client,
     programId: string,
     programStageId: string
-) =>
-    useQuery({
-        queryKey: ['event-form-demo', 'rules-lens', programId, programStageId],
-        queryFn: async ({ signal }): Promise<LensMetadata> => {
-            const programFilter = `program.id:eq:${programId}`
-            const [stage, program, rules, variables] = await Promise.all([
-                client.query(
-                    {
-                        resource: 'programStages',
-                        id: programStageId,
-                        params: {
-                            fields: 'programStageSections[id,displayName,sortOrder,dataElements[id]],programStageDataElements[sortOrder,dataElement[id,displayFormName]]',
-                        },
-                    },
-                    StageSchema,
-                    signal
-                ),
-                client.query(
-                    {
-                        resource: 'programs',
-                        id: programId,
-                        params: {
-                            fields: 'programTrackedEntityAttributes[trackedEntityAttribute[id,displayFormName]]',
-                        },
-                    },
-                    ProgramSchema,
-                    signal
-                ),
-                client.query(
-                    {
-                        resource: 'programRules',
-                        params: {
-                            filter: programFilter,
-                            fields: 'id,displayName,condition,programRuleActions[programRuleActionType]',
-                            paging: false,
-                        },
-                    },
-                    RulesSchema,
-                    signal
-                ),
-                client.query(
-                    {
-                        resource: 'programRuleVariables',
-                        params: {
-                            filter: programFilter,
-                            fields: 'name,dataElement[id],trackedEntityAttribute[id]',
-                            paging: false,
-                        },
-                    },
-                    VariablesSchema,
-                    signal
-                ),
-            ])
-
-            const stageFields = [...stage.programStageDataElements]
-                .sort(bySortOrder)
-                .map((entry) => entry.dataElement)
-            const sections: LensSection[] = [...stage.programStageSections]
-                .sort(bySortOrder)
-                .map((section) => ({
-                    id: section.id,
-                    name: section.displayName,
-                    fieldIds: section.dataElements.map((de) => de.id),
-                }))
-            const sectioned = new Set(sections.flatMap((s) => s.fieldIds))
-            const loose = stageFields
-                .map((field) => field.id)
-                .filter((id) => !sectioned.has(id))
-            if (loose.length > 0) {
-                sections.push({ id: 'unsectioned', fieldIds: loose })
+) => {
+    const rules = useProgramRuleContext({ programId, programStageId })
+    const labels = useProgramLabels(client, programId)
+    const { context, metadata } = rules
+    const data = useMemo((): LensMetadata | undefined => {
+        if (
+            context === undefined ||
+            metadata === undefined ||
+            labels.data === undefined
+        ) {
+            return undefined
+        }
+        const variables = new Map<string, string>()
+        for (const variable of metadata.variables) {
+            const fieldId = variable.dataElementId ?? variable.attributeId
+            if (fieldId !== undefined) {
+                variables.set(variable.name, fieldId)
             }
-
-            const labelled = [
-                ...stageFields,
-                ...program.programTrackedEntityAttributes.map(
-                    (entry) => entry.trackedEntityAttribute
-                ),
-            ]
-            const variableFields = new Map<string, string>()
-            for (const variable of variables.programRuleVariables) {
-                const fieldId =
-                    variable.dataElement?.id ??
-                    variable.trackedEntityAttribute?.id
-                if (fieldId !== undefined) {
-                    variableFields.set(variable.name, fieldId)
-                }
-            }
-            return {
-                sections,
-                labels: new Map(
-                    labelled.map((field) => [
-                        field.id,
-                        field.displayFormName ?? field.id,
-                    ])
-                ),
-                rules: new Map(
-                    rules.programRules.map((rule) => [
-                        rule.id,
-                        {
-                            name: rule.displayName,
-                            condition: rule.condition ?? '',
-                            actionTypes: rule.programRuleActions.map(
-                                (action) => action.programRuleActionType
-                            ),
-                        },
-                    ])
-                ),
-                variables: variableFields,
-            }
-        },
-        staleTime: 5 * 60 * 1000,
-        retry: retryOperationalError,
-    })
+        }
+        return {
+            labels: labels.data,
+            rules: new Map(
+                [...context.ruleInfo.values()].map((info) => [
+                    info.id,
+                    {
+                        name: info.name,
+                        condition: info.condition,
+                        actionTypes: [...info.actions.keys()].flatMap(
+                            (actionId) => {
+                                const type =
+                                    context.actionMetadata.get(actionId)?.type
+                                return type === undefined ? [] : [type]
+                            }
+                        ),
+                    },
+                ])
+            ),
+            variables,
+        }
+    }, [context, metadata, labels.data])
+    return { data, error: rules.error ?? labels.error ?? undefined }
+}

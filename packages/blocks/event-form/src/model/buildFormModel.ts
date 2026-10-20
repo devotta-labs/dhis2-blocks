@@ -59,6 +59,8 @@ export interface SectionModel {
     hidden: boolean
     /** Visible fields only. */
     fieldIds: string[]
+    /** Every field of the section in order, hidden ones too. */
+    allFieldIds: string[]
 }
 
 export interface FormModel {
@@ -340,7 +342,8 @@ const sameSection = (a: SectionModel, b: SectionModel): boolean =>
     a.id === b.id &&
     a.name === b.name &&
     a.hidden === b.hidden &&
-    sameStrings(a.fieldIds, b.fieldIds)
+    sameStrings(a.fieldIds, b.fieldIds) &&
+    sameStrings(a.allFieldIds, b.allFieldIds)
 
 /** Reuses the previous object when the new one has equal content. */
 const shared = <T>(
@@ -400,6 +403,7 @@ export const buildFormModel = (
                 : section.dataElementIds.filter(
                       (id) => fields.get(id)?.hidden === false
                   ),
+            allFieldIds: section.dataElementIds.filter((id) => fields.has(id)),
         }
         return shared(previousSections.get(section.id), next, sameSection)
     })

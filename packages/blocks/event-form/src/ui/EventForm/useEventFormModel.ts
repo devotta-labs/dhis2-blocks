@@ -1,8 +1,8 @@
-import { useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { useStore } from 'zustand'
 import {
-    useProgramRules,
-    type UseProgramRulesResult,
+    explainField,
+    useProgramRuleEvaluator,
 } from '@/registry/program-rules/use-program-rules'
 import type { StageMetadata } from '../../api/schemas'
 import {
@@ -53,22 +53,15 @@ const fieldErrorsOf = (
     return Object.fromEntries(errors)
 }
 
-const statusOf = (
-    first: UseProgramRulesResult,
-    second: UseProgramRulesResult
-): UseProgramRulesResult['status'] =>
-    first.status === 'error' || second.status === 'error'
-        ? 'error'
-        : second.status
-
 /**
  * Rule effects, the overlay and the form model, all derived from the store's committed state.
  *
  * Rules run twice per change. The first pass reads the stored values; the second reads those
  * values with the first pass's effects laid over them, so a rule that reads a field another rule
  * hides sees it empty, as it will be once saved. Two passes, never more: a rule that hides the
- * field it reads cannot loop. Each pass memoises on the content of its input, so a commit that
- * leaves the values as they were evaluates nothing.
+ * field it reads cannot loop. Both passes run against one rule context, and the evaluator returns
+ * the same result for the same event content, so a commit that leaves the values as they were
+ * evaluates nothing.
  */
 export const useEventFormModel = ({
     store,
@@ -85,33 +78,38 @@ export const useEventFormModel = ({
     const attempt = useStore(store, (state) => state.attempt)
     const serverErrors = useStore(store, (state) => state.fieldErrors)
 
-    const ruleEvent = (values: Values) =>
-        toRuleEvent({
-            eventId,
-            programStageId,
-            scheduledAt,
-            values,
-            context,
-            status,
-        })
-    const firstInput = { event: ruleEvent(stored) }
-    const first = useProgramRules({
+    const evaluator = useProgramRuleEvaluator({
         programId,
         programStageId,
         enrollmentId,
-        input: firstInput,
     })
+    const evaluate = (values: Values) =>
+        evaluator.evaluate?.(
+            toRuleEvent({
+                eventId,
+                programStageId,
+                scheduledAt,
+                values,
+                context,
+                status,
+            })
+        )
+    const first = evaluate(stored)
+    const firstEffects = first?.isOk() ? first.value : undefined
     const firstEffective = useMemo(
-        () => overlay(stored, first.effects).effective,
-        [stored, first.effects]
+        () => overlay(stored, firstEffects).effective,
+        [stored, firstEffects]
     )
-    const second = useProgramRules({
-        programId,
-        programStageId,
-        enrollmentId,
-        input: { event: ruleEvent(firstEffective) },
-    })
-    const effects = second.effects
+    // Without the first pass's effects there is nothing to lay over, so no second pass.
+    const second =
+        firstEffects === undefined ? undefined : evaluate(firstEffective)
+    const effects = second?.isOk() ? second.value : undefined
+    const evaluationError = first?.isErr()
+        ? first.error
+        : second?.isErr()
+          ? second.error
+          : undefined
+    const error = evaluator.error ?? evaluationError
 
     const { effective, ruleChanges } = useMemo(
         () => overlay(stored, effects),
@@ -129,7 +127,7 @@ export const useEventFormModel = ({
             effective,
             stored,
             effects,
-            optionGroupOptions: second.optionGroupOptions,
+            optionGroupOptions: evaluator.optionGroupOptions,
             fieldErrors,
             showAllErrors: attempt !== 'none',
             isCompleting: attempt === 'complete',
@@ -141,30 +139,39 @@ export const useEventFormModel = ({
         effective,
         stored,
         effects,
-        second.optionGroupOptions,
+        evaluator.optionGroupOptions,
         fieldErrors,
         attempt,
     ])
 
-    const rulesStatus = statusOf(first, second)
-    const error = first.error ?? second.error
+    const explain = useCallback(
+        (fieldId: string) =>
+            effects === undefined ? [] : explainField(effects, fieldId),
+        [effects]
+    )
+    const rulesStatus =
+        error !== undefined
+            ? 'error'
+            : effects === undefined
+              ? 'loading'
+              : 'ready'
     const rules = useMemo<EventFormRules>(
         () => ({
             status: rulesStatus,
             ...(effects !== undefined && { effects }),
             ruleChanges,
-            invalidRules: second.invalidRules,
-            explain: second.explain,
-            ...(second.graph !== undefined && { graph: second.graph }),
+            invalidRules: evaluator.invalidRules,
+            explain,
+            ...(evaluator.graph !== undefined && { graph: evaluator.graph }),
             ...(error !== undefined && { error }),
         }),
         [
             rulesStatus,
             effects,
             ruleChanges,
-            second.invalidRules,
-            second.explain,
-            second.graph,
+            evaluator.invalidRules,
+            explain,
+            evaluator.graph,
             error,
         ]
     )

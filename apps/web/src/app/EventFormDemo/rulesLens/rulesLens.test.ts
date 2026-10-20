@@ -4,6 +4,7 @@ import {
     changedAnswers,
     diffEffects,
     effectMap,
+    effectsByTarget,
     fieldLens,
     groupChanges,
 } from './effects'
@@ -93,6 +94,16 @@ describe('parseCondition', () => {
             { kind: 'text', text: " = 'x'" },
         ])
     })
+
+    it('reads d2:hasValue of a variable reference and leaves constants as written', () => {
+        expect(
+            parseCondition('!d2:hasValue(#{lmp}) || C{k} > 2', variables)
+        ).toEqual([
+            { kind: 'text', text: 'not ' },
+            { kind: 'field', name: 'lmp', fieldId: 'lmpDate' },
+            { kind: 'text', text: ' has a value or C{k} > 2' },
+        ])
+    })
 })
 
 describe('effect changes', () => {
@@ -144,7 +155,9 @@ describe('fieldLens', () => {
                 ? [by('hideFollowUps', 'h1'), by('req', 'r1')]
                 : []
 
-        expect(fieldLens(effects, graph, explain, 'diabetes')).toEqual({
+        expect(
+            fieldLens(effectsByTarget(effects), graph, explain, 'diabetes')
+        ).toEqual({
             acting: [
                 { by: by('hideFollowUps', 'h1'), kinds: ['hidden'] },
                 { by: by('req', 'r1'), kinds: ['mandatory'] },
@@ -154,10 +167,20 @@ describe('fieldLens', () => {
             controllers: [],
         })
         expect(
-            fieldLens(emptyEffects(), graph, () => [], 'hypertension')
+            fieldLens(
+                effectsByTarget(emptyEffects()),
+                graph,
+                () => [],
+                'hypertension'
+            )
         ).toMatchObject({ acting: [], dormant: ['hideFollowUps'] })
         expect(
-            fieldLens(emptyEffects(), graph, () => [], 'chronic')
+            fieldLens(
+                effectsByTarget(emptyEffects()),
+                graph,
+                () => [],
+                'chronic'
+            )
         ).toMatchObject({
             controls: ['diabetes', 'hypertension'],
             controllers: ['hideFollowUps'],

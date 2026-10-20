@@ -1,5 +1,11 @@
+import React from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { eventFormKeys } from '../../api/queries'
+import type {
+    EventFormFieldWrapperProps,
+    EventFormHiddenSectionProps,
+} from '../EventFormSection'
+import { EventFormSections } from '../EventFormSections'
 import {
     answerGroup,
     labelOf,
@@ -292,5 +298,76 @@ describe('EventForm lifecycle', () => {
         expect(probe.state?.isNew).toBe(true)
         expect(probe.state?.eventId).toMatch(/^[A-Za-z][A-Za-z0-9]{10}$/)
         expect(probe.state?.dirty).toBe(false)
+    })
+})
+
+const MarkedField = ({
+    fieldId,
+    hidden,
+    children,
+}: EventFormFieldWrapperProps) => (
+    <div data-testid={`wrapped-${fieldId}`} data-hidden={hidden}>
+        {children}
+    </div>
+)
+
+const HiddenSectionNote = ({
+    sectionId,
+    name,
+}: EventFormHiddenSectionProps) => (
+    <p data-testid={`hidden-section-${sectionId}`}>{name}</p>
+)
+
+describe('EventFormSections slots', () => {
+    it('wraps every field, the ones a rule hides marked hidden and left empty', async () => {
+        await renderEventForm({
+            eventId: RMNCH.eventId,
+            children: <EventFormSections FieldWrapper={MarkedField} />,
+        })
+        // Chronic conditions is No in the fixture, so a rule hides its follow-ups.
+        const hidden = page.getByTestId(`wrapped-${RMNCH.chronicFollowUps[0]}`)
+        await expect.element(hidden).toHaveAttribute('data-hidden', 'true')
+        await expect.element(hidden).toBeEmptyDOMElement()
+        const shown = page.getByTestId(`wrapped-${RMNCH.chronic}`)
+        await expect.element(shown).toHaveAttribute('data-hidden', 'false')
+        await expect
+            .element(shown.getByText(labelOf(RMNCH.chronic), { exact: true }))
+            .toBeVisible()
+
+        await answerGroup(RMNCH.chronic)
+            .getByRole('button', { name: 'Yes' })
+            .click()
+
+        await expect.element(hidden).toHaveAttribute('data-hidden', 'false')
+    })
+
+    it('renders HiddenSection in place of a section a rule hides', async () => {
+        await renderEventForm({
+            rules: (rules) => ({
+                programRules: [
+                    ...rules.programRules,
+                    {
+                        id: 'hideLabs',
+                        name: 'Hide lab section',
+                        displayName: 'Hide lab section',
+                        condition: 'true',
+                        programRuleActions: [
+                            {
+                                id: 'hideLabsAction',
+                                programRuleActionType: 'HIDESECTION',
+                                programStageSection: { id: 'AyWdV7K24Ih' },
+                            },
+                        ],
+                    },
+                ],
+            }),
+            children: <EventFormSections HiddenSection={HiddenSectionNote} />,
+        })
+        await expect
+            .element(page.getByTestId('hidden-section-AyWdV7K24Ih'))
+            .toHaveTextContent('Lab/testing')
+        await expect
+            .element(page.getByRole('heading', { name: 'Lab/testing' }))
+            .not.toBeInTheDocument()
     })
 })

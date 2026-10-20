@@ -1,5 +1,4 @@
 import type { RuleEnrollmentInput, RuleEventInput } from '../index'
-import type { ProgramRulesInput } from './useProgramRules'
 
 const sortedEntries = (values: Record<string, string>) =>
     Object.entries(values).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
@@ -27,12 +26,20 @@ const enrollmentKey = (enrollment: RuleEnrollmentInput) => [
     sortedEntries(enrollment.attributes),
 ]
 
-/** Equal for inputs with the same content, whatever their identity or key order. */
-export const inputContentKey = (input: ProgramRulesInput): string =>
+/** Equal for events with the same content, whatever their identity or key order. */
+export const eventContentKey = (event: RuleEventInput): string =>
+    JSON.stringify(eventKey(event))
+
+/** Equal for the same enrollment data. Missing other events differ from none. */
+export const supplementContentKey = (supplement: {
+    enrollment?: RuleEnrollmentInput
+    otherEvents?: ReadonlyArray<RuleEventInput>
+}): string =>
     JSON.stringify([
-        eventKey(input.event),
-        input.enrollment === undefined ? null : enrollmentKey(input.enrollment),
-        input.otherEvents === undefined
+        supplement.enrollment === undefined
             ? null
-            : input.otherEvents.map(eventKey),
+            : enrollmentKey(supplement.enrollment),
+        supplement.otherEvents === undefined
+            ? null
+            : supplement.otherEvents.map(eventKey),
     ])

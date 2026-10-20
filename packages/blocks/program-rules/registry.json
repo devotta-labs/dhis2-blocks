@@ -57,7 +57,7 @@
             "name": "use-program-rules",
             "type": "registry:hook",
             "title": "useProgramRules",
-            "description": "React hook that fetches DHIS2 program rule metadata with React Query, lazy-loads the rule engine and memoises rule effects for an event.",
+            "description": "React hook that fetches DHIS2 program rule metadata with React Query, lazy-loads the rule engine and memoises rule effects for an event, or evaluates many events against one rule context.",
             "dependencies": [
                 "@dhis2/app-runtime@^3.15.1",
                 "@dhis2/rule-engine@3.8.6",
@@ -107,6 +107,11 @@
                     "path": "src/hooks/useProgramRuleContext.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/hooks/useProgramRuleContext.ts"
+                },
+                {
+                    "path": "src/hooks/useProgramRuleEvaluator.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRuleEvaluator.ts"
                 },
                 {
                     "path": "src/hooks/useProgramRules.ts",

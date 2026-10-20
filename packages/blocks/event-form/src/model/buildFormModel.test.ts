@@ -53,6 +53,7 @@ describe('buildFormModel', () => {
                 name: 'Stage',
                 hidden: false,
                 fieldIds: ['a', 'b'],
+                allFieldIds: ['a', 'b'],
             },
         ])
         expect(model.fields.get('a')).toMatchObject({
@@ -273,8 +274,20 @@ describe('buildFormModel', () => {
             baseInput(metadata, { effects })
         )
         const expected: SectionModel[] = [
-            { id: 's1', name: 'One', hidden: true, fieldIds: [] },
-            { id: 's2', name: 'Two', hidden: false, fieldIds: ['c'] },
+            {
+                id: 's1',
+                name: 'One',
+                hidden: true,
+                fieldIds: [],
+                allFieldIds: ['a', 'b'],
+            },
+            {
+                id: 's2',
+                name: 'Two',
+                hidden: false,
+                fieldIds: ['c'],
+                allFieldIds: ['c'],
+            },
         ]
         expect(model.sections).toEqual(expected)
         expect(model.fields.get('a')?.hidden).toBe(true)

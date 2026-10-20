@@ -24,10 +24,21 @@ import type {
     RuleOptionSetMetadata,
     RuleOrgUnitGroupMetadata,
 } from '../src'
-import { buildRuleContext, evaluateEventRules, explainField } from '../src'
+import {
+    assignedVariable,
+    buildRuleContext,
+    evaluateEventRules,
+    explainField,
+    expressionReferences,
+    type ExpressionReference,
+} from '../src'
 import type {
     ProgramRulesInput,
     ProgramRulesStatus,
+    RuleEnrollmentInput as HookEnrollmentInput,
+    RuleEvaluation,
+    UseProgramRuleEvaluatorOptions,
+    UseProgramRuleEvaluatorResult,
     UseProgramRuleContextOptions,
     UseProgramRuleContextResult,
     UseProgramRulesOptions,
@@ -37,6 +48,7 @@ import {
     loadRuleEngine,
     programRulesQueryKeys,
     useProgramRuleContext,
+    useProgramRuleEvaluator,
     useProgramRules,
 } from '../src/use-program-rules'
 
@@ -67,10 +79,15 @@ export type SupportedProgramRulesTypes = [
     RuleOrgUnitGroupMetadata,
     ProgramRulesInput,
     ProgramRulesStatus,
+    RuleEvaluation,
+    UseProgramRuleEvaluatorOptions,
+    UseProgramRuleEvaluatorResult,
     UseProgramRuleContextOptions,
     UseProgramRuleContextResult,
     UseProgramRulesOptions,
     UseProgramRulesResult,
+    ExpressionReference,
+    HookEnrollmentInput,
 ]
 
 // The lib is engine-in, effects-out.
@@ -121,6 +138,31 @@ export const useEventRules = (): UseProgramRulesResult =>
         enrollmentId: 'PE6abx7Zhn0',
         input: { event },
     })
+
+// One context evaluates any number of events; each result is a Result.
+export const useTwoEvaluations = (): RuleEffects[] => {
+    const { evaluate } = useProgramRuleEvaluator({
+        programId: 'WSGAb5XwJ3Y',
+        programStageId: 'WZbXY0S00lP',
+        enrollmentId: 'PE6abx7Zhn0',
+    })
+    if (evaluate === undefined) {
+        return []
+    }
+    return [evaluate(event), evaluate({ ...event, dataValues: {} })].flatMap(
+        (evaluation) => (evaluation.isOk() ? [evaluation.value] : [])
+    )
+}
+declare const evaluation: RuleEvaluation
+// @ts-expect-error An evaluation is a Result, not the effects themselves.
+export const unwrapped: RuleEffects = evaluation
+
+// The references an expression reads, with where they are, for displays.
+export const referencedNames = (expression: string): string[] =>
+    expressionReferences(expression).map(({ name }) => name)
+export const writes = (
+    action: Parameters<typeof assignedVariable>[0]
+): string | undefined => assignedVariable(action)
 
 // The graph, invalid rules and requirements need no event.
 export const useStageGraph = (): RuleDependencyGraph | undefined =>

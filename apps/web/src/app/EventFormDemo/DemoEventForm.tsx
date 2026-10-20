@@ -37,8 +37,7 @@ interface DemoEventFormProps {
 /**
  * The Event Form composed with every part. The host owns the layout: details on top, then the
  * section navigation beside the sections and notes, and the actions at the bottom. With the
- * rules lens on, its sections replace the block's (and the section navigation, which only knows
- * the block's) and its feed sits beside the form.
+ * rules lens on, the sections carry its tags and placeholders and its feed sits beside the form.
  */
 export const DemoEventForm = ({
     client,
@@ -74,6 +73,7 @@ export const DemoEventForm = ({
                         <div className="flex min-w-0 flex-col gap-4">
                             <EventFormDetails />
                             <EventFormFeedback />
+                            <EventFormSectionNav />
                             <RulesLensSections />
                             <EventFormNotes />
                             <EventFormActions />

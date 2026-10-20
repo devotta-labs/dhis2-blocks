@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import large from '../../test/fixtures/large/bundle.json'
 import rmnch from '../../test/fixtures/rmnch/programRules.json'
-import { scanExpression } from './scanExpression'
+import { expressionReferences, scanExpression } from './scanExpression'
 
 interface ExpressionParser {
     ExpressionJs: typeof ExpressionJs
@@ -49,6 +49,17 @@ describe('scanExpression', () => {
         ).toEqual(['x', 'y'])
     })
 
+    it('reads a d2:hasValue name given as a variable reference', () => {
+        expect(scanExpression(`d2:hasValue(#{lmp}) && d2:count(A{x})`)).toEqual(
+            {
+                variables: ['lmp', 'x'],
+                programVariables: [],
+                constants: [],
+                orgUnitGroups: [],
+            }
+        )
+    })
+
     it('agrees with the engine parser on RMNCH and the generated fixture', async () => {
         const parser = await loadExpressionParser()
         const expressions = [
@@ -88,5 +99,50 @@ describe('scanExpression', () => {
             compared += 1
         }
         expect(compared).toBeGreaterThan(300)
+    })
+})
+
+describe('expressionReferences', () => {
+    it('gives each reference its kind, name, span and function', () => {
+        const expression = `!#{chronic} && d2:hasValue('lmp') && d2:hasValue(#{edd}) && V{event_date} > C{k} && d2:inOrgUnitGroup("MCHP")`
+        const references = expressionReferences(expression)
+        expect(
+            references.map(({ start, end, ...rest }) => ({
+                ...rest,
+                text: expression.slice(start, end),
+            }))
+        ).toEqual([
+            { kind: 'variable', name: 'chronic', text: '#{chronic}' },
+            {
+                kind: 'variable',
+                name: 'lmp',
+                fn: 'hasValue',
+                text: `d2:hasValue('lmp'`,
+            },
+            {
+                kind: 'variable',
+                name: 'edd',
+                fn: 'hasValue',
+                text: 'd2:hasValue(#{edd}',
+            },
+            {
+                kind: 'programVariable',
+                name: 'event_date',
+                text: 'V{event_date}',
+            },
+            { kind: 'constant', name: 'k', text: 'C{k}' },
+            {
+                kind: 'orgUnitGroup',
+                name: 'MCHP',
+                fn: 'inOrgUnitGroup',
+                text: 'd2:inOrgUnitGroup("MCHP"',
+            },
+        ])
+    })
+
+    it('lists a name once per appearance, unlike scanExpression', () => {
+        expect(
+            expressionReferences('#{a} + #{a}').map(({ name }) => name)
+        ).toEqual(['a', 'a'])
     })
 })

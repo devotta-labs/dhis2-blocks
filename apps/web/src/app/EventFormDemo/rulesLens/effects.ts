@@ -71,6 +71,20 @@ export const effectMap = (effects: Effects | undefined) => {
     return map
 }
 
+/** Every effect, by the field, section or `'form'` it acts on. */
+export const effectsByTarget = (
+    effects: Effects | undefined
+): Map<string, Effect[]> => {
+    const byTarget = new Map<string, Effect[]>()
+    for (const effect of effectMap(effects).values()) {
+        byTarget.set(effect.targetId, [
+            ...(byTarget.get(effect.targetId) ?? []),
+            effect,
+        ])
+    }
+    return byTarget
+}
+
 export interface EffectChange {
     /** `changed` is an assignment whose value changed. */
     direction: 'started' | 'stopped' | 'changed'
@@ -153,16 +167,14 @@ export interface FieldLens {
     controllers: string[]
 }
 
-/** Everything the lens shows for one field. */
+/** Everything the lens shows for one field. `effectsOn` is `effectsByTarget` of the effects. */
 export const fieldLens = (
-    effects: Effects | undefined,
+    effectsOn: ReadonlyMap<string, readonly Effect[]>,
     graph: Graph | undefined,
     explain: EventFormRules['explain'],
     fieldId: string
 ): FieldLens => {
-    const all = [...effectMap(effects).values()].filter(
-        (effect) => effect.targetId === fieldId
-    )
+    const all = effectsOn.get(fieldId) ?? []
     const acting = explain(fieldId).map((by) => ({
         by,
         kinds: [

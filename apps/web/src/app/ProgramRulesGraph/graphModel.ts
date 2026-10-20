@@ -1,8 +1,9 @@
-import type {
-    ProgramRuleActionMetadata,
-    ProgramRulesMetadata,
-    ProgramRuleVariableMetadata,
-    RuleContext,
+import {
+    assignedVariable,
+    type ProgramRuleActionMetadata,
+    type ProgramRulesMetadata,
+    type ProgramRuleVariableMetadata,
+    type RuleContext,
 } from '@/registry/program-rules/index'
 
 export type GraphNode =
@@ -53,14 +54,6 @@ export interface GraphLabels {
 export const ruleNodeId = (ruleId: string) => `rule:${ruleId}`
 export const fieldNodeId = (fieldId: string) => `field:${fieldId}`
 const variableNodeId = (name: string) => `variable:${name}`
-
-/** `#{name}` or `A{name}` as a whole ASSIGN content: the variable it writes. */
-const ASSIGNED_VARIABLE = /^\s*[#A]\{([^{}]+)\}\s*$/
-
-export const assignedVariable = (action: ProgramRuleActionMetadata) =>
-    action.type === 'ASSIGN'
-        ? action.content?.match(ASSIGNED_VARIABLE)?.[1]?.trim()
-        : undefined
 
 const variableField = (variable: ProgramRuleVariableMetadata | undefined) =>
     variable?.dataElementId ?? variable?.attributeId

@@ -1,3 +1,4 @@
+import { assignedVariable } from '@/registry/program-rules/index'
 import type {
     ProgramRulesMetadata,
     RuleContext,
@@ -7,7 +8,6 @@ import React, { type ReactNode } from 'react'
 import i18n from '../../i18n'
 import { edgeStyle, edgeCategory } from './edgeStyles'
 import {
-    assignedVariable,
     fieldNodeId,
     ruleActions,
     type GraphEdge,

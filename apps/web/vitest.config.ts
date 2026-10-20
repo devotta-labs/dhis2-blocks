@@ -34,6 +34,29 @@ export default defineConfig({
             {
                 plugins: [tailwindcss()],
                 resolve,
+                optimizeDeps: {
+                    // The Event Form and its rules, pre-bundled up front: a dependency discovered
+                    // mid-run reloads the page and breaks that test file.
+                    include: [
+                        '@dhis2/app-runtime',
+                        '@tanstack/react-query',
+                        'zod',
+                        '@dhis2-blocks/event-form > zustand',
+                        '@dhis2-blocks/event-form > zustand/vanilla',
+                        '@dhis2-blocks/event-form > better-result',
+                        '@dhis2-blocks/event-form > @dhis2/multi-calendar-dates',
+                        '@dhis2-blocks/event-form > @dhis2-blocks/program-rules > @dhis2/rule-engine',
+                        '@dhis2-blocks/ui > @base-ui/react',
+                        '@dhis2-blocks/ui > @base-ui/react/input',
+                        '@dhis2-blocks/ui > @base-ui/react/select',
+                        '@dhis2-blocks/ui > @base-ui/react/toggle',
+                        '@dhis2-blocks/ui > @base-ui/react/toggle-group',
+                        '@dhis2-blocks/ui > @base-ui/react/radio',
+                        '@dhis2-blocks/ui > @base-ui/react/radio-group',
+                        '@dhis2-blocks/ui > @base-ui/react/checkbox',
+                        '@dhis2-blocks/ui > @base-ui/react/popover',
+                    ],
+                },
                 test: {
                     ...sharedProjectOptions,
                     name: 'browser',

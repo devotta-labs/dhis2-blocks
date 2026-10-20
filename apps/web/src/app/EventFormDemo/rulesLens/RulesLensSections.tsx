@@ -1,4 +1,9 @@
-import { EventFormField, useEventFormRules } from '@dhis2-blocks/event-form'
+import {
+    EventFormSections,
+    useEventFormRules,
+    type EventFormFieldWrapperProps,
+    type EventFormHiddenSectionProps,
+} from '@dhis2-blocks/event-form'
 import { ErrorAlert } from '@dhis2-blocks/ui/alert'
 import { Spinner } from '@dhis2-blocks/ui/spinner'
 import React, { useId, useState, type ReactNode } from 'react'
@@ -71,8 +76,8 @@ const actingVerb = (kinds: readonly EffectKind[]) => {
 /** The box under a field that says which rules shape it, why, and what it feeds. */
 const Explanation = ({ id, fieldId }: { id: string; fieldId: string }) => {
     const { effects, graph, explain } = useEventFormRules()
-    const { metadata, label, ruleName } = useLens()
-    const lens = fieldLens(effects, graph, explain, fieldId)
+    const { metadata, effectsOn, label, ruleName } = useLens()
+    const lens = fieldLens(effectsOn, graph, explain, fieldId)
     const assigned = effects?.assignedValues.get(fieldId)
     return (
         <div
@@ -140,15 +145,21 @@ const Explanation = ({ id, fieldId }: { id: string; fieldId: string }) => {
     )
 }
 
-/** One field with its rule tags, or a placeholder where a rule hides it. */
-const LensField = ({ fieldId }: { fieldId: string }) => {
-    const { effects, graph, explain } = useEventFormRules()
-    const { label } = useLens()
+/**
+ * One field with its rule tags, or a placeholder where a rule hides it. The block's
+ * `EventFormSections` renders it around every field, hidden ones included.
+ */
+const LensField = ({
+    fieldId,
+    hidden,
+    children,
+}: EventFormFieldWrapperProps) => {
+    const { graph, explain } = useEventFormRules()
+    const { effectsOn, label } = useLens()
     const [open, setOpen] = useState(false)
     const explanationId = useId()
-    const lens = fieldLens(effects, graph, explain, fieldId)
+    const lens = fieldLens(effectsOn, graph, explain, fieldId)
     const kinds = [...new Set(lens.acting.flatMap(({ kinds }) => kinds))]
-    const hidden = kinds.includes('hidden')
     const toggle = () => setOpen((current) => !current)
     const tag = (tone: Tone, text: string) => (
         <Tag
@@ -201,7 +212,7 @@ const LensField = ({ fieldId }: { fieldId: string }) => {
         )
     }
     if (tags.length === 0) {
-        return <EventFormField id={fieldId} />
+        return <>{children}</>
     }
     return (
         // Boxed so the tags read as belonging to this field, not the one above or below.
@@ -210,21 +221,66 @@ const LensField = ({ fieldId }: { fieldId: string }) => {
             data-testid="rules-lens-field"
         >
             <span className="flex flex-wrap justify-end gap-1">{tags}</span>
-            <EventFormField id={fieldId} />
+            {children}
             {open ? <Explanation id={explanationId} fieldId={fieldId} /> : null}
         </div>
     )
 }
 
+/** A placeholder where a rule hides a section, with the rules behind it a click away. */
+const LensHiddenSection = ({
+    sectionId,
+    name,
+}: EventFormHiddenSectionProps) => {
+    const { effectsOn } = useLens()
+    const [open, setOpen] = useState(false)
+    const explanationId = useId()
+    const hiddenBy = (effectsOn.get(sectionId) ?? []).filter(
+        (effect) => effect.kind === 'hiddenSection'
+    )
+    return (
+        <section
+            className="flex flex-col gap-2 rounded-dhis2-md border border-dashed border-dhis2-grey-400 p-4"
+            data-testid="rules-lens-hidden-section"
+        >
+            <div className="flex items-center justify-between gap-2">
+                <span className="text-dhis2-grey-700">{name}</span>
+                <Tag
+                    tone="hidden"
+                    open={open}
+                    controls={explanationId}
+                    onClick={() => setOpen((current) => !current)}
+                >
+                    {i18n.t('Hidden')}
+                </Tag>
+            </div>
+            {open ? (
+                <div
+                    id={explanationId}
+                    className="flex flex-col gap-3 rounded-dhis2-sm bg-dhis2-grey-100 p-3 text-sm"
+                >
+                    {hiddenBy.map(({ by }) => (
+                        <div key={by.actionId} className="flex flex-col gap-1">
+                            <p className="m-0 font-medium">
+                                {actingVerb(['hidden'])}{' '}
+                                <RuleName>{by.ruleName}</RuleName>
+                            </p>
+                            <RuleCondition condition={by.condition} met />
+                        </div>
+                    ))}
+                </div>
+            ) : null}
+        </section>
+    )
+}
+
 /**
- * The stage's sections with every field a rule touches tagged: click a tag to see the rules
- * behind it. Fields a rule hides stay in place as placeholders. Use it in place of
- * `EventFormSections` while the lens is on.
+ * The block's sections with every field a rule touches tagged: click a tag to see the rules
+ * behind it. Fields and sections a rule hides stay in place as placeholders. Use it in place of
+ * `EventFormSections` while the lens is on; the section navigation works as without the lens.
  */
 export const RulesLensSections = () => {
-    const { effects } = useEventFormRules()
-    const { metadata, metadataError, sectionName } = useLens()
-    const [openSection, setOpenSection] = useState<string>()
+    const { metadata, metadataError } = useLens()
     if (metadataError) {
         return (
             <ErrorAlert title={i18n.t('Could not load the rules lens')}>
@@ -236,77 +292,9 @@ export const RulesLensSections = () => {
         return <Spinner aria-label={i18n.t('Loading')} />
     }
     return (
-        <>
-            {metadata.sections.map((section) => {
-                const hiddenBy = effects?.hiddenSections.get(section.id)
-                if (hiddenBy !== undefined && hiddenBy.length > 0) {
-                    const isOpen = openSection === section.id
-                    return (
-                        <section
-                            key={section.id}
-                            className="flex flex-col gap-2 rounded-dhis2-md border border-dashed border-dhis2-grey-400 p-4"
-                        >
-                            <div className="flex items-center justify-between gap-2">
-                                <span className="text-dhis2-grey-700">
-                                    {sectionName(section.id)}
-                                </span>
-                                <Tag
-                                    tone="hidden"
-                                    open={isOpen}
-                                    controls={`rules-lens-section-${section.id}`}
-                                    onClick={() =>
-                                        setOpenSection(
-                                            isOpen ? undefined : section.id
-                                        )
-                                    }
-                                >
-                                    {i18n.t('Hidden')}
-                                </Tag>
-                            </div>
-                            {isOpen ? (
-                                <div
-                                    id={`rules-lens-section-${section.id}`}
-                                    className="flex flex-col gap-3 rounded-dhis2-sm bg-dhis2-grey-100 p-3 text-sm"
-                                >
-                                    {hiddenBy.map((by) => (
-                                        <div
-                                            key={by.actionId}
-                                            className="flex flex-col gap-1"
-                                        >
-                                            <p className="m-0 font-medium">
-                                                {actingVerb(['hidden'])}{' '}
-                                                <RuleName>
-                                                    {by.ruleName}
-                                                </RuleName>
-                                            </p>
-                                            <RuleCondition
-                                                condition={by.condition}
-                                                met
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : null}
-                        </section>
-                    )
-                }
-                return (
-                    <section
-                        key={section.id}
-                        data-section-id={section.id}
-                        className="flex flex-col gap-4 rounded-dhis2-md bg-dhis2-card p-4 text-dhis2-card-foreground shadow-dhis2-card"
-                    >
-                        {section.name ? (
-                            <h2 className="m-0 text-base leading-snug font-medium text-dhis2-grey-900">
-                                {section.name}
-                            </h2>
-                        ) : null}
-                        {section.fieldIds.map((fieldId) => (
-                            <LensField key={fieldId} fieldId={fieldId} />
-                        ))}
-                    </section>
-                )
-            })}
-        </>
+        <EventFormSections
+            FieldWrapper={LensField}
+            HiddenSection={LensHiddenSection}
+        />
     )
 }

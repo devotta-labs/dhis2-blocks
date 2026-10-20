@@ -10,37 +10,107 @@ export interface ExpressionReferences {
     orgUnitGroups: string[]
 }
 
-// The engine's own collectors (ExpressionJs) are not exported from the
-// package entry, so this small scanner stands in for them. A test checks it
-// against the engine's parser on real and generated metadata.
-const VARIABLE =
-    /[#A]\{([^{}]+)\}|d2:(?:hasValue|count|countIfValue|countIfZeroPos|countIfCondition|maxValue|minValue|lastEventDate)\(\s*(['"])(.+?)\2/g
-const PROGRAM_VARIABLE = /V\{([^{}]+)\}/g
-const CONSTANT = /C\{([^{}]+)\}/g
-const ORG_UNIT_GROUP = /d2:inOrgUnitGroup\(\s*(['"])(.+?)\1/g
-
-const collect = (
-    expression: string,
-    pattern: RegExp,
-    pick: (match: RegExpExecArray) => string | undefined
-): string[] => {
-    const found = new Set<string>()
-    for (const match of expression.matchAll(pattern)) {
-        const name = pick(match)?.trim()
-        if (name) {
-            found.add(name)
-        }
-    }
-    return [...found]
+/** One reference in an expression, where it was found. */
+export interface ExpressionReference {
+    kind: 'variable' | 'programVariable' | 'constant' | 'orgUnitGroup'
+    name: string
+    /** Offset of the first character of the match. */
+    start: number
+    /** Offset just past the match. A function's closing parenthesis is not part of it. */
+    end: number
+    /**
+     * Set when the name is the first argument of a `d2:` function, e.g. `hasValue` for both
+     * `d2:hasValue('x')` and `d2:hasValue(#{x})`. The match then starts at `d2:`.
+     */
+    fn?: string
 }
 
-export const scanExpression = (expression: string): ExpressionReferences => ({
-    variables: collect(expression, VARIABLE, (match) => match[1] ?? match[3]),
-    programVariables: collect(
-        expression,
-        PROGRAM_VARIABLE,
-        (match) => match[1]
+// The engine's own collectors (ExpressionJs) are not exported from the
+// package entry, so this small scanner stands in for them. A test checks it
+// against the engine's parser on real and generated metadata. Every reader of
+// expressions (the dependency graph, condition displays) goes through it, so
+// there is one grammar to keep in step with the engine.
+const VARIABLE_FUNCTIONS =
+    'hasValue|count|countIfValue|countIfZeroPos|countIfCondition|maxValue|minValue|lastEventDate'
+const REFERENCE = new RegExp(
+    [
+        // 1: function, 3: quoted name, 4: #{name} or A{name} argument
+        `d2:(${VARIABLE_FUNCTIONS})\\(\\s*(?:(['"])(.+?)\\2|[#A]\\{([^{}]+)\\})`,
+        // 6: org unit group
+        `d2:inOrgUnitGroup\\(\\s*(['"])(.+?)\\5`,
+        // 7: variable
+        `[#A]\\{([^{}]+)\\}`,
+        // 8: program variable
+        `V\\{([^{}]+)\\}`,
+        // 9: constant
+        `C\\{([^{}]+)\\}`,
+    ].join('|'),
+    'g'
+)
+
+const reference = (
+    match: RegExpExecArray
+): Omit<ExpressionReference, 'start' | 'end'> | undefined => {
+    const [, fn, , quoted, braced, , group, variable, program, constant] = match
+    const name = (
+        quoted ??
+        braced ??
+        group ??
+        variable ??
+        program ??
+        constant
+    )?.trim()
+    if (!name) {
+        return undefined
+    }
+    if (fn !== undefined) {
+        return { kind: 'variable', name, fn }
+    }
+    if (group !== undefined) {
+        return { kind: 'orgUnitGroup', name, fn: 'inOrgUnitGroup' }
+    }
+    if (variable !== undefined) {
+        return { kind: 'variable', name }
+    }
+    return program !== undefined
+        ? { kind: 'programVariable', name }
+        : { kind: 'constant', name }
+}
+
+/** Every reference in the expression, in order of appearance, with its position. */
+export const expressionReferences = (
+    expression: string
+): ExpressionReference[] =>
+    [...expression.matchAll(REFERENCE)].flatMap((match) => {
+        const found = reference(match)
+        return found === undefined
+            ? []
+            : [
+                  {
+                      ...found,
+                      start: match.index,
+                      end: match.index + match[0].length,
+                  },
+              ]
+    })
+
+const namesOf = (
+    references: ReadonlyArray<ExpressionReference>,
+    kind: ExpressionReference['kind']
+) => [
+    ...new Set(
+        references
+            .filter((found) => found.kind === kind)
+            .map((found) => found.name)
     ),
-    constants: collect(expression, CONSTANT, (match) => match[1]),
-    orgUnitGroups: collect(expression, ORG_UNIT_GROUP, (match) => match[2]),
-})
+]
+
+export const scanExpression = (expression: string): ExpressionReferences => {
+    const references = expressionReferences(expression)
+    return {
+        variables: namesOf(references, 'variable'),
+        programVariables: namesOf(references, 'programVariable'),
+        constants: namesOf(references, 'constant'),
+        orgUnitGroups: namesOf(references, 'orgUnitGroup'),
+    }
+}

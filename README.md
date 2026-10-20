@@ -288,7 +288,9 @@ export const CaptureEvent = ({
 Parts: `EventFormDetails` (report date, organisation unit and, for a stage that
 captures a point, the coordinate), `EventFormSectionNav`, `EventFormSections`
 (or `EventFormSection id` and `EventFormField id` to lay out sections and
-questions yourself), `EventFormNotes`, `EventFormFeedback` (rule texts that
+questions yourself; both take a `FieldWrapper` component that wraps every
+field, hidden ones included and marked `hidden`, and a `HiddenSection`
+component shown in place of a section a rule hides), `EventFormNotes`, `EventFormFeedback` (rule texts that
 belong to no question) and `EventFormActions` (Save, Complete and Cancel). Read
 the form with `useEventFormState()`, drive it with `useEventFormActions()`
 (`save`, `complete`, `cancel`, `reset`) and ask why a value changed with

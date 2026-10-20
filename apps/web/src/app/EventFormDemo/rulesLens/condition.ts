@@ -1,11 +1,12 @@
+import { expressionReferences } from '@/registry/program-rules/index'
+
 /** A piece of a rule condition, ready to show: plain text or a reference to an answer. */
 export type ConditionPart =
     | { kind: 'text'; text: string }
     /** `fieldId` is unset for a variable that reads no field, such as `V{event_date}`. */
     | { kind: 'field'; name: string; fieldId?: string }
 
-const TOKEN =
-    /d2:hasValue\(\s*(?:'([^']+)'|[#A]\{([^}]+)\})\s*\)|[#A]\{([^}]+)\}|V\{([^}]+)\}|&&|\|\||!==|===|!=|==|!/g
+const OPERATOR = /&&|\|\||!==|===|!=|==|!/g
 
 const OPERATORS = new Map([
     ['&&', ' and '],
@@ -17,9 +18,14 @@ const OPERATORS = new Map([
     ['!', 'not '],
 ])
 
+/** The closing parenthesis of `d2:hasValue(`, which the reference stops short of. */
+const CLOSING = /^\s*\)/
+
 /**
  * Splits a rule condition into text and answer references, with the operators spelled out:
  * `!#{chronic} && d2:hasValue('lmp')` → "not ", [chronic], " and ", [lmp], " has a value".
+ * References come from the rule lib's scanner, so the lens reads expressions as the dependency
+ * graph does.
  */
 export const parseCondition = (
     condition: string,
@@ -34,27 +40,32 @@ export const parseCondition = (
             parts.push({ kind: 'text', text: value })
         }
     }
+    const prose = (value: string) =>
+        text(value.replace(OPERATOR, (token) => OPERATORS.get(token) ?? token))
     const field = (name: string) =>
         parts.push({ kind: 'field', name, fieldId: variables.get(name) })
 
     let cursor = 0
-    for (const match of condition.matchAll(TOKEN)) {
-        text(condition.slice(cursor, match.index))
-        cursor = match.index + match[0].length
-        const [token, quoted, braced, variable, programVariable] = match
-        const hasValue = quoted ?? braced
-        if (hasValue !== undefined) {
-            field(hasValue)
+    for (const reference of expressionReferences(condition)) {
+        prose(condition.slice(cursor, reference.start))
+        cursor = reference.end
+        if (reference.kind === 'programVariable') {
+            parts.push({ kind: 'field', name: reference.name })
+        } else if (reference.kind !== 'variable') {
+            // Constants and org unit groups read no answer: shown as written.
+            text(condition.slice(reference.start, reference.end))
+        } else if (reference.fn === 'hasValue') {
+            field(reference.name)
             text(' has a value')
-        } else if (variable !== undefined) {
-            field(variable)
-        } else if (programVariable !== undefined) {
-            parts.push({ kind: 'field', name: programVariable })
+            cursor += CLOSING.exec(condition.slice(cursor))?.[0].length ?? 0
         } else {
-            text(OPERATORS.get(token) ?? token)
+            if (reference.fn !== undefined) {
+                text(`d2:${reference.fn}(`)
+            }
+            field(reference.name)
         }
     }
-    text(condition.slice(cursor))
+    prose(condition.slice(cursor))
     for (const part of parts) {
         if (part.kind === 'text') {
             part.text = part.text.replace(/\s+/g, ' ')

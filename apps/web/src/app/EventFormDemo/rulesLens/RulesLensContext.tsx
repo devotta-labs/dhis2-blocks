@@ -1,8 +1,13 @@
-import { useEventFormState } from '@dhis2-blocks/event-form'
-import React, { createContext, useContext, type ReactNode } from 'react'
+import { useEventFormRules, useEventFormState } from '@dhis2-blocks/event-form'
+import React, {
+    createContext,
+    useContext,
+    useMemo,
+    type ReactNode,
+} from 'react'
 import type { createAppWorkingListClient } from '../../AppShell/createAppWorkingListClient'
 import i18n from '../../../i18n'
-import type { EffectKind } from './effects'
+import { effectsByTarget, type Effect, type EffectKind } from './effects'
 import { useLensMetadata, type LensMetadata } from './metadata'
 
 /** Interpolated values are labels and answers, not HTML; React escapes them. */
@@ -11,6 +16,8 @@ export const raw = { escapeValue: false }
 interface LensValue {
     metadata?: LensMetadata
     metadataError?: Error
+    /** The current rule effects by the field, section or `'form'` they act on. Built once per evaluation. */
+    effectsOn: ReadonlyMap<string, readonly Effect[]>
     label(fieldId: string): string
     sectionName(sectionId: string): string
     ruleName(ruleId: string, fallback?: string): string
@@ -58,25 +65,30 @@ export const RulesLensProvider = ({
 }) => {
     const query = useLensMetadata(client, programId, programStageId)
     const { values } = useEventFormState()
+    const { effects } = useEventFormRules()
     const metadata = query.data
-    const stageFields = new Set(
-        metadata?.sections.flatMap((section) => section.fieldIds)
-    )
-    const value: LensValue = {
-        metadata,
-        metadataError: query.error ?? undefined,
-        label: (fieldId) =>
-            fieldId === 'form'
-                ? i18n.t('the event')
-                : (metadata?.labels.get(fieldId) ?? fieldId),
-        sectionName: (sectionId) =>
-            metadata?.sections.find((section) => section.id === sectionId)
-                ?.name ?? sectionId,
-        ruleName: (ruleId, fallback) =>
-            metadata?.rules.get(ruleId)?.name ?? fallback ?? ruleId,
-        answer: (fieldId) =>
-            stageFields.has(fieldId) ? showValue(values[fieldId]) : undefined,
-    }
+    const effectsOn = useMemo(() => effectsByTarget(effects), [effects])
+    const value = useMemo<LensValue>(() => {
+        const labels = metadata?.labels
+        const stageFields = labels?.stageFields.get(programStageId)
+        return {
+            metadata,
+            metadataError: query.error,
+            effectsOn,
+            label: (fieldId) =>
+                fieldId === 'form'
+                    ? i18n.t('the event')
+                    : (labels?.fields.get(fieldId) ?? fieldId),
+            sectionName: (sectionId) =>
+                labels?.sections.get(sectionId) ?? sectionId,
+            ruleName: (ruleId, fallback) =>
+                metadata?.rules.get(ruleId)?.name ?? fallback ?? ruleId,
+            answer: (fieldId) =>
+                stageFields?.has(fieldId)
+                    ? showValue(values[fieldId])
+                    : undefined,
+        }
+    }, [metadata, query.error, effectsOn, programStageId, values])
     return <LensContext.Provider value={value}>{children}</LensContext.Provider>
 }
 

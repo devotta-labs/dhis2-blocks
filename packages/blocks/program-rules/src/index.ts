@@ -1,5 +1,12 @@
 export { buildRuleContext } from './lib/buildContext'
+export { assignedVariable } from './lib/dependencyGraph'
 export { evaluateEventRules, explainField } from './lib/evaluate'
+export {
+    expressionReferences,
+    scanExpression,
+    type ExpressionReference,
+    type ExpressionReferences,
+} from './lib/scanExpression'
 export type {
     Attribution,
     EventRuleInput,

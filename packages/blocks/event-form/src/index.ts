@@ -17,7 +17,10 @@ export { EventFormField } from './ui/EventFormField'
 export { EventFormNotes } from './ui/EventFormNotes'
 export {
     EventFormSection,
+    type EventFormFieldWrapperProps,
+    type EventFormHiddenSectionProps,
     type EventFormSectionProps,
+    type EventFormSectionSlots,
 } from './ui/EventFormSection'
 export { EventFormSectionNav } from './ui/EventFormSectionNav'
 export { EventFormSections } from './ui/EventFormSections'

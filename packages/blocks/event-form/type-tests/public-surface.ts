@@ -28,7 +28,10 @@ import {
     type EventFormReadOnlyReason,
     type EventFormRules,
     type EventFormSavedResult,
+    type EventFormFieldWrapperProps,
+    type EventFormHiddenSectionProps,
     type EventFormSectionProps,
+    type EventFormSectionSlots,
     type EventFormState,
     type EventFormTranslate,
     type EventPayload,
@@ -118,6 +121,25 @@ export const section = React.createElement(EventFormSection, {
     id: 'EzhVeTS7vx4',
 } satisfies EventFormSectionProps)
 export const field = React.createElement(EventFormField, { id: 'de0FEHSIoxh' })
+
+// Hosts can wrap every field, and show hidden fields and sections in place.
+const Wrapper = ({ fieldId, hidden, children }: EventFormFieldWrapperProps) =>
+    React.createElement(
+        'div',
+        { 'data-field': fieldId },
+        hidden ? null : children
+    )
+const Hidden = ({ name }: EventFormHiddenSectionProps) =>
+    React.createElement('p', null, name)
+const slots: EventFormSectionSlots = {
+    FieldWrapper: Wrapper,
+    HiddenSection: Hidden,
+}
+export const annotated = React.createElement(EventFormSections, slots)
+export const annotatedSection = React.createElement(EventFormSection, {
+    id: 'EzhVeTS7vx4',
+    FieldWrapper: Wrapper,
+})
 export const savedOutcome: EventFormSavedResult['outcome'] = 'queued'
 // @ts-expect-error onSaved reports saved or queued, nothing else.
 export const unknownOutcome: EventFormSavedResult['outcome'] = 'failed'

@@ -11,6 +11,7 @@ import {
 } from '../../test/rmnch'
 import { programRulesQueryKeys } from './queryKeys'
 import { useProgramRuleContext } from './useProgramRuleContext'
+import { useProgramRuleEvaluator } from './useProgramRuleEvaluator'
 import {
     useProgramRules,
     type ProgramRulesInput,
@@ -350,5 +351,76 @@ describe('useProgramRuleContext', () => {
         await settle(() => result.current.status)
         expect(result.current.status).toBe('error')
         expect(result.current.context).toBeUndefined()
+    })
+})
+
+describe('useProgramRuleEvaluator', () => {
+    const evaluatorOptions = {
+        programId: RMNCH.programId,
+        programStageId: RMNCH.stageId,
+        enrollmentId: RMNCH.enrollmentId,
+    }
+
+    it('evaluates several events against one context', async () => {
+        const { requests, wrapper } = serve(rmnchResponses)
+        const { result } = await renderHook(
+            () => useProgramRuleEvaluator(evaluatorOptions),
+            { wrapper }
+        )
+        await settle(() => result.current.status)
+        const evaluate = result.current.evaluate
+        expect(evaluate).toBeDefined()
+        const withoutChronic = evaluate?.(
+            currentEvent({ [RMNCH.chronic]: 'false' })
+        )
+        const withChronic = evaluate?.(
+            currentEvent({ [RMNCH.chronic]: 'true' })
+        )
+        expect(
+            withoutChronic?.isOk() &&
+                withoutChronic.value.hiddenFields.has(RMNCH.chronicFollowUps[0])
+        ).toBe(true)
+        expect(
+            withChronic?.isOk() &&
+                withChronic.value.hiddenFields.has(RMNCH.chronicFollowUps[0])
+        ).toBe(false)
+        expect(requests.filter((name) => name === 'programRules')).toHaveLength(
+            1
+        )
+    })
+
+    it('returns the same result for an event with the same content', async () => {
+        const { wrapper } = serve(rmnchResponses)
+        const { result } = await renderHook(
+            () => useProgramRuleEvaluator(evaluatorOptions),
+            { wrapper }
+        )
+        await settle(() => result.current.status)
+        const evaluate = result.current.evaluate
+        const first = evaluate?.(currentEvent({ [RMNCH.chronic]: 'false' }))
+        evaluate?.(currentEvent({ [RMNCH.chronic]: 'true' }))
+        expect(evaluate?.(currentEvent({ [RMNCH.chronic]: 'false' }))).toBe(
+            first
+        )
+    })
+
+    it('keeps the function when the passed enrollment data has the same content', async () => {
+        const { wrapper } = serve(rmnchResponses)
+        const { result, rerender } = await renderHook(
+            (props?: { input: ProgramRulesInput }) => {
+                const input = props?.input ?? rmnchInput()
+                return useProgramRuleEvaluator({
+                    ...evaluatorOptions,
+                    enrollment: input.enrollment,
+                    otherEvents: input.otherEvents,
+                })
+            },
+            { wrapper, initialProps: { input: rmnchInput() } }
+        )
+        await settle(() => result.current.status)
+        const evaluate = result.current.evaluate
+        expect(evaluate).toBeDefined()
+        await rerender({ input: rmnchInput() })
+        expect(result.current.evaluate).toBe(evaluate)
     })
 })

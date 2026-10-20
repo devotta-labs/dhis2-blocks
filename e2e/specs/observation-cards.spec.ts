@@ -33,9 +33,23 @@ const demoUrl = (preset: 'rmnch' | 'seeded', trackedEntityId: string) =>
 const card = (page: Page, label: string) =>
     page.getByRole('group', { name: label, exact: true })
 
+/**
+ * The fixture signs in on the Working List route, which starts loading its
+ * programs. Leaving that route mid-request cancels it, and the fixture reports
+ * the aborted request, so let the root route settle first.
+ */
+const openDemo = async (
+    page: Page,
+    preset: 'rmnch' | 'seeded',
+    trackedEntityId: string
+) => {
+    await page.waitForLoadState('networkidle')
+    await page.goto(demoUrl(preset, trackedEntityId))
+}
+
 const openSeededPerson = async (page: Page) => {
     await page.clock.setFixedTime(DEMO_NOW)
-    await page.goto(demoUrl('seeded', SEEDED_PERSON))
+    await openDemo(page, 'seeded', SEEDED_PERSON)
     await expect(card(page, SYSTOLIC)).toBeVisible({ timeout: 30_000 })
 }
 
@@ -239,7 +253,7 @@ test.describe('observation cards', () => {
         expect(labelResponse.ok()).toBe(true)
         const label = DataElementLabelSchema.parse(await labelResponse.json())
 
-        await page.goto(demoUrl('rmnch', trackedEntityId))
+        await openDemo(page, 'rmnch', trackedEntityId)
         const haemoglobin = card(page, label)
         await expect(haemoglobin).toBeVisible({ timeout: 30_000 })
 

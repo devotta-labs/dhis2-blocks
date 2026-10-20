@@ -16,6 +16,8 @@ password="${E2E_DHIS2_PASSWORD:-district}"
 artifact_dir="$(e2e_artifact_dir)"
 metadata_response="$artifact_dir/metadata-import.json"
 tracker_response="$artifact_dir/tracker-import.json"
+observation_metadata_response="$artifact_dir/observation-cards-metadata-import.json"
+observation_tracker_response="$artifact_dir/observation-cards-tracker-import.json"
 cors_response="$artifact_dir/cors-allowlist.json"
 users_payload="$E2E_REPO_ROOT/e2e/metadata/working-list-users.json"
 saved_lists_payload="$E2E_REPO_ROOT/e2e/metadata/working-list-saved-lists.json"
@@ -293,4 +295,14 @@ curl --fail --silent --show-error \
 echo "Corrupting one attribute value behind the importer's back ..."
 corrupt_data_quality_fixture
 
-echo "Supplemental working-list metadata and records are ready."
+echo "Importing idempotent observation-cards metadata and records ..."
+post_and_require_ok \
+    '/api/metadata?importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&importReportMode=ERRORS' \
+    "$E2E_REPO_ROOT/e2e/metadata/observation-cards-metadata.json" \
+    "$observation_metadata_response"
+post_and_require_ok \
+    '/api/tracker?async=false&importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&reportMode=FULL' \
+    "$E2E_REPO_ROOT/e2e/metadata/observation-cards-tracker-data.json" \
+    "$observation_tracker_response"
+
+echo "Supplemental working-list and observation-cards metadata and records are ready."

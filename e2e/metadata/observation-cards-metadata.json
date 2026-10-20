@@ -1,0 +1,365 @@
+{
+    "optionSets": [
+        {
+            "id": "ObE2eOps001",
+            "name": "Observation cards E2E smoking status",
+            "valueType": "TEXT",
+            "options": [
+                {
+                    "id": "ObE2eOpn001"
+                },
+                {
+                    "id": "ObE2eOpn002"
+                },
+                {
+                    "id": "ObE2eOpn003"
+                }
+            ]
+        }
+    ],
+    "options": [
+        {
+            "id": "ObE2eOpn001",
+            "name": "Never smoked",
+            "code": "NEVER",
+            "sortOrder": 1,
+            "optionSet": {
+                "id": "ObE2eOps001"
+            },
+            "style": {
+                "color": "#2e7d32"
+            }
+        },
+        {
+            "id": "ObE2eOpn002",
+            "name": "Former smoker",
+            "code": "FORMER",
+            "sortOrder": 2,
+            "optionSet": {
+                "id": "ObE2eOps001"
+            },
+            "style": {
+                "color": "#f9a825"
+            }
+        },
+        {
+            "id": "ObE2eOpn003",
+            "name": "Current smoker",
+            "code": "CURRENT",
+            "sortOrder": 3,
+            "optionSet": {
+                "id": "ObE2eOps001"
+            },
+            "style": {
+                "color": "#c62828"
+            }
+        }
+    ],
+    "legendSets": [
+        {
+            "id": "ObE2eLgs001",
+            "name": "Observation cards E2E systolic blood pressure",
+            "legends": [
+                {
+                    "id": "ObE2eLgd001",
+                    "name": "Normal",
+                    "color": "#2e7d32",
+                    "startValue": 0,
+                    "endValue": 120
+                },
+                {
+                    "id": "ObE2eLgd002",
+                    "name": "Elevated",
+                    "color": "#f9a825",
+                    "startValue": 120,
+                    "endValue": 140
+                },
+                {
+                    "id": "ObE2eLgd003",
+                    "name": "High",
+                    "color": "#c62828",
+                    "startValue": 140,
+                    "endValue": 300
+                }
+            ]
+        },
+        {
+            "id": "ObE2eLgs002",
+            "name": "Observation cards E2E haemoglobin",
+            "legends": [
+                {
+                    "id": "ObE2eLgd004",
+                    "name": "Severe",
+                    "color": "#b71c1c",
+                    "startValue": 0,
+                    "endValue": 7
+                },
+                {
+                    "id": "ObE2eLgd005",
+                    "name": "Moderate",
+                    "color": "#ef6c00",
+                    "startValue": 7,
+                    "endValue": 10
+                },
+                {
+                    "id": "ObE2eLgd006",
+                    "name": "Mild",
+                    "color": "#f9a825",
+                    "startValue": 10,
+                    "endValue": 11
+                },
+                {
+                    "id": "ObE2eLgd007",
+                    "name": "Normal",
+                    "color": "#2e7d32",
+                    "startValue": 11,
+                    "endValue": 25
+                }
+            ]
+        }
+    ],
+    "trackedEntityTypes": [
+        {
+            "id": "ObE2eTet001",
+            "name": "Observation cards E2E person",
+            "shortName": "Observation cards E2E person",
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "trackedEntityTypeAttributes": []
+        }
+    ],
+    "dataElements": [
+        {
+            "id": "ObE2eDel001",
+            "name": "Observation cards E2E systolic blood pressure",
+            "shortName": "OC E2E systolic BP",
+            "formName": "Systolic blood pressure",
+            "domainType": "TRACKER",
+            "valueType": "INTEGER_POSITIVE",
+            "aggregationType": "NONE",
+            "legendSets": [
+                {
+                    "id": "ObE2eLgs001"
+                }
+            ]
+        },
+        {
+            "id": "ObE2eDel002",
+            "name": "Observation cards E2E diastolic blood pressure",
+            "shortName": "OC E2E diastolic BP",
+            "formName": "Diastolic blood pressure",
+            "domainType": "TRACKER",
+            "valueType": "INTEGER_POSITIVE",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "ObE2eDel003",
+            "name": "Observation cards E2E weight",
+            "shortName": "OC E2E weight",
+            "formName": "Weight",
+            "domainType": "TRACKER",
+            "valueType": "NUMBER",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "ObE2eDel004",
+            "name": "Observation cards E2E haemoglobin",
+            "shortName": "OC E2E haemoglobin",
+            "formName": "Haemoglobin",
+            "domainType": "TRACKER",
+            "valueType": "NUMBER",
+            "aggregationType": "NONE",
+            "legendSets": [
+                {
+                    "id": "ObE2eLgs002"
+                }
+            ]
+        },
+        {
+            "id": "ObE2eDel005",
+            "name": "Observation cards E2E smoking status",
+            "shortName": "OC E2E smoking status",
+            "formName": "Smoking status",
+            "domainType": "TRACKER",
+            "valueType": "TEXT",
+            "aggregationType": "NONE",
+            "optionSet": {
+                "id": "ObE2eOps001"
+            }
+        },
+        {
+            "id": "ObE2eDel006",
+            "name": "Observation cards E2E extreme pallor",
+            "shortName": "OC E2E extreme pallor",
+            "formName": "Extreme pallor",
+            "domainType": "TRACKER",
+            "valueType": "TRUE_ONLY",
+            "aggregationType": "NONE"
+        }
+    ],
+    "programs": [
+        {
+            "id": "ObE2ePrg001",
+            "name": "Observation cards E2E program",
+            "shortName": "Observation cards E2E program",
+            "programType": "WITH_REGISTRATION",
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "trackedEntityType": {
+                "id": "ObE2eTet001"
+            },
+            "organisationUnits": [
+                {
+                    "id": "DiszpKrYNg8"
+                }
+            ],
+            "programTrackedEntityAttributes": [],
+            "programStages": [
+                {
+                    "id": "ObE2eStg001"
+                },
+                {
+                    "id": "ObE2eStg002"
+                }
+            ]
+        }
+    ],
+    "programStages": [
+        {
+            "id": "ObE2eStg001",
+            "name": "Observation cards E2E intake",
+            "program": {
+                "id": "ObE2ePrg001"
+            },
+            "repeatable": false,
+            "sortOrder": 1,
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "programStageDataElements": [
+                {
+                    "id": "ObE2ePsd001",
+                    "dataElement": {
+                        "id": "ObE2eDel001"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 1
+                },
+                {
+                    "id": "ObE2ePsd002",
+                    "dataElement": {
+                        "id": "ObE2eDel002"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 2
+                },
+                {
+                    "id": "ObE2ePsd003",
+                    "dataElement": {
+                        "id": "ObE2eDel003"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 3
+                },
+                {
+                    "id": "ObE2ePsd004",
+                    "dataElement": {
+                        "id": "ObE2eDel004"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 4
+                },
+                {
+                    "id": "ObE2ePsd005",
+                    "dataElement": {
+                        "id": "ObE2eDel005"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 5
+                },
+                {
+                    "id": "ObE2ePsd006",
+                    "dataElement": {
+                        "id": "ObE2eDel006"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 6
+                }
+            ]
+        },
+        {
+            "id": "ObE2eStg002",
+            "name": "Observation cards E2E follow-up",
+            "program": {
+                "id": "ObE2ePrg001"
+            },
+            "repeatable": true,
+            "sortOrder": 2,
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "programStageDataElements": [
+                {
+                    "id": "ObE2ePsd007",
+                    "dataElement": {
+                        "id": "ObE2eDel001"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 1
+                },
+                {
+                    "id": "ObE2ePsd008",
+                    "dataElement": {
+                        "id": "ObE2eDel002"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 2
+                },
+                {
+                    "id": "ObE2ePsd009",
+                    "dataElement": {
+                        "id": "ObE2eDel003"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 3
+                },
+                {
+                    "id": "ObE2ePsd010",
+                    "dataElement": {
+                        "id": "ObE2eDel004"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 4
+                },
+                {
+                    "id": "ObE2ePsd011",
+                    "dataElement": {
+                        "id": "ObE2eDel006"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 5
+                }
+            ]
+        }
+    ]
+}

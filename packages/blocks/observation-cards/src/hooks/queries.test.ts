@@ -197,9 +197,40 @@ describe('fetchEvents', () => {
         )
 
         expect(EVENTS_MAX_PAGES).toBe(50)
-        expect(query).toHaveBeenCalledTimes(EVENTS_MAX_PAGES)
+        expect(query).toHaveBeenCalledTimes(EVENTS_MAX_PAGES + 1)
         expect(Result.isError(result) && result.error.message).toContain(
             'Too many events'
+        )
+    })
+
+    it(`loads exactly ${EVENTS_MAX_PAGES} full pages when the next one is empty`, async () => {
+        const query = vi
+            .fn<DataEngineLike['query']>()
+            .mockImplementation(async (request) => {
+                const page = Number(
+                    Object.values(request)[0]?.params?.page ?? 0
+                )
+                return {
+                    observationsResource: {
+                        events:
+                            page > EVENTS_MAX_PAGES
+                                ? []
+                                : eventsOf(
+                                      EVENTS_PAGE_SIZE,
+                                      page * EVENTS_PAGE_SIZE
+                                  ),
+                    },
+                }
+            })
+
+        const result = await fetchEvents(
+            createObservationsClient({ query }),
+            subject
+        )
+
+        expect(query).toHaveBeenCalledTimes(EVENTS_MAX_PAGES + 1)
+        expect(Result.isOk(result) && result.value).toHaveLength(
+            EVENTS_MAX_PAGES * EVENTS_PAGE_SIZE
         )
     })
 })

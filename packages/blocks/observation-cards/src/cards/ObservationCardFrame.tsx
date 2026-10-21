@@ -43,11 +43,7 @@ interface CardNoteProps {
 }
 
 /** A short note with an icon, so a warning or failure never rests on colour alone. */
-function CardNote({
-    tone,
-    children,
-    'data-slot': dataSlot,
-}: CardNoteProps) {
+function CardNote({ tone, children, 'data-slot': dataSlot }: CardNoteProps) {
     const Icon = NOTE_ICONS[tone]
     return (
         <span

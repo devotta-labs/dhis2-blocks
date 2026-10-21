@@ -11,8 +11,20 @@ export interface ExamplePatient {
 
 const EventSchema = z.object({
     trackedEntity: z.string().optional(),
-    dataValues: z.array(z.object({ dataElement: z.string() })).optional(),
+    status: z.string().optional(),
+    occurredAt: z.string().optional(),
+    dataValues: z
+        .array(
+            z.object({
+                dataElement: z.string(),
+                value: z.string().nullish(),
+            })
+        )
+        .optional(),
 })
+
+/** The events the cards read readings from; scheduled and skipped visits hold none. */
+const RECORDED_STATUSES = new Set(['ACTIVE', 'COMPLETED'])
 
 /**
  * The engine nests the tracker list under the query key. Current servers
@@ -57,7 +69,7 @@ export const findExamplePatients = async (
                     resource: 'tracker/events',
                     params: {
                         program: programId,
-                        fields: 'trackedEntity,dataValues[dataElement]',
+                        fields: 'trackedEntity,status,occurredAt,dataValues[dataElement,value]',
                         order: 'occurredAt:desc',
                         pageSize: PAGE_SIZE,
                         page,
@@ -68,15 +80,19 @@ export const findExamplePatients = async (
         const events = response.events
 
         for (const event of events) {
-            if (event.trackedEntity === undefined) {
+            if (
+                event.trackedEntity === undefined ||
+                !RECORDED_STATUSES.has(event.status ?? '') ||
+                !event.occurredAt
+            ) {
                 continue
             }
             const entry = byPerson.get(event.trackedEntity) ?? {
                 covered: new Set<string>(),
                 readings: 0,
             }
-            for (const { dataElement } of event.dataValues ?? []) {
-                if (wanted.has(dataElement)) {
+            for (const { dataElement, value } of event.dataValues ?? []) {
+                if (wanted.has(dataElement) && value?.trim()) {
                     entry.covered.add(dataElement)
                     entry.readings += 1
                 }

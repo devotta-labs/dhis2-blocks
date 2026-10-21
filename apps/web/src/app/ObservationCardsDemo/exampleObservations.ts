@@ -5,6 +5,7 @@ import type {
     ObservationResult,
     ObservationSeries,
 } from '@dhis2-blocks/observation-cards'
+import i18n from '../../i18n'
 
 /**
  * Hand-written observations for the "All demo examples" tab. The cards never
@@ -127,9 +128,10 @@ export interface ExampleCard {
     lang?: string
 }
 
-export const EXAMPLE_CARDS: ExampleCard[] = [
+/** Built on each call so the captions follow the current language. */
+export const exampleCards = (): ExampleCard[] => [
     {
-        caption: 'Numeric trend with a legend set',
+        caption: i18n.t('Numeric trend with a legend set'),
         kind: 'trend',
         unit: 'g/dL',
         observation: series(
@@ -147,7 +149,7 @@ export const EXAMPLE_CARDS: ExampleCard[] = [
         ),
     },
     {
-        caption: 'Falling trend, no legend set',
+        caption: i18n.t('Falling trend, no legend set'),
         kind: 'trend',
         unit: 'kg',
         observation: series('exWeight', 'Weight', 'NUMBER', [
@@ -158,7 +160,7 @@ export const EXAMPLE_CARDS: ExampleCard[] = [
         ]),
     },
     {
-        caption: 'A single reading',
+        caption: i18n.t('A single reading'),
         kind: 'trend',
         unit: 'mmHg',
         observation: series('exBp', 'Systolic blood pressure', 'INTEGER', [
@@ -166,7 +168,7 @@ export const EXAMPLE_CARDS: ExampleCard[] = [
         ]),
     },
     {
-        caption: 'Option set with option colours',
+        caption: i18n.t('Option set with option colours'),
         kind: 'latest',
         observation: series(
             'exRisk',
@@ -180,7 +182,7 @@ export const EXAMPLE_CARDS: ExampleCard[] = [
         ),
     },
     {
-        caption: 'Yes/No value',
+        caption: i18n.t('Yes/No value'),
         kind: 'latest',
         observation: series('exSmoking', 'Smoking', 'BOOLEAN', [
             ['true', 70],
@@ -188,7 +190,7 @@ export const EXAMPLE_CARDS: ExampleCard[] = [
         ]),
     },
     {
-        caption: 'Tick-only field left unticked at the latest visit',
+        caption: i18n.t('Tick-only field left unticked at the latest visit'),
         kind: 'latest',
         observation: series('exPallor', 'Extreme pallor', 'TRUE_ONLY', [
             ['true', 70],
@@ -196,14 +198,14 @@ export const EXAMPLE_CARDS: ExampleCard[] = [
         ]),
     },
     {
-        caption: 'Free text',
+        caption: i18n.t('Free text'),
         kind: 'latest',
         observation: series('exNote', 'Clinical note', 'LONG_TEXT', [
             ['Reports mild headaches in the evening; advised to rest.', 6],
         ]),
     },
     {
-        caption: 'Out of date (older than 180 days)',
+        caption: i18n.t('Out of date (older than 180 days)'),
         kind: 'latest',
         unit: 'mmHg',
         staleAfterDays: 180,
@@ -213,7 +215,7 @@ export const EXAMPLE_CARDS: ExampleCard[] = [
         ]),
     },
     {
-        caption: 'Some visits hidden by the user’s access',
+        caption: i18n.t('Some visits hidden by the user’s access'),
         kind: 'latest',
         unit: 'g/dL',
         observation: series(
@@ -225,7 +227,7 @@ export const EXAMPLE_CARDS: ExampleCard[] = [
         ),
     },
     {
-        caption: 'Long data element name',
+        caption: i18n.t('Long data element name'),
         kind: 'trend',
         unit: 'g/dL',
         observation: series(
@@ -241,7 +243,7 @@ export const EXAMPLE_CARDS: ExampleCard[] = [
         ),
     },
     {
-        caption: 'Right to left (Arabic)',
+        caption: i18n.t('Right to left (Arabic)'),
         kind: 'trend',
         unit: 'غ/دل',
         dir: 'rtl',
@@ -263,24 +265,24 @@ export const EXAMPLE_CARDS: ExampleCard[] = [
         ),
     },
     {
-        caption: 'Never recorded',
+        caption: i18n.t('Never recorded'),
         kind: 'latest',
         observation: series('exNever', 'Fundal height', 'NUMBER', []),
     },
     {
-        caption: 'Loading (last recorded)',
+        caption: i18n.t('Loading (last recorded)'),
         kind: 'latest',
         label: 'Loading example',
         observation: { status: 'pending' },
     },
     {
-        caption: 'Loading (trend)',
+        caption: i18n.t('Loading (trend)'),
         kind: 'trend',
         label: 'Loading example',
         observation: { status: 'pending' },
     },
     {
-        caption: 'Failed to load',
+        caption: i18n.t('Failed to load'),
         kind: 'latest',
         label: 'Error example',
         observation: { status: 'error', error: new Error('Example failure') },

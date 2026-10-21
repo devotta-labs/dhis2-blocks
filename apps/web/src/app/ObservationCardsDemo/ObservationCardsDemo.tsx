@@ -6,10 +6,10 @@ import {
     TrendCard,
     useTrackedEntityObservations,
 } from '@dhis2-blocks/observation-cards'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import i18n from '../../i18n'
-import { EXAMPLE_CARDS } from './exampleObservations'
+import { exampleCards } from './exampleObservations'
 import { findExamplePatients, type ExamplePatient } from './findExamplePatients'
 import { OBSERVATION_PRESETS, type ObservationPreset } from './presets'
 
@@ -58,7 +58,7 @@ const ExamplesGallery = () => (
             </p>
         </div>
         <div className={CARD_GRID}>
-            {EXAMPLE_CARDS.map((example) => (
+            {exampleCards().map((example) => (
                 <figure
                     key={example.caption}
                     className="m-0 grid content-start gap-1"
@@ -198,6 +198,10 @@ export const ObservationCardsDemo = () => {
         'idle'
     )
 
+    // The preset a search started under must still be current when it ends.
+    const currentPresetId = useRef(preset.id)
+    currentPresetId.current = preset.id
+
     useEffect(() => setDraft(trackedEntityId), [trackedEntityId])
     // Candidates belong to the program they were found in.
     useEffect(() => {
@@ -209,21 +213,29 @@ export const ObservationCardsDemo = () => {
         setSearchParams(new URLSearchParams(buildSearch(presetId, te, next)))
 
     const loadExample = async () => {
+        const searched = preset
+        const isStale = () => currentPresetId.current !== searched.id
         setFinding('busy')
         try {
-            const found = await findExamplePatients(engine, preset.programId, [
-                ...preset.trend,
-                ...preset.latest,
-            ])
+            const found = await findExamplePatients(
+                engine,
+                searched.programId,
+                [...searched.trend, ...searched.latest]
+            )
+            if (isStale()) {
+                return
+            }
             setCandidates(found)
             if (found.length === 0) {
                 setFinding('none')
                 return
             }
             setFinding('idle')
-            update(preset.id, found[0].trackedEntityId, 'live')
+            update(searched.id, found[0].trackedEntityId, 'live')
         } catch {
-            setFinding('error')
+            if (!isStale()) {
+                setFinding('error')
+            }
         }
     }
 
@@ -312,7 +324,7 @@ export const ObservationCardsDemo = () => {
                                             key={option.id}
                                             value={option.id}
                                         >
-                                            {option.label}
+                                            {option.label()}
                                         </option>
                                     ))}
                                 </select>

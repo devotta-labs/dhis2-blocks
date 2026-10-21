@@ -98,7 +98,8 @@ export const fetchEnrollment = async (
  * Requests successive pages, in a stable order, until one returns fewer than
  * the page size. An event repeated across pages is kept once, and an event
  * that names another tracked entity is dropped. Still full after
- * EVENTS_MAX_PAGES pages is an error.
+ * EVENTS_MAX_PAGES pages, one more page is asked for only to learn whether
+ * the history ends there; any event on it is an error.
  */
 export const fetchEvents = async (
     client: ObservationsClient,
@@ -106,7 +107,7 @@ export const fetchEvents = async (
     signal?: AbortSignal
 ): Promise<Result<TrackerEventRecord[], Error>> => {
     const events = new Map<string, TrackerEventRecord>()
-    for (let page = 1; page <= EVENTS_MAX_PAGES; page++) {
+    for (let page = 1; page <= EVENTS_MAX_PAGES + 1; page++) {
         const result = await client.query(
             {
                 resource: 'tracker/events',
@@ -124,6 +125,9 @@ export const fetchEvents = async (
         )
         if (Result.isError(result)) {
             return Result.err(result.error)
+        }
+        if (page > EVENTS_MAX_PAGES && result.value.length > 0) {
+            break
         }
         for (const event of result.value) {
             const owner = event.trackedEntity

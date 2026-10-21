@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-21T10:13:55.355Z\n"
-"PO-Revision-Date: 2026-10-21T10:13:55.355Z\n"
+"POT-Creation-Date: 2026-10-21T12:52:06.943Z\n"
+"PO-Revision-Date: 2026-10-21T12:52:06.944Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -188,6 +188,57 @@ msgstr "Enter a tracked entity ID to see their observations."
 msgid "Use {{id}}"
 msgstr "Use {{id}}"
 
+msgid "Numeric trend with a legend set"
+msgstr "Numeric trend with a legend set"
+
+msgid "Falling trend, no legend set"
+msgstr "Falling trend, no legend set"
+
+msgid "A single reading"
+msgstr "A single reading"
+
+msgid "Option set with option colours"
+msgstr "Option set with option colours"
+
+msgid "Yes/No value"
+msgstr "Yes/No value"
+
+msgid "Tick-only field left unticked at the latest visit"
+msgstr "Tick-only field left unticked at the latest visit"
+
+msgid "Free text"
+msgstr "Free text"
+
+msgid "Out of date (older than 180 days)"
+msgstr "Out of date (older than 180 days)"
+
+msgid "Some visits hidden by the user’s access"
+msgstr "Some visits hidden by the user’s access"
+
+msgid "Long data element name"
+msgstr "Long data element name"
+
+msgid "Right to left (Arabic)"
+msgstr "Right to left (Arabic)"
+
+msgid "Never recorded"
+msgstr "Never recorded"
+
+msgid "Loading (last recorded)"
+msgstr "Loading (last recorded)"
+
+msgid "Loading (trend)"
+msgstr "Loading (trend)"
+
+msgid "Failed to load"
+msgstr "Failed to load"
+
+msgid "Real data: WHO RMNCH Tracker"
+msgstr "Real data: WHO RMNCH Tracker"
+
+msgid "Full features: seeded program"
+msgstr "Full features: seeded program"
+
 msgid "Search"
 msgstr "Search"
 
@@ -214,9 +265,6 @@ msgstr "Couldn't load this value"
 
 msgid "down"
 msgstr "down"
-
-msgid "Never recorded"
-msgstr "Never recorded"
 
 msgid "No"
 msgstr "No"

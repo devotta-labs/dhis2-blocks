@@ -56,6 +56,30 @@ describe('chart container', () => {
         ).not.toBe('')
     })
 
+    it('leaves out a colour that could break out of the style element', () => {
+        act(() => {
+            root.render(
+                <ChartContainer
+                    config={{
+                        safe: { color: '#123456' },
+                        unsafe: {
+                            color: 'red;}</style><img src=x onerror=alert(1)>',
+                        },
+                    }}
+                >
+                    <LineChart data={[{ value: 1 }]}>
+                        <Line dataKey="value" />
+                    </LineChart>
+                </ChartContainer>
+            )
+        })
+
+        const style = container.querySelector('style')?.textContent ?? ''
+        expect(style).toContain('--color-safe: #123456;')
+        expect(style).not.toContain('unsafe')
+        expect(container.querySelector('img')).toBeNull()
+    })
+
     it('labels a tooltip row from the config and formats numbers', () => {
         act(() => {
             root.render(

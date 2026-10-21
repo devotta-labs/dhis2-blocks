@@ -1,6 +1,9 @@
+import i18n from '../../i18n'
+
 export interface ObservationPreset {
     id: 'rmnch' | 'seeded'
-    label: string
+    /** A function so the label follows the current language. */
+    label: () => string
     programId: string
     trend: string[]
     latest: string[]
@@ -10,10 +13,15 @@ export interface ObservationPreset {
     suggestedTrackedEntityId?: string
 }
 
+// The extractor reads a colon as a namespace separator (d2-i18n turns
+// namespaces off at runtime); a separator absent from the key keeps it whole.
 export const OBSERVATION_PRESETS: [ObservationPreset, ObservationPreset] = [
     {
         id: 'rmnch',
-        label: 'Real data: WHO RMNCH Tracker',
+        label: () =>
+            i18n.t('Real data: WHO RMNCH Tracker', {
+                nsSeparator: '::',
+            }),
         programId: 'WSGAb5XwJ3Y',
         trend: ['vANAXwtLwcT'],
         latest: ['sWoqcoByYmD', 'EyfTU3ibMmJ'],
@@ -21,7 +29,10 @@ export const OBSERVATION_PRESETS: [ObservationPreset, ObservationPreset] = [
     },
     {
         id: 'seeded',
-        label: 'Full features: seeded program',
+        label: () =>
+            i18n.t('Full features: seeded program', {
+                nsSeparator: '::',
+            }),
         programId: 'ObE2ePrg001',
         trend: ['ObE2eDel001', 'ObE2eDel002', 'ObE2eDel003', 'ObE2eDel004'],
         latest: ['ObE2eDel005', 'ObE2eDel006'],

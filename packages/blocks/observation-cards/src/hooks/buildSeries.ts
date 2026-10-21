@@ -15,7 +15,12 @@ const NUMERIC_VALUE_TYPES = new Set([
     'INTEGER_NEGATIVE',
     'INTEGER_ZERO_OR_POSITIVE',
     'PERCENTAGE',
+    'UNIT_INTERVAL',
 ])
+
+/** Value types whose readings carry a `numericValue`. */
+export const isNumericValueType = (valueType: string): boolean =>
+    NUMERIC_VALUE_TYPES.has(valueType)
 
 const ELIGIBLE_STATUSES = new Set(['ACTIVE', 'COMPLETED'])
 
@@ -90,7 +95,7 @@ export function buildSeries({
     stages: StageMetadata[]
     events: TrackerEventRecord[]
 }): ObservationSeries {
-    const isNumeric = NUMERIC_VALUE_TYPES.has(dataElement.valueType)
+    const isNumeric = isNumericValueType(dataElement.valueType)
     const isTrueOnly = dataElement.valueType === 'TRUE_ONLY'
     const stageById = new Map(stages.map((stage) => [stage.id, stage]))
     const capturingStageIds = new Set(

@@ -1,5 +1,5 @@
 import { useDataEngine } from '@dhis2/app-runtime'
-import { useQueries } from '@tanstack/react-query'
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import { useMemo } from 'react'
 import { buildSeries } from './hooks/buildSeries'
@@ -15,6 +15,9 @@ import type { ObservationSeries } from './hooks/types'
 
 /** Parses a DHIS2 date or date-time to epoch milliseconds, as the hook orders them. */
 export { toInstant } from './hooks/buildSeries'
+
+/** Whether a DHIS2 value type is numeric, so its readings carry a `numericValue`. */
+export { isNumericValueType } from './hooks/buildSeries'
 
 export type {
     ObservationLegend,
@@ -70,18 +73,23 @@ export const useTrackedEntityObservations = ({
         [idsKey]
     )
 
-    const [stages, dataElements, events, enrollment] = useQueries({
+    // Its own observer, not part of useQueries: useQueries gives a changed key
+    // a fresh observer, which has no previous data to keep.
+    const dataElements = useQuery({
+        queryKey: observationQueryKeys.dataElements(sortedIds),
+        queryFn: async ({ signal }) =>
+            unwrap(await fetchDataElements(client, sortedIds, signal)),
+        enabled,
+        // A changed id list keeps the loaded cards on screen; only the cards
+        // for new ids wait for the refetch.
+        placeholderData: keepPreviousData,
+    })
+    const [stages, events, enrollment] = useQueries({
         queries: [
             {
                 queryKey: observationQueryKeys.stages(progId),
                 queryFn: async ({ signal }) =>
                     unwrap(await fetchStages(client, progId, signal)),
-                enabled,
-            },
-            {
-                queryKey: observationQueryKeys.dataElements(sortedIds),
-                queryFn: async ({ signal }) =>
-                    unwrap(await fetchDataElements(client, sortedIds, signal)),
                 enabled,
             },
             {
@@ -105,7 +113,8 @@ export const useTrackedEntityObservations = ({
     const status: TrackedEntityObservations['status'] =
         failure !== undefined
             ? 'error'
-            : queries.some((query) => query.isPending)
+            : queries.some((query) => query.isPending) ||
+                dataElements.isPlaceholderData
               ? 'pending'
               : 'success'
     const error = failure?.error ?? undefined
@@ -140,21 +149,21 @@ export const useTrackedEntityObservations = ({
 
     return useMemo<TrackedEntityObservations>(() => {
         const get = (dataElementId: string): ObservationResult => {
-            if (status === 'pending') {
-                return { status: 'pending' }
-            }
             if (error !== undefined) {
                 return { status: 'error', error }
             }
             const series = seriesById.get(dataElementId)
-            return series === undefined
-                ? {
+            if (series !== undefined) {
+                return { status: 'success', series }
+            }
+            return status === 'pending'
+                ? { status: 'pending' }
+                : {
                       status: 'error',
                       error: new Error(
                           `No observations were loaded for data element ${dataElementId}`
                       ),
                   }
-                : { status: 'success', series }
         }
         const observations: TrackedEntityObservations = { status, get }
         if (error !== undefined) {

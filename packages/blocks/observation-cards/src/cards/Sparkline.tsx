@@ -12,8 +12,8 @@ import { useFormatDate } from './calendar'
 import { displayValue } from './format'
 
 const DEFAULT_MAX_POINTS = 12
-/** Matches the `h-10` wrapper: the chart's height in pixels. */
-const CHART_HEIGHT = 40
+/** Matches the default `h-10` wrapper: the chart's height before it is measured. */
+const DEFAULT_CHART_HEIGHT = 40
 const MARGIN = 4
 /** The gap between the hovered point and the tooltip's bottom edge, in pixels. */
 const TOOLTIP_GAP = 6
@@ -22,7 +22,7 @@ export interface SparklineProps {
     series: ObservationSeries
     /** Shown after the value in the tooltip, such as `kg`. */
     unit?: string
-    /** The most recent readings to plot. */
+    /** The most recent readings to plot; 0 plots nothing. */
     maxPoints?: number
     className?: string
 }
@@ -43,9 +43,13 @@ export function Sparkline({
     }>()
     const wrapperRef = useRef<HTMLDivElement>(null)
 
-    const plotted = series.points
-        .filter((point) => point.numericValue !== undefined)
-        .slice(-maxPoints)
+    const numeric = series.points.filter(
+        (point) => point.numericValue !== undefined
+    )
+    // Not `slice(-maxPoints)`: -0 would keep every reading.
+    const plotted = numeric.slice(
+        Math.max(0, numeric.length - Math.floor(maxPoints))
+    )
     const first = plotted.at(0)
     const last = plotted.at(-1)
     if (first === undefined || last === undefined) {
@@ -73,10 +77,10 @@ export function Sparkline({
     const high = Math.max(...values)
     const domain: [number, number] =
         low === high ? [low - 1, high + 1] : [low, high]
-    const yFor = (value: number) =>
+    // The height is measured, since a className can resize the chart.
+    const yFor = (value: number, height: number) =>
         MARGIN +
-        ((domain[1] - value) / (domain[1] - domain[0])) *
-            (CHART_HEIGHT - 2 * MARGIN)
+        ((domain[1] - value) / (domain[1] - domain[0])) * (height - 2 * MARGIN)
 
     const summary =
         plotted.length === 1
@@ -120,7 +124,17 @@ export function Sparkline({
                         setAnchor(
                             value === undefined || x === undefined
                                 ? undefined
-                                : { index, x, y: yFor(value) - TOOLTIP_GAP }
+                                : {
+                                      index,
+                                      x,
+                                      y:
+                                          yFor(
+                                              value,
+                                              wrapperRef.current
+                                                  ?.clientHeight ||
+                                                  DEFAULT_CHART_HEIGHT
+                                          ) - TOOLTIP_GAP,
+                                  }
                         )
                     }}
                     onMouseLeave={() => setAnchor(undefined)}

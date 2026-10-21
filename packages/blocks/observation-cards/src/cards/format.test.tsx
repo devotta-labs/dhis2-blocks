@@ -58,9 +58,28 @@ describe('legendFor', () => {
             { name: 'B', color: '#222222', startValue: 8, endValue: 10 },
         ]
         expect(legendFor(gapped, 6)).toBeUndefined()
-        expect(legendFor(legends, 11)).toBeUndefined()
+        expect(legendFor(legends, 11.1)).toBeUndefined()
         expect(legendFor(legends, -1)).toBeUndefined()
         expect(legendFor(undefined, 5)).toBeUndefined()
+    })
+})
+
+describe('legendFor upper bound', () => {
+    it("the highest legend's endValue belongs to it", () => {
+        expect(legendFor(legends, 11)?.name).toBe('High')
+    })
+
+    it('finds the highest legend whatever the order', () => {
+        expect(legendFor([...legends].reverse(), 11)?.name).toBe('High')
+    })
+
+    it("an inner legend's endValue still belongs to the next one", () => {
+        const gapped: ObservationLegend[] = [
+            { name: 'A', color: '#111111', startValue: 0, endValue: 5 },
+            { name: 'B', color: '#222222', startValue: 8, endValue: 10 },
+        ]
+        expect(legendFor(gapped, 5)).toBeUndefined()
+        expect(legendFor(gapped, 10)?.name).toBe('B')
     })
 })
 
@@ -169,6 +188,7 @@ describe('value type support', () => {
         expect(isTrendType('NUMBER')).toBe(true)
         expect(isTrendType('PERCENTAGE')).toBe(true)
         expect(isTrendType('INTEGER_ZERO_OR_POSITIVE')).toBe(true)
+        expect(isTrendType('UNIT_INTERVAL')).toBe(true)
     })
 
     it('isSupportedLatestType accepts trend, text, boolean and date types', () => {
@@ -269,6 +289,21 @@ describe('relativeTime', () => {
         expect(relativeTime(at('2023-02-01T12:00:00.000'), now, 'en')).toBe(
             '3 years ago'
         )
+    })
+
+    it("counts calendar days, so last night's reading is a day ago", () => {
+        const morning = new Date(2026, 2, 12, 9, 0)
+        expect(relativeTime(at('2026-03-11T18:00:00.000'), morning, 'en')).toBe(
+            '1 day ago'
+        )
+        expect(relativeTime(at('2026-03-12T00:30:00.000'), morning, 'en')).toBe(
+            'today'
+        )
+    })
+
+    it('counts a date-only reading by its date', () => {
+        const evening = new Date(2026, 2, 12, 23, 30)
+        expect(relativeTime(at('2026-03-10'), evening, 'en')).toBe('2 days ago')
     })
 
     it('reads a future date forwards', () => {

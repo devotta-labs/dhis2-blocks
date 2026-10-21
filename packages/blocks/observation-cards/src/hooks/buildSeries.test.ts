@@ -232,6 +232,19 @@ describe('buildSeries', () => {
         expect(series.latest?.numericValue).toBe(6)
     })
 
+    it('reads UNIT_INTERVAL as numeric', () => {
+        const series = build(
+            [
+                event('e1', '2026-01-01T00:00:00.000Z', '0.5'),
+                event('e2', '2026-01-02T00:00:00.000Z', '0.75'),
+            ],
+            { dataElement: { valueType: 'UNIT_INTERVAL' } }
+        )
+
+        expect(series.points.map((p) => p.numericValue)).toEqual([0.5, 0.75])
+        expect(series.change).toBe(0.25)
+    })
+
     it('orders mixed date forms correctly', () => {
         const series = build([
             event('d4', '2026-03-15', '4'),

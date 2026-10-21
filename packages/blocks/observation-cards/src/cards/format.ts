@@ -1,20 +1,12 @@
 import i18n from '@dhis2/d2-i18n'
 import {
+    isNumericValueType,
     toInstant,
     type ObservationLegend,
     type ObservationOption,
     type ObservationPoint,
     type ObservationSeries,
 } from '../use-tracked-entity-observations'
-
-const TREND_TYPES = new Set([
-    'NUMBER',
-    'INTEGER',
-    'INTEGER_POSITIVE',
-    'INTEGER_NEGATIVE',
-    'INTEGER_ZERO_OR_POSITIVE',
-    'PERCENTAGE',
-])
 
 const LATEST_ONLY_TYPES = new Set([
     'BOOLEAN',
@@ -30,8 +22,7 @@ export const NO_ESCAPE = { escapeValue: false }
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 /** Types whose readings can be plotted and compared. */
-export const isTrendType = (valueType: string): boolean =>
-    TREND_TYPES.has(valueType)
+export const isTrendType = isNumericValueType
 
 /** Types the "last recorded" card can show; an option set supports any type. */
 export const isSupportedLatestType = (
@@ -39,17 +30,31 @@ export const isSupportedLatestType = (
     hasOptionSet: boolean
 ): boolean =>
     hasOptionSet ||
-    TREND_TYPES.has(valueType) ||
+    isNumericValueType(valueType) ||
     LATEST_ONLY_TYPES.has(valueType)
 
-/** The legend holding `value`. A start is inclusive and an end exclusive. */
+/**
+ * The legend holding `value`. A start is inclusive and an end exclusive, except
+ * the end of the highest legend, so the top of the scale still has a legend.
+ */
 export const legendFor = (
     legends: ObservationLegend[] | undefined,
     value: number
-): ObservationLegend | undefined =>
-    legends?.find(
+): ObservationLegend | undefined => {
+    if (legends === undefined || legends.length === 0) {
+        return undefined
+    }
+    const holding = legends.find(
         (legend) => value >= legend.startValue && value < legend.endValue
     )
+    if (holding !== undefined) {
+        return holding
+    }
+    const highest = legends.reduce((top, legend) =>
+        legend.endValue > top.endValue ? legend : top
+    )
+    return value === highest.endValue ? highest : undefined
+}
 
 /** The option for `code`; a code missing from the option set shows as itself, uncoloured. */
 export const optionFor = (
@@ -70,6 +75,10 @@ export const formatNumber = (value: number): string => {
 }
 
 const datePart = (iso: string): string => iso.slice(0, 10)
+
+/** Days since 1970-01-01 of a `YYYY-MM-DD` date; NaN when it is not one. */
+const dayNumber = (isoDate: string): number =>
+    Date.parse(`${isoDate}T00:00:00Z`) / MS_PER_DAY
 
 /**
  * The text to show for a point: the option name, Yes or No, a rounded number, a
@@ -118,6 +127,8 @@ const DAYS_PER_YEAR = 365.25
 /**
  * How long before `now` the point was recorded, in the user's locale: "today",
  * "3 days ago", "5 months ago", "3 years ago". A future date reads "in 2 days".
+ * Counts calendar days between the date the reading was recorded on, as
+ * written, and the user's local date, so last night's reading is "1 day ago".
  * Calendar-neutral, so it suits every DHIS2 calendar.
  */
 export const relativeTime = (
@@ -125,11 +136,13 @@ export const relativeTime = (
     now: Date,
     locale: string | undefined
 ): string => {
-    const occurred = toInstant(point.occurredAt)
+    const occurred = dayNumber(datePart(point.occurredAt))
     if (!Number.isFinite(occurred)) {
         return point.occurredAt
     }
-    const days = Math.trunc((now.getTime() - occurred) / MS_PER_DAY)
+    const today =
+        Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / MS_PER_DAY
+    const days = Math.round(today - occurred)
     if (days === 0) {
         return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(
             0,

@@ -58,7 +58,7 @@ type JsonValue =
     | null
     | JsonValue[]
     | { [key: string]: JsonValue }
-type Resolver = () => JsonValue
+type Resolver = () => JsonValue | Promise<JsonValue>
 type Resolvers = Record<
     'programs' | 'dataElements' | 'tracker/events' | 'tracker/enrollments',
     Resolver
@@ -244,6 +244,51 @@ describe('useTrackedEntityObservations', () => {
             ])
         )
         expect(keys).toHaveLength(4)
+    })
+
+    it('keeps loaded series while a changed id list refetches metadata', async () => {
+        // The second metadata request waits until released, to observe the
+        // state in between.
+        let release = () => {}
+        const held = new Promise<void>((resolve) => {
+            release = resolve
+        })
+        let metadataCalls = 0
+        const { wrapper } = setup({
+            dataElements: async () => {
+                metadataCalls += 1
+                if (metadataCalls === 1) {
+                    return {
+                        dataElements: [dataElementsResponse.dataElements[0]],
+                    }
+                }
+                await held
+                return dataElementsResponse
+            },
+        })
+        let ids = [WEIGHT]
+        const { result, rerender } = await renderHook(
+            () =>
+                useTrackedEntityObservations({
+                    trackedEntityId: 'te1',
+                    programId: 'prog1',
+                    dataElementIds: ids,
+                }),
+            { wrapper }
+        )
+        await settled(result)
+
+        ids = [WEIGHT, TEMP]
+        await rerender()
+        await expect.poll(() => metadataCalls).toBe(2)
+
+        expect(result.current.status).toBe('pending')
+        expect(result.current.get(WEIGHT).status).toBe('success')
+        expect(result.current.get(TEMP)).toEqual({ status: 'pending' })
+
+        release()
+        await settled(result)
+        expect(result.current.get(TEMP).status).toBe('success')
     })
 
     it('keeps get() stable while the data is unchanged', async () => {

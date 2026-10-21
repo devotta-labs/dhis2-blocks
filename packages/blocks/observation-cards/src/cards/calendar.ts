@@ -1,4 +1,5 @@
 import { useConfig } from '@dhis2/app-runtime'
+import i18n from '@dhis2/d2-i18n'
 import { convertFromIso8601 } from '@dhis2/multi-calendar-dates'
 import { useCallback } from 'react'
 import { z } from 'zod'
@@ -43,13 +44,36 @@ const toMultiCalendarIdentifier = (
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}/
 
+/**
+ * DHIS2 locales use underscores (`fr_SN`), which `Intl` rejects. Falls back to
+ * the browser's locale for one `Intl` still can't read.
+ */
+const dateFormat = (language: string | undefined): Intl.DateTimeFormat => {
+    const options: Intl.DateTimeFormatOptions = {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'UTC',
+    }
+    try {
+        return new Intl.DateTimeFormat(language?.replace(/_/g, '-'), options)
+    } catch {
+        return new Intl.DateTimeFormat(undefined, options)
+    }
+}
+
 const pad = (value: number, length = 2) =>
     value.toString().padStart(length, '0')
 
+/** Calendars `Intl` can name months for, so dates read as "14 Oct 2026". */
+const INTL_CALENDARS = new Set<Dhis2Calendar>(['gregorian', 'iso8601'])
+
 /**
- * A formatter from an ISO date or date-time to `YYYY-MM-DD` in the system
- * calendar. The date part is converted as written, so a reading keeps the day
- * it was recorded on. An unreadable value is returned unchanged.
+ * A formatter from an ISO date or date-time to a date in the system calendar:
+ * a short, locale-ordered date such as "14 Oct 2026" for the Gregorian
+ * calendar, and `YYYY-MM-DD` for the others, whose month names `Intl` lacks.
+ * The date part is converted as written, so a reading keeps the day it was
+ * recorded on. An unreadable value is returned unchanged.
  */
 export const useFormatDate = (): ((iso: string) => string) => {
     const { systemInfo } = useConfig()
@@ -61,6 +85,12 @@ export const useFormatDate = (): ((iso: string) => string) => {
             const day = ISO_DATE.exec(iso)?.[0]
             if (day === undefined) {
                 return iso
+            }
+            if (INTL_CALENDARS.has(calendar)) {
+                const date = new Date(`${day}T00:00:00Z`)
+                return Number.isNaN(date.getTime())
+                    ? day
+                    : dateFormat(i18n.language || undefined).format(date)
             }
             try {
                 const converted = convertFromIso8601(

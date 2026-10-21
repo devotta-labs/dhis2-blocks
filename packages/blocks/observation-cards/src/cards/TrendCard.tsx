@@ -5,7 +5,7 @@ import type {
     ObservationSeries,
 } from '../use-tracked-entity-observations'
 import { LegendBadge } from './LegendBadge'
-import { ObservationCardFrame } from './ObservationCardFrame'
+import { ObservationCardFrame, PartialNote } from './ObservationCardFrame'
 import { Sparkline } from './Sparkline'
 import { useFormatDate } from './calendar'
 import {
@@ -33,9 +33,10 @@ interface ChangeLine {
     text: string
 }
 
-/** The change since the previous reading, or nothing when there is no earlier one. */
+/** The change from the previous reading, or nothing when there is no earlier one. */
 const changeLine = (
     series: ObservationSeries,
+    unit: string | undefined,
     formatDate: (iso: string) => string
 ): ChangeLine | undefined => {
     const { change, previous } = series
@@ -46,7 +47,7 @@ const changeLine = (
     // A change that rounds to nothing would otherwise read "▲ 0".
     if (Math.round(change * 100) === 0) {
         return {
-            text: i18n.t('No change since {{date}}', {
+            text: i18n.t('No change from previous ({{date}})', {
                 date,
                 interpolation: NO_ESCAPE,
             }),
@@ -57,8 +58,10 @@ const changeLine = (
             change > 0
                 ? { glyph: '▲', word: i18n.t('up') }
                 : { glyph: '▼', word: i18n.t('down') },
-        text: i18n.t('{{change}} since {{date}}', {
-            change: formatNumber(Math.abs(change)),
+        text: i18n.t('{{change}} from previous ({{date}})', {
+            change: [formatNumber(Math.abs(change)), unit]
+                .filter(Boolean)
+                .join(' '),
             date,
             interpolation: NO_ESCAPE,
         }),
@@ -96,9 +99,7 @@ export function TrendCard({
 
     const { series } = observation
     const title = label ?? series.label
-    const partialNote = series.partial
-        ? i18n.t('Some visits are hidden by your access')
-        : undefined
+    const partialNote = series.partial ? <PartialNote /> : undefined
 
     if (!isTrendType(series.valueType)) {
         return (
@@ -130,7 +131,11 @@ export function TrendCard({
         latest.numericValue === undefined
             ? undefined
             : legendFor(series.legends, latest.numericValue)
-    const change = changeLine(series, formatDate)
+    const change = changeLine(series, unit, formatDate)
+    // One reading has no trend: a lone dot would read as a glitch.
+    const plottable =
+        series.points.filter((point) => point.numericValue !== undefined)
+            .length > 1
 
     return (
         <ObservationCardFrame
@@ -145,7 +150,7 @@ export function TrendCard({
                             interpolation: NO_ESCAPE,
                         })}
                     </span>
-                    {partialNote ? <span>{partialNote}</span> : null}
+                    {partialNote}
                 </>
             }
             className={className}
@@ -172,8 +177,14 @@ export function TrendCard({
                     ) : null}
                     {change.text}
                 </p>
+            ) : (
+                <p className="text-sm text-dhis2-grey-700">
+                    {i18n.t('First reading')}
+                </p>
+            )}
+            {plottable ? (
+                <Sparkline series={series} unit={unit} maxPoints={maxPoints} />
             ) : null}
-            <Sparkline series={series} maxPoints={maxPoints} />
         </ObservationCardFrame>
     )
 }

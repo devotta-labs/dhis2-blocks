@@ -1,9 +1,12 @@
 import i18n from '@dhis2/d2-i18n'
-import { IconWarningFilled16 } from '@dhis2/ui-icons'
 import React from 'react'
 import type { ObservationResult } from '../use-tracked-entity-observations'
 import { LegendBadge } from './LegendBadge'
-import { ObservationCardFrame } from './ObservationCardFrame'
+import {
+    CardNote,
+    ObservationCardFrame,
+    PartialNote,
+} from './ObservationCardFrame'
 import { useFormatDate } from './calendar'
 import {
     NO_ESCAPE,
@@ -80,9 +83,7 @@ export function LatestValueCard({
 
     const { series } = observation
     const title = label ?? series.label
-    const partialNote = series.partial
-        ? i18n.t('Some visits are hidden by your access')
-        : undefined
+    const partialNote = series.partial ? <PartialNote /> : undefined
 
     if (
         !isSupportedLatestType(series.valueType, series.options !== undefined)
@@ -136,20 +137,11 @@ export function LatestValueCard({
                         })}
                     </span>
                     {stale && staleAfterDays !== undefined ? (
-                        <span
-                            data-slot="stale-note"
-                            className="inline-flex items-center gap-1 font-medium text-dhis2-yellow-800"
-                        >
-                            <span
-                                aria-hidden="true"
-                                className="inline-flex shrink-0 [&_svg]:size-3.5"
-                            >
-                                <IconWarningFilled16 />
-                            </span>
+                        <CardNote tone="warning" data-slot="stale-note">
                             {staleNote(staleAfterDays)}
-                        </span>
+                        </CardNote>
                     ) : null}
-                    {partialNote ? <span>{partialNote}</span> : null}
+                    {partialNote}
                 </>
             }
             className={className}

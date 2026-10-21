@@ -8,7 +8,60 @@ import {
 import { cn } from '@/registry/dhis2/ui/cn'
 import { Skeleton } from '@/registry/dhis2/ui/skeleton'
 import i18n from '@dhis2/d2-i18n'
+import {
+    IconErrorFilled16,
+    IconInfo16,
+    IconWarningFilled16,
+} from '@dhis2/ui-icons'
 import React, { useId } from 'react'
+
+const NOTE_ICONS = {
+    info: IconInfo16,
+    warning: IconWarningFilled16,
+    error: IconErrorFilled16,
+}
+
+const NOTE_TONES = {
+    info: 'text-dhis2-grey-700',
+    warning: 'font-medium text-dhis2-yellow-800',
+    error: 'font-medium text-dhis2-destructive',
+}
+
+export interface CardNoteProps {
+    tone: keyof typeof NOTE_ICONS
+    children: React.ReactNode
+    'data-slot'?: string
+}
+
+/** A short note with an icon, so a warning or failure never rests on colour alone. */
+export function CardNote({
+    tone,
+    children,
+    'data-slot': dataSlot,
+}: CardNoteProps) {
+    const Icon = NOTE_ICONS[tone]
+    return (
+        <span
+            data-slot={dataSlot}
+            className={cn('inline-flex items-start gap-1', NOTE_TONES[tone])}
+        >
+            <span
+                aria-hidden="true"
+                className="inline-flex h-[1lh] shrink-0 items-center [&_svg]:size-3.5"
+            >
+                <Icon />
+            </span>
+            <span>{children}</span>
+        </span>
+    )
+}
+
+/** The note shown when the user can't read some stages that capture the value. */
+export const PartialNote = () => (
+    <CardNote tone="info" data-slot="partial-note">
+        {i18n.t('Some visits are hidden by your access')}
+    </CardNote>
+)
 
 export interface ObservationCardFrameProps {
     /** Names the card. While pending without one, a skeleton stands in for it. */
@@ -86,8 +139,10 @@ export function ObservationCardFrame({
                         <Skeleton className="h-10 w-full" />
                     </>
                 ) : state === 'error' ? (
-                    <p className="text-sm text-dhis2-destructive">
-                        {i18n.t("Couldn't load this value")}
+                    <p className="text-sm">
+                        <CardNote tone="error">
+                            {i18n.t("Couldn't load this value")}
+                        </CardNote>
                     </p>
                 ) : state === 'empty' ? (
                     <p className="text-sm text-dhis2-grey-700">

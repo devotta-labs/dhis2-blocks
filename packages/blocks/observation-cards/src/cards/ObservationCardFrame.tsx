@@ -7,6 +7,11 @@ import {
 } from '@/registry/dhis2/ui/card'
 import { cn } from '@/registry/dhis2/ui/cn'
 import { Skeleton } from '@/registry/dhis2/ui/skeleton'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/registry/dhis2/ui/tooltip'
 import i18n from '@dhis2/d2-i18n'
 import {
     IconErrorFilled16,
@@ -26,6 +31,10 @@ const NOTE_TONES = {
     warning: 'font-medium text-dhis2-yellow-800',
     error: 'font-medium text-dhis2-destructive',
 }
+
+/** A full-width tinted band under the body, for when and how a value was recorded. */
+const FOOTER =
+    'flex-wrap justify-between gap-x-3 gap-y-1 rounded-b-dhis2-md border-t border-dhis2-grey-300 bg-dhis2-grey-050 py-2 text-xs text-dhis2-grey-700'
 
 export interface CardNoteProps {
     tone: keyof typeof NOTE_ICONS
@@ -56,12 +65,35 @@ export function CardNote({
     )
 }
 
-/** The note shown when the user can't read some stages that capture the value. */
-export const PartialNote = () => (
-    <CardNote tone="info" data-slot="partial-note">
-        {i18n.t('Some visits are hidden by your access')}
-    </CardNote>
-)
+/**
+ * The note shown when the user can't read some stages that capture the value:
+ * "Restricted access", with the full reason on hover or focus. A screen reader
+ * hears the full reason instead.
+ */
+export const PartialNote = () => {
+    const reason = i18n.t('Some visits are hidden by your access')
+    return (
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <span
+                        tabIndex={0}
+                        data-slot="partial-note"
+                        className="ms-auto cursor-default rounded-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-primary"
+                    />
+                }
+            >
+                <span aria-hidden="true">
+                    <CardNote tone="info">
+                        {i18n.t('Restricted access')}
+                    </CardNote>
+                </span>
+                <span className="sr-only">{reason}</span>
+            </TooltipTrigger>
+            <TooltipContent>{reason}</TooltipContent>
+        </Tooltip>
+    )
+}
 
 export interface ObservationCardFrameProps {
     /** Names the card. While pending without one, a skeleton stands in for it. */
@@ -76,10 +108,15 @@ export interface ObservationCardFrameProps {
     /** A note under the body. */
     footer?: React.ReactNode
     /**
-     * `stale` marks a reading that is out of date: the body is greyed and the
-     * card keeps a border. The card's own footer carries the warning note.
+     * `stale` marks a reading that is out of date: the body is greyed. The
+     * card's own footer carries the warning note.
      */
     tone?: 'default' | 'stale'
+    /**
+     * The shape the loading skeleton takes, so a card keeps roughly its loaded
+     * height: `trend` adds the change line and the sparkline.
+     */
+    skeleton?: 'latest' | 'trend'
     className?: string
     children?: React.ReactNode
 }
@@ -91,6 +128,7 @@ export function ObservationCardFrame({
     state = 'content',
     footer,
     tone = 'default',
+    skeleton = 'latest',
     className,
     children,
 }: ObservationCardFrameProps) {
@@ -105,8 +143,8 @@ export function ObservationCardFrame({
             aria-busy={pending || undefined}
             data-tone={tone}
             className={cn(
-                'min-w-0',
-                tone === 'stale' && 'border border-dhis2-grey-400',
+                'min-w-0 border border-dhis2-grey-400 shadow-none',
+                (pending || footer) && 'pb-0',
                 className
             )}
         >
@@ -116,7 +154,7 @@ export function ObservationCardFrame({
                         id={titleId}
                         role="heading"
                         aria-level={3}
-                        className="min-w-0 text-sm text-dhis2-grey-700"
+                        className="min-w-0 text-sm text-dhis2-grey-900"
                     >
                         {label}
                     </CardTitle>
@@ -134,9 +172,13 @@ export function ObservationCardFrame({
                 {pending ? (
                     <>
                         <span className="sr-only">{i18n.t('Loading')}</span>
-                        <Skeleton className="h-8 w-28" />
-                        <Skeleton className="h-4 w-40" />
-                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-7 w-24" />
+                        {skeleton === 'trend' ? (
+                            <>
+                                <Skeleton className="my-0.5 h-4 w-40" />
+                                <Skeleton className="h-10 w-full" />
+                            </>
+                        ) : null}
                     </>
                 ) : state === 'error' ? (
                     <p className="text-sm">
@@ -152,10 +194,12 @@ export function ObservationCardFrame({
                     children
                 )}
             </CardContent>
-            {footer ? (
-                <CardFooter className="flex-col items-start gap-1 text-xs text-dhis2-grey-700">
-                    {footer}
+            {pending ? (
+                <CardFooter className={FOOTER}>
+                    <Skeleton className="my-0.5 h-3 w-36" />
                 </CardFooter>
+            ) : footer ? (
+                <CardFooter className={FOOTER}>{footer}</CardFooter>
             ) : null}
         </Card>
     )

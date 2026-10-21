@@ -97,7 +97,8 @@ option, yes/no, date or text.
 
 `LegendBadge` and `Sparkline` are exported for hosts that compose their own
 card. `LegendBadge` takes a `legend` or `option` from a series; `Sparkline`
-takes a `series` and an optional `maxPoints`.
+takes a `series` and optional `unit` and `maxPoints`. Its tooltip sits just
+above the hovered reading.
 
 Value types: `TrendCard` supports `NUMBER`, `INTEGER`, `INTEGER_POSITIVE`,
 `INTEGER_NEGATIVE`, `INTEGER_ZERO_OR_POSITIVE` and `PERCENTAGE`.
@@ -119,7 +120,9 @@ state.
 - Numeric values that do not parse are left out of the trend rather than
   plotted as zero.
 - When a program stage that captures the data element is not data-readable by
-  the current user, some visits may be missing, and the card says "Some visits are hidden by your access".
+  the current user, some visits may be missing, and the card's footer says
+  "Restricted access", with "Some visits are hidden by your access" on hover or
+  focus.
 - Dates display in the instance's calendar.
 
 ## Access and limits
@@ -136,9 +139,14 @@ state.
 
 ## Stale readings
 
+Each card's footer says how long ago the latest reading was recorded ("3 days
+ago", "5 months ago"), in the user's locale. Hovering or focusing it shows the
+date and program stage; a screen reader hears those in full.
+
 With `staleAfterDays` set, a `LatestValueCard` whose latest reading is older
-than that many days keeps its recorded date, greys the value, keeps a border,
-and adds a warning note with an icon: "Out of date: last recorded over 180
-days ago". The card carries `data-tone="stale"` for hosts that style it further.
+than that many days greys the value and adds a warning icon after the
+relative time. Its tooltip, and a screen reader, add "Out of date: last
+recorded over 180 days ago". The card carries `data-tone="stale"` for hosts
+that style it further.
 
 All user-facing text goes through `@dhis2/d2-i18n`.

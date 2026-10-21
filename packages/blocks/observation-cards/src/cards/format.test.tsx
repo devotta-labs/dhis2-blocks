@@ -10,6 +10,7 @@ import {
     normaliseColor,
     optionFor,
     readableTextColor,
+    relativeTime,
 } from './format'
 import type {
     ObservationLegend,
@@ -236,5 +237,49 @@ describe('formatNumber', () => {
 
     it('never shows negative zero', () => {
         expect(formatNumber(-0.001)).toBe('0')
+    })
+})
+
+describe('relativeTime', () => {
+    const now = new Date('2026-03-12T12:00:00.000Z')
+    const at = (occurredAt: string) => point('1', { occurredAt })
+
+    it('says today for a reading earlier the same day', () => {
+        expect(relativeTime(at('2026-03-12T08:00:00.000'), now, 'en')).toBe(
+            'today'
+        )
+    })
+
+    it('counts days under a month', () => {
+        expect(relativeTime(at('2026-03-09T12:00:00.000'), now, 'en')).toBe(
+            '3 days ago'
+        )
+        expect(relativeTime(at('2026-03-11T12:00:00.000'), now, 'en')).toBe(
+            '1 day ago'
+        )
+    })
+
+    it('counts months under a year', () => {
+        expect(relativeTime(at('2025-10-10T12:00:00.000'), now, 'en')).toBe(
+            '5 months ago'
+        )
+    })
+
+    it('counts years from a year on', () => {
+        expect(relativeTime(at('2023-02-01T12:00:00.000'), now, 'en')).toBe(
+            '3 years ago'
+        )
+    })
+
+    it('reads a future date forwards', () => {
+        expect(relativeTime(at('2026-03-14T12:00:00.000'), now, 'en')).toBe(
+            'in 2 days'
+        )
+    })
+
+    it('follows the locale', () => {
+        expect(relativeTime(at('2026-03-09T12:00:00.000'), now, 'fr')).toBe(
+            'il y a 3 jours'
+        )
     })
 })

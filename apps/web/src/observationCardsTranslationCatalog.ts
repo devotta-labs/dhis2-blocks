@@ -7,16 +7,15 @@ import i18n from '@dhis2/d2-i18n'
  * never invoked.
  */
 export const observationCardsTranslationCatalog = () => [
-    i18n.t('{{change}} from previous ({{date}})'),
+    i18n.t('{{change}} since {{date}}'),
     i18n.t('{{count}} readings from {{from}} to {{to}}, latest {{latest}}'),
     i18n.t('1 reading on {{date}}, latest {{latest}}'),
     i18n.t("Couldn't load this value"),
     i18n.t('down'),
-    i18n.t('First reading'),
     i18n.t('Loading'),
     i18n.t('Never recorded'),
     i18n.t('No'),
-    i18n.t('No change from previous ({{date}})'),
+    i18n.t('No change since {{date}}'),
     // The extractor reads a colon as a namespace separator (d2-i18n turns
     // namespaces off at runtime); a separator absent from the key keeps it whole.
     i18n.t('Out of date: last recorded over {{count}} day ago', {
@@ -26,6 +25,7 @@ export const observationCardsTranslationCatalog = () => [
         nsSeparator: '::',
     }),
     i18n.t('Recorded {{date}} · {{stage}}'),
+    i18n.t('Restricted access'),
     i18n.t('Some visits are hidden by your access'),
     i18n.t("This value type can't be shown as a trend"),
     i18n.t("This value type can't be shown here"),

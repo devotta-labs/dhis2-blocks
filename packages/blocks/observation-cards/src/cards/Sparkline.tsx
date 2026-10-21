@@ -1,8 +1,7 @@
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import {
     ChartContainer,
     ChartTooltip,
-    ChartTooltipContent,
     type ChartConfig,
 } from '@/registry/dhis2/ui/chart'
 import { cn } from '@/registry/dhis2/ui/cn'
@@ -13,6 +12,11 @@ import { useFormatDate } from './calendar'
 import { displayValue } from './format'
 
 const DEFAULT_MAX_POINTS = 12
+/** Matches the `h-10` wrapper: the chart's height in pixels. */
+const CHART_HEIGHT = 40
+const MARGIN = 4
+/** The gap between the hovered point and the tooltip's bottom edge, in pixels. */
+const TOOLTIP_GAP = 6
 
 export interface SparklineProps {
     series: ObservationSeries
@@ -31,6 +35,13 @@ export function Sparkline({
     className,
 }: SparklineProps) {
     const formatDate = useFormatDate()
+    // Where the hovered point sits, so the tooltip can stand just above it.
+    const [anchor, setAnchor] = useState<{
+        index: number
+        x: number
+        y: number
+    }>()
+    const wrapperRef = useRef<HTMLDivElement>(null)
 
     const plotted = series.points
         .filter((point) => point.numericValue !== undefined)
@@ -56,6 +67,17 @@ export function Sparkline({
     }))
     const lastIndex = data.length - 1
 
+    // Fit the readings, not zero up: a weight of 79 to 77 kg would otherwise look flat.
+    const values = data.map((entry) => entry.value ?? 0)
+    const low = Math.min(...values)
+    const high = Math.max(...values)
+    const domain: [number, number] =
+        low === high ? [low - 1, high + 1] : [low, high]
+    const yFor = (value: number) =>
+        MARGIN +
+        ((domain[1] - value) / (domain[1] - domain[0])) *
+            (CHART_HEIGHT - 2 * MARGIN)
+
     const summary =
         plotted.length === 1
             ? i18n.t('1 reading on {{date}}, latest {{latest}}', {
@@ -75,7 +97,7 @@ export function Sparkline({
               )
 
     return (
-        <div className={cn('h-10 w-full', className)}>
+        <div ref={wrapperRef} className={cn('h-10 w-full', className)}>
             <span className="sr-only">{summary}</span>
             <ChartContainer
                 aria-hidden="true"
@@ -84,31 +106,58 @@ export function Sparkline({
             >
                 <LineChart
                     data={data}
-                    margin={{ top: 4, right: 4, bottom: 4, left: 4 }}
+                    margin={{
+                        top: MARGIN,
+                        right: MARGIN,
+                        bottom: MARGIN,
+                        left: MARGIN,
+                    }}
                     accessibilityLayer={false}
+                    onMouseMove={(state) => {
+                        const index = Number(state.activeTooltipIndex)
+                        const value = data[index]?.value
+                        const x = state.activeCoordinate?.x
+                        setAnchor(
+                            value === undefined || x === undefined
+                                ? undefined
+                                : { index, x, y: yFor(value) - TOOLTIP_GAP }
+                        )
+                    }}
+                    onMouseLeave={() => setAnchor(undefined)}
                 >
+                    {/* Recharts places the wrapper's top-left corner at the position; the content lifts itself above it. */}
                     <ChartTooltip
-                        content={
-                            <ChartTooltipContent
-                                hideIndicator
-                                labelFormatter={(_label, items) =>
-                                    items[0]?.payload?.date
-                                }
-                                formatter={(_value, _name, item) => (
-                                    <span className="font-mono font-medium text-dhis2-foreground tabular-nums">
-                                        {item.payload?.display}
+                        position={anchor}
+                        allowEscapeViewBox={{ x: true, y: true }}
+                        // Recharts slides the tooltip in from its last position, the chart's corner on first hover.
+                        isAnimationActive={false}
+                        content={({ active }) => {
+                            const entry = anchor && data[anchor.index]
+                            const width = wrapperRef.current?.clientWidth
+                            // Left-aligned on the first point, centred midway, right-aligned on the last, so it never runs past the chart.
+                            const shift =
+                                anchor && width
+                                    ? Math.min(Math.max(anchor.x / width, 0), 1)
+                                    : 0.5
+                            return active && entry ? (
+                                <div
+                                    style={{
+                                        transform: `translate(${-shift * 100}%, -100%)`,
+                                    }}
+                                    className="rounded-dhis2-md border border-dhis2-border bg-dhis2-background px-1.5 py-0.5 text-[11px] leading-4 whitespace-nowrap shadow-dhis2-popover"
+                                >
+                                    <span className="font-medium text-dhis2-foreground tabular-nums">
+                                        {entry.display}
                                     </span>
-                                )}
-                            />
-                        }
+                                    <span className="text-dhis2-grey-700">
+                                        {' · '}
+                                        {entry.date}
+                                    </span>
+                                </div>
+                            ) : null
+                        }}
                     />
-                    {/* Fit the readings, not zero up: a weight of 79 to 77 kg would otherwise look flat. */}
-                    <YAxis
-                        hide
-                        domain={([min, max]: readonly number[]) =>
-                            min === max ? [min - 1, max + 1] : [min, max]
-                        }
-                    />
+                    <YAxis hide domain={domain} />
                     {/* Straight segments: a smoothed curve invents values between visits. */}
                     <Line
                         dataKey="value"

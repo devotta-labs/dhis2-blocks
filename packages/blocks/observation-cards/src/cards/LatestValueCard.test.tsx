@@ -1,5 +1,6 @@
 import axe from 'axe-core'
 import React from 'react'
+import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type {
     ObservationPoint,
@@ -353,6 +354,33 @@ describe('LatestValueCard', () => {
         expect(note?.textContent).toBe(
             'Out of date: last recorded over 30 days ago'
         )
+    })
+
+    it('shows how long ago it was recorded, with the date and stage on hover', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(NOW)
+        const { container } = await render(
+            <LatestValueCard
+                staleAfterDays={30}
+                observation={success(makeSeries([makePoint('O+')]))}
+            />
+        )
+        const trigger = container.querySelector<HTMLElement>(
+            '[data-slot="recorded-note"]'
+        )
+        expect(
+            trigger?.querySelector('[aria-hidden="true"]')?.textContent
+        ).toBe('2 months ago')
+        trigger?.focus()
+        await expect
+            .element(
+                page
+                    .getByText('Recorded Mar 12, 2026 · Antenatal visit', {
+                        exact: true,
+                    })
+                    .last()
+            )
+            .toBeVisible()
     })
 
     it('a one-day threshold reads "1 day"', async () => {

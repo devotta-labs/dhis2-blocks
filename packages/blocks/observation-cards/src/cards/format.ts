@@ -112,6 +112,46 @@ export const isStale = (
     )
 }
 
+const DAYS_PER_MONTH = 30.4375
+const DAYS_PER_YEAR = 365.25
+
+/**
+ * How long before `now` the point was recorded, in the user's locale: "today",
+ * "3 days ago", "5 months ago", "3 years ago". A future date reads "in 2 days".
+ * Calendar-neutral, so it suits every DHIS2 calendar.
+ */
+export const relativeTime = (
+    point: ObservationPoint,
+    now: Date,
+    locale: string | undefined
+): string => {
+    const occurred = toInstant(point.occurredAt)
+    if (!Number.isFinite(occurred)) {
+        return point.occurredAt
+    }
+    const days = Math.trunc((now.getTime() - occurred) / MS_PER_DAY)
+    if (days === 0) {
+        return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(
+            0,
+            'day'
+        )
+    }
+    const format = new Intl.RelativeTimeFormat(locale, { numeric: 'always' })
+    const size = Math.abs(days)
+    // Negative: the reading lies in the past.
+    const sign = days > 0 ? -1 : 1
+    if (size < 30) {
+        return format.format(sign * size, 'day')
+    }
+    if (size < DAYS_PER_YEAR) {
+        return format.format(
+            sign * Math.max(1, Math.trunc(size / DAYS_PER_MONTH)),
+            'month'
+        )
+    }
+    return format.format(sign * Math.trunc(size / DAYS_PER_YEAR), 'year')
+}
+
 const BARE_HEX = /^([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i
 
 /**

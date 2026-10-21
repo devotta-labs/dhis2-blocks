@@ -13,7 +13,9 @@ type JsonValue =
     | null
     | JsonValue[]
     | { [key: string]: JsonValue }
-type Resolver = (request: { forTrackedEntity: boolean }) => JsonValue
+type Resolver = (request: {
+    forTrackedEntity: boolean
+}) => JsonValue | Promise<JsonValue>
 
 const HAEMOGLOBIN = 'vANAXwtLwcT'
 const SMOKING = 'sWoqcoByYmD'
@@ -230,10 +232,19 @@ describe('ObservationCardsDemo', () => {
     })
 
     it('loads the best-covered example person from the Load example button', async () => {
-        const events = (trackedEntity: string, values: string[]) => ({
+        const events = (
+            trackedEntity: string,
+            values: string[],
+            status = 'COMPLETED'
+        ) => ({
             event: `${trackedEntity}-ev`,
             trackedEntity,
-            dataValues: values.map((dataElement) => ({ dataElement })),
+            status,
+            occurredAt: '2026-03-01T00:00:00.000',
+            dataValues: values.map((dataElement) => ({
+                dataElement,
+                value: '1',
+            })),
         })
         const { screen } = await renderDemo('/observation-cards?preset=rmnch', {
             'tracker/events': ({ forTrackedEntity }) =>
@@ -247,6 +258,13 @@ describe('ObservationCardsDemo', () => {
                                   EXTREME_PALLOR,
                               ]),
                               events('teMiddle0001', [HAEMOGLOBIN, SMOKING]),
+                              // A scheduled visit holds no readings, however
+                              // many elements it names.
+                              events(
+                                  'teSchedule01',
+                                  [HAEMOGLOBIN, SMOKING, EXTREME_PALLOR],
+                                  'SCHEDULE'
+                              ),
                           ],
                       }
                     : eventsResponse,
@@ -263,6 +281,50 @@ describe('ObservationCardsDemo', () => {
         await expect
             .element(screen.getByRole('link', { name: 'teMiddle0001' }))
             .toBeVisible()
+    })
+
+    it('drops an example search once the preset has changed', async () => {
+        let release = () => {}
+        const held = new Promise<void>((resolve) => {
+            release = resolve
+        })
+        const { screen } = await renderDemo('/observation-cards?preset=rmnch', {
+            'tracker/events': async ({ forTrackedEntity }) => {
+                if (forTrackedEntity) {
+                    return eventsResponse
+                }
+                await held
+                return {
+                    events: [
+                        {
+                            event: 'ev1',
+                            trackedEntity: 'teRmnch00001',
+                            status: 'COMPLETED',
+                            occurredAt: '2026-03-01T00:00:00.000',
+                            dataValues: [
+                                { dataElement: HAEMOGLOBIN, value: '11' },
+                            ],
+                        },
+                    ],
+                }
+            },
+        })
+
+        await screen.getByRole('button', { name: 'Load example' }).click()
+        await screen.getByRole('combobox').selectOptions('seeded')
+        await expect
+            .element(screen.getByTestId('location'))
+            .toHaveTextContent('?preset=seeded')
+        release()
+        // Long enough for the held search to have finished.
+        await new Promise((resolve) => setTimeout(resolve, 50))
+
+        await expect
+            .element(screen.getByTestId('location'))
+            .toHaveTextContent('?preset=seeded')
+        await expect
+            .element(screen.getByTestId('location'))
+            .not.toHaveTextContent('teRmnch00001')
     })
 
     it('says so when no one has values for the demo data elements', async () => {

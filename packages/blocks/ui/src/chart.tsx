@@ -85,12 +85,20 @@ function ChartContainer({
     )
 }
 
+/**
+ * Characters that could end a declaration, the rule or the `<style>` element
+ * itself. The style is written as raw markup, so a key, colour or id holding
+ * one is left out rather than escaped.
+ */
+const UNSAFE_CSS = /[<>{};\\]/
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     const colorConfig = Object.entries(config).filter(
-        ([, config]) => config.theme ?? config.color
+        ([key, config]) =>
+            !UNSAFE_CSS.test(key) && (config.theme ?? config.color)
     )
 
-    if (!colorConfig.length) {
+    if (!colorConfig.length || UNSAFE_CSS.test(id)) {
         return null
     }
 
@@ -107,7 +115,9 @@ ${colorConfig
         const themeColor =
             itemConfig.theme?.[theme as keyof typeof itemConfig.theme]
         const color = themeColor ?? itemConfig.color
-        return color ? `  --color-${key}: ${color};` : null
+        return color && !UNSAFE_CSS.test(color)
+            ? `  --color-${key}: ${color};`
+            : null
     })
     .join('\n')}
 }

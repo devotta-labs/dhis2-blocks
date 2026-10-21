@@ -13,7 +13,7 @@ type JsonValue =
     | null
     | JsonValue[]
     | { [key: string]: JsonValue }
-type Resolver = () => JsonValue
+type Resolver = (request: { forTrackedEntity: boolean }) => JsonValue
 
 const HAEMOGLOBIN = 'vANAXwtLwcT'
 const SMOKING = 'sWoqcoByYmD'
@@ -102,7 +102,9 @@ const renderDemo = async (
     for (const [resource, resolve] of Object.entries(all)) {
         data[resource] = async (_type, query) => {
             calls.push({ resource: query.resource, id: query.id })
-            return resolve()
+            return resolve({
+                forTrackedEntity: query.params?.trackedEntity !== undefined,
+            })
         }
     }
     const queryClient = new QueryClient({
@@ -225,5 +227,88 @@ describe('ObservationCardsDemo', () => {
         await expect
             .element(screen.getByTestId('location'))
             .toHaveTextContent('?preset=seeded&te=teXYZ1234567')
+    })
+
+    it('loads the best-covered example person from the Load example button', async () => {
+        const events = (trackedEntity: string, values: string[]) => ({
+            event: `${trackedEntity}-ev`,
+            trackedEntity,
+            dataValues: values.map((dataElement) => ({ dataElement })),
+        })
+        const { screen } = await renderDemo('/observation-cards?preset=rmnch', {
+            'tracker/events': ({ forTrackedEntity }) =>
+                !forTrackedEntity
+                    ? {
+                          events: [
+                              events('teSparse0001', [HAEMOGLOBIN]),
+                              events('teRich000001', [
+                                  HAEMOGLOBIN,
+                                  SMOKING,
+                                  EXTREME_PALLOR,
+                              ]),
+                              events('teMiddle0001', [HAEMOGLOBIN, SMOKING]),
+                          ],
+                      }
+                    : eventsResponse,
+        })
+
+        await screen.getByRole('button', { name: 'Load example' }).click()
+
+        await expect
+            .element(screen.getByTestId('location'))
+            .toHaveTextContent('?preset=rmnch&te=teRich000001')
+        await expect
+            .element(screen.getByTestId('patient-header'))
+            .toHaveTextContent('Tracked entity teRich000001')
+        await expect
+            .element(screen.getByRole('link', { name: 'teMiddle0001' }))
+            .toBeVisible()
+    })
+
+    it('says so when no one has values for the demo data elements', async () => {
+        const { screen } = await renderDemo('/observation-cards?preset=rmnch', {
+            'tracker/events': () => ({ events: [] }),
+        })
+
+        await screen.getByRole('button', { name: 'Load example' }).click()
+
+        await expect
+            .element(
+                screen.getByText(
+                    'No one in this program has values for these data elements.'
+                )
+            )
+            .toBeVisible()
+        await expect
+            .element(screen.getByTestId('location'))
+            .toHaveTextContent('?preset=rmnch')
+    })
+
+    it('shows every card state on the Utopian example tab without fetching', async () => {
+        const { calls, screen } = await renderDemo(
+            '/observation-cards?preset=rmnch&te=teABC123456'
+        )
+        const before = calls.length
+
+        await screen.getByRole('tab', { name: 'Utopian example' }).click()
+
+        await expect
+            .element(screen.getByRole('heading', { name: 'Utopian example' }))
+            .toBeVisible()
+        await expect
+            .element(screen.getByRole('group', { name: 'Fundal height' }))
+            .toHaveTextContent('Never recorded')
+        await expect
+            .element(
+                screen.getByRole('group', { name: 'Pregnancy risk assessment' })
+            )
+            .toHaveTextContent('Moderate risk')
+        await expect
+            .element(screen.getByText('Some visits are hidden by your access'))
+            .toBeVisible()
+        await expect
+            .element(screen.getByTestId('location'))
+            .toHaveTextContent('view=examples')
+        expect(calls).toHaveLength(before)
     })
 })

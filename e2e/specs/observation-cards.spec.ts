@@ -17,6 +17,8 @@ const LATEST_VISIT = '2025-08-12'
 const LATEST_VISIT_SHOWN = 'Aug 12, 2025'
 const PREVIOUS_VISIT_SHOWN = 'May 20, 2025'
 const FIRST_VISIT_SHOWN = 'Mar 4, 2024'
+// A date as the cards show it to the suite's English user, such as "Mar 4, 2024".
+const SHOWN_DATE = '[A-Z][a-z]{2} \\d{1,2}, \\d{4}'
 const INTAKE_STAGE = 'Observation cards E2E intake'
 const FOLLOW_UP_STAGE = 'Observation cards E2E follow-up'
 // Fixed so staleness (the seeded preset sets 180 days) never drifts with the
@@ -275,7 +277,9 @@ test.describe('observation cards', () => {
         ).toBeVisible()
         await expect(
             haemoglobin.getByText(
-                /^\d+ readings from \d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}, latest \d+(?:\.\d+)?$/
+                new RegExp(
+                    `^\\d+ readings from ${SHOWN_DATE} to ${SHOWN_DATE}, latest \\d+(?:\\.\\d+)?$`
+                )
             )
         ).toHaveCount(1)
     })

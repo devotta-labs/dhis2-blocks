@@ -54,6 +54,16 @@ describe('Sparkline', () => {
             .toBe(1)
     })
 
+    it('plots nothing for a maxPoints of 0', async () => {
+        const { container } = await render(
+            <Sparkline
+                series={makeSeries([makePoint(1, 70), makePoint(2, 71)])}
+                maxPoints={0}
+            />
+        )
+        expect(container.querySelector('[data-slot="chart"]')).toBeNull()
+    })
+
     it('marks only the latest reading with a dot', async () => {
         const { container } = await render(
             <Sparkline

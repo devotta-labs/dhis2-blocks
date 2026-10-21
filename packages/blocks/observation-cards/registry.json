@@ -71,6 +71,7 @@
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/skeleton",
+                "devotta-labs/dhis2-blocks/tooltip",
                 "devotta-labs/dhis2-blocks/use-tracked-entity-observations"
             ],
             "files": [
@@ -93,6 +94,11 @@
                     "path": "src/cards/ObservationCardFrame.tsx",
                     "type": "registry:file",
                     "target": "@components/observation-cards/cards/ObservationCardFrame.tsx"
+                },
+                {
+                    "path": "src/cards/RecordedNote.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/cards/RecordedNote.tsx"
                 },
                 {
                     "path": "src/cards/Sparkline.tsx",

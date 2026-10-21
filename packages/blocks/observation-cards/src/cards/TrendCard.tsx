@@ -1,4 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
+import { IconArrowDown16, IconArrowUp16 } from '@dhis2/ui-icons'
 import React from 'react'
 import type {
     ObservationResult,
@@ -6,6 +7,7 @@ import type {
 } from '../use-tracked-entity-observations'
 import { LegendBadge } from './LegendBadge'
 import { ObservationCardFrame, PartialNote } from './ObservationCardFrame'
+import { RecordedNote } from './RecordedNote'
 import { Sparkline } from './Sparkline'
 import { useFormatDate } from './calendar'
 import {
@@ -28,8 +30,8 @@ export interface TrendCardProps {
 }
 
 interface ChangeLine {
-    /** A glyph shown to sighted users and the word a screen reader says instead. */
-    direction?: { glyph: string; word: string }
+    /** An arrow shown to sighted users and the word a screen reader says instead. */
+    direction?: { Arrow: typeof IconArrowUp16; word: string }
     text: string
 }
 
@@ -44,10 +46,10 @@ const changeLine = (
         return undefined
     }
     const date = formatDate(previous.occurredAt)
-    // A change that rounds to nothing would otherwise read "▲ 0".
+    // A change that rounds to nothing would otherwise read "↑ 0".
     if (Math.round(change * 100) === 0) {
         return {
-            text: i18n.t('No change from previous ({{date}})', {
+            text: i18n.t('No change since {{date}}', {
                 date,
                 interpolation: NO_ESCAPE,
             }),
@@ -56,9 +58,9 @@ const changeLine = (
     return {
         direction:
             change > 0
-                ? { glyph: '▲', word: i18n.t('up') }
-                : { glyph: '▼', word: i18n.t('down') },
-        text: i18n.t('{{change}} from previous ({{date}})', {
+                ? { Arrow: IconArrowUp16, word: i18n.t('up') }
+                : { Arrow: IconArrowDown16, word: i18n.t('down') },
+        text: i18n.t('{{change}} since {{date}}', {
             change: [formatNumber(Math.abs(change)), unit]
                 .filter(Boolean)
                 .join(' '),
@@ -83,6 +85,7 @@ export function TrendCard({
             <ObservationCardFrame
                 label={label}
                 state="pending"
+                skeleton="trend"
                 className={className}
             />
         )
@@ -143,13 +146,7 @@ export function TrendCard({
             badge={<LegendBadge legend={legend} option={undefined} />}
             footer={
                 <>
-                    <span>
-                        {i18n.t('Recorded {{date}} · {{stage}}', {
-                            date: formatDate(latest.occurredAt),
-                            stage: latest.source.programStageName,
-                            interpolation: NO_ESCAPE,
-                        })}
-                    </span>
+                    <RecordedNote point={latest} />
                     {partialNote}
                 </>
             }
@@ -167,9 +164,13 @@ export function TrendCard({
                 <p className="text-sm text-dhis2-grey-700">
                     {change.direction ? (
                         <>
-                            <span aria-hidden="true">
-                                {change.direction.glyph}
-                            </span>{' '}
+                            <span
+                                aria-hidden="true"
+                                data-slot="change-arrow"
+                                className="inline-flex align-[-2px] text-dhis2-grey-600 [&_svg]:size-3.5"
+                            >
+                                <change.direction.Arrow />
+                            </span>
                             <span className="sr-only">
                                 {change.direction.word}
                             </span>{' '}
@@ -177,11 +178,7 @@ export function TrendCard({
                     ) : null}
                     {change.text}
                 </p>
-            ) : (
-                <p className="text-sm text-dhis2-grey-700">
-                    {i18n.t('First reading')}
-                </p>
-            )}
+            ) : null}
             {plottable ? (
                 <Sparkline series={series} unit={unit} maxPoints={maxPoints} />
             ) : null}

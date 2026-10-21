@@ -284,16 +284,16 @@ describe('ObservationCardsDemo', () => {
             .toHaveTextContent('?preset=rmnch')
     })
 
-    it('shows every card state on the Utopian example tab without fetching', async () => {
+    it('shows every card state on the All demo examples tab without fetching', async () => {
         const { calls, screen } = await renderDemo(
             '/observation-cards?preset=rmnch&te=teABC123456'
         )
         const before = calls.length
 
-        await screen.getByRole('tab', { name: 'Utopian example' }).click()
+        await screen.getByRole('tab', { name: 'All demo examples' }).click()
 
         await expect
-            .element(screen.getByRole('heading', { name: 'Utopian example' }))
+            .element(screen.getByRole('heading', { name: 'All demo examples' }))
             .toBeVisible()
         await expect
             .element(screen.getByRole('group', { name: 'Fundal height' }))

@@ -2,14 +2,10 @@ import i18n from '@dhis2/d2-i18n'
 import React from 'react'
 import type { ObservationResult } from '../use-tracked-entity-observations'
 import { LegendBadge } from './LegendBadge'
-import {
-    CardNote,
-    ObservationCardFrame,
-    PartialNote,
-} from './ObservationCardFrame'
+import { ObservationCardFrame, PartialNote } from './ObservationCardFrame'
+import { RecordedNote } from './RecordedNote'
 import { useFormatDate } from './calendar'
 import {
-    NO_ESCAPE,
     displayValue,
     isStale,
     isSupportedLatestType,
@@ -33,22 +29,6 @@ export interface LatestValueCardProps {
 
 /** Read per render so tests can stub the clock. */
 const now = () => new Date()
-
-/**
- * One key per English plural form: d2-app-scripts cannot extract `count`
- * plurals, so the form is picked here. `count` still reaches i18next for a
- * translation that defines its own plural forms.
- */
-const staleNote = (days: number): string =>
-    days === 1
-        ? i18n.t('Out of date: last recorded over {{count}} day ago', {
-              count: days,
-              interpolation: NO_ESCAPE,
-          })
-        : i18n.t('Out of date: last recorded over {{count}} days ago', {
-              count: days,
-              interpolation: NO_ESCAPE,
-          })
 
 const TEXT_TYPES = new Set(['TEXT', 'LONG_TEXT'])
 
@@ -129,18 +109,10 @@ export function LatestValueCard({
             tone={stale ? 'stale' : 'default'}
             footer={
                 <>
-                    <span>
-                        {i18n.t('Recorded {{date}} · {{stage}}', {
-                            date: formatDate(latest.occurredAt),
-                            stage: latest.source.programStageName,
-                            interpolation: NO_ESCAPE,
-                        })}
-                    </span>
-                    {stale && staleAfterDays !== undefined ? (
-                        <CardNote tone="warning" data-slot="stale-note">
-                            {staleNote(staleAfterDays)}
-                        </CardNote>
-                    ) : null}
+                    <RecordedNote
+                        point={latest}
+                        staleAfterDays={staleAfterDays}
+                    />
                     {partialNote}
                 </>
             }

@@ -129,13 +129,13 @@ describe('TrendCard', () => {
         expect(
             container.querySelector('[data-slot="badge"]')?.textContent
         ).toBe('Normal')
-        expect(text).toContain('▲ up 6 g/dL from previous (Mar 8, 2026)')
+        expect(text).toContain('up 6 g/dL since Mar 8, 2026')
         expect(text).toContain('Recorded Mar 12, 2026 · Antenatal visit')
         expect(text).not.toContain('hidden by your access')
         expect(container.querySelector('[data-slot="chart"]')).not.toBeNull()
     })
 
-    it('falling change shows ▼ and the absolute value', async () => {
+    it('falling change shows a down arrow and the absolute value', async () => {
         const { container } = await render(
             <TrendCard
                 observation={success(
@@ -143,13 +143,11 @@ describe('TrendCard', () => {
                 )}
             />
         )
-        expect(container.textContent).toContain(
-            '▼ down 2.5 from previous (Mar 1, 2026)'
-        )
+        expect(container.textContent).toContain('down 2.5 since Mar 1, 2026')
         expect(container.textContent).not.toContain('-2.5')
     })
 
-    it('says the direction in words for screen readers and hides the glyph', async () => {
+    it('says the direction in words for screen readers and hides the arrow', async () => {
         const { container } = await render(
             <TrendCard
                 observation={success(
@@ -157,10 +155,9 @@ describe('TrendCard', () => {
                 )}
             />
         )
-        const glyph = [
-            ...container.querySelectorAll('[aria-hidden="true"]'),
-        ].find((element) => element.textContent === '▲')
-        expect(glyph).toBeDefined()
+        const arrow = container.querySelector('[data-slot="change-arrow"]')
+        expect(arrow?.getAttribute('aria-hidden')).toBe('true')
+        expect(arrow?.querySelector('svg')).not.toBeNull()
         expect(
             [...container.querySelectorAll('.sr-only')].map(
                 (element) => element.textContent
@@ -176,19 +173,15 @@ describe('TrendCard', () => {
                 )}
             />
         )
-        expect(container.textContent).toContain(
-            'No change from previous (Mar 1, 2026)'
-        )
-        expect(container.textContent).not.toContain('▲')
-        expect(container.textContent).not.toContain('▼')
+        expect(container.textContent).toContain('No change since Mar 1, 2026')
+        expect(container.querySelector('[data-slot="change-arrow"]')).toBeNull()
     })
 
-    it('single reading says first reading and draws no sparkline', async () => {
+    it('single reading shows no change line and draws no sparkline', async () => {
         const { container } = await render(
             <TrendCard observation={success(makeSeries([makePoint(1, 10)]))} />
         )
-        expect(container.textContent).not.toContain('from previous')
-        expect(container.textContent).toContain('First reading')
+        expect(container.textContent).not.toContain('since')
         expect(container.textContent).toContain('Recorded Mar 1, 2026')
         expect(container.querySelector('[data-slot="chart"]')).toBeNull()
     })

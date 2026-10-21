@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-21T08:21:36.274Z\n"
-"PO-Revision-Date: 2026-10-21T08:21:36.275Z\n"
+"POT-Creation-Date: 2026-10-21T10:13:55.355Z\n"
+"PO-Revision-Date: 2026-10-21T10:13:55.355Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -127,8 +127,8 @@ msgstr "Technical details"
 msgid "Reload application"
 msgstr "Reload application"
 
-msgid "Utopian example"
-msgstr "Utopian example"
+msgid "All demo examples"
+msgstr "All demo examples"
 
 msgid ""
 "Idealised metadata shown through the same cards, to cover every state. Real "
@@ -200,8 +200,8 @@ msgstr "Could not load more organisation units"
 msgid "Show more"
 msgstr "Show more"
 
-msgid "{{change}} from previous ({{date}})"
-msgstr "{{change}} from previous ({{date}})"
+msgid "{{change}} since {{date}}"
+msgstr "{{change}} since {{date}}"
 
 msgid "{{count}} readings from {{from}} to {{to}}, latest {{latest}}"
 msgstr "{{count}} readings from {{from}} to {{to}}, latest {{latest}}"
@@ -215,17 +215,14 @@ msgstr "Couldn't load this value"
 msgid "down"
 msgstr "down"
 
-msgid "First reading"
-msgstr "First reading"
-
 msgid "Never recorded"
 msgstr "Never recorded"
 
 msgid "No"
 msgstr "No"
 
-msgid "No change from previous ({{date}})"
-msgstr "No change from previous ({{date}})"
+msgid "No change since {{date}}"
+msgstr "No change since {{date}}"
 
 msgid "Out of date: last recorded over {{count}} day ago"
 msgstr "Out of date: last recorded over {{count}} day ago"
@@ -235,6 +232,9 @@ msgstr "Out of date: last recorded over {{count}} days ago"
 
 msgid "Recorded {{date}} · {{stage}}"
 msgstr "Recorded {{date}} · {{stage}}"
+
+msgid "Restricted access"
+msgstr "Restricted access"
 
 msgid "Some visits are hidden by your access"
 msgstr "Some visits are hidden by your access"

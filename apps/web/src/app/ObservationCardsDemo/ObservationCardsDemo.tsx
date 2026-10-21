@@ -49,7 +49,7 @@ const ExamplesGallery = () => (
                 id="observation-cards-examples"
                 className="mt-0 mb-1 text-base font-medium"
             >
-                {i18n.t('Utopian example')}
+                {i18n.t('All demo examples')}
             </h2>
             <p className="m-0 max-w-2xl text-sm leading-6 text-[#4a5768]">
                 {i18n.t(
@@ -61,25 +61,27 @@ const ExamplesGallery = () => (
             {EXAMPLE_CARDS.map((example) => (
                 <figure
                     key={example.caption}
-                    className="m-0 grid grid-rows-[auto_1fr] gap-1"
+                    className="m-0 grid content-start gap-1"
                 >
                     <figcaption className="text-xs text-[#6c7787]">
                         {example.caption}
                     </figcaption>
-                    {example.kind === 'trend' ? (
-                        <TrendCard
-                            observation={example.observation}
-                            unit={example.unit}
-                            label={example.label}
-                        />
-                    ) : (
-                        <LatestValueCard
-                            observation={example.observation}
-                            unit={example.unit}
-                            label={example.label}
-                            staleAfterDays={example.staleAfterDays}
-                        />
-                    )}
+                    <div dir={example.dir} lang={example.lang}>
+                        {example.kind === 'trend' ? (
+                            <TrendCard
+                                observation={example.observation}
+                                unit={example.unit}
+                                label={example.label}
+                            />
+                        ) : (
+                            <LatestValueCard
+                                observation={example.observation}
+                                unit={example.unit}
+                                label={example.label}
+                                staleAfterDays={example.staleAfterDays}
+                            />
+                        )}
+                    </div>
                 </figure>
             ))}
         </div>
@@ -260,7 +262,7 @@ export const ObservationCardsDemo = () => {
                     {(
                         [
                             ['live', i18n.t('Live data')],
-                            ['examples', i18n.t('Utopian example')],
+                            ['examples', i18n.t('All demo examples')],
                         ] as const
                     ).map(([id, text]) => (
                         <button

@@ -147,7 +147,7 @@ const findRmnchPersonWithHaemoglobinTrend = async (
 }
 
 test.describe('observation cards', () => {
-    test('seeded person shows systolic 142 High with ▲ 6 and five readings', async ({
+    test('seeded person shows systolic 142 High, up 6, and five readings', async ({
         page,
     }) => {
         await openSeededPerson(page)
@@ -156,15 +156,17 @@ test.describe('observation cards', () => {
         await expect(systolic.getByText('142', { exact: true })).toBeVisible()
         await expect(systolic.getByText('mmHg', { exact: true })).toBeVisible()
         await expect(systolic.getByText('High', { exact: true })).toBeVisible()
-        // The glyph is hidden from screen readers, which hear "up" instead.
+        // The arrow is hidden from screen readers, which hear "up" instead.
         const change = systolic.getByText(
-            `▲ up 6 mmHg from previous (${PREVIOUS_VISIT_SHOWN})`,
+            `up 6 mmHg since ${PREVIOUS_VISIT_SHOWN}`,
             {
                 exact: true,
             }
         )
         await expect(change).toBeVisible()
-        await expect(change.locator('[aria-hidden="true"]')).toHaveText('▲')
+        await expect(
+            change.locator('[data-slot="change-arrow"] svg')
+        ).toHaveCount(1)
         await expect(
             systolic.getByText(
                 `5 readings from ${FIRST_VISIT_SHOWN} to ${LATEST_VISIT_SHOWN}, latest 142`,

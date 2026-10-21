@@ -7,7 +7,7 @@ import type {
 } from '@dhis2-blocks/observation-cards'
 
 /**
- * Hand-written observations for the "Utopian example" tab. The cards never
+ * Hand-written observations for the "All demo examples" tab. The cards never
  * fetch, so they render these exactly as they would hook output. The
  * metadata is idealised: real instances rarely define legend sets or option
  * colours this completely.
@@ -76,6 +76,38 @@ const HAEMOGLOBIN_LEGENDS: ObservationLegend[] = [
     { name: 'Normal', color: '#2e7d32', startValue: 11, endValue: 20 },
 ]
 
+/** Puts every reading of an example in another program stage. */
+const inStage = (
+    result: ObservationResult,
+    programStageName: string
+): ObservationResult =>
+    result.status === 'success'
+        ? {
+              ...result,
+              series: {
+                  ...result.series,
+                  points: result.series.points.map((reading) => ({
+                      ...reading,
+                      source: { ...reading.source, programStageName },
+                  })),
+                  latest: result.series.latest && {
+                      ...result.series.latest,
+                      source: {
+                          ...result.series.latest.source,
+                          programStageName,
+                      },
+                  },
+              },
+          }
+        : result
+
+const HAEMOGLOBIN_LEGENDS_AR: ObservationLegend[] = [
+    { name: 'فقر دم شديد', color: '#d32f2f', startValue: 0, endValue: 7 },
+    { name: 'فقر دم متوسط', color: '#ef6c00', startValue: 7, endValue: 10 },
+    { name: 'فقر دم خفيف', color: '#f9a825', startValue: 10, endValue: 11 },
+    { name: 'طبيعي', color: '#2e7d32', startValue: 11, endValue: 20 },
+]
+
 const RISK_OPTIONS: ObservationOption[] = [
     { code: 'LOW', name: 'Low risk', color: '#2e7d32' },
     { code: 'MODERATE', name: 'Moderate risk', color: '#f9a825' },
@@ -90,6 +122,9 @@ export interface ExampleCard {
     unit?: string
     label?: string
     staleAfterDays?: number
+    /** Renders the card right to left, as a host in that language would. */
+    dir?: 'rtl'
+    lang?: string
 }
 
 export const EXAMPLE_CARDS: ExampleCard[] = [
@@ -190,13 +225,57 @@ export const EXAMPLE_CARDS: ExampleCard[] = [
         ),
     },
     {
+        caption: 'Long data element name',
+        kind: 'trend',
+        unit: 'g/dL',
+        observation: series(
+            'exLong',
+            'MCH Haemoglobin value at first antenatal care visit (point-of-care HemoCue reading)',
+            'NUMBER',
+            [
+                ['10.4', 80],
+                ['10.9', 40],
+                ['11.3', 8],
+            ],
+            { legends: HAEMOGLOBIN_LEGENDS }
+        ),
+    },
+    {
+        caption: 'Right to left (Arabic)',
+        kind: 'trend',
+        unit: 'غ/دل',
+        dir: 'rtl',
+        lang: 'ar',
+        observation: inStage(
+            series(
+                'exRtl',
+                'الهيموغلوبين',
+                'NUMBER',
+                [
+                    ['9.4', 120],
+                    ['10.1', 80],
+                    ['10.6', 40],
+                    ['11.2', 5],
+                ],
+                { legends: HAEMOGLOBIN_LEGENDS_AR }
+            ),
+            'زيارة رعاية ما قبل الولادة'
+        ),
+    },
+    {
         caption: 'Never recorded',
         kind: 'latest',
         observation: series('exNever', 'Fundal height', 'NUMBER', []),
     },
     {
-        caption: 'Loading',
+        caption: 'Loading (last recorded)',
         kind: 'latest',
+        label: 'Loading example',
+        observation: { status: 'pending' },
+    },
+    {
+        caption: 'Loading (trend)',
+        kind: 'trend',
         label: 'Loading example',
         observation: { status: 'pending' },
     },

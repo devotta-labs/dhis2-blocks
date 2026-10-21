@@ -45,20 +45,15 @@ const toMultiCalendarIdentifier = (
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}/
 
 /**
- * DHIS2 locales use underscores (`fr_SN`), which `Intl` rejects. Falls back to
- * the browser's locale for one `Intl` still can't read.
+ * The user's DHIS2 locale as a tag `Intl` accepts. DHIS2 uses underscores
+ * (`fr_SN`), which `Intl` rejects; one it still can't read falls back to the
+ * browser's locale.
  */
-const dateFormat = (language: string | undefined): Intl.DateTimeFormat => {
-    const options: Intl.DateTimeFormatOptions = {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'UTC',
-    }
+export const intlLocale = (): string | undefined => {
     try {
-        return new Intl.DateTimeFormat(language?.replace(/_/g, '-'), options)
+        return Intl.getCanonicalLocales(i18n.language?.replace(/_/g, '-'))[0]
     } catch {
-        return new Intl.DateTimeFormat(undefined, options)
+        return undefined
     }
 }
 
@@ -90,7 +85,12 @@ export const useFormatDate = (): ((iso: string) => string) => {
                 const date = new Date(`${day}T00:00:00Z`)
                 return Number.isNaN(date.getTime())
                     ? day
-                    : dateFormat(i18n.language || undefined).format(date)
+                    : new Intl.DateTimeFormat(intlLocale(), {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          timeZone: 'UTC',
+                      }).format(date)
             }
             try {
                 const converted = convertFromIso8601(

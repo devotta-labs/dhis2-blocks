@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-20T19:14:55.311Z\n"
-"PO-Revision-Date: 2026-10-20T19:14:55.311Z\n"
+"POT-Creation-Date: 2026-10-21T08:21:36.274Z\n"
+"PO-Revision-Date: 2026-10-21T08:21:36.275Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -127,6 +127,22 @@ msgstr "Technical details"
 msgid "Reload application"
 msgstr "Reload application"
 
+msgid "Utopian example"
+msgstr "Utopian example"
+
+msgid ""
+"Idealised metadata shown through the same cards, to cover every state. Real "
+"instances rarely define legend sets and option colours this completely."
+msgstr ""
+"Idealised metadata shown through the same cards, to cover every state. Real "
+"instances rarely define legend sets and option colours this completely."
+
+msgid "Tracked entity {{id}}"
+msgstr "Tracked entity {{id}}"
+
+msgid "{{readings}} readings across {{elements}} of {{total}} data elements"
+msgstr "{{readings}} readings across {{elements}} of {{total}} data elements"
+
 msgid "Trends"
 msgstr "Trends"
 
@@ -145,11 +161,26 @@ msgstr "Read-only cards for a tracked entity's latest readings and trends."
 msgid "Back to Working List"
 msgstr "Back to Working List"
 
+msgid "Live data"
+msgstr "Live data"
+
 msgid "Preset"
 msgstr "Preset"
 
 msgid "Show observations"
 msgstr "Show observations"
+
+msgid "Finding a person…"
+msgstr "Finding a person…"
+
+msgid "Load example"
+msgstr "Load example"
+
+msgid "No one in this program has values for these data elements."
+msgstr "No one in this program has values for these data elements."
+
+msgid "Couldn't look for an example person"
+msgstr "Couldn't look for an example person"
 
 msgid "Enter a tracked entity ID to see their observations."
 msgstr "Enter a tracked entity ID to see their observations."
@@ -169,8 +200,8 @@ msgstr "Could not load more organisation units"
 msgid "Show more"
 msgstr "Show more"
 
-msgid "{{change}} since {{date}}"
-msgstr "{{change}} since {{date}}"
+msgid "{{change}} from previous ({{date}})"
+msgstr "{{change}} from previous ({{date}})"
 
 msgid "{{count}} readings from {{from}} to {{to}}, latest {{latest}}"
 msgstr "{{count}} readings from {{from}} to {{to}}, latest {{latest}}"
@@ -184,14 +215,17 @@ msgstr "Couldn't load this value"
 msgid "down"
 msgstr "down"
 
+msgid "First reading"
+msgstr "First reading"
+
 msgid "Never recorded"
 msgstr "Never recorded"
 
 msgid "No"
 msgstr "No"
 
-msgid "No change since {{date}}"
-msgstr "No change since {{date}}"
+msgid "No change from previous ({{date}})"
+msgstr "No change from previous ({{date}})"
 
 msgid "Out of date: last recorded over {{count}} day ago"
 msgstr "Out of date: last recorded over {{count}} day ago"

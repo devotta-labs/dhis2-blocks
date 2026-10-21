@@ -129,8 +129,8 @@ describe('TrendCard', () => {
         expect(
             container.querySelector('[data-slot="badge"]')?.textContent
         ).toBe('Normal')
-        expect(text).toContain('▲ up 6 since 2026-03-08')
-        expect(text).toContain('Recorded 2026-03-12 · Antenatal visit')
+        expect(text).toContain('▲ up 6 g/dL from previous (Mar 8, 2026)')
+        expect(text).toContain('Recorded Mar 12, 2026 · Antenatal visit')
         expect(text).not.toContain('hidden by your access')
         expect(container.querySelector('[data-slot="chart"]')).not.toBeNull()
     })
@@ -143,7 +143,9 @@ describe('TrendCard', () => {
                 )}
             />
         )
-        expect(container.textContent).toContain('▼ down 2.5 since 2026-03-01')
+        expect(container.textContent).toContain(
+            '▼ down 2.5 from previous (Mar 1, 2026)'
+        )
         expect(container.textContent).not.toContain('-2.5')
     })
 
@@ -174,17 +176,21 @@ describe('TrendCard', () => {
                 )}
             />
         )
-        expect(container.textContent).toContain('No change since 2026-03-01')
+        expect(container.textContent).toContain(
+            'No change from previous (Mar 1, 2026)'
+        )
         expect(container.textContent).not.toContain('▲')
         expect(container.textContent).not.toContain('▼')
     })
 
-    it('single reading shows no change line', async () => {
+    it('single reading says first reading and draws no sparkline', async () => {
         const { container } = await render(
             <TrendCard observation={success(makeSeries([makePoint(1, 10)]))} />
         )
-        expect(container.textContent).not.toContain('since')
-        expect(container.textContent).toContain('Recorded 2026-03-01')
+        expect(container.textContent).not.toContain('from previous')
+        expect(container.textContent).toContain('First reading')
+        expect(container.textContent).toContain('Recorded Mar 1, 2026')
+        expect(container.querySelector('[data-slot="chart"]')).toBeNull()
     })
 
     it('partial shows "Some visits are hidden by your access"', async () => {
@@ -279,7 +285,7 @@ describe('TrendCard', () => {
             />
         )
         expect(container.textContent).toContain(
-            "Recorded 2026-03-01 · Child's visit & labour"
+            "Recorded Mar 1, 2026 · Child's visit & labour"
         )
         expect(container.textContent).not.toContain('&#39;')
         expect(container.textContent).not.toContain('&amp;')

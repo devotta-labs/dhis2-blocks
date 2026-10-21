@@ -45,13 +45,46 @@ describe('Sparkline', () => {
             <Sparkline series={makeSeries(points)} maxPoints={4} />
         )
         expect(container.textContent).toContain(
-            '4 readings from 2026-03-07 to 2026-03-10, latest 79'
+            '4 readings from Mar 7, 2026 to Mar 10, 2026, latest 79'
         )
         await expect
             .poll(
                 () => container.querySelectorAll('.recharts-line-curve').length
             )
             .toBe(1)
+    })
+
+    it('marks only the latest reading with a dot', async () => {
+        const { container } = await render(
+            <Sparkline
+                series={makeSeries([
+                    makePoint(1, 70),
+                    makePoint(2, 72),
+                    makePoint(3, 71),
+                ])}
+            />
+        )
+        await expect
+            .poll(() => container.querySelectorAll('.recharts-dot').length)
+            .toBe(1)
+    })
+
+    it('fits the scale to the readings rather than starting at zero', async () => {
+        const { container } = await render(
+            <Sparkline
+                series={makeSeries([makePoint(1, 79), makePoint(2, 77.4)])}
+            />
+        )
+        await expect
+            .poll(() => container.querySelector('.recharts-line-curve'))
+            .not.toBeNull()
+        const box = container
+            .querySelector<SVGPathElement>('.recharts-line-curve')
+            ?.getBBox()
+        const svgHeight =
+            container.querySelector('svg.recharts-surface')?.clientHeight ?? 0
+        // From zero up, a 2% change would span about 1px of a 40px chart.
+        expect(box?.height).toBeGreaterThan(svgHeight / 2)
     })
 
     it('leaves out points with no numeric value', async () => {
@@ -79,7 +112,7 @@ describe('Sparkline', () => {
             />
         )
         expect(container.textContent).toContain(
-            '3 readings from 2026-03-01 to 2026-03-12, latest 72'
+            '3 readings from Mar 1, 2026 to Mar 12, 2026, latest 72'
         )
     })
 

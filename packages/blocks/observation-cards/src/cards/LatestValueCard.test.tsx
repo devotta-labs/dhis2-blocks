@@ -142,7 +142,7 @@ describe('LatestValueCard', () => {
         expect(badge?.textContent).toBe('B positive')
         expect(badge?.style.backgroundColor).toBe('rgb(255, 0, 0)')
         expect(container.textContent).toContain(
-            'Recorded 2026-03-12 · Antenatal visit'
+            'Recorded Mar 12, 2026 · Antenatal visit'
         )
     })
 
@@ -231,7 +231,7 @@ describe('LatestValueCard', () => {
         const text = container.textContent ?? ''
         expect(text).toContain('No')
         expect(text).not.toContain('Yes')
-        expect(text).toContain('Recorded 2026-03-12')
+        expect(text).toContain('Recorded Mar 12, 2026')
     })
 
     it('no unit after a value that is not a number', async () => {
@@ -266,7 +266,7 @@ describe('LatestValueCard', () => {
                 )}
             />
         )
-        expect(container.textContent).toContain('2026-01-05')
+        expect(container.textContent).toContain('Jan 5, 2026')
     })
 
     it('text value shows the text as plain text with no badge', async () => {
@@ -437,7 +437,7 @@ describe('LatestValueCard', () => {
             />
         )
         expect(container.textContent).toContain(
-            "Recorded 2026-03-12 · Child's visit & labour"
+            "Recorded Mar 12, 2026 · Child's visit & labour"
         )
         expect(container.textContent).not.toContain('&#39;')
         expect(container.textContent).not.toContain('&amp;')

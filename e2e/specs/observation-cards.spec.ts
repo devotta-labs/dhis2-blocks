@@ -13,8 +13,10 @@ const SYSTOLIC = 'Systolic blood pressure'
 const EXTREME_PALLOR = 'Extreme pallor'
 const SMOKING_STATUS = 'Smoking status'
 const LATEST_VISIT = '2025-08-12'
-const PREVIOUS_VISIT = '2025-05-20'
-const FIRST_VISIT = '2024-03-04'
+// How the cards show the visit dates for the suite's English user.
+const LATEST_VISIT_SHOWN = 'Aug 12, 2025'
+const PREVIOUS_VISIT_SHOWN = 'May 20, 2025'
+const FIRST_VISIT_SHOWN = 'Mar 4, 2024'
 const INTAKE_STAGE = 'Observation cards E2E intake'
 const FOLLOW_UP_STAGE = 'Observation cards E2E follow-up'
 // Fixed so staleness (the seeded preset sets 180 days) never drifts with the
@@ -155,14 +157,17 @@ test.describe('observation cards', () => {
         await expect(systolic.getByText('mmHg', { exact: true })).toBeVisible()
         await expect(systolic.getByText('High', { exact: true })).toBeVisible()
         // The glyph is hidden from screen readers, which hear "up" instead.
-        const change = systolic.getByText(`▲ up 6 since ${PREVIOUS_VISIT}`, {
-            exact: true,
-        })
+        const change = systolic.getByText(
+            `▲ up 6 mmHg from previous (${PREVIOUS_VISIT_SHOWN})`,
+            {
+                exact: true,
+            }
+        )
         await expect(change).toBeVisible()
         await expect(change.locator('[aria-hidden="true"]')).toHaveText('▲')
         await expect(
             systolic.getByText(
-                `5 readings from ${FIRST_VISIT} to ${LATEST_VISIT}, latest 142`,
+                `5 readings from ${FIRST_VISIT_SHOWN} to ${LATEST_VISIT_SHOWN}, latest 142`,
                 { exact: true }
             )
         ).toHaveCount(1)
@@ -186,7 +191,7 @@ test.describe('observation cards', () => {
 
         await expect(
             systolic.getByText(
-                `Recorded ${LATEST_VISIT} · ${FOLLOW_UP_STAGE}`,
+                `Recorded ${LATEST_VISIT_SHOWN} · ${FOLLOW_UP_STAGE}`,
                 {
                     exact: true,
                 }
@@ -194,13 +199,13 @@ test.describe('observation cards', () => {
         ).toBeVisible()
         await expect(
             systolic.getByText(
-                `5 readings from ${FIRST_VISIT} to ${LATEST_VISIT}, latest 142`,
+                `5 readings from ${FIRST_VISIT_SHOWN} to ${LATEST_VISIT_SHOWN}, latest 142`,
                 { exact: true }
             )
         ).toHaveCount(1)
         await expect(
             card(page, EXTREME_PALLOR).getByText(
-                `Recorded ${LATEST_VISIT} · ${FOLLOW_UP_STAGE}`,
+                `Recorded ${LATEST_VISIT_SHOWN} · ${FOLLOW_UP_STAGE}`,
                 { exact: true }
             )
         ).toBeVisible()
@@ -233,9 +238,12 @@ test.describe('observation cards', () => {
             smoking.getByText('Former smoker', { exact: true })
         ).toBeVisible()
         await expect(
-            smoking.getByText(`Recorded ${FIRST_VISIT} · ${INTAKE_STAGE}`, {
-                exact: true,
-            })
+            smoking.getByText(
+                `Recorded ${FIRST_VISIT_SHOWN} · ${INTAKE_STAGE}`,
+                {
+                    exact: true,
+                }
+            )
         ).toBeVisible()
         await expect(
             smoking.getByText('Out of date: last recorded over 180 days ago', {

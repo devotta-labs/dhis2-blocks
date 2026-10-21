@@ -36,14 +36,14 @@ const NOTE_TONES = {
 const FOOTER =
     'flex-wrap justify-between gap-x-3 gap-y-1 rounded-b-dhis2-md border-t border-dhis2-grey-300 bg-dhis2-grey-050 py-2 text-xs text-dhis2-grey-700'
 
-export interface CardNoteProps {
+interface CardNoteProps {
     tone: keyof typeof NOTE_ICONS
     children: React.ReactNode
     'data-slot'?: string
 }
 
 /** A short note with an icon, so a warning or failure never rests on colour alone. */
-export function CardNote({
+function CardNote({
     tone,
     children,
     'data-slot': dataSlot,
@@ -79,7 +79,7 @@ export const PartialNote = () => {
                     <span
                         tabIndex={0}
                         data-slot="partial-note"
-                        className="ms-auto cursor-default rounded-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-primary"
+                        className="ms-auto cursor-default rounded-dhis2-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-primary"
                     />
                 }
             >

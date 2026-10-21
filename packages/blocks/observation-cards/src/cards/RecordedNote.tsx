@@ -56,7 +56,7 @@ export function RecordedNote({ point, staleAfterDays }: RecordedNoteProps) {
                     <span
                         tabIndex={0}
                         data-slot="recorded-note"
-                        className="inline-flex cursor-default items-center gap-1 rounded-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-primary"
+                        className="inline-flex cursor-default items-center gap-1 rounded-dhis2-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-primary"
                     />
                 }
             >

@@ -9,7 +9,7 @@ export default defineConfig({
     testDir: './e2e/specs',
     outputDir: `${artifactRoot}/test-results`,
     fullyParallel: true,
-    workers: environment?.CI ? 2 : undefined,
+    workers: environment?.CI ? 4 : undefined,
     forbidOnly: Boolean(environment?.CI),
     retries: environment?.CI ? 1 : 0,
     timeout: 60_000,

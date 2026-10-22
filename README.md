@@ -337,7 +337,7 @@ pnpm e2e:dev
 ```
 
 Playwright schedules independent tests across files and within each file in
-parallel, using two workers in CI and its CPU-based default locally. Each test
+parallel, using four workers in CI and its CPU-based default locally. Each test
 gets its own browser context; saved-list tests clean up their own created
 records and restore the stale-list fixture. With a running E2E stack, use
 `pnpm exec playwright test --workers=1` to debug serially.

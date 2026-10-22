@@ -122,9 +122,8 @@ const itemDependencies = (
     versions: Record<string, string>
 ): Pick<RegistryItem, 'dependencies' | 'registryDependencies'> => {
     const external = new Set<string>()
-    const internal = new Set<string>(
-        item.kind === 'component' ? [THEME_ITEM] : []
-    )
+    // Every item styles itself with the DHIS2 tokens.
+    const internal = new Set<string>([THEME_ITEM])
     for (const { source } of item.files) {
         if (extname(source) === '.css') continue
         const file = toPosix(relative(REPO_ROOT, source))

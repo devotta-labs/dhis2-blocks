@@ -539,6 +539,7 @@
             "title": "DHIS2 Context Selector",
             "description": "Composable, controlled Capture-style context selector primitives for React 18 DHIS2 applications.",
             "dependencies": ["@dhis2/d2-i18n@1.2.0", "@dhis2/ui@^10.17.0"],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
             "files": [
                 {
                     "path": "packages/registry/blocks/context-selector/components/ClearSelections.tsx",
@@ -608,7 +609,10 @@
                 "@dhis2/ui-icons@^10.17.0",
                 "prop-types@^15.8.1"
             ],
-            "registryDependencies": ["devotta-labs/dhis2-blocks/cn"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
             "files": [
                 {
                     "path": "packages/registry/blocks/sidebar/context.ts",
@@ -658,6 +662,7 @@
                 "devotta-labs/dhis2-blocks/checkbox",
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/combobox",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/dialog",
                 "devotta-labs/dhis2-blocks/dropdown-menu",
                 "devotta-labs/dhis2-blocks/field",

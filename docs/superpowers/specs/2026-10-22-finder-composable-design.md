@@ -12,11 +12,18 @@ v1 works and is fully tested, but it reproduced the Capture app's search: an aut
 searchable attribute, an "ID route" and a "details route", an ID box that fans out over every unique attribute,
 a number grammar, an Exact/Range switch and a Program/TET toggle. The user's verdict: "Capture all over again".
 
-The real target is a country building a **narrow app for one program**, for example an HIV management app:
+One real target is a country building a **narrow app for one program**, for example an HIV management app:
 
 > Open the app → type the ART number → Search → pick the person → do HIV work.
 > No ID? A "No ID?" link (like "Forgot password?") swaps to a small form the developer chose, say first name and
 > date of birth → Search → pick the person.
+
+Another is an app for two programs, where the user first picks HIV or TB and then sees the finder set up for that
+program. **The finder is agnostic to where the program comes from:** `program` is a plain prop, so it can be a
+constant, a dropdown above or outside the finder, a route parameter or anything else the host has. Each root
+searches one program at a time; changing `program` resets values and results. Fields are composed per program
+(uids differ between programs), so a two-program app renders a different set of fields for each, typically by
+switching on the selected program.
 
 The developer, often working with an AI agent that has the program metadata JSON or server access, should
 **compose exactly the form and results they need** from small parts, shadcn-style (like `Command` →

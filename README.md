@@ -247,6 +247,28 @@ host: either run the bundled Node server (`pnpm serve:docs`, honoring
 `DOCS_PORT` and `DOCS_DHIS2_URL`), or terminate the `/dhis2` prefix on any
 standard reverse proxy (nginx, Caddy, Traefik) in front of the static files.
 
+### Vercel deployments
+
+The docs project is `eirikh/dhis2-blocks`, connected to the
+`devotta-labs/dhis2-blocks` GitHub repository. Its production branch is
+`master`: pushes to `master` deploy to `https://dhis2-blocks.vercel.app`,
+and pushes to other branches create preview deployments linked from PRs.
+
+Vercel uses the repository root with the settings committed in `vercel.json`:
+`pnpm install --frozen-lockfile`, `pnpm build:docs`, and output directory
+`apps/docs/dist`. Client-side routes fall back to `index.html`; `/dhis2`
+requests use `api/dhis2.mjs` and the shared proxy implementation.
+
+Set `DOCS_DHIS2_URL=https://play.im.dhis2.org/dev` in both the Production
+and Preview environments. This public demo uses the authentication defaults
+described above. Vercel owns the Git connection, production branch, and
+environment settings; these must also be configured when recreating the
+project. Local `.env` files are excluded from CLI uploads by `.vercelignore`.
+
+Normal releases come from GitHub pushes. To link a local checkout for
+inspection, run `vercel link --project dhis2-blocks --scope eirikh`.
+The generated `.vercel` directory is local state and is not committed.
+
 The site is written for developers and coding agents installing the blocks
 into their own projects; repository setup like the commands above belongs in
 this README, not on the site.

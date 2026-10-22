@@ -11,6 +11,7 @@ import {
     SidebarItems,
     SidebarLink,
     SidebarNavigation,
+    SidebarProvider,
     SidebarToggle,
 } from '@/components/sidebar'
 import { Host } from './host'
@@ -22,30 +23,32 @@ if (root !== null) {
     createRoot(root).render(
         <>
             <Host />
-            <Sidebar>
-                <SidebarNavigation>
-                    <SidebarContent>
-                        <SidebarItems>
-                            <SidebarGroup defaultOpen>
-                                <SidebarGroupTrigger>
-                                    Evaluate
-                                </SidebarGroupTrigger>
-                                <SidebarGroupContent>
-                                    <SidebarItem>
-                                        <SidebarLink
-                                            href="/evaluate"
-                                            aria-current="page"
-                                        >
-                                            Overview
-                                        </SidebarLink>
-                                    </SidebarItem>
-                                </SidebarGroupContent>
-                            </SidebarGroup>
-                        </SidebarItems>
-                    </SidebarContent>
-                </SidebarNavigation>
-                <SidebarToggle />
-            </Sidebar>
+            <SidebarProvider>
+                <Sidebar>
+                    <SidebarNavigation>
+                        <SidebarContent>
+                            <SidebarItems>
+                                <SidebarGroup defaultOpen>
+                                    <SidebarGroupTrigger>
+                                        Evaluate
+                                    </SidebarGroupTrigger>
+                                    <SidebarGroupContent>
+                                        <SidebarItem>
+                                            <SidebarLink
+                                                href="/evaluate"
+                                                aria-current="page"
+                                            >
+                                                Overview
+                                            </SidebarLink>
+                                        </SidebarItem>
+                                    </SidebarGroupContent>
+                                </SidebarGroup>
+                            </SidebarItems>
+                        </SidebarContent>
+                    </SidebarNavigation>
+                    <SidebarToggle />
+                </Sidebar>
+            </SidebarProvider>
             <ContextSelector>{null}</ContextSelector>
             <WorkingList programId="program" orgUnitId="orgUnit">
                 {null}

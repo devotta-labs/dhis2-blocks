@@ -1,6 +1,11 @@
 import i18n from '@dhis2/d2-i18n'
 import { IconChevronLeft24 } from '@dhis2/ui-icons'
-import React, { useId, useState, type ComponentPropsWithoutRef } from 'react'
+import React, {
+    useId,
+    useState,
+    type ComponentPropsWithoutRef,
+    type ReactNode,
+} from 'react'
 import { cn } from '@/registry/dhis2/ui/cn'
 import { SidebarContext, useSidebar } from './context'
 
@@ -16,16 +21,15 @@ type CollapseState =
           onCollapsedChange?: (collapsed: boolean) => void
       }
 
-export type SidebarProps = ComponentPropsWithoutRef<'aside'> & CollapseState
+export type SidebarProviderProps = { children?: ReactNode } & CollapseState
+export type SidebarProps = ComponentPropsWithoutRef<'aside'>
 
-export function Sidebar({
+export function SidebarProvider({
     collapsed: controlledCollapsed,
     defaultCollapsed = false,
     onCollapsedChange,
-    className,
     children,
-    ...props
-}: SidebarProps) {
+}: SidebarProviderProps) {
     const [localCollapsed, setLocalCollapsed] = useState(defaultCollapsed)
     const collapsed = controlledCollapsed ?? localCollapsed
     const navigationId = useId()
@@ -45,18 +49,24 @@ export function Sidebar({
                 meta: { navigationId },
             }}
         >
-            <aside
-                {...props}
-                data-slot="sidebar"
-                data-state={collapsed ? 'collapsed' : 'expanded'}
-                className={cn(
-                    'relative flex min-h-13 w-full shrink-0 flex-col overflow-hidden bg-dhis2-grey-900 font-dhis2 text-dhis2-grey-300 transition-[width] duration-300 motion-reduce:transition-none md:w-60 md:data-[state=collapsed]:w-13',
-                    className
-                )}
-            >
-                {children}
-            </aside>
+            {children}
         </SidebarContext.Provider>
+    )
+}
+
+export function Sidebar({ className, ...props }: SidebarProps) {
+    const { state } = useSidebar()
+
+    return (
+        <aside
+            {...props}
+            data-slot="sidebar"
+            data-state={state.collapsed ? 'collapsed' : 'expanded'}
+            className={cn(
+                'relative flex min-h-13 w-full shrink-0 flex-col overflow-hidden bg-dhis2-grey-900 font-dhis2 text-dhis2-grey-300 transition-[width] duration-300 motion-reduce:transition-none md:w-60 md:data-[state=collapsed]:w-13',
+                className
+            )}
+        />
     )
 }
 

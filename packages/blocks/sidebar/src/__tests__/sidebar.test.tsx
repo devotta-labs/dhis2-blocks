@@ -17,6 +17,7 @@ import {
     SidebarItems,
     SidebarLink,
     SidebarNavigation,
+    SidebarProvider,
     SidebarToggle,
     useSidebar,
 } from '../index'
@@ -62,10 +63,12 @@ afterEach(async () => {
 test('nested groups and collapse preserve state and keep hidden links out of keyboard navigation', async () => {
     const onCollapsedChange = vi.fn()
     await render(
-        <Sidebar onCollapsedChange={onCollapsedChange}>
-            <Navigation />
-            <SidebarToggle />
-        </Sidebar>
+        <SidebarProvider onCollapsedChange={onCollapsedChange}>
+            <Sidebar>
+                <Navigation />
+                <SidebarToggle />
+            </Sidebar>
+        </SidebarProvider>
     )
     const group = page.getByRole('button', { name: 'Evaluate', exact: true })
     await expect.element(group).toHaveAttribute('aria-expanded', 'true')
@@ -93,19 +96,23 @@ test('nested groups and collapse preserve state and keep hidden links out of key
 test('controlled collapse follows its parent and a cancelled click does not toggle', async () => {
     const change = vi.fn()
     const view = await render(
-        <Sidebar collapsed={false} onCollapsedChange={change}>
-            <Navigation />
-            <SidebarToggle />
-        </Sidebar>
+        <SidebarProvider collapsed={false} onCollapsedChange={change}>
+            <Sidebar>
+                <Navigation />
+                <SidebarToggle />
+            </Sidebar>
+        </SidebarProvider>
     )
     await page.getByRole('button', { name: 'Collapse sidebar' }).click()
     expect(change).toHaveBeenCalledWith(true)
     await expect.element(page.getByRole('navigation')).toBeVisible()
     await view.rerender(
-        <Sidebar collapsed onCollapsedChange={change}>
-            <Navigation />
-            <SidebarToggle onClick={(event) => event.preventDefault()} />
-        </Sidebar>
+        <SidebarProvider collapsed onCollapsedChange={change}>
+            <Sidebar>
+                <Navigation />
+                <SidebarToggle onClick={(event) => event.preventDefault()} />
+            </Sidebar>
+        </SidebarProvider>
     )
     await page.getByRole('button', { name: 'Expand sidebar' }).click()
     expect(change).toHaveBeenCalledTimes(1)
@@ -126,12 +133,15 @@ function CustomToggle() {
     )
 }
 
-test('defaultCollapsed and custom controls share the public context', async () => {
+test('sibling toolbar and sidebar toggle share the provider context', async () => {
     await render(
-        <Sidebar defaultCollapsed>
-            <Navigation />
+        <SidebarProvider defaultCollapsed>
+            <Sidebar>
+                <Navigation />
+                <SidebarToggle />
+            </Sidebar>
             <CustomToggle />
-        </Sidebar>
+        </SidebarProvider>
     )
     expect(document.querySelector('nav')).not.toBeVisible()
     const toggle = page.getByRole('button', { name: 'Toggle navigation' })
@@ -140,6 +150,10 @@ test('defaultCollapsed and custom controls share the public context', async () =
     expect(toggle.element().getAttribute('aria-controls')).toBe(
         page.getByRole('navigation').element().id
     )
+    expect(toggle.element().closest('aside')).toBeNull()
+    await page.getByRole('button', { name: 'Collapse sidebar' }).click()
+    await expect.element(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(document.querySelector('nav')).not.toBeVisible()
 })
 
 function RouteLocation() {
@@ -151,28 +165,30 @@ test('router links keep anchor semantics, navigation and theme-based active styl
     const onClick = vi.fn()
     const { container } = await render(
         <MemoryRouter initialEntries={['/dashboard']}>
-            <Sidebar>
-                <SidebarNavigation>
-                    <SidebarItems>
-                        <SidebarItem>
-                            <SidebarLink
-                                render={<NavLink to="/dashboard" end />}
-                            >
-                                Dashboard
-                            </SidebarLink>
-                        </SidebarItem>
-                        <SidebarItem>
-                            <SidebarLink
-                                render={<NavLink to="/datasets" />}
-                                onClick={onClick}
-                            >
-                                Datasets
-                            </SidebarLink>
-                        </SidebarItem>
-                    </SidebarItems>
-                </SidebarNavigation>
-            </Sidebar>
-            <RouteLocation />
+            <SidebarProvider>
+                <Sidebar>
+                    <SidebarNavigation>
+                        <SidebarItems>
+                            <SidebarItem>
+                                <SidebarLink
+                                    render={<NavLink to="/dashboard" end />}
+                                >
+                                    Dashboard
+                                </SidebarLink>
+                            </SidebarItem>
+                            <SidebarItem>
+                                <SidebarLink
+                                    render={<NavLink to="/datasets" />}
+                                    onClick={onClick}
+                                >
+                                    Datasets
+                                </SidebarLink>
+                            </SidebarItem>
+                        </SidebarItems>
+                    </SidebarNavigation>
+                </Sidebar>
+                <RouteLocation />
+            </SidebarProvider>
         </MemoryRouter>
     )
     const datasets = page.getByRole('link', { name: 'Datasets' })
@@ -199,32 +215,39 @@ test('controlled groups and native buttons support keyboard interaction and disa
     function ControlledGroup() {
         const [open, setOpen] = useState(false)
         return (
-            <Sidebar>
-                <SidebarNavigation>
-                    <SidebarItems>
-                        <SidebarGroup open={open} onOpenChange={setOpen}>
-                            <SidebarGroupTrigger>Evaluate</SidebarGroupTrigger>
-                            <SidebarGroupContent>
-                                <SidebarItem>
-                                    <SidebarButton onClick={action}>
-                                        Run evaluation
-                                    </SidebarButton>
-                                </SidebarItem>
-                                <SidebarItem>
-                                    <SidebarButton disabled onClick={action}>
-                                        Unavailable
-                                    </SidebarButton>
-                                </SidebarItem>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
-                        <SidebarGroup disabled>
-                            <SidebarGroupTrigger>
-                                Disabled group
-                            </SidebarGroupTrigger>
-                        </SidebarGroup>
-                    </SidebarItems>
-                </SidebarNavigation>
-            </Sidebar>
+            <SidebarProvider>
+                <Sidebar>
+                    <SidebarNavigation>
+                        <SidebarItems>
+                            <SidebarGroup open={open} onOpenChange={setOpen}>
+                                <SidebarGroupTrigger>
+                                    Evaluate
+                                </SidebarGroupTrigger>
+                                <SidebarGroupContent>
+                                    <SidebarItem>
+                                        <SidebarButton onClick={action}>
+                                            Run evaluation
+                                        </SidebarButton>
+                                    </SidebarItem>
+                                    <SidebarItem>
+                                        <SidebarButton
+                                            disabled
+                                            onClick={action}
+                                        >
+                                            Unavailable
+                                        </SidebarButton>
+                                    </SidebarItem>
+                                </SidebarGroupContent>
+                            </SidebarGroup>
+                            <SidebarGroup disabled>
+                                <SidebarGroupTrigger>
+                                    Disabled group
+                                </SidebarGroupTrigger>
+                            </SidebarGroup>
+                        </SidebarItems>
+                    </SidebarNavigation>
+                </Sidebar>
+            </SidebarProvider>
         )
     }
     await render(<ControlledGroup />)
@@ -245,10 +268,12 @@ test('controlled groups and native buttons support keyboard interaction and disa
 test('desktop rail, mobile bar and RTL marker retain accessible navigation', async () => {
     await page.viewport(1024, 768)
     const { container } = await render(
-        <Sidebar dir="rtl" className="md:h-96">
-            <Navigation />
-            <SidebarToggle />
-        </Sidebar>
+        <SidebarProvider>
+            <Sidebar dir="rtl" className="md:h-96">
+                <Navigation />
+                <SidebarToggle />
+            </Sidebar>
+        </SidebarProvider>
     )
     const sidebar = page.getByRole('complementary').element()
     expect(sidebar.getBoundingClientRect().width).toBe(240)

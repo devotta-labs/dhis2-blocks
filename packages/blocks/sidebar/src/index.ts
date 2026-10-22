@@ -4,7 +4,9 @@ export {
     SidebarFooter,
     SidebarHeader,
     SidebarNavigation,
+    SidebarProvider,
     SidebarToggle,
+    type SidebarProviderProps,
     type SidebarProps,
 } from './sidebar'
 export {

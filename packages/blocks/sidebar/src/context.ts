@@ -12,7 +12,9 @@ export const useSidebar = () => {
     const context = useContext(SidebarContext)
 
     if (!context) {
-        throw new Error('Sidebar components must be rendered inside Sidebar')
+        throw new Error(
+            'Sidebar components must be rendered inside SidebarProvider'
+        )
     }
 
     return context

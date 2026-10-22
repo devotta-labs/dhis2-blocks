@@ -1,17 +1,17 @@
-import type { SidebarProps } from '../src'
+import type { SidebarProviderProps } from '../src'
 
-export const uncontrolled: SidebarProps = { defaultCollapsed: true }
+export const uncontrolled: SidebarProviderProps = { defaultCollapsed: true }
 
-export const controlled: SidebarProps = {
+export const controlled: SidebarProviderProps = {
     collapsed: true,
     onCollapsedChange: (_collapsed: boolean) => undefined,
 }
 
 // @ts-expect-error Controlled collapse requires a change handler.
-export const missingHandler: SidebarProps = { collapsed: false }
+export const missingHandler: SidebarProviderProps = { collapsed: false }
 
 // @ts-expect-error Controlled and uncontrolled collapse cannot be combined.
-export const mixedControl: SidebarProps = {
+export const mixedControl: SidebarProviderProps = {
     collapsed: true,
     defaultCollapsed: false,
     onCollapsedChange: () => undefined,

@@ -14,7 +14,8 @@ import { InstallCommand } from '../../components/InstallCommand'
 
 ## Composition
 
-`Sidebar` owns collapse state. Compose the navigation, header, scrollable content,
+`SidebarProvider` owns collapse state without rendering a layout element; `Sidebar`
+is the visual frame. Compose the navigation, header, scrollable content,
 footer, and toggle explicitly; leave out the pieces you do not need.
 
 ```tsx
@@ -25,28 +26,36 @@ import {
     SidebarItems,
     SidebarLink,
     SidebarNavigation,
+    SidebarProvider,
     SidebarToggle,
 } from '@/components/sidebar'
 
 export function AppNavigation() {
     return (
-        <Sidebar>
-            <SidebarNavigation aria-label="Application navigation">
-                <SidebarContent>
-                    <SidebarItems>
-                        <SidebarItem>
-                            <SidebarLink href="/dashboard" aria-current="page">
-                                Dashboard
-                            </SidebarLink>
-                        </SidebarItem>
-                        <SidebarItem>
-                            <SidebarLink href="/datasets">Datasets</SidebarLink>
-                        </SidebarItem>
-                    </SidebarItems>
-                </SidebarContent>
-            </SidebarNavigation>
-            <SidebarToggle />
-        </Sidebar>
+        <SidebarProvider>
+            <Sidebar>
+                <SidebarNavigation aria-label="Application navigation">
+                    <SidebarContent>
+                        <SidebarItems>
+                            <SidebarItem>
+                                <SidebarLink
+                                    href="/dashboard"
+                                    aria-current="page"
+                                >
+                                    Dashboard
+                                </SidebarLink>
+                            </SidebarItem>
+                            <SidebarItem>
+                                <SidebarLink href="/datasets">
+                                    Datasets
+                                </SidebarLink>
+                            </SidebarItem>
+                        </SidebarItems>
+                    </SidebarContent>
+                </SidebarNavigation>
+                <SidebarToggle />
+            </Sidebar>
+        </SidebarProvider>
     )
 }
 ```
@@ -95,14 +104,15 @@ render a disabled `SidebarButton` instead; anchors do not have a disabled state.
 
 ## Controlled state
 
-Collapse is local by default. `defaultCollapsed` sets its initial value, and
+Collapse is local to `SidebarProvider` by default. `defaultCollapsed` sets its initial value, and
 `onCollapsedChange` can observe changes. To share state with a toolbar or router,
-pass both `collapsed` and `onCollapsedChange`; do not also pass `defaultCollapsed`.
+pass both `collapsed` and `onCollapsedChange` to `SidebarProvider`; do not also pass `defaultCollapsed`.
 
 <ExampleCard slug="sidebar/controlled" />
 
-Custom descendants can call `useSidebar()` for `state.collapsed`,
-`actions.setCollapsed`, and `meta.navigationId`. The stock `SidebarToggle` exposes
+Place `SidebarProvider` around the sidebar and the page to let sibling toolbar
+controls call `useSidebar()` for `state.collapsed`, `actions.setCollapsed`, and
+`meta.navigationId`, without passing props through the layout. The stock `SidebarToggle` exposes
 `collapseLabel` and `expandLabel` for application-specific accessible labels.
 
 ## Styling

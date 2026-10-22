@@ -102,7 +102,8 @@ pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/sidebar
 ```
 
 Import from `@/components/sidebar`. Compose `SidebarNavigation`, `SidebarContent`,
-`SidebarItems`, `SidebarItem`, and `SidebarLink` inside `Sidebar`; add
+`SidebarItems`, `SidebarItem`, and `SidebarLink` inside `Sidebar`; wrap the layout
+in `SidebarProvider` to share state with sibling page controls, and add
 `SidebarHeader`, `SidebarFooter`, and `SidebarToggle` where needed. Nested sections
 use `SidebarGroup`, `SidebarGroupTrigger`, and `SidebarGroupContent`.
 `SidebarButton` handles actions. Links accept a router element through `render`

@@ -1,7 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Result } from 'better-result'
-import { useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import type {
     SourceError,
     SourcePage,
@@ -11,6 +11,7 @@ import type {
 import { fetchTrackedEntityWithEnrollments } from './queries'
 import type { Enrollment, Note, TrackedEntity } from './schemas'
 import { timelineKeys } from './timelineKeys'
+import { useQueryRevision } from './useQueryRevision'
 import { useTimelineClient } from './useTimelineClient'
 
 export type MilestoneKind = 'enrolled' | 'incident' | 'completed' | 'cancelled'
@@ -30,8 +31,6 @@ export interface EnrollmentSourceOptions {
     trackedEntity: string
     program: string
 }
-
-const dayOf = (stored: string) => stored.slice(0, 10)
 
 const failed = (cause: unknown): SourceError => ({
     kind: 'failed',
@@ -58,10 +57,7 @@ const milestonesOf = (
         ...milestone('enrolled', enrolledAt),
         ...milestone(
             'incident',
-            occurredAt &&
-                (!enrolledAt || dayOf(occurredAt) !== dayOf(enrolledAt))
-                ? occurredAt
-                : undefined
+            occurredAt && occurredAt !== enrolledAt ? occurredAt : undefined
         ),
         ...milestone(
             'completed',
@@ -90,7 +86,7 @@ const notesOf = (enrollment: Enrollment): Array<TimelineEntry<NoteEntryData>> =>
 
 /**
  * One request for the tracked entity and its enrollments, shared by both
- * sources (same query key); `dataUpdatedAt` is the sources' `revision`.
+ * sources (same query key); `useQueryRevision` is the sources' `revision`.
  */
 const useEnrollmentSource = <TData>(
     { trackedEntity, program }: EnrollmentSourceOptions,
@@ -121,24 +117,15 @@ const useEnrollmentSource = <TData>(
     )
 
     // Only invalidation refreshes this; focus, reconnect and remount do not.
-    const { dataUpdatedAt } = useQuery({
+    useQuery({
         ...request,
         staleTime: Infinity,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         refetchOnMount: false,
     })
-    // The first load is not a change: the revision stays undefined until a
-    // later update (invalidation) moves `dataUpdatedAt` off its first value.
-    const baseline = useRef({ request, at: 0 })
-    if (baseline.current.request !== request) {
-        baseline.current = { request, at: 0 }
-    }
-    if (baseline.current.at === 0 && dataUpdatedAt !== 0) {
-        baseline.current.at = dataUpdatedAt
-    }
-    const revision =
-        dataUpdatedAt === baseline.current.at ? undefined : dataUpdatedAt
+    // The first load, or the first failure, is not a change; invalidation is.
+    const revision = useQueryRevision(request.queryKey)
 
     return useMemo(
         (): TimelineSource<TData> => ({
@@ -147,6 +134,8 @@ const useEnrollmentSource = <TData>(
             revision,
             async fetchPage(): Promise<Result<SourcePage<TData>, SourceError>> {
                 try {
+                    // Shares the query's own request, so this call's signal
+                    // is not used.
                     const entity = await queryClient.fetchQuery({
                         ...request,
                         staleTime: Infinity,

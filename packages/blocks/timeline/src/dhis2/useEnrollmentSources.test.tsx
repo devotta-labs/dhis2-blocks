@@ -23,8 +23,6 @@ const setup = (respond: () => Response) => {
     const data: CustomData = {
         'tracker/trackedEntities': async (_type, query) => {
             requests.push(query)
-            // A real request takes time, so refetches get a new timestamp.
-            await new Promise((resolve) => setTimeout(resolve, 5))
             return respond()
         },
     }
@@ -249,5 +247,84 @@ describe('enrollment sources', () => {
         expect(result.current.notes.revision).toBe(
             result.current.milestones.revision
         )
+    })
+
+    it('restarts after a failed first load once an invalidation succeeds', async () => {
+        let fail = true
+        const { wrapper, queryClient } = setup(() => {
+            if (fail) throw new Error('Access denied to TlE2eTei001')
+            return trackedEntity
+        })
+        const { result } = await renderBoth(wrapper)
+        const failedAnswer = await result.current.milestones.fetchPage(
+            undefined,
+            signal()
+        )
+        expect(Result.isError(failedAnswer)).toBe(true)
+        const before = result.current.milestones.revision
+
+        fail = false
+        await queryClient.invalidateQueries({ queryKey: timelineKeys.root })
+
+        await expect
+            .poll(() => result.current.milestones.revision)
+            .not.toBe(before)
+        expect(
+            (await entriesOf(result.current.milestones)).length
+        ).toBeGreaterThan(0)
+    })
+
+    it('keeps an incident on the same day at a different time', async () => {
+        const { wrapper } = setup(() =>
+            entity(
+                enrollment({
+                    enrolledAt: '2026-01-10T00:00:00.000',
+                    occurredAt: '2026-01-10T15:30:00.000',
+                })
+            )
+        )
+        const { result } = await renderBoth(wrapper)
+
+        const entries = await entriesOf(result.current.milestones)
+
+        expect(entries.map((e) => e.id)).toEqual([
+            'milestones:e1:enrolled',
+            'milestones:e1:incident',
+        ])
+    })
+
+    it('places a completed enrollment at updatedAt when it has no completedAt', async () => {
+        const { wrapper } = setup(() =>
+            entity(
+                enrollment({
+                    status: 'COMPLETED',
+                    updatedAt: '2026-06-01T08:00:00.000',
+                })
+            )
+        )
+        const { result } = await renderBoth(wrapper)
+
+        const entries = await entriesOf(result.current.milestones)
+
+        expect(
+            entries.filter((e) => e.id.endsWith(':completed')).map((e) => e.at)
+        ).toEqual(['2026-06-01T08:00:00.000'])
+    })
+
+    it('emits no status milestone for an active enrollment', async () => {
+        const { wrapper } = setup(() =>
+            entity(
+                enrollment({
+                    status: 'ACTIVE',
+                    completedAt: '2026-06-01T08:00:00.000',
+                    updatedAt: '2026-06-02T08:00:00.000',
+                })
+            )
+        )
+        const { result } = await renderBoth(wrapper)
+
+        const entries = await entriesOf(result.current.milestones)
+
+        expect(entries.map((e) => e.id)).toEqual(['milestones:e1:enrolled'])
     })
 })

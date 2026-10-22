@@ -51,6 +51,31 @@ const toError = (cause: unknown, context: string) => {
     return new Error(`${context}: ${detail}`, { cause })
 }
 
+const StatusDetailsSchema = z.object({
+    details: z.object({ httpStatusCode: z.number().int() }),
+})
+
+/**
+ * The HTTP status of a failed request, if the engine reported one: the
+ * app-runtime FetchError carries the DHIS2 JSON body (`httpStatusCode`) in
+ * `details`, and ends its message with `(<status>)` when the body wasn't JSON.
+ * Looks through `cause`, where this client keeps the engine's error.
+ */
+export const httpStatusOf = (error: Error): number | undefined => {
+    for (let at: unknown = error, depth = 0; at && depth < 5; depth++) {
+        const parsed = StatusDetailsSchema.safeParse(at)
+        if (parsed.success) {
+            return parsed.data.details.httpStatusCode
+        }
+        if (at instanceof Error && 'details' in at) {
+            const status = /\((\d{3})\)$/.exec(at.message)?.[1]
+            return status === undefined ? undefined : Number(status)
+        }
+        at = at instanceof Error ? at.cause : undefined
+    }
+    return undefined
+}
+
 /**
  * Engine failures (HTTP, network, abort) and schema failures both come back
  * as error results; nothing here throws.

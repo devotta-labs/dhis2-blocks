@@ -10,7 +10,10 @@ const viteConfig = defineConfig(({ mode }) => {
         resolve: {
             alias: {
                 '@/components/dhis2/ui': fileURLToPath(
-                    new URL('../../packages/registry/components', import.meta.url)
+                    new URL(
+                        '../../packages/registry/components',
+                        import.meta.url
+                    )
                 ),
                 '@/components': fileURLToPath(
                     new URL('../../packages/registry/blocks', import.meta.url)

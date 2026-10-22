@@ -54,13 +54,19 @@ export default defineConfig(({ mode }) => {
                 {
                     find: '@/components/dhis2/ui',
                     replacement: fileURLToPath(
-                        new URL('../../packages/registry/components', import.meta.url)
+                        new URL(
+                            '../../packages/registry/components',
+                            import.meta.url
+                        )
                     ),
                 },
                 {
                     find: '@/components',
                     replacement: fileURLToPath(
-                        new URL('../../packages/registry/blocks', import.meta.url)
+                        new URL(
+                            '../../packages/registry/blocks',
+                            import.meta.url
+                        )
                     ),
                 },
             ],

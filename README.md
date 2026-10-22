@@ -215,6 +215,36 @@ metadata and composes each package-owned registry manifest through shadcn's
 `include` mechanism. Paths declared by a package manifest are relative to that
 package.
 
+### Registry development
+
+This is a [GitHub source registry](https://ui.shadcn.com/docs/registry/github):
+consumers install straight from the repository. There is no registry server or
+generated JSON to deploy. The package manifests use shadcn's documented
+[`include`](https://ui.shadcn.com/docs/registry/registry-json#include),
+[`registryDependencies` and target placeholders](https://ui.shadcn.com/docs/registry/registry-item-json).
+Keep full `devotta-labs/dhis2-blocks/<item>` addresses for same-repository
+dependencies; bare names such as `button` refer to the upstream shadcn registry.
+
+```sh
+pnpm registry:validate # official CLI: schemas, includes and source-file existence
+pnpm registry:build    # official CLI: optional local artifacts in dist/registry
+pnpm registry:check    # validate, build, install, typecheck and bundle fresh consumers
+```
+
+Development and CI use the lockfile-pinned `shadcn` CLI. The install check uses
+the CLI's supported local JSON files, without an HTTP server. It rewrites only
+same-repository `registryDependencies` in temporary build artifacts, so those
+items come from the checkout being tested, not the default branch.
+GitHub `#ref` values are **not inherited** by dependencies; adding a branch ref
+to an install command alone is not enough to test an unmerged dependency graph.
+
+After editing UI primitives or tokens, run
+`pnpm --filter @dhis2-blocks/ui registry:write` and commit the updated manifest.
+The small UI manifest generator remains because `shadcn build` embeds declared
+files but does not infer dependencies or convert our shared theme stylesheet
+into `cssVars.theme`. It uses TypeScript and PostCSS to read those sources and
+shadcn's schema types; the generated manifest is checked for drift in tests.
+
 ## UI primitives
 
 The shared DHIS2-styled shadcn primitives live in `packages/blocks/ui` and are

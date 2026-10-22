@@ -1,9 +1,17 @@
 // The package intentionally exposes the builder as both its default and named export.
 // eslint-disable-next-line import/no-named-as-default
 import AxeBuilder from '@axe-core/playwright'
-import type { APIRequestContext, Locator, Page } from '@playwright/test'
-import { z } from 'zod'
+import type { Locator, Page } from '@playwright/test'
 import { e2eEnvironment, expect, test } from '../fixtures/test'
+import seed from '../metadata/timeline-tracker-data.json'
+import {
+    EventsSchema,
+    importTracker,
+    NotesSchema,
+    SeededEventsSchema,
+    SystemInfoSchema,
+    type TrackerImport,
+} from './timeline.support'
 
 // Seeded by scripts/e2e/seed-metadata.sh from
 // e2e/metadata/timeline-{metadata,tracker-data}.json: one water point with
@@ -107,80 +115,41 @@ const feedOutline = (page: Page) =>
             )
         )
 
-/** A stable key per entry in DOM order: the event's Capture link, or the entry's text. */
+/**
+ * A stable key per entry in DOM order: an event's Capture link (its uid), else
+ * the entry's stored times and its label or note text, none of which wait on
+ * metadata or org unit names.
+ */
 const entryKeys = (page: Page) =>
     feed(page)
         .locator('li[data-timeline-entry-index]')
         .evaluateAll((items) =>
-            items.map(
-                (item) =>
-                    item
-                        .querySelector('a[href*="eventId="]')
-                        ?.getAttribute('href') ??
-                    item.textContent ??
+            items.map((item) => {
+                const capture = item
+                    .querySelector('a[href*="eventId="]')
+                    ?.getAttribute('href')
+                if (capture != null) {
+                    return capture
+                }
+                const times = [...item.querySelectorAll('time')].map((time) =>
+                    time.getAttribute('datetime')
+                )
+                const label =
+                    item.querySelector('[data-slot="note-text"]')
+                        ?.textContent ??
+                    item.querySelector('.font-medium')?.textContent ??
                     ''
-            )
+                return `${times.join('|')}|${label}`
+            })
         )
+
+/** A heading such as "May 14, 2026" as a time, to compare headings by date. */
+const headingTime = (heading: string) => Date.parse(`${heading} 00:00 UTC`)
 
 const value = (entry: Locator, name: string) =>
     entry
         .locator('dt', { hasText: name })
         .locator('xpath=following-sibling::dd[1]')
-
-const SystemInfoSchema = z.object({ calendar: z.string() }).passthrough()
-
-const EventSchema = z
-    .object({ event: z.string(), updatedAt: z.string() })
-    .passthrough()
-// DHIS2 2.41 can answer with `instances`; later versions with `events`.
-const EventsSchema = z
-    .object({
-        events: z.array(EventSchema).optional(),
-        instances: z.array(EventSchema).optional(),
-    })
-    .passthrough()
-    .transform((page) => page.events ?? page.instances ?? [])
-
-const ImportReportSchema = z.object({ status: z.string() }).passthrough()
-
-/** The part of a tracker import payload these tests send. */
-interface TrackerImport {
-    trackedEntities?: {
-        trackedEntity: string
-        trackedEntityType: string
-        orgUnit: string
-        attributes: { attribute: string; value: string }[]
-    }[]
-    events?: {
-        event: string
-        program: string
-        programStage: string
-        enrollment: string
-        trackedEntity: string
-        orgUnit: string
-        status: string
-        occurredAt: string
-        scheduledAt: string
-        dataValues: { dataElement: string; value: string }[]
-    }[]
-}
-
-const importTracker = async (
-    api: APIRequestContext,
-    payload: TrackerImport
-) => {
-    const response = await api.post('/api/tracker', {
-        params: {
-            async: 'false',
-            importStrategy: 'UPDATE',
-            atomicMode: 'ALL',
-        },
-        data: payload,
-    })
-    const body: unknown = await response.json()
-    expect(response.ok(), JSON.stringify(body)).toBe(true)
-    expect(ImportReportSchema.parse(body).status).toBe('OK')
-}
 
 const renameWaterPoint = (value: string): TrackerImport => ({
     trackedEntities: [
@@ -217,20 +186,47 @@ const inspectActiveEvent = (
 })
 
 test.describe('timeline', () => {
-    test('shows future, now, overdue and past in order', async ({ page }) => {
+    test('shows future, now, overdue and past in order', async ({
+        dhis2,
+        page,
+    }) => {
+        // Notes keep the time they were imported, so their day is read, not assumed.
+        const response = await dhis2.get(
+            `/api/tracker/trackedEntities/${TRACKED_ENTITY}`,
+            {
+                params: {
+                    program: PROGRAM,
+                    fields: 'enrollments[notes[value,storedAt]]',
+                },
+            }
+        )
+        expect(response.ok()).toBe(true)
+        const notes = NotesSchema.parse(await response.json())
+        expect(notes).toHaveLength(2)
+
         await openCaseHistory(page)
 
         const outline = await feedOutline(page)
-        expect(outline.slice(0, 8)).toEqual([
+        expect(outline.slice(0, 4)).toEqual([
             shownDay('2090-09-01'),
             shownDay('2090-06-15'),
             'Now',
             'Overdue',
-            shownDay(today()),
-            shownDay('2026-05-14'),
-            shownDay('2026-03-20'),
-            shownDay('2026-02-03'),
         ])
+        // The past runs newest first, one group per day.
+        const past = outline.slice(4)
+        const times = past.map(headingTime)
+        expect(times.every((time) => Number.isFinite(time))).toBe(true)
+        expect(times).toEqual([...times].sort((a, b) => b - a))
+        expect(new Set(past).size).toBe(past.length)
+        for (const day of [
+            '2026-05-14',
+            '2026-03-20',
+            '2026-02-03',
+            ...notes.map((note) => note.storedAt.slice(0, 10)),
+        ]) {
+            expect(past).toContain(shownDay(day))
+        }
 
         const overdue = group(page, 'Overdue')
         await expect(overdue.locator('[data-slot="event-entry"]')).toHaveCount(
@@ -277,18 +273,15 @@ test.describe('timeline', () => {
                 exact: true,
             })
         ).toBeVisible()
-        // Both enrollment notes were stored today.
-        const todayGroup = group(page, shownDay(today()))
-        await expect(
-            todayGroup.getByText(
-                'Re-registered after the rehabilitation works.'
-            )
-        ).toBeVisible()
-        await expect(
-            todayGroup.getByText(
-                'Hand pump installed by the district water team.'
-            )
-        ).toBeVisible()
+        // Each enrollment note sits in the group of the day it was stored.
+        for (const note of notes) {
+            await expect(
+                group(page, shownDay(note.storedAt.slice(0, 10))).getByText(
+                    note.value,
+                    { exact: true }
+                )
+            ).toBeVisible()
+        }
     })
 
     test('renders option names and dates in the system calendar', async ({
@@ -326,10 +319,6 @@ test.describe('timeline', () => {
             0
         )
 
-        await expect(
-            value(eventEntry(page, ACTIVE_EVENT), 'Water quality')
-        ).toHaveText(/^(Needs treatment|Safe to drink)$/)
-
         await completed.getByRole('button', { name: '1 note' }).click()
         await expect(
             completed.getByText('Sample sent to the district laboratory.')
@@ -340,7 +329,18 @@ test.describe('timeline', () => {
         page,
     }) => {
         await openCaseHistory(page)
-        // Org unit names arrive after the entries; wait for them so the keys settle.
+        // Names arrive after the entries: wait until they have.
+        await expect(
+            eventEntry(page, COMPLETED_EVENT).getByText('Ngelehun CHC', {
+                exact: true,
+            })
+        ).toBeVisible()
+        await expect(
+            eventEntry(page, COMPLETED_EVENT).getByText(
+                'Timeline E2E inspection',
+                { exact: true }
+            )
+        ).toBeVisible()
         await expect(
             feed(page).getByText(ORG_UNIT, { exact: true })
         ).toHaveCount(0)
@@ -354,8 +354,10 @@ test.describe('timeline', () => {
         await expect(eventEntry(page, OLDEST_INSPECTION)).toBeVisible()
         await expect(loadMore(page)).toHaveCount(0)
         await expect(
-            feed(page).getByText(ORG_UNIT, { exact: true })
-        ).toHaveCount(0)
+            eventEntry(page, OLDEST_INSPECTION).getByText('Ngelehun CHC', {
+                exact: true,
+            })
+        ).toBeVisible()
         const after = await entryKeys(page)
         expect(after.length).toBeGreaterThan(before.length)
         expect(after.slice(0, before.length)).toEqual(before)
@@ -419,6 +421,9 @@ test.describe('timeline', () => {
 
             const active = eventEntry(page, ACTIVE_EVENT)
             await expect(value(active, 'Flow rate')).toHaveText('11.2')
+            await expect(value(active, 'Water quality')).toHaveText(
+                'Safe to drink'
+            )
             await active.getByRole('button', { name: 'Show changes' }).click()
             const latestSave = active
                 .locator('[data-slot="change-entry"]')
@@ -471,6 +476,12 @@ test.describe('timeline', () => {
         dhis2,
         page,
     }) => {
+        // Saving the seeded events again (same values) moves their updatedAt
+        // to now, whatever day the stack was seeded.
+        const { events } = SeededEventsSchema.parse(seed)
+        expect(events).toHaveLength(SEEDED_EVENTS)
+        await importTracker(dhis2, { events })
+
         const request = page.waitForRequest(
             (candidate) =>
                 new URL(candidate.url()).pathname.endsWith('/tracker/events') &&
@@ -489,9 +500,9 @@ test.describe('timeline', () => {
             pageSize: '50',
         })
 
-        // The server honours the window: the same request returns only events
-        // updated today, newest first, and nothing for a window that starts
-        // tomorrow or ends at today's start.
+        // The server honours the window: the same request returns the events
+        // just saved, all updated today, newest first, and none of them for a
+        // window that starts tomorrow or ends at today's start.
         const replay = async (overrides: Record<string, string>) => {
             const response = await dhis2.get('/api/tracker/events', {
                 params: {

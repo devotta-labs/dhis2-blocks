@@ -94,25 +94,20 @@ callbacks, and metadata-derived labels are supplied by the host.
 
 ## Sidebar block
 
-The Sidebar adapts the CHAP modeling app's navigation into composable Tailwind
-components, using the shared DHIS2 theme. Install the source from the registry:
+Build navigation with expandable groups, footer actions, and a collapsible sidebar.
 
 ```sh
 pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/sidebar
 ```
 
-Import from `@/components/sidebar`. Compose `SidebarNavigation`, `SidebarContent`,
-`SidebarItems`, `SidebarItem`, and `SidebarLink` inside `Sidebar`; wrap the layout
-in `SidebarProvider` to share state with sibling page controls, and add
-`SidebarHeader`, `SidebarFooter`, and `SidebarToggle` where needed. Nested sections
-use `SidebarGroup`, `SidebarGroupTrigger`, and `SidebarGroupContent`.
-`SidebarButton` handles actions. Links accept a router element through `render`
-and use `aria-current="page"` for active styling. Collapse and groups support
-controlled or uncontrolled state, without a DHIS2 backend or router dependency.
+Import from `@/components/sidebar`. Use `SidebarLink` with
+`render={<NavLink to="/projects" />}` to highlight the current page. Add
+`SidebarGroup` for nested links and `SidebarButton` for footer actions.
+Use `SidebarToggle` in the sidebar, or `useSidebar()` for a page-toolbar control.
+Collapsing preserves the open groups and selected page.
 
-The docs page at `/blocks/sidebar` includes modeling-app and controlled/RTL
-examples. Styling comes from Tailwind and the registry's `dhis2-theme` dependency;
-no additional stylesheet import is needed.
+See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
+examples.
 
 ## Working List block
 

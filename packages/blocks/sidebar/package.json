@@ -2,7 +2,7 @@
     "name": "@dhis2-blocks/sidebar",
     "version": "1.0.0",
     "private": true,
-    "description": "Composable modeling-app sidebar for DHIS2 applications",
+    "description": "Navigation with expandable groups, footer actions and a collapsible sidebar",
     "license": "BSD-3-Clause",
     "exports": {
         ".": "./src/index.ts"

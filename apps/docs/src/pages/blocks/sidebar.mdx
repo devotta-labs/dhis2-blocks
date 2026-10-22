@@ -1,26 +1,24 @@
 ---
 title: Sidebar
-description: The modeling app's navigation, composed from Tailwind-styled links, expandable groups, footer actions, and a collapsible rail.
+description: Navigation with expandable groups, footer actions, and a collapsible sidebar.
 ---
 
 import { ExampleCard } from '../../components/ExampleCard'
 import { InstallCommand } from '../../components/InstallCommand'
 
-<ExampleCard slug="sidebar/modeling" />
+<ExampleCard slug="sidebar/basic" />
 
 ## Installation
 
 <InstallCommand item="sidebar" />
 
-## Composition
+## Navigation links
 
-`SidebarProvider` owns collapse state without rendering a layout element; `Sidebar`
-is the visual frame. Compose the navigation, header, scrollable content,
-footer, and toggle explicitly; leave out the pieces you do not need.
-Use one `SidebarNavigation` per provider. Give separate sidebars their own
-providers; sharing the provider with page controls does not create a second sidebar.
+Pass a `NavLink` to `SidebarLink` through `render` to highlight the current page
+with a leading selection marker.
 
 ```tsx
+import { NavLink } from 'react-router-dom'
 import {
     Sidebar,
     SidebarContent,
@@ -41,15 +39,16 @@ export function AppNavigation() {
                         <SidebarItems>
                             <SidebarItem>
                                 <SidebarLink
-                                    href="/dashboard"
-                                    aria-current="page"
+                                    render={<NavLink to="/dashboard" end />}
                                 >
                                     Dashboard
                                 </SidebarLink>
                             </SidebarItem>
                             <SidebarItem>
-                                <SidebarLink href="/datasets">
-                                    Datasets
+                                <SidebarLink
+                                    render={<NavLink to="/projects" />}
+                                >
+                                    Projects
                                 </SidebarLink>
                             </SidebarItem>
                         </SidebarItems>
@@ -62,65 +61,37 @@ export function AppNavigation() {
 }
 ```
 
-Use a `flex-col md:flex-row` layout around the sidebar and page content. On
-desktop the sidebar is 240px wide, collapsing to a 52px rail; below `md` it spans
-the container and collapses to a 52px bar above the content. Give the desktop
-layout a bounded height to scroll long menus while keeping the footer visible.
-Hidden navigation stays mounted, preserving group state, but cannot receive focus.
+For other routers, set `aria-current="page"` on the active link.
 
 ## Nested navigation and actions
 
-Compose `SidebarGroup`, `SidebarGroupTrigger`, and `SidebarGroupContent` directly
-inside `SidebarItems`. Put each link or action in a `SidebarItem`. Groups support
-`defaultOpen`, or `open` with `onOpenChange`, and `disabled`.
+Use `SidebarGroup`, `SidebarGroupTrigger`, and `SidebarGroupContent` for nested
+links. Set `defaultOpen` to start a group expanded, or use `open` and
+`onOpenChange` to control it.
 
-`SidebarHeader` and `SidebarFooter` accept any children. Use `SidebarButton` for
-actions such as opening a bug-report dialog; it supports native `disabled` and
-`onClick`. Icons, badges, and custom labels are children rather than configuration
-props. The block does not fetch metadata, enforce permissions, or own dialogs.
+Keep frequently used actions in `SidebarFooter` with `SidebarButton`. Place
+icons, badges, and custom labels directly inside links and buttons.
 
-## Client-side routing
+## Collapse controls
 
-`SidebarLink` renders an anchor by default. Its `render` prop composes with a router
-link without introducing an extra element. `aria-current="page"` supplies the active
-background and leading teal marker; React Router's `NavLink` sets it automatically.
+Add `SidebarToggle` to collapse and expand the navigation. To start collapsed,
+set `defaultCollapsed` on `SidebarProvider`; to control it, use `collapsed` and
+`onCollapsedChange` instead. Collapsing preserves expanded groups and the selected page.
 
-```tsx
-import { NavLink } from 'react-router-dom'
-import { SidebarItem, SidebarLink } from '@/components/sidebar'
-
-export function DashboardLink() {
-    return (
-        <SidebarItem>
-            <SidebarLink render={<NavLink to="/dashboard" end />}>
-                Dashboard
-            </SidebarLink>
-        </SidebarItem>
-    )
-}
-```
-
-Use ordinary `href`, `target`, and `rel` for external links. Routing and deciding
-which page is active remain the host's responsibility. Omit inaccessible links or
-render a disabled `SidebarButton` instead; anchors do not have a disabled state.
-
-## Controlled state
-
-Collapse is local to `SidebarProvider` by default. `defaultCollapsed` sets its initial value, and
-`onCollapsedChange` can observe changes. To share state with a toolbar or router,
-pass both `collapsed` and `onCollapsedChange` to `SidebarProvider`; do not also pass `defaultCollapsed`.
+To add a page-toolbar control, place it under the same `SidebarProvider` and
+use `useSidebar()`. Give separate sidebars their own providers, with one
+`SidebarNavigation` each.
 
 <ExampleCard slug="sidebar/controlled" />
 
-Place `SidebarProvider` around the sidebar and the page to let sibling toolbar
-controls call `useSidebar()` for `state.collapsed`, `actions.setCollapsed`, and
-`meta.navigationId`, without passing props through the layout. The stock `SidebarToggle` exposes
-`collapseLabel` and `expandLabel` for application-specific accessible labels.
+Use `collapseLabel` and `expandLabel` on `SidebarToggle` to customize its accessible labels.
 
-## Styling
+## Layout
 
-All styling is Tailwind. The installed `dhis2-theme` supplies the existing DHIS2
-grey palette, teal selection marker, font, and radius tokens; no sidebar stylesheet
-or application-wide palette override is required. Use `className` on the pieces
-or customize the namespaced theme tokens. Logical spacing and selection borders
-follow the inherited `dir`; transitions respect reduced-motion preferences.
+The sidebar becomes a full-width bar on smaller screens. Use a
+`flex-col md:flex-row` layout to keep it above the page on mobile and beside it on
+desktop. Give the desktop layout a bounded height to scroll long menus while
+keeping the header and footer visible.
+
+Set `dir="rtl"` on the layout for right-to-left navigation; the selection marker
+and toggle direction follow it.

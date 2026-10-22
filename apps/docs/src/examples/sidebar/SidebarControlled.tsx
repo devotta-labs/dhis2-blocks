@@ -75,7 +75,7 @@ export default function SidebarControlled() {
                     aria-label="Sidebar controls"
                     className="min-w-0 flex-1 space-y-4 p-6 text-sm"
                 >
-                    <h3 className="font-medium">App-owned state</h3>
+                    <h3 className="font-medium">Navigation controls</h3>
                     <ToolbarToggle />
                     <label className="flex items-center gap-2">
                         <input
@@ -90,8 +90,7 @@ export default function SidebarControlled() {
                         Right-to-left layout
                     </label>
                     <p className="text-muted-foreground">
-                        The page toolbar and sidebar toggle share the same
-                        state.
+                        Use either button to show or hide navigation.
                     </p>
                 </section>
             </div>

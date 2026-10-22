@@ -16,11 +16,11 @@ import {
     SidebarToggle,
 } from '@/components/sidebar'
 
-const mainPages = ['Dashboard', 'Datasets']
-const evaluationPages = ['Overview', 'Compare', 'Benchmarks']
-const otherPages = ['Predict', 'Alert policies', 'Models', 'Jobs']
+const mainPages = ['Dashboard', 'Projects']
+const reportPages = ['Overview', 'Activity', 'Exports']
+const otherPages = ['Calendar', 'Messages', 'Files', 'Tasks']
 
-export default function SidebarModeling() {
+export default function SidebarBasic() {
     const [page, setPage] = useState('Overview')
     const [notice, setNotice] = useState('')
     const pageLink = (label: string) => (
@@ -43,10 +43,10 @@ export default function SidebarModeling() {
         <SidebarProvider>
             <div className="flex min-h-160 flex-col overflow-hidden rounded-md border border-border bg-background md:h-160 md:flex-row">
                 <Sidebar>
-                    <SidebarNavigation aria-label="Modeling navigation">
+                    <SidebarNavigation aria-label="Workspace navigation">
                         <SidebarHeader>
                             <span className="text-base font-medium">
-                                Modeling
+                                Workspace
                             </span>
                         </SidebarHeader>
                         <SidebarContent>
@@ -54,10 +54,10 @@ export default function SidebarModeling() {
                                 {mainPages.map(pageLink)}
                                 <SidebarGroup defaultOpen>
                                     <SidebarGroupTrigger>
-                                        Evaluate
+                                        Reports
                                     </SidebarGroupTrigger>
                                     <SidebarGroupContent>
-                                        {evaluationPages.map(pageLink)}
+                                        {reportPages.map(pageLink)}
                                     </SidebarGroupContent>
                                 </SidebarGroup>
                                 {otherPages.map(pageLink)}
@@ -69,11 +69,11 @@ export default function SidebarModeling() {
                                     <SidebarButton
                                         onClick={() =>
                                             setNotice(
-                                                'Your app opens its bug report dialog here.'
+                                                'Demo: contact support selected.'
                                             )
                                         }
                                     >
-                                        Report a bug
+                                        Contact support
                                     </SidebarButton>
                                 </SidebarItem>
                                 {['Guides', 'Settings'].map(pageLink)}
@@ -87,12 +87,12 @@ export default function SidebarModeling() {
                     className="min-w-0 flex-1 p-6"
                 >
                     <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Modeling workspace
+                        Workspace
                     </p>
                     <h3 className="mt-2 text-xl font-medium">{page}</h3>
                     <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
-                        Select a page, expand Evaluate, or collapse the sidebar.
-                        Navigation and footer actions belong to your app.
+                        Manage projects, review reports, and keep track of your
+                        team's work.
                     </p>
                     <p role="status" className="mt-4 text-sm">
                         {notice}

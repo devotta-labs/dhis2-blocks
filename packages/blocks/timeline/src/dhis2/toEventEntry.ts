@@ -1,4 +1,4 @@
-import type { TimelineEntry } from '../core/types'
+import type { TimelineEntry, TimelinePhase } from '../core/types'
 import { deriveEventStatus, type DerivedEventStatus } from './eventStatus'
 import type { EventTimeField } from './queries'
 import type { TrackerEvent } from './schemas'
@@ -7,6 +7,14 @@ export interface EventEntryData {
     event: TrackerEvent
     status: DerivedEventStatus
 }
+
+/** An event with no date has no place before or after now: it is Undated. */
+const phaseOf = (status: DerivedEventStatus): TimelinePhase =>
+    status === 'scheduled'
+        ? 'future'
+        : status === 'overdue'
+          ? 'overdue'
+          : 'past'
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
 
@@ -28,12 +36,7 @@ export const toEventEntry = (
         id: `events:${event.event}`,
         at,
         precision: DATE_ONLY.test(at) ? 'day' : 'instant',
-        phase:
-            status === 'scheduled'
-                ? 'future'
-                : status === 'overdue'
-                  ? 'overdue'
-                  : 'past',
+        phase: at === '' ? 'past' : phaseOf(status),
         sourceKey: options.sourceKey,
         data: { event, status },
     }

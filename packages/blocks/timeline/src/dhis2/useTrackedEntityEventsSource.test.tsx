@@ -1,8 +1,13 @@
 import { CustomDataProvider } from '@dhis2/app-runtime'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+    focusManager,
+    QueryClient,
+    QueryClientProvider,
+} from '@tanstack/react-query'
 import { Result } from 'better-result'
-import React, { type ComponentProps, type ReactNode } from 'react'
+import React, { useMemo, type ComponentProps, type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
+import type { SourcePage } from '../core/types'
 import { useTimelineSources } from '../core/useTimelineSources'
 import manyEvents from './__fixtures__/ugly/many-events.json'
 import { timelineKeys } from './timelineKeys'
@@ -49,9 +54,11 @@ const skipped = (
     return row
 }
 
+const FIELDS = ['occurredAt', 'scheduledAt', 'event'] as const
+type OrderField = (typeof FIELDS)[number]
+
 const compare =
-    (field: 'occurredAt' | 'scheduledAt', direction: 1 | -1) =>
-    (a: RawEvent, b: RawEvent) => {
+    (field: OrderField, direction: 1 | -1) => (a: RawEvent, b: RawEvent) => {
         const left = a[field]
         const right = b[field]
         if (left === right) return 0
@@ -60,6 +67,24 @@ const compare =
         if (right === undefined) return direction === -1 ? 1 : -1
         return (left < right ? -1 : 1) * direction
     }
+
+/** Orders by `field:dir,field:dir`, the way the server reads `order`. */
+const byOrder = (order: string) => {
+    const keys = order.split(',').flatMap((part) => {
+        const [name, direction] = part.split(':')
+        const field = FIELDS.find((known) => known === name)
+        return field === undefined
+            ? []
+            : [compare(field, direction === 'asc' ? 1 : -1)]
+    })
+    return (a: RawEvent, b: RawEvent) => {
+        for (const key of keys) {
+            const result = key(a, b)
+            if (result !== 0) return result
+        }
+        return 0
+    }
+}
 
 /** A fake tracker/events endpoint: status filter, ordering, paging. */
 const setup = (stored: RawEvent[]) => {
@@ -70,17 +95,9 @@ const setup = (stored: RawEvent[]) => {
             const status =
                 params.status === undefined ? undefined : String(params.status)
             requests.push({ status })
-            const [field, direction] = String(params.order)
-                .split(',')[0]
-                .split(':')
             const rows = stored
                 .filter((e) => status === undefined || e.status === status)
-                .sort(
-                    compare(
-                        field === 'scheduledAt' ? 'scheduledAt' : 'occurredAt',
-                        direction === 'asc' ? 1 : -1
-                    )
-                )
+                .sort(byOrder(String(params.order)))
             const pageSize = Number(params.pageSize)
             const page = Number(params.page)
             return {
@@ -119,7 +136,7 @@ const signal = () => new AbortController().signal
 
 const page = async (
     source: ReturnType<typeof useTrackedEntityEventsSource>,
-    cursor?: number
+    cursor?: SourcePage<unknown>['nextCursor']
 ) => {
     const result = await source.fetchPage(cursor, signal())
     if (Result.isError(result)) throw new Error(JSON.stringify(result.error))
@@ -151,11 +168,11 @@ describe('useTrackedEntityEventsSource', () => {
             ['events:late1', 'overdue'],
             ['events:skip1', 'past'],
         ])
-        expect(first.nextCursor).toBe(2)
+        expect(first.nextCursor).toBeDefined()
         expect(requests.some((r) => r.status === 'SCHEDULE')).toBe(true)
 
         requests.length = 0
-        const second = await page(result.current, 2)
+        const second = await page(result.current, first.nextCursor)
 
         expect(second.entries.map((e) => e.id)).toEqual([
             'events:c3',
@@ -170,7 +187,7 @@ describe('useTrackedEntityEventsSource', () => {
         const { result } = await render(wrapper, { pageSize: 5 })
 
         const first = await page(result.current)
-        const second = await page(result.current, 2)
+        const second = await page(result.current, first.nextCursor)
 
         // The last raw row on page 1 is c2.
         expect(first.completeUntil).toBe('2026-05-04T00:00:00.000')
@@ -189,16 +206,16 @@ describe('useTrackedEntityEventsSource', () => {
 
         // Only the pinned skipped entry; no past entry came from the raw page.
         expect(first.entries.map((e) => e.id)).toEqual(['events:skip1'])
-        expect(first.nextCursor).toBe(2)
+        expect(first.nextCursor).toBeDefined()
         expect(first.completeUntil).toBe('2026-03-01')
 
-        const second = await page(result.current, 2)
+        const second = await page(result.current, first.nextCursor)
         expect(second.entries.map((e) => e.id)).toEqual(['events:c1'])
         // A full page can't say it was the last.
-        expect(second.nextCursor).toBe(3)
+        expect(second.nextCursor).toBeDefined()
     })
 
-    it('shows no more than scheduledCap pinned events and says so on the first page only', async () => {
+    it('shows no more than scheduledCap pinned events and keeps saying so on every page', async () => {
         const { wrapper } = setup([
             scheduled('f1', '2027-01-01'),
             scheduled('f2', '2027-02-01'),
@@ -213,13 +230,21 @@ describe('useTrackedEntityEventsSource', () => {
         })
 
         const first = await page(result.current)
-        const second = await page(result.current, 2)
+        const second = await page(result.current, first.nextCursor)
+        const third = await page(result.current, second.nextCursor)
 
         expect(
             first.entries.filter((e) => e.phase === 'future').map((e) => e.id)
         ).toEqual(['events:f1', 'events:f2'])
         expect(first.notice).toBe("More scheduled events aren't shown.")
-        expect(second.notice).toBeUndefined()
+        // The events are still hidden after load-more, and the merge
+        // replaces a source's notice with each page's.
+        expect(second.notice).toBe("More scheduled events aren't shown.")
+        expect(third.notice).toBe("More scheduled events aren't shown.")
+        expect(third.entries.map((e) => e.id)).toEqual([
+            'events:c2',
+            'events:c3',
+        ])
     })
 
     it('has no notice when every scheduled event fits', async () => {
@@ -248,7 +273,10 @@ describe('useTrackedEntityEventsSource', () => {
         const answer = await result.current.fetchPage(undefined, signal())
 
         expect(Result.isError(answer) && answer.error.kind).toBe('failed')
-        const later = await result.current.fetchPage(2, signal())
+        const later = await result.current.fetchPage(
+            { page: 2, capped: false },
+            signal()
+        )
         expect(Result.isError(later) && later.error.kind).toBe('failed')
     })
 
@@ -298,5 +326,112 @@ describe('useTrackedEntityEventsSource', () => {
         await queryClient.invalidateQueries({ queryKey: timelineKeys.root })
 
         await expect.poll(() => result.current.revision).not.toBe(before)
+    })
+
+    describe('in a feed', () => {
+        /** The source in a feed, counting how often it is started over. */
+        const renderFeed = (
+            wrapper: ReturnType<typeof setup>['wrapper'],
+            pageSize: number
+        ) => {
+            const starts = { count: 0 }
+            const rendered = renderHook(
+                () => {
+                    const source = useTrackedEntityEventsSource({
+                        ...subject,
+                        pageSize,
+                    })
+                    const counted = useMemo(
+                        (): typeof source => ({
+                            ...source,
+                            fetchPage: (cursor, abort) => {
+                                if (cursor === undefined) {
+                                    starts.count += 1
+                                }
+                                return source.fetchPage(cursor, abort)
+                            },
+                        }),
+                        [source]
+                    )
+                    return useTimelineSources([counted])
+                },
+                { wrapper }
+            )
+            return { starts, rendered }
+        }
+
+        const settle = () => new Promise((resolve) => setTimeout(resolve, 100))
+
+        it('does not restart the source when its first page first settles', async () => {
+            const { wrapper } = setup(stored)
+            const { starts, rendered } = renderFeed(wrapper, 5)
+            const { result } = await rendered
+
+            await expect.poll(() => result.current.status).toBe('ready')
+            await settle()
+
+            expect(starts.count).toBe(1)
+            expect(result.current.entries.length).toBeGreaterThan(0)
+        })
+
+        it('does not restart the source on window focus or reconnect', async () => {
+            const { wrapper, requests } = setup(stored)
+            const { starts, rendered } = renderFeed(wrapper, 5)
+            const { result } = await rendered
+            await expect.poll(() => result.current.status).toBe('ready')
+            await settle()
+            const asked = requests.length
+
+            focusManager.setFocused(false)
+            focusManager.setFocused(true)
+            window.dispatchEvent(new Event('online'))
+            await settle()
+            focusManager.setFocused(undefined)
+
+            expect(starts.count).toBe(1)
+            expect(requests).toHaveLength(asked)
+        })
+
+        it('restarts the source when timelineKeys.root is invalidated', async () => {
+            const { wrapper, queryClient } = setup(stored)
+            const { starts, rendered } = renderFeed(wrapper, 5)
+            const { result } = await rendered
+            await expect.poll(() => result.current.status).toBe('ready')
+            await settle()
+
+            await queryClient.invalidateQueries({ queryKey: timelineKeys.root })
+
+            await expect.poll(() => starts.count).toBe(2)
+        })
+
+        it('only appends when load-more crosses a run of events with the same time', async () => {
+            const tied = ['t1', 't2', 't3', 't4'].map((id) =>
+                completed(id, '2026-05-05T00:00:00.000')
+            )
+            const { wrapper } = setup([
+                ...tied,
+                completed('o1', '2026-05-01T00:00:00.000'),
+                completed('o2', '2026-04-01T00:00:00.000'),
+            ])
+            const { rendered } = renderFeed(wrapper, 3)
+            const { result } = await rendered
+            await expect.poll(() => result.current.status).toBe('ready')
+            const first = result.current.entries.map((e) => e.id)
+            expect(first.length).toBeGreaterThan(0)
+
+            result.current.loadMore()
+            await expect
+                .poll(() => result.current.entries.length)
+                .toBeGreaterThan(first.length)
+
+            const next = result.current.entries.map((e) => e.id)
+            expect(next.slice(0, first.length)).toEqual(first)
+            expect(next.slice(0, 4)).toEqual([
+                'events:t1',
+                'events:t2',
+                'events:t3',
+                'events:t4',
+            ])
+        })
     })
 })

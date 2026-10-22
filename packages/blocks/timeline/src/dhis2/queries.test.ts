@@ -76,7 +76,7 @@ describe('fetchEventsPage', () => {
             params: {
                 trackedEntity: 'TlE2eTei001',
                 program: 'WSGAb5XwJ3Y',
-                order: 'completedAt:desc,event:desc',
+                order: 'completedAt:desc,event:asc',
                 page: 1,
                 pageSize: 4,
             },

@@ -55,7 +55,9 @@ interface Paging {
 
 /**
  * One page of the past stream, newest first by `timeField`, with the event
- * uid breaking ties so pages never overlap. No server version accepts more
+ * uid breaking ties so pages never overlap. The uid runs ascending because the
+ * merge breaks ties between entries of one instant by ascending id, so a page
+ * boundary inside a tie only ever appends. No server version accepts more
  * than one `status`, so scheduled and skipped events are removed here; they
  * still count toward the page being full.
  */
@@ -77,7 +79,7 @@ export const fetchEventsPage = async (
                 trackedEntity,
                 program,
                 fields: EVENT_FIELDS,
-                order: `${timeField}:desc,event:desc`,
+                order: `${timeField}:desc,event:asc`,
                 page,
                 pageSize,
             },

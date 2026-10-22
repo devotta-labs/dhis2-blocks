@@ -153,4 +153,15 @@ describe('toEventEntry', () => {
 
         expect(new Set(ids).size).toBe(visits.length)
     })
+
+    it('puts a scheduled or overdue event without scheduledAt in Undated, not in a phase', () => {
+        const entries = ['SCHEDULE', 'OVERDUE'].map((status) =>
+            toEventEntry(event(status), { ...options, timeField: 'occurredAt' })
+        )
+
+        expect(entries.map((e) => [e.at, e.phase])).toEqual([
+            ['', 'past'],
+            ['', 'past'],
+        ])
+    })
 })

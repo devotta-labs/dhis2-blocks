@@ -1,5 +1,5 @@
 interface:
   display_name: "Improve Codebase Architecture"
-  short_description: "Find and explore deepening opportunities"
+  short_description: "Find deepening opportunities"
 policy:
   allow_implicit_invocation: false

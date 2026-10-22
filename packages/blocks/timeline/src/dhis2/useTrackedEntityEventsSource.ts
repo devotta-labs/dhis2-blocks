@@ -1,7 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Result } from 'better-result'
-import { useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { z } from 'zod'
 import type { SourceError, SourcePage, TimelineSource } from '../core/types'
 import {
@@ -12,6 +12,7 @@ import {
 import type { EventsPage } from './schemas'
 import { timelineKeys } from './timelineKeys'
 import { toEventEntry, type EventEntryData } from './toEventEntry'
+import { useQueryRevision } from './useQueryRevision'
 import { useTimelineClient } from './useTimelineClient'
 
 export interface TrackedEntityEventsSourceOptions {
@@ -57,7 +58,7 @@ const failed = (cause: unknown): SourceError => ({
  * Events of one tracked entity in one program. The first page carries the
  * scheduled, overdue and skipped events (so the feed stays append-only) and
  * the first page of the past stream; its request is cached under
- * `timelineKeys.events`, and its `dataUpdatedAt` is the source's `revision`,
+ * `timelineKeys.events`, and its settles drive the source's `revision`,
  * so invalidating `timelineKeys.root` restarts the source.
  */
 export const useTrackedEntityEventsSource = ({
@@ -107,20 +108,12 @@ export const useTrackedEntityEventsSource = ({
     )
 
     // Observes the first page so the source restarts when it is refreshed.
-    const { dataUpdatedAt } = useQuery(firstPage)
-    // The first load is not a change: only later updates of the same subject
-    // (an invalidation) restart the source. A new subject starts it afresh.
-    const subjectKey = JSON.stringify(firstPage.queryKey)
-    const baseline = useRef<{ subject: string; at: number }>()
-    if (baseline.current?.subject !== subjectKey) {
-        baseline.current = { subject: subjectKey, at: 0 }
-    }
-    if (baseline.current.at === 0) {
-        baseline.current.at = dataUpdatedAt
-    }
-    const revision = `${subjectKey}:${
-        dataUpdatedAt === baseline.current.at ? 0 : dataUpdatedAt
-    }`
+    useQuery(firstPage)
+    // Changes when the query settles again after its first settle (success or
+    // error), so an invalidation restarts the source, also after a failed
+    // first page. The subject is part of it: a new subject starts afresh.
+    const settles = useQueryRevision(firstPage.queryKey)
+    const revision = `${JSON.stringify(firstPage.queryKey)}:${settles ?? 0}`
 
     return useMemo((): TimelineSource<EventEntryData> => {
         const entriesOf = (events: EventsPage['events'], today: string) =>

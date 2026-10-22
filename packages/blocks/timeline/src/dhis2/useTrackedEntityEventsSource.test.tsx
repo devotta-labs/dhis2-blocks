@@ -87,10 +87,13 @@ const byOrder = (order: string) => {
 }
 
 /** A fake tracker/events endpoint: status filter, ordering, paging. */
-const setup = (stored: RawEvent[]) => {
+const setup = (stored: RawEvent[], failing = { on: false }) => {
     const requests: Array<{ status?: string }> = []
     const data: CustomData = {
         'tracker/events': async (_type, query) => {
+            if (failing.on) {
+                throw new Error('down')
+            }
             const params = query.params ?? {}
             const status =
                 params.status === undefined ? undefined : String(params.status)
@@ -319,10 +322,9 @@ describe('useTrackedEntityEventsSource', () => {
     it('changes revision after timelineKeys.root is invalidated', async () => {
         const { wrapper, queryClient } = setup(stored)
         const { result } = await render(wrapper, { pageSize: 5 })
-        await expect.poll(() => result.current.revision).toBeDefined()
+        await new Promise((resolve) => setTimeout(resolve, 100))
         const before = result.current.revision
 
-        await new Promise((resolve) => setTimeout(resolve, 5))
         await queryClient.invalidateQueries({ queryKey: timelineKeys.root })
 
         await expect.poll(() => result.current.revision).not.toBe(before)
@@ -402,6 +404,24 @@ describe('useTrackedEntityEventsSource', () => {
             await queryClient.invalidateQueries({ queryKey: timelineKeys.root })
 
             await expect.poll(() => starts.count).toBe(2)
+        })
+
+        it('restarts after a failed first page once an invalidation succeeds', async () => {
+            const failing = { on: true }
+            const { wrapper, queryClient } = setup(stored, failing)
+            const { rendered } = renderFeed(wrapper, 5)
+            const { result } = await rendered
+            await expect
+                .poll(() => result.current.sources[0]?.status)
+                .toBe('error')
+
+            failing.on = false
+            await queryClient.invalidateQueries({ queryKey: timelineKeys.root })
+
+            await expect
+                .poll(() => result.current.entries.length)
+                .toBeGreaterThan(0)
+            expect(result.current.sources[0]?.status).toBe('hasMore')
         })
 
         it('only appends when load-more crosses a run of events with the same time', async () => {

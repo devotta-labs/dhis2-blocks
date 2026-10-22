@@ -1,4 +1,4 @@
-import { compareEntries, sortKey } from './sort'
+import { compareEntries, cutoffKey, sortKey } from './sort'
 import type { TimelineEntry } from './types'
 
 const entry = (
@@ -102,4 +102,20 @@ describe('sortKey', () => {
 
     it('is undefined when the stored day is unreadable', () =>
         expect(sortKey(entry('soon'))).toBeUndefined())
+})
+
+describe('cutoffKey', () => {
+    it('reads a date with no time as the whole day, like a day-precision entry', () => {
+        const day = cutoffKey('2026-10-15') ?? ''
+        expect(day < (sortKey(entry('2026-10-15T00:00')) ?? '')).toBe(true)
+        expect(day > (sortKey(entry('2026-10-14T23:59:59.999')) ?? '')).toBe(
+            true
+        )
+    })
+
+    it('reads a date-time as that instant', () =>
+        expect(cutoffKey('2026-10-15T09:05')).toBe('2026-10-15T09:05:00.000'))
+
+    it('is undefined when unreadable', () =>
+        expect(cutoffKey('later')).toBeUndefined())
 })

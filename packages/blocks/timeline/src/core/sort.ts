@@ -9,7 +9,9 @@ const STORED_CLOCK =
  * the stored text with no time-zone shift. Missing parts are zero. Undefined
  * when the stored day is unreadable.
  */
-export const sortKey = (entry: TimelineEntry): string | undefined => {
+export const sortKey = (
+    entry: Pick<TimelineEntry, 'at'>
+): string | undefined => {
     const day = storedDay(entry.at)
     if (day === undefined) {
         return undefined
@@ -22,12 +24,30 @@ export const sortKey = (entry: TimelineEntry): string | undefined => {
     return `${day}T${hours}:${minutes}:${seconds}.${fraction.padEnd(3, '0').slice(0, 3)}`
 }
 
-// '!' sorts before every digit, so a day-precision entry is the earliest
-// moment of its day: first when ascending, last once the order is reversed.
-const comparableKey = (entry: TimelineEntry): string | undefined =>
-    entry.precision === 'day'
-        ? `${storedDay(entry.at) ?? ''}T!`
-        : sortKey(entry)
+/**
+ * The key entries are ordered and cut off by: `sortKey`, except that a
+ * day-precision entry becomes `YYYY-MM-DDT!`. '!' sorts before every digit, so
+ * a day-precision entry is the earliest moment of its day: first when
+ * ascending, last once the order is reversed. Undefined when unreadable.
+ */
+export const comparableKey = (
+    entry: Pick<TimelineEntry, 'at' | 'precision'>
+): string | undefined => {
+    const key = sortKey(entry)
+    return key !== undefined && entry.precision === 'day'
+        ? `${key.slice(0, 10)}T!`
+        : key
+}
+
+/**
+ * The comparable key of a source's `completeUntil`. A date with no time covers
+ * that whole day, the same as a day-precision entry.
+ */
+export const cutoffKey = (completeUntil: string): string | undefined =>
+    comparableKey({
+        at: completeUntil,
+        precision: STORED_CLOCK.test(completeUntil) ? 'instant' : 'day',
+    })
 
 const compareText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 
@@ -39,8 +59,8 @@ const compareText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 export const compareEntries =
     (order: TimelineOrder) =>
     (a: TimelineEntry, b: TimelineEntry): number => {
-        const keyA = sortKey(a) === undefined ? undefined : comparableKey(a)
-        const keyB = sortKey(b) === undefined ? undefined : comparableKey(b)
+        const keyA = comparableKey(a)
+        const keyB = comparableKey(b)
         if (keyA === undefined || keyB === undefined) {
             if (keyA === keyB) {
                 return 0

@@ -10,7 +10,9 @@
         "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json --noEmit",
         "lint": "oxlint --deny-warnings src"
     },
-    "dependencies": {},
+    "dependencies": {
+        "better-result": "^3.0.1"
+    },
     "devDependencies": {
         "@dhis2-blocks/ui": "workspace:*",
         "@dhis2-blocks/value-display": "workspace:*",
@@ -25,7 +27,8 @@
         "tailwindcss": "^4.3.3",
         "typescript": "^5.9.3",
         "vite": "^7.3.0",
-        "vitest": "4.1.11"
+        "vitest": "4.1.11",
+        "vitest-browser-react": "2.2.0"
     },
     "peerDependencies": {
         "react": "^18.3.1",

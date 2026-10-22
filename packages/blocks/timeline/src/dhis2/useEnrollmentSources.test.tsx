@@ -3,11 +3,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import React, { type ComponentProps, type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
+import type { TimelineSource } from '../core/types'
 import { useTimelineSources } from '../core/useTimelineSources'
-import type { Enrollment } from './schemas'
 import trackedEntity from './__fixtures__/v43/tracked-entity.json'
 import { timelineKeys } from './timelineKeys'
 import {
+    type MilestoneEntryData,
+    type NoteEntryData,
     useEnrollmentMilestonesSource,
     useEnrollmentNotesSource,
 } from './useEnrollmentSources'
@@ -16,7 +18,8 @@ type CustomData = ComponentProps<typeof CustomDataProvider>['data']
 
 const subject = { trackedEntity: 'TlE2eTei001', program: 'WSGAb5XwJ3Y' }
 
-type Response = typeof trackedEntity | ReturnType<typeof entity>
+/** What the server sends: a plain JSON object. */
+type Response = object
 
 const setup = (respond: () => Response) => {
     const queryClient = new QueryClient()
@@ -24,7 +27,8 @@ const setup = (respond: () => Response) => {
     const data: CustomData = {
         'tracker/trackedEntities': async (_type, query) => {
             requests.push(query)
-            return respond()
+            // The engine takes JSON, as a real response is.
+            return JSON.parse(JSON.stringify(respond()))
         },
     }
     const wrapper = ({ children }: { children: ReactNode }) => (
@@ -48,27 +52,32 @@ const renderBoth = (wrapper: ReturnType<typeof setup>['wrapper']) =>
 
 const signal = () => new AbortController().signal
 
-const entriesOf = async (source: {
-    fetchPage: (
-        cursor: undefined,
-        signal: AbortSignal
-    ) => Promise<Result<{ entries: Array<{ id: string; at: string }> }, never>>
-}) => {
+const entriesOf = async (source: TimelineSource) => {
     const result = await source.fetchPage(undefined, signal())
     if (Result.isError(result)) throw new Error(JSON.stringify(result.error))
     return result.value.entries
 }
 
-const enrollment = (overrides: Partial<Enrollment>): Enrollment => ({
+interface RawEnrollment {
+    enrollment: string
+    program: string
+    status: string
+    enrolledAt?: string
+    occurredAt?: string
+    completedAt?: string
+    updatedAt?: string
+    notes?: Array<{ note: string; value: string; storedAt?: string }>
+}
+
+const enrollment = (overrides: Partial<RawEnrollment>): RawEnrollment => ({
     enrollment: 'e1',
     program: 'WSGAb5XwJ3Y',
     status: 'ACTIVE',
     enrolledAt: '2026-01-10T00:00:00.000',
-    notes: [],
     ...overrides,
 })
 
-const entity = (...enrollments: Enrollment[]) => ({
+const entity = (...enrollments: RawEnrollment[]) => ({
     trackedEntity: 'TlE2eTei001',
     enrollments,
 })
@@ -178,10 +187,11 @@ describe('enrollment sources', () => {
         })
         const { result } = await renderBoth(wrapper)
 
-        for (const source of [
+        const sources: TimelineSource[] = [
             result.current.milestones,
             result.current.notes,
-        ]) {
+        ]
+        for (const source of sources) {
             const answer = await source.fetchPage(undefined, signal())
             expect(Result.isError(answer)).toBe(true)
             if (Result.isError(answer)) {
@@ -335,7 +345,7 @@ describe('enrollment sources', () => {
         })
         const { result } = await renderHook(
             () =>
-                useTimelineSources([
+                useTimelineSources<MilestoneEntryData | NoteEntryData>([
                     useEnrollmentMilestonesSource(subject),
                     useEnrollmentNotesSource(subject),
                 ]),

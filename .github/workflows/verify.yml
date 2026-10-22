@@ -103,6 +103,31 @@ jobs:
             - name: dead code audit
               run: pnpm dead-code:audit
 
+    registry:
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+
+        steps:
+            - name: checkout
+              uses: actions/checkout@v4
+
+            - name: pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 10.13.1
+
+            - name: node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
+
+            - name: install
+              run: pnpm install --frozen-lockfile
+
+            - name: registry install check
+              run: pnpm registry:check
+
     e2e:
         needs: [validation, lint, knip]
         runs-on: ubuntu-latest

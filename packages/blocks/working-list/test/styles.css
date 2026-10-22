@@ -1,4 +1,5 @@
 @import 'tailwindcss';
-@import '../src/ui/primitives/theme.css';
+@import '../../ui/src/theme.css';
 
 @source '../src';
+@source '../../ui/src';

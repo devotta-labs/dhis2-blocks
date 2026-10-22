@@ -1,4 +1,4 @@
-import { Button } from '../primitives/button'
+import { Button } from '@/registry/dhis2/ui/button'
 import { Transfer } from '@dhis2/ui'
 import React, { useMemo, useState } from 'react'
 import type { WorkingListField } from '../../domain/model'
@@ -8,7 +8,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '../primitives/dialog'
+} from '@/registry/dhis2/ui/dialog'
 import { fieldDisplayName } from '../FilterControls'
 import { useWorkingListText } from '../WorkingListText'
 

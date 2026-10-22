@@ -28,7 +28,11 @@ import {
 } from '../../registry/valueTypes'
 import { fieldDisplayName, localizedField } from '../FilterControls'
 import type { WorkingListDataQualityMode } from '../types'
-import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/registry/dhis2/ui/tooltip'
 import { useWorkingListText } from '../WorkingListText'
 import {
     WorkingListTableView,

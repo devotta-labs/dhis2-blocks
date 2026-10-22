@@ -6,9 +6,19 @@
             "outputs": ["build/**", "dist/**", ".d2/**", "src/locales/**"]
         },
         "test": {
+            "dependsOn": ["^test"],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "$TURBO_ROOT$/tools/registry/manifest.ts"
+            ],
             "outputs": []
         },
         "typecheck": {
+            "dependsOn": ["^typecheck"],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "$TURBO_ROOT$/tools/registry/manifest.ts"
+            ],
             "outputs": []
         },
         "lint": {

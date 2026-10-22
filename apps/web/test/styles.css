@@ -1,6 +1,7 @@
 @import 'tailwindcss';
-@import '@dhis2-blocks/working-list/theme.css';
+@import '@dhis2-blocks/ui/theme.css';
 
 @source '../src';
 @source '../../../packages/blocks/context-selector/src';
+@source '../../../packages/blocks/ui/src';
 @source '../../../packages/blocks/working-list/src';

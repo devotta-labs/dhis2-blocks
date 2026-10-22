@@ -1,5 +1,6 @@
 import { useConfig, useDataEngine } from '@dhis2/app-runtime'
-import { Label, Switch } from '@dhis2-blocks/working-list/primitives'
+import { Label } from '@dhis2-blocks/ui/label'
+import { Switch } from '@dhis2-blocks/ui/switch'
 import {
     WorkingList,
     WorkingListColumnSelector,

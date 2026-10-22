@@ -1,11 +1,11 @@
+import { Button } from '@dhis2-blocks/ui/button'
 import {
-    Button,
     Dialog,
     DialogContent,
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@dhis2-blocks/working-list/primitives'
+} from '@dhis2-blocks/ui/dialog'
 import type { WorkingListResultTarget } from '@dhis2-blocks/working-list'
 import React from 'react'
 import i18n from '../../i18n'

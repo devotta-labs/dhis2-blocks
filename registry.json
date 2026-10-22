@@ -814,6 +814,11 @@
                     "target": "@components/working-list/provider/errors.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/working-list/provider/persistSavedList.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/persistSavedList.ts"
+                },
+                {
                     "path": "packages/registry/blocks/working-list/provider/repair.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/provider/repair.ts"

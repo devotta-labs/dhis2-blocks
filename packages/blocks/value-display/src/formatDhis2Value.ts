@@ -2,6 +2,8 @@ import i18n from '@dhis2/d2-i18n'
 import { formatCalendarDate, storedDay, storedTime } from './calendar'
 import type { FormatOptions, ValueMeta } from './types'
 
+export type { ValueMeta }
+
 // Bundlers replace `process.env.NODE_ENV` statically. Declared here so a consumer
 // without @types/node still type-checks this installed file.
 declare const process: { env: { NODE_ENV?: string } }

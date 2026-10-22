@@ -160,6 +160,22 @@
                 ]
             }
         },
+        "packages/blocks/sidebar": {
+            "entry": ["src/**/__tests__/**/*.{ts,tsx}"],
+            "project": ["src/**/*.{ts,tsx,css}", "test/**/*.{ts,css}"],
+            "includeEntryExports": true,
+            "ignoreDependencies": ["@dhis2-blocks/ui"],
+            "ignoreIssues": {
+                "src/index.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ]
+            }
+        },
         "packages/blocks/ui": {
             "entry": ["src/*.{ts,tsx}"],
             "project": ["src/**/*.{ts,tsx,css}", "test/**/*.{ts,css}"],

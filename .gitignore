@@ -16,3 +16,4 @@ e2e/artifacts
 .claude/
 
 .playwright-mcp
+.vercel

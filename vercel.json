@@ -1,0 +1,12 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "framework": "vite",
+    "installCommand": "pnpm install --frozen-lockfile",
+    "buildCommand": "pnpm build:docs",
+    "outputDirectory": "apps/docs/dist",
+    "git": { "deploymentEnabled": true },
+    "rewrites": [
+        { "source": "/dhis2/:path*", "destination": "/api/dhis2" },
+        { "source": "/((?!api/).*)", "destination": "/index.html" }
+    ]
+}

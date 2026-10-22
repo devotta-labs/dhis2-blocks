@@ -50,6 +50,9 @@ jobs:
             - name: build
               run: pnpm build
 
+            - name: docs build
+              run: pnpm build:docs
+
     lint:
         runs-on: ubuntu-latest
         timeout-minutes: 15

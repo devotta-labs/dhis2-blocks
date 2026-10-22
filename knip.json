@@ -93,6 +93,7 @@
             "entry": ["server/**/*.test.mjs"],
             "ignoreDependencies": [
                 "@dhis2-blocks/context-selector",
+                "@dhis2-blocks/working-list",
                 "typeface-roboto"
             ],
             "project": [

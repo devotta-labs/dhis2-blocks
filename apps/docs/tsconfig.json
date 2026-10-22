@@ -15,6 +15,7 @@
         "allowJs": true,
         "types": ["vite/client", "node"],
         "paths": {
+            "@/registry/dhis2/ui/*": ["../../packages/blocks/ui/src/*"],
             "@/components/context-selector": [
                 "../../packages/blocks/context-selector/src/index.ts"
             ],

@@ -52,6 +52,9 @@ importers:
       '@dhis2-blocks/context-selector':
         specifier: workspace:*
         version: link:../../packages/blocks/context-selector
+      '@dhis2-blocks/ui':
+        specifier: workspace:*
+        version: link:../../packages/blocks/ui
       '@dhis2-blocks/working-list':
         specifier: workspace:*
         version: link:../../packages/blocks/working-list

@@ -299,6 +299,10 @@ and `pnpm docs:up:dev`. The docs backend uses a dedicated Compose project
 `pnpm docs:down` stops the backend and keeps its data; `pnpm docs:reset`
 destroys the volumes and seeds a clean instance.
 
+PostgreSQL data is stored in a project-scoped named volume. Existing stacks
+created before this volume was added need a reset, or a manual copy of their
+anonymous database volume if local changes must be preserved.
+
 Point the site at an existing development instance instead:
 
 ```sh
@@ -358,8 +362,10 @@ pnpm test
 pnpm build
 ```
 
-Turborepo runs each task in the workspaces that provide it and caches declared
-build outputs.
+Turborepo runs workspace checks alongside the root registry and script tests.
+Builds track source-only workspace dependencies; independent checks use transit
+tasks to retain dependency-aware caching without serializing package checks.
+`pnpm build` builds the web app; `pnpm build:docs` builds the docs site.
 
 Unit and component tests use Vitest. Real-DHIS2 browser tests use Playwright.
 
@@ -377,6 +383,19 @@ pnpm e2e:41
 pnpm e2e:42
 pnpm e2e:43
 pnpm e2e:dev
+```
+
+The runners own the isolated DHIS2 stacks; Playwright owns app startup and
+shutdown through `webServer`. App logs remain under `e2e/artifacts/<version>/`
+and docs preview logs under `e2e/artifacts/docs/`. Existing app servers are never
+reused. Set `KEEP_E2E_STACK=1` or `KEEP_DOCS_STACK=1` to retain the corresponding
+backend after tests (not the app server).
+
+Playwright arguments are forwarded, for example:
+
+```sh
+pnpm e2e:42 --grep 'real DHIS2 server contract'
+pnpm docs:e2e --grep 'documentation catalog'
 ```
 
 See the [DHIS2 Application Platform documentation](https://platform.dhis2.nu/)

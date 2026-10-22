@@ -3,10 +3,14 @@
     "cacheDir": ".turbo/cache",
     "tasks": {
         "build": {
+            "dependsOn": ["^build"],
             "outputs": ["build/**", "dist/**", ".d2/**", "src/locales/**"]
         },
+        "transit": {
+            "dependsOn": ["^transit"]
+        },
         "test": {
-            "dependsOn": ["^test"],
+            "dependsOn": ["transit"],
             "inputs": [
                 "$TURBO_DEFAULT$",
                 "$TURBO_ROOT$/tools/registry/manifest.ts"
@@ -14,7 +18,7 @@
             "outputs": []
         },
         "typecheck": {
-            "dependsOn": ["^typecheck"],
+            "dependsOn": ["transit"],
             "inputs": [
                 "$TURBO_DEFAULT$",
                 "$TURBO_ROOT$/tools/registry/manifest.ts"
@@ -22,6 +26,15 @@
             "outputs": []
         },
         "lint": {
+            "outputs": []
+        },
+        "//#test:registry": {
+            "outputs": []
+        },
+        "//#test:scripts": {
+            "outputs": []
+        },
+        "//#typecheck:registry": {
             "outputs": []
         },
         "start": {

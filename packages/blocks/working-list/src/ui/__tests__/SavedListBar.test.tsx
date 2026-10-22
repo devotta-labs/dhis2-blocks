@@ -94,7 +94,7 @@ describe('SavedListBar', () => {
         })
         await expect
             .element(selectButton)
-            .toHaveAttribute('aria-current', 'true')
+            .toHaveAttribute('aria-pressed', 'true')
         expect(
             screen.container
                 .querySelector('[data-testid="saved-list-bar"]')

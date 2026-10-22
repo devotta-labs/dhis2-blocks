@@ -1,5 +1,5 @@
 import { useConfig, useDataEngine } from '@dhis2/app-runtime'
-import { Switch } from '@dhis2/ui'
+import { Label, Switch } from '@dhis2-blocks/working-list/primitives'
 import {
     WorkingList,
     WorkingListColumnSelector,
@@ -491,16 +491,17 @@ export const AppShell = () => {
                         data-testid="working-list-layout"
                     >
                         <div className="flex justify-end pb-3">
-                            <Switch
-                                dataTest="data-quality-mode-toggle"
-                                checked={dataQualityMode === 'highlighted'}
-                                label={i18n.t('Highlight data quality issues')}
-                                onChange={({ checked }) =>
-                                    setDataQualityMode(
-                                        checked ? 'highlighted' : 'hidden'
-                                    )
-                                }
-                            />
+                            <Label data-test="data-quality-mode-toggle">
+                                <Switch
+                                    checked={dataQualityMode === 'highlighted'}
+                                    onCheckedChange={(checked) =>
+                                        setDataQualityMode(
+                                            checked ? 'highlighted' : 'hidden'
+                                        )
+                                    }
+                                />
+                                {i18n.t('Highlight data quality issues')}
+                            </Label>
                         </div>
                         <WorkingList
                             programId={selectedProgramSummary.id}

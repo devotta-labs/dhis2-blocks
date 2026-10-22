@@ -12,6 +12,7 @@ import {
     addFilter,
     expect,
     openWorkingList,
+    selectTrigger,
     test,
     typedRegistryTest,
     typedRegistryTestTitle,
@@ -49,9 +50,11 @@ test.describe('Capture context and generated tracker views', () => {
         const booleanEditor = page.getByTestId(
             `filter-editor-${BOOLEAN_ATTRIBUTE}`
         )
-        await expect(booleanEditor.getByLabel('Yes')).not.toBeChecked()
-        await expect(booleanEditor.getByLabel('No')).not.toBeChecked()
-        await booleanEditor.getByLabel('Yes').check()
+        const yes = booleanEditor.getByRole('checkbox', { name: 'Yes' })
+        const no = booleanEditor.getByRole('checkbox', { name: 'No' })
+        await expect(yes).not.toBeChecked()
+        await expect(no).not.toBeChecked()
+        await yes.check()
         const booleanRequest = await waitForTrackerResponse(
             page,
             'trackedEntities',
@@ -72,17 +75,11 @@ test.describe('Capture context and generated tracker views', () => {
         )
 
         await addFilter(page, 'tracked-entity', MULTI_TEXT_ATTRIBUTE)
-        const optionEditor = page.getByTestId(
-            `filter-editor-${MULTI_TEXT_ATTRIBUTE}`
-        )
-        await optionEditor
-            .getByTestId(`filter-value-${MULTI_TEXT_ATTRIBUTE}`)
-            .locator('[data-test="dhis2-uicore-multiselect"]')
-            .click()
-        await page
-            .locator('[data-test="dhis2-uicore-multiselectoption"]')
-            .filter({ hasText: 'Alpha' })
-            .click()
+        await selectTrigger(
+            page,
+            `[data-testid="filter-editor-${MULTI_TEXT_ATTRIBUTE}"] [data-testid="filter-value-${MULTI_TEXT_ATTRIBUTE}"]`
+        ).click()
+        await page.getByRole('option', { name: 'Alpha' }).click()
         await page.keyboard.press('Escape')
         const optionRequest = await waitForTrackerResponse(
             page,

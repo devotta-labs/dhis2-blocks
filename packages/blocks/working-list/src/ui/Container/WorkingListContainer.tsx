@@ -1,4 +1,4 @@
-import { NoticeBox } from '@dhis2/ui'
+import { ErrorAlert } from '../primitives/alert'
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { useWorkingListMeta } from '../../provider/WorkingListContext'
 import { useWorkingListText } from '../WorkingListText'
@@ -46,14 +46,13 @@ export const WorkingListContainer = ({
             )}
             {failed && (
                 <div className="p-4" data-testid="working-list-lifecycle-error">
-                    <NoticeBox
-                        error
+                    <ErrorAlert
                         title={translate('Could not load the working list')}
                     >
                         {translate(
                             'The working list could not be initialized for this program.'
                         )}
-                    </NoticeBox>
+                    </ErrorAlert>
                 </div>
             )}
             <article

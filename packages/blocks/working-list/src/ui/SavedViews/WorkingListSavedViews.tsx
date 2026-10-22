@@ -1,11 +1,14 @@
+import { ErrorAlert } from '../primitives/alert'
 import {
-    Button,
-    Modal,
-    ModalActions,
-    ModalContent,
-    ModalTitle,
-    NoticeBox,
-} from '@dhis2/ui'
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '../primitives/alert-dialog'
+import { Button } from '../primitives/button'
 import { Result } from 'better-result'
 import React, { useState } from 'react'
 import type { NormalizedSavedWorkingList } from '../../api/savedLists'
@@ -141,8 +144,7 @@ export const WorkingListSavedViews = () => {
             )}
             {savedViews.status === 'error' && (
                 <div className="p-4" data-testid="saved-working-lists-error">
-                    <NoticeBox
-                        error
+                    <ErrorAlert
                         title={translate('Could not load saved working lists')}
                     >
                         <p>
@@ -151,14 +153,15 @@ export const WorkingListSavedViews = () => {
                             )}
                         </p>
                         <Button
-                            dataTest="retry-saved-working-lists"
+                            variant="outline"
+                            data-test="retry-saved-working-lists"
                             onClick={() =>
                                 void privateActions.retrySavedViews()
                             }
                         >
                             {translate('Try again')}
                         </Button>
-                    </NoticeBox>
+                    </ErrorAlert>
                 </div>
             )}
             {savedViews.status === 'ready' && (
@@ -177,40 +180,41 @@ export const WorkingListSavedViews = () => {
 
             {actionError && (
                 <div data-testid="working-list-view-action-error">
-                    <NoticeBox
-                        error
+                    <ErrorAlert
                         title={translate('Could not change the working list')}
                     >
                         {actionErrorCopy(actionError, translate)}
-                    </NoticeBox>
+                    </ErrorAlert>
                 </div>
             )}
 
             {pendingSelection && (
-                <Modal
-                    small
-                    position="middle"
-                    onClose={() => setPendingSelection(undefined)}
+                <AlertDialog
+                    open
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setPendingSelection(undefined)
+                        }
+                    }}
                 >
-                    <ModalTitle>
-                        {translate('Discard unsaved changes?')}
-                    </ModalTitle>
-                    <ModalContent>
-                        {translate(
-                            'Changing the saved view will discard the unsaved changes to this working list.'
-                        )}
-                    </ModalContent>
-                    <ModalActions>
-                        <div className="flex flex-wrap items-center justify-end gap-2">
-                            <Button
-                                dataTest="discard-saved-view-change-cancel"
-                                onClick={() => setPendingSelection(undefined)}
-                            >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                {translate('Discard unsaved changes?')}
+                            </AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <AlertDialogDescription>
+                            {translate(
+                                'Changing the saved view will discard the unsaved changes to this working list.'
+                            )}
+                        </AlertDialogDescription>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel data-test="discard-saved-view-change-cancel">
                                 {translate('Cancel')}
-                            </Button>
+                            </AlertDialogCancel>
                             <Button
-                                destructive
-                                dataTest="discard-saved-view-change-confirm"
+                                variant="destructive"
+                                data-test="discard-saved-view-change-confirm"
                                 onClick={() => {
                                     const target = pendingSelection
                                     setPendingSelection(undefined)
@@ -219,9 +223,9 @@ export const WorkingListSavedViews = () => {
                             >
                                 {translate('Discard changes')}
                             </Button>
-                        </div>
-                    </ModalActions>
-                </Modal>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             )}
 
             <WorkingListSharingDialog

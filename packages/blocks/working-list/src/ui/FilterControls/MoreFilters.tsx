@@ -1,14 +1,21 @@
-import { Button, Menu, MenuDivider, MenuItem, Tooltip } from '@dhis2/ui'
+import { Button } from '../primitives/button'
 import { IconFilter16 } from '@dhis2/ui-icons'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useId, useMemo, useState } from 'react'
 import type { TrackerProgram } from '../../api/schemas'
 import type { WorkingListField } from '../../domain/model'
-import { useWorkingListText } from '../WorkingListText'
 import {
-    FilterPopover,
-    focusFirstAvailableFilter,
-    useEscapeToClose,
-} from './FilterControlPrimitives'
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
+} from '../primitives/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip'
+import { useWorkingListText } from '../WorkingListText'
+import { focusFirstAvailableFilter } from './FilterControlPrimitives'
 import { fieldDisplayName } from './filterValueSupport'
 
 interface MoreFiltersProps {
@@ -38,13 +45,15 @@ export const MoreFilters = ({
 }: MoreFiltersProps) => {
     const translate = useWorkingListText()
     const i18n = { t: translate }
-    const [buttonElement, setButtonElement] = useState<HTMLDivElement | null>(
-        null
-    )
+    const lockMessageId = useId()
     const [open, setOpen] = useState(false)
-    const [openSubMenu, setOpenSubMenu] = useState<
-        'program-stages' | 'stage-fields' | null
-    >(null)
+    // Disabling closes the menu for good, so it doesn't reappear by itself
+    // once the button is enabled again.
+    useEffect(() => {
+        if (disabled) {
+            setOpen(false)
+        }
+    }, [disabled])
     const available = fields.filter(
         (field) => field.filterable && !visibleFilterIds.includes(field.id)
     )
@@ -66,203 +75,136 @@ export const MoreFilters = ({
                 ))
     )
 
-    const close = () => {
-        setOpen(false)
-        setOpenSubMenu(null)
-        requestAnimationFrame(() =>
-            buttonElement?.querySelector<HTMLButtonElement>('button')?.focus()
-        )
-    }
-    useEscapeToClose(open, close)
     if (!available.length && !stages.length && !availableStageFields.length) {
         return null
     }
+    const lockMessage = i18n.t('Can only filter using one program stage.')
 
     return (
-        // Flex, not block: an inline button would sit in a font-dependent
-        // line box and change the toolbar height between hosts.
-        <div
-            ref={setButtonElement}
-            className="relative flex min-w-0 max-w-full"
-        >
-            <Button
-                secondary
-                small
-                icon={<IconFilter16 />}
-                dataTest={`more-filters-${scope}`}
-                data-testid={`more-filters-${scope}`}
-                disabled={disabled}
-                aria-expanded={open && !disabled}
-                aria-haspopup="menu"
-                onClick={() => {
-                    if (!disabled) {
-                        setOpen((value) => !value)
+        <div className="relative flex min-w-0 max-w-full">
+            <DropdownMenu open={open && !disabled} onOpenChange={setOpen}>
+                <DropdownMenuTrigger
+                    disabled={disabled}
+                    render={
+                        <Button
+                            variant="secondary"
+                            size="field-dense"
+                            data-test={`more-filters-${scope}`}
+                            data-testid={`more-filters-${scope}`}
+                        />
                     }
-                }}
-            >
-                {i18n.t('Filter')}
-            </Button>
-            {open && !disabled && buttonElement && (
-                <FilterPopover
-                    arrow={false}
-                    maxWidth={400}
-                    placement="bottom-start"
-                    reference={buttonElement}
-                    onClickOutside={close}
                 >
-                    <div
-                        ref={focusFirstAvailableFilter}
-                        className="min-w-[128px] overflow-y-auto [padding:4px_0] [overscroll-behavior:contain]"
-                        style={{
-                            maxHeight: `max(160px, calc(100vh - ${
-                                Math.ceil(
-                                    buttonElement.getBoundingClientRect().bottom
-                                ) + 16
-                            }px))`,
-                        }}
-                        onMouseOver={(event) => {
-                            const target = event.target
-                            if (!(target instanceof Element)) {
-                                return
-                            }
-                            if (
-                                target.closest(
-                                    '[data-test="program-stage-filter-menu"]'
-                                )
-                            ) {
-                                setOpenSubMenu('program-stages')
-                            } else if (
-                                menuStage &&
-                                target.closest(
-                                    `[data-test="stage-filter-fields-${menuStage.id}"]`
-                                )
-                            ) {
-                                setOpenSubMenu('stage-fields')
-                            } else if (
-                                target.closest('[data-test^="add-filter-"]')
-                            ) {
-                                setOpenSubMenu(null)
-                            }
-                        }}
-                    >
-                        <Menu dense dataTest={`more-filters-menu-${scope}`}>
-                            {stages.length > 0 && (
-                                <MenuItem
-                                    dataTest="program-stage-filter-menu"
-                                    label={i18n.t('Program stage')}
-                                    showSubMenu={
-                                        openSubMenu === 'program-stages'
-                                    }
-                                    toggleSubMenu={() =>
-                                        setOpenSubMenu('program-stages')
-                                    }
-                                >
-                                    {stages.map((stage) => {
-                                        const disabled =
-                                            Boolean(selectedStageId)
-                                        const lockMessage = i18n.t(
-                                            'Can only filter using one program stage.'
-                                        )
-                                        const label = disabled ? (
-                                            <Tooltip
-                                                dataTest={`stage-lock-tooltip-${stage.id}`}
-                                                content={lockMessage}
-                                                openDelay={200}
-                                            >
-                                                {({ ref, ...tooltipProps }) => (
-                                                    <span
-                                                        ref={(element) => {
-                                                            if (element) {
-                                                                ref.current =
-                                                                    element
-                                                            }
-                                                        }}
-                                                        className="w-full"
-                                                        tabIndex={0}
-                                                        aria-label={`${stage.displayName}. ${lockMessage}`}
-                                                        {...tooltipProps}
-                                                    >
-                                                        {stage.displayName}
-                                                    </span>
-                                                )}
-                                            </Tooltip>
-                                        ) : (
-                                            stage.displayName
-                                        )
+                    <IconFilter16 />
+                    {i18n.t('Filter')}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                    data-test={`more-filters-menu-${scope}`}
+                    className="max-w-[400px] overscroll-contain"
+                >
+                    {stages.length > 0 && (
+                        <DropdownMenuSub>
+                            <DropdownMenuSubTrigger data-test="program-stage-filter-menu">
+                                {i18n.t('Program stage')}
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                                {stages.map((stage) => {
+                                    const selected =
+                                        stage.id === selectedStageId
+                                    // Only one stage can be filtered on at a
+                                    // time, so every stage locks once one is.
+                                    if (!selectedStageId) {
                                         return (
-                                            <MenuItem
+                                            <DropdownMenuItem
                                                 key={stage.id}
-                                                dataTest={`select-filter-stage-${stage.id}`}
-                                                disabled={disabled}
-                                                active={
-                                                    stage.id === selectedStageId
+                                                data-test={`select-filter-stage-${stage.id}`}
+                                                onClick={() =>
+                                                    onSelectStage?.(stage.id)
                                                 }
-                                                label={label}
-                                                {...(disabled
-                                                    ? {
-                                                          ariaLabel:
-                                                              stage.displayName,
-                                                      }
-                                                    : {})}
-                                                onClick={() => {
-                                                    if (!disabled) {
-                                                        onSelectStage?.(
-                                                            stage.id
-                                                        )
-                                                        close()
-                                                    }
-                                                }}
-                                            />
+                                            >
+                                                {stage.displayName}
+                                            </DropdownMenuItem>
                                         )
-                                    })}
-                                </MenuItem>
-                            )}
-                            {menuStage && availableStageFields.length > 0 && (
-                                <MenuItem
-                                    dataTest={`stage-filter-fields-${menuStage.id}`}
-                                    label={menuStage.displayName}
-                                    showSubMenu={openSubMenu === 'stage-fields'}
-                                    toggleSubMenu={() =>
-                                        setOpenSubMenu('stage-fields')
                                     }
-                                >
-                                    {availableStageFields.map((field) => (
-                                        <MenuItem
-                                            key={field.id}
-                                            dataTest={`add-stage-filter-${menuStage.id}-${field.id}`}
-                                            label={fieldDisplayName(
-                                                field,
-                                                translate
-                                            )}
-                                            onClick={() => {
-                                                onAddStageFilter?.(
-                                                    menuStage.id,
-                                                    field.id
-                                                )
-                                                close()
-                                            }}
-                                        />
-                                    ))}
-                                </MenuItem>
-                            )}
-                            {stages.length > 0 && available.length > 0 && (
-                                <MenuDivider dataTest="filter-scope-divider" />
-                            )}
-                            {available.map((field) => (
-                                <MenuItem
-                                    key={field.id}
-                                    dataTest={`add-filter-${field.id}`}
-                                    label={fieldDisplayName(field, translate)}
-                                    onClick={() => {
-                                        onAdd(field.id)
-                                        close()
-                                    }}
-                                />
-                            ))}
-                        </Menu>
-                    </div>
-                </FilterPopover>
-            )}
+                                    return (
+                                        <Tooltip key={stage.id}>
+                                            <TooltipTrigger
+                                                delay={200}
+                                                render={
+                                                    <DropdownMenuItem
+                                                        data-test={`select-filter-stage-${stage.id}`}
+                                                        className={
+                                                            selected
+                                                                ? 'bg-grey-300 data-highlighted:bg-grey-300'
+                                                                : undefined
+                                                        }
+                                                        disabled
+                                                        aria-describedby={`${lockMessageId}-${stage.id}`}
+                                                    />
+                                                }
+                                            >
+                                                {stage.displayName}
+                                                <span
+                                                    id={`${lockMessageId}-${stage.id}`}
+                                                    hidden
+                                                >
+                                                    {lockMessage}
+                                                </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent
+                                                data-test={`stage-lock-tooltip-${stage.id}-content`}
+                                            >
+                                                {lockMessage}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    )
+                                })}
+                            </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                    )}
+                    {menuStage && availableStageFields.length > 0 && (
+                        <DropdownMenuSub>
+                            <DropdownMenuSubTrigger
+                                data-test={`stage-filter-fields-${menuStage.id}`}
+                            >
+                                {menuStage.displayName}
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                                {availableStageFields.map((field) => (
+                                    <DropdownMenuItem
+                                        key={field.id}
+                                        data-test={`add-stage-filter-${menuStage.id}-${field.id}`}
+                                        onClick={() =>
+                                            onAddStageFilter?.(
+                                                menuStage.id,
+                                                field.id
+                                            )
+                                        }
+                                    >
+                                        {fieldDisplayName(field, translate)}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                    )}
+                    {stages.length > 0 && available.length > 0 && (
+                        <DropdownMenuSeparator data-test="filter-scope-divider" />
+                    )}
+                    {available.map((field, index) => (
+                        <DropdownMenuItem
+                            key={field.id}
+                            ref={
+                                index === 0
+                                    ? focusFirstAvailableFilter
+                                    : undefined
+                            }
+                            data-test={`add-filter-${field.id}`}
+                            onClick={() => onAdd(field.id)}
+                        >
+                            {fieldDisplayName(field, translate)}
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
     )
 }

@@ -64,7 +64,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             expect(createdId).toBeTruthy()
             await selectionNavigation
             await expect(savedViewButton(page, createdId!)).toHaveAttribute(
-                'aria-current',
+                'aria-pressed',
                 'true',
                 { timeout: 30_000 }
             )
@@ -153,7 +153,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             })
             await expect(page.getByTestId('working-list-table')).toHaveCount(0)
             await expect(savedViewButton(page, STALE_LIST)).toHaveAttribute(
-                'aria-current',
+                'aria-pressed',
                 'true'
             )
             await page.waitForTimeout(300)

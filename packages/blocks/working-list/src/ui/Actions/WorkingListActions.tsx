@@ -1,4 +1,6 @@
-import { Button, DropdownButton, FlyoutMenu, NoticeBox } from '@dhis2/ui'
+import { ErrorAlert } from '../primitives/alert'
+import { Button } from '../primitives/button'
+import { DropdownMenuTriggerArrow } from '../primitives/dropdown-menu'
 import { IconMore16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
@@ -130,22 +132,18 @@ const ActionsControl = () => {
             />
             {saveError && (
                 <div data-testid="working-list-save-error">
-                    <NoticeBox
-                        error
-                        title={actionCopy.noticeTitles.save(translate)}
-                    >
+                    <ErrorAlert title={actionCopy.noticeTitles.save(translate)}>
                         {saveError}
-                    </NoticeBox>
+                    </ErrorAlert>
                 </div>
             )}
             {downloadError && (
                 <div data-testid="working-list-download-error">
-                    <NoticeBox
-                        error
+                    <ErrorAlert
                         title={actionCopy.noticeTitles.download(translate)}
                     >
                         {downloadError}
-                    </NoticeBox>
+                    </ErrorAlert>
                 </div>
             )}
         </div>
@@ -180,25 +178,23 @@ export const WorkingListToolbarActions = ({
                     data-testid="working-list-actions"
                 >
                     <Button
-                        secondary
-                        small
-                        dataTest="save-working-list"
+                        variant="secondary"
+                        size="field-dense"
+                        data-test="save-working-list"
                         disabled
                     >
                         {actionCopy.controls.saveView(translate)}
                     </Button>
-                    {/* A dropdown like the live control, so the chevron
-                        does not shift the actions when it resolves. */}
-                    <DropdownButton
-                        secondary
-                        small
-                        icon={<IconMore16 />}
-                        dataTest="working-list-options"
+                    <Button
+                        variant="secondary"
+                        size="field-dense"
+                        data-test="working-list-options"
                         disabled
-                        component={<FlyoutMenu dense />}
                     >
+                        <IconMore16 />
                         {actionCopy.controls.more(translate)}
-                    </DropdownButton>
+                        <DropdownMenuTriggerArrow />
+                    </Button>
                 </div>
             )}
         </div>

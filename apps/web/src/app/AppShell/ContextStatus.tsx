@@ -1,4 +1,8 @@
-import { Button, CircularLoader, NoticeBox } from '@dhis2/ui'
+import {
+    ErrorAlert,
+    Button,
+    Spinner,
+} from '@dhis2-blocks/working-list/primitives'
 import React from 'react'
 import i18n from '../../i18n'
 
@@ -33,7 +37,10 @@ export const ContextStatus = ({
                 data-testid="app-context-loading"
                 aria-live="polite"
             >
-                <CircularLoader small />
+                <Spinner
+                    aria-label={i18n.t('Loading')}
+                    className="size-6 border-4"
+                />
                 <p>{i18n.t('Loading tracker programs…')}</p>
             </main>
         )
@@ -45,12 +52,14 @@ export const ContextStatus = ({
                 className={contextStateClassName}
                 data-testid="app-context-error"
             >
-                <NoticeBox error title={i18n.t('Could not load app context')}>
+                <ErrorAlert title={i18n.t('Could not load app context')}>
                     <p>
                         {error instanceof Error ? error.message : String(error)}
                     </p>
-                    <Button onClick={onRetry}>{i18n.t('Try again')}</Button>
-                </NoticeBox>
+                    <Button variant="outline" onClick={onRetry}>
+                        {i18n.t('Try again')}
+                    </Button>
+                </ErrorAlert>
             </main>
         )
     }
@@ -89,8 +98,7 @@ export const ContextStatus = ({
                 </p>
                 {canChooseOrganisationUnit ? (
                     <Button
-                        primary
-                        dataTest="choose-org-unit"
+                        data-test="choose-org-unit"
                         onClick={onChooseOrganisationUnit}
                     >
                         {i18n.t('Choose organisation unit')}
@@ -106,8 +114,7 @@ export const ContextStatus = ({
                 className={contextStateClassName}
                 data-testid="invalid-program-context"
             >
-                <NoticeBox
-                    error
+                <ErrorAlert
                     title={i18n.t(
                         'Selected program is invalid for selected organisation unit'
                     )}
@@ -119,13 +126,14 @@ export const ContextStatus = ({
                     </p>
                     {canChooseOrganisationUnit ? (
                         <Button
-                            dataTest="replace-invalid-org-unit"
+                            variant="outline"
+                            data-test="replace-invalid-org-unit"
                             onClick={onChooseOrganisationUnit}
                         >
                             {i18n.t('Choose another organisation unit')}
                         </Button>
                     ) : null}
-                </NoticeBox>
+                </ErrorAlert>
             </main>
         )
     }

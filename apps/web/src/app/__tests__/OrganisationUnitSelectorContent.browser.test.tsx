@@ -38,9 +38,7 @@ describe('Capture-style organisation-unit field', () => {
         const headerStyle = getComputedStyle(searchHeader!)
         const inputStyle = getComputedStyle(input.element())
         const treeStyle = getComputedStyle(tree)
-        const loader = tree.querySelector<HTMLElement>(
-            '[data-test="dhis2-uicore-circularloader"]'
-        )
+        const loader = tree.querySelector<HTMLElement>('[data-slot="spinner"]')
         const loaderStyle = getComputedStyle(loader!)
 
         expect(fieldStyle.borderWidth).toBe('1px')

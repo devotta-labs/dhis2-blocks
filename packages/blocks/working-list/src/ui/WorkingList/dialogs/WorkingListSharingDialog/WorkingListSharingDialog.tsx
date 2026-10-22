@@ -1,4 +1,5 @@
-import { NoticeBox, SharingDialog } from '@dhis2/ui'
+import { ErrorAlert } from '../../../primitives/alert'
+import { SharingDialog } from '@dhis2/ui'
 import React, { type ComponentProps, type ComponentType } from 'react'
 import {
     getSharingType,
@@ -38,9 +39,9 @@ export const WorkingListSharingDialog = ({
     return (
         <>
             {error && (
-                <NoticeBox error title={i18n.t('Could not update sharing')}>
+                <ErrorAlert title={i18n.t('Could not update sharing')}>
                     {error}
-                </NoticeBox>
+                </ErrorAlert>
             )}
             {list && (
                 <SharingDialogCompat

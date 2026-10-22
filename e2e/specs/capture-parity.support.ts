@@ -3,6 +3,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import type {
     APIRequestContext,
+    Locator,
     Page,
     Playwright,
     Request,
@@ -209,7 +210,7 @@ export const openWorkingList = async (
     })
     await expect(
         savedViewButton(page, options.template ?? 'active')
-    ).toHaveAttribute('aria-current', 'true', { timeout: 30_000 })
+    ).toHaveAttribute('aria-pressed', 'true', { timeout: 30_000 })
     await expect(
         page.getByTestId('working-list-selection-loading')
     ).toHaveCount(0)
@@ -224,31 +225,44 @@ export const openWorkingList = async (
 export const resultRows = (page: Page) =>
     page.locator('[data-testid^="working-list-row-"]')
 
-export const chooseDhis2Option = async (
+// Menu items carry their own data-test; there is no wrapper around them.
+export const menuItem = (scope: Page | Locator, dataTest: string) =>
+    scope.locator(`[role="menuitem"][data-test="${dataTest}"]`)
+
+const selectTriggers =
+    '[data-slot="select-trigger"], [data-slot="combobox-trigger"]'
+
+// The root is either the trigger itself or a field that contains it.
+export const selectTrigger = (page: Page, rootSelector: string) =>
+    page
+        .locator(
+            `:is(${selectTriggers}):is(${rootSelector}), ${rootSelector} :is(${selectTriggers})`
+        )
+        .first()
+
+export const chooseSelectOption = async (
     page: Page,
     rootSelector: string,
     label: string
 ) => {
-    const root = page.locator(rootSelector)
-    await root.locator('[data-test="dhis2-uicore-select-input"]').click()
-    await page.getByText(label, { exact: true }).last().click()
+    await selectTrigger(page, rootSelector).click()
+    await page.getByRole('option', { name: label, exact: true }).click()
 }
 
 export const openMoreActions = async (page: Page) => {
     const trigger = uiButton(page, 'working-list-options')
     await trigger.click()
-    const download = page.locator('[data-test="download-working-list"]')
+    const download = menuItem(page, 'download-working-list')
     await expect(download).toBeVisible()
     return download
 }
 
 export const chooseSaveViewOption = async (page: Page, dataTest: string) => {
     await uiButton(page, 'save-working-list').click()
-    const option = page.locator(`[data-test="${dataTest}"]`)
-    await expect(option).toBeVisible()
-    const menuItem = option.getByRole('menuitem')
-    await expect(menuItem).toBeEnabled()
-    await menuItem.click()
+    const item = menuItem(page, dataTest)
+    await expect(item).toBeVisible()
+    await expect(item).toBeEnabled()
+    await item.click()
 }
 
 export const openSavedViewActions = async (page: Page, listId: string) => {
@@ -264,11 +278,10 @@ export const chooseSavedViewAction = async (
     dataTest: string
 ) => {
     const menu = await openSavedViewActions(page, listId)
-    const option = menu.locator(`[data-test="${dataTest}"]`)
-    await expect(option).toBeVisible()
-    const menuItem = option.getByRole('menuitem')
-    await expect(menuItem).toBeEnabled()
-    await menuItem.click()
+    const item = menuItem(menu, dataTest)
+    await expect(item).toBeVisible()
+    await expect(item).toBeEnabled()
+    await item.click()
 }
 
 export type OrganisationUnitAncestor = {
@@ -322,28 +335,16 @@ export const addFilter = async (
         const stageControl = page.getByTestId('filter-programStage')
         if ((await stageControl.count()) === 0) {
             await page.getByTestId('more-filters-tracked-entity').click()
-            await page
-                .locator('[data-test="program-stage-filter-menu"]')
-                .getByRole('menuitem')
-                .hover()
-            await page
-                .locator(`[data-test="select-filter-stage-${STAGE}"]`)
-                .getByRole('menuitem')
-                .click()
+            await menuItem(page, 'program-stage-filter-menu').hover()
+            await menuItem(page, `select-filter-stage-${STAGE}`).click()
             await expect(stageControl).toBeVisible()
         }
         await page.getByTestId('more-filters-tracked-entity').click()
-        await page
-            .locator(`[data-test="stage-filter-fields-${STAGE}"]`)
-            .getByRole('menuitem')
-            .hover()
-        await page
-            .locator(`[data-test="add-stage-filter-${STAGE}-${fieldId}"]`)
-            .getByRole('menuitem')
-            .click()
+        await menuItem(page, `stage-filter-fields-${STAGE}`).hover()
+        await menuItem(page, `add-stage-filter-${STAGE}-${fieldId}`).click()
     } else {
         await page.getByTestId('more-filters-tracked-entity').click()
-        await page.locator(`[data-test="add-filter-${fieldId}"]`).click()
+        await menuItem(page, `add-filter-${fieldId}`).click()
     }
     await expect(page.getByTestId(`filter-${fieldId}`)).toBeVisible()
     // Newly added filters open their editor right away.

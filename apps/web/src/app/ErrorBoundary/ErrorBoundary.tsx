@@ -1,4 +1,4 @@
-import { Button, NoticeBox } from '@dhis2/ui'
+import { ErrorAlert, Button } from '@dhis2-blocks/working-list/primitives'
 import React, { Component, type ErrorInfo, type ReactNode } from 'react'
 import i18n from '../../i18n'
 
@@ -34,8 +34,7 @@ export class ErrorBoundary extends Component<
 
         return (
             <main className="grid min-h-[min(100vh,640px)] w-full min-w-0 max-w-full place-items-center p-6">
-                <NoticeBox
-                    error
+                <ErrorAlert
                     title={i18n.t('The working list could not be loaded')}
                 >
                     <p>
@@ -48,12 +47,13 @@ export class ErrorBoundary extends Component<
                         <pre>{error.message}</pre>
                     </details>
                     <Button
+                        variant="outline"
                         className="justify-self-center"
                         onClick={() => window.location.reload()}
                     >
                         {i18n.t('Reload application')}
                     </Button>
-                </NoticeBox>
+                </ErrorAlert>
             </main>
         )
     }

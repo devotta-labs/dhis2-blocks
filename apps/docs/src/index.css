@@ -1,10 +1,10 @@
 @import 'tailwindcss';
-@import '@dhis2-blocks/ui/theme.css';
+@import '@dhis2-blocks/registry/theme.css';
 
-@source '../../../packages/blocks/ui/src';
-@source '../../../packages/blocks/working-list/src';
-@source '../../../packages/blocks/context-selector/src';
-@source '../../../packages/blocks/sidebar/src';
+@source '../../../packages/registry/components';
+@source '../../../packages/registry/blocks/working-list';
+@source '../../../packages/registry/blocks/context-selector';
+@source '../../../packages/registry/blocks/sidebar';
 
 @import 'shadcn/tailwind.css';
 

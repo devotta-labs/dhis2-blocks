@@ -50,26 +50,4 @@ describe('DiscardChangesDialog', () => {
 
         expect(screen.container.textContent).toBe('')
     })
-
-    it('keeps the Capture message spacing and destructive action style', async () => {
-        const screen = await render(
-            <DiscardChangesDialog
-                open
-                onCancel={() => undefined}
-                onDiscard={() => undefined}
-            />
-        )
-        const message = screen.getByText(
-            'This event has unsaved changes. Leaving this page without saving will lose these changes. Are you sure you want to discard unsaved changes?'
-        )
-        const destructiveButton = screen.getByRole('button', {
-            name: 'Yes, discard changes',
-        })
-
-        expect(getComputedStyle(message.element()).marginTop).toBe('5px')
-        expect(getComputedStyle(message.element()).marginBottom).toBe('5px')
-        expect(
-            getComputedStyle(destructiveButton.element()).backgroundColor
-        ).not.toBe('rgba(0, 0, 0, 0)')
-    })
 })

@@ -1,4 +1,4 @@
-import { OrganisationUnitSelector } from '@dhis2-blocks/context-selector'
+import { OrganisationUnitSelector } from '@/components/context-selector'
 import React, { useState } from 'react'
 import { render } from 'vitest-browser-react'
 import { OrganisationUnitSelectorContent } from '../OrganisationUnitSelectorContent'

@@ -1,0 +1,5 @@
+{
+    "title": "DHIS2 Working List",
+    "description": "A composable React 18 Working List block for DHIS2 tracker programs.",
+    "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs."
+}

@@ -4,7 +4,7 @@ import {
     type DataEngineLike,
     type DataEngineMutation,
     type DataEngineQuery,
-} from '@dhis2-blocks/working-list/development'
+} from '@/components/working-list/api/client'
 import { z } from 'zod'
 
 type WorkingListEngineValue = Awaited<

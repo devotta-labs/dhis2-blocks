@@ -52,14 +52,16 @@ export default defineConfig(({ mode }) => {
             // (`@/components/<block>`); here that path is the workspace source.
             alias: [
                 {
-                    find: '@/registry/dhis2/ui',
+                    find: '@/components/dhis2/ui',
                     replacement: fileURLToPath(
-                        new URL('../../packages/blocks/ui/src', import.meta.url)
+                        new URL('../../packages/registry/components', import.meta.url)
                     ),
                 },
                 {
-                    find: /^@\/components\/(context-selector|working-list|sidebar)$/,
-                    replacement: '@dhis2-blocks/$1',
+                    find: '@/components',
+                    replacement: fileURLToPath(
+                        new URL('../../packages/registry/blocks', import.meta.url)
+                    ),
                 },
             ],
             // Workspace blocks resolve to their source entry points; dedupe keeps

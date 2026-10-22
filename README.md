@@ -10,20 +10,24 @@ apps/
   web/                  DHIS2 wrapper and component demo application
   docs/                 Vite documentation site with live block previews
 packages/
-  blocks/
-    context-selector/   Capture-style controlled context-selector primitives
-    ui/                 Shared DHIS2-styled shadcn primitives and theme
-    working-list/       Canonical Working List source and registry manifest
-    sidebar/            Composable modeling-app navigation with a collapse rail
+  registry/             @dhis2-blocks/registry: all shadcn registry source
+    components/         DHIS2-styled shadcn primitives (one file per item) and theme
+    blocks/
+      context-selector/ Capture-style controlled context-selector primitives
+      working-list/     Working List block
+      sidebar/          Composable modeling-app navigation with a collapse rail
+    test/               Shared Vitest browser setup
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
 scripts/docs/           Documentation site backend lifecycle
 ```
 
-The web application depends on the private block workspaces through pnpm's
-`workspace:*` protocol. Each workspace package resolves directly to its source
-entry point, so the demo, tests, and production application build all exercise
-the same canonical source.
+All registry source shares one `package.json`, `tsconfig.json` and
+`vitest.config.ts` in `packages/registry/`. Source imports items exactly as an installed
+project does: `@/components/dhis2/ui/<component>` and `@/components/<block>`.
+The apps map those aliases to `packages/registry/components` and
+`packages/registry/blocks`, so
+the demo, docs, tests and production build all exercise the same source.
 
 ## Setup
 
@@ -224,27 +228,23 @@ use React's reserved `key` to give each instance a stable identity:
 A supplied React key overrides the outer instance identity; changing it replaces
 that instance even when `programId` stays the same.
 
-The private block workspace packages remain only as the repository's canonical
-development and test harnesses. They are not compiled or publishable consumer
-packages.
+The `packages/registry` workspace is a development and test harness only; it is not
+compiled or published as an npm package.
 
-The root `registry.json` is the public registry entry point. It owns global
-metadata and composes each package-owned registry manifest through shadcn's
-`include` mechanism. Paths declared by a package manifest are relative to that
-package.
+The root `registry.json` is the public registry entry point. It is generated
+from `packages/registry/` by `pnpm registry:write`; do not edit it by hand.
 
 ### Registry development
 
 This is a [GitHub source registry](https://ui.shadcn.com/docs/registry/github):
 consumers install straight from the repository. There is no registry server or
-generated JSON to deploy. The package manifests use shadcn's documented
-[`include`](https://ui.shadcn.com/docs/registry/registry-json#include),
-[`registryDependencies` and target placeholders](https://ui.shadcn.com/docs/registry/registry-item-json).
-Keep full `devotta-labs/dhis2-blocks/<item>` addresses for same-repository
-dependencies; bare names such as `button` refer to the upstream shadcn registry.
+built JSON to deploy. Item addresses are flat (`devotta-labs/dhis2-blocks/<item>`)
+because shadcn looks items up by name, whatever folder their source lives in;
+names must be unique across components and blocks.
 
 ```sh
-pnpm registry:validate # official CLI: schemas, includes and source-file existence
+pnpm registry:write    # regenerate registry.json from packages/registry/
+pnpm registry:validate # registry.json is up to date, then the official CLI's schema and file checks
 pnpm registry:build    # official CLI: optional local artifacts in dist/registry
 pnpm registry:check    # validate, build, install, typecheck and bundle fresh consumers
 ```
@@ -256,16 +256,26 @@ items come from the checkout being tested, not the default branch.
 GitHub `#ref` values are **not inherited** by dependencies; adding a branch ref
 to an install command alone is not enough to test an unmerged dependency graph.
 
-After editing UI primitives or tokens, run
-`pnpm --filter @dhis2-blocks/ui registry:write` and commit the updated manifest.
-The small UI manifest generator remains because `shadcn build` embeds declared
-files but does not infer dependencies or convert our shared theme stylesheet
-into `cssVars.theme`. It uses TypeScript and PostCSS to read those sources and
-shadcn's schema types; the generated manifest is checked for drift in tests.
+After adding or editing a component, block or token, run `pnpm registry:write`
+and commit `registry.json`. The generator (`tools/registry/buildRegistry.ts`)
+derives every item from source:
+
+- each `packages/registry/components/*.ts(x)` file is a `registry:ui` item installed to
+  `@components/dhis2/ui/`, and `theme.css` becomes the `dhis2-theme` item;
+- each `packages/registry/blocks/<name>/` folder is a `registry:block` item installed to
+  `@components/<name>/`, with its title, description and docs from
+  `block.json`; tests, `__tests__/` and
+  `type-tests/` are never shipped;
+- npm `dependencies` come from each item's imports, versioned by
+  `packages/registry/package.json`, and `registryDependencies` from its
+  `@/components/dhis2/ui/*` and `@/components/<block>` imports.
+
+The generator rejects imports that would break once installed, such as a
+relative import into another block or an `@/` alias the CLI cannot rewrite.
 
 ## UI primitives
 
-The shared DHIS2-styled shadcn primitives live in `packages/blocks/ui` and are
+The shared DHIS2-styled shadcn primitives live in `packages/registry/components` and are
 published as one registry item per file, so a project can install only what it
 needs. They install to `components/dhis2/ui/` under the configured
 `aliases.components` directory, keep the standard shadcn file and export names,

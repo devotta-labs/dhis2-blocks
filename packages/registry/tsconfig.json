@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "skipLibCheck": true,
+        "jsx": "react-jsx",
+        "esModuleInterop": true,
+        "target": "ESNext",
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "noEmit": true,
+        "paths": {
+            "@/components/dhis2/ui/*": ["./components/*"]
+        },
+        "types": ["node", "vitest/globals"]
+    },
+    "include": ["components", "blocks", "test"]
+}

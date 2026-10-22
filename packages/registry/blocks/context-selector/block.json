@@ -1,0 +1,4 @@
+{
+    "title": "DHIS2 Context Selector",
+    "description": "Composable, controlled Capture-style context selector primitives for React 18 DHIS2 applications."
+}

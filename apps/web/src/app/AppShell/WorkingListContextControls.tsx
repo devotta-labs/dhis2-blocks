@@ -1,12 +1,12 @@
-import { Button } from '@dhis2-blocks/ui/button'
-import { Separator } from '@dhis2-blocks/ui/separator'
+import { Button } from '@/components/dhis2/ui/button'
+import { Separator } from '@/components/dhis2/ui/separator'
 import {
     ClearSelections,
     ContextSelector,
     OrganisationUnitSelector,
     ProgramSelector,
     type Option,
-} from '@dhis2-blocks/context-selector'
+} from '@/components/context-selector'
 import type { ReactNode } from 'react'
 import React from 'react'
 import i18n from '../../i18n'

@@ -9,8 +9,11 @@ const viteConfig = defineConfig(({ mode }) => {
         plugins: [tailwindcss()],
         resolve: {
             alias: {
-                '@/registry/dhis2/ui': fileURLToPath(
-                    new URL('../../packages/blocks/ui/src', import.meta.url)
+                '@/components/dhis2/ui': fileURLToPath(
+                    new URL('../../packages/registry/components', import.meta.url)
+                ),
+                '@/components': fileURLToPath(
+                    new URL('../../packages/registry/blocks', import.meta.url)
                 ),
             },
         },

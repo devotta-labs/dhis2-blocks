@@ -2,10 +2,1149 @@
     "$schema": "https://ui.shadcn.com/schema/registry.json",
     "name": "dhis2-blocks",
     "homepage": "https://github.com/devotta-labs/dhis2-blocks",
-    "include": [
-        "packages/blocks/context-selector/registry.json",
-        "packages/blocks/sidebar/registry.json",
-        "packages/blocks/ui/registry.json",
-        "packages/blocks/working-list/registry.json"
+    "items": [
+        {
+            "name": "dhis2-theme",
+            "type": "registry:theme",
+            "cssVars": {
+                "theme": {
+                    "color-dhis2-grey-050": "#fbfcfd",
+                    "color-dhis2-grey-100": "#f8f9fa",
+                    "color-dhis2-grey-200": "#f3f5f7",
+                    "color-dhis2-grey-300": "#e8edf2",
+                    "color-dhis2-grey-400": "#d5dde5",
+                    "color-dhis2-grey-500": "#a0adba",
+                    "color-dhis2-grey-600": "#6c7787",
+                    "color-dhis2-grey-700": "#4a5768",
+                    "color-dhis2-grey-800": "#404b5a",
+                    "color-dhis2-grey-900": "#212934",
+                    "color-dhis2-blue-050": "#f5fbff",
+                    "color-dhis2-blue-100": "#e3f2fd",
+                    "color-dhis2-blue-200": "#c5e3fc",
+                    "color-dhis2-blue-300": "#90caf9",
+                    "color-dhis2-blue-400": "#42a5f5",
+                    "color-dhis2-blue-500": "#2196f3",
+                    "color-dhis2-blue-600": "#147cd7",
+                    "color-dhis2-blue-700": "#1565c0",
+                    "color-dhis2-blue-800": "#0d47a1",
+                    "color-dhis2-blue-900": "#093371",
+                    "color-dhis2-teal-050": "#f1f9f9",
+                    "color-dhis2-teal-100": "#e0f2f1",
+                    "color-dhis2-teal-200": "#b2dfdb",
+                    "color-dhis2-teal-300": "#4db6ac",
+                    "color-dhis2-teal-400": "#009688",
+                    "color-dhis2-teal-500": "#00897b",
+                    "color-dhis2-teal-600": "#00796b",
+                    "color-dhis2-teal-700": "#00695c",
+                    "color-dhis2-teal-800": "#004d40",
+                    "color-dhis2-teal-900": "#00332b",
+                    "color-dhis2-red-050": "#fff5f6",
+                    "color-dhis2-red-100": "#ffe5e8",
+                    "color-dhis2-red-200": "#ffcdd2",
+                    "color-dhis2-red-300": "#e57373",
+                    "color-dhis2-red-400": "#f44336",
+                    "color-dhis2-red-500": "#d32f2f",
+                    "color-dhis2-red-600": "#c62828",
+                    "color-dhis2-red-700": "#b71c1c",
+                    "color-dhis2-red-800": "#891515",
+                    "color-dhis2-red-900": "#330202",
+                    "color-dhis2-yellow-050": "#fff8e1",
+                    "color-dhis2-yellow-100": "#ffecb3",
+                    "color-dhis2-yellow-200": "#ffe082",
+                    "color-dhis2-yellow-300": "#ffc324",
+                    "color-dhis2-yellow-400": "#ffa902",
+                    "color-dhis2-yellow-500": "#ff9302",
+                    "color-dhis2-yellow-600": "#ff8302",
+                    "color-dhis2-yellow-700": "#e56408",
+                    "color-dhis2-yellow-800": "#bb460d",
+                    "color-dhis2-yellow-900": "#6f3205",
+                    "color-dhis2-green-050": "#f4fbf4",
+                    "color-dhis2-green-100": "#e8f5e9",
+                    "color-dhis2-green-200": "#c8e6c9",
+                    "color-dhis2-green-300": "#a5d6a7",
+                    "color-dhis2-green-400": "#4caf50",
+                    "color-dhis2-green-500": "#43a047",
+                    "color-dhis2-green-600": "#388e3c",
+                    "color-dhis2-green-700": "#2e7d32",
+                    "color-dhis2-green-800": "#1b5e20",
+                    "color-dhis2-green-900": "#103713",
+                    "color-dhis2-background": "#ffffff",
+                    "color-dhis2-foreground": "#212934",
+                    "color-dhis2-card": "#ffffff",
+                    "color-dhis2-card-foreground": "#212934",
+                    "color-dhis2-popover": "#ffffff",
+                    "color-dhis2-popover-foreground": "#212934",
+                    "color-dhis2-primary": "#1565c0",
+                    "color-dhis2-primary-foreground": "#ffffff",
+                    "color-dhis2-secondary": "#f3f5f7",
+                    "color-dhis2-secondary-foreground": "#212934",
+                    "color-dhis2-muted": "#f3f5f7",
+                    "color-dhis2-muted-foreground": "#4a5768",
+                    "color-dhis2-accent": "#f3f5f7",
+                    "color-dhis2-accent-foreground": "#212934",
+                    "color-dhis2-destructive": "#b71c1c",
+                    "color-dhis2-border": "#e8edf2",
+                    "color-dhis2-input": "#a0adba",
+                    "color-dhis2-ring": "#147cd7",
+                    "color-dhis2-overlay": "rgb(33 43 54 / 0.4)",
+                    "radius-dhis2-sm": "3px",
+                    "radius-dhis2-md": "4px",
+                    "radius-dhis2-lg": "4px",
+                    "shadow-dhis2-popover": "0 4px 12px rgba(12, 14, 16, 0.15), 0 0 0 1px rgba(12, 14, 16, 0.05)",
+                    "shadow-dhis2-card": "0px 1px 2px rgba(33, 41, 52, 0.06), 0px 1px 3px rgba(33, 41, 52, 0.1)",
+                    "font-dhis2": "Roboto, Helvetica, Arial, sans-serif",
+                    "dhis2-field-height-dense": "32px"
+                }
+            }
+        },
+        {
+            "name": "alert-dialog",
+            "type": "registry:ui",
+            "dependencies": ["@base-ui/react@^1.9.0"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dialog",
+                "devotta-labs/dhis2-blocks/portal-root"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/alert-dialog.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/alert-dialog.tsx"
+                }
+            ]
+        },
+        {
+            "name": "alert",
+            "type": "registry:ui",
+            "dependencies": [
+                "@dhis2/ui-icons@^10.17.0",
+                "class-variance-authority@^0.7.1",
+                "prop-types@^15.8.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/alert.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/alert.tsx"
+                }
+            ]
+        },
+        {
+            "name": "button",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "class-variance-authority@^0.7.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/button.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/button.tsx"
+                }
+            ]
+        },
+        {
+            "name": "card",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/card.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/card.tsx"
+                }
+            ]
+        },
+        {
+            "name": "checkbox",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "class-variance-authority@^0.7.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/checkbox.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/checkbox.tsx"
+                }
+            ]
+        },
+        {
+            "name": "cn",
+            "type": "registry:ui",
+            "dependencies": ["clsx@^2.1.1", "tailwind-merge@^3.7.0"],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/components/cn.ts",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/cn.ts"
+                }
+            ]
+        },
+        {
+            "name": "combobox",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "prop-types@^15.8.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/checkbox",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/input-group",
+                "devotta-labs/dhis2-blocks/select"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/combobox.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/combobox.tsx"
+                }
+            ]
+        },
+        {
+            "name": "dialog",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "class-variance-authority@^0.7.1",
+                "prop-types@^15.8.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/portal-root"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/dialog.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/dialog.tsx"
+                }
+            ]
+        },
+        {
+            "name": "dropdown-menu",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "prop-types@^15.8.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/dropdown-menu.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/dropdown-menu.tsx"
+                }
+            ]
+        },
+        {
+            "name": "field",
+            "type": "registry:ui",
+            "dependencies": ["class-variance-authority@^0.7.1"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/label"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/field.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/field.tsx"
+                }
+            ]
+        },
+        {
+            "name": "input-group",
+            "type": "registry:ui",
+            "dependencies": ["class-variance-authority@^0.7.1"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/textarea"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/input-group.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/input-group.tsx"
+                }
+            ]
+        },
+        {
+            "name": "input",
+            "type": "registry:ui",
+            "dependencies": ["@base-ui/react@^1.9.0"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/input.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/input.tsx"
+                }
+            ]
+        },
+        {
+            "name": "label",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/label.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/label.tsx"
+                }
+            ]
+        },
+        {
+            "name": "popover",
+            "type": "registry:ui",
+            "dependencies": ["@base-ui/react@^1.9.0"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/portal-root"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/popover.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/popover.tsx"
+                }
+            ]
+        },
+        {
+            "name": "portal-root",
+            "type": "registry:ui",
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/components/portal-root.ts",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/portal-root.ts"
+                }
+            ]
+        },
+        {
+            "name": "radio-group",
+            "type": "registry:ui",
+            "dependencies": ["@base-ui/react@^1.9.0"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/radio-group.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/radio-group.tsx"
+                }
+            ]
+        },
+        {
+            "name": "select",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "class-variance-authority@^0.7.1",
+                "prop-types@^15.8.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/select.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/select.tsx"
+                }
+            ]
+        },
+        {
+            "name": "separator",
+            "type": "registry:ui",
+            "dependencies": ["@base-ui/react@^1.9.0"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/separator.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/separator.tsx"
+                }
+            ]
+        },
+        {
+            "name": "spinner",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/spinner.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/spinner.tsx"
+                }
+            ]
+        },
+        {
+            "name": "switch",
+            "type": "registry:ui",
+            "dependencies": ["@base-ui/react@^1.9.0"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/switch.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/switch.tsx"
+                }
+            ]
+        },
+        {
+            "name": "table",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/table.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/table.tsx"
+                }
+            ]
+        },
+        {
+            "name": "textarea",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/textarea.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/textarea.tsx"
+                }
+            ]
+        },
+        {
+            "name": "toggle-group",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "class-variance-authority@^0.7.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/toggle"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/toggle-group.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/toggle-group.tsx"
+                }
+            ]
+        },
+        {
+            "name": "toggle",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "class-variance-authority@^0.7.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/toggle.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/toggle.tsx"
+                }
+            ]
+        },
+        {
+            "name": "tooltip",
+            "type": "registry:ui",
+            "dependencies": ["@base-ui/react@^1.9.0"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/tooltip.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/tooltip.tsx"
+                }
+            ]
+        },
+        {
+            "name": "context-selector",
+            "type": "registry:block",
+            "title": "DHIS2 Context Selector",
+            "description": "Composable, controlled Capture-style context selector primitives for React 18 DHIS2 applications.",
+            "dependencies": ["@dhis2/d2-i18n@1.2.0", "@dhis2/ui@^10.17.0"],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/context-selector/components/ClearSelections.tsx",
+                    "type": "registry:file",
+                    "target": "@components/context-selector/components/ClearSelections.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/context-selector/components/ContextSelector.tsx",
+                    "type": "registry:file",
+                    "target": "@components/context-selector/components/ContextSelector.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/context-selector/components/ContextValue.tsx",
+                    "type": "registry:file",
+                    "target": "@components/context-selector/components/ContextValue.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/context-selector/components/OptionLabel.tsx",
+                    "type": "registry:file",
+                    "target": "@components/context-selector/components/OptionLabel.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/context-selector/components/OptionSelector.tsx",
+                    "type": "registry:file",
+                    "target": "@components/context-selector/components/OptionSelector.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/context-selector/components/OrganisationUnitSelector.tsx",
+                    "type": "registry:file",
+                    "target": "@components/context-selector/components/OrganisationUnitSelector.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/context-selector/components/SelectorVariants.tsx",
+                    "type": "registry:file",
+                    "target": "@components/context-selector/components/SelectorVariants.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/context-selector/components/internal.tsx",
+                    "type": "registry:file",
+                    "target": "@components/context-selector/components/internal.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/context-selector/dhis2-ui-selector-bar.d.ts",
+                    "type": "registry:file",
+                    "target": "@components/context-selector/dhis2-ui-selector-bar.d.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/context-selector/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/context-selector/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/context-selector/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/context-selector/types.ts"
+                }
+            ]
+        },
+        {
+            "name": "sidebar",
+            "type": "registry:block",
+            "title": "Sidebar",
+            "description": "Navigation with expandable groups, footer actions and a collapsible sidebar.",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "prop-types@^15.8.1"
+            ],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/cn"],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/sidebar/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/sidebar/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/sidebar/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/sidebar/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/sidebar/items.tsx",
+                    "type": "registry:file",
+                    "target": "@components/sidebar/items.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/sidebar/sidebar.tsx",
+                    "type": "registry:file",
+                    "target": "@components/sidebar/sidebar.tsx"
+                }
+            ],
+            "docs": "Use SidebarLink with render={<NavLink to=\"/projects\" />} to highlight the current page. Add SidebarGroup for nested links and SidebarButton for footer actions. Use SidebarToggle in the sidebar or useSidebar() for a page-toolbar control. Give each sidebar its own SidebarProvider and SidebarNavigation. Collapsing preserves expanded groups and the selected page."
+        },
+        {
+            "name": "working-list",
+            "type": "registry:block",
+            "title": "DHIS2 Working List",
+            "description": "A composable React 18 Working List block for DHIS2 tracker programs.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@2.1.2",
+                "@dhis2/ui@^10.17.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "@tanstack/react-query@^5.101.4",
+                "@tanstack/react-table@^9.1.2",
+                "better-result@^3.0.1",
+                "prop-types@^15.8.1",
+                "zod@^4.4.3",
+                "zustand@^5.0.15"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/alert-dialog",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/checkbox",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/combobox",
+                "devotta-labs/dhis2-blocks/dialog",
+                "devotta-labs/dhis2-blocks/dropdown-menu",
+                "devotta-labs/dhis2-blocks/field",
+                "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/label",
+                "devotta-labs/dhis2-blocks/popover",
+                "devotta-labs/dhis2-blocks/select",
+                "devotta-labs/dhis2-blocks/separator",
+                "devotta-labs/dhis2-blocks/spinner",
+                "devotta-labs/dhis2-blocks/table",
+                "devotta-labs/dhis2-blocks/toggle",
+                "devotta-labs/dhis2-blocks/toggle-group",
+                "devotta-labs/dhis2-blocks/tooltip"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/working-list/api/capabilities.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/capabilities.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/api/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/api/metadata.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/metadata.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/api/savedListContracts.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedListContracts.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/api/savedListNormalization.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedListNormalization.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/api/savedListPayload.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedListPayload.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/api/savedListQueries.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedListQueries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/api/savedListRepair.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedListRepair.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/api/savedLists.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedLists.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/api/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/schemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/api/systemInfo.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/systemInfo.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/domain/canonicalValue.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/canonicalValue.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/domain/filterControlPolicy.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/filterControlPolicy.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/domain/model.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/model.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/domain/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/schemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/domain/staleReferences.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/staleReferences.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/domain/visibleEventFilters.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/visibleEventFilters.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/WorkingListContext.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/WorkingListContext.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/WorkingListPrivateContext.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/WorkingListPrivateContext.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/WorkingListProvider.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/WorkingListProvider.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/actionCommands.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/actionCommands.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/configuration.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/configuration.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/contracts.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/contracts.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/engineAdapter.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/engineAdapter.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/errorNormalization.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/errorNormalization.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/errors.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/errors.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/repair.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/repair.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/results.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/results.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/store.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/store.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/useWorkingListLifecycle.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/useWorkingListLifecycle.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/useWorkingListRepair.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/useWorkingListRepair.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/useWorkingListResults.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/useWorkingListResults.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/useWorkingListSelection.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/useWorkingListSelection.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/query/fetchers.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/query/fetchers.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/query/fileResourceLabels.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/query/fileResourceLabels.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/query/keys.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/query/keys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/query/normalizeRows.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/query/normalizeRows.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/query/referenceLabels.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/query/referenceLabels.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/query/serialize.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/query/serialize.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/registry/dateTimeValueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/dateTimeValueTypes.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/registry/systemFilters.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/systemFilters.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/registry/textAndNumericValueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/textAndNumericValueTypes.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/registry/transformers.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/transformers.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/registry/valueTypeContracts.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/valueTypeContracts.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/registry/valueTypeShared.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/valueTypeShared.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/registry/valueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/valueTypes.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Actions/WorkingListActions.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Actions/WorkingListActions.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Actions/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Actions/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/ColumnSettingsDialog/ColumnSettingsDialog.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/ColumnSettingsDialog/ColumnSettingsDialog.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/ColumnSettingsDialog/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/ColumnSettingsDialog/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Columns/Columns.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Columns/Columns.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Columns/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Columns/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/ConfigureMenu/ConfigureMenu.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/ConfigureMenu/ConfigureMenu.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/ConfigureMenu/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/ConfigureMenu/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Container/WorkingListContainer.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Container/WorkingListContainer.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Container/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Container/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/FilterControls/CalendarRangeFields.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/CalendarRangeFields.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/FilterControls/FilterButton.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/FilterButton.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/FilterControls/FilterControlPrimitives.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/FilterControlPrimitives.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/FilterControls/FilterEditorValue.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/FilterEditorValue.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/FilterControls/FilterSelectFields.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/FilterSelectFields.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/FilterControls/MoreFilters.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/MoreFilters.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/FilterControls/ProgramStageControl.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/ProgramStageControl.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/FilterControls/ReferenceFilterSelects.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/ReferenceFilterSelects.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/FilterControls/filterValueSupport.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/filterValueSupport.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/FilterControls/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/FilterControls/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Filters/Filters.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Filters/Filters.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Filters/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Filters/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Results/WorkingListResults.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Results/WorkingListResults.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Results/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Results/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/SavedListBar/SavedListBar.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/SavedListBar/SavedListBar.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/SavedListBar/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/SavedListBar/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/SavedViews/WorkingListSavedViews.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/SavedViews/WorkingListSavedViews.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/SavedViews/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/SavedViews/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Skeleton/Skeleton.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Skeleton/Skeleton.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Skeleton/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Skeleton/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Toolbar/WorkingListToolbar.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Toolbar/WorkingListToolbar.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/Toolbar/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Toolbar/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingList/WorkingList.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/WorkingList.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingList/dialogs/WorkingListRepairDialog/WorkingListRepairDialog.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/dialogs/WorkingListRepairDialog/WorkingListRepairDialog.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingList/dialogs/WorkingListRepairDialog/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/dialogs/WorkingListRepairDialog/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingList/dialogs/WorkingListSharingDialog/WorkingListSharingDialog.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/dialogs/WorkingListSharingDialog/WorkingListSharingDialog.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingList/dialogs/WorkingListSharingDialog/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/dialogs/WorkingListSharingDialog/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingList/dialogs/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/dialogs/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingList/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingList/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingListTable/WorkingListPagination.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingListTable/WorkingListPagination.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingListTable/WorkingListTable.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingListTable/WorkingListTable.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingListTable/WorkingListTableView.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingListTable/WorkingListTableView.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingListTable/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingListTable/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingListText/WorkingListText.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingListText/WorkingListText.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/WorkingListText/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/WorkingListText/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/types.ts"
+                }
+            ],
+            "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs."
+        }
     ]
 }

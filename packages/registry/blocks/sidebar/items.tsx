@@ -44,7 +44,6 @@ export const SidebarLink = forwardRef<
 )
 SidebarLink.displayName = 'SidebarLink'
 
-/** @public */
 export const SidebarButton = forwardRef<
     HTMLButtonElement,
     ComponentPropsWithoutRef<'button'>

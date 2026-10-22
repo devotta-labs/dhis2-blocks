@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
     Sidebar,
+    SidebarButton,
     SidebarContent,
     SidebarFooter,
     SidebarGroup,
@@ -20,6 +21,7 @@ const reportPages = ['Overview', 'Activity', 'Exports']
 
 export default function SidebarBasic() {
     const [page, setPage] = useState('Overview')
+    const [notice, setNotice] = useState('')
     const pageLink = (label: string) => (
         <SidebarItem key={label}>
             <SidebarLink
@@ -28,6 +30,7 @@ export default function SidebarBasic() {
                 onClick={(event) => {
                     event.preventDefault()
                     setPage(label)
+                    setNotice('')
                 }}
             >
                 {label}
@@ -59,7 +62,20 @@ export default function SidebarBasic() {
                             </SidebarItems>
                         </SidebarContent>
                         <SidebarFooter>
-                            <SidebarItems>{pageLink('Settings')}</SidebarItems>
+                            <SidebarItems>
+                                {pageLink('Settings')}
+                                <SidebarItem>
+                                    <SidebarButton
+                                        onClick={() =>
+                                            setNotice(
+                                                'Demo: sign out selected.'
+                                            )
+                                        }
+                                    >
+                                        Sign out
+                                    </SidebarButton>
+                                </SidebarItem>
+                            </SidebarItems>
                         </SidebarFooter>
                     </SidebarNavigation>
                     <SidebarToggle />
@@ -72,6 +88,9 @@ export default function SidebarBasic() {
                     <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
                         Manage projects, review reports, and keep track of your
                         team's work.
+                    </p>
+                    <p role="status" className="mt-4 text-sm">
+                        {notice}
                     </p>
                 </section>
             </div>

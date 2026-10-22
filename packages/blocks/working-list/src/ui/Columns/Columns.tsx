@@ -130,15 +130,19 @@ export const WorkingListColumnSelector = ({
             {ready ? (
                 <ColumnsControl />
             ) : (
-                <Button
-                    secondary
-                    small
-                    icon={<IconLayoutColumns16 />}
-                    dataTest="configure-columns"
-                    disabled
-                >
-                    {translate('Columns')}
-                </Button>
+                // Same wrapper as the live control, so the toolbar keeps its
+                // height when the configuration resolves.
+                <div className="flex flex-none items-center">
+                    <Button
+                        secondary
+                        small
+                        icon={<IconLayoutColumns16 />}
+                        dataTest="configure-columns"
+                        disabled
+                    >
+                        {translate('Columns')}
+                    </Button>
+                </div>
             )}
         </div>
     )

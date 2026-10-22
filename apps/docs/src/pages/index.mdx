@@ -1,0 +1,42 @@
+---
+title: DHIS2 Blocks
+description: Production-ready UI blocks you copy into your DHIS2 application.
+---
+
+DHIS2 Blocks is a collection of UI blocks for DHIS2 web applications. Like
+shadcn/ui, blocks are not an npm package: the shadcn CLI copies each block's
+source into your project, where you can read, restyle, and change it like the
+rest of your code.
+
+Every page shows a live example you can try, the code behind it, and the
+command that installs the block.
+
+## Blocks
+
+- [Working List](/blocks/working-list) — a filtered, sortable list for finding
+  and reviewing tracker records, with saved views.
+- [Context Selector](/blocks/context-selector) — the Capture-style bar for
+  choosing a program, organisation unit, and the rest of the working context.
+
+## Get started
+
+1. Create an app with the DHIS2 `create-app` CLI, or open one you already
+   have.
+2. Set up Tailwind CSS and shadcn, then add a block:
+
+    ```bash
+    pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list
+    ```
+
+3. Import it from your components folder and render it.
+
+[Installation](/installation) walks through every step.
+
+## Using an AI coding agent
+
+The commands and code on these pages are complete and can be followed as
+written. A prompt such as _"Install the DHIS2 Blocks Working List from
+`devotta-labs/dhis2-blocks/working-list` with the shadcn CLI and render it for
+program `IpHINAT79UW` in organisation unit `y77LiPqLMoq`"_ gives an agent
+everything it needs. After installation, the block's source in your
+project is the most accurate reference for its API.

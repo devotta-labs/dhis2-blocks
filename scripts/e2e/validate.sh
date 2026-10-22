@@ -32,6 +32,8 @@ if (($# > 0)); then
     validate_version "$1"
 else
     for version in 41 42 43 dev; do
-        validate_version "$version"
+        # Subshell per lane: e2e_load_version only fills unset values, so its
+        # exports must not leak into the next iteration.
+        ( validate_version "$version" )
     done
 fi

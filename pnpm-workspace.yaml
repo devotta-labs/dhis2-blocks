@@ -7,6 +7,9 @@ onlyBuiltDependencies:
     - core-js-pure
     - esbuild
 
+patchedDependencies:
+    '@dhis2/app-adapter@12.10.3': patches/@dhis2__app-adapter@12.10.3.patch
+
 publicHoistPattern:
     - '@dhis2/ui'
     - typeface-roboto

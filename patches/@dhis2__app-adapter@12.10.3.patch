@@ -1,0 +1,300 @@
+diff --git a/build/cjs/components/AppWrapper.js b/build/cjs/components/AppWrapper.js
+index 41b97bef240ef4932d96e1b38977377787caebe9..e8f24f2cb95f400d7521cda43154eaa95e8114fc 100644
+--- a/build/cjs/components/AppWrapper.js
++++ b/build/cjs/components/AppWrapper.js
+@@ -36,7 +36,9 @@ const AppWrapper = ({
+     serverVersion
+   } = (0, _appRuntime.useConfig)();
+   if (localeLoading || latestUserLoading) {
+-    return /*#__PURE__*/_react.default.createElement(_LoadingMask.LoadingMask, null);
++    // Plugins render inline: the host owns the loading UI, so skip the
++    // page-covering mask.
++    return plugin ? null : /*#__PURE__*/_react.default.createElement(_LoadingMask.LoadingMask, null);
+   }
+   if (plugin) {
+     return /*#__PURE__*/_react.default.createElement("div", {
+diff --git a/build/cjs/components/ServerVersionProvider.js b/build/cjs/components/ServerVersionProvider.js
+index 597474bd4979fe69cb40cd7f13e622dd5604ea2d..a2e5b4141393d76313f965d6038d506fdee6a642 100644
+--- a/build/cjs/components/ServerVersionProvider.js
++++ b/build/cjs/components/ServerVersionProvider.js
+@@ -23,6 +23,7 @@ const ServerVersionProvider = ({
+   apiVersion,
+   pwaEnabled,
+   plugin,
++  connectionErrorFallback,
+   parentAlertsAdd,
+   showAlertsInPlugin,
+   loginApp,
+@@ -140,14 +141,23 @@ const ServerVersionProvider = ({
+       });
+       return;
+     }
++    // Cleanup invalidates this attempt before aborting its requests.
++    // Strict Mode can start another attempt before the abort rejection runs.
++    let active = true;
+     const request = (0, _api.get)(`${baseUrl}/api/system/info`);
+     request.then(systemInfo => {
++      if (!active) {
++        return;
++      }
+       setSystemInfoState({
+         loading: false,
+         error: undefined,
+         systemInfo: systemInfo
+       });
+     }).catch(e => {
++      if (!active) {
++        return;
++      }
+       // Todo: If this is a network error, the app cannot load -- handle that gracefully here
+       // if (e === 'Network error') { ... }
+       setSystemInfoState({
+@@ -158,12 +168,18 @@ const ServerVersionProvider = ({
+     });
+     const userInfoRequest = (0, _api.get)(`${baseUrl}/api/me`);
+     userInfoRequest.then(userInfo => {
++      if (!active) {
++        return;
++      }
+       setUserInfoState({
+         loading: false,
+         error: undefined,
+         userInfo: userInfo
+       });
+     }).catch(e => {
++      if (!active) {
++        return;
++      }
+       setUserInfoState({
+         loading: false,
+         error: e,
+@@ -171,6 +187,7 @@ const ServerVersionProvider = ({
+       });
+     });
+     return () => {
++      active = false;
+       request.abort();
+       userInfoRequest.abort();
+     };
+@@ -185,6 +202,9 @@ const ServerVersionProvider = ({
+ 
+   // This needs to come before 'loading' case to show modal at correct times
+   if (systemInfoState.error || userInfoState.error || baseUrlState.error) {
++    if (plugin && connectionErrorFallback !== undefined) {
++      return connectionErrorFallback;
++    }
+     return /*#__PURE__*/_react.default.createElement(_LoginModal.LoginModal, {
+       appName: appName,
+       baseUrl: baseUrl,
+@@ -192,7 +212,9 @@ const ServerVersionProvider = ({
+     });
+   }
+   if (systemInfoState.loading || userInfoState.loading || baseUrlState.loading || offlineInterfaceLoading) {
+-    return /*#__PURE__*/_react.default.createElement(_LoadingMask.LoadingMask, null);
++    // Plugins render inline: the host owns the loading UI, so skip the
++    // page-covering mask.
++    return plugin ? null : /*#__PURE__*/_react.default.createElement(_LoadingMask.LoadingMask, null);
+   }
+   const serverVersion = (0, _parseVersion.parseDHIS2ServerVersion)(systemInfo.version);
+   const realApiVersion = serverVersion.minor;
+@@ -222,6 +244,7 @@ ServerVersionProvider.propTypes = {
+   loginApp: _propTypes.default.bool,
+   parentAlertsAdd: _propTypes.default.func,
+   plugin: _propTypes.default.bool,
++  connectionErrorFallback: _propTypes.default.node,
+   pwaEnabled: _propTypes.default.bool,
+   showAlertsInPlugin: _propTypes.default.bool,
+   url: _propTypes.default.string
+diff --git a/build/cjs/index.js b/build/cjs/index.js
+index b0115161a974e9a165e9796e0fe73f80ef55908d..18e53a68719445aa4aad6227f8b5e51a2a17c471 100644
+--- a/build/cjs/index.js
++++ b/build/cjs/index.js
+@@ -22,6 +22,7 @@ const AppAdapter = ({
+   direction,
+   pwaEnabled,
+   plugin,
++  connectionErrorFallback,
+   parentAlertsAdd,
+   showAlertsInPlugin,
+   onPluginError,
+@@ -63,6 +64,7 @@ const AppAdapter = ({
+     apiVersion: apiVersion,
+     pwaEnabled: pwaEnabled,
+     plugin: plugin,
++    connectionErrorFallback: connectionErrorFallback,
+     parentAlertsAdd: parentAlertsAdd,
+     showAlertsInPlugin: showAlertsInPlugin
+   }, /*#__PURE__*/_react.default.createElement(_AppWrapper.AppWrapper, {
+@@ -82,6 +84,7 @@ AppAdapter.propTypes = {
+   loginApp: _propTypes.default.bool,
+   parentAlertsAdd: _propTypes.default.func,
+   plugin: _propTypes.default.bool,
++  connectionErrorFallback: _propTypes.default.node,
+   pwaEnabled: _propTypes.default.bool,
+   showAlertsInPlugin: _propTypes.default.bool,
+   url: _propTypes.default.string,
+diff --git a/build/cjs/utils/api.js b/build/cjs/utils/api.js
+index b70bb12ed9a54f3eb83d1f26885bab2de57c443b..f4c01798f6065e46f840b5902ac5aaa40fde092d 100644
+--- a/build/cjs/utils/api.js
++++ b/build/cjs/utils/api.js
+@@ -31,7 +31,9 @@ const request = (url, options) => {
+         resolve(response.text());
+       }
+     }).catch(e => {
+-      console.error('Network error: ', e);
++      if (!abortController.signal.aborted) {
++        console.error('Network error: ', e);
++      }
+       reject('Network error');
+     });
+   });
+diff --git a/build/es/components/AppWrapper.js b/build/es/components/AppWrapper.js
+index cc0eed4f7d52c2cc404286df67d78f8a18e608bf..0a7e88cb1de1c9316f19a15bc32cee399d10afa0 100644
+--- a/build/es/components/AppWrapper.js
++++ b/build/es/components/AppWrapper.js
+@@ -29,7 +29,9 @@ const AppWrapper = ({
+     serverVersion
+   } = useConfig();
+   if (localeLoading || latestUserLoading) {
+-    return /*#__PURE__*/React.createElement(LoadingMask, null);
++    // Plugins render inline: the host owns the loading UI, so skip the
++    // page-covering mask.
++    return plugin ? null : /*#__PURE__*/React.createElement(LoadingMask, null);
+   }
+   if (plugin) {
+     return /*#__PURE__*/React.createElement("div", {
+diff --git a/build/es/components/ServerVersionProvider.js b/build/es/components/ServerVersionProvider.js
+index bca32a7d80cee6ef9400dc89f52b03a9956a168f..661aefb48e93e4dfc0734ab4d568e44eb2dbd5c9 100644
+--- a/build/es/components/ServerVersionProvider.js
++++ b/build/es/components/ServerVersionProvider.js
+@@ -15,6 +15,7 @@ export const ServerVersionProvider = ({
+   apiVersion,
+   pwaEnabled,
+   plugin,
++  connectionErrorFallback,
+   parentAlertsAdd,
+   showAlertsInPlugin,
+   loginApp,
+@@ -132,14 +133,23 @@ export const ServerVersionProvider = ({
+       });
+       return;
+     }
++    // Cleanup invalidates this attempt before aborting its requests.
++    // Strict Mode can start another attempt before the abort rejection runs.
++    let active = true;
+     const request = get(`${baseUrl}/api/system/info`);
+     request.then(systemInfo => {
++      if (!active) {
++        return;
++      }
+       setSystemInfoState({
+         loading: false,
+         error: undefined,
+         systemInfo: systemInfo
+       });
+     }).catch(e => {
++      if (!active) {
++        return;
++      }
+       // Todo: If this is a network error, the app cannot load -- handle that gracefully here
+       // if (e === 'Network error') { ... }
+       setSystemInfoState({
+@@ -150,12 +160,18 @@ export const ServerVersionProvider = ({
+     });
+     const userInfoRequest = get(`${baseUrl}/api/me`);
+     userInfoRequest.then(userInfo => {
++      if (!active) {
++        return;
++      }
+       setUserInfoState({
+         loading: false,
+         error: undefined,
+         userInfo: userInfo
+       });
+     }).catch(e => {
++      if (!active) {
++        return;
++      }
+       setUserInfoState({
+         loading: false,
+         error: e,
+@@ -163,6 +179,7 @@ export const ServerVersionProvider = ({
+       });
+     });
+     return () => {
++      active = false;
+       request.abort();
+       userInfoRequest.abort();
+     };
+@@ -177,6 +194,9 @@ export const ServerVersionProvider = ({
+ 
+   // This needs to come before 'loading' case to show modal at correct times
+   if (systemInfoState.error || userInfoState.error || baseUrlState.error) {
++    if (plugin && connectionErrorFallback !== undefined) {
++      return connectionErrorFallback;
++    }
+     return /*#__PURE__*/React.createElement(LoginModal, {
+       appName: appName,
+       baseUrl: baseUrl,
+@@ -184,7 +204,9 @@ export const ServerVersionProvider = ({
+     });
+   }
+   if (systemInfoState.loading || userInfoState.loading || baseUrlState.loading || offlineInterfaceLoading) {
+-    return /*#__PURE__*/React.createElement(LoadingMask, null);
++    // Plugins render inline: the host owns the loading UI, so skip the
++    // page-covering mask.
++    return plugin ? null : /*#__PURE__*/React.createElement(LoadingMask, null);
+   }
+   const serverVersion = parseDHIS2ServerVersion(systemInfo.version);
+   const realApiVersion = serverVersion.minor;
+@@ -213,6 +235,7 @@ ServerVersionProvider.propTypes = {
+   loginApp: PropTypes.bool,
+   parentAlertsAdd: PropTypes.func,
+   plugin: PropTypes.bool,
++  connectionErrorFallback: PropTypes.node,
+   pwaEnabled: PropTypes.bool,
+   showAlertsInPlugin: PropTypes.bool,
+   url: PropTypes.string
+diff --git a/build/es/index.js b/build/es/index.js
+index 6c21e8832e4f337e42615d74cd73eeb688aced43..211a186eed08b5ef4ba23144d2699fec1991e0a2 100644
+--- a/build/es/index.js
++++ b/build/es/index.js
+@@ -15,6 +15,7 @@ const AppAdapter = ({
+   direction,
+   pwaEnabled,
+   plugin,
++  connectionErrorFallback,
+   parentAlertsAdd,
+   showAlertsInPlugin,
+   onPluginError,
+@@ -56,6 +57,7 @@ const AppAdapter = ({
+     apiVersion: apiVersion,
+     pwaEnabled: pwaEnabled,
+     plugin: plugin,
++    connectionErrorFallback: connectionErrorFallback,
+     parentAlertsAdd: parentAlertsAdd,
+     showAlertsInPlugin: showAlertsInPlugin
+   }, /*#__PURE__*/React.createElement(AppWrapper, {
+@@ -75,6 +77,7 @@ AppAdapter.propTypes = {
+   loginApp: PropTypes.bool,
+   parentAlertsAdd: PropTypes.func,
+   plugin: PropTypes.bool,
++  connectionErrorFallback: PropTypes.node,
+   pwaEnabled: PropTypes.bool,
+   showAlertsInPlugin: PropTypes.bool,
+   url: PropTypes.string,
+diff --git a/build/es/utils/api.js b/build/es/utils/api.js
+index 57d9ad92d4f837a11a707c509e4b9b485cb6a949..58228334588111fc3749f5d453fbe3c0d01918e0 100644
+--- a/build/es/utils/api.js
++++ b/build/es/utils/api.js
+@@ -25,7 +25,9 @@ const request = (url, options) => {
+         resolve(response.text());
+       }
+     }).catch(e => {
+-      console.error('Network error: ', e);
++      if (!abortController.signal.aborted) {
++        console.error('Network error: ', e);
++      }
+       reject('Network error');
+     });
+   });

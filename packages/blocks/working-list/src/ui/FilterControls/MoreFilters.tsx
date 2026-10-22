@@ -79,7 +79,12 @@ export const MoreFilters = ({
     }
 
     return (
-        <div ref={setButtonElement} className="relative min-w-0 max-w-full">
+        // Flex, not block: an inline button would sit in a font-dependent
+        // line box and change the toolbar height between hosts.
+        <div
+            ref={setButtonElement}
+            className="relative flex min-w-0 max-w-full"
+        >
             <Button
                 secondary
                 small

@@ -6,6 +6,7 @@ node_modules
 /src/locales/
 apps/web/src/locales
 apps/*/build
+apps/docs/dist
 packages/*/dist
 .turbo
 .npm-cache
@@ -13,3 +14,5 @@ e2e/artifacts
 
 # Local Claude Code state (agent worktrees, launch config)
 .claude/
+
+.playwright-mcp

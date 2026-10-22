@@ -153,7 +153,7 @@ describe('ChangeLogPageSchema', () => {
     it.each(VERSIONS)(
         '%s reads attribute changes with their user',
         (version) => {
-            const rows = ChangeLogPageSchema.parse(
+            const { rows } = ChangeLogPageSchema.parse(
                 fixture(version, 'tracked-entity-changelog.json')
             )
 
@@ -179,7 +179,7 @@ describe('ChangeLogPageSchema', () => {
     )
 
     it.each(VERSIONS)('%s reads data value changes', (version) => {
-        const rows = ChangeLogPageSchema.parse(
+        const { rows } = ChangeLogPageSchema.parse(
             fixture(version, 'event-changelog.json')
         )
 
@@ -191,7 +191,7 @@ describe('ChangeLogPageSchema', () => {
     })
 
     it('reads event field changes (42+)', () => {
-        const rows = ChangeLogPageSchema.parse(
+        const { rows } = ChangeLogPageSchema.parse(
             fixture('v42', 'event-changelog.json')
         )
 
@@ -204,7 +204,7 @@ describe('ChangeLogPageSchema', () => {
 
     it('skips a row whose change kind it does not know, keeping the rest', () => {
         const user = { username: 'admin' }
-        const rows = ChangeLogPageSchema.parse({
+        const { rows, received } = ChangeLogPageSchema.parse({
             changeLogs: [
                 {
                     createdAt: '2026-01-01T00:00:00.000',
@@ -224,6 +224,7 @@ describe('ChangeLogPageSchema', () => {
         })
 
         expect(rows).toHaveLength(1)
+        expect(received).toBe(2)
         expect(rows[0]?.change.id).toBe('d1')
     })
 })

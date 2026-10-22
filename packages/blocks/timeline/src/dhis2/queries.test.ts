@@ -1,5 +1,6 @@
 import { Result } from 'better-result'
 import { readFileSync } from 'node:fs'
+import { z } from 'zod'
 import {
     createTimelineClient,
     type DataEngineLike,
@@ -15,6 +16,11 @@ import {
     fetchTrackedEntityWithEnrollments,
 } from './queries'
 import { timelineKeys } from './timelineKeys'
+
+/** A recorded changelog page, rows kept as raw JSON so a test can alter them. */
+const RecordedChangeLogsSchema = z.object({
+    changeLogs: z.array(z.record(z.string(), z.json())),
+})
 
 const fixture = (name: string): DataEngineValue =>
     JSON.parse(
@@ -96,16 +102,21 @@ describe('fetchEventsPage', () => {
         expect(page?.hasMore).toBe(false)
     })
 
-    it('drops a legacy OVERDUE event from the past stream', async () => {
+    it('keeps a stored legacy OVERDUE event in the past stream, since pinned events never fetch it', async () => {
         const { client } = engineReturning({
-            events: [event('e1', 'OVERDUE'), event('e2', 'VISITED')],
+            events: [
+                event('e1', 'OVERDUE'),
+                event('e2', 'VISITED'),
+                event('e3', 'SCHEDULE'),
+                event('e4', 'SKIPPED'),
+            ],
         })
 
         const result = await fetchEventsPage(client, options)
 
         expect(
             Result.isOk(result) && result.value.events.map((e) => e.event)
-        ).toEqual(['e2'])
+        ).toEqual(['e1', 'e2'])
     })
 
     it('passes the abort signal to the engine', async () => {
@@ -271,6 +282,28 @@ describe('changelog pages', () => {
         })
         const page = Result.isOk(result) ? result.value : undefined
         expect(page?.rows).toHaveLength(7)
+        expect(page?.hasMore).toBe(true)
+    })
+
+    it('keeps paging when a full changelog page contains an unknown row', async () => {
+        const { changeLogs: rows } = RecordedChangeLogsSchema.parse(
+            fixture('tracked-entity-changelog.json')
+        )
+        const [first, ...rest] = rows
+        const unknownRow = { ...first, change: { somethingNew: { id: 'x' } } }
+        const { client } = engineReturning({
+            changeLogs: [unknownRow, ...rest],
+        })
+
+        const result = await fetchAttributeChangeLogPage(client, {
+            trackedEntity: 'TlE2eTei001',
+            program: 'WSGAb5XwJ3Y',
+            page: 1,
+            pageSize: rows.length,
+        })
+
+        const page = Result.isOk(result) ? result.value : undefined
+        expect(page?.rows).toHaveLength(rows.length - 1)
         expect(page?.hasMore).toBe(true)
     })
 

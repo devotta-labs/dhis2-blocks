@@ -217,11 +217,18 @@ const ChangeLogRowSchema = z
  * Tracked entity attribute and event changelog pages share this shape. A row
  * whose change or type this block does not know is skipped, not an error.
  */
+export interface ParsedChangeLogPage {
+    rows: ChangeLogRow[]
+    /** Rows the server sent, skipped ones included. */
+    received: number
+}
+
 export const ChangeLogPageSchema = z
     .object({ changeLogs: z.array(ChangeLogRowSchema) })
-    .transform((page): ChangeLogRow[] =>
-        page.changeLogs.flatMap((row) => (row ? [row] : []))
-    )
+    .transform((page): ParsedChangeLogPage => ({
+        rows: page.changeLogs.flatMap((row) => (row ? [row] : [])),
+        received: page.changeLogs.length,
+    }))
 
 export interface ChangeLogPage {
     rows: ChangeLogRow[]

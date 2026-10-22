@@ -25,10 +25,11 @@ export type EventTimeField =
     | 'updatedAt'
 
 /**
- * Statuses placed by `scheduledAt` and fetched apart from the past stream.
- * OVERDUE is never stored by current servers, but a legacy row may carry it.
+ * Statuses fetched by fetchPinnedEvents and so left out of the past stream.
+ * A stored legacy OVERDUE status stays in the past stream: `status=OVERDUE`
+ * is answered with past-due SCHEDULE events, so pinned events never see it.
  */
-const PINNED_STATUSES = new Set(['SCHEDULE', 'SKIPPED', 'OVERDUE'])
+const PINNED_STATUSES = new Set(['SCHEDULE', 'SKIPPED'])
 
 const EVENT_FIELDS =
     'event,status,program,programStage,enrollment,trackedEntity,orgUnit,occurredAt,scheduledAt,completedAt,completedBy,createdAt,updatedAt,createdBy,updatedBy,dataValues[dataElement,value],notes[note,value,storedAt,storedBy,createdBy]'
@@ -190,7 +191,12 @@ const changeLogPage = async (
         ChangeLogPageSchema,
         signal
     )
-    return result.map((rows) => ({ rows, hasMore: rows.length >= pageSize }))
+    // Counted before unknown rows were skipped, so a skipped row cannot end
+    // paging early.
+    return result.map(({ rows, received }) => ({
+        rows,
+        hasMore: received >= pageSize,
+    }))
 }
 
 /** Attribute value changes, newest first; `program` adds its attributes to the type's. */

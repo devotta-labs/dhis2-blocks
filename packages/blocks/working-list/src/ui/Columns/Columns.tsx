@@ -130,15 +130,17 @@ export const WorkingListColumnSelector = ({
             {ready ? (
                 <ColumnsControl />
             ) : (
-                <Button
-                    variant="secondary"
-                    size="field-dense"
-                    data-test="configure-columns"
-                    disabled
-                >
-                    <IconLayoutColumns16 />
-                    {translate('Columns')}
-                </Button>
+                <div className="flex flex-none items-center">
+                    <Button
+                        variant="secondary"
+                        size="field-dense"
+                        data-test="configure-columns"
+                        disabled
+                    >
+                        <IconLayoutColumns16 />
+                        {translate('Columns')}
+                    </Button>
+                </div>
             )}
         </div>
     )

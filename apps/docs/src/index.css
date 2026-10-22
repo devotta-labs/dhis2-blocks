@@ -1,0 +1,192 @@
+@import 'tailwindcss';
+@import '@dhis2-blocks/working-list/theme.css';
+
+@source '../../../packages/blocks/working-list/src';
+@source '../../../packages/blocks/context-selector/src';
+
+@import 'shadcn/tailwind.css';
+
+@plugin '@tailwindcss/typography';
+
+/* Keep fallback metrics for this navigation if a font misses first paint. */
+@font-face {
+    font-family: Roboto;
+    font-style: normal;
+    font-weight: 400;
+    font-display: optional;
+    src: url('typeface-roboto/files/roboto-latin-400.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: Roboto;
+    font-style: normal;
+    font-weight: 500;
+    font-display: optional;
+    src: url('typeface-roboto/files/roboto-latin-500.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: Roboto;
+    font-style: normal;
+    font-weight: 700;
+    font-display: optional;
+    src: url('typeface-roboto/files/roboto-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: Roboto;
+    font-style: italic;
+    font-weight: 400;
+    font-display: optional;
+    src: url('typeface-roboto/files/roboto-latin-400italic.woff2')
+        format('woff2');
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-destructive: var(--destructive);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+}
+
+:root {
+    --background: #ffffff;
+    --foreground: #1d2129;
+    --card: #ffffff;
+    --card-foreground: #1d2129;
+    --muted: #f3f5f7;
+    --muted-foreground: #5f6b7a;
+    --accent: #eef3f8;
+    --accent-foreground: #212934;
+    --border: #d5dde5;
+    --input: #d5dde5;
+    --ring: #2c6693;
+    --destructive: #d32f2f;
+    --primary: #2c6693;
+    --primary-foreground: #ffffff;
+    --radius: 0.5rem;
+
+    color: var(--foreground);
+    background: var(--background);
+    font-synthesis: none;
+}
+
+.dark {
+    --background: #16181d;
+    --foreground: #e8eaed;
+    --card: #1d2129;
+    --card-foreground: #e8eaed;
+    --muted: #262b35;
+    --muted-foreground: #9aa4b2;
+    --accent: #2a303b;
+    --accent-foreground: #e8eaed;
+    --border: #3a4048;
+    --input: #3a4048;
+    --ring: #6ea8d8;
+    --destructive: #f47067;
+    --primary: #6ea8d8;
+    --primary-foreground: #10151c;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family:
+        Roboto,
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Helvetica,
+        Arial,
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+/* The adapter defaults to a full viewport even in plugin mode. Inline
+   examples follow their card's width and content height instead. Keep these
+   overrides unlayered so they take precedence over the adapter's styled-jsx. */
+div.docs-preview-surface div.app-shell-adapter,
+div.docs-preview-surface div.pluginBoundary {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+}
+
+div.docs-preview-surface div.app-shell-app {
+    flex: none;
+    min-width: 0;
+    height: auto;
+    overflow: visible;
+}
+
+/* Numbered installation steps (components/Steps.tsx). */
+.docs-steps {
+    counter-reset: step;
+    margin-left: 1rem;
+    padding-left: 2rem;
+    border-left: 1px solid var(--border);
+}
+
+.docs-steps > h3 {
+    position: relative;
+    counter-increment: step;
+}
+
+.docs-steps > h3::before {
+    content: counter(step);
+    position: absolute;
+    left: -3rem;
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid var(--background);
+    border-radius: 9999px;
+    background: var(--muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-top: -0.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

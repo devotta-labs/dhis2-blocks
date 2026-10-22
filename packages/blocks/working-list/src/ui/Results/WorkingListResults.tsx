@@ -19,8 +19,14 @@ import type {
 } from '../../provider/contracts'
 import { WorkingListRepairDialog } from '../WorkingList/dialogs'
 import type { WorkingListDataQualityMode } from '../types'
-import { WorkingListDataTable } from '../WorkingListTable'
+import {
+    WorkingListDataTable,
+    WorkingListTableSkeleton,
+} from '../WorkingListTable'
 import { useWorkingListText } from '../WorkingListText'
+
+const visuallyHiddenClassName =
+    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
 export interface WorkingListTableProps extends Omit<
     ComponentPropsWithoutRef<'section'>,
@@ -77,17 +83,25 @@ const tableFieldsFor = (
 
 const SelectionLoading = () => {
     const translate = useWorkingListText()
+    const pageSize = useWorkingListMeta((meta) => meta.pagination.pageSize)
+
+    // While the list initializes, the container already announces loading.
+    const initializing = useWorkingListMeta(
+        (meta) => meta.lifecycle.status === 'pending'
+    )
+
     return (
-        <div
-            className="flex min-h-48 items-center justify-center gap-[var(--spacers-dp12)] text-[var(--colors-grey700)]"
-            data-testid="working-list-selection-loading"
-            aria-live="polite"
-        >
-            <Spinner
-                aria-label={translate('Loading')}
-                className="size-6 border-4"
-            />
-            <p>{translate('Loading the selected working list…')}</p>
+        <div data-testid="working-list-selection-loading">
+            {!initializing && (
+                <span
+                    className={visuallyHiddenClassName}
+                    role="status"
+                    aria-live="polite"
+                >
+                    {translate('Loading the selected working list…')}
+                </span>
+            )}
+            <WorkingListTableSkeleton pageSize={pageSize} />
         </div>
     )
 }

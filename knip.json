@@ -40,7 +40,11 @@
     "treatTagHintsAsErrors": true,
     "workspaces": {
         ".": {
-            "entry": ["e2e/specs/**/*.spec.ts"],
+            "entry": [
+                "e2e/specs/**/*.spec.ts",
+                "e2e/specs-docs/**/*.spec.ts",
+                "playwright.docs.config.ts"
+            ],
             "project": [
                 "e2e/**/*.ts",
                 "tools/**/*.ts",
@@ -82,6 +86,26 @@
                     "enumMembers",
                     "namespaceMembers"
                 ]
+            }
+        },
+        "apps/docs": {
+            "entry": ["server/**/*.test.mjs"],
+            "ignoreDependencies": [
+                "@dhis2-blocks/context-selector",
+                "typeface-roboto"
+            ],
+            "project": [
+                "src/**/*.{ts,tsx,css}",
+                "server/**/*.mjs",
+                "*.config.ts",
+                "*.mjs",
+                "src/**/*.mdx"
+            ],
+            "ignoreIssues": {
+                "src/components/ExampleCard.tsx": ["exports"],
+                "src/components/InstallCommand.tsx": ["exports"],
+                "src/components/ui/**": ["exports"],
+                "src/lib/highlighter.tsx": ["exports"]
             }
         },
         "packages/blocks/*": {

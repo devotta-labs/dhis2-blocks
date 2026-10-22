@@ -13,7 +13,14 @@
         },
         "build": {
             "dependsOn": ["^transit"],
-            "env": ["NODE_ENV", "REACT_APP_*", "VITE_*", "DOCS_*"],
+            "env": [
+                "NODE_ENV",
+                "PUBLIC_URL",
+                "DHIS2_BASE_URL",
+                "REACT_APP_*",
+                "VITE_*",
+                "DOCS_*"
+            ],
             "outputs": ["build/**", "dist/**", ".d2/**", "src/locales/**"]
         },
         "test": {

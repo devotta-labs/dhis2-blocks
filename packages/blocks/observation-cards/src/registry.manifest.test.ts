@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { registryItemSchema } from 'shadcn/schema'
 import {
     HOST_PACKAGES,
     importedSpecifiers,
@@ -19,25 +20,21 @@ const TARGET_PREFIX = '@components/observation-cards/'
 // Test-only recordings of DHIS2 responses.
 const FIXTURES = 'src/hooks/__fixtures__/'
 
-interface RegistryItem {
-    name: string
-    type: string
-    dependencies: string[]
-    registryDependencies?: string[]
-    cssVars?: unknown
-    files: { path: string; type: string; target: string }[]
-}
-
 const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'))
 
-const item = (name: string): RegistryItem => {
-    const found = readJson(join(PACKAGE_DIR, 'registry.json')).items.find(
-        (candidate: RegistryItem) => candidate.name === name
-    )
+const item = (name: string) => {
+    const items = registryItemSchema
+        .array()
+        .parse(readJson(join(PACKAGE_DIR, 'registry.json')).items)
+    const found = items.find((candidate) => candidate.name === name)
     if (found === undefined) {
         throw new Error(`registry.json has no ${name} item`)
     }
-    return found
+    return {
+        ...found,
+        files: found.files ?? [],
+        dependencies: found.dependencies ?? [],
+    }
 }
 
 const listFiles = (directory: string): string[] =>

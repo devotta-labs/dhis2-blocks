@@ -115,7 +115,7 @@ function DropdownMenuLabel({
 }
 
 const menuItemClasses =
-    "relative flex min-h-8 cursor-pointer items-center gap-2 bg-dhis2-popover px-3 py-2 text-sm leading-4 text-dhis2-grey-900 outline-none select-none data-highlighted:bg-dhis2-grey-200 active:bg-dhis2-grey-300 focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring data-inset:pl-9 data-disabled:cursor-not-allowed data-disabled:bg-dhis2-popover data-disabled:text-dhis2-grey-500 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4"
+    "relative flex min-h-8 cursor-pointer items-center gap-2 bg-dhis2-popover px-3 py-2 text-sm leading-4 text-dhis2-grey-900 outline-none select-none data-highlighted:bg-dhis2-grey-200 active:bg-dhis2-grey-300 focus-visible:outline-3 focus-visible:outline-solid focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring data-inset:pl-9 data-disabled:cursor-not-allowed data-disabled:bg-dhis2-popover data-disabled:text-dhis2-grey-500 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4"
 
 const DropdownMenuItem = React.forwardRef<
     HTMLElement,

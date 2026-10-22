@@ -9,7 +9,7 @@ import { cn } from './cn'
  * Sizes default/sm/lg match DHIS2 buttons; field-dense matches the sm Select.
  */
 const buttonVariants = cva(
-    "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-dhis2-md border text-sm leading-4 font-normal tracking-[0.5px] whitespace-nowrap no-underline outline-none select-none focus-visible:underline focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring disabled:cursor-not-allowed disabled:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
+    "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-dhis2-md border text-sm leading-4 font-normal tracking-[0.5px] whitespace-nowrap no-underline outline-none select-none focus-visible:underline focus-visible:outline-3 focus-visible:outline-solid focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring disabled:cursor-not-allowed disabled:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
     {
         variants: {
             variant: {

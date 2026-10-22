@@ -113,7 +113,7 @@ function DialogContent({
                     <DialogPrimitive.Close
                         data-slot="dialog-close"
                         aria-label={closeLabel}
-                        className="absolute end-0 top-0 flex cursor-pointer rounded-dhis2-sm border-0 bg-transparent px-1 pt-1 pb-0 text-dhis2-grey-700 outline-none hover:bg-dhis2-grey-200 hover:text-dhis2-grey-900 focus-visible:bg-dhis2-grey-200 focus-visible:outline-3 focus-visible:outline-dhis2-ring active:bg-dhis2-grey-300 [&_svg]:fill-current"
+                        className="absolute end-0 top-0 flex cursor-pointer rounded-dhis2-sm border-0 bg-transparent px-1 pt-1 pb-0 text-dhis2-grey-700 outline-none hover:bg-dhis2-grey-200 hover:text-dhis2-grey-900 focus-visible:bg-dhis2-grey-200 focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-dhis2-ring active:bg-dhis2-grey-300 [&_svg]:fill-current"
                     >
                         <IconCross16 />
                     </DialogPrimitive.Close>

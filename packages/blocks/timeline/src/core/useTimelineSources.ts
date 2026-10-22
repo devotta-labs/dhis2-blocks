@@ -4,6 +4,7 @@ import {
     applyError,
     applyPage,
     initialMergeState,
+    isAwaitingFirstAnswer,
     limitingSources,
     retainSources,
     startLoading,
@@ -227,11 +228,9 @@ export const useTimelineSources = <TData>(
     const all = [...state.sources.values()]
     return {
         entries,
-        status: all.some((s) => s.status === 'loading' && !s.hasPage)
-            ? 'loading'
-            : 'ready',
+        status: all.some(isAwaitingFirstAnswer) ? 'loading' : 'ready',
         sources: sourceStates,
-        hasMore: all.some((s) => s.status === 'hasMore'),
+        hasMore: limitingSources(state).length > 0,
         loadingMore: all.some((s) => s.loadingMore),
         loadMore,
         retry,

@@ -9,8 +9,12 @@ import type {
 export interface MergeSource {
     key: string
     status: SourceStatus
+    /** Whether the source has ever answered, with a page or an error. Until then it limits the feed. */
+    settled: boolean
     /** Whether a page has been applied since the source last (re)started. */
     hasPage: boolean
+    /** The source's entries are from before a restart and go when its new first page arrives. */
+    stale: boolean
     loadingMore: boolean
     partial: boolean
     cursor?: unknown
@@ -32,12 +36,14 @@ export interface MergeState<TData> {
 }
 
 /** Above every comparable key, which all start with a digit. */
-const END_OF_TIME = '￿'
+const END_OF_TIME = String.fromCharCode(0xffff)
 
 const freshSource = (key: string): MergeSource => ({
     key,
     status: 'loading',
+    settled: false,
     hasPage: false,
+    stale: false,
     loadingMore: false,
     partial: false,
 })
@@ -88,9 +94,11 @@ export const retainSources = <TData>(
 }
 
 /**
- * Marks a request as started. `restart` forgets the source's pages and fetches
- * its first page; `more` fetches the page after its cursor; `retry` repeats the
- * request that failed (the first page, if none arrived).
+ * Marks a request as started. `restart` fetches the first page again, keeping
+ * the source's entries on show until it answers; `more` fetches the page after
+ * the cursor; `retry` repeats the request that failed (the first page, if none
+ * arrived since the source started). Only a source that has never answered
+ * limits the feed while it loads.
  */
 export const startLoading = <TData>(
     state: MergeState<TData>,
@@ -101,11 +109,19 @@ export const startLoading = <TData>(
     if (source === undefined) {
         return state
     }
-    if (mode === 'restart' || (mode === 'retry' && !source.hasPage)) {
-        return {
-            ...updateSource(state, key, () => freshSource(key)),
-            entries: dropEntriesOf(state.entries, (owner) => owner !== key),
-        }
+    if (mode === 'restart') {
+        return updateSource(state, key, (s) =>
+            s.settled
+                ? {
+                      ...s,
+                      status: 'loading',
+                      hasPage: false,
+                      stale: true,
+                      loadingMore: false,
+                      error: undefined,
+                  }
+                : freshSource(key)
+        )
     }
     if (mode === 'more') {
         return updateSource(state, key, (s) => ({ ...s, loadingMore: true }))
@@ -132,21 +148,31 @@ export const applyPage = <TData>(
     key: string,
     page: SourcePage<TData>
 ): MergeState<TData> => {
-    if (!state.sources.has(key)) {
+    const source = state.sources.get(key)
+    if (source === undefined) {
         return state
     }
-    const entries = new Map(state.entries)
+    const entries = source.stale
+        ? dropEntriesOf(state.entries, (owner) => owner !== key)
+        : new Map(state.entries)
     for (const entry of page.entries) {
         entries.set(entry.id, { entry, owner: key })
     }
-    const next = updateSource(state, key, (source) => ({
+    // A first page starts the source's claims afresh.
+    const previous = source.hasPage ? source : undefined
+    const next = updateSource(state, key, () => ({
         ...source,
         status: page.nextCursor === undefined ? 'complete' : 'hasMore',
+        settled: true,
         hasPage: true,
+        stale: false,
         loadingMore: false,
-        partial: source.partial || page.partial === true,
+        partial: (previous?.partial ?? false) || page.partial === true,
         cursor: page.nextCursor,
-        completeUntil: strongerCutoff(source.completeUntil, page.completeUntil),
+        completeUntil: strongerCutoff(
+            previous?.completeUntil,
+            page.completeUntil
+        ),
         error: undefined,
         notice: page.notice,
     }))
@@ -161,13 +187,18 @@ export const applyError = <TData>(
     updateSource(state, key, (source) => ({
         ...source,
         status: error.kind === 'unsupported' ? 'unsupported' : 'error',
+        settled: true,
         loadingMore: false,
         error,
     }))
 
+/** A source that has never answered, so nothing it holds is known yet. */
+export const isAwaitingFirstAnswer = (source: MergeSource) =>
+    source.status === 'loading' && !source.settled
+
 /** How far back a source lets the feed reach, or undefined if it doesn't limit it. */
 const sourceCutoff = (source: MergeSource): string | undefined => {
-    if (source.status === 'loading' && !source.hasPage) {
+    if (isAwaitingFirstAnswer(source)) {
         return END_OF_TIME
     }
     if (source.status !== 'hasMore') {
@@ -191,28 +222,36 @@ const feedCutoff = <TData>(state: MergeState<TData>): string | undefined => {
 }
 
 /**
- * The entries the feed may show, newest first: future and overdue entries
- * always; past entries at or after every limiting source's `completeUntil`;
- * undated entries only once no source limits the feed.
+ * The entries the feed may show: future entries, then overdue, then past, each
+ * newest first. Future and overdue entries always show; past entries at or
+ * after every limiting source's `completeUntil`; undated entries only once no
+ * source limits the feed. Released entries only ever join the end.
  */
 export const visibleEntries = <TData>(
     state: MergeState<TData>
 ): TimelineEntry<TData>[] => {
     const cutoff = feedCutoff(state)
-    const visible: TimelineEntry<TData>[] = []
+    const future: TimelineEntry<TData>[] = []
+    const overdue: TimelineEntry<TData>[] = []
+    const past: TimelineEntry<TData>[] = []
     for (const { entry } of state.entries.values()) {
-        if (entry.phase === 'future' || entry.phase === 'overdue') {
-            visible.push(entry)
-            continue
-        }
-        const key = comparableKey(entry)
-        const shown =
-            cutoff === undefined || (key !== undefined && key >= cutoff)
-        if (shown) {
-            visible.push(entry)
+        if (entry.phase === 'future') {
+            future.push(entry)
+        } else if (entry.phase === 'overdue') {
+            overdue.push(entry)
+        } else {
+            const key = comparableKey(entry)
+            if (cutoff === undefined || (key !== undefined && key >= cutoff)) {
+                past.push(entry)
+            }
         }
     }
-    return visible.sort(compareEntries('desc'))
+    const newestFirst = compareEntries('desc')
+    return [
+        ...future.sort(newestFirst),
+        ...overdue.sort(newestFirst),
+        ...past.sort(newestFirst),
+    ]
 }
 
 /** The sources with more pages whose cut-off is the one limiting the feed. */

@@ -35,6 +35,18 @@ export default defineConfig({
             {
                 plugins: [tailwindcss()],
                 resolve,
+                // Pre-bundle up front so a cold run doesn't discover these
+                // mid-test and reload the page.
+                optimizeDeps: {
+                    include: [
+                        '@dhis2-blocks/value-display > @dhis2/multi-calendar-dates',
+                        'better-result',
+                        'react',
+                        'react-dom',
+                        'react-dom/client',
+                        'vitest-browser-react',
+                    ],
+                },
                 test: {
                     ...sharedProjectOptions,
                     // Browser tests arrive in later tasks; until then this

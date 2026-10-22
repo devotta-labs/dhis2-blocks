@@ -39,15 +39,21 @@ export const comparableKey = (
         : key
 }
 
+const STORED_DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
+
 /**
  * The comparable key of a source's `completeUntil`. A date with no time covers
- * that whole day, the same as a day-precision entry.
+ * that whole day, the same as a day-precision entry. Undefined when any part
+ * is unreadable, including a time that can't be read.
  */
-export const cutoffKey = (completeUntil: string): string | undefined =>
-    comparableKey({
-        at: completeUntil,
-        precision: STORED_CLOCK.test(completeUntil) ? 'instant' : 'day',
-    })
+export const cutoffKey = (completeUntil: string): string | undefined => {
+    if (STORED_CLOCK.test(completeUntil)) {
+        return comparableKey({ at: completeUntil })
+    }
+    return STORED_DATE_ONLY.test(completeUntil)
+        ? comparableKey({ at: completeUntil, precision: 'day' })
+        : undefined
+}
 
 const compareText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 

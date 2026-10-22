@@ -174,6 +174,117 @@ describe('merge', () => {
         expect(visible[0]?.data).toBe('new')
     })
 
+    it('keeps other sources visible while a failed source retries', () => {
+        let state = initialMergeState(['a', 'b'])
+        state = applyPage(state, 'a', page([entry('a1', '2026-09-01')]))
+        state = applyError(state, 'b', {
+            kind: 'failed',
+            error: new Error('boom'),
+        })
+        state = startLoading(state, 'b', 'retry')
+        expect(state.sources.get('b')?.status).toBe('loading')
+        expect(ids(visibleEntries(state))).toEqual(['a1'])
+        expect(limitingSources(state)).toEqual([])
+
+        // A user-triggered retry may insert above what is shown.
+        state = applyPage(
+            state,
+            'b',
+            page([entry('b1', '2026-10-01', { sourceKey: 'b' })])
+        )
+        expect(ids(visibleEntries(state))).toEqual(['b1', 'a1'])
+    })
+
+    it("keeps a refreshing source's old entries until its new first page answers", () => {
+        let state = initialMergeState(['a', 'b'])
+        state = applyPage(state, 'a', page([entry('a1', '2026-10-01')]))
+        state = applyPage(
+            state,
+            'b',
+            page([entry('b1', '2026-10-02', { sourceKey: 'b' })], '2026-09-01')
+        )
+        state = startLoading(state, 'b', 'restart')
+        expect(state.sources.get('b')?.status).toBe('loading')
+        expect(ids(visibleEntries(state))).toEqual(['b1', 'a1'])
+
+        state = applyPage(
+            state,
+            'b',
+            page([entry('b2', '2026-09-30', { sourceKey: 'b' })])
+        )
+        expect(ids(visibleEntries(state))).toEqual(['a1', 'b2'])
+        expect(state.sources.get('b')?.completeUntil).toBeUndefined()
+    })
+
+    it('lets a source that errors mid-paging stop limiting, then resume from its cursor on retry', () => {
+        let state = initialMergeState(['a', 'b'])
+        state = applyPage(
+            state,
+            'a',
+            page([entry('a1', '2026-10-05T09:00')], '2026-10-01')
+        )
+        state = applyPage(
+            state,
+            'b',
+            page(
+                [entry('b1', '2026-10-04T09:00', { sourceKey: 'b' })],
+                '2026-10-03'
+            )
+        )
+        expect(limitingSources(state)).toEqual(['b'])
+
+        state = startLoading(state, 'b', 'more')
+        state = applyError(state, 'b', {
+            kind: 'failed',
+            error: new Error('page 2'),
+        })
+        expect(limitingSources(state)).toEqual(['a'])
+
+        state = startLoading(state, 'a', 'more')
+        state = applyPage(state, 'a', page([entry('a2', '2026-09-20T09:00')]))
+        expect(ids(visibleEntries(state))).toEqual(['a1', 'b1', 'a2'])
+
+        state = startLoading(state, 'b', 'retry')
+        expect(state.sources.get('b')?.cursor).toBe('next')
+        expect(ids(visibleEntries(state))).toEqual(['a1', 'b1', 'a2'])
+        state = applyPage(
+            state,
+            'b',
+            page([entry('b2', '2026-09-25T09:00', { sourceKey: 'b' })])
+        )
+        expect(ids(visibleEntries(state))).toEqual(['a1', 'b1', 'b2', 'a2'])
+    })
+
+    it('keeps the flat list append-only with an old overdue entry', () => {
+        let state = initialMergeState(['a'])
+        state = applyPage(
+            state,
+            'a',
+            page(
+                [
+                    entry('due', '2027-01-01', { phase: 'future' }),
+                    entry('late', '2026-01-01', { phase: 'overdue' }),
+                    entry('p1', '2026-10-05T09:00'),
+                ],
+                '2026-10-01'
+            )
+        )
+        const shown = ids(visibleEntries(state))
+        expect(shown).toEqual(['due', 'late', 'p1'])
+
+        state = startLoading(state, 'a', 'more')
+        state = applyPage(state, 'a', page([entry('p0', '2026-06-01T09:00')]))
+        expect(ids(visibleEntries(state))).toEqual([...shown, 'p0'])
+    })
+
+    it('reads a completeUntil with an unreadable time as nothing complete', () => {
+        let state = initialMergeState(['a', 'b'])
+        state = applyPage(state, 'a', page([entry('a1', '2026-10-05T09:00')]))
+        state = applyPage(state, 'b', page([], '2026-10-01 09:00'))
+        expect(visibleEntries(state)).toEqual([])
+        expect(limitingSources(state)).toEqual(['b'])
+    })
+
     it('drops a removed source with its entries and adds a new one as loading', () => {
         let state = initialMergeState(['a', 'b'])
         state = applyPage(state, 'a', page([entry('a1', '2026-10-01')]))

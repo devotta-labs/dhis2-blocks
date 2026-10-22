@@ -85,6 +85,8 @@ describe('useTimelineSources', () => {
             .toBe('hasMore')
         expect(result.current.status).toBe('loading')
         expect(result.current.entries).toEqual([])
+        // b is still on its first page, so there is nothing loadMore could fetch.
+        expect(result.current.hasMore).toBe(false)
 
         await act(() =>
             lastCall(b.calls).answer(
@@ -115,7 +117,9 @@ describe('useTimelineSources', () => {
             lastCall(a.calls).answer(
                 Result.err({ kind: 'failed', error: new Error('boom') })
             )
-            lastCall(b.calls).answer(Result.ok({ entries: [] }))
+            lastCall(b.calls).answer(
+                Result.ok({ entries: [entry('b1', '2026-09-01', 'b')] })
+            )
         })
         await expect.poll(() => result.current.sources[0]?.status).toBe('error')
         expect(result.current.sources[0]?.error).toEqual({
@@ -128,6 +132,12 @@ describe('useTimelineSources', () => {
         expect(a.calls).toHaveLength(2)
         expect(lastCall(a.calls).cursor).toBeUndefined()
         expect(b.calls).toHaveLength(1)
+        // The retrying source doesn't hold the others back.
+        await expect
+            .poll(() => result.current.sources[0]?.status)
+            .toBe('loading')
+        expect(result.current.status).toBe('ready')
+        expect(result.current.entries.map((e) => e.id)).toEqual(['b1'])
 
         await act(() =>
             lastCall(a.calls).answer(
@@ -138,7 +148,7 @@ describe('useTimelineSources', () => {
             .poll(() => result.current.sources[0]?.status)
             .toBe('complete')
         expect(result.current.sources[0]?.error).toBeUndefined()
-        expect(result.current.entries.map((e) => e.id)).toEqual(['a1'])
+        expect(result.current.entries.map((e) => e.id)).toEqual(['a1', 'b1'])
     })
 
     it('restarts only the source whose revision changed', async () => {
@@ -167,14 +177,68 @@ describe('useTimelineSources', () => {
             .poll(() => result.current.sources[1]?.status)
             .toBe('loading')
         expect(result.current.sources[0]?.status).toBe('complete')
+        // b's old entries stay on show and the feed stays ready meanwhile.
+        expect(result.current.status).toBe('ready')
+        expect(result.current.entries.map((e) => e.id)).toEqual(['a1', 'b1'])
 
         await act(() =>
             lastCall(b.calls).answer(
                 Result.ok({ entries: [entry('b2', '2026-10-08', 'b')] })
             )
         )
-        await expect.poll(() => result.current.status).toBe('ready')
-        expect(result.current.entries.map((e) => e.id)).toEqual(['a1', 'b2'])
+        await expect
+            .poll(() => result.current.entries.map((e) => e.id))
+            .toEqual(['a1', 'b2'])
+        expect(result.current.status).toBe('ready')
+    })
+
+    it('resumes a source that failed mid-paging from its stored cursor', async () => {
+        const a = controlledSource('a')
+        const b = controlledSource('b')
+        const { result, act } = await render([a.source, b.source])
+
+        await act(() => {
+            lastCall(a.calls).answer(
+                Result.ok({
+                    entries: [entry('a1', '2026-10-05T09:00', 'a')],
+                    nextCursor: 2,
+                    completeUntil: '2026-10-01',
+                })
+            )
+            lastCall(b.calls).answer(
+                Result.ok({ entries: [entry('b1', '2026-09-01', 'b')] })
+            )
+        })
+        await expect
+            .poll(() => result.current.entries.map((e) => e.id))
+            .toEqual(['a1'])
+
+        await act(() => result.current.loadMore())
+        await act(() =>
+            lastCall(a.calls).answer(
+                Result.err({ kind: 'failed', error: new Error('page 2') })
+            )
+        )
+        // The failed source stops limiting, so b's older entry shows.
+        await expect.poll(() => result.current.sources[0]?.status).toBe('error')
+        expect(result.current.entries.map((e) => e.id)).toEqual(['a1', 'b1'])
+        expect(result.current.hasMore).toBe(false)
+
+        await act(() => result.current.retry('a'))
+        expect(a.calls).toHaveLength(3)
+        expect(lastCall(a.calls).cursor).toBe(2)
+        expect(b.calls).toHaveLength(1)
+        expect(result.current.status).toBe('ready')
+
+        await act(() =>
+            lastCall(a.calls).answer(
+                Result.ok({ entries: [entry('a2', '2026-09-15T09:00', 'a')] })
+            )
+        )
+        await expect
+            .poll(() => result.current.entries.map((e) => e.id))
+            .toEqual(['a1', 'a2', 'b1'])
+        expect(result.current.sources[0]?.status).toBe('complete')
     })
 
     it('aborts in-flight requests on unmount', async () => {

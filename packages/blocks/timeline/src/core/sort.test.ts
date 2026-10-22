@@ -118,4 +118,9 @@ describe('cutoffKey', () => {
 
     it('is undefined when unreadable', () =>
         expect(cutoffKey('later')).toBeUndefined())
+
+    it('is undefined when the time is unreadable, rather than the whole day', () => {
+        expect(cutoffKey('2026-10-01 09:00')).toBeUndefined()
+        expect(cutoffKey('2026-10-01T09')).toBeUndefined()
+    })
 })

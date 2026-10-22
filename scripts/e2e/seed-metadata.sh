@@ -18,6 +18,8 @@ metadata_response="$artifact_dir/metadata-import.json"
 tracker_response="$artifact_dir/tracker-import.json"
 observation_metadata_response="$artifact_dir/observation-cards-metadata-import.json"
 observation_tracker_response="$artifact_dir/observation-cards-tracker-import.json"
+timeline_metadata_response="$artifact_dir/timeline-metadata-import.json"
+timeline_tracker_response="$artifact_dir/timeline-tracker-import.json"
 cors_response="$artifact_dir/cors-allowlist.json"
 users_payload="$E2E_REPO_ROOT/e2e/metadata/working-list-users.json"
 saved_lists_payload="$E2E_REPO_ROOT/e2e/metadata/working-list-saved-lists.json"
@@ -305,4 +307,14 @@ post_and_require_ok \
     "$E2E_REPO_ROOT/e2e/metadata/observation-cards-tracker-data.json" \
     "$observation_tracker_response"
 
-echo "Supplemental working-list and observation-cards metadata and records are ready."
+echo "Importing idempotent timeline metadata and records ..."
+post_and_require_ok \
+    '/api/metadata?importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&importReportMode=ERRORS' \
+    "$E2E_REPO_ROOT/e2e/metadata/timeline-metadata.json" \
+    "$timeline_metadata_response"
+post_and_require_ok \
+    '/api/tracker?async=false&importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&reportMode=FULL' \
+    "$E2E_REPO_ROOT/e2e/metadata/timeline-tracker-data.json" \
+    "$timeline_tracker_response"
+
+echo "Supplemental working-list, observation-cards and timeline metadata and records are ready."

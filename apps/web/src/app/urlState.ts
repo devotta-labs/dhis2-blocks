@@ -1,4 +1,4 @@
-import { WORKING_LIST_PAGE_SIZES } from '@dhis2-blocks/working-list/development'
+import { WORKING_LIST_PAGE_SIZES } from '@/components/working-list/provider/contracts'
 import { z } from 'zod'
 
 const WorkingListPageSizeSchema = z.coerce

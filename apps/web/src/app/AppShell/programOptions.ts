@@ -1,4 +1,4 @@
-import type { Option } from '@dhis2-blocks/context-selector'
+import type { Option } from '@/components/context-selector'
 
 interface ProgramSummary {
     id: string

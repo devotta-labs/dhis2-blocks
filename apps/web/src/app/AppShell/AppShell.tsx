@@ -1,6 +1,6 @@
 import { useConfig, useDataEngine } from '@dhis2/app-runtime'
-import { Label } from '@dhis2-blocks/ui/label'
-import { Switch } from '@dhis2-blocks/ui/switch'
+import { Label } from '@/components/dhis2/ui/label'
+import { Switch } from '@/components/dhis2/ui/switch'
 import {
     WorkingList,
     WorkingListColumnSelector,
@@ -12,8 +12,8 @@ import {
     useWorkingListMeta,
     type WorkingListDataQualityMode,
     type WorkingListResultTarget,
-} from '@dhis2-blocks/working-list'
-import { trackerProgramsQueryOptions } from '@dhis2-blocks/working-list/development'
+} from '@/components/working-list'
+import { trackerProgramsQueryOptions } from '@/components/working-list/api/metadata'
 import { useQuery } from '@tanstack/react-query'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useBlocker } from 'react-router-dom'
@@ -369,10 +369,7 @@ export const AppShell = () => {
         (urlState.orgUnitId ? selectedOrgUnitQuery.error : undefined)
 
     return (
-        <div
-            className="min-h-screen w-full min-w-0 max-w-full pb-10"
-            data-testid="working-list-app"
-        >
+        <div className="min-h-screen w-full min-w-0 max-w-full pb-10">
             <WorkingListContextControls
                 clearDisabled={!selectedProgramSummary && !urlState.orgUnitId}
                 onClear={() =>

@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+@import '../components/theme.css';
+
+@source '../components';
+@source '../blocks';

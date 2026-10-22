@@ -1,0 +1,5 @@
+{
+    "title": "Sidebar",
+    "description": "Navigation with expandable groups, footer actions and a collapsible sidebar.",
+    "docs": "Use SidebarLink with render={<NavLink to=\"/projects\" />} to highlight the current page. Add SidebarGroup for nested links and SidebarButton for footer actions. Use SidebarToggle in the sidebar or useSidebar() for a page-toolbar control. Give each sidebar its own SidebarProvider and SidebarNavigation. Collapsing preserves expanded groups and the selected page."
+}

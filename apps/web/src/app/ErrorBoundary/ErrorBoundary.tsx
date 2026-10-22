@@ -1,5 +1,5 @@
-import { ErrorAlert } from '@dhis2-blocks/ui/alert'
-import { Button } from '@dhis2-blocks/ui/button'
+import { ErrorAlert } from '@/components/dhis2/ui/alert'
+import { Button } from '@/components/dhis2/ui/button'
 import React, { Component, type ErrorInfo, type ReactNode } from 'react'
 import i18n from '../../i18n'
 

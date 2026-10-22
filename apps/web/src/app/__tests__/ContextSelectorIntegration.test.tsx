@@ -2,7 +2,7 @@ import {
     ContextSelector,
     OrganisationUnitSelector,
     ProgramSelector,
-} from '@dhis2-blocks/context-selector'
+} from '@/components/context-selector'
 import React, { useState } from 'react'
 import { render } from 'vitest-browser-react'
 import { ContextStatus } from '../AppShell/ContextStatus'

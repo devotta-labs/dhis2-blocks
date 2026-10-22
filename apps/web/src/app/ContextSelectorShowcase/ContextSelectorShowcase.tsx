@@ -9,7 +9,7 @@ import {
     ProgramSelector,
     StageSelector,
     type Option,
-} from '@dhis2-blocks/context-selector'
+} from '@/components/context-selector'
 import React, { useState } from 'react'
 
 type SelectorMode = 'interactive' | 'loading' | 'disabled' | 'readOnly'

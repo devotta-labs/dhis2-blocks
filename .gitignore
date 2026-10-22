@@ -18,3 +18,5 @@ e2e/artifacts
 
 .playwright-mcp
 .vercel
+
+**/__screenshots__/**

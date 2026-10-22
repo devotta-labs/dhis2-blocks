@@ -100,12 +100,7 @@
         },
         "apps/docs": {
             "entry": ["server/**/*.test.mjs"],
-            "ignoreDependencies": [
-                "@dhis2-blocks/context-selector",
-                "@dhis2-blocks/sidebar",
-                "@dhis2-blocks/working-list",
-                "typeface-roboto"
-            ],
+            "ignoreDependencies": ["typeface-roboto"],
             "project": [
                 "src/**/*.{ts,tsx,css}",
                 "server/**/*.mjs",
@@ -120,21 +115,31 @@
                 "src/lib/highlighter.tsx": ["exports"]
             }
         },
-        "packages/blocks/*": {
+        "packages/registry": {
             "entry": [
-                "src/**/*.{test,spec}.{ts,tsx}",
-                "src/**/__tests__/**/*.{ts,tsx}",
-                "type-tests/**/*.ts"
+                "components/*.{ts,tsx}",
+                "blocks/*/index.ts",
+                "**/*.{test,spec}.{ts,tsx}",
+                "**/__tests__/**/*.{ts,tsx}",
+                "blocks/*/type-tests/**/*.ts"
             ],
             "project": [
-                "src/**/*.{ts,tsx,css}",
-                "test/**/*.{ts,css}",
-                "type-tests/**/*.ts"
+                "components/**/*.{ts,tsx,css}",
+                "blocks/**/*.{ts,tsx,css}",
+                "test/**/*.{ts,css}"
             ],
             "includeEntryExports": true,
-            "ignoreDependencies": ["@dhis2-blocks/ui"],
+            "ignoreDependencies": ["prop-types"],
             "ignoreIssues": {
-                "src/index.ts": [
+                "components/*.{ts,tsx}": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "blocks/*/index.ts": [
                     "exports",
                     "types",
                     "nsExports",
@@ -150,77 +155,7 @@
                     "enumMembers",
                     "namespaceMembers"
                 ],
-                "type-tests/**": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ]
-            }
-        },
-        "packages/blocks/sidebar": {
-            "entry": ["src/**/__tests__/**/*.{ts,tsx}"],
-            "project": ["src/**/*.{ts,tsx,css}", "test/**/*.{ts,css}"],
-            "includeEntryExports": true,
-            "ignoreDependencies": ["@dhis2-blocks/ui"],
-            "ignoreIssues": {
-                "src/index.ts": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ]
-            }
-        },
-        "packages/blocks/ui": {
-            "entry": ["src/*.{ts,tsx}"],
-            "project": ["src/**/*.{ts,tsx,css}", "test/**/*.{ts,css}"],
-            "includeEntryExports": false,
-            "ignoreIssues": {
-                "test/**": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ]
-            }
-        },
-        "packages/blocks/context-selector": {
-            "entry": [
-                "src/**/*.{test,spec}.{ts,tsx}",
-                "src/**/__tests__/**/*.{ts,tsx}",
-                "type-tests/**/*.ts"
-            ],
-            "project": [
-                "src/**/*.{ts,tsx}",
-                "test/**/*.{ts,css}",
-                "type-tests/**/*.ts"
-            ],
-            "includeEntryExports": true,
-            "ignoreIssues": {
-                "src/index.ts": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ],
-                "test/**": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ],
-                "type-tests/**": [
+                "blocks/*/type-tests/**": [
                     "exports",
                     "types",
                     "nsExports",

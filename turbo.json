@@ -25,27 +25,13 @@
         },
         "test": {
             "dependsOn": ["^transit"],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                "$TURBO_ROOT$/tools/registry/manifest.ts"
-            ],
             "outputs": []
         },
         "typecheck": {
             "dependsOn": ["^transit"],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                "$TURBO_ROOT$/tools/registry/manifest.ts"
-            ],
             "outputs": []
         },
         "lint": {
-            "outputs": []
-        },
-        "//#test:registry": {
-            "outputs": []
-        },
-        "//#test:scripts": {
             "outputs": []
         },
         "//#typecheck:registry": {

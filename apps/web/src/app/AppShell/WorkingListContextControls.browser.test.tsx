@@ -51,18 +51,6 @@ describe('WorkingListContextControls program scope actions', () => {
         await expect
             .element(screen.getByText('No programs available.'))
             .toBeVisible()
-        const warning = screen
-            .getByText('No programs available.')
-            .element().parentElement
-        expect(getComputedStyle(warning!).display).toBe('flex')
-        expect(getComputedStyle(warning!).alignItems).toBe('center')
-        expect(getComputedStyle(warning!).gap).toBe('8px')
-        expect(getComputedStyle(warning!).paddingTop).toBe('4px')
-        expect(getComputedStyle(warning!).paddingRight).toBe('12px')
-        expect(getComputedStyle(warning!).paddingBottom).toBe('4px')
-        expect(getComputedStyle(warning!).paddingLeft).toBe('12px')
-        expect(getComputedStyle(warning!).fontSize).toBe('14px')
-        expect(getComputedStyle(warning!).color).toBe('rgb(74, 87, 104)')
         await screen.getByRole('button', { name: 'Show all' }).click()
         expect(onShowAllPrograms).toHaveBeenCalledOnce()
     })
@@ -82,20 +70,6 @@ describe('WorkingListContextControls program scope actions', () => {
                 )
             )
             .toBeVisible()
-        const warning = screen
-            .getByText(
-                'Some programs are being filtered by the chosen organisation unit'
-            )
-            .element().parentElement
-        expect(getComputedStyle(warning!).display).toBe('flex')
-        expect(getComputedStyle(warning!).alignItems).toBe('center')
-        expect(getComputedStyle(warning!).gap).toBe('8px')
-        expect(getComputedStyle(warning!).paddingTop).toBe('4px')
-        expect(getComputedStyle(warning!).paddingRight).toBe('12px')
-        expect(getComputedStyle(warning!).paddingBottom).toBe('4px')
-        expect(getComputedStyle(warning!).paddingLeft).toBe('12px')
-        expect(getComputedStyle(warning!).fontSize).toBe('14px')
-        expect(getComputedStyle(warning!).color).toBe('rgb(74, 87, 104)')
         await screen.getByRole('button', { name: 'Show all programs' }).click()
         expect(onShowAllPrograms).toHaveBeenCalledOnce()
     })

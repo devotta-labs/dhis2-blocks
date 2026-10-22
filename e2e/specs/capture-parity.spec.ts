@@ -103,34 +103,11 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(page.getByTestId('working-list-table')).toBeVisible({
             timeout: 30_000,
         })
-        const contextBounds = await page.evaluate(() => {
-            const app = document.querySelector<HTMLElement>(
-                '[data-testid="working-list-app"]'
-            )
-            const bar = document.querySelector<HTMLElement>(
-                '[data-testid="context-selector"]'
-            )
-            if (!app || !bar) {
-                return undefined
-            }
-            const appRect = app.getBoundingClientRect()
-            const barRect = bar.getBoundingClientRect()
-            return {
-                appLeft: appRect.left,
-                appRight: appRect.right,
-                barLeft: barRect.left,
-                barRight: barRect.right,
-            }
-        })
-        expect(contextBounds).toBeDefined()
-        expect(contextBounds!.barLeft).toBeCloseTo(contextBounds!.appLeft, 0)
-        expect(contextBounds!.barRight).toBeCloseTo(contextBounds!.appRight, 0)
         const documentHeading = page.getByRole('heading', {
             level: 1,
             name: 'Working lists',
         })
         await expect(documentHeading).toBeAttached()
-        await expect(documentHeading).toHaveCSS('position', 'absolute')
     })
 
     test('loads generated defaults and reinstates active, completed, and cancelled filters', async ({

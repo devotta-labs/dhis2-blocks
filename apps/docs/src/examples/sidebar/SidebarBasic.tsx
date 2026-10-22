@@ -18,7 +18,6 @@ import {
 
 const mainPages = ['Dashboard', 'Projects']
 const reportPages = ['Overview', 'Activity', 'Exports']
-const otherPages = ['Calendar', 'Messages', 'Files', 'Tasks']
 
 export default function SidebarBasic() {
     const [page, setPage] = useState('Overview')
@@ -60,23 +59,22 @@ export default function SidebarBasic() {
                                         {reportPages.map(pageLink)}
                                     </SidebarGroupContent>
                                 </SidebarGroup>
-                                {otherPages.map(pageLink)}
                             </SidebarItems>
                         </SidebarContent>
                         <SidebarFooter>
                             <SidebarItems>
+                                {pageLink('Settings')}
                                 <SidebarItem>
                                     <SidebarButton
                                         onClick={() =>
                                             setNotice(
-                                                'Demo: contact support selected.'
+                                                'Demo: sign out selected.'
                                             )
                                         }
                                     >
-                                        Contact support
+                                        Sign out
                                     </SidebarButton>
                                 </SidebarItem>
-                                {['Guides', 'Settings'].map(pageLink)}
                             </SidebarItems>
                         </SidebarFooter>
                     </SidebarNavigation>
@@ -86,10 +84,7 @@ export default function SidebarBasic() {
                     aria-label="Selected page"
                     className="min-w-0 flex-1 p-6"
                 >
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Workspace
-                    </p>
-                    <h3 className="mt-2 text-xl font-medium">{page}</h3>
+                    <h3 className="text-xl font-medium">{page}</h3>
                     <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
                         Manage projects, review reports, and keep track of your
                         team's work.

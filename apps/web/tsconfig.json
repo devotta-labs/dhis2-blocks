@@ -11,9 +11,10 @@
         "moduleResolution": "bundler",
         "baseUrl": ".",
         "paths": {
-            "@/registry/dhis2/ui/*": ["../../packages/blocks/ui/src/*"]
-        }
+            "@/components/dhis2/ui/*": ["../../packages/registry/components/*"],
+            "@/components/*": ["../../packages/registry/blocks/*"]
+        },
+        "types": ["vitest/globals"]
     },
-    "include": ["src", "types"],
-    "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
+    "include": ["src", "types"]
 }

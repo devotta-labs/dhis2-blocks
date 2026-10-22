@@ -1,6 +1,6 @@
-import { ErrorAlert } from '@dhis2-blocks/ui/alert'
-import { Button } from '@dhis2-blocks/ui/button'
-import { Spinner } from '@dhis2-blocks/ui/spinner'
+import { ErrorAlert } from '@/components/dhis2/ui/alert'
+import { Button } from '@/components/dhis2/ui/button'
+import { Spinner } from '@/components/dhis2/ui/spinner'
 import React from 'react'
 import i18n from '../../i18n'
 

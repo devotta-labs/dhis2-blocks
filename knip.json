@@ -45,6 +45,7 @@
                 "e2e/specs-docs/**/*.spec.ts",
                 "playwright.docs.config.ts"
             ],
+            "ignore": ["tools/registry/consumer/**"],
             "project": [
                 "e2e/**/*.ts",
                 "tools/**/*.ts",
@@ -92,6 +93,7 @@
             "entry": ["server/**/*.test.mjs"],
             "ignoreDependencies": [
                 "@dhis2-blocks/context-selector",
+                "@dhis2-blocks/working-list",
                 "typeface-roboto"
             ],
             "project": [
@@ -120,6 +122,7 @@
                 "type-tests/**/*.ts"
             ],
             "includeEntryExports": true,
+            "ignoreDependencies": ["@dhis2-blocks/ui"],
             "ignoreIssues": {
                 "src/index.ts": [
                     "exports",
@@ -144,8 +147,22 @@
                     "nsTypes",
                     "enumMembers",
                     "namespaceMembers"
-                ],
-                "src/ui/primitives/**": ["exports", "types"]
+                ]
+            }
+        },
+        "packages/blocks/ui": {
+            "entry": ["src/*.{ts,tsx}"],
+            "project": ["src/**/*.{ts,tsx,css}", "test/**/*.{ts,css}"],
+            "includeEntryExports": false,
+            "ignoreIssues": {
+                "test/**": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ]
             }
         },
         "packages/blocks/context-selector": {

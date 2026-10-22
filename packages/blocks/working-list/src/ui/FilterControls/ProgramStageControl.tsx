@@ -1,8 +1,8 @@
-import { Button } from '../primitives/button'
+import { Button } from '@/registry/dhis2/ui/button'
 import React, { useMemo, useState } from 'react'
 import type { TrackerProgram } from '../../api/schemas'
 import { useWorkingListText } from '../WorkingListText'
-import { PopoverTitle } from '../primitives/popover'
+import { PopoverTitle } from '@/registry/dhis2/ui/popover'
 import { FilterChip } from './FilterControlPrimitives'
 import { SelectField } from './FilterSelectFields'
 

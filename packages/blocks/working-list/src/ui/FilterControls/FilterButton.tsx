@@ -1,4 +1,4 @@
-import { Button } from '../primitives/button'
+import { Button } from '@/registry/dhis2/ui/button'
 import React, { useState } from 'react'
 import type { WorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
@@ -14,11 +14,11 @@ import {
     validateAppliedFilter,
     type FilterSerializationContext,
 } from '../../registry/valueTypes'
-import { Checkbox } from '../primitives/checkbox'
-import { Label } from '../primitives/label'
-import { Separator } from '../primitives/separator'
+import { Checkbox } from '@/registry/dhis2/ui/checkbox'
+import { Label } from '@/registry/dhis2/ui/label'
+import { Separator } from '@/registry/dhis2/ui/separator'
 import { useWorkingListText } from '../WorkingListText'
-import { PopoverTitle } from '../primitives/popover'
+import { PopoverTitle } from '@/registry/dhis2/ui/popover'
 import { FilterChip } from './FilterControlPrimitives'
 import { EditorValue } from './FilterEditorValue'
 import { SelectField } from './FilterSelectFields'

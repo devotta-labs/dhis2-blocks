@@ -2,6 +2,7 @@
     "extends": "./tsconfig.json",
     "compilerOptions": {
         "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
         "types": ["node", "vitest/globals"]
     },
     "include": [

@@ -1,9 +1,16 @@
 import { CalendarInput } from '@dhis2/ui'
 import { IconChevronDown16 } from '@dhis2/ui-icons'
 import React, { createContext, useContext, useEffect, useRef } from 'react'
-import { cn } from '../primitives/cn'
-import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover'
-import { SelectClearIcon, selectTriggerVariants } from '../primitives/select'
+import { cn } from '@/registry/dhis2/ui/cn'
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/registry/dhis2/ui/popover'
+import {
+    SelectClearIcon,
+    selectTriggerVariants,
+} from '@/registry/dhis2/ui/select'
 
 // CalendarInput supports this at runtime (and documents it in PropTypes), but
 // @dhis2/ui 10.11 omits the prop from its declaration bundle.
@@ -120,13 +127,13 @@ export const FilterChip = ({
                         'w-auto max-w-full gap-0'
                     )}
                 >
-                    <span className="shrink-0 pe-3 text-grey-600">
+                    <span className="shrink-0 pe-3 text-dhis2-grey-600">
                         {prefix}
                     </span>
                     <span className="min-w-0 flex-1 truncate">{value}</span>
                     {/* Room for the clear button laid over the trigger. */}
                     <span aria-hidden="true" className="w-7 shrink-0" />
-                    <span className="ms-0.5 flex text-grey-900">
+                    <span className="ms-0.5 flex text-dhis2-grey-900">
                         <IconChevronDown16 />
                     </span>
                 </PopoverTrigger>
@@ -135,7 +142,7 @@ export const FilterChip = ({
                     aria-label={clearLabel}
                     data-test={`${dataTest}-select-clear`}
                     disabled={disabled}
-                    className="absolute end-[22px] top-1/2 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent p-0 text-grey-500 hover:bg-grey-200 hover:text-grey-800 focus-visible:outline-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:hover:bg-transparent [&_svg]:fill-current"
+                    className="absolute end-[22px] top-1/2 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-dhis2-sm border-0 bg-transparent p-0 text-dhis2-grey-500 hover:bg-dhis2-grey-200 hover:text-dhis2-grey-800 focus-visible:outline-2 focus-visible:outline-dhis2-ring disabled:cursor-not-allowed disabled:hover:bg-transparent [&_svg]:fill-current"
                     onClick={onClear}
                 >
                     <SelectClearIcon />

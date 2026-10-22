@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { defineConfig, loadEnv } from 'vite'
+import { fileURLToPath } from 'node:url'
 import {
     createDhis2ViteProxy,
     dhis2CsrfGuard,
@@ -50,6 +51,12 @@ export default defineConfig(({ mode }) => {
             // Examples import blocks the way an installed project does
             // (`@/components/<block>`); here that path is the workspace source.
             alias: [
+                {
+                    find: '@/registry/dhis2/ui',
+                    replacement: fileURLToPath(
+                        new URL('../../packages/blocks/ui/src', import.meta.url)
+                    ),
+                },
                 {
                     find: /^@\/components\/(context-selector|working-list)$/,
                     replacement: '@dhis2-blocks/$1',

@@ -1,4 +1,4 @@
-import { ErrorAlert } from '../primitives/alert'
+import { ErrorAlert } from '@/registry/dhis2/ui/alert'
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { useWorkingListMeta } from '../../provider/WorkingListContext'
 import { useWorkingListText } from '../WorkingListText'

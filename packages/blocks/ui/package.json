@@ -1,0 +1,68 @@
+{
+    "name": "@dhis2-blocks/ui",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Shared DHIS2-styled shadcn primitives for DHIS2 blocks",
+    "license": "BSD-3-Clause",
+    "type": "module",
+    "exports": {
+        "./alert-dialog": "./src/alert-dialog.tsx",
+        "./alert": "./src/alert.tsx",
+        "./button": "./src/button.tsx",
+        "./card": "./src/card.tsx",
+        "./checkbox": "./src/checkbox.tsx",
+        "./cn": "./src/cn.ts",
+        "./combobox": "./src/combobox.tsx",
+        "./dialog": "./src/dialog.tsx",
+        "./dropdown-menu": "./src/dropdown-menu.tsx",
+        "./field": "./src/field.tsx",
+        "./input-group": "./src/input-group.tsx",
+        "./input": "./src/input.tsx",
+        "./label": "./src/label.tsx",
+        "./popover": "./src/popover.tsx",
+        "./portal-root": "./src/portal-root.ts",
+        "./radio-group": "./src/radio-group.tsx",
+        "./select": "./src/select.tsx",
+        "./separator": "./src/separator.tsx",
+        "./spinner": "./src/spinner.tsx",
+        "./switch": "./src/switch.tsx",
+        "./table": "./src/table.tsx",
+        "./textarea": "./src/textarea.tsx",
+        "./toggle-group": "./src/toggle-group.tsx",
+        "./toggle": "./src/toggle.tsx",
+        "./tooltip": "./src/tooltip.tsx",
+        "./theme.css": "./src/theme.css"
+    },
+    "scripts": {
+        "test": "vitest run",
+        "registry:write": "node --experimental-strip-types scripts/buildUiRegistry.ts && oxfmt registry.json",
+        "test:browser": "vitest run --project browser",
+        "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json --noEmit",
+        "lint": "oxlint --deny-warnings src"
+    },
+    "dependencies": {
+        "@base-ui/react": "^1.9.0",
+        "@dhis2/ui-icons": "^10.17.0",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "tailwind-merge": "^3.7.0"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.3.3",
+        "@types/node": "^22.0.0",
+        "@types/react": "^18.3.31",
+        "@types/react-dom": "^18.3.7",
+        "@vitest/browser-playwright": "4.1.11",
+        "playwright": "1.62.1",
+        "react": "18.3.1",
+        "react-dom": "18.3.1",
+        "tailwindcss": "^4.3.3",
+        "typescript": "^5.9.3",
+        "vite": "^7.3.0",
+        "vitest": "4.1.11"
+    },
+    "peerDependencies": {
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1"
+    }
+}

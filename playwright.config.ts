@@ -8,8 +8,8 @@ const artifactRoot = `e2e/artifacts/${targetVersion}`
 export default defineConfig({
     testDir: './e2e/specs',
     outputDir: `${artifactRoot}/test-results`,
-    fullyParallel: false,
-    workers: 1,
+    fullyParallel: true,
+    workers: environment?.CI ? 2 : undefined,
     forbidOnly: Boolean(environment?.CI),
     retries: environment?.CI ? 1 : 0,
     timeout: 60_000,

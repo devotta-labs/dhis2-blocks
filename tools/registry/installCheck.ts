@@ -251,6 +251,7 @@ const checkInstall = async (workDirectory: string): Promise<void> => {
                 'add',
                 `${origin}/working-list.json`,
                 `${origin}/context-selector.json`,
+                `${origin}/observation-cards.json`,
                 '-y',
             ],
             appDirectory

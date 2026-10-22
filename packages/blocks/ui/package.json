@@ -8,8 +8,10 @@
     "exports": {
         "./alert-dialog": "./src/alert-dialog.tsx",
         "./alert": "./src/alert.tsx",
+        "./badge": "./src/badge.tsx",
         "./button": "./src/button.tsx",
         "./card": "./src/card.tsx",
+        "./chart": "./src/chart.tsx",
         "./checkbox": "./src/checkbox.tsx",
         "./cn": "./src/cn.ts",
         "./combobox": "./src/combobox.tsx",
@@ -24,6 +26,7 @@
         "./radio-group": "./src/radio-group.tsx",
         "./select": "./src/select.tsx",
         "./separator": "./src/separator.tsx",
+        "./skeleton": "./src/skeleton.tsx",
         "./spinner": "./src/spinner.tsx",
         "./switch": "./src/switch.tsx",
         "./table": "./src/table.tsx",
@@ -45,6 +48,7 @@
         "@dhis2/ui-icons": "^10.17.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "recharts": "^3.8.0",
         "tailwind-merge": "^3.7.0"
     },
     "devDependencies": {

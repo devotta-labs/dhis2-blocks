@@ -12,6 +12,7 @@ apps/
 packages/
   blocks/
     context-selector/   Capture-style controlled context-selector primitives
+    observation-cards/  Read-only trend and latest-value cards for tracked entities
     ui/                 Shared DHIS2-styled shadcn primitives and theme
     working-list/       Canonical Working List source and registry manifest
 e2e/                    Real-DHIS2 Playwright coverage
@@ -317,6 +318,22 @@ are wrapped in the app-adapter host at `/preview/<slug>`.
 `pnpm docs:e2e` runs the docs Playwright suite (`playwright.docs.config.ts`):
 catalog browsing without a backend and live Working List
 filtering, sorting, pagination, event mode, and saved-view persistence.
+
+## Observation Cards block
+
+The Observation Cards block shows a tracked entity's latest readings and trends
+as read-only cards. Install it from the GitHub registry in a project with
+Tailwind CSS enabled and a valid shadcn `components.json` configuration:
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/observation-cards
+```
+
+Call `useTrackedEntityObservations` once beneath the DHIS2 app-runtime and
+TanStack Query providers, then pass `observations.get(dataElementId)` to each
+`TrendCard` or `LatestValueCard`. See
+[the block's README](packages/blocks/observation-cards/README.md) for usage and
+props.
 
 ## Quality checks
 

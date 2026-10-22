@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-16T12:06:08.651Z\n"
-"PO-Revision-Date: 2026-10-16T12:06:08.651Z\n"
+"POT-Creation-Date: 2026-10-21T12:52:06.943Z\n"
+"PO-Revision-Date: 2026-10-21T12:52:06.944Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -127,6 +127,118 @@ msgstr "Technical details"
 msgid "Reload application"
 msgstr "Reload application"
 
+msgid "All demo examples"
+msgstr "All demo examples"
+
+msgid ""
+"Idealised metadata shown through the same cards, to cover every state. Real "
+"instances rarely define legend sets and option colours this completely."
+msgstr ""
+"Idealised metadata shown through the same cards, to cover every state. Real "
+"instances rarely define legend sets and option colours this completely."
+
+msgid "Tracked entity {{id}}"
+msgstr "Tracked entity {{id}}"
+
+msgid "{{readings}} readings across {{elements}} of {{total}} data elements"
+msgstr "{{readings}} readings across {{elements}} of {{total}} data elements"
+
+msgid "Trends"
+msgstr "Trends"
+
+msgid "Last recorded"
+msgstr "Last recorded"
+
+msgid "Component demo"
+msgstr "Component demo"
+
+msgid "Observation cards"
+msgstr "Observation cards"
+
+msgid "Read-only cards for a tracked entity's latest readings and trends."
+msgstr "Read-only cards for a tracked entity's latest readings and trends."
+
+msgid "Back to Working List"
+msgstr "Back to Working List"
+
+msgid "Live data"
+msgstr "Live data"
+
+msgid "Preset"
+msgstr "Preset"
+
+msgid "Show observations"
+msgstr "Show observations"
+
+msgid "Finding a person…"
+msgstr "Finding a person…"
+
+msgid "Load example"
+msgstr "Load example"
+
+msgid "No one in this program has values for these data elements."
+msgstr "No one in this program has values for these data elements."
+
+msgid "Couldn't look for an example person"
+msgstr "Couldn't look for an example person"
+
+msgid "Enter a tracked entity ID to see their observations."
+msgstr "Enter a tracked entity ID to see their observations."
+
+msgid "Use {{id}}"
+msgstr "Use {{id}}"
+
+msgid "Numeric trend with a legend set"
+msgstr "Numeric trend with a legend set"
+
+msgid "Falling trend, no legend set"
+msgstr "Falling trend, no legend set"
+
+msgid "A single reading"
+msgstr "A single reading"
+
+msgid "Option set with option colours"
+msgstr "Option set with option colours"
+
+msgid "Yes/No value"
+msgstr "Yes/No value"
+
+msgid "Tick-only field left unticked at the latest visit"
+msgstr "Tick-only field left unticked at the latest visit"
+
+msgid "Free text"
+msgstr "Free text"
+
+msgid "Out of date (older than 180 days)"
+msgstr "Out of date (older than 180 days)"
+
+msgid "Some visits hidden by the user’s access"
+msgstr "Some visits hidden by the user’s access"
+
+msgid "Long data element name"
+msgstr "Long data element name"
+
+msgid "Right to left (Arabic)"
+msgstr "Right to left (Arabic)"
+
+msgid "Never recorded"
+msgstr "Never recorded"
+
+msgid "Loading (last recorded)"
+msgstr "Loading (last recorded)"
+
+msgid "Loading (trend)"
+msgstr "Loading (trend)"
+
+msgid "Failed to load"
+msgstr "Failed to load"
+
+msgid "Real data: WHO RMNCH Tracker"
+msgstr "Real data: WHO RMNCH Tracker"
+
+msgid "Full features: seeded program"
+msgstr "Full features: seeded program"
+
 msgid "Search"
 msgstr "Search"
 
@@ -138,6 +250,54 @@ msgstr "Could not load more organisation units"
 
 msgid "Show more"
 msgstr "Show more"
+
+msgid "{{change}} since {{date}}"
+msgstr "{{change}} since {{date}}"
+
+msgid "{{count}} readings from {{from}} to {{to}}, latest {{latest}}"
+msgstr "{{count}} readings from {{from}} to {{to}}, latest {{latest}}"
+
+msgid "1 reading on {{date}}, latest {{latest}}"
+msgstr "1 reading on {{date}}, latest {{latest}}"
+
+msgid "Couldn't load this value"
+msgstr "Couldn't load this value"
+
+msgid "down"
+msgstr "down"
+
+msgid "No"
+msgstr "No"
+
+msgid "No change since {{date}}"
+msgstr "No change since {{date}}"
+
+msgid "Out of date: last recorded over {{count}} day ago"
+msgstr "Out of date: last recorded over {{count}} day ago"
+
+msgid "Out of date: last recorded over {{count}} days ago"
+msgstr "Out of date: last recorded over {{count}} days ago"
+
+msgid "Recorded {{date}} · {{stage}}"
+msgstr "Recorded {{date}} · {{stage}}"
+
+msgid "Restricted access"
+msgstr "Restricted access"
+
+msgid "Some visits are hidden by your access"
+msgstr "Some visits are hidden by your access"
+
+msgid "This value type can't be shown as a trend"
+msgstr "This value type can't be shown as a trend"
+
+msgid "This value type can't be shown here"
+msgstr "This value type can't be shown here"
+
+msgid "up"
+msgstr "up"
+
+msgid "Yes"
+msgstr "Yes"
 
 msgid "A required value is missing"
 msgstr "A required value is missing"
@@ -487,9 +647,6 @@ msgstr "No users match"
 msgid "No values match"
 msgstr "No values match"
 
-msgid "No"
-msgstr "No"
-
 msgid "Not empty"
 msgstr "Not empty"
 
@@ -773,9 +930,6 @@ msgstr "Working lists require DHIS2 41 or newer."
 
 msgid "Working lists require a tracker program with registration."
 msgstr "Working lists require a tracker program with registration."
-
-msgid "Yes"
-msgstr "Yes"
 
 msgid "{{count}} selected"
 msgstr "{{count}} selected"

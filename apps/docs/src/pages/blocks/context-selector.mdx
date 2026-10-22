@@ -1,0 +1,135 @@
+---
+title: Context Selector
+description: The Capture-style bar for choosing the program, organisation unit, and other working context.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="context-selector/basic" />
+
+## Installation
+
+<InstallCommand item="context-selector" />
+
+## Usage
+
+Place the selectors your workflow needs inside `ContextSelector`. Your app
+supplies everything they show: the options, the selected values, whether each
+menu is open, and what happens on change.
+
+```tsx
+import {
+    ClearSelections,
+    ContextSelector,
+    OrganisationUnitSelector,
+    ProgramSelector,
+} from '@/components/context-selector'
+
+export const RegistrationContext = () => (
+    <ContextSelector ariaLabel="Registration context">
+        <ProgramSelector
+            options={programOptions}
+            value={programId}
+            open={programOpen}
+            onOpenChange={setProgramOpen}
+            onChange={selectProgram}
+            onClear={clearProgram}
+        />
+        <OrganisationUnitSelector
+            value={organisationUnit?.displayName}
+            open={organisationUnitOpen}
+            onOpenChange={setOrganisationUnitOpen}
+            onClear={clearOrganisationUnit}
+        >
+            {/* your organisation unit tree or search */}
+            <OrganisationUnitTree onSelect={selectOrganisationUnit} />
+        </OrganisationUnitSelector>
+        <ClearSelections onClear={clearContext} disabled={!programId} />
+    </ContextSelector>
+)
+```
+
+Because your app owns the state, you decide which selectors appear and when.
+A program-first app can show only `ProgramSelector` at first, then add the
+organisation unit, enrollment, stage, and event selectors as the user makes
+choices. Keeping the selection in the URL or a store works the same way as
+for any other controlled component.
+
+## Components
+
+- `ContextSelector` — the bar itself. Pass `ariaLabel` to name it for
+  assistive technology.
+- `ProgramSelector`, `EnrollmentSelector`, `StageSelector` — Capture-style
+  menus labelled Program, Enrollment, and Stage by default.
+- `EventSelector` — the same menu for events; pass the `label` to show.
+- `OptionSelector` — the same menu for any other option list; pass the
+  `label` to show.
+- `OrganisationUnitSelector` — shows the selected organisation unit. Its
+  menu renders whatever you pass as `children`, such as an organisation unit
+  tree.
+- `ContextValue` — a read-only value for context the user cannot change.
+- `ClearSelections` — a button that clears the whole selection.
+
+## States
+
+All selectors accept the same state props:
+
+- `loading` and `loadingLabel` — show a loader while options load.
+- `disabled` — the selector cannot be opened.
+- `readOnly` — the value is shown but cannot be changed.
+- `onClear` — when set, the selector shows a clear button.
+
+Try them in the example below:
+
+<ExampleCard slug="context-selector/states" />
+
+## API reference
+
+### Selector props
+
+`ProgramSelector`, `EnrollmentSelector`, `StageSelector`, `EventSelector`,
+and `OptionSelector` accept:
+
+- `options: readonly Option[]` — the menu items.
+- `value?: string` — the selected option's `value`.
+- `onChange?: (value: string) => void` — called when the user picks an
+  option.
+- `onClear?: () => void` — shows a clear button and is called when it is
+  pressed.
+- `open?: boolean` and `onOpenChange?: (open: boolean) => void` — control
+  whether the menu is open.
+- `loading?`, `loadingLabel?`, `disabled?`, `readOnly?` — see
+  [States](#states).
+- `label?`, `placeholder?`, `searchPlaceholder?` — override the default
+  texts. `label` is required on `EventSelector` and `OptionSelector`.
+
+An `Option` is:
+
+```ts
+interface Option {
+    value: string
+    label: string
+    icon?: { source?: string; color?: string; alternativeText?: string }
+    disabled?: boolean
+    excludeFromMenu?: boolean
+}
+```
+
+### OrganisationUnitSelector
+
+Accepts `value` (the display name to show), `onClear`, `open`,
+`onOpenChange`, `loading`, `loadingLabel`, `disabled`, `readOnly`, `label`,
+`placeholder`, and `children` (the menu content).
+
+### ContextValue
+
+- `label: string` — **required.**
+- `value?: string | ReactElement`
+- `placeholder?: string` — shown when there is no value.
+- `onClear?: () => void` — shows a clear button when there is a value.
+
+### ClearSelections
+
+- `onClear: () => void` — **required.**
+- `disabled?: boolean`

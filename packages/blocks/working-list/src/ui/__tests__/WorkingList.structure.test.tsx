@@ -13,6 +13,7 @@ import { WorkingListContainer } from '../Container'
 import { WorkingListTable } from '../Results'
 import { WorkingListToolbar } from '../Toolbar'
 import { WorkingListTextProvider } from '../WorkingListText'
+import { WorkingListTableSkeleton } from '../WorkingListTable'
 
 vi.mock('../SavedViews', () => ({
     WorkingListSavedViews: () => <div data-testid="saved-views-content" />,
@@ -54,6 +55,28 @@ const meta = (lifecycle: WorkingListMeta['lifecycle']): WorkingListMeta => ({
 })
 
 describe('WorkingList structural components', () => {
+    it('renders page-sized skeleton rows with disabled shadcn pagination', async () => {
+        const screen = await render(
+            <WorkingListTextProvider translate={(message) => message}>
+                <WorkingListTableSkeleton pageSize={15} />
+            </WorkingListTextProvider>
+        )
+
+        expect(
+            screen.container.querySelectorAll(
+                '[data-test="working-list-skeleton-row"]'
+            )
+        ).toHaveLength(15)
+        expect(
+            screen.container.querySelectorAll('[data-slot="table-head"]')
+        ).toHaveLength(4)
+        expect(
+            screen.container.querySelectorAll(
+                '[data-test="working-list-pagination"] button:not(:disabled)'
+            )
+        ).toHaveLength(0)
+    })
+
     it('provides localized accessible defaults and forwards native props', async () => {
         const store = createWorkingListProviderStore(
             meta({ status: 'pending' })
@@ -122,7 +145,7 @@ describe('WorkingList structural components', () => {
         expect(table?.dataset.consumer).toBe('table')
     })
 
-    it('keeps lifecycle loading and fatal errors at the outer container', async () => {
+    it('keeps composed parts visible while initializing and hides them on fatal errors', async () => {
         const store = createWorkingListProviderStore(
             meta({ status: 'pending' })
         )
@@ -138,15 +161,15 @@ describe('WorkingList structural components', () => {
 
         await expect
             .element(screen.getByTestId('working-list-initializing'))
-            .toBeVisible()
-        expect(
-            screen.container
-                .querySelector('[data-testid="working-list"]')
-                ?.hasAttribute('hidden')
-        ).toBe(true)
-        expect(
-            screen.container.querySelector('[data-testid="composed-child"]')
-        ).not.toBeNull()
+            .toHaveTextContent('Loading the working list…')
+
+        const frame = screen.container.querySelector(
+            '[data-testid="working-list"]'
+        )
+
+        expect(frame?.hasAttribute('hidden')).toBe(false)
+        expect(frame?.getAttribute('aria-busy')).toBe('true')
+        await expect.element(screen.getByTestId('composed-child')).toBeVisible()
 
         store.setState((current) => ({
             meta: {
@@ -162,5 +185,11 @@ describe('WorkingList structural components', () => {
         await expect
             .element(screen.getByTestId('working-list-lifecycle-error'))
             .toBeVisible()
+        expect(frame?.hasAttribute('hidden')).toBe(true)
+        expect(
+            screen.container.querySelector(
+                '[data-testid="working-list-initializing"]'
+            )
+        ).toBeNull()
     })
 })

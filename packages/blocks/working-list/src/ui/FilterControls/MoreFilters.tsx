@@ -85,7 +85,7 @@ export const MoreFilters = ({
     const lockMessage = i18n.t('Can only filter using one program stage.')
 
     return (
-        <div className="relative min-w-0 max-w-full">
+        <div className="relative flex min-w-0 max-w-full">
             <DropdownMenu open={open && !disabled} onOpenChange={setOpen}>
                 <DropdownMenuTrigger
                     disabled={disabled}

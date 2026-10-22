@@ -422,6 +422,16 @@
                     "target": "@components/working-list/ui/SavedViews/index.ts"
                 },
                 {
+                    "path": "src/ui/Skeleton/Skeleton.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Skeleton/Skeleton.tsx"
+                },
+                {
+                    "path": "src/ui/Skeleton/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/Skeleton/index.ts"
+                },
+                {
                     "path": "src/ui/Toolbar/WorkingListToolbar.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/Toolbar/WorkingListToolbar.tsx"

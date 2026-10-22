@@ -12,8 +12,13 @@ import {
     TableHeader,
     TableRow,
 } from '@/registry/dhis2/ui/table'
+import { SkeletonBlock } from '../Skeleton'
 import { useWorkingListText } from '../WorkingListText'
 import { WorkingListPagination } from './WorkingListPagination'
+
+// Reserve the native scrollbar gutter before the columns are known.
+const tableScrollClassName =
+    'w-full min-w-0 max-w-full overflow-x-scroll [contain:layout] [overscroll-behavior-inline:contain]'
 
 export interface WorkingListTableHeaderView {
     id: string
@@ -103,10 +108,95 @@ const SortIndicator = ({ sorted }: { sorted: false | 'asc' | 'desc' }) => (
     </span>
 )
 
-// The @dhis2/ui DataTableBody `loading` state: a white veil over the body
-// with a CircularLoader-style ring in the middle.
-const loadingBodyClassName =
-    "before:absolute before:inset-0 before:bg-white/80 before:content-[''] after:absolute after:start-[calc(50%-24px)] after:top-[calc(50%-24px)] after:size-12 after:animate-spin after:rounded-full after:border-6 after:border-dhis2-grey-600/15 after:border-b-dhis2-blue-600 after:content-['']"
+const skeletonCellWidths = [
+    'w-[46%]',
+    'w-[62%]',
+    'w-[34%]',
+    'w-[54%]',
+    'w-[40%]',
+]
+
+const skeletonCellWidth = (row: number, column: number) =>
+    skeletonCellWidths[(row * 3 + column) % skeletonCellWidths.length]
+
+// One placeholder row per expected record, built from the same table cells
+// as real rows so the body keeps its final height while results load.
+const SkeletonRows = ({
+    columnCount,
+    rowCount,
+}: {
+    columnCount: number
+    rowCount: number
+}) =>
+    Array.from({ length: rowCount }, (_, row) => (
+        <TableRow key={row} data-test="working-list-skeleton-row">
+            {Array.from({ length: columnCount }, (_, column) => (
+                <TableCell key={column} className="min-w-[140px]">
+                    <SkeletonBlock
+                        className={`h-3.5 rounded-[3px] ${skeletonCellWidth(row, column)}`}
+                    />
+                </TableCell>
+            ))}
+        </TableRow>
+    ))
+
+const ignorePaginationChange = () => {}
+
+/**
+ * Results placeholder for when the columns are not known yet (initializing,
+ * or switching saved lists). It mirrors the loaded table — header, one row
+ * per page slot, pagination — so real data replaces it without a jump.
+ */
+export const WorkingListTableSkeleton = ({
+    pageSize,
+    columnCount = 4,
+}: {
+    pageSize: WorkingListPageSize
+    columnCount?: number
+}) => (
+    <div
+        className="w-full min-w-0 max-w-full"
+        data-testid="working-list-results-skeleton"
+        aria-hidden="true"
+    >
+        <div className={tableScrollClassName}>
+            <div className="min-w-[680px]">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            {Array.from(
+                                { length: columnCount },
+                                (_, column) => (
+                                    <TableHead key={column}>
+                                        <SkeletonBlock
+                                            className={`h-3 rounded-[3px] ${column % 2 === 0 ? 'w-24' : 'w-20'}`}
+                                        />
+                                    </TableHead>
+                                )
+                            )}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <SkeletonRows
+                            columnCount={columnCount}
+                            rowCount={pageSize}
+                        />
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+        <div className="flex min-h-14 w-full min-w-0 max-w-full items-center px-3 py-2">
+            <WorkingListPagination
+                page={1}
+                pageSize={pageSize}
+                hasNextPage={false}
+                disabled
+                onPageChange={ignorePaginationChange}
+                onPageSizeChange={ignorePaginationChange}
+            />
+        </div>
+    </div>
+)
 
 export const WorkingListTableView = ({
     model,
@@ -133,7 +223,7 @@ export const WorkingListTableView = ({
             data-testid="working-list-results"
         >
             <div
-                className="w-full min-w-0 max-w-full overflow-x-auto [contain:layout] [overscroll-behavior-inline:contain]"
+                className={tableScrollClassName}
                 data-testid="working-list-table-scroll"
             >
                 <div className="min-w-[680px]" data-testid="working-list-table">
@@ -190,30 +280,16 @@ export const WorkingListTableView = ({
                                 </TableRow>
                             ))}
                         </TableHeader>
-                        <TableBody
-                            aria-busy={isInitialLoading || isUpdating}
-                            className={
-                                isInitialLoading
-                                    ? loadingBodyClassName
-                                    : undefined
-                            }
-                        >
-                            {isInitialLoading &&
-                                model.rows.length === 0 && (
-                                    // Gives the loading ring a body to sit in
-                                    // before the first page of rows arrives.
-                                    <TableRow aria-hidden="true">
-                                        <TableCell
-                                            colSpan={
-                                                Math.max(
-                                                    visibleColumnCount,
-                                                    1
-                                                ) + (showIssuesColumn ? 1 : 0)
-                                            }
-                                            className="h-32"
-                                        />
-                                    </TableRow>
-                                )}
+                        <TableBody aria-busy={isInitialLoading || isUpdating}>
+                            {isInitialLoading && (
+                                <SkeletonRows
+                                    columnCount={
+                                        Math.max(visibleColumnCount, 1) +
+                                        (showIssuesColumn ? 1 : 0)
+                                    }
+                                    rowCount={pageSize}
+                                />
+                            )}
                             {!isInitialLoading && model.rows.length === 0 && (
                                 <TableRow>
                                     <TableCell

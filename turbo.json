@@ -3,7 +3,7 @@
     "cacheDir": ".turbo/cache",
     "tasks": {
         "build": {
-            "outputs": ["build/**", ".d2/**", "src/locales/**"]
+            "outputs": ["build/**", "dist/**", ".d2/**", "src/locales/**"]
         },
         "test": {
             "dependsOn": ["^test"],

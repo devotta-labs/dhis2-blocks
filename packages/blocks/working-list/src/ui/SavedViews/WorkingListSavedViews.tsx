@@ -24,6 +24,7 @@ import {
 } from '../../provider/WorkingListContext'
 import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
 import { SavedListBar } from '../SavedListBar'
+import { SavedViewsSkeleton } from '../Skeleton'
 import { WorkingListSharingDialog } from '../WorkingList/dialogs'
 import {
     useWorkingListText,
@@ -64,18 +65,6 @@ const actionErrorCopy = (
             return translate('The selected working list could not be applied.')
     }
 }
-
-const SavedViewsLoading = () => (
-    <div
-        className="flex min-h-[38px] items-center border-b border-[#e8edf2] px-2 pt-0 pb-2 text-xs leading-4 text-[var(--colors-grey700)]"
-        data-testid="saved-list-bar"
-    >
-        <div
-            className="h-[30px] w-[148px] rounded-2xl bg-[var(--colors-grey200)]"
-            aria-hidden="true"
-        />
-    </div>
-)
 
 export const WorkingListSavedViews = () => {
     const translate = useWorkingListText()
@@ -139,7 +128,7 @@ export const WorkingListSavedViews = () => {
 
     return (
         <div data-testid="working-list-saved-views">
-            {savedViews.status === 'pending' && <SavedViewsLoading />}
+            {savedViews.status === 'pending' && <SavedViewsSkeleton />}
             {savedViews.status === 'error' && savedViews.views.length > 0 && (
                 <SavedListBar
                     lists={savedViews.views}

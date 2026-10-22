@@ -190,6 +190,25 @@
                 ]
             }
         },
+        "packages/blocks/timeline": {
+            "entry": ["src/**/*.{test,spec}.{ts,tsx}"],
+            "project": ["src/**/*.{ts,tsx,css}", "test/**/*.{ts,css}"],
+            "includeEntryExports": true,
+            "ignoreDependencies": [
+                "@dhis2-blocks/ui",
+                "@dhis2-blocks/value-display"
+            ],
+            "ignoreIssues": {
+                "src/index.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ]
+            }
+        },
         "packages/blocks/value-display": {
             "entry": ["src/**/*.test.ts"],
             "project": ["src/**/*.ts"],

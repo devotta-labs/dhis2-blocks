@@ -299,6 +299,25 @@ build outputs.
 
 Unit and component tests use Vitest. Real-DHIS2 browser tests use Playwright.
 
+CI runs typechecking, tests, app/docs builds, lint, Knip, and DHIS2 dev E2E
+in parallel. Path filters skip unrelated jobs (for example, docs-only changes
+do not start the web app's E2E stack). Feature branches compare against their
+merge-base with the default branch, so later documentation commits cannot hide
+untested code changes. The `validation` check collects the static check results
+and fails if any relevant job fails or is cancelled.
+
+DHIS2 41, 42, and 43 E2E run nightly at 02:23 UTC on the default branch.
+Manual workflow runs always verify everything; enable `all-versions` to also
+run all four E2E versions. E2E results are never cached because the backend
+images move independently of this repository.
+
+CI caches the pnpm store, Playwright binaries (by exact version), per-job Turbo
+results, and pristine database dumps (refreshed weekly). Databases are still
+initialized and seeded from scratch on every E2E run. Turbo tracks transitive
+workspace sources, shared configuration, lockfiles, and build environment
+variables before reusing results. Lint still runs for prose-only changes since
+the formatter checks Markdown and workflow files too.
+
 `pnpm dead-code:audit` runs the complete Knip configuration and fails on any
 finding, including circular imports. Use `pnpm audit:exports` for a focused
 interactive export report.

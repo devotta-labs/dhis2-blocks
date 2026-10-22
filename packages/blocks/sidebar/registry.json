@@ -1,0 +1,43 @@
+{
+    "$schema": "https://ui.shadcn.com/schema/registry.json",
+    "items": [
+        {
+            "name": "sidebar",
+            "type": "registry:block",
+            "title": "Sidebar",
+            "description": "Navigation with expandable groups, footer actions and a collapsible sidebar.",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/ui-icons@^10.17.0"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "src/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/sidebar/index.ts"
+                },
+                {
+                    "path": "src/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/sidebar/context.ts"
+                },
+                {
+                    "path": "src/sidebar.tsx",
+                    "type": "registry:file",
+                    "target": "@components/sidebar/sidebar.tsx"
+                },
+                {
+                    "path": "src/items.tsx",
+                    "type": "registry:file",
+                    "target": "@components/sidebar/items.tsx"
+                }
+            ],
+            "docs": "Use SidebarLink with render={<NavLink to=\"/projects\" />} to highlight the current page. Add SidebarGroup for nested links and SidebarButton for footer actions. Use SidebarToggle in the sidebar or useSidebar() for a page-toolbar control. Give each sidebar its own SidebarProvider and SidebarNavigation. Collapsing preserves expanded groups and the selected page."
+        }
+    ]
+}

@@ -177,6 +177,7 @@ const checkInstall = (workDirectory: string): void => {
             'add',
             join(registryOutput, 'working-list.json'),
             join(registryOutput, 'context-selector.json'),
+            join(registryOutput, 'sidebar.json'),
             '-y',
             '--cwd',
             appDirectory,

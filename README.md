@@ -14,6 +14,7 @@ packages/
     context-selector/   Capture-style controlled context-selector primitives
     ui/                 Shared DHIS2-styled shadcn primitives and theme
     working-list/       Canonical Working List source and registry manifest
+    sidebar/            Composable modeling-app navigation with a collapse rail
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
 scripts/docs/           Documentation site backend lifecycle
@@ -90,6 +91,23 @@ A program-first application can initially render only
 `ProgramSelector`, then add organisation-unit, enrollment, stage, and event
 children as its own context policy makes them relevant. All values, direct
 callbacks, and metadata-derived labels are supplied by the host.
+
+## Sidebar block
+
+Build navigation with expandable groups, footer actions, and a collapsible sidebar.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/sidebar
+```
+
+Import from `@/components/sidebar`. Use `SidebarLink` with
+`render={<NavLink to="/projects" />}` to highlight the current page. Add
+`SidebarGroup` for nested links and `SidebarButton` for footer actions.
+Use `SidebarToggle` in the sidebar, or `useSidebar()` for a page-toolbar control.
+Collapsing preserves the open groups and selected page.
+
+See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
+examples.
 
 ## Working List block
 

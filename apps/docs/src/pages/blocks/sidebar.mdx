@@ -1,0 +1,97 @@
+---
+title: Sidebar
+description: Navigation with expandable groups, footer actions, and a collapsible sidebar.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="sidebar/basic" />
+
+## Installation
+
+<InstallCommand item="sidebar" />
+
+## Navigation links
+
+Pass a `NavLink` to `SidebarLink` through `render` to highlight the current page
+with a leading selection marker.
+
+```tsx
+import { NavLink } from 'react-router-dom'
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarItem,
+    SidebarItems,
+    SidebarLink,
+    SidebarNavigation,
+    SidebarProvider,
+    SidebarToggle,
+} from '@/components/sidebar'
+
+export function AppNavigation() {
+    return (
+        <SidebarProvider>
+            <Sidebar>
+                <SidebarNavigation aria-label="Application navigation">
+                    <SidebarContent>
+                        <SidebarItems>
+                            <SidebarItem>
+                                <SidebarLink
+                                    render={<NavLink to="/dashboard" end />}
+                                >
+                                    Dashboard
+                                </SidebarLink>
+                            </SidebarItem>
+                            <SidebarItem>
+                                <SidebarLink
+                                    render={<NavLink to="/projects" />}
+                                >
+                                    Projects
+                                </SidebarLink>
+                            </SidebarItem>
+                        </SidebarItems>
+                    </SidebarContent>
+                </SidebarNavigation>
+                <SidebarToggle />
+            </Sidebar>
+        </SidebarProvider>
+    )
+}
+```
+
+For other routers, set `aria-current="page"` on the active link.
+
+## Nested navigation and actions
+
+Use `SidebarGroup`, `SidebarGroupTrigger`, and `SidebarGroupContent` for nested
+links. Set `defaultOpen` to start a group expanded, or use `open` and
+`onOpenChange` to control it.
+
+Keep frequently used actions in `SidebarFooter` with `SidebarButton`. Place
+icons, badges, and custom labels directly inside links and buttons.
+
+## Collapse controls
+
+Add `SidebarToggle` to collapse and expand the navigation. To start collapsed,
+set `defaultCollapsed` on `SidebarProvider`; to control it, use `collapsed` and
+`onCollapsedChange` instead. Collapsing preserves expanded groups and the selected page.
+
+To add a page-toolbar control, place it under the same `SidebarProvider` and
+use `useSidebar()`. Give separate sidebars their own providers, with one
+`SidebarNavigation` each.
+
+<ExampleCard slug="sidebar/controlled" />
+
+Use `collapseLabel` and `expandLabel` on `SidebarToggle` to customize its accessible labels.
+
+## Layout
+
+The sidebar becomes a full-width bar on smaller screens. Use a
+`flex-col md:flex-row` layout to keep it above the page on mobile and beside it on
+desktop. Give the desktop layout a bounded height to scroll long menus while
+keeping the header and footer visible.
+
+Set `dir="rtl"` on the layout for right-to-left navigation; the selection marker
+and toggle direction follow it.

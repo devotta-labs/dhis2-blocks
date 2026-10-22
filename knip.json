@@ -190,6 +190,21 @@
                 ]
             }
         },
+        "packages/blocks/value-display": {
+            "entry": ["src/**/*.test.ts"],
+            "project": ["src/**/*.ts"],
+            "includeEntryExports": true,
+            "ignoreIssues": {
+                "src/index.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ]
+            }
+        },
         "packages/blocks/context-selector": {
             "entry": [
                 "src/**/*.{test,spec}.{ts,tsx}",

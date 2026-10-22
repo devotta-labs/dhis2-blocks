@@ -1,0 +1,38 @@
+{
+    "$schema": "https://ui.shadcn.com/schema/registry.json",
+    "items": [
+        {
+            "name": "dhis2-value-display",
+            "type": "registry:lib",
+            "title": "DHIS2 Value Display",
+            "description": "Read-only formatting of DHIS2 values by value type, option set and system calendar, keeping the day a date was stored on.",
+            "dependencies": [
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@2.1.2"
+            ],
+            "files": [
+                {
+                    "path": "src/calendar.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2/value-display/calendar.ts"
+                },
+                {
+                    "path": "src/formatDhis2Value.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2/value-display/formatDhis2Value.ts"
+                },
+                {
+                    "path": "src/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2/value-display/index.ts"
+                },
+                {
+                    "path": "src/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2/value-display/types.ts"
+                }
+            ],
+            "docs": "Call formatDhis2Value(value, { valueType, optionSet }, { calendar, locale }) to get display text. Read the system calendar with parseDhis2Calendar(useConfig().systemInfo?.calendar)."
+        }
+    ]
+}

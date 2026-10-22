@@ -1,0 +1,24 @@
+{
+    "name": "@dhis2-blocks/value-display",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Read-only formatter for DHIS2 values and calendar dates",
+    "license": "BSD-3-Clause",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "scripts": {
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json --noEmit",
+        "lint": "oxlint --deny-warnings src"
+    },
+    "dependencies": {
+        "@dhis2/d2-i18n": "1.2.0",
+        "@dhis2/multi-calendar-dates": "2.1.2"
+    },
+    "devDependencies": {
+        "@types/node": "^22.0.0",
+        "typescript": "^5.9.3",
+        "vitest": "4.1.11"
+    }
+}

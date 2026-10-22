@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "skipLibCheck": true,
+        "allowJs": false,
+        "esModuleInterop": true,
+        "target": "ESNext",
+        "module": "esnext",
+        "moduleResolution": "node",
+        "noEmit": true
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["src/**/*.test.ts"]
+}

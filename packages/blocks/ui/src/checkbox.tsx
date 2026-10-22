@@ -69,7 +69,7 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
             data-slot="checkbox"
             className={cn(
                 checkboxBoxVariants(),
-                'peer relative cursor-pointer outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-dhis2-ring data-disabled:cursor-not-allowed aria-invalid:border-dhis2-red-500',
+                'peer relative cursor-pointer outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-1 focus-visible:outline-dhis2-ring data-disabled:cursor-not-allowed aria-invalid:border-dhis2-red-500',
                 className
             )}
             {...props}

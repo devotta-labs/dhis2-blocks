@@ -15,6 +15,20 @@ export default defineConfig({
             },
             {
                 plugins: [tailwindcss()],
+                optimizeDeps: {
+                    include: [
+                        '@base-ui/react/button',
+                        '@base-ui/react/checkbox',
+                        '@base-ui/react/dialog',
+                        '@base-ui/react/menu',
+                        '@base-ui/react/radio',
+                        '@base-ui/react/radio-group',
+                        '@base-ui/react/switch',
+                        '@base-ui/react/toggle',
+                        '@dhis2/ui-icons',
+                        'class-variance-authority',
+                    ],
+                },
                 test: {
                     globals: true,
                     name: 'browser',

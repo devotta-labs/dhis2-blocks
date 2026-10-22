@@ -14,7 +14,7 @@ services:
         environment:
             DHIS2_DB_DUMP_URL: ${DHIS2_DB_DUMP_URL:?Set DHIS2_DB_DUMP_URL}
         volumes:
-            - database-dump:/opt/dump
+            - ${DHIS2_DB_DUMP_VOLUME:-database-dump}:/opt/dump
 
     database:
         image: ghcr.io/baosystems/postgis:16-3.5
@@ -24,7 +24,7 @@ services:
             POSTGRES_PASSWORD: dhis
             PGPASSWORD: dhis
         volumes:
-            - database-dump:/docker-entrypoint-initdb.d:ro
+            - ${DHIS2_DB_DUMP_VOLUME:-database-dump}:/docker-entrypoint-initdb.d:ro
             - database-data:/var/lib/postgresql/data
         healthcheck:
             test:

@@ -1,0 +1,51 @@
+name: DHIS2 E2E
+description: Run real-DHIS2 browser tests with cached tooling and pristine dumps
+
+inputs:
+    version:
+        description: DHIS2 version to test
+        required: true
+
+runs:
+    using: composite
+    steps:
+        - uses: ./.github/actions/setup
+          with:
+              browser: 'true'
+
+        - name: Database cache period
+          id: database
+          shell: bash
+          run: |
+              echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+              echo "DHIS2_DB_DUMP_VOLUME=$RUNNER_TEMP/dhis2-dump" >> "$GITHUB_ENV"
+              mkdir -p "$RUNNER_TEMP/dhis2-dump"
+
+        - uses: actions/cache@v4
+          with:
+              path: ${{ runner.temp }}/dhis2-dump
+              key: dhis2-dump-v1-${{ inputs.version }}-${{ steps.database.outputs.week }}-${{ hashFiles('scripts/e2e/versions.sh', 'docker/e2e/compose.yml') }}
+
+        - name: validate
+          shell: bash
+          run: bash scripts/e2e/validate.sh "$DHIS2_VERSION"
+          env:
+              DHIS2_VERSION: ${{ inputs.version }}
+
+        - name: e2e
+          shell: bash
+          run: bash scripts/e2e/run-version.sh "$DHIS2_VERSION"
+          env:
+              DHIS2_VERSION: ${{ inputs.version }}
+              CI: 'true'
+              E2E_DHIS2_USERNAME: admin
+              E2E_DHIS2_PASSWORD: district
+
+        - name: artifacts
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+              name: e2e-dhis2-${{ inputs.version }}-${{ github.run_attempt }}
+              path: e2e/artifacts/${{ inputs.version }}/
+              if-no-files-found: warn
+              retention-days: 14

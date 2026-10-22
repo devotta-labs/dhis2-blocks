@@ -178,4 +178,35 @@ describe('Timeline', () => {
         const results = await axe.run(container)
         expect(results.violations).toEqual([])
     })
+
+    it('does not re-render a consumer when the host passes a new inline groupBy function', async () => {
+        const sources = [staticTimelineSource('a', 'Visits', ENTRIES)]
+        let renders = 0
+        const Groups = React.memo(() => {
+            const groups = useTimelineState((state) => state.groups)
+            renders += 1
+            return <p data-testid="groups">{groups.length}</p>
+        })
+        const Host = () => (
+            <Timeline
+                sources={sources}
+                calendar="gregorian"
+                locale="en"
+                now={NOW}
+                groupBy={(item) => ({ key: item.at.slice(0, 7), label: 'Month' })}
+            >
+                <Groups />
+            </Timeline>
+        )
+        const { rerender, container } = await render(<Host />)
+        await vi.waitFor(() =>
+            expect(container.querySelector('[data-testid=groups]')?.textContent).not.toBe('0')
+        )
+        const before = renders
+
+        await rerender(<Host />)
+        await rerender(<Host />)
+
+        expect(renders).toBe(before)
+    })
 })

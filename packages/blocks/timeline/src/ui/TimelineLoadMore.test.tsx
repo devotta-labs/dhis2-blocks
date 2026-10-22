@@ -98,4 +98,75 @@ describe('TimelineLoadMore', () => {
         expect(button?.textContent).toBe('Loading more')
         expect(button?.disabled).toBe(true)
     })
+
+    it('keeps focus in the timeline when a load adds nothing and there is nothing more', async () => {
+        let finish = () => {}
+        const Quiet = () => {
+            const [phase, setPhase] = useState<'idle' | 'loading' | 'done'>(
+                'idle'
+            )
+            finish = () => setPhase('done')
+            return (
+                <Provided
+                    state={stateOf({
+                        entries: first,
+                        sources: [
+                            source(
+                                'a',
+                                phase === 'done' ? 'complete' : 'hasMore'
+                            ),
+                        ],
+                        hasMore: phase !== 'done',
+                        loadingMore: phase === 'loading',
+                    })}
+                    actions={actionsOf({ loadMore: () => setPhase('loading') })}
+                >
+                    <TimelineFeed<string>>{renderEntry}</TimelineFeed>
+                    <TimelineLoadMore />
+                </Provided>
+            )
+        }
+        const { container } = await render(<Quiet />)
+        container.querySelector('button')?.click()
+        await vi.waitFor(() =>
+            expect(container.querySelector('button')?.disabled).toBe(true)
+        )
+
+        finish()
+
+        await vi.waitFor(() => expect(container.querySelector('button')).toBeNull())
+        expect(
+            document.activeElement?.getAttribute('data-timeline-entry-index')
+        ).toBe('1')
+    })
+
+    it('does not move focus when entries grow without a load-more press', async () => {
+        let grow = () => {}
+        const Host = () => {
+            const [entries, setEntries] = useState(first)
+            grow = () => setEntries([...first, ...more])
+            return (
+                <Provided
+                    state={stateOf({ entries, hasMore: true })}
+                    actions={actionsOf()}
+                >
+                    <TimelineFeed<string>>{renderEntry}</TimelineFeed>
+                    <TimelineLoadMore />
+                </Provided>
+            )
+        }
+        const { container } = await render(<Host />)
+        // A press that starts no load.
+        container.querySelector('button')?.click()
+        await new Promise((resolve) => setTimeout(resolve, 20))
+
+        grow()
+
+        await vi.waitFor(() =>
+            expect(container.querySelectorAll('li[data-timeline-entry-index]')).toHaveLength(4)
+        )
+        expect(
+            document.activeElement?.hasAttribute('data-timeline-entry-index')
+        ).toBe(false)
+    })
 })

@@ -80,20 +80,32 @@ interface Snapshot {
 
 interface TimelineStore {
     get(): Snapshot
-    set(next: Snapshot): void
+    /** Makes `next` what consumers read from now on, without notifying. */
+    replace(next: Snapshot): void
+    /** Tells subscribers about whatever `replace` last stored. */
+    publish(): void
     subscribe(listener: () => void): () => void
 }
 
 const createStore = (initial: Snapshot): TimelineStore => {
     let snapshot = initial
+    let published = initial
     const listeners = new Set<() => void>()
     return {
         get: () => snapshot,
-        set: (next) => {
-            if (next.state === snapshot.state && next.meta === snapshot.meta) {
+        replace: (next) => {
+            if (next.state !== snapshot.state || next.meta !== snapshot.meta) {
+                snapshot = next
+            }
+        },
+        publish: () => {
+            if (
+                snapshot.state === published.state &&
+                snapshot.meta === published.meta
+            ) {
                 return
             }
-            snapshot = next
+            published = snapshot
             listeners.forEach((listener) => listener())
         },
         subscribe: (listener) => {
@@ -140,8 +152,12 @@ export const TimelineProvider = <TData,>({
     const id = useId()
     const snapshot: Snapshot = { state, meta }
     const [store] = useState(() => createStore(snapshot))
+    // Consumers rendered in this pass must see this pass's state, so the store
+    // takes it during render; subscribers that were not re-rendered by this
+    // pass are told once it has committed.
+    store.replace(snapshot)
     useLayoutEffect(() => {
-        store.set(snapshot)
+        store.publish()
     })
     // Actions are read through a ref so a new `actions` object never
     // re-renders consumers.
@@ -175,18 +191,16 @@ export const useTimelineState = <TData, TSelected>(
     const { store } = useTimelineContext()
     // SAFETY: the provider stored a TimelineState<TData'> for the host's own
     // TData'; the host picks the same TData here, as with any typed context.
-    return useSyncExternalStore(store.subscribe, () =>
-        selector(store.get().state as TimelineState<TData>)
-    )
+    const read = () => selector(store.get().state as TimelineState<TData>)
+    return useSyncExternalStore(store.subscribe, read, read)
 }
 
 export const useTimelineMeta = <TSelected,>(
     selector: (meta: TimelineMeta) => TSelected
 ): TSelected => {
     const { store } = useTimelineContext()
-    return useSyncExternalStore(store.subscribe, () =>
-        selector(store.get().meta)
-    )
+    const read = () => selector(store.get().meta)
+    return useSyncExternalStore(store.subscribe, read, read)
 }
 
 export const useTimelineActions = (): TimelineActions =>

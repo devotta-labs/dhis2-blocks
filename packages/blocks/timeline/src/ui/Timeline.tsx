@@ -1,5 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef } from 'react'
 import type { Dhis2Calendar } from '@/registry/dhis2/value-display/calendar'
 import type {
     GroupBy,
@@ -45,12 +45,19 @@ export const Timeline = <TData,>({
 }: TimelineProps<TData>) => {
     const result = useTimelineSources(sources, { firstPageTimeoutMs })
     const today = localDay(now ?? new Date())
+    // A function `groupBy` is usually written inline, so a new one every render
+    // must not rebuild the state: the latest is used whenever the entries,
+    // order, calendar, locale or day change.
+    const groupByRef = useRef(groupBy)
+    groupByRef.current = groupBy
+    const groupByKey =
+        groupBy === 'day' || groupBy === 'none' ? groupBy : 'function'
     const { loadMore, retry } = result
     const state = useMemo(
         () =>
             buildTimelineState(result, {
                 order,
-                groupBy,
+                groupBy: groupByRef.current,
                 today,
                 calendar,
                 locale,
@@ -68,7 +75,7 @@ export const Timeline = <TData,>({
             result.hasMore,
             result.loadingMore,
             order,
-            groupBy,
+            groupByKey,
             today,
             calendar,
             locale,

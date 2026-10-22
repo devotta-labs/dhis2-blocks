@@ -99,7 +99,6 @@
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/badge",
                 "devotta-labs/dhis2-blocks/button",
-                "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-value-display",
                 "devotta-labs/dhis2-blocks/timeline"
             ],
@@ -205,7 +204,7 @@
                     "target": "@components/timeline/dhis2/useTrackedEntityEventsSource.ts"
                 }
             ],
-            "docs": "Place TimelineDhis2Provider program=... inside Timeline, build sources with useTrackedEntityEventsSource, useEnrollmentMilestonesSource, useEnrollmentNotesSource and useTrackedEntityAttributeChangelogSource, and pick TimelineEventEntry, TimelineChangeEntry, TimelineNoteEntry or TimelineMilestoneEntry per sourceKey in TimelineFeed. Import from the installed timeline/dhis2 folder."
+            "docs": "Place TimelineDhis2Provider program=... inside Timeline, build sources with useTrackedEntityEventsSource, useEnrollmentMilestonesSource, useEnrollmentNotesSource and useTrackedEntityAttributeChangelogSource, and pick a part per sourceKey in TimelineFeed: TimelineEventEntry, TimelineNoteEntry and TimelineMilestoneEntry render their own TimelineItem, while TimelineChangeEntry must be wrapped in TimelineItem. Import from the installed timeline/dhis2 folder."
         }
     ]
 }

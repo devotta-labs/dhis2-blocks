@@ -28,9 +28,9 @@ export const useTimelineChangeEntry = (): ChangeGroup => {
 
 /**
  * One save: the rows a user changed together. Compose it from
- * `TimelineChangeSummary` and `TimelineChangeList`. In the feed, wrap it in a
- * `TimelineItem`; it renders no list item of its own so it can also sit inside
- * an event's change list.
+ * `TimelineChangeSummary` and `TimelineChangeList`. Inside `TimelineFeed`, wrap
+ * it in `TimelineItem` (for valid list markup and load-more focus); it renders
+ * no list item of its own so it can also sit inside an event's change list.
  */
 export const TimelineChangeEntry = ({
     group,
@@ -79,11 +79,54 @@ export const TimelineChangeSummary = () => {
     )
 }
 
-const UNKNOWN_FIELD: ValueMeta = { valueType: 'TEXT' }
-
 interface FieldInfo {
     name: string
     meta: ValueMeta
+}
+
+const UNKNOWN_FIELD: ValueMeta = { valueType: 'TEXT' }
+
+const eventFieldInfo = (id: string): FieldInfo | undefined => {
+    switch (id) {
+        case 'occurredAt':
+            return { name: i18n.t('Event date'), meta: { valueType: 'DATE' } }
+        case 'scheduledAt':
+            return { name: i18n.t('Due date'), meta: { valueType: 'DATE' } }
+        case 'completedAt':
+            return {
+                name: i18n.t('Completed date'),
+                meta: { valueType: 'DATE' },
+            }
+        case 'geometry':
+            return {
+                name: i18n.t('Coordinates'),
+                meta: { valueType: 'COORDINATE' },
+            }
+        default:
+            return undefined
+    }
+}
+
+/** Event fields are stored as `2026-06-12 00:00:00.000`: normalise to the `T` form the formatter reads. */
+const EVENT_DATE = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}).*$/
+
+interface EventFieldValue {
+    value: string | undefined
+    valueType?: string
+}
+
+const eventFieldValue = (
+    id: string,
+    value: string | undefined
+): EventFieldValue => {
+    const match = value === undefined ? null : EVENT_DATE.exec(value)
+    if (value === undefined || match === null || id === 'geometry') {
+        return { value }
+    }
+    // A time of midnight is a date stored as a date-time: show only the day.
+    return match[2] === '00:00'
+        ? { value: match[1] }
+        : { value: `${match[1]}T${match[2]}`, valueType: 'DATETIME' }
 }
 
 const ChangeRowItem = ({ change }: { change: ChangeRow }) => {
@@ -99,11 +142,20 @@ const ChangeRowItem = ({ change }: { change: ChangeRow }) => {
                   ? [...stages.values()]
                         .map((stage) => stage.dataElements.get(field.id))
                         .find((element) => element !== undefined)
-                  : undefined
+                  : eventFieldInfo(field.id)
         return known ?? { name: field.id, meta: UNKNOWN_FIELD }
     }, [field.kind, field.id, stages, attributes])
-    const show = (value: string | undefined) =>
-        formatDhis2Value(value, info.meta, { calendar, locale, orgUnitNames })
+    const show = (stored: string | undefined) => {
+        const { value, valueType } =
+            field.kind === 'eventField'
+                ? eventFieldValue(field.id, stored)
+                : { value: stored, valueType: undefined }
+        return formatDhis2Value(
+            value,
+            valueType === undefined ? info.meta : { valueType },
+            { calendar, locale, orgUnitNames }
+        )
+    }
     const before = show(change.previousValue)
     const after = show(change.currentValue)
     return (

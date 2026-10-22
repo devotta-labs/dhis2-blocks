@@ -106,6 +106,10 @@ export interface RenderOptions {
     changelogs?: Record<string, ChangeLogs>
     /** Events whose changelog request fails with this error instead. */
     changelogErrors?: Record<string, Error>
+    /** Delays the program metadata answer. */
+    metadataDelayMs?: number
+    /** `none` renders `ui` as is, for parts that bring their own list. */
+    layout?: 'list' | 'none'
     calendar?: Dhis2Calendar
     locale?: string
 }
@@ -121,7 +125,12 @@ export const renderEntries = async (
     options.metadata?.(metadata)
     const changelogRequests: string[] = []
     const data: CustomData = {
-        programs: async () => z.json().parse(metadata),
+        programs: async () => {
+            await new Promise((resolve) =>
+                setTimeout(resolve, options.metadataDelayMs ?? 0)
+            )
+            return z.json().parse(metadata)
+        },
         organisationUnits: async () => z.json().parse(orgUnitNames),
     }
     for (const [event, body] of Object.entries(options.changelogs ?? {})) {
@@ -176,7 +185,7 @@ export const renderEntries = async (
                     meta={meta}
                 >
                     <TimelineDhis2Provider program={PROGRAM}>
-                        <ol>{ui}</ol>
+                        {options.layout === 'none' ? ui : <ol>{ui}</ol>}
                     </TimelineDhis2Provider>
                 </TimelineProvider>
             </QueryClientProvider>

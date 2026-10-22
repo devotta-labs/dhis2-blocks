@@ -233,6 +233,42 @@ describe('TimelineEventEntry', () => {
         expect(container.textContent).not.toContain('2027')
     })
 
+    it('shows no due date until the program metadata is known', async () => {
+        const status = <TimelineEventStatus />
+        const shown = await renderEvent(recordedEvent('TlE2eEvt006'), status, {
+            metadataDelayMs: 150,
+        })
+
+        expect(shown.container.textContent).toContain('Scheduled')
+        expect(shown.container.textContent).not.toContain('Due')
+        await expect.poll(() => shown.container.textContent).toContain('Due')
+    })
+
+    it('never shows the due date of a hideDueDate stage while loading', async () => {
+        const { container } = await renderEvent(
+            recordedEvent('TlE2eEvt006'),
+            <>
+                <TimelineEventStage />
+                <TimelineEventStatus />
+            </>,
+            {
+                metadataDelayMs: 100,
+                metadata: (metadata) => {
+                    stageOf(metadata, AT_BIRTH).hideDueDate = true
+                },
+            }
+        )
+        const seen: string[] = []
+        const stop = Date.now() + 300
+        while (Date.now() < stop) {
+            seen.push(container.textContent ?? '')
+            await new Promise((resolve) => setTimeout(resolve, 10))
+        }
+
+        expect(seen.some((text) => text.includes('Care at birth'))).toBe(true)
+        expect(seen.some((text) => text.includes('Due'))).toBe(false)
+    })
+
     it('labels an overdue event', async () => {
         const { container } = await renderEvent(
             recordedEvent('TlE2eEvt005'),
@@ -257,6 +293,12 @@ describe('TimelineEventEntry', () => {
 
         const styleOf = (container: HTMLElement) =>
             getComputedStyle(elementIn(container, '[data-status] span'))
+        const frameColor = (container: HTMLElement) =>
+            getComputedStyle(elementIn(container, '[data-status]')).color
+        // The frame mutes what a host composes without TimelineEventStage.
+        expect(frameColor(skipped.container)).not.toBe(
+            frameColor(active.container)
+        )
         expect(Number(styleOf(skipped.container).fontWeight)).toBeLessThan(
             Number(styleOf(active.container).fontWeight)
         )
@@ -354,6 +396,49 @@ describe('TimelineEventEntry', () => {
             .toContain("Changes aren't available on this DHIS2 version.")
     })
 
+    it('notes that older changes are not shown when the changelog was cut short', async () => {
+        const page = ChangeLogsSchema.parse({
+            changeLogs: Array.from({ length: 100 }, (_, index) => ({
+                change: {
+                    dataValue: { dataElement: `de${index}`, currentValue: '1' },
+                },
+                createdAt: `2026-10-22T12:00:00.${String(index).padStart(3, '0')}`,
+                createdBy: { username: 'admin' },
+                type: 'CREATE',
+            })),
+        })
+        const { container } = await renderEvent(
+            recordedEvent('TlE2eEvt004'),
+            <TimelineEventChanges />,
+            { changelogs: { TlE2eEvt004: page } }
+        )
+
+        buttonIn(container).click()
+
+        await expect
+            .poll(() => container.textContent)
+            .toContain("Older changes aren't shown.")
+    })
+
+    it('does not say so when every change is shown', async () => {
+        const { container } = await renderEvent(
+            recordedEvent('TlE2eEvt004'),
+            <TimelineEventChanges />,
+            {
+                changelogs: {
+                    TlE2eEvt004: ChangeLogsSchema.parse(eventChangelog),
+                },
+            }
+        )
+
+        buttonIn(container).click()
+
+        await expect
+            .poll(() => container.textContent)
+            .toContain('John Traore changed')
+        expect(container.textContent).not.toContain('Older changes')
+    })
+
     it("expands the event's notes from the count", async () => {
         const { container } = await renderEvent(
             recordedEvent('TlE2eEvt001'),
@@ -369,6 +454,10 @@ describe('TimelineEventEntry', () => {
 
         await expect.poll(() => container.textContent).toContain(note)
         expect(button.getAttribute('aria-expanded')).toBe('true')
+        expect(container.textContent).toContain('John Traore')
+        expect(container.querySelector('time')?.textContent?.trim()).toMatch(
+            /^\d{2}:\d{2}$/
+        )
     })
 
     it('says "notes" for several and shows nothing for none', async () => {

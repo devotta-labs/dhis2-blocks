@@ -2,10 +2,10 @@ import i18n from '@dhis2/d2-i18n'
 import React, { createContext, useContext, useId, useState } from 'react'
 import { Badge } from '@/registry/dhis2/ui/badge'
 import { Button } from '@/registry/dhis2/ui/button'
-import { cn } from '@/registry/dhis2/ui/cn'
 import {
     formatCalendarDate,
     storedDay,
+    storedTime,
 } from '@/registry/dhis2/value-display/calendar'
 import { formatDhis2Value } from '@/registry/dhis2/value-display/formatDhis2Value'
 import type { TimelineEntry } from '../../core/types'
@@ -13,6 +13,7 @@ import { useTimelineMeta } from '../../ui/TimelineContext'
 import { TimelineItem } from '../../ui/TimelineParts'
 import type { DerivedEventStatus } from '../eventStatus'
 import { useTimelineDhis2 } from '../TimelineDhis2Provider'
+import type { Note } from '../schemas'
 import type { EventEntryData } from '../toEventEntry'
 import { useEventChangelog } from '../useEventChangelog'
 import {
@@ -52,7 +53,7 @@ export const TimelineEventEntry = ({
             <div
                 data-slot="event-entry"
                 data-status={entry.data.status}
-                className="flex flex-col items-start gap-1"
+                className="group/event flex flex-col items-start gap-1 data-[status=skipped]:text-dhis2-grey-700"
             >
                 {children}
             </div>
@@ -68,16 +69,9 @@ export const TimelineEventStage = () => {
     if (stage === undefined && status === 'loading') {
         return null
     }
-    // A skipped event is muted: lighter weight and grey, still readable.
+    // A skipped event is muted by the frame's data-status: lighter, still readable.
     return (
-        <span
-            className={cn(
-                'text-sm',
-                data.status === 'skipped'
-                    ? 'text-dhis2-grey-700'
-                    : 'font-medium text-dhis2-grey-900'
-            )}
-        >
+        <span className="text-sm font-medium text-dhis2-grey-900 group-data-[status=skipped]/event:font-normal group-data-[status=skipped]/event:text-dhis2-grey-700">
             {stage?.name ?? data.event.programStage}
         </span>
     )
@@ -117,9 +111,13 @@ export const TimelineEventStatus = () => {
     const locale = useTimelineMeta((meta) => meta.locale)
     const { event, status } = data
     const showsDue = status === 'scheduled' || status === 'overdue'
-    const hidden = stages.get(event.programStage)?.hideDueDate ?? false
+    // Until the stage is known its hideDueDate is too: show no date yet.
+    const stage = stages.get(event.programStage)
     const day =
-        showsDue && !hidden && event.scheduledAt !== undefined
+        showsDue &&
+        stage !== undefined &&
+        !stage.hideDueDate &&
+        event.scheduledAt !== undefined
             ? storedDay(event.scheduledAt)
             : undefined
     return (
@@ -208,7 +206,9 @@ export const TimelineEventValues = ({
                 {values.slice(0, MAX_VALUES).map(({ id, name, text }) => (
                     <React.Fragment key={id}>
                         <dt className="text-dhis2-grey-700">{name}</dt>
-                        <dd className="m-0 text-dhis2-grey-900">{text}</dd>
+                        <dd className="m-0 text-dhis2-grey-900 group-data-[status=skipped]/event:text-dhis2-grey-700">
+                            {text}
+                        </dd>
                     </React.Fragment>
                 ))}
             </dl>
@@ -218,6 +218,26 @@ export const TimelineEventValues = ({
                 </span>
             ) : null}
         </>
+    )
+}
+
+const EventNote = ({ note }: { note: Note }) => {
+    const author = note.createdBy?.displayName ?? note.storedBy
+    const time =
+        note.storedAt === undefined ? undefined : storedTime(note.storedAt)
+    return (
+        <li className="text-dhis2-grey-900">
+            <span className="whitespace-pre-wrap">{note.value}</span>
+            {author === undefined ? null : (
+                <span className="text-dhis2-grey-700"> {author}</span>
+            )}
+            {time === undefined || note.storedAt === undefined ? null : (
+                <time dateTime={note.storedAt} className="text-dhis2-grey-700">
+                    {' '}
+                    {time}
+                </time>
+            )}
+        </li>
     )
 }
 
@@ -247,18 +267,7 @@ export const TimelineEventNotes = () => {
                 {open ? (
                     <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
                         {notes.map((note) => (
-                            <li key={note.note} className="text-dhis2-grey-900">
-                                <span className="whitespace-pre-wrap">
-                                    {note.value}
-                                </span>
-                                {note.storedBy === undefined ? null : (
-                                    <span className="text-dhis2-grey-700">
-                                        {' '}
-                                        {note.createdBy?.displayName ??
-                                            note.storedBy}
-                                    </span>
-                                )}
-                            </li>
+                            <EventNote key={note.note} note={note} />
                         ))}
                     </ul>
                 ) : null}
@@ -268,7 +277,9 @@ export const TimelineEventNotes = () => {
 }
 
 const ChangesBody = ({ event }: { event: string }) => {
-    const { status, groups } = useEventChangelog(event, { enabled: true })
+    const { status, groups, truncated } = useEventChangelog(event, {
+        enabled: true,
+    })
     switch (status) {
         case 'idle':
         case 'loading':
@@ -295,16 +306,23 @@ const ChangesBody = ({ event }: { event: string }) => {
                     {i18n.t('No changes')}
                 </p>
             ) : (
-                <ul className="m-0 flex list-none flex-col gap-2 p-0">
-                    {groups.map((group) => (
-                        <li key={group.id}>
-                            <TimelineChangeEntry group={group}>
-                                <TimelineChangeSummary />
-                                <TimelineChangeList />
-                            </TimelineChangeEntry>
-                        </li>
-                    ))}
-                </ul>
+                <>
+                    <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                        {groups.map((group) => (
+                            <li key={group.id}>
+                                <TimelineChangeEntry group={group}>
+                                    <TimelineChangeSummary />
+                                    <TimelineChangeList />
+                                </TimelineChangeEntry>
+                            </li>
+                        ))}
+                    </ul>
+                    {truncated ? (
+                        <p className="m-0 mt-2 text-sm text-dhis2-grey-700">
+                            {i18n.t("Older changes aren't shown.")}
+                        </p>
+                    ) : null}
+                </>
             )
     }
 }

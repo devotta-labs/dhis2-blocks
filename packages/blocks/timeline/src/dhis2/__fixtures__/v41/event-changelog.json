@@ -1,0 +1,73 @@
+{
+    "changeLogs": [
+        {
+            "change": {
+                "dataValue": {
+                    "dataElement": "dyYdfamSY2Z",
+                    "previousValue": "13"
+                }
+            },
+            "createdAt": "2026-10-22T19:09:47.417",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "type": "DELETE"
+        },
+        {
+            "change": {
+                "dataValue": {
+                    "currentValue": "13",
+                    "dataElement": "dyYdfamSY2Z"
+                }
+            },
+            "createdAt": "2026-10-22T19:09:46.121",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "type": "CREATE"
+        },
+        {
+            "change": {
+                "dataValue": {
+                    "currentValue": "26",
+                    "dataElement": "roKuXYfw1BW",
+                    "previousValue": "24"
+                }
+            },
+            "createdAt": "2026-10-22T19:09:46.121",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "type": "UPDATE"
+        },
+        {
+            "change": {
+                "dataValue": {
+                    "currentValue": "24",
+                    "dataElement": "roKuXYfw1BW"
+                }
+            },
+            "createdAt": "2026-10-22T19:09:45.870",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "type": "CREATE"
+        }
+    ],
+    "pager": {
+        "page": 1,
+        "pageSize": 50
+    }
+}

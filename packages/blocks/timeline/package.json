@@ -14,8 +14,11 @@
         "lint": "oxlint --deny-warnings src"
     },
     "dependencies": {
+        "@dhis2/app-runtime": "^3.15.1",
         "@dhis2/d2-i18n": "1.2.0",
-        "better-result": "^3.0.1"
+        "@tanstack/react-query": "^5.101.4",
+        "better-result": "^3.0.1",
+        "zod": "^4.4.3"
     },
     "devDependencies": {
         "@dhis2-blocks/ui": "workspace:*",

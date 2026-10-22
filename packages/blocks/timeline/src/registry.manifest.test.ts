@@ -21,6 +21,8 @@ const ITEM = 'timeline'
 const TARGET_PREFIX = '@components/timeline/'
 // Test-only data and helpers.
 const FIXTURES = '/__fixtures__/'
+// The DHIS2 data layer ships in its own `timeline-dhis2` item, not this one.
+const DHIS2_DIR = 'src/dhis2/'
 
 const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'))
 
@@ -50,7 +52,10 @@ const nonTestSourceFiles = (): string[] =>
     listFiles(SOURCE_DIR)
         .map((file) => relative(PACKAGE_DIR, file))
         .filter(
-            (file) => !/\.test\.tsx?$/.test(file) && !file.includes(FIXTURES)
+            (file) =>
+                !/\.test\.tsx?$/.test(file) &&
+                !file.includes(FIXTURES) &&
+                !file.startsWith(DHIS2_DIR)
         )
 
 const itemPaths = (): string[] => item().files.map((file) => file.path).sort()

@@ -119,6 +119,23 @@ describe('fetchEventsPage', () => {
         ).toEqual(['e1', 'e2'])
     })
 
+    it("reports the last raw row's time field as lastAt, even when that row is filtered out", async () => {
+        const { client } = engineReturning({
+            events: [
+                { ...event('e1', 'ACTIVE'), occurredAt: '2026-05-02' },
+                { ...event('e2', 'SKIPPED'), occurredAt: '2026-04-01' },
+            ],
+        })
+
+        const result = await fetchEventsPage(client, {
+            ...options,
+            pageSize: 2,
+        })
+
+        expect(Result.isOk(result) && result.value.lastAt).toBe('2026-04-01')
+        expect(Result.isOk(result) && result.value.events).toHaveLength(1)
+    })
+
     it('passes the abort signal to the engine', async () => {
         const { client, query } = engineReturning({ events: [] })
         const signal = new AbortController().signal

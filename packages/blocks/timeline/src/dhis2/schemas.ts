@@ -105,6 +105,11 @@ export interface EventsPage {
     events: TrackerEvent[]
     /** The server may have more: the page came back full. */
     hasMore: boolean
+    /**
+     * Past stream only: the ordering time field of the last row the server
+     * sent, kept or not. Everything newer than it has been read.
+     */
+    lastAt?: string
 }
 
 const EnrollmentSchema = z.object({

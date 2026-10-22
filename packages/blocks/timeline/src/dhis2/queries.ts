@@ -88,6 +88,8 @@ export const fetchEventsPage = async (
     return result.map((events) => ({
         events: events.filter((event) => !PINNED_STATUSES.has(event.status)),
         hasMore: events.length >= pageSize,
+        // From the raw rows: filtered rows still bound what was read.
+        lastAt: events.at(-1)?.[timeField],
     }))
 }
 

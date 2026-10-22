@@ -156,6 +156,34 @@ test('sibling toolbar and sidebar toggle share the provider context', async () =
     expect(document.querySelector('nav')).not.toBeVisible()
 })
 
+test('separate sidebar providers have distinct navigation targets and independent state', async () => {
+    await render(
+        <>
+            <SidebarProvider>
+                <Sidebar>
+                    <Navigation />
+                    <SidebarToggle collapseLabel="Collapse first" />
+                </Sidebar>
+            </SidebarProvider>
+            <SidebarProvider>
+                <Sidebar>
+                    <Navigation />
+                    <SidebarToggle collapseLabel="Collapse second" />
+                </Sidebar>
+            </SidebarProvider>
+        </>
+    )
+    const first = page.getByRole('button', { name: 'Collapse first' })
+    const second = page.getByRole('button', { name: 'Collapse second' })
+    const firstTarget = first.element().getAttribute('aria-controls')!
+    const secondTarget = second.element().getAttribute('aria-controls')!
+    expect(firstTarget).not.toBe(secondTarget)
+    await first.click()
+    expect(document.getElementById(firstTarget)).not.toBeVisible()
+    expect(document.getElementById(secondTarget)).toBeVisible()
+    await expect.element(second).toHaveAttribute('aria-expanded', 'true')
+})
+
 function RouteLocation() {
     const location = useLocation()
     return <output aria-label="Current route">{location.pathname}</output>

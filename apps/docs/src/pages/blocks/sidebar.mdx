@@ -17,6 +17,8 @@ import { InstallCommand } from '../../components/InstallCommand'
 `SidebarProvider` owns collapse state without rendering a layout element; `Sidebar`
 is the visual frame. Compose the navigation, header, scrollable content,
 footer, and toggle explicitly; leave out the pieces you do not need.
+Use one `SidebarNavigation` per provider. Give separate sidebars their own
+providers; sharing the provider with page controls does not create a second sidebar.
 
 ```tsx
 import {

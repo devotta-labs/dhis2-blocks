@@ -1,6 +1,10 @@
 import { convertFromIso8601 } from '@dhis2/multi-calendar-dates'
 import type { Dhis2Calendar } from './types'
 
+// Also exported here so a block can import the type from this file: a
+// consumer's import rewriting resolves `./types` to the wrong block's.
+export type { Dhis2Calendar }
+
 type MultiCalendarIdentifier = Parameters<typeof convertFromIso8601>[1]
 
 const CALENDARS: readonly Dhis2Calendar[] = [

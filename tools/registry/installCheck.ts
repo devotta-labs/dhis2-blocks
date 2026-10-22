@@ -178,6 +178,8 @@ const checkInstall = (workDirectory: string): void => {
             join(registryOutput, 'working-list.json'),
             join(registryOutput, 'context-selector.json'),
             join(registryOutput, 'observation-cards.json'),
+            join(registryOutput, 'dhis2-value-display.json'),
+            join(registryOutput, 'timeline.json'),
             '-y',
             '--cwd',
             appDirectory,

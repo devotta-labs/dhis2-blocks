@@ -1,0 +1,91 @@
+{
+    "$schema": "https://ui.shadcn.com/schema/registry.json",
+    "items": [
+        {
+            "name": "timeline",
+            "type": "registry:block",
+            "title": "DHIS2 Timeline",
+            "description": "Read-only React 18 timeline that merges paged sources into one feed grouped by day, with a now marker, overdue group, load more and per-source notices. Composed from a provider and flat parts.",
+            "dependencies": [
+                "@dhis2/d2-i18n@1.2.0",
+                "better-result@^3.0.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/skeleton"
+            ],
+            "files": [
+                {
+                    "path": "src/core/group.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/core/group.ts"
+                },
+                {
+                    "path": "src/core/merge.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/core/merge.ts"
+                },
+                {
+                    "path": "src/core/sort.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/core/sort.ts"
+                },
+                {
+                    "path": "src/core/staticTimelineSource.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/core/staticTimelineSource.ts"
+                },
+                {
+                    "path": "src/core/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/core/types.ts"
+                },
+                {
+                    "path": "src/core/useTimelineSources.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/core/useTimelineSources.ts"
+                },
+                {
+                    "path": "src/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/index.ts"
+                },
+                {
+                    "path": "src/ui/Timeline.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/ui/Timeline.tsx"
+                },
+                {
+                    "path": "src/ui/TimelineContext.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/ui/TimelineContext.tsx"
+                },
+                {
+                    "path": "src/ui/TimelineFeed.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/ui/TimelineFeed.tsx"
+                },
+                {
+                    "path": "src/ui/TimelineLoadMore.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/ui/TimelineLoadMore.tsx"
+                },
+                {
+                    "path": "src/ui/TimelineParts.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/ui/TimelineParts.tsx"
+                },
+                {
+                    "path": "src/ui/TimelineStates.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/ui/TimelineStates.tsx"
+                }
+            ],
+            "docs": "Render <Timeline sources calendar> and compose TimelineFeed, TimelineLoading, TimelineEmpty, TimelineError, TimelineSourceNotices and TimelineLoadMore inside it. Pass the system calendar from useConfig().systemInfo.calendar. Build sources with staticTimelineSource or your own TimelineSource."
+        }
+    ]
+}

@@ -1,8 +1,8 @@
 import {
     formatCalendarDate,
     storedDay,
+    type Dhis2Calendar,
 } from '@/registry/dhis2/value-display/calendar'
-import type { Dhis2Calendar } from '@/registry/dhis2/value-display/types'
 import { compareEntries, sortKey } from './sort'
 import type {
     GroupBy,
@@ -32,6 +32,10 @@ interface TimelineLayout<TData> {
     /** The now marker renders before `groups[nowIndex]`. */
     nowIndex: number
 }
+
+// Bundlers replace `process.env.NODE_ENV` statically. Declared here so a consumer
+// without Node types still compiles.
+declare const process: { env: { NODE_ENV?: string } }
 
 let warnedAboutUndated = false
 

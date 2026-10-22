@@ -39,7 +39,14 @@ export default defineConfig({
                 // mid-test and reload the page.
                 optimizeDeps: {
                     include: [
+                        '@dhis2-blocks/ui > @base-ui/react/button',
+                        '@dhis2-blocks/ui > @dhis2/ui-icons',
+                        '@dhis2-blocks/ui > class-variance-authority',
+                        '@dhis2-blocks/ui > clsx',
+                        '@dhis2-blocks/ui > tailwind-merge',
                         '@dhis2-blocks/value-display > @dhis2/multi-calendar-dates',
+                        '@dhis2/d2-i18n',
+                        'axe-core',
                         'better-result',
                         'react',
                         'react-dom',
@@ -49,9 +56,6 @@ export default defineConfig({
                 },
                 test: {
                     ...sharedProjectOptions,
-                    // Browser tests arrive in later tasks; until then this
-                    // project must not fail the run.
-                    passWithNoTests: true,
                     name: 'browser',
                     include: ['src/**/*.test.tsx'],
                     setupFiles: ['./test/setup.ts'],

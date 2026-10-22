@@ -5,6 +5,7 @@
     "include": [
         "packages/blocks/context-selector/registry.json",
         "packages/blocks/observation-cards/registry.json",
+        "packages/blocks/timeline/registry.json",
         "packages/blocks/ui/registry.json",
         "packages/blocks/value-display/registry.json",
         "packages/blocks/working-list/registry.json"

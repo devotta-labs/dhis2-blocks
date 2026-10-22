@@ -89,6 +89,24 @@ test('only icon consumers install the undeclared ui-icons runtime dependency', (
     }
 })
 
+test('theme parsing handles inline blocks, comments and semicolons inside values', () => {
+    expect(
+        parseThemeTokens(`
+        :root { --outside: red; }
+        /* @theme { --comment: red; } */
+        @theme inline { --color-dhis2-primary: #1565c0; --font-dhis2: "a;b", sans-serif; }
+        @theme {
+            --shadow-dhis2-card: 0 1px 2px black,
+                0 2px 4px grey;
+        }
+    `)
+    ).toEqual([
+        ['color-dhis2-primary', '#1565c0'],
+        ['font-dhis2', '"a;b", sans-serif'],
+        ['shadow-dhis2-card', '0 1px 2px black, 0 2px 4px grey'],
+    ])
+})
+
 test('items install to the dhis2 ui folder and depend on the theme', () => {
     const [theme, ...primitives] = manifest().items
     expect(theme.files).toBeUndefined()

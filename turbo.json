@@ -42,6 +42,15 @@
         "lint": {
             "outputs": []
         },
+        "//#test:registry": {
+            "outputs": []
+        },
+        "//#test:scripts": {
+            "outputs": []
+        },
+        "//#typecheck:registry": {
+            "outputs": []
+        },
         "start": {
             "cache": false,
             "persistent": true

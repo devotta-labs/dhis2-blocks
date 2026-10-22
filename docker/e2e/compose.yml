@@ -25,6 +25,7 @@ services:
             PGPASSWORD: dhis
         volumes:
             - ${DHIS2_DB_DUMP_VOLUME:-database-dump}:/docker-entrypoint-initdb.d:ro
+            - database-data:/var/lib/postgresql/data
         healthcheck:
             test:
                 - CMD-SHELL
@@ -59,3 +60,4 @@ services:
 
 volumes:
     database-dump: {}
+    database-data: {}

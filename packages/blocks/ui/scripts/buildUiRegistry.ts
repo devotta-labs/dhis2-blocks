@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, extname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import postcss from 'postcss'
+import type { Registry, RegistryItem } from 'shadcn/schema'
 import {
     HOST_PACKAGES,
     importedSpecifiers,
@@ -14,30 +16,18 @@ const TARGET_PREFIX = '@components/dhis2/ui/'
 const THEME_ITEM = 'dhis2-theme'
 const SOURCE_FILE = /^(?!.*\.test\.tsx?$).*\.tsx?$/
 
-type RegistryItem = {
-    name: string
-    type: 'registry:theme' | 'registry:ui'
-    dependencies?: string[]
-    registryDependencies?: string[]
-    files?: { path: string; type: 'registry:ui'; target: string }[]
-    cssVars?: { theme: Record<string, string> }
-}
-
-export type RegistryManifest = { $schema: string; items: RegistryItem[] }
-
 /**
  * The tokens declared in theme.css's `@theme` block, as `[name, value]` pairs:
  * the name without its leading `--`, the value on one line.
  */
 export const parseThemeTokens = (css: string): [string, string][] => {
-    const start = css.indexOf('@theme {')
-    const block = css
-        .slice(start, css.indexOf('\n}', start))
-        .replace(/\/\*[\s\S]*?\*\//g, '')
-    return [...block.matchAll(/^\s*--([\w*-]+)\s*:([^;]*);/gm)].map((match) => [
-        match[1],
-        match[2].replace(/\s+/g, ' ').trim(),
-    ])
+    const tokens: [string, string][] = []
+    postcss.parse(css).walkAtRules('theme', (rule) => {
+        rule.walkDecls(/^--/, ({ prop, value }) => {
+            tokens.push([prop.slice(2), value.replace(/\s+/g, ' ').trim()])
+        })
+    })
+    return tokens
 }
 
 const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'))
@@ -95,7 +85,9 @@ const buildItem = (
     }
 }
 
-export const buildUiRegistry = (packageDir: string): RegistryManifest => {
+export const buildUiRegistry = (
+    packageDir: string
+): Pick<Registry, '$schema' | 'items'> => {
     const sourceDir = join(packageDir, 'src')
     const files = readdirSync(sourceDir)
         .filter((file) => SOURCE_FILE.test(file))

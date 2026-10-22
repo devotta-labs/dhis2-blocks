@@ -215,6 +215,36 @@ metadata and composes each package-owned registry manifest through shadcn's
 `include` mechanism. Paths declared by a package manifest are relative to that
 package.
 
+### Registry development
+
+This is a [GitHub source registry](https://ui.shadcn.com/docs/registry/github):
+consumers install straight from the repository. There is no registry server or
+generated JSON to deploy. The package manifests use shadcn's documented
+[`include`](https://ui.shadcn.com/docs/registry/registry-json#include),
+[`registryDependencies` and target placeholders](https://ui.shadcn.com/docs/registry/registry-item-json).
+Keep full `devotta-labs/dhis2-blocks/<item>` addresses for same-repository
+dependencies; bare names such as `button` refer to the upstream shadcn registry.
+
+```sh
+pnpm registry:validate # official CLI: schemas, includes and source-file existence
+pnpm registry:build    # official CLI: optional local artifacts in dist/registry
+pnpm registry:check    # validate, build, install, typecheck and bundle fresh consumers
+```
+
+Development and CI use the lockfile-pinned `shadcn` CLI. The install check uses
+the CLI's supported local JSON files, without an HTTP server. It rewrites only
+same-repository `registryDependencies` in temporary build artifacts, so those
+items come from the checkout being tested, not the default branch.
+GitHub `#ref` values are **not inherited** by dependencies; adding a branch ref
+to an install command alone is not enough to test an unmerged dependency graph.
+
+After editing UI primitives or tokens, run
+`pnpm --filter @dhis2-blocks/ui registry:write` and commit the updated manifest.
+The small UI manifest generator remains because `shadcn build` embeds declared
+files but does not infer dependencies or convert our shared theme stylesheet
+into `cssVars.theme`. It uses TypeScript and PostCSS to read those sources and
+shadcn's schema types; the generated manifest is checked for drift in tests.
+
 ## UI primitives
 
 The shared DHIS2-styled shadcn primitives live in `packages/blocks/ui` and are
@@ -268,6 +298,10 @@ and `pnpm docs:up:dev`. The docs backend uses a dedicated Compose project
 
 `pnpm docs:down` stops the backend and keeps its data; `pnpm docs:reset`
 destroys the volumes and seeds a clean instance.
+
+PostgreSQL data is stored in a project-scoped named volume. Existing stacks
+created before this volume was added need a reset, or a manual copy of their
+anonymous database volume if local changes must be preserved.
 
 Point the site at an existing development instance instead:
 
@@ -328,8 +362,10 @@ pnpm test
 pnpm build
 ```
 
-Turborepo runs each task in the workspaces that provide it and caches declared
-build outputs.
+Turborepo runs workspace checks alongside the root registry and script tests.
+Builds track source-only workspace dependencies; independent checks use transit
+tasks to retain dependency-aware caching without serializing package checks.
+`pnpm build` builds the web app; `pnpm build:docs` builds the docs site.
 
 Unit and component tests use Vitest. Real-DHIS2 browser tests use Playwright.
 
@@ -368,6 +404,19 @@ pnpm e2e:41
 pnpm e2e:42
 pnpm e2e:43
 pnpm e2e:dev
+```
+
+The runners own the isolated DHIS2 stacks; Playwright owns app startup and
+shutdown through `webServer`. App logs remain under `e2e/artifacts/<version>/`
+and docs preview logs under `e2e/artifacts/docs/`. Existing app servers are never
+reused. Set `KEEP_E2E_STACK=1` or `KEEP_DOCS_STACK=1` to retain the corresponding
+backend after tests (not the app server).
+
+Playwright arguments are forwarded, for example:
+
+```sh
+pnpm e2e:42 --grep 'real DHIS2 server contract'
+pnpm docs:e2e --grep 'documentation catalog'
 ```
 
 Playwright schedules independent tests across files and within each file in

@@ -143,6 +143,11 @@ export interface TimelineProviderProps<TData> {
     children: React.ReactNode
 }
 
+/**
+ * Shares the state, actions and meta. The snapshot is taken during render and
+ * subscribers are notified after commit; a discarded concurrent render can
+ * leave the snapshot briefly ahead of what committed (known limitation).
+ */
 export const TimelineProvider = <TData,>({
     state,
     actions,

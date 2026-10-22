@@ -2,7 +2,7 @@ import axe from 'axe-core'
 import React from 'react'
 import { render } from 'vitest-browser-react'
 import { staticTimelineSource } from '../core/staticTimelineSource'
-import type { TimelineEntry } from '../core/types'
+import type { TimelineEntry, TimelineGroup } from '../core/types'
 import { Timeline } from './Timeline'
 import { TimelineFeed } from './TimelineFeed'
 import {
@@ -179,8 +179,49 @@ describe('Timeline', () => {
         expect(results.violations).toEqual([])
     })
 
-    it('does not re-render a consumer when the host passes a new inline groupBy function', async () => {
+    it('regroups when the host switches groupBy functions', async () => {
         const sources = [staticTimelineSource('a', 'Visits', ENTRIES)]
+        const byMonth = (item: TimelineEntry<string>) => ({
+            key: item.at.slice(0, 7),
+            label: 'Month',
+        })
+        const byYear = (item: TimelineEntry<string>) => ({
+            key: item.at.slice(0, 4),
+            label: 'Year',
+        })
+        const Labels = () => {
+            const groups = useTimelineState<string, TimelineGroup<string>[]>(
+                (state) => state.groups
+            )
+            return <p data-testid="labels">{groups.map((g) => g.label).join()}</p>
+        }
+        const Host = ({ groupBy }: { groupBy: typeof byMonth }) => (
+            <Timeline
+                sources={sources}
+                calendar="gregorian"
+                locale="en"
+                now={NOW}
+                groupBy={groupBy}
+            >
+                <Labels />
+            </Timeline>
+        )
+        const labels = (container: HTMLElement) =>
+            container.querySelector('[data-testid=labels]')?.textContent
+        const { rerender, container } = await render(<Host groupBy={byMonth} />)
+        await vi.waitFor(() => expect(labels(container)).toContain('Month'))
+
+        await rerender(<Host groupBy={byYear} />)
+
+        expect(labels(container)).toBe('Year,Year')
+    })
+
+    it('does not regroup when the same memoised groupBy is passed again', async () => {
+        const sources = [staticTimelineSource('a', 'Visits', ENTRIES)]
+        const byMonth = (item: TimelineEntry<string>) => ({
+            key: item.at.slice(0, 7),
+            label: 'Month',
+        })
         let renders = 0
         const Groups = React.memo(() => {
             const groups = useTimelineState((state) => state.groups)
@@ -193,14 +234,16 @@ describe('Timeline', () => {
                 calendar="gregorian"
                 locale="en"
                 now={NOW}
-                groupBy={(item) => ({ key: item.at.slice(0, 7), label: 'Month' })}
+                groupBy={byMonth}
             >
                 <Groups />
             </Timeline>
         )
         const { rerender, container } = await render(<Host />)
         await vi.waitFor(() =>
-            expect(container.querySelector('[data-testid=groups]')?.textContent).not.toBe('0')
+            expect(
+                container.querySelector('[data-testid=groups]')?.textContent
+            ).not.toBe('0')
         )
         const before = renders
 

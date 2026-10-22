@@ -9,9 +9,9 @@ import { useQueryRevision } from './useQueryRevision'
 
 const queryKey = ['timeline', 'revision-test']
 
-/** The query fails while `failures` is above zero, then succeeds. */
-const setup = async (failures = 0) => {
-    let remaining = failures
+/** The query fails while `control.failing` is set, then succeeds. */
+const setup = async (failing = false) => {
+    const control = { failing }
     const queryClient = new QueryClient()
     const wrapper = ({ children }: { children: ReactNode }) => (
         <QueryClientProvider client={queryClient}>
@@ -25,8 +25,7 @@ const setup = async (failures = 0) => {
                 retry: false,
                 staleTime: Infinity,
                 queryFn: async () => {
-                    if (remaining > 0) {
-                        remaining -= 1
+                    if (control.failing) {
                         throw new Error('boom')
                     }
                     return 'ok'
@@ -36,13 +35,17 @@ const setup = async (failures = 0) => {
         },
         { wrapper }
     )
-    const invalidate = () =>
-        queryClient.invalidateQueries({ queryKey: ['timeline'] })
+    /** Invalidates and waits until the refetch has settled. */
+    const refetch = async () => {
+        const before = settledCount()
+        await queryClient.invalidateQueries({ queryKey: ['timeline'] })
+        await expect.poll(settledCount).toBe(before + 1)
+    }
     const settledCount = () => {
         const state = queryClient.getQueryState(queryKey)
         return (state?.dataUpdateCount ?? 0) + (state?.errorUpdateCount ?? 0)
     }
-    return { result, invalidate, settledCount }
+    return { result, control, refetch, settledCount, queryClient }
 }
 
 describe('useQueryRevision', () => {
@@ -55,41 +58,63 @@ describe('useQueryRevision', () => {
     })
 
     it('is undefined after the first settle fails', async () => {
-        const { result, settledCount } = await setup(1)
+        const { result, settledCount } = await setup(true)
 
         await expect.poll(settledCount).toBe(1)
 
         expect(result.current).toBeUndefined()
     })
 
-    it('becomes a number when an invalidation succeeds after a failed first load', async () => {
-        const { result, invalidate, settledCount } = await setup(1)
+    it('does not change while the query keeps failing', async () => {
+        const { result, refetch, settledCount } = await setup(true)
         await expect.poll(settledCount).toBe(1)
 
-        await invalidate()
+        await refetch()
+        await refetch()
+        await refetch()
 
-        await expect.poll(() => result.current).toBeTypeOf('number')
+        expect(result.current).toBeUndefined()
     })
 
-    it('changes when a successful load is invalidated', async () => {
-        const { result, invalidate, settledCount } = await setup()
+    it('becomes 1 when a refetch succeeds after a failed first load', async () => {
+        const { result, control, refetch, settledCount } = await setup(true)
         await expect.poll(settledCount).toBe(1)
+        await refetch()
+        control.failing = false
 
-        await invalidate()
+        await refetch()
 
-        await expect.poll(() => result.current).toBeTypeOf('number')
+        await expect.poll(() => result.current).toBe(1)
     })
 
-    it('changes on every invalidation, even when each resolves at once', async () => {
-        const { result, invalidate, settledCount } = await setup()
+    it('counts each successful invalidation, even when each resolves at once', async () => {
+        const { result, refetch, settledCount } = await setup()
         await expect.poll(settledCount).toBe(1)
 
-        await invalidate()
-        await expect.poll(settledCount).toBe(2)
-        const first = result.current
-        await invalidate()
-        await expect.poll(settledCount).toBe(3)
+        await refetch()
+        await expect.poll(() => result.current).toBe(1)
+        await refetch()
+        await expect.poll(() => result.current).toBe(2)
+    })
 
-        expect(result.current).not.toBe(first)
+    it('counts setQueryData as an update', async () => {
+        const { result, queryClient, settledCount } = await setup()
+        await expect.poll(settledCount).toBe(1)
+
+        queryClient.setQueryData(queryKey, 'changed')
+
+        await expect.poll(() => result.current).toBe(1)
+    })
+
+    it('ignores a failed refetch after a successful load', async () => {
+        const { result, control, refetch, settledCount } = await setup()
+        await expect.poll(settledCount).toBe(1)
+        await refetch()
+        await expect.poll(() => result.current).toBe(1)
+
+        control.failing = true
+        await refetch()
+
+        expect(result.current).toBe(1)
     })
 })

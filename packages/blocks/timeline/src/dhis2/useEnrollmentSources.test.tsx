@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import React, { type ComponentProps, type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
+import { useTimelineSources } from '../core/useTimelineSources'
 import type { Enrollment } from './schemas'
 import trackedEntity from './__fixtures__/v43/tracked-entity.json'
 import { timelineKeys } from './timelineKeys'
@@ -326,5 +327,28 @@ describe('enrollment sources', () => {
         const entries = await entriesOf(result.current.milestones)
 
         expect(entries.map((e) => e.id)).toEqual(['milestones:e1:enrolled'])
+    })
+
+    it('does not retry in a loop while the endpoint stays down', async () => {
+        const { wrapper, requests } = setup(() => {
+            throw new Error('Service unavailable')
+        })
+        const { result } = await renderHook(
+            () =>
+                useTimelineSources([
+                    useEnrollmentMilestonesSource(subject),
+                    useEnrollmentNotesSource(subject),
+                ]),
+            { wrapper }
+        )
+        await expect
+            .poll(() => result.current.sources.map((s) => s.status))
+            .toEqual(['error', 'error'])
+
+        result.current.retry('milestones')
+        await new Promise((resolve) => setTimeout(resolve, 200))
+
+        expect(requests.length).toBeLessThanOrEqual(2)
+        expect(result.current.sources[0].status).toBe('error')
     })
 })

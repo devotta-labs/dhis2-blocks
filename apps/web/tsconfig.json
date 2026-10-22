@@ -11,7 +11,10 @@
         "moduleResolution": "bundler",
         "baseUrl": ".",
         "paths": {
-            "@/registry/dhis2/ui/*": ["../../packages/blocks/ui/src/*"]
+            "@/registry/dhis2/ui/*": ["../../packages/blocks/ui/src/*"],
+            "@/registry/dhis2/value-display/*": [
+                "../../packages/blocks/value-display/src/*"
+            ]
         }
     },
     "include": ["src", "types"],

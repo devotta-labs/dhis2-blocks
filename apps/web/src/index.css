@@ -17,6 +17,8 @@
 @source '../../../../../../packages/blocks/context-selector/src';
 @source '../../../packages/blocks/observation-cards/src';
 @source '../../../../../../packages/blocks/observation-cards/src';
+@source '../../../packages/blocks/timeline/src';
+@source '../../../../../../packages/blocks/timeline/src';
 
 :root {
     color: #212934;

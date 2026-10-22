@@ -8,6 +8,9 @@ const resolve = {
         '@/registry/dhis2/ui': fileURLToPath(
             new URL('../../packages/blocks/ui/src', import.meta.url)
         ),
+        '@/registry/dhis2/value-display': fileURLToPath(
+            new URL('../../packages/blocks/value-display/src', import.meta.url)
+        ),
     },
     // One React for the app, the blocks and Recharts.
     dedupe: ['react', 'react-dom'],

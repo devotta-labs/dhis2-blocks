@@ -24,7 +24,9 @@ export {
 } from './entries/TimelineEventEntry'
 export { TimelineMilestoneEntry } from './entries/TimelineMilestoneEntry'
 export { TimelineNoteEntry } from './entries/TimelineNoteEntry'
-export type { EventTimeField } from './queries'
+export type { TimelineClient } from './client'
+export { EVENT_FIELDS, type EventTimeField } from './queries'
+export { EventsPageSchema, type TrackerEvent } from './schemas'
 export {
     TimelineDhis2Provider,
     useTimelineDhis2,
@@ -44,6 +46,7 @@ export {
 } from './useEnrollmentSources'
 export { useEventChangelog, type EventChangelog } from './useEventChangelog'
 export { useSystemCalendar } from './useSystemCalendar'
+export { useTimelineClient } from './useTimelineClient'
 export {
     useTrackedEntityAttributeChangelogSource,
     type TrackedEntityAttributeChangelogSourceOptions,

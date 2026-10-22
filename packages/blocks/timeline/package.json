@@ -5,7 +5,8 @@
     "description": "Reusable DHIS2 Timeline component",
     "license": "BSD-3-Clause",
     "exports": {
-        ".": "./src/index.ts"
+        ".": "./src/index.ts",
+        "./dhis2": "./src/dhis2/index.ts"
     },
     "scripts": {
         "test": "vitest run",

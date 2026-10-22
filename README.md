@@ -13,7 +13,9 @@ packages/
   blocks/
     context-selector/   Capture-style controlled context-selector primitives
     observation-cards/  Read-only trend and latest-value cards for tracked entities
+    timeline/           Read-only merged timeline with DHIS2 tracker sources
     ui/                 Shared DHIS2-styled shadcn primitives and theme
+    value-display/      Read-only formatter for DHIS2 values and calendar dates
     working-list/       Canonical Working List source and registry manifest
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
@@ -346,6 +348,28 @@ TanStack Query providers, then pass `observations.get(dataElementId)` to each
 `TrendCard` or `LatestValueCard`. See
 [the block's README](packages/blocks/observation-cards/README.md) for usage and
 props.
+
+## Timeline block
+
+The Timeline block merges paged sources into one read-only feed grouped by day,
+with a "Now" marker and an "Overdue" group. It installs as two items beside each
+other: `timeline` (the generic feed) and `timeline-dhis2` (tracker sources and
+entry parts for DHIS2 2.41 to 2.43). Both pull in the `dhis2-value-display`
+formatter and the shared UI primitives. Install them from the GitHub registry in
+a project with Tailwind CSS enabled and a valid shadcn `components.json`
+configuration:
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/timeline
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/timeline-dhis2
+```
+
+Compose `Timeline` with the sources you want and a `TimelineFeed` that renders
+each entry. See [the block's README](packages/blocks/timeline/README.md) for the
+case-history recipe and the other patterns, and
+[the formatter's README](packages/blocks/value-display/README.md) for
+`dhis2-value-display`. The demo routes are `#/timeline` (case history; `te` and
+`program` in the URL) and `#/timeline/updated-today` (`program` and `orgUnit`).
 
 ## Quality checks
 

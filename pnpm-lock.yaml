@@ -173,6 +173,9 @@ importers:
       '@dhis2-blocks/observation-cards':
         specifier: workspace:*
         version: link:../../packages/blocks/observation-cards
+      '@dhis2-blocks/timeline':
+        specifier: workspace:*
+        version: link:../../packages/blocks/timeline
       '@dhis2-blocks/ui':
         specifier: workspace:*
         version: link:../../packages/blocks/ui
@@ -191,6 +194,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.101.4
         version: 5.101.4(react@18.3.1)
+      better-result:
+        specifier: ^3.0.1
+        version: 3.0.1
       react:
         specifier: 18.3.1
         version: 18.3.1

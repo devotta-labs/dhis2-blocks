@@ -58,6 +58,7 @@
                 "src/AppWrapper.tsx",
                 "src/workingListTranslationCatalog.ts",
                 "src/observationCardsTranslationCatalog.ts",
+                "src/timelineTranslationCatalog.ts",
                 "src/**/*.{test,spec}.{ts,tsx}",
                 "src/**/__tests__/**/*.{ts,tsx}"
             ],
@@ -89,6 +90,14 @@
                     "namespaceMembers"
                 ],
                 "src/observationCardsTranslationCatalog.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "src/timelineTranslationCatalog.ts": [
                     "exports",
                     "types",
                     "nsExports",
@@ -197,6 +206,14 @@
             "ignoreDependencies": ["@dhis2-blocks/ui"],
             "ignoreIssues": {
                 "src/index.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "src/dhis2/index.ts": [
                     "exports",
                     "types",
                     "nsExports",

@@ -12,6 +12,12 @@ const viteConfig = defineConfig(({ mode }) => {
                 '@/registry/dhis2/ui': fileURLToPath(
                     new URL('../../packages/blocks/ui/src', import.meta.url)
                 ),
+                '@/registry/dhis2/value-display': fileURLToPath(
+                    new URL(
+                        '../../packages/blocks/value-display/src',
+                        import.meta.url
+                    )
+                ),
             },
         },
         // ...other config options here

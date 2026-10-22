@@ -31,7 +31,7 @@ export type EventTimeField =
  */
 const PINNED_STATUSES = new Set(['SCHEDULE', 'SKIPPED'])
 
-const EVENT_FIELDS =
+export const EVENT_FIELDS =
     'event,status,program,programStage,enrollment,trackedEntity,orgUnit,occurredAt,scheduledAt,completedAt,completedBy,createdAt,updatedAt,createdBy,updatedBy,dataValues[dataElement,value],notes[note,value,storedAt,storedBy,createdBy]'
 
 const NOTE_FIELDS = 'notes[note,value,storedAt,storedBy,createdBy]'

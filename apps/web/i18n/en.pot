@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-21T12:52:06.943Z\n"
-"PO-Revision-Date: 2026-10-21T12:52:06.944Z\n"
+"POT-Creation-Date: 2026-10-22T20:25:54.635Z\n"
+"PO-Revision-Date: 2026-10-22T20:25:54.635Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -251,6 +251,33 @@ msgstr "Could not load more organisation units"
 msgid "Show more"
 msgstr "Show more"
 
+msgid "Open in Capture"
+msgstr "Open in Capture"
+
+msgid "Case history"
+msgstr "Case history"
+
+msgid "Show history"
+msgstr "Show history"
+
+msgid "Program ID"
+msgstr "Program ID"
+
+msgid "Events updated today in my org unit"
+msgstr "Events updated today in my org unit"
+
+msgid "Events updated today"
+msgstr "Events updated today"
+
+msgid "Show events"
+msgstr "Show events"
+
+msgid "Organisation unit ID"
+msgstr "Organisation unit ID"
+
+msgid "Events"
+msgstr "Events"
+
 msgid "{{change}} since {{date}}"
 msgstr "{{change}} since {{date}}"
 
@@ -299,6 +326,138 @@ msgstr "up"
 msgid "Yes"
 msgstr "Yes"
 
+msgid "(empty)"
+msgstr "(empty)"
+
+msgid "+{{count}} more"
+msgstr "+{{count}} more"
+
+msgid "Active"
+msgstr "Active"
+
+msgid "All entries"
+msgstr "All entries"
+
+msgid "Changes"
+msgstr "Changes"
+
+msgid "Changes aren't available on this DHIS2 version."
+msgstr "Changes aren't available on this DHIS2 version."
+
+msgid "Completed"
+msgstr "Completed"
+
+msgid "Completed by {{name}}"
+msgstr "Completed by {{name}}"
+
+msgid "Completed date"
+msgstr "Completed date"
+
+msgid "Coordinates"
+msgstr "Coordinates"
+
+msgid "Couldn't load changes."
+msgstr "Couldn't load changes."
+
+msgid "Couldn't load the history"
+msgstr "Couldn't load the history"
+
+msgid "Due date"
+msgstr "Due date"
+
+msgid "Due {{date}}"
+msgstr "Due {{date}}"
+
+msgid "Enrolled"
+msgstr "Enrolled"
+
+msgid "Enrollment cancelled"
+msgstr "Enrollment cancelled"
+
+msgid "Enrollment completed"
+msgstr "Enrollment completed"
+
+msgid "Event date"
+msgstr "Event date"
+
+msgid "Hide changes"
+msgstr "Hide changes"
+
+msgid "Incident"
+msgstr "Incident"
+
+msgid "Load more"
+msgstr "Load more"
+
+msgid "Loading changes"
+msgstr "Loading changes"
+
+msgid "Loading more"
+msgstr "Loading more"
+
+msgid "Milestones"
+msgstr "Milestones"
+
+msgid "More scheduled events aren't shown."
+msgstr "More scheduled events aren't shown."
+
+msgid "No changes"
+msgstr "No changes"
+
+msgid "No history yet"
+msgstr "No history yet"
+
+msgid "Notes"
+msgstr "Notes"
+
+msgid "Now"
+msgstr "Now"
+
+msgid "Older changes aren't shown."
+msgstr "Older changes aren't shown."
+
+msgid "Overdue"
+msgstr "Overdue"
+
+msgid "Retry"
+msgstr "Retry"
+
+msgid "Scheduled"
+msgstr "Scheduled"
+
+msgid "Show changes"
+msgstr "Show changes"
+
+msgid "Show less"
+msgstr "Show less"
+
+msgid "Skipped"
+msgstr "Skipped"
+
+msgid "Some {{label}} may be hidden by your access."
+msgstr "Some {{label}} may be hidden by your access."
+
+msgid "Undated"
+msgstr "Undated"
+
+msgid "{{count}} note"
+msgstr "{{count}} note"
+
+msgid "{{count}} notes"
+msgstr "{{count}} notes"
+
+msgid "{{label}} couldn't load."
+msgstr "{{label}} couldn't load."
+
+msgid "{{label}} isn't available on this DHIS2 version."
+msgstr "{{label}} isn't available on this DHIS2 version."
+
+msgid "{{name}} changed {{count}} field"
+msgstr "{{name}} changed {{count}} field"
+
+msgid "{{name}} changed {{count}} fields"
+msgstr "{{name}} changed {{count}} fields"
+
 msgid "A required value is missing"
 msgstr "A required value is missing"
 
@@ -310,9 +469,6 @@ msgstr ""
 "A required part of this list is no longer available. The program metadata "
 "may have changed, or you may no longer have access. Select another list, or "
 "use the list menu for more options."
-
-msgid "Active"
-msgstr "Active"
 
 msgid "Active enrollments"
 msgstr "Active enrollments"
@@ -421,9 +577,6 @@ msgstr "{{column}} was not moved."
 
 msgid "Columns"
 msgstr "Columns"
-
-msgid "Completed"
-msgstr "Completed"
 
 msgid "Completed enrollments"
 msgstr "Completed enrollments"
@@ -656,9 +809,6 @@ msgstr "Open"
 msgid "Open row {{number}}"
 msgstr "Open row {{number}}"
 
-msgid "Overdue"
-msgstr "Overdue"
-
 msgid "Owner organisation unit"
 msgstr "Owner organisation unit"
 
@@ -753,9 +903,6 @@ msgstr "Save view"
 msgid "Saved views in this program"
 msgstr "Saved views in this program"
 
-msgid "Scheduled"
-msgstr "Scheduled"
-
 msgid "Scheduled date"
 msgstr "Scheduled date"
 
@@ -776,9 +923,6 @@ msgstr "Sharing and access"
 
 msgid "Show {{column}}"
 msgstr "Show {{column}}"
-
-msgid "Skipped"
-msgstr "Skipped"
 
 msgid ""
 "Some filters, columns, or sorting options are no longer available. Repair "

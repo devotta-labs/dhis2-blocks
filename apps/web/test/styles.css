@@ -4,5 +4,6 @@
 @source '../src';
 @source '../../../packages/blocks/context-selector/src';
 @source '../../../packages/blocks/observation-cards/src';
+@source '../../../packages/blocks/timeline/src';
 @source '../../../packages/blocks/ui/src';
 @source '../../../packages/blocks/working-list/src';

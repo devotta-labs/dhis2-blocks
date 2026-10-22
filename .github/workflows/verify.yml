@@ -3,14 +3,7 @@ name: verify
 on:
     push:
         branches: ['**']
-    schedule:
-        - cron: '23 2 * * *'
     workflow_dispatch:
-        inputs:
-            all-versions:
-                description: Run E2E against every supported DHIS2 version
-                type: boolean
-                default: false
 
 permissions:
     contents: read
@@ -38,7 +31,7 @@ jobs:
 
     typecheck:
         needs: changes
-        if: github.event_name != 'schedule' && (github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true' || needs.changes.outputs.docs == 'true')
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true' || needs.changes.outputs.docs == 'true'
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         steps:
@@ -51,7 +44,7 @@ jobs:
 
     test:
         needs: changes
-        if: github.event_name != 'schedule' && (github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true' || needs.changes.outputs.docs == 'true')
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true' || needs.changes.outputs.docs == 'true'
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         steps:
@@ -64,7 +57,7 @@ jobs:
 
     build:
         needs: changes
-        if: github.event_name != 'schedule' && (github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true')
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true'
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         steps:
@@ -76,7 +69,7 @@ jobs:
 
     docs-build:
         needs: changes
-        if: github.event_name != 'schedule' && (github.event_name == 'workflow_dispatch' || needs.changes.outputs.docs == 'true')
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.docs == 'true'
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         steps:
@@ -87,7 +80,6 @@ jobs:
             - run: pnpm build:docs
 
     lint:
-        if: github.event_name != 'schedule'
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         steps:
@@ -97,7 +89,7 @@ jobs:
 
     knip:
         needs: changes
-        if: github.event_name != 'schedule' && (github.event_name == 'workflow_dispatch' || needs.changes.outputs.quality == 'true')
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.quality == 'true'
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         steps:
@@ -107,7 +99,7 @@ jobs:
 
     validation:
         needs: [changes, typecheck, test, build, docs-build, lint, knip]
-        if: always() && github.event_name != 'schedule'
+        if: always()
         runs-on: ubuntu-24.04
         timeout-minutes: 5
         steps:
@@ -121,50 +113,13 @@ jobs:
                   '
 
     e2e:
+        name: e2e (dev)
         needs: changes
-        if: github.event_name != 'push' || needs.changes.outputs.e2e == 'true'
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.e2e == 'true'
         runs-on: ubuntu-24.04
         timeout-minutes: 45
-        strategy:
-            fail-fast: false
-            matrix:
-                dhis2: ${{ fromJSON(github.event_name == 'schedule' && '["41","42","43"]' || inputs.all-versions && '["41","42","43","dev"]' || '["dev"]') }}
         steps:
             - uses: actions/checkout@v4
-            - uses: ./.github/actions/setup
+            - uses: ./.github/actions/e2e
               with:
-                  browser: 'true'
-
-            - name: Database cache period
-              id: database
-              run: |
-                  echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
-                  echo "DHIS2_DB_DUMP_VOLUME=$RUNNER_TEMP/dhis2-dump" >> "$GITHUB_ENV"
-                  mkdir -p "$RUNNER_TEMP/dhis2-dump"
-
-            - uses: actions/cache@v4
-              with:
-                  path: ${{ runner.temp }}/dhis2-dump
-                  key: dhis2-dump-v1-${{ matrix.dhis2 }}-${{ steps.database.outputs.week }}-${{ hashFiles('scripts/e2e/versions.sh', 'docker/e2e/compose.yml') }}
-
-            - name: validate
-              run: bash scripts/e2e/validate.sh "$DHIS2_VERSION"
-              env:
-                  DHIS2_VERSION: ${{ matrix.dhis2 }}
-
-            - name: e2e
-              run: bash scripts/e2e/run-version.sh "$DHIS2_VERSION"
-              env:
-                  DHIS2_VERSION: ${{ matrix.dhis2 }}
-                  CI: 'true'
-                  E2E_DHIS2_USERNAME: admin
-                  E2E_DHIS2_PASSWORD: district
-
-            - name: artifacts
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: e2e-dhis2-${{ matrix.dhis2 }}-${{ github.run_attempt }}
-                  path: e2e/artifacts/${{ matrix.dhis2 }}/
-                  if-no-files-found: warn
-                  retention-days: 14
+                  version: dev

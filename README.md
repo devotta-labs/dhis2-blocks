@@ -306,10 +306,12 @@ merge-base with the default branch, so later documentation commits cannot hide
 untested code changes. The `validation` check collects the static check results
 and fails if any relevant job fails or is cancelled.
 
-DHIS2 41, 42, and 43 E2E run nightly at 02:23 UTC on the default branch.
-Manual workflow runs always verify everything; enable `all-versions` to also
-run all four E2E versions. E2E results are never cached because the backend
-images move independently of this repository.
+The separate `e2e-nightly` workflow runs DHIS2 41, 42, and 43 E2E at 02:23 UTC
+on the default branch. A manual `verify` run checks everything against dev;
+a manual `e2e-nightly` run checks the stable versions, with `all-versions`
+optionally including dev. Both workflows share the same E2E action. E2E
+results are never cached because the backend images move independently of
+this repository.
 
 CI caches the pnpm store, Playwright binaries (by exact version), per-job Turbo
 results, and pristine database dumps (refreshed weekly). Databases are still
@@ -333,6 +335,12 @@ pnpm e2e:42
 pnpm e2e:43
 pnpm e2e:dev
 ```
+
+Playwright schedules independent tests across files and within each file in
+parallel, using two workers in CI and its CPU-based default locally. Each test
+gets its own browser context; saved-list tests clean up their own created
+records and restore the stale-list fixture. With a running E2E stack, use
+`pnpm exec playwright test --workers=1` to debug serially.
 
 See the [DHIS2 Application Platform documentation](https://platform.dhis2.nu/)
 for platform-specific development and deployment guidance.

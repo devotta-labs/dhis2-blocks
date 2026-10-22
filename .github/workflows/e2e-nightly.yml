@@ -1,0 +1,32 @@
+name: e2e-nightly
+
+on:
+    schedule:
+        - cron: '23 2 * * *'
+    workflow_dispatch:
+        inputs:
+            all-versions:
+                description: Include DHIS2 dev alongside the supported stable versions
+                type: boolean
+                default: false
+
+permissions:
+    contents: read
+
+concurrency:
+    group: e2e-nightly-${{ github.event_name }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    e2e:
+        runs-on: ubuntu-24.04
+        timeout-minutes: 45
+        strategy:
+            fail-fast: false
+            matrix:
+                dhis2: ${{ fromJSON(inputs.all-versions && '["41","42","43","dev"]' || '["41","42","43"]') }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: ./.github/actions/e2e
+              with:
+                  version: ${{ matrix.dhis2 }}

@@ -7,6 +7,8 @@ import {
 } from './working-list/WorkingListPlaceholders'
 import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
+import sidebarModelingSource from './sidebar/SidebarModeling.tsx?raw'
+import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
 
 /**
  * Example registry.
@@ -37,6 +39,22 @@ export interface ExampleDefinition {
 }
 
 const examples = [
+    {
+        slug: 'sidebar/modeling',
+        title: 'Modeling sidebar',
+        live: false,
+        Component: lazy(() => import('./sidebar/SidebarModeling')),
+        source: sidebarModelingSource,
+        minHeight: 680,
+    },
+    {
+        slug: 'sidebar/controlled',
+        title: 'Controlled sidebar',
+        live: false,
+        Component: lazy(() => import('./sidebar/SidebarControlled')),
+        source: sidebarControlledSource,
+        minHeight: 360,
+    },
     {
         slug: 'working-list/default',
         title: 'Default Working List',

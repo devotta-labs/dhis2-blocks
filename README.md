@@ -14,6 +14,7 @@ packages/
     context-selector/   Capture-style controlled context-selector primitives
     ui/                 Shared DHIS2-styled shadcn primitives and theme
     working-list/       Canonical Working List source and registry manifest
+    sidebar/            Composable modeling-app navigation with a collapse rail
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
 scripts/docs/           Documentation site backend lifecycle
@@ -90,6 +91,27 @@ A program-first application can initially render only
 `ProgramSelector`, then add organisation-unit, enrollment, stage, and event
 children as its own context policy makes them relevant. All values, direct
 callbacks, and metadata-derived labels are supplied by the host.
+
+## Sidebar block
+
+The Sidebar adapts the CHAP modeling app's navigation into composable Tailwind
+components, using the shared DHIS2 theme. Install the source from the registry:
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/sidebar
+```
+
+Import from `@/components/sidebar`. Compose `SidebarNavigation`, `SidebarContent`,
+`SidebarItems`, `SidebarItem`, and `SidebarLink` inside `Sidebar`; add
+`SidebarHeader`, `SidebarFooter`, and `SidebarToggle` where needed. Nested sections
+use `SidebarGroup`, `SidebarGroupTrigger`, and `SidebarGroupContent`.
+`SidebarButton` handles actions. Links accept a router element through `render`
+and use `aria-current="page"` for active styling. Collapse and groups support
+controlled or uncontrolled state, without a DHIS2 backend or router dependency.
+
+The docs page at `/blocks/sidebar` includes modeling-app and controlled/RTL
+examples. Styling comes from Tailwind and the registry's `dhis2-theme` dependency;
+no additional stylesheet import is needed.
 
 ## Working List block
 

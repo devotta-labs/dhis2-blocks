@@ -16,6 +16,9 @@
         "types": ["vite/client", "node"],
         "paths": {
             "@/registry/dhis2/ui/*": ["../../packages/blocks/ui/src/*"],
+            "@/components/sidebar": [
+                "../../packages/blocks/sidebar/src/index.ts"
+            ],
             "@/components/context-selector": [
                 "../../packages/blocks/context-selector/src/index.ts"
             ],

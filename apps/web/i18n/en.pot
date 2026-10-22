@@ -139,6 +139,15 @@ msgstr "Could not load more organisation units"
 msgid "Show more"
 msgstr "Show more"
 
+msgid "Main navigation"
+msgstr "Main navigation"
+
+msgid "Collapse sidebar"
+msgstr "Collapse sidebar"
+
+msgid "Expand sidebar"
+msgstr "Expand sidebar"
+
 msgid "A required value is missing"
 msgstr "A required value is missing"
 

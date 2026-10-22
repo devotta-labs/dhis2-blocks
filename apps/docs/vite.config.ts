@@ -58,7 +58,7 @@ export default defineConfig(({ mode }) => {
                     ),
                 },
                 {
-                    find: /^@\/components\/(context-selector|working-list)$/,
+                    find: /^@\/components\/(context-selector|working-list|sidebar)$/,
                     replacement: '@dhis2-blocks/$1',
                 },
             ],

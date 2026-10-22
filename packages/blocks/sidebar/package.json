@@ -1,0 +1,43 @@
+{
+    "name": "@dhis2-blocks/sidebar",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Composable modeling-app sidebar for DHIS2 applications",
+    "license": "BSD-3-Clause",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "scripts": {
+        "test": "vitest run",
+        "test:browser": "vitest run --project browser",
+        "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json --noEmit",
+        "lint": "oxlint --deny-warnings src"
+    },
+    "dependencies": {
+        "@base-ui/react": "^1.9.0",
+        "@dhis2/d2-i18n": "1.2.0",
+        "@dhis2/ui-icons": "^10.17.0"
+    },
+    "devDependencies": {
+        "@dhis2-blocks/ui": "workspace:*",
+        "@tailwindcss/vite": "^4.3.3",
+        "@types/node": "^22.0.0",
+        "@types/react": "^18.3.31",
+        "@types/react-dom": "^18.3.7",
+        "@vitest/browser-playwright": "4.1.11",
+        "axe-core": "^4.13.0",
+        "playwright": "1.62.1",
+        "react": "18.3.1",
+        "react-dom": "18.3.1",
+        "react-router-dom": "^7.18.2",
+        "tailwindcss": "^4.3.3",
+        "typescript": "^5.9.3",
+        "vite": "^7.3.0",
+        "vitest": "4.1.11",
+        "vitest-browser-react": "2.2.0"
+    },
+    "peerDependencies": {
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1"
+    }
+}

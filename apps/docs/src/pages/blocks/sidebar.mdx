@@ -1,0 +1,114 @@
+---
+title: Sidebar
+description: The modeling app's navigation, composed from Tailwind-styled links, expandable groups, footer actions, and a collapsible rail.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="sidebar/modeling" />
+
+## Installation
+
+<InstallCommand item="sidebar" />
+
+## Composition
+
+`Sidebar` owns collapse state. Compose the navigation, header, scrollable content,
+footer, and toggle explicitly; leave out the pieces you do not need.
+
+```tsx
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarItem,
+    SidebarItems,
+    SidebarLink,
+    SidebarNavigation,
+    SidebarToggle,
+} from '@/components/sidebar'
+
+export function AppNavigation() {
+    return (
+        <Sidebar>
+            <SidebarNavigation aria-label="Application navigation">
+                <SidebarContent>
+                    <SidebarItems>
+                        <SidebarItem>
+                            <SidebarLink href="/dashboard" aria-current="page">
+                                Dashboard
+                            </SidebarLink>
+                        </SidebarItem>
+                        <SidebarItem>
+                            <SidebarLink href="/datasets">Datasets</SidebarLink>
+                        </SidebarItem>
+                    </SidebarItems>
+                </SidebarContent>
+            </SidebarNavigation>
+            <SidebarToggle />
+        </Sidebar>
+    )
+}
+```
+
+Use a `flex-col md:flex-row` layout around the sidebar and page content. On
+desktop the sidebar is 240px wide, collapsing to a 52px rail; below `md` it spans
+the container and collapses to a 52px bar above the content. Give the desktop
+layout a bounded height to scroll long menus while keeping the footer visible.
+Hidden navigation stays mounted, preserving group state, but cannot receive focus.
+
+## Nested navigation and actions
+
+Compose `SidebarGroup`, `SidebarGroupTrigger`, and `SidebarGroupContent` directly
+inside `SidebarItems`. Put each link or action in a `SidebarItem`. Groups support
+`defaultOpen`, or `open` with `onOpenChange`, and `disabled`.
+
+`SidebarHeader` and `SidebarFooter` accept any children. Use `SidebarButton` for
+actions such as opening a bug-report dialog; it supports native `disabled` and
+`onClick`. Icons, badges, and custom labels are children rather than configuration
+props. The block does not fetch metadata, enforce permissions, or own dialogs.
+
+## Client-side routing
+
+`SidebarLink` renders an anchor by default. Its `render` prop composes with a router
+link without introducing an extra element. `aria-current="page"` supplies the active
+background and leading teal marker; React Router's `NavLink` sets it automatically.
+
+```tsx
+import { NavLink } from 'react-router-dom'
+import { SidebarItem, SidebarLink } from '@/components/sidebar'
+
+export function DashboardLink() {
+    return (
+        <SidebarItem>
+            <SidebarLink render={<NavLink to="/dashboard" end />}>
+                Dashboard
+            </SidebarLink>
+        </SidebarItem>
+    )
+}
+```
+
+Use ordinary `href`, `target`, and `rel` for external links. Routing and deciding
+which page is active remain the host's responsibility. Omit inaccessible links or
+render a disabled `SidebarButton` instead; anchors do not have a disabled state.
+
+## Controlled state
+
+Collapse is local by default. `defaultCollapsed` sets its initial value, and
+`onCollapsedChange` can observe changes. To share state with a toolbar or router,
+pass both `collapsed` and `onCollapsedChange`; do not also pass `defaultCollapsed`.
+
+<ExampleCard slug="sidebar/controlled" />
+
+Custom descendants can call `useSidebar()` for `state.collapsed`,
+`actions.setCollapsed`, and `meta.navigationId`. The stock `SidebarToggle` exposes
+`collapseLabel` and `expandLabel` for application-specific accessible labels.
+
+## Styling
+
+All styling is Tailwind. The installed `dhis2-theme` supplies the existing DHIS2
+grey palette, teal selection marker, font, and radius tokens; no sidebar stylesheet
+or application-wide palette override is required. Use `className` on the pieces
+or customize the namespaced theme tokens. Logical spacing and selection borders
+follow the inherited `dir`; transitions respect reduced-motion preferences.

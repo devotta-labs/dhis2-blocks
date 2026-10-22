@@ -1,0 +1,43 @@
+{
+    "$schema": "https://ui.shadcn.com/schema/registry.json",
+    "items": [
+        {
+            "name": "sidebar",
+            "type": "registry:block",
+            "title": "DHIS2 Sidebar",
+            "description": "Composable Tailwind navigation based on the CHAP modeling app: nested groups, footer actions and a collapsible rail.",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/ui-icons@^10.17.0"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "src/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/sidebar/index.ts"
+                },
+                {
+                    "path": "src/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/sidebar/context.ts"
+                },
+                {
+                    "path": "src/sidebar.tsx",
+                    "type": "registry:file",
+                    "target": "@components/sidebar/sidebar.tsx"
+                },
+                {
+                    "path": "src/items.tsx",
+                    "type": "registry:file",
+                    "target": "@components/sidebar/items.tsx"
+                }
+            ],
+            "docs": "Compose SidebarNavigation, SidebarContent, SidebarItems, SidebarItem and SidebarLink inside Sidebar. Add SidebarFooter and SidebarToggle explicitly. Use SidebarGroup, SidebarGroupTrigger and SidebarGroupContent for nested navigation. SidebarLink accepts render={<NavLink to=\"/path\" />} for client-side routing; aria-current=\"page\" selects a link. Collapse and group state can be controlled or uncontrolled."
+        }
+    ]
+}

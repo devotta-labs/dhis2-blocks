@@ -57,6 +57,7 @@
                 "d2.config.js",
                 "src/AppWrapper.tsx",
                 "src/workingListTranslationCatalog.ts",
+                "src/sidebarTranslationCatalog.ts",
                 "src/**/*.{test,spec}.{ts,tsx}",
                 "src/**/__tests__/**/*.{ts,tsx}"
             ],
@@ -86,6 +87,14 @@
                     "nsTypes",
                     "enumMembers",
                     "namespaceMembers"
+                ],
+                "src/sidebarTranslationCatalog.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
                 ]
             }
         },
@@ -93,6 +102,7 @@
             "entry": ["server/**/*.test.mjs"],
             "ignoreDependencies": [
                 "@dhis2-blocks/context-selector",
+                "@dhis2-blocks/sidebar",
                 "@dhis2-blocks/working-list",
                 "typeface-roboto"
             ],

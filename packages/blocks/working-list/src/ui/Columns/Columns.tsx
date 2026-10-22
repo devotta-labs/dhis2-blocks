@@ -1,4 +1,3 @@
-import { Button } from '@dhis2/ui'
 import { IconLayoutColumns16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
@@ -13,6 +12,7 @@ import {
 import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
 import type { WorkingListConfiguration } from '../../provider/contracts'
 import { ColumnSettingsDialog } from '../ColumnSettingsDialog'
+import { Button } from '../primitives/button'
 import { useWorkingListText } from '../WorkingListText'
 
 const tableFieldsFor = (
@@ -80,13 +80,13 @@ const ColumnsControl = () => {
     return (
         <div className="flex flex-none items-center">
             <Button
-                secondary
-                small
-                icon={<IconLayoutColumns16 />}
-                dataTest="configure-columns"
+                variant="secondary"
+                size="field-dense"
+                data-test="configure-columns"
                 disabled={mutationBusy}
                 onClick={() => setDialogOpen(true)}
             >
+                <IconLayoutColumns16 />
                 {translate('Columns')}
             </Button>
             {dialogOpen && (
@@ -130,16 +130,14 @@ export const WorkingListColumnSelector = ({
             {ready ? (
                 <ColumnsControl />
             ) : (
-                // Same wrapper as the live control, so the toolbar keeps its
-                // height when the configuration resolves.
                 <div className="flex flex-none items-center">
                     <Button
-                        secondary
-                        small
-                        icon={<IconLayoutColumns16 />}
-                        dataTest="configure-columns"
+                        variant="secondary"
+                        size="field-dense"
+                        data-test="configure-columns"
                         disabled
                     >
+                        <IconLayoutColumns16 />
                         {translate('Columns')}
                     </Button>
                 </div>

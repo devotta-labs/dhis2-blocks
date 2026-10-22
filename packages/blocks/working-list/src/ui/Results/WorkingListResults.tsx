@@ -1,4 +1,6 @@
-import { Button, NoticeBox } from '@dhis2/ui'
+import { ErrorAlert } from '../primitives/alert'
+import { Button } from '../primitives/button'
+import { Spinner } from '../primitives/spinner'
 import { Result } from 'better-result'
 import React, { useMemo, useState, type ComponentPropsWithoutRef } from 'react'
 import { fieldsForConfiguration } from '../../api/metadata'
@@ -153,16 +155,19 @@ const ReadyResults = ({
     if (results.status === 'error') {
         return (
             <div className="p-4" data-testid="results-error">
-                <NoticeBox error title={translate('Could not load results')}>
+                <ErrorAlert title={translate('Could not load results')}>
                     <p>
                         {translate(
                             'The working list results could not be loaded. Check the connection and try again.'
                         )}
                     </p>
-                    <Button onClick={() => void privateActions.retryResults()}>
+                    <Button
+                        variant="outline"
+                        onClick={() => void privateActions.retryResults()}
+                    >
                         {translate('Try again')}
                     </Button>
-                </NoticeBox>
+                </ErrorAlert>
             </div>
         )
     }
@@ -170,7 +175,7 @@ const ReadyResults = ({
     return (
         <>
             <div
-                className={visuallyHiddenClassName}
+                className="sr-only"
                 role="status"
                 aria-live="polite"
                 data-testid="working-list-results-announcement"
@@ -232,8 +237,7 @@ const IncompatibleSelection = () => {
     return (
         <>
             <div className="p-4" data-testid="stale-list-panel">
-                <NoticeBox
-                    error
+                <ErrorAlert
                     title={translate(
                         'This saved list has unavailable settings'
                     )}
@@ -250,19 +254,26 @@ const IncompatibleSelection = () => {
                     {repairable && (
                         <div className="mt-2">
                             <Button
-                                small
-                                dataTest="repair-working-list"
+                                variant="outline"
+                                size="sm"
+                                data-test="repair-working-list"
                                 disabled={repairPending}
-                                loading={repairPending}
                                 onClick={() => setDialogOpen(true)}
                             >
+                                {repairPending && (
+                                    <Spinner
+                                        aria-label={translate('Loading')}
+                                        data-icon="inline-start"
+                                        className="size-4"
+                                    />
+                                )}
                                 {repairPending
                                     ? translate('Repairing…')
                                     : translate('Repair')}
                             </Button>
                             {repairPending && (
                                 <span
-                                    className={visuallyHiddenClassName}
+                                    className="sr-only"
                                     role="status"
                                     aria-live="polite"
                                 >
@@ -272,7 +283,7 @@ const IncompatibleSelection = () => {
                         </div>
                     )}
                     {repairError && <p role="alert">{repairError}</p>}
-                </NoticeBox>
+                </ErrorAlert>
             </div>
             <WorkingListRepairDialog
                 open={dialogOpen}
@@ -323,8 +334,7 @@ const WorkingListResultsContent = ({
                         className="p-4"
                         data-testid="unavailable-working-list-error"
                     >
-                        <NoticeBox
-                            error
+                        <ErrorAlert
                             title={translate(
                                 'This working list is unavailable'
                             )}
@@ -335,7 +345,8 @@ const WorkingListResultsContent = ({
                                 )}
                             </p>
                             <Button
-                                dataTest="use-default-working-list"
+                                variant="outline"
+                                data-test="use-default-working-list"
                                 onClick={() => {
                                     const result = actions.clearViewSelection()
                                     if (Result.isError(result)) {
@@ -345,7 +356,7 @@ const WorkingListResultsContent = ({
                             >
                                 {translate('Use the default working list')}
                             </Button>
-                        </NoticeBox>
+                        </ErrorAlert>
                     </div>
                 ))}
             {selection.status === 'ready' &&

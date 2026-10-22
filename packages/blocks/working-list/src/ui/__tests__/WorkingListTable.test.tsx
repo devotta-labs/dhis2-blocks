@@ -268,20 +268,24 @@ describe('WorkingListTable', () => {
                     '[data-testid="sort-firstName"]'
                 )
                 const header = sortButton?.closest('th')
+                const direction = () =>
+                    sortButton
+                        ?.querySelector('[data-slot="sort-indicator"]')
+                        ?.getAttribute('data-direction')
 
-                expect(sortButton?.textContent).toContain('↕')
+                expect(direction()).toBe('none')
                 expect(header?.getAttribute('aria-sort')).toBe('none')
 
                 act(() => sortButton?.click())
-                expect(sortButton?.textContent).toContain('↑')
+                expect(direction()).toBe('asc')
                 expect(header?.getAttribute('aria-sort')).toBe('ascending')
 
                 act(() => sortButton?.click())
-                expect(sortButton?.textContent).toContain('↓')
+                expect(direction()).toBe('desc')
                 expect(header?.getAttribute('aria-sort')).toBe('descending')
 
                 act(() => sortButton?.click())
-                expect(sortButton?.textContent).toContain('↕')
+                expect(direction()).toBe('none')
                 expect(header?.getAttribute('aria-sort')).toBe('none')
             } finally {
                 act(() => root.unmount())

@@ -1,28 +1,52 @@
-import {
-    Checkbox,
-    MultiSelectField,
-    MultiSelectOption,
-    SingleSelectField,
-    SingleSelectOption,
-} from '@dhis2/ui'
 import React from 'react'
-import { z } from 'zod'
 import type { WorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
 import { usesMultipleOptionSelection } from '../../domain/filterControlPolicy'
-import type { FilterValue, WorkingListField } from '../../domain/model'
+import {
+    RELATIVE_DATE_PERIODS,
+    type FilterValue,
+    type RelativeDatePeriod,
+    type WorkingListField,
+} from '../../domain/model'
 import type { FilterEditorKind } from '../../registry/valueTypes'
-import { useWorkingListText } from '../WorkingListText'
+import { Checkbox } from '../primitives/checkbox'
+import { Label } from '../primitives/label'
+import {
+    useWorkingListText,
+    type WorkingListTranslate,
+} from '../WorkingListText'
 import { CalendarRangeFields } from './CalendarRangeFields'
 import {
+    ComboboxField,
+    SelectField,
+    type SelectFieldOption,
+} from './FilterSelectFields'
+import {
     type FilterCalendarContext,
-    RelativeDatePeriodSchema,
     optionDisplayName,
 } from './filterValueSupport'
 import {
     OrganisationUnitFilterSelect,
     UserFilterSelect,
 } from './ReferenceFilterSelects'
+
+const relativePeriodOptions = (
+    translate: WorkingListTranslate
+): SelectFieldOption<RelativeDatePeriod>[] => {
+    const labels = {
+        TODAY: translate('Today'),
+        THIS_WEEK: translate('This week'),
+        LAST_WEEK: translate('Last week'),
+        THIS_MONTH: translate('This month'),
+        LAST_MONTH: translate('Last month'),
+        LAST_3_MONTHS: translate('Last three months'),
+        THIS_YEAR: translate('This year'),
+    } satisfies Record<RelativeDatePeriod, string>
+    return RELATIVE_DATE_PERIODS.map((value) => ({
+        value,
+        label: labels[value],
+    }))
+}
 
 export const EditorValue = ({
     client,
@@ -50,36 +74,17 @@ export const EditorValue = ({
                 : ({ kind: 'assignee', mode: 'CURRENT' } as const)
         return (
             <div className="[&>*+*]:mt-[12px]">
-                <SingleSelectField
-                    dense
+                <SelectField
                     label={i18n.t('Assignment')}
-                    selected={assignee.mode}
-                    onChange={({ selected }) =>
-                        onChange({
-                            kind: 'assignee',
-                            mode: z
-                                .enum(['CURRENT', 'PROVIDED', 'NONE', 'ANY'])
-                                .parse(selected),
-                        })
-                    }
-                >
-                    <SingleSelectOption
-                        value="CURRENT"
-                        label={i18n.t('Current user')}
-                    />
-                    <SingleSelectOption
-                        value="PROVIDED"
-                        label={i18n.t('Specific users')}
-                    />
-                    <SingleSelectOption
-                        value="NONE"
-                        label={i18n.t('Unassigned')}
-                    />
-                    <SingleSelectOption
-                        value="ANY"
-                        label={i18n.t('Any assigned user')}
-                    />
-                </SingleSelectField>
+                    value={assignee.mode}
+                    options={[
+                        { value: 'CURRENT', label: i18n.t('Current user') },
+                        { value: 'PROVIDED', label: i18n.t('Specific users') },
+                        { value: 'NONE', label: i18n.t('Unassigned') },
+                        { value: 'ANY', label: i18n.t('Any assigned user') },
+                    ]}
+                    onChange={(mode) => onChange({ kind: 'assignee', mode })}
+                />
                 {assignee.mode === 'PROVIDED' && (
                     <UserFilterSelect
                         client={client}
@@ -99,49 +104,36 @@ export const EditorValue = ({
 
     if (field.options?.length) {
         const values = value.kind === 'options' ? value.values : []
+        const optionItems = field.options.map((option) => ({
+            value: option.code,
+            label: optionDisplayName(field, option, translate),
+        }))
         // Tracker supports multiple option-set values on capable servers, but
         // Capture's system status filters are intentionally single-valued.
         if (usesMultipleOptionSelection(field, capabilities)) {
             return (
-                <MultiSelectField
-                    dense
-                    filterable
+                <ComboboxField
+                    multiple
                     label={i18n.t('Values')}
-                    selected={values}
+                    values={values}
+                    options={optionItems}
                     noMatchText={i18n.t('No values match')}
-                    onChange={({ selected }) =>
+                    onChange={(selected) =>
                         onChange({ kind: 'options', values: selected })
                     }
-                >
-                    {field.options.map((option) => (
-                        <MultiSelectOption
-                            key={option.code}
-                            value={option.code}
-                            label={optionDisplayName(field, option, translate)}
-                        />
-                    ))}
-                </MultiSelectField>
+                />
             )
         }
         return (
-            <SingleSelectField
-                dense
-                filterable
+            <ComboboxField
                 label={i18n.t('Value')}
-                selected={values[0]}
+                values={values}
+                options={optionItems}
                 noMatchText={i18n.t('No values match')}
-                onChange={({ selected }) =>
-                    onChange({ kind: 'options', values: [selected] })
+                onChange={(selected) =>
+                    onChange({ kind: 'options', values: selected })
                 }
-            >
-                {field.options.map((option) => (
-                    <SingleSelectOption
-                        key={option.code}
-                        value={option.code}
-                        label={optionDisplayName(field, option, translate)}
-                    />
-                ))}
-            </SingleSelectField>
+            />
         )
     }
 
@@ -153,30 +145,34 @@ export const EditorValue = ({
                 role="group"
                 aria-label={i18n.t('Values')}
             >
-                <Checkbox
-                    label={i18n.t('Yes')}
-                    checked={values.includes(true)}
-                    onChange={({ checked }) =>
-                        onChange({
-                            kind: 'boolean',
-                            values: checked
-                                ? [...values.filter((item) => !item), true]
-                                : values.filter((item) => !item),
-                        })
-                    }
-                />
-                <Checkbox
-                    label={i18n.t('No')}
-                    checked={values.includes(false)}
-                    onChange={({ checked }) =>
-                        onChange({
-                            kind: 'boolean',
-                            values: checked
-                                ? [...values.filter(Boolean), false]
-                                : values.filter(Boolean),
-                        })
-                    }
-                />
+                <Label className="cursor-pointer">
+                    <Checkbox
+                        checked={values.includes(true)}
+                        onCheckedChange={(checked) =>
+                            onChange({
+                                kind: 'boolean',
+                                values: checked
+                                    ? [...values.filter((item) => !item), true]
+                                    : values.filter((item) => !item),
+                            })
+                        }
+                    />
+                    {i18n.t('Yes')}
+                </Label>
+                <Label className="cursor-pointer">
+                    <Checkbox
+                        checked={values.includes(false)}
+                        onCheckedChange={(checked) =>
+                            onChange({
+                                kind: 'boolean',
+                                values: checked
+                                    ? [...values.filter(Boolean), false]
+                                    : values.filter(Boolean),
+                            })
+                        }
+                    />
+                    {i18n.t('No')}
+                </Label>
             </div>
         )
     }
@@ -188,14 +184,17 @@ export const EditorValue = ({
                 : { kind: 'dateRange', mode: 'absolute' }
         return (
             <div className="min-w-0 max-w-full [&>*+*]:mt-[12px]">
-                <SingleSelectField
-                    dense
+                <SelectField
                     dataTest={`date-mode-${field.id}`}
                     label={i18n.t('Date range type')}
-                    selected={date.mode}
-                    onChange={({ selected }) =>
+                    value={date.mode}
+                    options={[
+                        { value: 'absolute', label: i18n.t('Specific dates') },
+                        { value: 'relative', label: i18n.t('Relative period') },
+                    ]}
+                    onChange={(mode) =>
                         onChange(
-                            selected === 'relative'
+                            mode === 'relative'
                                 ? {
                                       kind: 'dateRange',
                                       mode: 'relative',
@@ -207,16 +206,7 @@ export const EditorValue = ({
                                   }
                         )
                     }
-                >
-                    <SingleSelectOption
-                        value="absolute"
-                        label={i18n.t('Specific dates')}
-                    />
-                    <SingleSelectOption
-                        value="relative"
-                        label={i18n.t('Relative period')}
-                    />
-                </SingleSelectField>
+                />
                 {date.mode === 'absolute' ? (
                     <CalendarRangeFields
                         start={date.start}
@@ -235,14 +225,23 @@ export const EditorValue = ({
                     />
                 ) : (
                     <>
-                        <SingleSelectField
-                            dense
+                        <SelectField
                             dataTest={`relative-kind-${field.id}`}
                             label={i18n.t('Relative range type')}
-                            selected={date.period ? 'period' : 'buffers'}
-                            onChange={({ selected }) =>
+                            value={date.period ? 'period' : 'buffers'}
+                            options={[
+                                {
+                                    value: 'period',
+                                    label: i18n.t('Named period'),
+                                },
+                                {
+                                    value: 'buffers',
+                                    label: i18n.t('Day offsets'),
+                                },
+                            ]}
+                            onChange={(kind) =>
                                 onChange(
-                                    selected === 'period'
+                                    kind === 'period'
                                         ? {
                                               kind: 'dateRange',
                                               mode: 'relative',
@@ -256,61 +255,21 @@ export const EditorValue = ({
                                           }
                                 )
                             }
-                        >
-                            <SingleSelectOption
-                                value="period"
-                                label={i18n.t('Named period')}
-                            />
-                            <SingleSelectOption
-                                value="buffers"
-                                label={i18n.t('Day offsets')}
-                            />
-                        </SingleSelectField>
+                        />
                         {date.period ? (
-                            <SingleSelectField
-                                dense
+                            <SelectField
                                 dataTest={`relative-period-${field.id}`}
                                 label={i18n.t('Relative period')}
-                                selected={date.period}
-                                onChange={({ selected }) =>
+                                value={date.period}
+                                options={relativePeriodOptions(translate)}
+                                onChange={(period) =>
                                     onChange({
                                         kind: 'dateRange',
                                         mode: 'relative',
-                                        period: RelativeDatePeriodSchema.parse(
-                                            selected
-                                        ),
+                                        period,
                                     })
                                 }
-                            >
-                                <SingleSelectOption
-                                    value="TODAY"
-                                    label={i18n.t('Today')}
-                                />
-                                <SingleSelectOption
-                                    value="THIS_WEEK"
-                                    label={i18n.t('This week')}
-                                />
-                                <SingleSelectOption
-                                    value="LAST_WEEK"
-                                    label={i18n.t('Last week')}
-                                />
-                                <SingleSelectOption
-                                    value="THIS_MONTH"
-                                    label={i18n.t('This month')}
-                                />
-                                <SingleSelectOption
-                                    value="LAST_MONTH"
-                                    label={i18n.t('Last month')}
-                                />
-                                <SingleSelectOption
-                                    value="LAST_3_MONTHS"
-                                    label={i18n.t('Last three months')}
-                                />
-                                <SingleSelectOption
-                                    value="THIS_YEAR"
-                                    label={i18n.t('This year')}
-                                />
-                            </SingleSelectField>
+                            />
                         ) : (
                             <RangeFields
                                 type="number"

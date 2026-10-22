@@ -1,4 +1,4 @@
-import { IconWarningFilled16, Tooltip } from '@dhis2/ui'
+import { IconWarningFilled16 } from '@dhis2/ui-icons'
 import {
     columnOrderingFeature,
     columnVisibilityFeature,
@@ -28,14 +28,12 @@ import {
 } from '../../registry/valueTypes'
 import { fieldDisplayName, localizedField } from '../FilterControls'
 import type { WorkingListDataQualityMode } from '../types'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip'
 import { useWorkingListText } from '../WorkingListText'
 import {
     WorkingListTableView,
     type WorkingListTableViewModel,
 } from './WorkingListTableView'
-
-const visuallyHiddenClassName =
-    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
 const tableFeatureSet = tableFeatures({
     columnOrderingFeature,
@@ -78,8 +76,22 @@ const invalidCellText = (
 const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
     const t = useWorkingListText()
     return (
-        <Tooltip
-            content={
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <span
+                        className="inline-flex items-center text-[#b93d2e]"
+                        role="img"
+                        data-testid={`row-issues-${row.id}`}
+                        aria-label={t('Row has {{count}} data quality issues', {
+                            count: row.issues.length,
+                        })}
+                    />
+                }
+            >
+                <IconWarningFilled16 />
+            </TooltipTrigger>
+            <TooltipContent>
                 <ul className="m-0 pl-4">
                     {row.issues.map((issue) => (
                         <li key={`${issue.fieldId}-${issue.message}`}>
@@ -87,18 +99,7 @@ const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
                         </li>
                     ))}
                 </ul>
-            }
-        >
-            <span
-                className="inline-flex items-center text-[#b93d2e]"
-                role="img"
-                data-testid={`row-issues-${row.id}`}
-                aria-label={t('Row has {{count}} data quality issues', {
-                    count: row.issues.length,
-                })}
-            >
-                <IconWarningFilled16 />
-            </span>
+            </TooltipContent>
         </Tooltip>
     )
 }
@@ -235,9 +236,7 @@ export const WorkingListDataTable = ({
             columnHelper.display({
                 id: DATA_QUALITY_COLUMN_ID,
                 header: () => (
-                    <span className={visuallyHiddenClassName}>
-                        {translate('Data quality')}
-                    </span>
+                    <span className="sr-only">{translate('Data quality')}</span>
                 ),
                 enableSorting: false,
                 cell: (context) =>

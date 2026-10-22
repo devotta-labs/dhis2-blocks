@@ -1,4 +1,5 @@
-import { Button, CircularLoader, OrganisationUnitTree } from '@dhis2/ui'
+import { Button, Spinner } from '@dhis2-blocks/working-list/primitives'
+import { OrganisationUnitTree } from '@dhis2/ui'
 import type { ComponentType, MouseEvent } from 'react'
 import React, { useCallback, useMemo, useState } from 'react'
 import i18n from '../../i18n'
@@ -155,7 +156,10 @@ export const OrganisationUnitSelectorContent = ({
                     data-testid="org-unit-tree"
                 >
                     {searchLoading ? (
-                        <CircularLoader />
+                        <Spinner
+                            aria-label={i18n.t('Loading')}
+                            className="size-12 border-6"
+                        />
                     ) : searchError ? (
                         <div
                             className="flex w-full flex-col items-center gap-[8px] px-[16px] py-[24px] text-center text-[14px] text-[#4a5768]"
@@ -165,7 +169,11 @@ export const OrganisationUnitSelectorContent = ({
                                 {i18n.t('Could not search organisation units')}
                             </span>
                             {onSearchRetry ? (
-                                <Button small secondary onClick={onSearchRetry}>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={onSearchRetry}
+                                >
                                     {i18n.t('Try again')}
                                 </Button>
                             ) : null}
@@ -188,8 +196,8 @@ export const OrganisationUnitSelectorContent = ({
                                         )}
                                     </span>
                                     <Button
-                                        small
-                                        secondary
+                                        variant="secondary"
+                                        size="sm"
                                         onClick={onSearchLoadMore}
                                     >
                                         {i18n.t('Try again')}
@@ -198,12 +206,19 @@ export const OrganisationUnitSelectorContent = ({
                             ) : searchHasMore ? (
                                 <div className="flex w-full justify-center pb-[4px]">
                                     <Button
-                                        small
-                                        secondary
-                                        loading={searchLoadingMore}
-                                        dataTest="org-unit-search-load-more"
+                                        variant="secondary"
+                                        size="sm"
+                                        data-test="org-unit-search-load-more"
                                         onClick={onSearchLoadMore}
+                                        disabled={searchLoadingMore}
                                     >
+                                        {searchLoadingMore && (
+                                            <Spinner
+                                                aria-label={i18n.t('Loading')}
+                                                data-icon="inline-start"
+                                                className="size-4"
+                                            />
+                                        )}
                                         {i18n.t('Show more')}
                                     </Button>
                                 </div>

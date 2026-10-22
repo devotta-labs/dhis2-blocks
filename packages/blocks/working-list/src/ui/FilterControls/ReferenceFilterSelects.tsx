@@ -1,15 +1,10 @@
-import {
-    Box,
-    Field,
-    MultiSelect,
-    MultiSelectOption,
-    OrganisationUnitTree,
-} from '@dhis2/ui'
+import { OrganisationUnitTree } from '@dhis2/ui'
 import { useQuery } from '@tanstack/react-query'
 import React, { useEffect, useState } from 'react'
 import { z } from 'zod'
 import type { WorkingListClient } from '../../api/client'
 import { useWorkingListText } from '../WorkingListText'
+import { ComboboxField } from './FilterSelectFields'
 
 const UserReferenceSchema = z
     .object({
@@ -78,56 +73,34 @@ export const UserFilterSelect = ({
     })
     const users = usersQuery.data?.users ?? []
     const knownIds = new Set(users.map((user) => user.id))
+    const options = [
+        ...users.map((user) => ({
+            value: user.id,
+            label: user.username
+                ? `${user.displayName} (${user.username})`
+                : user.displayName,
+        })),
+        // Keep selections that the current search no longer returns.
+        ...selected
+            .filter((id) => !knownIds.has(id))
+            .map((id) => ({ value: id, label: id })),
+    ]
 
     return (
-        <div
-            className="[&>*+*]:mt-[12px]"
-            data-testid="assignee-user-selector"
-            onChangeCapture={(event) => {
-                const target = event.target
-                if (
-                    target instanceof HTMLInputElement &&
-                    target.name === 'filter'
-                ) {
-                    setSearch(target.value)
-                }
-            }}
-        >
-            <Field dataTest="assignee-users" label={i18n.t('Users')}>
-                <Box minWidth="100px">
-                    <MultiSelect
-                        collapseSelectionAfter={1}
-                        dense
-                        filterable
-                        filterPlaceholder={i18n.t('Search users')}
-                        loading={usersQuery.isPending || usersQuery.isFetching}
-                        selected={selected}
-                        noMatchText={i18n.t('No users match')}
-                        onChange={({ selected: next }) => onChange(next)}
-                    >
-                        {users.map((user) => (
-                            <MultiSelectOption
-                                key={user.id}
-                                value={user.id}
-                                label={
-                                    user.username
-                                        ? `${user.displayName} (${user.username})`
-                                        : user.displayName
-                                }
-                            />
-                        ))}
-                        {selected
-                            .filter((id) => !knownIds.has(id))
-                            .map((id) => (
-                                <MultiSelectOption
-                                    key={id}
-                                    value={id}
-                                    label={id}
-                                />
-                            ))}
-                    </MultiSelect>
-                </Box>
-            </Field>
+        <div className="[&>*+*]:mt-[12px]" data-testid="assignee-user-selector">
+            <ComboboxField
+                multiple
+                dataTest="assignee-users"
+                label={i18n.t('Users')}
+                values={selected}
+                options={options}
+                collapseAfter={1}
+                filterPlaceholder={i18n.t('Search users')}
+                noMatchText={i18n.t('No users match')}
+                loading={usersQuery.isPending || usersQuery.isFetching}
+                onSearchChange={setSearch}
+                onChange={onChange}
+            />
             {usersQuery.error && (
                 <p role="alert">
                     {i18n.t('Could not load users')}: {String(usersQuery.error)}

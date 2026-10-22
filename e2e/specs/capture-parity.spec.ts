@@ -7,7 +7,7 @@ import {
     type Request,
     TEXT_ATTRIBUTE,
     addFilter,
-    chooseDhis2Option,
+    chooseSelectOption,
     expect,
     isTrackerResource,
     openFilterEditor,
@@ -18,6 +18,7 @@ import {
     resultRows,
     savedViewButton,
     selectOrganisationUnitFromTree,
+    selectTrigger,
     targetMajor,
     test,
     uiButton,
@@ -137,7 +138,7 @@ test.describe('Capture context and generated tracker views', () => {
     }) => {
         await openWorkingList(page)
         await expect(savedViewButton(page, 'active')).toHaveAttribute(
-            'aria-current',
+            'aria-pressed',
             'true'
         )
         await expect(resultRows(page)).toHaveCount(8)
@@ -194,7 +195,7 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(page).not.toHaveURL(/selectedTemplateId=/)
         await expect(
             page.locator(
-                '[data-testid^="working-list-view-"] button[aria-current="true"]'
+                '[data-testid^="working-list-view-"] button[aria-pressed="true"]'
             )
         ).toHaveCount(0)
         await expect(
@@ -213,7 +214,7 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(page).not.toHaveURL(/selectedTemplateId=/)
         await expect(
             page.locator(
-                '[data-testid^="working-list-view-"] button[aria-current="true"]'
+                '[data-testid^="working-list-view-"] button[aria-pressed="true"]'
             )
         ).toHaveCount(0)
         await expect(page.getByTestId('working-list-table')).toBeVisible({
@@ -280,7 +281,7 @@ test.describe('Capture context and generated tracker views', () => {
     }) => {
         await openWorkingList(page)
         const activeView = savedViewButton(page, 'active')
-        await expect(activeView).toHaveAttribute('aria-current', 'true')
+        await expect(activeView).toHaveAttribute('aria-pressed', 'true')
         const statusParameter =
             targetMajor === 41 ? 'programStatus' : 'enrollmentStatus'
 
@@ -291,7 +292,7 @@ test.describe('Capture context and generated tracker views', () => {
             (url) => !url.searchParams.has(statusParameter)
         )
         expect(deselectedQuery.searchParams.get('page')).toBe('1')
-        await expect(activeView).not.toHaveAttribute('aria-current', 'true')
+        await expect(activeView).not.toHaveAttribute('aria-pressed', 'true')
         // Deselection selects the synthetic default template so the
         // preference survives a reload.
         await expect(page).toHaveURL(
@@ -300,11 +301,11 @@ test.describe('Capture context and generated tracker views', () => {
 
         // React Query can satisfy this recently loaded query from cache.
         await activeView.click()
-        await expect(activeView).toHaveAttribute('aria-current', 'true')
+        await expect(activeView).toHaveAttribute('aria-pressed', 'true')
         await expect(page).toHaveURL(/selectedTemplateId=active/)
 
         await activeView.click()
-        await expect(activeView).not.toHaveAttribute('aria-current', 'true')
+        await expect(activeView).not.toHaveAttribute('aria-pressed', 'true')
         await expect(page).toHaveURL(
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
         )
@@ -319,7 +320,7 @@ test.describe('Capture context and generated tracker views', () => {
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
         )
         await expect(savedViewButton(page, 'active')).not.toHaveAttribute(
-            'aria-current',
+            'aria-pressed',
             'true'
         )
     })
@@ -363,20 +364,20 @@ test.describe('Capture context and generated tracker views', () => {
         ).toBeVisible()
 
         await openFilterEditor(page, TEXT_ATTRIBUTE)
-        const operator = page.locator(
+        await selectTrigger(
+            page,
             `[data-test="filter-operator-${TEXT_ATTRIBUTE}"]`
-        )
-        await operator
-            .locator('[data-test="dhis2-uicore-select-input"]')
-            .click()
+        ).click()
+        const isEmpty = page.getByRole('option', {
+            name: 'Is empty',
+            exact: true,
+        })
         if (targetMajor === 41) {
-            await expect(
-                page.getByText('Is empty', { exact: true })
-            ).toHaveCount(0)
+            await expect(isEmpty).toHaveCount(0)
             await page.keyboard.press('Escape')
             return
         }
-        await page.getByText('Is empty', { exact: true }).click()
+        await isEmpty.click()
         await waitForTrackerResponse(
             page,
             'trackedEntities',
@@ -392,7 +393,7 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(resultRows(page)).toHaveCount(1)
 
         await openFilterEditor(page, TEXT_ATTRIBUTE)
-        await chooseDhis2Option(
+        await chooseSelectOption(
             page,
             `[data-test="filter-operator-${TEXT_ATTRIBUTE}"]`,
             'Is not empty'

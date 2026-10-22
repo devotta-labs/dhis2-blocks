@@ -5,6 +5,7 @@ import {
     READER,
     SHARED_LIST,
     expect,
+    menuItem,
     openMoreActions,
     openWorkingList,
     test,
@@ -31,14 +32,11 @@ test.describe('read-only shared-list permissions', () => {
             page.getByTestId(`working-list-view-${SHARED_LIST}-menu`)
         ).toHaveCount(0)
         await uiButton(page, 'save-working-list').click()
-        await expect(
-            page.locator('[data-test="save-as-working-list"]')
-        ).toBeVisible()
-        await expect(
-            page
-                .locator('[data-test="update-working-list"]')
-                .getByRole('menuitem')
-        ).toHaveAttribute('aria-disabled', 'true')
+        await expect(menuItem(page, 'save-as-working-list')).toBeVisible()
+        await expect(menuItem(page, 'update-working-list')).toHaveAttribute(
+            'aria-disabled',
+            'true'
+        )
     })
 })
 
@@ -130,12 +128,10 @@ test.describe('accessibility and keyboard feedback', () => {
         await moreFilters.focus()
         await page.keyboard.press('Enter')
         const firstAvailableFilterItem = page
-            .locator('[data-test^="add-filter-"]')
+            .locator('[role="menuitem"][data-test^="add-filter-"]')
             .first()
-        const firstAvailableFilterAction =
-            firstAvailableFilterItem.getByRole('menuitem')
-        await expect(firstAvailableFilterAction).toBeVisible()
-        await expect(firstAvailableFilterAction).toHaveAccessibleName(/\S+/)
+        await expect(firstAvailableFilterItem).toBeVisible()
+        await expect(firstAvailableFilterItem).toHaveAccessibleName(/\S+/)
         await expect(firstAvailableFilterItem).toBeFocused()
         await expect(
             page.locator('[data-test="dhis2-uicore-popoverarrow"]')
@@ -238,7 +234,7 @@ test.describe('offline feedback', () => {
         ).toBeEnabled()
         await expect(uiButton(page, 'working-list-options')).toBeEnabled()
         const download = await openMoreActions(page)
-        await expect(download.getByRole('menuitem')).toBeEnabled()
+        await expect(download).toBeEnabled()
         await page.keyboard.press('Escape')
         await context.setOffline(false)
         await expect(page.getByTestId('offline-notice')).toHaveCount(0)

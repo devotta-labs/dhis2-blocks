@@ -92,7 +92,6 @@
             "entry": ["server/**/*.test.mjs"],
             "ignoreDependencies": [
                 "@dhis2-blocks/context-selector",
-                "@dhis2-blocks/working-list",
                 "typeface-roboto"
             ],
             "project": [
@@ -116,8 +115,8 @@
                 "type-tests/**/*.ts"
             ],
             "project": [
-                "src/**/*.{ts,tsx}",
-                "test/**/*.ts",
+                "src/**/*.{ts,tsx,css}",
+                "test/**/*.{ts,css}",
                 "type-tests/**/*.ts"
             ],
             "includeEntryExports": true,
@@ -145,7 +144,8 @@
                     "nsTypes",
                     "enumMembers",
                     "namespaceMembers"
-                ]
+                ],
+                "src/ui/primitives/**": ["exports", "types"]
             }
         },
         "packages/blocks/context-selector": {

@@ -1,22 +1,20 @@
-import {
-    DataTable,
-    DataTableBody,
-    DataTableCell,
-    DataTableHead,
-    DataTableRow,
-    Pagination,
-} from '@dhis2/ui'
 import React from 'react'
-import {
-    WORKING_LIST_PAGE_SIZES,
-    type WorkingListDisplayRow,
-    type WorkingListPageSize,
+import type {
+    WorkingListDisplayRow,
+    WorkingListPageSize,
 } from '../../provider/contracts'
+import { cn } from '../primitives/cn'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '../primitives/table'
 import { SkeletonBlock } from '../Skeleton'
 import { useWorkingListText } from '../WorkingListText'
-
-const visuallyHiddenClassName =
-    'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
+import { WorkingListPagination } from './WorkingListPagination'
 
 // Reserve the native scrollbar gutter before the columns are known.
 const tableScrollClassName =
@@ -79,8 +77,30 @@ const isInteractiveTarget = (target: EventTarget | null) =>
         )
     )
 
-const isWorkingListPageSize = (value: number): value is WorkingListPageSize =>
-    WORKING_LIST_PAGE_SIZES.some((pageSize) => pageSize === value)
+/** The sort indicator @dhis2/ui DataTableColumnHeader draws. */
+const SortIndicator = ({ sorted }: { sorted: false | 'asc' | 'desc' }) => (
+    <span
+        aria-hidden="true"
+        data-slot="sort-indicator"
+        data-direction={sorted || 'none'}
+        className="ms-0.5 flex size-6 shrink-0 items-center justify-center rounded-md group-hover/sort:bg-grey-400 group-focus-visible/sort:bg-grey-400 group-disabled/sort:bg-transparent"
+    >
+        <svg viewBox="0 0 16 16" className="size-4">
+            {/* DHIS2 names these "top" and "bottom" by stacking order, not
+                by direction: ascending highlights the down-pointing one. */}
+            <polygon
+                points="4 9 12 9 8 14"
+                className={sorted === 'asc' ? 'fill-blue-700' : 'fill-grey-500'}
+            />
+            <polygon
+                points="4 7 12 7 8 2"
+                className={
+                    sorted === 'desc' ? 'fill-blue-700' : 'fill-grey-500'
+                }
+            />
+        </svg>
+    </span>
+)
 
 const skeletonCellWidths = [
     'w-[46%]',
@@ -103,58 +123,16 @@ const SkeletonRows = ({
     rowCount: number
 }) =>
     Array.from({ length: rowCount }, (_, row) => (
-        <DataTableRow key={row} dataTest="working-list-skeleton-row">
+        <TableRow key={row} data-test="working-list-skeleton-row">
             {Array.from({ length: columnCount }, (_, column) => (
-                <DataTableCell key={column} className="min-w-[140px]">
+                <TableCell key={column} className="min-w-[140px]">
                     <SkeletonBlock
                         className={`h-3.5 rounded-[3px] ${skeletonCellWidth(row, column)}`}
                     />
-                </DataTableCell>
+                </TableCell>
             ))}
-        </DataTableRow>
+        </TableRow>
     ))
-
-const PaginationFooter = ({
-    page,
-    pageSize,
-    pageLength,
-    hasNextPage,
-    disabled,
-    onPageChange,
-    onPageSizeChange,
-}: {
-    page: number
-    pageSize: WorkingListPageSize
-    pageLength: number
-    hasNextPage: boolean
-    disabled: boolean
-    onPageChange: (page: number) => void
-    onPageSizeChange: (pageSize: WorkingListPageSize) => void
-}) => (
-    <div className="flex min-h-14 w-full min-w-0 max-w-full items-center justify-end px-3 py-2 [&_[data-test='dhis2-uicore-select-input']_>_:last-child]:[margin-block-start:0]">
-        <Pagination
-            dataTest="working-list-pagination"
-            page={page}
-            pageSize={pageSize}
-            pageLength={pageLength}
-            pageSizes={WORKING_LIST_PAGE_SIZES.map(String)}
-            isLastPage={!hasNextPage}
-            hidePageSelect
-            hidePageSummary
-            disabled={disabled}
-            onPageChange={onPageChange}
-            onPageSizeChange={(nextPageSize) => {
-                if (!isWorkingListPageSize(nextPageSize)) {
-                    throw new Error(
-                        `Unsupported working-list page size: ${nextPageSize}`
-                    )
-                }
-
-                onPageSizeChange(nextPageSize)
-            }}
-        />
-    </div>
-)
 
 const ignorePaginationChange = () => {}
 
@@ -177,39 +155,40 @@ export const WorkingListTableSkeleton = ({
     >
         <div className={tableScrollClassName}>
             <div className="min-w-[680px]">
-                <DataTable>
-                    <DataTableHead>
-                        <DataTableRow>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
                             {Array.from(
                                 { length: columnCount },
                                 (_, column) => (
-                                    <DataTableCell key={column} tag="th">
+                                    <TableHead key={column}>
                                         <SkeletonBlock
                                             className={`h-3 rounded-[3px] ${column % 2 === 0 ? 'w-24' : 'w-20'}`}
                                         />
-                                    </DataTableCell>
+                                    </TableHead>
                                 )
                             )}
-                        </DataTableRow>
-                    </DataTableHead>
-                    <DataTableBody>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         <SkeletonRows
                             columnCount={columnCount}
                             rowCount={pageSize}
                         />
-                    </DataTableBody>
-                </DataTable>
+                    </TableBody>
+                </Table>
             </div>
         </div>
-        <PaginationFooter
-            page={1}
-            pageSize={pageSize}
-            pageLength={0}
-            hasNextPage={false}
-            disabled
-            onPageChange={ignorePaginationChange}
-            onPageSizeChange={ignorePaginationChange}
-        />
+        <div className="flex min-h-14 w-full min-w-0 max-w-full items-center px-3 py-2">
+            <WorkingListPagination
+                page={1}
+                pageSize={pageSize}
+                hasNextPage={false}
+                disabled
+                onPageChange={ignorePaginationChange}
+                onPageSizeChange={ignorePaginationChange}
+            />
+        </div>
     </div>
 )
 
@@ -242,30 +221,27 @@ export const WorkingListTableView = ({
                 data-testid="working-list-table-scroll"
             >
                 <div className="min-w-[680px]" data-testid="working-list-table">
-                    <DataTable dataTest="working-list-data-table">
-                        <DataTableHead>
+                    <Table data-test="working-list-data-table">
+                        <TableHeader>
                             {model.headerGroups.map((group) => (
-                                <DataTableRow key={group.id}>
+                                <TableRow key={group.id}>
                                     {group.headers.map((header) => {
                                         if (header.isDataQuality) {
                                             return (
-                                                <DataTableCell
+                                                <TableHead
                                                     key={header.id}
-                                                    tag="th"
                                                     scope="col"
-                                                    align="center"
-                                                    className="w-px min-w-0 whitespace-nowrap"
+                                                    className="w-px min-w-0 text-center whitespace-nowrap"
                                                 >
                                                     {header.content}
-                                                </DataTableCell>
+                                                </TableHead>
                                             )
                                         }
                                         return (
-                                            <DataTableCell
+                                            <TableHead
                                                 key={header.id}
-                                                tag="th"
                                                 scope="col"
-                                                className="whitespace-nowrap"
+                                                className="py-1.5 whitespace-nowrap"
                                                 aria-sort={
                                                     header.sorted === 'asc'
                                                         ? 'ascending'
@@ -277,7 +253,7 @@ export const WorkingListTableView = ({
                                             >
                                                 <button
                                                     type="button"
-                                                    className="flex w-full cursor-pointer items-center justify-between gap-2.5 border-0 bg-transparent text-left text-[inherit] [font-weight:inherit] disabled:cursor-default focus-visible:[outline:3px_solid_rgb(20_124_215_/_35%)] focus-visible:outline-offset-2"
+                                                    className="group/sort flex min-h-6 w-full cursor-pointer items-center border-0 bg-transparent p-0 text-left text-[inherit] [font-weight:inherit] outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring/35 disabled:cursor-default"
                                                     data-testid={`sort-${header.fieldId}`}
                                                     disabled={
                                                         !header.canSort ||
@@ -288,27 +264,17 @@ export const WorkingListTableView = ({
                                                     }
                                                 >
                                                     {header.content}
-                                                    <span
-                                                        aria-hidden="true"
-                                                        className="text-[var(--colors-grey600)]"
-                                                    >
-                                                        {header.sorted === 'asc'
-                                                            ? '↑'
-                                                            : header.sorted ===
-                                                                'desc'
-                                                              ? '↓'
-                                                              : '↕'}
-                                                    </span>
+                                                    <SortIndicator
+                                                        sorted={header.sorted}
+                                                    />
                                                 </button>
-                                            </DataTableCell>
+                                            </TableHead>
                                         )
                                     })}
-                                </DataTableRow>
+                                </TableRow>
                             ))}
-                        </DataTableHead>
-                        <DataTableBody
-                            aria-busy={isInitialLoading || isUpdating}
-                        >
+                        </TableHeader>
+                        <TableBody aria-busy={isInitialLoading || isUpdating}>
                             {isInitialLoading && (
                                 <SkeletonRows
                                     columnCount={
@@ -319,14 +285,13 @@ export const WorkingListTableView = ({
                                 />
                             )}
                             {!isInitialLoading && model.rows.length === 0 && (
-                                <DataTableRow>
-                                    <DataTableCell
-                                        colSpan={String(
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={
                                             Math.max(visibleColumnCount, 1) +
-                                                (showIssuesColumn ? 1 : 0)
-                                        )}
-                                        align="center"
-                                        className="min-w-[140px] py-10!"
+                                            (showIssuesColumn ? 1 : 0)
+                                        }
+                                        className="min-w-[140px] py-10 text-center"
                                     >
                                         <strong className="mb-1 block font-medium">
                                             {i18n.t('No items to display')}
@@ -336,8 +301,8 @@ export const WorkingListTableView = ({
                                                 'Try adjusting the filters or organisation unit.'
                                             )}
                                         </span>
-                                    </DataTableCell>
-                                </DataTableRow>
+                                    </TableCell>
+                                </TableRow>
                             )}
                             {model.rows.map((row) => {
                                 const highlightIssues =
@@ -354,38 +319,34 @@ export const WorkingListTableView = ({
                                     }
                                 }
                                 return (
-                                    <DataTableRow
+                                    <TableRow
                                         key={row.id}
                                         className={
                                             interactive
                                                 ? 'cursor-pointer'
                                                 : undefined
                                         }
-                                        dataTest={`working-list-row-${row.id}`}
+                                        data-test={`working-list-row-${row.id}`}
                                         data-testid={`working-list-row-${row.id}`}
                                         data-invalid={
                                             highlightIssues ? 'true' : undefined
                                         }
                                     >
                                         {row.cells.map((cell, index) => (
-                                            <DataTableCell
+                                            <TableCell
                                                 key={cell.id}
-                                                align={
+                                                className={cn(
                                                     cell.isDataQuality
-                                                        ? 'center'
-                                                        : 'left'
-                                                }
-                                                backgroundColor={
-                                                    highlightIssues
-                                                        ? 'var(--colors-red050)'
-                                                        : undefined
-                                                }
-                                                className={
-                                                    cell.isDataQuality
-                                                        ? 'w-px min-w-0 whitespace-nowrap'
-                                                        : 'min-w-[140px]'
-                                                }
-                                                dataTest={
+                                                        ? 'w-px min-w-0 text-center whitespace-nowrap'
+                                                        : 'min-w-[140px]',
+                                                    // A fixed background
+                                                    // turns off the hover and
+                                                    // press states, as in
+                                                    // DataTable.
+                                                    highlightIssues &&
+                                                        'bg-red-050 group-hover/table-row:bg-red-050 group-active/table-row:bg-red-050'
+                                                )}
+                                                data-test={
                                                     cell.isDataQuality
                                                         ? `working-list-issues-cell-${row.id}`
                                                         : undefined
@@ -404,9 +365,7 @@ export const WorkingListTableView = ({
                                                 {index === 0 && interactive && (
                                                     <button
                                                         type="button"
-                                                        className={
-                                                            visuallyHiddenClassName
-                                                        }
+                                                        className="sr-only"
                                                         data-testid={`row-open-${row.id}`}
                                                         onClick={() =>
                                                             openRow(
@@ -425,24 +384,25 @@ export const WorkingListTableView = ({
                                                     </button>
                                                 )}
                                                 {cell.content}
-                                            </DataTableCell>
+                                            </TableCell>
                                         ))}
-                                    </DataTableRow>
+                                    </TableRow>
                                 )
                             })}
-                        </DataTableBody>
-                    </DataTable>
+                        </TableBody>
+                    </Table>
                 </div>
             </div>
-            <PaginationFooter
-                page={page}
-                pageSize={pageSize}
-                pageLength={model.rows.length}
-                hasNextPage={hasNextPage}
-                disabled={isInitialLoading}
-                onPageChange={onPageChange}
-                onPageSizeChange={onPageSizeChange}
-            />
+            <div className="flex min-h-14 w-full min-w-0 max-w-full items-center px-3 py-2">
+                <WorkingListPagination
+                    page={page}
+                    pageSize={pageSize}
+                    hasNextPage={hasNextPage}
+                    disabled={isInitialLoading}
+                    onPageChange={onPageChange}
+                    onPageSizeChange={onPageSizeChange}
+                />
+            </div>
         </div>
     )
 }

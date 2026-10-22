@@ -29,6 +29,7 @@ test('combobox depends on its siblings and the theme', () => {
     expect(combobox.dependencies).toEqual([
         '@base-ui/react@^1.9.0',
         '@dhis2/ui-icons@^10.17.0',
+        'prop-types@^15.8.1',
     ])
 })
 
@@ -67,12 +68,24 @@ test('subpath imports collapse to their package and react is left to the host', 
         '@base-ui/react@^1.9.0',
         '@dhis2/ui-icons@^10.17.0',
         'class-variance-authority@^0.7.1',
+        'prop-types@^15.8.1',
     ])
     for (const { dependencies = [] } of manifest().items) {
         for (const dependency of dependencies) {
             expect(dependency).not.toMatch(/^react(-dom)?@/)
             expect(dependency).toMatch(/^(?:@[^/@]+\/)?[^/@]+@/)
         }
+    }
+})
+
+test('only icon consumers install the undeclared ui-icons runtime dependency', () => {
+    const { items } = buildUiRegistry(UI_DIR)
+    for (const { dependencies = [] } of items) {
+        expect(dependencies.includes('prop-types@^15.8.1')).toBe(
+            dependencies.some((dependency: string) =>
+                dependency.startsWith('@dhis2/ui-icons@')
+            )
+        )
     }
 })
 

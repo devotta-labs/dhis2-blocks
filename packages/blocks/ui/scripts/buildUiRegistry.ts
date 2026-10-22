@@ -75,6 +75,11 @@ const buildItem = (
         }
         return `${dependency}@${version}`
     })
+    if (external.has('@dhis2/ui-icons')) {
+        // ui-icons imports prop-types without declaring it in its package metadata.
+        dependencies.push('prop-types@^15.8.1')
+        dependencies.sort()
+    }
     return {
         name,
         type: 'registry:ui',

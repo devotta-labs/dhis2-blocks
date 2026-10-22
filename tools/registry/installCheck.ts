@@ -209,7 +209,38 @@ const checkInstall = async (workDirectory: string): Promise<void> => {
         const origin = `http://127.0.0.1:${port}`
         console.log(`Serving ${registryOutput} on ${origin}`)
 
-        step('3. Install the items into a throwaway consumer app')
+        step('3. Install standalone UI items without block dependencies')
+        const uiAppDirectory = join(workDirectory, 'ui-app')
+        cpSync(CONSUMER_TEMPLATE, uiAppDirectory, { recursive: true })
+        cpSync(
+            join(CONSUMER_TEMPLATE, 'standalone.tsx'),
+            join(uiAppDirectory, 'src', 'main.tsx')
+        )
+        await run('pnpm', ['install', '--no-frozen-lockfile'], uiAppDirectory)
+        await run(
+            'pnpm',
+            [
+                'dlx',
+                SHADCN,
+                'add',
+                ...[
+                    'button',
+                    'card',
+                    'checkbox',
+                    'dialog',
+                    'dropdown-menu',
+                    'radio-group',
+                    'switch',
+                    'toggle',
+                ].map((name) => `${origin}/${name}.json`),
+                '-y',
+            ],
+            uiAppDirectory
+        )
+        await run('pnpm', ['exec', 'tsc', '--noEmit'], uiAppDirectory)
+        await run('pnpm', ['exec', 'vite', 'build'], uiAppDirectory)
+
+        step('3. Install the blocks into a throwaway consumer app')
         cpSync(CONSUMER_TEMPLATE, appDirectory, { recursive: true })
         await run('pnpm', ['install', '--no-frozen-lockfile'], appDirectory)
         await run(

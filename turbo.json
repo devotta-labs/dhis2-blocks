@@ -1,12 +1,30 @@
 {
     "$schema": "https://turborepo.dev/schema.json",
     "cacheDir": ".turbo/cache",
+    "globalDependencies": [
+        "tsconfig*.json",
+        "pnpm-workspace.yaml",
+        "patches/**"
+    ],
+    "globalEnv": ["CI"],
     "tasks": {
+        "transit": {
+            "dependsOn": ["^transit"]
+        },
         "build": {
+            "dependsOn": ["^transit"],
+            "env": [
+                "NODE_ENV",
+                "PUBLIC_URL",
+                "DHIS2_BASE_URL",
+                "REACT_APP_*",
+                "VITE_*",
+                "DOCS_*"
+            ],
             "outputs": ["build/**", "dist/**", ".d2/**", "src/locales/**"]
         },
         "test": {
-            "dependsOn": ["^test"],
+            "dependsOn": ["^transit"],
             "inputs": [
                 "$TURBO_DEFAULT$",
                 "$TURBO_ROOT$/tools/registry/manifest.ts"
@@ -14,7 +32,7 @@
             "outputs": []
         },
         "typecheck": {
-            "dependsOn": ["^typecheck"],
+            "dependsOn": ["^transit"],
             "inputs": [
                 "$TURBO_DEFAULT$",
                 "$TURBO_ROOT$/tools/registry/manifest.ts"

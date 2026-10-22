@@ -1,0 +1,35 @@
+shared: &shared
+    - '.github/**'
+    - 'package.json'
+    - 'pnpm-lock.yaml'
+    - 'pnpm-workspace.yaml'
+    - 'patches/**'
+    - 'turbo.json'
+    - 'tsconfig*.json'
+
+web: &web
+    - *shared
+    - 'apps/web/**'
+    - 'packages/**'
+
+docs:
+    - *shared
+    - 'apps/docs/**'
+    - 'packages/**'
+    - 'api/**'
+    - 'vercel.json'
+
+quality:
+    - *shared
+    - 'apps/**'
+    - 'packages/**'
+    - 'e2e/**'
+    - 'tools/**'
+    - '*.{json,js,mjs,cjs,ts,mts,cts}'
+
+e2e:
+    - *web
+    - 'e2e/**'
+    - 'scripts/e2e/**'
+    - 'docker/e2e/**'
+    - 'playwright.config.ts'

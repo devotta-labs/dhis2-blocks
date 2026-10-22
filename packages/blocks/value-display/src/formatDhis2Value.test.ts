@@ -28,6 +28,14 @@ describe('formatDhis2Value', () => {
         expect(formatDhis2Value(value, { valueType }, opts)).toBe(expected)
     )
 
+    it('keeps every stored decimal', () => {
+        expect(formatDhis2Value('3.14159', { valueType: 'NUMBER' }, opts)).toBe(
+            '3.14159'
+        )
+        expect(
+            formatDhis2Value('12.345678', { valueType: 'PERCENTAGE' }, opts)
+        ).toBe('12.345678%')
+    })
     it('maps an option code to its name', () =>
         expect(
             formatDhis2Value('POS', { valueType: 'TEXT', optionSet }, opts)

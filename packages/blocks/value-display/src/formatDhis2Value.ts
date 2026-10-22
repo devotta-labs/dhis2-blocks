@@ -22,7 +22,9 @@ const formatNumber = (value: string, locale?: string): string => {
     const number = Number(value)
     return value.trim() === '' || Number.isNaN(number)
         ? value
-        : new Intl.NumberFormat(locale).format(number)
+        : new Intl.NumberFormat(locale, { maximumFractionDigits: 20 }).format(
+              number
+          )
 }
 
 const formatCoordinate = (value: string): string => {

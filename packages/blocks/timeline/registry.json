@@ -6,10 +6,7 @@
             "type": "registry:block",
             "title": "DHIS2 Timeline",
             "description": "Read-only React 18 timeline that merges paged sources into one feed grouped by day, with a now marker, overdue group, load more and per-source notices. Composed from a provider and flat parts.",
-            "dependencies": [
-                "@dhis2/d2-i18n@1.2.0",
-                "better-result@^3.0.1"
-            ],
+            "dependencies": ["@dhis2/d2-i18n@1.2.0", "better-result@^3.0.1"],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/alert",
                 "devotta-labs/dhis2-blocks/button",
@@ -86,6 +83,129 @@
                 }
             ],
             "docs": "Render <Timeline sources calendar> and compose TimelineFeed, TimelineLoading, TimelineEmpty, TimelineError, TimelineSourceNotices and TimelineLoadMore inside it. Pass the system calendar from useConfig().systemInfo.calendar. Build sources with staticTimelineSource or your own TimelineSource."
+        },
+        {
+            "name": "timeline-dhis2",
+            "type": "registry:block",
+            "title": "DHIS2 Timeline Sources and Entries",
+            "description": "DHIS2 tracker data layer for the timeline: event, enrollment milestone, note and changelog sources, program metadata provider, and event, change, note and milestone entry parts. Installs beside the timeline item.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/badge",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/timeline"
+            ],
+            "files": [
+                {
+                    "path": "src/dhis2/TimelineDhis2Provider.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/TimelineDhis2Provider.tsx"
+                },
+                {
+                    "path": "src/dhis2/changelog.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/changelog.ts"
+                },
+                {
+                    "path": "src/dhis2/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/client.ts"
+                },
+                {
+                    "path": "src/dhis2/entries/TimelineChangeEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/entries/TimelineChangeEntry.tsx"
+                },
+                {
+                    "path": "src/dhis2/entries/TimelineEventEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/entries/TimelineEventEntry.tsx"
+                },
+                {
+                    "path": "src/dhis2/entries/TimelineMilestoneEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/entries/TimelineMilestoneEntry.tsx"
+                },
+                {
+                    "path": "src/dhis2/entries/TimelineNoteEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/entries/TimelineNoteEntry.tsx"
+                },
+                {
+                    "path": "src/dhis2/eventStatus.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/eventStatus.ts"
+                },
+                {
+                    "path": "src/dhis2/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/index.ts"
+                },
+                {
+                    "path": "src/dhis2/queries.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/queries.ts"
+                },
+                {
+                    "path": "src/dhis2/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/schemas.ts"
+                },
+                {
+                    "path": "src/dhis2/timelineKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/timelineKeys.ts"
+                },
+                {
+                    "path": "src/dhis2/toEventEntry.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/toEventEntry.ts"
+                },
+                {
+                    "path": "src/dhis2/useEnrollmentSources.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/useEnrollmentSources.ts"
+                },
+                {
+                    "path": "src/dhis2/useEventChangelog.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/useEventChangelog.ts"
+                },
+                {
+                    "path": "src/dhis2/useQueryRevision.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/useQueryRevision.ts"
+                },
+                {
+                    "path": "src/dhis2/useSystemCalendar.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/useSystemCalendar.ts"
+                },
+                {
+                    "path": "src/dhis2/useTimelineClient.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/useTimelineClient.ts"
+                },
+                {
+                    "path": "src/dhis2/useTrackedEntityAttributeChangelogSource.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/useTrackedEntityAttributeChangelogSource.ts"
+                },
+                {
+                    "path": "src/dhis2/useTrackedEntityEventsSource.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/useTrackedEntityEventsSource.ts"
+                }
+            ],
+            "docs": "Place TimelineDhis2Provider program=... inside Timeline, build sources with useTrackedEntityEventsSource, useEnrollmentMilestonesSource, useEnrollmentNotesSource and useTrackedEntityAttributeChangelogSource, and pick TimelineEventEntry, TimelineChangeEntry, TimelineNoteEntry or TimelineMilestoneEntry per sourceKey in TimelineFeed. Import from the installed timeline/dhis2 folder."
         }
     ]
 }

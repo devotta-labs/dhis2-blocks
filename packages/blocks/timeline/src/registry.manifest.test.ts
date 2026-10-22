@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 import { registryItemSchema } from 'shadcn/schema'
 import {
     HOST_PACKAGES,
@@ -17,22 +17,25 @@ const isValueDisplay = (specifier: string) =>
     specifier === VALUE_DISPLAY || specifier.startsWith(`${VALUE_DISPLAY}/`)
 const THEME_ITEM = `${ADDRESS_PREFIX}dhis2-theme`
 const VALUE_DISPLAY_ITEM = `${ADDRESS_PREFIX}dhis2-value-display`
-const ITEM = 'timeline'
-const TARGET_PREFIX = '@components/timeline/'
+const TIMELINE_ITEM = `${ADDRESS_PREFIX}timeline`
 // Test-only data and helpers.
 const FIXTURES = '/__fixtures__/'
-// The DHIS2 data layer ships in its own `timeline-dhis2` item, not this one.
+const SCREENSHOTS = '/__screenshots__/'
+// The DHIS2 data layer ships in its own `timeline-dhis2` item, which installs
+// beside `timeline` and imports its core and ui files.
 const DHIS2_DIR = 'src/dhis2/'
 
 const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'))
 
-const item = () => {
-    const items = registryItemSchema
+const items = () =>
+    registryItemSchema
         .array()
         .parse(readJson(join(PACKAGE_DIR, 'registry.json')).items)
-    const found = items.find((candidate) => candidate.name === ITEM)
+
+const itemNamed = (name: string) => {
+    const found = items().find((candidate) => candidate.name === name)
     if (found === undefined) {
-        throw new Error(`registry.json has no ${ITEM} item`)
+        throw new Error(`registry.json has no ${name} item`)
     }
     return {
         ...found,
@@ -55,76 +58,133 @@ const nonTestSourceFiles = (): string[] =>
             (file) =>
                 !/\.test\.tsx?$/.test(file) &&
                 !file.includes(FIXTURES) &&
-                !file.startsWith(DHIS2_DIR)
+                !file.includes(SCREENSHOTS)
         )
 
-const itemPaths = (): string[] => item().files.map((file) => file.path).sort()
+interface Subject {
+    name: string
+    targetPrefix: string
+    /** The non-test source files the item must ship. */
+    owns: (file: string) => boolean
+    /** Items it depends on besides the shared primitives it imports. */
+    requires: string[]
+}
 
-const specifiers = (): string[] =>
-    itemPaths().flatMap((file) =>
-        importedSpecifiers(readFileSync(join(PACKAGE_DIR, file), 'utf8'))
-    )
+const subjects: Subject[] = [
+    {
+        name: 'timeline',
+        targetPrefix: '@components/timeline/',
+        owns: (file) => !file.startsWith(DHIS2_DIR),
+        requires: [THEME_ITEM, VALUE_DISPLAY_ITEM],
+    },
+    {
+        name: 'timeline-dhis2',
+        targetPrefix: '@components/timeline/',
+        owns: (file) => file.startsWith(DHIS2_DIR),
+        requires: [TIMELINE_ITEM, VALUE_DISPLAY_ITEM],
+    },
+]
 
-test('every non-test source file is shipped by the item', () => {
-    expect(itemPaths()).toEqual(nonTestSourceFiles().sort())
-})
+describe.each(subjects)('registry item $name', (subject) => {
+    const item = () => itemNamed(subject.name)
+    const itemPaths = (): string[] =>
+        item()
+            .files.map((file) => file.path)
+            .sort()
+    const specifiers = (): string[] =>
+        itemPaths().flatMap((file) =>
+            importedSpecifiers(readFileSync(join(PACKAGE_DIR, file), 'utf8'))
+        )
 
-test('the item installs into one directory, mirroring src', () => {
-    expect(item().type).toBe('registry:block')
-    for (const file of item().files) {
-        expect(file).toEqual({
-            path: file.path,
-            type: 'registry:file',
-            target: file.path.replace(/^src\//, TARGET_PREFIX),
-        })
-    }
-})
-
-test('the item depends on the theme, value display and every shared primitive it imports', () => {
-    const imported = specifiers()
-        .filter((specifier) => specifier.startsWith(SHARED_UI_PREFIX))
-        .map((specifier) => ADDRESS_PREFIX + specifier.split('/').pop())
-    expect(imported.length).toBeGreaterThan(0)
-    expect(
-        specifiers().some(isValueDisplay)
-    ).toBe(true)
-    expect(item().registryDependencies).toEqual(
-        [...new Set([...imported, THEME_ITEM, VALUE_DISPLAY_ITEM])].sort()
-    )
-})
-
-test('imports nothing from another block', () => {
-    const foreign = specifiers().filter(
-        (specifier) =>
-            specifier.startsWith('@/') &&
-            !specifier.startsWith(SHARED_UI_PREFIX) &&
-            !isValueDisplay(specifier)
-    )
-    expect(foreign).toEqual([])
-})
-
-test('dependencies are exactly the packages the item imports', () => {
-    const versions = {
-        ...readJson(join(PACKAGE_DIR, '..', 'ui', 'package.json')).dependencies,
-        ...readJson(join(PACKAGE_DIR, 'package.json')).dependencies,
-    }
-    const external = new Set(
-        specifiers()
-            .filter(
-                (specifier) =>
-                    !isRelative(specifier) &&
-                    !specifier.startsWith('@/') &&
-                    !HOST_PACKAGES.has(packageName(specifier))
-            )
-            .map(packageName)
-    )
-    const expected = [...external].map((dependency) => {
-        expect(versions[dependency]).toBeDefined()
-        return `${dependency}@${versions[dependency]}`
+    test('every non-test source file is shipped by the item', () => {
+        expect(itemPaths()).toEqual(
+            nonTestSourceFiles().filter(subject.owns).sort()
+        )
     })
-    expect([...item().dependencies].sort()).toEqual(expected.sort())
+
+    test('the item installs into one directory, mirroring src', () => {
+        expect(item().type).toBe('registry:block')
+        for (const file of item().files) {
+            expect(file).toEqual({
+                path: file.path,
+                type: 'registry:file',
+                target: file.path.replace(/^src\//, subject.targetPrefix),
+            })
+        }
+    })
+
+    test('the item depends on its items and every shared primitive it imports', () => {
+        const imported = specifiers()
+            .filter((specifier) => specifier.startsWith(SHARED_UI_PREFIX))
+            .map((specifier) => ADDRESS_PREFIX + specifier.split('/').pop())
+        expect(imported.length).toBeGreaterThan(0)
+        expect(specifiers().some(isValueDisplay)).toBe(true)
+        expect(item().registryDependencies).toEqual(
+            [...new Set([...imported, ...subject.requires])].sort()
+        )
+    })
+
+    test('imports nothing from another block', () => {
+        const foreign = specifiers().filter(
+            (specifier) =>
+                specifier.startsWith('@/') &&
+                !specifier.startsWith(SHARED_UI_PREFIX) &&
+                !isValueDisplay(specifier)
+        )
+        expect(foreign).toEqual([])
+    })
+
+    test('every relative import lands on a file the timeline items ship', () => {
+        const shipped = new Set(
+            subjects.flatMap(({ name }) =>
+                itemNamed(name).files.map((file) => file.path)
+            )
+        )
+        const missing = itemPaths().flatMap((file) =>
+            importedSpecifiers(readFileSync(join(PACKAGE_DIR, file), 'utf8'))
+                .filter(isRelative)
+                .filter((specifier) => {
+                    const target = join(dirname(file), specifier)
+                    return !['.ts', '.tsx', '/index.ts', '/index.tsx'].some(
+                        (extension) => shipped.has(target + extension)
+                    )
+                })
+                .map((specifier) => `${file} -> ${specifier}`)
+        )
+        expect(missing).toEqual([])
+    })
+
+    test('dependencies are exactly the packages the item imports', () => {
+        const versions = {
+            ...readJson(join(PACKAGE_DIR, '..', 'ui', 'package.json'))
+                .dependencies,
+            ...readJson(join(PACKAGE_DIR, 'package.json')).dependencies,
+        }
+        const external = new Set(
+            specifiers()
+                .filter(
+                    (specifier) =>
+                        !isRelative(specifier) &&
+                        !specifier.startsWith('@/') &&
+                        !HOST_PACKAGES.has(packageName(specifier))
+                )
+                .map(packageName)
+        )
+        const expected = [...external].map((dependency) => {
+            expect(versions[dependency]).toBeDefined()
+            return `${dependency}@${versions[dependency]}`
+        })
+        expect([...item().dependencies].sort()).toEqual(expected.sort())
+    })
+
+    test('the item ships no theme of its own', () => {
+        expect(item().cssVars).toBeUndefined()
+    })
 })
 
-test('the item ships no theme of its own', () => {
-    expect(item().cssVars).toBeUndefined()
+test('the two items together ship every non-test source file once', () => {
+    const shipped = subjects.flatMap(({ name }) =>
+        itemNamed(name).files.map((file) => file.path)
+    )
+    expect(shipped.sort()).toEqual(nonTestSourceFiles().sort())
 })

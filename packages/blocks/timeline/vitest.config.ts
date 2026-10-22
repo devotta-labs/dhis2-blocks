@@ -40,6 +40,8 @@ export default defineConfig({
                 optimizeDeps: {
                     include: [
                         '@dhis2-blocks/ui > @base-ui/react/button',
+                        '@dhis2-blocks/ui > @base-ui/react/merge-props',
+                        '@dhis2-blocks/ui > @base-ui/react/use-render',
                         '@dhis2-blocks/ui > @dhis2/ui-icons',
                         '@dhis2-blocks/ui > class-variance-authority',
                         '@dhis2-blocks/ui > clsx',

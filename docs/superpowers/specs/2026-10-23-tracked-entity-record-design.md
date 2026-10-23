@@ -209,8 +209,10 @@ no visible enrollment:
 
 An owner in scope with nothing visible happens when the person's enrollments were deleted (the owner row stays), so
 the person can be enrolled again. Capture's extra PROTECTED branch (owner in search scope → break the glass) is
-`unavailable` here: break the glass is out of scope (§3). A superuser's scopes are irrelevant: the server returns
-everything, so they never reach this check with a hidden enrollment.
+`unavailable` here: break the glass is out of scope (§3). A superuser sees every enrollment, so they reach this check
+only when the person's enrollments in the program were deleted (the owner row stays). The rule then applies to the
+superuser's own scopes like anyone's: an owner outside them is `unavailable`, failing closed, even though the person
+could be enrolled again.
 
 This is the one access distinction the block keeps, because getting it wrong either creates duplicate enrollments or
 locks a person out of a program for good. The scope lookups run only when some program reaches case 2.

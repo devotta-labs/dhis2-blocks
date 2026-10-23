@@ -1,0 +1,299 @@
+{
+    "programs": [
+        {
+            "access": {
+                "data": {
+                    "read": true,
+                    "write": true
+                }
+            },
+            "accessLevel": "OPEN",
+            "completeEventsExpiryDays": 0,
+            "displayIncidentDate": true,
+            "displayName": "TER E2E enroll-once program",
+            "expiryDays": 0,
+            "id": "TrE2ePrg002",
+            "onlyEnrollOnce": true,
+            "programStages": [
+                {
+                    "access": {
+                        "data": {
+                            "read": true,
+                            "write": true
+                        }
+                    },
+                    "allowGenerateNextVisit": false,
+                    "autoGenerateEvent": true,
+                    "blockEntryForm": false,
+                    "displayName": "TER E2E enroll-once stage",
+                    "generatedByEnrollmentDate": false,
+                    "hideDueDate": false,
+                    "id": "TrE2eStg003",
+                    "minDaysFromStart": 0,
+                    "openAfterEnrollment": false,
+                    "programStageDataElements": [
+                        {
+                            "dataElement": {
+                                "displayFormName": "Temperature",
+                                "displayName": "TER E2E temperature",
+                                "id": "TrE2eDe0001",
+                                "valueType": "NUMBER"
+                            },
+                            "displayInReports": true,
+                            "sortOrder": 1
+                        }
+                    ],
+                    "repeatable": false,
+                    "sortOrder": 1
+                }
+            ],
+            "programTrackedEntityAttributes": [
+                {
+                    "displayInList": true,
+                    "mandatory": false,
+                    "sortOrder": 1,
+                    "trackedEntityAttribute": {
+                        "displayFormName": "First name",
+                        "displayName": "TER E2E first name",
+                        "displayShortName": "TER first name",
+                        "id": "TrE2eAtt001",
+                        "unique": false,
+                        "valueType": "TEXT"
+                    }
+                }
+            ],
+            "programType": "WITH_REGISTRATION",
+            "selectEnrollmentDatesInFuture": false,
+            "selectIncidentDatesInFuture": false,
+            "trackedEntityType": {
+                "id": "TrE2eTet001"
+            }
+        },
+        {
+            "access": {
+                "data": {
+                    "read": true,
+                    "write": true
+                }
+            },
+            "accessLevel": "OPEN",
+            "completeEventsExpiryDays": 0,
+            "displayEnrollmentDateLabel": "Date of registration",
+            "displayIncidentDate": true,
+            "displayIncidentDateLabel": "Date of first symptom",
+            "displayName": "TER E2E open program",
+            "enrollmentDateLabel": "Date of registration",
+            "expiryDays": 0,
+            "id": "TrE2ePrg001",
+            "incidentDateLabel": "Date of first symptom",
+            "onlyEnrollOnce": false,
+            "programStages": [
+                {
+                    "access": {
+                        "data": {
+                            "read": true,
+                            "write": true
+                        }
+                    },
+                    "allowGenerateNextVisit": false,
+                    "autoGenerateEvent": true,
+                    "blockEntryForm": false,
+                    "displayDueDateLabel": "Due date",
+                    "displayExecutionDateLabel": "Visit date",
+                    "displayName": "TER E2E visit",
+                    "dueDateLabel": "Due date",
+                    "executionDateLabel": "Visit date",
+                    "generatedByEnrollmentDate": false,
+                    "hideDueDate": false,
+                    "id": "TrE2eStg001",
+                    "minDaysFromStart": 0,
+                    "openAfterEnrollment": false,
+                    "programStageDataElements": [
+                        {
+                            "dataElement": {
+                                "displayFormName": "Temperature",
+                                "displayName": "TER E2E temperature",
+                                "id": "TrE2eDe0001",
+                                "valueType": "NUMBER"
+                            },
+                            "displayInReports": true,
+                            "sortOrder": 1
+                        },
+                        {
+                            "dataElement": {
+                                "displayFormName": "TER E2E severity",
+                                "displayName": "TER E2E severity",
+                                "id": "TrE2eDe0002",
+                                "optionSet": {
+                                    "id": "TrE2eOpt001",
+                                    "options": [
+                                        {
+                                            "code": "MILD",
+                                            "displayName": "Mild"
+                                        },
+                                        {
+                                            "code": "SEVERE",
+                                            "displayName": "Severe"
+                                        }
+                                    ]
+                                },
+                                "valueType": "TEXT"
+                            },
+                            "displayInReports": false,
+                            "sortOrder": 2
+                        }
+                    ],
+                    "repeatable": true,
+                    "sortOrder": 1
+                },
+                {
+                    "access": {
+                        "data": {
+                            "read": false,
+                            "write": false
+                        }
+                    },
+                    "allowGenerateNextVisit": false,
+                    "autoGenerateEvent": true,
+                    "blockEntryForm": false,
+                    "displayName": "TER E2E restricted stage",
+                    "generatedByEnrollmentDate": false,
+                    "hideDueDate": false,
+                    "id": "TrE2eStg002",
+                    "minDaysFromStart": 0,
+                    "openAfterEnrollment": false,
+                    "programStageDataElements": [
+                        {
+                            "dataElement": {
+                                "displayFormName": "TER E2E severity",
+                                "displayName": "TER E2E severity",
+                                "id": "TrE2eDe0002",
+                                "optionSet": {
+                                    "id": "TrE2eOpt001",
+                                    "options": [
+                                        {
+                                            "code": "MILD",
+                                            "displayName": "Mild"
+                                        },
+                                        {
+                                            "code": "SEVERE",
+                                            "displayName": "Severe"
+                                        }
+                                    ]
+                                },
+                                "valueType": "TEXT"
+                            },
+                            "displayInReports": true,
+                            "sortOrder": 1
+                        }
+                    ],
+                    "repeatable": false,
+                    "sortOrder": 2
+                }
+            ],
+            "programTrackedEntityAttributes": [
+                {
+                    "displayInList": true,
+                    "mandatory": false,
+                    "sortOrder": 1,
+                    "trackedEntityAttribute": {
+                        "displayFormName": "First name",
+                        "displayName": "TER E2E first name",
+                        "displayShortName": "TER first name",
+                        "id": "TrE2eAtt001",
+                        "unique": false,
+                        "valueType": "TEXT"
+                    }
+                },
+                {
+                    "displayInList": true,
+                    "mandatory": false,
+                    "sortOrder": 2,
+                    "trackedEntityAttribute": {
+                        "displayFormName": "TER E2E program id",
+                        "displayName": "TER E2E program id",
+                        "displayShortName": "TER program id",
+                        "id": "TrE2eAtt002",
+                        "unique": false,
+                        "valueType": "TEXT"
+                    }
+                }
+            ],
+            "programType": "WITH_REGISTRATION",
+            "selectEnrollmentDatesInFuture": false,
+            "selectIncidentDatesInFuture": false,
+            "trackedEntityType": {
+                "id": "TrE2eTet001"
+            }
+        },
+        {
+            "access": {
+                "data": {
+                    "read": true,
+                    "write": true
+                }
+            },
+            "accessLevel": "PROTECTED",
+            "completeEventsExpiryDays": 0,
+            "displayIncidentDate": true,
+            "displayName": "TER E2E protected program",
+            "expiryDays": 0,
+            "id": "TrE2ePrg003",
+            "onlyEnrollOnce": false,
+            "programStages": [
+                {
+                    "access": {
+                        "data": {
+                            "read": true,
+                            "write": true
+                        }
+                    },
+                    "allowGenerateNextVisit": false,
+                    "autoGenerateEvent": true,
+                    "blockEntryForm": false,
+                    "displayName": "TER E2E protected stage",
+                    "generatedByEnrollmentDate": false,
+                    "hideDueDate": false,
+                    "id": "TrE2eStg004",
+                    "minDaysFromStart": 0,
+                    "openAfterEnrollment": false,
+                    "programStageDataElements": [
+                        {
+                            "dataElement": {
+                                "displayFormName": "Temperature",
+                                "displayName": "TER E2E temperature",
+                                "id": "TrE2eDe0001",
+                                "valueType": "NUMBER"
+                            },
+                            "displayInReports": true,
+                            "sortOrder": 1
+                        }
+                    ],
+                    "repeatable": false,
+                    "sortOrder": 1
+                }
+            ],
+            "programTrackedEntityAttributes": [
+                {
+                    "displayInList": true,
+                    "mandatory": false,
+                    "sortOrder": 1,
+                    "trackedEntityAttribute": {
+                        "displayFormName": "First name",
+                        "displayName": "TER E2E first name",
+                        "displayShortName": "TER first name",
+                        "id": "TrE2eAtt001",
+                        "unique": false,
+                        "valueType": "TEXT"
+                    }
+                }
+            ],
+            "programType": "WITH_REGISTRATION",
+            "selectEnrollmentDatesInFuture": false,
+            "selectIncidentDatesInFuture": false,
+            "trackedEntityType": {
+                "id": "TrE2eTet001"
+            }
+        }
+    ]
+}

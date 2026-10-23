@@ -1,0 +1,10 @@
+{
+    "body": {
+        "errorCode": "E1005",
+        "httpStatus": "Not Found",
+        "httpStatusCode": 404,
+        "message": "TrackedEntity with id TrE2eMis001 could not be found.",
+        "status": "ERROR"
+    },
+    "status": 404
+}

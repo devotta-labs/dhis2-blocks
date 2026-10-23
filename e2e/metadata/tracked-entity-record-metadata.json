@@ -1,0 +1,406 @@
+{
+    "userRoles": [
+        {
+            "id": "TrE2eRol001",
+            "name": "Tracked entity record E2E non-admin",
+            "authorities": []
+        }
+    ],
+    "optionSets": [
+        {
+            "id": "TrE2eOpt001",
+            "name": "TER E2E severity",
+            "valueType": "TEXT",
+            "options": [
+                {
+                    "id": "TrE2eOpA001"
+                },
+                {
+                    "id": "TrE2eOpB001"
+                }
+            ]
+        }
+    ],
+    "options": [
+        {
+            "id": "TrE2eOpA001",
+            "name": "Mild",
+            "code": "MILD",
+            "sortOrder": 1,
+            "optionSet": {
+                "id": "TrE2eOpt001"
+            }
+        },
+        {
+            "id": "TrE2eOpB001",
+            "name": "Severe",
+            "code": "SEVERE",
+            "sortOrder": 2,
+            "optionSet": {
+                "id": "TrE2eOpt001"
+            }
+        }
+    ],
+    "trackedEntityAttributes": [
+        {
+            "id": "TrE2eAtt001",
+            "name": "TER E2E first name",
+            "shortName": "TER first name",
+            "formName": "First name",
+            "valueType": "TEXT",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "TrE2eAtt002",
+            "name": "TER E2E program id",
+            "shortName": "TER program id",
+            "valueType": "TEXT",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "TrE2eAtt003",
+            "name": "TER E2E date of birth",
+            "shortName": "TER date of birth",
+            "valueType": "DATE",
+            "aggregationType": "NONE"
+        }
+    ],
+    "trackedEntityTypes": [
+        {
+            "id": "TrE2eTet001",
+            "name": "TER Person",
+            "shortName": "TER Person",
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "trackedEntityTypeAttributes": [
+                {
+                    "id": "TrE2eTat001",
+                    "trackedEntityAttribute": {
+                        "id": "TrE2eAtt001"
+                    },
+                    "displayInList": true,
+                    "mandatory": false,
+                    "searchable": true
+                },
+                {
+                    "id": "TrE2eTat003",
+                    "trackedEntityAttribute": {
+                        "id": "TrE2eAtt003"
+                    },
+                    "displayInList": false,
+                    "mandatory": false,
+                    "searchable": false
+                }
+            ]
+        }
+    ],
+    "dataElements": [
+        {
+            "id": "TrE2eDe0001",
+            "name": "TER E2E temperature",
+            "shortName": "TER temperature",
+            "formName": "Temperature",
+            "domainType": "TRACKER",
+            "valueType": "NUMBER",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "TrE2eDe0002",
+            "name": "TER E2E severity",
+            "shortName": "TER severity",
+            "domainType": "TRACKER",
+            "valueType": "TEXT",
+            "aggregationType": "NONE",
+            "optionSet": {
+                "id": "TrE2eOpt001"
+            }
+        }
+    ],
+    "relationshipTypes": [
+        {
+            "id": "TrE2eRlt001",
+            "name": "TER E2E sibling",
+            "fromToName": "Sibling of",
+            "toFromName": "Sibling of",
+            "bidirectional": true,
+            "fromConstraint": {
+                "relationshipEntity": "TRACKED_ENTITY_INSTANCE",
+                "trackedEntityType": {
+                    "id": "TrE2eTet001"
+                }
+            },
+            "toConstraint": {
+                "relationshipEntity": "TRACKED_ENTITY_INSTANCE",
+                "trackedEntityType": {
+                    "id": "TrE2eTet001"
+                }
+            },
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            }
+        }
+    ],
+    "programs": [
+        {
+            "id": "TrE2ePrg001",
+            "name": "TER E2E open program",
+            "shortName": "TER open program",
+            "programType": "WITH_REGISTRATION",
+            "accessLevel": "OPEN",
+            "onlyEnrollOnce": false,
+            "displayIncidentDate": true,
+            "enrollmentDateLabel": "Date of registration",
+            "incidentDateLabel": "Date of first symptom",
+            "completeEventsExpiryDays": 0,
+            "expiryDays": 0,
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "trackedEntityType": {
+                "id": "TrE2eTet001"
+            },
+            "organisationUnits": [
+                {
+                    "id": "DiszpKrYNg8"
+                },
+                {
+                    "id": "FLjwMPWLrL2"
+                }
+            ],
+            "programTrackedEntityAttributes": [
+                {
+                    "id": "TrE2ePta011",
+                    "trackedEntityAttribute": {
+                        "id": "TrE2eAtt001"
+                    },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 1
+                },
+                {
+                    "id": "TrE2ePta012",
+                    "trackedEntityAttribute": {
+                        "id": "TrE2eAtt002"
+                    },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 2
+                }
+            ],
+            "programStages": [
+                {
+                    "id": "TrE2eStg001"
+                },
+                {
+                    "id": "TrE2eStg002"
+                }
+            ]
+        },
+        {
+            "id": "TrE2ePrg002",
+            "name": "TER E2E enroll-once program",
+            "shortName": "TER enroll once",
+            "programType": "WITH_REGISTRATION",
+            "accessLevel": "OPEN",
+            "onlyEnrollOnce": true,
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "trackedEntityType": {
+                "id": "TrE2eTet001"
+            },
+            "organisationUnits": [
+                {
+                    "id": "DiszpKrYNg8"
+                },
+                {
+                    "id": "FLjwMPWLrL2"
+                }
+            ],
+            "programTrackedEntityAttributes": [
+                {
+                    "id": "TrE2ePta021",
+                    "trackedEntityAttribute": {
+                        "id": "TrE2eAtt001"
+                    },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 1
+                }
+            ],
+            "programStages": [
+                {
+                    "id": "TrE2eStg003"
+                }
+            ]
+        },
+        {
+            "id": "TrE2ePrg003",
+            "name": "TER E2E protected program",
+            "shortName": "TER protected",
+            "programType": "WITH_REGISTRATION",
+            "accessLevel": "PROTECTED",
+            "onlyEnrollOnce": false,
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "trackedEntityType": {
+                "id": "TrE2eTet001"
+            },
+            "organisationUnits": [
+                {
+                    "id": "DiszpKrYNg8"
+                },
+                {
+                    "id": "FLjwMPWLrL2"
+                }
+            ],
+            "programTrackedEntityAttributes": [
+                {
+                    "id": "TrE2ePta031",
+                    "trackedEntityAttribute": {
+                        "id": "TrE2eAtt001"
+                    },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 1
+                }
+            ],
+            "programStages": [
+                {
+                    "id": "TrE2eStg004"
+                }
+            ]
+        }
+    ],
+    "programStages": [
+        {
+            "id": "TrE2eStg001",
+            "name": "TER E2E visit",
+            "program": {
+                "id": "TrE2ePrg001"
+            },
+            "sortOrder": 1,
+            "repeatable": true,
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "executionDateLabel": "Visit date",
+            "dueDateLabel": "Due date",
+            "programStageDataElements": [
+                {
+                    "id": "TrE2ePsd011",
+                    "dataElement": {
+                        "id": "TrE2eDe0001"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 1
+                },
+                {
+                    "id": "TrE2ePsd012",
+                    "dataElement": {
+                        "id": "TrE2eDe0002"
+                    },
+                    "compulsory": false,
+                    "displayInReports": false,
+                    "sortOrder": 2
+                }
+            ]
+        },
+        {
+            "id": "TrE2eStg002",
+            "name": "TER E2E restricted stage",
+            "program": {
+                "id": "TrE2ePrg001"
+            },
+            "sortOrder": 2,
+            "repeatable": false,
+            "featureType": "NONE",
+            "publicAccess": "rw------",
+            "sharing": {
+                "public": "rw------",
+                "users": {
+                    "xE7jOejl9FI": {
+                        "id": "xE7jOejl9FI",
+                        "access": "rwrw----"
+                    }
+                }
+            },
+            "programStageDataElements": [
+                {
+                    "id": "TrE2ePsd021",
+                    "dataElement": {
+                        "id": "TrE2eDe0002"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 1
+                }
+            ]
+        },
+        {
+            "id": "TrE2eStg003",
+            "name": "TER E2E enroll-once stage",
+            "program": {
+                "id": "TrE2ePrg002"
+            },
+            "sortOrder": 1,
+            "repeatable": false,
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "programStageDataElements": [
+                {
+                    "id": "TrE2ePsd031",
+                    "dataElement": {
+                        "id": "TrE2eDe0001"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 1
+                }
+            ]
+        },
+        {
+            "id": "TrE2eStg004",
+            "name": "TER E2E protected stage",
+            "program": {
+                "id": "TrE2ePrg003"
+            },
+            "sortOrder": 1,
+            "repeatable": false,
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "programStageDataElements": [
+                {
+                    "id": "TrE2ePsd041",
+                    "dataElement": {
+                        "id": "TrE2eDe0001"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 1
+                }
+            ]
+        }
+    ]
+}

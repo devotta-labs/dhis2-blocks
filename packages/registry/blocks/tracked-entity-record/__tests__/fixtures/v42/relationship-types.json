@@ -1,0 +1,11 @@
+{
+    "relationshipTypes": [
+        {
+            "bidirectional": true,
+            "displayName": "TER E2E sibling",
+            "fromToName": "Sibling of",
+            "id": "TrE2eRlt001",
+            "toFromName": "Sibling of"
+        }
+    ]
+}

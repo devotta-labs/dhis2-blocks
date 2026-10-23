@@ -1,0 +1,26 @@
+{
+    "attributes": [
+        {
+            "attribute": "TrE2eAtt003",
+            "value": "1984-11-30"
+        },
+        {
+            "attribute": "TrE2eAtt001",
+            "value": "Chidi"
+        }
+    ],
+    "createdAt": "2026-10-23T12:51:32.810",
+    "enrollments": [],
+    "inactive": false,
+    "orgUnit": "DiszpKrYNg8",
+    "potentialDuplicate": false,
+    "programOwners": [
+        {
+            "orgUnit": "DiszpKrYNg8",
+            "program": "TrE2ePrg001"
+        }
+    ],
+    "trackedEntity": "TrE2eTei003",
+    "trackedEntityType": "TrE2eTet001",
+    "updatedAt": "2026-10-23T12:52:17.003"
+}

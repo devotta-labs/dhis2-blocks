@@ -558,6 +558,42 @@ examples in `apps/docs/src/examples/tracked-entity-record/`, registered in `exam
 3. Whether the person request without `program` returns program attributes on `attributes`, or only on each
    enrollment's `attributes` (decides how `person.attributes` is merged; the record's shape doesn't change).
 
+### Verified API facts
+
+Recorded as the restricted seeded user (`ter_e2e_nurse`, not admin) on 2.41.10, 2.42.6 and 2.43.2, by
+`scripts/e2e/record-tracked-entity-record-fixtures.sh`. Fixtures are in
+`packages/registry/blocks/tracked-entity-record/__tests__/fixtures/v41|v42|v43/`. The three risks above:
+
+| Finding                                                                                                                                                                                                    | 2.41                                                                     | 2.42                                    | 2.43                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------- | --------------------------------------- |
+| 1. Person request without `program` embeds events for every readable stage, all statuses, unpaged (P1's active enrollment: ACTIVE, 2 COMPLETED, 2 SCHEDULE, SKIPPED), none for the stage without data read | Yes                                                                      | Yes                                     | Yes                                     |
+| 2a. `programOwners` lists a program whose enrollment is hidden (P1, PROTECTED program owned at another facility)                                                                                           | Yes                                                                      | Yes                                     | Yes                                     |
+| 2b. `programOwners` keeps the owner row after the only enrollment is deleted (P3, `enrollments: []`)                                                                                                       | Yes                                                                      | Yes                                     | Yes                                     |
+| 3. Top-level `attributes` hold type attributes only; a program attribute (`TrE2eAtt002`) appears only on enrollments                                                                                       | Type only                                                                | Type only                               | Type only                               |
+| 3b. What an enrollment's `attributes` hold                                                                                                                                                                 | Program attributes **and** the person's type attributes (all three seen) | Program attributes of that program only | Program attributes of that program only |
+
+Consequences: no fallback is needed for (1) or (2), so the default request plan (§8.2) and the §7.3 owner rule stand
+as written, and §7.3's "default if a version filters them out" is not used. For (3),
+`person.attributes` is the top-level attributes merged with every visible enrollment's attributes (an enrollment's
+value wins on a clash; they cannot differ, as values are stored once per person), which is correct on all three
+versions, including 2.41 where enrollments repeat type attributes.
+
+Other facts the mapping depends on, also from the fixtures:
+
+- **Missing person:** 404 `E1005` "TrackedEntity with id X could not be found." on all three versions (`person-missing.status.json`).
+- **Order is not stable.** Enrollments, events and `programOwners` come back in a different order on each version. The
+  block sorts (§8.1, `Enrollment.events`); it must not rely on API order.
+- **An empty data value** is listed as `{ "dataElement": "X" }` with no `value` key. The tracker importer drops a
+  `""` it is sent, so the seed writes one with SQL. The schema must make `value` optional, and `latestValues` treats a
+  missing value like an empty one.
+- **A stage without data read** is still returned by the `programs` request, with `access.data.read: false`, while
+  its events are left out of the person. §7.4's filter by `access.data.read` is therefore needed.
+- **Unset stage fields are `null`** (`executionDateLabel`, `reportDateToUse`, `standardInterval`, …); unset program
+  fields (labels, `featureType`, `expiryPeriodType`) are absent. Both must parse.
+- **A relationship carries the other person's attributes** when `attributes[attribute,value]` is requested under
+  `from`/`to`.`trackedEntity`, including program attributes, on all three versions. `tracker/relationships` answers
+  with the key `relationships`.
+
 ## 16. Left to the builder
 
 - File layout inside the block, internal names, the zod schemas.

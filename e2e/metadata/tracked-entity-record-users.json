@@ -1,0 +1,32 @@
+{
+    "users": [
+        {
+            "id": "TrE2eUsr001",
+            "username": "ter_e2e_nurse",
+            "password": "TrackedEntity123!",
+            "firstName": "Tracked entity record",
+            "surname": "Nurse",
+            "userRoles": [
+                {
+                    "id": "TrE2eRol001"
+                }
+            ],
+            "userGroups": [],
+            "organisationUnits": [
+                {
+                    "id": "DiszpKrYNg8"
+                }
+            ],
+            "dataViewOrganisationUnits": [
+                {
+                    "id": "DiszpKrYNg8"
+                }
+            ],
+            "teiSearchOrganisationUnits": [
+                {
+                    "id": "O6uvpzGd5pu"
+                }
+            ]
+        }
+    ]
+}

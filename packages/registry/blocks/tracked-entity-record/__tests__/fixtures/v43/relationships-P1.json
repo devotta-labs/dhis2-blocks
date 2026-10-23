@@ -1,0 +1,47 @@
+{
+    "relationships": [
+        {
+            "createdAt": "2026-10-23T12:51:32.836",
+            "from": {
+                "trackedEntity": {
+                    "attributes": [
+                        {
+                            "attribute": "TrE2eAtt002",
+                            "value": "PID-0001"
+                        },
+                        {
+                            "attribute": "TrE2eAtt003",
+                            "value": "1990-04-12"
+                        },
+                        {
+                            "attribute": "TrE2eAtt001",
+                            "value": "Amara"
+                        }
+                    ],
+                    "trackedEntity": "TrE2eTei001"
+                }
+            },
+            "relationship": "TrE2eRel001",
+            "relationshipType": "TrE2eRlt001",
+            "to": {
+                "trackedEntity": {
+                    "attributes": [
+                        {
+                            "attribute": "TrE2eAtt002",
+                            "value": "PID-0002"
+                        },
+                        {
+                            "attribute": "TrE2eAtt001",
+                            "value": "Bea"
+                        },
+                        {
+                            "attribute": "TrE2eAtt003",
+                            "value": "2015-02-02"
+                        }
+                    ],
+                    "trackedEntity": "TrE2eTei002"
+                }
+            }
+        }
+    ]
+}

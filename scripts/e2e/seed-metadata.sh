@@ -20,6 +20,12 @@ cors_response="$artifact_dir/cors-allowlist.json"
 users_payload="$E2E_REPO_ROOT/e2e/metadata/working-list-users.json"
 saved_lists_payload="$E2E_REPO_ROOT/e2e/metadata/working-list-saved-lists.json"
 test_user_password='WorkingList123!'
+ter_users_payload="$E2E_REPO_ROOT/e2e/metadata/tracked-entity-record-users.json"
+ter_tracker_payload="$E2E_REPO_ROOT/e2e/metadata/tracked-entity-record-tracker-data.json"
+ter_user_password='TrackedEntity123!'
+# The person whose only enrollment is created and then deleted, so the owner row
+# outlives it (tracked entity record spec section 7.3).
+ter_deleted_enrollment='TrE2eEnr006'
 
 configure_cors_allowlist() {
     local current_allowlist
@@ -122,7 +128,11 @@ resource_status() {
         "$E2E_DHIS2_URL$endpoint"
 }
 
-ensure_test_users() {
+# Creates every user in a payload file that does not exist yet, then proves each
+# one can authenticate with the shared test password.
+ensure_users_from_payload() {
+    local payload_file="$1"
+    local shared_password="$2"
     local user_id
     local user_payload
     local user_status
@@ -131,7 +141,7 @@ ensure_test_users() {
 
     while IFS= read -r user_id; do
         user_payload="$(jq --compact-output --arg id "$user_id" \
-            '.users[] | select(.id == $id)' "$users_payload")"
+            '.users[] | select(.id == $id)' "$payload_file")"
         test_username="$(jq --raw-output '.username' <<<"$user_payload")"
         user_response="$artifact_dir/user-$user_id.json"
         user_status="$(resource_status "/api/users/$user_id")"
@@ -154,11 +164,15 @@ ensure_test_users() {
         esac
 
         curl --fail --silent --show-error \
-            --user "$test_username:$test_user_password" \
+            --user "$test_username:$shared_password" \
             "$E2E_DHIS2_URL/api/me?fields=id,username" \
             | jq -e --arg id "$user_id" --arg username "$test_username" \
                 '.id == $id and .username == $username' >/dev/null
-    done < <(jq --raw-output '.users[].id' "$users_payload")
+    done < <(jq --raw-output '.users[].id' "$payload_file")
+}
+
+ensure_test_users() {
+    ensure_users_from_payload "$users_payload" "$test_user_password"
 
     if ! curl --fail --silent --show-error --globoff \
         --user "$username:$password" \
@@ -266,6 +280,117 @@ corrupt_data_quality_fixture() {
             '.attributes | any(.attribute == "WlAtDate001" and .value == $value)' >/dev/null
 }
 
+# Deleted tracker objects keep their uid, so the enrollment that gets deleted
+# cannot go through the plain CREATE_AND_UPDATE import: it would fail on the
+# second run. It is created once (CREATE refuses a uid that ever existed, with
+# E1080 or E1113), then deleted, leaving the person's owner row for the program
+# behind.
+ensure_deleted_enrollment() {
+    local enrollment_id="$ter_deleted_enrollment"
+    local create_payload="$artifact_dir/ter-deleted-enrollment-create.json"
+    local delete_payload="$artifact_dir/ter-deleted-enrollment-delete.json"
+    local create_response="$artifact_dir/ter-deleted-enrollment-create-response.json"
+    local enrollment_status
+    local create_status
+
+    jq --compact-output --arg id "$enrollment_id" \
+        '{enrollments: [.enrollments[] | select(.enrollment == $id)]}' \
+        "$ter_tracker_payload" >"$create_payload"
+    jq --null-input --compact-output --arg id "$enrollment_id" \
+        '{enrollments: [{enrollment: $id}]}' >"$delete_payload"
+
+    enrollment_status="$(resource_status "/api/tracker/enrollments/$enrollment_id")"
+    if [[ "$enrollment_status" == "404" ]]; then
+        create_status="$(curl --silent --show-error \
+            --user "$username:$password" \
+            --header 'Content-Type: application/json' \
+            --request POST \
+            --data-binary "@$create_payload" \
+            --output "$create_response" \
+            --write-out '%{http_code}' \
+            "$E2E_DHIS2_URL/api/tracker?async=false&importStrategy=CREATE&atomicMode=ALL&reportMode=FULL")"
+
+        if jq -e '.status == "OK"' "$create_response" >/dev/null 2>&1; then
+            enrollment_status=200
+        elif jq -e 'any(.validationReport.errorReports[]?; .errorCode == "E1080" or .errorCode == "E1113")' \
+            "$create_response" >/dev/null 2>&1; then
+            # E1080 (uid exists) or E1113 (uid already deleted): an earlier run created and deleted it.
+            enrollment_status=404
+        else
+            echo "Could not create enrollment $enrollment_id (HTTP $create_status). Response saved to $create_response" >&2
+            jq . "$create_response" >&2 || true
+            return 65
+        fi
+    fi
+
+    if [[ "$enrollment_status" == "200" ]]; then
+        post_and_require_ok \
+            '/api/tracker?async=false&importStrategy=DELETE&atomicMode=ALL&reportMode=FULL' \
+            "$delete_payload" \
+            "$artifact_dir/ter-deleted-enrollment-delete-response.json"
+    elif [[ "$enrollment_status" != "404" ]]; then
+        echo "Could not determine whether enrollment $enrollment_id exists (HTTP $enrollment_status)." >&2
+        return 65
+    fi
+
+    [[ "$(resource_status "/api/tracker/enrollments/$enrollment_id")" == "404" ]]
+}
+
+# The tracker importer drops a data value sent as "", but older clients and SQL
+# imports leave empty strings in real databases. The tracker import removes the
+# value on every seed run, so writing it back keeps the step idempotent. The
+# tables holding event data values changed across DHIS2 majors (one `event`
+# table, then `trackerevent` and `singleevent` from 2.43), so every table with
+# the column is updated; only the one holding the event matches. The API then
+# lists the data element without a `value` key, so the check treats a missing
+# value as empty.
+store_empty_event_data_value() {
+    e2e_compose exec -T database psql \
+        --no-password --quiet --username dhis --dbname dhis \
+        --set ON_ERROR_STOP=1 \
+        --command "DO \$\$
+            DECLARE event_table text;
+            BEGIN
+                FOR event_table IN
+                    SELECT table_name
+                    FROM information_schema.columns
+                    WHERE column_name = 'eventdatavalues' AND table_schema = 'public'
+                LOOP
+                    EXECUTE format(
+                        'UPDATE %I SET eventdatavalues = jsonb_set(
+                            eventdatavalues, ''{TrE2eDe0001}'',
+                            (eventdatavalues -> ''TrE2eDe0002'') || ''{\"value\": \"\"}''::jsonb)
+                        WHERE uid = ''TrE2eEvt003''',
+                        event_table);
+                END LOOP;
+            END \$\$;"
+
+    curl --fail --silent --show-error --globoff \
+        --user "$username:$password" \
+        "$E2E_DHIS2_URL/api/tracker/events/TrE2eEvt003?fields=dataValues[dataElement,value]" \
+        | jq -e '.dataValues | any(.dataElement == "TrE2eDe0001" and (.value // "") == "")' >/dev/null
+}
+
+import_tracked_entity_record_data() {
+    local import_payload="$artifact_dir/ter-tracker-data.json"
+
+    jq --arg id "$ter_deleted_enrollment" \
+        'del(.enrollments[] | select(.enrollment == $id))' \
+        "$ter_tracker_payload" >"$import_payload"
+
+    post_and_require_ok \
+        '/api/tracker?async=false&importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&reportMode=FULL' \
+        "$import_payload" \
+        "$artifact_dir/ter-tracker-import.json"
+    ensure_deleted_enrollment
+    store_empty_event_data_value
+
+    curl --fail --silent --show-error --globoff \
+        --user "$username:$password" \
+        "$E2E_DHIS2_URL/api/tracker/trackedEntities/TrE2eTei001?fields=enrollments[enrollment]" \
+        | jq -e '(.enrollments | length) == 4' >/dev/null
+}
+
 echo "Importing idempotent working-list metadata into DHIS2 $E2E_VERSION_SLUG ..."
 echo "Allowing the isolated browser origin $E2E_APP_URL ..."
 configure_cors_allowlist
@@ -294,3 +419,13 @@ echo "Corrupting one attribute value behind the importer's back ..."
 corrupt_data_quality_fixture
 
 echo "Supplemental working-list metadata and records are ready."
+
+echo "Importing idempotent tracked-entity-record metadata, users and records ..."
+post_and_require_ok \
+    '/api/metadata?importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&importReportMode=ERRORS' \
+    "$E2E_REPO_ROOT/e2e/metadata/tracked-entity-record-metadata.json" \
+    "$artifact_dir/ter-metadata-import.json"
+ensure_users_from_payload "$ter_users_payload" "$ter_user_password"
+import_tracked_entity_record_data
+
+echo "Tracked entity record metadata and records are ready."

@@ -1,0 +1,36 @@
+{
+    "access": {
+        "data": {
+            "read": true,
+            "write": true
+        }
+    },
+    "displayName": "TER Person",
+    "id": "TrE2eTet001",
+    "trackedEntityTypeAttributes": [
+        {
+            "displayInList": true,
+            "mandatory": false,
+            "trackedEntityAttribute": {
+                "displayFormName": "First name",
+                "displayName": "TER E2E first name",
+                "displayShortName": "TER first name",
+                "id": "TrE2eAtt001",
+                "unique": false,
+                "valueType": "TEXT"
+            }
+        },
+        {
+            "displayInList": false,
+            "mandatory": false,
+            "trackedEntityAttribute": {
+                "displayFormName": "TER E2E date of birth",
+                "displayName": "TER E2E date of birth",
+                "displayShortName": "TER date of birth",
+                "id": "TrE2eAtt003",
+                "unique": false,
+                "valueType": "DATE"
+            }
+        }
+    ]
+}

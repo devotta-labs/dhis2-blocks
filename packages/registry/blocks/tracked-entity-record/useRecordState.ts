@@ -52,7 +52,10 @@ interface Answer<T> {
 }
 
 const useAnswer = <T>(query: UseQueryResult<T, Error>): Answer<T> => {
-    const { data, error, refetch } = query
+    const { error, refetch } = query
+    // A host's placeholderData (e.g. keepPreviousData) is another key's answer,
+    // possibly another person's: never build the record from it.
+    const data = query.isPlaceholderData ? undefined : query.data
     return useMemo(
         () => ({
             data,

@@ -1,5 +1,9 @@
 import { CustomDataProvider } from '@dhis2/app-runtime'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+    keepPreviousData,
+    QueryClient,
+    QueryClientProvider,
+} from '@tanstack/react-query'
 import { Component, type ComponentProps, type ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
 import { z } from 'zod'
@@ -136,10 +140,12 @@ interface RecordProps {
 }
 
 /** Renders the provider under a fresh query client; records every value seen. */
-const setup = (server: FakeServer) => {
-    const queryClient = new QueryClient({
+const testQueryClient = () =>
+    new QueryClient({
         defaultOptions: { queries: { retry: false, retryDelay: 0 } },
     })
+
+const setup = (server: FakeServer, queryClient = testQueryClient()) => {
     const seen: TrackedEntityRecordContextValue[] = []
     const Probe = () => {
         seen.push(useTrackedEntityRecord())
@@ -180,6 +186,29 @@ const waitForReady = (view: View, id?: string) =>
 
 const statusesSince = (view: View, from: number) =>
     view.seen.slice(from).map(({ state }) => state.status)
+
+/** Review Focus 1: after P1 → P2, no render shows P1's record. */
+const expectNoPreviousPerson = async (view: View) => {
+    const screen = await render(view.ui({ trackedEntityId: P1 }))
+    await waitForReady(view, P1)
+    const changedAt = view.seen.length
+
+    await screen.rerender(view.ui({ trackedEntityId: P2 }))
+    expect((await waitForReady(view, P2)).person.id).toBe(P2)
+
+    const afterChange = view.seen.slice(changedAt)
+    expect(afterChange.length).toBeGreaterThan(0)
+    expect(
+        afterChange.some(
+            ({ state }) =>
+                state.status === 'ready' && state.record.person.id === P1
+        )
+    ).toBe(false)
+    expect(afterChange[0]?.state).toEqual({ status: 'pending' })
+    expect(afterChange.every(({ meta }) => meta.trackedEntityId === P2)).toBe(
+        true
+    )
+}
 
 describe('TrackedEntityRecordProvider', () => {
     it('goes from pending to ready with P1', async () => {
@@ -432,27 +461,20 @@ describe('TrackedEntityRecordProvider', () => {
     })
 
     it('does not show the previous person after the id changes', async () => {
-        const server = createServer()
-        const view = setup(server)
-        const screen = await render(view.ui({ trackedEntityId: P1 }))
-        await waitForReady(view, P1)
-        const changedAt = view.seen.length
+        await expectNoPreviousPerson(setup(createServer()))
+    })
 
-        await screen.rerender(view.ui({ trackedEntityId: P2 }))
-        expect((await waitForReady(view, P2)).person.id).toBe(P2)
-
-        const afterChange = view.seen.slice(changedAt)
-        expect(afterChange.length).toBeGreaterThan(0)
-        expect(
-            afterChange.some(
-                ({ state }) =>
-                    state.status === 'ready' && state.record.person.id === P1
-            )
-        ).toBe(false)
-        expect(afterChange[0]?.state).toEqual({ status: 'pending' })
-        expect(
-            afterChange.every(({ meta }) => meta.trackedEntityId === P2)
-        ).toBe(true)
+    it('does not show the previous person after the id changes when the host keeps previous data', async () => {
+        const queryClient = new QueryClient({
+            defaultOptions: {
+                queries: {
+                    retry: false,
+                    retryDelay: 0,
+                    placeholderData: keepPreviousData,
+                },
+            },
+        })
+        await expectNoPreviousPerson(setup(createServer(), queryClient))
     })
 
     it('is ready with no programs when the person has no visible enrollments', async () => {

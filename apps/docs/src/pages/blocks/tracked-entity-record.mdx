@@ -189,7 +189,7 @@ events, so pass that enrollment's events when a view must match the rules.
 
 ### enrollmentAllowance
 
-`enrollmentAllowance(record, program)` says whether a new enrollment may be
+`enrollmentAllowance(program)` says whether a new enrollment may be
 started in a program. When it may not, `reason` is the first that applies:
 `unavailable`, `no-write-access` (which includes an inactive person),
 `active-enrollment-exists` or `only-enroll-once`. Use it to decide whether to

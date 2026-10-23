@@ -71,12 +71,13 @@ export interface RecordClient {
     ): Promise<Result<T, RecordRequestError>>
 }
 
-const UNAVAILABLE_STATUSES: ReadonlySet<number> = new Set([401, 403, 404, 409])
+const UNAVAILABLE_STATUSES: ReadonlySet<number> = new Set([403, 404, 409])
 
 /**
  * Spec 7.1: the server's own "this person is not there for you" answers.
  * Anything else (network, 5xx, 400, a response the schema rejects) is an
- * error, not an absence.
+ * error, not an absence. A 401 is an ended session, not an answer about the
+ * person, so it is an error too.
  */
 export const isUnavailableResponse = (error: RecordRequestError) =>
     error.kind === 'http' &&

@@ -97,7 +97,8 @@ export const ownerInUserScope = (
         )
 }
 
-const sortedUnique = (ids: Iterable<string>) => [...new Set(ids)].sort()
+/** Unique ids, sorted, so the same set always gives the same array. */
+export const sortedUnique = (ids: Iterable<string>) => [...new Set(ids)].sort()
 
 /**
  * The programs whose metadata the record needs: the requested ones, else

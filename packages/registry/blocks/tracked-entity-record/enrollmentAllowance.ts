@@ -1,8 +1,4 @@
-import type {
-    EnrollmentAllowance,
-    ProgramRecord,
-    TrackedEntityRecord,
-} from './types'
+import type { EnrollmentAllowance, ProgramRecord } from './types'
 
 /**
  * Spec 9.4: whether a new enrollment may be started in the program, and if
@@ -10,7 +6,6 @@ import type {
  * access (an inactive person included), an active enrollment, enroll-once.
  */
 export const enrollmentAllowance = (
-    _record: TrackedEntityRecord,
     program: ProgramRecord
 ): EnrollmentAllowance => {
     if (program.status !== 'enrolled' && program.status !== 'not-enrolled') {

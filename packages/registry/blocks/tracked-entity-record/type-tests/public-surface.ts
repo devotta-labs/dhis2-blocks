@@ -114,7 +114,7 @@ export const helpers = (
         program,
         'Enrollment1'
     )
-    const allowance: EnrollmentAllowance = enrollmentAllowance(record, program)
+    const allowance: EnrollmentAllowance = enrollmentAllowance(program)
     const status: DerivedEventStatus = eventStatus(event, today)
     const overdue: boolean = isOverdue(event, today)
     const latest: Map<string, LatestValue> = latestValues(

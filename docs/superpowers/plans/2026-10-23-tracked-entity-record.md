@@ -169,8 +169,8 @@ Seed (uids are 11 characters; the builder picks Sierra Leone org units and recor
     - `createRecordClient(engine: DataEngineLike): RecordClient`
     - `httpStatusOf(error: Error): number | undefined`: reads `details.httpStatusCode` through `cause`, else a
       trailing `(NNN)` in a FetchError message.
-    - `isUnavailableResponse(error: RecordRequestError): boolean`: `kind === 'http'` and status ∈ {401, 403, 404,
-      409} (spec §7.1).
+    - `isUnavailableResponse(error: RecordRequestError): boolean`: `kind === 'http'` and status ∈ {403, 404, 409}
+      (spec §7.1; a 401 is an ended session, so an error).
     - `useRecordClient(): RecordClient`, memoised over `useDataEngine()`.
     - Request builders, each returning `ResourceRequest`: `personRequest(id)`, `programsRequest(ids)`,
       `trackedEntityTypeRequest(id)`, `relationshipsRequest(id)`, `relationshipTypesRequest(ids)`,
@@ -185,7 +185,7 @@ Seed (uids are 11 characters; the builder picks Sierra Leone org units and recor
 - [ ] **Step 1: Write failing tests.**
     - `client.test.ts`: `returns ok with the parsed resource`; `wraps an engine rejection as http with the status
 from details.httpStatusCode`; `reads the status from a trailing (404) in the message`; `marks a schema
-mismatch as invalid-response`; `isUnavailableResponse is true for 401, 403, 404, 409 and false for 400, 500
+mismatch as invalid-response`; `isUnavailableResponse is true for 403, 404, 409 and false for 400, 401, 500
 and network`.
     - `schemas.test.ts`: `parses every recorded fixture` (loop over `fixtures/v41|v42|v43`, each file through its
       schema, `expect(result.success).toBe(true)`).
@@ -260,7 +260,7 @@ occurredAt by scheduledAt, then createdAt`; `builds the same record from v41, v4
 - Consumes: `types.ts`.
 - Produces (spec §6, §8.1, §9):
     - `currentEnrollment(program: ProgramRecord, selectedEnrollmentId?: string): Enrollment | undefined`
-    - `enrollmentAllowance(record: TrackedEntityRecord, program: ProgramRecord): EnrollmentAllowance`
+    - `enrollmentAllowance(program: ProgramRecord): EnrollmentAllowance`
     - `eventStatus(event: TrackerEvent, today: string): DerivedEventStatus`, `isOverdue(event: TrackerEvent, today: string): boolean`, `todayIso(): string`
     - `latestValues(events: readonly TrackerEvent[], dataElementIds?: readonly string[]): Map<string, LatestValue>`
     - `interface DisplayAttributesOptions { onlyDisplayInList?: boolean }`;

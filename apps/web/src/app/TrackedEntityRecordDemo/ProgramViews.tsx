@@ -34,7 +34,7 @@ type ProgramViewsProps = {
     mode: ViewMode
     onModeChange: (mode: ViewMode) => void
 }
-type ProgramViewProps = { record: TrackedEntityRecord; entry: ProgramRecord }
+type ProgramViewProps = { entry: ProgramRecord }
 type AllowanceProps = ProgramViewProps
 
 const programLabel = (entry: ProgramRecord) =>
@@ -57,8 +57,8 @@ const allowanceReasons = () =>
     }) satisfies Record<EnrollmentAllowanceReason, string>
 
 /** Recipe: whether "Enroll" would be offered, from `enrollmentAllowance`. */
-const Allowance = ({ record, entry }: AllowanceProps) => {
-    const allowance = enrollmentAllowance(record, entry)
+const Allowance = ({ entry }: AllowanceProps) => {
+    const allowance = enrollmentAllowance(entry)
     return (
         <p data-testid="enrollment-allowance" className="m-0 text-sm">
             {allowance.allowed
@@ -69,11 +69,10 @@ const Allowance = ({ record, entry }: AllowanceProps) => {
 }
 
 type EnrolledProgramProps = {
-    record: TrackedEntityRecord
     entry: Extract<ProgramRecord, { status: 'enrolled' }>
 }
 
-const EnrolledProgram = ({ record, entry }: EnrolledProgramProps) => {
+const EnrolledProgram = ({ entry }: EnrolledProgramProps) => {
     const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<string>()
     const enrollment = currentEnrollment(entry, selectedEnrollmentId)
     return (
@@ -83,7 +82,7 @@ const EnrolledProgram = ({ record, entry }: EnrolledProgramProps) => {
                     <CardTitle>{entry.program.name}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
-                    <Allowance record={record} entry={entry} />
+                    <Allowance entry={entry} />
                     {entry.enrollments.length > 1 && (
                         <ToggleGroup
                             aria-label={i18n.t('Enrollment')}
@@ -122,6 +121,8 @@ const EnrolledProgram = ({ record, entry }: EnrolledProgramProps) => {
                     <EnrollmentNotes enrollment={enrollment} />
                     {entry.access.canWrite ? (
                         <AddNote
+                            // A fresh form per enrollment: no text or outcome carries over.
+                            key={enrollment.id}
                             program={entry.program}
                             enrollment={enrollment}
                         />
@@ -141,7 +142,7 @@ const EnrolledProgram = ({ record, entry }: EnrolledProgramProps) => {
     )
 }
 
-const ProgramView = ({ record, entry }: ProgramViewProps) => {
+const ProgramView = ({ entry }: ProgramViewProps) => {
     const id =
         entry.status === 'unavailable' || entry.status === 'error'
             ? entry.programId
@@ -169,13 +170,11 @@ const ProgramView = ({ record, entry }: ProgramViewProps) => {
                         <p className="m-0 text-sm">
                             {i18n.t('Not enrolled in this program.')}
                         </p>
-                        <Allowance record={record} entry={entry} />
+                        <Allowance entry={entry} />
                     </CardContent>
                 </Card>
             )}
-            {entry.status === 'enrolled' && (
-                <EnrolledProgram record={record} entry={entry} />
-            )}
+            {entry.status === 'enrolled' && <EnrolledProgram entry={entry} />}
         </section>
     )
 }
@@ -242,7 +241,7 @@ export const ProgramViews = ({
             )}
             <div className="flex flex-wrap gap-4 [&>*]:min-w-[320px]">
                 {shown.map(([id, entry]) => (
-                    <ProgramView key={id} record={record} entry={entry} />
+                    <ProgramView key={id} entry={entry} />
                 ))}
             </div>
         </div>

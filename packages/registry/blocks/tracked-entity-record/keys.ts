@@ -1,7 +1,6 @@
-const root = ['tracked-entity-record'] as const
+import { sortedUnique } from './programState'
 
-/** The same set of ids always maps to the same key, whatever order it came in. */
-const sortedUnique = (ids: ReadonlyArray<string>) => [...new Set(ids)].sort()
+const root = ['tracked-entity-record'] as const
 
 export const trackedEntityRecordKeys = {
     root,

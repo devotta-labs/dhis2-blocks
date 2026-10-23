@@ -10,6 +10,7 @@ import { trackedEntityRecordKeys } from './keys'
 import {
     ownerOrgUnitsToCheck,
     programIdsToLoad,
+    sortedUnique,
     toOwnerPaths,
     toUserScopes,
     type FailedRequest,
@@ -241,8 +242,6 @@ interface ShownRecord {
     programsKey: string | undefined
     state: TrackedEntityRecordState
 }
-
-const sortedUnique = (ids: Iterable<string>) => [...new Set(ids)].sort()
 
 export const useRecordState = (
     trackedEntityId: string,

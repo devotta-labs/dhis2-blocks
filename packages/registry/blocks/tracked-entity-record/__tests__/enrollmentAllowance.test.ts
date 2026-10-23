@@ -1,7 +1,7 @@
 import { buildRecord } from '../buildRecord'
 import { enrollmentAllowance } from '../enrollmentAllowance'
 import type { ProgramRecord } from '../types'
-import { enrollment, enrolled, notEnrolled, record } from './builders'
+import { enrollment, enrolled, notEnrolled } from './builders'
 import { loadFixtures, PRG_ONCE, PRG_OPEN, sourcesFor } from './loadFixtures'
 
 describe('enrollmentAllowance', () => {
@@ -11,7 +11,7 @@ describe('enrollmentAllowance', () => {
             programId: 'prg',
             debug: 'x',
         }
-        expect(enrollmentAllowance(record(), program)).toEqual({
+        expect(enrollmentAllowance(program)).toEqual({
             allowed: false,
             reason: 'unavailable',
         })
@@ -24,7 +24,7 @@ describe('enrollmentAllowance', () => {
             error: new Error('x'),
             retry: () => {},
         }
-        expect(enrollmentAllowance(record(), program)).toEqual({
+        expect(enrollmentAllowance(program)).toEqual({
             allowed: false,
             reason: 'unavailable',
         })
@@ -32,17 +32,10 @@ describe('enrollmentAllowance', () => {
 
     it('no-write-access', () => {
         const program = notEnrolled('prg', { access: { canWrite: false } })
-        expect(enrollmentAllowance(record(), program)).toEqual({
+        expect(enrollmentAllowance(program)).toEqual({
             allowed: false,
             reason: 'no-write-access',
         })
-    })
-
-    it('no-write-access for an inactive person', () => {
-        const program = notEnrolled('prg', { access: { canWrite: false } })
-        expect(
-            enrollmentAllowance(record({ inactive: true }), program)
-        ).toEqual({ allowed: false, reason: 'no-write-access' })
     })
 
     it('active-enrollment-exists', () => {
@@ -50,7 +43,7 @@ describe('enrollmentAllowance', () => {
             enrollment('a'),
             enrollment('b', { status: 'COMPLETED' }),
         ])
-        expect(enrollmentAllowance(record(), program)).toEqual({
+        expect(enrollmentAllowance(program)).toEqual({
             allowed: false,
             reason: 'active-enrollment-exists',
         })
@@ -62,14 +55,14 @@ describe('enrollmentAllowance', () => {
             [enrollment('a', { status: 'COMPLETED' })],
             { program: { onlyEnrollOnce: true } }
         )
-        expect(enrollmentAllowance(record(), program)).toEqual({
+        expect(enrollmentAllowance(program)).toEqual({
             allowed: false,
             reason: 'only-enroll-once',
         })
     })
 
     it('allowed for a not-enrolled program with write access', () => {
-        expect(enrollmentAllowance(record(), notEnrolled('prg'))).toEqual({
+        expect(enrollmentAllowance(notEnrolled('prg'))).toEqual({
             allowed: true,
         })
     })
@@ -78,20 +71,9 @@ describe('enrollmentAllowance', () => {
         const program = enrolled('prg', [
             enrollment('a', { status: 'COMPLETED' }),
         ])
-        expect(enrollmentAllowance(record(), program)).toEqual({
+        expect(enrollmentAllowance(program)).toEqual({
             allowed: true,
         })
-    })
-
-    it('unavailable wins over the other reasons', () => {
-        const program: ProgramRecord = {
-            status: 'unavailable',
-            programId: 'prg',
-            debug: 'x',
-        }
-        expect(
-            enrollmentAllowance(record({ inactive: true }), program)
-        ).toEqual({ allowed: false, reason: 'unavailable' })
     })
 
     it('no-write-access wins over an active enrollment and only-enroll-once', () => {
@@ -99,7 +81,7 @@ describe('enrollmentAllowance', () => {
             program: { onlyEnrollOnce: true },
             access: { canWrite: false },
         })
-        expect(enrollmentAllowance(record(), program)).toEqual({
+        expect(enrollmentAllowance(program)).toEqual({
             allowed: false,
             reason: 'no-write-access',
         })
@@ -109,7 +91,7 @@ describe('enrollmentAllowance', () => {
         const program = enrolled('prg', [enrollment('a')], {
             program: { onlyEnrollOnce: true },
         })
-        expect(enrollmentAllowance(record(), program)).toEqual({
+        expect(enrollmentAllowance(program)).toEqual({
             allowed: false,
             reason: 'active-enrollment-exists',
         })
@@ -124,14 +106,14 @@ describe('enrollmentAllowance', () => {
         }
 
         it('only-enroll-once in Prg002', () => {
-            expect(enrollmentAllowance(built, programOf(PRG_ONCE))).toEqual({
+            expect(enrollmentAllowance(programOf(PRG_ONCE))).toEqual({
                 allowed: false,
                 reason: 'only-enroll-once',
             })
         })
 
         it('active-enrollment-exists in Prg001', () => {
-            expect(enrollmentAllowance(built, programOf(PRG_OPEN))).toEqual({
+            expect(enrollmentAllowance(programOf(PRG_OPEN))).toEqual({
                 allowed: false,
                 reason: 'active-enrollment-exists',
             })

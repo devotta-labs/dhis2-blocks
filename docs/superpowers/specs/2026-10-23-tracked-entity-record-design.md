@@ -105,7 +105,7 @@ useTrackedEntityRecord(): {
 
 // Pure helpers (§9)
 currentEnrollment(program: ProgramRecord, selectedEnrollmentId?: string): Enrollment | undefined
-enrollmentAllowance(record: TrackedEntityRecord, program: ProgramRecord): EnrollmentAllowance
+enrollmentAllowance(program: ProgramRecord): EnrollmentAllowance
 eventStatus(event: TrackerEvent, today: string): DerivedEventStatus
 isOverdue(event: TrackerEvent, today: string): boolean
 latestValues(events: ReadonlyArray<TrackerEvent>, dataElementIds?: ReadonlyArray<string>): Map<string, LatestValue>
@@ -147,11 +147,11 @@ TrackedEntity:X` without a program).
 
 So the block maps:
 
-| Response                                                 | `state.status`                    |
-| -------------------------------------------------------- | --------------------------------- |
-| 200                                                      | `ready`                           |
-| 404, 403 (and 401 / 409 if an older server sends them)   | `unavailable` (`debug` = message) |
-| network failure, 5xx, 400, a response the schema rejects | `error`                           |
+| Response                                            | `state.status`                    |
+| --------------------------------------------------- | --------------------------------- |
+| 200                                                 | `ready`                           |
+| 404, 403 (and 409 if an older server sends it)      | `unavailable` (`debug` = message) |
+| network failure, 5xx, 400, 401, a rejected response | `error`                           |
 
 This is the same thing Capture does: it never says "access denied" for a person; any failure loading the person reads
 as "does not exist".
@@ -444,7 +444,7 @@ another way can still call them if it has the same shapes.
 
 ### 9.4 Enrollment allowance
 
-`enrollmentAllowance(record, program)` → `{ allowed: true } | { allowed: false; reason }`, reasons in this order:
+`enrollmentAllowance(program)` → `{ allowed: true } | { allowed: false; reason }`, reasons in this order:
 
 1. `'unavailable'`: the program isn't `enrolled` or `not-enrolled`.
 2. `'no-write-access'`: `canWrite` is false (includes an inactive person).

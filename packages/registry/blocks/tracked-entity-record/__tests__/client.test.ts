@@ -149,14 +149,14 @@ describe('record client', () => {
         expect(result.isErr() && result.error.kind).toBe('invalid-response')
     })
 
-    it('returns unavailable only for 401, 403, 404 and 409 http errors', () => {
+    it('returns unavailable only for 403, 404 and 409 http errors', () => {
         const http = (status: number) =>
             new RecordRequestError('http', 'failed', { status })
 
-        for (const status of [401, 403, 404, 409]) {
+        for (const status of [403, 404, 409]) {
             expect(isUnavailableResponse(http(status))).toBe(true)
         }
-        for (const status of [400, 500, 502]) {
+        for (const status of [400, 401, 500, 502]) {
             expect(isUnavailableResponse(http(status))).toBe(false)
         }
         expect(

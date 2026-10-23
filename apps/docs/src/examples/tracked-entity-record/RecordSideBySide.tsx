@@ -12,7 +12,6 @@ import {
     enrollmentAllowance,
     useTrackedEntityRecord,
     type ProgramRecord,
-    type TrackedEntityRecord,
 } from '@/components/tracked-entity-record'
 
 /**
@@ -23,9 +22,9 @@ import {
  * with a person and programs from your own instance. `programs` lists the
  * programs the app cares about, in the order it wants them.
  */
-type ProgramCardProps = { record: TrackedEntityRecord; entry: ProgramRecord }
+type ProgramCardProps = { entry: ProgramRecord }
 
-const ProgramCard = ({ record, entry }: ProgramCardProps) => {
+const ProgramCard = ({ entry }: ProgramCardProps) => {
     if (entry.status === 'unavailable') {
         // The block never says why a program is locked.
         return (
@@ -47,7 +46,7 @@ const ProgramCard = ({ record, entry }: ProgramCardProps) => {
         )
     }
 
-    const allowance = enrollmentAllowance(record, entry)
+    const allowance = enrollmentAllowance(entry)
 
     return (
         <section aria-label={entry.program.name}>
@@ -102,11 +101,7 @@ const Programs = () => {
             return (
                 <div className="grid gap-4 md:grid-cols-2">
                     {[...state.record.programs].map(([id, entry]) => (
-                        <ProgramCard
-                            key={id}
-                            record={state.record}
-                            entry={entry}
-                        />
+                        <ProgramCard key={id} entry={entry} />
                     ))}
                 </div>
             )

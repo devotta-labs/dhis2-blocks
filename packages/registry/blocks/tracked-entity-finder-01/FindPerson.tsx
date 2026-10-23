@@ -35,7 +35,7 @@ function SearchById({ onNoId }: { onNoId: () => void }) {
         <FinderForm>
             <FinderField attribute={ID_ATTRIBUTE} />
             <FinderHint />
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col items-start gap-1">
                 <FinderSubmit />
                 <Button type="button" variant="link" onClick={onNoId}>
                     {i18n.t('No ID?')}
@@ -52,7 +52,7 @@ function SearchByDetails({ onSearchById }: { onSearchById: () => void }) {
             <FinderField attribute={FIRST_NAME} />
             <FinderField attribute={DATE_OF_BIRTH} />
             <FinderHint />
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col items-start gap-1">
                 <FinderSubmit />
                 <Button type="button" variant="link" onClick={onSearchById}>
                     {i18n.t('Search by ID instead')}

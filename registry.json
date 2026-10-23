@@ -895,8 +895,8 @@
         {
             "name": "tracked-entity-finder-01",
             "type": "registry:block",
-            "title": "Find a Person by ID",
-            "description": "Find a person by ID, with a \"No ID?\" fallback to first name and date of birth.",
+            "title": "Find a person by ID, with a \"No ID?\" fallback",
+            "description": "An example composed from the tracked entity finder: search by a unique ID, or by first name and date of birth.",
             "dependencies": ["@dhis2/d2-i18n@1.2.0"],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/button",

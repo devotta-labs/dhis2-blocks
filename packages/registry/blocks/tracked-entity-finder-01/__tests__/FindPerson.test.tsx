@@ -1,6 +1,7 @@
 import { CustomDataProvider } from '@dhis2/app-runtime'
 import React, { type ComponentProps } from 'react'
 import { page, userEvent } from 'vitest/browser'
+// Test support only: neither block's __tests__ directory is shipped.
 import { renderWithQueries } from '../../tracked-entity-finder/__tests__/finderTestSupport'
 import { FindPerson } from '../FindPerson'
 
@@ -109,27 +110,36 @@ describe('FindPerson', () => {
             .element(page.getByRole('button', { name: /Mariama/ }))
             .toBeVisible()
         expect(searches).toHaveLength(1)
-        expect(searches[0]).toEqual(
-            expect.arrayContaining([
-                expect.stringMatching(new RegExp(`^${FIRST_NAME}:`)),
-                `${DATE_OF_BIRTH}:eq:1994-05-12`,
-            ])
-        )
+        expect(searches[0]).toEqual([
+            `${FIRST_NAME}:like:Mariama`,
+            `${DATE_OF_BIRTH}:eq:1994-05-12`,
+        ])
     })
 
     it('swaps back with Search by ID instead', async () => {
-        renderFindPerson()
+        const { searches } = renderFindPerson()
 
         await page.getByRole('button', { name: 'No ID?' }).click()
-        await expect.element(page.getByLabelText('First name')).toBeVisible()
+        await userEvent.fill(page.getByLabelText('First name'), 'Mariama')
+        await page.getByRole('button', { name: 'Search', exact: true }).click()
+        const row = page.getByRole('button', { name: /Mariama/ })
+        await expect.element(row).toBeVisible()
+
         await page.getByRole('button', { name: 'Search by ID instead' }).click()
 
-        await expect.element(page.getByLabelText('Unique ID')).toBeVisible()
         await expect
             .element(page.getByLabelText('First name'))
             .not.toBeInTheDocument()
         await expect
             .element(page.getByRole('button', { name: 'No ID?' }))
             .toBeVisible()
+        // The details search's results stay until the next Search.
+        await expect.element(row).toBeVisible()
+
+        await userEvent.fill(page.getByLabelText('Unique ID'), 'RMNCH-0042')
+        await page.getByRole('button', { name: 'Search', exact: true }).click()
+
+        await expect.poll(() => searches).toHaveLength(2)
+        expect(searches[1]).toEqual([`${ID_ATTRIBUTE}:eq:RMNCH-0042`])
     })
 })

@@ -75,26 +75,28 @@ apps/web/src/trackedEntityFinderTranslationCatalog.ts
 ### Task 1: Block scaffold and API layer
 
 **Files:**
+
 - Create: `block.json` (title "DHIS2 Tracked Entity Finder", description "Composable parts and hooks to find one tracked entity within a program's search rules.", `docs` one paragraph naming `FinderProvider`, `FinderForm`, `FinderField`, `FinderSubmit`, `FinderResults` and the docs page), `index.ts` (temporary: `createTrackedEntityFinderClient` and types), `api/{client,runtimeClient,schemas,queries,systemInfo}.ts`.
 - Modify: `registry.json` via `pnpm registry:write`; `knip.json` only if `pnpm dead-code:audit` needs it.
 - Test: `api/client.test.ts`, `api/schemas.test.ts`, `api/queries.test.ts`.
 
 **Interfaces:**
+
 - Produces:
-  - `interface DataEngineLike { query(query, options?: { signal?: AbortSignal }): Promise<Record<string, DataEngineValue>> }`
-  - `interface TrackedEntityFinderClient` (opaque, frozen, no methods); `createTrackedEntityFinderClient(engine: DataEngineLike): TrackedEntityFinderClient`; internal `resourceClientOf(client): FinderResourceClient` (throws for a foreign object); `FinderResourceClient.query<T>(request: { resource; id?; params? }, schema: ZodType<T>, signal?): Promise<T>`.
-  - `class FinderRequestError extends Error { status?: number; serverMessage?: string }`; status read from `details.httpStatusCode ?? httpStatusCode ?? status ?? response.status`.
-  - `shouldRetryFinderRequest(failureCount, cause): boolean` (no retry on zod errors, 4xx, or after 2).
-  - `useTrackedEntityFinderClient(): TrackedEntityFinderClient`.
-  - `interface ProgramMetadata { program; name; trackedEntityType; minAttributesRequiredToSearch; maxTeiCountToReturn; attributes: AttributeMetadata[] }` with `AttributeMetadata { id; label (displayFormName ?? displayName); valueType; unique; searchable; displayInList; options?: {code,name}[]; preferredSearchOperator?: string (lower-case); blockedSearchOperators: string[] (lower-case); minCharactersToSearch: number }`, attributes sorted by `sortOrder` then response order. Defaults: min 1, cap 0.
-  - `TrackedEntitiesResponseSchema` accepting `trackedEntities` or legacy `instances`, and the pager under `pager` or top level (`page`, `pageSize`, `total`); `normaliseTrackedEntities(response) → { rows: RawTrackedEntity[]; total?: number }`.
-  - `finderKeys = { all, systemInfo(), program(program), search(program, submission, page) }`; `programMetadataQueryOptions(client: FinderResourceClient, program: string)` (staleTime ∞, retry policy).
-  - `systemInfoQueryOptions(client) → { calendar: FinderCalendar; dateFormat: 'YYYY-MM-DD' | 'DD-MM-YYYY' }`.
+    - `interface DataEngineLike { query(query, options?: { signal?: AbortSignal }): Promise<Record<string, DataEngineValue>> }`
+    - `interface TrackedEntityFinderClient` (opaque, frozen, no methods); `createTrackedEntityFinderClient(engine: DataEngineLike): TrackedEntityFinderClient`; internal `resourceClientOf(client): FinderResourceClient` (throws for a foreign object); `FinderResourceClient.query<T>(request: { resource; id?; params? }, schema: ZodType<T>, signal?): Promise<T>`.
+    - `class FinderRequestError extends Error { status?: number; serverMessage?: string }`; status read from `details.httpStatusCode ?? httpStatusCode ?? status ?? response.status`.
+    - `shouldRetryFinderRequest(failureCount, cause): boolean` (no retry on zod errors, 4xx, or after 2).
+    - `useTrackedEntityFinderClient(): TrackedEntityFinderClient`.
+    - `interface ProgramMetadata { program; name; trackedEntityType; minAttributesRequiredToSearch; maxTeiCountToReturn; attributes: AttributeMetadata[] }` with `AttributeMetadata { id; label (displayFormName ?? displayName); valueType; unique; searchable; displayInList; options?: {code,name}[]; preferredSearchOperator?: string (lower-case); blockedSearchOperators: string[] (lower-case); minCharactersToSearch: number }`, attributes sorted by `sortOrder` then response order. Defaults: min 1, cap 0.
+    - `TrackedEntitiesResponseSchema` accepting `trackedEntities` or legacy `instances`, and the pager under `pager` or top level (`page`, `pageSize`, `total`); `normaliseTrackedEntities(response) → { rows: RawTrackedEntity[]; total?: number }`.
+    - `finderKeys = { all, systemInfo(), program(program), search(program, submission, page) }`; `programMetadataQueryOptions(client: FinderResourceClient, program: string)` (staleTime ∞, retry policy).
+    - `systemInfoQueryOptions(client) → { calendar: FinderCalendar; dateFormat: 'YYYY-MM-DD' | 'DD-MM-YYYY' }`.
 
 - [ ] **Step 1: Write failing tests**
-  - `client.test.ts`: `it('maps a 409 under error.details to status 409')`, `it('keeps the server message')`, `it('does not retry a 409 or a zod error, retries a 500 twice')`, `it('rejects a client it did not create')`.
-  - `schemas.test.ts`: `it('orders attributes by sortOrder')`, `it('defaults min to 1 and cap to 0')`, `it('lower-cases operators')`, `it('reads legacy instances and a top-level pager')`.
-  - `queries.test.ts`: `it('requests the program fields the rules need')` asserting `params.fields` contains `minAttributesRequiredToSearch`, `maxTeiCountToReturn`, `programTrackedEntityAttributes[searchable,displayInList,sortOrder,` and `blockedSearchOperators`.
+    - `client.test.ts`: `it('maps a 409 under error.details to status 409')`, `it('keeps the server message')`, `it('does not retry a 409 or a zod error, retries a 500 twice')`, `it('rejects a client it did not create')`.
+    - `schemas.test.ts`: `it('orders attributes by sortOrder')`, `it('defaults min to 1 and cap to 0')`, `it('lower-cases operators')`, `it('reads legacy instances and a top-level pager')`.
+    - `queries.test.ts`: `it('requests the program fields the rules need')` asserting `params.fields` contains `minAttributesRequiredToSearch`, `maxTeiCountToReturn`, `programTrackedEntityAttributes[searchable,displayInList,sortOrder,` and `blockedSearchOperators`.
 - [ ] **Step 2: Run `pnpm --filter @dhis2-blocks/registry exec vitest run --project node blocks/tracked-entity-finder` — expect FAIL (modules missing).**
 - [ ] **Step 3: Implement the files above; run `pnpm registry:write`.**
 - [ ] **Step 4: Run the tests, `pnpm --filter @dhis2-blocks/registry typecheck` and `pnpm registry:validate` — expect PASS.**
@@ -103,17 +105,19 @@ apps/web/src/trackedEntityFinderTranslationCatalog.ts
 ### Task 2: Program model
 
 **Files:**
+
 - Create: `rules/types.ts`, `rules/programModel.ts`, `rules/__fixtures__/program.ts`
 - Test: `rules/programModel.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ProgramMetadata` (Task 1).
 - Produces:
-  - `type FieldKind = 'text' | 'option' | 'boolean' | 'trueOnly' | 'number' | 'date' | 'dateTime' | 'unsupported'` (option set wins; text = TEXT, LONG_TEXT, LETTER, PHONE_NUMBER, EMAIL, URL, USERNAME; number = NUMBER, INTEGER*, PERCENTAGE; date = DATE, AGE; dateTime = DATETIME).
-  - `interface FinderAttribute { readonly id; label; valueType; kind; unique; searchable; displayInList; options?; textOperator?: 'like'|'sw'|'eq'; blocked: BlockedOperators; minCharacters; usable: boolean }` — `usable` = searchable, supported kind, and some operator it would send is not blocked (unique: `eq`; text: a `textOperator` exists; number/date/dateTime: `eq`, or `ge`/`le` for ranges; others `eq`).
-  - `interface ProgramModel { readonly program; name; trackedEntityType; attributes: readonly FinderAttribute[] (metadata order); minAttributes; maxResults }` frozen deep; `attributeOf(model, id): FinderAttribute | undefined`; `searchableAttributes(model): readonly FinderAttribute[]` (usable ones, metadata order).
-  - `buildProgramModel(meta: ProgramMetadata): ProgramModel`.
-  - Fixture `hivProgram: ProgramMetadata` (program `hivProgram`, name "HIV Program", min 2, cap 5) with attributes: `artNumber` ART number TEXT unique searchable displayInList; `legacyId` Legacy ID TEXT unique **not** searchable; `firstName` First name TEXT searchable displayInList minChars 2; `lastName` Last name TEXT displayInList not searchable; `dob` Date of birth DATE searchable displayInList; `sex` Sex TEXT option set (`F` Female, `M` Male) searchable displayInList; `weight` Weight INTEGER searchable; `visit` Last visit DATETIME searchable; `photo` Photo IMAGE searchable; `nickname` Nickname TEXT searchable blocked `like, sw, eq`.
+    - `type FieldKind = 'text' | 'option' | 'boolean' | 'trueOnly' | 'number' | 'date' | 'dateTime' | 'unsupported'` (option set wins; text = TEXT, LONG_TEXT, LETTER, PHONE_NUMBER, EMAIL, URL, USERNAME; number = NUMBER, INTEGER*, PERCENTAGE; date = DATE, AGE; dateTime = DATETIME).
+    - `interface FinderAttribute { readonly id; label; valueType; kind; unique; searchable; displayInList; options?; textOperator?: 'like'|'sw'|'eq'; blocked: BlockedOperators; minCharacters; usable: boolean }` — `usable` = searchable, supported kind, and some operator it would send is not blocked (unique: `eq`; text: a `textOperator` exists; number/date/dateTime: `eq`, or `ge`/`le` for ranges; others `eq`).
+    - `interface ProgramModel { readonly program; name; trackedEntityType; attributes: readonly FinderAttribute[] (metadata order); minAttributes; maxResults }` frozen deep; `attributeOf(model, id): FinderAttribute | undefined`; `searchableAttributes(model): readonly FinderAttribute[]` (usable ones, metadata order).
+    - `buildProgramModel(meta: ProgramMetadata): ProgramModel`.
+    - Fixture `hivProgram: ProgramMetadata` (program `hivProgram`, name "HIV Program", min 2, cap 5) with attributes: `artNumber` ART number TEXT unique searchable displayInList; `legacyId` Legacy ID TEXT unique **not** searchable; `firstName` First name TEXT searchable displayInList minChars 2; `lastName` Last name TEXT displayInList not searchable; `dob` Date of birth DATE searchable displayInList; `sex` Sex TEXT option set (`F` Female, `M` Male) searchable displayInList; `weight` Weight INTEGER searchable; `visit` Last visit DATETIME searchable; `photo` Photo IMAGE searchable; `nickname` Nickname TEXT searchable blocked `like, sw, eq`.
 
 - [ ] **Step 1: Write failing tests** — `it('marks unique-but-not-searchable attributes unusable')` (`legacyId.usable === false`), `it('marks unsupported value types unusable')` (`photo`), `it('marks a text attribute with every operator blocked unusable')` (`nickname`), `it('uses preferredSearchOperator unless blocked, else like, sw, eq')`, `it('lists searchable attributes in metadata order')` → `['artNumber','firstName','dob','sex','weight','visit']`, `it('freezes the model all the way down')` (`Object.isFrozen` on model, attributes array, an attribute, options; `blocked` has no `add`).
 - [ ] **Step 2: Run — expect FAIL.**
@@ -124,38 +128,40 @@ apps/web/src/trackedEntityFinderTranslationCatalog.ts
 ### Task 3: Form rules, sealed search, config messages
 
 **Files:**
+
 - Create: `rules/seal.ts`, `rules/evaluateForm.ts`, `rules/describeProblem.ts`
 - Test: `rules/evaluateForm.test.ts`, `rules/describeProblem.test.ts`, `rules/sealGuard.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ProgramModel`, `FinderAttribute`, fixture (Task 2).
 - Produces:
-  - `type FieldValue = { kind: 'text'; text: string } | { kind: 'option'; code?: string } | { kind: 'boolean'; value?: 'true' | 'false' } | { kind: 'trueOnly'; checked: boolean } | { kind: 'number'; value: string } | { kind: 'numberRange'; min: string; max: string } | { kind: 'date'; date?: string } | { kind: 'dateRange'; from?: string; to?: string }` (dates are ISO `yyyy-mm-dd`; anything else is invalid input).
-  - `type FieldIssue = 'too-short' | 'invalid-number' | 'not-integer' | 'invalid-date' | 'reversed'`.
-  - `type FormField = { attribute: string; shape: 'exact' | 'range' }` (`'range'` comes only from `FinderRangeField` / `useFinderRangeField`).
-  - `type ConfigProblem = { kind: 'unknown-attribute' | 'not-searchable' | 'unsupported-type' | 'operators-blocked' | 'range-not-supported' | 'shape-conflict'; attribute: string } | { kind: 'form-cannot-search' }`.
-  - `type ValidatedSearch` (branded, frozen `{ filters: readonly { attribute; conditions: readonly { op; value }[] }[] }`); `seal(filters)` imported only inside `rules/`.
-  - `interface FormVerdict { problems: readonly ConfigProblem[]; issues: Readonly<Record<string, FieldIssue>>; missing: number; reason: 'empty' | 'needs-more' | 'two-ids' | 'has-issues' | 'not-set-up' | 'ready'; searchingBy?: string /* unique attribute id when the ID wins */; search?: ValidatedSearch }` — frozen; `search` present iff `reason === 'ready'`.
-  - `evaluateForm(model: ProgramModel, fields: readonly FormField[], values: Readonly<Record<string, FieldValue>>): FormVerdict`.
-  - `findShapeConflicts(fields: readonly FormField[]): readonly string[]` (attribute ids composed both `exact` and `range` anywhere under the provider).
-  - `describeProblem(model, problem): string` — full message via `i18n.t`, e.g. ``"`xyz` isn't searchable in HIV Program. Searchable: ART number (`artNumber`, unique), First name (`firstName`), Date of birth (`dob`), Sex (`sex`), Weight (`weight`), Last visit (`visit`). This program needs 2 details unless an ID is used."``
+    - `type FieldValue = { kind: 'text'; text: string } | { kind: 'option'; code?: string } | { kind: 'boolean'; value?: 'true' | 'false' } | { kind: 'trueOnly'; checked: boolean } | { kind: 'number'; value: string } | { kind: 'numberRange'; min: string; max: string } | { kind: 'date'; date?: string } | { kind: 'dateRange'; from?: string; to?: string }` (dates are ISO `yyyy-mm-dd`; anything else is invalid input).
+    - `type FieldIssue = 'too-short' | 'invalid-number' | 'not-integer' | 'invalid-date' | 'reversed'`.
+    - `type FormField = { attribute: string; shape: 'exact' | 'range' }` (`'range'` comes only from `FinderRangeField` / `useFinderRangeField`).
+    - `type ConfigProblem = { kind: 'unknown-attribute' | 'not-searchable' | 'unsupported-type' | 'operators-blocked' | 'range-not-supported' | 'shape-conflict'; attribute: string } | { kind: 'form-cannot-search' }`.
+    - `type ValidatedSearch` (branded, frozen `{ filters: readonly { attribute; conditions: readonly { op; value }[] }[] }`); `seal(filters)` imported only inside `rules/`.
+    - `interface FormVerdict { problems: readonly ConfigProblem[]; issues: Readonly<Record<string, FieldIssue>>; missing: number; reason: 'empty' | 'needs-more' | 'two-ids' | 'has-issues' | 'not-set-up' | 'ready'; searchingBy?: string /* unique attribute id when the ID wins */; search?: ValidatedSearch }` — frozen; `search` present iff `reason === 'ready'`.
+    - `evaluateForm(model: ProgramModel, fields: readonly FormField[], values: Readonly<Record<string, FieldValue>>): FormVerdict`.
+    - `findShapeConflicts(fields: readonly FormField[]): readonly string[]` (attribute ids composed both `exact` and `range` anywhere under the provider).
+    - `describeProblem(model, problem): string` — full message via `i18n.t`, e.g. ``"`xyz` isn't searchable in HIV Program. Searchable: ART number (`artNumber`, unique), First name (`firstName`), Date of birth (`dob`), Sex (`sex`), Weight (`weight`), Last visit (`visit`). This program needs 2 details unless an ID is used."``
 
 Rules (spec §5): unusable/unknown fields → problem and excluded; `range` shape on unique, text, option, boolean or trueOnly → `range-not-supported`; no usable unique field and fewer usable non-unique fields than `max(min, 1)` → `form-cannot-search` and `reason: 'not-set-up'`. Any field issue → `has-issues` (my call: a value the user typed that cannot be used blocks Search rather than being silently dropped). Two filled unique fields → `two-ids`. One filled unique field → `ready`, `searchingBy`, single filter `[{op:'eq', value: trimmed}]`, other fields not sent. Otherwise count filled non-unique fields: `missing = max(0, max(min,1) - filled)`; nothing filled → `empty`; missing > 0 → `needs-more`. Text: trim, `minCharacters` → `too-short` (also for unique text), operator = `textOperator` (unique always `eq`). Number: `eq`; integer types reject decimals (`not-integer`); range sends `ge`/`le`, either side alone fills, min > max → `reversed`. Date: `eq`; DATETIME exact → `ge yyyy-mm-ddT00:00:00.000` + `le yyyy-mm-ddT23:59:59.999`; date ranges `ge`/`le` (datetime sides widened to day start/end). A condition whose operator is blocked makes the field unusable for that shape (`operators-blocked`). Option: `eq` code, only a known code fills.
 
 - [ ] **Step 1: Write failing tests** (fixture `hivProgram`; each asserts `reason` and `search?.filters` exactly):
-  - `it('searches a filled ID alone with an exact match')` — fields artNumber+firstName+dob, values artNumber `"  ART-1  "`, firstName `"Am"` → `ready`, `searchingBy: 'artNumber'`, filters `[{attribute:'artNumber', conditions:[{op:'eq', value:'ART-1'}]}]`.
-  - `it('refuses two IDs at once')` — a second unique usable attribute added to a local fixture copy → `two-ids`, no search.
-  - `it('needs the minimum of details without an ID')` — firstName `"Am"` only → `needs-more`, `missing: 1`; plus dob `2000-01-02` → `ready`, filters firstName `like Am`, dob `eq 2000-01-02`.
-  - `it('counts a one-sided range as filled')` — dob range `{from:'2000-01-01'}` + firstName → `ge 2000-01-01` only.
-  - `it('sends a datetime day as ge/le bounds')`.
-  - `it('flags short text, decimals in integers, bad dates and reversed ranges as issues and blocks search')` → `has-issues` with each issue.
-  - `it('reports non-searchable, unknown, unsupported and fully blocked fields and leaves them out')` → problems for `legacyId`, `nope`, `photo`, `nickname`; their values never appear in filters.
-  - `it('reports a form that can never search')` — fields `[firstName]` with min 2 → `form-cannot-search`, `not-set-up`.
-  - `it('rejects a range on an ID or text field')`.
-  - `it('finds an attribute composed both exact and as a range')`.
-  - `it('freezes the verdict and the search all the way down')`.
-  - `describeProblem.test.ts`: the exact message above for `not-searchable` `xyz`; `form-cannot-search` names the minimum.
-  - `sealGuard.test.ts`: `it('only rules modules import seal')` — scan the block's non-test source for imports of `rules/seal` outside `rules/`; expect none.
+    - `it('searches a filled ID alone with an exact match')` — fields artNumber+firstName+dob, values artNumber `"  ART-1  "`, firstName `"Am"` → `ready`, `searchingBy: 'artNumber'`, filters `[{attribute:'artNumber', conditions:[{op:'eq', value:'ART-1'}]}]`.
+    - `it('refuses two IDs at once')` — a second unique usable attribute added to a local fixture copy → `two-ids`, no search.
+    - `it('needs the minimum of details without an ID')` — firstName `"Am"` only → `needs-more`, `missing: 1`; plus dob `2000-01-02` → `ready`, filters firstName `like Am`, dob `eq 2000-01-02`.
+    - `it('counts a one-sided range as filled')` — dob range `{from:'2000-01-01'}` + firstName → `ge 2000-01-01` only.
+    - `it('sends a datetime day as ge/le bounds')`.
+    - `it('flags short text, decimals in integers, bad dates and reversed ranges as issues and blocks search')` → `has-issues` with each issue.
+    - `it('reports non-searchable, unknown, unsupported and fully blocked fields and leaves them out')` → problems for `legacyId`, `nope`, `photo`, `nickname`; their values never appear in filters.
+    - `it('reports a form that can never search')` — fields `[firstName]` with min 2 → `form-cannot-search`, `not-set-up`.
+    - `it('rejects a range on an ID or text field')`.
+    - `it('finds an attribute composed both exact and as a range')`.
+    - `it('freezes the verdict and the search all the way down')`.
+    - `describeProblem.test.ts`: the exact message above for `not-searchable` `xyz`; `form-cannot-search` names the minimum.
+    - `sealGuard.test.ts`: `it('only rules modules import seal')` — scan the block's non-test source for imports of `rules/seal` outside `rules/`; expect none.
 - [ ] **Step 2: Run — expect FAIL.**
 - [ ] **Step 3: Implement.**
 - [ ] **Step 4: Run — expect PASS.**
@@ -164,16 +170,18 @@ Rules (spec §5): unusable/unknown fields → problem and excluded; `range` shap
 ### Task 4: Running a search
 
 **Files:**
+
 - Create: `rules/searchParams.ts`, `api/search.ts`
 - Test: `rules/searchParams.test.ts`, `api/search.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ValidatedSearch`, `ProgramModel` (Tasks 2–3), `FinderResourceClient`, `TrackedEntitiesResponseSchema` (Task 1).
 - Produces:
-  - `PAGE_SIZE = 10`; `serializeFilter(filter): string` (escape `/` → `//`, `:` → `/:`, `,` → `/,`); `toSearchParams(model, search, page)` → exactly the request params in Global Constraints.
-  - `interface FinderPerson { trackedEntity; trackedEntityType; orgUnit; programOwner?: string; attributes: Record<string, string> }` (`programOwner` = owner orgUnit for the model's program).
-  - `type SearchOutcome = { kind: 'results'; people: FinderPerson[]; page: number; hasNext: boolean } | { kind: 'too-many' }`.
-  - `runSearch(client, model, search, page, signal?): Promise<SearchOutcome>` — total > `maxResults` (when > 0) → `too-many` with no people; 409 whose message contains `maxteicountreached` (case-insensitive) → `too-many` unless aborted; other errors throw. `hasNext` from total when present, else `people.length === PAGE_SIZE`.
+    - `PAGE_SIZE = 10`; `serializeFilter(filter): string` (escape `/` → `//`, `:` → `/:`, `,` → `/,`); `toSearchParams(model, search, page)` → exactly the request params in Global Constraints.
+    - `interface FinderPerson { trackedEntity; trackedEntityType; orgUnit; programOwner?: string; attributes: Record<string, string> }` (`programOwner` = owner orgUnit for the model's program).
+    - `type SearchOutcome = { kind: 'results'; people: FinderPerson[]; page: number; hasNext: boolean } | { kind: 'too-many' }`.
+    - `runSearch(client, model, search, page, signal?): Promise<SearchOutcome>` — total > `maxResults` (when > 0) → `too-many` with no people; 409 whose message contains `maxteicountreached` (case-insensitive) → `too-many` unless aborted; other errors throw. `hasNext` from total when present, else `people.length === PAGE_SIZE`.
 
 - [ ] **Step 1: Write failing tests** — `it('escapes : , / in values')` (`ART:1,2/3` → `artNumber:eq:ART/:1/,2//3`), `it('sends orgUnitMode ACCESSIBLE and no orgUnits')`, `it('returns too-many over the cap and shows no one')` (total 6, cap 5), `it('treats cap 0 as no cap')`, `it('maps a 409 maxteicountreached to too-many, from either error shape')`, `it('rethrows other failures')`, `it('picks the program owner for the program')`, `it('works out hasNext with and without a total')`.
 - [ ] **Step 2: Run — expect FAIL.**
@@ -184,15 +192,17 @@ Rules (spec §5): unusable/unknown fields → problem and excluded; `range` shap
 ### Task 5: Calendar dates and value formatting
 
 **Files:**
+
 - Create: `calendar/calendarDates.ts`, `calendar/CalendarDateInput.tsx`, `format/formatValue.ts`
 - Test: `calendar/calendarDates.test.ts`, `format/formatValue.test.ts`, `calendar/CalendarDateInput.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `FinderSystemInfo` (Task 1), `FinderAttribute` (Task 2).
 - Produces:
-  - `calendarDateToIso(value: string, info): string | undefined` and `isoToCalendarDate(iso: string, info): string` (system calendar + `dateFormat`, via `@dhis2/multi-calendar-dates`; Ethiopian/coptic era years handled as working-list's `registry/transformers.ts` does).
-  - `CalendarDateInput({ label, value /* ISO or invalid text */, onChange(next: string /* ISO, '' or the raw text when invalid */), info })` — renders `@dhis2/ui` `CalendarInput` in the system calendar inside an error boundary; if `CalendarInput` throws, it falls back to a labelled plain text input in the system date format (converted the same way). Tests may swap the component through a `CalendarInputProvider`, as working-list does.
-  - `formatValue(attribute: FinderAttribute | undefined, raw: string, info): string` — option code → name, DATE/AGE → system calendar date, DATETIME → date + time, BOOLEAN → Yes/No, TRUE_ONLY → Yes, empty → `—`, unknown attribute → raw.
+    - `calendarDateToIso(value: string, info): string | undefined` and `isoToCalendarDate(iso: string, info): string` (system calendar + `dateFormat`, via `@dhis2/multi-calendar-dates`; Ethiopian/coptic era years handled as working-list's `registry/transformers.ts` does).
+    - `CalendarDateInput({ label, value /* ISO or invalid text */, onChange(next: string /* ISO, '' or the raw text when invalid */), info })` — renders `@dhis2/ui` `CalendarInput` in the system calendar inside an error boundary; if `CalendarInput` throws, it falls back to a labelled plain text input in the system date format (converted the same way). Tests may swap the component through a `CalendarInputProvider`, as working-list does.
+    - `formatValue(attribute: FinderAttribute | undefined, raw: string, info): string` — option code → name, DATE/AGE → system calendar date, DATETIME → date + time, BOOLEAN → Yes/No, TRUE_ONLY → Yes, empty → `—`, unknown attribute → raw.
 
 - [ ] **Step 1: Write failing tests** — round-trips for gregorian `YYYY-MM-DD` and `DD-MM-YYYY`, nepali and ethiopian known dates (reference pairs from working-list's calendar tests); `formatValue` cases above; browser test `it('does not crash on the ethiopian calendar')` rendering the **real** `CalendarInput` with `calendar: 'ethiopian'`, typing a date, and asserting `onChange` received the ISO date (fallback path acceptable, crash not).
 - [ ] **Step 2: Run — expect FAIL.**
@@ -203,34 +213,36 @@ Rules (spec §5): unusable/unknown fields → problem and excluded; `range` shap
 ### Task 6: Provider, forms, fields, hint, submit
 
 **Files:**
+
 - Create: `provider/{FinderProvider.tsx,context.ts,useFinderController.ts}`, `form/{FinderForm,FinderField,FinderRangeField,FinderHint,FinderSubmit,ConfigError}.tsx`, `form/inputs/*`, `hooks.ts` (field, range field, search, program hooks), `__tests__/finderTestSupport.tsx`
 - Test: `__tests__/FinderForm.test.tsx`, `__tests__/ConfigErrors.test.tsx`
 
 **Interfaces:**
+
 - Consumes: Tasks 1–5.
 - Produces:
-  - `FinderProvider({ program: string; onSelect(person: FinderPerson): void; client?: TrackedEntityFinderClient; children?: ReactNode })` — keyed on `program`; renders children only; dev `console.warn` when children are empty.
-  - Internal context (not exported from `index.ts`), shape `{ state, actions, meta }`:
-    `state: { status: 'loading' | 'ready' | 'error'; model?: ProgramModel; values: Readonly<Record<string, FieldValue>>; fields: readonly FormField[] /* every registration, for shape conflicts */; submission?: { search: ValidatedSearch; id: number }; page: number }`,
-    `actions: { setValue(id, value): void; register(formId: string, key: string, field: FormField): () => void; submit(search: ValidatedSearch): void; setPage(page: number): void; select(person: FinderPerson): void }`,
-    `meta: { program: string; client: FinderResourceClient; info?: FinderSystemInfo }`. A separate internal form context carries `formId` and that form's registrations.
-  - `FinderForm(props: ComponentPropsWithoutRef<'form'>)`; `FinderField` / `FinderRangeField({ attribute: string; label?; description?; placeholder?; className? })`; `FinderHint(props: ComponentPropsWithoutRef<'p'>)`; `FinderSubmit(props: Button props, children default "Search")`.
-  - `useFinderField(uid)` and `useFinderRangeField(uid)` → `{ attribute?: { label; valueType; unique; options? }; value?: FieldValue; setValue(value: FieldValue): void; issue?: FieldIssue; problem?: string }` — inside `FinderForm` (throw otherwise); register via `useLayoutEffect`, unregister on unmount.
-  - `useFinderSearch() → { canSearch: boolean; missing: number; reason: FormVerdict['reason']; searchingBy?: string; submit(): void }` (inside `FinderForm`); `submit` sends only `verdict.search`.
-  - `useFinderProgram() → { status; name?; searchableAttributes: readonly { id; label; valueType; unique }[] }` (frozen).
+    - `FinderProvider({ program: string; onSelect(person: FinderPerson): void; client?: TrackedEntityFinderClient; children?: ReactNode })` — keyed on `program`; renders children only; dev `console.warn` when children are empty.
+    - Internal context (not exported from `index.ts`), shape `{ state, actions, meta }`:
+      `state: { status: 'loading' | 'ready' | 'error'; model?: ProgramModel; values: Readonly<Record<string, FieldValue>>; fields: readonly FormField[] /* every registration, for shape conflicts */; submission?: { search: ValidatedSearch; id: number }; page: number }`,
+      `actions: { setValue(id, value): void; register(formId: string, key: string, field: FormField): () => void; submit(search: ValidatedSearch): void; setPage(page: number): void; select(person: FinderPerson): void }`,
+      `meta: { program: string; client: FinderResourceClient; info?: FinderSystemInfo }`. A separate internal form context carries `formId` and that form's registrations.
+    - `FinderForm(props: ComponentPropsWithoutRef<'form'>)`; `FinderField` / `FinderRangeField({ attribute: string; label?; description?; placeholder?; className? })`; `FinderHint(props: ComponentPropsWithoutRef<'p'>)`; `FinderSubmit(props: Button props, children default "Search")`.
+    - `useFinderField(uid)` and `useFinderRangeField(uid)` → `{ attribute?: { label; valueType; unique; options? }; value?: FieldValue; setValue(value: FieldValue): void; issue?: FieldIssue; problem?: string }` — inside `FinderForm` (throw otherwise); register via `useLayoutEffect`, unregister on unmount.
+    - `useFinderSearch() → { canSearch: boolean; missing: number; reason: FormVerdict['reason']; searchingBy?: string; submit(): void }` (inside `FinderForm`); `submit` sends only `verdict.search`.
+    - `useFinderProgram() → { status; name?; searchableAttributes: readonly { id; label; valueType; unique }[] }` (frozen).
 
 Config errors: development (`process.env.NODE_ENV !== 'production'`) shows `describeProblem` text inline with `role="alert"`; production shows "This search isn't set up correctly" and `console.error`s the full text once per problem. Loading: fields disabled + spinner in the form; metadata error: inline error per form.
 
 - [ ] **Step 1: Write failing browser tests** (fake client from `finderTestSupport` serving `hivProgram` and canned search responses; record requests):
-  - `it('renders one input per composed field with metadata labels')` — text, option select, date, number.
-  - `it('renders From and To for a range field')`.
-  - `it('keeps Search disabled until the form can search, with a hint')` — firstName only → disabled + `FinderHint` "Add 1 more detail to search"; add dob → enabled, hint empty.
-  - `it('searches by an ID alone and says so')` — artNumber + firstName filled → "Searching by ART number only"; the recorded request has one filter `artNumber:eq:ART-1`.
-  - `it('keeps two forms apart under one provider')` — submitting the details form sends only its fields.
-  - `it('drops a form\'s fields when it unmounts')` (Review Focus 2).
-  - `it('submits on Enter')`.
-  - `it('passes className and native props through')` on `FinderForm` and `FinderSubmit`.
-  - `ConfigErrors.test.tsx`: `it('shows the full message in development')` for `legacyId`; `it('shows the short message and logs in production')` (stub `process.env.NODE_ENV`), never sends `legacyId` (Review Focus 4); `it('flags the same attribute as both exact and range')`; `it('throws when a field is outside a form or a part is outside the provider')`.
+    - `it('renders one input per composed field with metadata labels')` — text, option select, date, number.
+    - `it('renders From and To for a range field')`.
+    - `it('keeps Search disabled until the form can search, with a hint')` — firstName only → disabled + `FinderHint` "Add 1 more detail to search"; add dob → enabled, hint empty.
+    - `it('searches by an ID alone and says so')` — artNumber + firstName filled → "Searching by ART number only"; the recorded request has one filter `artNumber:eq:ART-1`.
+    - `it('keeps two forms apart under one provider')` — submitting the details form sends only its fields.
+    - `it('drops a form\'s fields when it unmounts')` (Review Focus 2).
+    - `it('submits on Enter')`.
+    - `it('passes className and native props through')` on `FinderForm` and `FinderSubmit`.
+    - `ConfigErrors.test.tsx`: `it('shows the full message in development')` for `legacyId`; `it('shows the short message and logs in production')` (stub `process.env.NODE_ENV`), never sends `legacyId` (Review Focus 4); `it('flags the same attribute as both exact and range')`; `it('throws when a field is outside a form or a part is outside the provider')`.
 - [ ] **Step 2: Run `pnpm --filter @dhis2-blocks/registry exec vitest run --project browser blocks/tracked-entity-finder` — expect FAIL.**
 - [ ] **Step 3: Implement.**
 - [ ] **Step 4: Run — expect PASS.**
@@ -239,19 +251,21 @@ Config errors: development (`process.env.NODE_ENV !== 'production'`) shows `desc
 ### Task 7: Results parts
 
 **Files:**
+
 - Create: `results/{FinderResults,FinderStates,FinderList,FinderItem,FinderValue,FinderPagination}.tsx`; add `useFinderResults` and `useFinderPerson` to `hooks.ts`
 - Test: `__tests__/FinderResults.test.tsx`
 
 **Interfaces:**
+
 - Consumes: provider context (Task 6), `runSearch`, `finderKeys` (Tasks 1, 4), `formatValue` (Task 5).
 - Produces:
-  - `useFinderResults() → { status: 'idle' | 'searching' | 'results' | 'empty' | 'too-many' | 'error'; people: readonly FinderPerson[]; page: number; hasNext: boolean; hasPrevious: boolean; refreshing: boolean; next(): void; previous(): void; select(person): void }` — one TanStack query keyed `finderKeys.search(program, submission.id, page)` with the query `signal`; the previous page stays on screen while the next loads (placeholder only within the same submission); a new submission resets page to 1.
-  - `useFinderPerson(): FinderPerson` (inside `FinderList`; throws otherwise).
-  - `FinderResults(props: ComponentPropsWithoutRef<'div'>)` — `aria-live="polite"`; no children → exactly `<FinderSearching /><FinderEmpty /><FinderTooMany /><FinderError /><FinderList><FinderItem /></FinderList><FinderPagination />`; children → only the children.
-  - `FinderSearching | FinderEmpty | FinderTooMany | FinderError(props: ComponentPropsWithoutRef<'div'>)` — render only in their state; default text when no children.
-  - `FinderList(props: ComponentPropsWithoutRef<'ul'>)` — children rendered once per person in an `<li>` with a person context; nothing unless `status === 'results'`.
-  - `FinderItem(props: ComponentPropsWithoutRef<'button'>)` — selects the current person; default content = `displayInList` attributes as label + `FinderValue`.
-  - `FinderValue({ attribute: string; className? })`, `FinderPagination(props: ComponentPropsWithoutRef<'nav'>)`.
+    - `useFinderResults() → { status: 'idle' | 'searching' | 'results' | 'empty' | 'too-many' | 'error'; people: readonly FinderPerson[]; page: number; hasNext: boolean; hasPrevious: boolean; refreshing: boolean; next(): void; previous(): void; select(person): void }` — one TanStack query keyed `finderKeys.search(program, submission.id, page)` with the query `signal`; the previous page stays on screen while the next loads (placeholder only within the same submission); a new submission resets page to 1.
+    - `useFinderPerson(): FinderPerson` (inside `FinderList`; throws otherwise).
+    - `FinderResults(props: ComponentPropsWithoutRef<'div'>)` — `aria-live="polite"`; no children → exactly `<FinderSearching /><FinderEmpty /><FinderTooMany /><FinderError /><FinderList><FinderItem /></FinderList><FinderPagination />`; children → only the children.
+    - `FinderSearching | FinderEmpty | FinderTooMany | FinderError(props: ComponentPropsWithoutRef<'div'>)` — render only in their state; default text when no children.
+    - `FinderList(props: ComponentPropsWithoutRef<'ul'>)` — children rendered once per person in an `<li>` with a person context; nothing unless `status === 'results'`.
+    - `FinderItem(props: ComponentPropsWithoutRef<'button'>)` — selects the current person; default content = `displayInList` attributes as label + `FinderValue`.
+    - `FinderValue({ attribute: string; className? })`, `FinderPagination(props: ComponentPropsWithoutRef<'nav'>)`.
 
 - [ ] **Step 1: Write failing browser tests** — `it('shows nothing before the first search')`, `it('shows searching, then rows from displayInList attributes')`, `it('says No one found')`, `it('says Too many matches. Add another detail. with no rows')`, `it('shows a request error')`, `it('selects a person by click and by keyboard')` (`onSelect` receives the `FinderPerson`), `it('pages with previous and next')`, `it('renders only what is composed')` (children `<FinderList><FinderItem><FinderValue attribute="artNumber" /></FinderItem></FinderList>` and an empty result → no "No one found"), `it('replaces default text with children')` (`<FinderEmpty>Nobody</FinderEmpty>`), `it('shows a non-displayInList attribute through FinderValue')` (`weight`), `it('gives custom content the person through useFinderPerson')`, `it('drops an old program\'s in-flight search when the program changes')` (Review Focus 1: rerender with another `program` while the fake response is pending; resolve it; expect idle and empty fields), `it('shows only the newest answer after a double submit')` (Review Focus 5).
 - [ ] **Step 2: Run — expect FAIL.**
@@ -262,6 +276,7 @@ Config errors: development (`process.env.NODE_ENV !== 'production'`) shows `desc
 ### Task 8: Public surface and README
 
 **Files:**
+
 - Modify: `index.ts` (exactly the Global Constraints public names plus `FieldValue`), `block.json` `docs`, `registry.json` via `pnpm registry:write`
 - Create: `type-tests/public-surface.ts`, `README.md` (like context-selector's: what it is, the parts, a pointer to the docs page)
 
@@ -274,10 +289,12 @@ Config errors: development (`process.env.NODE_ENV !== 'production'`) shows `desc
 ### Task 9: Example block `tracked-entity-finder-01`
 
 **Files:**
+
 - Create: `packages/registry/blocks/tracked-entity-finder-01/{block.json,index.ts,FindPerson.tsx,__tests__/FindPerson.test.tsx}`
 - Modify: `packages/registry/tsconfig.json` (`paths` add `"@/components/*": ["./blocks/*"]` after the `dhis2/ui` entry) and `packages/registry/vitest.config.ts` (alias `@/components` → `./blocks`, listed after `@/components/dhis2/ui`), so a block can import another as installed projects do; `registry.json` via `pnpm registry:write` (the builder derives the `tracked-entity-finder` registry dependency from the import).
 
 **Interfaces:**
+
 - Consumes: the public API via `@/components/tracked-entity-finder`.
 - Produces: `FindPerson({ onSelect(person: FinderPerson): void })`. Constants at the top, with the comment "Replace with your program's uids. List them with: GET /api/programs/<program>?fields=name,minAttributesRequiredToSearch,programTrackedEntityAttributes[searchable,displayInList,trackedEntityAttribute[id,displayName,valueType,unique]]": `PROGRAM`, `ID_ATTRIBUTE`, `FIRST_NAME`, `DATE_OF_BIRTH`, set to Sierra Leone demo uids.
 
@@ -295,10 +312,12 @@ Layout: ID form (`FinderField` ID, `FinderHint`, `FinderSubmit`); a link-style b
 ### Task 10: Docs page, examples, translations, docs e2e
 
 **Files:**
+
 - Create: `apps/docs/src/pages/blocks/tracked-entity-finder.mdx`, `apps/docs/src/examples/tracked-entity-finder/{FindPerson,CustomRows,ProgramPicker}.tsx`, `apps/web/src/trackedEntityFinderTranslationCatalog.ts`, `e2e/specs-docs/tracked-entity-finder.spec.ts`
 - Modify: `apps/docs/src/examples/registry.ts` (three `live: true` entries `tracked-entity-finder/find-person`, `/custom-rows`, `/program-picker`), `apps/docs/src/navigation.ts` (Blocks: "Tracked Entity Finder"), `apps/web/i18n/en.pot`, `knip.json` (catalog entry, as for `sidebarTranslationCatalog.ts`)
 
 **Interfaces:**
+
 - Consumes: the block via `@/components/tracked-entity-finder`; the example via `@/components/tracked-entity-finder-01`; uids from Task 9.
 
 Examples: `FindPerson` renders the example block and shows the selected person; `CustomRows` composes `FinderResults` with `FinderEmpty` text, `FinderList`/`FinderItem`/`FinderValue` and `FinderPagination`; `ProgramPicker` puts a `select` of two SL programs above the finder and renders a field set per program (the spec's HIV/TB story). Page sections per spec §10, mirroring `sidebar.mdx`.

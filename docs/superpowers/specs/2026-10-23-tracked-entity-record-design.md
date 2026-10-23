@@ -516,8 +516,10 @@ views. Recipes in the demo, not shipped:
 - Latest values for a few data elements: `latestValues`.
 - Upcoming and overdue visits: `eventStatus`.
 - Unavailable programs shown as a plain "You don't have access to this program's records" panel.
-- A small write that shows consistency: add an enrollment note (`POST tracker` with the enrollment's new note), then
-  `refresh()`, and every view updates. (My call: a note is the smallest real write.)
+- A small write that shows consistency: add an enrollment note, then `refresh()`, and every view updates. (My call: a
+  note is the smallest real write.) On 2.42+ it uses `POST tracker/enrollments/{id}/note`, which changes nothing
+  else; 2.41 has no such endpoint, so it sends `POST tracker` with every enrollment field the record has (its importer
+  resets an omitted `followUp`; a stored enrollment geometry, which the record doesn't load, is lost there).
 - A `refresh` button and a visible `isFetching` indicator.
 
 ### 13.1 Docs site page

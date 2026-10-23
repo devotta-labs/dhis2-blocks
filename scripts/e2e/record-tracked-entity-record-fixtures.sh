@@ -120,8 +120,9 @@ for person in "$person_one" "$person_two" "$person_three"; do
         --data-urlencode "fields=$PERSON_FIELDS"
 done
 
-# A person that does not exist: the status and the body are the fixture, since
-# the server answers 404 (2.42+) or 403 (2.41) and the block maps both.
+# A person that does not exist: the status and the body are the fixture. Every
+# version records 404 E1005 here; 2.41 answers 403 only for access cases (spec
+# 7.1), and the block maps both to unavailable.
 missing_body="$(mktemp)"
 missing_status="$(curl --silent --show-error --globoff --get \
     --user "$recorder_username:$recorder_password" \

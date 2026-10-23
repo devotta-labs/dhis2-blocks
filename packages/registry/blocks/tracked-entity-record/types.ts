@@ -132,7 +132,7 @@ export interface Enrollment {
     followUp: boolean
     createdAt: string
     updatedAt: string
-    attributes: Map<string, string> // program attributes as returned on the enrollment
+    attributes: Map<string, string> // the enrollment's values limited to its program's own attributes, in program metadata order
     notes: Note[]
     events: TrackerEvent[] // newest first by occurredAt ?? scheduledAt, then createdAt
 }

@@ -644,6 +644,7 @@
             "description": "Composable parts and hooks to find one tracked entity within a program's search rules.",
             "dependencies": [
                 "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
                 "@tanstack/react-query@^5.101.4",
                 "zod@^4.4.3"
             ],
@@ -680,9 +681,24 @@
                     "target": "@components/tracked-entity-finder/index.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-finder/rules/describeProblem.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/rules/describeProblem.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/rules/evaluateForm.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/rules/evaluateForm.ts"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-finder/rules/programModel.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/rules/programModel.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/rules/seal.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/rules/seal.ts"
                 },
                 {
                     "path": "packages/registry/blocks/tracked-entity-finder/rules/types.ts",

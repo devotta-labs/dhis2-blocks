@@ -1,9 +1,6 @@
 # Tracked Entity Record: design
 
 Date: 2026-10-23 · Status: draft, for review
-Revision (2026-10-23): narrowed. The record owns the person's tracker data and access, not every view's display
-metadata; it exports its query options; views may fetch what they need; every per-person query shares one key
-prefix so one invalidation refreshes them all (§4, §6, §10, §12).
 Working name in the brief: `useEnrollmentDashboard` / enrollment dashboard data layer. Renamed with the user to
 **Tracked Entity Record** (`tracked-entity-record`), because it is about one person across programs, not one
 enrollment.
@@ -539,7 +536,8 @@ trackedEntityRecordKeys = {
 ### 10.3 Refresh
 
 - `actions.refresh()` invalidates `scope(id)`: the record's person and relationships, and every other block's
-  per-person queries for this person. It resolves when the refetches settle. Metadata isn't refetched.
+  per-person queries for this person. It resolves when the record's own refetches settle; other views refetch
+  alongside and aren't waited for, so the slowest view never holds up the caller. Metadata isn't refetched.
 - It rejects only when the record's person request fails (relationships never block the record, §8.3). Another
   view's failed refetch is that view's to show, not the caller's.
 - **Refreshing is manual** (user's decision). A host calls `refresh()` after a write, for example once an event
@@ -626,8 +624,8 @@ examples in `apps/docs/src/examples/tracked-entity-record/`, registered in `exam
   with `isFetching`, then updates; a refresh that answers 404 replaces the record with `unavailable`; relationships
   failing don't block the record; `useTrackedEntityRecord` throws outside the provider; a `useQuery` with
   `queries.person(id)` and `select` under the provider makes no second request; `refresh()` refetches an unrelated
-  active query keyed under `scope(id)` and leaves metadata queries alone; a failed refetch of that other query doesn't
-  reject `refresh()`.
+  active query keyed under `scope(id)`, leaves another person's scope and metadata queries alone, and resolves while
+  that other query is still loading, which then fails without rejecting `refresh()`.
 - **e2e (real DHIS2 matrix):** seeded metadata and users (new `e2e/metadata/tracked-entity-record-*.json`): a person
   in two programs, one `onlyEnrollOnce`, several enrollments in one; a PROTECTED program with the person owned
   outside the test user's capture scope; a person whose only enrollment in a program was deleted; a stage without

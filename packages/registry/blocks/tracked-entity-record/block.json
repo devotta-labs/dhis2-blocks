@@ -1,5 +1,5 @@
 {
     "title": "Tracked Entity Record",
     "description": "Headless data for one person's record across programs: enrollments, events, relationships and metadata, with access honoured.",
-    "docs": "Wrap a screen in TrackedEntityRecordProvider trackedEntityId={id} (optionally programs={[…]}); read useTrackedEntityRecord().state. Call actions.refresh() after any write. Helpers: currentEnrollment, enrollmentAllowance, eventStatus, latestValues, displayAttributes."
+    "docs": "Wrap a screen in TrackedEntityRecordProvider trackedEntityId={id} (optionally programs={[…]}); read useTrackedEntityRecord().state. Call actions.refresh() after any write. Helpers: currentEnrollment, enrollmentAllowance, eventStatus, latestValues, displayAttributes. Other views of the person: key per-person queries under ['tracked-entity', id, '<view>', …] so refresh() reaches them, or read the record's own request with useTrackedEntityRecordQueries().person(id) and select."
 }

@@ -739,9 +739,14 @@
                     "path": "packages/registry/blocks/tracked-entity-record/useRecordState.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-record/useRecordState.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/useTrackedEntityRecordQueries.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/useTrackedEntityRecordQueries.ts"
                 }
             ],
-            "docs": "Wrap a screen in TrackedEntityRecordProvider trackedEntityId={id} (optionally programs={[…]}); read useTrackedEntityRecord().state. Call actions.refresh() after any write. Helpers: currentEnrollment, enrollmentAllowance, eventStatus, latestValues, displayAttributes."
+            "docs": "Wrap a screen in TrackedEntityRecordProvider trackedEntityId={id} (optionally programs={[…]}); read useTrackedEntityRecord().state. Call actions.refresh() after any write. Helpers: currentEnrollment, enrollmentAllowance, eventStatus, latestValues, displayAttributes. Other views of the person: key per-person queries under ['tracked-entity', id, '<view>', …] so refresh() reaches them, or read the record's own request with useTrackedEntityRecordQueries().person(id) and select."
         },
         {
             "name": "working-list",

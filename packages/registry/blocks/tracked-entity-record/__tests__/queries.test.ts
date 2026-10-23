@@ -41,14 +41,20 @@ const failingClient = (error: RecordRequestError): RecordClient => ({
 const clientFor = () => new QueryClient()
 
 describe('tracked entity record keys', () => {
-    it('person and relationships keys share the person prefix', () => {
-        const person = trackedEntityRecordKeys.person('abc')
-        const relationships = trackedEntityRecordKeys.relationships('abc')
+    it('person and relationships keys sit under the shared per-person scope', () => {
+        const scope = trackedEntityRecordKeys.scope('abc')
 
-        expect(person).toEqual(['tracked-entity-record', 'person', 'abc'])
-        expect(relationships).toEqual([...person, 'relationships'])
-        expect(relationships.slice(0, person.length)).toEqual(person)
-        expect(person.slice(0, 1)).toEqual(trackedEntityRecordKeys.root)
+        expect(scope).toEqual(['tracked-entity', 'abc'])
+        expect(trackedEntityRecordKeys.person('abc')).toEqual([
+            ...scope,
+            'tracked-entity-record',
+            'person',
+        ])
+        expect(trackedEntityRecordKeys.relationships('abc')).toEqual([
+            ...scope,
+            'tracked-entity-record',
+            'relationships',
+        ])
     })
 
     it('programs key sorts ids', () => {

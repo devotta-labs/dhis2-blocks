@@ -1,6 +1,8 @@
 import {
+    matchQuery,
     useQuery,
     useQueryClient,
+    type Query,
     type UseQueryResult,
 } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef } from 'react'
@@ -18,14 +20,11 @@ import {
 } from './programState'
 import {
     orgUnitPathsQuery,
-    personQuery,
-    programsQuery,
-    relationshipsQuery,
     relationshipTypesQuery,
-    trackedEntityTypeQuery,
     userScopesQuery,
 } from './queries'
 import { useRecordClient } from './runtimeClient'
+import { useTrackedEntityRecordQueries } from './useTrackedEntityRecordQueries'
 import type {
     OrgUnitPathsResponse,
     PersonResponse,
@@ -248,6 +247,8 @@ export const useRecordState = (
     programs?: readonly string[]
 ): TrackedEntityRecordContextValue => {
     const client = useRecordClient()
+    // The public options, so views reading them share these cache entries.
+    const queries = useTrackedEntityRecordQueries()
     const queryClient = useQueryClient()
     const {
         orderKey: programsKey,
@@ -256,9 +257,9 @@ export const useRecordState = (
     } = useProgramsProp(programs)
 
     // (1) the person and (4) relationships start at once.
-    const personQueryResult = useQuery(personQuery(client, trackedEntityId))
+    const personQueryResult = useQuery(queries.person(trackedEntityId))
     const relationshipsQueryResult = useQuery(
-        relationshipsQuery(client, trackedEntityId)
+        queries.relationships(trackedEntityId)
     )
     const person = useAnswer(personQueryResult)
     const relationships = useAnswer(relationshipsQueryResult)
@@ -266,7 +267,7 @@ export const useRecordState = (
     // (3) needs the person's type.
     const typeId = person.data?.trackedEntityType
     const trackedEntityTypeQueryResult = useQuery({
-        ...trackedEntityTypeQuery(client, typeId ?? ''),
+        ...queries.trackedEntityType(typeId ?? ''),
         enabled: typeId !== undefined,
     })
     const trackedEntityType = useAnswer(trackedEntityTypeQueryResult)
@@ -282,7 +283,7 @@ export const useRecordState = (
     )
     const hasProgramIds = programIds !== undefined && programIds.length > 0
     const programsQueryResult = useQuery({
-        ...programsQuery(client, programIds ?? []),
+        ...queries.programs(programIds ?? []),
         enabled: hasProgramIds,
     })
     const programsAnswer = useAnswer(programsQueryResult)
@@ -391,21 +392,30 @@ export const useRecordState = (
         relationshipTypesQueryResult,
     ].some((query) => query.isFetching)
 
-    // Spec 10: person, enrollments, events and relationships; not metadata.
-    // Only the person's refetch can reject: relationships never block the
-    // record (spec 8.3), so their failure shows on `record.relationships`.
+    // Spec 10.3: everything under the person's scope, any block's; not
+    // metadata. Only the person's refetch can reject: relationships never
+    // block the record (spec 8.3). Other views refetch alongside but are not
+    // waited for: their pace and failures are theirs to show.
     const refresh = useCallback(async () => {
+        const personKey = trackedEntityRecordKeys.person(trackedEntityId)
+        const relationshipsKey =
+            trackedEntityRecordKeys.relationships(trackedEntityId)
+        const isRecordQuery = (query: Query) =>
+            matchQuery({ queryKey: personKey, exact: true }, query) ||
+            matchQuery({ queryKey: relationshipsKey, exact: true }, query)
+        // Never rejects without throwOnError.
+        void queryClient.invalidateQueries({
+            queryKey: trackedEntityRecordKeys.scope(trackedEntityId),
+            predicate: (query) => !isRecordQuery(query),
+        })
         await Promise.all([
             queryClient.invalidateQueries(
-                {
-                    queryKey: trackedEntityRecordKeys.person(trackedEntityId),
-                    exact: true,
-                },
+                { queryKey: personKey, exact: true },
                 { throwOnError: true }
             ),
             queryClient.invalidateQueries({
-                queryKey:
-                    trackedEntityRecordKeys.relationships(trackedEntityId),
+                queryKey: relationshipsKey,
+                exact: true,
             }),
         ])
     }, [queryClient, trackedEntityId])

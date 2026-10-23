@@ -9,6 +9,13 @@ export { eventStatus, isOverdue, todayIso } from './eventStatus'
 export { latestValues } from './latestValues'
 export { displayAttributes } from './displayAttributes'
 export { trackedEntityRecordKeys } from './keys'
+export { useTrackedEntityRecordQueries } from './useTrackedEntityRecordQueries'
+export type {
+    PersonResponse,
+    ProgramsResponse,
+    RelationshipsResponse,
+    TrackedEntityTypeResponse,
+} from './schemas'
 export type {
     AccessLevel,
     AttributeInfo,

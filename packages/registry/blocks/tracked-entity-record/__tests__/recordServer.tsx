@@ -1,6 +1,6 @@
 import { CustomDataProvider } from '@dhis2/app-runtime'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import React, { type ComponentProps } from 'react'
+import React, { type ComponentProps, type ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
 import { z } from 'zod'
 import {
@@ -135,6 +135,8 @@ type FakeServer = ReturnType<typeof createServer>
 interface RecordProps {
     trackedEntityId: string
     programs?: readonly string[]
+    /** Other views rendered under the provider, beside the probe. */
+    children?: ReactNode
 }
 
 /** Renders the provider under a fresh query client; records every value seen. */
@@ -157,6 +159,7 @@ export const setup = (server: FakeServer, queryClient = testQueryClient()) => {
                     programs={props.programs}
                 >
                     <Probe />
+                    {props.children}
                 </TrackedEntityRecordProvider>
             </QueryClientProvider>
         </CustomDataProvider>

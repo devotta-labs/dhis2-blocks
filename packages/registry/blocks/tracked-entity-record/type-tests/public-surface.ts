@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import type { ReactElement } from 'react'
 import type {
     AccessLevel,
@@ -13,10 +14,13 @@ import type {
     JsonValue,
     LatestValue,
     Note,
+    PersonResponse,
     ProgramAccess,
     ProgramInfo,
     ProgramRecord,
+    ProgramsResponse,
     Relationship,
+    RelationshipsResponse,
     RelationshipsResult,
     StageInfo,
     TrackedEntityRecord,
@@ -24,6 +28,7 @@ import type {
     TrackedEntityRecordProviderProps,
     TrackedEntityRecordState,
     TrackedEntityTypeInfo,
+    TrackedEntityTypeResponse,
     TrackerEvent,
 } from '..'
 import {
@@ -37,6 +42,7 @@ import {
     trackedEntityRecordKeys,
     TrackedEntityRecordProvider,
     useTrackedEntityRecord,
+    useTrackedEntityRecordQueries,
 } from '..'
 
 export type SupportedTrackedEntityRecordTypes = [
@@ -132,6 +138,37 @@ export const personKey: readonly string[] =
     trackedEntityRecordKeys.person('TrackedEnt1')
 export const rootKey: readonly ['tracked-entity-record'] =
     trackedEntityRecordKeys.root
+export const scopeKey: readonly ['tracked-entity', string] =
+    trackedEntityRecordKeys.scope('TrackedEnt1')
+
+// Spec 6: the query options, for a view that reads a slice with `select`.
+export const useEventIds = (): string[] | undefined => {
+    const queries = useTrackedEntityRecordQueries()
+    const { data } = useQuery({
+        ...queries.person('TrackedEnt1'),
+        select: (person: PersonResponse) =>
+            person.enrollments.flatMap((enrollment) =>
+                enrollment.events.map((event) => event.event)
+            ),
+    })
+    return data
+}
+
+export const useResponses = (
+    queries: ReturnType<typeof useTrackedEntityRecordQueries>
+) => {
+    const person = useQuery(queries.person('TrackedEnt1')).data
+    const relationships = useQuery(queries.relationships('TrackedEnt1')).data
+    const programs = useQuery(queries.programs(['Program0001'])).data
+    const type = useQuery(queries.trackedEntityType('TrackedEnt1')).data
+    const typed: [
+        PersonResponse | undefined,
+        RelationshipsResponse | undefined,
+        ProgramsResponse | undefined,
+        TrackedEntityTypeResponse | undefined,
+    ] = [person, relationships, programs, type]
+    return typed
+}
 
 // Internals stay internal: no client, no request plan, no loosening option.
 // @ts-expect-error useRecordState is internal.

@@ -142,8 +142,12 @@ where you call `refresh()`.
 Refreshing is manual: the block does not watch other blocks' writes. The
 record also refetches when the window regains focus.
 
-Metadata is not refetched by `refresh()`. The React Query keys are exported as
-`trackedEntityRecordKeys`, all under `['tracked-entity-record']`.
+`refresh()` invalidates every query keyed under `['tracked-entity', id]`, the
+person's shared prefix, so other views of the same person refresh with it
+(see below). It waits only for the record: other views reload alongside and
+show their own loading and errors. Metadata is not refetched. The React Query keys are exported as
+`trackedEntityRecordKeys`: `scope(id)` is the shared prefix, and metadata keys
+sit under `['tracked-entity-record']`.
 
 ## Helpers
 
@@ -206,11 +210,34 @@ each stage has its own `canWrite`. Use them to decide which controls to show.
 ## Using it with views that fetch their own data
 
 Other blocks, such as a timeline or observation cards, can load their own data
-and do not need this block. The record exposes events and enrollments with the
-tracker API's own field names, plus resolved metadata, so an adapter from the
-record to such a view's input is small. Under a record, `refresh()` covers
-everything the record holds; a view that fetches on its own keeps its own
-refresh.
+and do not need this block. The record holds the person's tracker data and
+access, not every view's display metadata: legend sets, option colours and
+changelogs are each view's own to fetch.
+
+A view gets the person's events one of three ways:
+
+- **On its own.** Key its per-person queries under `['tracked-entity', id, '<your-view>', …]`
+  so `refresh()` reaches them too. Keep metadata under your own key.
+- **From the same request as the record**, with `useTrackedEntityRecordQueries()`
+  and `select`. This makes no second request:
+
+```tsx
+const queries = useTrackedEntityRecordQueries()
+const { data: eventCount } = useQuery({
+    ...queries.person(trackedEntityId),
+    select: (person) =>
+        person.enrollments.flatMap(({ events }) => events).length,
+})
+```
+
+- **From the record**, through a small adapter, when the view also needs a
+  program's state.
+
+The query options return the server's answer as it is. Enrollments and events
+come back in no stable order, so sort them before taking the "latest". On 2.41
+an enrollment's `attributes` also hold other programs' values. They cannot tell "not
+enrolled" from "enrolled where you can't see it", so anything that decides
+whether to offer enrollment reads the record.
 
 ## API reference
 
@@ -227,6 +254,14 @@ Returns `{ state, actions, meta }`:
 - `state` — `pending`, `unavailable`, `error` or `ready`, as above.
 - `actions.refresh(): Promise<void>` — reload the record after a write.
 - `meta.trackedEntityId`, `meta.isFetching`.
+
+### useTrackedEntityRecordQueries
+
+Returns React Query options for `person(id)`, `relationships(id)`,
+`programs(ids)` and `trackedEntityType(id)`, the same ones the provider uses.
+Works with or without the provider. Their data types are exported as
+`PersonResponse`, `RelationshipsResponse`, `ProgramsResponse` and
+`TrackedEntityTypeResponse`.
 
 ### Record
 

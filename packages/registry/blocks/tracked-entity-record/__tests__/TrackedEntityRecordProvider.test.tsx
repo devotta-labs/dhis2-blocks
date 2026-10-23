@@ -1,7 +1,11 @@
-import { keepPreviousData, QueryClient } from '@tanstack/react-query'
+import { keepPreviousData, QueryClient, useQuery } from '@tanstack/react-query'
 import React, { Component, type ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
-import { useTrackedEntityRecord } from '..'
+import {
+    trackedEntityRecordKeys,
+    useTrackedEntityRecord,
+    useTrackedEntityRecordQueries,
+} from '..'
 import personMissing from './fixtures/v42/person-missing.status.json'
 import personP1 from './fixtures/v42/person-P1.json'
 import personP3 from './fixtures/v42/person-P3.json'
@@ -282,6 +286,97 @@ describe('TrackedEntityRecordProvider', () => {
         expect(
             state.status === 'ready' && state.record.relationships.status
         ).toBe('ready')
+    })
+
+    it('refresh() fetches the person once when the host hashes keys its own way', async () => {
+        const server = createServer()
+        const view = setup(
+            server,
+            new QueryClient({
+                defaultOptions: {
+                    queries: {
+                        retry: false,
+                        queryKeyHashFn: (key) => `${JSON.stringify(key)}!`,
+                    },
+                },
+            })
+        )
+        await render(view.ui({ trackedEntityId: P1 }))
+        await waitForReady(view)
+        const personCalls = server.calls(PERSON)
+
+        await view.latest().actions.refresh()
+
+        expect(server.calls(PERSON)).toBe(personCalls + 1)
+    })
+
+    it('a view reading the person query options with select shares the provider request', async () => {
+        const server = createServer()
+        const view = setup(server)
+        const eventCounts: number[] = []
+        const EventCount = () => {
+            const queries = useTrackedEntityRecordQueries()
+            const { data } = useQuery({
+                ...queries.person(P1),
+                select: (person) =>
+                    person.enrollments.flatMap(({ events }) => events).length,
+            })
+            if (data !== undefined) eventCounts.push(data)
+            return null
+        }
+        await render(view.ui({ trackedEntityId: P1, children: <EventCount /> }))
+        await waitForReady(view)
+
+        await vi.waitFor(() => {
+            expect(eventCounts.at(-1)).toBeGreaterThan(0)
+        }, WAIT)
+        expect(server.calls(PERSON)).toBe(1)
+    })
+
+    it("refresh() refetches other views under the person's scope without waiting for them, and nothing else", async () => {
+        const server = createServer()
+        const view = setup(server)
+        const gate = Promise.withResolvers<void>()
+        let otherCalls = 0
+        let otherPersonCalls = 0
+        const OtherView = () => {
+            useQuery({
+                queryKey: [...trackedEntityRecordKeys.scope(P1), 'other-view'],
+                queryFn: async () => {
+                    otherCalls += 1
+                    if (otherCalls > 1) {
+                        await gate.promise
+                        throw new Error('Other view failed')
+                    }
+                    return otherCalls
+                },
+            })
+            useQuery({
+                queryKey: [...trackedEntityRecordKeys.scope(P2), 'other-view'],
+                queryFn: async () => {
+                    otherPersonCalls += 1
+                    return otherPersonCalls
+                },
+            })
+            return null
+        }
+        await render(view.ui({ trackedEntityId: P1, children: <OtherView /> }))
+        await waitForReady(view)
+        await vi.waitFor(() => {
+            expect(otherCalls).toBe(1)
+            expect(otherPersonCalls).toBe(1)
+        }, WAIT)
+        const programsCalls = server.calls('programs')
+        const typeCalls = server.calls('trackedEntityTypes')
+
+        // The other view's refetch is still held at the gate.
+        await expect(view.latest().actions.refresh()).resolves.toBeUndefined()
+
+        expect(otherCalls).toBe(2)
+        expect(otherPersonCalls).toBe(1)
+        expect(server.calls('programs')).toBe(programsCalls)
+        expect(server.calls('trackedEntityTypes')).toBe(typeCalls)
+        gate.resolve()
     })
 
     it('does not show the old program set after the programs prop changes', async () => {

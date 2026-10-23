@@ -1,0 +1,130 @@
+import i18n from '@dhis2/d2-i18n'
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    type ComponentPropsWithoutRef,
+} from 'react'
+import { Button } from '@/components/dhis2/ui/button'
+import { revealPast } from '../core/reveal'
+import { localDay } from '../core/today'
+import type { TimelineEntry } from '../core/types'
+import { useTimeline } from './TimelineContext'
+
+/**
+ * Shows every future and overdue entry and the newest `step` past ones;
+ * `showMore` reveals `step` more. The entries are all in memory: this only
+ * keeps the page short.
+ */
+export const useShowMore = <TData,>(
+    entries: ReadonlyArray<TimelineEntry<TData>>,
+    { step = 50, now }: { step?: number; now?: Date } = {}
+) => {
+    const [count, setCount] = useState(step)
+    const today = localDay(now ?? new Date())
+    const revealed = useMemo(
+        () => revealPast(entries, { count, today }),
+        [entries, count, today]
+    )
+    const showMore = useCallback(
+        () => setCount((shown) => shown + step),
+        [step]
+    )
+    return {
+        entries: revealed.entries,
+        hasMore: revealed.hidden > 0,
+        showMore,
+    }
+}
+
+interface Request {
+    /** The entries on show when the button was pressed. */
+    shown: ReadonlySet<string>
+    sawLoading: boolean
+}
+
+/**
+ * Asks for more entries, then moves focus to the first one that arrives, in
+ * reading order. When nothing arrives, focus stays on the button, or goes to
+ * the last entry if the button has gone. `onShowMore` can reveal entries
+ * already in memory (`useShowMore`) or fetch the next server page.
+ */
+export const TimelineShowMore = ({
+    hasMore,
+    onShowMore,
+    loading = false,
+    children,
+    ...props
+}: Omit<ComponentPropsWithoutRef<typeof Button>, 'onClick'> & {
+    hasMore: boolean
+    onShowMore: () => void
+    loading?: boolean
+}) => {
+    const { state, meta } = useTimeline()
+    const { entries, groups } = state
+    const { id } = meta
+    const request = useRef<Request>()
+    const button = useRef<HTMLButtonElement>(null)
+
+    useEffect(() => {
+        const pending = request.current
+        if (pending === undefined) {
+            return
+        }
+        const ordered = groups.flatMap((group) => group.entries)
+        const fresh = ordered.find((entry) => !pending.shown.has(entry.id))
+        const itemOf = (entryId: string) =>
+            document.querySelector<HTMLElement>(
+                `[data-timeline-id="${CSS.escape(id)}"][data-timeline-entry="${CSS.escape(entryId)}"]`
+            )
+        if (fresh !== undefined) {
+            request.current = undefined
+            itemOf(fresh.id)?.focus()
+        } else if (loading) {
+            pending.sawLoading = true
+        } else if (pending.sawLoading) {
+            request.current = undefined
+            const last = ordered.at(-1)
+            if (button.current !== null) {
+                button.current.focus()
+            } else if (last !== undefined) {
+                itemOf(last.id)?.focus()
+            }
+        }
+    }, [entries, groups, loading, hasMore, id])
+
+    if (!hasMore) {
+        return null
+    }
+    return (
+        <Button
+            variant="outline"
+            {...props}
+            ref={button}
+            type="button"
+            data-slot="timeline-show-more"
+            disabled={loading}
+            aria-busy={loading}
+            onClick={() => {
+                const pending: Request = {
+                    shown: new Set(entries.map((entry) => entry.id)),
+                    sawLoading: false,
+                }
+                request.current = pending
+                onShowMore()
+                // A press that starts no load and adds nothing leaves nothing
+                // to wait for; the render that shows either has run by now.
+                setTimeout(() => {
+                    if (request.current === pending && !pending.sawLoading) {
+                        request.current = undefined
+                    }
+                }, 0)
+            }}
+        >
+            {children ??
+                (loading ? i18n.t('Loading more') : i18n.t('Show more'))}
+        </Button>
+    )
+}

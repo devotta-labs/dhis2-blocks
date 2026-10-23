@@ -9,7 +9,8 @@
         "moduleResolution": "bundler",
         "noEmit": true,
         "paths": {
-            "@/components/dhis2/ui/*": ["./components/*"]
+            "@/components/dhis2/ui/*": ["./components/*"],
+            "@/components/*": ["./blocks/*"]
         },
         "types": ["node", "vitest/globals"]
     },

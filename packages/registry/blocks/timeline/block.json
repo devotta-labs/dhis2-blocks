@@ -1,0 +1,5 @@
+{
+    "title": "Timeline",
+    "description": "Read-only timeline: pass an array of entries and it groups them by day in the system calendar, with a now marker, an overdue group, show more and notices.",
+    "docs": "Pass entries and a status to Timeline, then compose TimelineFeed, TimelineLoading, TimelineError, TimelineNotices, TimelineEmpty and TimelineShowMore inside it. useShowMore reveals past entries a step at a time. The timeline never fetches: filter, merge or replace the array before it reaches it. Install timeline-dhis2 for tracker data."
+}

@@ -8,6 +8,8 @@ const resolve = {
         '@/components/dhis2/ui': fileURLToPath(
             new URL('./components', import.meta.url)
         ),
+        // Blocks import one another as they do once installed.
+        '@/components': fileURLToPath(new URL('./blocks', import.meta.url)),
     },
 }
 
@@ -41,8 +43,18 @@ export default defineConfig({
                         '@base-ui/react/radio-group',
                         '@base-ui/react/switch',
                         '@base-ui/react/toggle',
+                        '@base-ui/react/merge-props',
+                        '@base-ui/react/use-render',
+                        '@dhis2/app-runtime',
+                        '@dhis2/d2-i18n',
+                        '@dhis2/multi-calendar-dates',
                         '@dhis2/ui-icons',
+                        '@tanstack/react-query',
+                        'axe-core',
+                        'better-result',
                         'class-variance-authority',
+                        'vitest-browser-react',
+                        'zod',
                     ],
                 },
                 test: {

@@ -16,6 +16,9 @@ packages/
       context-selector/ Capture-style controlled context-selector primitives
       working-list/     Working List block
       sidebar/          Composable modeling-app navigation with a collapse rail
+      timeline/         Read-only timeline layout for an array of entries
+      timeline-dhis2/   Tracker history hooks and entry parts for the timeline
+      dhis2-value-display/ Read-only formatter for DHIS2 values and calendar dates
     test/               Shared Vitest browser setup
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
@@ -112,6 +115,25 @@ Collapsing preserves the open groups and selected page.
 
 See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
 examples.
+
+## Timeline block
+
+Show a person's history across programs: events, enrollment milestones and
+notes, and attribute changes, grouped by day around "now".
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/timeline
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/timeline-dhis2
+```
+
+Import from `@/components/timeline` and `@/components/timeline-dhis2`.
+`Timeline` takes a plain array of entries and never fetches;
+`useTrackedEntityHistory` returns that array for one tracked entity in every
+program they are enrolled in, and `Dhis2Entry` renders each entry. Both pull in
+the `dhis2-value-display` formatter. See
+[the block's README](packages/registry/blocks/timeline/README.md). The demo
+routes are `#/timeline` (case history; `te`, and optionally `programs`, in the
+URL) and `#/timeline/updated-today` (`program` and `orgUnit`).
 
 ## Working List block
 

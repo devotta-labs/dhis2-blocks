@@ -5,6 +5,8 @@
 @source '../../../packages/registry/blocks/working-list';
 @source '../../../packages/registry/blocks/context-selector';
 @source '../../../packages/registry/blocks/sidebar';
+@source '../../../packages/registry/blocks/timeline';
+@source '../../../packages/registry/blocks/timeline-dhis2';
 
 @import 'shadcn/tailwind.css';
 

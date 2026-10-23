@@ -1,0 +1,123 @@
+---
+title: Timeline
+description: A person's history across programs, grouped by day around "now", with scheduled and overdue visits.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { ShadcnCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="timeline/case-history" />
+
+## Installation
+
+Install the generic timeline, and the DHIS2 hooks and entry parts beside it.
+
+<ShadcnCommand args="add devotta-labs/dhis2-blocks/timeline devotta-labs/dhis2-blocks/timeline-dhis2" />
+
+`timeline` lays out entries and never fetches. `timeline-dhis2` reads a tracked
+entity's events, enrollment milestones, notes and attribute changes, and renders
+them. Both use the `dhis2-value-display` formatter, so dates follow the system
+calendar.
+
+## A person's history
+
+`useTrackedEntityHistory` covers every program the tracked entity is enrolled
+in, or only the ones you pass as `programs`. It returns `entries`, a `status`,
+`notices` and `refetch`, and is a plain TanStack Query hook: your
+`QueryClient` defaults apply, and invalidating `timelineKeys.root` refreshes it
+after your app saves something.
+
+`timeField` has no default. It decides where a past event sits (`occurredAt`,
+`completedAt` and so on), and programs differ in which date they treat as the
+visit. Scheduled, overdue and skipped events always sit at their due date.
+
+```tsx
+import {
+    Timeline,
+    TimelineEmpty,
+    TimelineError,
+    TimelineFeed,
+    TimelineLoading,
+    TimelineNotices,
+} from '@/components/timeline'
+import {
+    Dhis2Entry,
+    useSystemCalendar,
+    useTrackedEntityHistory,
+    type Dhis2EntryData,
+} from '@/components/timeline-dhis2'
+
+export function PatientHistory({ trackedEntity }: { trackedEntity: string }) {
+    const calendar = useSystemCalendar()
+    const history = useTrackedEntityHistory({
+        trackedEntity,
+        programs: ['IpHINAT79UW', 'ur1Edk5Oe2n'],
+        timeField: 'occurredAt',
+    })
+
+    return (
+        <Timeline<Dhis2EntryData>
+            entries={history.entries}
+            status={history.status}
+            calendar={calendar}
+        >
+            <TimelineLoading />
+            <TimelineError onRetry={history.refetch} />
+            <TimelineNotices notices={history.notices} />
+            <TimelineEmpty />
+            <TimelineFeed<Dhis2EntryData>>
+                {(entry) => <Dhis2Entry entry={entry} />}
+            </TimelineFeed>
+        </Timeline>
+    )
+}
+```
+
+A part that fails to load becomes a notice with a Retry, and the rest of the
+history still shows. Each program's events are read up to a cap (500 by
+default); past it, a notice says so.
+
+## Choosing what matters
+
+The timeline shows whatever array you pass it. Filter by `kind` to leave out
+attribute changes, or anything else:
+
+```tsx
+const clinical = useMemo(
+    () => history.entries.filter((entry) => entry.data.kind !== 'change'),
+    [history.entries]
+)
+```
+
+`useShowMore(entries)` keeps the page short: it shows every upcoming and overdue
+entry and the newest past ones, and `TimelineShowMore` reveals more and moves
+focus to the first new entry.
+
+## Your own data
+
+The generic timeline takes any array of entries: an `id`, the stored date or
+date-time in `at`, and your own `data`. Merge it with a DHIS2 history by
+concatenating the arrays.
+
+<ExampleCard slug="timeline/own-data" />
+
+## Entry parts anywhere
+
+The entry parts render from the entry alone, so they work in a dialog or a
+card under `TimelineMetaProvider`. `TimelineEventEntry` is compound: leave out
+its children for the standard look, or compose your own from its parts, and
+read the event in your own components with `useTimelineEventEntry()`.
+
+<ExampleCard slug="timeline/entry-parts" />
+
+`Dhis2Entry` picks the part for each kind of entry. Copy it when a kind should
+look different; `eventActions` adds your own actions, such as an "Open" link,
+to every event.
+
+## Change history
+
+Attribute changes, and each event's "Show changes", read the tracker changelog
+endpoints. DHIS2 only records changes where change logging is on
+(`enableChangeLog` on the program and tracked entity type in 2.43,
+`allowAuditLog` on the tracked entity type in 2.41); without it, changes are
+simply absent. On a server without the endpoints, a notice says so.

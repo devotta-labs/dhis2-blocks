@@ -139,9 +139,7 @@ export const ConfigureMenu = ({
             </div>
 
             <Dialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
-                <DialogContent
-                    closeLabel={i18n.t('Close')}
-                >
+                <DialogContent closeLabel={i18n.t('Close')}>
                     <form
                         className="flex min-w-0 flex-col"
                         onSubmit={(event) => {

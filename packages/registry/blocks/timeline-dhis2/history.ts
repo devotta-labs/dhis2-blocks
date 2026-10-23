@@ -1,4 +1,5 @@
 import type {
+    TimelineEntry,
     TimelineNotice,
     TimelineStatus,
 } from '@/components/timeline/core/types'
@@ -37,21 +38,29 @@ export const combineStatus = (
     return 'success'
 }
 
+/** The entries of several histories, or none while `status` is pending. */
+export const mergeEntries = <TData>(
+    status: TimelineStatus,
+    lists: ReadonlyArray<ReadonlyArray<TimelineEntry<TData>>>
+): ReadonlyArray<TimelineEntry<TData>> =>
+    status === 'pending' ? NO_ENTRIES : lists.flat()
+
 /**
  * Several histories as one: their entries and notices together, with one
  * status. Nothing is shown until every history has answered once, so entries
  * never shift about while the first answers arrive; after that, a refetch
- * keeps what is on screen until its answer replaces it.
+ * keeps what is on screen until its answer replaces it. To show some
+ * histories without waiting for the rest, see `addWhenReady`.
  */
 export const mergeHistory = <TData>(
     ...results: ReadonlyArray<HistoryResult<TData>>
 ): HistoryResult<TData> => {
     const status = combineStatus(results.map((result) => result.status))
     return {
-        entries:
-            status === 'pending'
-                ? NO_ENTRIES
-                : results.flatMap((result) => result.entries),
+        entries: mergeEntries(
+            status,
+            results.map((result) => result.entries)
+        ),
         status,
         notices: uniqueNotices(results.flatMap((result) => result.notices)),
         isFetching: results.some((result) => result.isFetching),
@@ -62,3 +71,22 @@ export const mergeHistory = <TData>(
         },
     }
 }
+
+/**
+ * `history` with `parts` added without waiting for them: while a part has
+ * not answered once, `history` shows on its own, and the part's entries join
+ * it when they arrive. For parts slower than they are worth waiting for,
+ * such as attribute changes, whose changelog is read a page at a time.
+ */
+export const addWhenReady = <TData>(
+    history: HistoryResult<TData>,
+    ...parts: ReadonlyArray<HistoryResult<TData>>
+): HistoryResult<TData> =>
+    mergeHistory(
+        history,
+        ...parts.map((part) =>
+            part.status === 'pending'
+                ? { ...part, status: history.status }
+                : part
+        )
+    )

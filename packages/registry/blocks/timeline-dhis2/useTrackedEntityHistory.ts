@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { mergeHistory } from './history'
+import { addWhenReady, mergeEntries, mergeHistory } from './history'
 import type { EventTimeField } from './queries'
 import type { HistoryEntryData, HistoryResult } from './types'
 import { useAttributeChangeEntries } from './useAttributeChangeEntries'
@@ -19,8 +19,11 @@ export interface TrackedEntityHistoryOptions {
 
 /**
  * A person's history: events, enrollment milestones and notes, and attribute
- * changes, in every program they are enrolled in (or `programs`). Compose
- * the three hooks yourself with `mergeHistory` to leave a kind out.
+ * changes, in every program they are enrolled in (or `programs`). Events and
+ * enrollments show together; attribute changes join them when they arrive,
+ * since a changelog is read a page at a time. Compose the three hooks
+ * yourself with `mergeHistory` and `addWhenReady` to leave a kind out or
+ * wait for every part.
  */
 export const useTrackedEntityHistory = ({
     trackedEntity,
@@ -38,12 +41,19 @@ export const useTrackedEntityHistory = ({
     })
     const enrollments = useEnrollmentEntries({ trackedEntity, programs })
     const changes = useAttributeChangeEntries({ trackedEntity, programs })
-    const merged = mergeHistory<HistoryEntryData>(events, enrollments, changes)
+    const merged = addWhenReady(
+        mergeHistory<HistoryEntryData>(events, enrollments),
+        changes
+    )
     // One array per change of the parts, so the timeline regroups only then.
     const entries = useMemo(
-        () => merged.entries,
-        // oxlint-disable-next-line react-hooks/exhaustive-deps
-        [events.entries, enrollments.entries, changes.entries, merged.status]
+        () =>
+            mergeEntries<HistoryEntryData>(merged.status, [
+                events.entries,
+                enrollments.entries,
+                changes.entries,
+            ]),
+        [merged.status, events.entries, enrollments.entries, changes.entries]
     )
     return { ...merged, entries }
 }

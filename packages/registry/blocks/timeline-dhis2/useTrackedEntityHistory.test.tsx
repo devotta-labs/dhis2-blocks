@@ -89,6 +89,8 @@ interface Server {
     /** Events per program, or an error to throw. */
     events?: Record<string, Json[] | Error>
     changelogs?: Record<string, Json[] | Error>
+    /** Holds every changelog request until it settles. */
+    changesGate?: Promise<void>
 }
 
 const setup = (server: Server = {}) => {
@@ -133,6 +135,7 @@ const setup = (server: Server = {}) => {
         [`tracker/trackedEntities/${TE}/changeLogs`]: async (_type, query) => {
             const program = String(query.params?.program)
             requests.push(`changes:${program}`)
+            await server.changesGate
             const rows =
                 server.changelogs?.[program] ??
                 (program === ANC ? ancChanges : tbChanges)
@@ -235,6 +238,32 @@ describe('useTrackedEntityHistory', () => {
         )
         expect(new Set(fields).size).toBe(fields.length)
         expect(fields.some((field) => field.endsWith('TlE2eTbAtt1'))).toBe(true)
+    })
+
+    it('shows events and enrollments without waiting for the changes, adding them when they arrive', async () => {
+        let release: () => void = () => undefined
+        const changesGate = new Promise<void>((resolve) => {
+            release = resolve
+        })
+        const { result, renders } = await renderHistory({ changesGate })
+        await expect.poll(() => result.current.status).toBe('success')
+
+        expect(kinds(result.current.entries)).toEqual([
+            'event',
+            'milestone',
+            'note',
+        ])
+        expect(result.current.isFetching).toBe(true)
+        const shown = result.current.entries.length
+        const from = renders.length
+
+        release()
+        await expect
+            .poll(() => kinds(result.current.entries))
+            .toEqual(['change', 'event', 'milestone', 'note'])
+        const during = renders.slice(from)
+        expect(during.every((render) => render.status === 'success')).toBe(true)
+        expect(during.every((render) => render.count >= shown)).toBe(true)
     })
 
     it('takes only the given programs', async () => {

@@ -28,7 +28,7 @@ export {
 export { TimelineMilestoneEntry } from './entries/TimelineMilestoneEntry'
 export { TimelineNoteEntry } from './entries/TimelineNoteEntry'
 export { deriveEventStatus, type DerivedEventStatus } from './eventStatus'
-export { combineStatus, mergeHistory } from './history'
+export { addWhenReady, combineStatus, mergeHistory } from './history'
 export { toProgramInfo } from './metadata'
 export { EVENT_FIELDS, type EventTimeField } from './queries'
 export {

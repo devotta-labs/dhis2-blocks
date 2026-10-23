@@ -1,5 +1,5 @@
 import type { TimelineEntry } from '@/components/timeline/core/types'
-import { combineStatus, mergeHistory } from './history'
+import { addWhenReady, combineStatus, mergeHistory } from './history'
 import type { HistoryResult } from './types'
 
 const entry = (id: string): TimelineEntry<string> => ({
@@ -71,5 +71,41 @@ describe('mergeHistory', () => {
         expect(merged.isFetching).toBe(true)
         expect(first).toHaveBeenCalledTimes(1)
         expect(second).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe('addWhenReady', () => {
+    it('shows the history while a part has not answered, adding the part when it has', () => {
+        const history = result({ entries: [entry('a')] })
+
+        const waiting = addWhenReady(
+            history,
+            result({ status: 'pending', isFetching: true })
+        )
+        expect(waiting.status).toBe('success')
+        expect(waiting.entries.map((e) => e.id)).toEqual(['a'])
+        expect(waiting.isFetching).toBe(true)
+
+        const arrived = addWhenReady(history, result({ entries: [entry('b')] }))
+        expect(arrived.entries.map((e) => e.id)).toEqual(['a', 'b'])
+    })
+
+    it('still waits for the history itself', () => {
+        const merged = addWhenReady(
+            result({ status: 'pending' }),
+            result({ entries: [entry('b')] })
+        )
+
+        expect(merged.status).toBe('pending')
+        expect(merged.entries).toEqual([])
+    })
+
+    it('is an error when the history failed and a part is still on its way', () => {
+        const merged = addWhenReady(
+            result({ status: 'error' }),
+            result({ status: 'pending' })
+        )
+
+        expect(merged.status).toBe('error')
     })
 })

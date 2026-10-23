@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { AttributeMetadata } from '../api/schemas'
-import { hivProgram } from './__fixtures__/program'
+import { hivProgram } from '../__tests__/fixtures/program'
 import {
     attributeOf,
     buildProgramModel,

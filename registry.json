@@ -680,11 +680,6 @@
                     "target": "@components/tracked-entity-finder/index.ts"
                 },
                 {
-                    "path": "packages/registry/blocks/tracked-entity-finder/rules/__fixtures__/program.ts",
-                    "type": "registry:file",
-                    "target": "@components/tracked-entity-finder/rules/__fixtures__/program.ts"
-                },
-                {
                     "path": "packages/registry/blocks/tracked-entity-finder/rules/programModel.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/rules/programModel.ts"

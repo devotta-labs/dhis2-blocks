@@ -104,7 +104,7 @@ export const DocsShell = () => {
     const closeMobile = useCallback(() => setMobileOpen(false), [])
 
     return (
-        <div className="isolate min-h-screen bg-background text-foreground">
+        <div className="min-h-screen bg-background text-foreground">
             <header className="fixed inset-x-0 top-0 z-50 h-14 border-b border-border bg-background/95 backdrop-blur">
                 <div className="mx-auto flex h-full max-w-[1536px] items-center gap-3 px-4 md:px-6">
                     <button

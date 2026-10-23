@@ -17,10 +17,6 @@ export const docsNavigation: readonly NavigationGroup[] = [
         ],
     },
     {
-        title: 'Components',
-        items: [{ title: 'Dialog', href: '/components/dialog' }],
-    },
-    {
         title: 'Blocks',
         items: [
             { title: 'Working List', href: '/blocks/working-list' },

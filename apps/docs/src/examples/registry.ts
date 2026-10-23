@@ -9,11 +9,6 @@ import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
 import sidebarBasicSource from './sidebar/SidebarBasic.tsx?raw'
 import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
-import dialogBasicSource from './dialog/DialogBasic.tsx?raw'
-import dialogFormSource from './dialog/DialogForm.tsx?raw'
-import dialogScrollableSource from './dialog/DialogScrollable.tsx?raw'
-import dialogWideSource from './dialog/DialogWide.tsx?raw'
-import dialogOutliersSource from './dialog/DialogOutliers.tsx?raw'
 
 /**
  * Example registry.
@@ -44,46 +39,6 @@ export interface ExampleDefinition {
 }
 
 const examples = [
-    {
-        slug: 'dialog/outliers',
-        title: 'Default dialog: content outliers',
-        live: false,
-        Component: lazy(() => import('./dialog/DialogOutliers')),
-        source: dialogOutliersSource,
-        minHeight: 180,
-    },
-    {
-        slug: 'dialog/basic',
-        title: 'Default dialog',
-        live: false,
-        Component: lazy(() => import('./dialog/DialogBasic')),
-        source: dialogBasicSource,
-        minHeight: 180,
-    },
-    {
-        slug: 'dialog/form',
-        title: 'Dialog with a form',
-        live: false,
-        Component: lazy(() => import('./dialog/DialogForm')),
-        source: dialogFormSource,
-        minHeight: 180,
-    },
-    {
-        slug: 'dialog/scrollable',
-        title: 'Scrollable dialog',
-        live: false,
-        Component: lazy(() => import('./dialog/DialogScrollable')),
-        source: dialogScrollableSource,
-        minHeight: 180,
-    },
-    {
-        slug: 'dialog/wide',
-        title: 'Wide, top-positioned dialog',
-        live: false,
-        Component: lazy(() => import('./dialog/DialogWide')),
-        source: dialogWideSource,
-        minHeight: 180,
-    },
     {
         slug: 'sidebar/basic',
         title: 'Sidebar navigation',

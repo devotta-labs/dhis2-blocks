@@ -55,7 +55,6 @@ const router = createBrowserRouter([
         children: [
             docRoute('/', './pages/index.mdx'),
             docRoute('/installation', './pages/installation.mdx'),
-            docRoute('/components/dialog', './pages/components/dialog.mdx'),
             // The former name of the installation page.
             {
                 path: '/getting-started',

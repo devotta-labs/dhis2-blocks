@@ -132,7 +132,7 @@ A form is checked as soon as program metadata is loaded. Problems:
 Each problem produces a message naming the program and listing its searchable attributes with names, uids and
 the unique flag, e.g.:
 
-> `xyz` isn't searchable in HIV Program. Searchable: ART number (`abc`, unique), First name (`def`), Date of
+> `xyz` isn't searchable in HIV Program. Searchable attributes are ART number (`abc`, unique), First name (`def`), Date of
 > birth (`ghi`). This program needs 2 details unless an ID is used.
 
 **How it surfaces (my call; please check):** metadata lives on the server and an admin can change it after the

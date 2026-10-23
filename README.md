@@ -168,6 +168,9 @@ enrollments, events and relationships, and every view under the provider
 updates; `meta.isFetching` is true meanwhile. The helpers `currentEnrollment`,
 `enrollmentAllowance`, `eventStatus`, `latestValues` and `displayAttributes`
 work on the record.
+Program rules' `DATAELEMENT_NEWEST_EVENT_PROGRAM` reads the current
+enrollment's events, so pass that enrollment's events to `latestValues` when a
+view must match the rules.
 
 The block shows only what the server lets the user read: a person the user may
 not see is `unavailable`, a program the user may not see is `unavailable`

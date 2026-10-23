@@ -54,6 +54,21 @@ const Visits = () => {
             )
         case 'ready': {
             const entry = state.record.programs.get(PROGRAM_ID)
+
+            if (entry?.status === 'unavailable') {
+                // Never "not enrolled": the person may be enrolled elsewhere.
+                return <p>You don't have access to this program's records.</p>
+            }
+            if (entry?.status === 'error') {
+                return (
+                    <ErrorAlert title="This program could not be loaded.">
+                        <Button variant="outline" onClick={entry.retry}>
+                            Try again
+                        </Button>
+                    </ErrorAlert>
+                )
+            }
+
             const enrollment = entry && currentEnrollment(entry)
 
             if (entry?.status !== 'enrolled' || !enrollment) {
@@ -65,10 +80,12 @@ const Visits = () => {
             const stageNames = new Map(
                 program.stages.map(({ id, name }) => [id, name])
             )
-            const reported = program.stages.flatMap(({ dataElements }) =>
-                [...dataElements.values()].filter(
-                    ({ displayInReports }) => displayInReports
-                )
+            // A data element used in several stages is listed once.
+            const dataElements = new Map(
+                program.stages.flatMap(({ dataElements }) => [...dataElements])
+            )
+            const reported = [...dataElements.values()].filter(
+                ({ displayInReports }) => displayInReports
             )
             const latest = latestValues(
                 enrollment.events,

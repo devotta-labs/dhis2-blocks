@@ -47,6 +47,44 @@ test.describe('Tracked Entity Record examples', () => {
                 /In progress|Completed|Upcoming|Overdue|Skipped/
             )
         }
+
+        // A data element used in several stages is listed once.
+        const labels = await page.locator('dt').allTextContents()
+        expect(labels.length).toBeGreaterThan(0)
+        expect(new Set(labels).size).toBe(labels.length)
+    })
+
+    test('the visits example tells an unavailable program from no enrollment', async ({
+        page,
+    }) => {
+        // No metadata for the program reads as unavailable (spec 7.2, case 1).
+        await page.route(/\/api(?:\/\d+)?\/programs\?/, (route) =>
+            route.fulfill({ json: { programs: [] } })
+        )
+        await page.goto('/preview/tracked-entity-record/visits')
+
+        await expect(
+            page.getByText("You don't have access to this program's records.")
+        ).toBeVisible({ timeout: 30_000 })
+        await expect(page.getByText('No current enrollment')).toHaveCount(0)
+    })
+
+    test('the visits example offers a retry when the program fails to load', async ({
+        page,
+    }) => {
+        // An answer the block's schema rejects fails the program's metadata.
+        await page.route(/\/api(?:\/\d+)?\/programs\?/, (route) =>
+            route.fulfill({ json: {} })
+        )
+        await page.goto('/preview/tracked-entity-record/visits')
+
+        await expect(
+            page.getByText('This program could not be loaded.')
+        ).toBeVisible({ timeout: 30_000 })
+        await expect(
+            page.getByRole('button', { name: 'Try again' })
+        ).toBeVisible()
+        await expect(page.getByText('No current enrollment')).toHaveCount(0)
     })
 
     test('renders the unavailable example', async ({ page }) => {

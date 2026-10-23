@@ -72,8 +72,10 @@ has a `status`:
   failed to load; the rest of the record is fine.
 
 Without the `programs` prop the map holds every program the user can see an
-enrollment in. With it, the map holds exactly the listed programs, in that
-order, which is how a screen chooses what to show:
+enrollment in, plus every program the person has an owner for (from
+`programOwners`) whose metadata the user can read; those show as `unavailable`
+or `not-enrolled`. With the prop, the map holds exactly the listed programs,
+in that order, which is how a screen chooses what to show:
 
 ```tsx
 <TrackedEntityRecordProvider
@@ -105,15 +107,31 @@ settles, and every view under the provider updates:
 ```tsx
 const AddNote = ({ enrollmentId }: { enrollmentId: string }) => {
     const { actions } = useTrackedEntityRecord()
+    const [message, setMessage] = useState<string>()
 
     const save = async (text: string) => {
-        await saveNote(enrollmentId, text) // your own write
-        await actions.refresh()
+        try {
+            await saveNote(enrollmentId, text) // your own write
+        } catch {
+            setMessage('The note could not be added.')
+            return false // keep the text so the user can try again
+        }
+        try {
+            await actions.refresh()
+            setMessage('Note added.')
+        } catch {
+            // The note is saved: saying it failed would invite a duplicate.
+            setMessage('Saved, but the record could not be refreshed.')
+        }
+        return true // clear the text
     }
 
-    return <NoteForm onSubmit={save} />
+    return <NoteForm onSubmit={save} message={message} />
 }
 ```
+
+Keep the write and the refresh apart: a refresh that fails after a successful
+write must not read as a failed write, or the user saves the same note twice.
 
 The record never goes blank while it refreshes: the last record stays on
 screen and `meta.isFetching` is true. A refresh that finds the person
@@ -163,7 +181,9 @@ zones cannot move a due day.
 `latestValues(events, dataElementIds?)` returns, for each data element, the
 newest non-empty value from an active or completed event, with the event it
 came from. Pass the events of one enrollment, or of one stage, to choose the
-scope. Scheduled, skipped and overdue events carry no observations.
+scope. Scheduled, skipped and overdue events carry no observations. Program
+rules' `DATAELEMENT_NEWEST_EVENT_PROGRAM` reads the current enrollment's
+events, so pass that enrollment's events when a view must match the rules.
 
 <ExampleCard slug="tracked-entity-record/visits" />
 

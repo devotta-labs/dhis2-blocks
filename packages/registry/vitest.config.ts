@@ -3,12 +3,20 @@ import { playwright } from '@vitest/browser-playwright'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 
+// Ordered: the more specific `@/components/dhis2/ui` must win over `@/components`.
 const resolve = {
-    alias: {
-        '@/components/dhis2/ui': fileURLToPath(
-            new URL('./components', import.meta.url)
-        ),
-    },
+    alias: [
+        {
+            find: '@/components/dhis2/ui',
+            replacement: fileURLToPath(
+                new URL('./components', import.meta.url)
+            ),
+        },
+        {
+            find: '@/components',
+            replacement: fileURLToPath(new URL('./blocks', import.meta.url)),
+        },
+    ],
 }
 
 const sharedProjectOptions = {

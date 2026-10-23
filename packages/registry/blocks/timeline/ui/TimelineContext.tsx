@@ -102,5 +102,6 @@ export const useTimeline = <
 export const useOptionalTimeline = (): TimelineContextValue | null =>
     useContext(TimelineContext)
 
+// Encoded: a host's group key may hold spaces, which split an id reference.
 export const groupHeadingId = (id: string, group: TimelineGroup<unknown>) =>
-    `${id}-${group.phase}:${group.key}`
+    `${id}-${group.phase}:${encodeURIComponent(group.key)}`

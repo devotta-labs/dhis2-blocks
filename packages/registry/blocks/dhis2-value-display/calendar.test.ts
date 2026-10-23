@@ -10,6 +10,18 @@ describe('calendar', () => {
         expect(formatCalendarDate('2026-10-14', 'gregorian', 'en')).toBe(
             'Oct 14, 2026'
         ))
+    it.each(['th', 'fa', 'prs', 'ps'])(
+        'stays Gregorian in the %s locale, whose own calendar differs',
+        (locale) =>
+            expect(formatCalendarDate('2024-03-01', 'gregorian', locale)).toBe(
+                new Intl.DateTimeFormat(`${locale}-u-ca-gregory`, {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    timeZone: 'UTC',
+                }).format(new Date('2024-03-01T00:00:00Z'))
+            )
+    )
     it('formats an Ethiopian day as YYYY-MM-DD in that calendar', () =>
         expect(formatCalendarDate('2026-10-14', 'ethiopian', 'en')).toBe(
             '2019-02-04'

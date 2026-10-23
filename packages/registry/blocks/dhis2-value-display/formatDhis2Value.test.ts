@@ -36,6 +36,18 @@ describe('formatDhis2Value', () => {
             formatDhis2Value('12.345678', { valueType: 'PERCENTAGE' }, opts)
         ).toBe('12.345678%')
     })
+    it('keeps every digit of a long number', () =>
+        expect(
+            formatDhis2Value('9007199254740993', { valueType: 'NUMBER' }, opts)
+        ).toBe('9,007,199,254,740,993'))
+    it('shows the raw number for a locale Intl cannot read', () =>
+        expect(
+            formatDhis2Value(
+                '1234.5',
+                { valueType: 'NUMBER' },
+                { calendar: 'gregorian', locale: 'en_US' }
+            )
+        ).toBe('1234.5'))
     it('maps an option code to its name', () =>
         expect(
             formatDhis2Value('POS', { valueType: 'TEXT', optionSet }, opts)

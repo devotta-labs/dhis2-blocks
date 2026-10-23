@@ -76,7 +76,9 @@ export const eventEntry = (
 /**
  * Enrolled, incident, completed and cancelled dates of one enrollment.
  * Enrollment and incident dates are dates stored at midnight; completed and
- * cancelled are moments.
+ * cancelled are moments that have happened. They are past even when the
+ * server's clock is a day ahead of the viewer's; an incident date may be in
+ * the future, so it keeps the default.
  */
 export const milestoneEntries = (
     enrollment: Enrollment,
@@ -97,17 +99,17 @@ export const milestoneEntries = (
         if (program !== undefined) {
             data.program = program
         }
-        return [
-            {
-                id: `milestone:${enrollment.enrollment}:${kind}`,
-                at,
-                precision:
-                    kind === 'enrolled' || kind === 'incident'
-                        ? 'day'
-                        : 'instant',
-                data,
-            },
-        ]
+        const byDay = kind === 'enrolled' || kind === 'incident'
+        const entry: TimelineEntry<MilestoneEntryData> = {
+            id: `milestone:${enrollment.enrollment}:${kind}`,
+            at,
+            precision: byDay ? 'day' : 'instant',
+            data,
+        }
+        if (!byDay) {
+            entry.phase = 'past'
+        }
+        return [entry]
     }
     const { enrolledAt, occurredAt, status } = enrollment
     const closedAt = enrollment.completedAt ?? enrollment.updatedAt
@@ -128,7 +130,10 @@ export const milestoneEntries = (
     ]
 }
 
-/** The notes on one enrollment, at the time they were stored. */
+/**
+ * The notes on one enrollment, at the time they were stored: past, even when
+ * the server's clock is a day ahead of the viewer's.
+ */
 export const noteEntries = (
     enrollment: Enrollment,
     program?: ProgramInfo
@@ -141,10 +146,12 @@ export const noteEntries = (
         if (program !== undefined) {
             data.program = program
         }
-        return [{ id: `note:${note.note}`, at: note.storedAt, data }]
+        return [
+            { id: `note:${note.note}`, at: note.storedAt, phase: 'past', data },
+        ]
     })
 
-/** One entry per save. */
+/** One entry per save; a save has happened, so it is past. */
 export const changeEntries = (
     saves: ReadonlyArray<ChangeSave>
 ): TimelineEntry<ChangeEntryData>[] =>
@@ -152,6 +159,7 @@ export const changeEntries = (
         id: `change:${save.id}`,
         at: save.createdAt,
         precision: 'instant',
+        phase: 'past',
         data: { kind: 'change', save },
     }))
 

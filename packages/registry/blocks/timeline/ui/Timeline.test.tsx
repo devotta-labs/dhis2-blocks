@@ -110,6 +110,26 @@ describe('Timeline', () => {
         expect(sections[1].querySelectorAll('ol > li')).toHaveLength(2)
     })
 
+    it('labels a section whose groupBy key has spaces', async () => {
+        const { container } = await render(
+            <Timeline
+                entries={ENTRIES}
+                groupBy={() => ({ key: 'Child health', label: 'Child health' })}
+                calendar="gregorian"
+                now={NOW}
+            >
+                <TimelineFeed<string>>{renderEntry}</TimelineFeed>
+            </Timeline>
+        )
+
+        const section = container.querySelector('section[aria-labelledby]')
+        const ids = section?.getAttribute('aria-labelledby')?.split(' ') ?? []
+        expect(ids).toHaveLength(1)
+        expect(container.querySelector(`[id="${ids[0]}"]`)?.textContent).toBe(
+            'Child health'
+        )
+    })
+
     it('wraps every entry in a focusable list item that names its entry', async () => {
         const { container } = await renderTimeline()
 
@@ -496,16 +516,23 @@ describe('show more', () => {
                             setTimeout(() => {
                                 setPages(2)
                                 setLoading(false)
-                            }, 20)
+                            }, 200)
                         }}
                     />
                 </Timeline>
             )
         }
         const { container } = await render(<Host />)
+        const button = container.querySelector('button')
+        button?.focus()
 
-        container.querySelector('button')?.click()
+        button?.click()
 
+        // While the page loads, focus stays on the button, not on <body>.
+        await vi.waitFor(() =>
+            expect(button?.getAttribute('aria-busy')).toBe('true')
+        )
+        expect(document.activeElement).toBe(button)
         await vi.waitFor(() =>
             expect(
                 document.activeElement?.getAttribute('data-timeline-entry')

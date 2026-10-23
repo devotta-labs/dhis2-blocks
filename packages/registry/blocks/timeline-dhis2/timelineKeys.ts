@@ -17,8 +17,18 @@ export const timelineKeys = {
         timeField: EventTimeField,
         cap: number
     ) => [...root, 'events', trackedEntity, program, timeField, cap] as const,
-    attributeChangeLog: (trackedEntity: string, program: string) =>
-        [...root, 'attributeChangeLog', trackedEntity, program] as const,
+    attributeChangeLog: (
+        trackedEntity: string,
+        program: string,
+        maxRows: number
+    ) =>
+        [
+            ...root,
+            'attributeChangeLog',
+            trackedEntity,
+            program,
+            maxRows,
+        ] as const,
     eventChangeLog: (event: string) =>
         [...root, 'eventChangeLog', event] as const,
     programMetadata: (program: string) =>

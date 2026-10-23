@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { useConfig } from '@dhis2/app-runtime'
 import {
-    localDay,
     Timeline,
     TimelineEmpty,
     TimelineError,
@@ -26,7 +26,7 @@ import { useSearchParams } from 'react-router-dom'
 import i18n from '../../i18n'
 import { OpenInCapture } from './CaseHistoryDemo'
 import { ParamsForm } from './ParamsForm'
-import { fetchUpdatedToday } from './updatedToday'
+import { fetchUpdatedToday, serverToday } from './updatedToday'
 
 // Capture's demo database: Ngelehun CHC, where the e2e seed records its events.
 const DEFAULT_ORG_UNIT = 'DiszpKrYNg8'
@@ -46,7 +46,8 @@ const UpdatedToday = ({
 }) => {
     const client = useTimelineClient()
     const calendar = useSystemCalendar()
-    const today = localDay(new Date())
+    const { systemInfo } = useConfig()
+    const today = serverToday(systemInfo?.serverTimeZoneId)
     const pages = useInfiniteQuery({
         queryKey: [
             ...timelineKeys.root,
@@ -75,8 +76,18 @@ const UpdatedToday = ({
             return result.value
         },
     })
+    // An event saved while paging moves to the top, so the next page repeats
+    // the one it pushed down: keep each event once.
+    // shortcut: the event pushed off page one shows only after a refetch;
+    // page by an updatedAt cursor if a host needs it at once.
     const events = useMemo(
-        () => pages.data?.pages.flatMap((page) => page.events) ?? [],
+        () => [
+            ...new Map(
+                (pages.data?.pages ?? [])
+                    .flatMap((page) => page.events)
+                    .map((event) => [event.event, event])
+            ).values(),
+        ],
         [pages.data]
     )
     const info = useProgramInfo([program])
@@ -102,7 +113,10 @@ const UpdatedToday = ({
     const status =
         pages.isError && pages.data === undefined
             ? 'error'
-            : pages.isPending || info.pending || names.pending
+            : pages.isPending ||
+                info.pending ||
+                // A later page's org units keep the known names on show.
+                (names.pending && names.names.size === 0)
               ? 'pending'
               : 'success'
     const notices: TimelineNotice[] = [
@@ -151,8 +165,9 @@ const UpdatedToday = ({
 
 export const UpdatedTodayDemo = () => {
     const [params] = useSearchParams()
-    const program = params.get('program') ?? DEFAULT_PROGRAM
-    const orgUnit = params.get('orgUnit') ?? DEFAULT_ORG_UNIT
+    // `||`: a cleared field submits an empty value.
+    const program = params.get('program') || DEFAULT_PROGRAM
+    const orgUnit = params.get('orgUnit') || DEFAULT_ORG_UNIT
     return (
         <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-6">
             <header className="flex flex-col gap-3">

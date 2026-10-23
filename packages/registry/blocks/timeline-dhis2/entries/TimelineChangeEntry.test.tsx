@@ -282,6 +282,27 @@ describe('TimelineChangeEntry', () => {
         ).toEqual(['b', 'a'])
     })
 
+    it('names org-unit-typed values from orgUnitNames, else shows the id', async () => {
+        const saves = groupChangelogRows(
+            [row('dataElement', 'clinic', 'UPDATE', 'ouOld', 'ouNew')],
+            () => ({
+                name: 'Referred to',
+                meta: { valueType: 'ORGANISATION_UNIT' },
+            })
+        )
+        const { container } = await renderEntries(
+            <TimelineSaves
+                saves={saves}
+                orgUnitNames={new Map([['ouNew', 'Bo Hospital']])}
+            />
+        )
+
+        expect(
+            container.querySelector('[data-slot=timeline-change-row]')
+                ?.textContent
+        ).toBe('Referred toouOld → Bo Hospital')
+    })
+
     it('shows a save that entered the record as its summary alone', async () => {
         const saves = groupChangelogRows([
             {

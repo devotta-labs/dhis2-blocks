@@ -8,7 +8,11 @@ export interface TimelineEntry<TData = unknown> {
     precision?: 'instant' | 'day'
     /** Orders entries that share the same instant. */
     sequence?: number
-    /** Defaults from the stored day: after today is future, otherwise past. */
+    /**
+     * Defaults from the stored day: after the viewer's day is future, otherwise
+     * past. Set `'past'` on what has already happened: a server clock ahead of
+     * the viewer's stores it under tomorrow.
+     */
     phase?: TimelinePhase
     data: TData
 }

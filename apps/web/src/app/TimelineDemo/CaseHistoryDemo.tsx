@@ -111,7 +111,8 @@ const programsFrom = (value: string | null) => {
 
 export const CaseHistoryDemo = () => {
     const [params] = useSearchParams()
-    const trackedEntity = params.get('te') ?? DEFAULT_TRACKED_ENTITY
+    // `||`: a cleared field submits an empty value.
+    const trackedEntity = params.get('te') || DEFAULT_TRACKED_ENTITY
     const programs = programsFrom(params.get('programs'))
     return (
         <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-6">

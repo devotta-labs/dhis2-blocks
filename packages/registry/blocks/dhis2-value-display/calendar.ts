@@ -61,6 +61,29 @@ const pad = (value: number, length = 2) =>
 /** Calendars `Intl` can name months for, so dates read as "Oct 14, 2026". */
 const INTL_CALENDARS = new Set<Dhis2Calendar>(['gregorian', 'iso8601'])
 
+/**
+ * One formatter per locale: building one costs far more than formatting, and
+ * the timeline formats a date per entry. `calendar: 'gregory'`, since `th` or
+ * `fa` would otherwise switch to the Buddhist or Persian calendar.
+ */
+const dayFormats = new Map<string, Intl.DateTimeFormat>()
+
+const dayFormat = (locale?: string): Intl.DateTimeFormat => {
+    const known = dayFormats.get(locale ?? '')
+    if (known !== undefined) {
+        return known
+    }
+    const format = new Intl.DateTimeFormat(locale, {
+        calendar: 'gregory',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'UTC',
+    })
+    dayFormats.set(locale ?? '', format)
+    return format
+}
+
 /** The Julian Day Number of a proleptic Gregorian date. */
 const julianDayNumber = (year: number, month: number, day: number) => {
     const a = Math.floor((14 - month) / 12)
@@ -130,12 +153,7 @@ export const formatCalendarDate = (
             return day
         }
         try {
-            return new Intl.DateTimeFormat(locale, {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                timeZone: 'UTC',
-            }).format(date)
+            return dayFormat(locale).format(date)
         } catch {
             return day
         }

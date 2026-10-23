@@ -91,6 +91,8 @@ interface Server {
     changelogs?: Record<string, Json[] | Error>
     /** Holds every changelog request until it settles. */
     changesGate?: Promise<void>
+    /** Org unit names added to the recorded ones. */
+    extraOrgUnits?: Json[]
 }
 
 const setup = (server: Server = {}) => {
@@ -150,7 +152,15 @@ const setup = (server: Server = {}) => {
         },
         organisationUnits: async () => {
             requests.push('orgUnits')
-            return JsonObject.parse(orgUnitNames)
+            const recorded = z
+                .object({ organisationUnits: z.array(JsonObject) })
+                .parse(orgUnitNames).organisationUnits
+            return {
+                organisationUnits: [
+                    ...recorded,
+                    ...(server.extraOrgUnits ?? []),
+                ],
+            }
         },
     }
     const queryClient = new QueryClient({
@@ -371,6 +381,49 @@ describe('useTrackedEntityHistory', () => {
         )
         // Shown only once its program's metadata has answered.
         expect(added?.data).toMatchObject({ program: { id: 'TlE2eNewPrg' } })
+    })
+
+    it("waits for the next person's org unit names instead of showing their ids", async () => {
+        const server: Server = {}
+        const { wrapper } = setup(server)
+        /** The TB event's org unit on every render that shows it. */
+        const shown: string[] = []
+        const { rerender } = await renderHook(
+            (props?: { trackedEntity: string }) => {
+                const trackedEntity = props?.trackedEntity ?? TE
+                const history = useTrackedEntityHistory({
+                    trackedEntity,
+                    timeField: 'occurredAt',
+                    now: NOW,
+                })
+                for (const entry of history.entries) {
+                    if (
+                        entry.data.kind === 'event' &&
+                        entry.id === 'event:TlE2eTbEvt1'
+                    ) {
+                        shown.push(
+                            `${trackedEntity}:${entry.data.orgUnitName ?? entry.data.event.orgUnit}`
+                        )
+                    }
+                }
+                return history
+            },
+            { wrapper, initialProps: { trackedEntity: TE } }
+        )
+        await expect.poll(() => shown.at(-1)).toBe(`${TE}:Ngelehun CHC`)
+
+        // The next person's TB visit was in an org unit not named yet.
+        const next = 'TlE2eTei002'
+        server.events = { [TB]: [{ ...tbEvent, orgUnit: 'TlE2eOrgU99' }] }
+        server.extraOrgUnits = [
+            { id: 'TlE2eOrgU99', displayName: 'Bo Hospital' },
+        ]
+        await rerender({ trackedEntity: next })
+        await expect.poll(() => shown.at(-1)).toBe(`${next}:Bo Hospital`)
+
+        expect(shown.filter((line) => line.startsWith(next))).not.toContain(
+            `${next}:TlE2eOrgU99`
+        )
     })
 
     it('is an error, with the enrollments notice, when the tracked entity fails', async () => {

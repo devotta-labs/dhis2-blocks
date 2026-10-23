@@ -20,6 +20,11 @@ import type { ChangeSave, ChangeEntryData, ResolvedChange } from '../types'
 
 const TimelineSaveContext = createContext<ChangeSave | null>(null)
 
+/** Names for org-unit-typed values, from the surrounding `TimelineSaves`. */
+const OrgUnitNamesContext = createContext<
+    ReadonlyMap<string, string> | undefined
+>(undefined)
+
 /** The save the surrounding `TimelineSave` or `TimelineChangeEntry` shows. */
 export const useTimelineSave = (): ChangeSave => {
     const save = useContext(TimelineSaveContext)
@@ -127,6 +132,7 @@ const Value = ({ text }: { text: string }) =>
 
 const ChangeRowItem = ({ change }: { change: ResolvedChange }) => {
     const { calendar, locale } = useTimelineMeta()
+    const orgUnitNames = useContext(OrgUnitNamesContext)
     const { field } = change
     const show = (stored: string | undefined) => {
         const { value, valueType } =
@@ -136,7 +142,7 @@ const ChangeRowItem = ({ change }: { change: ResolvedChange }) => {
         return formatDhis2Value(
             value,
             valueType === undefined ? change.meta : { valueType },
-            { calendar, locale }
+            { calendar, locale, orgUnitNames }
         )
     }
     return (
@@ -229,23 +235,30 @@ export const TimelineChangeEntry = ({
 /**
  * A list of saves, newest first, such as an event's changes. A save that
  * entered the record shows only who and when: its values are the record's.
+ * `orgUnitNames` names org-unit-typed values; one not in it shows its id.
  */
 export const TimelineSaves = ({
     saves,
+    orgUnitNames,
     className,
     ...props
-}: ComponentPropsWithoutRef<'ul'> & { saves: ReadonlyArray<ChangeSave> }) => (
-    <ul
-        {...props}
-        data-slot="timeline-saves"
-        className={cn('m-0 flex list-none flex-col gap-2 p-0', className)}
-    >
-        {saves.map((save) => (
-            <li key={save.id}>
-                <TimelineSave save={save}>
-                    {isEntry(save) ? <TimelineChangeSummary /> : undefined}
-                </TimelineSave>
-            </li>
-        ))}
-    </ul>
+}: ComponentPropsWithoutRef<'ul'> & {
+    saves: ReadonlyArray<ChangeSave>
+    orgUnitNames?: ReadonlyMap<string, string>
+}) => (
+    <OrgUnitNamesContext.Provider value={orgUnitNames}>
+        <ul
+            {...props}
+            data-slot="timeline-saves"
+            className={cn('m-0 flex list-none flex-col gap-2 p-0', className)}
+        >
+            {saves.map((save) => (
+                <li key={save.id}>
+                    <TimelineSave save={save}>
+                        {isEntry(save) ? <TimelineChangeSummary /> : undefined}
+                    </TimelineSave>
+                </li>
+            ))}
+        </ul>
+    </OrgUnitNamesContext.Provider>
 )

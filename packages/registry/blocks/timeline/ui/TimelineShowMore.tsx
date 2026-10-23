@@ -17,7 +17,9 @@ import { useTimeline } from './TimelineContext'
 /**
  * Shows every future and overdue entry and the newest `step` past ones;
  * `showMore` reveals `step` more. The entries are all in memory: this only
- * keeps the page short.
+ * keeps the page short. The count outlives a change of `entries`: give the
+ * component a `key` per record (`key={trackedEntity}`) so the next one starts
+ * short.
  */
 export const useShowMore = <TData,>(
     entries: ReadonlyArray<TimelineEntry<TData>>,
@@ -50,7 +52,9 @@ interface Request {
  * Asks for more entries, then moves focus to the first one that arrives, in
  * reading order. When nothing arrives, focus stays on the button, or goes to
  * the last entry if the button has gone. `onShowMore` can reveal entries
- * already in memory (`useShowMore`) or fetch the next server page.
+ * already in memory (`useShowMore`) or fetch the next server page; a fetch
+ * must turn `loading` on in the same update, or the press counts as one that
+ * added nothing.
  */
 export const TimelineShowMore = ({
     hasMore,
@@ -111,6 +115,8 @@ export const TimelineShowMore = ({
             type="button"
             data-slot="timeline-show-more"
             disabled={loading}
+            // Keeps focus on the button while it loads, not on <body>.
+            focusableWhenDisabled
             aria-busy={loading}
             onClick={() => {
                 const pending: Request = {

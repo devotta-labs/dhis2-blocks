@@ -1,6 +1,6 @@
 import { Result } from 'better-result'
 import { EVENT_FIELDS, type TimelineClient } from '@/components/timeline-dhis2'
-import { fetchUpdatedToday } from './updatedToday'
+import { fetchUpdatedToday, serverToday } from './updatedToday'
 
 type Request = Parameters<TimelineClient['query']>[0]
 
@@ -97,4 +97,17 @@ describe('fetchUpdatedToday', () => {
 
         expect(Result.isError(result)).toBe(true)
     })
+})
+
+describe('serverToday', () => {
+    // 01:00 in Nairobi on 24 October is still 23 October on a UTC server.
+    const moment = new Date('2026-10-23T22:00:00Z')
+
+    it("is the day in the server's time zone", () => {
+        expect(serverToday('UTC', moment)).toBe('2026-10-23')
+        expect(serverToday('Africa/Nairobi', moment)).toBe('2026-10-24')
+    })
+
+    it("falls back to the viewer's day for an unusable zone", () =>
+        expect(serverToday('not/a-zone', moment)).toMatch(/^2026-10-2[34]$/))
 })

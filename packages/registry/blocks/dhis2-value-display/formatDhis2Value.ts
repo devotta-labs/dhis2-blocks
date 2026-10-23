@@ -20,13 +20,27 @@ const warnOnce = (valueType: string) => {
     )
 }
 
+/** `Intl.NumberFormat` with its ES2023 overload that takes a numeric string. */
+interface ExactNumberFormat {
+    format(value: number | string): string
+}
+
 const formatNumber = (value: string, locale?: string): string => {
-    const number = Number(value)
-    return value.trim() === '' || Number.isNaN(number)
-        ? value
-        : new Intl.NumberFormat(locale, { maximumFractionDigits: 20 }).format(
-              number
-          )
+    if (value.trim() === '' || Number.isNaN(Number(value))) {
+        return value
+    }
+    try {
+        // SAFETY: browsers format a numeric string exactly (ES2023), where
+        // Number(value) rounds past 15-17 digits; an app's TypeScript lib may
+        // predate that overload. `value` was checked to be numeric above.
+        const format = new Intl.NumberFormat(locale, {
+            maximumFractionDigits: 20,
+        }) as ExactNumberFormat
+        return format.format(value)
+    } catch {
+        // An unusable locale, such as DHIS2's `en_US`.
+        return value
+    }
 }
 
 const formatCoordinate = (value: string): string => {

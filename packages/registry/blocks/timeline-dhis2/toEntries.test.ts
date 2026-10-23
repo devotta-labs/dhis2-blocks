@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { toProgramInfo } from './metadata'
 import {
+    changeEntries,
     eventEntry as toEventEntry,
     milestoneEntries,
     noteEntries,
@@ -294,5 +295,54 @@ describe('enrollment entries', () => {
             ['note:n1', '2026-02-01T09:00'],
         ])
         expect(entries[0]?.data).toMatchObject({ kind: 'note', enrollment })
+    })
+
+    // The server's clock can be a day ahead of the viewer's: what has
+    // happened must not land above "now".
+    it('puts notes, changes and closing milestones in the past, stored after today too', () => {
+        const [ahead] = TrackedEntitySchema.parse({
+            trackedEntity: 'te1',
+            enrollments: [
+                {
+                    enrollment: 'en2',
+                    program: 'p1',
+                    status: 'CANCELLED',
+                    enrolledAt: '2026-01-10T00:00:00.000',
+                    occurredAt: '2026-12-01T00:00:00.000',
+                    updatedAt: '2026-10-23T01:00:00.000',
+                    notes: [
+                        {
+                            note: 'n3',
+                            value: 'Just now',
+                            storedAt: '2026-10-23T01:00:00.000',
+                        },
+                    ],
+                },
+            ],
+        }).enrollments
+        if (ahead === undefined) {
+            throw new Error('fixture has no enrollment')
+        }
+        const save = {
+            id: 's1',
+            createdAt: '2026-10-23T01:00:00.000',
+            user: { username: 'u', displayName: 'U' },
+            changes: [],
+        }
+
+        expect(
+            [
+                ...milestoneEntries(ahead),
+                ...noteEntries(ahead),
+                ...changeEntries([save]),
+            ].map((entry) => [entry.id, entry.phase])
+        ).toEqual([
+            ['milestone:en2:enrolled', undefined],
+            // A future incident date stays future.
+            ['milestone:en2:incident', undefined],
+            ['milestone:en2:cancelled', 'past'],
+            ['note:n3', 'past'],
+            ['change:s1', 'past'],
+        ])
     })
 })

@@ -269,8 +269,9 @@ const NO_NAMES: ReadonlyMap<string, string> = new Map()
 
 /**
  * Names for org units, one request for the whole set. Waits for `ids`, so
- * entries never show an id that a name is about to replace. A new set keeps
- * the names already known on show while it loads.
+ * entries never show an id that a name is about to replace. While a new set
+ * loads, `names` keeps the previous answer and `pending` stays true; a hook
+ * already showing a history keeps it on show meanwhile.
  */
 export const useOrgUnitNames = (ids: ReadonlyArray<string> | undefined) => {
     const client = useTimelineClient()
@@ -289,7 +290,12 @@ export const useOrgUnitNames = (ids: ReadonlyArray<string> | undefined) => {
     const status = statusOf(query)
     return {
         names: query.data ?? NO_NAMES,
-        pending: ids === undefined || (ids.length > 0 && status === 'pending'),
+        // The last set's names stand in only once a history is on show: a
+        // new person's first answer waits for their own names.
+        pending:
+            ids === undefined ||
+            (ids.length > 0 &&
+                (status === 'pending' || query.isPlaceholderData)),
         isFetching: query.isFetching,
         notices:
             status === 'error'

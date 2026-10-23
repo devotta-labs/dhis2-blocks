@@ -51,7 +51,11 @@ export const useAttributeChangeEntries = ({
     const info = useProgramInfo(ids.ids)
     const changelogs = useQueries({
         queries: (ids.ids ?? []).map((program) => ({
-            queryKey: timelineKeys.attributeChangeLog(trackedEntity, program),
+            queryKey: timelineKeys.attributeChangeLog(
+                trackedEntity,
+                program,
+                maxRows
+            ),
             retry: retryUnlessNotFound,
             queryFn: async ({ signal }: { signal: AbortSignal }) =>
                 unwrap(

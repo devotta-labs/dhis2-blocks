@@ -326,7 +326,7 @@ describe('timelineKeys', () => {
         const keys = [
             timelineKeys.events('te', 'p', 'occurredAt', 500),
             timelineKeys.trackedEntity('te'),
-            timelineKeys.attributeChangeLog('te', 'p'),
+            timelineKeys.attributeChangeLog('te', 'p', 500),
             timelineKeys.eventChangeLog('e'),
             timelineKeys.programMetadata('p'),
             timelineKeys.orgUnitNames(['a', 'b']),

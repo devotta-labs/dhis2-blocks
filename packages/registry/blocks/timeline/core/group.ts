@@ -3,7 +3,7 @@ import {
     storedDay,
     type Dhis2Calendar,
 } from '@/components/dhis2-value-display/calendar'
-import { compareEntries, sortKey } from './sort'
+import { compareEntries } from './sort'
 import type {
     GroupBy,
     TimelineEntry,
@@ -94,23 +94,22 @@ export const groupTimeline = <TData>(
     entries: TimelineEntry<TData>[],
     options: GroupOptions<TData>
 ): TimelineLayout<TData> => {
-    const dated: TimelineEntry<TData>[] = []
     const undated: TimelineEntry<TData>[] = []
-    for (const entry of entries) {
-        ;(sortKey(entry) === undefined ? undated : dated).push(entry)
-    }
-    if (undated.length > 0) {
-        warnOnceAboutUndated(undated.length)
-    }
-
     const byPhase = {
         future: new Array<TimelineEntry<TData>>(),
         overdue: new Array<TimelineEntry<TData>>(),
         past: new Array<TimelineEntry<TData>>(),
     } satisfies Record<TimelinePhase, TimelineEntry<TData>[]>
-    for (const entry of dated) {
-        const day = storedDay(entry.at) ?? ''
-        byPhase[phaseOf(entry, day, options.today)].push(entry)
+    for (const entry of entries) {
+        const day = storedDay(entry.at)
+        if (day === undefined) {
+            undated.push(entry)
+        } else {
+            byPhase[phaseOf(entry, day, options.today)].push(entry)
+        }
+    }
+    if (undated.length > 0) {
+        warnOnceAboutUndated(undated.length)
     }
 
     const sorted = (phase: TimelinePhase) =>

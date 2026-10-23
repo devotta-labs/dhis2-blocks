@@ -210,7 +210,10 @@ export const TimelineEventOrgUnit = ({
     )
 }
 
-/** A muted line of short facts, separated by dots; empty parts drop out. */
+/**
+ * A muted line of short facts, separated by dots; empty parts drop out.
+ * @public For hosts recomposing an event's children.
+ */
 export const TimelineEventMeta = ({
     className,
     ...props
@@ -429,7 +432,10 @@ const ChangesBody = ({ entry }: { entry: TimelineEntry<EventEntryData> }) => {
                 </p>
             ) : (
                 <>
-                    <TimelineSaves saves={saves} />
+                    <TimelineSaves
+                        saves={saves}
+                        orgUnitNames={entry.data.orgUnitNames}
+                    />
                     {truncated ? (
                         <p className="m-0 mt-2 text-sm text-dhis2-grey-700">
                             {i18n.t("Older changes aren't shown.")}

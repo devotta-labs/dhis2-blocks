@@ -43,8 +43,29 @@ const isAbortedBootstrapRead = (diagnostic: BrowserDiagnostic) =>
     diagnostic.method === 'GET' &&
     bootstrapApiPath.test(urlPath(diagnostic.url) ?? '')
 
+// The Tracked Entity Record "unavailable" example loads a person that does
+// not exist on purpose; the server's 404 for the person and for their
+// relationships (and the browser's console line about each) is the expected
+// trigger.
+const missingPersonRequest =
+    /\/api(?:\/\d+)?\/tracker\/(?:trackedEntities\/AbCdEfGhIjK\?|relationships\?trackedEntity=AbCdEfGhIjK&)/
+
 const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
     const path = urlPath(diagnostic.url ?? diagnostic.location?.url)
+
+    if (
+        (diagnostic.kind === 'http' ||
+            (diagnostic.kind === 'console' &&
+                diagnostic.message.includes('Failed to load resource'))) &&
+        missingPersonRequest.test(
+            (diagnostic.url ?? diagnostic.location?.url ?? '').replace(
+                /^[a-z]+:\/\/[^/]+/,
+                ''
+            )
+        )
+    ) {
+        return true
+    }
 
     if (
         diagnostic.kind === 'http' &&

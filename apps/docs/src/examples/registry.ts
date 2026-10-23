@@ -7,6 +7,11 @@ import {
 } from './working-list/WorkingListPlaceholders'
 import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
+import recordHeaderSource from './tracked-entity-record/RecordHeader.tsx?raw'
+import { RecordPlaceholder } from './tracked-entity-record/RecordPlaceholders'
+import recordSideBySideSource from './tracked-entity-record/RecordSideBySide.tsx?raw'
+import recordUnavailableSource from './tracked-entity-record/RecordUnavailable.tsx?raw'
+import recordVisitsSource from './tracked-entity-record/RecordVisits.tsx?raw'
 import sidebarBasicSource from './sidebar/SidebarBasic.tsx?raw'
 import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
 
@@ -94,6 +99,46 @@ const examples = [
         ),
         source: contextSelectorStatesSource,
         minHeight: 340,
+    },
+    {
+        slug: 'tracked-entity-record/header',
+        title: 'Person header',
+        live: true,
+        Component: lazy(() => import('./tracked-entity-record/RecordHeader')),
+        source: recordHeaderSource,
+        minHeight: 130,
+        Placeholder: RecordPlaceholder,
+    },
+    {
+        slug: 'tracked-entity-record/side-by-side',
+        title: 'Two programs side by side',
+        live: true,
+        Component: lazy(
+            () => import('./tracked-entity-record/RecordSideBySide')
+        ),
+        source: recordSideBySideSource,
+        minHeight: 220,
+        Placeholder: RecordPlaceholder,
+    },
+    {
+        slug: 'tracked-entity-record/visits',
+        title: 'Latest values and visits',
+        live: true,
+        Component: lazy(() => import('./tracked-entity-record/RecordVisits')),
+        source: recordVisitsSource,
+        minHeight: 300,
+        Placeholder: RecordPlaceholder,
+    },
+    {
+        slug: 'tracked-entity-record/unavailable',
+        title: 'Unavailable person',
+        live: true,
+        Component: lazy(
+            () => import('./tracked-entity-record/RecordUnavailable')
+        ),
+        source: recordUnavailableSource,
+        minHeight: 130,
+        Placeholder: RecordPlaceholder,
     },
 ] as const satisfies readonly ExampleDefinition[]
 

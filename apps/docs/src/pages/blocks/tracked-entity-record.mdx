@@ -1,0 +1,219 @@
+---
+title: Tracked Entity Record
+description: One person's record across programs, loaded once and shared with every view.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="tracked-entity-record/header" />
+
+This block is headless: it renders nothing and gives your views the data. The
+previews use a person from the Sierra Leone demo database, enrolled in Child
+Programme and TB program. For another backend, replace the IDs.
+
+## Installation
+
+<InstallCommand item="tracked-entity-record" />
+
+## The provider and its state
+
+Render the provider beneath the DHIS2 app-runtime and TanStack Query
+providers, and read the record with `useTrackedEntityRecord()` anywhere below
+it. The record is loaded once, however many views read it.
+
+```tsx
+import {
+    TrackedEntityRecordProvider,
+    useTrackedEntityRecord,
+} from '@/components/tracked-entity-record'
+
+const PersonScreen = ({ id }: { id: string }) => (
+    <TrackedEntityRecordProvider trackedEntityId={id}>
+        <PersonBanner />
+    </TrackedEntityRecordProvider>
+)
+```
+
+`useTrackedEntityRecord()` returns `{ state, actions, meta }` and throws
+outside the provider. `state.status` is one of:
+
+- `pending` while the record loads.
+- `unavailable` when the person does not exist or the user may not see them.
+  The server answers both the same way, so the block does too. `debug` holds
+  the server's message in English, for developers; do not branch on it.
+- `error` for network failures, server errors and unexpected responses, with
+  `retry()`.
+- `ready` with `record`.
+
+Check `state.status` before reading `state.record`; TypeScript will not let
+you read it from a record that is not there. The `unavailable` and `error`
+cases are handled the same way in every example here:
+
+<ExampleCard slug="tracked-entity-record/unavailable" />
+
+`meta` has `trackedEntityId` and `isFetching`, which is true while the record
+refetches.
+
+## Programs
+
+`record.programs` is a `Map` from program ID to a `ProgramRecord`. Each entry
+has a `status`:
+
+- `enrolled` has the `program` (resolved metadata, with only the stages the
+  user can read), the person's `enrollments` (newest first, each with its
+  events) and `access.canWrite`.
+- `not-enrolled` has the `program` and `access`.
+- `unavailable` has the `programId` and a `debug` sentence for developers.
+  The user may not see this program, or may not see this person in it. A
+  person enrolled in a protected program at another clinic is `unavailable`,
+  never `not-enrolled`, so your app does not offer to enroll them again.
+- `error` has the `programId` and `retry()`. Only that program's metadata
+  failed to load; the rest of the record is fine.
+
+Without the `programs` prop the map holds every program the user can see an
+enrollment in. With it, the map holds exactly the listed programs, in that
+order, which is how a screen chooses what to show:
+
+```tsx
+<TrackedEntityRecordProvider
+    trackedEntityId={id}
+    programs={['IpHINAT79UW', 'ur1Edk5Oe2n']}
+>
+    <ChildProgramme />
+    <TbProgram />
+</TrackedEntityRecordProvider>
+```
+
+Because every view reads one provider, two programs can sit side by side
+without a second request:
+
+<ExampleCard slug="tracked-entity-record/side-by-side" />
+
+The docs sign in as an administrator, who can see every program, so a locked
+program cannot be shown in a live example here. To see `unavailable` for a
+program, sign in as a user without access to it. The example above already
+handles that entry in its code.
+
+## Refresh after writes
+
+The block reads; your app writes. After any write on the screen, such as
+saving an event or adding a note, call `refresh()`. It reloads the person,
+their enrollments, events and relationships, resolves when the refetch
+settles, and every view under the provider updates:
+
+```tsx
+const AddNote = ({ enrollmentId }: { enrollmentId: string }) => {
+    const { actions } = useTrackedEntityRecord()
+
+    const save = async (text: string) => {
+        await saveNote(enrollmentId, text) // your own write
+        await actions.refresh()
+    }
+
+    return <NoteForm onSubmit={save} />
+}
+```
+
+The record never goes blank while it refreshes: the last record stays on
+screen and `meta.isFetching` is true. A refresh that finds the person
+`unavailable`, for example after a transfer, replaces the record. A refresh
+that fails with a network error keeps the record and rejects, so catch it
+where you call `refresh()`.
+
+Refreshing is manual: the block does not watch other blocks' writes. The
+record also refetches when the window regains focus.
+
+Metadata is not refetched by `refresh()`. The React Query keys are exported as
+`trackedEntityRecordKeys`, all under `['tracked-entity-record']`.
+
+## Helpers
+
+The helpers are plain functions on the record, so they work in tests and
+outside React.
+
+### displayAttributes
+
+`displayAttributes(record, programId?, { onlyDisplayInList? })` lists the
+attributes to show for a person, each with its `value` if there is one. For a
+program the person is enrolled in, it uses that program's attributes in
+program order. Otherwise it uses the tracked entity type's. This is the header
+at the top of the page.
+
+### currentEnrollment
+
+`currentEnrollment(program, selectedEnrollmentId?)` picks the enrollment to
+show: the selected one if it belongs to the program, else the only one, else
+the newest active one. It returns `undefined` when there are several and none
+is active, so let the user choose. It also returns `undefined` for a program
+that is not `enrolled`.
+
+### eventStatus and isOverdue
+
+`eventStatus(event, today)` returns `active`, `completed`, `scheduled`,
+`overdue` or `skipped`. The server never stores overdue: a scheduled event
+whose due day is before `today` is overdue. `isOverdue(event, today)` is the
+yes or no version, and `todayIso()` gives the user's local date.
+
+Dates stay as stored `YYYY-MM-DD` strings and compare as strings, so time
+zones cannot move a due day.
+
+### latestValues
+
+`latestValues(events, dataElementIds?)` returns, for each data element, the
+newest non-empty value from an active or completed event, with the event it
+came from. Pass the events of one enrollment, or of one stage, to choose the
+scope. Scheduled, skipped and overdue events carry no observations.
+
+<ExampleCard slug="tracked-entity-record/visits" />
+
+### enrollmentAllowance
+
+`enrollmentAllowance(record, program)` says whether a new enrollment may be
+started in a program. When it may not, `reason` is the first that applies:
+`unavailable`, `no-write-access` (which includes an inactive person),
+`active-enrollment-exists` or `only-enroll-once`. Use it to decide whether to
+show an Enroll button and what to say when you do not.
+
+## Access
+
+The block shows only what the server lets the user read. No prop or option
+loosens that, and it never retries a request without the program to get around
+a hidden program. `ProgramRecord.access.canWrite` combines the user's program
+and tracked entity type data write access with the person being active, and
+each stage has its own `canWrite`. Use them to decide which controls to show.
+
+## Using it with views that fetch their own data
+
+Other blocks, such as a timeline or observation cards, can load their own data
+and do not need this block. The record exposes events and enrollments with the
+tracker API's own field names, plus resolved metadata, so an adapter from the
+record to such a view's input is small. Under a record, `refresh()` covers
+everything the record holds; a view that fetches on its own keeps its own
+refresh.
+
+## API reference
+
+### TrackedEntityRecordProvider
+
+- `trackedEntityId: string` — **required.** The person to load.
+- `programs?: readonly string[]` — the programs to show, in order. Defaults to
+  every program with an enrollment the user can see.
+
+### useTrackedEntityRecord
+
+Returns `{ state, actions, meta }`:
+
+- `state` — `pending`, `unavailable`, `error` or `ready`, as above.
+- `actions.refresh(): Promise<void>` — reload the record after a write.
+- `meta.trackedEntityId`, `meta.isFetching`.
+
+### Record
+
+`state.record` has `person` (type, org unit, `inactive`, attributes as a
+`Map` from attribute ID to value), `programs`, and `relationships`, which loads
+separately so a failure there never blocks the record. `relationships` is
+`pending`, `error` with `retry()`, or `ready` with the list.
+
+Values are the API's strings, such as `'2024-03-01'` or `'true'`; format them
+in your views.

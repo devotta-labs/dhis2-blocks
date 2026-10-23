@@ -49,7 +49,3 @@ For each suspected opportunity, trace:
 - **Tests**: which behavior could be covered through the deepened interface and which gaps would remain.
 
 Favor opportunities that concentrate a repeated protocol or tightly coupled behavior, improve locality and preserve meaningful differences between callers. Prefer a bounded change with a clear regression test over a broad rewrite. Similar-looking code alone is not evidence that it belongs behind one interface.
-
-## Source
-
-Adapted from Matt Pocock's [improve-codebase-architecture](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/improve-codebase-architecture/SKILL.md) and [codebase-design](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/codebase-design/SKILL.md) skills. Distributed under the [MIT license](LICENSE).

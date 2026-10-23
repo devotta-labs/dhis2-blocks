@@ -33,7 +33,7 @@ const AccessSchema = z.looseObject({
 
 const AttributeValueSchema = z.looseObject({
     attribute: z.string(),
-    value: optionalText,
+    value: optionalText.optional(),
 })
 
 const NoteSchema = z.looseObject({
@@ -54,7 +54,7 @@ const NoteSchema = z.looseObject({
 /** An empty data value comes back as `{ dataElement }`, with no `value` key. */
 const DataValueSchema = z.looseObject({
     dataElement: z.string(),
-    value: optionalText,
+    value: optionalText.optional(),
 })
 
 const EventSchema = z.looseObject({

@@ -115,7 +115,9 @@ describe('response schemas', () => {
         expect(program?.programTrackedEntityAttributes[0]?.sortOrder).toBe(0)
 
         const person = PersonResponseSchema.parse({
-            ...readFixture('v43', 'person-P3.json'),
+            ...z
+                .record(z.string(), z.json())
+                .parse(readFixture('v43', 'person-P3.json')),
             attributes: [{ attribute: 'A', value: null }],
             enrollments: [
                 {

@@ -14,6 +14,9 @@ const openRecord = async (page: Page, id: string, programs?: string[]) => {
     if (programs) {
         parameters.set('programs', programs.join(','))
     }
+    // Leaving '/' unmounts the working-list shell; let its reads finish first,
+    // or the browser reports them as aborted.
+    await page.waitForLoadState('networkidle')
     await page.goto(`/#/tracked-entity-record?${parameters.toString()}`)
 }
 

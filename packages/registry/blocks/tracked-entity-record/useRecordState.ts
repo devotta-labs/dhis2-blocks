@@ -103,7 +103,7 @@ const useProgramsProp = (programs?: readonly string[]) => {
         () => (sortedKey === undefined ? undefined : fromKey(sortedKey)),
         [sortedKey]
     )
-    return { requestedPrograms, requestedIds }
+    return { orderKey, requestedPrograms, requestedIds }
 }
 
 /** Spec 7.1: the server's "not there for you" answers. */
@@ -238,6 +238,7 @@ const resolveState = (inputs: StateInputs): TrackedEntityRecordState => {
 
 interface ShownRecord {
     trackedEntityId: string
+    programsKey: string | undefined
     state: TrackedEntityRecordState
 }
 
@@ -249,7 +250,11 @@ export const useRecordState = (
 ): TrackedEntityRecordContextValue => {
     const client = useRecordClient()
     const queryClient = useQueryClient()
-    const { requestedPrograms, requestedIds } = useProgramsProp(programs)
+    const {
+        orderKey: programsKey,
+        requestedPrograms,
+        requestedIds,
+    } = useProgramsProp(programs)
 
     // (1) the person and (4) relationships start at once.
     const personQueryResult = useQuery(personQuery(client, trackedEntityId))
@@ -361,16 +366,18 @@ export const useRecordState = (
     )
 
     // Once shown, a record stays shown while its next answers load (spec
-    // 8.4), but only for the same person: another id starts at pending.
+    // 8.4), but only for the same person and programs prop: another id or
+    // program list starts at pending, never showing the old set (spec 7.2).
     const shown = useRef<ShownRecord | undefined>(undefined)
     let state = resolved
     if (resolved.status === 'ready') {
-        shown.current = { trackedEntityId, state: resolved }
+        shown.current = { trackedEntityId, programsKey, state: resolved }
     } else if (resolved.status === 'unavailable') {
         shown.current = undefined
     } else if (
         resolved.status === 'pending' &&
-        shown.current?.trackedEntityId === trackedEntityId
+        shown.current?.trackedEntityId === trackedEntityId &&
+        shown.current.programsKey === programsKey
     ) {
         state = shown.current.state
     }
@@ -386,14 +393,23 @@ export const useRecordState = (
     ].some((query) => query.isFetching)
 
     // Spec 10: person, enrollments, events and relationships; not metadata.
-    const refresh = useCallback(
-        () =>
+    // Only the person's refetch can reject: relationships never block the
+    // record (spec 8.3), so their failure shows on `record.relationships`.
+    const refresh = useCallback(async () => {
+        await Promise.all([
             queryClient.invalidateQueries(
-                { queryKey: trackedEntityRecordKeys.person(trackedEntityId) },
+                {
+                    queryKey: trackedEntityRecordKeys.person(trackedEntityId),
+                    exact: true,
+                },
                 { throwOnError: true }
             ),
-        [queryClient, trackedEntityId]
-    )
+            queryClient.invalidateQueries({
+                queryKey:
+                    trackedEntityRecordKeys.relationships(trackedEntityId),
+            }),
+        ])
+    }, [queryClient, trackedEntityId])
 
     return useMemo(
         () => ({

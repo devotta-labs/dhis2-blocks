@@ -52,7 +52,7 @@ const allowanceReasons = () =>
             'This person already has an active enrollment in this program.'
         ),
         'only-enroll-once': i18n.t(
-            'This program allows one enrollment per person: this person can only be enrolled once.'
+            'This program allows one enrollment per person, so this person can only be enrolled once.'
         ),
     }) satisfies Record<EnrollmentAllowanceReason, string>
 
@@ -131,7 +131,7 @@ const EnrolledProgram = ({ record, entry }: EnrolledProgramProps) => {
                             className="m-0 text-sm"
                         >
                             {i18n.t(
-                                'This enrollment is read-only: the person is inactive or you only have read access.'
+                                'This enrollment is read-only because the person is inactive or you only have read access.'
                             )}
                         </p>
                     )}

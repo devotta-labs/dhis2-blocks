@@ -178,6 +178,13 @@ msgstr "You cannot enroll this person in this program."
 msgid "This person already has an active enrollment in this program."
 msgstr "This person already has an active enrollment in this program."
 
+msgid ""
+"This program allows one enrollment per person, so this person can only be "
+"enrolled once."
+msgstr ""
+"This program allows one enrollment per person, so this person can only be "
+"enrolled once."
+
 msgid "This person can be enrolled in this program."
 msgstr "This person can be enrolled in this program."
 
@@ -186,6 +193,13 @@ msgstr "Enrollment"
 
 msgid "Choose an enrollment to see its details."
 msgstr "Choose an enrollment to see its details."
+
+msgid ""
+"This enrollment is read-only because the person is inactive or you only "
+"have read access."
+msgstr ""
+"This enrollment is read-only because the person is inactive or you only "
+"have read access."
 
 msgid "This program could not be loaded."
 msgstr "This program could not be loaded."

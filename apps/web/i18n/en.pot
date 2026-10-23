@@ -220,6 +220,13 @@ msgstr "Next"
 msgid "Page {{page}}"
 msgstr "Page {{page}}"
 
+msgid ""
+"This form can never search in {{program}}. It has no usable ID field and "
+"too few usable fields to reach the program's minimum."
+msgstr ""
+"This form can never search in {{program}}. It has no usable ID field and "
+"too few usable fields to reach the program's minimum."
+
 msgid "`{{attribute}}` is not an attribute of {{program}}."
 msgstr "`{{attribute}}` is not an attribute of {{program}}."
 
@@ -232,6 +239,13 @@ msgid ""
 msgstr ""
 "`{{attribute}}` ({{label}}) has value type {{valueType}}, which can't be "
 "searched in {{program}}."
+
+msgid ""
+"`{{attribute}}` ({{label}}) can't be searched this way in {{program}} "
+"because the search operators it needs are blocked."
+msgstr ""
+"`{{attribute}}` ({{label}}) can't be searched this way in {{program}} "
+"because the search operators it needs are blocked."
 
 msgid ""
 "`{{attribute}}` ({{label}}) can't be a range in {{program}}. "
@@ -256,6 +270,9 @@ msgstr "{{label}} (`{{id}}`, unique)"
 
 msgid "{{label}} (`{{id}}`)"
 msgstr "{{label}} (`{{id}}`)"
+
+msgid "Searchable attributes are {{list}}."
+msgstr "Searchable attributes are {{list}}."
 
 msgid "Nothing is searchable."
 msgstr "Nothing is searchable."

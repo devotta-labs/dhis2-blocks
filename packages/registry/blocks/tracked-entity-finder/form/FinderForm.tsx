@@ -76,6 +76,8 @@ export function FinderForm({
     )
     // Fields register in layout effects, which run before this form's own:
     // until then the form looks empty and must not be judged unusable.
+    // This covers the form's own mount, not fields mounting later into an
+    // already-mounted empty form.
     const [registered, setRegistered] = useState(false)
     useLayoutEffect(() => setRegistered(true), [])
     const problem = useProblemMessage(

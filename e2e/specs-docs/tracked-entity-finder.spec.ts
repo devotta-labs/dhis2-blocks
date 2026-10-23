@@ -48,6 +48,7 @@ test.describe('live Tracked Entity Finder preview', () => {
             'lZGmxYbs97q:eq:9411202',
         ])
         expect(url.searchParams.get('orgUnits')).toBeNull()
+        expect(url.searchParams.get('orgUnitMode')).toBe('ACCESSIBLE')
 
         const row = page.getByRole('button', { name: /Linda/ })
         await expect(row).toHaveCount(1, { timeout: 30_000 })
@@ -65,6 +66,10 @@ test.describe('live Tracked Entity Finder preview', () => {
 
         // Nothing entered yet: there is nothing to search with.
         await expect(search(page)).toBeDisabled()
+        // An empty form has no hint. With this program's minimum of 1, one
+        // filled detail is enough, so "Add 1 more detail" never shows here;
+        // the block's browser tests cover the minimum.
+        await expect(page.locator('[data-slot="finder-hint"]')).toHaveCount(0)
 
         await page.getByLabel('First name').fill('Rose')
         await page.getByLabel('Birth date').fill('1989-07-04')
@@ -75,9 +80,12 @@ test.describe('live Tracked Entity Finder preview', () => {
             search(page).click()
         )
 
-        expect(new URL(request.url()).searchParams.getAll('filter')).toContain(
+        const url = new URL(request.url())
+
+        expect(url.searchParams.getAll('filter')).toContain(
             'gHGyrwKPzej:eq:1989-07-04'
         )
+        expect(url.searchParams.get('orgUnitMode')).toBe('ACCESSIBLE')
 
         await expect(
             page.getByRole('button', { name: /Rose.*Hudson/ })

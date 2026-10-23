@@ -5,14 +5,14 @@ import { buildProgramModel } from './programModel'
 
 const model = buildProgramModel(hivProgram)
 const searchable =
-    'Searchable: ART number (`artNumber`, unique), First name (`firstName`), Date of birth (`dob`), Sex (`sex`), Weight (`weight`), Last visit (`visit`).'
+    'Searchable attributes are ART number (`artNumber`, unique), First name (`firstName`), Date of birth (`dob`), Sex (`sex`), Weight (`weight`), Last visit (`visit`).'
 
 describe('describeProblem', () => {
     it('names the program and lists its searchable attributes', () => {
         expect(
             describeProblem(model, { kind: 'not-searchable', attribute: 'xyz' })
         ).toBe(
-            "`xyz` isn't searchable in HIV Program. Searchable: ART number (`artNumber`, unique), First name (`firstName`), Date of birth (`dob`), Sex (`sex`), Weight (`weight`), Last visit (`visit`). This program needs 2 details unless an ID is used."
+            "`xyz` isn't searchable in HIV Program. Searchable attributes are ART number (`artNumber`, unique), First name (`firstName`), Date of birth (`dob`), Sex (`sex`), Weight (`weight`), Last visit (`visit`). This program needs 2 details unless an ID is used."
         )
     })
 
@@ -44,5 +44,19 @@ describe('describeProblem', () => {
         expect(message).toContain('`photo`')
         expect(message).toContain('HIV Program')
         expect(message).toContain(searchable)
+    })
+
+    // d2-app-scripts' extractor reads ': ' as a namespace separator and drops
+    // such strings from en.pot, so no message may contain one.
+    it.each([
+        { kind: 'form-cannot-search' },
+        { kind: 'unknown-attribute', attribute: 'photo' },
+        { kind: 'not-searchable', attribute: 'photo' },
+        { kind: 'unsupported-type', attribute: 'photo' },
+        { kind: 'operators-blocked', attribute: 'photo' },
+        { kind: 'range-not-supported', attribute: 'photo' },
+        { kind: 'shape-conflict', attribute: 'photo' },
+    ] as const)('keeps $kind free of ": "', (problem) => {
+        expect(describeProblem(model, problem)).not.toContain(': ')
     })
 })

@@ -20,6 +20,7 @@ const notSearchable = describeProblem(model, {
     kind: 'not-searchable',
     attribute: 'legacyId',
 })
+const cannotSearch = describeProblem(model, { kind: 'form-cannot-search' })
 const conflict = describeProblem(model, {
     kind: 'shape-conflict',
     attribute: 'dob',
@@ -132,6 +133,74 @@ describe('config errors', () => {
         expect(
             error.mock.calls.filter(([message]) => message === notSearchable)
         ).toHaveLength(1)
+    })
+
+    it('reports a form that can never search, in production', async () => {
+        vi.stubEnv('NODE_ENV', 'production')
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+        await renderFinder(
+            <FinderForm aria-label="Legacy">
+                <FinderField attribute="legacyId" />
+            </FinderForm>
+        )
+
+        await expect
+            .element(
+                page
+                    .getByRole('form', { name: 'Legacy' })
+                    .getByText("This search isn't set up correctly")
+                    .first()
+            )
+            .toBeVisible()
+        await expect
+            .poll(() =>
+                error.mock.calls.filter(([message]) => message === cannotSearch)
+            )
+            .toHaveLength(1)
+    })
+
+    it('reports a form that can never search when it mounts after loading', async () => {
+        vi.stubEnv('NODE_ENV', 'production')
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const Later = () => {
+            const [shown, setShown] = useState(false)
+            return (
+                <>
+                    <FinderForm aria-label="ID">
+                        <FinderField attribute="artNumber" />
+                    </FinderForm>
+                    {shown ? (
+                        <FinderForm aria-label="Legacy">
+                            <FinderField attribute="legacyId" />
+                        </FinderForm>
+                    ) : (
+                        <button type="button" onClick={() => setShown(true)}>
+                            Show legacy form
+                        </button>
+                    )}
+                </>
+            )
+        }
+        await renderFinder(<Later />)
+        await expect
+            .element(page.getByLabelText('ART number'))
+            .not.toBeDisabled()
+
+        await page.getByRole('button', { name: 'Show legacy form' }).click()
+
+        await expect
+            .element(
+                page
+                    .getByRole('form', { name: 'Legacy' })
+                    .getByText("This search isn't set up correctly")
+                    .first()
+            )
+            .toBeVisible()
+        await expect
+            .poll(() =>
+                error.mock.calls.filter(([message]) => message === cannotSearch)
+            )
+            .toHaveLength(1)
     })
 
     it('flags the same attribute as both exact and range', async () => {

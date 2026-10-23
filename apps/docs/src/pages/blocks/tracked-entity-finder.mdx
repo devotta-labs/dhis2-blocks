@@ -83,10 +83,12 @@ fields; you cannot loosen these rules:
 
 - **Minimum details.** The program's "attributes required to search" sets how
   many details the user must fill in. Until then, Search stays disabled and
-  `FinderHint` says how many are missing.
+  `FinderHint` says how many are missing. A minimum of 0 still needs one
+  detail, so an empty form never searches.
 - **IDs search alone.** A unique attribute, such as a national ID, can search
-  on its own, and always matches exactly. A form searches by one ID at a
-  time.
+  on its own, and always matches exactly. When an ID is filled in, the search
+  uses the ID only and the form's other filled fields aren't sent. A form
+  searches by one ID at a time.
 - **Exact matches.** Option sets, numbers, yes/no and dates match exactly.
   Text matches the way the attribute is set up to be searched, and needs the
   attribute's minimum number of characters.
@@ -105,9 +107,12 @@ fields; you cannot loosen these rules:
   date, date-time and age attributes.
 - `FinderHint` shows what the form still needs, such as "Add 1 more detail to
   search". Place it where your users will read it.
-- `FinderSubmit` is the Search button. Its children replace the label.
+- `FinderSubmit` is the Search button. It takes the props of the `Button`
+  component, except `type`, and its children replace the label.
 
-Fields show their own problems, such as a date that doesn't exist. Several
+`FinderField` and `FinderRangeField` take `className` and the props listed
+here, not every HTML prop. Fields show their own problems, such as a date
+that doesn't exist. Several
 forms can share one provider, like the ID form and the **No ID?** form above.
 The same attribute in two forms shares its value, and the results show the
 last search until the next one.
@@ -152,7 +157,9 @@ fields:
 
 A field that doesn't fit the program, such as an attribute that isn't in it
 or isn't searchable, is left out of the search and shows a message in its
-place. The rest of the form keeps working.
+place. The rest of the form keeps working. A form that can never search,
+because it has no usable ID field and too few usable fields for the
+program's minimum, shows the message for the whole form.
 
 In development, the message says what is wrong and lists the program's
 searchable attributes with their uids and its minimum, so you, or your coding
@@ -166,7 +173,11 @@ set up correctly" and the full message is logged to the console.
 - `program: string` — **required.** The tracker program to search.
 - `onSelect: (person: FinderPerson) => void` — **required.** Called with the
   person the user picks.
+- `children?: ReactNode` — the forms, results and any of your own UI that uses
+  the hooks. The provider renders only its children.
 - `client?: TrackedEntityFinderClient` — a custom data engine, from
   `createTrackedEntityFinderClient`. Defaults to the DHIS2 app runtime.
 
-All other parts accept `className` and the props of their HTML element.
+`FinderField` and `FinderRangeField` take `className` and their listed props.
+`FinderSubmit` takes `Button` props. The other parts accept `className` and
+the props of their HTML element.

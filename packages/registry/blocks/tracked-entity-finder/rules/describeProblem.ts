@@ -8,7 +8,7 @@ const whatWentWrong = (model: ProgramModel, problem: ConfigProblem): string => {
     const program = model.name
     if (problem.kind === 'form-cannot-search') {
         return i18n.t(
-            "This form can never search in {{program}}: it has no usable ID field and too few usable fields to reach the program's minimum.",
+            "This form can never search in {{program}}. It has no usable ID field and too few usable fields to reach the program's minimum.",
             { program, ...raw }
         )
     }
@@ -44,7 +44,7 @@ const whatWentWrong = (model: ProgramModel, problem: ConfigProblem): string => {
             )
         case 'operators-blocked':
             return i18n.t(
-                "`{{attribute}}` ({{label}}) can't be searched this way in {{program}}: the search operators it needs are blocked.",
+                "`{{attribute}}` ({{label}}) can't be searched this way in {{program}} because the search operators it needs are blocked.",
                 { attribute, label, program, ...raw }
             )
         case 'range-not-supported':
@@ -67,7 +67,10 @@ const searchableList = (model: ProgramModel): string => {
             : i18n.t('{{label}} (`{{id}}`)', { label, id, ...raw })
     )
     return entries.length
-        ? i18n.t('Searchable: {{list}}.', { list: entries.join(', '), ...raw })
+        ? i18n.t('Searchable attributes are {{list}}.', {
+              list: entries.join(', '),
+              ...raw,
+          })
         : i18n.t('Nothing is searchable.')
 }
 

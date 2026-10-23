@@ -29,7 +29,7 @@ export const trackedEntityFinderTranslationCatalog = () => [
     i18n.t('Next'),
     i18n.t('Page {{page}}'),
     i18n.t(
-        "This form can never search in {{program}}: it has no usable ID field and too few usable fields to reach the program's minimum."
+        "This form can never search in {{program}}. It has no usable ID field and too few usable fields to reach the program's minimum."
     ),
     i18n.t('`{{attribute}}` is not an attribute of {{program}}.'),
     i18n.t("`{{attribute}}` isn't searchable in {{program}}."),
@@ -37,7 +37,7 @@ export const trackedEntityFinderTranslationCatalog = () => [
         "`{{attribute}}` ({{label}}) has value type {{valueType}}, which can't be searched in {{program}}."
     ),
     i18n.t(
-        "`{{attribute}}` ({{label}}) can't be searched this way in {{program}}: the search operators it needs are blocked."
+        "`{{attribute}}` ({{label}}) can't be searched this way in {{program}} because the search operators it needs are blocked."
     ),
     i18n.t(
         "`{{attribute}}` ({{label}}) can't be a range in {{program}}. FinderRangeField works only for number, date and date-time attributes that aren't unique; use FinderField."
@@ -47,7 +47,7 @@ export const trackedEntityFinderTranslationCatalog = () => [
     ),
     i18n.t('{{label}} (`{{id}}`, unique)'),
     i18n.t('{{label}} (`{{id}}`)'),
-    i18n.t('Searchable: {{list}}.'),
+    i18n.t('Searchable attributes are {{list}}.'),
     i18n.t('Nothing is searchable.'),
     i18n.t('This program needs 1 detail unless an ID is used.'),
     i18n.t('This program needs {{count}} details unless an ID is used.'),

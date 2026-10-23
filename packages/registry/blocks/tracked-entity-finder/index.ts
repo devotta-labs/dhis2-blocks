@@ -42,3 +42,4 @@ export {
     type FinderTooManyProps,
 } from './results/FinderStates'
 export { FinderValue, type FinderValueProps } from './results/FinderValue'
+export type { FieldValue } from './rules/types'

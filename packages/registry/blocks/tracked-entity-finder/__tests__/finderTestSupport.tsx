@@ -48,7 +48,7 @@ const toProgramResponse = (program: ProgramMetadata): EngineValue => ({
 })
 
 /** A search the fake engine holds open until the test answers it. */
-export interface PendingSearch {
+interface PendingSearch {
     request: ResourceRequest
     respond: (response: EngineValue) => void
 }

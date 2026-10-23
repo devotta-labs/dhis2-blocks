@@ -27,7 +27,7 @@ import type {
     FormVerdict,
 } from './rules/types'
 
-export interface FinderFieldAttribute {
+interface FinderFieldAttribute {
     readonly label: string
     readonly valueType: string
     readonly unique: boolean
@@ -171,7 +171,7 @@ export const useFinderSearch = (): FinderSearchState => {
     }
 }
 
-export interface FinderProgramAttribute {
+interface FinderProgramAttribute {
     readonly id: string
     readonly label: string
     readonly valueType: string
@@ -203,8 +203,6 @@ export const useFinderProgram = (): FinderProgramState => {
         [status, model]
     )
 }
-
-export type { FinderResultsStatus }
 
 export interface FinderResultsState {
     status: FinderResultsStatus

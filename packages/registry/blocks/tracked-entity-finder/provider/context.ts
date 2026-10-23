@@ -35,7 +35,7 @@ export interface FinderSubmission {
     id: number
 }
 
-export interface FinderState {
+interface FinderState {
     status: FinderStatus
     model?: ProgramModel
     /** Keyed by attribute id; the same id in two forms shares its value. */
@@ -50,7 +50,7 @@ export interface FinderState {
     results: FinderResultsView
 }
 
-export interface FinderActions {
+interface FinderActions {
     setValue: (id: string, value: FieldValue) => void
     /** Returns the unregister function. */
     register: (formId: string, key: string, field: FormField) => () => void
@@ -61,7 +61,7 @@ export interface FinderActions {
     logProblem: (message: string) => void
 }
 
-export interface FinderMeta {
+interface FinderMeta {
     program: string
     client: FinderResourceClient
     info?: FinderSystemInfo

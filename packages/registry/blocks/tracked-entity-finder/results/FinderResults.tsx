@@ -25,7 +25,6 @@ export function FinderResults({
     const { status, refreshing } = useFinderResults()
     return (
         <div
-            aria-live="polite"
             aria-busy={status === 'searching' || refreshing}
             {...props}
             data-slot="finder-results"

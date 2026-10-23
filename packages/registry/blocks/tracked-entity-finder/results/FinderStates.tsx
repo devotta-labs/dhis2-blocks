@@ -25,6 +25,7 @@ export function FinderSearching({
     }
     return (
         <div
+            role="status"
             {...props}
             data-slot="finder-searching"
             className={cn(STATE_TEXT, className)}
@@ -50,6 +51,7 @@ export function FinderEmpty({
     }
     return (
         <div
+            role="status"
             {...props}
             data-slot="finder-empty"
             className={cn(STATE_TEXT, className)}
@@ -70,6 +72,7 @@ export function FinderTooMany({
     }
     return (
         <div
+            role="status"
             {...props}
             data-slot="finder-too-many"
             className={cn(STATE_TEXT, className)}

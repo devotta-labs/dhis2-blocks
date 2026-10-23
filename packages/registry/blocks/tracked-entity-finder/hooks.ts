@@ -233,7 +233,8 @@ export const useFinderResults = (): FinderResultsState => {
     const { page } = state
     const { status, people, hasNext, refreshing } = state.results
     const { setPage, select } = actions
-    const hasPrevious = status === 'results' && page > 1
+    // Also after a failed or empty later page, so the user can go back.
+    const hasPrevious = page > 1 && status !== 'searching'
     // No-ops without a page to go to, as the disabled buttons are.
     const next = useCallback(() => {
         if (hasNext) {

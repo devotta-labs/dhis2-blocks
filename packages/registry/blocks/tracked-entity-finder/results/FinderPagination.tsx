@@ -11,9 +11,9 @@ export function FinderPagination({
     className,
     ...props
 }: FinderPaginationProps) {
-    const { status, page, hasNext, hasPrevious, refreshing, next, previous } =
+    const { page, hasNext, hasPrevious, refreshing, next, previous } =
         useFinderResults()
-    if (status !== 'results' || (!hasNext && !hasPrevious)) {
+    if (!hasNext && !hasPrevious) {
         return null
     }
     return (

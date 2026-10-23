@@ -133,9 +133,10 @@ describe('FinderResults', () => {
         await expect
             .element(page.getByRole('textbox', { name: 'ART number' }))
             .toBeEnabled()
-        await expect
-            .element(page.getByTestId('results'))
-            .toHaveAttribute('aria-live', 'polite')
+        // Only the state parts announce; a live wrapper would read every row.
+        expect(
+            page.getByTestId('results').element().hasAttribute('aria-live')
+        ).toBe(false)
         expect(page.getByTestId('results').element().textContent).toBe('')
         expect(page.getByText('No one found').query()).toBeNull()
         expect(page.getByText('Searching…').query()).toBeNull()
@@ -171,7 +172,9 @@ describe('FinderResults', () => {
 
         await searchFor('A1')
 
-        await expect.element(page.getByText('No one found')).toBeVisible()
+        await expect
+            .element(page.getByRole('status'))
+            .toHaveTextContent('No one found')
         expect(page.getByRole('list').query()).toBeNull()
     })
 
@@ -291,6 +294,44 @@ describe('FinderResults', () => {
         await settle()
         expect(searchRequests(server)).toHaveLength(2)
         await expect.element(next).toBeEnabled()
+    })
+
+    it('goes back to the previous page after a later page fails', async () => {
+        await renderFinder({
+            options: {
+                program: { ...hivProgram, maxTeiCountToReturn: 0 },
+                answerSearch: (request) => {
+                    if (Number(request.params?.page ?? 1) > 1) {
+                        throw Object.assign(new Error('Search failed'), {
+                            httpStatusCode: 400,
+                        })
+                    }
+                    return answer(
+                        Array.from({ length: 10 }, (_, index) =>
+                            entity(`p1-${index}`, {
+                                firstName: `First${index}`,
+                            })
+                        ),
+                        12
+                    )
+                },
+            },
+        })
+
+        await searchFor('A1')
+        await expect.element(page.getByText('First0')).toBeVisible()
+        await page.getByRole('button', { name: 'Next' }).click()
+        await expect
+            .element(page.getByRole('alert'))
+            .toHaveTextContent("The search couldn't be completed")
+
+        const previous = page.getByRole('button', { name: 'Previous' })
+        await expect.element(previous).toBeEnabled()
+        await expect
+            .element(page.getByRole('button', { name: 'Next' }))
+            .toBeDisabled()
+        await previous.click()
+        await expect.element(page.getByText('First0')).toBeVisible()
     })
 
     it('sends exactly one request to show results', async () => {

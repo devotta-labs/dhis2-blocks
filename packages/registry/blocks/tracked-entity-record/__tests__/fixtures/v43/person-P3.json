@@ -1,15 +1,15 @@
 {
     "attributes": [
         {
-            "attribute": "TrE2eAtt003",
-            "value": "1984-11-30"
-        },
-        {
             "attribute": "TrE2eAtt001",
             "value": "Chidi"
+        },
+        {
+            "attribute": "TrE2eAtt003",
+            "value": "1984-11-30"
         }
     ],
-    "createdAt": "2026-10-23T12:51:32.810",
+    "createdAt": "2026-10-23T12:59:20.071",
     "enrollments": [],
     "inactive": false,
     "orgUnit": "DiszpKrYNg8",
@@ -22,5 +22,5 @@
     ],
     "trackedEntity": "TrE2eTei003",
     "trackedEntityType": "TrE2eTet001",
-    "updatedAt": "2026-10-23T12:52:17.003"
+    "updatedAt": "2026-10-23T12:59:20.522"
 }

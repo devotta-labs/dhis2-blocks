@@ -9,7 +9,7 @@
             "value": "2015-02-02"
         }
     ],
-    "createdAt": "2026-10-23T12:50:00.628",
+    "createdAt": "2026-10-23T12:58:07.583",
     "enrollments": [
         {
             "attributes": [
@@ -26,7 +26,7 @@
                     "value": "2015-02-02"
                 }
             ],
-            "createdAt": "2026-10-23T12:50:00.635",
+            "createdAt": "2026-10-23T12:58:07.588",
             "enrolledAt": "2025-09-01T00:00:00.000",
             "enrollment": "TrE2eEnr005",
             "events": [],
@@ -36,7 +36,7 @@
             "orgUnit": "DiszpKrYNg8",
             "program": "TrE2ePrg001",
             "status": "ACTIVE",
-            "updatedAt": "2026-10-23T12:50:09.756"
+            "updatedAt": "2026-10-23T12:58:07.588"
         }
     ],
     "inactive": true,
@@ -50,5 +50,5 @@
     ],
     "trackedEntity": "TrE2eTei002",
     "trackedEntityType": "TrE2eTet001",
-    "updatedAt": "2026-10-23T12:50:09.766"
+    "updatedAt": "2026-10-23T12:58:07.613"
 }

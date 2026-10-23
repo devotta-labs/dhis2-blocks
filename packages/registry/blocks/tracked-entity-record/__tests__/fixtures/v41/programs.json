@@ -36,6 +36,7 @@
                             "dataElement": {
                                 "displayFormName": "Temperature",
                                 "displayName": "TER E2E temperature",
+                                "displayShortName": "TER temperature",
                                 "id": "TrE2eDe0001",
                                 "valueType": "NUMBER"
                             },
@@ -113,6 +114,7 @@
                             "dataElement": {
                                 "displayFormName": "Temperature",
                                 "displayName": "TER E2E temperature",
+                                "displayShortName": "TER temperature",
                                 "id": "TrE2eDe0001",
                                 "valueType": "NUMBER"
                             },
@@ -123,6 +125,7 @@
                             "dataElement": {
                                 "displayFormName": "TER E2E severity",
                                 "displayName": "TER E2E severity",
+                                "displayShortName": "TER severity",
                                 "id": "TrE2eDe0002",
                                 "optionSet": {
                                     "id": "TrE2eOpt001",
@@ -167,6 +170,7 @@
                             "dataElement": {
                                 "displayFormName": "TER E2E severity",
                                 "displayName": "TER E2E severity",
+                                "displayShortName": "TER severity",
                                 "id": "TrE2eDe0002",
                                 "optionSet": {
                                     "id": "TrE2eOpt001",
@@ -262,6 +266,7 @@
                             "dataElement": {
                                 "displayFormName": "Temperature",
                                 "displayName": "TER E2E temperature",
+                                "displayShortName": "TER temperature",
                                 "id": "TrE2eDe0001",
                                 "valueType": "NUMBER"
                             },

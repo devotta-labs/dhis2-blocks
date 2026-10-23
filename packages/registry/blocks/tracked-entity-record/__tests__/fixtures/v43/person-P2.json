@@ -1,15 +1,15 @@
 {
     "attributes": [
         {
-            "attribute": "TrE2eAtt003",
-            "value": "2015-02-02"
-        },
-        {
             "attribute": "TrE2eAtt001",
             "value": "Bea"
+        },
+        {
+            "attribute": "TrE2eAtt003",
+            "value": "2015-02-02"
         }
     ],
-    "createdAt": "2026-10-23T12:51:32.810",
+    "createdAt": "2026-10-23T12:59:20.071",
     "enrollments": [
         {
             "attributes": [
@@ -22,7 +22,7 @@
                     "value": "Bea"
                 }
             ],
-            "createdAt": "2026-10-23T12:51:32.824",
+            "createdAt": "2026-10-23T12:59:20.092",
             "enrolledAt": "2025-09-01T00:00:00.000",
             "enrollment": "TrE2eEnr005",
             "events": [],
@@ -32,7 +32,7 @@
             "orgUnit": "DiszpKrYNg8",
             "program": "TrE2ePrg001",
             "status": "ACTIVE",
-            "updatedAt": "2026-10-23T12:52:17.012"
+            "updatedAt": "2026-10-23T12:59:20.092"
         }
     ],
     "inactive": true,
@@ -46,5 +46,5 @@
     ],
     "trackedEntity": "TrE2eTei002",
     "trackedEntityType": "TrE2eTet001",
-    "updatedAt": "2026-10-23T12:52:17.015"
+    "updatedAt": "2026-10-23T12:59:20.108"
 }

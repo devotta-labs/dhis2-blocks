@@ -52,7 +52,7 @@ PERSON_FIELDS="trackedEntity,trackedEntityType,orgUnit,inactive,potentialDuplica
 
 ATTRIBUTE_FIELDS="id,displayName,displayShortName,displayFormName,valueType,unique,optionSet[$OPTION_SET_FIELDS]"
 
-DATA_ELEMENT_FIELDS="id,displayName,displayFormName,valueType,optionSet[$OPTION_SET_FIELDS]"
+DATA_ELEMENT_FIELDS="id,displayName,displayShortName,displayFormName,valueType,optionSet[$OPTION_SET_FIELDS]"
 
 STAGE_FIELDS="id,displayName,sortOrder,repeatable,autoGenerateEvent,openAfterEnrollment,generatedByEnrollmentDate,reportDateToUse,minDaysFromStart,standardInterval,hideDueDate,blockEntryForm,allowGenerateNextVisit,executionDateLabel,displayExecutionDateLabel,dueDateLabel,displayDueDateLabel,access[data[read,write]],programStageDataElements[displayInReports,sortOrder,dataElement[$DATA_ELEMENT_FIELDS]]"
 

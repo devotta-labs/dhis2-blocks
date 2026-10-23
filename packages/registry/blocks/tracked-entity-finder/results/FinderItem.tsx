@@ -1,6 +1,6 @@
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
-import { useFinderPerson, useFinderResults } from '../hooks'
+import { useFinderPerson } from '../hooks'
 import { useFinderContext } from '../provider/context'
 import { FinderValue } from './FinderValue'
 
@@ -38,7 +38,7 @@ export function FinderItem({
     ...props
 }: FinderItemProps) {
     const person = useFinderPerson()
-    const { select } = useFinderResults()
+    const { actions } = useFinderContext()
     return (
         <button
             {...props}
@@ -51,7 +51,7 @@ export function FinderItem({
             onClick={(event) => {
                 onClick?.(event)
                 if (!event.defaultPrevented) {
-                    select(person)
+                    actions.select(person)
                 }
             }}
         >

@@ -12,6 +12,23 @@ import type {
 
 export type FinderStatus = 'loading' | 'ready' | 'error'
 
+export type FinderResultsStatus =
+    | 'idle'
+    | 'searching'
+    | 'results'
+    | 'empty'
+    | 'too-many'
+    | 'error'
+
+/** The last submitted search's answer for the current page. */
+export interface FinderResultsView {
+    status: FinderResultsStatus
+    people: readonly FinderPerson[]
+    hasNext: boolean
+    /** The previous page stays on screen while the next one loads. */
+    refreshing: boolean
+}
+
 export interface FinderSubmission {
     search: ValidatedSearch
     /** Grows with every Search, so the same search can run again. */
@@ -29,6 +46,8 @@ export interface FinderState {
     forms: Readonly<Record<string, readonly FormField[]>>
     submission?: FinderSubmission
     page: number
+    /** Run once here, so every results part reads the same answer. */
+    results: FinderResultsView
 }
 
 export interface FinderActions {

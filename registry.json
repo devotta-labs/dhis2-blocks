@@ -647,7 +647,9 @@
                 "@dhis2/d2-i18n@1.2.0",
                 "@dhis2/multi-calendar-dates@2.1.2",
                 "@dhis2/ui@^10.17.0",
+                "@dhis2/ui-icons@^10.17.0",
                 "@tanstack/react-query@^5.101.4",
+                "prop-types@^15.8.1",
                 "zod@^4.4.3"
             ],
             "registryDependencies": [
@@ -821,6 +823,11 @@
                     "path": "packages/registry/blocks/tracked-entity-finder/provider/useFinderController.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/provider/useFinderController.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/provider/useSearchResults.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/provider/useSearchResults.ts"
                 },
                 {
                     "path": "packages/registry/blocks/tracked-entity-finder/results/FinderItem.tsx",

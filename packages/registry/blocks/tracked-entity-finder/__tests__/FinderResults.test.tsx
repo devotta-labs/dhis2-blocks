@@ -118,6 +118,9 @@ class Catch extends Component<{ children: ReactNode }, CatchState> {
     }
 }
 
+/** Lets any follow-up request (a refetch on mount or focus) go out. */
+const settle = () => new Promise((resolve) => setTimeout(resolve, 100))
+
 const searchRequests = (server: FakeServer) =>
     server.requests.filter(
         ({ resource }) => resource === 'tracker/trackedEntities'
@@ -183,6 +186,7 @@ describe('FinderResults', () => {
             .element(page.getByText('Too many matches. Add another detail.'))
             .toBeVisible()
         expect(page.getByRole('listitem').query()).toBeNull()
+        expect(page.getByRole('navigation').query()).toBeNull()
     })
 
     it('shows a request error', async () => {
@@ -266,6 +270,8 @@ describe('FinderResults', () => {
 
         await searchFor('A1')
         await expect.element(page.getByText('First0')).toBeVisible()
+        await settle()
+        expect(searchRequests(server)).toHaveLength(1)
         const previous = page.getByRole('button', { name: 'Previous' })
         const next = page.getByRole('button', { name: 'Next' })
         await expect.element(previous).toBeDisabled()
@@ -274,11 +280,36 @@ describe('FinderResults', () => {
         await expect.element(page.getByText('Zainab')).toBeVisible()
         expect(page.getByText('First0').query()).toBeNull()
         await expect.element(next).toBeDisabled()
+        await settle()
+        expect(searchRequests(server)).toHaveLength(2)
         expect(searchRequests(server).at(-1)?.params?.page).toBe(2)
 
         await previous.click()
         await expect.element(page.getByText('First0')).toBeVisible()
         expect(page.getByText('Zainab').query()).toBeNull()
+        // Page 1 is cached: going back sends nothing.
+        await settle()
+        expect(searchRequests(server)).toHaveLength(2)
+        await expect.element(next).toBeEnabled()
+    })
+
+    it('sends exactly one request to show results', async () => {
+        const { server } = await renderFinder({
+            options: { searchResponse: answer([amina]) },
+        })
+
+        await searchFor('A1')
+        await expect
+            .element(page.getByRole('button', { name: /Amina/ }))
+            .toBeVisible()
+        await settle()
+        expect(searchRequests(server)).toHaveLength(1)
+
+        // Focusing the window again does not run the search again.
+        window.dispatchEvent(new Event('visibilitychange'))
+        window.dispatchEvent(new Event('focus'))
+        await settle()
+        expect(searchRequests(server)).toHaveLength(1)
     })
 
     it('hides pagination when there is one page', async () => {
@@ -332,7 +363,9 @@ describe('FinderResults', () => {
             options: { searchFails: true },
             results: (
                 <FinderResults>
-                    <FinderError>Try again later</FinderError>
+                    <FinderError className="custom-error" title="Details">
+                        Try again later
+                    </FinderError>
                 </FinderResults>
             ),
         })
@@ -341,6 +374,12 @@ describe('FinderResults', () => {
         await expect
             .element(page.getByRole('alert'))
             .toHaveTextContent('Try again later')
+        await expect
+            .element(page.getByRole('alert'))
+            .toHaveClass('custom-error')
+        await expect
+            .element(page.getByRole('alert'))
+            .toHaveAttribute('title', 'Details')
     })
 
     it('shows a non-displayInList attribute through FinderValue', async () => {

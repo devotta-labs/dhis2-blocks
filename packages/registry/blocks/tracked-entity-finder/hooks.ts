@@ -1,5 +1,4 @@
 import i18n from '@dhis2/d2-i18n'
-import { useQuery } from '@tanstack/react-query'
 import {
     useCallback,
     useContext,
@@ -8,19 +7,17 @@ import {
     useLayoutEffect,
     useMemo,
 } from 'react'
-import { shouldRetryFinderRequest } from './api/client'
-import { finderKeys } from './api/queries'
-import { runSearch, type FinderPerson } from './api/search'
+import type { FinderPerson } from './api/search'
 import {
     FinderPersonContext,
     useFinderContext,
     useFinderFormContext,
+    type FinderResultsStatus,
     type FinderStatus,
 } from './provider/context'
 import { isProduction } from './provider/env'
 import { describeProblem } from './rules/describeProblem'
 import { attributeOf, searchableAttributes } from './rules/programModel'
-import { serializeFilter } from './rules/searchParams'
 import type {
     ConfigProblem,
     FieldIssue,
@@ -207,13 +204,7 @@ export const useFinderProgram = (): FinderProgramState => {
     )
 }
 
-export type FinderResultsStatus =
-    | 'idle'
-    | 'searching'
-    | 'results'
-    | 'empty'
-    | 'too-many'
-    | 'error'
+export type { FinderResultsStatus }
 
 export interface FinderResultsState {
     status: FinderResultsStatus
@@ -229,72 +220,12 @@ export interface FinderResultsState {
     select: (person: FinderPerson) => void
 }
 
-const NO_PEOPLE: readonly FinderPerson[] = Object.freeze([])
-
 /** The last submitted search's results, and paging through them. */
 export const useFinderResults = (): FinderResultsState => {
-    const { state, actions, meta } = useFinderContext()
-    const { submission, page, model } = state
-    const { client, program } = meta
-    const ready = state.status === 'ready' && model !== undefined
-    const submissionId = submission?.id ?? 0
-    // The filters are in the key too: a remounted provider restarts its ids.
-    const key = finderKeys.search(
-        program,
-        {
-            submission: submissionId,
-            filter: submission?.search.filters.map(serializeFilter) ?? [],
-        },
-        page
-    )
-    const query = useQuery({
-        queryKey: key,
-        queryFn: ({ signal }) => {
-            if (!model || !submission) {
-                throw new Error('A finder search ran without a submission')
-            }
-            return runSearch(client, model, submission.search, page, signal)
-        },
-        enabled: ready && submission !== undefined,
-        retry: shouldRetryFinderRequest,
-        // Only a page change of the same search keeps the old page on screen.
-        placeholderData: (previous, previousQuery) => {
-            const previousSubmission = previousQuery?.queryKey[3]
-            return previousSubmission?.submission === submissionId
-                ? previous
-                : undefined
-        },
-    })
-
+    const { state, actions } = useFinderContext()
+    const { page } = state
+    const { status, people, hasNext, refreshing } = state.results
     const { setPage, select } = actions
-    const outcome = submission ? query.data : undefined
-    const status: FinderResultsStatus = (() => {
-        if (state.status === 'error') {
-            return 'error'
-        }
-        if (!submission) {
-            return 'idle'
-        }
-        if (query.isError) {
-            return 'error'
-        }
-        if (!outcome) {
-            return 'searching'
-        }
-        if (outcome.kind === 'too-many') {
-            return 'too-many'
-        }
-        return outcome.people.length ? 'results' : 'empty'
-    })()
-    const people =
-        outcome?.kind === 'results' && status === 'results'
-            ? outcome.people
-            : NO_PEOPLE
-    const hasNext =
-        status === 'results' && outcome?.kind === 'results'
-            ? outcome.hasNext
-            : false
-    const hasPrevious = status === 'results' && page > 1
     const next = useCallback(() => setPage(page + 1), [setPage, page])
     const previous = useCallback(
         () => setPage(Math.max(1, page - 1)),
@@ -305,8 +236,8 @@ export const useFinderResults = (): FinderResultsState => {
         people,
         page,
         hasNext,
-        hasPrevious,
-        refreshing: status !== 'searching' && query.isFetching,
+        hasPrevious: status === 'results' && page > 1,
+        refreshing,
         next,
         previous,
         select,

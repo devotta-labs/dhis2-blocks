@@ -12,6 +12,7 @@ import type {
     FinderStatus,
     FinderSubmission,
 } from './context'
+import { useSearchResults } from './useSearchResults'
 
 interface Registration {
     key: string
@@ -63,6 +64,15 @@ export const useFinderController = ({
     const [registrations, setRegistrations] = useState<Registrations>({})
     const [submission, setSubmission] = useState<FinderSubmission>()
     const [page, setPage] = useState(1)
+
+    const results = useSearchResults({
+        client: resourceClient,
+        program,
+        model,
+        status,
+        submission,
+        page,
+    })
 
     const onSelectRef = useRef(onSelect)
     onSelectRef.current = onSelect
@@ -137,7 +147,16 @@ export const useFinderController = ({
 
     return useMemo(
         () => ({
-            state: { status, model, values, fields, forms, submission, page },
+            state: {
+                status,
+                model,
+                values,
+                fields,
+                forms,
+                submission,
+                page,
+                results,
+            },
             actions,
             meta: { program, client: resourceClient, info: systemInfo.data },
         }),
@@ -149,6 +168,7 @@ export const useFinderController = ({
             forms,
             submission,
             page,
+            results,
             actions,
             program,
             resourceClient,

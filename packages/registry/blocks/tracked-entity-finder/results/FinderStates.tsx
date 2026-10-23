@@ -1,6 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import React, { type ComponentPropsWithoutRef } from 'react'
-import { ErrorAlert } from '@/components/dhis2/ui/alert'
+import { IconErrorFilled24 } from '@dhis2/ui-icons'
+import { Alert, AlertTitle } from '@/components/dhis2/ui/alert'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import { useFinderResults } from '../hooks'
@@ -82,7 +83,11 @@ export function FinderTooMany({
  * Shown when the search or the program's metadata could not be loaded.
  * Children replace the message.
  */
-export function FinderError({ children, ...props }: FinderErrorProps) {
+export function FinderError({
+    className,
+    children,
+    ...props
+}: FinderErrorProps) {
     const { state } = useFinderContext()
     if (useFinderResults().status !== 'error') {
         return null
@@ -92,10 +97,14 @@ export function FinderError({ children, ...props }: FinderErrorProps) {
             ? i18n.t("The search couldn't be loaded")
             : i18n.t("The search couldn't be completed")
     return (
-        <ErrorAlert
+        <Alert
+            variant="destructive"
             {...props}
             data-slot="finder-error"
-            title={children ?? text}
-        />
+            className={cn(className)}
+        >
+            <IconErrorFilled24 />
+            <AlertTitle>{children ?? text}</AlertTitle>
+        </Alert>
     )
 }

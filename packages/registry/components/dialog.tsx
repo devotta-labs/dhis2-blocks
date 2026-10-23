@@ -2,19 +2,10 @@
 
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { IconCross16 } from '@dhis2/ui-icons'
-import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 import { Button } from './button'
 import { cn } from './cn'
 import { dhis2PortalRoot } from './portal-root'
-
-/*
- * shadcn Dialog (Base UI) restyled to match @dhis2/ui Modal: a white card on
- * a translucent backdrop, 64px clear of the viewport edges, with body text
- * inheriting the page font size as Modal's does. `size` maps to
- * Modal's small (400px) / default (600px) / large (800px) / fluid widths and
- * `position` to its top / middle placement.
- */
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
     return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -60,50 +51,24 @@ function DialogOverlay({
     )
 }
 
-/** The @dhis2/ui Modal card, shared with AlertDialogContent. */
-const dialogContentVariants = cva(
-    'fixed left-1/2 flex max-h-[calc(100vh-128px)] max-w-[calc(100vw-128px)] -translate-x-1/2 flex-col rounded-dhis2-sm bg-white p-6 text-dhis2-grey-900 shadow-dhis2-card outline-none',
-    {
-        variants: {
-            size: {
-                sm: 'w-[400px]',
-                default: 'w-[600px]',
-                lg: 'w-[800px]',
-                fluid: 'w-auto',
-            },
-            position: {
-                top: 'top-16',
-                middle: 'top-1/2 -translate-y-1/2',
-            },
-        },
-        defaultVariants: {
-            size: 'default',
-            position: 'top',
-        },
-    }
-)
-
 function DialogContent({
     className,
     children,
-    size,
-    position,
     showCloseButton = true,
     closeLabel = 'Close',
     ...props
-}: DialogPrimitive.Popup.Props &
-    VariantProps<typeof dialogContentVariants> & {
-        showCloseButton?: boolean
-        /** Accessible name of the corner close button. */
-        closeLabel?: string
-    }) {
+}: DialogPrimitive.Popup.Props & {
+    showCloseButton?: boolean
+    /** Accessible name of the corner close button. */
+    closeLabel?: string
+}) {
     return (
         <DialogPortal>
             <DialogOverlay />
             <DialogPrimitive.Popup
                 data-slot="dialog-content"
                 className={cn(
-                    dialogContentVariants({ size, position }),
+                    'fixed top-1/2 left-1/2 flex w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-dhis2-sm bg-white p-6 text-dhis2-grey-900 shadow-dhis2-card outline-none sm:max-w-sm',
                     className
                 )}
                 {...props}
@@ -202,5 +167,4 @@ export {
     DialogPortal,
     DialogTitle,
     DialogTrigger,
-    dialogContentVariants,
 }

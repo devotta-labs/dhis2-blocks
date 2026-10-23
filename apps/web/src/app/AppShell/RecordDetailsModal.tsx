@@ -25,7 +25,7 @@ export const RecordDetailsModal = ({
             }
         }}
     >
-        <DialogContent size="sm" position="middle" closeLabel={i18n.t('Close')}>
+        <DialogContent closeLabel={i18n.t('Close')}>
             <DialogHeader>
                 <DialogTitle>
                     {record.mode === 'event'

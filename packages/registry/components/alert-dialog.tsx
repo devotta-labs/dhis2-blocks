@@ -1,10 +1,10 @@
 'use client'
 
 import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog'
+import { cva } from 'class-variance-authority'
 import * as React from 'react'
 import { Button } from './button'
 import { cn } from './cn'
-import { dialogContentVariants } from './dialog'
 import { dhis2PortalRoot } from './portal-root'
 
 /*
@@ -54,6 +54,22 @@ function AlertDialogOverlay({
     )
 }
 
+const alertDialogContentVariants = cva(
+    'fixed left-1/2 flex max-h-[calc(100vh-128px)] max-w-[calc(100vw-128px)] -translate-x-1/2 flex-col rounded-dhis2-sm bg-white p-6 text-dhis2-grey-900 shadow-dhis2-card outline-none',
+    {
+        variants: {
+            size: {
+                sm: 'w-[400px]',
+                default: 'w-[600px]',
+            },
+            position: {
+                top: 'top-16',
+                middle: 'top-1/2 -translate-y-1/2',
+            },
+        },
+    }
+)
+
 function AlertDialogContent({
     className,
     size = 'sm',
@@ -71,7 +87,7 @@ function AlertDialogContent({
                 data-size={size}
                 className={cn(
                     'group/alert-dialog-content',
-                    dialogContentVariants({ size, position }),
+                    alertDialogContentVariants({ size, position }),
                     className
                 )}
                 {...props}

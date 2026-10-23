@@ -38,7 +38,7 @@ const FormDialog = ({
     return (
         <WorkingListTextProvider translate={(message) => message}>
             <Dialog open onOpenChange={onOpenChange}>
-                <DialogContent size="sm" position="middle">
+                <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Edit</DialogTitle>
                     </DialogHeader>

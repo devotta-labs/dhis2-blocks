@@ -100,12 +100,14 @@
         {
             "name": "alert-dialog",
             "type": "registry:ui",
-            "dependencies": ["@base-ui/react@^1.9.0"],
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "class-variance-authority@^0.7.1"
+            ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
-                "devotta-labs/dhis2-blocks/dialog",
                 "devotta-labs/dhis2-blocks/portal-root"
             ],
             "files": [
@@ -231,7 +233,6 @@
             "dependencies": [
                 "@base-ui/react@^1.9.0",
                 "@dhis2/ui-icons@^10.17.0",
-                "class-variance-authority@^0.7.1",
                 "prop-types@^15.8.1"
             ],
             "registryDependencies": [

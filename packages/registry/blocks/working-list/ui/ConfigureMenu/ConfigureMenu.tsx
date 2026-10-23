@@ -140,8 +140,6 @@ export const ConfigureMenu = ({
 
             <Dialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
                 <DialogContent
-                    size="sm"
-                    position="middle"
                     closeLabel={i18n.t('Close')}
                 >
                     <form

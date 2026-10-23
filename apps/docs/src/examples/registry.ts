@@ -2,6 +2,14 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
 import {
+    ProfileWidgetEnrollmentPlaceholder,
+    ProfileWidgetToolbarPlaceholder,
+    ProfileWidgetVisitPlaceholder,
+} from './profile-widget/ProfileWidgetPlaceholders'
+import profileWidgetEnrollmentSource from './profile-widget/ProfileWidgetEnrollment.tsx?raw'
+import profileWidgetToolbarSource from './profile-widget/ProfileWidgetToolbar.tsx?raw'
+import profileWidgetVisitSource from './profile-widget/ProfileWidgetVisit.tsx?raw'
+import {
     WorkingListDefaultPlaceholder,
     WorkingListProgramPickerPlaceholder,
 } from './working-list/WorkingListPlaceholders'
@@ -74,6 +82,35 @@ const examples = [
         source: workingListProgramPickerSource,
         minHeight: 730,
         Placeholder: WorkingListProgramPickerPlaceholder,
+    },
+    {
+        slug: 'profile-widget/enrollment',
+        title: 'Capture-style profile widget',
+        live: true,
+        Component: lazy(
+            () => import('./profile-widget/ProfileWidgetEnrollment')
+        ),
+        source: profileWidgetEnrollmentSource,
+        minHeight: 300,
+        Placeholder: ProfileWidgetEnrollmentPlaceholder,
+    },
+    {
+        slug: 'profile-widget/visit',
+        title: 'Attributes and event data',
+        live: true,
+        Component: lazy(() => import('./profile-widget/ProfileWidgetVisit')),
+        source: profileWidgetVisitSource,
+        minHeight: 900,
+        Placeholder: ProfileWidgetVisitPlaceholder,
+    },
+    {
+        slug: 'profile-widget/toolbar',
+        title: 'Actions outside the widget',
+        live: true,
+        Component: lazy(() => import('./profile-widget/ProfileWidgetToolbar')),
+        source: profileWidgetToolbarSource,
+        minHeight: 220,
+        Placeholder: ProfileWidgetToolbarPlaceholder,
     },
     {
         slug: 'context-selector/basic',

@@ -61,6 +61,10 @@ const router = createBrowserRouter([
                 element: <Navigate to="/installation" replace />,
             },
             docRoute('/blocks/working-list', './pages/blocks/working-list.mdx'),
+            docRoute(
+                '/blocks/profile-widget',
+                './pages/blocks/profile-widget.mdx'
+            ),
             docRoute('/blocks/sidebar', './pages/blocks/sidebar.mdx'),
             docRoute(
                 '/blocks/context-selector',

@@ -20,6 +20,7 @@ export const docsNavigation: readonly NavigationGroup[] = [
         title: 'Blocks',
         items: [
             { title: 'Working List', href: '/blocks/working-list' },
+            { title: 'Profile Widget', href: '/blocks/profile-widget' },
             { title: 'Context Selector', href: '/blocks/context-selector' },
             { title: 'Sidebar', href: '/blocks/sidebar' },
         ],

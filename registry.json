@@ -638,6 +638,51 @@
             "docs": "Use SidebarLink with render={<NavLink to=\"/projects\" />} to highlight the current page. Add SidebarGroup for nested links and SidebarButton for footer actions. Use SidebarToggle in the sidebar or useSidebar() for a page-toolbar control. Give each sidebar its own SidebarProvider and SidebarNavigation. Collapsing preserves expanded groups and the selected page."
         },
         {
+            "name": "tracked-entity-finder",
+            "type": "registry:block",
+            "title": "DHIS2 Tracked Entity Finder",
+            "description": "Composable parts and hooks to find one tracked entity within a program's search rules.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@tanstack/react-query@^5.101.4",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/api/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/api/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/api/queries.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/api/queries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/api/runtimeClient.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/api/runtimeClient.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/api/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/api/schemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/api/systemInfo.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/api/systemInfo.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/index.ts"
+                }
+            ],
+            "docs": "Wrap the finder in FinderProvider with a program, then compose FinderForm with FinderField inputs and a FinderSubmit button, and show matches with FinderResults. See the tracked entity finder docs page for the full list of parts, hooks and examples."
+        },
+        {
             "name": "working-list",
             "type": "registry:block",
             "title": "DHIS2 Working List",

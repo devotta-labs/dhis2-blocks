@@ -20,15 +20,21 @@ const NO_FIELDS: readonly FormField[] = Object.freeze([])
 const withConflicts = (
     fields: readonly FormField[],
     conflicts: readonly string[]
-): readonly FormField[] => [
-    ...fields,
-    ...fields
-        .filter(({ attribute }) => conflicts.includes(attribute))
-        .map(({ attribute, match }) => ({
-            attribute,
-            match: match === 'range' ? ('exact' as const) : ('range' as const),
-        })),
-]
+): readonly FormField[] => {
+    const composed = new Set(
+        fields.map(({ attribute, match }) => `${match}:${attribute}`)
+    )
+    const added: FormField[] = []
+    for (const { attribute, match } of fields) {
+        const opposite = match === 'range' ? 'exact' : 'range'
+        const key = `${opposite}:${attribute}`
+        if (conflicts.includes(attribute) && !composed.has(key)) {
+            composed.add(key)
+            added.push({ attribute, match: opposite })
+        }
+    }
+    return added.length ? [...fields, ...added] : fields
+}
 
 /**
  * One search: the fields inside it are judged together under the program's

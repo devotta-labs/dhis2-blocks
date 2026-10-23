@@ -1,4 +1,4 @@
-import React, { type ErrorInfo, type ReactNode } from 'react'
+import React, { useState, type ErrorInfo, type ReactNode } from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { FinderField } from '../form/FinderField'
 import { FinderForm } from '../form/FinderForm'
@@ -156,6 +156,59 @@ describe('config errors', () => {
                 page.getByRole('form', { name: 'Range' }).getByText(conflict)
             )
             .toBeVisible()
+    })
+
+    it('recovers a form when the form composing the range unmounts', async () => {
+        const Forms = () => {
+            const [range, setRange] = useState(true)
+            return (
+                <>
+                    <FinderForm aria-label="Details">
+                        <FinderField attribute="firstName" />
+                        <FinderField attribute="dob" />
+                        <FinderSubmit />
+                    </FinderForm>
+                    {range && (
+                        <FinderForm aria-label="Range">
+                            <FinderRangeField attribute="dob" />
+                        </FinderForm>
+                    )}
+                    <button type="button" onClick={() => setRange(false)}>
+                        Hide range
+                    </button>
+                </>
+            )
+        }
+        await renderFinder(<Forms />)
+        const details = page.getByRole('form', { name: 'Details' })
+
+        await expect.element(details.getByText(conflict)).toBeVisible()
+        await expect
+            .element(
+                page.getByRole('form', { name: 'Range' }).getByText(conflict)
+            )
+            .toBeVisible()
+        await userEvent.fill(details.getByLabelText('First name'), 'Joe')
+        await expect
+            .element(details.getByRole('button', { name: 'Search' }))
+            .toBeDisabled()
+
+        await page.getByRole('button', { name: 'Hide range' }).click()
+        await expect
+            .element(details.getByText(conflict))
+            .not.toBeInTheDocument()
+        await userEvent.fill(
+            details.getByLabelText('Date of birth'),
+            '2001-02-03'
+        )
+        await userEvent.tab()
+        await expect
+            .element(details.getByRole('button', { name: 'Search' }))
+            .toBeEnabled()
+        await details.getByRole('button', { name: 'Search' }).click()
+        await expect
+            .element(page.getByTestId('submission'))
+            .toHaveTextContent('firstName:like:Joe dob:eq:2001-02-03')
     })
 
     it('throws when a field is outside a form or a part is outside the provider', async () => {

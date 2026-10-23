@@ -58,6 +58,9 @@ export interface FakeServerOptions {
     /** Never answers the program request, so the finder stays loading. */
     programPending?: boolean
     programFails?: boolean
+    /** Never answers the system info request. */
+    systemInfoPending?: boolean
+    systemInfoFails?: boolean
     searchResponse?: EngineValue
 }
 
@@ -81,6 +84,12 @@ export const createFakeServer = (
                     }
                     return { [key]: toProgramResponse(program) }
                 case 'system/info':
+                    if (options.systemInfoPending) {
+                        return new Promise<EngineResult>(() => {})
+                    }
+                    if (options.systemInfoFails) {
+                        throw new Error('System info request failed')
+                    }
                     return {
                         [key]: {
                             calendar: 'gregorian',

@@ -313,6 +313,60 @@ describe('FinderForm', () => {
             .toBeDisabled()
     })
 
+    it('keeps fields disabled with their labels while system info loads', async () => {
+        const server = createFakeServer({ systemInfoPending: true })
+        await renderWithQueries(
+            <FinderProvider
+                program="hivProgram"
+                client={server.client}
+                onSelect={vi.fn()}
+            >
+                <FinderForm>
+                    <FinderField attribute="firstName" />
+                    <FinderField attribute="dob" />
+                    <FinderSubmit />
+                </FinderForm>
+            </FinderProvider>
+        )
+
+        await expect.element(page.getByRole('status')).toBeVisible()
+        await expect.element(page.getByLabelText('First name')).toBeDisabled()
+        await expect
+            .element(page.getByLabelText('Date of birth'))
+            .toBeDisabled()
+        await expect
+            .element(page.getByRole('button', { name: 'Search' }))
+            .toBeDisabled()
+    })
+
+    it('shows an error and keeps fields disabled when system info fails', async () => {
+        const server = createFakeServer({ systemInfoFails: true })
+        await renderWithQueries(
+            <FinderProvider
+                program="hivProgram"
+                client={server.client}
+                onSelect={vi.fn()}
+            >
+                <FinderForm>
+                    <FinderField attribute="firstName" />
+                    <FinderField attribute="dob" />
+                    <FinderSubmit />
+                </FinderForm>
+            </FinderProvider>
+        )
+
+        await expect
+            .element(page.getByRole('alert'))
+            .toHaveTextContent("The search couldn't be loaded")
+        await expect.element(page.getByLabelText('First name')).toBeDisabled()
+        await expect
+            .element(page.getByLabelText('Date of birth'))
+            .toBeDisabled()
+        await expect
+            .element(page.getByRole('button', { name: 'Search' }))
+            .toBeDisabled()
+    })
+
     it('shows an error in the form when metadata fails', async () => {
         const server = createFakeServer({ programFails: true })
         await renderWithQueries(

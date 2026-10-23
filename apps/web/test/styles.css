@@ -4,4 +4,6 @@
 @source '../src';
 @source '../../../packages/registry/blocks/context-selector';
 @source '../../../packages/registry/components';
+@source '../../../packages/registry/blocks/timeline';
+@source '../../../packages/registry/blocks/timeline-dhis2';
 @source '../../../packages/registry/blocks/working-list';

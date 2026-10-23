@@ -1,4 +1,3 @@
-/** Entry point: later tasks add the results parts and hooks. */
 export {
     createTrackedEntityFinderClient,
     type DataEngineLike,
@@ -15,11 +14,31 @@ export {
 export { FinderSubmit, type FinderSubmitProps } from './form/FinderSubmit'
 export {
     useFinderField,
+    useFinderPerson,
     useFinderProgram,
     useFinderRangeField,
+    useFinderResults,
     useFinderSearch,
 } from './hooks'
 export {
     FinderProvider,
     type FinderProviderProps,
 } from './provider/FinderProvider'
+export { FinderItem, type FinderItemProps } from './results/FinderItem'
+export { FinderList, type FinderListProps } from './results/FinderList'
+export {
+    FinderPagination,
+    type FinderPaginationProps,
+} from './results/FinderPagination'
+export { FinderResults, type FinderResultsProps } from './results/FinderResults'
+export {
+    FinderEmpty,
+    FinderError,
+    FinderSearching,
+    FinderTooMany,
+    type FinderEmptyProps,
+    type FinderErrorProps,
+    type FinderSearchingProps,
+    type FinderTooManyProps,
+} from './results/FinderStates'
+export { FinderValue, type FinderValueProps } from './results/FinderValue'

@@ -47,10 +47,18 @@ const toProgramResponse = (program: ProgramMetadata): EngineValue => ({
     ),
 })
 
+/** A search the fake engine holds open until the test answers it. */
+export interface PendingSearch {
+    request: ResourceRequest
+    respond: (response: EngineValue) => void
+}
+
 export interface FakeServer {
     client: TrackedEntityFinderClient
     /** Every request the finder made, in order. */
     requests: ResourceRequest[]
+    /** With `deferSearches`, every search request, in order, still open or not. */
+    pendingSearches: PendingSearch[]
 }
 
 export interface FakeServerOptions {
@@ -62,6 +70,17 @@ export interface FakeServerOptions {
     systemInfoPending?: boolean
     systemInfoFails?: boolean
     searchResponse?: EngineValue
+    /** Answers each search from its request, e.g. by page. */
+    answerSearch?: (request: ResourceRequest) => EngineValue
+    /** Answers searches with a 400, which is never retried. */
+    searchFails?: boolean
+    /** Holds every search open until the test calls `respond`. */
+    deferSearches?: boolean
+}
+
+const EMPTY_SEARCH: EngineValue = {
+    trackedEntities: [],
+    pager: { page: 1, pageSize: 10, total: 0 },
 }
 
 /** A finder client over a fake engine serving `hivProgram` by default. */
@@ -69,6 +88,7 @@ export const createFakeServer = (
     options: FakeServerOptions = {}
 ): FakeServer => {
     const requests: ResourceRequest[] = []
+    const pendingSearches: PendingSearch[] = []
     const program = options.program ?? hivProgram
     const engine: DataEngineLike = {
         query: async (query: DataEngineQuery) => {
@@ -96,27 +116,51 @@ export const createFakeServer = (
                             dateFormat: 'YYYY-MM-DD',
                         },
                     }
-                default:
-                    return {
-                        [key]: options.searchResponse ?? {
-                            trackedEntities: [],
-                            pager: { page: 1, pageSize: 10, total: 0 },
-                        },
+                default: {
+                    if (options.searchFails) {
+                        throw Object.assign(new Error('Search failed'), {
+                            httpStatusCode: 400,
+                        })
                     }
+                    if (options.deferSearches) {
+                        return new Promise<EngineResult>((resolve) => {
+                            pendingSearches.push({
+                                request,
+                                respond: (response) =>
+                                    resolve({ [key]: response }),
+                            })
+                        })
+                    }
+                    return {
+                        [key]:
+                            options.answerSearch?.(request) ??
+                            options.searchResponse ??
+                            EMPTY_SEARCH,
+                    }
+                }
             }
         },
     }
-    return { client: createTrackedEntityFinderClient(engine), requests }
+    return {
+        client: createTrackedEntityFinderClient(engine),
+        requests,
+        pendingSearches,
+    }
 }
 
-/** Renders inside a fresh QueryClient with retries off. */
+/** Renders inside a fresh QueryClient with retries off by default. */
 export const renderWithQueries = (ui: ReactNode) => {
     const queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false } },
     })
-    return render(
-        <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
-    )
+    // A wrapper, so `rerender` keeps the same QueryClient.
+    return render(ui, {
+        wrapper: ({ children }) => (
+            <QueryClientProvider client={queryClient}>
+                {children}
+            </QueryClientProvider>
+        ),
+    })
 }
 
 /**

@@ -88,3 +88,6 @@ export const useFinderFormContext = (): FinderFormContextValue => {
     }
     return context
 }
+
+/** The person a `FinderList` item renders. */
+export const FinderPersonContext = createContext<FinderPerson | null>(null)

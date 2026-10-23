@@ -823,6 +823,36 @@
                     "target": "@components/tracked-entity-finder/provider/useFinderController.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-finder/results/FinderItem.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/results/FinderItem.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/results/FinderList.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/results/FinderList.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/results/FinderPagination.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/results/FinderPagination.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/results/FinderResults.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/results/FinderResults.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/results/FinderStates.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/results/FinderStates.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/results/FinderValue.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/results/FinderValue.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-finder/rules/describeProblem.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/rules/describeProblem.ts"

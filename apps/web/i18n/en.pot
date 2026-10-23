@@ -148,6 +148,130 @@ msgstr "Collapse sidebar"
 msgid "Expand sidebar"
 msgstr "Expand sidebar"
 
+msgid "Searching…"
+msgstr "Searching…"
+
+msgid "No one found"
+msgstr "No one found"
+
+msgid "Too many matches. Add another detail."
+msgstr "Too many matches. Add another detail."
+
+msgid "This search isn't set up correctly"
+msgstr "This search isn't set up correctly"
+
+msgid "Add 1 more detail to search"
+msgstr "Add 1 more detail to search"
+
+msgid "Add {{count}} more details to search"
+msgstr "Add {{count}} more details to search"
+
+msgid "Searching by {{label}} only"
+msgstr "Searching by {{label}} only"
+
+msgid "Search by one ID at a time"
+msgstr "Search by one ID at a time"
+
+msgid "The search couldn't be loaded"
+msgstr "The search couldn't be loaded"
+
+msgid "The search couldn't be completed"
+msgstr "The search couldn't be completed"
+
+msgid "Enter at least {{count}} characters"
+msgstr "Enter at least {{count}} characters"
+
+msgid "Enter a number"
+msgstr "Enter a number"
+
+msgid "Enter a whole number"
+msgstr "Enter a whole number"
+
+msgid "Enter a valid date"
+msgstr "Enter a valid date"
+
+msgid "From must not be after To"
+msgstr "From must not be after To"
+
+msgid "Any"
+msgstr "Any"
+
+msgid "Yes"
+msgstr "Yes"
+
+msgid "No"
+msgstr "No"
+
+msgid "From"
+msgstr "From"
+
+msgid "To"
+msgstr "To"
+
+msgid "Results pages"
+msgstr "Results pages"
+
+msgid "Previous"
+msgstr "Previous"
+
+msgid "Next"
+msgstr "Next"
+
+msgid "Page {{page}}"
+msgstr "Page {{page}}"
+
+msgid "`{{attribute}}` is not an attribute of {{program}}."
+msgstr "`{{attribute}}` is not an attribute of {{program}}."
+
+msgid "`{{attribute}}` isn't searchable in {{program}}."
+msgstr "`{{attribute}}` isn't searchable in {{program}}."
+
+msgid ""
+"`{{attribute}}` ({{label}}) has value type {{valueType}}, which can't be "
+"searched in {{program}}."
+msgstr ""
+"`{{attribute}}` ({{label}}) has value type {{valueType}}, which can't be "
+"searched in {{program}}."
+
+msgid ""
+"`{{attribute}}` ({{label}}) can't be a range in {{program}}. "
+"FinderRangeField works only for number, date and date-time attributes that "
+"aren't unique; use FinderField."
+msgstr ""
+"`{{attribute}}` ({{label}}) can't be a range in {{program}}. "
+"FinderRangeField works only for number, date and date-time attributes that "
+"aren't unique; use FinderField."
+
+msgid ""
+"`{{attribute}}` ({{label}}) is composed both as FinderField and as "
+"FinderRangeField under one FinderProvider for {{program}}; they cannot "
+"share a value, so use one."
+msgstr ""
+"`{{attribute}}` ({{label}}) is composed both as FinderField and as "
+"FinderRangeField under one FinderProvider for {{program}}; they cannot "
+"share a value, so use one."
+
+msgid "{{label}} (`{{id}}`, unique)"
+msgstr "{{label}} (`{{id}}`, unique)"
+
+msgid "{{label}} (`{{id}}`)"
+msgstr "{{label}} (`{{id}}`)"
+
+msgid "Nothing is searchable."
+msgstr "Nothing is searchable."
+
+msgid "This program needs 1 detail unless an ID is used."
+msgstr "This program needs 1 detail unless an ID is used."
+
+msgid "This program needs {{count}} details unless an ID is used."
+msgstr "This program needs {{count}} details unless an ID is used."
+
+msgid "No ID?"
+msgstr "No ID?"
+
+msgid "Search by ID instead"
+msgstr "Search by ID instead"
+
 msgid "A required value is missing"
 msgstr "A required value is missing"
 
@@ -244,14 +368,8 @@ msgstr "Column"
 msgid "Items per page"
 msgstr "Items per page"
 
-msgid "Next"
-msgstr "Next"
-
 msgid "Pagination"
 msgstr "Pagination"
-
-msgid "Previous"
-msgstr "Previous"
 
 msgid "Remove {{label}}"
 msgstr "Remove {{label}}"
@@ -367,9 +485,6 @@ msgstr "Enrollment date"
 msgid "Enrollment status"
 msgstr "Enrollment status"
 
-msgid "Enter at least {{count}} characters"
-msgstr "Enter at least {{count}} characters"
-
 msgid "Equals"
 msgstr "Equals"
 
@@ -396,9 +511,6 @@ msgstr "Filter available columns"
 
 msgid "Follow up"
 msgstr "Follow up"
-
-msgid "From"
-msgstr "From"
 
 msgid "GEOJSON is not valid JSON"
 msgstr "GEOJSON is not valid JSON"
@@ -495,9 +607,6 @@ msgstr "No users match"
 
 msgid "No values match"
 msgstr "No values match"
-
-msgid "No"
-msgstr "No"
 
 msgid "Not empty"
 msgstr "Not empty"
@@ -707,9 +816,6 @@ msgstr "This year"
 msgid "TIME requires a 24-hour time, optionally with seconds"
 msgstr "TIME requires a 24-hour time, optionally with seconds"
 
-msgid "To"
-msgstr "To"
-
 msgid ""
 "To reorder a column, press Space to pick it up, use the arrow keys to move "
 "it, and press Space again to drop it."
@@ -782,9 +888,6 @@ msgstr "Working lists require DHIS2 41 or newer."
 
 msgid "Working lists require a tracker program with registration."
 msgstr "Working lists require a tracker program with registration."
-
-msgid "Yes"
-msgstr "Yes"
 
 msgid "{{count}} selected"
 msgstr "{{count}} selected"

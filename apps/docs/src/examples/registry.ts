@@ -9,6 +9,9 @@ import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
 import sidebarBasicSource from './sidebar/SidebarBasic.tsx?raw'
 import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
+import finderCustomRowsSource from './tracked-entity-finder/CustomRows.tsx?raw'
+import finderFindPersonSource from './tracked-entity-finder/FindPerson.tsx?raw'
+import finderProgramPickerSource from './tracked-entity-finder/ProgramPicker.tsx?raw'
 
 /**
  * Example registry.
@@ -94,6 +97,30 @@ const examples = [
         ),
         source: contextSelectorStatesSource,
         minHeight: 340,
+    },
+    {
+        slug: 'tracked-entity-finder/find-person',
+        title: 'Find a person by ID',
+        live: true,
+        Component: lazy(() => import('./tracked-entity-finder/FindPerson')),
+        source: finderFindPersonSource,
+        minHeight: 360,
+    },
+    {
+        slug: 'tracked-entity-finder/custom-rows',
+        title: 'Composed results',
+        live: true,
+        Component: lazy(() => import('./tracked-entity-finder/CustomRows')),
+        source: finderCustomRowsSource,
+        minHeight: 360,
+    },
+    {
+        slug: 'tracked-entity-finder/program-picker',
+        title: 'Program from a select',
+        live: true,
+        Component: lazy(() => import('./tracked-entity-finder/ProgramPicker')),
+        source: finderProgramPickerSource,
+        minHeight: 520,
     },
 ] as const satisfies readonly ExampleDefinition[]
 

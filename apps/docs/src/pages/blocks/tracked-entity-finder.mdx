@@ -1,0 +1,172 @@
+---
+title: Tracked Entity Finder
+description: Find one person in a tracker program, within the program's search rules.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="tracked-entity-finder/find-person" />
+
+This preview searches the WHO RMNCH Tracker in the Sierra Leone demo
+database. Try the Unique ID `9411202`, or choose **No ID?** and search for
+the first name `Rose` with the birth date `1989-07-04`.
+
+The example is the `tracked-entity-finder-01` block: an ID form, a **No ID?**
+link that swaps to a name and birth date form, and the default results. It is
+one way to compose the finder's parts, not the only way. Install it to start
+from it, and edit the uids at the top of the file:
+
+<InstallCommand item="tracked-entity-finder-01" />
+
+## Installation
+
+To compose the parts yourself, install the finder alone:
+
+<InstallCommand item="tracked-entity-finder" />
+
+## Usage
+
+Pass the program and what to do with the person the user picks, then place
+the parts you need. `program` and `onSelect` are the only required props.
+
+```tsx
+import {
+    FinderField,
+    FinderForm,
+    FinderHint,
+    FinderProvider,
+    FinderResults,
+    FinderSubmit,
+    type FinderPerson,
+} from '@/components/tracked-entity-finder'
+
+export function FindPatient({
+    onSelect,
+}: {
+    onSelect: (person: FinderPerson) => void
+}) {
+    return (
+        <FinderProvider program="WSGAb5XwJ3Y" onSelect={onSelect}>
+            <FinderForm>
+                <FinderField attribute="lZGmxYbs97q" />
+                <FinderHint />
+                <FinderSubmit />
+            </FinderForm>
+            <FinderResults />
+        </FinderProvider>
+    )
+}
+```
+
+`onSelect` receives the person: `trackedEntity`, `trackedEntityType`,
+`orgUnit`, `programOwner` (the organisation unit that owns the person in
+this program, when known), and `attributes`, a map from attribute uid to
+value. Searches cover every organisation unit the user
+can search.
+
+## Finding attribute uids
+
+Fields name program attributes by uid. List a program's attributes, with
+which are searchable and which are unique IDs:
+
+```
+GET /api/programs/<program>?fields=name,minAttributesRequiredToSearch,programTrackedEntityAttributes[searchable,displayInList,trackedEntityAttribute[id,displayName,valueType,unique]]
+```
+
+Only attributes marked `searchable` in the program can be used.
+
+## The rules
+
+The finder applies the program's search settings from DHIS2. You choose the
+fields; you cannot loosen these rules:
+
+- **Minimum details.** The program's "attributes required to search" sets how
+  many details the user must fill in. Until then, Search stays disabled and
+  `FinderHint` says how many are missing.
+- **IDs search alone.** A unique attribute, such as a national ID, can search
+  on its own, and always matches exactly. A form searches by one ID at a
+  time.
+- **Exact matches.** Option sets, numbers, yes/no and dates match exactly.
+  Text matches the way the attribute is set up to be searched, and needs the
+  attribute's minimum number of characters.
+- **Too many matches.** When more people match than the program allows, the
+  results ask the user to add another detail instead of listing them.
+
+## Forms and fields
+
+`FinderForm` groups the fields of one search. Enter submits it. Inside it:
+
+- `FinderField attribute="uid"` shows the attribute's label and an input that
+  fits its type: text, an option set, yes/no, a checkbox, a number, or a date
+  in the server's calendar. Set `label`, `description` or `placeholder` to
+  change the defaults.
+- `FinderRangeField attribute="uid"` shows From and To inputs for number,
+  date, date-time and age attributes.
+- `FinderHint` shows what the form still needs, such as "Add 1 more detail to
+  search". Place it where your users will read it.
+- `FinderSubmit` is the Search button. Its children replace the label.
+
+Fields show their own problems, such as a date that doesn't exist. Several
+forms can share one provider, like the ID form and the **No ID?** form above.
+The same attribute in two forms shares its value, and the results show the
+last search until the next one.
+
+## Results
+
+`<FinderResults />` with no children shows the default results: a searching
+state, "No one found", "Too many matches. Add another detail.", request
+errors, a row per person with the program's list attributes, and paging.
+
+With children, only the parts you place render. `FinderEmpty`,
+`FinderTooMany`, `FinderSearching` and `FinderError` take children to replace
+their text. `FinderList` repeats its children for each person, and inside it
+`FinderValue attribute="uid"` shows one of the person's values, formatted for
+its type:
+
+<ExampleCard slug="tracked-entity-finder/custom-rows" />
+
+### Hooks
+
+For your own parts inside `FinderProvider`:
+
+- `useFinderField(uid)` and `useFinderRangeField(uid)` — inside a
+  `FinderForm`: the attribute, its value, `setValue`, and any problem with
+  it.
+- `useFinderSearch()` — inside a `FinderForm`: whether it can search, how
+  many details are missing, and `submit`.
+- `useFinderResults()` — the results status, the people on the page, paging,
+  and `select`.
+- `useFinderPerson()` — inside `FinderList`: the current person.
+- `useFinderProgram()` — the program's name and searchable attributes.
+
+## Choose the program at runtime
+
+`program` is a plain prop. Changing it clears the values and the results, so
+nothing found in one program shows under the other. Give each program its own
+fields:
+
+<ExampleCard slug="tracked-entity-finder/program-picker" />
+
+## Setup errors
+
+A field that doesn't fit the program, such as an attribute that isn't in it
+or isn't searchable, is left out of the search and shows a message in its
+place. The rest of the form keeps working.
+
+In development, the message says what is wrong and lists the program's
+searchable attributes with their uids and its minimum, so you, or your coding
+agent, can fix the field. In production builds, users see "This search isn't
+set up correctly" and the full message is logged to the console.
+
+## API reference
+
+### FinderProvider
+
+- `program: string` — **required.** The tracker program to search.
+- `onSelect: (person: FinderPerson) => void` — **required.** Called with the
+  person the user picks.
+- `client?: TrackedEntityFinderClient` — a custom data engine, from
+  `createTrackedEntityFinderClient`. Defaults to the DHIS2 app runtime.
+
+All other parts accept `className` and the props of their HTML element.

@@ -79,6 +79,11 @@ const typeDate = async (label: string, text: string) => {
 }
 
 describe('FindPerson', () => {
+    afterEach(() => {
+        vi.unstubAllEnvs()
+        vi.restoreAllMocks()
+    })
+
     it('finds by ID', async () => {
         const { onSelect, searches } = renderFindPerson()
 
@@ -114,6 +119,25 @@ describe('FindPerson', () => {
             `${FIRST_NAME}:like:Mariama`,
             `${DATE_OF_BIRTH}:eq:1994-05-12`,
         ])
+    })
+
+    it('logs no setup problem in production when the forms swap', async () => {
+        vi.stubEnv('NODE_ENV', 'production')
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+        renderFindPerson()
+        await expect
+            .element(page.getByLabelText('Unique ID'))
+            .not.toBeDisabled()
+
+        await page.getByRole('button', { name: 'No ID?' }).click()
+        await expect.element(page.getByLabelText('First name')).toBeVisible()
+        await page.getByRole('button', { name: 'Search by ID instead' }).click()
+        await expect.element(page.getByLabelText('Unique ID')).toBeVisible()
+
+        // A form's fields register after its first render; that render
+        // must not be judged as a form with no fields.
+        expect(error).not.toHaveBeenCalled()
+        await expect.element(page.getByRole('alert')).not.toBeInTheDocument()
     })
 
     it('swaps back with Search by ID instead', async () => {

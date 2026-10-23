@@ -1,5 +1,11 @@
 import i18n from '@dhis2/d2-i18n'
-import React, { useId, useMemo, type ComponentPropsWithoutRef } from 'react'
+import React, {
+    useId,
+    useLayoutEffect,
+    useMemo,
+    useState,
+    type ComponentPropsWithoutRef,
+} from 'react'
 import { ErrorAlert } from '@/components/dhis2/ui/alert'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
@@ -68,8 +74,16 @@ export function FinderForm({
         () => ({ formId, fields, verdict }),
         [formId, fields, verdict]
     )
+    // Fields register in layout effects, which run before this form's own:
+    // until then the form looks empty and must not be judged unusable.
+    const [registered, setRegistered] = useState(false)
+    useLayoutEffect(() => setRegistered(true), [])
     const problem = useProblemMessage(
-        verdict?.problems.find(({ kind }) => kind === 'form-cannot-search')
+        registered
+            ? verdict?.problems.find(
+                  ({ kind }) => kind === 'form-cannot-search'
+              )
+            : undefined
     )
     const search = state.status === 'ready' ? verdict?.search : undefined
 

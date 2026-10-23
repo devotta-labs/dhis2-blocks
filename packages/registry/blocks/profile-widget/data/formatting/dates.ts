@@ -1,13 +1,6 @@
 import { convertFromIso8601 } from '@dhis2/multi-calendar-dates'
 import type { ProfileCalendar, ProfileSystemInfo } from '../../api/schemas'
 
-/*
- * Server ISO dates in the system calendar (via @dhis2/multi-calendar-dates)
- * and the system date format, as Capture's clientToView converter shows them
- * (`CAP/utils/converters/date/convertIsoToLocalCalendar.ts`): the local
- * calendar date as `YYYY-MM-DD` or `DD-MM-YYYY`, plus ` HH:mm` for date-times.
- */
-
 type MultiCalendarIdentifier = Parameters<typeof convertFromIso8601>[1]
 
 interface CalendarDate {
@@ -16,7 +9,6 @@ interface CalendarDate {
     day: number
 }
 
-/** DHIS2 calendar names to the identifiers multi-calendar-dates expects. */
 const MULTI_CALENDAR_IDENTIFIERS = {
     coptic: 'coptic',
     ethiopian: 'ethiopic',
@@ -28,12 +20,6 @@ const MULTI_CALENDAR_IDENTIFIERS = {
     thai: 'buddhist',
 } satisfies Record<ProfileCalendar, MultiCalendarIdentifier>
 
-/*
- * The Temporal polyfill behind multi-calendar-dates rejects the Coptic and
- * Ethiopian eras ("Era am … was not matched"), so those two calendars are
- * converted through the Julian day number instead. Both have twelve 30-day
- * months plus a 5- or 6-day thirteenth month.
- */
 const EPAGOMENAL_EPOCHS = {
     coptic: 1825030,
     ethiopian: 1724221,
@@ -113,7 +99,6 @@ const isValidGregorianDate = ({ year, month, day }: CalendarDate) => {
     )
 }
 
-/** A gregorian date in the system calendar. */
 const toSystemCalendarDate = (
     isoDate: CalendarDate,
     calendar: ProfileCalendar
@@ -141,11 +126,6 @@ interface ServerDateTime {
 const SERVER_DATE_TIME =
     /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?)?(Z|[+-]\d{2}:?\d{2})?$/
 
-/**
- * Tracker dates are server-local and carry no zone, so their lexical date
- * and time are shown as-is. A value with an explicit zone (`Z` or an offset)
- * is shown in the browser's zone, as Capture's moment parsing does.
- */
 const parseServerDateTime = (value: string): ServerDateTime | undefined => {
     const match = SERVER_DATE_TIME.exec(value.trim())
     if (!match) {
@@ -182,7 +162,6 @@ const formatLocalDate = (
         ? `${pad(date.day)}-${pad(date.month)}-${pad(date.year, 4)}`
         : `${pad(date.year, 4)}-${pad(date.month)}-${pad(date.day)}`
 
-/** Undefined when the date is outside what the calendar converter supports. */
 const formatParsedDate = (
     parsed: ServerDateTime,
     systemInfo: ProfileSystemInfo
@@ -197,10 +176,6 @@ const formatParsedDate = (
     }
 }
 
-/**
- * DATE and AGE: `2024-03-01` (or a date-time) → the system calendar date in
- * `dateFormat`. Returns undefined when the value is not a server date.
- */
 export const formatServerDate = (
     value: string,
     systemInfo: ProfileSystemInfo
@@ -209,7 +184,6 @@ export const formatServerDate = (
     return parsed ? formatParsedDate(parsed, systemInfo) : undefined
 }
 
-/** DATETIME: the formatted date plus ` HH:mm`. Undefined when unparseable. */
 export const formatServerDateTime = (
     value: string,
     systemInfo: ProfileSystemInfo

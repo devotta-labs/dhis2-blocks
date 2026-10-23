@@ -18,18 +18,11 @@ import type {
     TrackedEntityChangeType,
 } from '../types'
 
-/*
- * Capture's changelog table: Date / User / Data item / Change / Value, with
- * sortable column headers drawn like the working list's (and @dhis2/ui
- * DataTableColumnHeader's) sort buttons.
- */
-
 type SortColumn = TrackedEntityChangelogOrder['column']
 
 const COLUMN_COUNT = 5
 
-/** Unsorted → ascending → descending → unsorted, as DataTable cycles. */
-export const nextChangelogOrder = (
+const nextChangelogOrder = (
     current: TrackedEntityChangelogOrder | null,
     column: SortColumn
 ): TrackedEntityChangelogOrder | null => {
@@ -131,7 +124,6 @@ const changeTags = {
     { label: () => string; className: string }
 >
 
-/** @dhis2/ui Tag (100 tint, 23px high): positive for created, neutral for updated, negative for deleted. */
 const ChangeTag = ({ changeType }: { changeType: TrackedEntityChangeType }) => {
     const tag = changeTags[changeType]
     return (
@@ -188,10 +180,8 @@ const MessageRow = ({ children }: { children: ReactNode }) => (
 
 export interface ChangelogTableProps {
     entries: readonly TrackedEntityChangelogEntry[] | undefined
-    /** True while a newer page, filter or order is loading over `entries`. */
     isFetching: boolean
     order: TrackedEntityChangelogOrder | null
-    /** Username and data-item sorting are 2.42+; the date always sorts. */
     canSortByUserAndDataItem: boolean
     onOrderChange: (order: TrackedEntityChangelogOrder | null) => void
 }

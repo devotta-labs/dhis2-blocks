@@ -14,16 +14,6 @@ import type {
     TrackedEntityChangeType,
 } from '../types'
 
-/*
- * Turns a changelog page into entries in two steps. `prepareChangelogEntries`
- * pairs every row with its attribute metadata and builds the raw values the
- * formatting pipeline needs; once the formatter is ready,
- * `formatChangelogEntries` produces the public entries. Rows are labelled from
- * the `attributes` passed in, never dropped: an attribute missing from them
- * (for example one the profile could not read) shows its id as plain text.
- */
-
-/** A changelog row before its values are formatted. */
 interface PreparedChangelogEntry {
     id: string
     createdAt: string
@@ -44,16 +34,12 @@ interface ChangelogAttributeDefinition {
     label: string
     valueType: ProfileValueType
     options?: readonly ProfileFieldOption[]
-    /** The attribute's current server value; only it has a file endpoint. */
     currentRawValue: string | null
 }
 
 const EMPTY_VALUE: ProfileFieldValue = { kind: 'empty' }
 
-/** "First Last (username)", or the username when no name is known. */
-export const formatChangelogUser = (
-    createdBy: ApiChangelogEntry['createdBy']
-) => {
+const formatChangelogUser = (createdBy: ApiChangelogEntry['createdBy']) => {
     const name = [createdBy.firstName, createdBy.surname]
         .map((part) => part?.trim() ?? '')
         .filter((part) => part.length > 0)
@@ -79,11 +65,6 @@ const definitionFor = (
 const isFileValueType = (valueType: ProfileValueType) =>
     valueType === 'FILE_RESOURCE' || valueType === 'IMAGE'
 
-/**
- * DHIS2 serves a tracked entity attribute's file only for its current value,
- * so a replaced or deleted file or image shows a plain "File" / "Image" label,
- * as in Capture. That also avoids looking up file resources that may be gone.
- */
 const replacedFileLabel = (valueType: ProfileValueType) =>
     valueType === 'IMAGE' ? i18n.t('Image') : i18n.t('File')
 
@@ -128,7 +109,6 @@ const toFormattableValue = (
     }
 }
 
-/** Pairs each row with its attribute metadata; drops nothing. */
 export const prepareChangelogPage = (
     response: ApiChangelogResponse,
     attributes: readonly TrackedEntityAttributeField[],
@@ -143,7 +123,6 @@ export const prepareChangelogPage = (
             const definition = definitionFor(attributeId, attributesById)
             const valueScope = { ...scope, attributeId }
             return {
-                // Several rows share a timestamp and attribute; the index keeps keys unique.
                 id: `${row.createdAt}-${attributeId}-${index}`,
                 createdAt: row.createdAt,
                 user: {
@@ -172,7 +151,6 @@ export const prepareChangelogPage = (
     }
 }
 
-/** Every raw value of a page, for `useValueFormatter`. */
 export const changelogFormattableValues = (
     page: PreparedChangelogPage
 ): readonly FormattableValue[] =>
@@ -202,11 +180,6 @@ export const formatChangelogEntries = (
             : EMPTY_VALUE,
     }))
 
-/**
- * The attributes the changelog call can return, for the data-item filter.
- * With a program, DHIS2 joins the program's attributes; without one it reads
- * the tracked entity type's attributes.
- */
 export const selectChangelogFilterAttributes = (
     attributes: readonly TrackedEntityAttributeField[],
     programId: string | null

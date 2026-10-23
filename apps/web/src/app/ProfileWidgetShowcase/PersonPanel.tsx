@@ -82,10 +82,6 @@ interface PersonPanelProps {
     onDeleted: () => void
 }
 
-/**
- * Spec Example D: no program, the person's name as the title, and the status
- * and delete actions in a toolbar outside the widget.
- */
 export const PersonPanel = ({
     trackedEntityId,
     onDeleted,

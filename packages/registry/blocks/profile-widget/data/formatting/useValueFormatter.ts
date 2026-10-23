@@ -18,14 +18,6 @@ const NO_FILE_RESOURCE_NAMES: ReadonlyMap<string, string> = new Map()
 const NO_ORGANISATION_UNITS: ReadonlyMap<string, OrganisationUnitLookup> =
     new Map()
 
-/**
- * Loads system info plus the file-resource and org-unit lookups `values`
- * need, then returns a synchronous formatter. Pass undefined while the raw
- * values are still loading. Reused by the changelog.
- *
- * System info starts loading straight away, so it runs in parallel with the
- * caller's own requests; the lookups start once `values` is known.
- */
 export function useValueFormatter(
     values: readonly FormattableValue[] | undefined
 ): ValueFormatterState {

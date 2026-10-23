@@ -14,12 +14,6 @@ import {
 } from './schemas'
 import type { ProfileServerFeatures } from './serverVersion'
 
-/*
- * Plain request functions shared by the data, action and changelog hooks.
- * They validate the response and throw the raw failure; callers map it with
- * the `to*Error` helpers in ./client.
- */
-
 export const fetchProgramMetadata = (
     client: ProfileWidgetClient,
     input: { programId: string; features: ProfileServerFeatures },
@@ -50,7 +44,6 @@ export const fetchTrackedEntityTypeMetadata = (
         signal
     )
 
-/** With a program, attributes are TET ∪ program; without, TET only. */
 export const fetchTrackedEntityRecord = (
     client: ProfileWidgetClient,
     input: { trackedEntityId: string; programId: string | null },
@@ -62,7 +55,6 @@ export const fetchTrackedEntityRecord = (
             id: input.trackedEntityId,
             params: {
                 fields: TRACKED_ENTITY_PROFILE_FIELDS,
-                // app-runtime drops undefined parameters
                 program: input.programId ?? undefined,
             },
         },
@@ -70,7 +62,6 @@ export const fetchTrackedEntityRecord = (
         signal
     )
 
-/** The fields a tracker UPDATE would otherwise wipe. */
 export const fetchTrackedEntityForUpdate = (
     client: ProfileWidgetClient,
     input: { trackedEntityId: string },
@@ -108,19 +99,11 @@ export const fetchAuthorities = async (
         )
     ).authorities
 
-/* -------------------------------- URLs ------------------------------------ */
-
-/** The API path of one tracked-entity attribute's file or image. */
 export const trackedEntityAttributeFileEndpoint = (
     trackedEntityId: string,
     attributeId: string
 ) => `tracker/trackedEntities/${trackedEntityId}/attributes/${attributeId}`
 
-/**
- * An href for an API path, from `useConfig()`'s `baseUrl` and `apiVersion`.
- * A relative `baseUrl` (e.g. `..`) gives a relative href, which the browser
- * resolves against the app's own location.
- */
 export const buildApiHref = (
     config: { baseUrl: string; apiVersion: number },
     path: string,

@@ -20,7 +20,6 @@ export interface ProfileWidgetQueryRequest {
     params?: QueryParameters
 }
 
-/** The block only ever mutates through the tracker importer. */
 export interface ProfileWidgetMutationRequest {
     resource: 'tracker'
     type: 'create'
@@ -37,7 +36,6 @@ export type DataEngineValue =
     | ReadonlyArray<DataEngineValue>
     | { [key: string]: DataEngineValue }
 
-/** The structural slice of app-runtime's data engine the block calls. */
 export interface DataEngineLike {
     query(
         query: Record<string, ProfileWidgetQueryRequest>,
@@ -46,7 +44,6 @@ export interface DataEngineLike {
     mutate(mutation: ProfileWidgetMutationRequest): Promise<DataEngineValue>
 }
 
-/** A zod-validated wrapper around the data engine. */
 export interface ProfileWidgetClient {
     query<T>(
         request: ProfileWidgetQueryRequest,
@@ -86,8 +83,6 @@ export const createProfileWidgetClient = (
     },
 })
 
-/* ------------------------------ Failures ---------------------------------- */
-
 const RequestFailureSchema = z
     .object({
         status: z.number().optional(),
@@ -99,7 +94,6 @@ const RequestFailureSchema = z
     })
     .passthrough()
 
-/** The HTTP status carried by an app-runtime FetchError, if any. */
 export const getRequestStatus = (cause: unknown): number | undefined => {
     const parsed = RequestFailureSchema.safeParse(cause)
     return parsed.success
@@ -109,10 +103,6 @@ export const getRequestStatus = (cause: unknown): number | undefined => {
         : undefined
 }
 
-/**
- * Boundary and client (4xx) errors are deterministic. Operational failures are
- * retried twice, matching the working-list policy.
- */
 export const shouldRetryProfileWidgetRequest = (
     failureCount: number,
     cause: unknown
@@ -138,7 +128,6 @@ const describeFailure = (operation: string, status: number | undefined) =>
         ? `${operation}: the request could not reach the server`
         : `${operation}: the server responded with status ${status}`
 
-/** Any failure as a request error (used where the result type has no other kind). */
 export const toProfileWidgetRequestError = (
     cause: unknown,
     operation: string
@@ -165,10 +154,6 @@ export const toProfileWidgetRequestError = (
     })
 }
 
-/**
- * A load failure. Pass `trackedEntity` only for the tracked-entity request, so
- * that its 403 / 404 becomes `TrackedEntityNotAccessibleError`.
- */
 export const toProfileWidgetLoadError = (
     cause: unknown,
     operation: string,
@@ -224,7 +209,6 @@ const ErrorReportsSchema = z
     })
     .passthrough()
 
-/** `errorReports` from a tracker import report or a FetchError's `details`. */
 const readTrackerErrorReports = (
     cause: unknown
 ): readonly TrackerErrorReport[] => {
@@ -245,10 +229,6 @@ const readTrackerErrorReports = (
     return []
 }
 
-/**
- * A mutation failure: tracker `errorReports` become `TrackerImportError`,
- * everything else `ProfileWidgetRequestError`.
- */
 export const toProfileMutationError = (
     cause: unknown,
     operation: string

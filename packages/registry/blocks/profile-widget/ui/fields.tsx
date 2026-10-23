@@ -13,7 +13,6 @@ import {
 } from '@/components/dhis2/ui/tooltip'
 import type { ProfileFieldValue } from '../types'
 
-/** `<dl>`. */
 export const ProfileWidgetFieldList = forwardRef<
     HTMLDListElement,
     ComponentPropsWithoutRef<'dl'>
@@ -31,16 +30,12 @@ export type ProfileWidgetFieldProps = Omit<
     ComponentPropsWithoutRef<'div'>,
     'children'
 > & {
-    /** Rendered in the `<dt>` */
     label: ReactNode
-    /** Rendered in the `<dd>`, usually a `ProfileWidgetValue` */
     children?: ReactNode
 }
 
-// Capture's FlatList: long words break instead of overflowing the column.
 const cellClassName = 'min-w-0 overflow-hidden wrap-break-word hyphens-auto'
 
-/** A `<div>` grouping one `<dt>` and `<dd>`. */
 export const ProfileWidgetField = forwardRef<
     HTMLDivElement,
     ProfileWidgetFieldProps
@@ -113,7 +108,6 @@ function OrganisationUnitValue({
                 render={
                     <span
                         {...props}
-                        // Focusable so keyboard users can reveal the path too.
                         tabIndex={0}
                         aria-describedby={pathId}
                         className={cn(
@@ -135,10 +129,8 @@ function OrganisationUnitValue({
     )
 }
 
-// Capture's MinimalCoordinates prints six decimals.
 const formatCoordinate = (coordinate: number) => coordinate.toFixed(6)
 
-/** Pure renderer for a `ProfileFieldValue`; it fetches nothing. */
 export function ProfileWidgetValue({
     value,
     className,

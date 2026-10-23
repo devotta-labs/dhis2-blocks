@@ -1,8 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 
-// Extraction markers for the source-installed profile widget's default copy.
 export const profileWidgetTranslationCatalog = () => [
-    // Data: title, terminology, permission reasons and formatted values
     i18n.t('Profile'),
     i18n.t('{{trackedEntityTypeName}} profile', {
         trackedEntityTypeName: '',
@@ -15,7 +13,6 @@ export const profileWidgetTranslationCatalog = () => [
     }),
     i18n.t('Yes'),
     i18n.t('No'),
-    // Frame, fields and menu
     i18n.t('Collapse'),
     i18n.t('Expand'),
     i18n.t('More actions'),
@@ -23,7 +20,6 @@ export const profileWidgetTranslationCatalog = () => [
     i18n.t('Lat'),
     i18n.t('Long'),
     i18n.t('File'),
-    // Status dialog
     i18n.t('Activate {{trackedEntityTypeName}}', { trackedEntityTypeName: '' }),
     i18n.t('Deactivate {{trackedEntityTypeName}}', {
         trackedEntityTypeName: '',
@@ -48,7 +44,6 @@ export const profileWidgetTranslationCatalog = () => [
     i18n.t('There was a problem deactivating the {{trackedEntityTypeName}}', {
         trackedEntityTypeName: '',
     }),
-    // Delete dialog
     i18n.t('Delete {{trackedEntityTypeName}}', { trackedEntityTypeName: '' }),
     i18n.t(
         'Are you sure you want to delete this {{trackedEntityTypeName}}? This will permanently remove the {{trackedEntityTypeName}} and all its associated {{enrollmentsLabel}} and {{eventsLabel}} in all programs.',
@@ -61,7 +56,6 @@ export const profileWidgetTranslationCatalog = () => [
         trackedEntityTypeName: '',
     }),
     i18n.t('No, cancel'),
-    // Changelog
     i18n.t('Changelog'),
     i18n.t('Date'),
     i18n.t('User'),

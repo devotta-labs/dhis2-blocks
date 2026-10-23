@@ -14,29 +14,20 @@ import type { FormattableValue } from './contracts'
 
 export interface OrganisationUnitLookup {
     name: string
-    /** Ancestor names, root first. */
     path: readonly string[]
 }
 
 export interface LookupIds {
-    /** FILE_RESOURCE values (IMAGE needs no name). Sorted, unique. */
     fileResourceIds: readonly string[]
-    /** ORGANISATION_UNIT values. Sorted, unique. */
     organisationUnitIds: readonly string[]
 }
 
-/** Capture's batch size for `organisationUnits?filter=id:in:[…]` (orgUnitName.ts). */
-export const ORGANISATION_UNIT_BATCH_SIZE = 50
+const ORGANISATION_UNIT_BATCH_SIZE = 50
 
-/** Lookups change rarely; keep them for the session like Capture's module cache. */
 const LOOKUP_STALE_TIME = 60 * 60_000
 
 const sortedUnique = (ids: Iterable<string>) => [...new Set(ids)].sort()
 
-/**
- * The ids a set of values needs resolved before it can be formatted. Values
- * with options never need a lookup: the option name wins, as in Capture.
- */
 export const collectLookupIds = (
     values: readonly FormattableValue[]
 ): LookupIds => {
@@ -56,7 +47,7 @@ export const collectLookupIds = (
     }
 }
 
-export const fetchFileResourceNames = async (
+const fetchFileResourceNames = async (
     client: ProfileWidgetClient,
     fileResourceIds: readonly string[],
     signal?: AbortSignal
@@ -76,10 +67,6 @@ export const fetchFileResourceNames = async (
                 return [id, resource.displayName] as const
             } catch (cause) {
                 const status = getRequestStatus(cause)
-                // A file resource that is gone (404) or not visible (403)
-                // blanks only its own row. Network, 5xx and boundary failures
-                // reject, so the query retries and the formatter reports
-                // 'Load file names' instead of caching a blank name.
                 if (signal?.aborted || (status !== 404 && status !== 403)) {
                     throw cause
                 }
@@ -106,11 +93,7 @@ const toBatches = (ids: readonly string[]) => {
     return batches
 }
 
-/**
- * Batched org-unit names with their ancestor paths. An id the user cannot see
- * is simply missing from the map; the formatter then shows the raw id.
- */
-export const fetchOrganisationUnits = async (
+const fetchOrganisationUnits = async (
     client: ProfileWidgetClient,
     organisationUnitIds: readonly string[],
     signal?: AbortSignal
@@ -149,10 +132,6 @@ export const fetchOrganisationUnits = async (
     )
 }
 
-/**
- * `fileResources/{id}?fields=id,displayName` per id. A missing or inaccessible
- * file (403/404) blanks its name; other failures reject.
- */
 export const fileResourceNamesQueryOptions = (
     client: ProfileWidgetClient,
     fileResourceIds: readonly string[]
@@ -165,7 +144,6 @@ export const fileResourceNamesQueryOptions = (
         retry: shouldRetryProfileWidgetRequest,
     })
 
-/** Batched `organisationUnits?filter=id:in:[…]&fields=id,displayName,ancestors[displayName]`. */
 export const organisationUnitsQueryOptions = (
     client: ProfileWidgetClient,
     organisationUnitIds: readonly string[]

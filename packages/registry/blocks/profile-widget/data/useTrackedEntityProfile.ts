@@ -31,21 +31,6 @@ import {
 } from './queries'
 import { selectDisplayInListAttributes } from './selectDisplayInListAttributes'
 
-/**
- * Spec 2.3.
- *
- * - With a program, the program metadata (which embeds its tracked entity
- *   type) and the program-scoped tracked entity load in parallel.
- * - Without a program, the tracked entity loads first and its type's
- *   metadata after it, since only the entity names its type.
- * - System info and the user's authorities always load in parallel; the
- *   file-resource and org-unit lookups start once the values are known.
- *
- * `isPending` stays true until every one of those has resolved, so a row
- * never flashes a raw id before its name arrives. A 403 / 404 on the tracked
- * entity becomes `TrackedEntityNotAccessibleError`, and so does (2.41) a
- * program-scoped entity of another tracked entity type than the program's.
- */
 export function useTrackedEntityProfile(
     options: UseTrackedEntityProfileOptions
 ): UseTrackedEntityProfileResult {
@@ -81,9 +66,6 @@ export function useTrackedEntityProfile(
         programId === null
             ? trackedEntityTypeQuery.data
             : programQuery.data?.trackedEntityType
-    // 2.41 answers 200 for a program-scoped read of an entity of another
-    // tracked entity type; 2.42+ answers 404. Report both the same way, instead
-    // of building the profile from the program's (wrong) type.
     const programTypeMismatch =
         programId !== null &&
         record !== undefined &&

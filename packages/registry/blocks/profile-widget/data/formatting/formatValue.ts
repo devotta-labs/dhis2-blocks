@@ -11,10 +11,8 @@ import type { FormattableValue, ValueFormatter } from './contracts'
 import { formatServerDate, formatServerDateTime } from './dates'
 import type { OrganisationUnitLookup } from './lookups'
 
-/** Everything `formatValue` needs, resolved ahead of time. */
 export interface FormatContext {
     systemInfo: ProfileSystemInfo
-    /** From `useConfig()`; passed to `buildApiHref` for file and image hrefs. */
     api: { baseUrl: string; apiVersion: number }
     fileResourceNames: ReadonlyMap<string, string>
     organisationUnits: ReadonlyMap<string, OrganisationUnitLookup>
@@ -36,7 +34,6 @@ const NUMERIC_VALUE_TYPES: ReadonlySet<ProfileValueType> = new Set([
     'PERCENTAGE',
 ])
 
-/** Capture's `parseNumber`: spaces dropped, a decimal comma accepted. */
 const parseNumber = (value: string): number | undefined => {
     const normalized = value.replace(/ /g, '').replace(',', '.')
     if (normalized === '') {
@@ -46,10 +43,6 @@ const parseNumber = (value: string): number | undefined => {
     return Number.isFinite(parsed) ? parsed : undefined
 }
 
-/**
- * Capture converts option codes and values to the field's client type before
- * comparing them, so `1` matches the code `1.0` on a NUMBER option set.
- */
 const optionMatches = (
     option: ProfileFieldOption,
     value: string,
@@ -65,7 +58,6 @@ const optionMatches = (
     return false
 }
 
-/** An unknown code shows as-is rather than blanking the row. */
 const optionName = (
     options: readonly ProfileFieldOption[],
     value: string,
@@ -88,7 +80,6 @@ const formatOptionValue = (
               .join(', ')
         : optionName(options, value, valueType)
 
-/** `[longitude, latitude]` as DHIS2 stores COORDINATE values. */
 const parseCoordinate = (value: string): ProfileFieldValue | undefined => {
     const parts = value.replace(/[()[\]\s]/g, '').split(',')
     if (parts.length !== 2 || parts.some((part) => part === '')) {
@@ -118,10 +109,6 @@ const GeoJsonValueSchema = z.union([
         ),
 ])
 
-/**
- * GEOJSON has no Capture converter. Polygons show as the "Polygon" literal
- * Capture uses for geometry, points as coordinates, anything else as text.
- */
 const parseGeoJson = (value: string): ProfileFieldValue | undefined => {
     try {
         const parsed = GeoJsonValueSchema.safeParse(JSON.parse(value))
@@ -139,9 +126,6 @@ const formatFile = (
     if (!value.file) {
         return text(name ?? value.rawValue)
     }
-    // A file resource that is gone or not visible (403/404) has no name in the
-    // lookup and blanks only its own row. A nameless one does too, since a link
-    // needs a name. Other lookup failures surface as a formatter error.
     if (!name) {
         return EMPTY
     }
@@ -222,7 +206,6 @@ const formatByValueType = (
             if (rawValue === 'false') return text(i18n.t('No'))
             return text(rawValue)
         case 'TRUE_ONLY':
-            // Capture converts anything but 'true' to null, which renders empty.
             return rawValue === 'true' ? text(i18n.t('Yes')) : EMPTY
         case 'COORDINATE':
             return parseCoordinate(rawValue) ?? text(rawValue)
@@ -235,19 +218,11 @@ const formatByValueType = (
         case 'ORGANISATION_UNIT':
             return formatOrganisationUnit(rawValue, context)
         default:
-            // TEXT, LONG_TEXT, LETTER, PHONE_NUMBER, EMAIL, URL, USERNAME,
-            // TIME, UNIT_INTERVAL, TRACKER_ASSOCIATE, REFERENCE and
-            // MULTI_TEXT without options show the raw value, as in Capture.
             return text(rawValue)
     }
 }
 
-/**
- * Capture's clientToView rules (`CAP/converters/clientToView.tsx:55-85`): option
- * names, MULTI_TEXT lists, calendar dates, `N %`, Yes/No, Lat/Long, Polygon,
- * file links, image previews and org-unit names with their ancestor path.
- */
-export const formatValue = (
+const formatValue = (
     value: FormattableValue,
     context: FormatContext
 ): ProfileFieldValue => {

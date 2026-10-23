@@ -32,32 +32,16 @@ export default defineConfig({
                 plugins: [tailwindcss()],
                 resolve,
                 optimizeDeps: {
-                    // Every React-dependent entry the tests import. Vite
-                    // re-optimizes any it discovers mid-run, which loads a
-                    // second React copy on a cold cache.
                     include: [
-                        '@base-ui/react',
-                        '@base-ui/react/alert-dialog',
                         '@base-ui/react/button',
                         '@base-ui/react/checkbox',
-                        '@base-ui/react/collapsible',
                         '@base-ui/react/dialog',
-                        '@base-ui/react/input',
                         '@base-ui/react/menu',
-                        '@base-ui/react/merge-props',
-                        '@base-ui/react/popover',
                         '@base-ui/react/radio',
                         '@base-ui/react/radio-group',
-                        '@base-ui/react/select',
-                        '@base-ui/react/separator',
                         '@base-ui/react/switch',
                         '@base-ui/react/toggle',
-                        '@base-ui/react/toggle-group',
-                        '@base-ui/react/tooltip',
-                        '@base-ui/react/use-render',
-                        '@dhis2/app-runtime',
                         '@dhis2/ui-icons',
-                        '@tanstack/react-query',
                         'class-variance-authority',
                     ],
                 },

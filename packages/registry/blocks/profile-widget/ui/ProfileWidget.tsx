@@ -16,10 +16,6 @@ import { ProfileWidgetContext, useProfileWidget } from './context'
 
 const toOpenState = (open: boolean) => (open ? 'open' : 'closed')
 
-/**
- * The frame: `useRender` (default `<section aria-labelledby>`), Base UI
- * `Collapsible.Root` (`defaultOpen` true) and the generated title id.
- */
 export const ProfileWidget = forwardRef<HTMLElement, ProfileWidgetProps>(
     (
         {
@@ -95,7 +91,6 @@ export const ProfileWidgetHeader = forwardRef<
 ))
 ProfileWidgetHeader.displayName = 'ProfileWidgetHeader'
 
-/** `useRender`, default `h2`; carries the id the frame's `aria-labelledby` points at. */
 export const ProfileWidgetTitle = forwardRef<
     HTMLHeadingElement,
     useRender.ComponentProps<'h2'>
@@ -146,24 +141,10 @@ export const ProfileWidgetHeaderActions = forwardRef<
 ProfileWidgetHeaderActions.displayName = 'ProfileWidgetHeaderActions'
 
 export type ProfileWidgetToggleProps = ComponentPropsWithoutRef<'button'> & {
-    /**
-     * Accessible name while open, replacing the default name (the widget
-     * title). Also the tooltip. Default tooltip: "Collapse"
-     */
     collapseLabel?: string
-    /**
-     * Accessible name while closed, replacing the default name (the widget
-     * title). Also the tooltip. Default tooltip: "Expand"
-     */
     expandLabel?: string
 }
 
-/**
- * Chevron button (`Collapsible.Trigger`) with `aria-expanded` / `aria-controls`.
- * Its accessible name is the widget title, so it says which widget it toggles
- * and stays the same while `aria-expanded` carries the state. Without a title,
- * or with `collapseLabel` / `expandLabel`, it is named "Collapse" / "Expand".
- */
 export const ProfileWidgetToggle = forwardRef<
     HTMLButtonElement,
     ProfileWidgetToggleProps
@@ -224,7 +205,6 @@ export type ProfileWidgetContentProps = Omit<
     className?: string
 }
 
-/** `Collapsible.Panel`. */
 export const ProfileWidgetContent = forwardRef<
     HTMLDivElement,
     ProfileWidgetContentProps

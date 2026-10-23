@@ -33,11 +33,9 @@ import { useTrackedEntityChangelog } from './useTrackedEntityChangelog'
 export type ProfileWidgetChangelogDialogProps = ControlledDialogProps & {
     trackedEntityId: string
     programId?: string
-    /** Labels the rows and fills the data-item filter: pass data.attributes */
     attributes: readonly TrackedEntityAttributeField[]
 }
 
-/** Capture's page size; the pager has no total, so paging is prev / next. */
 const CHANGELOG_PAGE_SIZE = 10
 
 function DataItemFilter({
@@ -82,7 +80,6 @@ function DataItemFilter({
                 {items.map((item) => (
                     <React.Fragment key={item.value ?? ''}>
                         <SelectItem value={item.value}>{item.label}</SelectItem>
-                        {/* Capture's divider under "Show all" */}
                         {item.value === null && items.length > 1 && (
                             <SelectSeparator />
                         )}
@@ -147,10 +144,6 @@ function ChangelogPagination({
     )
 }
 
-/**
- * The dialog body. It mounts only while the dialog is open, so nothing is
- * fetched for a closed dialog and paging, filter and order reset on reopen.
- */
 function ChangelogDialogBody({
     trackedEntityId,
     programId,
@@ -219,7 +212,6 @@ function ChangelogDialogBody({
                     }}
                 />
             )}
-            {/* Stays after a failed page, so earlier (cached) pages remain reachable. */}
             <ChangelogPagination
                 page={page}
                 hasNextPage={error ? false : (data?.hasNextPage ?? false)}
@@ -231,7 +223,6 @@ function ChangelogDialogBody({
     )
 }
 
-/** Large dialog, page size 10, prev/next paging; filter and sort on 2.42+. */
 export function ProfileWidgetChangelogDialog({
     open,
     onOpenChange,

@@ -14,12 +14,6 @@ import {
 } from '../api/requests'
 import type { ProfileServerFeatures } from '../api/serverVersion'
 
-/*
- * Query options for the profile. Metadata, system info and authorities use
- * `staleTime: Infinity`. `systemInfoQueryOptions` is shared with the
- * formatting pipeline (and therefore the changelog).
- */
-
 export const programMetadataQueryOptions = (
     client: ProfileWidgetClient,
     input: { programId: string; features: ProfileServerFeatures }
@@ -61,7 +55,6 @@ export const trackedEntityRecordQueryOptions = (
         queryFn: ({ signal }) =>
             fetchTrackedEntityRecord(client, input, signal),
         retry: shouldRetryProfileWidgetRequest,
-        // Never refetch a deleted entity that a mounted profile still shows.
         enabled: isQueryNotDeleted,
     })
 

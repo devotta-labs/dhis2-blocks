@@ -13,12 +13,6 @@ export type ProfileWidgetStatusDialogProps = ControlledDialogProps & {
     onSuccess?: (inactive: boolean) => void
 }
 
-/**
- * Confirms deactivating or activating, depending on `trackedEntity.inactive`.
- * On success it invalidates the profile and changelog queries, calls
- * `onOpenChange(false)` and then `onSuccess(nextInactive)`. Failures are shown
- * in the dialog, which stays open.
- */
 export function ProfileWidgetStatusDialog({
     open,
     onOpenChange,
@@ -27,11 +21,6 @@ export function ProfileWidgetStatusDialog({
 }: ProfileWidgetStatusDialogProps) {
     const { setInactive, isPending } = useSetTrackedEntityInactive()
     const [error, setError] = useState<ProfileMutationError | null>(null)
-    /*
-     * The status the confirmation was made from. It keeps the copy stable
-     * while the refetched profile flips `trackedEntity.inactive` under the
-     * pending or closing dialog.
-     */
     const [confirmedFrom, setConfirmedFrom] = useState<boolean | null>(null)
     const [wasOpen, setWasOpen] = useState(open)
     if (open !== wasOpen) {
@@ -48,8 +37,6 @@ export function ProfileWidgetStatusDialog({
         interpolation: { escapeValue: false },
     }
 
-    // `isPending` reaches the button a render late; two confirms inside that
-    // window must not send two imports.
     const inFlight = useRef(false)
     const handleConfirm = async () => {
         if (inFlight.current) return

@@ -29,20 +29,11 @@ import {
     type UseTrackedEntityProfileResult,
 } from '@/components/profile-widget'
 
-/**
- * The Capture-style profile widget on an enrollment dashboard.
- *
- * `mXAzn3hMR5a` (Sarah Thompson) is enrolled in `uy2gU8kT1jF`
- * (MNCH / PNC (Adult Woman)) at Ngelehun CHC in the DHIS2 Sierra Leone demo
- * database. Replace them with a tracked entity and a program it is enrolled
- * in on your own instance.
- */
 const TRACKED_ENTITY_ID = 'mXAzn3hMR5a'
 const PROGRAM_ID = 'uy2gU8kT1jF'
 
 type ProfileDialog = 'changelog' | 'status' | 'delete' | null
 
-/** Capture's loading, error and empty states, then one row per field. */
 function ProfileBody({ profile }: { profile: UseTrackedEntityProfileResult }) {
     const { data, error, isPending, refetch } = profile
 
@@ -72,7 +63,6 @@ function ProfileBody({ profile }: { profile: UseTrackedEntityProfileResult }) {
     const { attributes, fields, labels, trackedEntity } = data
 
     if (fields.length === 0) {
-        // Capture's empty-state copy and colour (grey600).
         const attributesLabel = labels.attributes
         const { trackedEntityTypeName } = trackedEntity
         const interpolation = { escapeValue: false }
@@ -112,7 +102,6 @@ function ProfileBody({ profile }: { profile: UseTrackedEntityProfileResult }) {
     )
 }
 
-/** Capture's menu order, each item gated on `data.permissions`. */
 function ProfileActionsMenu({
     data,
     onOpenDialog,
@@ -124,7 +113,6 @@ function ProfileActionsMenu({
     const deletePermission = permissions.delete
     const trackedEntityTypeName = trackedEntity.trackedEntityTypeName
 
-    // Capture hides the whole menu when no item would show.
     if (
         permissions.changelog.status === 'unavailable' &&
         permissions.setInactive.status === 'unavailable' &&
@@ -200,8 +188,6 @@ const ProfileWidgetEnrollment = () => {
         }
     }
 
-    // In an app, navigate away in the delete dialog's onSuccess instead,
-    // e.g. back to the working list. The record no longer exists.
     if (deleted) {
         return (
             <p className="m-0 text-sm text-dhis2-grey-700">

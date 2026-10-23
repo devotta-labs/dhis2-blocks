@@ -1,9 +1,3 @@
-/*
- * The app-runtime hooks behind the data, changelog and action hooks.
- * app-runtime reads `localStorage` when it is imported, so the plain modules
- * (api/client, api/serverVersion, api/requests, the lookups and the tracker
- * import functions) stay free of it and run in node tests with a fake engine.
- */
 import { useConfig, useDataEngine } from '@dhis2/app-runtime'
 import { useMemo } from 'react'
 import { z } from 'zod'
@@ -30,7 +24,6 @@ const EngineValueSchema: z.ZodType<DataEngineValue> = z.lazy(() =>
 )
 const EngineResultSchema = z.record(z.string(), EngineValueSchema)
 
-/** The client bound to the app-runtime data engine of the current app. */
 export const useProfileWidgetClient = (): ProfileWidgetClient => {
     const engine = useDataEngine()
 
@@ -55,7 +48,6 @@ export const useProfileWidgetClient = (): ProfileWidgetClient => {
     )
 }
 
-/** Reads `useConfig().serverVersion` (falling back to `apiVersion`). */
 export const useProfileServerFeatures = (): ProfileServerFeatures => {
     const { apiVersion, serverVersion } = useConfig()
     const major = serverVersion?.major

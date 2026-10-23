@@ -8,16 +8,6 @@ import {
     ProfileWidgetToggle,
 } from '@/components/profile-widget'
 
-/**
- * Loading placeholders for the Profile Widget examples.
- *
- * These belong to the docs, not the block: they cover the time before the
- * example can mount at all — its code loading and the adapter starting the
- * DHIS2 session. The widget's frame is presentational and needs no data, so
- * they render the real frame with the examples' own loading spinner, and the
- * preview does not change layout when the example takes over. If an
- * example's loading state changes, update its placeholder to match.
- */
 const ProfileWidgetPlaceholder = ({
     title,
     toggle,
@@ -26,7 +16,6 @@ const ProfileWidgetPlaceholder = ({
 }: {
     title: string
     toggle: boolean
-    /** The visit example loads its event section separately. */
     visit?: boolean
     className?: string
 }) => (

@@ -11,22 +11,10 @@ import { useDeleteTrackedEntity } from './useDeleteTrackedEntity'
 
 export type ProfileWidgetDeleteDialogProps = ControlledDialogProps & {
     trackedEntity: ProfileTrackedEntity
-    /**
-     * Program terminology for the cascade warning: pass `data.labels`.
-     * Defaults to "enrollments" / "events"
-     */
     labels?: Pick<TrackedEntityProfileData['labels'], 'enrollments' | 'events'>
-    /** Required: the host decides where to go once the entity is gone */
     onSuccess: () => void
 }
 
-/**
- * Confirms deleting the tracked entity with everything attached to it. On
- * success it removes the entity's queries without refetching them (a refetch
- * would 404; a profile still on screen keeps its last data until it unmounts
- * and is not refetched on window focus or reconnect meanwhile), then calls `onOpenChange(false)` and `onSuccess()`. Failures are
- * shown in the dialog, which stays open.
- */
 export function ProfileWidgetDeleteDialog({
     open,
     onOpenChange,
@@ -48,8 +36,6 @@ export function ProfileWidgetDeleteDialog({
         interpolation: { escapeValue: false },
     }
 
-    // `isPending` reaches the button a render late; two confirms inside that
-    // window must not send two imports.
     const inFlight = useRef(false)
     const handleConfirm = async () => {
         if (inFlight.current) return

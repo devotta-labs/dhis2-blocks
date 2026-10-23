@@ -17,11 +17,6 @@ import { Spinner } from '@/components/dhis2/ui/spinner'
 import { TrackerImportError } from '../errors'
 import type { ControlledDialogProps, ProfileMutationError } from '../types'
 
-/**
- * The messages to list under a failed action, like Capture's
- * `processErrorReports`: the tracker `errorReports`, otherwise the message of
- * the underlying request failure. Boundary-validation details are not shown.
- */
 const describeMutationError = (
     error: ProfileMutationError
 ): readonly string[] => {
@@ -39,7 +34,6 @@ const describeMutationError = (
 }
 
 interface ConfirmActionDialogProps extends ControlledDialogProps {
-    /** `data-slot` of the popup, e.g. `profile-widget-status-dialog` */
     slot: string
     size: 'default' | 'sm'
     title: ReactNode
@@ -52,11 +46,6 @@ interface ConfirmActionDialogProps extends ControlledDialogProps {
     onConfirm: () => void
 }
 
-/**
- * A Capture-style confirmation: "No, cancel" plus one confirm button, errors
- * in an `ErrorAlert` while the dialog stays open. It cannot be dismissed while
- * the action is pending.
- */
 export function ConfirmActionDialog({
     open,
     onOpenChange,

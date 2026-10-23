@@ -5,42 +5,17 @@ import type {
     PlaywrightWorkerArgs,
 } from '@playwright/test'
 import { z } from 'zod'
-import { expect, test as base, type E2ECredentials } from '../fixtures/test'
+import { expect, test as base } from '../fixtures/test'
 
-// Fixtures for the profile widget. The spec imports its own program, type and
-// attributes (below) with CREATE_AND_UPDATE before it runs, and every tracked
-// entity a test changes is created (and cleaned up) by that test.
-//
-// It also reads, without changing, fixtures that scripts/e2e/seed-metadata.sh
-// creates, so that script must have run against the target:
-// - the user wl_e2e_outsider (USER_WITHOUT_DELETE_AUTHORITY), whose role has no
-//   authorities and whose capture and search scope is DiszpKrYNg8 alone;
-// - the program WlE2ePrg001 and its tracked entity WlE2eTei001, of type
-//   WlE2eTet001, which keeps enableChangeLog off on every version.
-
-export const PROGRAM = 'PwE2ePrg001'
+const PROGRAM = 'PwE2ePrg001'
 const TRACKED_ENTITY_TYPE = 'PwE2eTet001'
 export const TRACKED_ENTITY_TYPE_NAME = 'Profile E2E person'
 const ORG_UNIT = 'DiszpKrYNg8'
-// Bo, an ancestor of ORG_UNIT: outside USER_WITHOUT_DELETE_AUTHORITY's
-// capture and search scope (ORG_UNIT only).
-export const ORG_UNIT_OUTSIDE_USER_SCOPE = 'O6uvpzGd5pu'
 export const GEOMETRY = {
     type: 'Point',
     coordinates: [-11.4197, 8.1039],
 } as const
-export const CREATED_AT_CLIENT = '2025-01-01T10:00:00.000'
-
-// A working-list fixture whose type keeps enableChangeLog off on every version.
-export const CHANGELOG_DISABLED_PROGRAM = 'WlE2ePrg001'
-export const CHANGELOG_DISABLED_TRACKED_ENTITY = 'WlE2eTei001'
-
-// scripts/e2e/seed-metadata.sh creates this user with a role that has no
-// authorities, so it lacks F_TEI_CASCADE_DELETE and ALL.
-export const USER_WITHOUT_DELETE_AUTHORITY: E2ECredentials = {
-    username: 'wl_e2e_outsider',
-    password: 'WorkingList123!',
-}
+const CREATED_AT_CLIENT = '2025-01-01T10:00:00.000'
 
 export const ATTRIBUTE = {
     firstName: { id: 'PwAtFirs001', label: 'Profile E2E first name' },
@@ -57,6 +32,16 @@ export const ATTRIBUTE = {
 
 type AttributeKey = keyof typeof ATTRIBUTE
 
+const ATTRIBUTE_KEYS: readonly AttributeKey[] = [
+    'firstName',
+    'lastName',
+    'nickname',
+    'typeOnlyHidden',
+    'visitNote',
+    'consent',
+    'programHidden',
+]
+
 const VALUE_TYPES = {
     firstName: 'TEXT',
     lastName: 'TEXT',
@@ -67,7 +52,6 @@ const VALUE_TYPES = {
     programHidden: 'TEXT',
 } as const satisfies Record<AttributeKey, string>
 
-// [attribute, displayInList] in metadata order.
 const TYPE_ATTRIBUTES: readonly (readonly [AttributeKey, boolean])[] = [
     ['firstName', true],
     ['lastName', true],
@@ -82,7 +66,6 @@ const PROGRAM_ATTRIBUTES: readonly (readonly [AttributeKey, boolean])[] = [
     ['programHidden', false],
 ]
 
-/** Every attribute value except the visit note, which stays empty. */
 const DEFAULT_ATTRIBUTE_VALUES = {
     firstName: 'Ada',
     lastName: 'Lovelace',
@@ -96,27 +79,20 @@ const linkId = (prefix: string, key: AttributeKey) =>
     `${prefix}${ATTRIBUTE[key].id.slice(4)}`
 
 const buildProfileWidgetMetadata = (serverMinor: number) => ({
-    trackedEntityAttributes: Object.entries(ATTRIBUTE).map(
-        ([key, attribute]) => ({
-            id: attribute.id,
-            name: attribute.label,
-            shortName: attribute.label,
-            // SAFETY: Object.entries over ATTRIBUTE only yields its own keys.
-            valueType: VALUE_TYPES[key as AttributeKey],
-            aggregationType: 'NONE',
-        })
-    ),
+    trackedEntityAttributes: ATTRIBUTE_KEYS.map((key) => ({
+        id: ATTRIBUTE[key].id,
+        name: ATTRIBUTE[key].label,
+        shortName: ATTRIBUTE[key].label,
+        valueType: VALUE_TYPES[key],
+        aggregationType: 'NONE',
+    })),
     trackedEntityTypes: [
         {
             id: TRACKED_ENTITY_TYPE,
             name: TRACKED_ENTITY_TYPE_NAME,
             shortName: TRACKED_ENTITY_TYPE_NAME,
-            // POINT lets the tracked entities carry the geometry that the
-            // status round trip has to preserve.
             featureType: 'POINT',
             allowAuditLog: false,
-            // The property only exists from 2.43; older servers write tracker
-            // changelogs from dhis.conf instead, and the widget hides it there.
             enableChangeLog: serverMinor >= 43 ? true : undefined,
             publicAccess: 'rwrw----',
             sharing: { public: 'rwrw----' },
@@ -139,12 +115,7 @@ const buildProfileWidgetMetadata = (serverMinor: number) => ({
             publicAccess: 'rwrw----',
             sharing: { public: 'rwrw----' },
             trackedEntityType: { id: TRACKED_ENTITY_TYPE },
-            // ORG_UNIT_OUTSIDE_USER_SCOPE lets a test enroll, and so own, an
-            // entity where USER_WITHOUT_DELETE_AUTHORITY cannot search.
-            organisationUnits: [
-                { id: ORG_UNIT },
-                { id: ORG_UNIT_OUTSIDE_USER_SCOPE },
-            ],
+            organisationUnits: [{ id: ORG_UNIT }],
             programTrackedEntityAttributes: PROGRAM_ATTRIBUTES.map(
                 ([key, displayInList], index) => ({
                     id: linkId('PwPa', key),
@@ -206,7 +177,6 @@ export const createAdminApi = async (
     })
 }
 
-/** 2.43.1 → 43; 2.44-SNAPSHOT → 44. */
 export const readServerMinor = async (api: APIRequestContext) => {
     const response = await api.get('/api/system/info?fields=version')
     expect(response.ok()).toBe(true)
@@ -251,11 +221,12 @@ const generateUid = () =>
 const toAttributeValues = (
     values: Readonly<Partial<Record<AttributeKey, string>>>
 ) =>
-    Object.entries(values).map(([key, value]) => ({
-        // SAFETY: Object.entries over a Partial<Record<AttributeKey, …>> only yields AttributeKeys.
-        attribute: ATTRIBUTE[key as AttributeKey].id,
-        value,
-    }))
+    ATTRIBUTE_KEYS.flatMap((key) => {
+        const value = values[key]
+        return value === undefined
+            ? []
+            : [{ attribute: ATTRIBUTE[key].id, value }]
+    })
 
 interface TrackedEntityPayload {
     trackedEntity: string
@@ -285,18 +256,7 @@ const postTracker = async (
     )
 
 export interface TrackedEntityFactory {
-    /**
-     * Creates a tracked entity with geometry and potentialDuplicate set,
-     * enrolled in the profile program unless `enrolled` is false. `orgUnit`
-     * (ORG_UNIT by default) is both the registering org unit and the
-     * enrollment's, so it also becomes the program owner. The program is
-     * assigned to ORG_UNIT and ORG_UNIT_OUTSIDE_USER_SCOPE.
-     */
-    create: (options?: {
-        enrolled?: boolean
-        orgUnit?: string
-    }) => Promise<string>
-    /** One UPDATE per value, so each writes its own changelog entry. */
+    create: () => Promise<string>
     updateFirstName: (
         trackedEntityId: string,
         values: readonly string[]
@@ -312,31 +272,29 @@ export const test = base.extend<{ trackedEntities: TrackedEntityFactory }>({
         const created: string[] = []
 
         await use({
-            create: async ({ enrolled = true, orgUnit = ORG_UNIT } = {}) => {
+            create: async () => {
                 const trackedEntity = generateUid()
                 await expectImportOk(
                     await postTracker(dhis2, 'CREATE', [
                         {
                             trackedEntity,
                             trackedEntityType: TRACKED_ENTITY_TYPE,
-                            orgUnit,
+                            orgUnit: ORG_UNIT,
                             geometry: GEOMETRY,
                             potentialDuplicate: true,
                             createdAtClient: CREATED_AT_CLIENT,
                             attributes: toAttributeValues(
                                 DEFAULT_ATTRIBUTE_VALUES
                             ),
-                            enrollments: enrolled
-                                ? [
-                                      {
-                                          program: PROGRAM,
-                                          orgUnit,
-                                          enrolledAt: '2025-01-01',
-                                          occurredAt: '2025-01-01',
-                                          status: 'ACTIVE',
-                                      },
-                                  ]
-                                : [],
+                            enrollments: [
+                                {
+                                    program: PROGRAM,
+                                    orgUnit: ORG_UNIT,
+                                    enrolledAt: '2025-01-01',
+                                    occurredAt: '2025-01-01',
+                                    status: 'ACTIVE',
+                                },
+                            ],
                         },
                     ]),
                     `Create tracked entity ${trackedEntity}`
@@ -385,8 +343,6 @@ export const test = base.extend<{ trackedEntities: TrackedEntityFactory }>({
                 ).status(),
         })
 
-        // Soft-delete whatever the test left behind; an entity the test
-        // already deleted answers 409, which is fine here.
         for (const trackedEntity of created) {
             await postTracker(dhis2, 'DELETE', [{ trackedEntity }])
         }
@@ -403,63 +359,16 @@ const showcaseHash = (trackedEntityId: string, programId?: string) => {
     return `/#/profile-widget-showcase?${parameters.toString()}`
 }
 
-/**
- * The fixture signs in on `/`, whose working list starts its own program and
- * org unit reads. Navigating away while those are in flight aborts them, and
- * the fixture reports every aborted request, so let them finish first.
- */
 const settleAppShell = (page: Page) => page.waitForLoadState('networkidle')
-
-/** Opens the enrollment composition without waiting for it to load. */
-export const navigateToEnrollmentProfile = async (
-    page: Page,
-    trackedEntityId: string,
-    programId: string = PROGRAM
-) => {
-    await settleAppShell(page)
-    await page.goto(showcaseHash(trackedEntityId, programId))
-    return page.getByTestId('profile-widget-enrollment')
-}
-
-/**
- * Collects the `fields` parameter of every program and tracked entity type
- * metadata request the page makes from now on.
- */
-export const recordMetadataFields = (page: Page) => {
-    const fields: string[] = []
-    page.on('request', (request) => {
-        const url = new URL(request.url())
-        if (
-            /\/api(?:\/\d+)?\/(?:programs|trackedEntityTypes)\/[^/]+$/.test(
-                url.pathname
-            )
-        ) {
-            fields.push(url.searchParams.get('fields') ?? '')
-        }
-    })
-    return fields
-}
 
 export const openEnrollmentProfile = async (
     page: Page,
     trackedEntityId: string,
     programId: string = PROGRAM
 ) => {
-    const widget = await navigateToEnrollmentProfile(
-        page,
-        trackedEntityId,
-        programId
-    )
-    await expect(widget.getByRole('term').first()).toBeVisible({
-        timeout: 30_000,
-    })
-    return widget
-}
-
-export const openPersonPanel = async (page: Page, trackedEntityId: string) => {
     await settleAppShell(page)
-    await page.goto(showcaseHash(trackedEntityId))
-    const widget = page.getByTestId('profile-widget-person')
+    await page.goto(showcaseHash(trackedEntityId, programId))
+    const widget = page.getByTestId('profile-widget-enrollment')
     await expect(widget.getByRole('term').first()).toBeVisible({
         timeout: 30_000,
     })

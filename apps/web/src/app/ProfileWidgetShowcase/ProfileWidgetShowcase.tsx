@@ -10,11 +10,6 @@ import { PersonPanel } from './PersonPanel'
 const TRACKED_ENTITY_PARAMETER = 'trackedEntityId'
 const PROGRAM_PARAMETER = 'programId'
 
-/**
- * Demo route for the profile widget. With `programId` it renders the
- * Capture-style enrollment composition (spec Example A); without it, the
- * program-less person panel with an external toolbar (spec Example D).
- */
 export const ProfileWidgetShowcase = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const trackedEntityId = searchParams.get(TRACKED_ENTITY_PARAMETER) ?? ''

@@ -31,7 +31,6 @@ import i18n from '../../i18n'
 
 export type ProfileDialog = 'changelog' | 'status' | 'delete' | null
 
-/** Capture's loading, error, empty and list states for a profile result. */
 export const ProfileBody = ({
     profile,
 }: {
@@ -52,8 +51,6 @@ export const ProfileBody = ({
     if (error || !data) {
         return (
             <ErrorAlert
-                // The error kind, so e2e can tell a 403/404 from other failures.
-                data-error={error?._tag}
                 title={i18n.t(
                     'Profile widget could not be loaded. Please try again later'
                 )}
@@ -68,7 +65,6 @@ export const ProfileBody = ({
     const { attributes, fields, labels, trackedEntity } = data
 
     if (fields.length === 0) {
-        // Capture's empty-state copy and colour (grey600).
         const attributesLabel = labels.attributes
         const { trackedEntityTypeName } = trackedEntity
         const interpolation = { escapeValue: false }
@@ -108,7 +104,6 @@ export const ProfileBody = ({
     )
 }
 
-/** Capture's overflow menu: changelog, then status, then delete. */
 const ProfileActionsMenu = ({
     data,
     onOpenDialog,
@@ -181,7 +176,6 @@ const ProfileActionsMenu = ({
     )
 }
 
-/** Capture's page-level status tag, which the widget leaves to its host. */
 export const InactiveNotice = ({
     data,
 }: {
@@ -205,7 +199,6 @@ interface EnrollmentProfileProps {
     onDeleted: () => void
 }
 
-/** Spec Example A: the full Capture composition on an enrollment dashboard. */
 export const EnrollmentProfile = ({
     trackedEntityId,
     programId,

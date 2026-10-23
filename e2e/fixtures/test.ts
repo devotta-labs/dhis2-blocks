@@ -17,19 +17,8 @@ type BrowserDiagnostic = {
     location?: ReturnType<ConsoleMessage['location']>
 }
 
-/**
- * An error response a test provokes on purpose, e.g. a 404 for a tracked
- * entity outside the requested program. Matches the HTTP response and the
- * browser's matching "Failed to load resource" console error.
- */
-export type ExpectedHttpError = {
-    statuses: readonly number[]
-    path: RegExp
-}
-
 type WorkingListFixtures = {
     allowOfflineRequestFailures: boolean
-    expectedHttpErrors: readonly ExpectedHttpError[]
     dhis2: APIRequestContext
     e2eCredentials: E2ECredentials
     page: Page
@@ -61,33 +50,11 @@ const urlPath = (value?: string) => {
     }
 }
 
-const isExpectedHttpError = (
-    diagnostic: BrowserDiagnostic,
-    path: string | undefined,
-    expectedHttpErrors: readonly ExpectedHttpError[]
-) =>
-    expectedHttpErrors.some(
-        ({ statuses, path: expectedPath }) =>
-            expectedPath.test(path ?? '') &&
-            ((diagnostic.kind === 'http' &&
-                statuses.includes(diagnostic.status ?? 0)) ||
-                (diagnostic.kind === 'console' &&
-                    statuses.some((status) =>
-                        diagnostic.message.includes(
-                            `Failed to load resource: the server responded with a status of ${status}`
-                        )
-                    )))
-    )
-
 const isKnownBenignDiagnostic = (
     diagnostic: BrowserDiagnostic,
-    allowOfflineRequestFailures: boolean,
-    expectedHttpErrors: readonly ExpectedHttpError[]
+    allowOfflineRequestFailures: boolean
 ) => {
     const path = urlPath(diagnostic.url ?? diagnostic.location?.url)
-    if (isExpectedHttpError(diagnostic, path, expectedHttpErrors)) {
-        return true
-    }
     if (
         diagnostic.kind === 'http' &&
         diagnostic.status === 404 &&
@@ -180,7 +147,6 @@ const signInToApp = async (
 
 export const test = base.extend<WorkingListFixtures>({
     allowOfflineRequestFailures: [false, { option: true }],
-    expectedHttpErrors: [[], { option: true }],
     e2eCredentials: [{ username, password }, { option: true }],
     dhis2: async ({ playwright }, use) => {
         const baseURL = environment?.E2E_DHIS2_URL
@@ -202,12 +168,7 @@ export const test = base.extend<WorkingListFixtures>({
         await api.dispose()
     },
     page: async (
-        {
-            allowOfflineRequestFailures,
-            e2eCredentials,
-            expectedHttpErrors,
-            page,
-        },
+        { allowOfflineRequestFailures, e2eCredentials, page },
         use,
         testInfo
     ) => {
@@ -274,8 +235,7 @@ export const test = base.extend<WorkingListFixtures>({
             (diagnostic) =>
                 !isKnownBenignDiagnostic(
                     diagnostic,
-                    allowOfflineRequestFailures,
-                    expectedHttpErrors
+                    allowOfflineRequestFailures
                 )
         )
         if (

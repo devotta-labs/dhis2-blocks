@@ -20,31 +20,15 @@ import {
     type TrackedEntityAttributeField,
 } from '@/components/profile-widget'
 
-/**
- * Attributes plus the current event's data elements.
- *
- * The IDs below come from the metadata this repository seeds next to the
- * Sierra Leone demo database (`e2e/metadata`): tracked entity `WlE2eTei003`,
- * enrolled in `WlE2ePrg001`, and its event `WlE2eEvt003` in stage
- * `WlE2eStg001`. Replace them with your own.
- */
 const TRACKED_ENTITY_ID = 'WlE2eTei003'
 const PROGRAM_ID = 'WlE2ePrg001'
 const PROGRAM_STAGE_ID = 'WlE2eStg001'
 const EVENT_ID = 'WlE2eEvt003'
 
-/**
- * Every attribute that has a value, not only the `displayInList` ones.
- * `selectFields` runs on every render, so it does not need to be stable.
- */
 const selectFilledAttributes = (
     attributes: readonly TrackedEntityAttributeField[]
 ): readonly ProfileField[] =>
     attributes.filter((attribute) => attribute.value.kind !== 'empty')
-
-/* ---------------------------------------------------------------- */
-/* Event data values, fetched by the app and formatted by the block */
-/* ---------------------------------------------------------------- */
 
 const visitQuery = {
     event: {
@@ -110,7 +94,6 @@ function toVisitInputs(
             valueType: dataElement.valueType,
             value: values.get(dataElement.id) ?? null,
             options: dataElement.optionSet?.options,
-            // The block appends /file or /image for FILE_RESOURCE and IMAGE.
             fileEndpoint: `tracker/events/${response.event.event}/dataValues/${dataElement.id}`,
         }))
 }
@@ -122,7 +105,6 @@ function CurrentVisitFields() {
         () => (visit.data ? visitResponse.safeParse(visit.data) : undefined),
         [visit.data]
     )
-    // Pass undefined while your own data is loading; the hook stays pending.
     const inputs = useMemo(
         () => (parsed?.success ? toVisitInputs(parsed.data) : undefined),
         [parsed]
@@ -160,10 +142,6 @@ function CurrentVisitFields() {
     )
 }
 
-/* ---------------------------------------------------------------- */
-/* The widget                                                       */
-/* ---------------------------------------------------------------- */
-
 const ProfileWidgetVisit = () => {
     const { data, error, isPending } = useTrackedEntityProfile({
         trackedEntityId: TRACKED_ENTITY_ID,
@@ -181,9 +159,6 @@ const ProfileWidgetVisit = () => {
             )
         }
 
-        // A program-scoped request returns 404 on 2.42+ when the tracked
-        // entity is not enrolled in, or not owned by, that program, and 403
-        // on 2.41 when the user cannot reach its owner org unit.
         if (error instanceof TrackedEntityNotAccessibleError) {
             return (
                 <ErrorAlert
@@ -215,7 +190,6 @@ const ProfileWidgetVisit = () => {
         )
     }
 
-    // No ProfileWidgetToggle, so the widget cannot be collapsed.
     return (
         <ProfileWidget className="max-w-xl">
             <ProfileWidgetHeader>
@@ -225,8 +199,6 @@ const ProfileWidgetVisit = () => {
             </ProfileWidgetHeader>
             <ProfileWidgetContent>
                 {renderAttributes()}
-                {/* Its own loading and error state: a failed event request
-                    never hides the attributes. */}
                 <CurrentVisitFields />
             </ProfileWidgetContent>
         </ProfileWidget>

@@ -7,11 +7,6 @@ import type {
     TrackerImportError,
 } from './errors'
 
-/* -------------------------------------------------------------------------- */
-/* Values and fields                                                          */
-/* -------------------------------------------------------------------------- */
-
-/** Every DHIS2 `ValueType`. Unknown server strings decode to `'TEXT'`. */
 export const PROFILE_VALUE_TYPES = [
     'TEXT',
     'LONG_TEXT',
@@ -45,13 +40,11 @@ export const PROFILE_VALUE_TYPES = [
 
 export type ProfileValueType = (typeof PROFILE_VALUE_TYPES)[number]
 
-/** One option of an option set, as DHIS2 returns it. */
 export interface ProfileFieldOption {
     code: string
     displayName: string
 }
 
-/** A formatted value, ready for `ProfileWidgetValue`. */
 export type ProfileFieldValue =
     | { kind: 'empty' }
     | { kind: 'text'; text: string }
@@ -65,31 +58,20 @@ export interface ProfileField {
     id: string
     label: string
     valueType: ProfileValueType
-    /** Server value, kept for future editing */
     rawValue: string | null
     value: ProfileFieldValue
-    /**
-     * The option set's options when the field has one. Kept so the changelog
-     * and a later edit form can label option codes without refetching.
-     */
     options?: readonly ProfileFieldOption[]
 }
 
 export interface TrackedEntityAttributeField extends ProfileField {
     origin: 'trackedEntityType' | 'program' | 'both'
-    /** The program-level flag when the attribute is in the program, otherwise the TET flag */
     displayInList: boolean
     unique: boolean
 }
 
-/* -------------------------------------------------------------------------- */
-/* useTrackedEntityProfile                                                    */
-/* -------------------------------------------------------------------------- */
-
 export interface UseTrackedEntityProfileOptions {
     trackedEntityId: string
     programId?: string
-    /** Runs on every render, outside the query key. It does not need to be stable. Default: selectDisplayInListAttributes */
     selectFields?: (
         attributes: readonly TrackedEntityAttributeField[]
     ) => readonly ProfileField[]
@@ -109,15 +91,10 @@ export interface UseTrackedEntityProfileResult {
 }
 
 export interface TrackedEntityProfileData {
-    /** "Person profile", or "Profile" when the type name is unknown */
     title: string
-    /** First two TET displayInList values joined with a space (Capture's `??` bug fixed) */
     displayName: string
-    /** Every readable attribute (TET ∪ program), formatted, in metadata order. Labels the changelog */
     attributes: readonly TrackedEntityAttributeField[]
-    /** The default rows: selectFields(attributes) */
     fields: readonly ProfileField[]
-    /** Program custom terminology (2.43+), defaulting to "attributes" / "enrollments" / "events" */
     labels: {
         attributes: string
         enrollments: string
@@ -131,7 +108,6 @@ export interface ProfileTrackedEntity {
     id: string
     programId: string | null
     trackedEntityTypeId: string
-    /** Used in dialog copy, e.g. "Yes, delete Person" */
     trackedEntityTypeName: string
     orgUnitId: string
     inactive: boolean
@@ -148,48 +124,32 @@ export type ProfileActionAvailability =
     | { status: 'disabled'; reason: string }
     | { status: 'unavailable' }
 
-/* -------------------------------------------------------------------------- */
-/* useProfileFields                                                           */
-/* -------------------------------------------------------------------------- */
-
 export interface ProfileFieldInput {
     id: string
     label: string
-    /** Raw DHIS2 valueType string. It is decoded inside the block; unknown types render as text */
     valueType: string
     value: string | null
     options?: readonly ProfileFieldOption[]
-    /** API path for FILE_RESOURCE / IMAGE, e.g. `tracker/events/{event}/dataValues/{dataElement}`. The block appends /file or /image */
     fileEndpoint?: string
 }
 
 export interface UseProfileFieldsResult {
     data: readonly ProfileField[] | undefined
     error: ProfileWidgetRequestError | null
-    /** Also true while `inputs` is undefined */
     isPending: boolean
 }
-
-/* -------------------------------------------------------------------------- */
-/* Changelog                                                                  */
-/* -------------------------------------------------------------------------- */
 
 export type TrackedEntityChangeType = 'CREATE' | 'UPDATE' | 'DELETE'
 
 export interface TrackedEntityChangelogEntry {
-    /** Stable key for the row within its page */
     id: string
-    /** Server timestamp as returned (ISO local date-time) */
     createdAt: string
-    /** `createdAt` in the system calendar and date format, with HH:mm */
     createdAtLabel: string
     user: {
         username: string
-        /** "First Last (username)", or the username when no name is known */
         displayName: string
     }
     attributeId: string
-    /** Label from the attribute metadata passed in, so no row is dropped */
     attributeLabel: string
     changeType: TrackedEntityChangeType
     previousValue: ProfileFieldValue
@@ -205,12 +165,9 @@ export interface UseTrackedEntityChangelogOptions {
     trackedEntityId: string
     programId?: string
     attributes: readonly TrackedEntityAttributeField[]
-    /** 1-based */
     page: number
     pageSize: number
-    /** 2.42+ only; ignored on older servers */
     attributeId?: string
-    /** `username` and `attribute` columns are 2.42+ only */
     order?: TrackedEntityChangelogOrder
 }
 
@@ -224,13 +181,8 @@ export interface UseTrackedEntityChangelogResult {
     error: ProfileWidgetLoadError | null
     isPending: boolean
     isFetching: boolean
-    /** Re-requests the current page (and any lookup that failed) */
     refetch: () => void
 }
-
-/* -------------------------------------------------------------------------- */
-/* Mutations                                                                  */
-/* -------------------------------------------------------------------------- */
 
 export type ProfileMutationError =
     | TrackerImportError
@@ -255,10 +207,6 @@ export interface UseDeleteTrackedEntityResult {
     isPending: boolean
 }
 
-/* -------------------------------------------------------------------------- */
-/* Frame and dialogs                                                          */
-/* -------------------------------------------------------------------------- */
-
 export type ProfileWidgetProps = useRender.ComponentProps<'section'> &
     (
         | {
@@ -273,7 +221,6 @@ export type ProfileWidgetProps = useRender.ComponentProps<'section'> &
           }
     )
 
-/** Shared by every dialog: the host owns the open state. */
 export interface ControlledDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void

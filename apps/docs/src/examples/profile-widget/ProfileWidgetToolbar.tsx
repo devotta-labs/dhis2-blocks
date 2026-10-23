@@ -19,18 +19,10 @@ import {
     type TrackedEntityProfileData,
 } from '@/components/profile-widget'
 
-/**
- * No program, with the actions in a toolbar outside the widget.
- *
- * `PQfMcpmXeFE` (John Kelly) exists in the DHIS2 Sierra Leone demo database.
- * Without a program, the rows are the tracked entity type's `displayInList`
- * attributes. Replace the ID with a tracked entity from your own instance.
- */
 const TRACKED_ENTITY_ID = 'PQfMcpmXeFE'
 
 type ProfileDialog = 'changelog' | 'status' | null
 
-/** Any part of the page can open the dialogs: their state lives in the page. */
 function RecordToolbar({
     data,
     onOpenDialog,
@@ -92,7 +84,6 @@ const ProfileWidgetToolbar = () => {
                         {data?.displayName || i18n.t('Profile')}
                     </ProfileWidgetTitle>
                     <ProfileWidgetHeaderActions>
-                        {/* The block shows no inactive badge; render your own. */}
                         {data?.trackedEntity.inactive && (
                             <span className="rounded-dhis2-sm bg-dhis2-grey-200 px-1.5 py-0.5 text-xs text-dhis2-grey-800">
                                 {i18n.t('Inactive')}

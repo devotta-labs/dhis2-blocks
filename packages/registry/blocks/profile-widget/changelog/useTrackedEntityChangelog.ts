@@ -27,7 +27,6 @@ import {
 
 const OPERATION = 'Load tracked entity changelog'
 
-/** Entity, program: the key parts a page can keep showing while the next loads. */
 const SCOPE_KEY_LENGTH = profileWidgetQueryKeys.changelogs('scope').length + 1
 
 const isSameScope = (
@@ -38,14 +37,6 @@ const isSameScope = (
         .slice(0, SCOPE_KEY_LENGTH)
         .every((part, index) => previousKey[index] === part)
 
-/**
- * `tracker/trackedEntities/{id}/changeLogs`, keyed by
- * `profileWidgetQueryKeys.changelog`. Values go through `useValueFormatter`.
- * `attributeId` and the username/attribute order are 2.42+ only; older
- * servers get the request without them. `refetch` re-requests the current
- * page, and after a lookup failure the file-resource, org-unit and system
- * info lookups as well.
- */
 export function useTrackedEntityChangelog(
     options: UseTrackedEntityChangelogOptions
 ): UseTrackedEntityChangelogResult {
@@ -62,9 +53,7 @@ export function useTrackedEntityChangelog(
         queryFn: ({ signal }) =>
             fetchTrackedEntityChangelog(client, request, signal),
         retry: shouldRetryProfileWidgetRequest,
-        // Never refetch a page of a deleted entity that is still on screen.
         enabled: (cached) => isQueryNotDeleted(cached),
-        // Keep the current page on screen while the next page, filter or order loads.
         placeholderData: (previous, previousQuery) =>
             previousQuery && isSameScope(previousQuery.queryKey, queryKey)
                 ? previous
@@ -109,12 +98,6 @@ export function useTrackedEntityChangelog(
         [query.error, trackedEntityId, programId]
     )
 
-    // While a new page's file or org-unit names load, the formatter is not
-    // ready; keep the last formatted page of the same entity and program on
-    // screen, as the query does for the raw page. The page is kept in a ref
-    // written after commit, never in state set during render: `data` gets a
-    // new identity whenever the caller passes a new `attributes` array, and
-    // setting state from that identity would re-render without end.
     const scope = `${trackedEntityId}:${programId ?? ''}`
     const lastPageRef = useRef<{
         scope: string

@@ -3,26 +3,12 @@ import { ChangelogResponseSchema } from '../api/schemas'
 import type { ProfileServerFeatures } from '../api/serverVersion'
 import type { TrackedEntityChangelogOrder } from '../types'
 
-/*
- * `GET tracker/trackedEntities/{id}/changeLogs` on DHIS2 2.41–2.43.
- *
- * - `page` (1-based) and `pageSize`; the pager never carries a total, only a
- *   `nextPage` link (the server reads one extra row to know).
- * - `program` scopes the call to that program's attributes.
- * - `order=createdAt|username|attribute:asc|desc`. 2.41 orders by `createdAt`
- *   only; `username` and `attribute` are 2.42+.
- * - `filter=attribute:eq:{uid}` is 2.42+; 2.41 ignores unknown parameters.
- */
-
-/** The changelog request after server-version gating. */
 export interface ChangelogRequest {
     trackedEntityId: string
     programId: string | null
     page: number
     pageSize: number
-    /** Only set when the server supports filtering (2.42+). */
     attributeId: string | null
-    /** Only set when the server supports this column (createdAt always). */
     order: TrackedEntityChangelogOrder | null
 }
 
@@ -40,7 +26,6 @@ const isOrderSupported = (
     features: ProfileServerFeatures
 ) => order.column === 'createdAt' || features.changelogFilterAndOrder
 
-/** Drops the filter and order columns the connected server cannot honour. */
 export const resolveChangelogRequest = (
     input: ChangelogRequestInput,
     features: ProfileServerFeatures
@@ -59,8 +44,7 @@ export const resolveChangelogRequest = (
             : null,
 })
 
-/** Query parameters for a resolved request; app-runtime drops undefined ones. */
-export const changelogQueryParameters = (
+const changelogQueryParameters = (
     request: ChangelogRequest
 ): QueryParameters => ({
     page: request.page,
@@ -74,11 +58,9 @@ export const changelogQueryParameters = (
         : undefined,
 })
 
-/** The resource path; the id is part of the path, not a separate `id`. */
 const changelogResource = (trackedEntityId: string) =>
     `tracker/trackedEntities/${trackedEntityId}/changeLogs`
 
-/** Throws the raw failure; callers map it with `toProfileWidgetLoadError`. */
 export const fetchTrackedEntityChangelog = (
     client: ProfileWidgetClient,
     request: ChangelogRequest,

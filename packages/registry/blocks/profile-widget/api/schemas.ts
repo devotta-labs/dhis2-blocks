@@ -1,14 +1,6 @@
 import { z } from 'zod'
 import type { ProfileServerFeatures } from './serverVersion'
 
-/*
- * Boundary schemas for every DHIS2 response the block reads. Objects pass
- * unknown keys through so newer servers never break validation; optional
- * fields are the ones DHIS2 omits when they are unset.
- */
-
-/* ------------------------------ Metadata ---------------------------------- */
-
 const DataAccessSchema = z
     .object({
         data: z.object({ read: z.boolean(), write: z.boolean() }).passthrough(),
@@ -23,7 +15,6 @@ const TrackedEntityAttributeSchema = z
     .object({
         id: z.string().min(1),
         displayFormName: z.string(),
-        /** Raw DHIS2 ValueType; decode with the formatting pipeline. */
         valueType: z.string().min(1),
         unique: z.boolean().optional().default(false),
         access: z.object({ read: z.boolean() }).passthrough(),
@@ -55,7 +46,6 @@ export const TrackedEntityTypeMetadataSchema = z
         id: z.string().min(1),
         displayName: z.string().optional(),
         access: DataAccessSchema,
-        /** 2.43+. Absent on older servers, which hides the changelog. */
         enableChangeLog: z.boolean().optional(),
         trackedEntityTypeAttributes: z
             .array(AttributeLinkSchema)
@@ -73,12 +63,6 @@ export const ProgramMetadataSchema = z
         id: z.string().min(1),
         displayName: z.string().optional(),
         access: DataAccessSchema,
-        /*
-         * Custom terminology (2.43+). DHIS2 omits unset labels. The server has
-         * no plural attribute label yet (only the singular
-         * displayTrackedEntityAttributeLabel), so the plural is requested as
-         * Capture does and usually falls back to the default.
-         */
         displayTrackedEntityAttributesLabel: z.string().optional(),
         displayEnrollmentsLabel: z.string().optional(),
         displayEventsLabel: z.string().optional(),
@@ -104,7 +88,6 @@ const trackedEntityTypeFields = (features: ProfileServerFeatures) =>
         `trackedEntityTypeAttributes[displayInList,trackedEntityAttribute[${ATTRIBUTE_FIELDS}]]`,
     ].join(',')
 
-/** `fields` for `programs/{id}`; label and changelog fields need 2.43+. */
 export const programMetadataFields = (features: ProfileServerFeatures) =>
     [
         'id',
@@ -121,10 +104,7 @@ export const programMetadataFields = (features: ProfileServerFeatures) =>
         `programTrackedEntityAttributes[displayInList,trackedEntityAttribute[${ATTRIBUTE_FIELDS}]]`,
     ].join(',')
 
-/** `fields` for `trackedEntityTypes/{id}` (no-program mode). */
 export const trackedEntityTypeMetadataFields = trackedEntityTypeFields
-
-/* ---------------------------- Tracked entity ------------------------------ */
 
 export const TRACKED_ENTITY_PROFILE_FIELDS =
     'trackedEntity,trackedEntityType,orgUnit,inactive,attributes[attribute,value]'
@@ -133,7 +113,6 @@ export const TrackedEntityRecordSchema = z
     .object({
         trackedEntity: z.string().min(1),
         trackedEntityType: z.string().min(1),
-        /** Missing org unit makes `setInactive` unavailable, as in Capture. */
         orgUnit: z.string().min(1).optional(),
         inactive: z.boolean().optional().default(false),
         attributes: z
@@ -153,7 +132,6 @@ const GeometrySchema = z
     .object({ type: z.string().min(1), coordinates: z.json() })
     .passthrough()
 
-/** Fields a tracker UPDATE overwrites unconditionally. */
 export const TRACKED_ENTITY_UPDATE_FIELDS =
     'trackedEntity,trackedEntityType,orgUnit,inactive,geometry,potentialDuplicate,createdAtClient,updatedAtClient'
 
@@ -163,7 +141,6 @@ export const TrackedEntityForUpdateSchema = z
         trackedEntityType: z.string().min(1),
         orgUnit: z.string().min(1),
         inactive: z.boolean().optional().default(false),
-        /** GeoJSON geometry; echoed back untouched. */
         geometry: GeometrySchema.nullable().optional(),
         potentialDuplicate: z.boolean().optional(),
         createdAtClient: z.string().optional(),
@@ -174,8 +151,6 @@ export const TrackedEntityForUpdateSchema = z
 export type ApiTrackedEntityForUpdate = z.infer<
     typeof TrackedEntityForUpdateSchema
 >
-
-/* ------------------------------ System -------------------------------------- */
 
 const PROFILE_CALENDARS = [
     'coptic',
@@ -219,8 +194,6 @@ export const MeAuthoritiesSchema = z
     .object({ authorities: z.array(z.string()) })
     .passthrough()
 
-/* ------------------------------ Lookups ----------------------------------- */
-
 export const FileResourceSchema = z
     .object({ id: z.string().min(1), displayName: z.string() })
     .passthrough()
@@ -235,7 +208,6 @@ export const OrganisationUnitsResponseSchema = z
                 .object({
                     id: z.string().min(1),
                     displayName: z.string(),
-                    /** Root first, parent last. */
                     ancestors: z
                         .array(
                             z.object({ displayName: z.string() }).passthrough()
@@ -247,8 +219,6 @@ export const OrganisationUnitsResponseSchema = z
         ),
     })
     .passthrough()
-
-/* ------------------------------ Changelog --------------------------------- */
 
 export const ChangelogResponseSchema = z
     .object({
@@ -294,8 +264,6 @@ export const ChangelogResponseSchema = z
 export type ApiChangelogResponse = z.infer<typeof ChangelogResponseSchema>
 export type ApiChangelogEntry = ApiChangelogResponse['changeLogs'][number]
 
-/* ---------------------------- Tracker import ------------------------------ */
-
 const ErrorReportSchema = z
     .object({
         message: z.string(),
@@ -317,7 +285,6 @@ export const TrackerImportReportSchema = z
     })
     .passthrough()
 
-/** One tracked entity in a `POST tracker` body. */
 interface TrackedEntityImportPayload {
     trackedEntity: string
     trackedEntityType?: string

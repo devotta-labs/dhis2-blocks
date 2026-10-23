@@ -9,22 +9,8 @@ import type { ProfileActionAvailability, ProfilePermissions } from '../types'
 const AVAILABLE: ProfileActionAvailability = { status: 'available' }
 const UNAVAILABLE: ProfileActionAvailability = { status: 'unavailable' }
 
-/** `CAP/utils/authority/useAuthority.ts`: either authority allows a cascade delete. */
 const CASCADE_DELETE_AUTHORITIES = ['ALL', 'F_TEI_CASCADE_DELETE']
 
-/**
- * Spec 2.3 permission table, Capture's rules rebuilt from API data:
- *
- * - `changelog` needs `TrackedEntityType.enableChangeLog === true`, which
- *   only 2.43+ returns, never `allowAuditLog`.
- * - `setInactive` needs raw TET data write and a known org unit
- *   (`EnrollmentAccessContext.tsx:102`). Being inactive does not hide it, so
- *   an inactive entity can be activated again.
- * - `delete` needs TET data write, program data write when a program is
- *   given, and an active entity, since Capture forces both write
- *   flags off while inactive. Without the cascade-delete authority it is
- *   disabled with a reason (`DeleteMenuItem.component.tsx:24-48`).
- */
 export const resolveProfilePermissions = (input: {
     trackedEntityType: ApiTrackedEntityTypeMetadata
     trackedEntityTypeName: string

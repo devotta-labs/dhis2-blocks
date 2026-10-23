@@ -7,7 +7,6 @@ import type {
 } from './contracts'
 import { useValueFormatter } from './useValueFormatter'
 
-/** One formattable field as a `ProfileField`; options are kept for later editing. */
 const toProfileField = (
     field: FormattableField,
     formatter: ValueFormatter
@@ -20,10 +19,6 @@ const toProfileField = (
     options: field.options,
 })
 
-/**
- * `useValueFormatter` plus the mapping to `ProfileField` (id, label,
- * valueType, rawValue, value, options). Powers `useProfileFields`.
- */
 export function useFormattedFields(
     fields: readonly FormattableField[] | undefined
 ): FormattedFieldsState {

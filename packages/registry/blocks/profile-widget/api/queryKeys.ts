@@ -2,39 +2,26 @@ import type { TrackedEntityChangelogOrder } from '../types'
 
 const sortedUnique = (ids: readonly string[]) => [...new Set(ids)].sort()
 
-/**
- * Every query the block owns lives under `['profile-widget', …]`.
- *
- * - `trackedEntity(id)` is the prefix for everything that belongs to one
- *   entity (its record and its changelog pages). Invalidate it after a status
- *   change; remove it after a delete.
- * - Metadata, system info and authorities are entity-independent and cached
- *   with `staleTime: Infinity` by their query options.
- */
 export const profileWidgetQueryKeys = {
     all: ['profile-widget'] as const,
 
-    /** Prefix for one tracked entity's record and changelog queries. */
     trackedEntity: (trackedEntityId: string) =>
         [
             ...profileWidgetQueryKeys.all,
             'tracked-entity',
             trackedEntityId,
         ] as const,
-    /** `tracker/trackedEntities/{id}` (profile fields), per program scope. */
     trackedEntityRecord: (trackedEntityId: string, programId: string | null) =>
         [
             ...profileWidgetQueryKeys.trackedEntity(trackedEntityId),
             'record',
             programId ?? 'no-program',
         ] as const,
-    /** Prefix for all changelog pages of one tracked entity. */
     changelogs: (trackedEntityId: string) =>
         [
             ...profileWidgetQueryKeys.trackedEntity(trackedEntityId),
             'changelog',
         ] as const,
-    /** One changelog page. */
     changelog: (
         trackedEntityId: string,
         params: {
@@ -57,7 +44,6 @@ export const profileWidgetQueryKeys = {
         ] as const,
 
     metadata: () => [...profileWidgetQueryKeys.all, 'metadata'] as const,
-    /** `programs/{id}`; the field list depends on the server minor version. */
     programMetadata: (programId: string, minorVersion: number) =>
         [
             ...profileWidgetQueryKeys.metadata(),
@@ -65,7 +51,6 @@ export const profileWidgetQueryKeys = {
             programId,
             minorVersion,
         ] as const,
-    /** `trackedEntityTypes/{id}` (no-program mode). */
     trackedEntityTypeMetadata: (
         trackedEntityTypeId: string,
         minorVersion: number

@@ -23,13 +23,10 @@ export type ProfileWidgetMenuProps = Omit<
     ComponentPropsWithoutRef<'button'>,
     'children'
 > & {
-    /** Accessible name of the `IconMore16` trigger. Default: "More actions" */
     label?: string
-    /** `ProfileWidgetMenuItem` elements, shown in a dense `DropdownMenu` */
     children: ReactNode
 }
 
-/** The props spread onto the trigger button. */
 export const ProfileWidgetMenu = forwardRef<
     HTMLButtonElement,
     ProfileWidgetMenuProps
@@ -66,13 +63,7 @@ export type ProfileWidgetMenuItemProps = Omit<
     ComponentPropsWithoutRef<typeof DropdownMenuItem>,
     'variant'
 > & {
-    /**
-     * Red text, for deactivate and delete. Only while enabled: a disabled
-     * item is grey like any other, as in @dhis2/ui. `data-destructive` marks
-     * it either way.
-     */
     destructive?: boolean
-    /** Shown as a tooltip when `disabled` is true */
     disabledReason?: string
 }
 
@@ -92,8 +83,6 @@ export const ProfileWidgetMenuItem = forwardRef<
         ref
     ) => {
         const reasonId = useId()
-        // The shared item's destructive styles outrank its disabled ones, so
-        // a disabled destructive item would still look enabled and red.
         const variant = destructive && !disabled ? 'destructive' : 'default'
 
         if (!disabled || !disabledReason) {
@@ -112,8 +101,6 @@ export const ProfileWidgetMenuItem = forwardRef<
             )
         }
 
-        // A disabled item cannot be activated, so the reason is shown on
-        // hover and focus and is announced as the item's description.
         return (
             <Tooltip>
                 <TooltipTrigger

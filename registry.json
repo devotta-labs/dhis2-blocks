@@ -651,9 +651,15 @@
                 "zod@^4.4.3"
             ],
             "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/checkbox",
+                "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/field",
-                "devotta-labs/dhis2-blocks/input"
+                "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/select",
+                "devotta-labs/dhis2-blocks/spinner"
             ],
             "files": [
                 {
@@ -697,14 +703,124 @@
                     "target": "@components/tracked-entity-finder/calendar/calendarDates.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/ConfigError.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/ConfigError.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/FinderField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/FinderField.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/FinderForm.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/FinderForm.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/FinderHint.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/FinderHint.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/FinderRangeField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/FinderRangeField.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/FinderSubmit.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/FinderSubmit.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/fieldProps.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/fieldProps.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/ChoiceSelect.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/inputs/ChoiceSelect.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/DateInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/inputs/DateInput.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/FieldFrame.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/inputs/FieldFrame.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/NumberInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/inputs/NumberInput.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/PendingInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/inputs/PendingInput.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/RangeInputs.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/inputs/RangeInputs.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/TextInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/inputs/TextInput.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/TrueOnlyCheckbox.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/inputs/TrueOnlyCheckbox.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/issueText.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/inputs/issueText.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/inputs/types.ts"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-finder/format/formatValue.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/format/formatValue.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-finder/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/hooks.ts"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-finder/index.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/provider/FinderProvider.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/provider/FinderProvider.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/provider/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/provider/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/provider/env.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/provider/env.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/provider/useFinderController.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/provider/useFinderController.ts"
                 },
                 {
                     "path": "packages/registry/blocks/tracked-entity-finder/rules/describeProblem.ts",

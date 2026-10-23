@@ -86,6 +86,8 @@ export interface CalendarDateInputProps {
     /** An ISO date, '' when cleared, or the text when it is not a date. */
     onChange: (next: string) => void
     info: FinderSystemInfo
+    /** Marks the input invalid; the caller shows why. */
+    invalid?: boolean
 }
 
 /**
@@ -98,6 +100,7 @@ export const CalendarDateInput = ({
     value,
     onChange,
     info,
+    invalid = false,
 }: CalendarDateInputProps) => {
     const id = useId()
     const CalendarInputComponent = useContext(CalendarInputContext)
@@ -114,6 +117,7 @@ export const CalendarDateInput = ({
                 type="text"
                 autoComplete="off"
                 placeholder={info.dateFormat}
+                aria-invalid={invalid || undefined}
                 value={shown}
                 onChange={(event) => report(event.target.value)}
             />
@@ -134,6 +138,7 @@ export const CalendarDateInput = ({
                 format={info.dateFormat}
                 date={shown}
                 inputWidth="100%"
+                error={invalid}
                 onDateSelect={(selection) =>
                     report(selection?.calendarDateString)
                 }

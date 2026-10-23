@@ -21,13 +21,19 @@ const optionalNumber = z
     .nullish()
     .transform((value) => value ?? undefined)
 
+/** A number the API omits (or sends as null) when it is 0. */
+const numberOrZero = z
+    .number()
+    .nullish()
+    .transform((value) => value ?? 0)
+
 const AccessSchema = z.looseObject({
     data: z.looseObject({ read: z.boolean(), write: z.boolean() }),
 })
 
 const AttributeValueSchema = z.looseObject({
     attribute: z.string(),
-    value: z.string().optional(),
+    value: optionalText,
 })
 
 const NoteSchema = z.looseObject({
@@ -48,7 +54,7 @@ const NoteSchema = z.looseObject({
 /** An empty data value comes back as `{ dataElement }`, with no `value` key. */
 const DataValueSchema = z.looseObject({
     dataElement: z.string(),
-    value: z.string().optional(),
+    value: optionalText,
 })
 
 const EventSchema = z.looseObject({
@@ -129,20 +135,20 @@ const AttributeMetadataSchema = FieldMetadataSchema.extend({ unique: flag })
 
 const StageDataElementSchema = z.looseObject({
     displayInReports: flag,
-    sortOrder: z.number().default(0),
+    sortOrder: numberOrZero,
     dataElement: FieldMetadataSchema,
 })
 
 const StageSchema = z.looseObject({
     id: z.string(),
     displayName: z.string(),
-    sortOrder: z.number().default(0),
+    sortOrder: numberOrZero,
     repeatable: flag,
     autoGenerateEvent: flag,
     openAfterEnrollment: flag,
     generatedByEnrollmentDate: flag,
     reportDateToUse: optionalText,
-    minDaysFromStart: z.number().default(0),
+    minDaysFromStart: numberOrZero,
     standardInterval: optionalNumber,
     hideDueDate: flag,
     blockEntryForm: flag,
@@ -158,7 +164,7 @@ const StageSchema = z.looseObject({
 const ProgramAttributeSchema = z.looseObject({
     displayInList: flag,
     mandatory: flag,
-    sortOrder: z.number().default(0),
+    sortOrder: numberOrZero,
     trackedEntityAttribute: AttributeMetadataSchema,
 })
 
@@ -176,8 +182,8 @@ const ProgramSchema = z.looseObject({
     incidentDateLabel: optionalText,
     displayIncidentDateLabel: optionalText,
     featureType: optionalText,
-    completeEventsExpiryDays: z.number().default(0),
-    expiryDays: z.number().default(0),
+    completeEventsExpiryDays: numberOrZero,
+    expiryDays: numberOrZero,
     expiryPeriodType: optionalText,
     access: AccessSchema,
     trackedEntityType: z

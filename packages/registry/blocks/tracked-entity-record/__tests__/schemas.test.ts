@@ -64,6 +64,92 @@ describe('response schemas', () => {
         expect(person.enrollments).toEqual([])
     })
 
+    it('accepts null for a stage, data value or attribute that has none', () => {
+        const stage = {
+            id: 'S',
+            displayName: 'Stage',
+            sortOrder: null,
+            minDaysFromStart: null,
+            access: { data: { read: true, write: true } },
+            programStageDataElements: [
+                {
+                    sortOrder: null,
+                    dataElement: {
+                        id: 'D',
+                        displayName: 'Weight',
+                        valueType: 'NUMBER',
+                    },
+                },
+            ],
+        }
+        const programs = ProgramsResponseSchema.parse({
+            programs: [
+                {
+                    id: 'P',
+                    displayName: 'Program',
+                    programType: 'WITH_REGISTRATION',
+                    accessLevel: 'OPEN',
+                    expiryDays: null,
+                    completeEventsExpiryDays: null,
+                    access: { data: { read: true, write: true } },
+                    programStages: [stage],
+                    programTrackedEntityAttributes: [
+                        {
+                            sortOrder: null,
+                            trackedEntityAttribute: {
+                                id: 'A',
+                                displayName: 'Name',
+                                valueType: 'TEXT',
+                            },
+                        },
+                    ],
+                },
+            ],
+        })
+        const [program] = programs.programs
+        expect(program?.programStages[0]?.sortOrder).toBe(0)
+        expect(program?.programStages[0]?.minDaysFromStart).toBe(0)
+        expect(
+            program?.programStages[0]?.programStageDataElements[0]?.sortOrder
+        ).toBe(0)
+        expect(program?.programTrackedEntityAttributes[0]?.sortOrder).toBe(0)
+
+        const person = PersonResponseSchema.parse({
+            ...readFixture('v43', 'person-P3.json'),
+            attributes: [{ attribute: 'A', value: null }],
+            enrollments: [
+                {
+                    enrollment: 'E',
+                    program: 'P',
+                    status: 'ACTIVE',
+                    orgUnit: 'O',
+                    enrolledAt: '2026-01-01T00:00:00.000',
+                    createdAt: '2026-01-01T00:00:00.000',
+                    updatedAt: '2026-01-01T00:00:00.000',
+                    attributes: [{ attribute: 'A', value: null }],
+                    events: [
+                        {
+                            event: 'V',
+                            program: 'P',
+                            programStage: 'S',
+                            enrollment: 'E',
+                            status: 'ACTIVE',
+                            orgUnit: 'O',
+                            createdAt: '2026-01-01T00:00:00.000',
+                            updatedAt: '2026-01-01T00:00:00.000',
+                            dataValues: [{ dataElement: 'D', value: null }],
+                        },
+                    ],
+                },
+            ],
+        })
+        expect(person.attributes[0]?.value).toBeUndefined()
+        expect(person.enrollments[0]?.attributes[0]?.value).toBeUndefined()
+        expect(
+            person.enrollments[0]?.events[0]?.dataValues[0]?.value
+        ).toBeUndefined()
+    })
+
     it('rejects a person without a tracked entity type', () => {
         const result = PersonResponseSchema.safeParse({
             trackedEntity: 'X',

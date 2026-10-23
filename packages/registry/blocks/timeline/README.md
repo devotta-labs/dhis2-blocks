@@ -97,15 +97,26 @@ To limit it to some programs, pass `programs: ['IpHINAT79UW', 'ur1Edk5Oe2n']`. W
 | `useAttributeChangeEntries` | `tracker/trackedEntities/{uid}/changeLogs` once per program, 100 rows a page, up to 500     |
 | all three                   | `programs/{id}` once per program (cached for the session), and one `organisationUnits` call |
 
-`useTrackedEntityHistory` is those three hooks put together with `mergeHistory`. Compose them yourself to leave a kind out:
+With N programs that is 3N + 2 requests, plus a request for each further changelog page, so the count grows with every program the person is enrolled in. Pass `programs` to keep it down.
+
+`useTrackedEntityHistory` is those three hooks put together. Events and enrollments show together; attribute changes don't hold them back, since a changelog is read a page at a time and is often the slowest request. They join the history when they arrive. Compose the hooks yourself to leave a kind out, or to change what waits for what:
 
 ```ts
 const events = useEventEntries({ trackedEntity, timeField: 'occurredAt' })
 const enrollments = useEnrollmentEntries({ trackedEntity })
+const changes = useAttributeChangeEntries({ trackedEntity })
+
+// Show events and enrollments together, without changes.
 const history = mergeHistory<HistoryEntryData>(events, enrollments)
+// Or wait for all three before showing anything.
+const everything = mergeHistory<HistoryEntryData>(events, enrollments, changes)
+// Or show events first and add the rest as each arrives.
+const eventsFirst = addWhenReady<HistoryEntryData>(events, enrollments, changes)
 ```
 
-Every hook returns `{ entries, status, notices, isFetching, refetch }`. `status` stays `pending` until every request has answered once, so entries never jump around on the first load. After that it never goes back: a retry, a refetch or a newly enrolled program fills in while what is on screen stays. A part that fails becomes a notice with a Retry, and the rest of the history still shows. `status` is `error` only when everything failed.
+`mergeHistory` makes a new `entries` array on every render. Wrap it in `useMemo` on the parts' `entries` (as `useTrackedEntityHistory` does) if the timeline regrouping each render shows up in a profile.
+
+Every hook returns `{ entries, status, notices, isFetching, refetch }`. A hook's `status` stays `pending` until every one of its requests has answered once, so its entries never jump around on the first load. After that it never goes back: a retry, a refetch or a newly enrolled program fills in while what is on screen stays. A part that fails becomes a notice with a Retry, and the rest of the history still shows. `status` is `error` only when everything failed.
 
 ### Choosing what matters
 

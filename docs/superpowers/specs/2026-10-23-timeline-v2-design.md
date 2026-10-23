@@ -67,7 +67,7 @@ server-paged source, built by the host with `useInfiniteQuery`.
 - Deciding what counts as "important". Hosts filter the array (`entries.filter(...)`). The demo shows a kind filter.
 - Event programs without registration as a shipped source.
 - Virtualisation.
-- Detecting whether change logging is enabled on the server (see Decision 6).
+- Detecting whether change logging is enabled on the server (see Decision 7).
 
 ## Anti-goals
 
@@ -98,10 +98,13 @@ These facts set the request plan:
   without `program`.
 - **Events**: one request per program (`useQueries`), all statuses, `order=<timeField>:desc,event:asc`,
   `pageSize=cap+1`.
-- **Attribute changes**: one request per program, de-duplicated on `createdAt + attribute + type`, because the type's
-  attributes repeat in every program's answer.
+- **Attribute changes**: one request per program, read 100 rows a page up to `maxRows` (500), and de-duplicated on
+  `createdAt + username + field`, because the type's attributes repeat in every program's answer.
 - **Metadata**: one `programs/{id}` request per program. **Org unit names**: one batched request for every org unit
   on the person's events and in their org-unit-typed values.
+
+With N programs that is 3N + 2 requests (more when a changelog runs past one page), and the count grows with every
+program the person is enrolled in. Pass `programs` to limit it.
 
 ## Shapes
 
@@ -233,13 +236,13 @@ interface HistoryResult<T> {
     refetch(): void
 }
 
-useTrackedEntityPrograms({ trackedEntity, programs? })   // the enrollments request, and the program ids it implies
 useEventEntries({ trackedEntity, programs?, timeField, cap = 500 }): HistoryResult<EventEntryData>
 useEnrollmentEntries({ trackedEntity, programs? }): HistoryResult<MilestoneEntryData | NoteEntryData>
 useAttributeChangeEntries({ trackedEntity, programs? }): HistoryResult<ChangeEntryData>
 useTrackedEntityHistory({ trackedEntity, programs?, timeField, cap? }): HistoryResult<HistoryEntryData>  // all of the above
 useEventChangelog(event, { enabled, stage? }): { status, saves, truncated }
 mergeHistory<T>(...results): HistoryResult<T>          // pure: concatenates entries and notices, combines status
+addWhenReady<T>(history, ...parts): HistoryResult<T>   // pure: like mergeHistory, but doesn't wait for `parts`
 useProgramInfo(programIds), useOrgUnitNames(ids)          // the lookups the hooks share, for hosts naming their own events
 ```
 
@@ -292,7 +295,10 @@ const { entries, hasMore, showMore } = useShowMore(history.entries)
    (`TimelineEventNotes`). This is deliberate: an event note belongs to the visit.
 5. **Status is a prop on `Timeline`.** It is derived by the hook (`mergeHistory`): `pending` while any first load is
    pending and nothing is shown yet, `error` when every part failed, otherwise `success`, with failed parts listed as
-   notices that carry `retry`.
+   notices that carry `retry`. `useTrackedEntityHistory` waits for events and enrollments together, but not for
+   attribute changes (`addWhenReady`): the changelog is read a page at a time per program, is often the slowest
+   request, and matters least, so its entries join the history when they arrive. A host that wants every part at once
+   composes the hooks with `mergeHistory` alone.
 6. **Once shown, a history stays shown.** Each hook latches after its first full answer for a record: a retry of a
    failed part, a refetch or a newly enrolled program never puts it back to `pending`. A query that failed and is
    being retried counts as failed, not pending (TanStack Query resets it to `pending`). New programs, and their
@@ -301,7 +307,14 @@ const { entries, hasMore, showMore } = useShowMore(history.entries)
 7. **Change logging may be off.** If `enableChangeLog` (2.43) or `allowAuditLog` (2.41) is off, attribute and event
    changes are simply absent. The block says so in the README and doesn't guess. An EMR host that needs it should
    check the server settings, not the timeline.
-8. **The generic item still needs `calendar`.** Day grouping must follow the system calendar, so `Timeline` keeps a
+8. **Entries carry metadata, not only names.** An event entry holds its `ProgramInfo` and `StageInfo` (shared
+   references, one per program) and one `orgUnitNames` map shared by every entry, rather than flattened strings.
+   `TimelineEventValues({ dataElementIds })` picks any of the stage's data elements, with their labels and value
+   types, so the entry needs the stage's metadata, not a fixed `values[]`. Org-unit-typed values need the names map
+   for the same reason. The cost is that entries aren't plain JSON and a host building its own event entries uses
+   `eventEntry` with `useProgramInfo` and `useOrgUnitNames` instead of filling in strings. Nothing needs entries to be
+   serialisable, and `orgUnitName`, the one name every event shows, is resolved onto the entry.
+9. **The generic item still needs `calendar`.** Day grouping must follow the system calendar, so `Timeline` keeps a
    required `calendar` and the `dhis2-value-display` dependency, even for static data. `'iso8601'` is the plain
    choice for non-DHIS2 data.
 
@@ -311,7 +324,8 @@ const { entries, hasMore, showMore } = useShowMore(history.entries)
   milestones, notes, change saves, resolution with and without metadata), changelog de-duplication across programs,
   and event status derivation. These run against the recorded 2.41–2.43 fixtures.
 - **Hooks (browser):** a mocked engine with two programs. One program's events request fails (notice with retry, the
-  rest still shown). The changelog 404s (unsupported notice). The cap is exceeded (notice). `refetch` and
+  rest still shown). The changelog 404s (unsupported notice). A slow changelog doesn't hold back events and
+  enrollments. A save shared by two programs' changelogs shows once. The cap is exceeded (notice). `refetch` and
   invalidation of `timelineKeys.root` refresh the history.
 - **Parts (browser):** each entry part renders outside a `Timeline` under `TimelineMetaProvider`. `TimelineHistoryEntry`
   dispatches every kind. `TimelineShowMore` moves focus to the first new entry. axe passes on the case history.

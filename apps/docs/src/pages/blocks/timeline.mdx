@@ -25,7 +25,9 @@ calendar.
 in, or only the ones you pass as `programs`. It returns `entries`, a `status`,
 `notices` and `refetch`, and is a plain TanStack Query hook: your
 `QueryClient` defaults apply, and invalidating `timelineKeys.root` refreshes it
-after your app saves something.
+after your app saves something. Events and enrollments show together; attribute
+changes join them when they arrive, since the changelog is often the slowest
+request.
 
 `timeField` has no default. It decides where a past event sits (`occurredAt`,
 `completedAt` and so on), and programs differ in which date they treat as the

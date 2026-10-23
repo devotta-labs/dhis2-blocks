@@ -678,6 +678,21 @@
                     "path": "packages/registry/blocks/tracked-entity-finder/index.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/rules/__fixtures__/program.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/rules/__fixtures__/program.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/rules/programModel.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/rules/programModel.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/rules/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/rules/types.ts"
                 }
             ],
             "docs": "Wrap the finder in FinderProvider with a program, then compose FinderForm with FinderField inputs and a FinderSubmit button, and show matches with FinderResults. See the tracked entity finder docs page for the full list of parts, hooks and examples."

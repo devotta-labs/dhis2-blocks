@@ -4,7 +4,7 @@ import {
     QueryClient,
     QueryClientProvider,
 } from '@tanstack/react-query'
-import { Component, type ComponentProps, type ReactNode } from 'react'
+import React, { Component, type ComponentProps, type ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
 import { z } from 'zod'
 import {

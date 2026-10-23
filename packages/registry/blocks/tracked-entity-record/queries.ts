@@ -74,6 +74,7 @@ export const retryRecordRequest = (failureCount: number, error: Error) => {
 export const personQuery = (client: RecordClient, id: string) =>
     queryOptions({
         queryKey: trackedEntityRecordKeys.person(id),
+        retry: retryRecordRequest,
         queryFn: ({ signal }) =>
             run(
                 { client, request: personRequest(id), signal },
@@ -84,6 +85,7 @@ export const personQuery = (client: RecordClient, id: string) =>
 export const relationshipsQuery = (client: RecordClient, id: string) =>
     queryOptions({
         queryKey: trackedEntityRecordKeys.relationships(id),
+        retry: retryRecordRequest,
         queryFn: ({ signal }) =>
             run(
                 { client, request: relationshipsRequest(id), signal },
@@ -97,6 +99,7 @@ export const programsQuery = (
 ) =>
     queryOptions({
         queryKey: trackedEntityRecordKeys.programs(ids),
+        retry: retryRecordRequest,
         queryFn: ({ signal }) =>
             run(
                 { client, request: programsRequest(ids), signal },
@@ -108,6 +111,7 @@ export const programsQuery = (
 export const trackedEntityTypeQuery = (client: RecordClient, id: string) =>
     queryOptions({
         queryKey: trackedEntityRecordKeys.trackedEntityType(id),
+        retry: retryRecordRequest,
         queryFn: ({ signal }) =>
             run(
                 { client, request: trackedEntityTypeRequest(id), signal },
@@ -122,6 +126,7 @@ export const relationshipTypesQuery = (
 ) =>
     queryOptions({
         queryKey: trackedEntityRecordKeys.relationshipTypes(ids),
+        retry: retryRecordRequest,
         queryFn: ({ signal }) =>
             run(
                 { client, request: relationshipTypesRequest(ids), signal },
@@ -133,6 +138,7 @@ export const relationshipTypesQuery = (
 export const userScopesQuery = (client: RecordClient) =>
     queryOptions({
         queryKey: trackedEntityRecordKeys.userScopes(),
+        retry: retryRecordRequest,
         queryFn: ({ signal }) =>
             run(
                 { client, request: userScopesRequest(), signal },
@@ -147,6 +153,7 @@ export const orgUnitPathsQuery = (
 ) =>
     queryOptions({
         queryKey: trackedEntityRecordKeys.orgUnitPaths(ids),
+        retry: retryRecordRequest,
         queryFn: ({ signal }) =>
             run(
                 { client, request: orgUnitPathsRequest(ids), signal },

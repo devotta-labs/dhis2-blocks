@@ -119,6 +119,22 @@ describe('tracked entity record queries', () => {
         }
     })
 
+    it('every query uses retryRecordRequest', () => {
+        const client = recordingClient([])
+
+        for (const options of [
+            personQuery(client, 'p'),
+            relationshipsQuery(client, 'p'),
+            programsQuery(client, ['a']),
+            trackedEntityTypeQuery(client, 't'),
+            relationshipTypesQuery(client, ['a']),
+            userScopesQuery(client),
+            orgUnitPathsQuery(client, ['a']),
+        ]) {
+            expect(options.retry).toBe(retryRecordRequest)
+        }
+    })
+
     it('query keys match the key factory', () => {
         const client = recordingClient([])
 

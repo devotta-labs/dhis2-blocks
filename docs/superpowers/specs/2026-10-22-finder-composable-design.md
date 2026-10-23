@@ -1,8 +1,11 @@
 # Tracked Entity Finder v2 (composable): design
 
-Date: 2026-10-22 · Status: draft, awaiting approval
-Branch: `jc/feat/finder-composable`, based on `jc/feat/shared-ui` @ 52d5020 (the user's call, 2026-10-22). The v1
-work stays untouched on `jc/feat/tracked-entity-finder` @ b3359b9 and is not on this branch.
+Date: 2026-10-22, revised 2026-10-23 for master's conventions (§13) · Status: approved 2026-10-22; revision
+awaiting approval
+Branch: `jc/feat/finder-composable`, based on `master` @ b11e89e (shared-ui has landed there; rebased 2026-10-23).
+The v1 work stays untouched on `jc/feat/tracked-entity-finder` @ b3359b9 and is not on this branch.
+Composition rules: `.agents/skills/vercel-composition-patterns/` on master, and how master's blocks apply them
+(`sidebar`, `working-list`, `context-selector`). §13 lists what the revision changed and why.
 Research on what Capture and the server do: `patient-search-capture-research.md` in the session notes folder, and
 §5 of the v1 spec (`docs/superpowers/specs/2026-10-21-tracked-entity-finder-design.md`).
 
@@ -20,7 +23,7 @@ One real target is a country building a **narrow app for one program**, for exam
 
 Another is an app for two programs, where the user first picks HIV or TB and then sees the finder set up for that
 program. **The finder is agnostic to where the program comes from:** `program` is a plain prop, so it can be a
-constant, a dropdown above or outside the finder, a route parameter or anything else the host has. Each root
+constant, a dropdown above or outside the finder, a route parameter or anything else the host has. Each provider
 searches one program at a time; changing `program` resets values and results. Fields are composed per program
 (uids differ between programs), so a two-program app renders a different set of fields for each, typically by
 switching on the selected program.
@@ -32,26 +35,26 @@ rules unbreakable, invisibly.
 
 **Standalone from v1 (the user's instruction, 2026-10-22).** v2 is a fresh build, not a refactor of v1. v1 is a
 reference for the search rules, the edge cases its tests caught, and the DHIS2 quirks it learned (listed in §9),
-not a codebase to carry forward. The package `packages/blocks/tracked-entity-finder`, its registry entry in the
-root `registry.json`, the demo route, the e2e seed and the README section are all created fresh on this branch.
+not a codebase to carry forward. The block `packages/registry/blocks/tracked-entity-finder/`, the example block,
+the docs page and examples, and the docs e2e are all created fresh on this branch.
 Looking at v1 (`git show jc/feat/tracked-entity-finder:<path>`) or at working-list for a small helper (filter
 escaping, calendar ↔ ISO conversion, the 409 check) is fine; write what fits the new shape.
 
 ## 2. Goals
 
-1. One registry block, `tracked-entity-finder`, exporting a root, small composable parts and hooks for finding one
-   tracked entity in **one program** and handing it to `onSelect`.
+1. One registry block, `tracked-entity-finder`, exporting a provider, small composable parts and hooks for finding
+   one tracked entity in **one program** and handing it to `onSelect`.
 2. The developer chooses every field, by attribute uid. There is no auto-generated form anywhere.
-3. Results work with zero wiring (`<FinderResults />`), can be overridden part by part, or built fully headless.
-4. Search rules (§5) are enforced by the root at Search time, for every composition, with no way to loosen them.
+3. Results work with zero wiring (`<FinderResults />`), can be composed from their parts, or built fully headless.
+4. Search rules (§5) are enforced by the provider at Search time, for every composition, with no way to loosen them.
 5. Developer mistakes fail loudly with messages an AI agent can act on (§6).
 6. A separate, copy-and-edit **example block** (§8): ID search + "No ID?" fallback + results. A clear starting
    point, explicitly not the only way.
-7. Demo route, e2e and README rebuilt around that example.
+7. A docs page with live examples, docs e2e and a block README, built around that example.
 
 ## 3. Non-goals
 
-- Tracked entity type scope, and the Program/TET toggle. The root takes a program only.
+- Tracked entity type scope, and the Program/TET toggle. The provider takes a program only.
 - An auto-generated "all searchable attributes" form, ID fan-out across all unique attributes, the number query
   grammar and its read-backs, an end-user Exact/Range switch.
 - Cross-program fallback, registering or enrolling, break the glass, an org unit picker, offline search.
@@ -83,7 +86,8 @@ developer composed, per form.
    fields on older servers mean "no restriction" for those two things only. `maxTeiCountToReturn: 0` means no cap.
 2. **Only `searchable` attributes can be searched**, including unique ones (a unique attribute that is not
    `searchable` cannot be used; stricter than Capture, the user's earlier decision).
-3. **Each `<FinderForm>` is one search.** Its fields are the `FinderField`s / `useFinderField` calls inside it.
+3. **Each `<FinderForm>` is one search.** Its fields are the `FinderField`s, `FinderRangeField`s and field hooks
+   inside it.
    When the user presses Search in a form:
    - **A filled unique field searches alone**, with exactly one filter `uid:eq:value`, and that is enough on its
      own. Never `like`, `sw` or ranges for a unique attribute.
@@ -98,10 +102,10 @@ developer composed, per form.
    `DATETIME` exact means the whole day (`ge` start, `le` end); `AGE` searches by date of birth. Blocked
    operators are never sent; `minCharactersToSearch` applies to text; values are trimmed (not option codes) and
    `:`, `,`, `/` are escaped as on the server.
-5. **Ranges are opt-in by the developer, never an end-user switch (my call; please check).** `FinderField` takes
-   `range` for date, age, datetime and number attributes and then renders From–To; either side alone counts as
-   filled (as Capture). Without `range`, dates and numbers are a single exact input. Ranges are legitimate
-   DHIS2 search (Capture offers them), so this does not loosen anything.
+5. **Ranges are opt-in by the developer, never an end-user switch.** The developer composes `FinderRangeField`
+   (an explicit part, not a boolean prop, §13) for a date, age, datetime or number attribute; it renders
+   From–To and either side alone counts as filled (as Capture). `FinderField` on those types is a single exact
+   input. Ranges are legitimate DHIS2 search (Capture offers them), so this does not loosen anything.
 6. **Org units:** every request sends `orgUnitMode=ACCESSIBLE` and no `orgUnits`.
 7. **Cap and paging:** requests ask for totals; if `maxTeiCountToReturn > 0` and the total exceeds it, show "Too
    many matches. Add another detail." and **no rows**. A 409 `maxteicountreached` (status on the error or under
@@ -121,7 +125,9 @@ A form is checked as soon as program metadata is loaded. Problems:
 - A field uid that is not in the program, not `searchable`, of an unsupported value type, or whose operators are
   all blocked.
 - A form that can never search: no usable unique field and fewer usable non-unique fields than the minimum.
-- A `FinderField` / `useFinderField` outside a `FinderForm`, or a part outside the root.
+- `FinderRangeField` on an attribute that cannot be a range (unique, text, option, boolean, true-only), or the
+  same uid composed as both `FinderField` and `FinderRangeField` under one provider (they cannot share a value).
+- A field part or field hook outside a `FinderForm`, or any part outside `FinderProvider`.
 
 Each problem produces a message naming the program and listing its searchable attributes with names, uids and
 the unique flag, e.g.:
@@ -136,98 +142,134 @@ app ships, so a config error must not crash a production app. Instead:
   of the search; Search stays disabled if the form can no longer reach the rules.
 - In development builds the inline error shows the full message above; in production builds it shows a short
   "This search isn't set up correctly" and the full message goes to `console.error`.
-- Programmer errors that metadata cannot cause (a part outside the root, a field outside a form) throw, like any
-  React context misuse.
-- An empty root (no children) logs a development warning.
+- Programmer errors that metadata cannot cause (a part outside the provider, a field outside a form) throw, like
+  any React context misuse.
+- An empty provider (no children) logs a development warning.
 
-The README gives the single API call that lists a program's searchable attributes (and their unique flag,
+The README and docs page give the single API call that lists a program's searchable attributes (and their unique flag,
 value type, `displayInList`), so a developer or agent can pick uids before writing code.
 
-## 7. Public surface (decided parts, names my call)
+## 7. Public surface (decided parts; revised 2026-10-23, §13)
 
 ```tsx
-<Finder program="ART_PROGRAM_UID" onSelect={(person) => …}>
-  <FinderForm>                       {/* one search; rules apply to its fields */}
+<FinderProvider program="ART_PROGRAM_UID" onSelect={(person) => …}>
+  <FinderForm>                        {/* one search; rules apply to its fields */}
     <FinderField attribute="ART_NUMBER_UID" />
-    <FinderSubmit />                 {/* "Search"; disabled until the form can search */}
+    <FinderHint />                    {/* "Add 1 more detail to search", … */}
+    <FinderSubmit />                  {/* "Search"; disabled until the form can search */}
   </FinderForm>
-  <FinderResults />                  {/* zero-config results for the last search */}
-</Finder>
+  <FinderResults />                   {/* zero-config results for the last search */}
+</FinderProvider>
 ```
 
-**Root, `Finder`.** Props: `program` (uid), `onSelect(person)`, optional `client`, `children`. Renders only its
-children (like an empty `<Command/>`). Holds metadata, field values, the last submitted search and its results.
-Changing `program` resets everything. Naming (my call): parts are `Finder*`, matching the agreed names, while the
-package and registry item stay `tracked-entity-finder`.
+All names are `Finder*`; the block and registry item stay `tracked-entity-finder`. Every part that renders an
+element takes that element's native props and `className`, like master's blocks (`SidebarProps =
+ComponentPropsWithoutRef<'aside'>`).
+
+**Provider, `FinderProvider`.** Props: `program` (uid), `onSelect(person)`, optional `client`, `children`. It is
+the only place that knows how state is held: program metadata, field values, form registrations, the last
+submitted search, the page. It renders only its children, so any UI inside it (a dropdown, a dialog's buttons, a
+custom preview) can use the hooks. Changing `program` resets everything. Internally its context follows master's
+`{ state, actions, meta }` shape (as `SidebarProvider` does). **Deliberately not injectable:** the context is not
+exported and there is no way to supply another provider, because a swapped-in provider would be an escape hatch
+(§4); this is the one place the block departs from the "dependency-injectable state" rule, on purpose.
 
 **Form parts.**
 
-- `FinderForm`: a `<form>`; Enter submits. Groups the fields that form one search (§5.3). Several forms may share
-  one root (the ID form and the "No ID?" form); results always show the last submitted one, until the next
-  Search. Field values live in the root keyed by uid, so the same uid in two forms shares its value. **My call:**
-  the same uid composed with `range` in one place and without it in another is a developer error (§6), since the
-  two cannot share a value.
-- `FinderField attribute="uid"`: label + input chosen by value type (text, option select, yes/no select,
-  true-only checkbox, number, system-calendar date). Optional `label`, `description`, `placeholder`, `range`
-  (§5.5). Shows its own issue inline (too short, invalid number/date, reversed range).
-- `FinderSubmit`: submit button plus the live hint ("Add 1 more detail to search", "Searching by ART number
-  only"). Optional children replace the label.
+- `FinderForm` (`<form>` props): Enter submits. Groups the fields that form one search (§5.3). Several forms may
+  share one provider (the ID form and the "No ID?" form); results show the last submitted search until the next
+  one. Field values live in the provider keyed by uid, so the same uid in two forms shares its value.
+- `FinderField attribute="uid"`: label + exact input chosen by value type (text, option select, yes/no select,
+  true-only checkbox, number, system-calendar date). Optional `label`, `description`, `placeholder`. Shows its own
+  issue inline (too short, invalid number or date).
+- `FinderRangeField attribute="uid"`: label + From–To for date, age, datetime and number attributes. Same optional
+  props; also shows "reversed range".
+- `FinderHint`: the live hint for its form ("Add 1 more detail to search", "Searching by ART number only",
+  "Search by one ID at a time"); renders nothing when there is nothing to say. Separate from the button so the
+  developer places it.
+- `FinderSubmit` (button props): the submit button, disabled until the form can search. Children replace the
+  "Search" label.
 
-**Results parts.** All read root state; nothing to wire.
+**Results parts.** All read provider state; nothing to wire. Composition is explicit: what you compose is what
+renders, with no hidden fallbacks.
 
-- `FinderResults`: with no children, renders the default: a searching state, "No one found", "Too many matches.
-  Add another detail.", a request error, a list of rows and a pager. Default rows show the program's
-  `displayInList` attributes (IDs included) in metadata order, values formatted; each row is a keyboard-accessible
-  button that calls `onSelect`. **With children (my call):** it renders the children; the override parts below
-  register with it, and any state the developer did not override (searching, empty, too many, error) still shows
-  its default in place of the list, and the default pager follows the children unless a `FinderPagination` is
-  among them. So `<FinderResults><FinderList>{…}</FinderList></FinderResults>` customises rows only and keeps
-  every other default.
-- `FinderEmpty`, `FinderTooMany`, `FinderError`: optional overrides for those states (children = content).
-- `FinderList`: `children: (person) => ReactNode`; renders the current page.
-- `FinderItem person={person}`: the clickable, keyboard-accessible row; calls `onSelect(person)`.
-- `FinderValue person={person} attribute="uid"`: one value formatted by value type (option names,
+- `FinderResults` (`<div>` props): the results region (`aria-live`). With **no children** it renders the default
+  composition, exactly:
+  `<FinderSearching /><FinderEmpty /><FinderTooMany /><FinderError /><FinderList><FinderItem /></FinderList><FinderPagination />`.
+  With children it renders only the children.
+- `FinderSearching`, `FinderEmpty`, `FinderTooMany`, `FinderError`: each renders only in its state. Without
+  children each shows its default text ("Searching…", "No one found", "Too many matches. Add another detail.",
+  a request error); children replace it.
+- `FinderList` (`<ul>` props): renders its children once per person on the current page, each inside a person
+  context (`<li>`). Renders nothing unless there are results.
+- `FinderItem` (button props): the clickable, keyboard-accessible row for the current person; calls `onSelect`.
+  Without children it shows the program's `displayInList` attributes (IDs included) in metadata order, each as
+  label and formatted value. Children replace that.
+- `FinderValue attribute="uid"`: one value of the current person, formatted by value type (option names,
   system-calendar dates, yes/no). **Change from v1:** any attribute the API returned may be shown, not only
-  `displayInList` ones; the server only returns what the user may read, so this is the builder's call. A uid
-  outside the program's attributes shows the raw value.
-- `FinderPagination`: previous/next for the current results.
+  `displayInList` ones; the server only returns what the user may read. A uid outside the program's attributes
+  shows the raw value.
+- `FinderPagination`: previous/next for the current results; renders nothing when there is one page.
+
+Custom rows, for example:
+
+```tsx
+<FinderResults>
+  <FinderEmpty>No one with that ID. Check the card and try again.</FinderEmpty>
+  <FinderTooMany />
+  <FinderError />
+  <FinderList>
+    <FinderItem>
+      <FinderValue attribute={ART_NUMBER} /> · <FinderValue attribute={FIRST_NAME} />
+    </FinderItem>
+  </FinderList>
+  <FinderPagination />
+</FinderResults>
+```
 
 **Hooks (headless).**
 
-- `useFinderField(uid)` → `{ attribute: { label, valueType, unique, options? }, value, setValue, issue,
-  configError? }`. Must be inside a `FinderForm`; it registers the field there like `FinderField` does.
-- `useFinderSearch()` (inside a `FinderForm`) → `{ canSearch, missing, reason, submit }`.
+- `useFinderField(uid)` / `useFinderRangeField(uid)` → `{ attribute: { label, valueType, unique, options? }, value,
+  setValue, issue, problem? }`. Must be inside a `FinderForm`; they register the field there like the parts do.
+  Two hooks rather than an options flag, matching the two parts.
+- `useFinderSearch()` (inside a `FinderForm`) → `{ canSearch, missing, reason, searchingBy, submit }`.
 - `useFinderResults()` → `{ status: 'idle' | 'searching' | 'results' | 'empty' | 'too-many' | 'error', people,
   page, hasNext, hasPrevious, next(), previous(), select(person) }`.
+- `useFinderPerson()` (inside `FinderList`) → the current person, for custom row content (joining names is the
+  developer's call, §3).
 - `useFinderProgram()` → `{ status: 'loading' | 'ready' | 'error', name, searchableAttributes }` (read-only,
   frozen), for developers building their own labels or empty states.
 
 **Loading and errors before search (my call):** while program metadata loads, fields render disabled with a
-spinner in the form; a metadata request failure renders an error in each form and in `FinderResults`.
+spinner in the form; a metadata request failure renders an error in each form and in `FinderError`.
 
-**Person shape** (`onSelect`, `FinderList`, hooks): `{ trackedEntity, trackedEntityType, orgUnit, programOwner?,
-attributes: { [uid]: value } }`, as v1.
+**Person shape** (`onSelect`, `useFinderPerson`, `useFinderResults`): `{ trackedEntity, trackedEntityType, orgUnit,
+programOwner?, attributes: { [uid]: value } }`, as v1.
 
-**Text:** a `FinderTextProvider` (translate function, default `i18n.t`), keys in the `apps/web` catalog and
-`en.pot`, as other blocks do.
+**Text (revised):** parts use `i18n.t` directly with literal strings, as `sidebar` and `context-selector` do;
+custom text comes through children and props (composition), so there is no text provider. Strings are listed in
+an `apps/web` translation catalog (`trackedEntityFinderTranslationCatalog.ts`, like `sidebarTranslationCatalog.ts`)
+and `en.pot`.
 
 ## 8. Example block (decided: separate registry item)
 
-A second registry item, shadcn "blocks" style (like `login-01`): **`tracked-entity-finder-01`**, "Find a person by
-ID, with a 'No ID?' fallback". One readable component built only from the public parts:
+A second registry block, shadcn "blocks" style (like `login-01`): **`tracked-entity-finder-01`**, "Find a person by
+ID, with a 'No ID?' fallback", at `packages/registry/blocks/tracked-entity-finder-01/`. It imports the finder from
+`@/components/tracked-entity-finder`, so the registry build lists the finder as its registry dependency, as
+master does for any block importing another. One readable component built only from the public parts:
 
-- An ID form: `FinderField` for the unique ID + Search.
-- A "No ID?" link button under it (like "Forgot password?") that swaps to a second form, e.g. first name + date of
-  birth + Search, with a "Search by ID instead" link back.
+- An ID form: `FinderField` for the unique ID, `FinderHint`, `FinderSubmit`.
+- A "No ID?" link button under it (like "Forgot password?") that swaps to a second form (first name + date of
+  birth), with a "Search by ID instead" link back. Two explicit forms, not one form with a mode prop.
 - `<FinderResults />` below; selecting calls the component's `onSelect` prop.
-- The program and attribute uids are named constants at the top of the file with a comment: "Replace with your
-  program's uids; list them with <API call>". **My call:** the constants point at the e2e seed program (§10), so
-  the example runs as-is in this repo's demo and e2e, and the swap point is obvious.
+- The program and attribute uids are named constants at the top of the file, commented "Replace with your
+  program's uids" with the API call that lists them. **Revised (my call):** they point at the Sierra Leone demo
+  database, like every docs example on master, so the example runs on the docs stack and on public DHIS2 demo
+  servers. Which SL program: one with a searchable unique ID and searchable first name and date of birth,
+  confirmed against `pnpm docs:up` before writing the example (the TB program is the likely candidate).
 
 It must read as a well-made, very clear starting point (the user's requirement), commented where a developer or
-agent would edit, and the README says plainly that it is one way to compose the parts, not the only way. It
-depends on the `tracked-entity-finder` item through `registryDependencies`; where its source lives and how its
-imports resolve after install is the builder's call, as long as `pnpm registry:check` installs both cleanly.
+agent would edit, and the docs say plainly that it is one way to compose the parts, not the only way.
 
 ## 9. What v1 learned (reference, not code to keep)
 
@@ -244,21 +286,24 @@ Behaviour and edge cases the rewrite must still get right; v1's tests show concr
 - Abort in-flight searches when a new one starts; keep the previous page on screen while the next page loads.
 - Retry only operational failures (no retry on 4xx or schema errors).
 
-## 10. Demo, e2e, README
+## 10. Docs, e2e, README (revised 2026-10-23, §13)
 
-- **Demo** `#/tracked-entity-finder`: renders the example block as-is (no program picker, no scope toggle), plus a
-  "Selected" panel showing what `onSelect` returned. **My call:** it runs against the seeded e2e stack only
-  (`pnpm e2e:up 43`, as the other demos are run); the README says so and points at the uid constants to try it
-  elsewhere. Add the route lazily in `AppWrapper.tsx` with a footer link in `AppShell`, like the other demos.
-- **e2e seed:** a new seed program (`e2e/metadata/tracked-entity-finder-*.json`, wired into
-  `scripts/e2e/seed-metadata.sh`) telling the HIV-style story (unique, searchable ID; first name;
-  date of birth; a couple of other attributes, one non-searchable and one unique-but-not-searchable for the
-  negative cases; min 2; cap 5) with enough people to hit "too many". Exact data is the builder's call.
-- **e2e spec:** find by ID and select; "No ID?" swap and search by first name + date of birth; Search disabled
-  until the minimum; too many matches shows no rows; no serious axe violations.
-- **README** (root section + package README): the idea in one paragraph; the API call to list searchable
-  attributes; the rules in plain words; the parts and hooks; three short recipes (zero-config results, custom
-  rows with `FinderList`/`FinderItem`/`FinderValue`, fully headless); the example block as a starting point.
+Master moved demos into the docs app (`apps/docs`), with live examples run against the docs stack, so:
+
+- **Docs page** `apps/docs/src/pages/blocks/tracked-entity-finder.mdx`, linked from `apps/docs/src/navigation.ts`,
+  in the shape of the other block pages: the example first, install command, then sections: listing a program's
+  searchable attributes (the API call), the rules in plain words, forms and fields, results (zero-config,
+  composed, headless), a program from a dropdown, and setup errors.
+- **Docs examples** in `apps/docs/src/examples/tracked-entity-finder/`, registered in `examples/registry.ts`
+  (`live: true`): `FindPerson` (the example block's composition), `CustomRows` (composed results), and
+  `ProgramPicker` (HIV/TB-style switch: `program` from a select above the finder, a field set per program).
+- **No `apps/web` route and no custom e2e seed** (my call): master keeps per-block demos in the docs app, and the
+  rule edge cases (minimum, cap, too many, 409) are covered by browser tests with fixtures (§11).
+- **Docs e2e** `e2e/specs-docs/tracked-entity-finder.spec.ts` against the live examples: find by ID and select;
+  "No ID?" swap and search by first name + date of birth; Search disabled until the minimum; no serious axe
+  violations.
+- **Block README** (`packages/registry/blocks/tracked-entity-finder/README.md`, like context-selector's) and the
+  `block.json` `docs` string: what it is, the parts, and a pointer to the docs page.
 
 ## 11. Testing
 
@@ -267,12 +312,13 @@ Behaviour and edge cases the rewrite must still get right; v1's tests show concr
   choice with preferred/blocked, escaping, datetime whole day, cap total, 0 = no cap, 409 both shapes, frozen
   outputs, re-check of registered uids).
 - Browser tests (vitest browser project) on the parts: field per value type, Submit gating and hints, two forms
-  in one root, default results states, overrides, `FinderItem` keyboard select, pagination, config error
+  under one provider, the default results composition, composed results, `FinderItem` keyboard select, pagination, config error
   rendering in dev and prod modes.
 - A browser test of the example block against fixture metadata.
-- Type test on the public surface: no rule-override props or hook options.
-- Registry manifest test covering both items; root `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm
-  registry:check` green; `pnpm e2e:43` green when Docker is available.
+- Type test on the public surface: no rule-override props or hook options, no boolean mode props.
+- Root `pnpm lint` (including master's anti-slop rules), `pnpm typecheck`, `pnpm test`, `pnpm registry:check`
+  (generated `registry.json` up to date, both items install) green; `pnpm docs:e2e` green when Docker is
+  available.
 
 ## 12. Left to the builder
 
@@ -280,4 +326,23 @@ Behaviour and edge cases the rewrite must still get right; v1's tests show concr
   only way to build a request.
 - Visual details within the existing `ui` primitives; default row layout.
 - Exact wording of hints and errors, within the meaning above.
-- Seed data details.
+- Which Sierra Leone program the examples use, within §8.
+
+## 13. Revision 2026-10-23: master's conventions
+
+The user asked to align the spec with what has merged to master. Changes, with the rule each follows:
+
+| Change | Why |
+| --- | --- |
+| Based on `master`; block at `packages/registry/blocks/tracked-entity-finder/` with `block.json`; imports `@/components/dhis2/ui/*`; `registry.json` generated by `pnpm registry:write` | master collapsed the registry into one package (#46) |
+| Root renamed `Finder` → `FinderProvider`; it holds all state and renders only children | `state-lift-state`, `state-decouple-implementation`; matches `SidebarProvider` |
+| Internal context is `{ state, actions, meta }`, but not injectable | `state-context-interface`; injection would be an escape hatch (§4) |
+| `FinderField range` → separate `FinderRangeField`; `useFinderField(uid, { range })` → `useFinderRangeField(uid)` | `architecture-avoid-boolean-props`, `patterns-explicit-variants` |
+| Hint split from `FinderSubmit` into `FinderHint` | `architecture-compound-components`: one job per part, placed by the developer |
+| `FinderList` render function → children rendered per person with `useFinderPerson()`; `FinderItem`/`FinderValue` read the person from context instead of a `person` prop | `patterns-children-over-render-props` |
+| Results: explicit composition. `<FinderResults />` alone renders a fixed default composition; with children only what is composed renders (no registration or hidden fallbacks); new `FinderSearching` part | `architecture-compound-components`: no hidden conditionals |
+| Parts take native element props and `className` | how master's blocks expose parts |
+| Text provider dropped; `i18n.t` in parts, custom text through children | master's newer blocks (`sidebar`, `context-selector`) |
+| Demo route + HIV e2e seed → docs page, live docs examples on Sierra Leone data, docs e2e | master moved demos to `apps/docs` |
+| Example block imports `@/components/tracked-entity-finder` | how master's registry build links blocks |
+

@@ -119,7 +119,7 @@ describe('tracked entity record queries', () => {
         }
     })
 
-    it('every query uses retryRecordRequest', () => {
+    it('every query uses retryRecordRequest and never throws to a boundary', () => {
         const client = recordingClient([])
 
         for (const options of [
@@ -132,6 +132,8 @@ describe('tracked entity record queries', () => {
             orgUnitPathsQuery(client, ['a']),
         ]) {
             expect(options.retry).toBe(retryRecordRequest)
+            // A host default `throwOnError: true` must not reach the record.
+            expect(options.throwOnError).toBe(false)
         }
     })
 

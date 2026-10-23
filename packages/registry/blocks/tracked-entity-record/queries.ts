@@ -26,7 +26,11 @@ import {
     UserScopesResponseSchema,
 } from './schemas'
 
-/** Metadata changes rarely: 30 minutes. Tracker queries use the host's defaults. */
+/**
+ * Metadata changes rarely: 30 minutes. Tracker queries use the host's defaults,
+ * except `retry` and `throwOnError`: the record reports its own failures (an
+ * unavailable person is a state, not an error boundary).
+ */
 export const METADATA_STALE_TIME = 30 * 60_000
 
 const MAX_RETRIES = 2
@@ -75,6 +79,7 @@ export const personQuery = (client: RecordClient, id: string) =>
     queryOptions({
         queryKey: trackedEntityRecordKeys.person(id),
         retry: retryRecordRequest,
+        throwOnError: false,
         queryFn: ({ signal }) =>
             run(
                 { client, request: personRequest(id), signal },
@@ -86,6 +91,7 @@ export const relationshipsQuery = (client: RecordClient, id: string) =>
     queryOptions({
         queryKey: trackedEntityRecordKeys.relationships(id),
         retry: retryRecordRequest,
+        throwOnError: false,
         queryFn: ({ signal }) =>
             run(
                 { client, request: relationshipsRequest(id), signal },
@@ -100,6 +106,7 @@ export const programsQuery = (
     queryOptions({
         queryKey: trackedEntityRecordKeys.programs(ids),
         retry: retryRecordRequest,
+        throwOnError: false,
         queryFn: ({ signal }) =>
             run(
                 { client, request: programsRequest(ids), signal },
@@ -112,6 +119,7 @@ export const trackedEntityTypeQuery = (client: RecordClient, id: string) =>
     queryOptions({
         queryKey: trackedEntityRecordKeys.trackedEntityType(id),
         retry: retryRecordRequest,
+        throwOnError: false,
         queryFn: ({ signal }) =>
             run(
                 { client, request: trackedEntityTypeRequest(id), signal },
@@ -127,6 +135,7 @@ export const relationshipTypesQuery = (
     queryOptions({
         queryKey: trackedEntityRecordKeys.relationshipTypes(ids),
         retry: retryRecordRequest,
+        throwOnError: false,
         queryFn: ({ signal }) =>
             run(
                 { client, request: relationshipTypesRequest(ids), signal },
@@ -139,6 +148,7 @@ export const userScopesQuery = (client: RecordClient) =>
     queryOptions({
         queryKey: trackedEntityRecordKeys.userScopes(),
         retry: retryRecordRequest,
+        throwOnError: false,
         queryFn: ({ signal }) =>
             run(
                 { client, request: userScopesRequest(), signal },
@@ -154,6 +164,7 @@ export const orgUnitPathsQuery = (
     queryOptions({
         queryKey: trackedEntityRecordKeys.orgUnitPaths(ids),
         retry: retryRecordRequest,
+        throwOnError: false,
         queryFn: ({ signal }) =>
             run(
                 { client, request: orgUnitPathsRequest(ids), signal },

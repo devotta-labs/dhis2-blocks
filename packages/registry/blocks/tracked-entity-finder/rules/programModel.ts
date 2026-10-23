@@ -91,31 +91,55 @@ const textOperatorOf = (
     return TEXT_OPERATORS.find((operator) => !blocked.has(operator))
 }
 
-/** Whether at least one operator this attribute would send is allowed. */
-const canSend = (
-    kind: FieldKind,
-    unique: boolean,
+/** The kinds a `FinderRangeField` can search, when not unique. */
+export const RANGE_KINDS: ReadonlySet<FieldKind> = new Set([
+    'number',
+    'date',
+    'dateTime',
+])
+
+type OperatorSource = Pick<FinderAttribute, 'kind' | 'unique' | 'textOperator'>
+
+/** The operators a field of this kind and match sends; all must be allowed. */
+const operatorsFor = (
+    attribute: OperatorSource,
+    match: 'exact' | 'range'
+): readonly (SearchOperator | undefined)[] => {
+    if (match === 'range' || attribute.kind === 'dateTime') {
+        return attribute.unique ? ['eq'] : ['ge', 'le']
+    }
+    if (attribute.kind === 'text' && !attribute.unique) {
+        return [attribute.textOperator]
+    }
+    return ['eq']
+}
+
+/** Whether a match sends only operators that are allowed. */
+export const canSendMatch = (
+    attribute: OperatorSource,
     blocked: BlockedOperators,
-    textOperator: FinderAttribute['textOperator']
+    match: 'exact' | 'range'
+): boolean =>
+    operatorsFor(attribute, match).every(
+        (operator) => operator !== undefined && !blocked.has(operator)
+    )
+
+/**
+ * Whether some field can search this attribute: the exact match, or the range
+ * match where the kind allows one. The same check judges composed fields.
+ */
+const canSend = (
+    attribute: OperatorSource,
+    blocked: BlockedOperators
 ): boolean => {
-    if (kind === 'unsupported') {
+    if (attribute.kind === 'unsupported') {
         return false
     }
-    if (unique) {
-        return !blocked.has('eq')
-    }
-    switch (kind) {
-        case 'text':
-            return textOperator !== undefined
-        case 'number':
-        case 'date':
-        case 'dateTime':
-            return (
-                !blocked.has('eq') || !blocked.has('ge') || !blocked.has('le')
-            )
-        default:
-            return !blocked.has('eq')
-    }
+    const rangeable = !attribute.unique && RANGE_KINDS.has(attribute.kind)
+    return (
+        canSendMatch(attribute, blocked, 'exact') ||
+        (rangeable && canSendMatch(attribute, blocked, 'range'))
+    )
 }
 
 const toAttribute = (meta: AttributeMetadata): FinderAttribute => {
@@ -140,7 +164,7 @@ const toAttribute = (meta: AttributeMetadata): FinderAttribute => {
         minCharacters: meta.minCharactersToSearch,
         usable:
             meta.searchable &&
-            canSend(kind, meta.unique, blocked, textOperator),
+            canSend({ kind, unique: meta.unique, textOperator }, blocked),
         ...(meta.options && {
             options: Object.freeze(
                 meta.options.map(({ code, name }) =>

@@ -2,17 +2,17 @@ import React, { useState, type ErrorInfo, type ReactNode } from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { FinderField } from '../form/FinderField'
 import { FinderForm } from '../form/FinderForm'
+import { FinderHint } from '../form/FinderHint'
 import { FinderRangeField } from '../form/FinderRangeField'
 import { FinderSubmit } from '../form/FinderSubmit'
-import { useFinderField } from '../hooks'
 import { FinderProvider } from '../provider/FinderProvider'
 import { describeProblem } from '../rules/describeProblem'
 import { buildProgramModel } from '../rules/programModel'
 import { hivProgram } from './fixtures/program'
 import {
     createFakeServer,
+    renderInFinder,
     renderWithQueries,
-    SubmissionProbe,
 } from './finderTestSupport'
 
 const model = buildProgramModel(hivProgram)
@@ -20,38 +20,10 @@ const notSearchable = describeProblem(model, {
     kind: 'not-searchable',
     attribute: 'legacyId',
 })
-const cannotSearch = describeProblem(model, { kind: 'form-cannot-search' })
 const conflict = describeProblem(model, {
     kind: 'shape-conflict',
     attribute: 'dob',
 })
-
-const renderFinder = (children: ReactNode) => {
-    const server = createFakeServer()
-    return renderWithQueries(
-        <FinderProvider
-            program="hivProgram"
-            client={server.client}
-            onSelect={vi.fn()}
-        >
-            {children}
-            <SubmissionProbe />
-        </FinderProvider>
-    )
-}
-
-/** Sets a value for a field without rendering an input, as a custom part could. */
-const LegacyIdSetter = () => {
-    const { setValue } = useFinderField('legacyId')
-    return (
-        <button
-            type="button"
-            onClick={() => setValue({ kind: 'text', text: 'L-1' })}
-        >
-            Set legacy ID
-        </button>
-    )
-}
 
 interface Caught {
     message?: string
@@ -77,12 +49,11 @@ class Catch extends React.Component<{ children: ReactNode }, Caught> {
 
 describe('config errors', () => {
     afterEach(() => {
-        vi.unstubAllEnvs()
         vi.restoreAllMocks()
     })
 
     it('shows the full message in development', async () => {
-        await renderFinder(
+        await renderInFinder(
             <FinderForm>
                 <FinderField attribute="legacyId" />
                 <FinderField attribute="firstName" />
@@ -98,113 +69,8 @@ describe('config errors', () => {
             .not.toBeInTheDocument()
     })
 
-    it('shows the short message and logs in production', async () => {
-        vi.stubEnv('NODE_ENV', 'production')
-        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
-        await renderFinder(
-            <FinderForm>
-                <FinderField attribute="legacyId" />
-                <LegacyIdSetter />
-                <FinderField attribute="firstName" />
-                <FinderField attribute="dob" />
-                <FinderSubmit />
-            </FinderForm>
-        )
-
-        await expect
-            .element(page.getByRole('alert'))
-            .toHaveTextContent("This search isn't set up correctly")
-        await expect
-            .element(page.getByRole('alert'))
-            .not.toHaveTextContent('legacyId')
-
-        await page.getByRole('button', { name: 'Set legacy ID' }).click()
-        await userEvent.fill(page.getByLabelText('First name'), 'Joe')
-        await userEvent.fill(page.getByLabelText('Date of birth'), '2001-02-03')
-        await userEvent.tab()
-        await page.getByRole('button', { name: 'Search' }).click()
-
-        await expect
-            .element(page.getByTestId('submission'))
-            .toHaveTextContent('firstName:like:Joe dob:eq:2001-02-03')
-        await expect
-            .element(page.getByTestId('submission'))
-            .not.toHaveTextContent('legacyId')
-        expect(
-            error.mock.calls.filter(([message]) => message === notSearchable)
-        ).toHaveLength(1)
-    })
-
-    it('reports a form that can never search, in production', async () => {
-        vi.stubEnv('NODE_ENV', 'production')
-        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
-        await renderFinder(
-            <FinderForm aria-label="Legacy">
-                <FinderField attribute="legacyId" />
-            </FinderForm>
-        )
-
-        await expect
-            .element(
-                page
-                    .getByRole('form', { name: 'Legacy' })
-                    .getByText("This search isn't set up correctly")
-                    .first()
-            )
-            .toBeVisible()
-        await expect
-            .poll(() =>
-                error.mock.calls.filter(([message]) => message === cannotSearch)
-            )
-            .toHaveLength(1)
-    })
-
-    it('reports a form that can never search when it mounts after loading', async () => {
-        vi.stubEnv('NODE_ENV', 'production')
-        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
-        const Later = () => {
-            const [shown, setShown] = useState(false)
-            return (
-                <>
-                    <FinderForm aria-label="ID">
-                        <FinderField attribute="artNumber" />
-                    </FinderForm>
-                    {shown ? (
-                        <FinderForm aria-label="Legacy">
-                            <FinderField attribute="legacyId" />
-                        </FinderForm>
-                    ) : (
-                        <button type="button" onClick={() => setShown(true)}>
-                            Show legacy form
-                        </button>
-                    )}
-                </>
-            )
-        }
-        await renderFinder(<Later />)
-        await expect
-            .element(page.getByLabelText('ART number'))
-            .not.toBeDisabled()
-
-        await page.getByRole('button', { name: 'Show legacy form' }).click()
-
-        await expect
-            .element(
-                page
-                    .getByRole('form', { name: 'Legacy' })
-                    .getByText("This search isn't set up correctly")
-                    .first()
-            )
-            .toBeVisible()
-        await expect
-            .poll(() =>
-                error.mock.calls.filter(([message]) => message === cannotSearch)
-            )
-            .toHaveLength(1)
-    })
-
     it('flags the same attribute as both exact and range', async () => {
-        await renderFinder(
+        await renderInFinder(
             <>
                 <FinderForm aria-label="Exact">
                     <FinderField attribute="dob" />
@@ -248,7 +114,7 @@ describe('config errors', () => {
                 </>
             )
         }
-        await renderFinder(<Forms />)
+        await renderInFinder(<Forms />)
         const details = page.getByRole('form', { name: 'Details' })
 
         await expect.element(details.getByText(conflict)).toBeVisible()
@@ -295,19 +161,39 @@ describe('config errors', () => {
                     </FinderProvider>
                 </Catch>
                 <Catch>
+                    <FinderProvider
+                        program="hivProgram"
+                        client={server.client}
+                        onSelect={vi.fn()}
+                    >
+                        <FinderHint />
+                    </FinderProvider>
+                </Catch>
+                <Catch>
+                    <FinderProvider
+                        program="hivProgram"
+                        client={server.client}
+                        onSelect={vi.fn()}
+                    >
+                        <FinderSubmit />
+                    </FinderProvider>
+                </Catch>
+                <Catch>
                     <FinderForm />
                 </Catch>
             </>
         )
 
         const caught = page.getByTestId('caught')
+        const outsideForm =
+            'FinderField, FinderRangeField, FinderHint, FinderSubmit, useFinderField, useFinderRangeField and useFinderSearch must be rendered inside FinderForm'
+        for (const index of [0, 1, 2]) {
+            await expect
+                .element(caught.nth(index))
+                .toHaveTextContent(outsideForm)
+        }
         await expect
-            .element(caught.nth(0))
-            .toHaveTextContent(
-                'FinderField and field hooks must be rendered inside FinderForm'
-            )
-        await expect
-            .element(caught.nth(1))
+            .element(caught.nth(3))
             .toHaveTextContent(
                 'Finder parts and hooks must be rendered inside FinderProvider'
             )

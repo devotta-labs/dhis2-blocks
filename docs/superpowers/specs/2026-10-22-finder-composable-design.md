@@ -232,7 +232,7 @@ Custom rows, for example:
 
 **Hooks (headless).**
 
-- `useFinderField(uid)` / `useFinderRangeField(uid)` → `{ attribute: { label, valueType, unique, options? }, value,
+- `useFinderField(uid)` / `useFinderRangeField(uid)` → `{ attribute: { kind, label, valueType, unique, options? }, value,
 setValue, issue, problem? }`. Must be inside a `FinderForm`; they register the field there like the parts do.
   Two hooks rather than an options flag, matching the two parts.
 - `useFinderSearch()` (inside a `FinderForm`) → `{ canSearch, missing, reason, searchingBy, submit }`.

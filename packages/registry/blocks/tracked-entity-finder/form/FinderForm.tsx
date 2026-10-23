@@ -99,6 +99,10 @@ export function FinderForm({
                 className={cn('flex flex-col gap-4', className)}
                 onSubmit={(event) => {
                     onSubmit?.(event)
+                    // A consumer's preventDefault cancels the search too.
+                    if (event.defaultPrevented) {
+                        return
+                    }
                     event.preventDefault()
                     if (search) {
                         actions.submit(search)

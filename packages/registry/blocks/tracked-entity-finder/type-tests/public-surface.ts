@@ -1,19 +1,24 @@
 import type {
     DataEngineLike,
+    FieldKind,
     FieldValue,
     FinderEmptyProps,
     FinderErrorProps,
     FinderFieldProps,
+    FinderFieldState,
     FinderFormProps,
     FinderHintProps,
     FinderItemProps,
     FinderListProps,
     FinderPaginationProps,
     FinderPerson,
+    FinderProgramState,
     FinderProviderProps,
     FinderRangeFieldProps,
     FinderResultsProps,
+    FinderResultsState,
     FinderSearchingProps,
+    FinderSearchState,
     FinderSubmitProps,
     FinderTooManyProps,
     FinderValueProps,
@@ -48,20 +53,25 @@ import type { ValidatedSearch } from '../rules/types'
 
 export type SupportedFinderTypes = [
     DataEngineLike,
+    FieldKind,
     FieldValue,
     FinderEmptyProps,
     FinderErrorProps,
     FinderFieldProps,
+    FinderFieldState,
     FinderFormProps,
     FinderHintProps,
     FinderItemProps,
     FinderListProps,
     FinderPaginationProps,
     FinderPerson,
+    FinderProgramState,
     FinderProviderProps,
     FinderRangeFieldProps,
     FinderResultsProps,
+    FinderResultsState,
     FinderSearchingProps,
+    FinderSearchState,
     FinderSubmitProps,
     FinderTooManyProps,
     FinderValueProps,
@@ -159,6 +169,35 @@ export const fieldState = (): void => {
         // @ts-expect-error the attribute is readonly
         state.attribute.label = 'Other'
     }
+}
+
+// The hooks return the exported state types.
+export const hookStates = (): [
+    FinderFieldState,
+    FinderFieldState,
+    FinderSearchState,
+    FinderResultsState,
+    FinderProgramState,
+] => [
+    useFinderField('uid'),
+    useFinderRangeField('uid'),
+    useFinderSearch(),
+    useFinderResults(),
+    useFinderProgram(),
+]
+
+// A field's attribute says which FieldValue shape to send.
+export const fieldKind = (): FieldKind | undefined => {
+    const state = useFinderField('uid')
+    if (state.attribute) {
+        // @ts-expect-error the kind is any field kind, not just text
+        const narrow: 'text' = state.attribute.kind
+        const kind: FieldKind = state.attribute.kind
+        // @ts-expect-error the kind is readonly
+        state.attribute.kind = 'text'
+        return narrow ?? kind
+    }
+    return undefined
 }
 
 export const resultsState = (): void => {

@@ -107,3 +107,62 @@ describe('buildProgramModel', () => {
         expect(attr('nickname').blocked.has('like')).toBe(true)
     })
 })
+
+describe('usable attributes match what a field can send', () => {
+    const one = (extra: Partial<AttributeMetadata>) =>
+        buildProgramModel({
+            ...hivProgram,
+            attributes: [
+                {
+                    ...hivProgram.attributes[2]!,
+                    searchable: true,
+                    ...extra,
+                },
+            ],
+        }).attributes[0]!
+
+    it('marks a date-time with ge or le blocked unusable', () => {
+        expect(
+            one({ valueType: 'DATETIME', blockedSearchOperators: ['ge'] })
+                .usable
+        ).toBe(false)
+        expect(
+            one({ valueType: 'DATETIME', blockedSearchOperators: ['le'] })
+                .usable
+        ).toBe(false)
+        expect(
+            one({ valueType: 'DATETIME', blockedSearchOperators: ['eq'] })
+                .usable
+        ).toBe(true)
+    })
+
+    it('marks a number usable only when eq, or both ge and le, are allowed', () => {
+        expect(
+            one({
+                valueType: 'NUMBER',
+                blockedSearchOperators: ['eq', 'le'],
+            }).usable
+        ).toBe(false)
+        expect(
+            one({ valueType: 'NUMBER', blockedSearchOperators: ['eq'] }).usable
+        ).toBe(true)
+        expect(
+            one({ valueType: 'NUMBER', blockedSearchOperators: ['ge', 'le'] })
+                .usable
+        ).toBe(true)
+        expect(
+            one({ valueType: 'DATE', blockedSearchOperators: ['eq', 'ge'] })
+                .usable
+        ).toBe(false)
+    })
+
+    it('marks a unique attribute usable only with eq allowed', () => {
+        expect(
+            one({
+                valueType: 'INTEGER',
+                unique: true,
+                blockedSearchOperators: ['eq'],
+            }).usable
+        ).toBe(false)
+    })
+})

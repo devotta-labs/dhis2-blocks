@@ -28,6 +28,7 @@ describe('evaluateForm', () => {
         )
         expect(verdict.reason).toBe('ready')
         expect(verdict.searchingBy).toBe('artNumber')
+        expect(verdict.dropped).toBe(1)
         expect(verdict.problems).toEqual([])
         expect(verdict.search?.filters).toEqual([
             {
@@ -538,4 +539,32 @@ describe('evaluateForm', () => {
             expect(filter.conditions.every(Object.isFrozen)).toBe(true)
         }
     })
+})
+
+describe('integer values', () => {
+    it.each(['1.0', '9007199254740993.5', '2.', '.0'])(
+        'rejects %s for an INTEGER attribute',
+        (value) => {
+            const verdict = evaluateForm(model, exact('firstName', 'weight'), {
+                firstName: text('Ama'),
+                weight: { kind: 'number', value },
+            })
+            expect(verdict.issues).toEqual({ weight: 'not-integer' })
+        }
+    )
+
+    it.each(['61', '+61', '-3', '007'])(
+        'accepts %s for an INTEGER attribute and sends it as typed',
+        (value) => {
+            const verdict = evaluateForm(model, exact('firstName', 'weight'), {
+                firstName: text('Ama'),
+                weight: { kind: 'number', value },
+            })
+            expect(verdict.issues).toEqual({})
+            expect(verdict.search?.filters[1]).toEqual({
+                attribute: 'weight',
+                conditions: [{ op: 'eq', value }],
+            })
+        }
+    )
 })

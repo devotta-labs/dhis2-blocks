@@ -2,15 +2,16 @@ import i18n from '@dhis2/d2-i18n'
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import { useFinderSearch, type FinderSearchState } from '../hooks'
+import { useFinderFormContext } from '../provider/context'
 
 export type FinderHintProps = ComponentPropsWithoutRef<'p'>
 
-const hintText = ({
-    reason,
-    missing,
-    searchingBy,
-}: FinderSearchState): string | undefined => {
-    if (searchingBy) {
+const hintText = (
+    { reason, missing, searchingBy }: FinderSearchState,
+    dropped: number
+): string | undefined => {
+    // Only worth saying when the ID leaves another filled detail out.
+    if (searchingBy && dropped > 0) {
         return i18n.t('Searching by {{label}} only', {
             label: searchingBy,
             interpolation: { escapeValue: false },
@@ -29,7 +30,9 @@ const hintText = ({
 
 /** What the form still needs, or what it searches by. Renders nothing otherwise. */
 export function FinderHint({ className, ...props }: FinderHintProps) {
-    const text = hintText(useFinderSearch())
+    const search = useFinderSearch()
+    const { verdict } = useFinderFormContext()
+    const text = hintText(search, verdict?.dropped ?? 0)
     if (!text) {
         return null
     }

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
     shouldRetryFinderRequest,
     type FinderResourceClient,
@@ -26,6 +26,9 @@ export interface SearchResultsOptions {
 
 const NO_PEOPLE: readonly FinderPerson[] = Object.freeze([])
 
+/** Counts finder mounts, so each mount keys its searches apart. */
+let mounts = 0
+
 /**
  * Runs the submitted search for the current page. The provider calls it
  * once; parts read the answer from context.
@@ -38,12 +41,15 @@ export const useSearchResults = ({
     submission,
     page,
 }: SearchResultsOptions): FinderResultsView => {
+    // Submission ids restart with each mount. A new mount must ask the server
+    // again: the same search may find someone registered in the meantime.
+    const [instance] = useState(() => ++mounts)
     const submissionId = submission?.id ?? 0
     const query = useQuery({
-        // The filters are in the key too: a remounted provider restarts its ids.
         queryKey: finderKeys.search(
             program,
             {
+                instance,
                 submission: submissionId,
                 filter: submission?.search.filters.map(serializeFilter) ?? [],
             },
@@ -64,7 +70,8 @@ export const useSearchResults = ({
         retry: shouldRetryFinderRequest,
         // Only a page change of the same search keeps the old page on screen.
         placeholderData: (previous, previousQuery) =>
-            previousQuery?.queryKey[3]?.submission === submissionId
+            previousQuery?.queryKey[3]?.instance === instance &&
+            previousQuery.queryKey[3].submission === submissionId
                 ? previous
                 : undefined,
     })

@@ -534,4 +534,66 @@ describe('FinderResults', () => {
             .element(page.getByTestId('probe'))
             .toHaveTextContent('results 1 1 false false')
     })
+
+    it('asks the server again for the same search after the finder remounts', async () => {
+        const onSelect = vi.fn()
+        const server = createFakeServer()
+        const screen = await renderWithQueries(
+            ui(server, 'hivProgram', onSelect, <FinderResults />)
+        )
+
+        await searchFor('A1')
+        await expect.element(page.getByText('No one found')).toBeVisible()
+        expect(searchRequests(server)).toHaveLength(1)
+
+        await screen.rerender(<></>)
+        await screen.rerender(
+            ui(server, 'hivProgram', onSelect, <FinderResults />)
+        )
+        await expect
+            .element(page.getByRole('textbox', { name: 'ART number' }))
+            .toBeEnabled()
+        expect(page.getByText('No one found').query()).toBeNull()
+
+        // Someone may have been registered since: never reuse the answer.
+        await searchFor('A1')
+        await expect.poll(() => searchRequests(server)).toHaveLength(2)
+        await expect.element(page.getByText('No one found')).toBeVisible()
+    })
+
+    it('ignores next and previous when there is no such page', async () => {
+        const Probe = () => {
+            const results = useFinderResults()
+            return (
+                <>
+                    <output data-testid="probe">
+                        {`${results.status} ${results.page}`}
+                    </output>
+                    <button type="button" onClick={results.next}>
+                        Force next
+                    </button>
+                    <button type="button" onClick={results.previous}>
+                        Force previous
+                    </button>
+                </>
+            )
+        }
+        const { server } = await renderFinder({
+            options: { searchResponse: answer([amina]) },
+            results: <Probe />,
+        })
+        const probe = page.getByTestId('probe')
+
+        await expect.element(probe).toHaveTextContent('idle 1')
+        await page.getByRole('button', { name: 'Force next' }).click()
+        await expect.element(probe).toHaveTextContent('idle 1')
+
+        await searchFor('A1')
+        await expect.element(probe).toHaveTextContent('results 1')
+        await page.getByRole('button', { name: 'Force next' }).click()
+        await page.getByRole('button', { name: 'Force previous' }).click()
+        await settle()
+        await expect.element(probe).toHaveTextContent('results 1')
+        expect(searchRequests(server)).toHaveLength(1)
+    })
 })

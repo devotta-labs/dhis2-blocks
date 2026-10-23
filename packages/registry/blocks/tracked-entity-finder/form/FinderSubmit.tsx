@@ -1,9 +1,12 @@
 import i18n from '@dhis2/d2-i18n'
-import React, { type ComponentProps } from 'react'
+import React, { type ComponentPropsWithoutRef } from 'react'
 import { Button } from '@/components/dhis2/ui/button'
 import { useFinderSearch } from '../hooks'
 
-export type FinderSubmitProps = Omit<ComponentProps<typeof Button>, 'type'>
+export type FinderSubmitProps = Omit<
+    ComponentPropsWithoutRef<typeof Button>,
+    'type'
+>
 
 /** The form's submit button, disabled until the form can search. */
 export function FinderSubmit({

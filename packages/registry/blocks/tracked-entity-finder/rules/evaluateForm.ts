@@ -1,4 +1,4 @@
-import { attributeOf } from './programModel'
+import { attributeOf, canSendMatch, RANGE_KINDS } from './programModel'
 import { seal } from './seal'
 import type {
     ConfigProblem,
@@ -9,7 +9,6 @@ import type {
     FormVerdict,
     ProgramModel,
     SearchCondition,
-    SearchOperator,
 } from './types'
 
 type Match = FormField['match']
@@ -27,23 +26,8 @@ const fill = (conditions: SearchCondition[]): Reading => ({
     conditions,
 })
 
-const RANGE_KINDS = new Set(['number', 'date', 'dateTime'])
 const DAY_START = 'T00:00:00.000'
 const DAY_END = 'T23:59:59.999'
-
-/** The operators a field of this kind and match sends; all must be allowed. */
-const operatorsFor = (
-    attribute: FinderAttribute,
-    match: Match
-): readonly (SearchOperator | undefined)[] => {
-    if (match === 'range' || attribute.kind === 'dateTime') {
-        return attribute.unique ? ['eq'] : ['ge', 'le']
-    }
-    if (attribute.kind === 'text' && !attribute.unique) {
-        return [attribute.textOperator]
-    }
-    return ['eq']
-}
 
 const problemOf = (
     model: ProgramModel,
@@ -65,8 +49,7 @@ const problemOf = (
     ) {
         return 'range-not-supported'
     }
-    const operators = operatorsFor(attribute, match)
-    if (operators.some((op) => op === undefined || attribute.blocked.has(op))) {
+    if (!canSendMatch(attribute, attribute.blocked, match)) {
         return 'operators-blocked'
     }
     return undefined
@@ -85,6 +68,7 @@ export const findRangeConflicts = (
 }
 
 const NUMBER = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/
+const INTEGER = /^[+-]?\d+$/
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
 
 /** A valid value: the trimmed text as typed (sent unchanged) and its order. */
@@ -105,11 +89,11 @@ const parseNumber = (raw: string, attribute: FinderAttribute): Parsed => {
     if (!NUMBER.test(text)) {
         return { ok: false, issue: 'invalid-number' }
     }
-    const value = Number(text)
-    if (attribute.valueType.startsWith('INTEGER') && !Number.isInteger(value)) {
+    // Read from the text: `Number` rounds "1.0" and long decimals to integers.
+    if (attribute.valueType.startsWith('INTEGER') && !INTEGER.test(text)) {
         return { ok: false, issue: 'not-integer' }
     }
-    return { ok: true, text, order: value }
+    return { ok: true, text, order: Number(text) }
 }
 
 const parseDate = (raw: string | undefined): Parsed => {
@@ -348,6 +332,7 @@ export const evaluateForm = (
             ...base,
             reason: 'ready',
             searchingBy: id.attribute.id,
+            dropped: filledOthers.length,
             search: seal([
                 { attribute: id.attribute.id, conditions: id.conditions },
             ]),

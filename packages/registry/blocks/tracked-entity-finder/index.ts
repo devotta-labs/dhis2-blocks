@@ -13,6 +13,10 @@ export {
 } from './form/FinderRangeField'
 export { FinderSubmit, type FinderSubmitProps } from './form/FinderSubmit'
 export {
+    type FinderFieldState,
+    type FinderProgramState,
+    type FinderResultsState,
+    type FinderSearchState,
     useFinderField,
     useFinderPerson,
     useFinderProgram,
@@ -42,4 +46,4 @@ export {
     type FinderTooManyProps,
 } from './results/FinderStates'
 export { FinderValue, type FinderValueProps } from './results/FinderValue'
-export type { FieldValue } from './rules/types'
+export type { FieldKind, FieldValue } from './rules/types'

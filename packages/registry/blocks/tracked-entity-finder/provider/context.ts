@@ -102,7 +102,7 @@ export const useFinderFormContext = (): FinderFormContextValue => {
     const context = useContext(FinderFormContext)
     if (!context) {
         throw new Error(
-            'FinderField and field hooks must be rendered inside FinderForm'
+            'FinderField, FinderRangeField, FinderHint, FinderSubmit, useFinderField, useFinderRangeField and useFinderSearch must be rendered inside FinderForm'
         )
     }
     return context

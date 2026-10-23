@@ -136,8 +136,9 @@ its type:
 For your own parts inside `FinderProvider`:
 
 - `useFinderField(uid)` and `useFinderRangeField(uid)` — inside a
-  `FinderForm`: the attribute, its value, `setValue`, and any problem with
-  it.
+  `FinderForm`: the attribute (with its `kind`, which says which value shape
+  `setValue` takes; an option set is `option` even on a TEXT attribute), its
+  value, `setValue`, and any problem with it.
 - `useFinderSearch()` — inside a `FinderForm`: whether it can search, how
   many details are missing, and `submit`.
 - `useFinderResults()` — the results status, the people on the page, paging,

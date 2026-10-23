@@ -21,6 +21,7 @@ import { attributeOf, searchableAttributes } from './rules/programModel'
 import type {
     ConfigProblem,
     FieldIssue,
+    FieldKind,
     FieldValue,
     FinderAttribute,
     FormField,
@@ -28,6 +29,13 @@ import type {
 } from './rules/types'
 
 interface FinderFieldAttribute {
+    /**
+     * The `FieldValue` shape to send: `text`, `option` (an option set, even on
+     * a TEXT attribute), `number`, `boolean`, `trueOnly`, `date` (also for
+     * `dateTime`); a range field sends `numberRange` or `dateRange`.
+     * `unsupported` attributes cannot be searched.
+     */
+    readonly kind: FieldKind
     readonly label: string
     readonly valueType: string
     readonly unique: boolean
@@ -100,6 +108,7 @@ export const useComposedField = (
         () =>
             found &&
             Object.freeze({
+                kind: found.kind,
                 label: found.label,
                 valueType: found.valueType,
                 unique: found.unique,
@@ -224,17 +233,24 @@ export const useFinderResults = (): FinderResultsState => {
     const { page } = state
     const { status, people, hasNext, refreshing } = state.results
     const { setPage, select } = actions
-    const next = useCallback(() => setPage(page + 1), [setPage, page])
-    const previous = useCallback(
-        () => setPage(Math.max(1, page - 1)),
-        [setPage, page]
-    )
+    const hasPrevious = status === 'results' && page > 1
+    // No-ops without a page to go to, as the disabled buttons are.
+    const next = useCallback(() => {
+        if (hasNext) {
+            setPage(page + 1)
+        }
+    }, [setPage, page, hasNext])
+    const previous = useCallback(() => {
+        if (hasPrevious) {
+            setPage(page - 1)
+        }
+    }, [setPage, page, hasPrevious])
     return {
         status,
         people,
         page,
         hasNext,
-        hasPrevious: status === 'results' && page > 1,
+        hasPrevious,
         refreshing,
         next,
         previous,

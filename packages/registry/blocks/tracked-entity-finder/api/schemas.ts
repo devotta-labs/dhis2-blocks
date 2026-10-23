@@ -68,7 +68,9 @@ const toAttributeMetadata = (link: AttributeLink): AttributeMetadata => {
     const attribute = link.trackedEntityAttribute
     const meta: AttributeMetadata = {
         id: attribute.id,
-        label: attribute.displayFormName ?? attribute.displayName,
+        label: attribute.displayFormName?.trim()
+            ? attribute.displayFormName
+            : attribute.displayName,
         valueType: attribute.valueType,
         unique: attribute.unique,
         searchable: link.searchable,

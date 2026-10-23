@@ -10,6 +10,7 @@ import {
 } from '../api/client'
 import type { ProgramMetadata } from '../api/schemas'
 import { FinderContext } from '../provider/context'
+import { FinderProvider } from '../provider/FinderProvider'
 import { serializeFilter } from '../rules/searchParams'
 import { hivProgram } from './fixtures/program'
 
@@ -161,6 +162,21 @@ export const renderWithQueries = (ui: ReactNode) => {
             </QueryClientProvider>
         ),
     })
+}
+
+/** Renders `children` under a `hivProgram` provider, with a SubmissionProbe. */
+export const renderInFinder = (children: ReactNode) => {
+    const server = createFakeServer()
+    return renderWithQueries(
+        <FinderProvider
+            program="hivProgram"
+            client={server.client}
+            onSelect={() => undefined}
+        >
+            {children}
+            <SubmissionProbe />
+        </FinderProvider>
+    )
 }
 
 /**

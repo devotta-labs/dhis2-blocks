@@ -1,10 +1,16 @@
-import React, { useContext, useState, type ReactNode } from 'react'
+import React, {
+    useContext,
+    useState,
+    type FormEvent,
+    type ReactNode,
+} from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { FinderField } from '../form/FinderField'
 import { FinderForm } from '../form/FinderForm'
 import { FinderHint } from '../form/FinderHint'
 import { FinderRangeField } from '../form/FinderRangeField'
 import { FinderSubmit } from '../form/FinderSubmit'
+import { useFinderField, useFinderRangeField } from '../hooks'
 import { FinderContext } from '../provider/context'
 import { FinderProvider } from '../provider/FinderProvider'
 import {
@@ -384,5 +390,84 @@ describe('FinderForm', () => {
         await expect
             .element(page.getByRole('alert'))
             .toHaveTextContent("The search couldn't be loaded")
+    })
+
+    it('skips the search when a consumer onSubmit prevents it', async () => {
+        const onSubmit = vi.fn((event: FormEvent) => event.preventDefault())
+        await renderFinder(
+            <FinderForm onSubmit={onSubmit}>
+                <FinderField attribute="artNumber" />
+                <FinderSubmit />
+            </FinderForm>
+        )
+
+        await userEvent.fill(page.getByLabelText('ART number'), 'ART-1')
+        await page.getByRole('button', { name: 'Search' }).click()
+
+        expect(onSubmit).toHaveBeenCalledTimes(1)
+        await expect.element(submission()).toHaveTextContent('none')
+    })
+
+    it('says it searches by an ID only when another detail is filled', async () => {
+        await renderFinder(
+            <FinderForm>
+                <FinderField attribute="artNumber" />
+                <FinderField attribute="firstName" />
+                <FinderHint data-testid="hint" />
+                <FinderSubmit />
+            </FinderForm>
+        )
+
+        await userEvent.fill(page.getByLabelText('ART number'), 'ART-1')
+        await expect
+            .element(page.getByRole('button', { name: 'Search' }))
+            .toBeEnabled()
+        await expect.element(page.getByTestId('hint')).not.toBeInTheDocument()
+
+        await userEvent.fill(page.getByLabelText('First name'), 'Jo')
+        await expect
+            .element(page.getByTestId('hint'))
+            .toHaveTextContent('Searching by ART number only')
+    })
+
+    it('says nothing about the ID in a form with only an ID', async () => {
+        await renderFinder(
+            <FinderForm>
+                <FinderField attribute="artNumber" />
+                <FinderHint data-testid="hint" />
+                <FinderSubmit />
+            </FinderForm>
+        )
+
+        await userEvent.fill(page.getByLabelText('ART number'), 'ART-1')
+        await expect
+            .element(page.getByRole('button', { name: 'Search' }))
+            .toBeEnabled()
+        await expect.element(page.getByTestId('hint')).not.toBeInTheDocument()
+    })
+
+    it('tells field hooks the kind of value an attribute takes', async () => {
+        const Kind = ({ attribute }: { attribute: string }) => (
+            <li>{`${attribute} ${useFinderField(attribute).attribute?.kind};`}</li>
+        )
+        const Range = () => (
+            <li>{`range ${useFinderRangeField('visit').attribute?.kind};`}</li>
+        )
+        await renderFinder(
+            <FinderForm>
+                <ul data-testid="kinds">
+                    <Kind attribute="sex" />
+                    <Kind attribute="firstName" />
+                    <Kind attribute="dob" />
+                    <Range />
+                </ul>
+            </FinderForm>
+        )
+
+        await expect
+            .element(page.getByTestId('kinds'))
+            .toHaveTextContent(
+                'sex option;firstName text;dob date;range dateTime;'
+            )
     })
 })

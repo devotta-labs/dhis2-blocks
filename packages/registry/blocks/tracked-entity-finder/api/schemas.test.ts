@@ -90,6 +90,18 @@ describe('program metadata', () => {
             minCharactersToSearch: 3,
         })
     })
+    it('falls back to displayName when displayFormName is empty', () => {
+        const metadata = program({
+            programTrackedEntityAttributes: [
+                link('a', {}, { displayFormName: '' }),
+                link('b', {}, { displayFormName: '   ' }),
+            ],
+        })
+        expect(metadata.attributes.map(({ label }) => label)).toEqual([
+            'Name a',
+            'Name b',
+        ])
+    })
 })
 
 describe('tracked entities response', () => {

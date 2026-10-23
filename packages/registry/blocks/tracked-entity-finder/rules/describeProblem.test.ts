@@ -60,3 +60,30 @@ describe('describeProblem', () => {
         expect(describeProblem(model, problem)).not.toContain(': ')
     })
 })
+
+describe('describeProblem lists only attributes a field can search', () => {
+    it('leaves out a date-time with ge blocked and a number with only ge allowed', () => {
+        const blocked = buildProgramModel({
+            ...hivProgram,
+            attributes: hivProgram.attributes.map((attribute) => {
+                if (attribute.id === 'visit') {
+                    return { ...attribute, blockedSearchOperators: ['ge'] }
+                }
+                if (attribute.id === 'weight') {
+                    return {
+                        ...attribute,
+                        blockedSearchOperators: ['eq', 'le', 'like', 'sw'],
+                    }
+                }
+                return attribute
+            }),
+        })
+        const message = describeProblem(blocked, {
+            kind: 'operators-blocked',
+            attribute: 'visit',
+        })
+        expect(message).toContain(
+            'Searchable attributes are ART number (`artNumber`, unique), First name (`firstName`), Date of birth (`dob`), Sex (`sex`).'
+        )
+    })
+})

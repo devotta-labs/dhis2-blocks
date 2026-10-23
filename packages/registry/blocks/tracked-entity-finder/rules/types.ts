@@ -122,5 +122,7 @@ export interface FormVerdict {
         | 'ready'
     /** The unique attribute id when a filled ID searches alone. */
     readonly searchingBy?: string
+    /** With `searchingBy`: the other filled details the ID leaves out. */
+    readonly dropped?: number
     readonly search?: ValidatedSearch
 }

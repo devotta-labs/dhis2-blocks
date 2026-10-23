@@ -96,9 +96,11 @@ export const PersonResponseSchema = z.looseObject({
     createdAt: z.string(),
     updatedAt: z.string(),
     attributes: z.array(AttributeValueSchema).default([]),
-    programOwners: z
-        .array(z.looseObject({ program: z.string(), orgUnit: z.string() }))
-        .default([]),
+    // Required: without owner rows a hidden enrollment would read as "not
+    // enrolled" (spec 7.3), so a missing key is an invalid response.
+    programOwners: z.array(
+        z.looseObject({ program: z.string(), orgUnit: z.string() })
+    ),
     enrollments: z.array(EnrollmentSchema).default([]),
 })
 export type PersonResponse = z.infer<typeof PersonResponseSchema>

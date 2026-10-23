@@ -28,7 +28,8 @@ export interface UserScopes {
     search: ReadonlySet<string>
 }
 
-interface ProgramsError {
+/** A request that failed with a network, 5xx or response error. */
+export interface FailedRequest {
     error: Error
     retry(): void
 }
@@ -45,7 +46,12 @@ export interface RecordSources {
     /** Owner org unit id → path, for the same check. */
     ownerPaths?: ReadonlyMap<string, string>
     /** The programs request failed: every program is `error`. */
-    programsError?: ProgramsError
+    programsError?: FailedRequest
+    /**
+     * The scope or owner path lookup failed: programs that need the owner
+     * check (spec 7.3 case 2) are `error`, not `unavailable`.
+     */
+    scopesError?: FailedRequest
     relationships: RelationshipsResult
 }
 
@@ -433,6 +439,14 @@ export const resolveProgramState = (
     }
 
     if (owner !== undefined) {
+        if (sources.scopesError) {
+            return {
+                status: 'error',
+                programId,
+                error: sources.scopesError.error,
+                retry: sources.scopesError.retry,
+            }
+        }
         const hidden = ownerProblem(
             programId,
             owner,

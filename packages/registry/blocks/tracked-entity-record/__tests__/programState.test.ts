@@ -184,6 +184,55 @@ describe('resolveProgramState', () => {
         expectUnavailable(resolveProgramState(PRG_OPEN, sources))
     })
 
+    it('P3/Prg001 is error with retry when the scope lookup failed', () => {
+        const error = new Error('me failed')
+        const retry = vi.fn()
+        const { scopes: _scopes, ...rest } = sourcesFor(v42, 'P3')
+        const sources: RecordSources = {
+            ...rest,
+            scopesError: { error, retry },
+        }
+
+        const state = resolveProgramState(PRG_OPEN, sources)
+
+        expect(state).toEqual({
+            status: 'error',
+            programId: PRG_OPEN,
+            error,
+            retry: expect.any(Function),
+        })
+        if (state.status === 'error') state.retry()
+        expect(retry).toHaveBeenCalledTimes(1)
+    })
+
+    it('P1/Prg001 is still enrolled when the scope lookup failed', () => {
+        const error = new Error('organisationUnits failed')
+        const sources: RecordSources = {
+            ...sourcesFor(v42, 'P1'),
+            scopes: undefined,
+            ownerPaths: undefined,
+            scopesError: { error, retry: () => {} },
+        }
+
+        expect(resolveProgramState(PRG_OPEN, sources).status).toBe('enrolled')
+        // Only the program that needs the owner check shows the failure.
+        expect(resolveProgramState(PRG_PROTECTED, sources)).toMatchObject({
+            status: 'error',
+            error,
+        })
+    })
+
+    it('a failed scope lookup leaves programs without an owner row not-enrolled', () => {
+        const sources: RecordSources = {
+            ...sourcesFor(v42, 'P2'),
+            scopesError: { error: new Error('me failed'), retry: () => {} },
+        }
+
+        expect(resolveProgramState(PRG_ONCE, sources).status).toBe(
+            'not-enrolled'
+        )
+    })
+
     it('error for every program when the programs request failed', () => {
         const error = new Error('programs failed')
         const retry = vi.fn()

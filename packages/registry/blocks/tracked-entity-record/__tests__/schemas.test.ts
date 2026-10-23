@@ -74,4 +74,24 @@ describe('response schemas', () => {
 
         expect(result.success).toBe(false)
     })
+
+    it('rejects a person response without programOwners', () => {
+        // Without owner rows a hidden enrollment would read as not enrolled
+        // (spec 7.3), so a missing key must fail rather than default.
+        const person = {
+            trackedEntity: 'X',
+            trackedEntityType: 'T',
+            orgUnit: 'O',
+            createdAt: '2026-01-01T00:00:00.000',
+            updatedAt: '2026-01-01T00:00:00.000',
+            attributes: [],
+            enrollments: [],
+        }
+
+        expect(PersonResponseSchema.safeParse(person).success).toBe(false)
+        expect(
+            PersonResponseSchema.safeParse({ ...person, programOwners: [] })
+                .success
+        ).toBe(true)
+    })
 })

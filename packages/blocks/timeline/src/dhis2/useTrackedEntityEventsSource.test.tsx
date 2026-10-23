@@ -7,7 +7,8 @@ import {
 import { Result } from 'better-result'
 import React, { useMemo, type ComponentProps, type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
-import type { SourcePage } from '../core/types'
+import { staticTimelineSource } from '../core/staticTimelineSource'
+import type { SourcePage, TimelineEntry } from '../core/types'
 import { useTimelineSources } from '../core/useTimelineSources'
 import manyEvents from './__fixtures__/ugly/many-events.json'
 import { timelineKeys } from './timelineKeys'
@@ -164,9 +165,9 @@ describe('useTrackedEntityEventsSource', () => {
 
         const first = await page(result.current)
 
+        // c2, at the full page's last time, is held back for the next page.
         expect(first.entries.map((e) => [e.id, e.phase]).sort()).toEqual([
             ['events:c1', 'past'],
-            ['events:c2', 'past'],
             ['events:future1', 'future'],
             ['events:late1', 'overdue'],
             ['events:skip1', 'past'],
@@ -178,6 +179,7 @@ describe('useTrackedEntityEventsSource', () => {
         const second = await page(result.current, first.nextCursor)
 
         expect(second.entries.map((e) => e.id)).toEqual([
+            'events:c2',
             'events:c3',
             'events:c4',
         ])
@@ -185,20 +187,20 @@ describe('useTrackedEntityEventsSource', () => {
         expect(requests).toHaveLength(1)
     })
 
-    it('sets completeUntil to the last raw row of a full page and stops on a short page', async () => {
+    it('claims a full page complete down to the oldest event it shows and stops on a short page', async () => {
         const { wrapper } = setup(stored)
         const { result } = await render(wrapper, { pageSize: 5 })
 
         const first = await page(result.current)
         const second = await page(result.current, first.nextCursor)
 
-        // The last raw row on page 1 is c2.
-        expect(first.completeUntil).toBe('2026-05-04T00:00:00.000')
+        // The last raw row on page 1 is c2, held back; c1 is the oldest shown.
+        expect(first.completeUntil).toBe('2026-05-05T00:00:00.000')
         expect(second.nextCursor).toBeUndefined()
         expect(second.completeUntil).toBeUndefined()
     })
 
-    it('returns no entries but a cursor and completeUntil when a full page is all filtered out', async () => {
+    it('returns a cursor but claims nothing when a full page shows no past event', async () => {
         const { wrapper } = setup([
             skipped('skip1', '2026-04-20T00:00:00.000', '2026-03-01'),
             completed('c1', '2026-02-01'),
@@ -210,12 +212,17 @@ describe('useTrackedEntityEventsSource', () => {
         // Only the pinned skipped entry; no past entry came from the raw page.
         expect(first.entries.map((e) => e.id)).toEqual(['events:skip1'])
         expect(first.nextCursor).toBeDefined()
-        expect(first.completeUntil).toBe('2026-03-01')
+        expect(first.completeUntil).toBeUndefined()
 
+        // c1 fills a full page, which can't say it was the last, so it waits.
         const second = await page(result.current, first.nextCursor)
-        expect(second.entries.map((e) => e.id)).toEqual(['events:c1'])
-        // A full page can't say it was the last.
+        expect(second.entries).toEqual([])
         expect(second.nextCursor).toBeDefined()
+        expect(second.completeUntil).toBeUndefined()
+
+        const third = await page(result.current, second.nextCursor)
+        expect(third.entries.map((e) => e.id)).toEqual(['events:c1'])
+        expect(third.nextCursor).toBeUndefined()
     })
 
     it('shows no more than scheduledCap pinned events and keeps saying so on every page', async () => {
@@ -244,10 +251,36 @@ describe('useTrackedEntityEventsSource', () => {
         // replaces a source's notice with each page's.
         expect(second.notice).toBe("More scheduled events aren't shown.")
         expect(third.notice).toBe("More scheduled events aren't shown.")
+        // c3, at the full third page's last time, waits for the next page.
         expect(third.entries.map((e) => e.id)).toEqual([
+            'events:c1',
             'events:c2',
-            'events:c3',
         ])
+    })
+
+    it('says when skipped events are cut off, without dropping upcoming ones', async () => {
+        const { wrapper } = setup([
+            scheduled('next', '2027-01-01'),
+            skipped('s1', '2025-01-01'),
+            skipped('s2', '2025-02-01'),
+            skipped('s3', '2025-03-01'),
+            completed('c1', '2026-05-05'),
+            completed('c2', '2026-05-04'),
+            completed('c3', '2026-05-03'),
+        ])
+        const { result } = await render(wrapper, {
+            pageSize: 2,
+            scheduledCap: 2,
+        })
+
+        const first = await page(result.current)
+        const second = await page(result.current, first.nextCursor)
+
+        expect(
+            first.entries.filter((e) => e.phase === 'future').map((e) => e.id)
+        ).toEqual(['events:next'])
+        expect(first.notice).toBe("More skipped events aren't shown.")
+        expect(second.notice).toBe("More skipped events aren't shown.")
     })
 
     it('has no notice when every scheduled event fits', async () => {
@@ -277,7 +310,7 @@ describe('useTrackedEntityEventsSource', () => {
 
         expect(Result.isError(answer) && answer.error.kind).toBe('failed')
         const later = await result.current.fetchPage(
-            { page: 2, capped: false },
+            { page: 2, scheduleCapped: false, skippedCapped: false, carry: [] },
             signal()
         )
         expect(Result.isError(later) && later.error.kind).toBe('failed')
@@ -298,7 +331,8 @@ describe('useTrackedEntityEventsSource', () => {
 
         await expect.poll(() => result.current.status).toBe('ready')
         let previous = result.current.entries.map((e) => e.id)
-        expect(previous).toHaveLength(50)
+        // A full page holds back its oldest time for the next one.
+        expect(previous).toHaveLength(49)
         while (result.current.entries.length < 500) {
             const before = previous.length
             result.current.loadMore()
@@ -310,9 +344,8 @@ describe('useTrackedEntityEventsSource', () => {
             previous = next
         }
 
-        // The tenth page was full, so one more request finds the end.
-        expect(result.current.hasMore).toBe(true)
-        result.current.loadMore()
+        // The tenth page was full, so the eleventh request found the end
+        // and brought the event held back from the tenth.
         await expect.poll(() => result.current.hasMore).toBe(false)
         expect(result.current.entries.map((e) => e.id)).toEqual(previous)
         expect(previous).toHaveLength(500)
@@ -328,6 +361,55 @@ describe('useTrackedEntityEventsSource', () => {
         await queryClient.invalidateQueries({ queryKey: timelineKeys.root })
 
         await expect.poll(() => result.current.revision).not.toBe(before)
+        // The subject stays: a refresh keeps the shown events until it answers.
+        expect(result.current.subject).toBe(
+            JSON.stringify(timelineKeys.events('te1', 'prog1', 'occurredAt'))
+        )
+    })
+
+    it('holds back a tie at the end of a full page so another source at that time never moves', async () => {
+        const at = '2026-05-05T00:00:00.000'
+        const { wrapper } = setup([
+            completed('n1', '2026-05-06T00:00:00.000'),
+            completed('t1', at),
+            completed('t2', at),
+            completed('t3', at),
+            completed('o1', '2026-05-01T00:00:00.000'),
+        ])
+        const other: TimelineEntry<unknown>[] = [
+            {
+                id: 'other:x',
+                at,
+                precision: 'instant',
+                sourceKey: 'other',
+                data: null,
+            },
+        ]
+        const { result } = await renderHook(
+            () =>
+                useTimelineSources<unknown>([
+                    useTrackedEntityEventsSource({ ...subject, pageSize: 3 }),
+                    staticTimelineSource('other', 'Other', other),
+                ]),
+            { wrapper }
+        )
+        await expect.poll(() => result.current.status).toBe('ready')
+        const first = result.current.entries.map((e) => e.id)
+        expect(first).toEqual(['events:n1'])
+
+        result.current.loadMore()
+        await expect.poll(() => result.current.hasMore).toBe(false)
+
+        const next = result.current.entries.map((e) => e.id)
+        expect(next.slice(0, first.length)).toEqual(first)
+        expect(next).toEqual([
+            'events:n1',
+            'events:t1',
+            'events:t2',
+            'events:t3',
+            'other:x',
+            'events:o1',
+        ])
     })
 
     describe('in a feed', () => {
@@ -436,8 +518,9 @@ describe('useTrackedEntityEventsSource', () => {
             const { rendered } = renderFeed(wrapper, 3)
             const { result } = await rendered
             await expect.poll(() => result.current.status).toBe('ready')
+            // The whole first page is one time, held back for the next page.
             const first = result.current.entries.map((e) => e.id)
-            expect(first.length).toBeGreaterThan(0)
+            expect(first).toEqual([])
 
             result.current.loadMore()
             await expect

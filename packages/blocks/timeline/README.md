@@ -59,9 +59,13 @@ type HistoryData =
 const OpenInCapture = () => {
     const { data } = useTimelineEventEntry()
     const { event, orgUnit } = data.event
+    const params = new URLSearchParams({ eventId: event })
+    if (orgUnit !== undefined) {
+        params.set('orgUnitId', orgUnit)
+    }
     return (
         <a
-            href={`../../dhis-web-capture/index.html#/enrollmentEventEdit?eventId=${event}&orgUnitId=${orgUnit ?? ''}`}
+            href={`../../dhis-web-capture/index.html#/enrollmentEventEdit?${params.toString()}`}
         >
             Open in Capture
         </a>
@@ -205,11 +209,23 @@ export const VisitHistory = () => (
 )
 ```
 
-Keep `sources` stable between renders (module level or `useMemo`); a new array of new sources restarts them.
+Keep `sources` stable between renders (module level or `useMemo`). The feed matches sources by `key` and compares them on every render:
+
+- a new `key` starts that source;
+- a changed `subject` (what the source is about, such as the tracked entity) starts it afresh: its entries go at once and the feed waits for its new first page;
+- a changed `revision` refreshes it: its entries stay on show until the new first page answers.
+
+Anything else, including a new array or new source objects with the same key, subject and revision, changes nothing. So to show new in-memory entries, give the static source a new `revision`, and a new `subject` when they belong to another record:
+
+```ts
+staticTimelineSource('visits', 'Visits', visits, { revision: visits })
+```
 
 ## A headless layout
 
 Skip the feed part and lay the groups out yourself from `useTimelineState`. It takes a selector and re-renders only when the selected value changes.
+
+The provider takes its snapshot during render and notifies subscribers that did not re-render after commit. If React discards a render (concurrent rendering), the snapshot can be briefly ahead of what committed.
 
 ```tsx
 import {
@@ -357,6 +373,12 @@ export const FilteredTimeline = ({ today }: { today: string }) => {
 
 **Changes.** Attribute changes and each event's "Show changes" read the tracker changelog endpoints, with no version gate. They work on any version whose server has those endpoints (2.41.10 and later); where an endpoint answers 404, that source shows a notice ("isn't available on this DHIS2 version") instead of an empty history.
 
+The server only records changes when it is set up to: on 2.43 the program and the tracked entity type need `enableChangeLog: true`, and on 2.41 the tracked entity type needs `allowAuditLog: true`. Without that, "Show changes" and the attribute change source stay empty, with no notice.
+
+**Dates in other calendars.** Day headings and dates follow the system calendar. Gregorian and ISO 8601 read as "Oct 14, 2026" in the user's locale; Ethiopian, Coptic, Nepali, Islamic, Persian and Thai have no month names in `Intl`, so they show as `YYYY-MM-DD` in that calendar.
+
+**Your own event source.** The event parts look up org unit names for entries whose `sourceKey` is `'events'`. A source of your own that renders with `TimelineEventEntry` must build its entries with `toEventEntry(event, { sourceKey: 'events', timeField, today })`, or org units show as ids.
+
 **A SQL view as a source.** Anything that can return a page of `TimelineEntry` is a source. This one reads a SQL view (`placeholderViewUid`, with a `tei` variable) whose rows are `[date, text]`:
 
 ```tsx
@@ -382,6 +404,8 @@ const useReferralsSource = (trackedEntity: string): TimelineSource<string> => {
         () => ({
             key: 'referrals',
             label: 'Referrals',
+            // Another tracked entity starts the source afresh.
+            subject: trackedEntity,
             async fetchPage() {
                 try {
                     const { view } = await engine.query({

@@ -1,11 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import React, { useMemo } from 'react'
 import type { Dhis2Calendar } from '@/registry/dhis2/value-display/calendar'
-import type {
-    GroupBy,
-    TimelineOrder,
-    TimelineSource,
-} from '../core/types'
+import type { GroupBy, TimelineOrder, TimelineSource } from '../core/types'
 import { useTimelineSources } from '../core/useTimelineSources'
 import {
     buildTimelineState,

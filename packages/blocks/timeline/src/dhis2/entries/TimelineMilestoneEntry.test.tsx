@@ -1,53 +1,63 @@
 import axe from 'axe-core'
 import React from 'react'
-import type { TimelineEntry } from '../../core/types'
 import { renderEntries } from '../__fixtures__/renderEntries'
 import { TrackedEntitySchema } from '../schemas'
-import type { MilestoneEntryData, MilestoneKind } from '../useEnrollmentSources'
+import { milestoneEntries } from '../useEnrollmentSources'
 import { TimelineMilestoneEntry } from './TimelineMilestoneEntry'
 
-const ENROLLMENT = TrackedEntitySchema.parse({
+/** As the server stores them: enrollment and incident dates at midnight. */
+const ENTITY = TrackedEntitySchema.parse({
     trackedEntity: 'TlE2eTei001',
     enrollments: [
-        { enrollment: 'TlE2eEnr002', program: 'WSGAb5XwJ3Y', status: 'ACTIVE' },
+        {
+            enrollment: 'TlE2eEnr001',
+            program: 'WSGAb5XwJ3Y',
+            status: 'COMPLETED',
+            enrolledAt: '2026-01-10T00:00:00.000',
+            occurredAt: '2026-01-05T00:00:00.000',
+            completedAt: '2026-03-01T10:15:00.000',
+        },
+        {
+            enrollment: 'TlE2eEnr002',
+            program: 'WSGAb5XwJ3Y',
+            status: 'CANCELLED',
+            enrolledAt: '2026-04-10T00:00:00.000',
+            updatedAt: '2026-05-02T16:40:00.000',
+        },
     ],
-}).enrollments[0]
-
-const milestone = (kind: MilestoneKind): TimelineEntry<MilestoneEntryData> => ({
-    id: `milestones:TlE2eEnr002:${kind}`,
-    at: '2026-01-10',
-    precision: 'day',
-    sourceKey: 'milestones',
-    data: {
-        kind,
-        enrollment: ENROLLMENT,
-    },
 })
+
+const milestone = (id: string) => {
+    const found = milestoneEntries(ENTITY).find((entry) => entry.id === id)
+    if (found === undefined) {
+        throw new Error(`no milestone ${id}`)
+    }
+    return found
+}
 
 describe('TimelineMilestoneEntry', () => {
     it.each([
-        ['enrolled', 'Enrolled'],
-        ['incident', 'Incident'],
-        ['completed', 'Enrollment completed'],
-        ['cancelled', 'Enrollment cancelled'],
-    ] as const)('labels the %s milestone', async (kind, label) => {
-        const { container } = await renderEntries(
-            <TimelineMilestoneEntry entry={milestone(kind)} />
-        )
+        ['milestones:TlE2eEnr001:enrolled', 'Enrolled'],
+        ['milestones:TlE2eEnr001:incident', 'Incident'],
+        ['milestones:TlE2eEnr001:completed', 'Enrollment completed10:15'],
+        ['milestones:TlE2eEnr002:cancelled', 'Enrollment cancelled16:40'],
+    ] as const)(
+        'labels %s, with a time only where one was recorded',
+        async (id, text) => {
+            const { container } = await renderEntries(
+                <TimelineMilestoneEntry entry={milestone(id)} />
+            )
 
-        expect(container.textContent).toBe(label)
-    })
+            expect(container.textContent).toBe(text)
+            expect(container.textContent).not.toContain('00:00')
+        }
+    )
 
     it('has no axe violations', async () => {
         const { container } = await renderEntries(
             <>
-                {(
-                    ['enrolled', 'incident', 'completed', 'cancelled'] as const
-                ).map((kind) => (
-                    <TimelineMilestoneEntry
-                        key={kind}
-                        entry={milestone(kind)}
-                    />
+                {milestoneEntries(ENTITY).map((entry) => (
+                    <TimelineMilestoneEntry key={entry.id} entry={entry} />
                 ))}
             </>
         )

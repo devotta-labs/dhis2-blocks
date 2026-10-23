@@ -22,4 +22,13 @@ describe('staticTimelineSource', () => {
         expect(result.value.entries).toEqual(entries)
         expect(result.value.nextCursor).toBeUndefined()
     })
+
+    it('carries the revision and subject it is given', () => {
+        const source = staticTimelineSource('notes', 'Notes', [], {
+            revision: 3,
+            subject: 'te1',
+        })
+        expect(source.revision).toBe(3)
+        expect(source.subject).toBe('te1')
+    })
 })

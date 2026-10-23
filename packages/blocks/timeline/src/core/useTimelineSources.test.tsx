@@ -1,5 +1,6 @@
 import { Result } from 'better-result'
 import { renderHook } from 'vitest-browser-react'
+import { staticTimelineSource } from './staticTimelineSource'
 import type {
     SourceError,
     SourcePage,
@@ -190,6 +191,70 @@ describe('useTimelineSources', () => {
             .poll(() => result.current.entries.map((e) => e.id))
             .toEqual(['a1', 'b2'])
         expect(result.current.status).toBe('ready')
+    })
+
+    it('starts a source afresh, dropping its entries, when its subject changes', async () => {
+        const a = controlledSource('a')
+        const b = controlledSource('b')
+        const { result, act, rerender } = await render([
+            a.source,
+            { ...b.source, subject: 'te1', revision: 1 },
+        ])
+
+        await act(() => {
+            lastCall(a.calls).answer(
+                Result.ok({ entries: [entry('a1', '2026-10-10', 'a')] })
+            )
+            lastCall(b.calls).answer(
+                Result.ok({ entries: [entry('b1', '2026-10-09', 'b')] })
+            )
+        })
+        await expect.poll(() => result.current.entries.length).toBe(2)
+
+        // Same revision, new subject: the old record's entries go at once.
+        await rerender({
+            sources: [a.source, { ...b.source, subject: 'te2', revision: 1 }],
+        })
+        expect(a.calls).toHaveLength(1)
+        expect(b.calls).toHaveLength(2)
+        expect(lastCall(b.calls).cursor).toBeUndefined()
+        await expect.poll(() => result.current.status).toBe('loading')
+        expect(result.current.entries).toEqual([])
+
+        await act(() =>
+            lastCall(b.calls).answer(
+                Result.ok({ entries: [entry('b2', '2026-10-08', 'b')] })
+            )
+        )
+        await expect
+            .poll(() => result.current.entries.map((e) => e.id))
+            .toEqual(['a1', 'b2'])
+    })
+
+    it('shows new static entries when the static source gets a new revision', async () => {
+        const notes = (entries: TimelineEntry<null>[], revision: number) =>
+            staticTimelineSource('notes', 'Notes', entries, { revision })
+        const { result, rerender } = await render([
+            notes([entry('n1', '2026-10-01', 'notes')], 1),
+        ])
+        await expect
+            .poll(() => result.current.entries.map((e) => e.id))
+            .toEqual(['n1'])
+
+        await rerender({
+            sources: [
+                notes(
+                    [
+                        entry('n2', '2026-10-02', 'notes'),
+                        entry('n1', '2026-10-01', 'notes'),
+                    ],
+                    2
+                ),
+            ],
+        })
+        await expect
+            .poll(() => result.current.entries.map((e) => e.id))
+            .toEqual(['n2', 'n1'])
     })
 
     it('resumes a source that failed mid-paging from its stored cursor', async () => {

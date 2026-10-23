@@ -11,7 +11,11 @@ import {
     TimelineItem,
     TimelineTime,
 } from './TimelineParts'
-import { TimelineError, TimelineLoading, TimelineSourceNotices } from './TimelineStates'
+import {
+    TimelineError,
+    TimelineLoading,
+    TimelineSourceNotices,
+} from './TimelineStates'
 import { TimelineLoadMore } from './TimelineLoadMore'
 import { useTimelineState } from './TimelineContext'
 import { entry, Provided, stateOf } from './__fixtures__/timelineFixtures'
@@ -80,11 +84,7 @@ describe('Timeline', () => {
             expect(heading?.tagName).toBe('H3')
             return heading?.textContent
         })
-        expect(labels).toEqual([
-            'Oct 25, 2026',
-            'Oct 20, 2026',
-            'Oct 18, 2026',
-        ])
+        expect(labels).toEqual(['Oct 25, 2026', 'Oct 20, 2026', 'Oct 18, 2026'])
         expect(sections[1].querySelectorAll('ol > li')).toHaveLength(2)
     })
 
@@ -105,7 +105,9 @@ describe('Timeline', () => {
             expect(container.querySelector('time')).not.toBeNull()
         )
 
-        const time = container.querySelector('time[datetime="2026-10-20T09:30"]')
+        const time = container.querySelector(
+            'time[datetime="2026-10-20T09:30"]'
+        )
         expect(time?.textContent).toBe('09:30')
     })
 
@@ -123,9 +125,10 @@ describe('Timeline', () => {
 
     it('lets a host lay out groups from useTimelineState without TimelineFeed', async () => {
         const Custom = () => {
-            const groups = useTimelineState<string, ReturnType<typeof stateOf>['groups']>(
-                (state) => state.groups
-            )
+            const groups = useTimelineState<
+                string,
+                ReturnType<typeof stateOf>['groups']
+            >((state) => state.groups)
             return (
                 <div data-testid="custom">
                     {groups.map((group) => (
@@ -143,7 +146,9 @@ describe('Timeline', () => {
         }
         const { container } = await renderTimeline(ENTRIES, <Custom />)
         await vi.waitFor(() =>
-            expect(container.querySelector('[data-testid=custom] h3')).not.toBeNull()
+            expect(
+                container.querySelector('[data-testid=custom] h3')
+            ).not.toBeNull()
         )
 
         expect(container.querySelector('ol')).toBeNull()
@@ -154,7 +159,13 @@ describe('Timeline', () => {
 
     it('renders every part under a hand-written TimelineProvider with no sources', async () => {
         const { container } = await render(
-            <Provided state={stateOf({ entries: ENTRIES, sources: [], hasMore: true })}>
+            <Provided
+                state={stateOf({
+                    entries: ENTRIES,
+                    sources: [],
+                    hasMore: true,
+                })}
+            >
                 <TimelineLoading />
                 <TimelineError />
                 <TimelineSourceNotices />
@@ -193,7 +204,9 @@ describe('Timeline', () => {
             const groups = useTimelineState<string, TimelineGroup<string>[]>(
                 (state) => state.groups
             )
-            return <p data-testid="labels">{groups.map((g) => g.label).join()}</p>
+            return (
+                <p data-testid="labels">{groups.map((g) => g.label).join()}</p>
+            )
         }
         const Host = ({ groupBy }: { groupBy: typeof byMonth }) => (
             <Timeline

@@ -46,6 +46,12 @@ const milestonesOf = (
                   {
                       id: `milestones:${enrollment.enrollment}:${kind}`,
                       at,
+                      // Enrollment and incident dates are dates, stored at
+                      // midnight; completed and cancelled are moments.
+                      precision:
+                          kind === 'enrolled' || kind === 'incident'
+                              ? ('day' as const)
+                              : ('instant' as const),
                       sourceKey: 'milestones',
                       data: { kind, enrollment },
                   },
@@ -86,7 +92,8 @@ const notesOf = (enrollment: Enrollment): Array<TimelineEntry<NoteEntryData>> =>
 
 /**
  * One request for the tracked entity and its enrollments, shared by both
- * sources (same query key); `useQueryRevision` is the sources' `revision`.
+ * sources (same query key); `useQueryRevision` is the sources' `revision`,
+ * and the query key their `subject`, so another record starts them afresh.
  */
 const useEnrollmentSource = <TData>(
     { trackedEntity, program }: EnrollmentSourceOptions,
@@ -126,12 +133,14 @@ const useEnrollmentSource = <TData>(
     })
     // The first load, or the first failure, is not a change; invalidation is.
     const revision = useQueryRevision(request.queryKey)
+    const subject = JSON.stringify(request.queryKey)
 
     return useMemo(
         (): TimelineSource<TData> => ({
             key,
             label,
             revision,
+            subject,
             async fetchPage(): Promise<Result<SourcePage<TData>, SourceError>> {
                 try {
                     // Shares the query's own request, so this call's signal
@@ -147,11 +156,12 @@ const useEnrollmentSource = <TData>(
             },
         }),
         // `entriesOf` and `label` are module-level or constant per hook.
-        [revision, request, queryClient, key]
+        [revision, subject, request, queryClient, key]
     )
 }
 
-const milestoneEntries = (entity: TrackedEntity) =>
+/** Every enrollment's milestones, as the milestones source shows them. */
+export const milestoneEntries = (entity: TrackedEntity) =>
     entity.enrollments.flatMap(milestonesOf)
 
 const noteEntries = (entity: TrackedEntity) =>

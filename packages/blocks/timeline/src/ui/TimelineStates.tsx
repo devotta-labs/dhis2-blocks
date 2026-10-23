@@ -22,25 +22,51 @@ export const TimelineLoading = () => {
     )
 }
 
-/** Shown when every source failed. */
+/** Shown when every source failed, with one Retry for them all. */
 export const TimelineError = ({ children }: { children?: React.ReactNode }) => {
     const allFailed = useTimelineState((state) => state.allFailed)
+    const sources = useTimelineState((state) => state.sources)
+    const { retry } = useTimelineActions()
     if (!allFailed) {
         return null
     }
     return (
-        <ErrorAlert title={children ?? i18n.t("Couldn't load the history")} />
+        <ErrorAlert title={children ?? i18n.t("Couldn't load the history")}>
+            <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                    for (const source of sources) {
+                        if (source.status === 'error') {
+                            retry(source.key)
+                        }
+                    }
+                }}
+            >
+                {i18n.t('Retry')}
+            </Button>
+        </ErrorAlert>
     )
 }
 
-const SourceNotice = ({ source }: { source: SourceState }) => {
+const SourceNotice = ({
+    source,
+    allFailed,
+}: {
+    source: SourceState
+    allFailed: boolean
+}) => {
     const { retry } = useTimelineActions()
     const notices: React.ReactNode[] = []
-    if (source.status === 'error') {
+    // When every source failed, TimelineError says so once, with its Retry.
+    if (source.status === 'error' && !allFailed) {
         notices.push(
             <Alert key="error" variant="warning" role="status">
                 <span>
-                    {i18n.t("{{label}} couldn't load.", { label: source.label })}
+                    {i18n.t("{{label}} couldn't load.", {
+                        label: source.label,
+                    })}
                 </span>
                 <div>
                     <Button
@@ -83,12 +109,16 @@ const SourceNotice = ({ source }: { source: SourceState }) => {
     return notices.map((notice, index) => <li key={index}>{notice}</li>)
 }
 
-/** One notice per source that failed, is unsupported, is partial or says something. */
+/**
+ * One notice per source that failed, is unsupported, is partial or says
+ * something. Failures are left to TimelineError when every source failed.
+ */
 export const TimelineSourceNotices = () => {
     const sources = useTimelineState((state) => state.sources)
+    const allFailed = useTimelineState((state) => state.allFailed)
     const noticed = sources.filter(
         (source) =>
-            source.status === 'error' ||
+            (source.status === 'error' && !allFailed) ||
             source.status === 'unsupported' ||
             source.partial ||
             source.notice !== undefined
@@ -99,7 +129,11 @@ export const TimelineSourceNotices = () => {
     return (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {noticed.map((source) => (
-                <SourceNotice key={source.key} source={source} />
+                <SourceNotice
+                    key={source.key}
+                    source={source}
+                    allFailed={allFailed}
+                />
             ))}
         </ul>
     )

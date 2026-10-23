@@ -7,7 +7,12 @@ import {
     useTimelineState,
 } from './TimelineContext'
 import { TimelineItem } from './TimelineParts'
-import { actionsOf, entry, META, stateOf } from './__fixtures__/timelineFixtures'
+import {
+    actionsOf,
+    entry,
+    META,
+    stateOf,
+} from './__fixtures__/timelineFixtures'
 
 const Probe = ({ hook }: { hook: () => void }) => {
     hook()
@@ -17,7 +22,8 @@ const Probe = ({ hook }: { hook: () => void }) => {
 describe('timeline hooks', () => {
     it('throws a clear error when a hook is used outside a provider', async () => {
         const error = vi.spyOn(console, 'error').mockImplementation(() => {})
-        const message = 'Timeline hooks must be used within Timeline or TimelineProvider.'
+        const message =
+            'Timeline hooks must be used within Timeline or TimelineProvider.'
         for (const hook of [
             () => useTimelineState((state) => state.status),
             () => useTimelineMeta((meta) => meta.today),
@@ -57,7 +63,9 @@ describe('timeline hooks', () => {
 
         await rerender(<Tree ids={['a', 'b']} />)
 
-        expect(container.querySelector('[data-testid=count]')?.textContent).toBe('2')
+        expect(
+            container.querySelector('[data-testid=count]')?.textContent
+        ).toBe('2')
         expect(renders.status).toBe(before.status)
         expect(renders.count).toBeGreaterThan(before.count)
     })

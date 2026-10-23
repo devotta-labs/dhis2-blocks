@@ -9,7 +9,7 @@ import {
     fetchPinnedEvents,
     type EventTimeField,
 } from './queries'
-import type { EventsPage } from './schemas'
+import type { EventsPage, TrackerEvent } from './schemas'
 import { timelineKeys } from './timelineKeys'
 import { toEventEntry, type EventEntryData } from './toEventEntry'
 import { useQueryRevision } from './useQueryRevision'
@@ -27,14 +27,33 @@ export interface TrackedEntityEventsSourceOptions {
 }
 
 /**
- * The cursor this source hands out: the next past page, and whether the
- * scheduled cap cut events off (the merge replaces a source's notice with each
- * page's, so every page repeats it).
+ * The cursor this source hands out: the next past page; whether the cap cut
+ * scheduled or skipped events off (the merge replaces a source's notice with
+ * each page's, so every page repeats it); and the events at the last page's
+ * oldest time, held back because more at that time may follow, with that time.
  */
 const CursorSchema = z.object({
     page: z.number().int().min(2),
-    capped: z.boolean(),
+    scheduleCapped: z.boolean(),
+    skippedCapped: z.boolean(),
+    carry: z.array(z.custom<TrackerEvent>()),
+    boundary: z.string().optional(),
 })
+
+type Cursor = z.infer<typeof CursorSchema>
+
+const noticeOf = ({
+    scheduleCapped,
+    skippedCapped,
+}: Pick<Cursor, 'scheduleCapped' | 'skippedCapped'>) => {
+    const notices = [
+        ...(scheduleCapped
+            ? [i18n.t("More scheduled events aren't shown.")]
+            : []),
+        ...(skippedCapped ? [i18n.t("More skipped events aren't shown.")] : []),
+    ]
+    return notices.length === 0 ? undefined : notices.join(' ')
+}
 
 const pad = (value: number) => value.toString().padStart(2, '0')
 
@@ -109,11 +128,12 @@ export const useTrackedEntityEventsSource = ({
 
     // Observes the first page so the source restarts when it is refreshed.
     useQuery(firstPage)
-    // Changes when the query settles again after its first settle (success or
-    // error), so an invalidation restarts the source, also after a failed
-    // first page. The subject is part of it: a new subject starts afresh.
-    const settles = useQueryRevision(firstPage.queryKey)
-    const revision = `${JSON.stringify(firstPage.queryKey)}:${settles ?? 0}`
+    // Changes each time the query's data is updated after it first settled
+    // (a refetch after invalidation, also after a failed first page), so the
+    // source refreshes; a failed refetch does not change it.
+    const revision = useQueryRevision(firstPage.queryKey)
+    // Another tracked entity, program or time field starts the source afresh.
+    const subject = JSON.stringify(firstPage.queryKey)
 
     return useMemo((): TimelineSource<EventEntryData> => {
         const entriesOf = (events: EventsPage['events'], today: string) =>
@@ -121,32 +141,80 @@ export const useTrackedEntityEventsSource = ({
                 toEventEntry(event, { sourceKey: 'events', timeField, today })
             )
 
-        /** The past stream's part of a page. */
+        /**
+         * The past stream's part of a page. A full page holds back its events
+         * at the last raw row's time (more at that time may follow on the next
+         * page) and claims complete only down to the oldest event it shows.
+         */
         const pastPage = (
             past: EventsPage,
             page: number,
-            capped: boolean,
+            capped: Pick<Cursor, 'scheduleCapped' | 'skippedCapped'>,
             today: string
         ): SourcePage<EventEntryData> => {
             const result: SourcePage<EventEntryData> = {
                 entries: entriesOf(past.events, today),
             }
-            if (capped) {
-                result.notice = i18n.t("More scheduled events aren't shown.")
+            const notice = noticeOf(capped)
+            if (notice !== undefined) {
+                result.notice = notice
             }
-            if (past.hasMore) {
-                result.nextCursor = { page: page + 1, capped }
-                // From the last raw row, not the last kept entry: a full page
-                // may keep few or none.
-                result.completeUntil = past.lastAt
+            if (!past.hasMore) {
+                return result
+            }
+            const boundary = past.lastAt
+            const held = (event: TrackerEvent) =>
+                boundary !== undefined && event[timeField] === boundary
+            const emitted = past.events.filter((event) => !held(event))
+            const cursor: Cursor = {
+                page: page + 1,
+                scheduleCapped: capped.scheduleCapped,
+                skippedCapped: capped.skippedCapped,
+                carry: past.events.filter(held),
+                boundary,
+            }
+            result.entries = entriesOf(emitted, today)
+            result.nextCursor = cursor
+            // None shown (one time filled the page) claims nothing.
+            const oldestShown = emitted.reduce<string | undefined>(
+                (min, event) => {
+                    const at = event[timeField]
+                    return at !== undefined && (min === undefined || at < min)
+                        ? at
+                        : min
+                },
+                undefined
+            )
+            if (oldestShown !== undefined) {
+                result.completeUntil = oldestShown
             }
             return result
+        }
+
+        /** The held-back events, then the rows of the next page not yet seen. */
+        const withCarry = (past: EventsPage, cursor: Cursor): EventsPage => {
+            const carried = new Set(cursor.carry.map((event) => event.event))
+            const { boundary } = cursor
+            // Rows newer than the boundary were shown already; they reappear
+            // when new events shift the offset pages.
+            const fresh = past.events.filter((event) => {
+                if (carried.has(event.event)) {
+                    return false
+                }
+                if (boundary === undefined) {
+                    return true
+                }
+                const at = event[timeField]
+                return at !== undefined && at <= boundary
+            })
+            return { ...past, events: [...cursor.carry, ...fresh] }
         }
 
         return {
             key: 'events',
             label: i18n.t('Events'),
             revision,
+            subject,
             async fetchPage(cursor, signal) {
                 const today = dayOf(now ?? new Date())
                 try {
@@ -157,14 +225,15 @@ export const useTrackedEntityEventsSource = ({
                             ...firstPage,
                             staleTime: Infinity,
                         })
-                        const page = pastPage(past, 1, pinned.hasMore, today)
+                        const page = pastPage(past, 1, pinned, today)
                         page.entries = [
                             ...entriesOf(pinned.events, today),
                             ...page.entries,
                         ]
                         return Result.ok(page)
                     }
-                    const { page, capped } = CursorSchema.parse(cursor)
+                    const parsed = CursorSchema.parse(cursor)
+                    const { page } = parsed
                     const past = unwrap(
                         await fetchEventsPage(
                             client,
@@ -178,7 +247,9 @@ export const useTrackedEntityEventsSource = ({
                             signal
                         )
                     )
-                    return Result.ok(pastPage(past, page, capped, today))
+                    return Result.ok(
+                        pastPage(withCarry(past, parsed), page, parsed, today)
+                    )
                 } catch (cause) {
                     return Result.err(failed(cause))
                 }
@@ -186,6 +257,7 @@ export const useTrackedEntityEventsSource = ({
         }
     }, [
         revision,
+        subject,
         firstPage,
         queryClient,
         client,

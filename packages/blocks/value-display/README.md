@@ -70,6 +70,6 @@ export const StoredAt = ({
 ## Boundaries
 
 - The day is read from the stored text, never through the viewer's time zone, and converted into the calendar you pass.
-- Gregorian and ISO 8601 dates read as "Oct 14, 2026" in the locale; other calendars read as `YYYY-MM-DD` in that calendar.
+- Gregorian and ISO 8601 dates read as "Oct 14, 2026" in the locale. Every other calendar (Ethiopian, Coptic, Nepali, Islamic, Persian, Thai) reads as `YYYY-MM-DD` in that calendar, with no month names: Ethiopian `2019-02-04` is 14 October 2026. Ethiopian and Coptic are converted by fixed arithmetic, so they don't depend on the browser's ICU data.
 - `parseDhis2Calendar` reads `systemInfo.calendar`; an unknown or missing calendar is Gregorian.
 - It only formats; it does not fetch option sets, org unit names or metadata.

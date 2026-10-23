@@ -216,6 +216,28 @@ describe('merge', () => {
         expect(state.sources.get('b')?.completeUntil).toBeUndefined()
     })
 
+    it("drops a source's entries at once when it starts afresh for a new subject", () => {
+        let state = initialMergeState(['a', 'b'])
+        state = applyPage(state, 'a', page([entry('a1', '2026-10-01')]))
+        state = applyPage(
+            state,
+            'b',
+            page([entry('b1', '2026-10-02', { sourceKey: 'b' })])
+        )
+        state = startLoading(state, 'b', 'fresh')
+        expect(state.sources.get('b')?.status).toBe('loading')
+        // b limits the feed again, as on its very first page.
+        expect(ids(visibleEntries(state))).toEqual([])
+        expect(state.entries.has('b1')).toBe(false)
+
+        state = applyPage(
+            state,
+            'b',
+            page([entry('b2', '2026-09-30', { sourceKey: 'b' })])
+        )
+        expect(ids(visibleEntries(state))).toEqual(['a1', 'b2'])
+    })
+
     it('lets a source that errors mid-paging stop limiting, then resume from its cursor on retry', () => {
         let state = initialMergeState(['a', 'b'])
         state = applyPage(

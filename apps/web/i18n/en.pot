@@ -401,6 +401,9 @@ msgstr "Milestones"
 msgid "More scheduled events aren't shown."
 msgstr "More scheduled events aren't shown."
 
+msgid "More skipped events aren't shown."
+msgstr "More skipped events aren't shown."
+
 msgid "No changes"
 msgstr "No changes"
 

@@ -190,9 +190,34 @@ describe('fetchPinnedEvents', () => {
             }),
         ])
         const pinned = Result.isOk(result) ? result.value : undefined
-        // Oldest scheduled date first, then cut to the cap.
-        expect(pinned?.events.map((e) => e.event)).toEqual(['s', 'a'])
-        expect(pinned?.hasMore).toBe(true)
+        // Each status cut to the cap on its own, then oldest scheduled first.
+        expect(pinned?.events.map((e) => e.event)).toEqual(['s', 'a', 'b'])
+        expect(pinned?.scheduleCapped).toBe(true)
+        expect(pinned?.skippedCapped).toBe(false)
+    })
+
+    it('never lets old skipped events push out upcoming scheduled ones', async () => {
+        const { client } = engineReturning(
+            {
+                events: [
+                    event('next', 'SCHEDULE', { scheduledAt: '2027-01-15' }),
+                ],
+            },
+            {
+                events: [
+                    event('s1', 'SKIPPED', { scheduledAt: '2025-01-01' }),
+                    event('s2', 'SKIPPED', { scheduledAt: '2025-02-01' }),
+                    event('s3', 'SKIPPED', { scheduledAt: '2025-03-01' }),
+                ],
+            }
+        )
+
+        const result = await fetchPinnedEvents(client, options)
+
+        const pinned = Result.isOk(result) ? result.value : undefined
+        expect(pinned?.events.map((e) => e.event)).toEqual(['s1', 's2', 'next'])
+        expect(pinned?.scheduleCapped).toBe(false)
+        expect(pinned?.skippedCapped).toBe(true)
     })
 
     it('reports no more when both statuses fit within the cap', async () => {
@@ -209,7 +234,8 @@ describe('fetchPinnedEvents', () => {
             'TlE2eEvt005',
             'TlE2eEvt006',
         ])
-        expect(pinned?.hasMore).toBe(false)
+        expect(pinned?.scheduleCapped).toBe(false)
+        expect(pinned?.skippedCapped).toBe(false)
     })
 
     it('fails when either status request fails', async () => {

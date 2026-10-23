@@ -101,6 +101,35 @@ describe('enrollment sources', () => {
         ])
     })
 
+    it('places enrolled and incident on their day, and completed and cancelled at their instant', async () => {
+        const { wrapper } = setup(() =>
+            entity(
+                enrollment({
+                    enrollment: 'a',
+                    occurredAt: '2026-01-05T00:00:00.000',
+                    status: 'COMPLETED',
+                    completedAt: '2026-03-01T10:15:00.000',
+                }),
+                enrollment({
+                    enrollment: 'b',
+                    status: 'CANCELLED',
+                    updatedAt: '2026-05-02T16:40:00.000',
+                })
+            )
+        )
+        const { result } = await renderBoth(wrapper)
+
+        const entries = await entriesOf(result.current.milestones)
+
+        expect(entries.map((e) => [e.id, e.precision])).toEqual([
+            ['milestones:a:enrolled', 'day'],
+            ['milestones:a:incident', 'day'],
+            ['milestones:a:completed', 'instant'],
+            ['milestones:b:enrolled', 'day'],
+            ['milestones:b:cancelled', 'instant'],
+        ])
+    })
+
     it('omits the incident milestone when it equals the enrollment date', async () => {
         const { wrapper } = setup(() =>
             entity(
@@ -258,6 +287,17 @@ describe('enrollment sources', () => {
         expect(result.current.notes.revision).toBe(
             result.current.milestones.revision
         )
+        expect(result.current.milestones.subject).toBe(
+            JSON.stringify(
+                timelineKeys.trackedEntity(
+                    subject.trackedEntity,
+                    subject.program
+                )
+            )
+        )
+        expect(result.current.notes.subject).toBe(
+            result.current.milestones.subject
+        )
     })
 
     it('restarts after a failed first load once an invalidation succeeds', async () => {
@@ -337,6 +377,59 @@ describe('enrollment sources', () => {
         const entries = await entriesOf(result.current.milestones)
 
         expect(entries.map((e) => e.id)).toEqual(['milestones:e1:enrolled'])
+    })
+
+    it("shows only the new record's milestones once the tracked entity changes", async () => {
+        const queryClient = new QueryClient()
+        let answerSecond: (() => void) | undefined
+        const data: CustomData = {
+            'tracker/trackedEntities': async (_type, query) => {
+                if (query.id !== 'te1') {
+                    await new Promise<void>((resolve) => {
+                        answerSecond = resolve
+                    })
+                }
+                const name = query.id === 'te1' ? 'old' : 'new'
+                // The engine takes JSON, as a real response is.
+                return JSON.parse(
+                    JSON.stringify(entity(enrollment({ enrollment: name })))
+                )
+            },
+        }
+        const wrapper = ({ children }: { children: ReactNode }) => (
+            <CustomDataProvider data={data}>
+                <QueryClientProvider client={queryClient}>
+                    {children}
+                </QueryClientProvider>
+            </CustomDataProvider>
+        )
+        const { result, rerender } = await renderHook(
+            (props?: { trackedEntity: string }) => {
+                const options = {
+                    trackedEntity: props?.trackedEntity ?? 'te1',
+                    program: subject.program,
+                }
+                return useTimelineSources<MilestoneEntryData | NoteEntryData>([
+                    useEnrollmentMilestonesSource(options),
+                    useEnrollmentNotesSource(options),
+                ])
+            },
+            { wrapper, initialProps: { trackedEntity: 'te1' } }
+        )
+        await expect
+            .poll(() => result.current.entries.map((e) => e.id))
+            .toEqual(['milestones:old:enrolled'])
+
+        await rerender({ trackedEntity: 'te2' })
+        // The old record's entries go before the new one answers.
+        await expect.poll(() => result.current.entries).toEqual([])
+        expect(result.current.status).toBe('loading')
+
+        await expect.poll(() => answerSecond).toBeDefined()
+        answerSecond?.()
+        await expect
+            .poll(() => result.current.entries.map((e) => e.id))
+            .toEqual(['milestones:new:enrolled'])
     })
 
     it('does not retry in a loop while the endpoint stays down', async () => {

@@ -159,7 +159,7 @@ const ChangeSchema = z.object({
 
 const CHANGE_TYPES = ['CREATE', 'UPDATE', 'DELETE'] as const
 
-export type ChangeType = (typeof CHANGE_TYPES)[number]
+type ChangeType = (typeof CHANGE_TYPES)[number]
 
 export interface ChangeLogRow {
     createdAt: string

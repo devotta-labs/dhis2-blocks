@@ -5,12 +5,15 @@ import type { TimelineEntry } from '../core/types'
 import { TimelineFeed } from './TimelineFeed'
 import { TimelineItem } from './TimelineParts'
 import { TimelineLoadMore } from './TimelineLoadMore'
-import { actionsOf, entry, Provided, source, stateOf } from './__fixtures__/timelineFixtures'
+import {
+    actionsOf,
+    entry,
+    Provided,
+    source,
+    stateOf,
+} from './__fixtures__/timelineFixtures'
 
-const first = [
-    entry('e1', '2026-10-20T09:00'),
-    entry('e2', '2026-10-19T09:00'),
-]
+const first = [entry('e1', '2026-10-20T09:00'), entry('e2', '2026-10-19T09:00')]
 const more = [entry('e3', '2026-10-18T09:00'), entry('e4', '2026-10-17T09:00')]
 
 const renderEntry = (item: TimelineEntry<string>) => (
@@ -50,7 +53,9 @@ describe('TimelineLoadMore', () => {
         await vi.waitFor(() =>
             expect(document.activeElement?.textContent).toContain('e3')
         )
-        expect(document.activeElement?.getAttribute('data-timeline-entry-index')).toBe('2')
+        expect(
+            document.activeElement?.getAttribute('data-timeline-entry-index')
+        ).toBe('2')
     })
 
     it('is reachable and operable with the keyboard alone', async () => {
@@ -71,7 +76,10 @@ describe('TimelineLoadMore', () => {
     it('reads hasMore and loadMore from context and renders nothing when there is nothing more', async () => {
         const loadMore = vi.fn()
         const withMore = await render(
-            <Provided state={stateOf({ hasMore: true })} actions={actionsOf({ loadMore })}>
+            <Provided
+                state={stateOf({ hasMore: true })}
+                actions={actionsOf({ loadMore })}
+            >
                 <TimelineLoadMore />
             </Provided>
         )
@@ -134,7 +142,9 @@ describe('TimelineLoadMore', () => {
 
         finish()
 
-        await vi.waitFor(() => expect(container.querySelector('button')).toBeNull())
+        await vi.waitFor(() =>
+            expect(container.querySelector('button')).toBeNull()
+        )
         expect(
             document.activeElement?.getAttribute('data-timeline-entry-index')
         ).toBe('1')
@@ -163,7 +173,9 @@ describe('TimelineLoadMore', () => {
         grow()
 
         await vi.waitFor(() =>
-            expect(container.querySelectorAll('li[data-timeline-entry-index]')).toHaveLength(4)
+            expect(
+                container.querySelectorAll('li[data-timeline-entry-index]')
+            ).toHaveLength(4)
         )
         expect(
             document.activeElement?.hasAttribute('data-timeline-entry-index')

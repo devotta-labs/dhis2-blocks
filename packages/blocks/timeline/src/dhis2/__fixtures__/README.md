@@ -35,6 +35,10 @@ then `pnpm format` (the script writes 2-space JSON). Fixtures are recorded
 whole; only `program-metadata.json` is trimmed (two `displayInReports` data
 elements and one not per stage, four attributes, three options per option set).
 
+> **Warning:** `record.sh` seeds the same ids (`TlE2eTei001`, …) as the
+> timeline e2e seed, so re-record on a stack that has not had the timeline e2e
+> seed imported (or rename the ids first).
+
 ## Files (per version)
 
 | File                                                                 | Request                                                                                             |

@@ -9,7 +9,10 @@ import {
     useTimelineState,
 } from './TimelineContext'
 
-/** The dot that marks an entry on the line. */
+/**
+ * The dot that marks an entry on the line.
+ * @public Exported for hosts that lay out their own items.
+ */
 export const TimelineMarker = () => (
     <span
         aria-hidden="true"
@@ -18,7 +21,10 @@ export const TimelineMarker = () => (
     />
 )
 
-/** The line that joins an entry to the next one. */
+/**
+ * The line that joins an entry to the next one.
+ * @public Exported for hosts that lay out their own items.
+ */
 export const TimelineConnector = () => (
     <span
         aria-hidden="true"

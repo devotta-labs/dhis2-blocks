@@ -47,8 +47,17 @@ export interface SourcePage<TData> {
 export interface TimelineSource<TData = unknown> {
     key: string
     label: string
-    /** Change it to make the source start again from its first page. */
+    /**
+     * Change it to refresh the source from its first page; its entries stay
+     * on show until that page answers.
+     */
     revision?: unknown
+    /**
+     * What the source is about, such as the tracked entity and program.
+     * Change it to start the source afresh: its entries go at once and it
+     * holds the feed back until its new first page answers.
+     */
+    subject?: string
     fetchPage(
         cursor: unknown | undefined,
         signal: AbortSignal

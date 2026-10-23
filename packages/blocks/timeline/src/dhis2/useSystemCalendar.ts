@@ -15,12 +15,3 @@ export const useSystemCalendar = (): Dhis2Calendar => {
         SystemInfoCalendarSchema.safeParse(systemInfo).data?.calendar
     )
 }
-
-/**
- * The server's minor version (42 for 2.42). Unknown reads as 0, so
- * version-gated features stay off rather than fail.
- */
-export const useServerMinor = (): number => {
-    const { serverVersion } = useConfig()
-    return serverVersion?.minor ?? 0
-}

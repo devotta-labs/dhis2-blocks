@@ -26,7 +26,11 @@ export interface TimelineSourcesOptions {
 
 type Action<TData> =
     | { type: 'retain'; keys: string[] }
-    | { type: 'start'; key: string; mode: 'restart' | 'more' | 'retry' }
+    | {
+          type: 'start'
+          key: string
+          mode: 'restart' | 'fresh' | 'more' | 'retry'
+      }
     | { type: 'page'; key: string; page: SourcePage<TData> }
     | { type: 'error'; key: string; error: SourceError }
 
@@ -71,8 +75,10 @@ export const useTimelineSources = <TData>(
     latest.current = { sources, state, options }
     /** One controller per in-flight request, by source key. */
     const requests = useRef(new Map<string, AbortController>())
-    /** The revision each source was last started at. */
-    const started = useRef(new Map<string, unknown>())
+    /** The revision and subject each source was last started at. */
+    const started = useRef(
+        new Map<string, { revision: unknown; subject?: string }>()
+    )
 
     const request = useCallback(
         (
@@ -136,8 +142,8 @@ export const useTimelineSources = <TData>(
         }
     }, [])
 
-    // Every render: start sources that are new or whose revision changed,
-    // and forget the ones that are gone.
+    // Every render: start sources that are new or whose revision or subject
+    // changed, and forget the ones that are gone.
     useEffect(() => {
         const keys = sources.map((source) => source.key)
         for (const key of started.current.keys()) {
@@ -151,15 +157,24 @@ export const useTimelineSources = <TData>(
             dispatch({ type: 'retain', keys })
         }
         for (const source of sources) {
-            const known = started.current
+            const known = started.current.get(source.key)
+            const sameSubject = known?.subject === source.subject
             if (
-                known.has(source.key) &&
-                Object.is(known.get(source.key), source.revision)
+                known !== undefined &&
+                sameSubject &&
+                Object.is(known.revision, source.revision)
             ) {
                 continue
             }
-            known.set(source.key, source.revision)
-            dispatch({ type: 'start', key: source.key, mode: 'restart' })
+            started.current.set(source.key, {
+                revision: source.revision,
+                subject: source.subject,
+            })
+            dispatch({
+                type: 'start',
+                key: source.key,
+                mode: known === undefined || sameSubject ? 'restart' : 'fresh',
+            })
             request(source, undefined, true)
         }
     })

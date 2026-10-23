@@ -104,50 +104,66 @@ const byScheduledAt = (a: TrackerEvent, b: TrackerEvent) => {
     return a.event < b.event ? -1 : a.event > b.event ? 1 : 0
 }
 
+export interface PinnedEvents {
+    events: TrackerEvent[]
+    /** More SCHEDULE events than the cap exist. */
+    scheduleCapped: boolean
+    /** More SKIPPED events than the cap exist. */
+    skippedCapped: boolean
+}
+
 /**
  * Scheduled (including past-due) and skipped events, oldest scheduled date
- * first, at most `cap`. Each status is asked for `cap + 1` so `hasMore` says
- * whether any were left out. `status=OVERDUE` is not asked for: servers
- * answer it with the past-due SCHEDULE events, which are already here.
+ * first, at most `cap` of each status, so old skipped events never push out
+ * upcoming ones. Each status is asked for `cap + 1` to tell whether any were
+ * left out. `status=OVERDUE` is not asked for: servers answer it with the
+ * past-due SCHEDULE events, which are already here.
  */
 export const fetchPinnedEvents = async (
     client: TimelineClient,
     { trackedEntity, program, cap }: Subject & { cap: number },
     signal?: AbortSignal
-): Promise<Result<EventsPage, Error>> => {
-    const results = await Promise.all(
-        (['SCHEDULE', 'SKIPPED'] as const).map((status) =>
-            client.query(
-                {
-                    resource: 'tracker/events',
-                    params: {
-                        trackedEntity,
-                        program,
-                        status,
-                        fields: EVENT_FIELDS,
-                        order: 'scheduledAt:asc,event:asc',
-                        page: 1,
-                        pageSize: cap + 1,
-                    },
+): Promise<Result<PinnedEvents, Error>> => {
+    const ask = (status: 'SCHEDULE' | 'SKIPPED') =>
+        client.query(
+            {
+                resource: 'tracker/events',
+                params: {
+                    trackedEntity,
+                    program,
+                    status,
+                    fields: EVENT_FIELDS,
+                    order: 'scheduledAt:asc,event:asc',
+                    page: 1,
+                    pageSize: cap + 1,
                 },
-                EventsPageSchema,
-                signal
-            )
+            },
+            EventsPageSchema,
+            signal
         )
-    )
-    const events = new Map<string, TrackerEvent>()
-    for (const result of results) {
-        if (Result.isError(result)) {
-            return Result.err(result.error)
-        }
-        for (const event of result.value) {
-            events.set(event.event, event)
-        }
+    const [schedule, skipped] = await Promise.all([
+        ask('SCHEDULE'),
+        ask('SKIPPED'),
+    ])
+    if (Result.isError(schedule)) {
+        return Result.err(schedule.error)
     }
-    const sorted = [...events.values()].sort(byScheduledAt)
+    if (Result.isError(skipped)) {
+        return Result.err(skipped.error)
+    }
+    const firstOf = (events: TrackerEvent[]) =>
+        [...events].sort(byScheduledAt).slice(0, cap)
+    const events = new Map<string, TrackerEvent>()
+    for (const event of [
+        ...firstOf(schedule.value),
+        ...firstOf(skipped.value),
+    ]) {
+        events.set(event.event, event)
+    }
     return Result.ok({
-        events: sorted.slice(0, cap),
-        hasMore: sorted.length > cap,
+        events: [...events.values()].sort(byScheduledAt),
+        scheduleCapped: schedule.value.length > cap,
+        skippedCapped: skipped.value.length > cap,
     })
 }
 

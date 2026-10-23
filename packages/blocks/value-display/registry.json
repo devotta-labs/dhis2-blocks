@@ -32,7 +32,7 @@
                     "target": "@components/dhis2/value-display/types.ts"
                 }
             ],
-            "docs": "Call formatDhis2Value(value, { valueType, optionSet }, { calendar, locale }) to get display text. Read the system calendar with parseDhis2Calendar(useConfig().systemInfo?.calendar)."
+            "docs": "Call formatDhis2Value(value, { valueType, optionSet }, { calendar, locale }) to get display text. Read the system calendar from useConfig().systemInfo, whose app-runtime type leaves out calendar: parseDhis2Calendar(z.object({ calendar: z.string().optional() }).safeParse(systemInfo).data?.calendar). Calendars other than Gregorian and ISO 8601 show as YYYY-MM-DD in that calendar."
         }
     ]
 }

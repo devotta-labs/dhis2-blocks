@@ -274,6 +274,8 @@ describe('useTrackedEntityAttributeChangelogSource', () => {
         await queryClient.invalidateQueries({ queryKey: timelineKeys.root })
 
         await expect.poll(() => result.current.revision).not.toBe(initial)
+        // A refresh, not a new subject: the shown changes stay until it answers.
+        expect(result.current.subject).toContain('attributeChangeLog')
     })
 
     it('stops requesting while the endpoint keeps failing', async () => {

@@ -22,11 +22,11 @@ import programMetadata from './v43/program-metadata.json'
 
 type CustomData = ComponentProps<typeof CustomDataProvider>['data']
 
-export const PROGRAM = 'WSGAb5XwJ3Y'
+const PROGRAM = 'WSGAb5XwJ3Y'
 
 export const ChangeLogsSchema = z.object({ changeLogs: z.array(z.json()) })
 
-export type ChangeLogs = z.infer<typeof ChangeLogsSchema>
+type ChangeLogs = z.infer<typeof ChangeLogsSchema>
 
 /** The first element matching `selector`, which the test expects to exist. */
 export const elementIn = (
@@ -49,7 +49,7 @@ export const buttonIn = (container: HTMLElement): HTMLButtonElement => {
 }
 
 /** The recorded events by id. */
-export const recordedEvents: Record<string, TrackerEvent> = Object.fromEntries(
+const recordedEvents: Record<string, TrackerEvent> = Object.fromEntries(
     [...EventsPageSchema.parse(page1), ...EventsPageSchema.parse(page2)].map(
         (event) => [event.event, event]
     )

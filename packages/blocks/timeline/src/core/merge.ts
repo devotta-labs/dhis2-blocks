@@ -95,7 +95,8 @@ export const retainSources = <TData>(
 
 /**
  * Marks a request as started. `restart` fetches the first page again, keeping
- * the source's entries on show until it answers; `more` fetches the page after
+ * the source's entries on show until it answers; `fresh` fetches it for a new
+ * subject, dropping the source's entries at once; `more` fetches the page after
  * the cursor; `retry` repeats the request that failed (the first page, if none
  * arrived since the source started). Only a source that has never answered
  * limits the feed while it loads.
@@ -103,11 +104,17 @@ export const retainSources = <TData>(
 export const startLoading = <TData>(
     state: MergeState<TData>,
     key: string,
-    mode: 'restart' | 'more' | 'retry'
+    mode: 'restart' | 'fresh' | 'more' | 'retry'
 ): MergeState<TData> => {
     const source = state.sources.get(key)
     if (source === undefined) {
         return state
+    }
+    if (mode === 'fresh') {
+        return {
+            ...updateSource(state, key, () => freshSource(key)),
+            entries: dropEntriesOf(state.entries, (owner) => owner !== key),
+        }
     }
     if (mode === 'restart') {
         return updateSource(state, key, (s) =>

@@ -34,6 +34,7 @@ export const timelineTranslationCatalog = () => [
     i18n.t('Loading more'),
     i18n.t('Milestones'),
     i18n.t("More scheduled events aren't shown."),
+    i18n.t("More skipped events aren't shown."),
     i18n.t('No'),
     i18n.t('No changes'),
     i18n.t('No history yet'),

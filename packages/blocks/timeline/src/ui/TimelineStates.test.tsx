@@ -1,10 +1,14 @@
 import axe from 'axe-core'
 import React from 'react'
 import { render } from 'vitest-browser-react'
-import { actionsOf, entry, Provided, source, stateOf } from './__fixtures__/timelineFixtures'
 import {
-    TimelineEmpty,
-} from './TimelineParts'
+    actionsOf,
+    entry,
+    Provided,
+    source,
+    stateOf,
+} from './__fixtures__/timelineFixtures'
+import { TimelineEmpty } from './TimelineParts'
 import {
     TimelineError,
     TimelineLoading,
@@ -33,11 +37,13 @@ const LOADING = stateOf({
     sources: [source('a', 'loading')],
 })
 const EMPTY = stateOf({
-    sources: [source('a', 'complete'), source('b', 'unsupported')],
+    sources: [source('a', 'complete'), source('b', 'complete')],
 })
 const FAILED = stateOf({
     sources: [
-        source('a', 'error', { error: { kind: 'failed', error: new Error('x') } }),
+        source('a', 'error', {
+            error: { kind: 'failed', error: new Error('x') },
+        }),
     ],
 })
 
@@ -45,16 +51,24 @@ describe('timeline states', () => {
     it('shows TimelineLoading, not TimelineEmpty, while a source loads', async () => {
         const { container } = await renderState(LOADING)
 
-        expect(container.querySelector('[role=status]')?.textContent).toContain('Loading')
+        expect(container.querySelector('[role=status]')?.textContent).toContain(
+            'Loading'
+        )
         expect(container.textContent).not.toContain('No history yet')
     })
 
-    it('shows TimelineEmpty only when every source is complete or unsupported with no entries', async () => {
-        expect((await renderState(EMPTY)).container.textContent).toContain('No history yet')
+    it('shows TimelineEmpty only when every source is complete with no entries', async () => {
+        expect((await renderState(EMPTY)).container.textContent).toContain(
+            'No history yet'
+        )
 
         for (const state of [
             LOADING,
             FAILED,
+            stateOf({ sources: [source('a', 'unsupported')] }),
+            stateOf({
+                sources: [source('a', 'complete'), source('b', 'unsupported')],
+            }),
             stateOf({ sources: [source('a', 'hasMore')] }),
             stateOf({
                 entries: [entry('e1', '2026-10-20T09:00')],
@@ -81,7 +95,9 @@ describe('timeline states', () => {
                 ],
             })
         )
-        expect(some.container.textContent).not.toContain("Couldn't load the history")
+        expect(some.container.textContent).not.toContain(
+            "Couldn't load the history"
+        )
     })
 
     it('lets the host replace the empty and error text', async () => {
@@ -106,6 +122,7 @@ describe('timeline states', () => {
         const { container } = await renderState(
             stateOf({
                 sources: [
+                    source('notes', 'complete'),
                     source('visits', 'error', {
                         label: 'Visits',
                         error: { kind: 'failed', error: new Error('x') },
@@ -123,6 +140,32 @@ describe('timeline states', () => {
         expect(retry).toHaveBeenCalledExactlyOnceWith('visits')
     })
 
+    it('says the failure once when every source failed, with one Retry for them all', async () => {
+        const retry = vi.fn()
+        const { container } = await renderState(
+            stateOf({
+                sources: [
+                    source('visits', 'error', {
+                        label: 'Visits',
+                        error: { kind: 'failed', error: new Error('x') },
+                    }),
+                    source('notes', 'error', {
+                        label: 'Notes',
+                        error: { kind: 'failed', error: new Error('y') },
+                    }),
+                ],
+            }),
+            retry
+        )
+
+        expect(container.textContent).toContain("Couldn't load the history")
+        expect(container.textContent).not.toContain("couldn't load.")
+        const buttons = [...container.querySelectorAll('button')]
+        expect(buttons.map((b) => b.textContent)).toEqual(['Retry'])
+        buttons[0]?.click()
+        expect(retry.mock.calls).toEqual([['visits'], ['notes']])
+    })
+
     it("shows the partial and unsupported notices, and a source's own notice text", async () => {
         const { container } = await renderState(
             stateOf({
@@ -137,8 +180,12 @@ describe('timeline states', () => {
             })
         )
 
-        expect(container.textContent).toContain('Some Visits may be hidden by your access.')
-        expect(container.textContent).toContain("Changes isn't available on this DHIS2 version.")
+        expect(container.textContent).toContain(
+            'Some Visits may be hidden by your access.'
+        )
+        expect(container.textContent).toContain(
+            "Changes isn't available on this DHIS2 version."
+        )
         expect(container.textContent).toContain('Showing the last 100 notes.')
         expect(container.querySelector('button')).toBeNull()
     })

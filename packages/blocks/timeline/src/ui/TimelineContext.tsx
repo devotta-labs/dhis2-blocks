@@ -27,7 +27,7 @@ export interface TimelineState<TData = unknown> {
     sources: SourceState[]
     hasMore: boolean
     loadingMore: boolean
-    /** Every source is complete or unsupported, and there is nothing to show. */
+    /** Every source is complete, and there is nothing to show. */
     isEmpty: boolean
     /** Every source failed. */
     allFailed: boolean
@@ -62,11 +62,7 @@ export const buildTimelineState = <TData,>(
         loadingMore: result.loadingMore,
         isEmpty:
             result.entries.length === 0 &&
-            sources.every(
-                (source) =>
-                    source.status === 'complete' ||
-                    source.status === 'unsupported'
-            ),
+            sources.every((source) => source.status === 'complete'),
         allFailed:
             sources.length > 0 &&
             sources.every((source) => source.status === 'error'),

@@ -125,18 +125,19 @@ export const useTrackedEntityAttributeChangelogSource = ({
         [client, trackedEntity, program, pageSize]
     )
 
-    // Observed so invalidation refetches it; the revision moves only when it
-    // settles again after its first load. The subject is part of the revision
-    // so another tracked entity starts the source afresh.
+    // Observed so invalidation refetches it; the revision moves only when its
+    // data is updated after its first load. Another tracked entity or program
+    // is a new subject, which starts the source afresh.
     useQuery(firstPage)
-    const settled = useQueryRevision(firstPage.queryKey)
-    const revision = `${JSON.stringify(firstPage.queryKey)}:${settled ?? 0}`
+    const revision = useQueryRevision(firstPage.queryKey)
+    const subject = JSON.stringify(firstPage.queryKey)
 
     return useMemo(
         (): TimelineSource<ChangeGroup> => ({
             key: 'changes',
             label: i18n.t('Changes'),
             revision,
+            subject,
             async fetchPage(
                 cursor,
                 signal
@@ -174,6 +175,7 @@ export const useTrackedEntityAttributeChangelogSource = ({
         }),
         [
             revision,
+            subject,
             firstPage,
             queryClient,
             client,

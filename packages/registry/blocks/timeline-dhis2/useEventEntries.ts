@@ -7,14 +7,13 @@ import type {
     TimelineStatus,
 } from '@/components/timeline/core/types'
 import { combineStatus, NO_ENTRIES } from './history'
-import { fetchEvents, type EventTimeField } from './queries'
+import { fetchEvents, type EventsResult, type EventTimeField } from './queries'
 import { timelineKeys } from './timelineKeys'
 import { eventEntry, orgUnitIdsOf } from './toEntries'
 import type { EventEntryData, HistoryResult } from './types'
 import {
     programLabel,
-    refetchOf,
-    statusOf,
+    summarize,
     unwrap,
     useOrgUnitNames,
     useProgramIds,
@@ -68,23 +67,22 @@ export const useEventEntries = ({
                     )
                 ),
         })),
+        combine: summarize<EventsResult>,
     })
-    const eventsSettled = events.every((query) => statusOf(query) !== 'pending')
-    const answered = events.map((query) => query.dataUpdatedAt).join()
+    const eventsSettled = events.statuses.every(
+        (status) => status !== 'pending'
+    )
     // A program shows once its events and its metadata have both answered,
     // so its events never show ids that names are about to replace.
-    const waiting = [...info.pendingIds].join()
     const groups = useMemo(
         () =>
             (ids.ids ?? []).flatMap((program, index) => {
-                const data = events[index]?.data
+                const data = events.data[index]
                 return data === undefined || info.pendingIds.has(program)
                     ? []
                     : [{ program, ...data, info: info.programs.get(program) }]
             }),
-        // `answered` and `waiting` change whenever the queries' data does.
-        // oxlint-disable-next-line react-hooks/exhaustive-deps
-        [ids.ids, answered, waiting, info.programs]
+        [ids.ids, events.data, info.pendingIds, info.programs]
     )
     const subject = [trackedEntity, programs?.join(), timeField, cap].join('|')
     const firstAnswers = ids.ids !== undefined && eventsSettled && !info.pending
@@ -121,12 +119,11 @@ export const useEventEntries = ({
         [groups, timeField, today, names.names]
     )
 
-    const eventStatuses = events.map((query) => statusOf(query))
     const firstStatus: TimelineStatus =
         ids.status !== 'success'
             ? ids.status
             : combineStatus([
-                  ...eventStatuses,
+                  ...events.statuses,
                   ...(info.pending || names.pending
                       ? ['pending' as const]
                       : []),
@@ -137,10 +134,10 @@ export const useEventEntries = ({
         firstStatus === 'pending' && shown ? 'success' : firstStatus
     const notices: TimelineNotice[] = [
         ...ids.notices,
-        ...events.flatMap((query, index): TimelineNotice[] => {
+        ...events.statuses.flatMap((eventsStatus, index): TimelineNotice[] => {
             const program = ids.ids?.[index] ?? ''
             const label = programLabel(info.programs, program)
-            if (statusOf(query) === 'error') {
+            if (eventsStatus === 'error') {
                 return [
                     {
                         id: `events-failed:${program}`,
@@ -149,11 +146,11 @@ export const useEventEntries = ({
                             "Events in {{program}} couldn't load.",
                             { program: label }
                         ),
-                        retry: refetchOf(query),
+                        retry: events.retries[index],
                     },
                 ]
             }
-            return query.data?.capped
+            return events.data[index]?.capped
                 ? [
                       {
                           id: `events-capped:${program}`,
@@ -178,11 +175,11 @@ export const useEventEntries = ({
             ids.isFetching ||
             info.isFetching ||
             names.isFetching ||
-            events.some((query) => query.isFetching),
+            events.isFetching,
         refetch: () => {
             ids.refetch()
-            for (const query of events) {
-                refetchOf(query)()
+            for (const retry of events.retries) {
+                retry()
             }
         },
     }

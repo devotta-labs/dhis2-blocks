@@ -52,6 +52,30 @@ export const statusOf = (query: {
 export const refetchOf = (query: Pick<UseQueryResult, 'refetch'>) => () =>
     void query.refetch({ cancelRefetch: false })
 
+/** What the hooks read from a list of queries, one item per query. */
+export interface QueriesSummary<T> {
+    data: Array<T | undefined>
+    statuses: TimelineStatus[]
+    errors: Array<Error | null>
+    isFetching: boolean
+    retries: Array<() => void>
+}
+
+/**
+ * The `combine` for `useQueries`. TanStack Query shares the parts of its
+ * result that haven't changed, so `data` and `statuses` keep their
+ * references until an answer or a status changes, and can be memo deps.
+ */
+export const summarize = <T>(
+    queries: ReadonlyArray<UseQueryResult<T>>
+): QueriesSummary<T> => ({
+    data: queries.map((query) => query.data),
+    statuses: queries.map(statusOf),
+    errors: queries.map((query) => query.error),
+    isFetching: queries.some((query) => query.isFetching),
+    retries: queries.map(refetchOf),
+})
+
 /**
  * True once `settled` has been true for this `subject` (the tracked entity
  * and programs). After that a history never goes back to showing nothing:
@@ -165,9 +189,6 @@ export interface ProgramInfoResult {
 
 const NO_PROGRAMS: ReadonlyMap<string, ProgramInfo> = new Map()
 
-/** A query not yet asked for: pending. */
-const NOT_ASKED = { data: undefined, isError: false, errorUpdateCount: 0 }
-
 /** The display name of a program for notices: its name once known, else its id. */
 export const programLabel = (
     programs: ReadonlyMap<string, ProgramInfo>,
@@ -199,32 +220,35 @@ export const useProgramInfo = (
                     )
                 ),
         })),
+        combine: summarize<ProgramInfo>,
     })
     // Rebuilt only when an answer changes, so entries keep their references.
-    const answered = queries.map((query) => query.dataUpdatedAt).join()
     const programs = useMemo(() => {
-        const found = queries.flatMap((query) =>
-            query.data === undefined ? [] : [query.data]
+        const found = queries.data.flatMap((info) =>
+            info === undefined ? [] : [info]
         )
         return found.length === 0
             ? NO_PROGRAMS
             : new Map(found.map((info) => [info.id, info]))
-        // `answered` changes whenever any query's data does.
-        // oxlint-disable-next-line react-hooks/exhaustive-deps
-    }, [answered])
-    const pendingIds = new Set(
-        (ids ?? []).filter(
-            (_, index) => statusOf(queries[index] ?? NOT_ASKED) === 'pending'
-        )
+    }, [queries.data])
+    const pendingIds = useMemo(
+        () =>
+            new Set(
+                (ids ?? []).filter(
+                    (_, index) =>
+                        (queries.statuses[index] ?? 'pending') === 'pending'
+                )
+            ),
+        [ids, queries.statuses]
     )
     return {
         programs,
         pending: ids === undefined || pendingIds.size > 0,
         pendingIds,
-        isFetching: queries.some((query) => query.isFetching),
-        notices: queries.flatMap((query, index) => {
+        isFetching: queries.isFetching,
+        notices: queries.statuses.flatMap((status, index) => {
             const program = ids?.[index]
-            return statusOf(query) === 'error' && program !== undefined
+            return status === 'error' && program !== undefined
                 ? [
                       {
                           id: `metadata-failed:${program}`,
@@ -233,7 +257,7 @@ export const useProgramInfo = (
                               "Details of program {{program}} couldn't load, so ids are shown.",
                               { program }
                           ),
-                          retry: refetchOf(query),
+                          retry: queries.retries[index],
                       },
                   ]
                 : []

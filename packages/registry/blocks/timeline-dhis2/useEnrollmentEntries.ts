@@ -55,7 +55,6 @@ export const useEnrollmentEntries = ({
     const info = useProgramInfo(programIds)
 
     // An enrollment shows once its program's metadata has answered.
-    const waiting = [...info.pendingIds].join()
     const entries = useMemo(
         () =>
             enrollments.flatMap((enrollment) => {
@@ -68,9 +67,7 @@ export const useEnrollmentEntries = ({
                     ...noteEntries(enrollment, program),
                 ]
             }),
-        // `waiting` changes whenever a program's metadata answers.
-        // oxlint-disable-next-line react-hooks/exhaustive-deps
-        [enrollments, waiting, info.programs]
+        [enrollments, info.pendingIds, info.programs]
     )
 
     const entityStatus = statusOf(entity)

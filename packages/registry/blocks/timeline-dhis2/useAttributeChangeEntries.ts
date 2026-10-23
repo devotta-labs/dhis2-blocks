@@ -8,14 +8,13 @@ import type {
 import { groupChangelogRows, isNotFound } from './changelog'
 import { combineStatus, NO_ENTRIES } from './history'
 import { attributesOf } from './metadata'
-import { fetchAttributeChangeLog } from './queries'
+import { fetchAttributeChangeLog, type ChangeLogResult } from './queries'
 import { timelineKeys } from './timelineKeys'
 import { changeEntries } from './toEntries'
 import type { ChangeEntryData, HistoryResult } from './types'
 import {
     programLabel,
-    refetchOf,
-    statusOf,
+    summarize,
     unwrap,
     useProgramIds,
     useProgramInfo,
@@ -63,18 +62,17 @@ export const useAttributeChangeEntries = ({
                     )
                 ),
         })),
+        combine: summarize<ChangeLogResult>,
     })
-    const answered = changelogs.map((query) => query.dataUpdatedAt).join()
     // A program's changes show once its metadata has answered, so they never
     // show attribute ids that labels are about to replace.
-    const waiting = [...info.pendingIds].join()
     const entries = useMemo(() => {
         const attributes = attributesOf(info.programs.values())
-        const rows = changelogs.flatMap((query, index) => {
+        const rows = changelogs.data.flatMap((data, index) => {
             const program = ids.ids?.[index]
             return program === undefined || info.pendingIds.has(program)
                 ? []
-                : (query.data?.rows ?? [])
+                : (data?.rows ?? [])
         })
         return changeEntries(
             groupChangelogRows(rows, (field) =>
@@ -83,22 +81,15 @@ export const useAttributeChangeEntries = ({
                     : undefined
             )
         )
-        // `answered` and `waiting` change whenever the queries' data does.
-        // oxlint-disable-next-line react-hooks/exhaustive-deps
-    }, [ids.ids, answered, waiting, info.programs])
+    }, [ids.ids, changelogs.data, info.pendingIds, info.programs])
 
-    const unsupported = changelogs.some(
-        (query) => query.error !== null && isNotFound(query.error)
+    const notFound = changelogs.errors.map(
+        (error) => error !== null && isNotFound(error)
     )
-    const failed = changelogs.filter(
-        (query) =>
-            statusOf(query) === 'error' &&
-            !(query.error !== null && isNotFound(query.error))
-    )
-    const changelogStatuses: TimelineStatus[] = changelogs.map((query) =>
-        query.error !== null && isNotFound(query.error)
-            ? 'success'
-            : statusOf(query)
+    const unsupported = notFound.includes(true)
+    // A 404 is an answer, not a failure.
+    const changelogStatuses: TimelineStatus[] = changelogs.statuses.map(
+        (status, index) => (notFound[index] ? 'success' : status)
     )
     const firstStatus: TimelineStatus =
         ids.status !== 'success'
@@ -128,35 +119,37 @@ export const useAttributeChangeEntries = ({
                   },
               ]
             : []),
-        ...changelogs.flatMap((query, index): TimelineNotice[] => {
-            const program = ids.ids?.[index] ?? ''
-            const label = programLabel(info.programs, program)
-            if (failed.includes(query)) {
-                return [
-                    {
-                        id: `changes-failed:${program}`,
-                        tone: 'error',
-                        message: i18n.t(
-                            "Changes in {{program}} couldn't load.",
-                            { program: label }
-                        ),
-                        retry: refetchOf(query),
-                    },
-                ]
+        ...changelogStatuses.flatMap(
+            (changesStatus, index): TimelineNotice[] => {
+                const program = ids.ids?.[index] ?? ''
+                const label = programLabel(info.programs, program)
+                if (changesStatus === 'error') {
+                    return [
+                        {
+                            id: `changes-failed:${program}`,
+                            tone: 'error',
+                            message: i18n.t(
+                                "Changes in {{program}} couldn't load.",
+                                { program: label }
+                            ),
+                            retry: changelogs.retries[index],
+                        },
+                    ]
+                }
+                return changelogs.data[index]?.truncated
+                    ? [
+                          {
+                              id: `changes-truncated:${program}`,
+                              tone: 'info',
+                              message: i18n.t(
+                                  "Older changes in {{program}} aren't shown.",
+                                  { program: label }
+                              ),
+                          },
+                      ]
+                    : []
             }
-            return query.data?.truncated
-                ? [
-                      {
-                          id: `changes-truncated:${program}`,
-                          tone: 'info',
-                          message: i18n.t(
-                              "Older changes in {{program}} aren't shown.",
-                              { program: label }
-                          ),
-                      },
-                  ]
-                : []
-        }),
+        ),
         ...info.notices,
     ]
 
@@ -164,14 +157,11 @@ export const useAttributeChangeEntries = ({
         entries: status === 'pending' ? NO_ENTRIES : entries,
         status,
         notices,
-        isFetching:
-            ids.isFetching ||
-            info.isFetching ||
-            changelogs.some((query) => query.isFetching),
+        isFetching: ids.isFetching || info.isFetching || changelogs.isFetching,
         refetch: () => {
             ids.refetch()
-            for (const query of changelogs) {
-                refetchOf(query)()
+            for (const retry of changelogs.retries) {
+                retry()
             }
         },
     }

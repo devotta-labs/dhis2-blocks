@@ -1,6 +1,9 @@
 # Tracked Entity Record: design
 
 Date: 2026-10-23 · Status: draft, for review
+Revision (2026-10-23): narrowed. The record owns the person's tracker data and access, not every view's display
+metadata; it exports its query options; views may fetch what they need; every per-person query shares one key
+prefix so one invalidation refreshes them all (§4, §6, §10, §12).
 Working name in the brief: `useEnrollmentDashboard` / enrollment dashboard data layer. Renamed with the user to
 **Tracked Entity Record** (`tracked-entity-record`), because it is about one person across programs, not one
 enrollment.
@@ -25,13 +28,15 @@ dashboard means one program at a time.
 ## 2. Goals
 
 1. **One load, many views.** A host wraps a screen in `TrackedEntityRecordProvider`; any component under it reads the
-   same snapshot of the person.
+   same snapshot of the person. A view that only needs tracker data can also read the same cached request through
+   the exported query options (§6), without an adapter.
 2. **Any program the person is in, side by side or one at a time.** "Selected program" is the host's state, not the
    block's. The block answers "what is this person's state in program X?" for any X.
 3. **Access is honoured, simply.** The person is `ready`, `unavailable` or `error`. Each program is either there with
    read/write flags, or `unavailable`. A locked program never blanks the rest of the record. No break-the-glass, no
    overrides, no prop that loosens anything.
-4. **One refresh.** `actions.refresh()` reloads the person after any write made anywhere on the screen.
+4. **One refresh.** `actions.refresh()` reloads the person after any write made anywhere on the screen, and with it
+   every view's per-person query that follows the shared key prefix (§10), whether or not that view reads the record.
 5. **Small pure helpers for the things that are easy to get wrong**: latest value per data element, overdue status,
    which attributes to show, which enrollment is current, whether a new enrollment is allowed.
 6. **Clean seams** for the blocks that come next (§11): stage availability, enrollment-level program rules, lifecycle
@@ -49,6 +54,8 @@ dashboard means one program at a time.
 - Event programs without registration.
 - Offline.
 - Replacing the Timeline's or Observation Cards' own fetching. They stay usable on their own (§12).
+- Carrying each view's display metadata: legend sets, option colours, changelogs, org unit names and the like. The
+  record holds what the access rules and the helpers need; a view fetches the rest itself (§12).
 
 ## 4. Anti-goals: failure even if it technically works
 
@@ -59,7 +66,10 @@ dashboard means one program at a time.
   the program, a cached answer from another user.
 - A custom store, a pager protocol or bent TanStack Query options (`staleTime: Infinity` on tracker data, a private
   revision counter). `refetch`, `isFetching` and invalidation behave as everywhere else in the host.
-- Views fetching on their own to fill gaps in the record. If a view needs more, the record grows a field.
+- A record that grows a field for every view's display needs. It becomes the union of every view on the screen, and
+  no view can ship without changing it.
+- A view that decides "enrolled", "not enrolled" or "no access" from its own requests when a record is there. Program
+  state (§7) comes only from the record, because the server's answers alone can't tell those apart.
 
 ## 5. Constraints and conventions
 
@@ -73,13 +83,15 @@ The block follows **master's architecture**, not older work on feature branches 
 - **Branch:** implementation starts from `origin/master`. It depends on nothing that is only on feature branches
   (Program Rules, Timeline, Observation Cards, Finder). Their seams are described as data shapes (§11).
 - **Context shape:** `{ state, actions, meta }`, as in the composition guide (`state-context-interface`) and
-  `useSidebar`. The provider is the only place that knows state comes from React Query.
-- **Plain TanStack Query:** one keys object with a `root`; ordinary `refetch`, `isFetching` and invalidation; long
-  `staleTime` only on metadata, which doesn't change during a session.
+  `useSidebar`. Context consumers don't see React Query; the exported query options (§6) are the deliberate second
+  way in, for views that want a slice of the same cache.
+- **Plain TanStack Query:** one keys object, with per-person keys under the shared prefix (§10) and metadata under the
+  block's own `root`; ordinary `refetch`, `isFetching` and invalidation; long `staleTime` only on metadata, which
+  doesn't change during a session.
 - **Pure core, hooks at the edges:** API responses → record is a pure function tested against recorded fixtures. The
   helpers are pure functions over the record.
-- **Deep, small interface:** a host learns one provider, one hook, the record's shape and a handful of helpers. The
-  request plan, version differences and the 404 handling stay inside.
+- **Deep, small interface:** a host learns one provider, one hook, the record's shape and a handful of helpers. A view
+  author may also use the query options. The access rules, version differences and the 404 handling stay inside.
 - Stack as elsewhere in the repo: React 18, TypeScript, `@tanstack/react-query`, `zod` at API boundaries,
   `better-result` inside the client, `@dhis2/app-runtime` data engine, oxlint/oxfmt, knip, vitest (node + browser).
 - DHIS2 versions: the e2e matrix (2.41, 2.42, 2.43, dev).
@@ -113,11 +125,29 @@ displayAttributes(record: TrackedEntityRecord, programId?: string, options?: { o
 todayIso(): string // the user's local date as YYYY-MM-DD
 
 trackedEntityRecordKeys // React Query keys (§10)
+
+// Query options bound to the app-runtime data engine, for use with useQuery / useQueries and `select`
+useTrackedEntityRecordQueries(): {
+    person(trackedEntityId: string): QueryOptions<PersonResponse>          // person, enrollments, events (§8.2 (1))
+    relationships(trackedEntityId: string): QueryOptions<RelationshipsResponse>
+    programs(programIds: ReadonlyArray<string>): QueryOptions<ProgramsResponse>
+    trackedEntityType(id: string): QueryOptions<TrackedEntityTypeResponse>
+}
 ```
 
 - `useTrackedEntityRecord` throws outside the provider, like `useSidebar`.
-- There is no standalone hook without the provider (my call: one way in keeps the interface small; the provider is
-  cheap and can wrap a single component).
+- There is no standalone record hook without the provider (my call: the record combines several queries and the
+  access rules; the provider is cheap and can wrap a single component).
+- `useTrackedEntityRecordQueries` works with or without the provider. Its options are the ones the provider uses, so
+  a view calling `useQuery({ ...queries.person(id), select })` shares the provider's request and cache entry instead
+  of making its own. It doesn't throw outside the provider: a view on its own may use it too.
+- What the query options return is the server's answer, parsed by the block's schemas: tracker-shaped, already
+  filtered by the server's own access rules, with **no program state**. It can't tell "not enrolled" from "enrolled
+  where you can't see it" (§7.3), and on 2.41 an enrollment's `attributes` still include other programs' values
+  (§15). A view that needs either reads the record.
+- The parsed response types (`PersonResponse`, `RelationshipsResponse`, `ProgramsResponse`,
+  `TrackedEntityTypeResponse`) become public. Changing a `fields` string is then a change to the interface: fields
+  can be added, never removed without a breaking release. Scope lookups (`userScopes`, `orgUnitPaths`) stay internal.
 - `state` is a discriminated union, so a host can't read data from a record that isn't there:
 
 ```ts
@@ -234,7 +264,8 @@ Capture, which hides unreadable stages and doesn't render "New event" for unwrit
 
 ## 8. The record
 
-Everything a view needs, with names resolved, so recipes never fetch:
+The person's tracker data, with names resolved and program state attached. Display metadata beyond this is the
+views' own (§12):
 
 ```ts
 interface TrackedEntityRecord {
@@ -455,12 +486,42 @@ The lifecycle block uses it; a recipe can use it to decide whether to show "Enro
 
 ## 10. Keys and refresh
 
+### 10.1 The shared per-person prefix
+
+Every query in this library that loads data about one tracked entity is keyed under `['tracked-entity', id]`, then
+the block's own name, then whatever the block needs:
+
 ```ts
-const root = ['tracked-entity-record'] as const
+['tracked-entity', id, 'tracked-entity-record', …]
+['tracked-entity', id, 'observation-cards', 'events', programId]
+['tracked-entity', id, 'timeline', 'event-changelog', eventId]
+```
+
+- It is a **convention, not an import**: a block writes the literal, so no block depends on this one to follow it.
+  This block exports it as `trackedEntityRecordKeys.scope(id)` for hosts that have the record.
+- Only per-person data goes under it: tracker data, changelogs, anything a write to the person can change.
+  Metadata (programs, stages, data elements, legend sets, option sets) stays under each block's own root, so a refresh
+  never refetches it.
+- One `invalidateQueries({ queryKey: ['tracked-entity', id] })` refreshes the person on every view on the screen, under
+  a record or not. TanStack refetches only active queries; inactive ones are marked stale.
+- This answers the open question the user took to the team
+  ([Shared or Self-Fetching Views](https://claude.ai/artifact/MjqxitNX9W1ZGPG3KGv2kX)) as both: views may fetch for
+  themselves, and they share one invalidation. If the team decides otherwise, only §10.1 and `refresh()` change.
+
+### 10.2 The record's keys
+
+```ts
+const scope = (id) => ['tracked-entity', id] as const
+const root = ['tracked-entity-record'] as const // metadata only
 trackedEntityRecordKeys = {
+    scope,
     root,
-    person: (id) => [...root, 'person', id],
-    relationships: (id) => [...root, 'person', id, 'relationships'],
+    person: (id) => [...scope(id), 'tracked-entity-record', 'person'],
+    relationships: (id) => [
+        ...scope(id),
+        'tracked-entity-record',
+        'relationships',
+    ],
     programs: (sortedIds) => [...root, 'programs', sortedIds],
     trackedEntityType: (id) => [...root, 'tracked-entity-type', id],
     relationshipTypes: (sortedIds) => [
@@ -473,8 +534,14 @@ trackedEntityRecordKeys = {
 }
 ```
 
-- `actions.refresh()` invalidates `person(id)` (person, enrollments, events, relationships) and resolves when the
-  refetch settles. Metadata isn't refetched.
+`userScopes` stays under `root`: it is about the user, not the person. `orgUnitPaths` is metadata.
+
+### 10.3 Refresh
+
+- `actions.refresh()` invalidates `scope(id)`: the record's person and relationships, and every other block's
+  per-person queries for this person. It resolves when the refetches settle. Metadata isn't refetched.
+- It rejects only when the record's person request fails (relationships never block the record, §8.3). Another
+  view's failed refetch is that view's to show, not the caller's.
 - **Refreshing is manual** (user's decision). A host calls `refresh()` after a write, for example once an event
   is saved. The block does not watch other blocks' mutations.
 - Tracker queries use TanStack's defaults for `staleTime` (my call: 0, with `refetchOnWindowFocus` left on, so a
@@ -491,20 +558,31 @@ Described only, so their designs start from what's here. None of them is built i
 | Lifecycle actions           | `Enrollment` (`status`, `followUp`, dates), `ProgramInfo` (`accessLevel`, `onlyEnrollOnce`, date settings and labels, `owner`), `ProgramAccess.canWrite`, `enrollmentAllowance`, `actions.refresh()`                                            | Writes are its own; it calls `refresh()` after each.                                                                                                                                                               |
 | Anything that writes events | Ids to write against: `programId`, stage id, `enrollmentId` (from `currentEnrollment`), `trackedEntityId`, `orgUnitId` (the enrollment's), `eventId`; the stage's `canWrite`                                                                    | The writer is not designed here. The host calls `refresh()` once the write succeeds.                                                                                                                               |
 | Finder                      | Nothing. The Finder's `onSelect(person)` gives `person.trackedEntity`; the host routes to a screen wrapped in `TrackedEntityRecordProvider trackedEntityId={…} programs={[finderProgram]}`                                                      | The demo takes the id from the URL until the Finder lands.                                                                                                                                                         |
-| Timeline, Observation Cards | `TrackerEvent`, `Enrollment`, `ProgramInfo`, `StageInfo.dataElements`                                                                                                                                                                           | See §12.                                                                                                                                                                                                           |
+| Timeline, Observation Cards | `TrackerEvent`, `Enrollment`, program state; or the `person` query options with `select`                                                                                                                                                        | Their display metadata and changelogs are their own. See §12.                                                                                                                                                      |
 
-## 12. Views that fetch their own data
+## 12. Views and their data
 
 Timeline v2 and Observation Cards each have their own query hooks today, and the user wants both ways to work: a view
-can load on its own, or take its data from this record. So:
+can load on its own, or take its data from this record. The line between them:
 
-- This block doesn't import them, and they don't have to use it.
-- The record exposes tracker-shaped events and enrollments and resolved metadata, so an adapter from the record to a
-  view's input is small. Adapters are written when those blocks land on master, in those blocks.
-- A view on its own keeps its own refresh; under a record, the host's `refresh()` covers the record. Whether to also
-  share a key prefix across blocks is an open question the user has taken to the team
-  ([Shared or Self-Fetching Views](https://claude.ai/artifact/MjqxitNX9W1ZGPG3KGv2kX)); this design doesn't depend on
-  the answer.
+- **The record owns the person's tracker data and access**: the person, enrollments, events, relationships, program
+  state (§7), and the metadata that the access rules and the helpers (§9) need.
+- **A view owns its display metadata**: Observation Cards' legend sets and option colours, Timeline's changelogs and
+  org unit names, and whatever the next view needs. It fetches them itself, under its own root with a long
+  `staleTime` for metadata, or under the shared prefix (§10.1) for per-person data such as changelogs. The record
+  doesn't grow a field for them (§3, §4).
+- **A view gets tracker data one of three ways**, all supported:
+    1. On its own, with its own requests, keyed under the shared prefix so `refresh()` still covers it.
+    2. From the `person` query options with `select`, sharing the record's request and cache entry (§6). No adapter,
+       no second request for the same events.
+    3. From the record through a small adapter, when it also needs program state.
+- A view's presentational components keep taking their data as props (as Observation Cards' `LatestValueCard` and
+  `TrendCard` take an `ObservationResult`), so a view's own hook and an adapter from the record are two producers of
+  the same input.
+- This block doesn't import them, and they don't have to use it. Adapters and the move to the shared prefix are
+  written when those blocks land on master, in those blocks. Known changes there: Observation Cards' `events` and
+  `enrollments` keys and all of Timeline's per-person keys move under `['tracked-entity', id, <block>, …]`;
+  Timeline's event changelog key gains the person's id, since today it is keyed by event alone.
 
 ## 13. Demo
 
@@ -546,7 +624,10 @@ examples in `apps/docs/src/examples/tracked-entity-record/`, registered in `exam
 - **Provider (browser project):** a fake engine. Pending → ready; 404 → unavailable; network → error with retry;
   `programs` prop ordering; a failed metadata request makes one program `error`; `refresh()` keeps the record shown
   with `isFetching`, then updates; a refresh that answers 404 replaces the record with `unavailable`; relationships
-  failing don't block the record; `useTrackedEntityRecord` throws outside the provider.
+  failing don't block the record; `useTrackedEntityRecord` throws outside the provider; a `useQuery` with
+  `queries.person(id)` and `select` under the provider makes no second request; `refresh()` refetches an unrelated
+  active query keyed under `scope(id)` and leaves metadata queries alone; a failed refetch of that other query doesn't
+  reject `refresh()`.
 - **e2e (real DHIS2 matrix):** seeded metadata and users (new `e2e/metadata/tracked-entity-record-*.json`): a person
   in two programs, one `onlyEnrollOnce`, several enrollments in one; a PROTECTED program with the person owned
   outside the test user's capture scope; a person whose only enrollment in a program was deleted; a stage without

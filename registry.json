@@ -671,6 +671,11 @@
                     "target": "@components/tracked-entity-finder/api/schemas.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-finder/api/search.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/api/search.ts"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-finder/api/systemInfo.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/api/systemInfo.ts"
@@ -699,6 +704,11 @@
                     "path": "packages/registry/blocks/tracked-entity-finder/rules/seal.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/rules/seal.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/rules/searchParams.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/rules/searchParams.ts"
                 },
                 {
                     "path": "packages/registry/blocks/tracked-entity-finder/rules/types.ts",

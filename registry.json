@@ -638,6 +638,112 @@
             "docs": "Use SidebarLink with render={<NavLink to=\"/projects\" />} to highlight the current page. Add SidebarGroup for nested links and SidebarButton for footer actions. Use SidebarToggle in the sidebar or useSidebar() for a page-toolbar control. Give each sidebar its own SidebarProvider and SidebarNavigation. Collapsing preserves expanded groups and the selected page."
         },
         {
+            "name": "tracked-entity-record",
+            "type": "registry:block",
+            "title": "Tracked Entity Record",
+            "description": "Headless data for one person's record across programs: enrollments, events, relationships and metadata, with access honoured.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/TrackedEntityRecordProvider.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/TrackedEntityRecordProvider.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/buildRecord.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/buildRecord.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/currentEnrollment.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/currentEnrollment.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/displayAttributes.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/displayAttributes.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/enrollmentAllowance.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/enrollmentAllowance.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/eventStatus.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/eventStatus.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/keys.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/keys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/latestValues.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/latestValues.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/programState.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/programState.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/queries.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/queries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/requests.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/requests.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/runtimeClient.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/runtimeClient.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/schemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-record/useRecordState.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-record/useRecordState.ts"
+                }
+            ],
+            "docs": "Wrap a screen in TrackedEntityRecordProvider trackedEntityId={id} (optionally programs={[…]}); read useTrackedEntityRecord().state. Call actions.refresh() after any write. Helpers: currentEnrollment, enrollmentAllowance, eventStatus, latestValues, displayAttributes."
+        },
+        {
             "name": "working-list",
             "type": "registry:block",
             "title": "DHIS2 Working List",

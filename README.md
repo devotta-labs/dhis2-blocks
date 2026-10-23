@@ -113,6 +113,66 @@ Collapsing preserves the open groups and selected page.
 See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
 examples.
 
+## Tracked Entity Record block
+
+Load one person's record once, across programs, and read it from any view
+below the provider. The block is headless: it renders nothing.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/tracked-entity-record
+```
+
+Import from `@/components/tracked-entity-record`. Render the provider beneath
+the DHIS2 app-runtime and TanStack Query providers; `programs` is optional and
+lists the programs the app cares about, in the order it wants them:
+
+```tsx
+import {
+    TrackedEntityRecordProvider,
+    displayAttributes,
+    useTrackedEntityRecord,
+} from '@/components/tracked-entity-record'
+
+const PersonHeader = () => {
+    const { state } = useTrackedEntityRecord()
+    if (state.status !== 'ready') return null
+    const attributes = displayAttributes(state.record, undefined, {
+        onlyDisplayInList: true,
+    })
+    return (
+        <dl>
+            {attributes.map(({ attribute, value }) => (
+                <div key={attribute.id}>
+                    <dt>{attribute.name}</dt>
+                    <dd>{value}</dd>
+                </div>
+            ))}
+        </dl>
+    )
+}
+
+export const PersonScreen = ({ id }: { id: string }) => (
+    <TrackedEntityRecordProvider
+        trackedEntityId={id}
+        programs={['IpHINAT79UW']}
+    >
+        <PersonHeader />
+    </TrackedEntityRecordProvider>
+)
+```
+
+`state` is `pending`, `unavailable`, `error` (with `retry()`) or `ready` with
+the record. After any write on the screen, call
+`useTrackedEntityRecord().actions.refresh()`: it reloads the person, their
+enrollments, events and relationships, and every view under the provider
+updates; `meta.isFetching` is true meanwhile. The helpers `currentEnrollment`,
+`enrollmentAllowance`, `eventStatus`, `latestValues` and `displayAttributes`
+work on the record.
+
+The block shows only what the server lets the user read: a person the user may
+not see is `unavailable`, a program the user may not see is `unavailable`
+within an otherwise ready record, and no prop loosens that.
+
 ## Working List block
 
 The Working List is distributed to consumers as a source registry block.

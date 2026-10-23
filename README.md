@@ -16,6 +16,7 @@ packages/
       context-selector/ Capture-style controlled context-selector primitives
       working-list/     Working List block
       sidebar/          Composable modeling-app navigation with a collapse rail
+      profile-widget/   Read-only, composable tracked entity profile widget
     test/               Shared Vitest browser setup
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
@@ -112,6 +113,35 @@ Collapsing preserves the open groups and selected page.
 
 See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
 examples.
+
+## Profile Widget block
+
+A read-only tracked entity profile in the style of the Capture app, with
+formatted attributes, an actions menu, and changelog, status, and delete
+dialogs.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/profile-widget
+```
+
+Import from `@/components/profile-widget`. Pass `trackedEntityId` and an
+optional `programId` to `useTrackedEntityProfile`, which returns
+`{ data, error, isPending }`, and render `data.fields` with
+`ProfileWidgetField` and `ProfileWidgetValue` inside `ProfileWidget`,
+`ProfileWidgetHeader`, `ProfileWidgetTitle`, and `ProfileWidgetContent`.
+There is no provider: the parts are presentational, so you choose the
+loading, error, and empty states, the rows (`selectFields`), and which
+`ProfileWidgetMenuItem`s to show from `data.permissions`. The changelog,
+status, and delete dialogs are controlled with `open` and `onOpenChange`.
+`useProfileFields` formats values from other sources, such as event data
+values, the same way.
+
+Render it beneath the DHIS2 app-runtime provider and a TanStack
+`QueryClientProvider`. With `programId`, the tracked entity must be enrolled
+in that program. The changelog is offered only on DHIS2 2.43 and later.
+
+See `/blocks/profile-widget` for the Capture-style recipe, composition
+examples, and the API reference.
 
 ## Working List block
 

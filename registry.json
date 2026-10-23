@@ -599,6 +599,229 @@
             ]
         },
         {
+            "name": "profile-widget",
+            "type": "registry:block",
+            "title": "Profile widget",
+            "description": "A collapsible tracked entity profile with formatted attributes, an actions menu, changelog, status and delete dialogs.",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@2.1.2",
+                "@dhis2/ui-icons@^10.17.0",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "prop-types@^15.8.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/alert-dialog",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dialog",
+                "devotta-labs/dhis2-blocks/dropdown-menu",
+                "devotta-labs/dhis2-blocks/select",
+                "devotta-labs/dhis2-blocks/spinner",
+                "devotta-labs/dhis2-blocks/table",
+                "devotta-labs/dhis2-blocks/tooltip"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/profile-widget/actions/ConfirmActionDialog.tsx",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/actions/ConfirmActionDialog.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/actions/DeleteDialog.tsx",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/actions/DeleteDialog.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/actions/StatusDialog.tsx",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/actions/StatusDialog.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/actions/trackerImport.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/actions/trackerImport.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/actions/useDeleteTrackedEntity.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/actions/useDeleteTrackedEntity.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/actions/useSetTrackedEntityInactive.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/actions/useSetTrackedEntityInactive.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/api/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/api/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/api/deletedQueries.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/api/deletedQueries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/api/queryKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/api/queryKeys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/api/requests.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/api/requests.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/api/runtime.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/api/runtime.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/api/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/api/schemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/api/serverVersion.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/api/serverVersion.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/changelog/ChangelogDialog.tsx",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/changelog/ChangelogDialog.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/changelog/ChangelogTable.tsx",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/changelog/ChangelogTable.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/changelog/normalize.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/changelog/normalize.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/changelog/requests.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/changelog/requests.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/changelog/useTrackedEntityChangelog.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/changelog/useTrackedEntityChangelog.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/formatting/contracts.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/formatting/contracts.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/formatting/dates.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/formatting/dates.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/formatting/formatValue.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/formatting/formatValue.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/formatting/lookups.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/formatting/lookups.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/formatting/useFormattedFields.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/formatting/useFormattedFields.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/formatting/useValueFormatter.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/formatting/useValueFormatter.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/formatting/valueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/formatting/valueTypes.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/normalize.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/normalize.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/permissions.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/permissions.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/queries.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/queries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/selectDisplayInListAttributes.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/selectDisplayInListAttributes.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/useProfileFields.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/useProfileFields.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/data/useTrackedEntityProfile.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/data/useTrackedEntityProfile.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/errors.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/errors.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/ui/ProfileWidget.tsx",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/ui/ProfileWidget.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/ui/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/ui/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/ui/fields.tsx",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/ui/fields.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/profile-widget/ui/menu.tsx",
+                    "type": "registry:file",
+                    "target": "@components/profile-widget/ui/menu.tsx"
+                }
+            ],
+            "docs": "Call useTrackedEntityProfile({ trackedEntityId, programId }) and compose ProfileWidget, ProfileWidgetHeader, ProfileWidgetTitle, ProfileWidgetContent and ProfileWidgetFieldList with one ProfileWidgetField and ProfileWidgetValue per data.fields entry. Gate ProfileWidgetMenuItem on data.permissions and open the controlled ProfileWidgetChangelogDialog, ProfileWidgetStatusDialog and ProfileWidgetDeleteDialog from useState. Use useProfileFields to format values from other sources. Requires a TanStack QueryClientProvider."
+        },
+        {
             "name": "sidebar",
             "type": "registry:block",
             "title": "Sidebar",

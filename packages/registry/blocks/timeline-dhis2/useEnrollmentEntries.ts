@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { TimelineStatus } from '@/components/timeline/core/types'
 import { NO_ENTRIES } from './history'
 import { milestoneEntries, noteEntries } from './toEntries'
-import type { Dhis2MilestoneData, Dhis2NoteData, HistoryResult } from './types'
+import type { MilestoneEntryData, NoteEntryData, HistoryResult } from './types'
 import {
     refetchOf,
     statusOf,
@@ -27,7 +27,7 @@ export const useEnrollmentEntries = ({
     trackedEntity,
     programs,
 }: EnrollmentEntriesOptions): HistoryResult<
-    Dhis2MilestoneData | Dhis2NoteData
+    MilestoneEntryData | NoteEntryData
 > => {
     const entity = useTrackedEntity(trackedEntity)
     const programKey = programs?.join(',')

@@ -9,11 +9,11 @@ import {
     useShowMore,
 } from '@/components/timeline'
 import {
-    Dhis2Entry,
+    TimelineHistoryEntry,
     useSystemCalendar,
     useTimelineEventEntry,
     useTrackedEntityHistory,
-    type Dhis2EntryData,
+    type HistoryEntryData,
 } from '@/components/timeline-dhis2'
 
 /**
@@ -47,7 +47,7 @@ const TimelineCaseHistory = () => {
     })
 
     return (
-        <Timeline<Dhis2EntryData>
+        <Timeline<HistoryEntryData>
             entries={entries}
             status={history.status}
             calendar={calendar}
@@ -57,9 +57,12 @@ const TimelineCaseHistory = () => {
             <TimelineError onRetry={history.refetch} />
             <TimelineNotices notices={history.notices} />
             <TimelineEmpty />
-            <TimelineFeed<Dhis2EntryData>>
+            <TimelineFeed<HistoryEntryData>>
                 {(entry) => (
-                    <Dhis2Entry entry={entry} eventActions={<EventId />} />
+                    <TimelineHistoryEntry
+                        entry={entry}
+                        eventActions={<EventId />}
+                    />
                 )}
             </TimelineFeed>
             <TimelineShowMore hasMore={hasMore} onShowMore={showMore} />

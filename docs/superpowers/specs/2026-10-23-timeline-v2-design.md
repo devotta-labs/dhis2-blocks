@@ -40,7 +40,7 @@ server-paged source, built by the host with `useInfiniteQuery`.
   they work inside a `Timeline` or anywhere under a `TimelineMetaProvider`: a dialog, a card or a list.
 - **DHIS2 hooks are ordinary TanStack Query hooks.** They are scoped to the patient (`programs?: string[]`) and return
   `{ entries, status, notices, isFetching, refetch }`. Refresh, caching and `isFetching` behave like any other query.
-- **A shipped default dispatcher**, `Dhis2Entry`, that hosts can use as is or copy and edit.
+- **A shipped default dispatcher**, `TimelineHistoryEntry`, that hosts can use as is or copy and edit.
 - **Consistent part contracts, as in the sidebar block.** `TimelineFeed` wraps each entry in `TimelineItem`. No entry
   part renders its own list item. Every part takes `className` and native props (`ComponentPropsWithoutRef`: the parts
   don't forward refs, so they don't accept one), spreads them first and then sets the attributes it relies on, and
@@ -155,8 +155,8 @@ from `entries` and passes it down. There is no store and no subscription. `statu
 ### DHIS2 layer (`timeline-dhis2`)
 
 ```ts
-type Dhis2EntryData =
-    Dhis2EventData | Dhis2MilestoneData | Dhis2NoteData | Dhis2ChangeData
+type HistoryEntryData =
+    EventEntryData | MilestoneEntryData | NoteEntryData | ChangeEntryData
 
 interface ProgramInfo {
     id: string
@@ -176,7 +176,7 @@ interface FieldInfo {
     meta: ValueMeta
 }
 
-interface Dhis2EventData {
+interface EventEntryData {
     kind: 'event'
     event: TrackerEvent
     status: DerivedEventStatus
@@ -185,19 +185,19 @@ interface Dhis2EventData {
     orgUnitName?: string
     orgUnitNames: ReadonlyMap<string, string> // for org-unit-typed values; shared by every entry
 }
-interface Dhis2MilestoneData {
+interface MilestoneEntryData {
     kind: 'milestone'
     milestone: 'enrolled' | 'incident' | 'completed' | 'cancelled'
     enrollment: Enrollment
     program?: ProgramInfo
 }
-interface Dhis2NoteData {
+interface NoteEntryData {
     kind: 'note'
     note: Note
     enrollment: Enrollment
     program?: ProgramInfo
 }
-interface Dhis2ChangeData {
+interface ChangeEntryData {
     kind: 'change'
     save: ChangeSave
 }
@@ -234,10 +234,10 @@ interface HistoryResult<T> {
 }
 
 useTrackedEntityPrograms({ trackedEntity, programs? })   // the enrollments request, and the program ids it implies
-useEventEntries({ trackedEntity, programs?, timeField, cap = 500 }): HistoryResult<Dhis2EventData>
-useEnrollmentEntries({ trackedEntity, programs? }): HistoryResult<Dhis2MilestoneData | Dhis2NoteData>
-useAttributeChangeEntries({ trackedEntity, programs? }): HistoryResult<Dhis2ChangeData>
-useTrackedEntityHistory({ trackedEntity, programs?, timeField, cap? }): HistoryResult<Dhis2EntryData>  // all of the above
+useEventEntries({ trackedEntity, programs?, timeField, cap = 500 }): HistoryResult<EventEntryData>
+useEnrollmentEntries({ trackedEntity, programs? }): HistoryResult<MilestoneEntryData | NoteEntryData>
+useAttributeChangeEntries({ trackedEntity, programs? }): HistoryResult<ChangeEntryData>
+useTrackedEntityHistory({ trackedEntity, programs?, timeField, cap? }): HistoryResult<HistoryEntryData>  // all of the above
 useEventChangelog(event, { enabled, stage? }): { status, saves, truncated }
 mergeHistory<T>(...results): HistoryResult<T>          // pure: concatenates entries and notices, combines status
 useProgramInfo(programIds), useOrgUnitNames(ids)          // the lookups the hooks share, for hosts naming their own events
@@ -249,7 +249,7 @@ still refreshes everything, and so does `refetch()`.
 Parts:
 
 ```ts
-Dhis2Entry({ entry, eventActions? })   // the default dispatcher; copy it to change how a kind renders
+TimelineHistoryEntry({ entry, eventActions? })   // the default dispatcher; copy it to change how a kind renders
 TimelineEventEntry({ entry, actions?, children? })  // compound; children default to the standard composition
   TimelineEventProgram, TimelineEventStage, TimelineEventStatus, TimelineEventOrgUnit, TimelineEventCompletedBy,
   TimelineEventValues({ dataElementIds? }), TimelineEventNotes, TimelineEventChanges, useTimelineEventEntry()
@@ -270,8 +270,8 @@ const { entries, hasMore, showMore } = useShowMore(history.entries)
     <TimelineError onRetry={history.refetch} />
     <TimelineNotices notices={history.notices} />
     <TimelineEmpty />
-    <TimelineFeed<Dhis2EntryData>>
-        {(entry) => <Dhis2Entry entry={entry} eventActions={<OpenInCapture />} />}
+    <TimelineFeed<HistoryEntryData>>
+        {(entry) => <TimelineHistoryEntry entry={entry} eventActions={<OpenInCapture />} />}
     </TimelineFeed>
     <TimelineShowMore hasMore={hasMore} onShowMore={showMore} />
 </Timeline>
@@ -313,7 +313,7 @@ const { entries, hasMore, showMore } = useShowMore(history.entries)
 - **Hooks (browser):** a mocked engine with two programs. One program's events request fails (notice with retry, the
   rest still shown). The changelog 404s (unsupported notice). The cap is exceeded (notice). `refetch` and
   invalidation of `timelineKeys.root` refresh the history.
-- **Parts (browser):** each entry part renders outside a `Timeline` under `TimelineMetaProvider`. `Dhis2Entry`
+- **Parts (browser):** each entry part renders outside a `Timeline` under `TimelineMetaProvider`. `TimelineHistoryEntry`
   dispatches every kind. `TimelineShowMore` moves focus to the first new entry. axe passes on the case history.
 - **e2e:** the existing record on 2.41, 2.42 and 2.43, with the case history now showing every program.
 
@@ -322,5 +322,5 @@ const { entries, hasMore, showMore } = useShowMore(history.entries)
 1. Generic layer: entries in, pure grouping, a plain context, parts with `className`, show-more.
 2. DHIS2 data: self-describing entry builders and plain query hooks across programs. Delete `TimelineDhis2Provider`,
    the sources, the merge engine and `useQueryRevision`.
-3. DHIS2 parts: content-only entries, `Dhis2Entry`, presentational `TimelineSaves`.
+3. DHIS2 parts: content-only entries, `TimelineHistoryEntry`, presentational `TimelineSaves`.
 4. Demos, README, registry, e2e.

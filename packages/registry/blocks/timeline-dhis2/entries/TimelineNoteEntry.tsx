@@ -10,7 +10,7 @@ import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import type { TimelineEntry } from '@/components/timeline/core/types'
 import { TimelineTime } from '@/components/timeline/ui/TimelineParts'
-import type { Dhis2NoteData } from '../types'
+import type { NoteEntryData } from '../types'
 
 /** Whether the text is taller than the box that clamps it. */
 const useIsClamped = (expanded: boolean, text: string) => {
@@ -37,7 +37,7 @@ export const TimelineNoteEntry = ({
     className,
     ...props
 }: ComponentPropsWithoutRef<'div'> & {
-    entry: TimelineEntry<Dhis2NoteData>
+    entry: TimelineEntry<NoteEntryData>
 }) => {
     const { note } = entry.data
     const [expanded, setExpanded] = useState(false)

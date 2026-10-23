@@ -13,7 +13,7 @@ import {
 import { formatDhis2Value } from '@/components/dhis2-value-display/formatDhis2Value'
 import type { TimelineEntry } from '@/components/timeline/core/types'
 import { useTimelineMeta } from '@/components/timeline/ui/TimelineContext'
-import type { ChangeSave, Dhis2ChangeData, ResolvedChange } from '../types'
+import type { ChangeSave, ChangeEntryData, ResolvedChange } from '../types'
 
 const TimelineSaveContext = createContext<ChangeSave | null>(null)
 
@@ -186,7 +186,7 @@ export const TimelineChangeEntry = ({
     entry,
     ...props
 }: ComponentPropsWithoutRef<'div'> & {
-    entry: TimelineEntry<Dhis2ChangeData>
+    entry: TimelineEntry<ChangeEntryData>
 }) => <TimelineSave {...props} save={entry.data.save} />
 
 /** A list of saves, newest first, such as an event's changes. */

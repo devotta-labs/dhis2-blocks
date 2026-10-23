@@ -1,13 +1,13 @@
 import React from 'react'
 import type { TimelineEntry } from '@/components/timeline/core/types'
-import type { Dhis2EntryData } from '../types'
+import type { HistoryEntryData } from '../types'
 import { TimelineChangeEntry } from './TimelineChangeEntry'
 import { TimelineEventEntry } from './TimelineEventEntry'
 import { TimelineMilestoneEntry } from './TimelineMilestoneEntry'
 import { TimelineNoteEntry } from './TimelineNoteEntry'
 
-type DataOf<TKind extends Dhis2EntryData['kind']> = Extract<
-    Dhis2EntryData,
+type DataOf<TKind extends HistoryEntryData['kind']> = Extract<
+    HistoryEntryData,
     { kind: TKind }
 >
 
@@ -15,8 +15,8 @@ type DataOf<TKind extends Dhis2EntryData['kind']> = Extract<
  * Narrows a history entry by the kind of its data.
  * @public For hosts writing their own dispatcher.
  */
-export const isEntryOf = <TKind extends Dhis2EntryData['kind']>(
-    entry: TimelineEntry<Dhis2EntryData>,
+export const isEntryOf = <TKind extends HistoryEntryData['kind']>(
+    entry: TimelineEntry<HistoryEntryData>,
     kind: TKind
 ): entry is TimelineEntry<DataOf<TKind>> => entry.data.kind === kind
 
@@ -25,11 +25,11 @@ export const isEntryOf = <TKind extends Dhis2EntryData['kind']>(
  * kind renders; `eventActions` (an "Open" link, say) is added to each event,
  * where it can read the event with `useTimelineEventEntry()`.
  */
-export const Dhis2Entry = ({
+export const TimelineHistoryEntry = ({
     entry,
     eventActions,
 }: {
-    entry: TimelineEntry<Dhis2EntryData>
+    entry: TimelineEntry<HistoryEntryData>
     eventActions?: React.ReactNode
 }) => {
     if (isEntryOf(entry, 'event')) {

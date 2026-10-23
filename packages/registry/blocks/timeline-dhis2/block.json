@@ -1,5 +1,5 @@
 {
     "title": "Timeline DHIS2",
     "description": "DHIS2 tracker data for the timeline: query hooks for a person's history across programs, with names resolved, and presentational event, change, note and milestone entry parts.",
-    "docs": "useTrackedEntityHistory({ trackedEntity, timeField }) returns entries, status, notices and refetch for every program the person is enrolled in (or programs you pass). Render each entry with Dhis2Entry, or compose TimelineEventEntry and its parts; add host actions with eventActions and useTimelineEventEntry(). Invalidate timelineKeys.root to refresh after edits elsewhere."
+    "docs": "useTrackedEntityHistory({ trackedEntity, timeField }) returns entries, status, notices and refetch for every program the person is enrolled in (or programs you pass). Render each entry with TimelineHistoryEntry, or compose TimelineEventEntry and its parts; add host actions with eventActions and useTimelineEventEntry(). Invalidate timelineKeys.root to refresh after edits elsewhere."
 }

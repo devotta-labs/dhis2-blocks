@@ -4,7 +4,7 @@ export {
     type ResolveField,
 } from './changelog'
 export type { TimelineClient } from './client'
-export { Dhis2Entry, isEntryOf } from './entries/Dhis2Entry'
+export { TimelineHistoryEntry, isEntryOf } from './entries/TimelineHistoryEntry'
 export {
     TimelineChangeEntry,
     TimelineChangeList,
@@ -47,11 +47,11 @@ export {
 } from './toEntries'
 export type {
     ChangeSave,
-    Dhis2ChangeData,
-    Dhis2EntryData,
-    Dhis2EventData,
-    Dhis2MilestoneData,
-    Dhis2NoteData,
+    ChangeEntryData,
+    HistoryEntryData,
+    EventEntryData,
+    MilestoneEntryData,
+    NoteEntryData,
     FieldInfo,
     HistoryResult,
     MilestoneKind,

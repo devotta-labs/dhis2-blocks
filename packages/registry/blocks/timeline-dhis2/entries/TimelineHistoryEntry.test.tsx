@@ -12,8 +12,8 @@ import {
 import { groupChangelogRows } from '../changelog'
 import { TrackedEntitySchema } from '../schemas'
 import { changeEntries, milestoneEntries, noteEntries } from '../toEntries'
-import type { Dhis2EntryData } from '../types'
-import { Dhis2Entry } from './Dhis2Entry'
+import type { HistoryEntryData } from '../types'
+import { TimelineHistoryEntry } from './TimelineHistoryEntry'
 import { useTimelineEventEntry } from './TimelineEventEntry'
 
 const PROGRAM = recordedProgram()
@@ -67,17 +67,20 @@ const ENTRIES = [
 
 const EventId = () => <span>id {useTimelineEventEntry().data.event.event}</span>
 
-describe('Dhis2Entry', () => {
+describe('TimelineHistoryEntry', () => {
     it('renders every kind in one feed, with host actions on events', async () => {
         const { container } = await renderEntries(
-            <Timeline<Dhis2EntryData>
+            <Timeline<HistoryEntryData>
                 entries={ENTRIES}
                 calendar="gregorian"
                 now={NOW}
             >
-                <TimelineFeed<Dhis2EntryData>>
+                <TimelineFeed<HistoryEntryData>>
                     {(entry) => (
-                        <Dhis2Entry entry={entry} eventActions={<EventId />} />
+                        <TimelineHistoryEntry
+                            entry={entry}
+                            eventActions={<EventId />}
+                        />
                     )}
                 </TimelineFeed>
             </Timeline>

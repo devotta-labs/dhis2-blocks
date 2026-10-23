@@ -11,14 +11,14 @@ import {
     type TimelineNotice,
 } from '@/components/timeline'
 import {
-    Dhis2Entry,
+    TimelineHistoryEntry,
     eventEntry,
     timelineKeys,
     useOrgUnitNames,
     useProgramInfo,
     useSystemCalendar,
     useTimelineClient,
-    type Dhis2EntryData,
+    type HistoryEntryData,
 } from '@/components/timeline-dhis2'
 import { Result } from 'better-result'
 import React, { useMemo } from 'react'
@@ -120,7 +120,7 @@ const UpdatedToday = ({
         ...names.notices,
     ]
     return (
-        <Timeline<Dhis2EntryData>
+        <Timeline<HistoryEntryData>
             entries={status === 'pending' ? [] : entries}
             status={status}
             calendar={calendar}
@@ -132,9 +132,9 @@ const UpdatedToday = ({
             <TimelineEmpty>
                 {i18n.t('No events were updated today.')}
             </TimelineEmpty>
-            <TimelineFeed<Dhis2EntryData>>
+            <TimelineFeed<HistoryEntryData>>
                 {(entry) => (
-                    <Dhis2Entry
+                    <TimelineHistoryEntry
                         entry={entry}
                         eventActions={<OpenInCapture />}
                     />

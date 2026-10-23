@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { mergeHistory } from './history'
 import type { EventTimeField } from './queries'
-import type { Dhis2EntryData, HistoryResult } from './types'
+import type { HistoryEntryData, HistoryResult } from './types'
 import { useAttributeChangeEntries } from './useAttributeChangeEntries'
 import { useEnrollmentEntries } from './useEnrollmentEntries'
 import { useEventEntries } from './useEventEntries'
@@ -28,7 +28,7 @@ export const useTrackedEntityHistory = ({
     timeField,
     cap,
     now,
-}: TrackedEntityHistoryOptions): HistoryResult<Dhis2EntryData> => {
+}: TrackedEntityHistoryOptions): HistoryResult<HistoryEntryData> => {
     const events = useEventEntries({
         trackedEntity,
         programs,
@@ -38,7 +38,7 @@ export const useTrackedEntityHistory = ({
     })
     const enrollments = useEnrollmentEntries({ trackedEntity, programs })
     const changes = useAttributeChangeEntries({ trackedEntity, programs })
-    const merged = mergeHistory<Dhis2EntryData>(events, enrollments, changes)
+    const merged = mergeHistory<HistoryEntryData>(events, enrollments, changes)
     // One array per change of the parts, so the timeline regroups only then.
     const entries = useMemo(
         () => merged.entries,

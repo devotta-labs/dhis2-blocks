@@ -10,11 +10,11 @@ import {
     useShowMore,
 } from '@/components/timeline'
 import {
-    Dhis2Entry,
+    TimelineHistoryEntry,
     useSystemCalendar,
     useTimelineEventEntry,
     useTrackedEntityHistory,
-    type Dhis2EntryData,
+    type HistoryEntryData,
 } from '@/components/timeline-dhis2'
 import { Checkbox } from '@/components/dhis2/ui/checkbox'
 import React, { useMemo, useState } from 'react'
@@ -71,7 +71,7 @@ const CaseHistory = ({
     )
     const { entries, hasMore, showMore } = useShowMore(filtered)
     return (
-        <Timeline<Dhis2EntryData>
+        <Timeline<HistoryEntryData>
             entries={entries}
             status={history.status}
             calendar={calendar}
@@ -88,9 +88,9 @@ const CaseHistory = ({
             <TimelineError onRetry={history.refetch} />
             <TimelineNotices notices={history.notices} />
             <TimelineEmpty />
-            <TimelineFeed<Dhis2EntryData>>
+            <TimelineFeed<HistoryEntryData>>
                 {(entry) => (
-                    <Dhis2Entry
+                    <TimelineHistoryEntry
                         entry={entry}
                         eventActions={<OpenInCapture />}
                     />

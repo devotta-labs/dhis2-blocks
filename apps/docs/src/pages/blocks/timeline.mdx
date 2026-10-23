@@ -41,10 +41,10 @@ import {
     TimelineNotices,
 } from '@/components/timeline'
 import {
-    Dhis2Entry,
+    TimelineHistoryEntry,
     useSystemCalendar,
     useTrackedEntityHistory,
-    type Dhis2EntryData,
+    type HistoryEntryData,
 } from '@/components/timeline-dhis2'
 
 export function PatientHistory({ trackedEntity }: { trackedEntity: string }) {
@@ -56,7 +56,7 @@ export function PatientHistory({ trackedEntity }: { trackedEntity: string }) {
     })
 
     return (
-        <Timeline<Dhis2EntryData>
+        <Timeline<HistoryEntryData>
             entries={history.entries}
             status={history.status}
             calendar={calendar}
@@ -65,8 +65,8 @@ export function PatientHistory({ trackedEntity }: { trackedEntity: string }) {
             <TimelineError onRetry={history.refetch} />
             <TimelineNotices notices={history.notices} />
             <TimelineEmpty />
-            <TimelineFeed<Dhis2EntryData>>
-                {(entry) => <Dhis2Entry entry={entry} />}
+            <TimelineFeed<HistoryEntryData>>
+                {(entry) => <TimelineHistoryEntry entry={entry} />}
             </TimelineFeed>
         </Timeline>
     )
@@ -110,7 +110,7 @@ read the event in your own components with `useTimelineEventEntry()`.
 
 <ExampleCard slug="timeline/entry-parts" />
 
-`Dhis2Entry` picks the part for each kind of entry. Copy it when a kind should
+`TimelineHistoryEntry` picks the part for each kind of entry. Copy it when a kind should
 look different; `eventActions` adds your own actions, such as an "Open" link,
 to every event.
 

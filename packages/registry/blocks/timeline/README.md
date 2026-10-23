@@ -11,7 +11,7 @@ pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/timeline-dhis2
 
 ## A person's history
 
-One tracked entity across every program they're enrolled in: events, enrollment milestones and notes, and attribute changes, all in one feed. A scheduled event sits in the future, past-due events sit in "Overdue", and the rest are grouped by day. Every entry carries its `kind`, its program and its names, so `Dhis2Entry` can render any of them.
+One tracked entity across every program they're enrolled in: events, enrollment milestones and notes, and attribute changes, all in one feed. A scheduled event sits in the future, past-due events sit in "Overdue", and the rest are grouped by day. Every entry carries its `kind`, its program and its names, so `TimelineHistoryEntry` can render any of them.
 
 ```tsx
 import { useConfig } from '@dhis2/app-runtime'
@@ -27,11 +27,11 @@ import {
     useShowMore,
 } from '@/components/timeline'
 import {
-    Dhis2Entry,
+    TimelineHistoryEntry,
     useSystemCalendar,
     useTimelineEventEntry,
     useTrackedEntityHistory,
-    type Dhis2EntryData,
+    type HistoryEntryData,
 } from '@/components/timeline-dhis2'
 
 // A host action: it reads the event the surrounding entry shows.
@@ -63,7 +63,7 @@ export const PatientHistory = ({
     })
     const { entries, hasMore, showMore } = useShowMore(history.entries)
     return (
-        <Timeline<Dhis2EntryData>
+        <Timeline<HistoryEntryData>
             entries={entries}
             status={history.status}
             calendar={calendar}
@@ -72,9 +72,9 @@ export const PatientHistory = ({
             <TimelineError onRetry={history.refetch} />
             <TimelineNotices notices={history.notices} />
             <TimelineEmpty />
-            <TimelineFeed<Dhis2EntryData>>
+            <TimelineFeed<HistoryEntryData>>
                 {(entry) => (
-                    <Dhis2Entry
+                    <TimelineHistoryEntry
                         entry={entry}
                         eventActions={<OpenInCapture />}
                     />
@@ -102,7 +102,7 @@ To limit it to some programs, pass `programs: ['IpHINAT79UW', 'ur1Edk5Oe2n']`. W
 ```ts
 const events = useEventEntries({ trackedEntity, timeField: 'occurredAt' })
 const enrollments = useEnrollmentEntries({ trackedEntity })
-const history = mergeHistory<Dhis2EntryData>(events, enrollments)
+const history = mergeHistory<HistoryEntryData>(events, enrollments)
 ```
 
 Every hook returns `{ entries, status, notices, isFetching, refetch }`. `status` stays `pending` until every request has answered once, so entries never jump around on the first load. After that it never goes back: a retry, a refetch or a newly enrolled program fills in while what is on screen stays. A part that fails becomes a notice with a Retry, and the rest of the history still shows. `status` is `error` only when everything failed.
@@ -128,7 +128,7 @@ The entry parts are presentational: they render from the entry and the meta cont
 </TimelineMetaProvider>
 ```
 
-`Dhis2Entry` picks the part for each `kind`. It is short, so copy it when you want a kind to look different. `isEntryOf(entry, 'event')` narrows an entry for you.
+`TimelineHistoryEntry` picks the part for each `kind`. It is short, so copy it when you want a kind to look different. `isEntryOf(entry, 'event')` narrows an entry for you.
 
 `TimelineEventEntry` is compound. Leave its children out to get the standard composition, or compose your own from `TimelineEventStage`, `TimelineEventProgram`, `TimelineEventStatus`, `TimelineEventOrgUnit`, `TimelineEventCompletedBy`, `TimelineEventValues`, `TimelineEventNotes` and `TimelineEventChanges`. Your own components can read the event with `useTimelineEventEntry()`. `TimelineChangeEntry` is compound in the same way (`TimelineChangeSummary`, `TimelineChangeList`, `useTimelineSave()`). Every part takes `className` and native props.
 

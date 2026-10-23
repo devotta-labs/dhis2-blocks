@@ -7,10 +7,10 @@ import type { EventTimeField } from './queries'
 import type { Enrollment, TrackerEvent } from './schemas'
 import type {
     ChangeSave,
-    Dhis2ChangeData,
-    Dhis2EventData,
-    Dhis2MilestoneData,
-    Dhis2NoteData,
+    ChangeEntryData,
+    EventEntryData,
+    MilestoneEntryData,
+    NoteEntryData,
     MilestoneKind,
     ProgramInfo,
 } from './types'
@@ -44,12 +44,12 @@ export interface EventEntryOptions {
 export const eventEntry = (
     event: TrackerEvent,
     { timeField, today, program, orgUnitNames = NO_NAMES }: EventEntryOptions
-): TimelineEntry<Dhis2EventData> => {
+): TimelineEntry<EventEntryData> => {
     const status = deriveEventStatus(event, today)
     const byScheduledAt =
         status === 'scheduled' || status === 'overdue' || status === 'skipped'
     const at = (byScheduledAt ? event.scheduledAt : event[timeField]) ?? ''
-    const data: Dhis2EventData = { kind: 'event', event, status, orgUnitNames }
+    const data: EventEntryData = { kind: 'event', event, status, orgUnitNames }
     if (program !== undefined) {
         data.program = program
         const stage = program.stages.get(event.programStage)
@@ -81,15 +81,15 @@ export const eventEntry = (
 export const milestoneEntries = (
     enrollment: Enrollment,
     program?: ProgramInfo
-): TimelineEntry<Dhis2MilestoneData>[] => {
+): TimelineEntry<MilestoneEntryData>[] => {
     const milestone = (
         kind: MilestoneKind,
         at: string | undefined
-    ): TimelineEntry<Dhis2MilestoneData>[] => {
+    ): TimelineEntry<MilestoneEntryData>[] => {
         if (!at) {
             return []
         }
-        const data: Dhis2MilestoneData = {
+        const data: MilestoneEntryData = {
             kind: 'milestone',
             milestone: kind,
             enrollment,
@@ -132,12 +132,12 @@ export const milestoneEntries = (
 export const noteEntries = (
     enrollment: Enrollment,
     program?: ProgramInfo
-): TimelineEntry<Dhis2NoteData>[] =>
+): TimelineEntry<NoteEntryData>[] =>
     enrollment.notes.flatMap((note) => {
         if (!note.storedAt) {
             return []
         }
-        const data: Dhis2NoteData = { kind: 'note', note, enrollment }
+        const data: NoteEntryData = { kind: 'note', note, enrollment }
         if (program !== undefined) {
             data.program = program
         }
@@ -147,7 +147,7 @@ export const noteEntries = (
 /** One entry per save. */
 export const changeEntries = (
     saves: ReadonlyArray<ChangeSave>
-): TimelineEntry<Dhis2ChangeData>[] =>
+): TimelineEntry<ChangeEntryData>[] =>
     saves.map((save) => ({
         id: `change:${save.id}`,
         at: save.createdAt,

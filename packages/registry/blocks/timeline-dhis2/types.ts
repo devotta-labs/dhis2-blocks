@@ -30,7 +30,7 @@ export interface ProgramInfo {
     attributes: ReadonlyMap<string, FieldInfo>
 }
 
-export interface Dhis2EventData {
+export interface EventEntryData {
     kind: 'event'
     event: TrackerEvent
     status: DerivedEventStatus
@@ -44,14 +44,14 @@ export interface Dhis2EventData {
 
 export type MilestoneKind = 'enrolled' | 'incident' | 'completed' | 'cancelled'
 
-export interface Dhis2MilestoneData {
+export interface MilestoneEntryData {
     kind: 'milestone'
     milestone: MilestoneKind
     enrollment: Enrollment
     program?: ProgramInfo
 }
 
-export interface Dhis2NoteData {
+export interface NoteEntryData {
     kind: 'note'
     note: Note
     enrollment: Enrollment
@@ -77,16 +77,16 @@ export interface ChangeSave {
     changes: ResolvedChange[]
 }
 
-export interface Dhis2ChangeData {
+export interface ChangeEntryData {
     kind: 'change'
     save: ChangeSave
 }
 
-export type Dhis2EntryData =
-    | Dhis2EventData
-    | Dhis2MilestoneData
-    | Dhis2NoteData
-    | Dhis2ChangeData
+export type HistoryEntryData =
+    | EventEntryData
+    | MilestoneEntryData
+    | NoteEntryData
+    | ChangeEntryData
 
 /** What every history hook returns. */
 export interface HistoryResult<TData> {

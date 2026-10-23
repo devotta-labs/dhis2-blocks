@@ -10,7 +10,7 @@ import { combineStatus, NO_ENTRIES } from './history'
 import { fetchEvents, type EventTimeField } from './queries'
 import { timelineKeys } from './timelineKeys'
 import { eventEntry, orgUnitIdsOf } from './toEntries'
-import type { Dhis2EventData, HistoryResult } from './types'
+import type { EventEntryData, HistoryResult } from './types'
 import {
     programLabel,
     refetchOf,
@@ -47,7 +47,7 @@ export const useEventEntries = ({
     timeField,
     cap = 500,
     now,
-}: EventEntriesOptions): HistoryResult<Dhis2EventData> => {
+}: EventEntriesOptions): HistoryResult<EventEntryData> => {
     const client = useTimelineClient()
     const ids = useProgramIds({ trackedEntity, programs })
     const info = useProgramInfo(ids.ids)

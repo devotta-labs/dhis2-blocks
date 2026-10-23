@@ -129,7 +129,7 @@ pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/timeline-dhis2
 Import from `@/components/timeline` and `@/components/timeline-dhis2`.
 `Timeline` takes a plain array of entries and never fetches;
 `useTrackedEntityHistory` returns that array for one tracked entity in every
-program they are enrolled in, and `Dhis2Entry` renders each entry. Both pull in
+program they are enrolled in, and `TimelineHistoryEntry` renders each entry. Both pull in
 the `dhis2-value-display` formatter. See
 [the block's README](packages/registry/blocks/timeline/README.md). The demo
 routes are `#/timeline` (case history; `te`, and optionally `programs`, in the

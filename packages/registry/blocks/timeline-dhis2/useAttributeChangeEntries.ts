@@ -11,7 +11,7 @@ import { attributesOf } from './metadata'
 import { fetchAttributeChangeLog } from './queries'
 import { timelineKeys } from './timelineKeys'
 import { changeEntries } from './toEntries'
-import type { Dhis2ChangeData, HistoryResult } from './types'
+import type { ChangeEntryData, HistoryResult } from './types'
 import {
     programLabel,
     refetchOf,
@@ -46,7 +46,7 @@ export const useAttributeChangeEntries = ({
     trackedEntity,
     programs,
     maxRows = 500,
-}: AttributeChangeEntriesOptions): HistoryResult<Dhis2ChangeData> => {
+}: AttributeChangeEntriesOptions): HistoryResult<ChangeEntryData> => {
     const client = useTimelineClient()
     const ids = useProgramIds({ trackedEntity, programs })
     const info = useProgramInfo(ids.ids)

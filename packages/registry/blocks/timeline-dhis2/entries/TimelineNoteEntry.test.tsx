@@ -8,10 +8,10 @@ import {
 } from '../__tests__/fixtures/renderEntries'
 import { TrackedEntitySchema } from '../schemas'
 import { noteEntries } from '../toEntries'
-import type { Dhis2NoteData } from '../types'
+import type { NoteEntryData } from '../types'
 import { TimelineNoteEntry } from './TimelineNoteEntry'
 
-const noteEntry = (value: string): TimelineEntry<Dhis2NoteData> => {
+const noteEntry = (value: string): TimelineEntry<NoteEntryData> => {
     const [enrollment] = TrackedEntitySchema.parse({
         trackedEntity: 'TlE2eTei001',
         enrollments: [

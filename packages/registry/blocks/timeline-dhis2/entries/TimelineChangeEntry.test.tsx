@@ -7,7 +7,7 @@ import { groupChangelogRows } from '../changelog'
 import { attributesOf } from '../metadata'
 import type { ChangeLogRow } from '../schemas'
 import { changeEntries } from '../toEntries'
-import type { ChangeSave, Dhis2ChangeData } from '../types'
+import type { ChangeSave, ChangeEntryData } from '../types'
 import {
     NOW,
     recordedProgram,
@@ -211,7 +211,7 @@ describe('TimelineChangeEntry', () => {
         ])
         const { container } = await renderEntries(
             <Timeline entries={entries} calendar="gregorian" now={NOW}>
-                <TimelineFeed<Dhis2ChangeData>>
+                <TimelineFeed<ChangeEntryData>>
                     {(entry) => (
                         <TimelineChangeEntry entry={entry} className="custom" />
                     )}

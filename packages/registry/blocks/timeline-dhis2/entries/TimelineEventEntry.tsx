@@ -20,15 +20,15 @@ import type { TimelineEntry } from '@/components/timeline/core/types'
 import { useTimelineMeta } from '@/components/timeline/ui/TimelineContext'
 import type { DerivedEventStatus } from '../eventStatus'
 import type { Note } from '../schemas'
-import type { Dhis2EventData } from '../types'
+import type { EventEntryData } from '../types'
 import { useEventChangelog } from '../useEventChangelog'
 import { TimelineSaves } from './TimelineChangeEntry'
 
 const TimelineEventContext =
-    createContext<TimelineEntry<Dhis2EventData> | null>(null)
+    createContext<TimelineEntry<EventEntryData> | null>(null)
 
 /** The event entry the surrounding `TimelineEventEntry` shows. */
-export const useTimelineEventEntry = (): TimelineEntry<Dhis2EventData> => {
+export const useTimelineEventEntry = (): TimelineEntry<EventEntryData> => {
     const entry = useContext(TimelineEventContext)
     if (entry === null) {
         throw new Error(
@@ -303,7 +303,7 @@ export const TimelineEventNotes = ({
     )
 }
 
-const ChangesBody = ({ entry }: { entry: TimelineEntry<Dhis2EventData> }) => {
+const ChangesBody = ({ entry }: { entry: TimelineEntry<EventEntryData> }) => {
     const { status, saves, truncated } = useEventChangelog(
         entry.data.event.event,
         { enabled: true, stage: entry.data.stage }
@@ -394,7 +394,7 @@ export const TimelineEventEntry = ({
     children,
     ...props
 }: ComponentPropsWithoutRef<'div'> & {
-    entry: TimelineEntry<Dhis2EventData>
+    entry: TimelineEntry<EventEntryData>
     actions?: ReactNode
 }) => (
     <TimelineEventContext.Provider value={entry}>

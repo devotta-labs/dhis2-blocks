@@ -3,7 +3,7 @@ import React, { type ComponentPropsWithoutRef } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import type { TimelineEntry } from '@/components/timeline/core/types'
 import { TimelineTime } from '@/components/timeline/ui/TimelineParts'
-import type { Dhis2MilestoneData, MilestoneKind } from '../types'
+import type { MilestoneEntryData, MilestoneKind } from '../types'
 
 const label = (kind: MilestoneKind): string => {
     switch (kind) {
@@ -24,7 +24,7 @@ export const TimelineMilestoneEntry = ({
     className,
     ...props
 }: ComponentPropsWithoutRef<'div'> & {
-    entry: TimelineEntry<Dhis2MilestoneData>
+    entry: TimelineEntry<MilestoneEntryData>
 }) => (
     <div
         {...props}

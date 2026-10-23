@@ -814,11 +814,6 @@
                     "target": "@components/timeline-dhis2/client.ts"
                 },
                 {
-                    "path": "packages/registry/blocks/timeline-dhis2/entries/Dhis2Entry.tsx",
-                    "type": "registry:file",
-                    "target": "@components/timeline-dhis2/entries/Dhis2Entry.tsx"
-                },
-                {
                     "path": "packages/registry/blocks/timeline-dhis2/entries/TimelineChangeEntry.tsx",
                     "type": "registry:file",
                     "target": "@components/timeline-dhis2/entries/TimelineChangeEntry.tsx"
@@ -827,6 +822,11 @@
                     "path": "packages/registry/blocks/timeline-dhis2/entries/TimelineEventEntry.tsx",
                     "type": "registry:file",
                     "target": "@components/timeline-dhis2/entries/TimelineEventEntry.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline-dhis2/entries/TimelineHistoryEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline-dhis2/entries/TimelineHistoryEntry.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/timeline-dhis2/entries/TimelineMilestoneEntry.tsx",
@@ -924,7 +924,7 @@
                     "target": "@components/timeline-dhis2/useTrackedEntityHistory.ts"
                 }
             ],
-            "docs": "useTrackedEntityHistory({ trackedEntity, timeField }) returns entries, status, notices and refetch for every program the person is enrolled in (or programs you pass). Render each entry with Dhis2Entry, or compose TimelineEventEntry and its parts; add host actions with eventActions and useTimelineEventEntry(). Invalidate timelineKeys.root to refresh after edits elsewhere."
+            "docs": "useTrackedEntityHistory({ trackedEntity, timeField }) returns entries, status, notices and refetch for every program the person is enrolled in (or programs you pass). Render each entry with TimelineHistoryEntry, or compose TimelineEventEntry and its parts; add host actions with eventActions and useTimelineEventEntry(). Invalidate timelineKeys.root to refresh after edits elsewhere."
         },
         {
             "name": "working-list",

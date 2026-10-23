@@ -19,6 +19,7 @@ type BrowserDiagnostic = {
 
 type WorkingListFixtures = {
     allowOfflineRequestFailures: boolean
+    allowTrackedEntityNotFound: boolean
     dhis2: APIRequestContext
     e2eCredentials: E2ECredentials
     page: Page
@@ -52,9 +53,22 @@ const urlPath = (value?: string) => {
 
 const isKnownBenignDiagnostic = (
     diagnostic: BrowserDiagnostic,
-    allowOfflineRequestFailures: boolean
+    allowOfflineRequestFailures: boolean,
+    allowTrackedEntityNotFound: boolean
 ) => {
     const path = urlPath(diagnostic.url ?? diagnostic.location?.url)
+    if (
+        allowTrackedEntityNotFound &&
+        /\/api(?:\/\d+)?\/tracker\/(?:trackedEntities\/[^/]+|relationships)$/.test(
+            path ?? ''
+        ) &&
+        ((diagnostic.kind === 'http' && diagnostic.status === 404) ||
+            (diagnostic.kind === 'console' &&
+                diagnostic.message.includes('Failed to load resource')))
+    ) {
+        // A test that opens a person the user cannot read expects the server's 404 for the person and their relationships.
+        return true
+    }
     if (
         diagnostic.kind === 'http' &&
         diagnostic.status === 404 &&
@@ -147,6 +161,7 @@ const signInToApp = async (
 
 export const test = base.extend<WorkingListFixtures>({
     allowOfflineRequestFailures: [false, { option: true }],
+    allowTrackedEntityNotFound: [false, { option: true }],
     e2eCredentials: [{ username, password }, { option: true }],
     dhis2: async ({ playwright }, use) => {
         const baseURL = environment?.E2E_DHIS2_URL
@@ -168,7 +183,12 @@ export const test = base.extend<WorkingListFixtures>({
         await api.dispose()
     },
     page: async (
-        { allowOfflineRequestFailures, e2eCredentials, page },
+        {
+            allowOfflineRequestFailures,
+            allowTrackedEntityNotFound,
+            e2eCredentials,
+            page,
+        },
         use,
         testInfo
     ) => {
@@ -235,7 +255,8 @@ export const test = base.extend<WorkingListFixtures>({
             (diagnostic) =>
                 !isKnownBenignDiagnostic(
                     diagnostic,
-                    allowOfflineRequestFailures
+                    allowOfflineRequestFailures,
+                    allowTrackedEntityNotFound
                 )
         )
         if (

@@ -17,6 +17,9 @@ msgstr "Working lists"
 msgid "Highlight data quality issues"
 msgstr "Highlight data quality issues"
 
+msgid "Tracked entity record demo"
+msgstr "Tracked entity record demo"
+
 msgid "Loading"
 msgstr "Loading"
 
@@ -138,6 +141,124 @@ msgstr "Could not load more organisation units"
 
 msgid "Show more"
 msgstr "Show more"
+
+msgid "Notes"
+msgstr "Notes"
+
+msgid "No notes yet."
+msgstr "No notes yet."
+
+msgid "The note could not be added."
+msgstr "The note could not be added."
+
+msgid "Add a note to this enrollment"
+msgstr "Add a note to this enrollment"
+
+msgid "Saving"
+msgstr "Saving"
+
+msgid "Add note"
+msgstr "Add note"
+
+msgid "Latest values"
+msgstr "Latest values"
+
+msgid "No values recorded yet."
+msgstr "No values recorded yet."
+
+msgid "This person is inactive."
+msgstr "This person is inactive."
+
+msgid "Enrollment is not available in this program."
+msgstr "Enrollment is not available in this program."
+
+msgid "You cannot enroll this person in this program."
+msgstr "You cannot enroll this person in this program."
+
+msgid "This person already has an active enrollment in this program."
+msgstr "This person already has an active enrollment in this program."
+
+msgid "This person can be enrolled in this program."
+msgstr "This person can be enrolled in this program."
+
+msgid "Enrollment"
+msgstr "Enrollment"
+
+msgid "Choose an enrollment to see its details."
+msgstr "Choose an enrollment to see its details."
+
+msgid "This program could not be loaded."
+msgstr "This program could not be loaded."
+
+msgid "Not enrolled in this program."
+msgstr "Not enrolled in this program."
+
+msgid "Layout"
+msgstr "Layout"
+
+msgid "One program"
+msgstr "One program"
+
+msgid "Side by side"
+msgstr "Side by side"
+
+msgid "This person has no programs to show."
+msgstr "This person has no programs to show."
+
+msgid "The record could not be refreshed."
+msgstr "The record could not be refreshed."
+
+msgid "Refresh"
+msgstr "Refresh"
+
+msgid "Refreshing"
+msgstr "Refreshing"
+
+msgid "Refreshing the record…"
+msgstr "Refreshing the record…"
+
+msgid "Loading the record"
+msgstr "Loading the record"
+
+msgid ""
+"This person is not available. They may not exist, or you may not have "
+"access."
+msgstr ""
+"This person is not available. They may not exist, or you may not have "
+"access."
+
+msgid "The record could not be loaded."
+msgstr "The record could not be loaded."
+
+msgid "Open"
+msgstr "Open"
+
+msgid "Tracked entity record"
+msgstr "Tracked entity record"
+
+msgid "You don't have access to this program's records"
+msgstr "You don't have access to this program's records"
+
+msgid "Overdue"
+msgstr "Overdue"
+
+msgid "Upcoming"
+msgstr "Upcoming"
+
+msgid "In progress"
+msgstr "In progress"
+
+msgid "Completed"
+msgstr "Completed"
+
+msgid "Skipped"
+msgstr "Skipped"
+
+msgid "Visits"
+msgstr "Visits"
+
+msgid "No visits yet."
+msgstr "No visits yet."
 
 msgid "Main navigation"
 msgstr "Main navigation"
@@ -270,9 +391,6 @@ msgstr "{{column}} was not moved."
 
 msgid "Columns"
 msgstr "Columns"
-
-msgid "Completed"
-msgstr "Completed"
 
 msgid "Completed enrollments"
 msgstr "Completed enrollments"
@@ -502,14 +620,8 @@ msgstr "No"
 msgid "Not empty"
 msgstr "Not empty"
 
-msgid "Open"
-msgstr "Open"
-
 msgid "Open row {{number}}"
 msgstr "Open row {{number}}"
-
-msgid "Overdue"
-msgstr "Overdue"
 
 msgid "Owner organisation unit"
 msgstr "Owner organisation unit"
@@ -628,9 +740,6 @@ msgstr "Sharing and access"
 
 msgid "Show {{column}}"
 msgstr "Show {{column}}"
-
-msgid "Skipped"
-msgstr "Skipped"
 
 msgid ""
 "Some filters, columns, or sorting options are no longer available. Repair "

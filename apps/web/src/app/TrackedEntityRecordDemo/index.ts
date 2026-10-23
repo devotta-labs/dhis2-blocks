@@ -1,0 +1,1 @@
+export { TrackedEntityRecordDemo } from './TrackedEntityRecordDemo'

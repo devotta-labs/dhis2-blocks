@@ -1,0 +1,266 @@
+{
+    "optionSets": [
+        {
+            "id": "TlE2eOps001",
+            "name": "Timeline E2E water quality",
+            "valueType": "TEXT",
+            "options": [
+                {
+                    "id": "TlE2eOpt001"
+                },
+                {
+                    "id": "TlE2eOpt002"
+                },
+                {
+                    "id": "TlE2eOpt003"
+                }
+            ]
+        }
+    ],
+    "options": [
+        {
+            "id": "TlE2eOpt001",
+            "name": "Safe to drink",
+            "code": "SAFE",
+            "sortOrder": 1,
+            "optionSet": {
+                "id": "TlE2eOps001"
+            }
+        },
+        {
+            "id": "TlE2eOpt002",
+            "name": "Needs treatment",
+            "code": "TREAT",
+            "sortOrder": 2,
+            "optionSet": {
+                "id": "TlE2eOps001"
+            }
+        },
+        {
+            "id": "TlE2eOpt003",
+            "name": "Unsafe",
+            "code": "UNSAFE",
+            "sortOrder": 3,
+            "optionSet": {
+                "id": "TlE2eOps001"
+            }
+        }
+    ],
+    "trackedEntityAttributes": [
+        {
+            "id": "TlE2eAtr001",
+            "name": "Timeline E2E water point name",
+            "shortName": "TL E2E water point name",
+            "formName": "Water point name",
+            "valueType": "TEXT",
+            "aggregationType": "NONE",
+            "publicAccess": "rw------",
+            "sharing": {
+                "public": "rw------"
+            }
+        },
+        {
+            "id": "TlE2eAtr002",
+            "name": "Timeline E2E pump type",
+            "shortName": "TL E2E pump type",
+            "formName": "Pump type",
+            "valueType": "TEXT",
+            "aggregationType": "NONE",
+            "publicAccess": "rw------",
+            "sharing": {
+                "public": "rw------"
+            }
+        }
+    ],
+    "trackedEntityTypes": [
+        {
+            "id": "TlE2eTet001",
+            "name": "Water point",
+            "shortName": "Water point",
+            "featureType": "NONE",
+            "allowAuditLog": true,
+            "enableChangeLog": true,
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "trackedEntityTypeAttributes": [
+                {
+                    "id": "TlE2eTta001",
+                    "trackedEntityAttribute": {
+                        "id": "TlE2eAtr001"
+                    },
+                    "displayInList": true,
+                    "mandatory": false,
+                    "searchable": true
+                }
+            ]
+        }
+    ],
+    "dataElements": [
+        {
+            "id": "TlE2eDe0001",
+            "name": "Timeline E2E flow rate",
+            "shortName": "TL E2E flow rate",
+            "formName": "Flow rate",
+            "domainType": "TRACKER",
+            "valueType": "NUMBER",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "TlE2eDe0002",
+            "name": "Timeline E2E water quality",
+            "shortName": "TL E2E water quality",
+            "formName": "Water quality",
+            "domainType": "TRACKER",
+            "valueType": "TEXT",
+            "aggregationType": "NONE",
+            "optionSet": {
+                "id": "TlE2eOps001"
+            }
+        },
+        {
+            "id": "TlE2eDe0003",
+            "name": "Timeline E2E inspector remarks",
+            "shortName": "TL E2E inspector remarks",
+            "formName": "Inspector remarks",
+            "domainType": "TRACKER",
+            "valueType": "TEXT",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "TlE2eDe0004",
+            "name": "Timeline E2E parts replaced",
+            "shortName": "TL E2E parts replaced",
+            "formName": "Parts replaced",
+            "domainType": "TRACKER",
+            "valueType": "TEXT",
+            "aggregationType": "NONE"
+        }
+    ],
+    "programs": [
+        {
+            "id": "TlE2ePrg001",
+            "name": "Timeline E2E water points",
+            "shortName": "Timeline E2E water points",
+            "programType": "WITH_REGISTRATION",
+            "onlyEnrollOnce": false,
+            "displayIncidentDate": true,
+            "enableChangeLog": true,
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "trackedEntityType": {
+                "id": "TlE2eTet001"
+            },
+            "organisationUnits": [
+                {
+                    "id": "DiszpKrYNg8"
+                }
+            ],
+            "programTrackedEntityAttributes": [
+                {
+                    "id": "TlE2ePta001",
+                    "trackedEntityAttribute": {
+                        "id": "TlE2eAtr001"
+                    },
+                    "displayInList": true,
+                    "mandatory": false,
+                    "searchable": true,
+                    "sortOrder": 1
+                },
+                {
+                    "id": "TlE2ePta002",
+                    "trackedEntityAttribute": {
+                        "id": "TlE2eAtr002"
+                    },
+                    "displayInList": false,
+                    "mandatory": false,
+                    "searchable": false,
+                    "sortOrder": 2
+                }
+            ],
+            "programStages": [
+                {
+                    "id": "TlE2eStg001"
+                },
+                {
+                    "id": "TlE2eStg002"
+                }
+            ]
+        }
+    ],
+    "programStages": [
+        {
+            "id": "TlE2eStg001",
+            "name": "Timeline E2E inspection",
+            "program": {
+                "id": "TlE2ePrg001"
+            },
+            "repeatable": true,
+            "hideDueDate": false,
+            "sortOrder": 1,
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "programStageDataElements": [
+                {
+                    "id": "TlE2ePsd001",
+                    "dataElement": {
+                        "id": "TlE2eDe0001"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 1
+                },
+                {
+                    "id": "TlE2ePsd002",
+                    "dataElement": {
+                        "id": "TlE2eDe0002"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 2
+                },
+                {
+                    "id": "TlE2ePsd003",
+                    "dataElement": {
+                        "id": "TlE2eDe0003"
+                    },
+                    "compulsory": false,
+                    "displayInReports": false,
+                    "sortOrder": 3
+                }
+            ]
+        },
+        {
+            "id": "TlE2eStg002",
+            "name": "Timeline E2E maintenance",
+            "program": {
+                "id": "TlE2ePrg001"
+            },
+            "repeatable": true,
+            "hideDueDate": true,
+            "sortOrder": 2,
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "programStageDataElements": [
+                {
+                    "id": "TlE2ePsd004",
+                    "dataElement": {
+                        "id": "TlE2eDe0004"
+                    },
+                    "compulsory": false,
+                    "displayInReports": false,
+                    "sortOrder": 1
+                }
+            ]
+        }
+    ]
+}

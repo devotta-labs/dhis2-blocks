@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-16T12:06:08.651Z\n"
-"PO-Revision-Date: 2026-10-16T12:06:08.651Z\n"
+"POT-Creation-Date: 2026-10-23T14:47:32.110Z\n"
+"PO-Revision-Date: 2026-10-23T14:47:32.110Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -159,6 +159,15 @@ msgstr "Saving"
 
 msgid "Add note"
 msgstr "Add note"
+
+msgid "Note added."
+msgstr "Note added."
+
+msgid "Saved, but the record could not be refreshed."
+msgstr "Saved, but the record could not be refreshed."
+
+msgid "The note is saved. Refresh the record to see it."
+msgstr "The note is saved. Refresh the record to see it."
 
 msgid "Latest values"
 msgstr "Latest values"

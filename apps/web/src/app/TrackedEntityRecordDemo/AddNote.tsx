@@ -1,4 +1,9 @@
-import { ErrorAlert } from '@/components/dhis2/ui/alert'
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+    ErrorAlert,
+} from '@/components/dhis2/ui/alert'
 import { Button } from '@/components/dhis2/ui/button'
 import {
     Card,
@@ -13,7 +18,7 @@ import {
     type Enrollment,
     type ProgramInfo,
 } from '@/components/tracked-entity-record'
-import { useDataEngine } from '@dhis2/app-runtime'
+import { useConfig, useDataEngine } from '@dhis2/app-runtime'
 import React, { useId, useState } from 'react'
 import i18n from '../../i18n'
 
@@ -42,51 +47,87 @@ export const EnrollmentNotes = ({ enrollment }: EnrollmentNotesProps) => (
     </Card>
 )
 
+/** What the last submit came to: the write and the refresh after it are separate. */
+type Outcome =
+    | { kind: 'idle' }
+    | { kind: 'saved' }
+    | { kind: 'not-refreshed' }
+    | { kind: 'failed'; message: string }
+
 /**
  * Recipe: the smallest real write. It adds a note to the enrollment, then
- * awaits `refresh()` so every view under the provider shows it.
+ * awaits `refresh()` so every view under the provider shows it. A refresh
+ * that fails after a saved note is reported as such, so nobody saves it twice.
  */
 export const AddNote = ({ program, enrollment }: AddNoteProps) => {
     const { actions, meta } = useTrackedEntityRecord()
     const engine = useDataEngine()
+    const { serverVersion } = useConfig()
     const textId = useId()
     const [text, setText] = useState('')
     const [saving, setSaving] = useState(false)
-    const [error, setError] = useState<string>()
+    const [outcome, setOutcome] = useState<Outcome>({ kind: 'idle' })
+
+    const writeNote = (value: string) => {
+        // 2.42+: a note endpoint that changes nothing else on the enrollment.
+        if ((serverVersion?.minor ?? 0) >= 42) {
+            return engine.mutate({
+                resource: `tracker/enrollments/${enrollment.id}/note`,
+                type: 'create',
+                data: { value },
+            })
+        }
+        // 2.41 has no note endpoint, and its importer resets what the payload
+        // leaves out (followUp), so send every enrollment field the record has.
+        // The record has no geometry: a stored enrollment location is cleared.
+        return engine.mutate({
+            resource: 'tracker',
+            type: 'create',
+            params: { async: false, importStrategy: 'CREATE_AND_UPDATE' },
+            data: {
+                enrollments: [
+                    {
+                        enrollment: enrollment.id,
+                        trackedEntity: meta.trackedEntityId,
+                        program: program.id,
+                        orgUnit: enrollment.orgUnit,
+                        status: enrollment.status,
+                        enrolledAt: enrollment.enrolledAt,
+                        occurredAt: enrollment.occurredAt,
+                        completedAt: enrollment.completedAt,
+                        followUp: enrollment.followUp,
+                        // The server assigns the note id.
+                        notes: [{ value }],
+                    },
+                ],
+            },
+        })
+    }
 
     const submit = async (event: React.FormEvent) => {
         event.preventDefault()
         setSaving(true)
-        setError(undefined)
+        setOutcome({ kind: 'idle' })
         try {
-            await engine.mutate({
-                resource: 'tracker',
-                type: 'create',
-                params: { async: false, importStrategy: 'CREATE_AND_UPDATE' },
-                data: {
-                    enrollments: [
-                        {
-                            enrollment: enrollment.id,
-                            trackedEntity: meta.trackedEntityId,
-                            program: program.id,
-                            orgUnit: enrollment.orgUnit,
-                            status: enrollment.status,
-                            enrolledAt: enrollment.enrolledAt,
-                            occurredAt: enrollment.occurredAt,
-                            // The server assigns the note id.
-                            notes: [{ value: text.trim() }],
-                        },
-                    ],
-                },
-            })
-            await actions.refresh()
-            setText('')
+            await writeNote(text.trim())
         } catch (cause) {
-            setError(
-                cause instanceof Error
-                    ? cause.message
-                    : i18n.t('The note could not be added.')
-            )
+            setOutcome({
+                kind: 'failed',
+                message:
+                    cause instanceof Error
+                        ? cause.message
+                        : i18n.t('The note could not be added.'),
+            })
+            setSaving(false)
+            return
+        }
+        // The note is saved: never offer to save it again.
+        setText('')
+        try {
+            await actions.refresh()
+            setOutcome({ kind: 'saved' })
+        } catch {
+            setOutcome({ kind: 'not-refreshed' })
         } finally {
             setSaving(false)
         }
@@ -113,9 +154,28 @@ export const AddNote = ({ program, enrollment }: AddNoteProps) => {
                     {i18n.t('Add note')}
                 </Button>
             </div>
-            {error && (
+            {outcome.kind === 'saved' && (
+                <p role="status" className="m-0 text-sm">
+                    {i18n.t('Note added.')}
+                </p>
+            )}
+            {outcome.kind === 'not-refreshed' && (
+                <Alert variant="warning" data-testid="add-note-not-refreshed">
+                    <AlertTitle>
+                        {i18n.t(
+                            'Saved, but the record could not be refreshed.'
+                        )}
+                    </AlertTitle>
+                    <AlertDescription>
+                        {i18n.t(
+                            'The note is saved. Refresh the record to see it.'
+                        )}
+                    </AlertDescription>
+                </Alert>
+            )}
+            {outcome.kind === 'failed' && (
                 <ErrorAlert title={i18n.t('The note could not be added.')}>
-                    {error}
+                    {outcome.message}
                 </ErrorAlert>
             )}
         </form>

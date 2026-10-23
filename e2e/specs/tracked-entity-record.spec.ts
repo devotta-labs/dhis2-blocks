@@ -1,5 +1,5 @@
 import { AxeBuilder } from '@axe-core/playwright'
-import type { Page } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
 import { expect, test } from '../fixtures/test'
 
 const PERSON = 'TrE2eTei001'
@@ -19,6 +19,20 @@ const openRecord = async (page: Page, id: string, programs?: string[]) => {
 
 const programView = (page: Page, id: string) =>
     page.getByTestId(`program-view-${id}`)
+
+const ACTIVE_ENROLLMENT = 'TrE2eEnr002'
+
+/** The enrollment as the server holds it, read as the admin. */
+const readEnrollment = async (dhis2: APIRequestContext) => {
+    const response = await dhis2.get(
+        `/api/tracker/enrollments/${ACTIVE_ENROLLMENT}`,
+        { params: { fields: 'followUp,notes[value]' } }
+    )
+    expect(response.ok()).toBe(true)
+    const body: { followUp: boolean; notes: { value: string }[] } =
+        await response.json()
+    return body
+}
 
 test.describe('tracked entity record demo as a restricted nurse', () => {
     test.use({
@@ -141,35 +155,78 @@ test.describe('tracked entity record demo as a restricted nurse', () => {
         })
     })
 
-    test('adding a note refreshes every view', async ({ page }) => {
-        const note = `E2E note ${Date.now()}`
-        await openRecord(page, PERSON, [OPEN_PROGRAM])
+    test.describe('notes on the active enrollment', () => {
+        // Both write to one enrollment; 2.41 answers 500 to concurrent writes.
+        test.describe.configure({ mode: 'serial' })
 
-        const view = programView(page, OPEN_PROGRAM)
-        const notes = view.getByTestId('notes')
-        await expect(notes).toContainText(
-            'Enrolled again after the first course ended.'
-        )
+        test('adding a note refreshes every view', async ({ page, dhis2 }) => {
+            const note = `E2E note ${Date.now()}`
+            // The seeded enrollment is marked for follow-up; the note must not clear it.
+            expect((await readEnrollment(dhis2)).followUp).toBe(true)
+            await openRecord(page, PERSON, [OPEN_PROGRAM])
 
-        // Hold the refetch back so the fetching indicator is on screen long enough to see.
-        await page.route(
-            new RegExp(`/tracker/trackedEntities/${PERSON}(\\?|$)`),
-            async (route) => {
-                await new Promise((resolve) => setTimeout(resolve, 1_500))
-                await route.continue()
-            }
-        )
-        await view.getByTestId('add-note-text').fill(note)
-        await view.getByTestId('add-note').click()
+            const view = programView(page, OPEN_PROGRAM)
+            const notes = view.getByTestId('notes')
+            await expect(notes).toContainText(
+                'Enrolled again after the first course ended.'
+            )
 
-        await expect(page.getByTestId('record-fetching')).toBeVisible()
-        await expect(view.getByTestId('latest-values')).toBeVisible()
-        await expect(notes).toContainText(note)
-        await expect(notes).toContainText(
-            'Enrolled again after the first course ended.'
-        )
-        await expect(page.getByTestId('record-fetching')).toHaveCount(0)
-        await expect(view.getByTestId('add-note-text')).toHaveValue('')
+            // Hold the refetch back so the fetching indicator is on screen long enough to see.
+            await page.route(
+                new RegExp(`/tracker/trackedEntities/${PERSON}(\\?|$)`),
+                async (route) => {
+                    await new Promise((resolve) => setTimeout(resolve, 1_500))
+                    await route.continue()
+                }
+            )
+            await view.getByTestId('add-note-text').fill(note)
+            await view.getByTestId('add-note').click()
+
+            await expect(page.getByTestId('record-fetching')).toBeVisible()
+            await expect(view.getByTestId('latest-values')).toBeVisible()
+            await expect(notes).toContainText(note)
+            await expect(notes).toContainText(
+                'Enrolled again after the first course ended.'
+            )
+            await expect(page.getByTestId('record-fetching')).toHaveCount(0)
+            await expect(view.getByTestId('add-note-text')).toHaveValue('')
+            await expect(view.getByRole('status')).toContainText('Note added.')
+            expect((await readEnrollment(dhis2)).followUp).toBe(true)
+        })
+
+        test('a note saved before a failed refresh says so and is not offered again', async ({
+            page,
+            dhis2,
+        }) => {
+            const note = `E2E unrefreshed note ${Date.now()}`
+            await openRecord(page, PERSON, [OPEN_PROGRAM])
+
+            const view = programView(page, OPEN_PROGRAM)
+            await expect(view.getByTestId('notes')).toBeVisible()
+
+            // The refetch answers something the block's schema rejects: refresh()
+            // fails after the note is saved, without an HTTP error.
+            await page.route(
+                new RegExp(`/tracker/trackedEntities/${PERSON}(\\?|$)`),
+                (route) => route.fulfill({ json: {} })
+            )
+            await view.getByTestId('add-note-text').fill(note)
+            await view.getByTestId('add-note').click()
+
+            await expect(
+                view.getByTestId('add-note-not-refreshed')
+            ).toContainText('Saved, but the record could not be refreshed.')
+            await expect(view.getByTestId('add-note-text')).toHaveValue('')
+            await expect(
+                view.getByText('The note could not be added.')
+            ).toHaveCount(0)
+            // The record stays on screen, and the note is saved once.
+            await expect(view.getByTestId('latest-values')).toBeVisible()
+            const saved = (await readEnrollment(dhis2)).notes.filter(
+                ({ value }) => value === note
+            )
+            expect(saved).toHaveLength(1)
+        })
     })
 
     test('shows two programs side by side from one record', async ({

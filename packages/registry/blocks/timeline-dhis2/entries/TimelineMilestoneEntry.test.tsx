@@ -48,7 +48,7 @@ const milestone = (id: string) => {
 describe('TimelineMilestoneEntry', () => {
     it.each([
         ['milestone:TlE2eEnr001:enrolled', 'Enrolled'],
-        ['milestone:TlE2eEnr001:incident', 'Incident'],
+        ['milestone:TlE2eEnr001:incident', 'Incident date'],
         ['milestone:TlE2eEnr001:completed', 'Enrollment completed10:15'],
         ['milestone:TlE2eEnr002:cancelled', 'Enrollment cancelled16:40'],
     ] as const)(
@@ -63,6 +63,28 @@ describe('TimelineMilestoneEntry', () => {
             expect(container.textContent).not.toContain('00:00')
         }
     )
+
+    it("uses the program's own enrollment and incident date labels", async () => {
+        const program = {
+            ...PROGRAM,
+            enrollmentDateLabel: 'Date of registration',
+            incidentDateLabel: 'Date of diagnosis',
+        }
+        const [enrolled, incident] = milestoneEntries(
+            ENTITY.enrollments[0],
+            program
+        )
+        const { container } = await renderEntries(
+            <>
+                <TimelineMilestoneEntry entry={enrolled} />
+                <TimelineMilestoneEntry entry={incident} />
+            </>
+        )
+
+        expect(container.textContent).toContain('Date of registration')
+        expect(container.textContent).toContain('Date of diagnosis')
+        expect(container.textContent).not.toContain('Enrolled')
+    })
 
     it('names the program by id when its metadata could not be read', async () => {
         const [entry] = milestoneEntries(ENTITY.enrollments[0])

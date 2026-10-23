@@ -26,6 +26,9 @@ export interface StageInfo {
 export interface ProgramInfo {
     id: string
     name: string
+    /** The program's own names for its enrollment and incident dates. */
+    enrollmentDateLabel?: string
+    incidentDateLabel?: string
     stages: ReadonlyMap<string, StageInfo>
     attributes: ReadonlyMap<string, FieldInfo>
 }

@@ -909,6 +909,11 @@
                     "target": "@components/timeline-dhis2/useHistoryQueries.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/timeline-dhis2/useSpansPrograms.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline-dhis2/useSpansPrograms.ts"
+                },
+                {
                     "path": "packages/registry/blocks/timeline-dhis2/useSystemCalendar.ts",
                     "type": "registry:file",
                     "target": "@components/timeline-dhis2/useSystemCalendar.ts"

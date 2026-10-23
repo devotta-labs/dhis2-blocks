@@ -182,7 +182,8 @@ describe('CaseHistoryDemo', () => {
             .element(screen.getByText('Amina Bello changed 1 field'))
             .toBeVisible()
 
-        const feed = document.body.innerText
+        // textContent, not innerText: the headings are uppercased by CSS.
+        const feed = document.body.textContent ?? ''
         const order = [
             'Future visit',
             'Now',

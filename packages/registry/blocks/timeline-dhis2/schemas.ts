@@ -261,6 +261,8 @@ const ProgramStageSchema = z.object({
 export const ProgramTimelineMetadataSchema = z.object({
     id: z.string().min(1),
     displayName: z.string(),
+    displayEnrollmentDateLabel: z.string().optional(),
+    displayIncidentDateLabel: z.string().optional(),
     programStages: listOf(ProgramStageSchema),
     programTrackedEntityAttributes: listOf(
         z.object({ trackedEntityAttribute: ValueMetadataSchema })

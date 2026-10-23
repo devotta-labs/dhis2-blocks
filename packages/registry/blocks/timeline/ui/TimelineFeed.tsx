@@ -39,6 +39,7 @@ export const TimelineFeed = <TData,>({
                 ...(index === nowIndex ? [now] : []),
                 <li key={`${group.phase}:${group.key}`}>
                     <section
+                        className="group/phase"
                         data-slot="timeline-group"
                         data-phase={group.phase}
                         aria-labelledby={groupHeadingId(meta.id, group)}

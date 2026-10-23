@@ -3,14 +3,15 @@ import React, { type ComponentPropsWithoutRef } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import type { TimelineEntry } from '@/components/timeline/core/types'
 import { TimelineTime } from '@/components/timeline/ui/TimelineParts'
-import type { MilestoneEntryData, MilestoneKind } from '../types'
+import { useSpansPrograms } from '../useSpansPrograms'
+import type { MilestoneEntryData, MilestoneKind, ProgramInfo } from '../types'
 
-const label = (kind: MilestoneKind): string => {
+const label = (kind: MilestoneKind, program?: ProgramInfo): string => {
     switch (kind) {
         case 'enrolled':
-            return i18n.t('Enrolled')
+            return program?.enrollmentDateLabel ?? i18n.t('Enrolled')
         case 'incident':
-            return i18n.t('Incident')
+            return program?.incidentDateLabel ?? i18n.t('Incident date')
         case 'completed':
             return i18n.t('Enrollment completed')
         case 'cancelled':
@@ -25,21 +26,27 @@ export const TimelineMilestoneEntry = ({
     ...props
 }: ComponentPropsWithoutRef<'div'> & {
     entry: TimelineEntry<MilestoneEntryData>
-}) => (
-    <div
-        {...props}
-        data-slot="timeline-milestone"
-        className={cn(
-            'flex flex-wrap items-baseline gap-x-2 text-sm',
-            className
-        )}
-    >
-        <span className="font-medium text-dhis2-grey-900">
-            {label(entry.data.milestone)}
-        </span>
-        <span className="text-dhis2-grey-700">
-            {entry.data.program?.name ?? entry.data.enrollment.program}
-        </span>
-        <TimelineTime entry={entry} />
-    </div>
-)
+}) => {
+    const spansPrograms = useSpansPrograms()
+    return (
+        <div
+            {...props}
+            data-slot="timeline-milestone"
+            data-marker="dot"
+            className={cn(
+                'flex flex-wrap items-baseline gap-x-2 text-sm',
+                className
+            )}
+        >
+            <span className="font-medium text-dhis2-grey-900">
+                {label(entry.data.milestone, entry.data.program)}
+            </span>
+            {spansPrograms ? (
+                <span className="text-dhis2-grey-700">
+                    {entry.data.program?.name ?? entry.data.enrollment.program}
+                </span>
+            ) : null}
+            <TimelineTime entry={entry} />
+        </div>
+    )
+}

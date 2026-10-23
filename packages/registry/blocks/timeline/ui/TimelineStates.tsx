@@ -24,9 +24,19 @@ export const TimelineLoading = ({
             className={cn('flex flex-col gap-3', className)}
         >
             <span className="sr-only">{i18n.t('Loading')}</span>
-            {[0, 1, 2].map((row) => (
-                <Skeleton key={row} aria-hidden="true" className="h-10" />
-            ))}
+            {/* The feed's own shape: a day heading, then entries on the line. */}
+            <div aria-hidden="true" className="flex flex-col gap-4">
+                <Skeleton className="h-3 w-20" />
+                {[0, 1, 2].map((row) => (
+                    <div key={row} className="flex gap-3.5">
+                        <Skeleton className="mt-1 size-2.5 rounded-full" />
+                        <div className="flex flex-1 flex-col gap-2">
+                            <Skeleton className="h-4 w-48" />
+                            <Skeleton className="h-3.5 w-32" />
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     )
 }

@@ -1,3 +1,4 @@
+import { useConfig } from '@dhis2/app-runtime'
 import {
     Timeline,
     TimelineEmpty,
@@ -27,12 +28,18 @@ import {
 const TRACKED_ENTITY = 'TlE2eTei001'
 
 /** A host action: it reads the event the surrounding entry shows. */
-const EventId = () => {
+const OpenEvent = () => {
+    const { baseUrl } = useConfig()
     const { data } = useTimelineEventEntry()
     return (
-        <span className="text-xs text-muted-foreground">
-            {data.event.event}
-        </span>
+        <a
+            className="text-sm text-dhis2-primary underline-offset-2 hover:underline"
+            href={`${baseUrl}/dhis-web-capture/index.html#/enrollmentEventEdit?eventId=${data.event.event}`}
+            target="_blank"
+            rel="noreferrer"
+        >
+            Open
+        </a>
     )
 }
 
@@ -61,7 +68,7 @@ const TimelineCaseHistory = () => {
                 {(entry) => (
                     <TimelineHistoryEntry
                         entry={entry}
-                        eventActions={<EventId />}
+                        eventActions={<OpenEvent />}
                     />
                 )}
             </TimelineFeed>

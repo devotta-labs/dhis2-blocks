@@ -10,7 +10,9 @@ import {
 } from './TimelineContext'
 
 /**
- * The dot that marks an entry on the line.
+ * The dot that marks an entry on the line. It is grey above "now" and red in
+ * the Overdue group; content inside the item can set `data-marker` to
+ * `filled` (done), `muted` (set aside) or `dot` (a minor entry).
  * @public Exported for hosts that lay out their own items.
  */
 export const TimelineMarker = ({
@@ -23,6 +25,12 @@ export const TimelineMarker = ({
         data-slot="timeline-marker"
         className={cn(
             'absolute top-1.5 left-0 size-2.5 rounded-full border-2 border-dhis2-blue-700 bg-white',
+            // The phase: grey for what is coming, red for what is overdue.
+            'group-data-[phase=future]/phase:border-dhis2-grey-500 group-data-[phase=overdue]/phase:border-dhis2-red-700',
+            // An entry can set data-marker on its content to say more.
+            'group-has-[[data-marker=filled]]/item:bg-dhis2-blue-700',
+            'group-has-[[data-marker=muted]]/item:border-dhis2-grey-400',
+            'group-has-[[data-marker=dot]]/item:top-[7px] group-has-[[data-marker=dot]]/item:left-[2px] group-has-[[data-marker=dot]]/item:size-1.5 group-has-[[data-marker=dot]]/item:border-0 group-has-[[data-marker=dot]]/item:bg-dhis2-grey-500',
             className
         )}
     />
@@ -73,7 +81,7 @@ export const TimelineItem = <TData,>({
             data-timeline-id={timeline?.meta.id}
             data-timeline-entry={entry.id}
             className={cn(
-                'relative pb-4 pl-6 outline-none focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-dhis2-ring',
+                'group/item relative pb-4 pl-6 outline-none focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-dhis2-ring',
                 className
             )}
         >
@@ -98,7 +106,7 @@ export const TimelineGroupHeading = ({
             id={groupHeadingId(meta.id, group)}
             data-slot="timeline-group-heading"
             className={cn(
-                'mb-2 text-sm font-medium text-dhis2-grey-800',
+                'mb-2 text-xs font-medium tracking-wide text-dhis2-grey-600 uppercase',
                 group.phase === 'overdue' && 'text-dhis2-red-700',
                 className
             )}
@@ -118,7 +126,7 @@ export const TimelineNow = ({
         {...props}
         data-slot="timeline-now"
         className={cn(
-            'my-2 flex items-center gap-2 text-sm font-medium text-dhis2-blue-800',
+            'my-2 flex items-center gap-2 text-xs font-medium tracking-wide text-dhis2-blue-800 uppercase',
             className
         )}
     >

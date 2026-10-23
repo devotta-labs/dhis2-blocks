@@ -36,7 +36,7 @@ const FLOW_RATE = 'TlE2eDe0001'
 const WATER_QUALITY = 'TlE2eDe0002'
 // 55 inspections plus 6 events in the active enrollment: more than the case
 // history shows at first (50 past entries) and more than one page of the
-// updated-today demo (50 events), so both demos offer "Show more".
+// updated-today demo (50 events), so both demos offer "Show older entries".
 const SEEDED_EVENTS = 61
 const username = process.env.E2E_DHIS2_USERNAME ?? 'admin'
 const password = process.env.E2E_DHIS2_PASSWORD ?? 'district'
@@ -93,10 +93,10 @@ const eventEntry = (page: Page, event: string) =>
         })
 
 const showMore = (page: Page) =>
-    feed(page).getByRole('button', { name: 'Show more', exact: true })
+    feed(page).getByRole('button', { name: 'Show older entries', exact: true })
 
 /**
- * Presses "Show more" until everything is on show. Each run of the "after an
+ * Presses "Show older entries" until everything is on show. Each run of the "after an
  * update" tests adds saves to the record, so a stack reused between runs has
  * more entries than one press reveals.
  */
@@ -262,20 +262,21 @@ test.describe('timeline', () => {
             overdue.getByText(`Due ${shownDay('2026-07-01')}`, { exact: true })
         ).toBeVisible()
 
+        // Above "now" and under its due day, its place says it is scheduled
+        // and when: no badge, no due date.
         const future = group(page, shownDay('2090-06-15'))
+        await expect(eventEntry(page, FUTURE_EVENT)).toBeVisible()
         await expect(
             future.getByText('Scheduled', { exact: true })
-        ).toBeVisible()
-        await expect(
-            future.getByText(`Due ${shownDay('2090-06-15')}`, { exact: true })
-        ).toBeVisible()
-        await expect(eventEntry(page, FUTURE_EVENT)).toBeVisible()
+        ).toHaveCount(0)
+        await expect(future.getByText(/^Due /)).toHaveCount(0)
 
         // The maintenance stage hides due dates.
         const hidden = eventEntry(page, FUTURE_HIDDEN_DUE_EVENT)
+        await expect(hidden).toBeVisible()
         await expect(
             hidden.getByText('Scheduled', { exact: true })
-        ).toBeVisible()
+        ).toHaveCount(0)
         await expect(hidden.getByText(/^Due /)).toHaveCount(0)
 
         await expect(
@@ -344,7 +345,7 @@ test.describe('timeline', () => {
             0
         )
 
-        await completed.getByRole('button', { name: '1 note' }).click()
+        // A single note shows as it is.
         await expect(
             completed.getByText('Sample sent to the district laboratory.')
         ).toBeVisible()
@@ -479,8 +480,6 @@ test.describe('timeline', () => {
 
     test('has no axe violations', async ({ page }) => {
         await openCaseHistory(page)
-        const completed = eventEntry(page, COMPLETED_EVENT)
-        await completed.getByRole('button', { name: '1 note' }).click()
         await eventEntry(page, ACTIVE_EVENT)
             .getByRole('button', { name: 'Show changes' })
             .click()

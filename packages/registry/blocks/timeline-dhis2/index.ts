@@ -16,6 +16,7 @@ export {
 export {
     TimelineEventChanges,
     TimelineEventCompletedBy,
+    TimelineEventMeta,
     TimelineEventEntry,
     TimelineEventNotes,
     TimelineEventOrgUnit,

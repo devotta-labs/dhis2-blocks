@@ -140,10 +140,10 @@ describe('UpdatedTodayDemo', () => {
             </CustomDataProvider>
         )
         await expect
-            .element(screen.getByRole('button', { name: 'Show more' }))
+            .element(screen.getByRole('button', { name: 'Show older entries' }))
             .toBeVisible()
 
-        await screen.getByRole('button', { name: 'Show more' }).click()
+        await screen.getByRole('button', { name: 'Show older entries' }).click()
 
         await expect
             .element(screen.getByText("More events couldn't load."))

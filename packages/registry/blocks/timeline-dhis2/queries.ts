@@ -33,7 +33,7 @@ const ENROLLMENT_FIELDS = `enrollments[enrollment,program,status,orgUnit,enrolle
 const VALUE_METADATA_FIELDS =
     'id,displayName,displayFormName,valueType,optionSet[options[code,displayName]]'
 
-const PROGRAM_FIELDS = `id,displayName,programStages[id,displayName,sortOrder,hideDueDate,repeatable,programStageDataElements[displayInReports,dataElement[${VALUE_METADATA_FIELDS}]]],programTrackedEntityAttributes[trackedEntityAttribute[${VALUE_METADATA_FIELDS}]]`
+const PROGRAM_FIELDS = `id,displayName,displayEnrollmentDateLabel,displayIncidentDateLabel,programStages[id,displayName,sortOrder,hideDueDate,repeatable,programStageDataElements[displayInReports,dataElement[${VALUE_METADATA_FIELDS}]]],programTrackedEntityAttributes[trackedEntityAttribute[${VALUE_METADATA_FIELDS}]]`
 
 export interface EventsResult {
     /** Newest first by the time field; events with no value in it come first. */

@@ -18,6 +18,8 @@ export const toProgramInfo = (
 ): ProgramInfo => ({
     id: metadata.id,
     name: metadata.displayName,
+    enrollmentDateLabel: metadata.displayEnrollmentDateLabel,
+    incidentDateLabel: metadata.displayIncidentDateLabel,
     stages: new Map(
         metadata.programStages.map((stage): [string, StageInfo] => [
             stage.id,

@@ -118,7 +118,7 @@ describe('TimelineChangeEntry', () => {
         expect(container.textContent).toContain('24 → 26')
     })
 
-    it('shows (empty) for created and deleted values', async () => {
+    it('shows a created value alone and (empty) for a deleted one', async () => {
         const { container } = await renderGroup(
             group(
                 row('dataElement', 'roKuXYfw1BW', 'CREATE', undefined, '24'),
@@ -126,8 +126,33 @@ describe('TimelineChangeEntry', () => {
             )
         )
 
-        await expect.poll(() => container.textContent).toContain('(empty) → 24')
+        await expect
+            .poll(() => container.textContent)
+            .toContain('Gestational age at visit24')
+        expect(container.textContent).not.toContain('(empty) → 24')
         expect(container.textContent).toContain('13 → (empty)')
+    })
+
+    it('says "entered" for a save that only filled fields in', async () => {
+        const entered = await renderGroup(
+            group(
+                row('dataElement', 'roKuXYfw1BW', 'CREATE', undefined, '24'),
+                row('dataElement', 'dyYdfamSY2Z', 'CREATE', undefined, '13')
+            )
+        )
+        const mixed = await renderGroup(
+            group(
+                row('dataElement', 'roKuXYfw1BW', 'CREATE', undefined, '24'),
+                row('dataElement', 'dyYdfamSY2Z', 'UPDATE', '12', '13')
+            )
+        )
+
+        expect(entered.container.textContent).toContain(
+            'John Traore entered 2 fields'
+        )
+        expect(mixed.container.textContent).toContain(
+            'John Traore changed 2 fields'
+        )
     })
 
     it('labels attributes and data elements by name, and unknown fields by id', async () => {
@@ -173,7 +198,7 @@ describe('TimelineChangeEntry', () => {
 
             await expect
                 .poll(() => container.textContent)
-                .toContain(`Event date(empty) → ${expected}`)
+                .toContain(`Event date${expected}`)
             expect(container.textContent).not.toContain('00:00')
         }
     )
@@ -221,6 +246,11 @@ describe('TimelineChangeEntry', () => {
 
         expect(container.textContent).toContain('First name')
         expect(container.textContent).toContain('John Traore changed 1 field')
+        // The day heading above says the day; the summary says only the time.
+        expect(
+            container.querySelector('[data-slot=timeline-change-summary] time')
+                ?.textContent
+        ).toBe('19:11')
         expect(
             container.querySelector('li [data-slot=timeline-change]')?.className
         ).toContain('custom')
@@ -250,6 +280,31 @@ describe('TimelineChangeEntry', () => {
                 ),
             ].map((field) => field.textContent)
         ).toEqual(['b', 'a'])
+    })
+
+    it('shows a save that entered the record as its summary alone', async () => {
+        const saves = groupChangelogRows([
+            {
+                ...row('attribute', 'a', 'CREATE', undefined, '1'),
+                createdAt: '2026-10-22T10:00',
+            },
+            {
+                ...row('attribute', 'b', 'UPDATE', '1', '2'),
+                createdAt: '2026-10-22T11:00',
+            },
+        ])
+        const { container } = await renderEntries(
+            <TimelineSaves saves={saves} />
+        )
+
+        expect(container.textContent).toContain('John Traore entered 1 field')
+        expect(
+            [
+                ...container.querySelectorAll(
+                    '[data-slot=timeline-change-field]'
+                ),
+            ].map((field) => field.textContent)
+        ).toEqual(['b'])
     })
 
     it('summarises one save, singular and plural', async () => {

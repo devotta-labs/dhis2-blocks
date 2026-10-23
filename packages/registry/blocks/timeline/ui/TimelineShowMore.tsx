@@ -8,6 +8,7 @@ import React, {
     type ComponentPropsWithoutRef,
 } from 'react'
 import { Button } from '@/components/dhis2/ui/button'
+import { cn } from '@/components/dhis2/ui/cn'
 import { revealPast } from '../core/reveal'
 import { localDay } from '../core/today'
 import type { TimelineEntry } from '../core/types'
@@ -55,6 +56,7 @@ export const TimelineShowMore = ({
     hasMore,
     onShowMore,
     loading = false,
+    className,
     children,
     ...props
 }: Omit<ComponentPropsWithoutRef<typeof Button>, 'onClick'> & {
@@ -100,8 +102,11 @@ export const TimelineShowMore = ({
     }
     return (
         <Button
-            variant="outline"
+            variant="secondary"
+            size="sm"
             {...props}
+            // Sits under the entries, at their indent, not across the page.
+            className={cn('ml-6 self-start text-sm!', className)}
             ref={button}
             type="button"
             data-slot="timeline-show-more"
@@ -124,7 +129,9 @@ export const TimelineShowMore = ({
             }}
         >
             {children ??
-                (loading ? i18n.t('Loading more') : i18n.t('Show more'))}
+                (loading
+                    ? i18n.t('Loading more')
+                    : i18n.t('Show older entries'))}
         </Button>
     )
 }

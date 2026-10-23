@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-23T12:09:43.084Z\n"
-"PO-Revision-Date: 2026-10-23T12:09:43.084Z\n"
+"POT-Creation-Date: 2026-10-23T13:47:20.990Z\n"
+"PO-Revision-Date: 2026-10-23T13:47:20.990Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -247,8 +247,11 @@ msgstr "Events in {{program}} couldn't load."
 msgid "Hide changes"
 msgstr "Hide changes"
 
-msgid "Incident"
-msgstr "Incident"
+msgid "Hide notes"
+msgstr "Hide notes"
+
+msgid "Incident date"
+msgstr "Incident date"
 
 msgid "Loading changes"
 msgstr "Loading changes"
@@ -292,6 +295,9 @@ msgstr "Show changes"
 msgid "Show less"
 msgstr "Show less"
 
+msgid "Show older entries"
+msgstr "Show older entries"
+
 msgid "Showing the most recent {{count}} events in {{program}}."
 msgstr "Showing the most recent {{count}} events in {{program}}."
 
@@ -307,9 +313,6 @@ msgstr "Undated"
 msgid "Yes"
 msgstr "Yes"
 
-msgid "{{count}} note"
-msgstr "{{count}} note"
-
 msgid "{{count}} notes"
 msgstr "{{count}} notes"
 
@@ -318,6 +321,12 @@ msgstr "{{name}} changed {{count}} field"
 
 msgid "{{name}} changed {{count}} fields"
 msgstr "{{name}} changed {{count}} fields"
+
+msgid "{{name}} entered {{count}} field"
+msgstr "{{name}} entered {{count}} field"
+
+msgid "{{name}} entered {{count}} fields"
+msgstr "{{name}} entered {{count}} fields"
 
 msgid "A required value is missing"
 msgstr "A required value is missing"
@@ -576,9 +585,6 @@ msgstr "Greater than"
 
 msgid "Image attachment"
 msgstr "Image attachment"
-
-msgid "Incident date"
-msgstr "Incident date"
 
 msgid "Is empty"
 msgstr "Is empty"

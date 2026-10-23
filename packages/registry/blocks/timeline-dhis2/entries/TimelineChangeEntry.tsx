@@ -12,7 +12,10 @@ import {
 } from '@/components/dhis2-value-display/calendar'
 import { formatDhis2Value } from '@/components/dhis2-value-display/formatDhis2Value'
 import type { TimelineEntry } from '@/components/timeline/core/types'
-import { useTimelineMeta } from '@/components/timeline/ui/TimelineContext'
+import {
+    useOptionalTimeline,
+    useTimelineMeta,
+} from '@/components/timeline/ui/TimelineContext'
 import type { ChangeSave, ChangeEntryData, ResolvedChange } from '../types'
 
 const TimelineSaveContext = createContext<ChangeSave | null>(null)
@@ -28,19 +31,31 @@ export const useTimelineSave = (): ChangeSave => {
     return save
 }
 
-/** "Amina Bello changed 3 fields", and when. */
+/** A save that only filled in fields: the record being entered, not edited. */
+const isEntry = (save: ChangeSave) =>
+    save.changes.every((change) => change.type === 'CREATE')
+
+/** "Amina Bello changed 3 fields" (or "entered", for a first save), and when. */
 export const TimelineChangeSummary = ({
+    withDay = true,
     className,
     ...props
-}: ComponentPropsWithoutRef<'p'>) => {
-    const { user, changes, createdAt } = useTimelineSave()
+}: ComponentPropsWithoutRef<'p'> & {
+    /** False under a day heading that already says the day. */
+    withDay?: boolean
+}) => {
+    const save = useTimelineSave()
+    const { user, changes, createdAt } = save
+    const entered = isEntry(save)
     const { calendar, locale } = useTimelineMeta()
     const day = storedDay(createdAt)
     const time = storedTime(createdAt)
     const when =
         day === undefined
             ? undefined
-            : [formatCalendarDate(day, calendar, locale), time].join(' ')
+            : withDay
+              ? [formatCalendarDate(day, calendar, locale), time].join(' ')
+              : time
     return (
         <p
             {...props}
@@ -51,15 +66,25 @@ export const TimelineChangeSummary = ({
             )}
         >
             <span className="font-medium">
-                {changes.length === 1
-                    ? i18n.t('{{name}} changed {{count}} field', {
-                          name: user.displayName,
-                          count: changes.length,
-                      })
-                    : i18n.t('{{name}} changed {{count}} fields', {
-                          name: user.displayName,
-                          count: changes.length,
-                      })}
+                {entered
+                    ? changes.length === 1
+                        ? i18n.t('{{name}} entered {{count}} field', {
+                              name: user.displayName,
+                              count: changes.length,
+                          })
+                        : i18n.t('{{name}} entered {{count}} fields', {
+                              name: user.displayName,
+                              count: changes.length,
+                          })
+                    : changes.length === 1
+                      ? i18n.t('{{name}} changed {{count}} field', {
+                            name: user.displayName,
+                            count: changes.length,
+                        })
+                      : i18n.t('{{name}} changed {{count}} fields', {
+                            name: user.displayName,
+                            count: changes.length,
+                        })}
             </span>
             {when === undefined ? null : (
                 <time dateTime={createdAt} className="text-dhis2-grey-700">
@@ -126,7 +151,11 @@ const ChangeRowItem = ({ change }: { change: ResolvedChange }) => {
                 {change.name}
             </span>
             <span className="text-dhis2-grey-800">
-                <Value text={show(change.previousValue)} /> →{' '}
+                {change.type === 'CREATE' ? null : (
+                    <>
+                        <Value text={show(change.previousValue)} /> →{' '}
+                    </>
+                )}
                 <Value text={show(change.currentValue)} />
             </span>
         </li>
@@ -187,9 +216,20 @@ export const TimelineChangeEntry = ({
     ...props
 }: ComponentPropsWithoutRef<'div'> & {
     entry: TimelineEntry<ChangeEntryData>
-}) => <TimelineSave {...props} save={entry.data.save} />
+}) => {
+    const inFeed = useOptionalTimeline() !== null
+    return (
+        <TimelineSave data-marker="dot" {...props} save={entry.data.save}>
+            <TimelineChangeSummary withDay={!inFeed} />
+            <TimelineChangeList />
+        </TimelineSave>
+    )
+}
 
-/** A list of saves, newest first, such as an event's changes. */
+/**
+ * A list of saves, newest first, such as an event's changes. A save that
+ * entered the record shows only who and when: its values are the record's.
+ */
 export const TimelineSaves = ({
     saves,
     className,
@@ -202,7 +242,9 @@ export const TimelineSaves = ({
     >
         {saves.map((save) => (
             <li key={save.id}>
-                <TimelineSave save={save} />
+                <TimelineSave save={save}>
+                    {isEntry(save) ? <TimelineChangeSummary /> : undefined}
+                </TimelineSave>
             </li>
         ))}
     </ul>

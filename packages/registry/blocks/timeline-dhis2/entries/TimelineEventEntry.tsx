@@ -17,11 +17,16 @@ import {
 } from '@/components/dhis2-value-display/calendar'
 import { formatDhis2Value } from '@/components/dhis2-value-display/formatDhis2Value'
 import type { TimelineEntry } from '@/components/timeline/core/types'
-import { useTimelineMeta } from '@/components/timeline/ui/TimelineContext'
+import { TimelineTime } from '@/components/timeline/ui/TimelineParts'
+import {
+    useOptionalTimeline,
+    useTimelineMeta,
+} from '@/components/timeline/ui/TimelineContext'
 import type { DerivedEventStatus } from '../eventStatus'
 import type { Note } from '../schemas'
 import type { EventEntryData } from '../types'
 import { useEventChangelog } from '../useEventChangelog'
+import { useSpansPrograms } from '../useSpansPrograms'
 import { TimelineSaves } from './TimelineChangeEntry'
 
 const TimelineEventContext =
@@ -91,6 +96,15 @@ const statusLabel = (status: DerivedEventStatus): string => {
     }
 }
 
+/** How the line's marker shows each status; the feed's phase covers the rest. */
+const MARKER = {
+    completed: 'filled',
+    active: undefined,
+    scheduled: undefined,
+    overdue: undefined,
+    skipped: 'muted',
+} satisfies Record<DerivedEventStatus, string | undefined>
+
 const STATUS_STYLE = {
     completed: 'bg-dhis2-green-100 text-dhis2-green-900',
     active: 'bg-dhis2-blue-100 text-dhis2-blue-900',
@@ -100,21 +114,55 @@ const STATUS_STYLE = {
 } satisfies Record<DerivedEventStatus, string>
 
 /**
- * The status badge. A scheduled or overdue event also shows its due date,
- * unless its stage hides due dates.
+ * Whether the entry's place in the feed already says its status: a scheduled
+ * event above "now", an overdue one in the Overdue group.
+ */
+const usePlaceTellsStatus = (entry: TimelineEntry<EventEntryData>): boolean => {
+    const inFeed = useOptionalTimeline() !== null
+    const { today } = useTimelineMeta()
+    if (!inFeed) {
+        return false
+    }
+    switch (entry.data.status) {
+        case 'overdue':
+            return entry.phase === 'overdue'
+        case 'scheduled': {
+            const day = storedDay(entry.at)
+            return day !== undefined && day > today
+        }
+        default:
+            return false
+    }
+}
+
+/**
+ * The status badge, left out in a feed where the entry's place already says
+ * it. A scheduled or overdue event also shows its due date, unless its stage
+ * hides due dates or the day heading above it is that date.
  */
 export const TimelineEventStatus = ({
     className,
     ...props
 }: ComponentPropsWithoutRef<'span'>) => {
-    const { data } = useTimelineEventEntry()
+    const entry = useTimelineEventEntry()
+    const { data } = entry
     const { calendar, locale } = useTimelineMeta()
+    const placeTellsStatus = usePlaceTellsStatus(entry)
+    const inFeed = useOptionalTimeline() !== null
     const { event, status, stage } = data
     const showsDue = status === 'scheduled' || status === 'overdue'
-    const day =
+    const due =
         showsDue && !stage?.hideDueDate && event.scheduledAt !== undefined
             ? storedDay(event.scheduledAt)
             : undefined
+    // Under a day heading that is the due date, the date would say it twice.
+    const day =
+        inFeed && entry.phase !== 'overdue' && due === storedDay(entry.at)
+            ? undefined
+            : due
+    if (placeTellsStatus && day === undefined) {
+        return null
+    }
     return (
         <span
             {...props}
@@ -125,9 +173,11 @@ export const TimelineEventStatus = ({
                 className
             )}
         >
-            <Badge className={STATUS_STYLE[status]}>
-                {statusLabel(status)}
-            </Badge>
+            {placeTellsStatus ? null : (
+                <Badge className={STATUS_STYLE[status]}>
+                    {statusLabel(status)}
+                </Badge>
+            )}
             {day === undefined ? null : (
                 <span className="text-sm text-dhis2-grey-700">
                     {i18n.t('Due {{date}}', {
@@ -159,6 +209,21 @@ export const TimelineEventOrgUnit = ({
         </span>
     )
 }
+
+/** A muted line of short facts, separated by dots; empty parts drop out. */
+export const TimelineEventMeta = ({
+    className,
+    ...props
+}: ComponentPropsWithoutRef<'span'>) => (
+    <span
+        {...props}
+        data-slot="timeline-event-meta"
+        className={cn(
+            "flex flex-wrap items-baseline gap-x-1.5 text-sm text-dhis2-grey-700 empty:hidden [&>*+*]:before:pe-1.5 [&>*+*]:before:content-['·']",
+            className
+        )}
+    />
+)
 
 /** Who completed the event, when it was completed. */
 export const TimelineEventCompletedBy = ({
@@ -242,26 +307,37 @@ export const TimelineEventValues = ({
 }
 
 const EventNote = ({ note }: { note: Note }) => {
+    const entry = useTimelineEventEntry()
+    const { calendar, locale } = useTimelineMeta()
     const author = note.createdBy?.displayName ?? note.storedBy
     const time =
         note.storedAt === undefined ? undefined : storedTime(note.storedAt)
+    // Written on another day than the event's: say which, or it reads as the event's day.
+    const day =
+        note.storedAt === undefined ? undefined : storedDay(note.storedAt)
+    const when =
+        time === undefined
+            ? undefined
+            : day !== undefined && day !== storedDay(entry.at)
+              ? `${formatCalendarDate(day, calendar, locale)} ${time}`
+              : time
     return (
         <li className="text-dhis2-grey-900">
             <span className="whitespace-pre-wrap">{note.value}</span>
             {author === undefined ? null : (
                 <span className="text-dhis2-grey-700"> {author}</span>
             )}
-            {time === undefined || note.storedAt === undefined ? null : (
+            {when === undefined || note.storedAt === undefined ? null : (
                 <time dateTime={note.storedAt} className="text-dhis2-grey-700">
                     {' '}
-                    {time}
+                    {when}
                 </time>
             )}
         </li>
     )
 }
 
-/** The event's notes: a count that expands them. */
+/** The event's notes: one shows as it is; more hide behind a count. */
 export const TimelineEventNotes = ({
     className,
     ...props
@@ -271,6 +347,19 @@ export const TimelineEventNotes = ({
     const listId = useId()
     if (notes.length === 0) {
         return null
+    }
+    if (notes.length === 1) {
+        return (
+            <div
+                {...props}
+                data-slot="timeline-event-notes"
+                className={cn('flex flex-col items-start gap-1', className)}
+            >
+                <ul className="order-first m-0 flex basis-full list-none flex-col gap-1 border-l-2 border-dhis2-grey-300 p-0 pl-3 text-sm">
+                    <EventNote note={notes[0]} />
+                </ul>
+            </div>
+        )
     }
     return (
         <div
@@ -282,15 +371,20 @@ export const TimelineEventNotes = ({
                 type="button"
                 variant="link"
                 size="sm"
+                className="h-auto border-0 p-0 text-sm! leading-5 tracking-normal"
                 aria-expanded={open}
                 aria-controls={listId}
                 onClick={() => setOpen(!open)}
             >
-                {notes.length === 1
-                    ? i18n.t('{{count}} note', { count: notes.length })
+                {open
+                    ? i18n.t('Hide notes')
                     : i18n.t('{{count}} notes', { count: notes.length })}
             </Button>
-            <div id={listId} hidden={!open}>
+            <div
+                id={listId}
+                hidden={!open}
+                className="order-last mt-1 basis-full border-l-2 border-dhis2-grey-300 pl-3"
+            >
                 {open ? (
                     <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
                         {notes.map((note) => (
@@ -358,6 +452,15 @@ export const TimelineEventChanges = ({
     const entry = useTimelineEventEntry()
     const [open, setOpen] = useState(false)
     const bodyId = useId()
+    // Never edited and holding no values: its log is only the scheduling.
+    const { event } = entry.data
+    if (
+        event.dataValues.length === 0 &&
+        event.createdAt !== undefined &&
+        event.createdAt === event.updatedAt
+    ) {
+        return null
+    }
     return (
         <div
             {...props}
@@ -368,13 +471,18 @@ export const TimelineEventChanges = ({
                 type="button"
                 variant="link"
                 size="sm"
+                className="h-auto border-0 p-0 text-sm! leading-5 tracking-normal"
                 aria-expanded={open}
                 aria-controls={bodyId}
                 onClick={() => setOpen(!open)}
             >
                 {open ? i18n.t('Hide changes') : i18n.t('Show changes')}
             </Button>
-            <div id={bodyId} hidden={!open}>
+            <div
+                id={bodyId}
+                hidden={!open}
+                className="order-last mt-1 basis-full border-l-2 border-dhis2-grey-300 pl-3"
+            >
                 {open ? <ChangesBody entry={entry} /> : null}
             </div>
         </div>
@@ -396,32 +504,48 @@ export const TimelineEventEntry = ({
 }: ComponentPropsWithoutRef<'div'> & {
     entry: TimelineEntry<EventEntryData>
     actions?: ReactNode
-}) => (
-    <TimelineEventContext.Provider value={entry}>
-        <div
-            {...props}
-            data-slot="timeline-event"
-            data-status={entry.data.status}
-            className={cn(
-                'group/event flex flex-col items-start gap-1 data-[status=skipped]:text-dhis2-grey-700',
-                className
-            )}
-        >
-            {children ?? (
-                <>
-                    <span className="flex flex-wrap items-baseline gap-x-2">
-                        <TimelineEventStage />
-                        <TimelineEventProgram />
-                    </span>
-                    <TimelineEventStatus />
-                    <TimelineEventOrgUnit />
-                    <TimelineEventCompletedBy />
-                    <TimelineEventValues />
-                    <TimelineEventNotes />
-                    <TimelineEventChanges />
-                </>
-            )}
-            {actions}
-        </div>
-    </TimelineEventContext.Provider>
-)
+}) => {
+    const spansPrograms = useSpansPrograms()
+    return (
+        <TimelineEventContext.Provider value={entry}>
+            <div
+                {...props}
+                data-slot="timeline-event"
+                data-status={entry.data.status}
+                data-marker={MARKER[entry.data.status]}
+                className={cn(
+                    'group/event flex flex-col items-start gap-1 data-[status=skipped]:text-dhis2-grey-700',
+                    className
+                )}
+            >
+                {children ?? (
+                    <>
+                        <span className="flex flex-wrap items-center gap-x-2">
+                            <TimelineEventStage />
+                            {spansPrograms ? <TimelineEventProgram /> : null}
+                            <TimelineEventStatus />
+                        </span>
+                        <TimelineEventMeta>
+                            {/* Midnight is a date stored as a date-time. */}
+                            {storedTime(entry.at) === '00:00' ? null : (
+                                <TimelineTime entry={entry} />
+                            )}
+                            <TimelineEventOrgUnit />
+                            <TimelineEventCompletedBy />
+                        </TimelineEventMeta>
+                        <TimelineEventValues />
+                        <div
+                            data-slot="timeline-event-actions"
+                            className="flex flex-wrap items-baseline gap-x-4 gap-y-1 empty:hidden"
+                        >
+                            <TimelineEventNotes className="contents" />
+                            <TimelineEventChanges className="contents" />
+                            {actions}
+                        </div>
+                    </>
+                )}
+                {children === undefined ? null : actions}
+            </div>
+        </TimelineEventContext.Provider>
+    )
+}

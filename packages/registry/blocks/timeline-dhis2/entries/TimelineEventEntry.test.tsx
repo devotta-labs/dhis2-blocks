@@ -285,7 +285,27 @@ describe('TimelineEventEntry', () => {
         expect(frame.textContent).toContain('First antenatal care visit')
         expect(frame.textContent).toContain('Ngelehun CHC')
         expect(frame.textContent).toContain('Show changes')
-        expect(frame.lastElementChild?.textContent).toBe('Open')
+        // Host actions close the action row, after the part toggles.
+        expect(
+            elementIn(frame, '[data-slot=timeline-event-actions]')
+                .lastElementChild?.textContent
+        ).toBe('Open')
+    })
+
+    it('offers no changes for an event never edited and holding no values', async () => {
+        const scheduled = await renderEvent(
+            recordedEvent('TlE2eEvt006'),
+            <TimelineEventChanges />
+        )
+        const edited = await renderEvent(
+            recordedEvent('TlE2eEvt004'),
+            <TimelineEventChanges />
+        )
+
+        expect(scheduled.container.querySelector('button')).toBeNull()
+        expect(edited.container.querySelector('button')?.textContent).toBe(
+            'Show changes'
+        )
     })
 
     it('labels an overdue event', async () => {
@@ -458,28 +478,38 @@ describe('TimelineEventEntry', () => {
         expect(container.textContent).not.toContain('Older changes')
     })
 
-    it("expands the event's notes from the count", async () => {
+    it('shows a single note as it is, dated when written on another day', async () => {
         const { container } = await renderEvent(
             recordedEvent('TlE2eEvt001'),
             <TimelineEventNotes />
         )
-        const button = buttonIn(container)
         const note = recordedEvent('TlE2eEvt001').notes[0].value
 
-        expect(button.textContent).toBe('1 note')
-        expect(container.textContent).not.toContain(note)
-
-        button.click()
-
-        await expect.poll(() => container.textContent).toContain(note)
-        expect(button.getAttribute('aria-expanded')).toBe('true')
+        expect(container.querySelector('button')).toBeNull()
+        expect(container.textContent).toContain(note)
         expect(container.textContent).toContain('John Traore')
-        expect(container.querySelector('time')?.textContent?.trim()).toMatch(
-            /^\d{2}:\d{2}$/
+        // The event is from 15 Jan; the note was written on 22 Oct.
+        expect(container.querySelector('time')?.textContent?.trim()).toBe(
+            `${formatCalendarDate('2026-10-22', 'gregorian', 'en')} 19:11`
         )
     })
 
-    it('says "notes" for several and shows nothing for none', async () => {
+    it('shows only the time of a note written on the event day', async () => {
+        const base = recordedEvent('TlE2eEvt001')
+        const { container } = await renderEvent(
+            {
+                ...base,
+                notes: [{ ...base.notes[0], storedAt: '2026-01-15T09:05:00' }],
+            },
+            <TimelineEventNotes />
+        )
+
+        expect(container.querySelector('time')?.textContent?.trim()).toBe(
+            '09:05'
+        )
+    })
+
+    it('expands several notes from the count, and shows nothing for none', async () => {
         const base = recordedEvent('TlE2eEvt001')
         const two = await renderEvent(
             {
@@ -492,10 +522,18 @@ describe('TimelineEventEntry', () => {
             recordedEvent('TlE2eEvt004'),
             <TimelineEventNotes />
         )
+        const button = buttonIn(two.container)
 
-        expect(two.container.querySelector('button')?.textContent).toBe(
-            '2 notes'
-        )
+        expect(button.textContent).toBe('2 notes')
+        expect(two.container.textContent).not.toContain(base.notes[0].value)
+
+        button.click()
+
+        await expect
+            .poll(() => two.container.textContent)
+            .toContain(base.notes[0].value)
+        expect(button.textContent).toBe('Hide notes')
+        expect(button.getAttribute('aria-expanded')).toBe('true')
         expect(none.container.querySelector('button')).toBeNull()
     })
 
@@ -542,9 +580,12 @@ describe('TimelineEventEntry', () => {
             container
                 .querySelectorAll('button')
                 .forEach((button) => button.click())
-            await expect
-                .poll(() => container.textContent)
-                .toContain('No changes')
+            // An event never edited and holding no values offers no changes.
+            if (container.querySelector('[data-slot=timeline-event-changes]')) {
+                await expect
+                    .poll(() => container.textContent)
+                    .toContain('No changes')
+            }
 
             const results = await axe.run(container)
             expect(results.violations).toEqual([])

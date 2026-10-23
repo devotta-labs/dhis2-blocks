@@ -13,6 +13,26 @@ button dismiss the dialog.
 
 <ExampleCard slug="dialog/basic" />
 
+## Content outliers
+
+These dialogs all use unmodified `DialogContent`. Try a 960px-wide table,
+an unbroken identifier, and content taller than the viewport. The raw versions
+intentionally overflow: the dialog does not grow to fit wide content or add
+scrolling automatically. Press Escape to dismiss the tall example.
+
+Compare the raw table with a scrollable wrapper, and raw text with
+`overflow-wrap: anywhere`. Both fixes live on the content, not the dialog.
+
+<ExampleCard slug="dialog/outliers" />
+
+[shadcn's Base UI/Nova default](https://ui.shadcn.com/r/styles/base-nova/dialog.json)
+also has a fixed responsive width cap and no automatic overflow handling.
+Its [scrollable example](https://github.com/shadcn-ui/ui/blob/main/apps/v4/examples/base/dialog-scrollable-content.tsx)
+adds `max-h-[50vh] overflow-y-auto` to the body. Base UI's
+[scrolling examples](https://base-ui.com/react/components/dialog)
+explicitly compose a scrollable viewport or body; this is layout CSS, not
+automatic sizing in the primitive.
+
 ## Form content
 
 Use a controlled dialog to close after a form submission. This example only

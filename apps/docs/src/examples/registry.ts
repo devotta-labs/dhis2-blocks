@@ -13,6 +13,7 @@ import dialogBasicSource from './dialog/DialogBasic.tsx?raw'
 import dialogFormSource from './dialog/DialogForm.tsx?raw'
 import dialogScrollableSource from './dialog/DialogScrollable.tsx?raw'
 import dialogWideSource from './dialog/DialogWide.tsx?raw'
+import dialogOutliersSource from './dialog/DialogOutliers.tsx?raw'
 
 /**
  * Example registry.
@@ -43,6 +44,14 @@ export interface ExampleDefinition {
 }
 
 const examples = [
+    {
+        slug: 'dialog/outliers',
+        title: 'Default dialog: content outliers',
+        live: false,
+        Component: lazy(() => import('./dialog/DialogOutliers')),
+        source: dialogOutliersSource,
+        minHeight: 180,
+    },
     {
         slug: 'dialog/basic',
         title: 'Default dialog',

@@ -599,6 +599,39 @@
             ]
         },
         {
+            "name": "dhis2-value-display",
+            "type": "registry:block",
+            "title": "DHIS2 Value Display",
+            "description": "Read-only formatting of DHIS2 values by value type, option set and system calendar, keeping the day a date was stored on.",
+            "dependencies": [
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@2.1.2"
+            ],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/dhis2-value-display/calendar.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-display/calendar.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-display/formatDhis2Value.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-display/formatDhis2Value.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-display/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-display/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-display/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-display/types.ts"
+                }
+            ]
+        },
+        {
             "name": "sidebar",
             "type": "registry:block",
             "title": "Sidebar",

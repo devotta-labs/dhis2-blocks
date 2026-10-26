@@ -599,6 +599,29 @@
             ]
         },
         {
+            "name": "data-entry",
+            "type": "registry:block",
+            "title": "Data Entry",
+            "description": "Grid data entry for DHIS2 events and data sets: typed cells, Excel-style keys, program rules and unsent changes kept on the device.",
+            "dependencies": ["zustand@^5.0.15"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-types"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/data-entry/model/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/model/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/store/store.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/store/store.ts"
+                }
+            ]
+        },
+        {
             "name": "dhis2-value-display",
             "type": "registry:block",
             "title": "DHIS2 Value Display",

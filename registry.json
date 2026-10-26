@@ -632,6 +632,44 @@
             ]
         },
         {
+            "name": "dhis2-value-types",
+            "type": "registry:block",
+            "title": "DHIS2 Value Types",
+            "description": "How each DHIS2 value type is typed, checked, pasted and shown for editing, in the system calendar.",
+            "dependencies": ["@dhis2/multi-calendar-dates@2.1.2"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/dates.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/dates.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/fieldMask.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/fieldMask.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/valueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/valueTypes.ts"
+                }
+            ]
+        },
+        {
             "name": "program-rules",
             "type": "registry:block",
             "title": "Program Rules",

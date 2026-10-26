@@ -1,4 +1,6 @@
 export { parseDateFormat } from './dates'
+export { OPTION_LIMIT, optionIndex, searchOptions } from './optionSearch'
+export type { OptionIndex } from './optionSearch'
 export type {
     CellKind,
     DateFormat,

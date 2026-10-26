@@ -42,6 +42,8 @@ parseTyped(field, text, settings): TypedValue // typed or pasted text -> the sto
 typedText(field, value, settings): string // a stored value -> what an editable cell shows
 checkStored(field, value): ValueProblem | undefined // a stored value today's rules reject
 parseDateFormat(systemInfoDateFormat): DateFormat
+optionIndex(options): OptionIndex // the search text for an option list, built once per list and cached
+searchOptions(index, query, limit = OPTION_LIMIT): { codes, total } // every word must match; exact code first, then code starts, then word starts
 ```
 
 `ValueProblem.message` is English and untranslated, for the UI to translate; `code` is stable.

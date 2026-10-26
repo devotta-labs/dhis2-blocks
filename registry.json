@@ -658,6 +658,11 @@
                     "target": "@components/dhis2-value-types/index.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/dhis2-value-types/optionSearch.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/optionSearch.ts"
+                },
+                {
                     "path": "packages/registry/blocks/dhis2-value-types/types.ts",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-types/types.ts"

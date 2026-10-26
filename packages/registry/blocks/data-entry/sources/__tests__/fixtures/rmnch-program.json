@@ -119,7 +119,8 @@
             "displayName": "Previous deliveries",
             "access": { "data": { "write": true } },
             "id": "PUZaKR0Jh2k",
-            "repeatable": false
+            "repeatable": false,
+            "programStageSections": []
         },
         {
             "programStageDataElements": [
@@ -622,7 +623,78 @@
             "displayName": "First antenatal care visit",
             "access": { "data": { "write": true } },
             "id": "WZbXY0S00lP",
-            "repeatable": false
+            "repeatable": false,
+            "programStageSections": [
+                {
+                    "dataElements": [
+                        { "id": "de0FEHSIoxh" },
+                        { "id": "Q1x1HIhuwFN" },
+                        { "id": "UQ2Zo8CruPB" },
+                        { "id": "zzGNbeMnTd6" },
+                        { "id": "VFffa31SKjH" },
+                        { "id": "sdchiIXIcCf" },
+                        { "id": "xPTngRLQTnu" },
+                        { "id": "Mh7nK8UKoZP" },
+                        { "id": "QFX1FLWBwtq" },
+                        { "id": "E6QaDtrQP5e" },
+                        { "id": "dpOtt7HUQXa" },
+                        { "id": "VSmOcdK3v7y" },
+                        { "id": "ZbDPeYzWsh2" },
+                        { "id": "zk4Eui7Jhtr" },
+                        { "id": "fNnOPQj83jz" }
+                    ],
+                    "id": "EzhVeTS7vx4"
+                },
+                {
+                    "dataElements": [
+                        { "id": "w4ky6EkVahL" },
+                        { "id": "roKuXYfw1BW" },
+                        { "id": "DecmCMPDPdS" },
+                        { "id": "r3BqzOPxAjp" },
+                        { "id": "sWoqcoByYmD" },
+                        { "id": "ytV9rX4ADnn" },
+                        { "id": "M4HEOoEFTAT" },
+                        { "id": "dyYdfamSY2Z" },
+                        { "id": "PN6HcGjTraL" },
+                        { "id": "vPdXnmGWzfy" },
+                        { "id": "EyfTU3ibMmJ" }
+                    ],
+                    "id": "SyzhZewrUHP"
+                },
+                {
+                    "dataElements": [
+                        { "id": "dpiyZz8bkVE" },
+                        { "id": "a7XjFEuZuKE" },
+                        { "id": "X8HbdaoS9LN" },
+                        { "id": "vANAXwtLwcT" },
+                        { "id": "Itl05OEupgQ" },
+                        { "id": "AAaJGnWR5js" }
+                    ],
+                    "id": "AyWdV7K24Ih"
+                },
+                {
+                    "dataElements": [
+                        { "id": "w7enwqzx90I" },
+                        { "id": "lcaG1Pnh27I" },
+                        { "id": "vTEkiy8F3yj" },
+                        { "id": "OhcR0fpFcWa" },
+                        { "id": "cKBSkBB3Mt4" },
+                        { "id": "nhW3SZX9JaN" },
+                        { "id": "MHW5v2Iljtw" },
+                        { "id": "OSuxnldV4Ug" },
+                        { "id": "Ok9OQpitjQr" },
+                        { "id": "RxVNLSeTjto" },
+                        { "id": "nB4Ui3ckmUi" },
+                        { "id": "Kb6kZzUCJi1" },
+                        { "id": "jRo4KlnCKeX" },
+                        { "id": "Js57E09s9fh" },
+                        { "id": "rHgrmXfa57b" },
+                        { "id": "PKZPVfAJfHD" },
+                        { "id": "NPZPVg2rVh4" }
+                    ],
+                    "id": "tR4D0m1d5A5"
+                }
+            ]
         },
         {
             "programStageDataElements": [
@@ -997,7 +1069,8 @@
             "displayName": "Second antenatal care visit",
             "access": { "data": { "write": true } },
             "id": "edqlbukwRfQ",
-            "repeatable": true
+            "repeatable": true,
+            "programStageSections": []
         },
         {
             "programStageDataElements": [
@@ -1466,7 +1539,37 @@
             "displayName": "Care at birth",
             "access": { "data": { "write": true } },
             "id": "PFDfvmGpsR3",
-            "repeatable": false
+            "repeatable": false,
+            "programStageSections": [
+                {
+                    "dataElements": [
+                        { "id": "Itl05OEupgQ" },
+                        { "id": "Mfq2Y9N21KZ" },
+                        { "id": "mGHBXrtqSut" },
+                        { "id": "klEz81wXFoU" },
+                        { "id": "z8m3llJYuh9" },
+                        { "id": "MH33VLmOOqm" },
+                        { "id": "spkG704sTh6" },
+                        { "id": "EyfTU3ibMmJ" },
+                        { "id": "u7aAPS8OgLw" },
+                        { "id": "vPdXnmGWzfy" },
+                        { "id": "yq1qT0NdjYQ" },
+                        { "id": "YsVHgzQCwmr" },
+                        { "id": "BmaBjPQX8ME" },
+                        { "id": "HUfKCOou7de" },
+                        { "id": "VXdfPQRXKiA" },
+                        { "id": "V5PR8Kw8ZnC" },
+                        { "id": "PCiOYWXZq2E" },
+                        { "id": "sWoqcoByYmD" },
+                        { "id": "sUX4i7QqbXF" },
+                        { "id": "cz5DN6BVVeW" },
+                        { "id": "SojR4V7A8u2" },
+                        { "id": "hib4oz2sOLw" },
+                        { "id": "n1rtSHYf6O6" }
+                    ],
+                    "id": "bbjzL5gp0NZ"
+                }
+            ]
         },
         {
             "programStageDataElements": [
@@ -1699,7 +1802,30 @@
             "displayName": "Postpartum care visit",
             "access": { "data": { "write": true } },
             "id": "bbKtnxRZKEP",
-            "repeatable": false
+            "repeatable": false,
+            "programStageSections": [
+                {
+                    "dataElements": [
+                        { "id": "Itl05OEupgQ" },
+                        { "id": "klEz81wXFoU" },
+                        { "id": "cwgQnkamM2j" },
+                        { "id": "EyfTU3ibMmJ" },
+                        { "id": "yq1qT0NdjYQ" },
+                        { "id": "u3TE34T4KH0" },
+                        { "id": "QWVRukwa83h" },
+                        { "id": "ytV9rX4ADnn" }
+                    ],
+                    "id": "ehgw1raICOm"
+                },
+                {
+                    "dataElements": [
+                        { "id": "B3bDhNpCcEM" },
+                        { "id": "X8HbdaoS9LN" },
+                        { "id": "vANAXwtLwcT" }
+                    ],
+                    "id": "zp6Z3kiwzeP"
+                }
+            ]
         }
     ]
 }

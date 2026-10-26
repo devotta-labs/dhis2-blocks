@@ -612,9 +612,25 @@
             ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/dhis2-theme",
-                "devotta-labs/dhis2-blocks/dhis2-value-types"
+                "devotta-labs/dhis2-blocks/dhis2-value-types",
+                "devotta-labs/dhis2-blocks/program-rules"
             ],
             "files": [
+                {
+                    "path": "packages/registry/blocks/data-entry/logic/effects.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/logic/effects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/logic/ruleEffects.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/logic/ruleEffects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/logic/summary.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/logic/summary.ts"
+                },
                 {
                     "path": "packages/registry/blocks/data-entry/model/types.ts",
                     "type": "registry:file",

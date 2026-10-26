@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const PROGRAM_FIELDS =
-    'id,displayName,programType,expiryPeriodType,expiryDays,completeEventsExpiryDays,categoryCombo[id,isDefault],programStages[id,displayName,repeatable,validationStrategy,blockEntryForm,access[data[write]],programStageDataElements[compulsory,dataElement[id,displayFormName,valueType,fieldMask,optionSet[options[code,displayName]]]]]'
+    'id,displayName,programType,expiryPeriodType,expiryDays,completeEventsExpiryDays,categoryCombo[id,isDefault],programStages[id,displayName,repeatable,validationStrategy,blockEntryForm,access[data[write]],programStageDataElements[compulsory,dataElement[id,displayFormName,valueType,fieldMask,optionSet[options[code,displayName]]]],programStageSections[id,dataElements[id]]]'
 
 /** The event date column's id; its cells are `<event>.occurredAt`. */
 export const EVENT_DATE_COLUMN = 'occurredAt'
@@ -37,6 +37,14 @@ const stageSchema = z.object({
             }),
         })
     ),
+    programStageSections: z
+        .array(
+            z.object({
+                id: z.string(),
+                dataElements: z.array(z.object({ id: z.string() })),
+            })
+        )
+        .default([]),
 })
 
 export type ProgramStage = z.infer<typeof stageSchema>

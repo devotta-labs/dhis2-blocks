@@ -237,6 +237,48 @@ test('reads values and required fields per stage', async () => {
     expect(form.strategy.get(INPATIENT_STAGE)).toBe('ON_UPDATE_AND_INSERT')
 })
 
+test('reads each stage’s sections with their data elements', async () => {
+    const form = await loadInpatient(inpatientProgram, inpatientEvents, meAdmin)
+    expect(form.sections.get(INPATIENT_STAGE)).toEqual(
+        new Map([
+            [
+                'd7ZILSbPgYh',
+                [
+                    'oZg33kd9taw',
+                    'SWfdB5lX0fk',
+                    'qrur9Dvnyt5',
+                    'GieVkTxp4HH',
+                    'vV9UWAZohSf',
+                ],
+            ],
+            [
+                'OeSqs7pkKqI',
+                [
+                    'eMyVanycQSC',
+                    'K6uUAvq500H',
+                    'msodh3rEMJa',
+                    'S33cRBsnXPo',
+                    'fWIAEtYVEGk',
+                    'ulD2zW0TIy2',
+                ],
+            ],
+        ])
+    )
+
+    const personForm = await person().load(
+        engineFor(rmnchProgram, rmnchEvents, meAdmin).engine
+    )
+    expect(personForm.sections.get(PREVIOUS_DELIVERIES)).toEqual(new Map())
+    expect(personForm.sections.get(FIRST_VISIT)?.get('AyWdV7K24Ih')).toEqual([
+        'dpiyZz8bkVE',
+        'a7XjFEuZuKE',
+        'X8HbdaoS9LN',
+        'vANAXwtLwcT',
+        'Itl05OEupgQ',
+        'AAaJGnWR5js',
+    ])
+})
+
 test('new rows: one org unit for event programs, a named stage for one person', async () => {
     const selected = await loadInpatient(
         inpatientProgram,

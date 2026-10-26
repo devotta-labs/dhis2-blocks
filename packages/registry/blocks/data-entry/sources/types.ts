@@ -18,6 +18,8 @@ export interface LoadedForm {
     /** Compulsory data elements per stage, and each stage's validation strategy. */
     required: ReadonlyMap<string, ReadonlySet<string>>
     strategy: ReadonlyMap<string, 'ON_COMPLETE' | 'ON_UPDATE_AND_INSERT'>
+    /** Each stage's sections (section id → its data element ids); a rule hides a section only in its own stage. */
+    sections: ReadonlyMap<string, ReadonlyMap<string, ReadonlyArray<string>>>
     /** Why a whole row is read-only, by row id, from Capture's edit rules. */
     readOnlyRows: ReadonlyMap<string, string>
     /** Completed rows the user may reopen (`F_UNCOMPLETE_EVENT`, stage write access, not expired). */

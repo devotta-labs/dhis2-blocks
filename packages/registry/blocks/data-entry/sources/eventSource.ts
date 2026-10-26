@@ -286,6 +286,17 @@ const toForm = (
         strategy: new Map(
             stages.map((stage) => [stage.id, stage.validationStrategy])
         ),
+        sections: new Map(
+            stages.map((stage) => [
+                stage.id,
+                new Map(
+                    stage.programStageSections.map(({ id, dataElements }) => [
+                        id,
+                        dataElements.map((dataElement) => dataElement.id),
+                    ])
+                ),
+            ])
+        ),
         readOnlyRows,
         canReopen,
         rules,

@@ -233,7 +233,52 @@
                 }
             },
             "id": "Zj7UnCAulEk",
-            "repeatable": false
+            "repeatable": false,
+            "programStageSections": [
+                {
+                    "dataElements": [
+                        {
+                            "id": "oZg33kd9taw"
+                        },
+                        {
+                            "id": "SWfdB5lX0fk"
+                        },
+                        {
+                            "id": "qrur9Dvnyt5"
+                        },
+                        {
+                            "id": "GieVkTxp4HH"
+                        },
+                        {
+                            "id": "vV9UWAZohSf"
+                        }
+                    ],
+                    "id": "d7ZILSbPgYh"
+                },
+                {
+                    "dataElements": [
+                        {
+                            "id": "eMyVanycQSC"
+                        },
+                        {
+                            "id": "K6uUAvq500H"
+                        },
+                        {
+                            "id": "msodh3rEMJa"
+                        },
+                        {
+                            "id": "S33cRBsnXPo"
+                        },
+                        {
+                            "id": "fWIAEtYVEGk"
+                        },
+                        {
+                            "id": "ulD2zW0TIy2"
+                        }
+                    ],
+                    "id": "OeSqs7pkKqI"
+                }
+            ]
         }
     ]
 }

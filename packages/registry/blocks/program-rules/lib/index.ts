@@ -7,6 +7,7 @@ export {
     type ExpressionReference,
     type ExpressionReferences,
 } from './scanExpression'
+export { metadataForStage } from './stages'
 export type {
     Attribution,
     EventRuleInput,
@@ -23,6 +24,7 @@ export type {
     RuleDisplayItem,
     RuleEffects,
     RuleEngineModule,
+    RuleEnrollmentData,
     RuleEnrollmentInput,
     RuleEnrollmentStatus,
     RuleEventInput,

@@ -3,6 +3,7 @@ import { Result } from 'better-result'
 import { useMemo } from 'react'
 import {
     buildRuleContext,
+    metadataForStage,
     type ProgramRulesMetadata,
     type RuleContext,
     type RuleEngineModule,
@@ -93,19 +94,12 @@ export const useStageRuleContext = ({
     })
     const engine = ruleEngine.engine
 
-    const metadata = useMemo(() => {
-        const all = metadataQuery.data
-        return (
-            all && {
-                ...all,
-                rules: all.rules.filter(
-                    (rule) =>
-                        rule.programStageId === undefined ||
-                        rule.programStageId === programStageId
-                ),
-            }
-        )
-    }, [metadataQuery.data, programStageId])
+    const metadata = useMemo(
+        () =>
+            metadataQuery.data &&
+            metadataForStage(metadataQuery.data, programStageId),
+        [metadataQuery.data, programStageId]
+    )
 
     const baseContext = useMemo(
         () => buildContext(engine, metadata),

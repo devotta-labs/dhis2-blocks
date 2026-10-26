@@ -112,6 +112,12 @@ export interface RuleEnrollmentInput {
     attributes: Record<string, string>
 }
 
+/** An enrollment with all of its events: the person data rules read. */
+export interface RuleEnrollmentData {
+    enrollment: RuleEnrollmentInput
+    events: RuleEventInput[]
+}
+
 export interface EventRuleInput {
     event: RuleEventInput
     enrollment?: RuleEnrollmentInput

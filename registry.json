@@ -693,6 +693,11 @@
                     "target": "@components/program-rules/lib/scanExpression.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/program-rules/lib/stages.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/stages.ts"
+                },
+                {
                     "path": "packages/registry/blocks/program-rules/lib/types.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/lib/types.ts"

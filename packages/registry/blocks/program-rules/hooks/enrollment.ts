@@ -1,4 +1,4 @@
-import type { RuleEnrollmentInput, RuleEventInput } from '../lib'
+import type { RuleEnrollmentData, RuleEventInput } from '../lib'
 import { z } from 'zod'
 import type { ProgramRulesClient } from './client'
 
@@ -40,11 +40,6 @@ export const RuleEnrollmentResponseSchema = z.object({
 export type RuleEnrollmentResponse = z.infer<
     typeof RuleEnrollmentResponseSchema
 >
-
-export interface RuleEnrollmentData {
-    enrollment: RuleEnrollmentInput
-    events: RuleEventInput[]
-}
 
 const presentValues = (
     entries: ReadonlyArray<readonly [string, string | undefined]>
@@ -89,23 +84,81 @@ export const toRuleEnrollmentData = (
 const EVENT_FIELDS =
     'event,programStage,status,occurredAt,scheduledAt,createdAt,completedAt,orgUnit,dataValues[dataElement,value]'
 
+const enrollmentFields = (withEvents: boolean): string =>
+    `enrollment,status,enrolledAt,occurredAt,orgUnit,attributes[attribute,value]${withEvents ? `,events[${EVENT_FIELDS}]` : ''}`
+
 export const fetchRuleEnrollment = async (
     client: ProgramRulesClient,
     enrollmentId: string,
     withEvents: boolean,
     signal?: AbortSignal
 ): Promise<RuleEnrollmentData> => {
-    const fields = `enrollment,status,enrolledAt,occurredAt,orgUnit,attributes[attribute,value]${withEvents ? `,events[${EVENT_FIELDS}]` : ''}`
     const response = await client.query(
         {
             enrollment: {
                 resource: 'tracker/enrollments',
                 id: enrollmentId,
-                params: { fields },
+                params: { fields: enrollmentFields(withEvents) },
             },
         },
         z.object({ enrollment: RuleEnrollmentResponseSchema }),
         signal
     )
     return toRuleEnrollmentData(response.enrollment)
+}
+
+/** The enrollment ids a single request may carry, to keep the URL short. */
+const ENROLLMENT_BATCH_SIZE = 100
+
+/**
+ * Many enrollments by id, in parallel requests of up to 100. Enrollments the server omits (deleted or no access)
+ * are absent from the result.
+ */
+export const fetchRuleEnrollments = async (
+    client: ProgramRulesClient,
+    enrollmentIds: ReadonlyArray<string>,
+    withEvents: boolean,
+    signal?: AbortSignal
+): Promise<Map<string, RuleEnrollmentData>> => {
+    const fields = enrollmentFields(withEvents)
+    const batches = Array.from(
+        { length: Math.ceil(enrollmentIds.length / ENROLLMENT_BATCH_SIZE) },
+        (_, index) =>
+            enrollmentIds.slice(
+                index * ENROLLMENT_BATCH_SIZE,
+                (index + 1) * ENROLLMENT_BATCH_SIZE
+            )
+    )
+    const responses = await Promise.all(
+        batches.map((ids) =>
+            client.query(
+                {
+                    enrollments: {
+                        resource: 'tracker/enrollments',
+                        params: {
+                            enrollments: ids.join(','),
+                            pageSize: ids.length,
+                            fields,
+                        },
+                    },
+                },
+                z.object({
+                    enrollments: z.object({
+                        enrollments: z.array(RuleEnrollmentResponseSchema),
+                    }),
+                }),
+                signal
+            )
+        )
+    )
+    return new Map(
+        responses.flatMap((response) =>
+            response.enrollments.enrollments.map(
+                (enrollment): [string, RuleEnrollmentData] => [
+                    enrollment.enrollment,
+                    toRuleEnrollmentData(enrollment),
+                ]
+            )
+        )
+    )
 }

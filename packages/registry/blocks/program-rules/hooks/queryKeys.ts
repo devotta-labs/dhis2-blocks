@@ -22,4 +22,11 @@ export const programRulesQueryKeys = {
                   enrollmentId,
                   withEvents ? 'with-events' : 'without-events',
               ] as const),
+    enrollments: (enrollmentIds: ReadonlyArray<string>, withEvents: boolean) =>
+        [
+            ...programRulesQueryKeys.all,
+            'enrollments',
+            [...enrollmentIds].sort().join(','),
+            withEvents ? 'with-events' : 'without-events',
+        ] as const,
 }

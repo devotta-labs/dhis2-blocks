@@ -1,8 +1,14 @@
 import type { z } from 'zod'
 import { cellKey } from '../model/types'
 import type { CellKey, GridColumn, GridRow } from '../model/types'
-import { EVENT_FIELDS, PROGRAM_FIELDS, eventFormSchema } from './eventSchemas'
+import {
+    EVENT_DATE_COLUMN,
+    EVENT_FIELDS,
+    PROGRAM_FIELDS,
+    eventFormSchema,
+} from './eventSchemas'
 import type { ProgramStage, TrackerEvent } from './eventSchemas'
+import { eventSaver } from './eventSave'
 import { completionExpired, expiryStart } from './expiry'
 import type { DataEntrySource, LoadedForm, RulesTarget } from './types'
 
@@ -21,9 +27,6 @@ export interface EventSourceOptions {
     /** The date (`YYYY-MM-DD`) the expiry rules are checked against; the device's date by default. */
     today?: string
 }
-
-/** The event date column's id; its cells are `<event>.occurredAt`. */
-export const EVENT_DATE_COLUMN = 'occurredAt'
 
 const NOT_IN_STAGE = 'Not in this stage'
 
@@ -72,10 +75,6 @@ const toColumn = ({
         })),
     },
 })
-
-const notImplemented = (): never => {
-    throw new Error('Saving events is not implemented')
-}
 
 const toForm = (
     { program, events: { events }, me }: z.infer<typeof eventFormSchema>,
@@ -313,46 +312,47 @@ export const eventSource = (options: EventSourceOptions): DataEntrySource => {
     const orgUnitMode = options.orgUnitMode ?? 'SELECTED'
     // One person's events are read wherever they happened, not only at one org unit.
     const atOrgUnit = enrollmentId === undefined
+    const key = `events:${programId}:${programStageId ?? '-'}:${orgUnitId}:${orgUnitMode}:${enrollmentId ?? '-'}`
+    const saver = eventSaver(key, programId)
     return {
-        key: `events:${programId}:${programStageId ?? '-'}:${orgUnitId}:${orgUnitMode}:${enrollmentId ?? '-'}`,
-        load: async (engine, signal) =>
-            toForm(
-                eventFormSchema.parse(
-                    await engine.query(
-                        {
-                            program: {
-                                resource: 'programs',
-                                id: programId,
-                                params: { fields: PROGRAM_FIELDS },
-                            },
-                            events: {
-                                resource: 'tracker/events',
-                                params: {
-                                    program: programId,
-                                    programStage: programStageId,
-                                    orgUnit: atOrgUnit ? orgUnitId : undefined,
-                                    orgUnitMode: atOrgUnit
-                                        ? orgUnitMode
-                                        : undefined,
-                                    enrollments: enrollmentId,
-                                    pageSize: options.pageSize ?? 50,
-                                    order: options.order ?? 'occurredAt:desc',
-                                    fields: EVENT_FIELDS,
-                                },
-                            },
-                            me: {
-                                resource: 'me',
-                                params: { fields: 'id,authorities' },
+        key,
+        load: async (engine, signal) => {
+            const loaded = eventFormSchema.parse(
+                await engine.query(
+                    {
+                        program: {
+                            resource: 'programs',
+                            id: programId,
+                            params: { fields: PROGRAM_FIELDS },
+                        },
+                        events: {
+                            resource: 'tracker/events',
+                            params: {
+                                program: programId,
+                                programStage: programStageId,
+                                orgUnit: atOrgUnit ? orgUnitId : undefined,
+                                orgUnitMode: atOrgUnit
+                                    ? orgUnitMode
+                                    : undefined,
+                                enrollments: enrollmentId,
+                                pageSize: options.pageSize ?? 50,
+                                order: options.order ?? 'occurredAt:desc',
+                                fields: EVENT_FIELDS,
                             },
                         },
-                        { signal }
-                    )
-                ),
-                options,
-                options.today ?? localToday()
-            ),
-        save: async () => notImplemented(),
-        setStatus: async () => notImplemented(),
-        restoreRows: () => notImplemented(),
+                        me: {
+                            resource: 'me',
+                            params: { fields: 'id,authorities' },
+                        },
+                    },
+                    { signal }
+                )
+            )
+            saver.remember(loaded.events.events.map(({ event }) => event))
+            return toForm(loaded, options, options.today ?? localToday())
+        },
+        save: saver.save,
+        setStatus: saver.setStatus,
+        restoreRows: saver.restoreRows,
     }
 }

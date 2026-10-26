@@ -12,8 +12,17 @@ curl -s -u admin:district -G "$B/programs/eBAyeGv0exc" --data-urlencode "fields=
 curl -s -u admin:district -G "$B/tracker/events" -d program=eBAyeGv0exc -d orgUnit=DiszpKrYNg8 -d pageSize=5 -d order=occurredAt:desc --data-urlencode "fields=$E" > $D/inpatient-events.json
 curl -s -u admin:district -G "$B/programs/WSGAb5XwJ3Y" --data-urlencode "fields=$P" > $D/rmnch-program.json
 curl -s -u admin:district -G "$B/tracker/events" -d program=WSGAb5XwJ3Y -d enrollments=PE6abx7Zhn0 -d pageSize=50 -d order=occurredAt:asc --data-urlencode "fields=$E" > $D/rmnch-person-events.json
+I='{"events":[{"event":"NGxc7JpmqqD","program":"eBAyeGv0exc","programStage":"Zj7UnCAulEk","orgUnit":"DiszpKrYNg8","occurredAt":"2026-12-25","status":"COMPLETED","dataValues":[{"dataElement":"qrur9Dvnyt5","value":"6"},{"dataElement":"GieVkTxp4HH","value":null}]},{"event":"wAiGPfJGMxt","program":"eBAyeGv0exc","programStage":"Zj7UnCAulEk","orgUnit":"DiszpKrYNg8","occurredAt":"2026-12-18","status":"COMPLETED","dataValues":[{"dataElement":"qrur9Dvnyt5","value":"abc"}]}]}'
+U="$B/tracker?async=false&importStrategy=CREATE_AND_UPDATE&importMode=VALIDATE"
+curl -s -u admin:district -H 'Content-Type: application/json' -d "$I" "$U&atomicMode=OBJECT" > $D/import-one-refused.json
+curl -s -u admin:district -H 'Content-Type: application/json' -d "$I" "$U&atomicMode=ALL" > $D/import-all-refused.json
 pnpm exec oxfmt --write $D
 ```
 
 `inpatient-program.json` keeps only the first 20 options of each option set. The diagnosis option set has 14,240
 options, and the full response is 3.2 MB once formatted.
+
+The two import reports validate one valid update and one age that is not a number without writing anything
+(`importMode=VALIDATE`; `/api/tracker` ignores `dryRun`). With `atomicMode=OBJECT` DHIS2 answers HTTP 200 with status
+`OK` and reports the refused event by its id (a committed import saves the other); with `atomicMode=ALL` it answers
+HTTP 409 with status `ERROR` and saves neither.

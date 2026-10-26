@@ -3,6 +3,9 @@ import { z } from 'zod'
 export const PROGRAM_FIELDS =
     'id,displayName,programType,expiryPeriodType,expiryDays,completeEventsExpiryDays,categoryCombo[id,isDefault],programStages[id,displayName,repeatable,validationStrategy,blockEntryForm,access[data[write]],programStageDataElements[compulsory,dataElement[id,displayFormName,valueType,fieldMask,optionSet[options[code,displayName]]]]]'
 
+/** The event date column's id; its cells are `<event>.occurredAt`. */
+export const EVENT_DATE_COLUMN = 'occurredAt'
+
 export const EVENT_FIELDS =
     'event,enrollment,program,programStage,orgUnit,occurredAt,scheduledAt,completedAt,status,attributeOptionCombo,dataValues[dataElement,value]'
 
@@ -38,6 +41,15 @@ const stageSchema = z.object({
 
 export type ProgramStage = z.infer<typeof stageSchema>
 
+const statusSchema = z.enum([
+    'ACTIVE',
+    'COMPLETED',
+    'SCHEDULE',
+    'SKIPPED',
+    'VISITED',
+    'OVERDUE',
+])
+
 const eventSchema = z.object({
     event: z.string(),
     enrollment: z.string().optional(),
@@ -46,20 +58,31 @@ const eventSchema = z.object({
     occurredAt: z.string().optional(),
     scheduledAt: z.string().optional(),
     completedAt: z.string().optional(),
-    status: z.enum([
-        'ACTIVE',
-        'COMPLETED',
-        'SCHEDULE',
-        'SKIPPED',
-        'VISITED',
-        'OVERDUE',
-    ]),
+    status: statusSchema,
     dataValues: z.array(
         z.object({ dataElement: z.string(), value: z.string() })
     ),
 })
 
 export type TrackerEvent = z.infer<typeof eventSchema>
+
+/** An event's own fields: an update replaces them with what it is sent, so a save reads them first. */
+export const EVENT_LEVEL_FIELDS =
+    'event,program,programStage,orgUnit,enrollment,occurredAt,scheduledAt,status,attributeOptionCombo,geometry,assignedUser'
+
+export const eventFieldsSchema = z.object({
+    event: z.string(),
+    program: z.string(),
+    programStage: z.string(),
+    orgUnit: z.string(),
+    enrollment: z.string().optional(),
+    occurredAt: z.string().optional(),
+    scheduledAt: z.string().optional(),
+    status: statusSchema,
+    attributeOptionCombo: z.string().optional(),
+    geometry: z.object({ type: z.string(), coordinates: z.json() }).optional(),
+    assignedUser: z.object({ uid: z.string() }).optional(),
+})
 
 /** The program with its stages, one page of its events, and the user's authorities, as one query returns them. */
 export const eventFormSchema = z.object({

@@ -605,6 +605,7 @@
             "description": "Grid data entry for DHIS2 events and data sets: typed cells, Excel-style keys, program rules and unsent changes kept on the device.",
             "dependencies": [
                 "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
                 "@dhis2/multi-calendar-dates@2.1.2",
                 "zod@^4.4.3",
                 "zustand@^5.0.15"
@@ -635,6 +636,11 @@
                     "target": "@components/data-entry/outbox/sync.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/sources/eventSave.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/eventSave.ts"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/sources/eventSchemas.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/sources/eventSchemas.ts"
@@ -653,6 +659,11 @@
                     "path": "packages/registry/blocks/data-entry/sources/types.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/sources/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/uid.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/uid.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/store/store.ts",

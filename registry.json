@@ -643,6 +643,11 @@
                     "target": "@components/program-rules/hooks/queryKeys.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/program-rules/hooks/useEventsRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useEventsRules.ts"
+                },
+                {
                     "path": "packages/registry/blocks/program-rules/hooks/useProgramRuleContext.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/hooks/useProgramRuleContext.ts"

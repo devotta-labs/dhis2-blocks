@@ -3,6 +3,7 @@ import type {
     EventRuleInput,
     EventsRuleInput,
     EventsRuleRow,
+    EventsRules,
     InvalidRule,
     ProgramRuleActionMetadata,
     ProgramRuleMetadata,
@@ -36,6 +37,8 @@ import type {
     UseProgramRuleEvaluatorResult,
     UseProgramRuleContextOptions,
     UseProgramRuleContextResult,
+    UseEventsRulesOptions,
+    UseEventsRulesResult,
     UseProgramRulesOptions,
     UseProgramRulesResult,
 } from '../index'
@@ -52,6 +55,7 @@ import {
     scanExpression,
     loadRuleEngine,
     programRulesQueryKeys,
+    useEventsRules,
     useProgramRuleContext,
     useProgramRuleEvaluator,
     useProgramRules,
@@ -62,6 +66,7 @@ export type SupportedProgramRulesTypes = [
     EventRuleInput,
     EventsRuleInput,
     EventsRuleRow,
+    EventsRules,
     InvalidRule,
     ProgramRuleActionMetadata,
     ProgramRuleMetadata,
@@ -92,6 +97,8 @@ export type SupportedProgramRulesTypes = [
     UseProgramRuleEvaluatorResult,
     UseProgramRuleContextOptions,
     UseProgramRuleContextResult,
+    UseEventsRulesOptions,
+    UseEventsRulesResult,
     UseProgramRulesOptions,
     UseProgramRulesResult,
     ExpressionReference,
@@ -230,4 +237,30 @@ export const eventlessRow: EventsRuleRow = { enrollmentId: 'PE6abx7Zhn0' }
 export const missingTracker: EventsRuleInput = {
     rows: [],
     persons: new Map(),
+}
+
+// A grid hands the hook its stages and people; the rules evaluate its rows and name the rows an edit affects.
+export const useGridRules = (): Map<string, RuleEffects> => {
+    const { rules } = useEventsRules({
+        programId: 'WSGAb5XwJ3Y',
+        programStageIds: ['WZbXY0S00lP'],
+        tracker: true,
+        enrollmentIds: ['PE6abx7Zhn0'],
+    })
+    const rows: EventsRuleRow[] = [{ event, enrollmentId: 'PE6abx7Zhn0' }]
+    const affected = rules?.rowsAffectedBy(rows, event.id, 'w4ky6EkVahL') ?? [
+        event.id,
+    ]
+    return rules?.evaluate(rows, affected) ?? new Map()
+}
+export const gridRules = (
+    result: UseEventsRulesResult
+): EventsRules | undefined => result.rules
+export const gridInvalidRules = (rules: EventsRules): InvalidRule[] =>
+    rules.invalidRules
+// @ts-expect-error The hook needs to know whether the program is a tracker program.
+export const missingTrackerOption: UseEventsRulesOptions = {
+    programId: 'WSGAb5XwJ3Y',
+    programStageIds: [],
+    enrollmentIds: [],
 }

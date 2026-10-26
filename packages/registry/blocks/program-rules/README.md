@@ -166,6 +166,80 @@ How the hook behaves:
 - `status` is `loading` until effects exist (also while `enabled` is `false`, when nothing is fetched), and
   `error` when a request, the context build or evaluation fails.
 
+## Many events
+
+`useEventsRules` is for a grid with one row per event: any number of rows across stages, evaluated on the grid's live
+values. It loads the engine, the rule metadata, a rule context for each stage and, for a tracker program whose rules
+read the enrollment or other events, every person in one batched request.
+
+```ts
+useEventsRules({
+    programId: string,
+    programStageIds: ReadonlyArray<string>, // the stages the rows belong to
+    tracker: boolean, // WITH_REGISTRATION programs; false evaluates every row alone
+    enrollmentIds: ReadonlyArray<string>, // the people the rows belong to
+    enabled?: boolean,
+}): {
+    status: 'loading' | 'ready' | 'error'
+    rules?: {
+        evaluate(rows: ReadonlyArray<EventsRuleRow>, rowIds: ReadonlyArray<string>): Map<string, RuleEffects>
+        rowsAffectedBy(rows: ReadonlyArray<EventsRuleRow>, rowId: string, fieldId: string): string[]
+        invalidRules: InvalidRule[]
+    }
+    error?: Error
+}
+interface EventsRuleRow {
+    event: RuleEventInput // the grid's live values, empty values left out
+    enrollmentId?: string // tracker programs only
+}
+```
+
+```tsx
+const { rules } = useEventsRules({
+    programId,
+    programStageIds: [...new Set(rows.map((row) => row.event.programStageId))],
+    tracker: true,
+    enrollmentIds: rows.flatMap((row) => row.enrollmentId ?? []),
+})
+
+// Every row, once the rules have loaded: rowId → effects.
+const effects = rules?.evaluate(
+    rows,
+    rows.map((row) => row.event.id)
+)
+
+// After a value changed, only the rows it can change.
+const stale = rules?.rowsAffectedBy(rows, rowId, fieldId) ?? [rowId]
+const fresh = rules?.evaluate(rows, stale)
+```
+
+- `evaluate` returns an entry for each requested row that is in `rows` and whose stage was passed in `programStageIds`.
+  A tracker row sees its person's other events: the server's, each replaced by its live row, plus the live rows the
+  server lacks (unsaved ones). The row itself is never one of its own `otherEvents`.
+- `rowsAffectedBy` returns the row itself and, when the field is one that other events' rules read (a newest-event or
+  previous-event variable), the person's other rows. It covers data value edits. When a row's event date changes, or a
+  row is added or removed, re-evaluate every row of that person: which event is newest or previous changes.
+- Event-program rows are always evaluated alone: their events share one hidden enrollment, so `rowsAffectedBy` returns
+  only the row, and no person is fetched.
+- Every person is read in one `tracker/enrollments` request (in batches of 100 for more people), with their events
+  only when the rules read other events. Duplicate ids are fetched once. A person the server omits is evaluated
+  without enrollment data.
+- After saving, invalidate the batched person cache, which is keyed apart from `programRulesQueryKeys.enrollment`:
+  `queryClient.invalidateQueries({ queryKey: [...programRulesQueryKeys.all, 'enrollments'] })`.
+- `rules` changes only when the stages, `tracker`, the rule metadata, the org unit groups or the people's data
+  actually change; an equal refetch keeps the same object, so it can be an effect dependency.
+- When `enrollmentIds` gain a person, `rules` stays defined and `status` stays `ready` while that person loads (the
+  people already loaded stay in use), and `evaluate` leaves out the rows of a person that has not loaded yet. `rules`
+  changes when the person is added and again when they have loaded. A failed fetch reports its `error` as usual.
+- `invalidRules` lists each rule the engine cannot parse once, however many stages carry it.
+- It shares its queries, retry policy and status rules with `useProgramRules`: `status` is `loading` until the rules
+  exist, a failed background refetch keeps the last good data, and `error` is reported only when a needed request has
+  nothing to show.
+
+The lib has the same pieces without React: `crossEventFields(metadata)`, `rowsAffectedBy(rows, crossFields, rowId,
+fieldId)` and `evaluateEventsRules(engine, contexts, { rows, persons, tracker }, rowIds)`, with `contexts` keyed by
+stage id and built from `metadataForStage(metadata, stageId)`.
+
 ## Behaviour worth knowing
 
 - **Invalid rules.** Each condition and action expression is checked once with the engine's own parser when the

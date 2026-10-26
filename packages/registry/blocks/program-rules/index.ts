@@ -1,5 +1,11 @@
 export { loadRuleEngine } from './hooks/loadRuleEngine'
 export { programRulesQueryKeys } from './hooks/queryKeys'
+export { useEventsRules } from './hooks/useEventsRules'
+export type {
+    EventsRules,
+    UseEventsRulesOptions,
+    UseEventsRulesResult,
+} from './hooks/useEventsRules'
 export { useProgramRuleContext } from './hooks/useProgramRuleContext'
 export type {
     UseProgramRuleContextOptions,

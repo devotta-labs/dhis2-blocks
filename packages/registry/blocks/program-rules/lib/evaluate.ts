@@ -17,7 +17,8 @@ const MESSAGE_KINDS = new Map<string, RuleMessage['kind']>([
     ['WARNINGONCOMPLETE', 'warningOnComplete'],
 ])
 
-const emptyEffects = (): RuleEffects => ({
+/** Effects with nothing in them: what a row gets when no rule acts on it. */
+export const emptyEffects = (): RuleEffects => ({
     hiddenFields: new Map(),
     hiddenSections: new Map(),
     mandatoryFields: new Map(),

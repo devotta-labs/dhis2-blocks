@@ -9,10 +9,15 @@ interface RawRules {
         id: string
         name: string
         condition: string
+        programStage?: { id: string }
         programRuleActions: ReadonlyArray<{
             id: string
             programRuleActionType: string
             dataElement?: { id: string }
+            optionGroup?: {
+                id: string
+                options: ReadonlyArray<{ code: string }>
+            }
         }>
     }>
 }

@@ -4,6 +4,7 @@ import type {
     EventsRuleInput,
     EventsRuleRow,
     EventsRules,
+    EventsRulesEvaluation,
     InvalidRule,
     ProgramRuleActionMetadata,
     ProgramRuleMetadata,
@@ -46,6 +47,7 @@ import {
     assignedVariable,
     buildRuleContext,
     crossEventFields,
+    emptyEffects,
     evaluateEventRules,
     evaluateEventsRules,
     explainField,
@@ -67,6 +69,7 @@ export type SupportedProgramRulesTypes = [
     EventsRuleInput,
     EventsRuleRow,
     EventsRules,
+    EventsRulesEvaluation,
     InvalidRule,
     ProgramRuleActionMetadata,
     ProgramRuleMetadata,
@@ -206,7 +209,7 @@ export const evaluateGrid = async (
     metadata: ProgramRulesMetadata,
     input: EventsRuleInput,
     changed: { rowId: string; fieldId: string }
-): Promise<Map<string, RuleEffects>> => {
+): Promise<EventsRulesEvaluation> => {
     const engine = await loadRuleEngine()
     const contexts = new Map(
         metadata.programStages.map(({ id }): [string, RuleContext] => [
@@ -251,13 +254,26 @@ export const useGridRules = (): Map<string, RuleEffects> => {
     const affected = rules?.rowsAffectedBy(rows, event.id, 'w4ky6EkVahL') ?? [
         event.id,
     ]
-    return rules?.evaluate(rows, affected) ?? new Map()
+    return rules?.evaluate(rows, affected).effects ?? new Map()
 }
+// A row the engine failed on is in `failures`, never in `effects`.
+export const gridFailures = (evaluation: EventsRulesEvaluation): Error[] => [
+    ...evaluation.failures.values(),
+]
+declare const gridEvaluation: EventsRulesEvaluation
+// @ts-expect-error An evaluation holds the effects and the failures, not the effects alone.
+export const gridEffectsOnly: Map<string, RuleEffects> = gridEvaluation
 export const gridRules = (
     result: UseEventsRulesResult
 ): EventsRules | undefined => result.rules
 export const gridInvalidRules = (rules: EventsRules): InvalidRule[] =>
     rules.invalidRules
+// The option codes of the groups that rows' option group effects name, across every stage.
+export const gridOptionGroups = (
+    rules: EventsRules
+): Map<string, Set<string>> => rules.optionGroupOptions
+// A row the rules do not act on.
+export const noEffects: RuleEffects = emptyEffects()
 // @ts-expect-error The hook needs to know whether the program is a tracker program.
 export const missingTrackerOption: UseEventsRulesOptions = {
     programId: 'WSGAb5XwJ3Y',

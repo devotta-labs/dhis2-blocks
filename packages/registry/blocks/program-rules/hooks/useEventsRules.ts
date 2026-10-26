@@ -4,14 +4,15 @@ import { useMemo } from 'react'
 import {
     buildRuleContext,
     crossEventFields,
+    emptyEffects,
     evaluateEventsRules,
     metadataForStage,
     rowsAffectedBy,
     type EventsRuleRow,
+    type EventsRulesEvaluation,
     type InvalidRule,
     type ProgramRulesMetadata,
     type RuleContext,
-    type RuleEffects,
     type RuleEngineModule,
     type RuleEnrollmentData,
     type RuleOrgUnitGroupMetadata,
@@ -37,19 +38,22 @@ export interface UseEventsRulesOptions {
 
 export interface EventsRules {
     /**
-     * Runs the rules of the rows named by `rowIds` against `rows`, the grid's live values. A row of a tracker program
-     * sees its person's other events: the server's, each replaced by its live row, plus the live rows the server lacks.
-     * A row that is not in `rows`, or whose stage was not asked for, gets no entry, nor does a row of a person added
-     * to `enrollmentIds` who has not loaded yet.
+     * Runs the rules of the rows named by `rowIds` against `rows`, the grid's live values, each row on its own: a row
+     * the engine fails on is in `failures`, the others in `effects`. A row of a tracker program sees its person's other
+     * events: the server's, each replaced by its live row, plus the live rows the server lacks. A row that is not in
+     * `rows`, whose stage was not asked for, or whose person was added to `enrollmentIds` and has not loaded yet, is in
+     * neither map: it was not evaluated.
      */
     evaluate(
         rows: ReadonlyArray<EventsRuleRow>,
         rowIds: ReadonlyArray<string>
-    ): Map<string, RuleEffects>
+    ): EventsRulesEvaluation
     /**
      * The rows to run again after `fieldId` changed in `rowId`: the row itself, and for a field other events read, the
      * person's other rows. Covers data value edits only. After an event date changes, or a row is added or removed,
-     * run every row of that person: which event is newest or previous changes. An event program's row is always alone.
+     * run every row of that person: which event is newest or previous changes. A deleted event stays in the cached
+     * people until `[...programRulesQueryKeys.all, 'enrollments']` is invalidated. An event program's row is always
+     * alone.
      */
     rowsAffectedBy(
         rows: ReadonlyArray<EventsRuleRow>,
@@ -58,13 +62,15 @@ export interface EventsRules {
     ): string[]
     /** Rules the engine cannot parse, each listed once however many stages carry it. */
     invalidRules: InvalidRule[]
+    /** optionGroupId → option codes, to resolve option group effects */
+    optionGroupOptions: Map<string, Set<string>>
 }
 
 export interface UseEventsRulesResult {
     status: ProgramRulesStatus
     /**
      * Present once the engine, the metadata and the people the rules read have loaded, and from then on while a new
-     * person loads. Stable while its inputs are.
+     * person loads; for a program without rules, once the metadata has. Stable while its inputs are.
      */
     rules?: EventsRules
     error?: Error
@@ -72,6 +78,24 @@ export interface UseEventsRulesResult {
 
 const HOUR = 60 * 60_000
 const NO_PERSONS = new Map<string, RuleEnrollmentData>()
+
+/** A program without rules: every row is evaluated, to nothing, and stands alone. */
+const NO_RULES: EventsRules = {
+    evaluate: (rows, rowIds) => {
+        const ids = new Set(rows.map((row) => row.event.id))
+        return {
+            effects: new Map(
+                rowIds
+                    .filter((rowId) => ids.has(rowId))
+                    .map((rowId) => [rowId, emptyEffects()])
+            ),
+            failures: new Map(),
+        }
+    },
+    rowsAffectedBy: (_rows, rowId) => [rowId],
+    invalidRules: [],
+    optionGroupOptions: new Map(),
+}
 
 type StageContexts = Result<Map<string, RuleContext>, Error>
 
@@ -102,16 +126,19 @@ const buildContexts = (
               catch: asError,
           })
 
-/** Whether the row's person is among the loaded ones; a row without a person has nothing to wait for. */
-const hasLoadedPerson = (
+/** The requested rows whose person has loaded; a row without a person has nothing to wait for. */
+const withLoadedPerson = (
     rows: ReadonlyArray<EventsRuleRow>,
     persons: ReadonlyMap<string, RuleEnrollmentData>,
-    rowId: string
-): boolean => {
-    const enrollmentId = rows.find(
-        (row) => row.event.id === rowId
-    )?.enrollmentId
-    return enrollmentId === undefined || persons.has(enrollmentId)
+    rowIds: ReadonlyArray<string>
+): string[] => {
+    const personOf = new Map(
+        rows.map((row) => [row.event.id, row.enrollmentId])
+    )
+    return rowIds.filter((rowId) => {
+        const enrollmentId = personOf.get(rowId)
+        return enrollmentId === undefined || persons.has(enrollmentId)
+    })
 }
 
 /** Program-wide rules sit in every stage's context, so the same rule would be listed once per stage. */
@@ -128,10 +155,17 @@ const distinctInvalidRules = (
     ).values(),
 ]
 
+/** Group ids are global, so each stage's groups merge into one map. */
+const allOptionGroups = (
+    contexts: Iterable<RuleContext>
+): Map<string, Set<string>> =>
+    new Map([...contexts].flatMap((context) => [...context.optionGroupOptions]))
+
 /**
  * Program rules for a grid of events: any number of rows across stages, evaluated on the grid's live values. Loads the
- * engine, the rule metadata, a rule context for each stage and, for a tracker program whose rules read the enrollment
- * or other events, every person in one batched request. Shares the metadata query and the engine with the other hooks.
+ * rule metadata and, for a program with rules, the engine, a rule context for each stage and, for a tracker program
+ * whose rules read the enrollment or other events, every person in one batched request. Shares the metadata query and
+ * the engine with the other hooks.
  */
 export const useEventsRules = ({
     programId,
@@ -142,7 +176,6 @@ export const useEventsRules = ({
 }: UseEventsRulesOptions): UseEventsRulesResult => {
     const client = useProgramRulesClient()
 
-    const ruleEngine = useRuleEngine(enabled)
     const metadataQuery = useQuery({
         queryKey: programRulesQueryKeys.metadata(programId),
         queryFn: ({ signal }) =>
@@ -151,8 +184,11 @@ export const useEventsRules = ({
         staleTime: HOUR,
         retry: shouldRetryProgramRulesRequest,
     })
-    const engine = ruleEngine.engine
     const metadata = metadataQuery.data
+    const hasRules = metadata !== undefined && metadata.rules.length > 0
+    const ruleEngine = useRuleEngine(enabled && hasRules)
+    // Another hook may have loaded the engine already; a program without rules still needs no context.
+    const engine = hasRules ? ruleEngine.engine : undefined
 
     // Read through its content, so a new array of the same stages keeps the contexts.
     const stageKey = [...new Set(programStageIds)].sort().join(',')
@@ -223,6 +259,9 @@ export const useEventsRules = ({
     )
 
     const rules = useMemo((): EventsRules | undefined => {
+        if (metadata !== undefined && metadata.rules.length === 0) {
+            return NO_RULES
+        }
         if (
             engine === undefined ||
             metadata === undefined ||
@@ -239,9 +278,7 @@ export const useEventsRules = ({
                     contexts,
                     { rows, persons, tracker },
                     loadingMorePersons
-                        ? rowIds.filter((rowId) =>
-                              hasLoadedPerson(rows, persons, rowId)
-                          )
+                        ? withLoadedPerson(rows, persons, rowIds)
                         : rowIds
                 ),
             // An event program's events share one hidden enrollment and must never couple.
@@ -250,6 +287,7 @@ export const useEventsRules = ({
                     ? rowsAffectedBy(rows, crossFields, rowId, fieldId)
                     : [rowId],
             invalidRules: distinctInvalidRules(contexts.values()),
+            optionGroupOptions: allOptionGroups(contexts.values()),
         }
     }, [engine, metadata, contexts, persons, tracker, loadingMorePersons])
 

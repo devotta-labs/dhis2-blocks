@@ -80,12 +80,24 @@ const hiddenFollowUps = (
         contexts,
         input(rows, overrides),
         [LATER_VISIT]
-    ).get(LATER_VISIT)
+    ).effects.get(LATER_VISIT)
     // An empty list must mean "none hidden", never "not evaluated".
     if (effects === undefined) {
         throw new Error('the later visit was not evaluated')
     }
     return RMNCH.chronicFollowUps.filter((id) => effects.hiddenFields.has(id))
+}
+
+/** The engine, failing on the later visit the way it fails on input it cannot read. */
+class FailsOnLaterVisit extends engine.RuleEngineJs {
+    override evaluateEvent(
+        ...args: Parameters<engine.RuleEngineJs['evaluateEvent']>
+    ) {
+        if (args[0].event === LATER_VISIT) {
+            throw new Error('the engine failed on the later visit')
+        }
+        return super.evaluateEvent(...args)
+    }
 }
 
 const crossFields = crossEventFields(rmnchMetadata())
@@ -196,22 +208,45 @@ describe('evaluateEventsRules', () => {
         const otherStages = new Map(
             [...contexts].filter(([stageId]) => stageId !== LATER_STAGE)
         )
-        const effects = evaluateEventsRules(
+        const { effects, failures } = evaluateEventsRules(
             engine,
             otherStages,
             input([fixtureRow(FIRST_VISIT), fixtureRow(LATER_VISIT)]),
             [FIRST_VISIT, LATER_VISIT]
         )
         expect([...effects.keys()]).toEqual([FIRST_VISIT])
+        expect(failures.size).toBe(0)
+    })
+
+    it('keeps the other rows’ effects when the engine fails on one row', () => {
+        const failing = new Map(
+            [...contexts].map(([stageId, context]): [string, RuleContext] => [
+                stageId,
+                { ...context, engine: new FailsOnLaterVisit() },
+            ])
+        )
+        const { effects, failures } = evaluateEventsRules(
+            engine,
+            failing,
+            input([fixtureRow(FIRST_VISIT), fixtureRow(LATER_VISIT)]),
+            [FIRST_VISIT, LATER_VISIT]
+        )
+        expect([...effects.keys()]).toEqual([FIRST_VISIT])
+        expect([...failures.keys()]).toEqual([LATER_VISIT])
+        expect(failures.get(LATER_VISIT)).toBeInstanceOf(Error)
+        expect(failures.get(LATER_VISIT)?.message).toBe(
+            'the engine failed on the later visit'
+        )
     })
 
     it('returns no effects for a row id that is not in the rows', () => {
-        const effects = evaluateEventsRules(
+        const { effects, failures } = evaluateEventsRules(
             engine,
             contexts,
             input([fixtureRow(FIRST_VISIT)]),
             ['missing']
         )
         expect(effects.size).toBe(0)
+        expect(failures.size).toBe(0)
     })
 })

@@ -1,12 +1,13 @@
 export { buildRuleContext } from './buildContext'
 export { assignedVariable } from './dependencyGraph'
-export { evaluateEventRules, explainField } from './evaluate'
+export { emptyEffects, evaluateEventRules, explainField } from './evaluate'
 export {
     crossEventFields,
     evaluateEventsRules,
     rowsAffectedBy,
     type EventsRuleInput,
     type EventsRuleRow,
+    type EventsRulesEvaluation,
 } from './manyEvents'
 export {
     expressionReferences,

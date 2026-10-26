@@ -19,6 +19,7 @@ import {
 
 const FIRST_VISIT = RMNCH.eventId
 const LATER_VISIT = 'H693QbyyYhi'
+const LATER_STAGE = 'edqlbukwRfQ'
 
 const person = toRuleEnrollmentData(
     RuleEnrollmentResponseSchema.parse(rmnchEnrollmentResponse)
@@ -84,10 +85,13 @@ describe('useEventsRules', () => {
             row(LATER_VISIT),
         ]
         expect(
-            hiddenFollowUps(rules.evaluate(saysNo, [LATER_VISIT]), LATER_VISIT)
+            hiddenFollowUps(
+                rules.evaluate(saysNo, [LATER_VISIT]).effects,
+                LATER_VISIT
+            )
         ).toEqual(RMNCH.chronicFollowUps)
         // Each row's rules come from its own stage's context.
-        const both = rules.evaluate(saysNo, [FIRST_VISIT, LATER_VISIT])
+        const both = rules.evaluate(saysNo, [FIRST_VISIT, LATER_VISIT]).effects
         expect([...both.keys()]).toEqual([FIRST_VISIT, LATER_VISIT])
         // A 'true' on the first visit can only reach the later visit through the person's other rows.
         const saysYes = [
@@ -95,7 +99,10 @@ describe('useEventsRules', () => {
             row(LATER_VISIT),
         ]
         expect(
-            hiddenFollowUps(rules.evaluate(saysYes, [LATER_VISIT]), LATER_VISIT)
+            hiddenFollowUps(
+                rules.evaluate(saysYes, [LATER_VISIT]).effects,
+                LATER_VISIT
+            )
         ).toEqual([])
     })
 
@@ -188,7 +195,10 @@ describe('useEventsRules', () => {
             row(LATER_VISIT),
         ]
         expect(
-            hiddenFollowUps(rules.evaluate(rows, [LATER_VISIT]), LATER_VISIT)
+            hiddenFollowUps(
+                rules.evaluate(rows, [LATER_VISIT]).effects,
+                LATER_VISIT
+            )
         ).toEqual(RMNCH.chronicFollowUps)
         expect(rules.rowsAffectedBy(rows, FIRST_VISIT, RMNCH.chronic)).toEqual([
             FIRST_VISIT,
@@ -286,9 +296,47 @@ describe('useEventsRules', () => {
         const effects = result.current.rules?.evaluate(
             [row(FIRST_VISIT)],
             [FIRST_VISIT]
-        )
+        ).effects
         expect(effects?.get(FIRST_VISIT)?.hiddenFields.has(RMNCH.lmp)).toBe(
             true
+        )
+    })
+
+    it('maps the option groups of every stage to their option codes', async () => {
+        const hideGroup = (stageId: string, groupId: string, code: string) => ({
+            id: `hide${groupId}`,
+            name: `Hide ${groupId}`,
+            condition: 'true',
+            programStage: { id: stageId },
+            programRuleActions: [
+                {
+                    id: `action${groupId}`,
+                    programRuleActionType: 'HIDEOPTIONGROUP',
+                    dataElement: { id: RMNCH.chronic },
+                    optionGroup: { id: groupId, options: [{ code }] },
+                },
+            ],
+        })
+        const { wrapper } = serve({
+            ...rmnchResponses,
+            rules: {
+                programRules: [
+                    hideGroup(RMNCH.stageId, 'firstGroup', 'A'),
+                    hideGroup(LATER_STAGE, 'laterGroup', 'B'),
+                ],
+            },
+        })
+        const { result } = await renderHook(
+            () => useEventsRules(options({ enrollmentIds: [] })),
+            { wrapper }
+        )
+        await settle(() => result.current.status)
+        // Each stage's context holds only its own rule's group.
+        expect(result.current.rules?.optionGroupOptions).toEqual(
+            new Map([
+                ['firstGroup', new Set(['A'])],
+                ['laterGroup', new Set(['B'])],
+            ])
         )
     })
 
@@ -392,13 +440,13 @@ describe('useEventsRules', () => {
         // The first person's rows run on the data already loaded; the new person's wait for their own.
         const waiting = result.current.rules
         expect(result.current.status).toBe('ready')
-        expect([...(waiting?.evaluate(rows, ids).keys() ?? [])]).toEqual([
-            FIRST_VISIT,
-        ])
+        expect([
+            ...(waiting?.evaluate(rows, ids).effects.keys() ?? []),
+        ]).toEqual([FIRST_VISIT])
         release()
         await expect.poll(() => result.current.rules !== waiting).toBe(true)
         expect([
-            ...(result.current.rules?.evaluate(rows, ids).keys() ?? []),
+            ...(result.current.rules?.evaluate(rows, ids).effects.keys() ?? []),
         ]).toEqual(ids)
         expect(seen.every((rules) => rules !== undefined)).toBe(true)
         expect(result.current.status).toBe('ready')

@@ -1,3 +1,4 @@
+import { Result } from 'better-result'
 import { evaluateEventRules } from './evaluate'
 import type {
     EventRuleInput,
@@ -25,6 +26,14 @@ export interface EventsRuleInput {
     persons: ReadonlyMap<string, RuleEnrollmentData>
     /** Whether a row sees its person's other events. `false` for an event program. */
     tracker: boolean
+}
+
+/** What `evaluateEventsRules` returns: each evaluated row is in exactly one of the maps. */
+export interface EventsRulesEvaluation {
+    /** rowId → the row's effects */
+    effects: Map<string, RuleEffects>
+    /** rowId → why the engine could not run the row's rules */
+    failures: Map<string, Error>
 }
 
 /** The variable source types that read a value from another event. */
@@ -102,20 +111,22 @@ const rowsByPerson = (
 }
 
 /**
- * Runs the rules of the requested rows against the grid's live values. `contexts` is keyed by program stage id; a row
- * of a stage without a context, or an id that is not in `input.rows`, gets no entry. Pure.
+ * Runs the rules of the requested rows against the grid's live values, each row on its own: a row the engine fails on
+ * is in `failures`, and the other rows still get their effects. `contexts` is keyed by program stage id; a row of a
+ * stage without a context, or an id that is not in `input.rows`, is in neither map. Pure.
  */
 export const evaluateEventsRules = (
     engine: RuleEngineModule,
     contexts: ReadonlyMap<string, RuleContext>,
     input: EventsRuleInput,
     rowIds: ReadonlyArray<string>
-): Map<string, RuleEffects> => {
+): EventsRulesEvaluation => {
     const rows = new Map(input.rows.map((row) => [row.event.id, row]))
     const rowsOfPerson = input.tracker
         ? rowsByPerson(input.rows)
         : new Map<string, EventsRuleRow[]>()
-    const results = new Map<string, RuleEffects>()
+    const effects = new Map<string, RuleEffects>()
+    const failures = new Map<string, Error>()
     for (const rowId of rowIds) {
         const row = rows.get(rowId)
         const context =
@@ -141,7 +152,16 @@ export const evaluateEventsRules = (
                   otherEvents: otherEventsOf(row, person, siblings),
               }
             : { event: row.event, otherEvents: [] }
-        results.set(rowId, evaluateEventRules(engine, context, ruleInput))
+        const evaluation = Result.try({
+            try: () => evaluateEventRules(engine, context, ruleInput),
+            catch: (cause) =>
+                cause instanceof Error ? cause : new Error(String(cause)),
+        })
+        if (evaluation.isOk()) {
+            effects.set(rowId, evaluation.value)
+        } else {
+            failures.set(rowId, evaluation.error)
+        }
     }
-    return results
+    return { effects, failures }
 }

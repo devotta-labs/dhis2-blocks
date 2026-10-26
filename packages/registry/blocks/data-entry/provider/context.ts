@@ -1,9 +1,10 @@
 import { createContext, useContext, useMemo } from 'react'
 import { useStore } from 'zustand'
+import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import type { CellEffects } from '../logic/effects'
-import type { CellKey, CellState } from '../model/types'
+import type { CellKey, CellState, GridTable } from '../model/types'
 import { EMPTY_CELL } from '../store/store'
 import type { DataEntryState } from '../store/store'
 
@@ -12,13 +13,47 @@ export interface EffectsState {
     cells: Partial<Record<CellKey, CellEffects>>
 }
 
-/** What the cells read from the provider. */
+/** What the one polite live region says. */
+interface Announcement {
+    text: string
+}
+
+/** What the cells and the grid read from the provider. */
 export interface DataEntryContext {
     store: StoreApi<DataEntryState>
     effects: StoreApi<EffectsState>
     settings: ValueSettings
     /** Says an outcome in the grid's one polite live region. */
     announce(text: string): void
+    /** What `announce` last said, for the grid's live region to show. */
+    announcements: StoreApi<Announcement>
+    tables: ReadonlyArray<GridTable>
+    /** Ids of the tables that take new rows: each has an "Add event" button. */
+    newRowTables: ReadonlySet<string>
+    addRow(tableId: string): void
+}
+
+// Long enough for screen readers to notice the region emptied, so the same text said twice is heard twice.
+const CLEARED_FOR_MS = 100
+
+/** `announce` and the text it sets: the region is emptied first, then given the text. */
+export const createAnnouncer = (): Pick<
+    DataEntryContext,
+    'announce' | 'announcements'
+> => {
+    const announcements = createStore<Announcement>()(() => ({ text: '' }))
+    let timer: ReturnType<typeof setTimeout> | undefined
+    return {
+        announcements,
+        announce(text) {
+            clearTimeout(timer)
+            announcements.setState({ text: '' })
+            timer = setTimeout(
+                () => announcements.setState({ text }),
+                CLEARED_FOR_MS
+            )
+        },
+    }
 }
 
 /** What a cell with no entry reads as; one stable object. */

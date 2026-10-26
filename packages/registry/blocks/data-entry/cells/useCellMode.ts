@@ -85,6 +85,8 @@ export const useCellMode = ({
         ready: () => setMode('ready'),
         inputProps: {
             ref,
+            // The grid reads it: Ready-mode paste and Ctrl+Z are the grid's, typing keeps the browser's.
+            'data-mode': mode,
             onFocus(event: FocusEvent<HTMLInputElement>) {
                 setMode('ready')
                 setNotesDismissed(false)

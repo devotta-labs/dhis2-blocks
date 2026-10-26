@@ -1,4 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
+import { cn } from '@/components/dhis2/ui/cn'
+import { POPOVER_CLASS } from './CellStatus'
 
 interface OptionListProps {
     id: string
@@ -16,8 +18,9 @@ interface OptionListProps {
 }
 
 /**
- * The open list of an option cell, below it: the matches, the highlighted one kept in view, and the count when more
- * match than are drawn. Focus stays in the cell, which points at the highlighted match and announces the count.
+ * The open list of an option cell, below it (above when there is no room): the matches, the highlighted one kept in
+ * view, and the count when more match than are drawn. Focus stays in the cell, which points at the highlighted match
+ * and announces the count.
  */
 export const OptionList = ({
     id,
@@ -37,7 +40,10 @@ export const OptionList = ({
         // Focus stays in the cell, which saves the pick, whatever part of the list is pressed.
         <div
             onMouseDown={(event) => event.preventDefault()}
-            className="absolute start-0 top-full z-30 w-max max-w-[min(30rem,90vw)] min-w-full overflow-hidden rounded-dhis2-sm border border-dhis2-grey-200 bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover"
+            className={cn(
+                POPOVER_CLASS,
+                'z-50 w-max max-w-[min(30rem,90vw)] min-w-full overflow-hidden supports-[anchor-name:--a]:min-w-[anchor-size(width)] rounded-dhis2-sm border border-dhis2-grey-200 bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover'
+            )}
         >
             <div
                 ref={list}

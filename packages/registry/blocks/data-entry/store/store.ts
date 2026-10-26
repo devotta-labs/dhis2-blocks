@@ -32,8 +32,11 @@ export interface DataEntryState {
     ): CommitResult[]
     /** Drops a cell's draft and its error: nothing is enqueued and there is nothing to undo. */
     discardDraft(key: CellKey): void
-    /** Reverts the person's last commit (every cell of it), as new changes. */
-    undo(): boolean
+    /**
+     * Reverts the person's last commit (every cell of it), as new changes. Returns the cells it changed, in the order
+     * they were committed; none when there was nothing to undo.
+     */
+    undo(): ReadonlyArray<CellKey>
     /**
      * Records what became of the values sent. A cell that has changed since keeps its newer change's
      * state; `saved` still moves its base to the value that was sent.
@@ -232,16 +235,18 @@ export const createDataEntryStore = ({
             undo() {
                 const last = undoStack.pop()
                 if (last === undefined) {
-                    return false
+                    return []
                 }
-                edit(({ read, queue }) => {
+                return edit(({ read, queue }) => {
+                    const undone: CellKey[] = []
                     for (const { key, previous } of last.slice().reverse()) {
                         if (read(key)?.value !== previous) {
                             queue(key, previous, 'person')
+                            undone.unshift(key)
                         }
                     }
+                    return undone
                 })
-                return true
             },
             markSync(sent, sync, reason) {
                 edit(({ read, write }) => {

@@ -611,6 +611,7 @@
                 "zustand@^5.0.15"
             ],
             "registryDependencies": [
+                "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/dhis2-value-types",
@@ -656,6 +657,16 @@
                     "path": "packages/registry/blocks/data-entry/cells/useCellMode.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/cells/useCellMode.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/grid/DataGrid.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/DataGrid.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/grid/headers.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/headers.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/grid/navigation.ts",

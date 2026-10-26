@@ -92,6 +92,14 @@ const MARKERS = new Map<SyncState, string>([
     ['failed', 'bg-dhis2-red-600'],
 ])
 
+/**
+ * Places a popover under its cell, above the grid's sticky headers. Where the browser has anchor positioning it is
+ * fixed to the focused cell, so a scrolling table does not clip it, and it opens above when there is no room below.
+ * Elsewhere it hangs under the cell inside the table, and scrolls into view with it.
+ */
+export const POPOVER_CLASS =
+    'absolute start-0 top-full supports-[anchor-name:--a]:fixed supports-[anchor-name:--a]:[position-anchor:--data-entry-cell] supports-[anchor-name:--a]:[top:anchor(bottom)] supports-[anchor-name:--a]:[inset-inline-start:anchor(start)] supports-[anchor-name:--a]:[position-try-fallbacks:flip-block]'
+
 const NOTE_TONES = {
     error: 'border-dhis2-red-300',
     warning: 'border-dhis2-yellow-300',
@@ -144,7 +152,8 @@ export const CellStatus = ({
             {notes.length > 0 ? (
                 <span
                     className={cn(
-                        'pointer-events-none absolute start-0 top-full z-20 hidden w-max max-w-72 flex-col gap-0.5 rounded-dhis2-sm bg-dhis2-grey-900 px-2 py-1 text-xs text-white',
+                        POPOVER_CLASS,
+                        'pointer-events-none z-40 hidden w-max max-w-72 flex-col gap-0.5 rounded-dhis2-sm bg-dhis2-grey-900 px-2 py-1 text-xs text-white',
                         !dismissed && 'peer-focus:flex'
                     )}
                 >

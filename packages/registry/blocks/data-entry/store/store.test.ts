@@ -137,9 +137,9 @@ test('discarding a draft is not an undo step', () => {
     commit('r1.c1', '7')
     commit('r1.c1', 'abc')
     store.getState().discardDraft('r1.c1')
-    expect(store.getState().undo()).toBe(true)
+    expect(store.getState().undo()).toEqual(['r1.c1'])
     expect(cell('r1.c1').value).toBe('5')
-    expect(store.getState().undo()).toBe(false)
+    expect(store.getState().undo()).toEqual([])
 })
 
 test('discarding when there is no draft leaves the store alone', () => {
@@ -153,7 +153,7 @@ test('discarding when there is no draft leaves the store alone', () => {
 test('undo restores the previous value as a new change', () => {
     const { store, enqueued, cell, commit } = setup([['r1.c1', '5']])
     commit('r1.c1', '6')
-    expect(store.getState().undo()).toBe(true)
+    expect(store.getState().undo()).toEqual(['r1.c1'])
     expect(cell('r1.c1')).toMatchObject({ value: '5', sync: 'queued' })
     expect(enqueued).toEqual([
         ['r1.c1', '6', '5'],
@@ -176,7 +176,7 @@ test('undo steps back through changes in the grid, newest first', () => {
 
 test('undo has nothing to do when nothing was changed', () => {
     const { store, enqueued } = setup([['r1.c1', '5']])
-    expect(store.getState().undo()).toBe(false)
+    expect(store.getState().undo()).toEqual([])
     expect(enqueued).toEqual([])
 })
 
@@ -184,7 +184,7 @@ test('undo is not itself undone by a second undo', () => {
     const { store, cell, commit } = setup([['r1.c1', '5']])
     commit('r1.c1', '6')
     store.getState().undo()
-    expect(store.getState().undo()).toBe(false)
+    expect(store.getState().undo()).toEqual([])
     expect(cell('r1.c1').value).toBe('5')
 })
 
@@ -196,13 +196,13 @@ test('undo skips changes that were rejected or unchanged', () => {
     store.getState().undo()
     expect(cell('r1.c1')).toMatchObject({ value: '5', sync: 'queued' })
     expect(cell('r1.c1').draft).toBeUndefined()
-    expect(store.getState().undo()).toBe(false)
+    expect(store.getState().undo()).toEqual([])
 })
 
 test('a rule’s change is not on the undo stack', () => {
     const { store, cell, commit } = setup()
     commit('r1.c1', '10', 'rule')
-    expect(store.getState().undo()).toBe(false)
+    expect(store.getState().undo()).toEqual([])
     expect(cell('r1.c1').value).toBe('10')
 })
 
@@ -289,7 +289,7 @@ test('a person committing the same value on a failed cell queues it again', () =
     // No second undo entry: one undo goes back to the loaded value.
     store.getState().undo()
     expect(cell('r1.c1').value).toBe('5')
-    expect(store.getState().undo()).toBe(false)
+    expect(store.getState().undo()).toEqual([])
 })
 
 test('a failed delete is queued again by a blank commit', () => {
@@ -397,7 +397,7 @@ test('one undo reverts a whole commitMany', () => {
     store.subscribe(() => {
         updates += 1
     })
-    expect(store.getState().undo()).toBe(true)
+    expect(store.getState().undo()).toEqual(['r1.c1', 'r2.c1', 'r1.c2'])
     expect(updates).toBe(1)
     expect(cell('r1.c1').value).toBe('0')
     expect(cell('r2.c1').value).toBe('9')
@@ -438,7 +438,7 @@ test('commitMany with nothing to change does not update the store', () => {
 test('a rule’s commitMany is not on the undo stack', () => {
     const { store } = setup()
     store.getState().commitMany(THREE, 'rule')
-    expect(store.getState().undo()).toBe(false)
+    expect(store.getState().undo()).toEqual([])
 })
 
 test('a commitMany with a cell that has no column changes nothing', () => {
@@ -458,7 +458,7 @@ test('undo leaves a cell that already has the earlier value', () => {
     commit('r1.c1', '6')
     commit('r1.c1', '5', 'rule')
     enqueued.length = 0
-    expect(store.getState().undo()).toBe(true)
+    expect(store.getState().undo()).toEqual([])
     expect(enqueued).toEqual([])
 })
 
@@ -468,7 +468,7 @@ test('a batch that changes one cell twice undoes to the value before the batch',
         { key: 'r1.c1', text: '6' },
         { key: 'r1.c1', text: '7' },
     ])
-    expect(store.getState().undo()).toBe(true)
+    expect(store.getState().undo()).toEqual(['r1.c1'])
     expect(cell('r1.c1').value).toBe('5')
     expect(enqueued.at(-1)).toEqual(['r1.c1', '5', '5'])
     expect(enqueued).toHaveLength(3)

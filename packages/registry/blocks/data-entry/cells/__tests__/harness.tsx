@@ -6,8 +6,8 @@ import type { NavKey } from '../../grid/navigation'
 import type { CellEffects } from '../../logic/effects'
 import { cellKey } from '../../model/types'
 import type { CellKey, GridTable } from '../../model/types'
-import { DataEntryReactContext } from '../../provider/context'
-import type { EffectsState } from '../../provider/context'
+import { createAnnouncer, DataEntryReactContext } from '../../provider/context'
+import type { DataEntryContext, EffectsState } from '../../provider/context'
 import { createDataEntryStore } from '../../store/store'
 
 const GREGORIAN = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
@@ -46,13 +46,17 @@ export const rig = (field: Field, { value, effects }: RigOptions = {}) => {
                 : { [CELL]: { required: false, messages: [], ...effects } },
     }))
     const announced: string[] = []
-    const context = {
+    const context: DataEntryContext = {
         store,
         effects: effectsStore,
         settings: GREGORIAN,
         announce: (text: string) => {
             announced.push(text)
         },
+        announcements: createAnnouncer().announcements,
+        tables: [table],
+        newRowTables: new Set(),
+        addRow: () => {},
     }
     return {
         store,

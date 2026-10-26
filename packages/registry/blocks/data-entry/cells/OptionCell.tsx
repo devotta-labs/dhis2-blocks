@@ -22,7 +22,7 @@ const NO_MATCHES = {
     names: new Map<string, string>(),
 }
 
-const formatCount = (count: number) => {
+export const formatCount = (count: number) => {
     try {
         // DHIS2 writes locales as `en_US`; Intl expects `en-US`.
         return new Intl.NumberFormat(i18n.language.replace('_', '-')).format(

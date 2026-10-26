@@ -13,9 +13,9 @@ import { CellStatus, describeCell } from './CellStatus'
 import { READY_CLASS, useCellMode } from './useCellMode'
 
 // Borderless until it has focus, then a box. Invalid looks red only while it does not have focus, so the focus ring
-// always shows.
+// always shows. The focused control anchors its popovers (`POPOVER_CLASS`).
 export const CONTROL_CLASS =
-    'peer block h-9 w-full min-w-0 truncate bg-transparent px-2 text-sm text-dhis2-grey-900 outline-none focus:bg-white focus:shadow-[inset_0_0_0_2px_var(--color-dhis2-blue-600)] aria-invalid:not-focus:bg-dhis2-red-050 aria-invalid:not-focus:shadow-[inset_0_0_0_2px_var(--color-dhis2-red-600)]'
+    'peer block h-9 w-full min-w-0 truncate bg-transparent px-2 text-sm text-dhis2-grey-900 outline-none focus:bg-white focus:[anchor-name:--data-entry-cell] focus:shadow-[inset_0_0_0_2px_var(--color-dhis2-blue-600)] aria-invalid:not-focus:bg-dhis2-red-050 aria-invalid:not-focus:shadow-[inset_0_0_0_2px_var(--color-dhis2-red-600)]'
 export const LOCKED_CLASS = 'bg-dhis2-grey-100 text-dhis2-grey-800'
 export const HIDDEN_CLASS = 'bg-dhis2-grey-200 italic'
 

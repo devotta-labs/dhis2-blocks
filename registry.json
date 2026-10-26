@@ -617,6 +617,16 @@
             ],
             "files": [
                 {
+                    "path": "packages/registry/blocks/data-entry/grid/navigation.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/navigation.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/grid/paste.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/paste.ts"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/logic/effects.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/logic/effects.ts"

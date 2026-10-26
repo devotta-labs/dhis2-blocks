@@ -1,6 +1,8 @@
 import type {
     Attribution,
     EventRuleInput,
+    EventsRuleInput,
+    EventsRuleRow,
     InvalidRule,
     ProgramRuleActionMetadata,
     ProgramRuleMetadata,
@@ -14,6 +16,7 @@ import type {
     RuleDisplayItem,
     RuleEffects,
     RuleEngineModule,
+    RuleEnrollmentData,
     RuleEnrollmentInput,
     RuleEnrollmentStatus,
     RuleEventInput,
@@ -39,9 +42,13 @@ import type {
 import {
     assignedVariable,
     buildRuleContext,
+    crossEventFields,
     evaluateEventRules,
+    evaluateEventsRules,
     explainField,
     expressionReferences,
+    metadataForStage,
+    rowsAffectedBy,
     scanExpression,
     loadRuleEngine,
     programRulesQueryKeys,
@@ -53,6 +60,8 @@ import {
 export type SupportedProgramRulesTypes = [
     Attribution,
     EventRuleInput,
+    EventsRuleInput,
+    EventsRuleRow,
     InvalidRule,
     ProgramRuleActionMetadata,
     ProgramRuleMetadata,
@@ -66,6 +75,7 @@ export type SupportedProgramRulesTypes = [
     RuleDisplayItem,
     RuleEffects,
     RuleEngineModule,
+    RuleEnrollmentData,
     RuleEnrollmentInput,
     RuleEnrollmentStatus,
     RuleEventInput,
@@ -183,3 +193,41 @@ export const idle: UseProgramRulesResult['status'] = 'idle'
 // Hosts invalidate rule data with the exported keys.
 export const ruleQueryKey: readonly string[] = programRulesQueryKeys.all
 export const metadataKey = programRulesQueryKeys.metadata('WSGAb5XwJ3Y')
+
+// A grid evaluates many rows at once, on its live values; a person's other rows re-run when a field they read changes.
+export const evaluateGrid = async (
+    metadata: ProgramRulesMetadata,
+    input: EventsRuleInput,
+    changed: { rowId: string; fieldId: string }
+): Promise<Map<string, RuleEffects>> => {
+    const engine = await loadRuleEngine()
+    const contexts = new Map(
+        metadata.programStages.map(({ id }): [string, RuleContext] => [
+            id,
+            buildRuleContext(engine, metadataForStage(metadata, id)),
+        ])
+    )
+    const rowIds = rowsAffectedBy(
+        input.rows,
+        crossEventFields(metadata),
+        changed.rowId,
+        changed.fieldId
+    )
+    return evaluateEventsRules(engine, contexts, input, rowIds)
+}
+export const loadedPerson: RuleEnrollmentData = {
+    enrollment: {
+        id: 'PE6abx7Zhn0',
+        enrolledAt: '2026-03-01',
+        orgUnitId: 'm7fBMpmVpSM',
+        attributes: {},
+    },
+    events: [event],
+}
+// @ts-expect-error A row needs its event.
+export const eventlessRow: EventsRuleRow = { enrollmentId: 'PE6abx7Zhn0' }
+// @ts-expect-error The input says whether the rows belong to a tracker program.
+export const missingTracker: EventsRuleInput = {
+    rows: [],
+    persons: new Map(),
+}

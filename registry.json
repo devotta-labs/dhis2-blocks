@@ -688,6 +688,11 @@
                     "target": "@components/program-rules/lib/index.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/program-rules/lib/manyEvents.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/manyEvents.ts"
+                },
+                {
                     "path": "packages/registry/blocks/program-rules/lib/scanExpression.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/lib/scanExpression.ts"

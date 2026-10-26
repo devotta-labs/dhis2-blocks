@@ -726,6 +726,11 @@
                     "target": "@components/data-entry/provider/DataEntry.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/provider/afterPaint.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/afterPaint.ts"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/provider/completion.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/provider/completion.ts"

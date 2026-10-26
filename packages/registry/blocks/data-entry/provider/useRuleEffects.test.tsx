@@ -23,6 +23,7 @@ import {
     cleanUp,
     freshServer,
     holdIdle,
+    holdPaint,
     later,
     memorySource,
     mount,
@@ -193,9 +194,16 @@ test('opening the grid changes nothing; a person’s first change in a row saves
         'Hidden by rule: Hide all fields for chronic conitions unless the w'
     )
 
+    const paint = holdPaint()
     control(LMP).focus()
     await userEvent.keyboard('2026-01-01{Enter}')
+    // Until the browser paints, the change waits on the page with the rules it asks for.
+    await later(200)
+    expect(memory.sent).toEqual([])
+    paint.run()
     await expect.poll(() => memory.sent).toHaveLength(1)
+    await later(200)
+    expect(memory.sent).toHaveLength(1)
     // One save for the event: the date, its gestational age and the hidden follow-ups cleared.
     expect(sentKeys(memory)).toEqual(
         expect.arrayContaining([
@@ -256,6 +264,30 @@ test('completing a row saves its rule changes first, and keeps its rule effects'
     await expect
         .poll(() => context().effects.getState().cells[FOLLOW_UPS[0]]?.hiddenBy)
         .toBe(hidden)
+})
+
+test('completing a row first runs the rules of an edit still waiting for a paint', async () => {
+    const memory = memorySource(await rmnchForm(eventsOf(0)))
+    let sentFirst: string[] = []
+    const source: DataEntrySource = {
+        ...memory.source,
+        setStatus: (...args) => {
+            sentFirst = sentKeys(memory)
+            return memory.source.setStatus(...args)
+        },
+    }
+    const { context, view } = await mount(source, { data: RULES })
+    await rulesRan()
+    // No frame is painted, so the edit's rules have not run when the row completes.
+    holdPaint()
+
+    context().store.getState().commit(LMP, '2026-01-01')
+    expect(await view().complete(FIRST_VISIT)).toMatchObject([
+        { result: 'saved' },
+    ])
+    expect(sentFirst).toEqual(
+        expect.arrayContaining([LMP, cellKey(FIRST_VISIT, GESTATIONAL_AGE)])
+    )
 })
 
 test('shows the rules’ notes under the row’s label', async () => {
@@ -362,6 +394,31 @@ test('writes performance marks', async () => {
     expect(
         performance.getEntriesByName('data-entry:rules-visible', 'measure')
     ).toHaveLength(1)
+})
+
+test('a key that saves a value returns before the rules run; they run once the browser has painted', async () => {
+    const { context } = await mountRmnch(eventsOf(0))
+    const edits = () =>
+        performance.getEntriesByName('data-entry:rules-edit', 'measure')
+    const age = () =>
+        context().effects.getState().cells[
+            cellKey(FIRST_VISIT, GESTATIONAL_AGE)
+        ]?.readOnly
+    control(LMP).focus()
+    await userEvent.keyboard('2026-01-01')
+
+    // The key's own handling: Enter saves the value.
+    control(LMP).dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+    )
+    expect(context().store.getState().cells[LMP]?.value).toBe('2026-01-01')
+    // What the key queued has run; the rules have not.
+    await Promise.resolve()
+    expect(edits()).toHaveLength(0)
+    expect(age()).toBeUndefined()
+
+    await expect.poll(edits).toHaveLength(1)
+    expect(age()).toBe(ASSIGNED)
 })
 
 test('a rule waits for the person to leave the cell they are typing in', async () => {

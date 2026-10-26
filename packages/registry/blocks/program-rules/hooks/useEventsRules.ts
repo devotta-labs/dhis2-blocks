@@ -237,6 +237,7 @@ export const useEventsRules = ({
         queryFn: async ({ signal }) => [
             ...(await fetchRuleEnrollments(
                 client,
+                programId,
                 personIds,
                 withEvents,
                 signal

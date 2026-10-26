@@ -18,6 +18,7 @@ import { cellKey } from '../model/types'
 import type { CellKey, GridRow, GridTable } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
+import { afterPaint } from './afterPaint'
 import { rowIdOf } from './formRows'
 import type { OpenForm } from './openForm'
 
@@ -356,19 +357,28 @@ export const connectRules = ({
         return rowIds.slice(first.done)
     }
 
-    // Changes in one task are run together, once the task is done.
     const pending = new Set<string>()
+    let cancelPending: (() => void) | undefined
     const flush = () => {
+        cancelPending?.()
+        cancelPending = undefined
         const rowIds = [...pending]
         pending.clear()
-        if (!stopped) {
+        if (!stopped && rowIds.length > 0) {
             measured('data-entry:rules-edit', () => run(rowIds))
         }
     }
+    // A person's changes until the next paint run together, after it: the key or click that made them returns first.
     const rerun = (rowIds: ReadonlyArray<string>) => {
-        const waiting = pending.size > 0
         rowIds.forEach((rowId) => pending.add(rowId))
-        if (!waiting && pending.size > 0) {
+        if (cancelPending === undefined && pending.size > 0) {
+            cancelPending = afterPaint(flush)
+        }
+    }
+    // A row added or saved re-runs before the next paint, so its rule effects never go missing for a frame.
+    const rerunNow = (rowIds: ReadonlyArray<string>) => {
+        rowIds.forEach((rowId) => pending.add(rowId))
+        if (pending.size > 0) {
             queueMicrotask(flush)
         }
     }
@@ -451,7 +461,7 @@ export const connectRules = ({
                 )
             const is = rowsOf(now)
             const was = rowsOf(before)
-            rerun([
+            rerunNow([
                 ...[...is.values()].flatMap((row) =>
                     was.get(row.id) === row
                         ? []
@@ -476,6 +486,8 @@ export const connectRules = ({
     document.addEventListener('focusout', onFocusOut)
     // Completing touches the row: what its rules say is saved before it is checked and sent.
     const prepare = (rowId: string) => {
+        // An edit whose rules wait for a paint runs now: completion checks what they say.
+        flush()
         if (!stopped && !(touched.has(rowId) && seen.has(rowId))) {
             touched.add(rowId)
             measured('data-entry:rules-edit', () => run([rowId]))
@@ -487,6 +499,7 @@ export const connectRules = ({
     return () => {
         stopped = true
         cancel()
+        cancelPending?.()
         unsubscribes.forEach((unsubscribe) => unsubscribe())
         document.removeEventListener('focusout', onFocusOut)
         beforeComplete.delete(prepare)

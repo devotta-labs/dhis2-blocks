@@ -140,12 +140,15 @@ completed while its rules are still loading, or if they could not be loaded.
 
 The rules of the rows in view are evaluated first, and the rest when the
 browser is idle. An edit evaluates its row again, and every row of the same
-person when other events read the field or the event date changed.
+person when other events read the field or the event date changed, once the
+browser has shown the edit, so typing never waits for the rules. Completing a
+row runs them first.
 
 ## Saving
 
-- Every change goes to an IndexedDB outbox on this device before it is sent.
-  The outbox opens only for the same user on the same server, and sending
+- Every change goes to an IndexedDB outbox on this device before it is sent,
+  once the browser has shown it and together with the values its rules
+  assign, so both are sent in one save. The outbox opens only for the same user on the same server, and sending
   pauses when someone else is signed in. Nothing in it is encrypted.
 - Changes are sent oldest first, in one request for the form: a single tracker
   import with all its events, on each sync pass. Two changes to one cell send

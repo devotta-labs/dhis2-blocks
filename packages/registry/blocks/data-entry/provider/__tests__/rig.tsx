@@ -22,6 +22,7 @@ import type {
 import { openOutbox, outboxName } from '../../outbox/outbox'
 import type { Outbox, OutboxRecord } from '../../outbox/outbox'
 import type { DataEntrySource, LoadedForm } from '../../sources/types'
+import { paintClock } from '../afterPaint'
 import { useDataEntryContext } from '../context'
 import type { DataEntryContext } from '../context'
 import { DataEntry } from '../DataEntry'
@@ -365,6 +366,27 @@ export const holdIdle = () => {
         run() {
             while (waiting.length > 0) {
                 next()
+            }
+        },
+    }
+}
+
+/** Holds the paint that deferred work waits for: `run` lets it happen, and runs what waited. */
+export const holdPaint = () => {
+    const waiting: Array<() => void> = []
+    vi.spyOn(paintClock, 'wait').mockImplementation((next) => {
+        waiting.push(next)
+        return () => {
+            const at = waiting.indexOf(next)
+            if (at >= 0) {
+                waiting.splice(at, 1)
+            }
+        }
+    })
+    return {
+        run() {
+            while (waiting.length > 0) {
+                waiting.shift()?.()
             }
         },
     }

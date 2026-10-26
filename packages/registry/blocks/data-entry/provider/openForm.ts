@@ -16,6 +16,7 @@ import type { DataEngine, DataEntrySource, LoadedForm } from '../sources/types'
 import { generateUid } from '../sources/uid'
 import { createDataEntryStore } from '../store/store'
 import type { DataEntryState } from '../store/store'
+import { afterPaint } from './afterPaint'
 import { completionChecks, refusalOf } from './completion'
 import type { EffectsState } from './context'
 import { formEffects, pendingRow, rowIdOf, withRows } from './formRows'
@@ -138,7 +139,10 @@ const connect = (
     // Each cell's changes get strictly later times, so an outcome for one never removes the next from the outbox.
     const lastAt = new Map(unsent.map(({ key, at }) => [key, at]))
     let batch: PendingChange[] = []
+    let cancelFlush: (() => void) | undefined
     const flush = () => {
+        cancelFlush?.()
+        cancelFlush = undefined
         const changes = batch
         batch = []
         if (changes.length === 0) {
@@ -171,9 +175,10 @@ const connect = (
                 at,
                 row: pendingRow(rows.get(rowIdOf(key))),
             })
-            // Every cell one commit changes goes to the outbox in one write.
+            // Every cell changed until the next paint goes to the outbox in one write, after the rules that change
+            // asks for: they were asked first, so what they commit joins the person's change in one save.
             if (batch.length === 1) {
-                queueMicrotask(flush)
+                cancelFlush = afterPaint(flush)
             }
         },
         // Typed and pasted alike: an option a rule hid is not an option.
@@ -458,6 +463,8 @@ const connect = (
                 : [refusal(cellKey(rowId, 'status'), paused)]
         },
         downloadUnsent() {
+            // A change made since the last paint is stored first, so the file has it.
+            flush()
             void outbox.list(source.key).then((saved) => {
                 const kept = new Map<string, string | null>(
                     saved.map(({ key, value }) => [key, value])
@@ -484,7 +491,7 @@ const connect = (
             })
         },
         close() {
-            // A change queued in this task still reaches the outbox before it closes.
+            // A change made since the last paint still reaches the outbox before it closes.
             flush()
             closed = true
             clearTimeout(settling)

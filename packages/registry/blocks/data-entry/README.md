@@ -158,12 +158,14 @@ the cell being typed in; it does once the person leaves the cell. A form whose r
 a row; if they cannot be loaded, the summary says so and nothing completes.
 
 On load the rows in view are evaluated first, for about 100 ms, and the rest about 16 ms at a time when the browser is
-idle. An edit re-runs its row, and every row of that person when other events read the field or the event date changed.
+idle. An edit re-runs its row, and every row of that person when other events read the field or the event date changed,
+once the browser has shown the edit, so typing never waits for rules; completing a row runs them first.
 The `performance` measures `data-entry:rules` (the first slice) and `data-entry:rules-edit` (each edit) time them.
 
 ## Saving
 
-- Every change goes to an IndexedDB outbox on this device, `dhis2-data-entry:<server>:<user id>`, before it is sent.
+- Every change goes to an IndexedDB outbox on this device, `dhis2-data-entry:<server>:<user id>`, before it is sent,
+  once the browser has shown it and together with the values its rules assign, so both are sent in one save.
   It opens only for the same user on the same server. Before every send, and before completing or reopening, the
   server is asked who is signed in; when it is not that user (another tab may have signed in as someone else, and
   tabs share the session), sending pauses until that user signs in again. Nothing is encrypted.

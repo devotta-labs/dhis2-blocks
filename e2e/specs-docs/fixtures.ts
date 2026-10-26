@@ -107,6 +107,18 @@ const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
     }
 
     if (
+        diagnostic.kind === 'console' &&
+        /rule-engine[^/]*\.m?js$/.test(path ?? '') &&
+        /^Rule .+ raised an error: Failed to coerce value 'null'/.test(
+            diagnostic.message
+        )
+    ) {
+        // The DHIS2 rule engine logs, and skips, a rule that reads a value the
+        // person lacks, such as an attribute of a person DHIS2 left out.
+        return true
+    }
+
+    if (
         diagnostic.kind === 'requestfailed' &&
         diagnostic.message === 'net::ERR_BLOCKED_BY_ORB' &&
         diagnostic.method === 'GET' &&

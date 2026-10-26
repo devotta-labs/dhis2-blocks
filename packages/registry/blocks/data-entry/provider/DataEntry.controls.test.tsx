@@ -88,6 +88,8 @@ test('a replacement control saves through useCell as the built-in controls do', 
 
 test('commit checks the value as the built-in controls do', async () => {
     const memory = memorySource(visitForm())
+    // Nothing is sent, so the outbox keeps what was queued for the test to read.
+    memory.hold()
     const { Typist, commitTo } = typist()
     const { server, context } = await mount(memory.source, {
         cells: { fields: { c1: Typist, c2: Typist } },
@@ -130,6 +132,8 @@ test('commit writes nothing to a cell that is locked', async () => {
             readOnlyRows: [['r2', 'Completed events cannot be edited']],
         })
     )
+    // Nothing is sent, so the outbox keeps what was queued for the test to read.
+    memory.hold()
     const { Typist, commitTo } = typist()
     const { server, context } = await mount(memory.source, {
         cells: { fields: { c1: Typist, c2: Typist } },

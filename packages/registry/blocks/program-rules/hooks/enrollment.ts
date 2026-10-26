@@ -111,11 +111,12 @@ export const fetchRuleEnrollment = async (
 const ENROLLMENT_BATCH_SIZE = 100
 
 /**
- * Many enrollments by id, in parallel requests of up to 100. Enrollments the server omits (deleted or no access)
- * are absent from the result.
+ * Many enrollments of one program by id, in parallel requests of up to 100. Enrollments the server omits (deleted or
+ * no access) are absent from the result.
  */
 export const fetchRuleEnrollments = async (
     client: ProgramRulesClient,
+    programId: string,
     enrollmentIds: ReadonlyArray<string>,
     withEvents: boolean,
     signal?: AbortSignal
@@ -136,6 +137,8 @@ export const fetchRuleEnrollments = async (
                     enrollments: {
                         resource: 'tracker/enrollments',
                         params: {
+                            // DHIS2 2.43 refuses a list of enrollments without its program.
+                            program: programId,
                             enrollments: ids.join(','),
                             pageSize: ids.length,
                             fields,

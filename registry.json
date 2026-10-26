@@ -731,6 +731,11 @@
                     "target": "@components/data-entry/provider/completion.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/provider/connectRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/connectRules.ts"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/provider/context.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/provider/context.ts"
@@ -764,6 +769,11 @@
                     "path": "packages/registry/blocks/data-entry/provider/useLeaveWarning.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/provider/useLeaveWarning.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/useRuleEffects.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/useRuleEffects.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/sources/eventSave.ts",

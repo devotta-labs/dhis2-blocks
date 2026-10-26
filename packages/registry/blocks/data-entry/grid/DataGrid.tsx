@@ -10,6 +10,7 @@ import {
 } from 'react'
 import type { ClipboardEvent, KeyboardEvent } from 'react'
 import { flushSync } from 'react-dom'
+import { useStore } from 'zustand'
 import type { StoreApi } from 'zustand/vanilla'
 import { cellKind } from '@/components/dhis2-value-types'
 import { Button } from '@/components/dhis2/ui/button'
@@ -17,6 +18,7 @@ import { cn } from '@/components/dhis2/ui/cn'
 import { Cell } from '../cells/Cell'
 import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
+import { typingIn } from '../cells/useCellMode'
 import { cellKey } from '../model/types'
 import type { CellKey, GridRow, GridTable } from '../model/types'
 import { useDataEntryContext } from '../provider/context'
@@ -74,10 +76,6 @@ const positionsOf = (tables: ReadonlyArray<GridTable>) => {
     return positions
 }
 
-/** A text cell being typed in keeps the browser's own paste and undo; any other cell is in Ready. */
-const typingIn = (target: HTMLElement) =>
-    target.dataset.mode === 'enter' || target.dataset.mode === 'edit'
-
 // The row header column's width; sticky group labels and scroll padding keep clear of it.
 const ROW_HEADER_CLASS = 'w-48 min-w-48 max-w-48'
 const BORDER_CLASS = 'border-b border-e border-dhis2-grey-300'
@@ -86,7 +84,14 @@ const HEADER_CLASS = cn(
     'bg-dhis2-grey-100 px-2 py-1.5 text-start align-bottom text-[13px] font-medium text-dhis2-grey-800'
 )
 
+const NO_NOTES: ReadonlyArray<string> = []
+
 const RowHeader = ({ tableId, row }: { tableId: string; row: GridRow }) => {
+    const { effects } = useDataEntryContext()
+    const notes = useStore(
+        effects,
+        (state) => state.rowNotes.get(row.id) ?? NO_NOTES
+    )
     const marker =
         row.status === 'COMPLETED'
             ? i18n.t('Completed')
@@ -115,6 +120,15 @@ const RowHeader = ({ tableId, row }: { tableId: string; row: GridRow }) => {
                     </span>
                 </>
             )}
+            {notes.map((note, i) => (
+                <span
+                    key={i}
+                    dir="auto"
+                    className="block text-xs text-dhis2-grey-700"
+                >
+                    {note}
+                </span>
+            ))}
         </th>
     )
 }

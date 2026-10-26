@@ -211,6 +211,24 @@ test('a rule that locks the cell closes its list and keeps focus on the same con
     expect(enqueued).toEqual([])
 })
 
+test('text typed into a cell a rule then hides is saved as the person’s, for the rule to clear', async () => {
+    const { input, effects, enqueued } = await mount({ value: 'A01' })
+    inputOf(input).focus()
+    await userEvent.keyboard('Diagnosis A02')
+    effects.setState({
+        cells: {
+            [CELL]: {
+                required: false,
+                messages: [],
+                hiddenBy: 'Hidden by rule: Not pregnant',
+            },
+        },
+    })
+    await expect.element(input).toHaveValue('Hidden')
+    inputOf(input).blur()
+    expect(enqueued).toEqual([[CELL, 'A02', 'A01']])
+})
+
 test('Alt+Down and F4 list every option from the keyboard; Escape closes the list', async () => {
     const { input, stored } = await mount({
         value: 'A01',

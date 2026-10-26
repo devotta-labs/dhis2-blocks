@@ -6,7 +6,7 @@ import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
 import type { SummaryItem } from '../logic/summary'
 import { cellKey } from '../model/types'
-import { useDataEntryContext } from '../provider/context'
+import { FORM_MESSAGES, useDataEntryContext } from '../provider/context'
 import { useDataEntry } from '../provider/hooks'
 
 // Labels and messages are shown as DHIS2 and the rules give them, not HTML-escaped.
@@ -34,15 +34,17 @@ const Item = ({
     const rowId = dot < 0 ? key : key.slice(0, dot)
     const row = rows.get(rowId) ?? rowId
     const className = cn('border-s-2 ps-2', TONES[kind])
-    // A message without a field is the row's: there is no cell to go to.
+    // A message without a field is the row's, or the whole form's: there is no cell to go to.
     if (dot < 0) {
         return (
             <li className={className}>
-                {i18n.t('{{row}}: {{message}}', {
-                    row,
-                    message: text,
-                    interpolation: AS_IS,
-                })}
+                {key === FORM_MESSAGES
+                    ? text
+                    : i18n.t('{{row}}: {{message}}', {
+                          row,
+                          message: text,
+                          interpolation: AS_IS,
+                      })}
             </li>
         )
     }

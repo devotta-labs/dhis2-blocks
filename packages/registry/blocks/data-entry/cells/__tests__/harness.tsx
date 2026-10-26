@@ -45,6 +45,7 @@ export const rig = (field: Field, { value, effects }: RigOptions = {}) => {
                 ? {}
                 : { [CELL]: { required: false, messages: [], ...effects } },
         rowMessages: new Map(),
+        rowNotes: new Map(),
     }))
     const announced: string[] = []
     const context: DataEntryContext = {

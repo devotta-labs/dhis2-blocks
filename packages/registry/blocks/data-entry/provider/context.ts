@@ -12,9 +12,14 @@ import type { DataEntryState } from '../store/store'
 /** What logic says about each cell; only cells it has something to say about have an entry. */
 export interface EffectsState {
     cells: Partial<Record<CellKey, CellEffects>>
-    /** Row id → the messages without a field. */
+    /** Row id → the messages without a field; `FORM_MESSAGES` → those about the whole form. */
     rowMessages: ReadonlyMap<string, ReadonlyArray<CellMessage>>
+    /** Row id → what rules display for the row (texts and key-value pairs), shown under its label. */
+    rowNotes: ReadonlyMap<string, ReadonlyArray<string>>
 }
+
+/** The `rowMessages` key of messages about the whole form; no row has an empty id. */
+export const FORM_MESSAGES = ''
 
 /** What the one polite live region says. */
 interface Announcement {

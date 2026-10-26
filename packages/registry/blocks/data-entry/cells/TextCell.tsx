@@ -41,8 +41,11 @@ export const TextCell = memo(function TextCell({
             return undefined
         }
         setDraft(null)
-        // A rule can lock the cell while its text is being typed: the lock wins.
-        return locked ? undefined : store.getState().commit(cellKey, draft)
+        // A rule can lock the cell while its text is being typed: the lock wins. Text in a cell a rule hid is the
+        // person's, saved, then cleared by the rule, which says so: it is never dropped unsaid.
+        return locked && !(hidden && draft !== '')
+            ? undefined
+            : store.getState().commit(cellKey, draft)
     }
     const revert = () => {
         setDraft(null)

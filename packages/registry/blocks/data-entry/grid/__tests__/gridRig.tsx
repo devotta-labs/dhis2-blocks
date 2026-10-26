@@ -110,6 +110,7 @@ export const mount = async (
     const effects = createStore<EffectsState>()(() => ({
         cells,
         rowMessages: new Map(),
+        rowNotes: new Map(),
     }))
     const counted: StoreApi<EffectsState> = {
         ...effects,

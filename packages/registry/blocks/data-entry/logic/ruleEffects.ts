@@ -1,5 +1,14 @@
 import i18n from '@dhis2/d2-i18n'
-import type { Attribution, RuleEffects } from '@/components/program-rules'
+import type {
+    Attribution,
+    EventsRuleRow,
+    RuleEffects,
+} from '@/components/program-rules'
+import { cellKey } from '../model/types'
+import type { GridTable } from '../model/types'
+import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
+import type { LoadedForm } from '../sources/types'
+import type { DataEntryState } from '../store/store'
 import type { CellEffects, CellMessage } from './effects'
 
 /** What a row's stage holds, for reading its rule effects. */
@@ -16,6 +25,39 @@ interface RowFields {
     optionGroups: ReadonlyMap<string, ReadonlySet<string>>
     /** The stage's sections: section id → its field ids. */
     sections: ReadonlyMap<string, ReadonlyArray<string>>
+}
+
+const NONE: ReadonlySet<string> = new Set()
+
+/** What a stage's rows hold in the table: its columns but the event date and those closed to the stage. */
+export const stageFields = (
+    form: Pick<LoadedForm, 'closedByStage' | 'required' | 'sections'>,
+    table: GridTable,
+    stageId: string,
+    optionGroups: RowFields['optionGroups']
+): RowFields => {
+    const closed = form.closedByStage.get(stageId) ?? NONE
+    const columns = table.columns.filter(
+        ({ id }) => id !== EVENT_DATE_COLUMN && !closed.has(id)
+    )
+    return {
+        stageFields: new Set(columns.map(({ id }) => id)),
+        required: form.required.get(stageId) ?? NONE,
+        options: new Map(
+            columns.flatMap(({ id, field: { options } }) =>
+                options === undefined
+                    ? []
+                    : [[id, new Set(options.map(({ code }) => code))]]
+            )
+        ),
+        multiText: new Set(
+            columns
+                .filter(({ field }) => field.valueType === 'MULTI_TEXT')
+                .map(({ id }) => id)
+        ),
+        optionGroups,
+        sections: form.sections.get(stageId) ?? new Map(),
+    }
 }
 
 // Rule names are shown as DHIS2 gives them, not HTML-escaped.
@@ -132,3 +174,40 @@ export const rowRuleOutcome = (effects: RuleEffects, row: RowFields) => {
 
     return { cells, assignments, rowMessages: messagesOf('form'), notes }
 }
+
+/** Every row as the rules read it: the grid's live values, empty ones left out. */
+export const ruleRowsOf = (
+    tables: ReadonlyArray<GridTable>,
+    cells: DataEntryState['cells']
+): EventsRuleRow[] =>
+    tables.flatMap(({ rows, columns }) =>
+        rows.flatMap(
+            ({ id, programStageId, orgUnitId, status, enrollmentId }) => {
+                if (programStageId === undefined || orgUnitId === undefined) {
+                    return []
+                }
+                const { [EVENT_DATE_COLUMN]: occurredAt, ...dataValues } =
+                    Object.fromEntries(
+                        columns.flatMap(
+                            ({ id: column }): Array<[string, string]> => {
+                                const value = cells[cellKey(id, column)]?.value
+                                return value ? [[column, value]] : []
+                            }
+                        )
+                    )
+                return [
+                    {
+                        event: {
+                            id,
+                            programStageId,
+                            orgUnitId,
+                            status: status ?? 'ACTIVE',
+                            occurredAt,
+                            dataValues,
+                        },
+                        enrollmentId,
+                    },
+                ]
+            }
+        )
+    )

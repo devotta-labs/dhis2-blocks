@@ -98,8 +98,9 @@ export const OptionCell = memo(function OptionCell({
     const save = (text: string | null) => {
         setListing(false)
         setDraft(null)
-        // A rule can lock the cell while its text is being typed: the lock wins.
-        return text === null || locked
+        // A rule can lock the cell while its text is being typed: the lock wins. Text in a cell a rule hid is the
+        // person's, saved, then cleared by the rule, which says so: it is never dropped unsaid.
+        return text === null || (locked && !(hidden && text !== ''))
             ? undefined
             : store.getState().commit(cellKey, text)
     }

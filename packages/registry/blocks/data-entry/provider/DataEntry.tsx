@@ -21,6 +21,7 @@ import type { DataEntryView } from './hooks'
 import { emptyForm, openForm } from './openForm'
 import type { OpenForm } from './openForm'
 import { useLeaveWarning } from './useLeaveWarning'
+import { useRuleEffects } from './useRuleEffects'
 
 const ACCOUNT_QUERY = {
     me: { resource: 'me', params: { fields: 'id' } },
@@ -177,6 +178,13 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
     )
 
     const tables = useStore(active.tables, (state) => state.tables)
+    useRuleEffects({
+        open: opened,
+        form,
+        tables,
+        settings,
+        announce: announcer.announce,
+    })
     const context = useMemo(
         (): DataEntryContext => ({
             store: active.store,

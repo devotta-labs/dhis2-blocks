@@ -34,6 +34,13 @@ export interface OpenForm extends Actions {
     effects: StoreApi<EffectsState>
     /** The form's tables, with the rows added since it loaded and each row's status as last saved. */
     tables: StoreApi<{ tables: ReadonlyArray<GridTable> }>
+    /** Why a whole row is read-only, as statuses saved since loading left it. */
+    readOnlyRows: ReadonlyMap<string, string>
+    /**
+     * Called with a row's id as it starts completing, before its checks: rules save what they say of it here, or say
+     * why it cannot complete yet.
+     */
+    beforeComplete: Set<(rowId: string) => string | undefined>
     newRowTables: ReadonlySet<string>
     /** Stops syncing; changes already handed to the outbox are kept. */
     close(): void
@@ -125,6 +132,7 @@ const connect = (
             tables.getState().tables
         ),
         rowMessages: new Map(),
+        rowNotes: new Map(),
     }))
 
     // Each cell's changes get strictly later times, so an outcome for one never removes the next from the outbox.
@@ -319,6 +327,7 @@ const connect = (
     }
 
     const { signedInHere, notNow } = userCheck(engine, userId)
+    const beforeComplete = new Set<(rowId: string) => string | undefined>()
 
     const refusal = (key: CellKey, reason: string) =>
         refusalOf(source.key, key, reason)
@@ -372,6 +381,8 @@ const connect = (
         store,
         effects,
         tables,
+        readOnlyRows,
+        beforeComplete,
         newRowTables: new Set(
             form.newRows === undefined ? [] : [form.newRows.tableId]
         ),
@@ -411,6 +422,12 @@ const connect = (
             const paused = await notNow()
             if (paused !== undefined) {
                 return [refusal(cellKey(rowId, 'status'), paused)]
+            }
+            for (const prepare of beforeComplete) {
+                const notYet = prepare(rowId)
+                if (notYet !== undefined) {
+                    return [refusal(cellKey(rowId, 'status'), notYet)]
+                }
             }
             const now = refusals(rowId, false)
             if (now.length > 0) {
@@ -490,10 +507,13 @@ export const emptyForm = (): OpenForm => ({
     effects: createStore<EffectsState>()(() => ({
         cells: {},
         rowMessages: new Map(),
+        rowNotes: new Map(),
     })),
     tables: createStore<{ tables: ReadonlyArray<GridTable> }>()(() => ({
         tables: [],
     })),
+    readOnlyRows: new Map(),
+    beforeComplete: new Set(),
     newRowTables: new Set(),
     addRow: () => {},
     complete: async () => [],

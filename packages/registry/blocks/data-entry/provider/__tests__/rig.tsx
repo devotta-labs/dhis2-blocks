@@ -249,6 +249,8 @@ interface MountOptions {
     children?: ReactNode
     /** Who the server says is signed in, asked on every request; an error is thrown as the server's answer. */
     signedIn?: () => string | Error
+    /** More resources the fake server answers, such as a program's rules. */
+    data?: ComponentProps<typeof CustomDataProvider>['data']
 }
 
 /** `DataEntry` over the source, with the grid unless other children are given; resolves once it is ready. */
@@ -259,6 +261,7 @@ export const mount = async (
         cells,
         children = <DataGrid />,
         signedIn = () => USER,
+        data: more = {},
     }: MountOptions = {}
 ) => {
     // The abort signal of every `me` request, in order.
@@ -273,6 +276,7 @@ export const mount = async (
             return { id: who }
         },
         'system/info': { calendar: 'iso8601', dateFormat: 'yyyy-mm-dd' },
+        ...more,
     } satisfies ComponentProps<typeof CustomDataProvider>['data']
     const client = new QueryClient({
         defaultOptions: { queries: { retry: false } },
@@ -346,4 +350,22 @@ export const catchDownloads = () => {
     })
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     return files
+}
+
+/** Holds idle callbacks: `next` runs the first one, `run` runs them and those they ask for. */
+export const holdIdle = () => {
+    const waiting: IdleRequestCallback[] = []
+    vi.spyOn(window, 'requestIdleCallback').mockImplementation((callback) =>
+        waiting.push(callback)
+    )
+    const next = () =>
+        waiting.shift()?.({ didTimeout: false, timeRemaining: () => 50 })
+    return {
+        next,
+        run() {
+            while (waiting.length > 0) {
+                next()
+            }
+        },
+    }
 }

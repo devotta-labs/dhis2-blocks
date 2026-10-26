@@ -116,6 +116,24 @@ Tab moves with the page, Escape puts the value back. A block copied from a sprea
 skipping cells that cannot take it, and Ctrl+Z (Cmd+Z) undoes the last change. A value its type refuses stays in the
 cell with its error and is not saved; nothing typed is lost.
 
+## Program rules
+
+Rules hide fields and options, make fields required, lock the values they assign and put their messages on cells
+(messages without a field go on the row). What they display (texts and key-value pairs) shows under the row's label. A
+row whose rules fail shows the error on the row and keeps none of their effects.
+
+Opening the grid never changes data. In a row no one has changed, an assigned cell shows the value DHIS2 holds, locked
+with "Assigned by rule: …", and a hidden cell shows "Hidden"; the rule's value appears once the row is changed. The
+values rules assign, and the clearing of fields they hide, are saved only with a row a person changes or completes, or
+that has unsent changes; they are saved with the person's change. A cleared cell says "Cleared by rule: …" until it
+holds a value again, and text typed into a cell a rule hides is saved, then cleared the same way. A rule never changes
+the cell being typed in; it does once the person leaves the cell. A form whose rules are still loading cannot complete
+a row; if they cannot be loaded, the summary says so and nothing completes.
+
+On load the rows in view are evaluated first, for about 100 ms, and the rest about 16 ms at a time when the browser is
+idle. An edit re-runs its row, and every row of that person when other events read the field or the event date changed.
+The `performance` measures `data-entry:rules` (the first slice) and `data-entry:rules-edit` (each edit) time them.
+
 ## Saving
 
 - Every change goes to an IndexedDB outbox on this device, `dhis2-data-entry:<server>:<user id>`, before it is sent.

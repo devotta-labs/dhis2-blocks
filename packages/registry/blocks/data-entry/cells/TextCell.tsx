@@ -8,21 +8,16 @@ import {
 import { cn } from '@/components/dhis2/ui/cn'
 import { useCellView, useDataEntryContext } from '../provider/context'
 import { cellDomId } from './cellProps'
-import type { CellComponent, CellProps } from './cellProps'
+import type { CellComponent, ControlProps } from './cellProps'
 import { CellStatus, describeCell } from './CellStatus'
 import { READY_CLASS, useCellMode } from './useCellMode'
 
 // Borderless until it has focus, then a box. Invalid looks red only while it does not have focus, so the focus ring
 // always shows.
-const CONTROL_CLASS =
+export const CONTROL_CLASS =
     'peer block h-9 w-full min-w-0 truncate bg-transparent px-2 text-sm text-dhis2-grey-900 outline-none focus:bg-white focus:shadow-[inset_0_0_0_2px_var(--color-dhis2-blue-600)] aria-invalid:not-focus:bg-dhis2-red-050 aria-invalid:not-focus:shadow-[inset_0_0_0_2px_var(--color-dhis2-red-600)]'
-
-interface TextCellProps extends CellProps {
-    /** Why the cell cannot be edited: it then shows its value, stays focusable and says why. */
-    readOnly?: string
-    /** A rule hides the cell: `readOnly` is the rule, and the cell shows "Hidden" instead of its value. */
-    hidden?: boolean
-}
+export const LOCKED_CLASS = 'bg-dhis2-grey-100 text-dhis2-grey-800'
+export const HIDDEN_CLASS = 'bg-dhis2-grey-200 italic'
 
 /**
  * Text, numbers, dates and times in one native input, saved when the person moves on. A cell that cannot be edited
@@ -35,7 +30,7 @@ export const TextCell = memo(function TextCell({
     move,
     readOnly,
     hidden = false,
-}: TextCellProps) {
+}: ControlProps) {
     const { store, settings } = useDataEntryContext()
     const view = useCellView(cellKey)
     // What has been typed and not yet saved; `null` shows the cell's own text.
@@ -92,8 +87,8 @@ export const TextCell = memo(function TextCell({
                     CONTROL_CLASS,
                     cellKind(field) === 'number' && 'text-end tabular-nums',
                     mode === 'ready' && READY_CLASS,
-                    locked && 'bg-dhis2-grey-100 text-dhis2-grey-800',
-                    hidden && 'bg-dhis2-grey-200 italic'
+                    locked && LOCKED_CLASS,
+                    hidden && HIDDEN_CLASS
                 )}
             />
             <CellStatus view={view} notes={notes} dismissed={notesDismissed} />

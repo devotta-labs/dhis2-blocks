@@ -17,6 +17,8 @@ export interface DataEntryContext {
     store: StoreApi<DataEntryState>
     effects: StoreApi<EffectsState>
     settings: ValueSettings
+    /** Says an outcome in the grid's one polite live region. */
+    announce(text: string): void
 }
 
 /** What a cell with no entry reads as; one stable object. */

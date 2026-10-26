@@ -45,12 +45,22 @@ export const rig = (field: Field, { value, effects }: RigOptions = {}) => {
                 ? {}
                 : { [CELL]: { required: false, messages: [], ...effects } },
     }))
-    const context = { store, effects: effectsStore, settings: GREGORIAN }
+    const announced: string[] = []
+    const context = {
+        store,
+        effects: effectsStore,
+        settings: GREGORIAN,
+        announce: (text: string) => {
+            announced.push(text)
+        },
+    }
     return {
         store,
         effects: effectsStore,
         enqueued,
         moves,
+        /** What the cell said in the grid's live region. */
+        announced,
         move: (key: NavKey) => {
             moves.push(key)
         },

@@ -10,11 +10,11 @@ export type CellMode = 'ready' | 'enter' | 'edit'
 export const READY_CLASS = 'caret-transparent selection:bg-transparent'
 
 // Safari reports the key that ends a composition as keyCode 229 with `isComposing` already false.
-const composing = (event: KeyboardEvent) =>
+export const composing = (event: KeyboardEvent) =>
     event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229
 
 /** The move a plain arrow, Enter or Tab asks for; a key with a modifier belongs to the browser. */
-const navKeyOf = (event: KeyboardEvent): NavKey | undefined => {
+export const navKeyOf = (event: KeyboardEvent): NavKey | undefined => {
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
         return undefined
     }
@@ -81,6 +81,8 @@ export const useCellMode = ({
         notesDismissed,
         /** Typing in Ready starts Enter. */
         typed: () => setMode((now) => (now === 'ready' ? 'enter' : now)),
+        /** Back to Ready, the value selected: a pick from a list was saved without moving. */
+        ready: () => setMode('ready'),
         inputProps: {
             ref,
             onFocus(event: FocusEvent<HTMLInputElement>) {

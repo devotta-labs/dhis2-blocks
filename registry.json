@@ -628,6 +628,21 @@
                     "target": "@components/data-entry/cells/CellStatus.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/cells/ChoiceCells.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/ChoiceCells.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/OptionCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/OptionCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/OptionList.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/OptionList.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/cells/TextCell.tsx",
                     "type": "registry:file",
                     "target": "@components/data-entry/cells/TextCell.tsx"

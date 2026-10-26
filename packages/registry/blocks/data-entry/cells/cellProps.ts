@@ -18,5 +18,13 @@ export interface CellProps {
 
 export type CellComponent = (props: CellProps) => ReactNode
 
+/** What `Cell` hands the control it picks for a field. */
+export interface ControlProps extends CellProps {
+    /** Why the cell cannot be edited: it then shows its value, stays focusable and says why. */
+    readOnly?: string
+    /** A rule hides the cell: `readOnly` is the rule, and the cell shows "Hidden" instead of its value. */
+    hidden?: boolean
+}
+
 /** The id of the cell's focusable control, for the grid and the summary to focus it by. */
 export const cellDomId = (key: CellKey) => `data-entry-cell-${key}`

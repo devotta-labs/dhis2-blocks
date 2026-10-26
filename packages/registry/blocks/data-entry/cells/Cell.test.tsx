@@ -146,6 +146,23 @@ test('pop-up kinds show their value read-only and point to their own form', asyn
         .toHaveAccessibleDescription('Edit this field in its own form')
 })
 
+test('a multi-text option field stays read-only and points to its own form', async () => {
+    const { cell } = await mount(
+        {
+            valueType: 'MULTI_TEXT',
+            options: [
+                { code: 'A', name: 'Alpha' },
+                { code: 'B', name: 'Beta' },
+            ],
+        },
+        { value: 'A,B' }
+    )
+    await expect.element(cell).toHaveAttribute('readonly')
+    await expect
+        .element(cell)
+        .toHaveAccessibleDescription('Edit this field in its own form')
+})
+
 test('a value type nothing can edit is read-only with the same reason', async () => {
     const { cell } = await mount({ valueType: 'REFERENCE' })
     await expect.element(cell).toHaveAttribute('readonly')

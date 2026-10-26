@@ -3,6 +3,8 @@ import { memo } from 'react'
 import { cellKind } from '@/components/dhis2-value-types'
 import { useCellEffects } from '../provider/context'
 import type { CellProps } from './cellProps'
+import { BooleanCell, TrueOnlyCell } from './ChoiceCells'
+import { OptionCell } from './OptionCell'
 import { TextCell } from './TextCell'
 
 // A cell with no control: greyed, skipped by the arrows, its reason read out.
@@ -22,12 +24,16 @@ const OpenCell = (props: CellProps) => {
         (kind === 'popup' || kind === 'readOnly'
             ? i18n.t('Edit this field in its own form')
             : undefined)
+    const Control =
+        kind === 'boolean'
+            ? BooleanCell
+            : kind === 'trueOnly'
+              ? TrueOnlyCell
+              : kind === 'option'
+                ? OptionCell
+                : TextCell
     return (
-        <TextCell
-            {...props}
-            readOnly={reason}
-            hidden={hiddenBy !== undefined}
-        />
+        <Control {...props} readOnly={reason} hidden={hiddenBy !== undefined} />
     )
 }
 

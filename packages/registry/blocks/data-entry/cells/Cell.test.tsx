@@ -2,6 +2,7 @@ import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field } from '@/components/dhis2-value-types'
 import { CELL, HEADER, inputOf, rig } from './__tests__/harness'
+import type { CellComponent } from './cellProps'
 import { Cell } from './Cell'
 
 const mount = async (
@@ -171,6 +172,51 @@ test('a value type nothing can edit is read-only with the same reason', async ()
         .toHaveAccessibleDescription('Edit this field in its own form')
 })
 
+/** A replacement control that shows what the cell hands it. */
+const Probe: CellComponent = ({ id, readOnly, hidden }) => (
+    <p id={id}>{`readOnly: ${readOnly ?? 'none'}, hidden: ${hidden}`}</p>
+)
+
+test('a replacement control is not told a pop-up or unknown type is edited elsewhere', async () => {
+    await mount(
+        { valueType: 'LONG_TEXT' },
+        { overrides: { valueTypes: { LONG_TEXT: Probe } } }
+    )
+    await expect
+        .element(page.getByText('readOnly: none, hidden: false'))
+        .toBeVisible()
+})
+
+test('a replacement for a field of an unknown type is not told so either', async () => {
+    await mount(
+        { valueType: 'REFERENCE' },
+        { overrides: { fields: { c1: Probe } } }
+    )
+    await expect
+        .element(page.getByText('readOnly: none, hidden: false'))
+        .toBeVisible()
+})
+
+test('a replacement control gets the lock a rule puts on the cell', async () => {
+    await mount(
+        { valueType: 'LONG_TEXT' },
+        {
+            overrides: { valueTypes: { LONG_TEXT: Probe } },
+            effects: { readOnly: 'Assigned by rule: Notes' },
+        }
+    )
+    await expect
+        .element(page.getByText('readOnly: Assigned by rule: Notes'))
+        .toBeVisible()
+})
+
+test('a replacement control gets the id the grid finds the cell by', async () => {
+    await mount(INTEGER, { overrides: { valueTypes: { INTEGER: Probe } } })
+    await expect
+        .element(page.getByText('readOnly: none'))
+        .toHaveAttribute('id', 'data-entry-cell-r1.c1')
+})
+
 test('a closed cell has no control and says its reason', async () => {
     await mount(INTEGER, undefined, 'Not used')
     await expect.element(page.getByRole('textbox')).not.toBeInTheDocument()
@@ -239,4 +285,23 @@ test('typing that a rule locks away is not written', async () => {
     await expect.element(cell).toHaveValue('12')
     inputOf(cell).blur()
     expect(enqueued).toEqual([])
+})
+
+test('text typed into a cell a rule then hides and locks is not saved', async () => {
+    const { cell, effects, stored } = await mount(INTEGER, { value: '1' })
+    inputOf(cell).focus()
+    await userEvent.keyboard('5')
+    effects.setState({
+        cells: {
+            [CELL]: {
+                required: false,
+                messages: [],
+                hiddenBy: 'Hidden by rule: Hide when not pregnant',
+                readOnly: 'Completed events in this stage cannot be edited',
+            },
+        },
+    })
+    inputOf(cell).blur()
+    await expect.element(cell).toHaveValue('Hidden')
+    expect(stored()?.value).toBe('1')
 })

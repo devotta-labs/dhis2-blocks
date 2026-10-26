@@ -3,6 +3,7 @@ import { memo } from 'react'
 import { cellKind } from '@/components/dhis2-value-types'
 import type { CellKind } from '@/components/dhis2-value-types'
 import { useCellEffects, useDataEntryContext } from '../provider/context'
+import { cellDomId } from './cellProps'
 import type { CellComponent, CellProps } from './cellProps'
 import { BooleanCell, TrueOnlyCell } from './ChoiceCells'
 import { OptionCell } from './OptionCell'
@@ -34,19 +35,24 @@ const OpenCell = (props: CellProps) => {
     const { hiddenBy, readOnly } = useCellEffects(props.cellKey)
     const { overrides } = useDataEntryContext()
     const kind = cellKind(props.field)
-    const reason =
-        hiddenBy ??
-        readOnly ??
-        (kind === 'popup' || kind === 'readOnly'
-            ? i18n.t('Edit this field in its own form')
-            : undefined)
     const column = props.cellKey.slice(props.cellKey.indexOf('.') + 1)
-    const Control =
+    const replacement =
         overrides?.fields?.[column] ??
-        overrides?.valueTypes?.[props.field.valueType] ??
-        cells[kind]
+        overrides?.valueTypes?.[props.field.valueType]
+    // A value type edited elsewhere is the default controls' reason; a replacement is how a host edits it here.
+    const elsewhere =
+        replacement === undefined && (kind === 'popup' || kind === 'readOnly')
+            ? i18n.t('Edit this field in its own form')
+            : undefined
+    const reason = hiddenBy ?? readOnly ?? elsewhere
+    const Control = replacement ?? cells[kind]
     return (
-        <Control {...props} readOnly={reason} hidden={hiddenBy !== undefined} />
+        <Control
+            {...props}
+            id={cellDomId(props.cellKey)}
+            readOnly={reason}
+            hidden={hiddenBy !== undefined}
+        />
     )
 }
 

@@ -18,6 +18,11 @@ export interface CellProps {
 
 /** What `Cell` hands the control it picks for a field. */
 export interface ControlProps extends CellProps {
+    /**
+     * The id for the control's focusable element. The grid's focus and arrows, paste, undo and the summary's links find
+     * a cell by it, so a replacement control puts it on the one element that takes focus.
+     */
+    id: string
     /** Why the cell cannot be edited: it then shows its value, stays focusable and says why. */
     readOnly?: string
     /** A rule hides the cell: `readOnly` is the rule, and the cell shows "Hidden" instead of its value. */

@@ -12,6 +12,7 @@ export type { SummaryItem } from './logic/summary'
 export type {
     CellKey,
     CellState,
+    CommitResult,
     EventStatus,
     GridColumn,
     GridRow,

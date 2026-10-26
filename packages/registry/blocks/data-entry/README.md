@@ -56,7 +56,7 @@ DataEntry({ source, cells?, children }) // loads the form and keeps it; one per 
 DataGrid({ tableId?, className? }) // the form's tables, or one of them
 DataEntrySummary({ className? }) // every message as a link to its cell, the count not yet in DHIS2, and the download
 Cell({ cellKey, field, labelledBy, move }) // one bound control, for your own layouts
-useCell(cellKey): CellView // one cell's value, draft, error, sync state and effects
+useCell(cellKey): CellView // one cell's value, draft, error, sync state and effects, and commit(text) to save it
 useDataEntry(select): T // anything else, and the actions; select a value, not a new object
 eventSource(options): DataEntrySource // the events of a program, a stage or one person
 cells: Record<CellKind, CellComponent> // the default control per kind of field
@@ -100,14 +100,41 @@ status shows in the row's header and locks or unlocks the row where its stage bl
 ## Replace a control
 
 ```tsx
-const Notes: CellComponent = ({ cellKey, readOnly }) => …
+const Notes: CellComponent = ({ id, cellKey, labelledBy, readOnly, hidden }) => {
+    const { value, draft, error, commit } = useCell(cellKey)
+    return (
+        <textarea
+            key={`${hidden}:${value ?? ''}`} // starts again when the value changes elsewhere (an undo) or a rule hides it
+            id={id}
+            aria-labelledby={labelledBy}
+            aria-invalid={error !== undefined}
+            defaultValue={hidden ? 'Hidden' : (draft ?? value)}
+            readOnly={readOnly !== undefined}
+            onBlur={(event) => {
+                if (readOnly === undefined) {
+                    commit(event.target.value)
+                }
+            }}
+        />
+    )
+}
 
 <DataEntry source={inpatient} cells={{ valueTypes: { LONG_TEXT: Notes }, fields: { qrur9Dvnyt5: Notes } }}>
 ```
 
-A field's control wins over its value type's. The control gets `readOnly` (why it cannot be edited) and `hidden` (a
-rule hides it) besides the cell's props; read and save its value with `useCell` and the cell's key. Keep the object
-stable (a module constant or `useMemo`): a new one renders every cell again.
+A field's control wins over its value type's. The control gets `readOnly` (why it cannot be edited: the lock a rule or the
+row puts on the cell), `hidden` (a rule hides it: show that, not the value) and `id`, besides the cell's props. Put `id`
+on the one element that takes focus: the grid's focus and arrows, paste, undo and the summary's links find a cell by it.
+The default controls give the pop-up types and value types this block does not know a read-only reason of their own
+("Edit this field in its own form"); a replacement is not given it. Keep the object stable (a module constant or
+`useMemo`): a new one renders every cell again.
+
+`useCell(cellKey).commit(text)` saves what a person typed or chose, through the store the default controls use. It
+returns `'queued'` when the value changed (it is on the device, then sent), `'unchanged'` when it did not, and
+`'invalid'` when its type or a rule's hidden options refuse it: the text stays as the cell's `draft` with its `error`,
+and nothing is saved. A cell a rule locks, or whose row is read-only (`effects.readOnly`), is not written to
+(`'unchanged'`); text typed into a cell a rule has hidden, and not locked, is saved, and the rule then clears it. To keep
+a default control's editing, render it from `cells` (`<cells.text {...props} />`).
 
 ## Typing
 

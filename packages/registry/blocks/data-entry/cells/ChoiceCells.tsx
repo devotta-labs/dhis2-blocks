@@ -3,7 +3,6 @@ import { memo, useLayoutEffect, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import { useCellView, useDataEntryContext } from '../provider/context'
-import { cellDomId } from './cellProps'
 import type { CellComponent, ControlProps } from './cellProps'
 import { CellStatus, describeCell } from './CellStatus'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
@@ -23,7 +22,13 @@ const opensList = (event: KeyboardEvent) =>
     (event.altKey && event.key.startsWith('Arrow'))
 
 /** What a Yes/No field and a checkbox share: a value saved at once, their notes, and keys that only move. */
-const useChoice = ({ cellKey, labelledBy, move, readOnly }: ControlProps) => {
+const useChoice = ({
+    id,
+    cellKey,
+    labelledBy,
+    move,
+    readOnly,
+}: ControlProps) => {
     const { store } = useDataEntryContext()
     const view = useCellView(cellKey)
     const { notes, aria } = describeCell(cellKey, view, readOnly)
@@ -43,7 +48,7 @@ const useChoice = ({ cellKey, labelledBy, move, readOnly }: ControlProps) => {
         },
         controlProps: {
             ...aria,
-            id: cellDomId(cellKey),
+            id,
             'aria-labelledby': labelledBy,
             'aria-readonly': locked || undefined,
             onFocus: () => setNotesDismissed(false),

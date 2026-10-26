@@ -9,6 +9,9 @@ import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
 import sidebarBasicSource from './sidebar/SidebarBasic.tsx?raw'
 import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
+import dataEntryEventProgramSource from './data-entry/EventProgramGrid.tsx?raw'
+import dataEntryPersonEventsSource from './data-entry/PersonEventsGrid.tsx?raw'
+import dataEntryTrackerRegisterSource from './data-entry/TrackerRegisterGrid.tsx?raw'
 
 /**
  * Example registry.
@@ -94,6 +97,30 @@ const examples = [
         ),
         source: contextSelectorStatesSource,
         minHeight: 340,
+    },
+    {
+        slug: 'data-entry/event-program',
+        title: 'Inpatient morbidity and mortality at Ngelehun CHC',
+        live: true,
+        Component: lazy(() => import('./data-entry/EventProgramGrid')),
+        source: dataEntryEventProgramSource,
+        minHeight: 680,
+    },
+    {
+        slug: 'data-entry/tracker-register',
+        title: 'RMNCH first visits across Sierra Leone',
+        live: true,
+        Component: lazy(() => import('./data-entry/TrackerRegisterGrid')),
+        source: dataEntryTrackerRegisterSource,
+        minHeight: 640,
+    },
+    {
+        slug: 'data-entry/person-events',
+        title: 'One RMNCH woman',
+        live: true,
+        Component: lazy(() => import('./data-entry/PersonEventsGrid')),
+        source: dataEntryPersonEventsSource,
+        minHeight: 680,
     },
 ] as const satisfies readonly ExampleDefinition[]
 

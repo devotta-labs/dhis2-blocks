@@ -8,7 +8,6 @@ import {
 import type { Option } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
 import { useCellView, useDataEntryContext } from '../provider/context'
-import { cellDomId } from './cellProps'
 import type { CellComponent, ControlProps } from './cellProps'
 import { CellStatus, describeCell } from './CellStatus'
 import { OptionList } from './OptionList'
@@ -40,6 +39,7 @@ export const formatCount = (count: number) => {
  * that is no option is saved like any cell's and refused with its error.
  */
 export const OptionCell = memo(function OptionCell({
+    id,
     cellKey,
     field,
     labelledBy,
@@ -74,7 +74,7 @@ export const OptionCell = memo(function OptionCell({
     }, [open, offered, draft])
     const listed = matches.codes.length > 0
     const highlighted = Math.min(active, matches.codes.length - 1)
-    const listId = `${cellDomId(cellKey)}-options`
+    const listId = `${id}-options`
     // From the code, so a new top match is a new active option that a screen reader reads.
     const optionId = (code: string) => `${listId}-${encodeURIComponent(code)}`
     const count =
@@ -98,11 +98,11 @@ export const OptionCell = memo(function OptionCell({
     const save = (text: string | null) => {
         setListing(false)
         setDraft(null)
-        // A rule can lock the cell while its text is being typed: the lock wins. Text in a cell a rule hid is the
-        // person's, saved, then cleared by the rule, which says so: it is never dropped unsaid.
-        return text === null || (locked && !(hidden && text !== ''))
+        // A rule can lock the cell while its text is being typed: the lock wins. Text in a cell a rule only hid is the
+        // person's, saved, then cleared by the rule, which says so; `commit` reads the cell's lock as it saves.
+        return text === null || (locked && !hidden)
             ? undefined
-            : store.getState().commit(cellKey, text)
+            : view.commit(text)
     }
     const revert = () => {
         setListing(false)
@@ -140,7 +140,7 @@ export const OptionCell = memo(function OptionCell({
             <input
                 {...inputProps}
                 {...aria}
-                id={cellDomId(cellKey)}
+                id={id}
                 aria-labelledby={labelledBy}
                 role="combobox"
                 aria-autocomplete="list"

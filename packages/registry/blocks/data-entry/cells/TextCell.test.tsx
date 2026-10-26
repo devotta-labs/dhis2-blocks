@@ -13,6 +13,7 @@ const mount = async (options?: Parameters<typeof rig>[1], field = INTEGER) => {
     await render(
         setup.ui(
             <TextCell
+                id={cellDomId(CELL)}
                 cellKey={CELL}
                 field={field}
                 labelledBy={HEADER}

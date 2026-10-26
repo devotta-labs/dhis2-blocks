@@ -180,6 +180,8 @@ const checkInstall = (workDirectory: string): void => {
             join(registryOutput, 'sidebar.json'),
             join(registryOutput, 'program-rules.json'),
             join(registryOutput, 'dhis2-value-display.json'),
+            join(registryOutput, 'dhis2-value-types.json'),
+            join(registryOutput, 'data-entry.json'),
             '-y',
             '--cwd',
             appDirectory,

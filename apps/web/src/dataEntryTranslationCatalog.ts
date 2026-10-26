@@ -1,0 +1,77 @@
+import i18n from '@dhis2/d2-i18n'
+
+/**
+ * Literal extraction markers for the data entry grid and the value types it
+ * checks. Runtime rendering uses `i18n.t`; d2-app-scripts currently only
+ * discovers literal calls. This function is intentionally never invoked.
+ *
+ * A key containing ":" passes `nsSeparator: '::'`: else the extractor drops it.
+ */
+export const dataEntryTranslationCatalog = () => [
+    i18n.t('{{field}} is required'),
+    i18n.t('{{row}}, {{field}}: {{message}}', { nsSeparator: '::' }),
+    i18n.t('{{row}}: {{message}}', { nsSeparator: '::' }),
+    i18n.t('Add event'),
+    i18n.t('All changes saved'),
+    i18n.t('Assigned by rule: {{rule}}', { nsSeparator: '::' }),
+    i18n.t('Cells pasted: {{cells}}', { nsSeparator: '::' }),
+    i18n.t('Cleared by rule: {{rule}}', { nsSeparator: '::' }),
+    i18n.t('Completed'),
+    i18n.t('Completed events in this stage cannot be edited'),
+    i18n.t('Download unsent changes'),
+    i18n.t('Edit this field in its own form'),
+    i18n.t('Event date'),
+    i18n.t('Hidden'),
+    i18n.t('Hidden by rule: {{rule}}', { nsSeparator: '::' }),
+    i18n.t('New event'),
+    i18n.t('No'),
+    i18n.t('No matches'),
+    i18n.t('Not in this stage'),
+    i18n.t('Not saved: {{reason}}', { nsSeparator: '::' }),
+    i18n.t('Not yet sent to DHIS2'),
+    i18n.t('Not yet sent to DHIS2: {{changes}}', { nsSeparator: '::' }),
+    i18n.t('Program rules are still loading'),
+    i18n.t('Program rules could not be loaded'),
+    i18n.t('Programs with attribute categories are not supported in this grid'),
+    i18n.t('Saved on this device'),
+    i18n.t('Scheduled'),
+    i18n.t(
+        'Showing {{shown}} of {{total}} matches. Keep typing to narrow them.'
+    ),
+    i18n.t('Sign in to keep saving'),
+    i18n.t('Skip past the grid'),
+    i18n.t('Skipped events cannot be edited'),
+    i18n.t('This device could not store the change'),
+    i18n.t('This event has not been saved yet'),
+    i18n.t('This event is in an expired period'),
+    i18n.t('This event was completed too long ago to edit'),
+    i18n.t('This event was deleted or you no longer have access to it'),
+    i18n.t('This row cannot be reopened'),
+    i18n.t('Values not saved: {{values}}', { nsSeparator: '::' }),
+    i18n.t('Waiting for required fields: {{fields}}', { nsSeparator: '::' }),
+    i18n.t('Yes'),
+    i18n.t('You are offline'),
+    i18n.t('You do not have access to enter data in this stage'),
+    // Value-type problems are English keys, translated where they are shown.
+    i18n.t('Choose one of the options'),
+    i18n.t('Enter a number'),
+    i18n.t('Enter a number between 0 and 1'),
+    i18n.t('Enter a percentage between 0 and 100'),
+    i18n.t('Enter a single letter'),
+    i18n.t('Enter a valid coordinate'),
+    i18n.t('Enter a valid date'),
+    i18n.t('Enter a valid date and time'),
+    i18n.t('Enter a valid email address'),
+    i18n.t('Enter a valid phone number'),
+    i18n.t('Enter a valid time'),
+    i18n.t('Enter a valid URL'),
+    i18n.t('Enter a value in the required format'),
+    i18n.t('Enter a whole number'),
+    i18n.t('Enter a whole number greater than zero'),
+    i18n.t('Enter a whole number less than zero'),
+    i18n.t('Enter a whole number of zero or more'),
+    i18n.t('Only Yes can be selected'),
+    i18n.t('Select a valid organisation unit'),
+    i18n.t('Select Yes or No'),
+    i18n.t('Use a full stop for decimals'),
+]

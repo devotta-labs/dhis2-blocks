@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-16T12:06:08.651Z\n"
-"PO-Revision-Date: 2026-10-16T12:06:08.651Z\n"
+"POT-Creation-Date: 2026-10-26T18:48:29.186Z\n"
+"PO-Revision-Date: 2026-10-26T18:48:29.186Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -139,6 +139,195 @@ msgstr "Could not load more organisation units"
 msgid "Show more"
 msgstr "Show more"
 
+msgid "{{field}} is required"
+msgstr "{{field}} is required"
+
+msgid "{{row}}, {{field}}: {{message}}"
+msgstr "{{row}}, {{field}}: {{message}}"
+
+msgid "{{row}}: {{message}}"
+msgstr "{{row}}: {{message}}"
+
+msgid "Add event"
+msgstr "Add event"
+
+msgid "All changes saved"
+msgstr "All changes saved"
+
+msgid "Assigned by rule: {{rule}}"
+msgstr "Assigned by rule: {{rule}}"
+
+msgid "Cells pasted: {{cells}}"
+msgstr "Cells pasted: {{cells}}"
+
+msgid "Cleared by rule: {{rule}}"
+msgstr "Cleared by rule: {{rule}}"
+
+msgid "Completed"
+msgstr "Completed"
+
+msgid "Completed events in this stage cannot be edited"
+msgstr "Completed events in this stage cannot be edited"
+
+msgid "Download unsent changes"
+msgstr "Download unsent changes"
+
+msgid "Edit this field in its own form"
+msgstr "Edit this field in its own form"
+
+msgid "Event date"
+msgstr "Event date"
+
+msgid "Hidden"
+msgstr "Hidden"
+
+msgid "Hidden by rule: {{rule}}"
+msgstr "Hidden by rule: {{rule}}"
+
+msgid "New event"
+msgstr "New event"
+
+msgid "No"
+msgstr "No"
+
+msgid "No matches"
+msgstr "No matches"
+
+msgid "Not in this stage"
+msgstr "Not in this stage"
+
+msgid "Not saved: {{reason}}"
+msgstr "Not saved: {{reason}}"
+
+msgid "Not yet sent to DHIS2"
+msgstr "Not yet sent to DHIS2"
+
+msgid "Not yet sent to DHIS2: {{changes}}"
+msgstr "Not yet sent to DHIS2: {{changes}}"
+
+msgid "Program rules are still loading"
+msgstr "Program rules are still loading"
+
+msgid "Program rules could not be loaded"
+msgstr "Program rules could not be loaded"
+
+msgid "Programs with attribute categories are not supported in this grid"
+msgstr "Programs with attribute categories are not supported in this grid"
+
+msgid "Saved on this device"
+msgstr "Saved on this device"
+
+msgid "Scheduled"
+msgstr "Scheduled"
+
+msgid "Showing {{shown}} of {{total}} matches. Keep typing to narrow them."
+msgstr "Showing {{shown}} of {{total}} matches. Keep typing to narrow them."
+
+msgid "Sign in to keep saving"
+msgstr "Sign in to keep saving"
+
+msgid "Skip past the grid"
+msgstr "Skip past the grid"
+
+msgid "Skipped events cannot be edited"
+msgstr "Skipped events cannot be edited"
+
+msgid "This device could not store the change"
+msgstr "This device could not store the change"
+
+msgid "This event has not been saved yet"
+msgstr "This event has not been saved yet"
+
+msgid "This event is in an expired period"
+msgstr "This event is in an expired period"
+
+msgid "This event was completed too long ago to edit"
+msgstr "This event was completed too long ago to edit"
+
+msgid "This event was deleted or you no longer have access to it"
+msgstr "This event was deleted or you no longer have access to it"
+
+msgid "This row cannot be reopened"
+msgstr "This row cannot be reopened"
+
+msgid "Values not saved: {{values}}"
+msgstr "Values not saved: {{values}}"
+
+msgid "Waiting for required fields: {{fields}}"
+msgstr "Waiting for required fields: {{fields}}"
+
+msgid "Yes"
+msgstr "Yes"
+
+msgid "You are offline"
+msgstr "You are offline"
+
+msgid "You do not have access to enter data in this stage"
+msgstr "You do not have access to enter data in this stage"
+
+msgid "Choose one of the options"
+msgstr "Choose one of the options"
+
+msgid "Enter a number"
+msgstr "Enter a number"
+
+msgid "Enter a number between 0 and 1"
+msgstr "Enter a number between 0 and 1"
+
+msgid "Enter a percentage between 0 and 100"
+msgstr "Enter a percentage between 0 and 100"
+
+msgid "Enter a single letter"
+msgstr "Enter a single letter"
+
+msgid "Enter a valid coordinate"
+msgstr "Enter a valid coordinate"
+
+msgid "Enter a valid date"
+msgstr "Enter a valid date"
+
+msgid "Enter a valid date and time"
+msgstr "Enter a valid date and time"
+
+msgid "Enter a valid email address"
+msgstr "Enter a valid email address"
+
+msgid "Enter a valid phone number"
+msgstr "Enter a valid phone number"
+
+msgid "Enter a valid time"
+msgstr "Enter a valid time"
+
+msgid "Enter a valid URL"
+msgstr "Enter a valid URL"
+
+msgid "Enter a value in the required format"
+msgstr "Enter a value in the required format"
+
+msgid "Enter a whole number"
+msgstr "Enter a whole number"
+
+msgid "Enter a whole number greater than zero"
+msgstr "Enter a whole number greater than zero"
+
+msgid "Enter a whole number less than zero"
+msgstr "Enter a whole number less than zero"
+
+msgid "Enter a whole number of zero or more"
+msgstr "Enter a whole number of zero or more"
+
+msgid "Only Yes can be selected"
+msgstr "Only Yes can be selected"
+
+msgid "Select a valid organisation unit"
+msgstr "Select a valid organisation unit"
+
+msgid "Select Yes or No"
+msgstr "Select Yes or No"
+
+msgid "Use a full stop for decimals"
+msgstr "Use a full stop for decimals"
+
 msgid "Main navigation"
 msgstr "Main navigation"
 
@@ -270,9 +459,6 @@ msgstr "{{column}} was not moved."
 
 msgid "Columns"
 msgstr "Columns"
-
-msgid "Completed"
-msgstr "Completed"
 
 msgid "Completed enrollments"
 msgstr "Completed enrollments"
@@ -496,9 +682,6 @@ msgstr "No users match"
 msgid "No values match"
 msgstr "No values match"
 
-msgid "No"
-msgstr "No"
-
 msgid "Not empty"
 msgstr "Not empty"
 
@@ -604,9 +787,6 @@ msgstr "Save view"
 
 msgid "Saved views in this program"
 msgstr "Saved views in this program"
-
-msgid "Scheduled"
-msgstr "Scheduled"
 
 msgid "Scheduled date"
 msgstr "Scheduled date"
@@ -782,9 +962,6 @@ msgstr "Working lists require DHIS2 41 or newer."
 
 msgid "Working lists require a tracker program with registration."
 msgstr "Working lists require a tracker program with registration."
-
-msgid "Yes"
-msgstr "Yes"
 
 msgid "{{count}} selected"
 msgstr "{{count}} selected"

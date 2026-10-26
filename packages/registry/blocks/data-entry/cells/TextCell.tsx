@@ -7,7 +7,6 @@ import {
 } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
 import { useCellView, useDataEntryContext } from '../provider/context'
-import { cellDomId } from './cellProps'
 import type { CellComponent, ControlProps } from './cellProps'
 import { CellStatus, describeCell } from './CellStatus'
 import { READY_CLASS, useCellMode } from './useCellMode'
@@ -24,6 +23,7 @@ export const HIDDEN_CLASS = 'bg-dhis2-grey-200 italic'
  * is the same input made read-only, so focus survives a rule locking or hiding it.
  */
 export const TextCell = memo(function TextCell({
+    id,
     cellKey,
     field,
     labelledBy,
@@ -41,11 +41,9 @@ export const TextCell = memo(function TextCell({
             return undefined
         }
         setDraft(null)
-        // A rule can lock the cell while its text is being typed: the lock wins. Text in a cell a rule hid is the
-        // person's, saved, then cleared by the rule, which says so: it is never dropped unsaid.
-        return locked && !(hidden && draft !== '')
-            ? undefined
-            : store.getState().commit(cellKey, draft)
+        // A rule can lock the cell while its text is being typed: the lock wins. Text in a cell a rule only hid is the
+        // person's, saved, then cleared by the rule, which says so; `commit` reads the cell's lock as it saves.
+        return locked && !hidden ? undefined : view.commit(draft)
     }
     const revert = () => {
         setDraft(null)
@@ -73,7 +71,7 @@ export const TextCell = memo(function TextCell({
             <input
                 {...inputProps}
                 {...aria}
-                id={cellDomId(cellKey)}
+                id={id}
                 aria-labelledby={labelledBy}
                 type="text"
                 readOnly={locked}

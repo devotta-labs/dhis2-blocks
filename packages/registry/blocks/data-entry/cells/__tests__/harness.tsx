@@ -9,6 +9,7 @@ import type { CellKey, GridTable } from '../../model/types'
 import { createAnnouncer, DataEntryReactContext } from '../../provider/context'
 import type { DataEntryContext, EffectsState } from '../../provider/context'
 import { createDataEntryStore } from '../../store/store'
+import type { CellOverrides } from '../cellProps'
 
 const GREGORIAN = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 
@@ -19,10 +20,14 @@ export const HEADER = 'header'
 interface RigOptions {
     value?: string
     effects?: Partial<CellEffects>
+    overrides?: CellOverrides
 }
 
 /** One cell in a store of its own, with the effects store and what the cell asked of the grid. */
-export const rig = (field: Field, { value, effects }: RigOptions = {}) => {
+export const rig = (
+    field: Field,
+    { value, effects, overrides }: RigOptions = {}
+) => {
     const enqueued: Array<[CellKey, string | null, string | null]> = []
     const moves: NavKey[] = []
     const table: GridTable = {
@@ -59,6 +64,7 @@ export const rig = (field: Field, { value, effects }: RigOptions = {}) => {
         tables: [table],
         newRowTables: new Set(),
         addRow: () => {},
+        overrides,
     }
     return {
         store,

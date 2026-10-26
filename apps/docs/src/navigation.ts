@@ -22,6 +22,7 @@ export const docsNavigation: readonly NavigationGroup[] = [
             { title: 'Working List', href: '/blocks/working-list' },
             { title: 'Context Selector', href: '/blocks/context-selector' },
             { title: 'Sidebar', href: '/blocks/sidebar' },
+            { title: 'Data Entry', href: '/blocks/data-entry' },
         ],
     },
 ]

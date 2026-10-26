@@ -8,6 +8,7 @@ import type {
     CellProps,
     CellState,
     CellView,
+    CommitResult,
     ControlProps,
     DataEngine,
     DataEntrySource,
@@ -50,6 +51,7 @@ export type SupportedDataEntryTypes = [
     CellProps,
     CellState,
     CellView,
+    CommitResult,
     ControlProps,
     DataEngine,
     DataEntrySource,
@@ -114,6 +116,15 @@ export const useAge = (): [string | undefined, boolean, string | undefined] => {
 }
 // @ts-expect-error A cell key is a row and a column joined by a dot.
 export const useNoColumn = () => useCell('event1')
+
+// A replacement control saves what was typed through its cell's view, and learns what became of it.
+export const Typed: CellComponent = ({ id, cellKey, readOnly }) => {
+    const { commit, draft, error } = useCell(cellKey)
+    const result: CommitResult = commit('42')
+    // @ts-expect-error The text typed or chosen, not a number.
+    commit(42)
+    return readOnly ?? `${id} ${result} ${draft} ${error}`
+}
 
 // Anything else, selected.
 export const useCanComplete = (): boolean =>

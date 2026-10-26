@@ -1,11 +1,16 @@
-import { createContext, useContext, useMemo } from 'react'
+import { createContext, useCallback, useContext, useMemo } from 'react'
 import { useStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import type { CellOverrides } from '../cells/cellProps'
 import type { CellEffects, CellMessage } from '../logic/effects'
-import type { CellKey, CellState, GridTable } from '../model/types'
+import type {
+    CellKey,
+    CellState,
+    CommitResult,
+    GridTable,
+} from '../model/types'
 import { EMPTY_CELL } from '../store/store'
 import type { DataEntryState } from '../store/store'
 
@@ -73,6 +78,13 @@ const EMPTY_EFFECTS: Readonly<CellEffects> = Object.freeze({
 
 export interface CellView extends CellState {
     effects: CellEffects
+    /**
+     * Saves what a person typed or chose through the store the built-in controls use: the text is checked against the
+     * field, `'invalid'` keeps it as the cell's draft with its error, and an unchanged value writes nothing. A cell a
+     * rule or its row locks (`effects.readOnly`) is not written to (`'unchanged'`); text typed into a cell a rule has
+     * hidden, and not locked, is saved, and the rule then clears it.
+     */
+    commit(text: string): CommitResult
 }
 
 export const DataEntryReactContext = createContext<
@@ -93,10 +105,27 @@ export const useCellEffects = (key: CellKey): CellEffects => {
     return useStore(effects, (state) => state.cells[key] ?? EMPTY_EFFECTS)
 }
 
-/** One cell's state and effects; it re-renders only when this cell changes in either store. */
+/** One cell's state, effects and `commit`; it re-renders only when this cell changes in either store. */
 export const useCellView = (key: CellKey): CellView => {
-    const { store } = useDataEntryContext()
+    const { store, effects: effectsStore } = useDataEntryContext()
     const cell = useStore(store, (state) => state.cells[key] ?? EMPTY_CELL)
     const effects = useCellEffects(key)
-    return useMemo(() => ({ ...cell, effects }), [cell, effects])
+    // The lock is read when committing, not when rendering: a rule may have locked the cell while its text was typed.
+    const commit = useCallback(
+        (text: string): CommitResult => {
+            const { hiddenBy, readOnly } =
+                effectsStore.getState().cells[key] ?? EMPTY_EFFECTS
+            // A lock wins. Without one, text typed into a cell a rule has just hidden is saved, then cleared by the
+            // rule, as the default controls do.
+            return readOnly !== undefined ||
+                (hiddenBy !== undefined && text === '')
+                ? 'unchanged'
+                : store.getState().commit(key, text)
+        },
+        [store, effectsStore, key]
+    )
+    return useMemo(
+        () => ({ ...cell, effects, commit }),
+        [cell, effects, commit]
+    )
 }

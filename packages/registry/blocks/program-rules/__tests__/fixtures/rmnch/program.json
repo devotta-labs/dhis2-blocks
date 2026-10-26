@@ -1,0 +1,113 @@
+{
+    "name": "WHO RMNCH Tracker",
+    "displayName": "WHO RMNCH Tracker",
+    "id": "WSGAb5XwJ3Y",
+    "programStages": [
+        {
+            "name": "Previous deliveries",
+            "displayName": "Previous deliveries",
+            "id": "PUZaKR0Jh2k"
+        },
+        {
+            "name": "First antenatal care visit",
+            "displayName": "First antenatal care visit",
+            "id": "WZbXY0S00lP"
+        },
+        {
+            "name": "Second antenatal care visit",
+            "displayName": "Second antenatal care visit",
+            "id": "edqlbukwRfQ"
+        },
+        {
+            "name": "Care at birth",
+            "displayName": "Care at birth",
+            "id": "PFDfvmGpsR3"
+        },
+        {
+            "name": "Postpartum care visit",
+            "displayName": "Postpartum care visit",
+            "id": "bbKtnxRZKEP"
+        }
+    ],
+    "programTrackedEntityAttributes": [
+        {
+            "trackedEntityAttribute": {
+                "name": "Unique ID",
+                "valueType": "TEXT",
+                "id": "lZGmxYbs97q"
+            }
+        },
+        {
+            "trackedEntityAttribute": {
+                "name": "First name",
+                "valueType": "TEXT",
+                "id": "w75KJ2mc4zz"
+            }
+        },
+        {
+            "trackedEntityAttribute": {
+                "name": "Last name",
+                "valueType": "TEXT",
+                "id": "zDhUuAYrxNC"
+            }
+        },
+        {
+            "trackedEntityAttribute": {
+                "name": "Address",
+                "valueType": "TEXT",
+                "id": "VqEFza8wbwA"
+            }
+        },
+        {
+            "trackedEntityAttribute": {
+                "name": "Postal code",
+                "valueType": "TEXT",
+                "id": "ZcBPrXKahq2"
+            }
+        },
+        {
+            "trackedEntityAttribute": {
+                "name": "City",
+                "valueType": "TEXT",
+                "id": "FO4sWYJ64LQ"
+            }
+        },
+        {
+            "trackedEntityAttribute": {
+                "name": "Mobile number",
+                "valueType": "PHONE_NUMBER",
+                "id": "Agywv2JGwuq"
+            }
+        },
+        {
+            "trackedEntityAttribute": {
+                "name": "Email address",
+                "valueType": "EMAIL",
+                "id": "KmEUg2hHEtx"
+            }
+        },
+        {
+            "trackedEntityAttribute": {
+                "name": "Birth date",
+                "valueType": "DATE",
+                "id": "gHGyrwKPzej"
+            }
+        },
+        {
+            "trackedEntityAttribute": {
+                "name": "Civil status",
+                "valueType": "TEXT",
+                "optionSet": { "id": "xjA5E9MimMU" },
+                "id": "ciq2USN94oJ"
+            }
+        },
+        {
+            "trackedEntityAttribute": {
+                "name": "Allergies (multi-select)",
+                "valueType": "MULTI_TEXT",
+                "optionSet": { "id": "nYMyWES01DB" },
+                "id": "gu1fqsmoU8r"
+            }
+        }
+    ]
+}

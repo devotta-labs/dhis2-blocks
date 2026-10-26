@@ -599,6 +599,112 @@
             ]
         },
         {
+            "name": "program-rules",
+            "type": "registry:block",
+            "title": "Program Rules",
+            "description": "DHIS2 program rules through the official rule engine: effects for one event or many, with attribution and dependency tracking.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/rule-engine@3.8.6",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/enrollment.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/enrollment.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/inputKey.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/inputKey.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/loadRuleEngine.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/loadRuleEngine.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/metadata.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/metadata.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/queryKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/queryKeys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/useProgramRuleContext.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRuleContext.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/useProgramRuleEvaluator.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRuleEvaluator.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/useProgramRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/buildContext.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/buildContext.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/buildInput.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/buildInput.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/dependencyGraph.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/dependencyGraph.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/evaluate.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/evaluate.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/scanExpression.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/scanExpression.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/valueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/valueTypes.ts"
+                }
+            ]
+        },
+        {
             "name": "sidebar",
             "type": "registry:block",
             "title": "Sidebar",

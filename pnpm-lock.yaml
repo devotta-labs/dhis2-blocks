@@ -240,6 +240,9 @@ importers:
       '@dhis2/multi-calendar-dates':
         specifier: 2.1.2
         version: 2.1.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@dhis2/rule-engine':
+        specifier: 3.8.6
+        version: 3.8.6
       '@dhis2/ui':
         specifier: ^10.17.0
         version: 10.17.0(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.29.7)(react@18.3.1))
@@ -1506,6 +1509,9 @@ packages:
   '@dhis2/pwa@12.10.3':
     resolution: {integrity: sha512-WXWgtmjb95t5jU8vFYCdlJ1mczkLGDCXL69ZC/kUa2XTAby6cpLkoZMNFfOyoVOOtbq0J88UEaXrDGK1zoGfbg==}
 
+  '@dhis2/rule-engine@3.8.6':
+    resolution: {integrity: sha512-kRce5NFEh/zMkj9wsoek71BZbSjrCP5xo8awju/+cOaG0Su72yQ5Ve6IGLYdWXwQ2G/JrzWrvsb8GYSBrcm8UQ==}
+
   '@dhis2/ui-constants@10.17.0':
     resolution: {integrity: sha512-xChC65imSJ1kfsL0QuI8NY+3xI8VkAUw24HxhqLES5S8tNJ0arRakfa2W3uZK1M7EDxZYo3YBc50QkD8a4rznA==}
 
@@ -1953,6 +1959,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@js-joda/core@3.2.0':
+    resolution: {integrity: sha512-PMqgJ0sw5B7FKb2d5bWYIoxjri+QlW/Pys7+Rw82jSH0QN3rB05jZ/VrrsUdh1w4+i2kw9JOejXGq/KhDOX7Kg==}
 
   '@js-temporal/polyfill@0.4.3':
     resolution: {integrity: sha512-6Fmjo/HlkyVCmJzAPnvtEWlcbQUSRhi8qlN9EtJA/wP7FqXsevLLrlojR44kzNzrRkpf7eDJ+z7b4xQD/Ycypw==}
@@ -10915,6 +10924,10 @@ snapshots:
       workbox-routing: 7.4.0
       workbox-strategies: 7.4.0
 
+  '@dhis2/rule-engine@3.8.6':
+    dependencies:
+      '@js-joda/core': 3.2.0
+
   '@dhis2/ui-constants@10.17.0':
     dependencies:
       prop-types: 15.8.1
@@ -11483,6 +11496,8 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@js-joda/core@3.2.0': {}
 
   '@js-temporal/polyfill@0.4.3':
     dependencies:

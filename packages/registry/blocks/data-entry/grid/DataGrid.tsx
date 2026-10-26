@@ -10,7 +10,6 @@ import {
 } from 'react'
 import type { ClipboardEvent, KeyboardEvent } from 'react'
 import { flushSync } from 'react-dom'
-import { useStore } from 'zustand'
 import type { StoreApi } from 'zustand/vanilla'
 import { cellKind } from '@/components/dhis2-value-types'
 import { Button } from '@/components/dhis2/ui/button'
@@ -78,17 +77,6 @@ const positionsOf = (tables: ReadonlyArray<GridTable>) => {
 /** A text cell being typed in keeps the browser's own paste and undo; any other cell is in Ready. */
 const typingIn = (target: HTMLElement) =>
     target.dataset.mode === 'enter' || target.dataset.mode === 'edit'
-
-/** The one polite live region, saying what `announce` was given. */
-const LiveRegion = () => {
-    const { announcements } = useDataEntryContext()
-    const text = useStore(announcements, (state) => state.text)
-    return (
-        <div role="status" className="sr-only">
-            {text}
-        </div>
-    )
-}
 
 // The row header column's width; sticky group labels and scroll padding keep clear of it.
 const ROW_HEADER_CLASS = 'w-48 min-w-48 max-w-48'
@@ -460,7 +448,6 @@ export const DataGrid = ({
                     addRow={addRow}
                 />
             ))}
-            <LiveRegion />
             <div id={end} tabIndex={-1} className="outline-none" />
         </div>
     )

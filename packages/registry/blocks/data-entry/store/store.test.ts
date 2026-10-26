@@ -34,13 +34,17 @@ const table: GridTable = {
     closed: new Map([[cellKey('r2', 'c2'), 'Not used']]),
 }
 
-const setup = (initial: Array<[CellKey, string]> = []) => {
+const setup = (
+    initial: Array<[CellKey, string]> = [],
+    check?: (key: CellKey, value: string) => string | undefined
+) => {
     const enqueued: Array<[CellKey, string | null, string | null]> = []
     const store = createDataEntryStore({
         tables: [table],
         values: new Map(initial),
         settings: GREGORIAN,
         enqueue: (key, value, base) => enqueued.push([key, value, base]),
+        check,
     })
     const cell = (key: CellKey) => store.getState().cells[key] ?? EMPTY_CELL
     const commit = (key: CellKey, text: string, source?: 'person' | 'rule') =>
@@ -120,6 +124,38 @@ test('a person’s commit takes the cell back from a rule', () => {
     commit('r1.c1', '10', 'rule')
     commit('r1.c1', '11')
     expect(cell('r1.c1').source).toBe('person')
+})
+
+test('a value the check refuses is kept as a draft with its error, for a person but not a rule', () => {
+    const checked: Array<[CellKey, string]> = []
+    const { enqueued, cell, commit, store } = setup([], (key, value) => {
+        checked.push([key, value])
+        return value === '7' ? 'Choose one of the options' : undefined
+    })
+    expect(commit('r1.c1', ' 7 ')).toBe('invalid')
+    expect(cell('r1.c1')).toMatchObject({
+        draft: ' 7 ',
+        error: 'Choose one of the options',
+    })
+    expect(cell('r1.c1').value).toBeUndefined()
+    expect(
+        store.getState().commitMany([
+            { key: 'r1.c1', text: '7' },
+            { key: 'r2.c1', text: '8' },
+        ])
+    ).toEqual(['invalid', 'queued'])
+    // Blank deletes, whatever the check says; a rule's own value is not checked.
+    expect(commit('r1.c1', '')).toBe('unchanged')
+    expect(commit('r1.c1', '7', 'rule')).toBe('queued')
+    expect(checked).toEqual([
+        ['r1.c1', '7'],
+        ['r1.c1', '7'],
+        ['r2.c1', '8'],
+    ])
+    expect(enqueued).toEqual([
+        ['r2.c1', '8', null],
+        ['r1.c1', '7', null],
+    ])
 })
 
 test('discarding a draft clears it with its error and queues nothing', () => {

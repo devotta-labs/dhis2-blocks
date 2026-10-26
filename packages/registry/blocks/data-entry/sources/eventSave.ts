@@ -22,7 +22,7 @@ type TrackerEventPayload = EventFields & {
 }
 
 /** A save, read included, that takes longer is aborted, so the sync loop backs off and tries again. */
-const SAVE_TIMEOUT = 60_000
+export const SAVE_TIMEOUT = 60_000
 
 // OBJECT saves the valid events of an import and reports the refused ones by id.
 const IMPORT_PARAMS = {
@@ -71,7 +71,7 @@ const withTime = (date: string, held: string | undefined) =>
     `${date}${held?.slice(10) ?? ''}`
 
 /** Runs `task` with a signal that aborts after `timeout` ms. */
-const withinLimit = async <T>(
+export const withinLimit = async <T>(
     timeout: number,
     task: (signal: AbortSignal) => Promise<T>
 ) => {

@@ -303,6 +303,12 @@ const toForm = (
         ),
         readOnlyRows,
         canReopen,
+        readOnlyWhenCompleted: new Map(
+            stages
+                .filter(({ blockEntryForm }) => blockEntryForm)
+                .map(({ id }) => [id, READ_ONLY.blocked()])
+        ),
+        mayUncomplete: has('F_UNCOMPLETE_EVENT'),
         rules,
         newRows:
             newRowStage !== undefined && writable(newRowStage)
@@ -311,13 +317,18 @@ const toForm = (
                       programStageId: newRowStage.id,
                       orgUnitId,
                       enrollmentId: tracker ? enrollmentId : undefined,
-                      closedColumns: new Set(
-                          Array.from(dataElements.keys()).filter(
-                              (id) => !fieldsOf.get(newRowStage.id)?.has(id)
-                          )
-                      ),
                   }
                 : undefined,
+        closedByStage: new Map(
+            stages.map(({ id: stage }) => [
+                stage,
+                new Set(
+                    Array.from(dataElements.keys()).filter(
+                        (id) => !fieldsOf.get(stage)?.has(id)
+                    )
+                ),
+            ])
+        ),
     }
 }
 
@@ -328,9 +339,19 @@ export const eventSource = (options: EventSourceOptions): DataEntrySource => {
     // One person's events are read wherever they happened, not only at one org unit.
     const atOrgUnit = enrollmentId === undefined
     const key = `events:${programId}:${programStageId ?? '-'}:${orgUnitId}:${orgUnitMode}:${enrollmentId ?? '-'}`
+    const pageSize = options.pageSize ?? 50
+    const order = options.order ?? 'occurredAt:desc'
     const saver = eventSaver(key, programId)
     return {
         key,
+        // Anything else that changes the load is another load; the outbox keeps one key, so no change is stranded.
+        cacheKey: [
+            key,
+            pageSize,
+            order,
+            options.newRowStageId ?? '-',
+            options.today ?? '-',
+        ].join(':'),
         load: async (engine, signal) => {
             const loaded = eventFormSchema.parse(
                 await engine.query(
@@ -350,8 +371,8 @@ export const eventSource = (options: EventSourceOptions): DataEntrySource => {
                                     ? orgUnitMode
                                     : undefined,
                                 enrollments: enrollmentId,
-                                pageSize: options.pageSize ?? 50,
-                                order: options.order ?? 'occurredAt:desc',
+                                pageSize,
+                                order,
                                 fields: EVENT_FIELDS,
                             },
                         },

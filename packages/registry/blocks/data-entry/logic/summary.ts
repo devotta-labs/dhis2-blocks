@@ -2,7 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import type { CellKey, CellState, GridTable, SyncState } from '../model/types'
 import type { CellEffects, CellMessage, MessageKind } from './effects'
 
-interface SummaryItem {
+export interface SummaryItem {
     /** A cell, or a row for a message without a field. */
     key: CellKey | string
     kind: MessageKind | 'unsent' | 'failed'
@@ -18,13 +18,17 @@ const BLOCKS_COMPLETION = new Set<SummaryItem['kind']>([
 // Server reasons and field names are shown as DHIS2 gives them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
+/** Whether the item stops completion: an error, or an empty required cell. */
+export const blocksCompletion = ({ kind }: SummaryItem) =>
+    BLOCKS_COMPLETION.has(kind)
+
 /**
  * Every failed cell, every unsent cell with a reason, every cell's own error and warning, every empty required cell
  * and every message, with the unsent and failed counts. Errors and empty required cells stop completion; warnings block nothing.
  */
 export const summarise = (
     cells: Partial<Record<CellKey, CellState>>,
-    effects: ReadonlyMap<CellKey, CellEffects>,
+    effects: Partial<Record<CellKey, CellEffects>>,
     /** Row id → the messages without a field. */
     rowMessages: ReadonlyMap<string, ReadonlyArray<CellMessage>>,
     tables: ReadonlyArray<GridTable>
@@ -35,12 +39,14 @@ export const summarise = (
     let canComplete = true
     const add = (item: SummaryItem) => {
         items.push(item)
-        if (BLOCKS_COMPLETION.has(item.kind)) {
+        if (blocksCompletion(item)) {
             canComplete = false
         }
     }
 
+    const values = new Map<string, string | undefined>()
     for (const [key, cell] of Object.entries(cells)) {
+        values.set(key, cell?.value)
         if (cell?.sync === 'failed') {
             failed += 1
             add({
@@ -57,12 +63,12 @@ export const summarise = (
                 add({ key, kind: 'unsent', text: cell.reason })
             }
         }
-        // A draft its value type refuses, and a stored value the field's checks now reject.
+        // A draft its value type refuses, and a stored value the field's checks now reject; both untranslated.
         if (cell?.error !== undefined) {
-            add({ key, kind: 'error', text: cell.error })
+            add({ key, kind: 'error', text: i18n.t(cell.error) })
         }
         if (cell?.warning !== undefined) {
-            add({ key, kind: 'warning', text: cell.warning })
+            add({ key, kind: 'warning', text: i18n.t(cell.warning) })
         }
     }
 
@@ -71,8 +77,12 @@ export const summarise = (
             columns.map(({ id, label }) => [id, label])
         )
     )
-    for (const [key, { required, messages }] of effects) {
-        if (required && !cells[key]?.value) {
+    for (const [key, cellEffects] of Object.entries(effects)) {
+        if (cellEffects === undefined) {
+            continue
+        }
+        const { required, messages } = cellEffects
+        if (required && !values.get(key)) {
             const column = key.slice(key.indexOf('.') + 1)
             add({
                 key,

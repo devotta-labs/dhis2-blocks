@@ -3,7 +3,8 @@ import { useStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import type { ValueSettings } from '@/components/dhis2-value-types'
-import type { CellEffects } from '../logic/effects'
+import type { CellOverrides } from '../cells/cellProps'
+import type { CellEffects, CellMessage } from '../logic/effects'
 import type { CellKey, CellState, GridTable } from '../model/types'
 import { EMPTY_CELL } from '../store/store'
 import type { DataEntryState } from '../store/store'
@@ -11,6 +12,8 @@ import type { DataEntryState } from '../store/store'
 /** What logic says about each cell; only cells it has something to say about have an entry. */
 export interface EffectsState {
     cells: Partial<Record<CellKey, CellEffects>>
+    /** Row id → the messages without a field. */
+    rowMessages: ReadonlyMap<string, ReadonlyArray<CellMessage>>
 }
 
 /** What the one polite live region says. */
@@ -31,6 +34,7 @@ export interface DataEntryContext {
     /** Ids of the tables that take new rows: each has an "Add event" button. */
     newRowTables: ReadonlySet<string>
     addRow(tableId: string): void
+    overrides?: CellOverrides
 }
 
 // Long enough for screen readers to notice the region emptied, so the same text said twice is heard twice.

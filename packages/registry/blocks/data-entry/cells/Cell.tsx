@@ -1,8 +1,9 @@
 import i18n from '@dhis2/d2-i18n'
 import { memo } from 'react'
 import { cellKind } from '@/components/dhis2-value-types'
-import { useCellEffects } from '../provider/context'
-import type { CellProps } from './cellProps'
+import type { CellKind } from '@/components/dhis2-value-types'
+import { useCellEffects, useDataEntryContext } from '../provider/context'
+import type { CellComponent, CellProps } from './cellProps'
 import { BooleanCell, TrueOnlyCell } from './ChoiceCells'
 import { OptionCell } from './OptionCell'
 import { TextCell } from './TextCell'
@@ -14,9 +15,24 @@ const ClosedCell = ({ reason }: { reason: string }) => (
     </div>
 )
 
+/** The default control for each kind of field. */
+export const cells = Object.freeze({
+    text: TextCell,
+    number: TextCell,
+    date: TextCell,
+    dateTime: TextCell,
+    time: TextCell,
+    boolean: BooleanCell,
+    trueOnly: TrueOnlyCell,
+    option: OptionCell,
+    popup: TextCell,
+    readOnly: TextCell,
+} satisfies Record<CellKind, CellComponent>)
+
 // One control whatever a rule does to the cell, so focus stays where it is.
 const OpenCell = (props: CellProps) => {
     const { hiddenBy, readOnly } = useCellEffects(props.cellKey)
+    const { overrides } = useDataEntryContext()
     const kind = cellKind(props.field)
     const reason =
         hiddenBy ??
@@ -24,14 +40,11 @@ const OpenCell = (props: CellProps) => {
         (kind === 'popup' || kind === 'readOnly'
             ? i18n.t('Edit this field in its own form')
             : undefined)
+    const column = props.cellKey.slice(props.cellKey.indexOf('.') + 1)
     const Control =
-        kind === 'boolean'
-            ? BooleanCell
-            : kind === 'trueOnly'
-              ? TrueOnlyCell
-              : kind === 'option'
-                ? OptionCell
-                : TextCell
+        overrides?.fields?.[column] ??
+        overrides?.valueTypes?.[props.field.valueType] ??
+        cells[kind]
     return (
         <Control {...props} readOnly={reason} hidden={hiddenBy !== undefined} />
     )

@@ -24,20 +24,26 @@ export interface LoadedForm {
     readOnlyRows: ReadonlyMap<string, string>
     /** Completed rows the user may reopen (`F_UNCOMPLETE_EVENT`, stage write access, not expired). */
     canReopen: ReadonlySet<string>
+    /** Stages whose events cannot be edited once completed, with the reason; for statuses saved after loading. */
+    readOnlyWhenCompleted: ReadonlyMap<string, string>
+    /** Whether the user may reopen what they complete (`F_UNCOMPLETE_EVENT`). */
+    mayUncomplete: boolean
     rules?: RulesTarget
     newRows?: {
         tableId: string
         programStageId: string
         orgUnitId: string
         enrollmentId?: string
-        /** The table's columns outside `programStageId`, closed on new rows; never the event date. */
-        closedColumns: ReadonlySet<string>
     }
+    /** Each stage's closed columns: those of the table its events have no field for; never the event date. */
+    closedByStage: ReadonlyMap<string, ReadonlySet<string>>
 }
 
 export interface DataEntrySource {
-    /** Identifies the loaded context in query keys and the outbox. */
+    /** Identifies the loaded context in the outbox. */
     key: string
+    /** Identifies what is loaded, for the load's cache; `key` when absent. */
+    cacheKey?: string
     load(engine: DataEngine, signal?: AbortSignal): Promise<LoadedForm>
     save(
         engine: DataEngine,

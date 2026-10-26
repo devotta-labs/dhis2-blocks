@@ -16,14 +16,20 @@ export interface CellProps {
     move(key: NavKey): void
 }
 
-export type CellComponent = (props: CellProps) => ReactNode
-
 /** What `Cell` hands the control it picks for a field. */
 export interface ControlProps extends CellProps {
     /** Why the cell cannot be edited: it then shows its value, stays focusable and says why. */
     readOnly?: string
     /** A rule hides the cell: `readOnly` is the rule, and the cell shows "Hidden" instead of its value. */
     hidden?: boolean
+}
+
+export type CellComponent = (props: ControlProps) => ReactNode
+
+/** Controls that replace the default one: by value type, and by field id (which wins). */
+export interface CellOverrides {
+    valueTypes?: Partial<Record<string, CellComponent>>
+    fields?: Partial<Record<string, CellComponent>>
 }
 
 /** The id of the cell's focusable control, for the grid and the summary to focus it by. */

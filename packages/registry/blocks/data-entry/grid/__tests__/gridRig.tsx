@@ -9,6 +9,7 @@ import { cellKey } from '../../model/types'
 import type { CellKey, GridTable, HeaderCell } from '../../model/types'
 import { createAnnouncer, DataEntryReactContext } from '../../provider/context'
 import type { DataEntryContext, EffectsState } from '../../provider/context'
+import { LiveRegion } from '../../provider/DataEntry'
 import { createDataEntryStore } from '../../store/store'
 import { DataGrid } from '../DataGrid'
 
@@ -106,7 +107,10 @@ export const mount = async (
         // SAFETY: the keys were typed as cell keys above; Object.entries widens them to string.
         cells[key as CellKey] = { required: false, messages: [], ...effects }
     }
-    const effects = createStore<EffectsState>()(() => ({ cells }))
+    const effects = createStore<EffectsState>()(() => ({
+        cells,
+        rowMessages: new Map(),
+    }))
     const counted: StoreApi<EffectsState> = {
         ...effects,
         getState: () => {
@@ -153,6 +157,7 @@ export const mount = async (
                 {above === undefined ? null : <div style={{ height: above }} />}
                 <DataGrid />
                 <button type="button">After</button>
+                <LiveRegion />
             </DataEntryReactContext.Provider>
         )
     }

@@ -1,0 +1,148 @@
+# Data Entry
+
+Grid data entry for DHIS2 events: one row per event and one column per data element, typed in like a spreadsheet.
+Every change is kept on the device before it is sent, so nothing typed is lost to a dropped connection, a reload or
+a crash. Program rules run for every row whose stage the grid shows, as Capture runs them. It builds on `dhis2-value-types` (what each value
+type accepts), `dhis2-value-display` (the calendar) and `program-rules`.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/data-entry
+```
+
+`DataEntry` needs a React Query `QueryClientProvider` and the DHIS2 app-runtime provider above it, nothing else.
+
+## Use it
+
+```tsx
+import {
+    DataEntry,
+    DataEntrySummary,
+    DataGrid,
+    eventSource,
+    useDataEntry,
+} from '@/components/data-entry'
+
+// Made once: a source with new keys loads the form again.
+const inpatient = eventSource({
+    programId: 'eBAyeGv0exc',
+    orgUnitId: 'DiszpKrYNg8',
+})
+
+const Status = () => {
+    const status = useDataEntry((view) => view.status)
+    return status === 'ready' ? null : (
+        <p>
+            {status === 'loading' ? 'Loading…' : 'The form could not be loaded'}
+        </p>
+    )
+}
+
+export const InpatientGrid = () => (
+    <DataEntry source={inpatient}>
+        <Status />
+        <DataGrid />
+        <DataEntrySummary />
+    </DataEntry>
+)
+```
+
+The grid shows nothing until the form has loaded; show what you want with `useDataEntry((view) => view.status)`.
+Render your own `Cell`s only once `status` is `'ready'`: before that there are no cells to bind them to.
+
+## API
+
+```ts
+DataEntry({ source, cells?, children }) // loads the form and keeps it; one per form
+DataGrid({ tableId?, className? }) // the form's tables, or one of them
+DataEntrySummary({ className? }) // every message as a link to its cell, the count not yet in DHIS2, and the download
+Cell({ cellKey, field, labelledBy, move }) // one bound control, for your own layouts
+useCell(cellKey): CellView // one cell's value, draft, error, sync state and effects
+useDataEntry(select): T // anything else, and the actions; select a value, not a new object
+eventSource(options): DataEntrySource // the events of a program, a stage or one person
+cells: Record<CellKind, CellComponent> // the default control per kind of field
+```
+
+```ts
+interface DataEntryView {
+    status: 'loading' | 'ready' | 'error'
+    summary: {
+        items: SummaryItem[]
+        unsent: number
+        failed: number
+        canComplete: boolean
+    }
+    sync: 'idle' | 'sending' | 'offline' | 'signIn' | 'retrying'
+    addRow(tableId: string): void
+    complete(rowId: string): Promise<SaveOutcome[]>
+    reopen(rowId: string): Promise<SaveOutcome[]>
+    downloadUnsent(): void
+}
+
+interface EventSourceOptions {
+    programId: string
+    programStageId?: string
+    orgUnitId: string
+    orgUnitMode?: 'SELECTED' | 'DESCENDANTS' // default SELECTED
+    enrollmentId?: string // one person's events, wherever they happened
+    newRowStageId?: string // with enrollmentId: "Add event" adds an event of this stage for the person
+    pageSize?: number // default 50
+    order?: 'occurredAt:asc' | 'occurredAt:desc' // default occurredAt:desc
+}
+```
+
+The host decides where the buttons go. `complete(rowId)` refuses at once, with one `failed` outcome per reason, when
+the device is offline or someone else is signed in, and while the row has an error, an empty required field, or a
+change DHIS2 refused or that waits; otherwise it sends the row's unsent changes first (and refuses if sending pauses),
+then asks DHIS2. `reopen(rowId)` asks DHIS2 only for a completed row the user may reopen (`F_UNCOMPLETE_EVENT`, write
+access to the stage, not expired), whether it was completed when loaded or here, and refuses the same way offline. A saved
+status shows in the row's header and locks or unlocks the row where its stage blocks entry once completed.
+
+## Replace a control
+
+```tsx
+const Notes: CellComponent = ({ cellKey, readOnly }) => …
+
+<DataEntry source={inpatient} cells={{ valueTypes: { LONG_TEXT: Notes }, fields: { qrur9Dvnyt5: Notes } }}>
+```
+
+A field's control wins over its value type's. The control gets `readOnly` (why it cannot be edited) and `hidden` (a
+rule hides it) besides the cell's props; read and save its value with `useCell` and the cell's key. Keep the object
+stable (a module constant or `useMemo`): a new one renders every cell again.
+
+## Typing
+
+Each cell works as a spreadsheet's does: typing replaces the value, F2 edits it, Enter and the arrows save and move,
+Tab moves with the page, Escape puts the value back. A block copied from a spreadsheet pastes from the focused cell,
+skipping cells that cannot take it, and Ctrl+Z (Cmd+Z) undoes the last change. A value its type refuses stays in the
+cell with its error and is not saved; nothing typed is lost.
+
+## Saving
+
+- Every change goes to an IndexedDB outbox on this device, `dhis2-data-entry:<server>:<user id>`, before it is sent.
+  It opens only for the same user on the same server. Before every send, and before completing or reopening, the
+  server is asked who is signed in; when it is not that user (another tab may have signed in as someone else, and
+  tabs share the session), sending pauses until that user signs in again. Nothing is encrypted.
+- One loop per browser sends them, oldest first, one request per form; two changes to one cell send only the latest.
+  Another tab's loop may send this tab's changes: the cells here still learn what became of them. A dropped connection
+  pauses sending; an expired session pauses it, and the summary asks the person to sign in.
+- While anything is unsent or not saved, leaving the page asks first (the browser's own prompt). `downloadUnsent()`
+  saves every unsent change of the form as a CSV file, with enough to enter it again by hand, including a change this
+  device could not store (then it is only on the page).
+- A refusal keeps the value and marks the cell "Not saved" with DHIS2's reason; it is not sent again until the person
+  enters the value again. A new event waits on the device until its event date is filled in, and, in a stage that checks
+  required fields on every save, those fields too.
+- One polite live region says outcomes once things settle ("All changes saved"), never progress.
+
+## Boundaries
+
+- Only the first page of events loads: `pageSize` of them (default 50), in `order`.
+- Values are checked against their value type as they are typed; an option a rule hid is refused like any value that
+  is not an option.
+- Program rules run for the rows whose stage the grid shows: the source's `programStageIds` (for `eventSource`, the
+  stages of the loaded events and of new rows, or the stage asked for when there are none). A row of any other stage is
+  not evaluated.
+- Read-only, with the reason on each cell: events the user cannot write in that stage, skipped events, completed events
+  in a stage that blocks entry, expired events (unless the user has `F_EDIT_EXPIRED`), and every event of a program with
+  attribute categories. `LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `ORGANISATION_UNIT`, `USERNAME`,
+  `FILE_RESOURCE` and `IMAGE` show their value and are edited in their own form.
+- A form loads once per mount; changes made elsewhere show after the next load.

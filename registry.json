@@ -602,11 +602,12 @@
             "name": "data-entry",
             "type": "registry:block",
             "title": "Data Entry",
-            "description": "Grid data entry for DHIS2 events and data sets: typed cells, Excel-style keys, program rules and unsent changes kept on the device.",
+            "description": "Grid data entry for DHIS2 events: typed cells, Excel-style keys, program rules, and unsent changes kept on the device until DHIS2 has them.",
             "dependencies": [
                 "@dhis2/app-runtime@^3.15.1",
                 "@dhis2/d2-i18n@1.2.0",
                 "@dhis2/multi-calendar-dates@2.1.2",
+                "@tanstack/react-query@^5.101.4",
                 "zod@^4.4.3",
                 "zustand@^5.0.15"
             ],
@@ -614,6 +615,7 @@
                 "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
                 "devotta-labs/dhis2-blocks/dhis2-value-types",
                 "devotta-labs/dhis2-blocks/program-rules"
             ],
@@ -679,6 +681,11 @@
                     "target": "@components/data-entry/grid/paste.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/index.ts"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/logic/effects.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/logic/effects.ts"
@@ -714,9 +721,49 @@
                     "target": "@components/data-entry/outbox/sync.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/provider/DataEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/DataEntry.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/completion.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/completion.ts"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/provider/context.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/provider/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/formRows.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/formRows.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/hooks.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/openForm.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/openForm.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/signedIn.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/signedIn.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/unsentFile.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/unsentFile.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/useLeaveWarning.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/useLeaveWarning.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/sources/eventSave.ts",
@@ -752,6 +799,11 @@
                     "path": "packages/registry/blocks/data-entry/store/store.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/store/store.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/summary/DataEntrySummary.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/summary/DataEntrySummary.tsx"
                 }
             ]
         },

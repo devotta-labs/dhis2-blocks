@@ -17,6 +17,8 @@ export interface DataEntryStoreOptions {
     settings: ValueSettings
     /** Called for every change that must be saved; the outbox writes it. */
     enqueue(key: CellKey, value: string | null, base: string | null): void
+    /** The untranslated message refusing a person's value its type accepts, or nothing; blank is never checked. */
+    check?(key: CellKey, value: string): string | undefined
 }
 
 type Source = 'person' | 'rule'
@@ -67,6 +69,7 @@ export const createDataEntryStore = ({
     values,
     settings,
     enqueue,
+    check,
 }: DataEntryStoreOptions): StoreApi<DataEntryState> => {
     // A column id means the same field in every table.
     const fields = new Map<string, Field>(
@@ -177,12 +180,14 @@ export const createDataEntryStore = ({
                     }
                     const cell = read(key) ?? EMPTY_CELL
                     const parsed = parseTyped(field, text, settings)
-                    if (!parsed.ok) {
-                        write(key, {
-                            ...cell,
-                            draft: text,
-                            error: parsed.problem.message,
-                        })
+                    // A rule's own values are not checked against what rules hide.
+                    const error = !parsed.ok
+                        ? parsed.problem.message
+                        : parsed.value === undefined || source === 'rule'
+                          ? undefined
+                          : check?.(key, parsed.value)
+                    if (!parsed.ok || error !== undefined) {
+                        write(key, { ...cell, draft: text, error })
                         return 'invalid'
                     }
                     if (parsed.value === cell.value) {

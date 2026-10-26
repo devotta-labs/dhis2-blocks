@@ -92,6 +92,10 @@ const classify = (error: FetchError): Failure => {
         : RETRY
 }
 
+/** Whether the error means the session has lapsed: the person must sign in before anything more is sent. */
+export const sessionLapsed = (error: FetchError) =>
+    classify(error).kind === 'signIn'
+
 export const startSync = ({
     outbox,
     save,

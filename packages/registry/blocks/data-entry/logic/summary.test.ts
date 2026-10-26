@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import type { CellKey, CellState, GridTable } from '../model/types'
 import type { CellEffects, CellMessage } from './effects'
 import { summarise } from './summary'
@@ -35,15 +36,12 @@ test('summarise counts unsent and failed cells and blocks completion on errors',
         },
         'e1.c': { value: '3', base: '3', sync: 'saved', source: 'person' },
     } satisfies Partial<Record<CellKey, CellState>>
-    const effects = new Map<CellKey, CellEffects>([
-        [
-            'e1.c',
-            {
-                ...NO_EFFECTS,
-                messages: [{ kind: 'error', text: 'Too high', source: 'rule' }],
-            },
-        ],
-    ])
+    const effects = {
+        'e1.c': {
+            ...NO_EFFECTS,
+            messages: [{ kind: 'error', text: 'Too high', source: 'rule' }],
+        },
+    } satisfies Partial<Record<CellKey, CellEffects>>
     expect(summarise(cells, effects, NO_ROW_MESSAGES, TABLES)).toEqual({
         items: [
             {
@@ -70,7 +68,7 @@ test('a waiting cell is unsent and says why', () => {
             },
             'e1.b': { value: '2', sync: 'sending', source: 'person' },
         },
-        new Map(),
+        {},
         NO_ROW_MESSAGES,
         TABLES
     )
@@ -91,17 +89,14 @@ test('a waiting cell is unsent and says why', () => {
 test('warnings block nothing', () => {
     const summary = summarise(
         { 'e1.a': FILLED },
-        new Map([
-            [
-                'e1.a',
-                {
-                    required: true,
-                    messages: [
-                        { kind: 'warning', text: 'Unusual', source: 'rule' },
-                    ],
-                },
-            ],
-        ]),
+        {
+            'e1.a': {
+                required: true,
+                messages: [
+                    { kind: 'warning', text: 'Unusual', source: 'rule' },
+                ],
+            },
+        },
         new Map([
             [
                 'e1',
@@ -128,9 +123,9 @@ test('warnings block nothing', () => {
 })
 
 test('an empty required cell is listed by its column’s label and blocks completion', () => {
-    const required = new Map<CellKey, CellEffects>([
-        ['e1.a', { required: true, messages: [] }],
-    ])
+    const required = {
+        'e1.a': { required: true, messages: [] },
+    } satisfies Partial<Record<CellKey, CellEffects>>
     const summarised = (cells: Partial<Record<CellKey, CellState>>) =>
         summarise(cells, required, NO_ROW_MESSAGES, TABLES)
 
@@ -157,7 +152,7 @@ test('row messages are listed by row, and their errors block completion', () => 
     const withRowMessage = (kind: CellMessage['kind']) =>
         summarise(
             {},
-            new Map(),
+            {},
             new Map([
                 [
                     'e1',
@@ -185,7 +180,7 @@ test('a cell’s own error blocks completion; its warning does not', () => {
                 error: 'Use a full stop for decimals',
             },
         },
-        new Map(),
+        {},
         NO_ROW_MESSAGES,
         TABLES
     )
@@ -202,7 +197,7 @@ test('a cell’s own error blocks completion; its warning does not', () => {
 
     const warned = summarise(
         { 'e1.a': { ...FILLED, warning: 'Not a valid option' } },
-        new Map(),
+        {},
         NO_ROW_MESSAGES,
         TABLES
     )
@@ -210,4 +205,33 @@ test('a cell’s own error blocks completion; its warning does not', () => {
         items: [{ key: 'e1.a', kind: 'warning', text: 'Not a valid option' }],
         canComplete: true,
     })
+})
+
+test('a cell’s own error and warning are listed translated', async () => {
+    i18n.addResources('xx', 'translation', {
+        'Enter a whole number': 'Saisissez un nombre entier',
+        'Not a valid option': 'Option non valide',
+    })
+    await i18n.changeLanguage('xx')
+    try {
+        const summary = summarise(
+            {
+                'e1.a': {
+                    ...FILLED,
+                    draft: 'abc',
+                    error: 'Enter a whole number',
+                },
+                'e1.b': { ...FILLED, warning: 'Not a valid option' },
+            },
+            {},
+            NO_ROW_MESSAGES,
+            TABLES
+        )
+        expect(summary.items.map(({ text }) => text)).toEqual([
+            'Saisissez un nombre entier',
+            'Option non valide',
+        ])
+    } finally {
+        await i18n.changeLanguage('en')
+    }
 })

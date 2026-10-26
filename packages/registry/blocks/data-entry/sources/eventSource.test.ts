@@ -306,8 +306,10 @@ test('new rows: one org unit for event programs, a named stage for one person', 
         tableId: selected.tables[0].id,
         programStageId: INPATIENT_STAGE,
         orgUnitId: NGELEHUN,
-        closedColumns: new Set(),
     })
+    expect(selected.closedByStage).toEqual(
+        new Map([[INPATIENT_STAGE, new Set()]])
+    )
     const descendants = await loadInpatient(
         inpatientProgram,
         inpatientEvents,
@@ -328,7 +330,7 @@ test('new rows: one org unit for event programs, a named stage for one person', 
         enrollmentId: PERSON,
     })
     // First visit only; in both visits; the event date.
-    const closedColumns = repeatable.newRows?.closedColumns
+    const closedColumns = repeatable.closedByStage.get(SECOND_VISIT)
     expect(closedColumns?.has('de0FEHSIoxh')).toBe(true)
     expect(closedColumns?.has('roKuXYfw1BW')).toBe(false)
     expect(closedColumns?.has(EVENT_DATE_COLUMN)).toBe(false)
@@ -399,25 +401,12 @@ test('an event that has not happened yet is labelled by its scheduled date', asy
     )
 })
 
-test('the key names the context', () => {
-    expect(eventSource({ programId: 'p', orgUnitId: 'o' }).key).toBe(
-        'events:p:-:o:SELECTED:-'
-    )
-    expect(
-        eventSource({
-            programId: 'p',
-            programStageId: 's',
-            orgUnitId: 'o',
-            orgUnitMode: 'DESCENDANTS',
-            enrollmentId: 'e',
-        }).key
-    ).toBe('events:p:s:o:DESCENDANTS:e')
-})
-
 test('a completed event in a blockEntryForm stage is read-only; reopening needs F_UNCOMPLETE_EVENT', async () => {
     const open = await loadInpatient(inpatientProgram, inpatientEvents, meAdmin)
     expect(open.readOnlyRows.size).toBe(0)
     expect(open.canReopen).toEqual(new Set(INPATIENT_ROWS))
+    expect(open.readOnlyWhenCompleted.size).toBe(0)
+    expect(open.mayUncomplete).toBe(true)
 
     const blocking = withStage({ blockEntryForm: true })
     const blocked = await loadInpatient(blocking, inpatientEvents, meAdmin)
@@ -430,6 +419,15 @@ test('a completed event in a blockEntryForm stage is read-only; reopening needs 
         )
     )
     expect(blocked.canReopen).toEqual(new Set(INPATIENT_ROWS))
+    // What a status saved later changes: the stage blocks entry once completed.
+    expect(blocked.readOnlyWhenCompleted).toEqual(
+        new Map([
+            [
+                INPATIENT_STAGE,
+                'Completed events in this stage cannot be edited',
+            ],
+        ])
+    )
 
     const noAuthority = await loadInpatient(
         blocking,
@@ -437,6 +435,7 @@ test('a completed event in a blockEntryForm stage is read-only; reopening needs 
         withAuthorities([])
     )
     expect(noAuthority.canReopen.size).toBe(0)
+    expect(noAuthority.mayUncomplete).toBe(false)
     const superuser = await loadInpatient(
         blocking,
         inpatientEvents,

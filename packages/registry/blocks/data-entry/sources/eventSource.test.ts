@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { cellKey } from '../model/types'
 import inpatientEvents from './__tests__/fixtures/inpatient-events.json'
 import inpatientProgram from './__tests__/fixtures/inpatient-program.json'
@@ -166,6 +167,22 @@ test('event-program rows carry no enrollment', async () => {
         tracker: false,
         enrollmentIds: [],
     })
+})
+
+test('the reason a cell is closed is translated', async () => {
+    i18n.addResources('xx', 'translation', {
+        'Not in this stage': 'Pas dans cette étape',
+    })
+    await i18n.changeLanguage('xx')
+    try {
+        const { engine } = engineFor(rmnchProgram, rmnchEvents, meAdmin)
+        const [table] = (await person().load(engine)).tables
+        expect(table.closed.get(cellKey('yDPqyTvcRpA', 'de0FEHSIoxh'))).toBe(
+            'Pas dans cette étape'
+        )
+    } finally {
+        await i18n.changeLanguage('en')
+    }
 })
 
 test('one person’s events across stages share one table with "Not in this stage" cells', async () => {

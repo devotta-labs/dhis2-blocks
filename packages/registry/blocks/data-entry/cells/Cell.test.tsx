@@ -1,0 +1,225 @@
+import { page, userEvent } from 'vitest/browser'
+import { render } from 'vitest-browser-react'
+import type { Field } from '@/components/dhis2-value-types'
+import { CELL, HEADER, inputOf, rig } from './__tests__/harness'
+import { Cell } from './Cell'
+
+const mount = async (
+    field: Field,
+    options?: Parameters<typeof rig>[1],
+    closedReason?: string
+) => {
+    const setup = rig(field, options)
+    await render(
+        setup.ui(
+            <Cell
+                cellKey={CELL}
+                field={field}
+                labelledBy={HEADER}
+                move={setup.move}
+                closedReason={closedReason}
+            />
+        )
+    )
+    return {
+        ...setup,
+        cell: page.getByRole('textbox', { name: 'Age (years)' }),
+    }
+}
+
+const INTEGER: Field = { valueType: 'INTEGER' }
+
+test('a read-only cell is focusable and says why', async () => {
+    const reason = 'Assigned by rule: Calculate gestational age from LMP'
+    const { cell, moves, enqueued } = await mount(INTEGER, {
+        value: '12',
+        effects: { readOnly: reason },
+    })
+    await expect.element(cell).toHaveValue('12')
+    await expect.element(cell).toHaveAttribute('readonly')
+    expect(inputOf(cell).tabIndex).toBe(0)
+    await expect.element(cell).toHaveAccessibleDescription(reason)
+    inputOf(cell).focus()
+    await expect.element(cell).toHaveFocus()
+    // It takes no typing, and still moves with the keys.
+    await userEvent.keyboard('7{Enter}{ArrowRight}')
+    await expect.element(cell).toHaveValue('12')
+    expect(enqueued).toEqual([])
+    expect(moves).toEqual(['enter', 'right'])
+})
+
+test('a hidden cell names the rule', async () => {
+    const reason = 'Hidden by rule: Hide when not pregnant'
+    const { cell } = await mount(INTEGER, {
+        value: '12',
+        effects: { hiddenBy: reason, readOnly: 'Assigned by rule: Other' },
+    })
+    await expect.element(cell).toHaveValue('Hidden')
+    await expect.element(cell).toHaveAccessibleDescription(reason)
+})
+
+test('a saved-on-this-device cell says so', async () => {
+    const { cell, store } = await mount(INTEGER)
+    await expect.element(cell).not.toHaveAccessibleDescription(/./)
+    store.getState().commit(CELL, '5')
+    await expect
+        .element(cell)
+        .toHaveAccessibleDescription('Saved on this device')
+})
+
+test('a cell that failed to save gives the reason', async () => {
+    const { cell, store } = await mount(INTEGER)
+    store.getState().commit(CELL, '5')
+    store
+        .getState()
+        .markSync([{ key: CELL, value: '5' }], 'failed', 'Server said no')
+    await expect
+        .element(cell)
+        .toHaveAccessibleDescription('Not saved: Server said no')
+})
+
+test('a cell waiting for required fields gives the reason and says it is on this device', async () => {
+    const { cell, store } = await mount(INTEGER)
+    store.getState().commit(CELL, '5')
+    store
+        .getState()
+        .markSync(
+            [{ key: CELL, value: '5' }],
+            'waiting',
+            'Waiting for required fields: Event date'
+        )
+    await expect
+        .element(cell)
+        .toHaveAccessibleDescription(
+            'Waiting for required fields: Event date Saved on this device'
+        )
+})
+
+test('rule errors mark the cell invalid, warnings only describe it, required is announced', async () => {
+    const { cell } = await mount(INTEGER, {
+        value: '3',
+        effects: {
+            required: true,
+            messages: [
+                { kind: 'error', text: 'Too young', source: 'rule' },
+                { kind: 'warning', text: 'Check the age', source: 'rule' },
+            ],
+        },
+    })
+    await expect.element(cell).toBeRequired()
+    await expect.element(cell).toHaveAttribute('aria-invalid', 'true')
+    await expect
+        .element(cell)
+        .toHaveAccessibleDescription('Too young Check the age')
+})
+
+test('a warning alone leaves the cell valid', async () => {
+    const { cell } = await mount(INTEGER, {
+        value: '3',
+        effects: {
+            messages: [
+                { kind: 'warning', text: 'Check the age', source: 'rule' },
+            ],
+        },
+    })
+    await expect.element(cell).not.toHaveAttribute('aria-invalid')
+    await expect.element(cell).toHaveAccessibleDescription('Check the age')
+})
+
+test('a saved value that breaks the field rules is described, and not invalid', async () => {
+    const { cell } = await mount(INTEGER, { value: 'abc' })
+    await expect.element(cell).not.toHaveAttribute('aria-invalid')
+    await expect
+        .element(cell)
+        .toHaveAccessibleDescription('Enter a whole number')
+})
+
+test('pop-up kinds show their value read-only and point to their own form', async () => {
+    const { cell } = await mount(
+        { valueType: 'LONG_TEXT' },
+        { value: 'Some notes' }
+    )
+    await expect.element(cell).toHaveValue('Some notes')
+    await expect.element(cell).toHaveAttribute('readonly')
+    await expect
+        .element(cell)
+        .toHaveAccessibleDescription('Edit this field in its own form')
+})
+
+test('a value type nothing can edit is read-only with the same reason', async () => {
+    const { cell } = await mount({ valueType: 'REFERENCE' })
+    await expect.element(cell).toHaveAttribute('readonly')
+    await expect
+        .element(cell)
+        .toHaveAccessibleDescription('Edit this field in its own form')
+})
+
+test('a closed cell has no control and says its reason', async () => {
+    await mount(INTEGER, undefined, 'Not used')
+    await expect.element(page.getByRole('textbox')).not.toBeInTheDocument()
+    await expect.element(page.getByText('Not used')).toBeInTheDocument()
+})
+
+test('an editable value type gets the typed cell', async () => {
+    const { cell, stored } = await mount(INTEGER, { value: '1' })
+    await expect.element(cell).not.toHaveAttribute('readonly')
+    inputOf(cell).focus()
+    await userEvent.keyboard('2{Enter}')
+    expect(stored()?.value).toBe('2')
+})
+
+test('a rule that hides or locks a cell keeps focus on the same control', async () => {
+    const { cell, effects } = await mount(INTEGER, { value: '12' })
+    const control = inputOf(cell)
+    control.focus()
+    await expect.element(cell).toHaveFocus()
+
+    effects.setState({
+        cells: {
+            [CELL]: {
+                required: false,
+                messages: [],
+                hiddenBy: 'Hidden by rule: Hide when not pregnant',
+            },
+        },
+    })
+    await expect.element(cell).toHaveValue('Hidden')
+    await expect.element(cell).toHaveFocus()
+    expect(inputOf(cell)).toBe(control)
+
+    effects.setState({
+        cells: {
+            [CELL]: {
+                required: false,
+                messages: [],
+                readOnly: 'Assigned by rule: Calculate age',
+            },
+        },
+    })
+    await expect.element(cell).toHaveValue('12')
+    await expect.element(cell).toHaveAttribute('readonly')
+    await expect.element(cell).toHaveFocus()
+
+    effects.setState({ cells: {} })
+    await expect.element(cell).not.toHaveAttribute('readonly')
+    await expect.element(cell).toHaveFocus()
+    expect(inputOf(cell)).toBe(control)
+})
+
+test('typing that a rule locks away is not written', async () => {
+    const { cell, effects, enqueued } = await mount(INTEGER, { value: '12' })
+    inputOf(cell).focus()
+    await userEvent.keyboard('9')
+    effects.setState({
+        cells: {
+            [CELL]: {
+                required: false,
+                messages: [],
+                readOnly: 'Assigned by rule: Calculate age',
+            },
+        },
+    })
+    await expect.element(cell).toHaveValue('12')
+    inputOf(cell).blur()
+    expect(enqueued).toEqual([])
+})

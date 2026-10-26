@@ -611,11 +611,37 @@
                 "zustand@^5.0.15"
             ],
             "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/dhis2-value-types",
                 "devotta-labs/dhis2-blocks/program-rules"
             ],
             "files": [
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/Cell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/Cell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/CellStatus.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/CellStatus.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/TextCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/TextCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/cellProps.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/cellProps.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/useCellMode.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/useCellMode.ts"
+                },
                 {
                     "path": "packages/registry/blocks/data-entry/grid/navigation.ts",
                     "type": "registry:file",
@@ -660,6 +686,11 @@
                     "path": "packages/registry/blocks/data-entry/outbox/sync.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/outbox/sync.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/context.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/sources/eventSave.ts",

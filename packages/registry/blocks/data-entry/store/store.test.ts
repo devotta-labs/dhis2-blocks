@@ -122,6 +122,34 @@ test('a person’s commit takes the cell back from a rule', () => {
     expect(cell('r1.c1').source).toBe('person')
 })
 
+test('discarding a draft clears it with its error and queues nothing', () => {
+    const { enqueued, cell, store, commit } = setup([['r1.c1', '5']])
+    commit('r1.c1', 'abc')
+    store.getState().discardDraft('r1.c1')
+    expect(cell('r1.c1').draft).toBeUndefined()
+    expect(cell('r1.c1').error).toBeUndefined()
+    expect(cell('r1.c1')).toMatchObject({ value: '5', sync: 'idle' })
+    expect(enqueued).toEqual([])
+})
+
+test('discarding a draft is not an undo step', () => {
+    const { cell, store, commit } = setup([['r1.c1', '5']])
+    commit('r1.c1', '7')
+    commit('r1.c1', 'abc')
+    store.getState().discardDraft('r1.c1')
+    expect(store.getState().undo()).toBe(true)
+    expect(cell('r1.c1').value).toBe('5')
+    expect(store.getState().undo()).toBe(false)
+})
+
+test('discarding when there is no draft leaves the store alone', () => {
+    const { store } = setup([['r1.c1', '5']])
+    const before = store.getState().cells
+    store.getState().discardDraft('r1.c1')
+    store.getState().discardDraft('r1.c2')
+    expect(store.getState().cells).toBe(before)
+})
+
 test('undo restores the previous value as a new change', () => {
     const { store, enqueued, cell, commit } = setup([['r1.c1', '5']])
     commit('r1.c1', '6')

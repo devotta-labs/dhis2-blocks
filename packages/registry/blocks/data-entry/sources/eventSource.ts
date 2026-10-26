@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import type { z } from 'zod'
 import { cellKey } from '../model/types'
 import type { CellKey, GridColumn, GridRow } from '../model/types'
@@ -28,16 +29,18 @@ export interface EventSourceOptions {
     today?: string
 }
 
-const NOT_IN_STAGE = 'Not in this stage'
-
+// Translated when used, so the reasons follow the user's language.
 const READ_ONLY = {
-    categories:
-        'Programs with attribute categories are not supported in this grid',
-    noWrite: 'You do not have access to enter data in this stage',
-    skipped: 'Skipped events cannot be edited',
-    blocked: 'Completed events in this stage cannot be edited',
-    expiredPeriod: 'This event is in an expired period',
-    expiredCompletion: 'This event was completed too long ago to edit',
+    categories: () =>
+        i18n.t(
+            'Programs with attribute categories are not supported in this grid'
+        ),
+    noWrite: () => i18n.t('You do not have access to enter data in this stage'),
+    skipped: () => i18n.t('Skipped events cannot be edited'),
+    blocked: () => i18n.t('Completed events in this stage cannot be edited'),
+    expiredPeriod: () => i18n.t('This event is in an expired period'),
+    expiredCompletion: () =>
+        i18n.t('This event was completed too long ago to edit'),
 }
 
 type DataElement =
@@ -149,6 +152,7 @@ const toForm = (
 
     const values = new Map<CellKey, string>()
     const closed = new Map<CellKey, string>()
+    const notInStage = i18n.t('Not in this stage')
     for (const event of events) {
         const date = dateOf(event.occurredAt)
         if (date !== undefined) {
@@ -159,7 +163,7 @@ const toForm = (
         }
         for (const id of dataElements.keys()) {
             if (!fieldsOf.get(event.programStage)?.has(id)) {
-                closed.set(cellKey(event.event, id), NOT_IN_STAGE)
+                closed.set(cellKey(event.event, id), notInStage)
             }
         }
     }
@@ -179,29 +183,29 @@ const toForm = (
         }
         const date = eventDate(event)
         if (opensOn !== undefined && date !== undefined && date < opensOn) {
-            return READ_ONLY.expiredPeriod
+            return READ_ONLY.expiredPeriod()
         }
         return completionExpired(
             event.completedAt,
             program.completeEventsExpiryDays,
             today
         )
-            ? READ_ONLY.expiredCompletion
+            ? READ_ONLY.expiredCompletion()
             : undefined
     }
     const readOnlyReason = (event: TrackerEvent) => {
         const stage = stageById.get(event.programStage)
         if (!program.categoryCombo.isDefault) {
-            return READ_ONLY.categories
+            return READ_ONLY.categories()
         }
         if (!writable(stage)) {
-            return READ_ONLY.noWrite
+            return READ_ONLY.noWrite()
         }
         if (event.status === 'SKIPPED') {
-            return READ_ONLY.skipped
+            return READ_ONLY.skipped()
         }
         if (event.status === 'COMPLETED' && stage?.blockEntryForm) {
-            return READ_ONLY.blocked
+            return READ_ONLY.blocked()
         }
         return expiredReason(event)
     }

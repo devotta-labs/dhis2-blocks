@@ -3,8 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { parseTyped } from '@/components/dhis2-value-types'
 import { Textarea } from '@/components/dhis2/ui/textarea'
 import type { PopupEditorProps } from '../popupEditors'
-import { composing } from '../useCellMode'
-import { EditorButtons } from './EditorButtons'
+import { EditorButtons, saveOnCtrlEnter } from './EditorButtons'
 
 /**
  * Long text in a text area: Enter adds a line, Ctrl+Enter or ⌘+Enter saves. It opens on the stored text with the
@@ -71,16 +70,7 @@ export const LongTextEditor = ({
                     setProblem(undefined)
                     tell(target.value)
                 }}
-                onKeyDown={(event) => {
-                    if (
-                        event.key === 'Enter' &&
-                        (event.ctrlKey || event.metaKey) &&
-                        !composing(event)
-                    ) {
-                        event.preventDefault()
-                        commit()
-                    }
-                }}
+                onKeyDown={saveOnCtrlEnter(commit)}
                 className="max-h-60 min-h-24"
             />
             {problem === undefined ? null : (

@@ -666,6 +666,16 @@
                     "target": "@components/data-entry/cells/cellProps.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/AgeEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/AgeEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/CoordinateEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/CoordinateEditor.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/cells/editors/EditorButtons.tsx",
                     "type": "registry:file",
                     "target": "@components/data-entry/cells/editors/EditorButtons.tsx"
@@ -679,6 +689,11 @@
                     "path": "packages/registry/blocks/data-entry/cells/editors/MultiSelectEditor.tsx",
                     "type": "registry:file",
                     "target": "@components/data-entry/cells/editors/MultiSelectEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/age.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/age.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/cells/popupEditors.ts",

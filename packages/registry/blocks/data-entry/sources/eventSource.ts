@@ -10,7 +10,7 @@ import {
 } from './eventSchemas'
 import type { ProgramStage, TrackerEvent } from './eventSchemas'
 import { eventSaver } from './eventSave'
-import { completionExpired, expiryStart } from './expiry'
+import { completionExpired, expiryStart, localToday } from './expiry'
 import type { DataEntrySource, LoadedForm, RulesTarget } from './types'
 
 export interface EventSourceOptions {
@@ -45,14 +45,6 @@ const READ_ONLY = {
 
 type DataElement =
     ProgramStage['programStageDataElements'][number]['dataElement']
-
-/** The device's date as `YYYY-MM-DD`. */
-const localToday = () => {
-    const now = new Date()
-    return new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
-        .toISOString()
-        .slice(0, 10)
-}
 
 const dateOf = (dateTime: string | undefined) => dateTime?.slice(0, 10)
 

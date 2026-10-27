@@ -1,6 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
-import type { ReactNode } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import { Button } from '@/components/dhis2/ui/button'
+import { composing } from '../useCellMode'
 
 interface EditorButtonsProps {
     save(): void
@@ -25,3 +26,15 @@ export const EditorButtons = ({
         </Button>
     </div>
 )
+
+/** A key handler for a field of an editor: Ctrl+Enter or ⌘+Enter saves. */
+export const saveOnCtrlEnter = (save: () => void) => (event: KeyboardEvent) => {
+    if (
+        event.key === 'Enter' &&
+        (event.ctrlKey || event.metaKey) &&
+        !composing(event)
+    ) {
+        event.preventDefault()
+        save()
+    }
+}

@@ -26,8 +26,16 @@ const PERIOD_TYPES = new Map<string, PeriodType>([
     ['FinancialNov', 'FYNOV'],
 ])
 
+/** The device's date as `YYYY-MM-DD`. */
+export const localToday = () => {
+    const now = new Date()
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
+        .toISOString()
+        .slice(0, 10)
+}
+
 /** `YYYY-MM-DD` plus `days`; in UTC, so no daylight saving shift moves the date. */
-const addDays = (date: string, days: number) =>
+export const addDays = (date: string, days: number) =>
     new Date(Date.parse(`${date}T00:00:00Z`) + days * 86_400_000)
         .toISOString()
         .slice(0, 10)

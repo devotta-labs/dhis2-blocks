@@ -2,6 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import {
     checkStored,
     cellKind,
+    coordinateNumber,
     inputModeFor,
     parseTyped,
     typedText,
@@ -24,6 +25,94 @@ test.each([
         ok: true,
         value: stored,
     })
+})
+
+test.each([
+    // Bracketed is the stored [lng,lat] order; without brackets a coordinate is read latitude first.
+    ['[8.2, -11.4]', '[8.2,-11.4]'],
+    ['-11.4, 8.2', '[8.2,-11.4]'],
+    // Numbers are read as number cells read them.
+    ['.5, 5.', '[5,0.5]'],
+    ['[007, -0]', '[7,0]'],
+    ['90, 180', '[180,90]'],
+    ['-90, -180', '[-180,-90]'],
+])('the coordinate %s is stored as %s', (text, stored) => {
+    expect(parseTyped({ valueType: 'COORDINATE' }, text, GREGORIAN)).toEqual({
+        ok: true,
+        value: stored,
+    })
+})
+
+test.each([
+    // Never swapped to fit: a latitude past 90 is refused, not read as a longitude.
+    '91, 10',
+    '[10, 91]',
+    '10, 181',
+    '[181, 10]',
+    '+8, 1',
+    '1e1, 1',
+    '8,1,2',
+    '[1,2,3]',
+    '8.2',
+])('the coordinate %s is refused', (text) => {
+    expect(
+        parseTyped({ valueType: 'COORDINATE' }, text, GREGORIAN)
+    ).toMatchObject({
+        ok: false,
+        problem: { message: 'Enter a valid coordinate' },
+    })
+})
+
+test('a coordinate number is the number a number cell reads, within its limit', () => {
+    expect(coordinateNumber('latitude', ' .5 ')).toBe('0.5')
+    expect(coordinateNumber('latitude', '90')).toBe('90')
+    expect(coordinateNumber('latitude', '-90.1')).toBeUndefined()
+    expect(coordinateNumber('longitude', '180')).toBe('180')
+    expect(coordinateNumber('longitude', '-180.5')).toBeUndefined()
+    expect(coordinateNumber('longitude', '+1')).toBeUndefined()
+    expect(coordinateNumber('longitude', '')).toBeUndefined()
+})
+
+test('an age is typed as a date of birth in the system calendar and date format, and stored as an ISO date', () => {
+    const age = { valueType: 'AGE' }
+    const dayFirst = {
+        calendar: 'gregorian',
+        dateFormat: 'DD-MM-YYYY',
+    } as const
+    const ethiopian = {
+        calendar: 'ethiopian',
+        dateFormat: 'DD-MM-YYYY',
+    } as const
+    expect(parseTyped(age, '29-02-2020', dayFirst)).toEqual({
+        ok: true,
+        value: '2020-02-29',
+    })
+    expect(parseTyped(age, '21-06-2012', ethiopian)).toEqual({
+        ok: true,
+        value: '2020-02-29',
+    })
+    // The format of the system, as for any date.
+    expect(parseTyped(age, '2020-02-29', dayFirst)).toMatchObject({
+        ok: false,
+        problem: { message: 'Enter a valid date' },
+    })
+    expect(parseTyped(age, '30-02-2020', dayFirst)).toMatchObject({ ok: false })
+    expect(typedText(age, '2020-02-29', ethiopian)).toBe('21-06-2012')
+    expect(typedText(age, '2020-02-29', dayFirst)).toBe('29-02-2020')
+    expect(typedText(age, '2020-02-29', GREGORIAN)).toBe('2020-02-29')
+})
+
+test('a coordinate is read as "lat, lng" or "[lng,lat]" and stored as [lng,lat]', () => {
+    for (const text of [
+        '8.2, -11.4',
+        '8.2,-11.4',
+        '[-11.4,8.2]',
+        '[ -11.4 , 8.2 ]',
+    ]) {
+        expect(
+            parseTyped({ valueType: 'COORDINATE' }, text, GREGORIAN)
+        ).toEqual({ ok: true, value: '[-11.4,8.2]' })
+    }
 })
 
 test.each([

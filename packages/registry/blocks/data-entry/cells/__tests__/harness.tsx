@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { onTestFinished } from 'vitest'
 import type { Locator } from 'vitest/browser'
 import { createStore } from 'zustand/vanilla'
-import type { Field } from '@/components/dhis2-value-types'
+import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import type { NavKey } from '../../grid/navigation'
 import type { CellEffects } from '../../logic/effects'
 import { cellKey } from '../../model/types'
@@ -24,12 +24,14 @@ interface RigOptions {
     value?: string
     effects?: Partial<CellEffects>
     overrides?: CellOverrides
+    /** The system calendar and date format; Gregorian, year first, by default. */
+    settings?: ValueSettings
 }
 
 /** One cell in a store of its own, with the effects store and what the cell asked of the grid. */
 export const rig = (
     field: Field,
-    { value, effects, overrides }: RigOptions = {}
+    { value, effects, overrides, settings = GREGORIAN }: RigOptions = {}
 ) => {
     const enqueued: Array<[CellKey, string | null, string | null]> = []
     const moves: NavKey[] = []
@@ -44,7 +46,7 @@ export const rig = (
     const store = createDataEntryStore({
         tables: [table],
         values: new Map(value === undefined ? [] : [[CELL, value]]),
-        settings: GREGORIAN,
+        settings,
         enqueue: (key, saved, base) => enqueued.push([key, saved, base]),
     })
     const effectsStore = createStore<EffectsState>()(() => ({
@@ -60,7 +62,7 @@ export const rig = (
         store,
         effects: effectsStore,
         idScope: 'data-entry',
-        settings: GREGORIAN,
+        settings,
         announce: (text: string) => {
             announced.push(text)
         },

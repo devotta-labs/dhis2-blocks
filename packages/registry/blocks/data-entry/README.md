@@ -198,6 +198,16 @@ most, in the option set's order, with the count line): a choice is saved with Sa
 in option-set order joined by commas, and "Clear all" saves no value. Options a rule hid are not offered, unless the
 stored value holds one, which can still be unchecked.
 
+An age opens its date of birth, typed and shown in the system calendar and date format, with years, months and days
+beside it: typing in one fills the other, and a part left empty counts as zero. Retyping the age of a date of birth that
+was given leaves that date, even where the age also reaches another day. A date in the future, and a part that is not a
+whole number of zero or more (up to three digits), keep the editor open with a message, under the field it is about. A coordinate opens latitude and longitude
+fields (no map, and no location from the device) and is saved as `[lng,lat]`; a latitude outside -90 to 90 or a
+longitude outside -180 to 180 keeps the editor open with a message, and both fields empty save no value. Numbers are
+read as number cells read them (`.5` is `0.5`; `+8` is refused). In both, Ctrl+Enter or ⌘+Enter in a field saves. A
+coordinate is pasted as `lat, lng` or, with brackets, `[lng,lat]`; an age is pasted as a date in the system calendar and
+date format.
+
 Dates are typed and shown in the system calendar and date format, and an empty date cell says the format
 ("Date format: DD-MM-YYYY"). A row is named by its event date in that format once it has one, its stage after it where
 the grid shows several; a new row is "New event" until its date is typed.

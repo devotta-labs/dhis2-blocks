@@ -378,6 +378,7 @@ test('a rule locking the cell closes its editor without saving', async () => {
 })
 
 test('a value type with no editor stays read-only with "Edit this field in its own form"', async () => {
+    withEditor('COORDINATE', undefined)
     const { cell, moves } = await mount(
         { valueType: 'COORDINATE' },
         { value: '[-11.4,8.2]' }

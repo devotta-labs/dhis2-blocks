@@ -14,6 +14,7 @@ export type {
 export {
     cellKind,
     checkStored,
+    coordinateNumber,
     inputModeFor,
     parseTyped,
     typedText,

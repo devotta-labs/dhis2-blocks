@@ -40,6 +40,7 @@ cellKind(field): CellKind // text, number, date, dateTime, time, boolean, trueOn
 inputModeFor(field): InputMode | undefined // the keyboard for a typed cell
 parseTyped(field, text, settings): TypedValue // typed or pasted text -> the stored value, or a problem
 typedText(field, value, settings): string // a stored value -> what an editable cell shows
+coordinateNumber(axis, text): string | undefined // a typed latitude or longitude as numbers are stored, within its limit (90, 180)
 checkStored(field, value): ValueProblem | undefined // a stored value today's rules reject
 parseDateFormat(systemInfoDateFormat): DateFormat
 optionIndex(options): OptionIndex // the search text for an option list, built once per list and cached
@@ -58,4 +59,6 @@ searchOptions(index, query, limit = OPTION_LIMIT): { codes, total } // every wor
 - A field mask (DHIS2's TextPattern: `\d` digit, `\x` lower case, `\X` capital, `\w` letter or digit, also inside `[...]`; the rest a regular expression) must match the whole value. A blank mask, or one that is not a valid pattern, never blocks entry.
 - A date is converted through the system calendar and must convert back to itself, so a day the calendar does not have is refused. A date time is typed as the date, a space and `HH:mm`; a time may have a one-digit hour (`9:30` is stored `09:30`).
 - Pop-up types (`LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `ORGANISATION_UNIT`, `USERNAME`, `FILE_RESOURCE`, `IMAGE`) are checked and shown in their stored form. A value type this block does not know is `readOnly`.
+- An age is its date of birth: typed, pasted and shown as a date is, in the system calendar and date format, and stored as the ISO date.
+- A coordinate is typed or pasted as `lat, lng`, or with brackets as the stored `[lng,lat]`, and is stored as `[lng,lat]` (latitude within ±90, longitude within ±180). Its numbers are read as numbers are (`.5` is `0.5`, `+8` is refused), and which number is which is never guessed from its size.
 - It does not format values for reading; `dhis2-value-display` does.

@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import { AgeEditor } from './editors/AgeEditor'
+import { CoordinateEditor } from './editors/CoordinateEditor'
 import { LongTextEditor } from './editors/LongTextEditor'
 import { MultiSelectEditor } from './editors/MultiSelectEditor'
 
@@ -48,6 +50,8 @@ export type PopupEditor = (props: PopupEditorProps) => ReactNode
 export const popupEditors: PopupEditors = {
     LONG_TEXT: LongTextEditor,
     MULTI_TEXT: MultiSelectEditor,
+    AGE: AgeEditor,
+    COORDINATE: CoordinateEditor,
 }
 
 /** Value types whose typed text parses, so paste can fill them. */

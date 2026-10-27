@@ -72,6 +72,23 @@ const canonicalNumber = (text: string): string | undefined => {
     return /[1-9]/.test(digits) ? `${groups.sign}${digits}` : digits
 }
 
+const COORDINATE_LIMITS = { latitude: 90, longitude: 180 }
+
+/**
+ * A typed latitude or longitude in the form numbers are stored in (`.5` is `0.5`, `5.` is `5`), or `undefined` when
+ * it is not a number, as in a number cell, or lies outside its limit: 90 degrees for a latitude, 180 for a longitude.
+ */
+export const coordinateNumber = (
+    axis: keyof typeof COORDINATE_LIMITS,
+    text: string
+): string | undefined => {
+    const number = canonicalNumber(text.trim())
+    return number !== undefined &&
+        Math.abs(Number(number)) <= COORDINATE_LIMITS[axis]
+        ? number
+        : undefined
+}
+
 const whole =
     (pattern: RegExp, bad: () => ValueProblem): Check =>
     (value) =>
@@ -179,8 +196,8 @@ const CHECKS = new Map(
         COORDINATE: (value) => {
             const match = COORDINATE.exec(value)
             return match !== null &&
-                Math.abs(Number(match[1])) <= 180 &&
-                Math.abs(Number(match[2])) <= 90
+                Math.abs(Number(match[1])) <= COORDINATE_LIMITS.longitude &&
+                Math.abs(Number(match[2])) <= COORDINATE_LIMITS.latitude
                 ? undefined
                 : notACoordinate()
         },
@@ -368,6 +385,25 @@ const dateTimeToStored = (
 }
 
 /**
+ * A coordinate typed as `lat, lng`, or in the stored `[lng,lat]` order with brackets, as `[lng,lat]`; text that is
+ * neither, or has a number outside its limit, as typed, for `checkStored` to refuse. Which number is which is never
+ * guessed from its size.
+ */
+const coordinateToStored = (text: string): string => {
+    const bracketed = text.startsWith('[') && text.endsWith(']')
+    const parts = (bracketed ? text.slice(1, -1) : text).split(',')
+    if (parts.length !== 2) {
+        return text
+    }
+    const [first, second] = parts
+    const longitude = coordinateNumber('longitude', bracketed ? first : second)
+    const latitude = coordinateNumber('latitude', bracketed ? second : first)
+    return longitude === undefined || latitude === undefined
+        ? text
+        : `[${longitude},${latitude}]`
+}
+
+/**
  * What a person typed or pasted as the stored text, or `undefined` for a date
  * the calendar does not have. Text that does not fit is returned as typed, for
  * `checkStored` to refuse.
@@ -400,10 +436,18 @@ const toStored = (
             return calendarDateToIso(text, settings)
         case 'dateTime':
             return dateTimeToStored(text, settings)
+        case 'popup':
+            return field.valueType === 'COORDINATE'
+                ? coordinateToStored(text)
+                : text
         default:
             return text
     }
 }
+
+/** How a field's text is read and shown: an age is its date of birth, typed as any date is. */
+const textKind = (field: Field): CellKind =>
+    field.valueType === 'AGE' ? 'date' : cellKind(field)
 
 /** What a person typed or pasted → the stored value (`undefined` = no value), or a problem. */
 export const parseTyped = (
@@ -415,7 +459,7 @@ export const parseTyped = (
     if (trimmed === '') {
         return { ok: true, value: undefined }
     }
-    const kind = cellKind(field)
+    const kind = textKind(field)
     const stored = toStored(field, kind, trimmed, settings)
     // A yes-only field has no "no": the value is just absent.
     if (kind === 'trueOnly' && stored === 'false') {
@@ -444,7 +488,7 @@ export const typedText = (
     value: string,
     settings: ValueSettings
 ): string => {
-    switch (cellKind(field)) {
+    switch (textKind(field)) {
         case 'date':
             return isoToCalendarDate(storedDay(value) ?? value, settings)
         case 'dateTime': {

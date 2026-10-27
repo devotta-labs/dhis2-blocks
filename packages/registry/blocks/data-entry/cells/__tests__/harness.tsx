@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { onTestFinished } from 'vitest'
 import type { Locator } from 'vitest/browser'
 import { createStore } from 'zustand/vanilla'
 import type { Field } from '@/components/dhis2-value-types'
@@ -10,6 +11,8 @@ import { createAnnouncer, DataEntryReactContext } from '../../provider/context'
 import type { DataEntryContext, EffectsState } from '../../provider/context'
 import { createDataEntryStore } from '../../store/store'
 import type { CellOverrides } from '../cellProps'
+import { popupEditors } from '../popupEditors'
+import type { PopupEditor, PopupValueType } from '../popupEditors'
 
 const GREGORIAN = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 
@@ -86,6 +89,15 @@ export const rig = (
         ),
         stored: () => store.getState().cells[CELL],
     }
+}
+
+/** Registers `editor` for `type` until the test ends. */
+export const withEditor = (type: PopupValueType, editor: PopupEditor) => {
+    const before = popupEditors[type]
+    popupEditors[type] = editor
+    onTestFinished(() => {
+        popupEditors[type] = before
+    })
 }
 
 export const inputOf = (locator: Locator): HTMLInputElement => {

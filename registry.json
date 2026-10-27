@@ -647,6 +647,11 @@
                     "target": "@components/data-entry/cells/OptionList.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/cells/PopupCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/PopupCell.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/cells/TextCell.tsx",
                     "type": "registry:file",
                     "target": "@components/data-entry/cells/TextCell.tsx"
@@ -655,6 +660,11 @@
                     "path": "packages/registry/blocks/data-entry/cells/cellProps.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/cells/cellProps.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/popupEditors.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/popupEditors.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/cells/useCellMode.ts",

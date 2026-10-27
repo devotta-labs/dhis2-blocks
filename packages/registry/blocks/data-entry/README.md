@@ -162,8 +162,8 @@ notes, and `aria-invalid` and `aria-required` say whether the cell has an error 
 focus is in the cell; Escape hides them, unless the control calls `preventDefault` on it. Paste and Ctrl+Z (Cmd+Z) are
 the grid's only in the default controls: a replacement keeps its own, and a block pasted from the cells around it still
 lands in it.
-The default controls give the pop-up types and value types this block does not know a read-only reason of their own
-("Edit this field in its own form"); a replacement is not given it. Keep the object stable (a module constant or
+The default controls give value types this block does not know, and pop-up types without an editor, a read-only
+reason of their own ("Edit this field in its own form"); a replacement is not given it. Keep the object stable (a module constant or
 `useMemo`): a new one renders every cell again.
 
 `useCell(cellKey).commit(text)` saves what a person typed or chose, through the store the default controls use. It
@@ -181,6 +181,16 @@ too. A block copied from a spreadsheet pastes from the focused cell, skipping ce
 (Cmd+Z) undoes the last change. A value its type refuses stays in the cell with its error and is not saved; nothing
 typed is lost. In an option cell, typing lists the matches and Enter or Tab picks the highlighted one; emptied text
 highlights none, so Enter or Tab clears the cell. Delete clears a checkbox, and `y`, `n` and Delete set a Yes/No field.
+
+Pop-up types (`LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `ORGANISATION_UNIT`, `USERNAME`, `FILE_RESOURCE` and
+`IMAGE`) show their value as DHIS2 displays it (an age as its date of birth, in the system date format) and are edited
+in a small editor, a dialog named "Edit …" that opens under the cell: Enter, F2, F4, Alt+↓, a click on the selected
+cell or a double-click opens it, and so does typing in long text, org unit and username cells, starting from the text
+typed (a key, or what a dead key or an input method composed). Tab and Shift+Tab stay inside the editor, and the cell's
+notes hide while it is open. Escape or Cancel closes it without saving; a save goes through the cell's `commit` and
+returns to the cell, where the next Enter moves on. A press outside the editor, or focus moved out of it, saves what
+the editor last reported, or says why it cannot be saved. A rule that locks or hides the cell while its editor is open
+closes it unsaved and says why. A pasted block fills pop-up cells like any cell, except files and images.
 
 Dates are typed and shown in the system calendar and date format, and an empty date cell says the format
 ("Date format: DD-MM-YYYY"). A row is named by its event date in that format once it has one, its stage after it where
@@ -251,7 +261,7 @@ The `performance` measures `data-entry:rules` (the first slice) and `data-entry:
   not evaluated.
 - Read-only, with the reason on each cell: events the user cannot write in that stage, skipped events, completed events
   in a stage that blocks entry, expired events (unless the user has `F_EDIT_EXPIRED`), and every event of a program with
-  attribute categories. `LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `ORGANISATION_UNIT`, `USERNAME`,
-  `FILE_RESOURCE` and `IMAGE` show their value and are edited in their own form.
+  attribute categories. `TRACKER_ASSOCIATE`, `REFERENCE`, `GEOJSON`, and a pop-up type without an editor, show their
+  value and are edited in their own form.
 - A form loads once per mount, and not again when the app invalidates its queries; changes made elsewhere show after
   the next load.

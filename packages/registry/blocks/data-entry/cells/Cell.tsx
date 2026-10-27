@@ -8,6 +8,8 @@ import type { CellComponent, CellOverrides, CellProps } from './cellProps'
 import { CellNotes, CellStatus, describeCell } from './CellStatus'
 import { BooleanCell, TrueOnlyCell } from './ChoiceCells'
 import { OptionCell } from './OptionCell'
+import { PopupCell } from './PopupCell'
+import { editorFor } from './popupEditors'
 import { TextCell } from './TextCell'
 
 // A cell with no control: greyed, skipped by the arrows, its reason read out.
@@ -27,7 +29,7 @@ export const cells = Object.freeze({
     boolean: BooleanCell,
     trueOnly: TrueOnlyCell,
     option: OptionCell,
-    popup: TextCell,
+    popup: PopupCell,
     readOnly: TextCell,
 } satisfies Record<CellKind, CellComponent>)
 
@@ -46,9 +48,13 @@ const OpenCell = (props: CellProps) => {
     const kind = cellKind(props.field)
     const column = props.cellKey.slice(props.cellKey.indexOf('.') + 1)
     const replacement = replacementFor(overrides, column, props.field)
-    // A value type edited elsewhere is the default controls' reason; a replacement is how a host edits it here.
+    // A value type no default control edits (unknown, or a pop-up type without an editor) is edited elsewhere; a
+    // replacement is how a host edits it here.
     const elsewhere =
-        replacement === undefined && (kind === 'popup' || kind === 'readOnly')
+        replacement === undefined &&
+        (kind === 'readOnly' ||
+            (kind === 'popup' &&
+                editorFor(props.field.valueType) === undefined))
             ? i18n.t('Edit this field in its own form')
             : undefined
     const reason = hiddenBy ?? readOnly ?? elsewhere

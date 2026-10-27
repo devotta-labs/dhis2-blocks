@@ -178,7 +178,9 @@ export const CellStatus = ({
                     className={cn(
                         POPOVER_CLASS,
                         'pointer-events-none z-40 hidden w-max max-w-72 flex-col gap-0.5 rounded-dhis2-sm bg-dhis2-grey-900 px-2 py-1 text-xs text-white',
-                        !dismissed && 'group-focus-within/cell:flex'
+                        !dismissed && 'group-focus-within/cell:flex',
+                        // An open editor covers the cell's place below it.
+                        'group-has-[[role=dialog]]/cell:hidden'
                     )}
                 >
                     {notes.map(({ id, tone, text }) => (

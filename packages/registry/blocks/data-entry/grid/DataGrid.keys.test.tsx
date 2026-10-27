@@ -1,5 +1,6 @@
 /// <reference types="@vitest/browser-playwright" />
 import { userEvent } from 'vitest/browser'
+import { withEditor } from '../cells/__tests__/harness'
 import type { CellComponent } from '../cells/cellProps'
 import { cellKey } from '../model/types'
 import { useCellView } from '../provider/context'
@@ -54,6 +55,36 @@ test('a replacement control keeps its own paste and undo; a block pasted across 
     expect(paste(age, '7\tSeen at home')).toBe(true)
     expect(value(cellKey('t1r0', 'c0'))).toBe('7')
     expect(value(cellKey('t1r0', 'c1'))).toBe('Seen at home')
+})
+
+test('a pasted block fills pop-up cells that read text and skips file cells', async () => {
+    const editor = () => null
+    withEditor('LONG_TEXT', editor)
+    withEditor('FILE_RESOURCE', editor)
+    const { value } = await mount([
+        makeTable({
+            columns: ['Age (years)', 'Notes', 'Scan', 'Visits'],
+            fields: [
+                INTEGER,
+                { valueType: 'LONG_TEXT' },
+                { valueType: 'FILE_RESOURCE' },
+                INTEGER,
+            ],
+        }),
+    ])
+    const age = control(cellKey('t1r0', 'c0'))
+    age.focus()
+    expect(paste(age, '7\tSeen at home\tscan.png\t2')).toBe(true)
+    expect(value(cellKey('t1r0', 'c0'))).toBe('7')
+    expect(value(cellKey('t1r0', 'c1'))).toBe('Seen at home')
+    // The file cell is skipped, and the block does not shift past it.
+    expect(value(cellKey('t1r0', 'c2'))).toBeUndefined()
+    expect(value(cellKey('t1r0', 'c3'))).toBe('2')
+    // A pop-up cell in Ready takes a paste of its own, as a typed cell does.
+    const notes = control(cellKey('t1r0', 'c1'))
+    notes.focus()
+    expect(paste(notes, 'Follow up')).toBe(true)
+    expect(value(cellKey('t1r0', 'c1'))).toBe('Follow up')
 })
 
 test('in a right-to-left page, Left and Right move the way they point', async () => {

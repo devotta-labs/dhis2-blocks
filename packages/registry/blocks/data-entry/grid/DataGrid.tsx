@@ -19,6 +19,7 @@ import { Cell, replacementFor } from '../cells/Cell'
 import { cellDomId } from '../cells/cellProps'
 import type { CellOverrides } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
+import { editorFor, pasteablePopupTypes } from '../cells/popupEditors'
 import type { CellMessage, MessageKind } from '../logic/effects'
 import { cellKey } from '../model/types'
 import type { CellKey, GridRow, GridTable } from '../model/types'
@@ -35,6 +36,9 @@ import { nextCell } from './navigation'
 import type { CellPosition, NavGrid, NavKey } from './navigation'
 import { isBlock, parseBlock, pasteTargets } from './paste'
 
+// Read by the field's value type, which can be any DHIS2 value type.
+const pasteable: ReadonlySet<string> = pasteablePopupTypes
+
 /** What `nextCell` and `pasteTargets` walk; each lookup is a map read, as they ask once per cell stepped over. */
 const navGrid = (
     tables: ReadonlyArray<GridTable>,
@@ -44,12 +48,17 @@ const navGrid = (
     tables: tables.map(({ rows, columns, closed }) => {
         const keyAt = (row: number, column: number) =>
             cellKey(rows[row].id, columns[column].id)
-        // Pop-up and read-only kinds are edited in their own form, never pasted into, unless a replacement edits them.
+        // Read-only kinds, pop-up kinds without an editor, and pop-up kinds whose text does not parse (files) are never
+        // pasted into, unless a replacement edits them.
         const elsewhere = columns.map(({ id, field }) => {
             const kind = cellKind(field)
+            const takesText =
+                kind === 'popup'
+                    ? editorFor(field.valueType) !== undefined &&
+                      pasteable.has(field.valueType)
+                    : kind !== 'readOnly'
             return (
-                (kind === 'popup' || kind === 'readOnly') &&
-                replacementFor(overrides, id, field) === undefined
+                !takesText && replacementFor(overrides, id, field) === undefined
             )
         })
         const isOpen = (row: number, column: number) =>

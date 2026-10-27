@@ -169,9 +169,10 @@ test('event-program rows carry no enrollment', async () => {
     })
 })
 
-test('the reason a cell is closed is translated', async () => {
+test('the reason a cell is closed, and the event date’s header, are translated', async () => {
     i18n.addResources('xx', 'translation', {
         'Not in this stage': 'Pas dans cette étape',
+        'Event date': 'Date de l’événement',
     })
     await i18n.changeLanguage('xx')
     try {
@@ -180,6 +181,7 @@ test('the reason a cell is closed is translated', async () => {
         expect(table.closed.get(cellKey('yDPqyTvcRpA', 'de0FEHSIoxh'))).toBe(
             'Pas dans cette étape'
         )
+        expect(table.columns[0].label).toBe('Date de l’événement')
     } finally {
         await i18n.changeLanguage('en')
     }
@@ -205,6 +207,7 @@ test('one person’s events across stages share one table with "Not in this stag
     expect(table.rows[1]).toEqual({
         id: 'yDPqyTvcRpA',
         label: '2026-04-14 · Second antenatal care visit',
+        stage: 'Second antenatal care visit',
         programStageId: SECOND_VISIT,
         enrollmentId: PERSON,
         orgUnitId: PERSON_ORG_UNIT,
@@ -252,6 +255,16 @@ test('reads values and required fields per stage', async () => {
         new Set(['eMyVanycQSC', 'msodh3rEMJa', 'fWIAEtYVEGk', 'K6uUAvq500H'])
     )
     expect(form.strategy.get(INPATIENT_STAGE)).toBe('ON_UPDATE_AND_INSERT')
+})
+
+test('required fields and strategies cover every stage of the program, so changes from its other grids are checked', async () => {
+    const personForm = await person({
+        programStageId: SECOND_VISIT,
+    }).load(engineFor(rmnchProgram, { events: [] }, meAdmin).engine)
+    const stages = rmnchProgram.programStages.map(({ id }) => id)
+    expect(personForm.rules?.programStageIds).toEqual([SECOND_VISIT])
+    expect([...personForm.required.keys()]).toEqual(stages)
+    expect([...personForm.strategy.keys()]).toEqual(stages)
 })
 
 test('reads each stage’s sections with their data elements', async () => {
@@ -328,6 +341,8 @@ test('new rows: one org unit for event programs, a named stage for one person', 
         programStageId: SECOND_VISIT,
         orgUnitId: PERSON_ORG_UNIT,
         enrollmentId: PERSON,
+        // A grid of several stages names each row's stage, new rows' too.
+        stage: 'Second antenatal care visit',
     })
     // First visit only; in both visits; the event date.
     const closedColumns = repeatable.closedByStage.get(SECOND_VISIT)
@@ -371,7 +386,11 @@ test('an event that has not happened yet is labelled by its scheduled date', asy
         withEvent(0, scheduled),
         meAdmin
     )
-    expect(form.tables[0].rows[0].label).toBe('2026-11-02')
+    expect(form.tables[0].rows[0]).toMatchObject({
+        label: '2026-11-02',
+        // For the grid to show in the system's calendar and format.
+        scheduledAt: '2026-11-02',
+    })
     expect(form.values.has(cellKey('NGxc7JpmqqD', EVENT_DATE_COLUMN))).toBe(
         false
     )

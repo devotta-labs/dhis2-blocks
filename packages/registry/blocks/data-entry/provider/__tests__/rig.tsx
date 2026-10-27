@@ -29,7 +29,7 @@ import { DataEntry } from '../DataEntry'
 import { DataEntryViewContext } from '../hooks'
 import type { DataEntryView } from '../hooks'
 
-const USER = 'userA'
+export const USER = 'userA'
 export const KEY = 'memory:visits'
 const STAGE = 's1'
 const ORG_UNIT = 'o1'
@@ -124,11 +124,15 @@ const gates: Array<() => void> = []
 export const memorySource = (form: LoadedForm, key = KEY) => {
     const sent: OutboxRecord[][] = []
     const statuses: Array<[string, string]> = []
+    let loads = 0
     let gate = Promise.resolve()
     let failing = false
     const source: DataEntrySource = {
         key,
-        load: async () => form,
+        load: async () => {
+            loads += 1
+            return form
+        },
         save: async (_engine, records) => {
             sent.push([...records])
             if (failing) {
@@ -151,11 +155,16 @@ export const memorySource = (form: LoadedForm, key = KEY) => {
                 },
             ]
         },
-        restoreRows: (records) => {
+        // Only the new rows this form adds: same stage and org unit.
+        restoreRows: async (_engine, records, { newRows }) => {
             const rows = new Map<string, GridRow>()
             for (const { key: restored, row } of records) {
                 const id = restored.slice(0, restored.indexOf('.'))
-                if (row?.isNew) {
+                if (
+                    row?.isNew &&
+                    row.programStageId === newRows?.programStageId &&
+                    row.orgUnitId === newRows.orgUnitId
+                ) {
                     rows.set(id, {
                         id,
                         label: 'New event',
@@ -173,6 +182,8 @@ export const memorySource = (form: LoadedForm, key = KEY) => {
         source,
         sent,
         statuses,
+        /** How often the form was loaded. */
+        loads: () => loads,
         hold() {
             gate = new Promise((resolve) => gates.push(resolve))
         },
@@ -246,12 +257,18 @@ export const change = (
 
 interface MountOptions {
     server?: string
+    /** The app's React Query client; a fresh one by default. */
+    client?: QueryClient
     cells?: CellOverrides
     children?: ReactNode
     /** Who the server says is signed in, asked on every request; an error is thrown as the server's answer. */
     signedIn?: () => string | Error
     /** More resources the fake server answers, such as a program's rules. */
     data?: ComponentProps<typeof CustomDataProvider>['data']
+    /** How many `DataEntry`s of the source the page shows, side by side; the last one is read. */
+    copies?: number
+    /** The status the form is waiting for before `mount` resolves. */
+    until?: DataEntryView['status']
 }
 
 /** `DataEntry` over the source, with the grid unless other children are given; resolves once it is ready. */
@@ -259,10 +276,15 @@ export const mount = async (
     source: DataEntrySource,
     {
         server = freshServer(),
+        client = new QueryClient({
+            defaultOptions: { queries: { retry: false } },
+        }),
         cells,
         children = <DataGrid />,
         signedIn = () => USER,
         data: more = {},
+        copies = 1,
+        until = 'ready',
     }: MountOptions = {}
 ) => {
     // The abort signal of every `me` request, in order.
@@ -279,9 +301,6 @@ export const mount = async (
         'system/info': { calendar: 'iso8601', dateFormat: 'yyyy-mm-dd' },
         ...more,
     } satisfies ComponentProps<typeof CustomDataProvider>['data']
-    const client = new QueryClient({
-        defaultOptions: { queries: { retry: false } },
-    })
     let context: DataEntryContext | undefined
     let view: StoreApi<DataEntryView> | undefined
     const Grab = () => {
@@ -299,15 +318,17 @@ export const mount = async (
         >
             <CustomDataProvider data={data}>
                 <QueryClientProvider client={client}>
-                    <DataEntry source={source} cells={cells}>
-                        {children}
-                        <Grab />
-                    </DataEntry>
+                    {Array.from({ length: copies }, (_, copy) => (
+                        <DataEntry key={copy} source={source} cells={cells}>
+                            {children}
+                            <Grab />
+                        </DataEntry>
+                    ))}
                 </QueryClientProvider>
             </CustomDataProvider>
         </Provider>
     )
-    await expect.poll(() => view?.getState().status).toBe('ready')
+    await expect.poll(() => view?.getState().status).toBe(until)
     const got = <T,>(value: T | undefined) => {
         if (value === undefined) {
             throw new Error('DataEntry did not render its children')
@@ -317,6 +338,7 @@ export const mount = async (
     return {
         server,
         screen,
+        client,
         meSignals,
         context: () => got(context),
         view: () => got(view).getState(),

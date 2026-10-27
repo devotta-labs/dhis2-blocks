@@ -1,6 +1,6 @@
 import { useConfig, useDataEngine } from '@dhis2/app-runtime'
-import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { z } from 'zod'
 import { useStore } from 'zustand'
@@ -9,7 +9,7 @@ import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { parseDateFormat } from '@/components/dhis2-value-types'
 import type { CellOverrides } from '../cells/cellProps'
 import { summarise } from '../logic/summary'
-import type { DataEntrySource } from '../sources/types'
+import type { DataEntrySource, LoadedForm } from '../sources/types'
 import {
     createAnnouncer,
     DataEntryReactContext,
@@ -18,8 +18,9 @@ import {
 import type { DataEntryContext } from './context'
 import { DataEntryViewContext } from './hooks'
 import type { DataEntryView } from './hooks'
-import { emptyForm, openForm } from './openForm'
+import { openForm, summaryOf } from './openForm'
 import type { OpenForm } from './openForm'
+import { emptyForm, lockedForm } from './standInForms'
 import { useLeaveWarning } from './useLeaveWarning'
 import { useRuleEffects } from './useRuleEffects'
 
@@ -38,6 +39,9 @@ const accountSchema = z.object({
         dateFormat: z.string().optional(),
     }),
 })
+
+/** A failure's message, for `DataEntryView.error`. */
+const reasonOf = (error: Error | null) => error?.message ?? String(error)
 
 /** The one polite live region, saying what `announce` was given. */
 export const LiveRegion = () => {
@@ -60,27 +64,59 @@ interface DataEntryProps {
 
 /**
  * Loads the source's form and keeps it: cells and their effects, unsent changes kept on this device per user and
- * server, one sync loop per browser, the leave-page prompt while anything is unsent, and one polite live region.
+ * server, one sync loop per browser, the leave-page prompt while anything is unsent, and one polite live region. Once
+ * someone else signs in, the form locks until the page is reloaded.
  */
 export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
     const engine = useDataEngine()
+    const queryClient = useQueryClient()
     // Absolute, so the outbox is named for the server however the app reaches it.
     const serverUrl = new URL(useConfig().baseUrl, window.location.href).href
     const account = useQuery({
         queryKey: ['data-entry', 'account', serverUrl],
         queryFn: async ({ signal }) =>
             accountSchema.parse(await engine.query(ACCOUNT_QUERY, { signal })),
-        staleTime: Infinity,
     })
-    const loaded = useQuery({
-        queryKey: ['data-entry', 'form', source.cacheKey ?? source.key],
-        queryFn: ({ signal }) => source.load(engine, signal),
-        // Loaded once per mount: loading again would replace the cells under the person's edits.
-        staleTime: Infinity,
-        gcTime: 0,
-    })
-    const form = loaded.data
+    const cacheKey = source.cacheKey ?? source.key
+    const [loaded, setLoaded] = useState<{ form?: LoadedForm; error?: string }>(
+        {}
+    )
+    useEffect(() => {
+        let live = true
+        // Fetched once per mount and not watched: loading again, as an app-wide invalidation would, replaces the cells
+        // under the person's edits.
+        queryClient
+            .fetchQuery({
+                queryKey: ['data-entry', 'form', cacheKey],
+                queryFn: ({ signal }) => source.load(engine, signal),
+                gcTime: 0,
+            })
+            .then(
+                (form) => live && setLoaded({ form }),
+                (error) => live && setLoaded({ error: reasonOf(error) })
+            )
+        return () => {
+            live = false
+            setLoaded({})
+        }
+        // A source with the same keys is the same form.
+    }, [queryClient, cacheKey, engine])
+    const form = loaded.form
     const userId = account.data?.me.id
+    // The user this mount opened the form for. Once DHIS2 names someone else, the form stays locked until a reload.
+    const [openedFor, setOpenedFor] = useState<string>()
+    if (openedFor === undefined && userId !== undefined) {
+        setOpenedFor(userId)
+    }
+    const [locked, setLocked] = useState(false)
+    if (
+        !locked &&
+        openedFor !== undefined &&
+        userId !== undefined &&
+        userId !== openedFor
+    ) {
+        setLocked(true)
+    }
     const calendar = account.data?.systemInfo.calendar
     const dateFormat = account.data?.systemInfo.dateFormat
     const settings = useMemo(
@@ -91,6 +127,8 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
         [calendar, dateFormat]
     )
 
+    // Every DOM id of the form starts with it, so two forms on one page never share one.
+    const idScope = `data-entry-${useId().replaceAll(':', '')}`
     const [start] = useState(() => performance.now())
     const measured = useRef(false)
     const [announcer] = useState(createAnnouncer)
@@ -98,19 +136,22 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
     const [view] = useState(() =>
         createStore<DataEntryView>()(() => ({
             status: 'loading',
+            tables: [],
             summary: summarise({}, {}, new Map(), []),
             sync: 'idle',
             addRow: placeholder.addRow,
             complete: placeholder.complete,
             reopen: placeholder.reopen,
             downloadUnsent: placeholder.downloadUnsent,
+            discardFailed: placeholder.discardFailed,
         }))
     )
     const [opened, setOpened] = useState<OpenForm>()
-    const [failed, setFailed] = useState(false)
+    // Why opening the loaded form failed.
+    const [failed, setFailed] = useState<string>()
 
     useEffect(() => {
-        if (form === undefined || userId === undefined) {
+        if (form === undefined || openedFor === undefined || locked) {
             return
         }
         let cancelled = false
@@ -121,9 +162,16 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
             engine,
             settings,
             serverUrl,
-            userId,
+            userId: openedFor,
             view,
             announce: announcer.announce,
+            onSignedInAsOther() {
+                setLocked(true)
+                // So every grid of this server, and the next mount, learn who is signed in now.
+                void queryClient.invalidateQueries({
+                    queryKey: ['data-entry', 'account', serverUrl],
+                })
+            },
         }).then(
             (next) => {
                 if (cancelled) {
@@ -133,9 +181,9 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
                 open = next
                 setOpened(next)
             },
-            () => {
+            (error) => {
                 if (!cancelled) {
-                    setFailed(true)
+                    setFailed(reasonOf(error))
                 }
             }
         )
@@ -143,27 +191,56 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
             cancelled = true
             open?.close()
             setOpened(undefined)
-            setFailed(false)
+            setFailed(undefined)
         }
         // A source with the same keys is the same form: its keys are in the form's query key.
-    }, [form, userId, serverUrl, settings, engine, view, announcer])
+    }, [
+        form,
+        openedFor,
+        locked,
+        serverUrl,
+        settings,
+        engine,
+        view,
+        announcer,
+        queryClient,
+    ])
 
-    const active = opened ?? placeholder
+    const lockedView = useMemo(
+        () =>
+            locked && form !== undefined
+                ? lockedForm(form, settings, source.key)
+                : undefined,
+        [locked, form, settings, source.key]
+    )
+    const active = lockedView ?? opened ?? placeholder
+    const error =
+        loaded.error ??
+        (account.isLoadingError ? reasonOf(account.error) : undefined) ??
+        failed
     const status =
-        loaded.isError || account.isError || failed
+        error !== undefined
             ? 'error'
-            : opened === undefined
+            : active === placeholder
               ? 'loading'
               : 'ready'
     useEffect(() => {
         view.setState({
             status,
+            error,
             addRow: active.addRow,
             complete: active.complete,
             reopen: active.reopen,
             downloadUnsent: active.downloadUnsent,
+            discardFailed: active.discardFailed,
         })
-    }, [view, status, active])
+    }, [view, status, error, active])
+    // Locked, nothing is sent: the form's last sync state no longer applies.
+    useEffect(() => {
+        if (lockedView !== undefined) {
+            view.setState({ sync: 'idle', summary: summaryOf(lockedView) })
+        }
+    }, [view, lockedView])
 
     useEffect(() => {
         if (opened !== undefined && !measured.current) {
@@ -178,17 +255,20 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
     )
 
     const tables = useStore(active.tables, (state) => state.tables)
+    useEffect(() => view.setState({ tables }), [view, tables])
     useRuleEffects({
         open: opened,
         form,
         tables,
         settings,
         announce: announcer.announce,
+        idScope,
     })
     const context = useMemo(
         (): DataEntryContext => ({
             store: active.store,
             effects: active.effects,
+            idScope,
             settings,
             announce: announcer.announce,
             announcements: announcer.announcements,
@@ -197,7 +277,7 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
             addRow: active.addRow,
             overrides: cells,
         }),
-        [active, tables, settings, announcer, cells]
+        [active, tables, idScope, settings, announcer, cells]
     )
     return (
         <DataEntryViewContext.Provider value={view}>

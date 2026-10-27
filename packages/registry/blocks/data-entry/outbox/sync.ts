@@ -1,6 +1,6 @@
 import { FetchError } from '@dhis2/app-runtime'
-import { z } from 'zod'
 import type { CellKey } from '../model/types'
+import { classify, PartlySaved, RETRY } from './failure'
 import type { Outbox, OutboxRecord } from './outbox'
 
 export interface SaveOutcome {
@@ -20,7 +20,8 @@ export interface SyncOptions {
     /**
      * One call per source key with all its queued and waiting records, oldest first. Throws for network or
      * session failures; a refusal is an outcome. A record it gives no outcome for stays as it was. A
-     * `FetchError` for a 403, a 409 or another client error (400 to 499) refuses all the records of the call.
+     * `FetchError` for a 403, a 409 or another client error (400 to 499) refuses all the records of the call. A
+     * `PartlySaved` keeps the outcomes it carries, and its failure is about the other records alone.
      */
     save(
         sourceKey: string,
@@ -48,49 +49,6 @@ const LONGEST_DELAY = 60_000
 
 const wait = (ms: number) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms))
-
-// DHIS2's error body carries the status and the reason; a field that is not there as a number or text counts as absent.
-const bodySchema = z
-    .object({
-        httpStatusCode: z.number().optional().catch(undefined),
-        message: z.string().optional().catch(undefined),
-    })
-    .catch({})
-
-type Failure =
-    | { kind: 'signIn' }
-    | { kind: 'retry' }
-    | { kind: 'refusal'; reason: string }
-
-const RETRY: Failure = { kind: 'retry' }
-
-const RETRYABLE_CLIENT_ERRORS = new Set([408, 429])
-
-/**
- * The platform throws `access` for 401, 403 and 409: a 401 means the session has lapsed and the others refuse
- * the records. Any other client error (400 to 499) is a refusal too, except a timeout (408) or too many requests
- * (429); those, a server error or no status may pass on a retry.
- */
-const classify = (error: FetchError): Failure => {
-    const body = bodySchema.parse(error.details)
-    const status = body.httpStatusCode
-    const reason = body.message ?? error.message
-    if (error.type === 'access') {
-        // A 401 with no JSON message arrives as 'Unauthorized', a 403 as 'Forbidden'.
-        const lapsed =
-            status === undefined
-                ? error.message === 'Unauthorized'
-                : status === 401
-        return lapsed ? { kind: 'signIn' } : { kind: 'refusal', reason }
-    }
-    return error.type === 'unknown' &&
-        status !== undefined &&
-        status >= 400 &&
-        status < 500 &&
-        !RETRYABLE_CLIENT_ERRORS.has(status)
-        ? { kind: 'refusal', reason }
-        : RETRY
-}
 
 /** Whether the error means the session has lapsed: the person must sign in before anything more is sent. */
 export const sessionLapsed = (error: FetchError) =>
@@ -182,7 +140,13 @@ export const startSync = ({
             let outcomes: SaveOutcome[]
             try {
                 outcomes = await save(sourceKey, sent)
-            } catch (error) {
+            } catch (thrown) {
+                // What the save finished is kept, so a retry sends only the rest.
+                const done =
+                    thrown instanceof PartlySaved ? thrown.outcomes : []
+                await settle(sent, done)
+                const error =
+                    thrown instanceof PartlySaved ? thrown.failure : thrown
                 const failure =
                     error instanceof FetchError ? classify(error) : RETRY
                 if (failure.kind === 'signIn') {
@@ -195,12 +159,15 @@ export const startSync = ({
                             : new Error(String(error))
                     continue
                 }
-                outcomes = sent.map((record) => ({
-                    sourceKey,
-                    key: record.key,
-                    result: 'failed',
-                    reason: failure.reason,
-                }))
+                const answered = new Set(done.map(({ key }) => key))
+                outcomes = sent
+                    .filter(({ key }) => !answered.has(key))
+                    .map((record) => ({
+                        sourceKey,
+                        key: record.key,
+                        result: 'failed',
+                        reason: failure.reason,
+                    }))
             }
             await settle(sent, outcomes)
         }

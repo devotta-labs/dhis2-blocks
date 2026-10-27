@@ -35,6 +35,8 @@ interface Announcement {
 export interface DataEntryContext {
     store: StoreApi<DataEntryState>
     effects: StoreApi<EffectsState>
+    /** Starts every DOM id of the form, so two forms on one page never share one. */
+    idScope: string
     settings: ValueSettings
     /** Says an outcome in the grid's one polite live region. */
     announce(text: string): void
@@ -49,23 +51,39 @@ export interface DataEntryContext {
 
 // Long enough for screen readers to notice the region emptied, so the same text said twice is heard twice.
 const CLEARED_FOR_MS = 100
+// Between one text and the next, so a text said right after another is heard after it rather than over it.
+const APART_MS = 150
 
-/** `announce` and the text it sets: the region is emptied first, then given the text. */
+/**
+ * `announce` and the text it sets: each text in turn, 150 ms after the one before, the region emptied first. A newer
+ * text replaces one still waiting: it is the newer news.
+ */
 export const createAnnouncer = (): Pick<
     DataEntryContext,
     'announce' | 'announcements'
 > => {
     const announcements = createStore<Announcement>()(() => ({ text: '' }))
-    let timer: ReturnType<typeof setTimeout> | undefined
+    const waiting: string[] = []
+    let saying = false
+    const sayNext = () => {
+        const text = waiting.shift()
+        saying = text !== undefined
+        if (text === undefined) {
+            return
+        }
+        announcements.setState({ text: '' })
+        setTimeout(() => {
+            announcements.setState({ text })
+            setTimeout(sayNext, APART_MS - CLEARED_FOR_MS)
+        }, CLEARED_FOR_MS)
+    }
     return {
         announcements,
         announce(text) {
-            clearTimeout(timer)
-            announcements.setState({ text: '' })
-            timer = setTimeout(
-                () => announcements.setState({ text }),
-                CLEARED_FOR_MS
-            )
+            waiting.splice(0, waiting.length, text)
+            if (!saying) {
+                sayNext()
+            }
         },
     }
 }
@@ -100,7 +118,7 @@ export const useDataEntryContext = (): DataEntryContext => {
 }
 
 /** One cell's effects; for a cell that needs no more, so it re-renders only when these change. */
-export const useCellEffects = (key: CellKey): CellEffects => {
+const useCellEffects = (key: CellKey): CellEffects => {
     const { effects } = useDataEntryContext()
     return useStore(effects, (state) => state.cells[key] ?? EMPTY_EFFECTS)
 }

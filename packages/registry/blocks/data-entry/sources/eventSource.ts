@@ -126,7 +126,7 @@ const toForm = (
     const columns: GridColumn[] = [
         {
             id: EVENT_DATE_COLUMN,
-            label: 'Event date',
+            label: i18n.t('Event date'),
             field: { valueType: 'DATE' },
         },
         ...Array.from(dataElements.values(), toColumn),
@@ -143,6 +143,11 @@ const toForm = (
                     : shown.length > 1
                       ? `${date} · ${stageName}`
                       : date,
+            stage: shown.length > 1 ? stageName : undefined,
+            scheduledAt:
+                event.occurredAt === undefined
+                    ? dateOf(event.scheduledAt)
+                    : undefined,
             programStageId: event.programStage,
             enrollmentId: tracker ? event.enrollment : undefined,
             orgUnitId: event.orgUnit,
@@ -317,6 +322,10 @@ const toForm = (
                       programStageId: newRowStage.id,
                       orgUnitId,
                       enrollmentId: tracker ? enrollmentId : undefined,
+                      stage:
+                          shown.length > 1
+                              ? newRowStage.displayName
+                              : undefined,
                   }
                 : undefined,
         closedByStage: new Map(
@@ -338,15 +347,20 @@ export const eventSource = (options: EventSourceOptions): DataEntrySource => {
     const orgUnitMode = options.orgUnitMode ?? 'SELECTED'
     // One person's events are read wherever they happened, not only at one org unit.
     const atOrgUnit = enrollmentId === undefined
-    const key = `events:${programId}:${programStageId ?? '-'}:${orgUnitId}:${orgUnitMode}:${enrollmentId ?? '-'}`
+    // Unsent changes belong to the program, so any of its grids sends them, wherever they were made.
+    const key = `events:${programId}`
     const pageSize = options.pageSize ?? 50
     const order = options.order ?? 'occurredAt:desc'
     const saver = eventSaver(key, programId)
     return {
         key,
-        // Anything else that changes the load is another load; the outbox keeps one key, so no change is stranded.
+        // Everything that changes the load; the outbox keeps the program's one key, so no change is stranded.
         cacheKey: [
             key,
+            programStageId ?? '-',
+            orgUnitId,
+            orgUnitMode,
+            enrollmentId ?? '-',
             pageSize,
             order,
             options.newRowStageId ?? '-',

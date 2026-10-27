@@ -10,7 +10,10 @@ export interface OutboxRecord extends PendingChange {
 type RecordRef = Pick<OutboxRecord, 'sourceKey' | 'key'> & { at?: number }
 
 export interface Outbox {
-    /** Coalesces by `sourceKey` + `key`: a later change replaces an earlier one, keeping its `base`. */
+    /**
+     * Coalesces by `sourceKey` + `key`: a later change replaces an earlier one, keeping its `base`; an older one, written
+     * late by another grid of the program, is dropped.
+     */
     put(change: PendingChange): Promise<void>
     /** Writes every change in one transaction, coalescing like `put`. */
     putMany(changes: ReadonlyArray<PendingChange>): Promise<void>
@@ -112,6 +115,9 @@ export const openOutbox = async (
         inTransaction(async (store) => {
             for (const change of changes) {
                 const earlier = await readRecord(store, change)
+                if (earlier !== undefined && earlier.at > change.at) {
+                    continue
+                }
                 store.put({
                     ...change,
                     base: earlier ? earlier.base : change.base,

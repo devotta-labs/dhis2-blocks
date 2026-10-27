@@ -1,11 +1,12 @@
 import type { Browser, Page, TestInfo } from '@playwright/test'
-import { gridReady } from './data-entry.support'
+import { gridReady, TRACKER_IMPORT } from './data-entry.support'
 import { expect, test } from './fixtures'
 
 /**
  * Budgets for the register example (50 first visits by 50 columns) on the
- * production preview, with the CPU slowed 4×. Edits are made offline: they
- * stay on the device, so the shared docs DHIS2 is never changed.
+ * production preview, with the CPU slowed 4×. The edit is made offline, so it
+ * stays on the device; the keypresses are made online, their imports answered
+ * by the test. The shared docs DHIS2 is never changed.
  */
 const REGISTER = 'data-entry/tracker-register'
 const DIASTOLIC = 'dyYdfamSY2Z'
@@ -127,9 +128,16 @@ test('rules for the first rows within 300 ms, an edit within 100 ms', async ({
     withinBudget(testInfo, 'data-entry:rules-edit', edit ?? Infinity, 100)
 })
 
-test('no keypress slower than 150 ms', async ({ page, context }, testInfo) => {
+test('no keypress slower than 150 ms', async ({ page }, testInfo) => {
     await openSlowed(page)
-    await context.setOffline(true)
+    // Online, so sending and its outcome happen as they would; the test answers the import in DHIS2's place.
+    await page.route(
+        (url) => TRACKER_IMPORT.test(url.pathname),
+        (route) =>
+            route.fulfill({
+                json: { status: 'OK', validationReport: { errorReports: [] } },
+            })
+    )
     const timing = await page.evaluateHandle(() => {
         const seen: PerformanceEntry[] = []
         // Every event of 16 ms or more, the shortest Event Timing reports.

@@ -1,4 +1,5 @@
 import { FetchError } from '@dhis2/app-runtime'
+import { PartlySaved } from './failure'
 import {
     SOURCE,
     answer,
@@ -254,6 +255,52 @@ test.each([
         ])
     }
 )
+
+test('a save that stopped partway keeps what it saved and tries again with only the rest', async () => {
+    const { outbox, lockName } = await setup()
+    await outbox.putMany([
+        change({ key: 'r1.c1', at: 1 }),
+        change({ key: 'r2.c1', at: 2 }),
+    ])
+    const sent: string[][] = []
+    const run = begin(outbox, lockName, async (_, records) => {
+        sent.push(records.map(({ key }) => key))
+        if (sent.length === 1) {
+            throw new PartlySaved([answer(records[0], 'saved')], networkDown())
+        }
+        return records.map((record) => answer(record, 'saved'))
+    })
+    await vi.waitFor(() => expect(run.statuses.at(-1)).toBe('idle'))
+    expect(sent).toEqual([['r1.c1', 'r2.c1'], ['r2.c1']])
+    expect(run.statuses).toEqual(['sending', 'retrying', 'sending', 'idle'])
+    expect(run.outcomes.map(({ key }) => key)).toEqual(['r1.c1', 'r2.c1'])
+    expect(await outbox.list()).toEqual([])
+})
+
+test('a save refused partway keeps what it saved and refuses only the rest', async () => {
+    const { outbox, lockName } = await setup()
+    await outbox.putMany([
+        change({ key: 'r1.c1', at: 1 }),
+        change({ key: 'r2.c1', at: 2 }),
+    ])
+    const run = begin(outbox, lockName, async (_, records) => {
+        throw new PartlySaved(
+            [answer(records[0], 'saved')],
+            fetchError('access', 'Forbidden', {
+                httpStatusCode: 403,
+                message: 'No access to the stage',
+            })
+        )
+    })
+    await vi.waitFor(() => expect(run.statuses.at(-1)).toBe('idle'))
+    expect(await outbox.list()).toMatchObject([
+        { key: 'r2.c1', state: 'failed', reason: 'No access to the stage' },
+    ])
+    expect(run.outcomes).toMatchObject([
+        { key: 'r1.c1', result: 'saved' },
+        { key: 'r2.c1', result: 'failed', reason: 'No access to the stage' },
+    ])
+})
 
 test('a refusal leaves a newer change to the same cell queued', async () => {
     const { outbox, lockName } = await setup()

@@ -62,6 +62,13 @@ test('a later change to the same cell replaces the earlier one', async () => {
     expect(records[0]).toMatchObject({ value: '6', at: 2, state: 'queued' })
 })
 
+test('an older change written late never replaces a newer one', async () => {
+    const outbox = await open(freshServer(), 'userA')
+    await outbox.put(change({ value: '6', at: 2 }))
+    await outbox.putMany([change({ value: '5', at: 1 })])
+    expect(await outbox.list()).toMatchObject([{ value: '6', at: 2 }])
+})
+
 test('keeps the base the first change was made against', async () => {
     const outbox = await open(freshServer(), 'userA')
     await outbox.put(change({ value: '5', base: '4', at: 1 }))

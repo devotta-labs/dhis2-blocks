@@ -67,6 +67,40 @@ test('Space toggles a checkbox; arrows move', async () => {
     expect(moves).toEqual(['down', 'up', 'left', 'right', 'enter'])
 })
 
+test('Delete and Backspace clear a checkbox', async () => {
+    const { stored } = await mount(TRUE_ONLY, { value: 'true' })
+    checkbox().element().focus()
+    await userEvent.keyboard('{Delete}')
+    expect(stored()).toMatchObject({ value: undefined, sync: 'queued' })
+    await expect.element(checkbox()).not.toBeChecked()
+    await userEvent.keyboard(' {Backspace}')
+    expect(stored()?.value).toBeUndefined()
+})
+
+test('a choice made as a rule locks the cell is not saved: the lock is read as it saves', async () => {
+    const { effects, enqueued } = await mount(BOOLEAN)
+    const control = yesNo().element()
+    control.focus()
+    // The rule locks the cell, and the key arrives before the cell is drawn again.
+    effects.setState({
+        cells: {
+            [CELL]: {
+                required: false,
+                messages: [],
+                readOnly: 'Assigned by rule: Smoker',
+            },
+        },
+    })
+    control.dispatchEvent(
+        new KeyboardEvent('keydown', {
+            key: 'y',
+            bubbles: true,
+            cancelable: true,
+        })
+    )
+    expect(enqueued).toEqual([])
+})
+
 test('a locked Yes/No field takes no keys, still moves and says why', async () => {
     const reason = 'Assigned by rule: Smoker'
     const { stored, moves, enqueued } = await mount(BOOLEAN, {

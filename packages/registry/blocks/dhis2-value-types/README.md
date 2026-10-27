@@ -46,7 +46,7 @@ optionIndex(options): OptionIndex // the search text for an option list, built o
 searchOptions(index, query, limit = OPTION_LIMIT): { codes, total } // every word must match; exact code first, then code starts, then word starts
 ```
 
-`ValueProblem.message` is English and untranslated, for the UI to translate; `code` is stable.
+`ValueProblem.message` is translated with `@dhis2/d2-i18n` when the problem arises, in the language set then; `code` is stable.
 
 ## Boundaries
 

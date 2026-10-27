@@ -154,12 +154,14 @@ export const rowRuleOutcome = (effects: RuleEffects, row: RowFields) => {
             hiddenBy:
                 hidden &&
                 i18n.t('Hidden by rule: {{rule}}', {
+                    nsSeparator: '::',
                     rule: hidden.ruleName,
                     interpolation: AS_IS,
                 }),
             readOnly:
                 assigned &&
                 i18n.t('Assigned by rule: {{rule}}', {
+                    nsSeparator: '::',
                     rule: assigned.by.ruleName,
                     interpolation: AS_IS,
                 }),

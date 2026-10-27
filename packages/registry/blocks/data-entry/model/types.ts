@@ -16,7 +16,12 @@ export type EventStatus =
 
 export interface GridRow {
     id: string
+    /** Names the row until it has an event date; then the date does, in the system calendar and format. */
     label: string
+    /** The stage's name, shown after the event date in a grid of several stages. */
+    stage?: string
+    /** The day (`YYYY-MM-DD`) a scheduled event is due: it names the row, as its event date would, until it has one. */
+    scheduledAt?: string
     programStageId?: string
     enrollmentId?: string
     orgUnitId?: string

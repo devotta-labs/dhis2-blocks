@@ -24,6 +24,7 @@ import {
     freshServer,
     holdIdle,
     holdPaint,
+    KEY,
     later,
     memorySource,
     mount,
@@ -238,6 +239,20 @@ test('a row with unsent changes saves its rule changes when the grid opens', asy
     )
 })
 
+test('a row whose only unsent change failed saves no rule changes when the grid opens', async () => {
+    const server = freshServer()
+    await withOutbox(server, async (outbox) => {
+        await outbox.put(change(LMP, '2026-01-01'))
+        await outbox.mark([{ sourceKey: KEY, key: LMP }], 'failed', 'Too high')
+    })
+    const { memory, context } = await mountRmnch(eventsOf(0), server)
+    await later(300)
+    expect(memory.sent).toEqual([])
+    expect(
+        context().store.getState().cells[cellKey(FIRST_VISIT, GESTATIONAL_AGE)]
+    ).toBeUndefined()
+})
+
 test('completing a row saves its rule changes first, and keeps its rule effects', async () => {
     const memory = memorySource(await rmnchForm(eventsOf(0)))
     let sentFirst: string[] = []
@@ -306,7 +321,9 @@ test('shows the rules’ notes under the row’s label', async () => {
         expect.stringMatching(ageNow),
     ])
     const header = document
-        .getElementById(rowHeaderDomId(form.tables[0].id, FIRST_VISIT))
+        .getElementById(
+            rowHeaderDomId(context().idScope, form.tables[0].id, FIRST_VISIT)
+        )
         ?.closest('th')
     const note = [...(header?.querySelectorAll('[dir="auto"]') ?? [])].at(-1)
     await expect

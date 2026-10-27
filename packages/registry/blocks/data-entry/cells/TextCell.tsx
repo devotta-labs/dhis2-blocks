@@ -8,13 +8,12 @@ import {
 import { cn } from '@/components/dhis2/ui/cn'
 import { useCellView, useDataEntryContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
-import { CellStatus, describeCell } from './CellStatus'
 import { READY_CLASS, useCellMode } from './useCellMode'
 
 // Borderless until it has focus, then a box. Invalid looks red only while it does not have focus, so the focus ring
-// always shows. The focused control anchors its popovers (`POPOVER_CLASS`).
+// always shows.
 export const CONTROL_CLASS =
-    'peer block h-9 w-full min-w-0 truncate bg-transparent px-2 text-sm text-dhis2-grey-900 outline-none focus:bg-white focus:[anchor-name:--data-entry-cell] focus:shadow-[inset_0_0_0_2px_var(--color-dhis2-blue-600)] aria-invalid:not-focus:bg-dhis2-red-050 aria-invalid:not-focus:shadow-[inset_0_0_0_2px_var(--color-dhis2-red-600)]'
+    'block h-9 w-full min-w-0 truncate bg-transparent px-2 text-sm text-dhis2-grey-900 outline-none focus:bg-white focus:shadow-[inset_0_0_0_2px_var(--color-dhis2-blue-600)] aria-invalid:not-focus:bg-dhis2-red-050 aria-invalid:not-focus:shadow-[inset_0_0_0_2px_var(--color-dhis2-red-600)]'
 export const LOCKED_CLASS = 'bg-dhis2-grey-100 text-dhis2-grey-800'
 export const HIDDEN_CLASS = 'bg-dhis2-grey-200 italic'
 
@@ -30,6 +29,7 @@ export const TextCell = memo(function TextCell({
     move,
     readOnly,
     hidden = false,
+    aria,
 }: ControlProps) {
     const { store, settings } = useDataEntryContext()
     const view = useCellView(cellKey)
@@ -51,13 +51,11 @@ export const TextCell = memo(function TextCell({
             store.getState().discardDraft(cellKey)
         }
     }
-    const { notes, aria } = describeCell(cellKey, view, readOnly)
-    const { mode, notesDismissed, typed, inputProps } = useCellMode({
+    const { mode, typed, inputProps } = useCellMode({
         commit,
         revert,
         move,
         readOnly: locked,
-        hasNotes: notes.length > 0,
     })
     const stored =
         view.value === undefined ? '' : typedText(field, view.value, settings)
@@ -67,32 +65,29 @@ export const TextCell = memo(function TextCell({
           ? stored
           : (draft ?? view.draft ?? stored)
     return (
-        <div className="relative">
-            <input
-                {...inputProps}
-                {...aria}
-                id={id}
-                aria-labelledby={labelledBy}
-                type="text"
-                readOnly={locked}
-                inputMode={inputModeFor(field)}
-                autoComplete="off"
-                spellCheck={false}
-                value={shown}
-                onChange={(event) => {
-                    setDraft(event.target.value)
-                    typed()
-                }}
-                onBlur={commit}
-                className={cn(
-                    CONTROL_CLASS,
-                    cellKind(field) === 'number' && 'text-end tabular-nums',
-                    mode === 'ready' && READY_CLASS,
-                    locked && LOCKED_CLASS,
-                    hidden && HIDDEN_CLASS
-                )}
-            />
-            <CellStatus view={view} notes={notes} dismissed={notesDismissed} />
-        </div>
+        <input
+            {...inputProps}
+            {...aria}
+            id={id}
+            aria-labelledby={labelledBy}
+            type="text"
+            readOnly={locked}
+            inputMode={inputModeFor(field)}
+            autoComplete="off"
+            spellCheck={false}
+            value={shown}
+            onChange={(event) => {
+                setDraft(event.target.value)
+                typed()
+            }}
+            onBlur={commit}
+            className={cn(
+                CONTROL_CLASS,
+                cellKind(field) === 'number' && 'text-end tabular-nums',
+                mode === 'ready' && READY_CLASS,
+                locked && LOCKED_CLASS,
+                hidden && HIDDEN_CLASS
+            )}
+        />
     )
 }) satisfies CellComponent

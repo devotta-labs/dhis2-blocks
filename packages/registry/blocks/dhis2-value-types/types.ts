@@ -35,7 +35,7 @@ export interface ValueSettings {
     dateFormat: DateFormat
 }
 
-/** `message` is untranslated; the UI translates it. */
+/** `message` is translated into the language set when the problem arises. */
 export interface ValueProblem {
     code: string
     message: string

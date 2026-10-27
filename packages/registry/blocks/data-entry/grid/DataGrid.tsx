@@ -15,15 +15,22 @@ import type { StoreApi } from 'zustand/vanilla'
 import { cellKind } from '@/components/dhis2-value-types'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
-import { Cell } from '../cells/Cell'
+import { Cell, replacementFor } from '../cells/Cell'
 import { cellDomId } from '../cells/cellProps'
+import type { CellOverrides } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
-import { typingIn } from '../cells/useCellMode'
+import type { CellMessage, MessageKind } from '../logic/effects'
 import { cellKey } from '../model/types'
 import type { CellKey, GridRow, GridTable } from '../model/types'
 import { useDataEntryContext } from '../provider/context'
 import type { EffectsState } from '../provider/context'
-import { columnHeaderIds, headerDomId, rowHeaderDomId } from './headers'
+import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
+import {
+    columnHeaderIds,
+    headerDomId,
+    rowHeaderDomId,
+    rowLabel,
+} from './headers'
 import { nextCell } from './navigation'
 import type { CellPosition, NavGrid, NavKey } from './navigation'
 import { isBlock, parseBlock, pasteTargets } from './paste'
@@ -31,15 +38,19 @@ import { isBlock, parseBlock, pasteTargets } from './paste'
 /** What `nextCell` and `pasteTargets` walk; each lookup is a map read, as they ask once per cell stepped over. */
 const navGrid = (
     tables: ReadonlyArray<GridTable>,
-    effects: StoreApi<EffectsState>
+    effects: StoreApi<EffectsState>,
+    overrides: CellOverrides | undefined
 ): NavGrid => ({
     tables: tables.map(({ rows, columns, closed }) => {
         const keyAt = (row: number, column: number) =>
             cellKey(rows[row].id, columns[column].id)
-        // Pop-up and read-only kinds are edited in their own form, never pasted into.
-        const elsewhere = columns.map(({ field }) => {
+        // Pop-up and read-only kinds are edited in their own form, never pasted into, unless a replacement edits them.
+        const elsewhere = columns.map(({ id, field }) => {
             const kind = cellKind(field)
-            return kind === 'popup' || kind === 'readOnly'
+            return (
+                (kind === 'popup' || kind === 'readOnly') &&
+                replacementFor(overrides, id, field) === undefined
+            )
         })
         const isOpen = (row: number, column: number) =>
             !closed.has(keyAt(row, column))
@@ -61,14 +72,18 @@ const navGrid = (
 })
 
 /** Where each cell control is, by its DOM id; closed cells have no control. */
-const positionsOf = (tables: ReadonlyArray<GridTable>) => {
+const positionsOf = (idScope: string, tables: ReadonlyArray<GridTable>) => {
     const positions = new Map<string, CellPosition>()
     tables.forEach(({ rows, columns, closed }, table) => {
         rows.forEach(({ id: rowId }, row) => {
             columns.forEach(({ id: columnId }, column) => {
                 const key = cellKey(rowId, columnId)
                 if (!closed.has(key)) {
-                    positions.set(cellDomId(key), { table, row, column })
+                    positions.set(cellDomId(idScope, key), {
+                        table,
+                        row,
+                        column,
+                    })
                 }
             })
         })
@@ -76,8 +91,10 @@ const positionsOf = (tables: ReadonlyArray<GridTable>) => {
     return positions
 }
 
-// The row header column's width; sticky group labels and scroll padding keep clear of it.
-const ROW_HEADER_CLASS = 'w-48 min-w-48 max-w-48'
+// The row header column's width, at most 30% of the screen so the page reflows when zoomed; sticky group labels and
+// scroll padding keep clear of it.
+const ROW_HEADER_CLASS =
+    'w-[min(12rem,30vw)] min-w-[min(12rem,30vw)] max-w-[min(12rem,30vw)]'
 const BORDER_CLASS = 'border-b border-e border-dhis2-grey-300'
 const HEADER_CLASS = cn(
     BORDER_CLASS,
@@ -85,12 +102,37 @@ const HEADER_CLASS = cn(
 )
 
 const NO_NOTES: ReadonlyArray<string> = []
+const NO_MESSAGES: ReadonlyArray<CellMessage> = []
 
-const RowHeader = ({ tableId, row }: { tableId: string; row: GridRow }) => {
-    const { effects } = useDataEntryContext()
+// Marked as a cell's notes are, on the header's light background.
+const MESSAGE_TONES = {
+    error: 'border-dhis2-red-600',
+    errorOnComplete: 'border-dhis2-red-600',
+    warning: 'border-dhis2-yellow-700',
+    warningOnComplete: 'border-dhis2-yellow-700',
+} satisfies Record<MessageKind, string>
+
+const RowHeader = ({
+    idScope,
+    tableId,
+    row,
+}: {
+    idScope: string
+    tableId: string
+    row: GridRow
+}) => {
+    const { effects, store, settings } = useDataEntryContext()
     const notes = useStore(
         effects,
         (state) => state.rowNotes.get(row.id) ?? NO_NOTES
+    )
+    const messages = useStore(
+        effects,
+        (state) => state.rowMessages.get(row.id) ?? NO_MESSAGES
+    )
+    const date = useStore(
+        store,
+        (state) => state.cells[cellKey(row.id, EVENT_DATE_COLUMN)]?.value
     )
     const marker =
         row.status === 'COMPLETED'
@@ -109,8 +151,8 @@ const RowHeader = ({ tableId, row }: { tableId: string; row: GridRow }) => {
         >
             {/* Cells are named by the label alone; the marker is said once, with the row. The label sets its own
                 direction, so the header keeps the table's and stays at its start. */}
-            <span id={rowHeaderDomId(tableId, row.id)} dir="auto">
-                {row.label}
+            <span id={rowHeaderDomId(idScope, tableId, row.id)} dir="auto">
+                {rowLabel(row, date, settings)}
             </span>
             {marker === undefined ? null : (
                 <>
@@ -129,11 +171,29 @@ const RowHeader = ({ tableId, row }: { tableId: string; row: GridRow }) => {
                     {note}
                 </span>
             ))}
+            {/* What the row's rules, or their failure, say without a field. */}
+            {messages.length > 0 ? (
+                <ul className="mt-0.5 flex flex-col gap-0.5">
+                    {messages.map(({ kind, text }, i) => (
+                        <li
+                            key={i}
+                            dir="auto"
+                            className={cn(
+                                'border-s-2 ps-1.5 text-xs text-dhis2-grey-900',
+                                MESSAGE_TONES[kind]
+                            )}
+                        >
+                            {text}
+                        </li>
+                    ))}
+                </ul>
+            ) : null}
         </th>
     )
 }
 
 interface TableViewProps {
+    idScope: string
     table: GridTable
     move(key: NavKey): void
     /** The table takes new rows: an "Add event" button follows it. */
@@ -143,6 +203,7 @@ interface TableViewProps {
 
 /** One table in its own scrolling region, its header row and first column sticky. */
 const TableView = memo(function TableView({
+    idScope,
     table,
     move,
     adds,
@@ -150,8 +211,11 @@ const TableView = memo(function TableView({
 }: TableViewProps) {
     const region = useRef<HTMLDivElement>(null)
     const head = useRef<HTMLTableSectionElement>(null)
-    const labels = useMemo(() => columnHeaderIds(table), [table])
-    const titleId = `data-entry-${table.id}-title`
+    const labels = useMemo(
+        () => columnHeaderIds(idScope, table),
+        [idScope, table]
+    )
+    const titleId = `${idScope}-${table.id}-title`
     // The rows before "Add event" was pressed; the row that then appears takes focus.
     const rowsBefore = useRef<ReadonlySet<string>>()
     useEffect(() => {
@@ -169,10 +233,12 @@ const TableView = memo(function TableView({
         )
         if (column !== undefined) {
             document
-                .getElementById(cellDomId(cellKey(added.id, column.id)))
+                .getElementById(
+                    cellDomId(idScope, cellKey(added.id, column.id))
+                )
                 ?.focus()
         }
-    }, [table])
+    }, [idScope, table])
     // Scroll padding as tall as the sticky header, however its labels wrap, so a focused cell never sits under it.
     useLayoutEffect(() => {
         const scroller = region.current
@@ -195,7 +261,7 @@ const TableView = memo(function TableView({
                 ref={region}
                 role="region"
                 aria-labelledby={titleId}
-                className="max-h-[70vh] scroll-ps-48 overflow-auto rounded-dhis2-sm border border-dhis2-grey-300 bg-white"
+                className="max-h-[70vh] scroll-ps-[min(12rem,30vw)] overflow-auto rounded-dhis2-sm border border-dhis2-grey-300 bg-white"
             >
                 <table
                     aria-labelledby={titleId}
@@ -217,14 +283,14 @@ const TableView = memo(function TableView({
                                 {cells.map(({ id, label, span }) => (
                                     <th
                                         key={id}
-                                        id={headerDomId(table.id, id)}
+                                        id={headerDomId(idScope, table.id, id)}
                                         colSpan={span}
                                         scope="col"
                                         className={cn(HEADER_CLASS, 'min-w-28')}
                                     >
                                         {/* A group wider than the screen keeps its label beside the row headers. */}
                                         {span > 1 ? (
-                                            <span className="sticky start-48 inline-block">
+                                            <span className="sticky start-[min(12rem,30vw)] inline-block">
                                                 {label}
                                             </span>
                                         ) : (
@@ -237,10 +303,18 @@ const TableView = memo(function TableView({
                     </thead>
                     <tbody>
                         {table.rows.map((row) => {
-                            const rowHeader = rowHeaderDomId(table.id, row.id)
+                            const rowHeader = rowHeaderDomId(
+                                idScope,
+                                table.id,
+                                row.id
+                            )
                             return (
                                 <tr key={row.id}>
-                                    <RowHeader tableId={table.id} row={row} />
+                                    <RowHeader
+                                        idScope={idScope}
+                                        tableId={table.id}
+                                        row={row}
+                                    />
                                     {table.columns.map((column, c) => {
                                         const key = cellKey(row.id, column.id)
                                         return (
@@ -304,6 +378,8 @@ export const DataGrid = ({
         tables: all,
         store,
         effects,
+        idScope,
+        overrides,
         announce,
         newRowTables,
         addRow,
@@ -315,8 +391,14 @@ export const DataGrid = ({
                 : all.filter(({ id }) => id === tableId),
         [all, tableId]
     )
-    const grid = useMemo(() => navGrid(tables, effects), [tables, effects])
-    const positions = useMemo(() => positionsOf(tables), [tables])
+    const grid = useMemo(
+        () => navGrid(tables, effects, overrides),
+        [tables, effects, overrides]
+    )
+    const positions = useMemo(
+        () => positionsOf(idScope, tables),
+        [idScope, tables]
+    )
     const keyAt = ({ table, row, column }: CellPosition) =>
         cellKey(tables[table].rows[row].id, tables[table].columns[column].id)
     const end = useId()
@@ -336,10 +418,23 @@ export const DataGrid = ({
             tabStart.current ??= from.column
             return
         }
-        const to = nextCell(grid, from, key, tabStart.current)
+        // Left and Right go the way they point: in a right-to-left table the next column is on the left.
+        const table = document
+            .getElementById(focused.current ?? '')
+            ?.closest('table')
+        const flipped =
+            (key === 'left' || key === 'right') &&
+            table instanceof HTMLTableElement &&
+            getComputedStyle(table).direction === 'rtl'
+        const to = nextCell(
+            grid,
+            from,
+            flipped ? (key === 'left' ? 'right' : 'left') : key,
+            tabStart.current
+        )
         tabStart.current = undefined
         if (to !== undefined) {
-            document.getElementById(cellDomId(keyAt(to)))?.focus()
+            document.getElementById(cellDomId(idScope, keyAt(to)))?.focus()
         }
     }
     // One function for the grid's life, so no cell re-renders for it.
@@ -361,16 +456,16 @@ export const DataGrid = ({
                     cell !== was &&
                     cell.draft !== was?.draft
                 ) {
-                    announce(i18n.t(cell.error))
+                    announce(cell.error)
                 }
             }),
         // `keyAt` reads `tables`, which `positions` follows.
         [store, announce, positions]
     )
 
-    /** The cell a Ready-mode paste or undo is for: a cell control not being typed in. */
+    /** The cell a Ready-mode paste or undo is for: a default control in Ready. A replacement keeps its own. */
     const readyCell = (target: EventTarget) =>
-        target instanceof HTMLElement && !typingIn(target)
+        target instanceof HTMLElement && target.dataset.mode === 'ready'
             ? positions.get(target.id)
             : undefined
     /** Runs a store change on the screen at once, then selects the cell's new value, as Ready shows it. */
@@ -402,6 +497,7 @@ export const DataGrid = ({
         if (isBlock(text)) {
             announce(
                 i18n.t('Cells pasted: {{cells}}', {
+                    nsSeparator: '::',
                     cells: formatCount(filled),
                 })
             )
@@ -423,7 +519,7 @@ export const DataGrid = ({
             })
             // Undo can change a cell elsewhere in the grid: focus goes there, so the change is seen and heard.
             if (undone.length > 0) {
-                document.getElementById(cellDomId(undone[0]))?.focus()
+                document.getElementById(cellDomId(idScope, undone[0]))?.focus()
             }
         }
     }
@@ -456,6 +552,7 @@ export const DataGrid = ({
             {tables.map((table) => (
                 <TableView
                     key={table.id}
+                    idScope={idScope}
                     table={table}
                     move={move}
                     adds={newRowTables.has(table.id)}

@@ -74,6 +74,7 @@ export const completionChecks = (
                           refusal(
                               key,
                               i18n.t('Not saved: {{reason}}', {
+                                  nsSeparator: '::',
                                   reason: reason ?? '',
                                   interpolation: AS_IS,
                               })

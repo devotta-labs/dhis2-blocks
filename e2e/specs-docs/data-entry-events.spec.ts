@@ -372,7 +372,10 @@ test('register: a person whose enrollment DHIS2 leaves out is evaluated without 
     await gridReady(page)
     expect((await batched).ok()).toBe(true)
     await hiddenUnless(valuesOf(visit).get(SMOKING) === 'true')
-    await expect(page.getByRole('main').getByRole('listitem')).toHaveCount(0)
+    // Her row says nothing: no message of its own, such as its rules failing, and no cell in error.
+    const herRow = page.getByRole('row').filter({ has: cessation })
+    await expect(herRow.getByRole('listitem')).toHaveCount(0)
+    await expect(herRow.locator('[aria-invalid="true"]')).toHaveCount(0)
 })
 
 test('one woman: chronic conditions Yes and No show and hide the follow-ups in all her rows', async ({
@@ -396,7 +399,7 @@ test('one woman: chronic conditions Yes and No show and hide the follow-ups in a
         events
             .flatMap(({ event }) =>
                 CHRONIC_FOLLOW_UPS.map(
-                    (field) => `[id="data-entry-cell-${event}.${field}"]`
+                    (field) => `[id$="-cell-${event}.${field}"]`
                 )
             )
             .join(', ')

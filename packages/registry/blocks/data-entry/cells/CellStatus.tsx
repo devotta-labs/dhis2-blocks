@@ -1,9 +1,10 @@
 import i18n from '@dhis2/d2-i18n'
+import { createContext } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import type { MessageKind } from '../logic/effects'
-import type { CellKey, SyncState } from '../model/types'
+import type { SyncState } from '../model/types'
 import type { CellView } from '../provider/context'
-import { cellDomId } from './cellProps'
+import type { ControlProps } from './cellProps'
 
 type Tone = 'error' | 'warning' | 'info'
 
@@ -27,27 +28,35 @@ const AS_IS = { escapeValue: false }
 const UNSENT = new Set<SyncState>(['queued', 'sending', 'waiting'])
 
 /**
- * Everything to say about a cell, as separate notes: `reason` (why it cannot be edited), its errors and warnings, and
- * whether it is saved. Each is its own element, so a screen reader reads them one after another.
+ * Everything to say about a cell, as separate notes: `reason` (why it cannot be edited) or `hint` (how to type it),
+ * its errors and warnings, and whether it is saved. Each is its own element, so a screen reader reads them one after
+ * another.
  */
-const notesOf = (key: CellKey, view: CellView, reason?: string) => {
+const notesOf = (
+    id: string,
+    view: CellView,
+    reason?: string,
+    hint?: string
+) => {
     const texts: Array<[Tone, string]> = []
-    if (reason !== undefined) {
-        texts.push(['info', reason])
+    const about = reason ?? hint
+    if (about !== undefined) {
+        texts.push(['info', about])
     }
     if (view.error !== undefined) {
-        texts.push(['error', i18n.t(view.error)])
+        texts.push(['error', view.error])
     }
     for (const { kind, text } of view.effects.messages) {
         texts.push([TONES[kind], text])
     }
     if (view.warning !== undefined) {
-        texts.push(['warning', i18n.t(view.warning)])
+        texts.push(['warning', view.warning])
     }
     if (view.sync === 'failed') {
         texts.push([
             'error',
             i18n.t('Not saved: {{reason}}', {
+                nsSeparator: '::',
                 reason: view.reason ?? '',
                 interpolation: AS_IS,
             }),
@@ -59,15 +68,20 @@ const notesOf = (key: CellKey, view: CellView, reason?: string) => {
         texts.push(['info', i18n.t('Saved on this device')])
     }
     return texts.map(([tone, text], index): CellNote => ({
-        id: `${cellDomId(key)}-note-${index}`,
+        id: `${id}-note-${index}`,
         tone,
         text,
     }))
 }
 
-/** The notes and the ARIA attributes that carry them, for the cell's control. */
-export const describeCell = (key: CellKey, view: CellView, reason?: string) => {
-    const notes = notesOf(key, view, reason)
+/** The notes of the cell whose control has `id`, and the ARIA attributes that carry them, for that control. */
+export const describeCell = (
+    id: string,
+    view: CellView,
+    reason?: string,
+    hint?: string
+) => {
+    const notes = notesOf(id, view, reason, hint)
     const invalid =
         view.error !== undefined ||
         view.effects.messages.some(({ kind }) => kind === 'error')
@@ -80,17 +94,27 @@ export const describeCell = (key: CellKey, view: CellView, reason?: string) => {
                 notes.length > 0
                     ? notes.map(({ id }) => id).join(' ')
                     : undefined,
-        },
+        } satisfies ControlProps['aria'],
     }
 }
 
-// A quiet ring while sending, solid once saved on this device, red when refused.
+// A quiet ring while sending, a solid dot once saved on this device, a red square when refused: told apart by shape,
+// not only colour.
 const MARKERS = new Map<SyncState, string>([
-    ['sending', 'border-2 border-dhis2-grey-600'],
-    ['queued', 'bg-dhis2-blue-700'],
-    ['waiting', 'bg-dhis2-blue-700'],
+    ['sending', 'rounded-full border-2 border-dhis2-grey-600'],
+    ['queued', 'rounded-full bg-dhis2-blue-700'],
+    ['waiting', 'rounded-full bg-dhis2-blue-700'],
     ['failed', 'bg-dhis2-red-600'],
 ])
+
+/**
+ * Whether the cell's notes show, for the control `Cell` wraps: Escape hides them until focus next enters the cell
+ * (WCAG 1.4.13). A control that takes Escape for itself calls `preventDefault`; else the cell hides its notes.
+ */
+export const CellNotes = createContext({
+    shown: false,
+    show: () => {},
+})
 
 /**
  * Places a popover under its cell, above the grid's sticky headers. Where the browser has anchor positioning it is
@@ -108,7 +132,7 @@ const NOTE_TONES = {
 
 /**
  * What a cell shows besides its value: the required marker, whether it is saved, an amber outline for a warning, and
- * the notes while the control has focus (until Escape hides them). It sits after the control, which carries the `peer` class.
+ * the notes while focus is in the cell (until Escape hides them). It sits after the control, in `Cell`'s `group/cell`.
  */
 export const CellStatus = ({
     view,
@@ -138,7 +162,7 @@ export const CellStatus = ({
                 <span
                     aria-hidden="true"
                     className={cn(
-                        'pointer-events-none absolute end-1 top-1 size-2 rounded-full',
+                        'pointer-events-none absolute end-1 top-1 size-2',
                         marker
                     )}
                 />
@@ -146,7 +170,7 @@ export const CellStatus = ({
             {warned ? (
                 <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_2px_var(--color-dhis2-yellow-700)] peer-focus:hidden"
+                    className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_2px_var(--color-dhis2-yellow-700)] group-focus-within/cell:hidden"
                 />
             ) : null}
             {notes.length > 0 ? (
@@ -154,7 +178,7 @@ export const CellStatus = ({
                     className={cn(
                         POPOVER_CLASS,
                         'pointer-events-none z-40 hidden w-max max-w-72 flex-col gap-0.5 rounded-dhis2-sm bg-dhis2-grey-900 px-2 py-1 text-xs text-white',
-                        !dismissed && 'peer-focus:flex'
+                        !dismissed && 'group-focus-within/cell:flex'
                     )}
                 >
                     {notes.map(({ id, tone, text }) => (

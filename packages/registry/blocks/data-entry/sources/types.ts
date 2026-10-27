@@ -15,7 +15,10 @@ export interface RulesTarget {
 export interface LoadedForm {
     tables: GridTable[]
     values: ReadonlyMap<CellKey, string>
-    /** Compulsory data elements per stage, and each stage's validation strategy. */
+    /**
+     * Compulsory data elements per stage, and each stage's validation strategy: every stage of the program, so a save
+     * checks the changes made in its other grids too.
+     */
     required: ReadonlyMap<string, ReadonlySet<string>>
     strategy: ReadonlyMap<string, 'ON_COMPLETE' | 'ON_UPDATE_AND_INSERT'>
     /** Each stage's sections (section id → its data element ids); a rule hides a section only in its own stage. */
@@ -34,13 +37,18 @@ export interface LoadedForm {
         programStageId: string
         orgUnitId: string
         enrollmentId?: string
+        /** The stage's name, for a grid of several stages to show after each new row's event date. */
+        stage?: string
     }
     /** Each stage's closed columns: those of the table its events have no field for; never the event date. */
     closedByStage: ReadonlyMap<string, ReadonlySet<string>>
 }
 
 export interface DataEntrySource {
-    /** Identifies the loaded context in the outbox. */
+    /**
+     * Names the program (or data set) in the outbox: every grid of it shares one record per cell, and the open one
+     * sends them all, including changes made in its other grids.
+     */
     key: string
     /** Identifies what is loaded, for the load's cache; `key` when absent. */
     cacheKey?: string
@@ -56,6 +64,13 @@ export interface DataEntrySource {
         status: 'COMPLETED' | 'ACTIVE',
         form: LoadedForm
     ): Promise<SaveOutcome[]>
-    /** Rows for unsent new events found in the outbox after a reload. */
-    restoreRows(records: ReadonlyArray<OutboxRecord>): GridRow[]
+    /**
+     * Rows for this form's unsent new events found in the outbox after a reload: those of its `newRows` target that
+     * DHIS2 does not hold yet.
+     */
+    restoreRows(
+        engine: DataEngine,
+        records: ReadonlyArray<OutboxRecord>,
+        form: LoadedForm
+    ): Promise<GridRow[]>
 }

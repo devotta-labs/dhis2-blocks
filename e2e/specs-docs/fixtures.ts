@@ -43,7 +43,13 @@ const isAbortedBootstrapRead = (diagnostic: BrowserDiagnostic) =>
     diagnostic.method === 'GET' &&
     bootstrapApiPath.test(urlPath(diagnostic.url) ?? '')
 
-const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
+// The data entry specs run program rules; no other spec does.
+const DATA_ENTRY_SPEC = /data-entry-[^/]*\.spec\.ts$/
+
+const isKnownBenignDiagnostic = (
+    diagnostic: BrowserDiagnostic,
+    specFile: string
+) => {
     const path = urlPath(diagnostic.url ?? diagnostic.location?.url)
 
     if (
@@ -107,6 +113,7 @@ const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
     }
 
     if (
+        DATA_ENTRY_SPEC.test(specFile) &&
         diagnostic.kind === 'console' &&
         /rule-engine[^/]*\.m?js$/.test(path ?? '') &&
         /^Rule .+ raised an error: Failed to coerce value 'null'/.test(
@@ -231,7 +238,7 @@ export const test = base.extend<DocsFixtures>({
                 return false
             }
 
-            return !isKnownBenignDiagnostic(diagnostic)
+            return !isKnownBenignDiagnostic(diagnostic, testInfo.file)
         })
 
         if (unexpectedDiagnostics.length > 0) {

@@ -1,7 +1,8 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useContext, useLayoutEffect, useRef, useState } from 'react'
 import type { FocusEvent, KeyboardEvent, MouseEvent } from 'react'
 import type { NavKey } from '../grid/navigation'
 import type { CommitResult } from '../model/types'
+import { CellNotes } from './CellStatus'
 
 /** Excel's three modes: Ready (selected, no cursor), Enter (typing) and Edit (inside the text). */
 export type CellMode = 'ready' | 'enter' | 'edit'
@@ -46,8 +47,6 @@ interface CellModeOptions {
     move(key: NavKey): void
     /** The cell cannot be edited: it stays in Ready. */
     readOnly: boolean
-    /** Whether the cell has notes to show while it has focus. */
-    hasNotes: boolean
 }
 
 /** The modes and keys of a cell holding text: what each key does is the spec's key table. */
@@ -56,12 +55,10 @@ export const useCellMode = ({
     revert,
     move,
     readOnly,
-    hasNotes,
 }: CellModeOptions) => {
     const [state, setMode] = useState<CellMode>('ready')
     const mode = readOnly ? 'ready' : state
-    // Escape hides the notes until the cell is next focused (WCAG 1.4.13).
-    const [notesDismissed, setNotesDismissed] = useState(false)
+    const notes = useContext(CellNotes)
     const ref = useRef<HTMLInputElement>(null)
     // Back in Ready (Escape, a save that went nowhere) the text is selected again once it shows the stored value.
     useLayoutEffect(() => {
@@ -82,7 +79,6 @@ export const useCellMode = ({
     }
     return {
         mode,
-        notesDismissed,
         /** Typing in Ready starts Enter. */
         typed: () => setMode((now) => (now === 'ready' ? 'enter' : now)),
         /** Back to Ready, the value selected: a pick from a list was saved without moving. */
@@ -93,7 +89,6 @@ export const useCellMode = ({
             'data-mode': mode,
             onFocus(event: FocusEvent<HTMLInputElement>) {
                 setMode('ready')
-                setNotesDismissed(false)
                 event.currentTarget.select()
             },
             onMouseDown(event: MouseEvent<HTMLInputElement>) {
@@ -131,7 +126,7 @@ export const useCellMode = ({
                     if (commit() === 'invalid' && key !== 'tab') {
                         // Nothing is lost, but the text is not a value: stay and fix it, with its error shown.
                         setMode('edit')
-                        setNotesDismissed(false)
+                        notes.show()
                     } else {
                         move(key)
                         // At the grid's edge nothing moves; the cell is selected again.
@@ -141,9 +136,9 @@ export const useCellMode = ({
                     event.preventDefault()
                     edit(event.currentTarget)
                 } else if (event.key === 'Escape') {
-                    if (mode === 'ready' && hasNotes && !notesDismissed) {
-                        setNotesDismissed(true)
-                    } else {
+                    // In Ready, the first Escape is the cell's: it hides the notes. Otherwise it puts the value back.
+                    if (mode !== 'ready' || !notes.shown) {
+                        event.preventDefault()
                         revert()
                         setMode('ready')
                     }

@@ -141,7 +141,8 @@ export const openGrid = async <L>(
             source.save(fake.engine, records, form),
         setStatus: (rowId: string, status: 'COMPLETED' | 'ACTIVE') =>
             source.setStatus(fake.engine, rowId, status, form),
-        restoreRows: (records: OutboxRecord[]) => source.restoreRows(records),
+        restoreRows: (records: OutboxRecord[]) =>
+            source.restoreRows(fake.engine, records, form),
         sent: () =>
             fake.mutations.flatMap((mutation) =>
                 mutation.type === 'delete' ? [] : mutation.data.events

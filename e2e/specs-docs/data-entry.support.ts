@@ -1,6 +1,7 @@
 // The package exposes the builder as both its default and named export.
 // eslint-disable-next-line import/no-named-as-default
 import AxeBuilder from '@axe-core/playwright'
+import { isDeepStrictEqual } from 'node:util'
 import type {
     APIRequestContext,
     Locator,
@@ -28,11 +29,28 @@ const EventSchema = z.object({
     enrollment: z.string().optional(),
     status: z.string(),
     occurredAt: z.string(),
+    scheduledAt: z.string().optional(),
+    completedAt: z.string().optional(),
+    geometry: z.json().optional(),
+    assignedUser: z.json().optional(),
+    attributeOptionCombo: z.string().optional(),
     dataValues: z.array(DataValueSchema),
 })
 type ApiEvent = z.infer<typeof EventSchema>
-const EVENT_FIELDS =
-    'event,program,programStage,orgUnit,enrollment,status,occurredAt,dataValues[dataElement,value]'
+// Every field, so an event put back after a test is put back whole.
+const EVENT_FIELDS = '*'
+// The event's own fields an update sets: one it is not sent is erased.
+const OWN_FIELDS = [
+    'occurredAt',
+    'scheduledAt',
+    'status',
+    'completedAt',
+    'geometry',
+    'assignedUser',
+    'attributeOptionCombo',
+] as const
+const ownFields = (event?: ApiEvent) =>
+    Object.fromEntries(OWN_FIELDS.map((field) => [field, event?.[field]]))
 
 export const readEvents = async (
     request: APIRequestContext,
@@ -82,7 +100,11 @@ export const valuesOf = (event?: Pick<ApiEvent, 'dataValues'>) =>
         ])
     )
 
-/** Puts back the values, date and status an existing event had before the test; returns how many values changed. */
+/**
+ * Puts back the values and the own fields (dates, status, place, assignee, category options) an existing event had
+ * before the test, sending every own field DHIS2 held, since an update erases those it is not sent; returns how many
+ * values changed.
+ */
 const restore = async (request: APIRequestContext, original: ApiEvent) => {
     const now = await readEvent(request, original.event)
     expect(now, `event ${original.event} still exists`).toBeDefined()
@@ -96,19 +118,17 @@ const restore = async (request: APIRequestContext, original: ApiEvent) => {
         }))
     if (
         dataValues.length > 0 ||
-        now?.occurredAt !== original.occurredAt ||
-        now?.status !== original.status
+        !isDeepStrictEqual(ownFields(now), ownFields(original))
     ) {
         await importEvents(request, 'UPDATE', [{ ...original, dataValues }])
     }
     const after = await readEvent(request, original.event)
     expect(valuesOf(after)).toEqual(was)
-    expect(after?.occurredAt).toBe(original.occurredAt)
-    expect(after?.status).toBe(original.status)
+    expect(ownFields(after)).toEqual(ownFields(original))
     return dataValues.length
 }
 
-const TRACKER_IMPORT = /\/api\/(?:\d+\/)?tracker$/
+export const TRACKER_IMPORT = /\/api\/(?:\d+\/)?tracker$/
 const ImportSchema = z.object({
     events: z.array(z.object({ event: z.string() })).default([]),
 })
@@ -227,8 +247,9 @@ export const openGrid = async (page: Page, slug: string) => {
     await gridReady(page)
 }
 
+/** A cell's control: its id ends in the cell's key, after the form's own prefix. */
 export const cell = (page: Page, eventId: string, field: string) =>
-    page.locator(`[id="data-entry-cell-${eventId}.${field}"]`)
+    page.locator(`[id$="-cell-${eventId}.${field}"]`)
 
 export const enter = async (page: Page, target: Locator, text: string) => {
     await target.click()
@@ -239,7 +260,7 @@ export const enter = async (page: Page, target: Locator, text: string) => {
 /** The event id of the row whose cell has focus. */
 export const focusedRow = async (page: Page) =>
     found(
-        /^data-entry-cell-(\w+)\./.exec(
+        /-cell-(\w+)\./.exec(
             await page.evaluate(() => document.activeElement?.id ?? '')
         )?.[1],
         'cell with focus'

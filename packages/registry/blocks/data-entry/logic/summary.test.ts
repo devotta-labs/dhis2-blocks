@@ -207,10 +207,10 @@ test('a cell’s own error blocks completion; its warning does not', () => {
     })
 })
 
-test('a cell’s own error and warning are listed translated', async () => {
+test('a cell’s own error and warning are listed as their value type made them, not translated again', async () => {
+    // Made in French when the value was refused; one French text happens to be a key of its own.
     i18n.addResources('xx', 'translation', {
-        'Enter a whole number': 'Saisissez un nombre entier',
-        'Not a valid option': 'Option non valide',
+        'Saisissez un nombre entier': 'Ne pas traduire deux fois',
     })
     await i18n.changeLanguage('xx')
     try {
@@ -219,9 +219,9 @@ test('a cell’s own error and warning are listed translated', async () => {
                 'e1.a': {
                     ...FILLED,
                     draft: 'abc',
-                    error: 'Enter a whole number',
+                    error: 'Saisissez un nombre entier',
                 },
-                'e1.b': { ...FILLED, warning: 'Not a valid option' },
+                'e1.b': { ...FILLED, warning: 'Option non valide' },
             },
             {},
             NO_ROW_MESSAGES,

@@ -117,6 +117,18 @@ export const useAge = (): [string | undefined, boolean, string | undefined] => {
 // @ts-expect-error A cell key is a row and a column joined by a dot.
 export const useNoColumn = () => useCell('event1')
 
+// A replacement control puts the cell's notes on the element that has its id.
+export const describedBy = ({ aria }: ControlProps): string | undefined =>
+    aria['aria-describedby']
+// @ts-expect-error Cell hands every control the cell's ARIA attributes.
+export const noAria: ControlProps = {
+    id: 'cell',
+    cellKey: 'event1.qrur9Dvnyt5',
+    field: { valueType: 'TEXT' },
+    labelledBy: 'header',
+    move: () => {},
+}
+
 // A replacement control saves what was typed through its cell's view, and learns what became of it.
 export const Typed: CellComponent = ({ id, cellKey, readOnly }) => {
     const { commit, draft, error } = useCell(cellKey)
@@ -135,6 +147,24 @@ export const useActions = () =>
     useDataEntry((view) => view.complete) satisfies (
         rowId: string
     ) => Promise<SaveOutcome[]>
+export const useReopen = () =>
+    useDataEntry((view) => view.reopen) satisfies (
+        rowId: string
+    ) => Promise<SaveOutcome[]>
+export const useAddRow = () =>
+    useDataEntry((view) => view.addRow) satisfies (tableId: string) => void
+export const useDownload = () =>
+    useDataEntry((view) => view.downloadUnsent) satisfies () => void
+export const useDiscard = () =>
+    useDataEntry((view) => view.discardFailed) satisfies () => Promise<void>
+// The form's rows, to lay out controls of your own by, such as a "Complete" button per row.
+export const useRows = (): GridRow[] =>
+    useDataEntry((view) => view.tables).flatMap(({ rows }) => rows)
+// A row named as the grid names it: by its event date once it has one.
+export const useRowName = (row: GridRow): string =>
+    useCell(`${row.id}.occurredAt`).value ?? row.label
+export const useLoadError = (): string | undefined =>
+    useDataEntry((view) => view.error)
 export const statuses: DataEntryView['status'][] = ['loading', 'ready', 'error']
 export const syncs: SyncStatus[] = [
     'idle',

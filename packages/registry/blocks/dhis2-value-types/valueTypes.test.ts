@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import {
     checkStored,
     cellKind,
@@ -231,6 +232,28 @@ test.each([
 
 test('a field with options has no input mode', () =>
     expect(inputModeFor({ valueType: 'TEXT', options: [] })).toBeUndefined())
+
+test('problems are made in the language set when they arise', async () => {
+    i18n.addResources('xx', 'translation', {
+        'Enter a whole number': 'Saisissez un nombre entier',
+        'Enter a valid date': 'Saisissez une date valide',
+    })
+    await i18n.changeLanguage('xx')
+    try {
+        expect(parseTyped({ valueType: 'INTEGER' }, 'abc', GREGORIAN)).toEqual({
+            ok: false,
+            problem: { code: 'integer', message: 'Saisissez un nombre entier' },
+        })
+        expect(
+            parseTyped({ valueType: 'DATE' }, '2026-13-40', GREGORIAN)
+        ).toMatchObject({ problem: { message: 'Saisissez une date valide' } })
+        expect(checkStored({ valueType: 'INTEGER' }, '12.5')?.message).toBe(
+            'Saisissez un nombre entier'
+        )
+    } finally {
+        await i18n.changeLanguage('en')
+    }
+})
 
 test('legacy values are flagged', () => {
     expect(checkStored({ valueType: 'INTEGER' }, '12.5')?.message).toBe(

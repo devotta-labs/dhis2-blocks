@@ -19,6 +19,7 @@ import type { DataEntryState } from '../store/store'
 import { afterPaint } from './afterPaint'
 import { completionChecks, refusalOf } from './completion'
 import type { EffectsState } from './context'
+import { discardFailed } from './discardFailed'
 import { formEffects, pendingRow, rowIdOf, withRows } from './formRows'
 import type { DataEntryView } from './hooks'
 import { userCheck } from './signedIn'
@@ -26,7 +27,7 @@ import { saveUnsentFile } from './unsentFile'
 
 type Actions = Pick<
     DataEntryView,
-    'addRow' | 'complete' | 'reopen' | 'downloadUnsent'
+    'addRow' | 'complete' | 'reopen' | 'downloadUnsent' | 'discardFailed'
 >
 
 /** A loaded form wired to its stores, the outbox and the sync loop. */
@@ -58,6 +59,8 @@ interface OpenFormOptions {
     /** Where the summary and the sync status go. */
     view: StoreApi<DataEntryView>
     announce(text: string): void
+    /** Called when the server says someone else is signed in; the form has stopped sending by then. */
+    onSignedInAsOther(): void
 }
 
 // Long enough that a burst of edits is announced once, after the last of them is saved.
@@ -77,14 +80,34 @@ const messageSchema = z.object({
     ),
 })
 
+/** The form's summary, from its cells, their effects and its tables. */
+export const summaryOf = ({
+    store,
+    effects,
+    tables,
+}: Pick<OpenForm, 'store' | 'effects' | 'tables'>) =>
+    summarise(
+        store.getState().cells,
+        effects.getState().cells,
+        effects.getState().rowMessages,
+        tables.getState().tables
+    )
+
 /**
  * Opens the user's outbox on this server, puts the form's unsent changes back on their cells (new rows included),
- * and starts the sync loop. Every change the store queues is written to the outbox, then sent.
+ * and starts the sync loop. Every change the store queues is written to the outbox, then sent, with the changes made
+ * in the program's other grids.
  */
 export const openForm = async (options: OpenFormOptions): Promise<OpenForm> => {
     const outbox = await openOutbox(options.serverUrl, options.userId)
     try {
-        return connect(outbox, await outbox.list(options.source.key), options)
+        const unsent = await outbox.list(options.source.key)
+        const restoredRows = await options.source.restoreRows(
+            options.engine,
+            unsent,
+            options.form
+        )
+        return connect(outbox, unsent, restoredRows, options)
     } catch (error) {
         outbox.close()
         throw error
@@ -94,6 +117,7 @@ export const openForm = async (options: OpenFormOptions): Promise<OpenForm> => {
 const connect = (
     outbox: Outbox,
     unsent: ReadonlyArray<OutboxRecord>,
+    restoredRows: ReadonlyArray<GridRow>,
     {
         source,
         form,
@@ -103,6 +127,7 @@ const connect = (
         userId,
         view,
         announce,
+        onSignedInAsOther,
     }: OpenFormOptions
 ): OpenForm => {
     let closed = false
@@ -110,7 +135,6 @@ const connect = (
     const readOnlyRows = new Map(form.readOnlyRows)
     const reopenable = new Set(form.canReopen)
 
-    const restoredRows = source.restoreRows(unsent)
     const newRowTable = form.newRows?.tableId ?? form.tables.at(0)?.id
     const tables = createStore<{ tables: ReadonlyArray<GridTable> }>()(() => ({
         tables: form.tables.map((table) =>
@@ -126,6 +150,18 @@ const connect = (
                 table.rows.map((row): [string, GridRow] => [row.id, row])
             )
     )
+    /** Whether the cell is in this form: the outbox also holds changes made in the program's other grids. */
+    const inForm = (key: string) => {
+        const rowId = rowIdOf(key)
+        const column = key.slice(rowId.length + 1)
+        return tables
+            .getState()
+            .tables.some(
+                (table) =>
+                    table.rows.some(({ id }) => id === rowId) &&
+                    table.columns.some(({ id }) => id === column)
+            )
+    }
     const effects = createStore<EffectsState>()(() => ({
         cells: formEffects(
             form.required,
@@ -184,12 +220,32 @@ const connect = (
         // Typed and pasted alike: an option a rule hid is not an option.
         check: (key, value) =>
             effects.getState().cells[key]?.hiddenOptions?.has(value)
-                ? 'Choose one of the options'
+                ? i18n.t('Choose one of the options')
                 : undefined,
     })
     store
         .getState()
-        .restore(unsent.map((record) => ({ ...record, sync: record.state })))
+        .restore(
+            unsent
+                .filter(({ key }) => inForm(key))
+                .map((record) => ({ ...record, sync: record.state }))
+        )
+
+    // Changes made in the program's other grids that could not be saved: counted, downloaded and discarded here too,
+    // so none is stuck where no grid shows it.
+    const failedElsewhere = (held: ReadonlyArray<OutboxRecord>) =>
+        held.filter(({ key, state }) => state === 'failed' && !inForm(key))
+            .length
+    let failedThere = failedElsewhere(unsent)
+    const countElsewhere = () =>
+        outbox.list(source.key).then(
+            (held) => {
+                failedThere = failedElsewhere(held)
+                summarize()
+            },
+            // Closed meanwhile: there is no one to tell.
+            () => {}
+        )
 
     // Whether this form heard of its own outcomes since it last said so.
     let applied = false
@@ -220,6 +276,9 @@ const connect = (
         for (const { result, reason, sent } of groups.values()) {
             store.getState().markSync(sent, result, reason)
         }
+        if (outcomes.some(({ key }) => !inForm(key))) {
+            void countElsewhere()
+        }
     }
 
     let settling: ReturnType<typeof setTimeout> | undefined
@@ -246,26 +305,33 @@ const connect = (
                 if (failed > 0) {
                     announce(
                         i18n.t('Values not saved: {{values}}', {
+                            nsSeparator: '::',
                             values: formatCount(failed),
                         })
                     )
                 } else if (left === 0) {
-                    announce(i18n.t('All changes saved'))
+                    // Changes from the program's other grids are sent from here too: all are saved once none is left.
+                    outbox.list(source.key).then(
+                        (held) => {
+                            if (held.length === 0 && !closed) {
+                                announce(i18n.t('All changes saved'))
+                            }
+                        },
+                        // Closed meanwhile: there is no one to tell.
+                        () => {}
+                    )
                 }
             }, SETTLE_MS)
         }
         previous = status
     }
 
-    const summarize = () =>
+    const summarize = () => {
+        const summary = summaryOf({ store, effects, tables })
         view.setState({
-            summary: summarise(
-                store.getState().cells,
-                effects.getState().cells,
-                effects.getState().rowMessages,
-                tables.getState().tables
-            ),
+            summary: { ...summary, failed: summary.failed + failedThere },
         })
+    }
 
     const setStatus = async (rowId: string, status: 'COMPLETED' | 'ACTIVE') => {
         const outcomes = await source.setStatus(engine, rowId, status, form)
@@ -331,7 +397,11 @@ const connect = (
         return outcomes
     }
 
-    const { signedInHere, notNow } = userCheck(engine, userId)
+    // Someone else signed in: nothing more is sent from here, and the provider locks the form.
+    const { signedIn, notNow } = userCheck(engine, userId, () => {
+        sync.stop()
+        onSignedInAsOther()
+    })
     const beforeComplete = new Set<(rowId: string) => string | undefined>()
 
     const refusal = (key: CellKey, reason: string) =>
@@ -362,15 +432,16 @@ const connect = (
             if (sourceKey !== source.key) {
                 return []
             }
-            // Sent only as the user who made them: otherwise the loop pauses as for a lapsed session.
-            if (!(await signedInHere())) {
+            // Sent only as the user who made them: signed out, the loop pauses as for a lapsed session.
+            const who = await signedIn()
+            if (who === 'lapsed') {
                 throw new FetchError({
                     type: 'access',
                     message: 'Unauthorized',
                     details: { httpStatusCode: 401 },
                 })
             }
-            return source.save(engine, records, form)
+            return who === 'here' ? source.save(engine, records, form) : []
         },
         onOutcomes(outcomes) {
             apply(outcomes)
@@ -381,6 +452,25 @@ const connect = (
         onStatus,
         lockName: `dhis2-data-entry-sync:${name}`,
     })
+
+    // A hidden or closing page may never paint again: what waits for a paint is stored at once.
+    const onPageHide = () => flush()
+    // A pause for signing in ends when the person comes back: they may have signed in again elsewhere.
+    const onFocus = () => {
+        if (view.getState().sync === 'signIn') {
+            sync.nudge()
+        }
+    }
+    const onVisibility = () => {
+        if (document.visibilityState === 'hidden') {
+            flush()
+        } else {
+            onFocus()
+        }
+    }
+    window.addEventListener('pagehide', onPageHide)
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
 
     return {
         store,
@@ -402,6 +492,7 @@ const connect = (
             const row: GridRow = {
                 id: generateUid(),
                 label: i18n.t('New event'),
+                stage: newRows.stage,
                 programStageId: newRows.programStageId,
                 orgUnitId: newRows.orgUnitId,
                 enrollmentId: newRows.enrollmentId,
@@ -446,7 +537,14 @@ const connect = (
                 return [refusal(cellKey(rowId, 'status'), stopped)]
             }
             const later = refusals(rowId, true)
-            return later.length > 0 ? later : setStatus(rowId, 'COMPLETED')
+            if (later.length > 0) {
+                return later
+            }
+            // Asked again: someone else may have signed in while the row's changes were on their way.
+            const notAnyMore = await notNow()
+            return notAnyMore === undefined
+                ? setStatus(rowId, 'COMPLETED')
+                : [refusal(cellKey(rowId, 'status'), notAnyMore)]
         },
         async reopen(rowId) {
             if (!reopenable.has(rowId)) {
@@ -465,36 +563,30 @@ const connect = (
         downloadUnsent() {
             // A change made since the last paint is stored first, so the file has it.
             flush()
-            void outbox.list(source.key).then((saved) => {
-                const kept = new Map<string, string | null>(
-                    saved.map(({ key, value }) => [key, value])
+            void outbox
+                .list(source.key)
+                .then((held) =>
+                    saveUnsentFile(
+                        held,
+                        inForm,
+                        store.getState().cells,
+                        tables.getState().tables,
+                        settings
+                    )
                 )
-                // A change this device could not store is only on this page, even where it kept an older one.
-                const onlyHere = Object.entries(store.getState().cells).flatMap(
-                    ([key, cell]) =>
-                        cell?.sync === 'failed' &&
-                        kept.get(key) !== (cell.value ?? null)
-                            ? [
-                                  {
-                                      key,
-                                      value: cell.value ?? null,
-                                      state: 'failed',
-                                      reason: cell.reason,
-                                  },
-                              ]
-                            : []
-                )
-                saveUnsentFile(
-                    [...saved, ...onlyHere],
-                    tables.getState().tables
-                )
-            })
+        },
+        async discardFailed() {
+            await discardFailed(outbox, source.key, store)
+            await countElsewhere()
         },
         close() {
             // A change made since the last paint still reaches the outbox before it closes.
             flush()
             closed = true
             clearTimeout(settling)
+            window.removeEventListener('pagehide', onPageHide)
+            window.removeEventListener('focus', onFocus)
+            document.removeEventListener('visibilitychange', onVisibility)
             unsubscribes.forEach((unsubscribe) => unsubscribe())
             sync.stop()
             channel.close()
@@ -502,29 +594,3 @@ const connect = (
         },
     }
 }
-
-/** What the provider shows until a form is open: no tables, no cells, nothing to do. */
-export const emptyForm = (): OpenForm => ({
-    store: createDataEntryStore({
-        tables: [],
-        values: new Map(),
-        settings: { calendar: 'gregorian', dateFormat: 'YYYY-MM-DD' },
-        enqueue: () => {},
-    }),
-    effects: createStore<EffectsState>()(() => ({
-        cells: {},
-        rowMessages: new Map(),
-        rowNotes: new Map(),
-    })),
-    tables: createStore<{ tables: ReadonlyArray<GridTable> }>()(() => ({
-        tables: [],
-    })),
-    readOnlyRows: new Map(),
-    beforeComplete: new Set(),
-    newRowTables: new Set(),
-    addRow: () => {},
-    complete: async () => [],
-    reopen: async () => [],
-    downloadUnsent: () => {},
-    close: () => {},
-})

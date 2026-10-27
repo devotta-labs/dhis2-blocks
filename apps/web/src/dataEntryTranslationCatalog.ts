@@ -6,6 +6,7 @@ import i18n from '@dhis2/d2-i18n'
  * discovers literal calls. This function is intentionally never invoked.
  *
  * A key containing ":" passes `nsSeparator: '::'`: else the extractor drops it.
+ * A key with a `count` option is listed without it: the extractor drops those.
  */
 export const dataEntryTranslationCatalog = () => [
     i18n.t('{{field}} is required'),
@@ -14,10 +15,15 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('Add event'),
     i18n.t('All changes saved'),
     i18n.t('Assigned by rule: {{rule}}', { nsSeparator: '::' }),
+    i18n.t('Cancel'),
     i18n.t('Cells pasted: {{cells}}', { nsSeparator: '::' }),
     i18n.t('Cleared by rule: {{rule}}', { nsSeparator: '::' }),
     i18n.t('Completed'),
     i18n.t('Completed events in this stage cannot be edited'),
+    i18n.t('Date format: {{format}}', { nsSeparator: '::' }),
+    i18n.t('Discard'),
+    i18n.t('Discard {{changes}} changes?'),
+    i18n.t('Discard changes that could not be saved'),
     i18n.t('Download unsent changes'),
     i18n.t('Edit this field in its own form'),
     i18n.t('Event date'),
@@ -38,9 +44,13 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t(
         'Showing {{shown}} of {{total}} matches. Keep typing to narrow them.'
     ),
+    i18n.t('Signed in as someone else. Reload to continue as that user.'),
     i18n.t('Sign in to keep saving'),
     i18n.t('Skip past the grid'),
     i18n.t('Skipped events cannot be edited'),
+    i18n.t(
+        'They are not saved anywhere else. Download them first to keep a copy.'
+    ),
     i18n.t('This device could not store the change'),
     i18n.t('This event has not been saved yet'),
     i18n.t('This event is in an expired period'),
@@ -52,7 +62,7 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('Yes'),
     i18n.t('You are offline'),
     i18n.t('You do not have access to enter data in this stage'),
-    // Value-type problems are English keys, translated where they are shown.
+    // The value types' problems, translated where they arise.
     i18n.t('Choose one of the options'),
     i18n.t('Enter a number'),
     i18n.t('Enter a number between 0 and 1'),

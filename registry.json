@@ -612,6 +612,7 @@
                 "zustand@^5.0.15"
             ],
             "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert-dialog",
                 "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
@@ -711,6 +712,11 @@
                     "target": "@components/data-entry/outbox/download.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/outbox/failure.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/outbox/failure.ts"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/outbox/outbox.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/outbox/outbox.ts"
@@ -746,6 +752,11 @@
                     "target": "@components/data-entry/provider/context.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/provider/discardFailed.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/discardFailed.ts"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/provider/formRows.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/provider/formRows.ts"
@@ -764,6 +775,11 @@
                     "path": "packages/registry/blocks/data-entry/provider/signedIn.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/provider/signedIn.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/standInForms.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/standInForms.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/provider/unsentFile.ts",
@@ -860,7 +876,10 @@
             "type": "registry:block",
             "title": "DHIS2 Value Types",
             "description": "How each DHIS2 value type is typed, checked, pasted and shown for editing, in the system calendar.",
-            "dependencies": ["@dhis2/multi-calendar-dates@2.1.2"],
+            "dependencies": [
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@2.1.2"
+            ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/dhis2-value-display"

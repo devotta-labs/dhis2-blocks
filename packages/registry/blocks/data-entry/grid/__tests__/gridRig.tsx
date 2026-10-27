@@ -3,8 +3,8 @@ import { render } from 'vitest-browser-react'
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import type { Field } from '@/components/dhis2-value-types'
-import { cellDomId } from '../../cells/cellProps'
-import type { CellEffects } from '../../logic/effects'
+import type { CellOverrides } from '../../cells/cellProps'
+import type { CellEffects, CellMessage } from '../../logic/effects'
 import { cellKey } from '../../model/types'
 import type { CellKey, GridTable, HeaderCell } from '../../model/types'
 import { createAnnouncer, DataEntryReactContext } from '../../provider/context'
@@ -14,6 +14,8 @@ import { createDataEntryStore } from '../../store/store'
 import { DataGrid } from '../DataGrid'
 
 const GREGORIAN = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
+/** What the grids of this rig prefix their DOM ids with. */
+export const ID_SCOPE = 'data-entry'
 export const INTEGER: Field = { valueType: 'INTEGER' }
 
 interface TableOptions {
@@ -82,6 +84,9 @@ interface MountOptions {
     above?: string
     /** Called whenever a cell reads its effects or the grid reads its tables, as each does when it renders. */
     onRead?: (what: 'effects' | 'tables') => void
+    overrides?: CellOverrides
+    /** Row id → the row's messages without a field. */
+    rowMessages?: Array<[string, CellMessage[]]>
 }
 
 /** A grid over `tables` in a context of its own; `addRow` appends a row to its table. */
@@ -95,6 +100,8 @@ export const mount = async (
         closedOnNewRows = [],
         above,
         onRead,
+        overrides,
+        rowMessages = [],
     } = options
     const store = createDataEntryStore({
         tables,
@@ -109,7 +116,7 @@ export const mount = async (
     }
     const effects = createStore<EffectsState>()(() => ({
         cells,
-        rowMessages: new Map(),
+        rowMessages: new Map(rowMessages),
         rowNotes: new Map(),
     }))
     const counted: StoreApi<EffectsState> = {
@@ -132,6 +139,8 @@ export const mount = async (
             (): DataEntryContext => ({
                 store,
                 effects: counted,
+                idScope: ID_SCOPE,
+                overrides,
                 settings: GREGORIAN,
                 announce,
                 announcements: announcer.announcements,
@@ -172,9 +181,10 @@ export const mount = async (
     }
 }
 
+/** The cell's control, whichever form on the page it is in: its id ends in the cell's key. */
 export const control = (key: CellKey): HTMLElement => {
-    const element = document.getElementById(cellDomId(key))
-    if (element === null) {
+    const element = document.querySelector(`[id$="-cell-${key}"]`)
+    if (!(element instanceof HTMLElement)) {
         throw new Error(`No control for ${key}`)
     }
     return element

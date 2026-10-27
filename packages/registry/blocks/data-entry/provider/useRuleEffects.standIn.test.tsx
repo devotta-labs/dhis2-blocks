@@ -7,6 +7,7 @@ import { cellKey } from '../model/types'
 import type { CellKey, GridTable } from '../model/types'
 import { createDataEntryStore } from '../store/store'
 import type { DataEntryState } from '../store/store'
+import { rowHeaderDomId } from '../grid/headers'
 import { holdIdle, later, visit, visitForm } from './__tests__/rig'
 import { connectRules } from './connectRules'
 import type { EffectsState } from './context'
@@ -106,6 +107,7 @@ const connect = (
         announce: (text) => said.push(text),
         cleared: new Map(),
         touched: new Set(),
+        idScope: 'data-entry',
     })
     return { ...open, queued, said, stop }
 }
@@ -369,4 +371,42 @@ test('a rule’s value its type refuses leaves no draft in the locked cell', () 
         'Assigned by rule: Stand-in rule'
     )
     stop()
+})
+
+test('rows in view take their slices one after another, without waiting for idle time', async () => {
+    const idle = holdIdle()
+    const rows = FIVE_ROWS
+    const tableId = visitForm({ rows }).tables[0].id
+    // The row headers the grid would draw, in view.
+    const headers = rows.map(({ id }) => {
+        const header = document.createElement('div')
+        header.id = rowHeaderDomId('data-entry', tableId, id)
+        header.textContent = id
+        document.body.append(header)
+        return header
+    })
+    const slow = standIn(() => {
+        busy(60)
+        return hiding('c2')
+    })
+    const measuresBefore = performance.getEntriesByName(
+        'data-entry:rules-visible',
+        'measure'
+    ).length
+    const { effects, stop } = connect(slow, { rows })
+    const done = () =>
+        rows.filter(
+            ({ id }) => effects.getState().cells[cellKey(id, 'c2')]?.hiddenBy
+        ).length
+
+    expect(done()).toBe(2)
+    await later(400)
+    // No idle callback ran: the rows in view were not left waiting for one.
+    expect(done()).toBe(5)
+    expect(
+        performance.getEntriesByName('data-entry:rules-visible', 'measure')
+    ).toHaveLength(measuresBefore + 1)
+    idle.run()
+    stop()
+    headers.forEach((header) => header.remove())
 })

@@ -2,6 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import { z } from 'zod'
 import { cellKey } from '../model/types'
 import type { CellKey, EventStatus, GridRow } from '../model/types'
+import { PartlySaved } from '../outbox/failure'
 import type { OutboxRecord } from '../outbox/outbox'
 import type { SaveOutcome } from '../outbox/sync'
 import {
@@ -21,7 +22,7 @@ type TrackerEventPayload = EventFields & {
     dataValues: Array<{ dataElement: string; value: string | null }>
 }
 
-/** A save, read included, that takes longer is aborted, so the sync loop backs off and tries again. */
+/** A request of a save (a read or an import) that takes longer is aborted, so the sync loop backs off and tries again. */
 export const SAVE_TIMEOUT = 60_000
 
 // OBJECT saves the valid events of an import and reports the refused ones by id.
@@ -85,8 +86,8 @@ export const withinLimit = async <T>(
     }
 }
 
-// Ids per read, so the request stays well within URL limits however many events wait.
-const READ_CHUNK = 100
+// Events per read and per import, so each request stays well within URL and server limits however many wait.
+const CHUNK = 100
 
 /** What DHIS2 holds now for each event of `ids` in the program; an event it does not return is new or gone. */
 const readEvents = async (
@@ -96,8 +97,8 @@ const readEvents = async (
     signal: AbortSignal
 ) => {
     const current = new Map<string, EventFields>()
-    for (let at = 0; at < ids.length; at += READ_CHUNK) {
-        const chunk = ids.slice(at, at + READ_CHUNK)
+    for (let at = 0; at < ids.length; at += CHUNK) {
+        const chunk = ids.slice(at, at + CHUNK)
         const { events } = currentSchema.parse(
             await engine.query(
                 {
@@ -195,9 +196,9 @@ const importEvents = async (
 }
 
 /**
- * Saving for one event source. Every import is built from the event fields DHIS2 holds at that moment, read in
- * the same request limit, because an update replaces whatever it is not sent and the loaded form may be stale.
- * Network, session and server failures are thrown to the sync loop.
+ * Saving for one event source. Every import is built from the event fields DHIS2 holds at that moment, read just
+ * before it, because an update replaces whatever it is not sent and the loaded form may be stale. Network, session
+ * and server failures are thrown to the sync loop, with the outcomes of the chunks saved before them.
  */
 export const eventSaver = (
     sourceKey: string,
@@ -243,8 +244,8 @@ export const eventSaver = (
     /**
      * One payload per event DHIS2 holds or the records make new. `waiting` holds the outcomes of records not sent:
      * a new event waits for its event date and, in an ON_UPDATE_AND_INSERT stage, its required fields; clearing an
-     * event date or a required value is refused, and so is any change to an event DHIS2 held but no longer returns.
-     * Records of other events get no outcome.
+     * event date or a required value is refused, and so is any change to an event DHIS2 does not return that was
+     * not made as a new one, or that was saved here since.
      */
     const payloads = (
         records: ReadonlyArray<OutboxRecord>,
@@ -315,8 +316,9 @@ export const eventSaver = (
                 continue
             }
 
-            // DHIS2 had it, so it was deleted or is out of the user's reach; its changes cannot be saved.
-            if (held.has(event)) {
+            const newRow = changes.find((change) => change.row?.isNew)?.row
+            // DHIS2 had it, here or in another grid, so it was deleted or is out of the user's reach.
+            if (held.has(event) || newRow === undefined) {
                 for (const { sourceKey: source, key } of changes) {
                     waiting.push({
                         sourceKey: source,
@@ -327,10 +329,6 @@ export const eventSaver = (
                         ),
                     })
                 }
-                continue
-            }
-            const newRow = changes.find((change) => change.row?.isNew)?.row
-            if (newRow === undefined) {
                 continue
             }
             const filled = new Set(
@@ -346,6 +344,7 @@ export const eventSaver = (
                 const reason = i18n.t(
                     'Waiting for required fields: {{fields}}',
                     {
+                        nsSeparator: '::',
                         fields: missing.map(nameOf).join(', '),
                         interpolation: AS_IS,
                     }
@@ -374,6 +373,38 @@ export const eventSaver = (
         return { events, waiting }
     }
 
+    /** Up to 100 events' records: what DHIS2 holds of them is read, then they are imported. */
+    const saveChunk = async (
+        engine: DataEngine,
+        records: ReadonlyArray<OutboxRecord>,
+        form: LoadedForm
+    ): Promise<SaveOutcome[]> => {
+        const current = await withinLimit(timeout, (signal) =>
+            readEvents(
+                engine,
+                programId,
+                [...new Set(records.map(({ key }) => rowOf(key)))],
+                signal
+            )
+        )
+        const { events, waiting } = payloads(records, form, current)
+        if (events.length === 0) {
+            return waiting
+        }
+        const inPayload = new Set(events.map(({ event }) => event))
+        const notSent = new Set(waiting.map(({ key }) => key))
+        const sent = records.filter(
+            ({ key }) => inPayload.has(rowOf(key)) && !notSent.has(key)
+        )
+        const created = new Set([...inPayload].filter((id) => !current.has(id)))
+        return [
+            ...waiting,
+            ...(await withinLimit(timeout, (signal) =>
+                send(engine, events, sent, created, signal)
+            )),
+        ]
+    }
+
     return {
         /** Notes the events a load found, so they are not restored as new rows. */
         remember(eventIds: ReadonlyArray<string>) {
@@ -382,39 +413,45 @@ export const eventSaver = (
             }
         },
 
-        /** Sends the records' events in one tracker import. */
+        /**
+         * Sends the records' events 100 at a time, one chunk after another: each read, then imported, each request
+         * within its own limit. A failure keeps the outcomes of the chunks before it (`PartlySaved`).
+         */
         save: (
             engine: DataEngine,
             records: ReadonlyArray<OutboxRecord>,
             form: LoadedForm
         ) =>
-            inTurn(() =>
-                withinLimit(timeout, async (signal): Promise<SaveOutcome[]> => {
-                    const current = await readEvents(
-                        engine,
-                        programId,
-                        [...new Set(records.map(({ key }) => rowOf(key)))],
-                        signal
-                    )
-                    const { events, waiting } = payloads(records, form, current)
-                    if (events.length === 0) {
-                        return waiting
+            inTurn(async () => {
+                const events = [
+                    ...new Set(records.map(({ key }) => rowOf(key))),
+                ]
+                const outcomes: SaveOutcome[] = []
+                for (let at = 0; at < events.length; at += CHUNK) {
+                    const ids = new Set(events.slice(at, at + CHUNK))
+                    try {
+                        outcomes.push(
+                            ...(await saveChunk(
+                                engine,
+                                records.filter(({ key }) =>
+                                    ids.has(rowOf(key))
+                                ),
+                                form
+                            ))
+                        )
+                    } catch (error) {
+                        throw outcomes.length === 0
+                            ? error
+                            : new PartlySaved(
+                                  outcomes,
+                                  error instanceof Error
+                                      ? error
+                                      : new Error(String(error))
+                              )
                     }
-                    const inPayload = new Set(events.map(({ event }) => event))
-                    const notSent = new Set(waiting.map(({ key }) => key))
-                    const sent = records.filter(
-                        ({ key }) =>
-                            inPayload.has(rowOf(key)) && !notSent.has(key)
-                    )
-                    const created = new Set(
-                        [...inPayload].filter((id) => !current.has(id))
-                    )
-                    return [
-                        ...waiting,
-                        ...(await send(engine, events, sent, created, signal)),
-                    ]
-                })
-            ),
+                }
+                return outcomes
+            }),
 
         /** Completes or reopens an event DHIS2 holds; its one outcome is keyed `<event>.status`. */
         setStatus: (
@@ -454,19 +491,33 @@ export const eventSaver = (
                 })
             ),
 
-        /** One row per new event DHIS2 does not hold, in the order they were made, labelled by its event date. */
-        restoreRows: (records: ReadonlyArray<OutboxRecord>) => {
+        /**
+         * One row per new event of the form's new-row target (its stage, org unit and enrollment) that DHIS2 does not
+         * hold, in the order they were made, labelled by its event date.
+         */
+        restoreRows: async (
+            engine: DataEngine,
+            records: ReadonlyArray<OutboxRecord>,
+            { newRows: target }: LoadedForm
+        ) => {
             const rows = new Map<string, GridRow>()
             for (const { key, value, row } of [...records].sort(
                 (a, b) => a.at - b.at
             )) {
                 const id = rowOf(key)
-                if (!row?.isNew || held.has(id)) {
+                if (
+                    !row?.isNew ||
+                    held.has(id) ||
+                    row.programStageId !== target?.programStageId ||
+                    row.orgUnitId !== target.orgUnitId ||
+                    row.enrollmentId !== target.enrollmentId
+                ) {
                     continue
                 }
                 const restored = rows.get(id) ?? {
                     id,
                     label: i18n.t('New event'),
+                    stage: target?.stage,
                     programStageId: row.programStageId,
                     orgUnitId: row.orgUnitId,
                     enrollmentId: row.enrollmentId,
@@ -478,7 +529,15 @@ export const eventSaver = (
                 }
                 rows.set(id, restored)
             }
-            return [...rows.values()]
+            if (rows.size === 0) {
+                return []
+            }
+            // One saved since, from another grid or beyond the page loaded, is DHIS2's: its changes are ordinary ones.
+            // Unasked, the rows show as new; a save reads what DHIS2 holds first either way.
+            const saved = await withinLimit(timeout, (signal) =>
+                readEvents(engine, programId, [...rows.keys()], signal)
+            ).catch(() => new Map<string, EventFields>())
+            return [...rows.values()].filter(({ id }) => !saved.has(id))
         },
     }
 }

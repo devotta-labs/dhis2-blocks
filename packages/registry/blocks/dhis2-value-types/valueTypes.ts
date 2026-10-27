@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { storedDay, storedTime } from '@/components/dhis2-value-display'
 import { calendarDateToIso, isIsoDate, isoToCalendarDate } from './dates'
 import { matchesFieldMask } from './fieldMask'
@@ -18,12 +19,16 @@ const problem = (code: string, message: string): ValueProblem => ({
 
 type Check = (value: string) => ValueProblem | undefined
 
-const NOT_AN_OPTION = problem('option', 'Choose one of the options')
-const NOT_A_NUMBER = problem('number', 'Enter a number')
-const DECIMAL_COMMA = problem('decimalComma', 'Use a full stop for decimals')
-const NOT_A_DATE = problem('date', 'Enter a valid date')
-const NOT_A_DATE_TIME = problem('dateTime', 'Enter a valid date and time')
-const NOT_IN_MASK = problem('fieldMask', 'Enter a value in the required format')
+// Each problem is made when a value is refused, so its message is in the language set then.
+const notAnOption = () => problem('option', i18n.t('Choose one of the options'))
+const notANumber = () => problem('number', i18n.t('Enter a number'))
+const decimalComma = () =>
+    problem('decimalComma', i18n.t('Use a full stop for decimals'))
+const notADate = () => problem('date', i18n.t('Enter a valid date'))
+const notADateTime = () =>
+    problem('dateTime', i18n.t('Enter a valid date and time'))
+const notInMask = () =>
+    problem('fieldMask', i18n.t('Enter a value in the required format'))
 
 // What DHIS2's server accepts for numbers: no leading zeros, no exponent.
 const STORED_INTEGER = /^(?:0|-?[1-9]\d*)$/
@@ -68,115 +73,128 @@ const canonicalNumber = (text: string): string | undefined => {
 }
 
 const whole =
-    (pattern: RegExp, bad: ValueProblem): Check =>
+    (pattern: RegExp, bad: () => ValueProblem): Check =>
     (value) =>
         pattern.test(value) && Number.isSafeInteger(Number(value))
             ? undefined
-            : bad
+            : bad()
 
 const decimal =
-    (accepts: (n: number) => boolean, bad: ValueProblem): Check =>
+    (accepts: (n: number) => boolean, bad: () => ValueProblem): Check =>
     (value) => {
         if (isNumber(value)) {
-            return accepts(Number(value)) ? undefined : bad
+            return accepts(Number(value)) ? undefined : bad()
         }
         return value.includes(',') &&
             canonicalNumber(value.replace(',', '.')) !== undefined
-            ? DECIMAL_COMMA
-            : bad
+            ? decimalComma()
+            : bad()
     }
 
 const matches =
-    (pattern: RegExp, bad: ValueProblem): Check =>
+    (pattern: RegExp, bad: () => ValueProblem): Check =>
     (value) =>
-        pattern.test(value) ? undefined : bad
+        pattern.test(value) ? undefined : bad()
 
-const NOT_A_COORDINATE = problem('coordinate', 'Enter a valid coordinate')
+const notACoordinate = () =>
+    problem('coordinate', i18n.t('Enter a valid coordinate'))
 
 // What each value type accepts in its stored form.
 const CHECKS = new Map(
     Object.entries({
-        INTEGER: whole(
-            STORED_INTEGER,
-            problem('integer', 'Enter a whole number')
+        INTEGER: whole(STORED_INTEGER, () =>
+            problem('integer', i18n.t('Enter a whole number'))
         ),
-        INTEGER_POSITIVE: whole(
-            STORED_INTEGER_POSITIVE,
-            problem('integerPositive', 'Enter a whole number greater than zero')
-        ),
-        INTEGER_NEGATIVE: whole(
-            STORED_INTEGER_NEGATIVE,
-            problem('integerNegative', 'Enter a whole number less than zero')
-        ),
-        INTEGER_ZERO_OR_POSITIVE: whole(
-            STORED_INTEGER_ZERO_OR_POSITIVE,
+        INTEGER_POSITIVE: whole(STORED_INTEGER_POSITIVE, () =>
             problem(
-                'integerZeroOrPositive',
-                'Enter a whole number of zero or more'
+                'integerPositive',
+                i18n.t('Enter a whole number greater than zero')
             )
         ),
-        NUMBER: decimal(() => true, NOT_A_NUMBER),
+        INTEGER_NEGATIVE: whole(STORED_INTEGER_NEGATIVE, () =>
+            problem(
+                'integerNegative',
+                i18n.t('Enter a whole number less than zero')
+            )
+        ),
+        INTEGER_ZERO_OR_POSITIVE: whole(STORED_INTEGER_ZERO_OR_POSITIVE, () =>
+            problem(
+                'integerZeroOrPositive',
+                i18n.t('Enter a whole number of zero or more')
+            )
+        ),
+        NUMBER: decimal(() => true, notANumber),
         PERCENTAGE: decimal(
             (n) => n >= 0 && n <= 100,
-            problem('percentage', 'Enter a percentage between 0 and 100')
+            () =>
+                problem(
+                    'percentage',
+                    i18n.t('Enter a percentage between 0 and 100')
+                )
         ),
         UNIT_INTERVAL: decimal(
             (n) => n >= 0 && n <= 1,
-            problem('unitInterval', 'Enter a number between 0 and 1')
+            () =>
+                problem(
+                    'unitInterval',
+                    i18n.t('Enter a number between 0 and 1')
+                )
         ),
-        LETTER: matches(/^\p{L}$/u, problem('letter', 'Enter a single letter')),
-        EMAIL: matches(EMAIL, problem('email', 'Enter a valid email address')),
-        PHONE_NUMBER: matches(
-            PHONE,
-            problem('phoneNumber', 'Enter a valid phone number')
+        LETTER: matches(/^\p{L}$/u, () =>
+            problem('letter', i18n.t('Enter a single letter'))
+        ),
+        EMAIL: matches(EMAIL, () =>
+            problem('email', i18n.t('Enter a valid email address'))
+        ),
+        PHONE_NUMBER: matches(PHONE, () =>
+            problem('phoneNumber', i18n.t('Enter a valid phone number'))
         ),
         URL: (value) => {
-            const bad = problem('url', 'Enter a valid URL')
             try {
-                return URL_PROTOCOLS.has(new URL(value).protocol)
-                    ? undefined
-                    : bad
+                if (URL_PROTOCOLS.has(new URL(value).protocol)) {
+                    return undefined
+                }
             } catch {
-                return bad
+                // Not a URL at all.
             }
+            return problem('url', i18n.t('Enter a valid URL'))
         },
-        DATE: (value) => (isIsoDate(value) ? undefined : NOT_A_DATE),
+        DATE: (value) => (isIsoDate(value) ? undefined : notADate()),
         DATETIME: (value) => {
             const groups = DATE_TIME.exec(value)?.groups
             return groups !== undefined &&
                 isIsoDate(groups.day) &&
                 isClockTime(groups.hours, groups.minutes, groups.seconds)
                 ? undefined
-                : NOT_A_DATE_TIME
+                : notADateTime()
         },
         TIME: (value) => {
             const groups = TIME.exec(value)?.groups
             return groups !== undefined &&
                 isClockTime(groups.hours, groups.minutes)
                 ? undefined
-                : problem('time', 'Enter a valid time')
+                : problem('time', i18n.t('Enter a valid time'))
         },
-        AGE: (value) => (isIsoDate(value) ? undefined : NOT_A_DATE),
+        AGE: (value) => (isIsoDate(value) ? undefined : notADate()),
         COORDINATE: (value) => {
             const match = COORDINATE.exec(value)
             return match !== null &&
                 Math.abs(Number(match[1])) <= 180 &&
                 Math.abs(Number(match[2])) <= 90
                 ? undefined
-                : NOT_A_COORDINATE
+                : notACoordinate()
         },
-        ORGANISATION_UNIT: matches(
-            UID,
-            problem('orgUnit', 'Select a valid organisation unit')
+        ORGANISATION_UNIT: matches(UID, () =>
+            problem('orgUnit', i18n.t('Select a valid organisation unit'))
         ),
         BOOLEAN: (value) =>
             value === 'true' || value === 'false'
                 ? undefined
-                : problem('boolean', 'Select Yes or No'),
+                : problem('boolean', i18n.t('Select Yes or No')),
         TRUE_ONLY: (value) =>
             value === 'true'
                 ? undefined
-                : problem('trueOnly', 'Only Yes can be selected'),
+                : problem('trueOnly', i18n.t('Only Yes can be selected')),
     } satisfies Record<string, Check>)
 )
 
@@ -309,7 +327,7 @@ export const checkStored = (
         const codes = valueType === 'MULTI_TEXT' ? value.split(',') : [value]
         return codes.every((code) => texts.has(code))
             ? undefined
-            : NOT_AN_OPTION
+            : notAnOption()
     }
     const typeProblem = CHECKS.get(valueType)?.(value)
     if (typeProblem !== undefined || fieldMask === undefined) {
@@ -317,7 +335,7 @@ export const checkStored = (
     }
     return MASKABLE_VALUE_TYPES.has(valueType) &&
         !matchesFieldMask(fieldMask, value)
-        ? NOT_IN_MASK
+        ? notInMask()
         : undefined
 }
 
@@ -406,7 +424,7 @@ export const parseTyped = (
     if (stored === undefined) {
         return {
             ok: false,
-            problem: kind === 'dateTime' ? NOT_A_DATE_TIME : NOT_A_DATE,
+            problem: kind === 'dateTime' ? notADateTime() : notADate(),
         }
     }
     const bad = checkStored(field, stored)

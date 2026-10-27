@@ -27,6 +27,18 @@ export interface ControlProps extends CellProps {
     readOnly?: string
     /** A rule hides the cell: `readOnly` is the rule, and the cell shows "Hidden" instead of its value. */
     hidden?: boolean
+    /**
+     * Spread on the element that has `id`. The cell shows its notes (why it cannot be edited, its errors and warnings,
+     * whether it is saved) while focus is in it; these attributes say them to a screen reader.
+     */
+    aria: {
+        /** The ids of the cell's notes. */
+        'aria-describedby'?: string
+        /** An error of the value's type or of a rule. */
+        'aria-invalid'?: true
+        /** A rule or the stage asks for a value. */
+        'aria-required'?: true
+    }
 }
 
 export type CellComponent = (props: ControlProps) => ReactNode
@@ -37,5 +49,5 @@ export interface CellOverrides {
     fields?: Partial<Record<string, CellComponent>>
 }
 
-/** The id of the cell's focusable control, for the grid and the summary to focus it by. */
-export const cellDomId = (key: CellKey) => `data-entry-cell-${key}`
+/** The id of the cell's focusable control, for the grid and the summary to focus it by; `scope` is the form's. */
+export const cellDomId = (scope: string, key: CellKey) => `${scope}-cell-${key}`

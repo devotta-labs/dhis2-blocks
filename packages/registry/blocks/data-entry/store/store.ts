@@ -17,7 +17,7 @@ export interface DataEntryStoreOptions {
     settings: ValueSettings
     /** Called for every change that must be saved; the outbox writes it. */
     enqueue(key: CellKey, value: string | null, base: string | null): void
-    /** The untranslated message refusing a person's value its type accepts, or nothing; blank is never checked. */
+    /** The translated message refusing a person's value its type accepts, or nothing; blank is never checked. */
     check?(key: CellKey, value: string): string | undefined
 }
 

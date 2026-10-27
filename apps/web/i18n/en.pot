@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-26T18:48:29.186Z\n"
-"PO-Revision-Date: 2026-10-26T18:48:29.186Z\n"
+"POT-Creation-Date: 2026-10-27T07:37:18.196Z\n"
+"PO-Revision-Date: 2026-10-27T07:37:18.196Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -157,6 +157,9 @@ msgstr "All changes saved"
 msgid "Assigned by rule: {{rule}}"
 msgstr "Assigned by rule: {{rule}}"
 
+msgid "Cancel"
+msgstr "Cancel"
+
 msgid "Cells pasted: {{cells}}"
 msgstr "Cells pasted: {{cells}}"
 
@@ -168,6 +171,18 @@ msgstr "Completed"
 
 msgid "Completed events in this stage cannot be edited"
 msgstr "Completed events in this stage cannot be edited"
+
+msgid "Date format: {{format}}"
+msgstr "Date format: {{format}}"
+
+msgid "Discard"
+msgstr "Discard"
+
+msgid "Discard {{changes}} changes?"
+msgstr "Discard {{changes}} changes?"
+
+msgid "Discard changes that could not be saved"
+msgstr "Discard changes that could not be saved"
 
 msgid "Download unsent changes"
 msgstr "Download unsent changes"
@@ -223,6 +238,9 @@ msgstr "Scheduled"
 msgid "Showing {{shown}} of {{total}} matches. Keep typing to narrow them."
 msgstr "Showing {{shown}} of {{total}} matches. Keep typing to narrow them."
 
+msgid "Signed in as someone else. Reload to continue as that user."
+msgstr "Signed in as someone else. Reload to continue as that user."
+
 msgid "Sign in to keep saving"
 msgstr "Sign in to keep saving"
 
@@ -231,6 +249,9 @@ msgstr "Skip past the grid"
 
 msgid "Skipped events cannot be edited"
 msgstr "Skipped events cannot be edited"
+
+msgid "They are not saved anywhere else. Download them first to keep a copy."
+msgstr "They are not saved anywhere else. Download them first to keep a copy."
 
 msgid "This device could not store the change"
 msgstr "This device could not store the change"
@@ -384,9 +405,6 @@ msgstr "Available columns"
 
 msgid "Between"
 msgstr "Between"
-
-msgid "Cancel"
-msgstr "Cancel"
 
 msgid "Can only filter using one program stage."
 msgstr "Can only filter using one program stage."

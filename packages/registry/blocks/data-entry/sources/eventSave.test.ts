@@ -324,8 +324,20 @@ test('names fields as DHIS2 shows them', async () => {
     expect(outcome.reason).toBe('Admission date / time & place is required')
 })
 
-test('leaves the changes of events DHIS2 does not hold', async () => {
+test('a change to an event DHIS2 does not return fails, whether or not this grid loaded it', async () => {
+    // Loaded by another grid of the program, then deleted or moved out of the user's reach.
     const grid = await inpatient()
-    expect(await grid.save(change('Zz9yX8wV7uT', AGE, '6'))).toEqual([])
+    const record = change('Zz9yX8wV7uT', AGE, '6', {
+        ...NEW_INPATIENT,
+        isNew: false,
+    })
+    expect(await grid.save(record)).toEqual([
+        {
+            sourceKey: SOURCE,
+            key: record.key,
+            result: 'failed',
+            reason: 'This event was deleted or you no longer have access to it',
+        },
+    ])
     expect(grid.mutations).toEqual([])
 })

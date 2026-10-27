@@ -272,6 +272,39 @@ test('Tab picks the highlighted match and moves; Shift+Tab picks it and leaves t
     await expect.element(input).not.toHaveFocus()
 })
 
+const GENDER: Field = {
+    valueType: 'TEXT',
+    options: [
+        { code: 'Male', name: 'Male' },
+        { code: 'Female', name: 'Female' },
+    ],
+}
+
+test.each(['{Delete}', '{Backspace}', ' '])(
+    '%s, then Enter, clears the cell: nothing is highlighted to pick',
+    async (key) => {
+        const { input, stored, moves } = await mount(
+            { value: 'Female' },
+            GENDER
+        )
+        inputOf(input).focus()
+        await userEvent.keyboard(key)
+        await expect.element(list).toBeVisible()
+        await expect.element(input).not.toHaveAttribute('aria-activedescendant')
+        await userEvent.keyboard('{Enter}')
+        expect(stored()).toMatchObject({ value: undefined, sync: 'queued' })
+        expect(moves).toEqual(['enter'])
+    }
+)
+
+test('Tab on emptied text clears the cell too', async () => {
+    const { input, stored, moves } = await mount({ value: 'Female' }, GENDER)
+    inputOf(input).focus()
+    await userEvent.keyboard('{Backspace}{Tab}')
+    expect(stored()).toMatchObject({ value: undefined, sync: 'queued' })
+    expect(moves).toEqual(['tab'])
+})
+
 test('clicking a locked cell lists nothing, even once it is unlocked', async () => {
     const { input, effects } = await mount({
         value: 'A01',

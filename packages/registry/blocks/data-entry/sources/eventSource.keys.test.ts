@@ -1,18 +1,16 @@
 import { eventSource } from './eventSource'
 
-test('the key names the context', () => {
-    expect(eventSource({ programId: 'p', orgUnitId: 'o' }).key).toBe(
-        'events:p:-:o:SELECTED:-'
-    )
+test('the key names the program: its grids share one record per cell', () => {
+    expect(eventSource({ programId: 'p', orgUnitId: 'o' }).key).toBe('events:p')
     expect(
         eventSource({
             programId: 'p',
             programStageId: 's',
-            orgUnitId: 'o',
+            orgUnitId: 'o2',
             orgUnitMode: 'DESCENDANTS',
             enrollmentId: 'e',
         }).key
-    ).toBe('events:p:s:o:DESCENDANTS:e')
+    ).toBe('events:p')
 })
 
 test('the cache key adds what else the load reads; the outbox key stays the same', () => {
@@ -46,5 +44,7 @@ test('the cache key adds what else the load reads; the outbox key stays the same
     expect(adding.cacheKey).toBe(
         'events:p:-:o:SELECTED:e:50:occurredAt:desc:s:2026-10-26'
     )
-    expect(new Set([first.key, bigger.key, oldest.key]).size).toBe(1)
+    expect(new Set([first.key, bigger.key, oldest.key, adding.key]).size).toBe(
+        1
+    )
 })

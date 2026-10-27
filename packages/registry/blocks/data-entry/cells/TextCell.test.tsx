@@ -2,8 +2,7 @@ import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field } from '@/components/dhis2-value-types'
 import { CELL, HEADER, inputOf, rig } from './__tests__/harness'
-import { cellDomId } from './cellProps'
-import { TextCell } from './TextCell'
+import { Cell } from './Cell'
 
 const INTEGER: Field = { valueType: 'INTEGER' }
 const TRANSPARENT = 'rgba(0, 0, 0, 0)'
@@ -12,8 +11,7 @@ const mount = async (options?: Parameters<typeof rig>[1], field = INTEGER) => {
     const setup = rig(field, options)
     await render(
         setup.ui(
-            <TextCell
-                id={cellDomId(CELL)}
+            <Cell
                 cellKey={CELL}
                 field={field}
                 labelledBy={HEADER}
@@ -298,7 +296,7 @@ test('after saving at the grid edge, where nothing moves, the cell is selected a
 
 test('the control has the id the grid focuses by and asks for the numeric keyboard', async () => {
     const { input } = await mount(undefined, { valueType: 'INTEGER_POSITIVE' })
-    expect(inputOf(input).id).toBe(cellDomId(CELL))
+    expect(inputOf(input).id).toBe('data-entry-cell-r1.c1')
     await expect.element(input).toHaveAttribute('inputmode', 'numeric')
 })
 

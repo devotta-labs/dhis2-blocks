@@ -57,9 +57,15 @@ const whenIdle = (work: () => void) => {
     return () => clearTimeout(id)
 }
 
-const onScreen = (tableId: string, rowId: string) => {
+// The rows in view do not wait for the browser to be idle, which it rarely is while it renders the grid.
+const soon = (work: () => void) => {
+    const id = setTimeout(work)
+    return () => clearTimeout(id)
+}
+
+const onScreen = (idScope: string, tableId: string, rowId: string) => {
     const box = document
-        .getElementById(rowHeaderDomId(tableId, rowId))
+        .getElementById(rowHeaderDomId(idScope, tableId, rowId))
         ?.getBoundingClientRect()
     return box !== undefined && box.bottom > 0 && box.top < window.innerHeight
 }
@@ -89,6 +95,8 @@ interface ConnectOptions {
     cleared: Map<CellKey, string>
     /** Rows a person changed or completed, or with unsent changes: only there are the rules' values saved. */
     touched: Set<string>
+    /** Starts the form's DOM ids. */
+    idScope: string
 }
 
 /**
@@ -104,11 +112,17 @@ export const connectRules = ({
     announce,
     cleared,
     touched,
+    idScope,
 }: ConnectOptions) => {
     let stopped = false
-    // Opening the grid changes nothing: rules' values are saved only with a row someone is changing.
+    // Opening the grid changes nothing: rules' values are saved only with a row someone is changing. A failed change is
+    // not on its way: it waits for the person to enter it again.
     for (const [key, cell] of Object.entries(store.getState().cells)) {
-        if (cell !== undefined && cell.sync !== 'idle') {
+        if (
+            cell !== undefined &&
+            cell.sync !== 'idle' &&
+            cell.sync !== 'failed'
+        ) {
             touched.add(rowIdOf(key))
         }
     }
@@ -160,7 +174,7 @@ export const connectRules = ({
                     continue
                 }
                 // A rule never overwrites what is being typed: it runs again once the person leaves the cell.
-                if (cellDomId(key) === typing) {
+                if (cellDomId(idScope, key) === typing) {
                     held.set(typing, row.id)
                     continue
                 }
@@ -177,6 +191,7 @@ export const connectRules = ({
                 notes.push(
                     value === null && now
                         ? i18n.t('Cleared by rule: {{rule}}', {
+                              nsSeparator: '::',
                               rule: by?.ruleName ?? '',
                               interpolation: AS_IS,
                           })
@@ -384,11 +399,12 @@ export const connectRules = ({
     }
 
     // The visible rows first, then the rest in their order.
-    const order = tables
-        .getState()
-        .tables.flatMap(({ id: tableId, rows }) =>
-            rows.map(({ id }) => ({ id, visible: onScreen(tableId, id) }))
-        )
+    const order = tables.getState().tables.flatMap(({ id: tableId, rows }) =>
+        rows.map(({ id }) => ({
+            id,
+            visible: onScreen(idScope, tableId, id),
+        }))
+    )
     const offScreen = order
         .filter(({ visible }) => !visible)
         .map(({ id }) => id)
@@ -408,13 +424,15 @@ export const connectRules = ({
     }
     measured('data-entry:rules', () => slice(FIRST_SLICE_MS))
     let cancel = () => {}
+    // Rows still in view take short slices one after another; the rest wait for idle time.
+    const schedule = () => (inView ? soon : whenIdle)(nextSlice)
     const nextSlice = () => {
         if (!stopped && rest.length > 0) {
             slice(IDLE_SLICE_MS)
-            cancel = whenIdle(nextSlice)
+            cancel = schedule()
         }
     }
-    cancel = whenIdle(nextSlice)
+    cancel = schedule()
 
     const unsubscribes = [
         // A person's change re-runs the rows it can affect; an event date, every row of that person.

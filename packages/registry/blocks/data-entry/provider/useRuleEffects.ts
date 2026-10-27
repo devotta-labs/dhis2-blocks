@@ -15,6 +15,8 @@ interface RuleEffectsOptions {
     tables: ReadonlyArray<GridTable>
     settings: ValueSettings
     announce(text: string): void
+    /** Starts the form's DOM ids. */
+    idScope: string
 }
 
 /**
@@ -27,6 +29,7 @@ export const useRuleEffects = ({
     tables,
     settings,
     announce,
+    idScope,
 }: RuleEffectsOptions) => {
     const target = form?.rules
     const { rules, status } = useEventsRules({
@@ -99,6 +102,7 @@ export const useRuleEffects = ({
             announce,
             cleared,
             touched,
+            idScope,
         })
-    }, [open, form, rules, settings, announce])
+    }, [open, form, rules, settings, announce, idScope])
 }

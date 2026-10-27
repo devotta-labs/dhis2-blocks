@@ -1,6 +1,5 @@
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
-import { cellDomId } from '../cells/cellProps'
 import type { CellComponent } from '../cells/cellProps'
 import { DataGrid } from '../grid/DataGrid'
 import { control, paste } from '../grid/__tests__/gridRig'
@@ -84,7 +83,28 @@ test('unsent changes come back after the provider remounts', async () => {
     expect(notesOf(cellKey(added, 'c1'))).toContain('Saved on this device')
     expect(control(cellKey(added, 'c1'))).toHaveValue('3')
     // The restored row is closed where new rows are.
-    expect(document.getElementById(cellDomId(cellKey(added, 'c3')))).toBeNull()
+    expect(() => control(cellKey(added, 'c3'))).toThrow()
+})
+
+test('the form loads once per mount: an app-wide invalidation never loads it again under the person', async () => {
+    const memory = memorySource(visitForm())
+    memory.hold()
+    const first = await mount(memory.source)
+    control(CHILDREN).focus()
+    await userEvent.keyboard('5{Enter}')
+    await first.client.invalidateQueries()
+    await later(200)
+    expect(memory.loads()).toBe(1)
+    expect(control(CHILDREN)).toHaveValue('5')
+    await first.screen.unmount()
+
+    // A remount loads the form, and asks who is signed in, again.
+    const second = await mount(memory.source, {
+        server: first.server,
+        client: first.client,
+    })
+    expect(memory.loads()).toBe(2)
+    expect(second.meSignals.length).toBeGreaterThan(0)
 })
 
 test('the leave-page prompt is armed while anything is unsent', async () => {
@@ -228,6 +248,47 @@ test('measures how long the form took to be ready', async () => {
         .toHaveLength(1)
 })
 
+test('completing asks again who is signed in once the row’s changes are sent', async () => {
+    let user = 'userA'
+    const memory = memorySource(visitForm())
+    memory.hold()
+    const { view } = await mount(memory.source, { signedIn: () => user })
+    control(CHILDREN).focus()
+    await userEvent.keyboard('2{Enter}')
+    const completing = view().complete('r1')
+    await expect.poll(() => memory.sent).toHaveLength(1)
+    // Someone else signs in while the row's changes are on their way.
+    user = 'userB'
+    memory.release()
+    expect(await completing).toMatchObject([
+        {
+            key: 'r1.status',
+            result: 'failed',
+            reason: 'Signed in as someone else. Reload to continue as that user.',
+        },
+    ])
+    expect(memory.statuses).toEqual([])
+})
+
+test('a new row names its stage when the form gives one', async () => {
+    const form = visitForm()
+    const memory = memorySource({
+        ...form,
+        newRows: {
+            tableId: 't1',
+            programStageId: 's1',
+            orgUnitId: 'o1',
+            stage: 'Antenatal visit',
+        },
+    })
+    const { context } = await mount(memory.source)
+    await userEvent.click(page.getByRole('button', { name: 'Add event' }))
+    expect(context().tables[0].rows.at(-1)).toMatchObject({
+        isNew: true,
+        stage: 'Antenatal visit',
+    })
+})
+
 test('complete and reopen send nothing while someone else is signed in', async () => {
     let user = 'userA'
     const memory = memorySource(
@@ -239,16 +300,16 @@ test('complete and reopen send nothing while someone else is signed in', async (
     )
     const { view } = await mount(memory.source, { signedIn: () => user })
     user = 'userB'
-    const signIn = (row: string) => [
+    const locked = (row: string) => [
         {
             sourceKey: KEY,
             key: `${row}.status`,
             result: 'failed',
-            reason: 'Sign in to keep saving',
+            reason: 'Signed in as someone else. Reload to continue as that user.',
         },
     ]
-    expect(await view().complete('r1')).toEqual(signIn('r1'))
-    expect(await view().reopen('r2')).toEqual(signIn('r2'))
+    expect(await view().complete('r1')).toEqual(locked('r1'))
+    expect(await view().reopen('r2')).toEqual(locked('r2'))
     expect(memory.statuses).toEqual([])
 })
 
@@ -343,7 +404,7 @@ test('a summary link moves focus to its cell', async () => {
             name: 'Visit 1, Children: Enter a whole number',
         })
     )
-    expect(document.activeElement?.id).toBe(cellDomId(CHILDREN))
+    expect(document.activeElement).toBe(control(CHILDREN))
 })
 
 test('an option a rule hid is refused when typed or pasted', async () => {
@@ -377,4 +438,19 @@ test('an option a rule hid is refused when typed or pasted', async () => {
         error,
     })
     expect(await records(server)).toEqual([])
+})
+
+test('two forms of one program on one page share no DOM id', async () => {
+    await mount(memorySource(visitForm()).source, {
+        copies: 2,
+        children: (
+            <>
+                <DataGrid />
+                <DataEntrySummary />
+            </>
+        ),
+    })
+    expect(document.querySelectorAll('table')).toHaveLength(2)
+    const ids = [...document.querySelectorAll('[id]')].map(({ id }) => id)
+    expect(ids.filter((id, at) => ids.indexOf(id) !== at)).toEqual([])
 })

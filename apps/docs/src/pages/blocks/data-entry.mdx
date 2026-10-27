@@ -68,9 +68,10 @@ export const InpatientGrid = () => (
 ```
 
 The grid shows nothing until the form has loaded, so show the loading and
-error states yourself with `useDataEntry((view) => view.status)`. Render your
-own `Cell`s only once `status` is `'ready'`: before that there are no cells to
-bind them to.
+error states yourself with `useDataEntry((view) => view.status)`, and why the
+form could not load with `view.error`. Render your own `Cell`s only once
+`status` is `'ready'`: before that there are no cells to bind them to. Several
+forms can share a page: each starts its DOM ids with its own prefix.
 
 ## Choose which events are rows
 
@@ -111,13 +112,20 @@ interface EventSourceOptions {
 ## Typing
 
 Typing replaces the value, F2 edits it, Enter and the arrow keys save and
-move, Tab moves with the page, and Escape puts the value back. A block copied
-from a spreadsheet pastes from the focused cell, skipping cells that cannot
-take it, and Ctrl+Z (Cmd+Z on a Mac) undoes the last change.
+move, Tab moves with the page, and Escape puts the value back. Left and Right
+move the way they point, in a right-to-left page too. A block copied from a
+spreadsheet pastes from the focused cell, skipping cells that cannot take it,
+and Ctrl+Z (Cmd+Z on a Mac) undoes the last change. In an option cell, typing
+lists the matches and Enter or Tab picks the highlighted one; text that is
+emptied highlights none, so Enter or Tab clears the cell. Delete clears a
+checkbox.
 
 Values are checked against their value type as they are typed. A value its
 type refuses stays in the cell with its error and is not saved; nothing typed
-is lost. Dates are typed and shown in the system calendar and date format.
+is lost. Dates are typed and shown in the system calendar and date format, and
+an empty date cell says the format. A row is named by its event date in that
+format once it has one, followed by its stage where the grid shows several; a
+new row is "New event" until its date is typed.
 
 `LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `ORGANISATION_UNIT`,
 `USERNAME`, `FILE_RESOURCE` and `IMAGE` show their value and are edited in
@@ -126,10 +134,10 @@ their own form.
 ## Program rules
 
 Rules hide fields and options, make fields required, lock the values they
-assign, and put their messages on cells; a message without a field goes on the
-row. What a rule displays, such as texts and key-value pairs, shows under the
-row's label. A row whose rules fail shows the error on the row and keeps none
-of their effects.
+assign, and put their messages on cells. A message without a field shows in
+the row's header, marked as a cell's are, and in the summary. What a rule
+displays, such as texts and key-value pairs, shows under the row's label. A row
+whose rules fail shows the error in its header and keeps none of their effects.
 
 Opening the grid never changes data. In a row nobody has changed, an assigned
 cell shows the value DHIS2 holds, locked with its rule, and a hidden cell shows
@@ -148,21 +156,40 @@ row runs them first.
 
 - Every change goes to an IndexedDB outbox on this device before it is sent,
   once the browser has shown it and together with the values its rules
-  assign, so both are sent in one save. The outbox opens only for the same user on the same server, and sending
-  pauses when someone else is signed in. Nothing in it is encrypted.
-- Changes are sent oldest first, in one request for the form: a single tracker
-  import with all its events, on each sync pass. Two changes to one cell send
-  only the latest. A dropped connection or an expired session pauses sending,
-  and the summary asks the person to sign in.
+  assign, so both are sent in one save. The outbox opens only for the same
+  user on the same server. Nothing in it is encrypted.
+- Unsent changes belong to the program, not the grid. Every grid of a program
+  keeps one change per cell, the newer one, and any open grid of the program
+  sends them all, the changes made in its other grids included. They are sent
+  oldest first, 100 events at a time: each chunk's events are read, then
+  imported, each request within its own minute. Two changes to one cell send
+  only the latest. A chunk that fails keeps the chunks before it saved: refused
+  as a whole, it refuses its events and those after it; otherwise only those
+  are sent again. A change to an event DHIS2 no longer returns is refused.
+- Before sending, the server is asked who is signed in. When it is someone
+  else, as when another tab signed in (tabs share the session), the form locks
+  until the page is reloaded: every cell is read-only and back to what DHIS2
+  had, nothing more is sent, and the summary says "Signed in as someone else.
+  Reload to continue as that user." The changes stay on the device for their
+  user. A dropped connection pauses sending; an expired session pauses it too,
+  the summary asks the person to sign in, and sending starts again when they
+  come back to the page.
 - While anything is unsent or not saved, leaving the page asks first. The
   summary counts the changes DHIS2 does not have yet, and **Download unsent
-  changes** saves them as a CSV file with enough to enter them again by hand.
+  changes** saves them as a CSV file with enough to enter them again by hand,
+  the ones that could not be saved included. The changes of the program's other
+  grids that could not be saved are counted and downloaded too, so none is
+  stuck where no grid shows it.
 - A refusal keeps the value and marks the cell "Not saved" with DHIS2's reason.
-  It is not sent again until the person enters the value again.
+  It is not sent again until the person enters the value again. Once they are
+  downloaded, **Discard changes that could not be saved** drops them from the
+  device after asking, the program's other grids' too, and this form's cells
+  go back to what DHIS2 has.
 - A new event waits on the device until its event date is filled in, and, in a
   stage that checks required fields on every save, those fields too.
 - A polite live region announces outcomes once things settle, such as "All
-  changes saved", and never progress.
+  changes saved" once nothing of the program is left on the device, each in
+  turn, and never progress.
 
 Events the user cannot edit are read-only, with the reason on each cell:
 events in a stage the user cannot write to, skipped events, completed events
@@ -173,8 +200,8 @@ in a stage that blocks entry, expired events (unless the user has
 
 - Only the first page of events loads: `pageSize` of them (default 50), in
   `order`.
-- The form loads once per mount. Changes made elsewhere show after the next
-  load.
+- The form loads once per mount, and not again when the app invalidates its
+  queries. Changes made elsewhere show after the next load.
 - Program rules run only for rows whose stage the grid shows: the stages of the
   loaded events and of new rows, or the stage asked for when there are none. A
   row of any other stage is not evaluated.
@@ -202,10 +229,11 @@ const Notes: CellComponent = ({
     id,
     cellKey,
     labelledBy,
+    aria,
     readOnly,
     hidden,
 }) => {
-    const { value, draft, error, commit } = useCell(cellKey)
+    const { value, draft, commit } = useCell(cellKey)
 
     return (
         <textarea
@@ -214,7 +242,7 @@ const Notes: CellComponent = ({
             key={`${hidden}:${value ?? ''}`}
             id={id}
             aria-labelledby={labelledBy}
-            aria-invalid={error !== undefined}
+            {...aria}
             defaultValue={hidden ? 'Hidden' : (draft ?? value)}
             readOnly={readOnly !== undefined}
             onBlur={(event) => {
@@ -238,10 +266,20 @@ export const InpatientGrid = () => (
 
 The control gets `readOnly` (why it cannot be edited, such as a rule that
 assigns the value or a read-only row), `hidden` (a rule hides it, so show that
-instead of the value) and `id`. Put `id` on the one element that takes focus:
-the grid's arrows, paste and undo, and the summary's links, find a cell by it.
-The default controls give the pop-up types, such as `LONG_TEXT`, a read-only
-reason of their own; a replacement is how you edit them in the grid.
+instead of the value), `id` and `aria`. Put `id` on the one element that takes
+focus: the grid's arrows and the summary's links find a cell by it. Spread
+`aria` on the same element.
+
+`Cell` draws the cell's notes around every control, replacements included: why
+it cannot be edited, its errors and warnings, and whether it is saved, with the
+required marker and the sync marker. The notes show while focus is in the cell,
+and Escape hides them unless the control calls `preventDefault` on it.
+`aria-describedby` names the notes, and `aria-invalid` and `aria-required` say
+whether the cell has an error and needs a value. Paste and Ctrl+Z belong to the
+grid only in the default controls: a replacement keeps its own, and a block
+pasted from the cells around it still lands in it. The default controls give
+the pop-up types, such as `LONG_TEXT`, a read-only reason of their own; a
+replacement is how you edit them in the grid.
 
 `commit` returns `'queued'` when the value changed, `'unchanged'` when it did
 not, and `'invalid'` when the field's type or a rule refuses it. An invalid
@@ -266,8 +304,9 @@ default control's editing, render it from `cells` instead, such as
 
 ### DataEntrySummary
 
-Every message as a link to its cell, the number of changes DHIS2 does not have
-yet, and the download of unsent changes.
+Every message, each about a cell a link to it, the number of changes DHIS2 does
+not have yet, the download of unsent changes, and discarding the changes that
+could not be saved, after asking.
 
 - `className?: string`
 
@@ -283,6 +322,8 @@ yet, and the download of unsent changes.
 ```ts
 interface DataEntryView {
     status: 'loading' | 'ready' | 'error'
+    error?: string // why the form could not be loaded, while status is 'error'
+    tables: ReadonlyArray<GridTable> // as the grid shows them, new rows included
     summary: {
         items: SummaryItem[]
         unsent: number
@@ -294,6 +335,7 @@ interface DataEntryView {
     complete(rowId: string): Promise<SaveOutcome[]>
     reopen(rowId: string): Promise<SaveOutcome[]>
     downloadUnsent(): void
+    discardFailed(): Promise<void>
 }
 ```
 
@@ -304,9 +346,38 @@ change that waits or that DHIS2 refused. Otherwise it sends the row's unsent
 changes first, then asks DHIS2. `reopen(rowId)` asks DHIS2 only for a
 completed row the user may reopen. A saved status shows in the row's header
 and locks or unlocks the row where its stage blocks entry once completed.
+`tables` gives the rows to lay such buttons out by:
+
+```tsx
+// A "Complete" button for each active row, beside the grid, named by the
+// row's event date once it has one.
+const CompleteButton = ({ row }: { row: GridRow }) => {
+    const complete = useDataEntry((view) => view.complete)
+    const { value: date } = useCell(`${row.id}.occurredAt`)
+
+    return (
+        <button type="button" onClick={() => void complete(row.id)}>
+            Complete {date ?? row.label}
+        </button>
+    )
+}
+
+const CompleteButtons = () => {
+    const tables = useDataEntry((view) => view.tables)
+
+    return tables
+        .flatMap(({ rows }) => rows)
+        .filter(({ status }) => status === 'ACTIVE')
+        .map((row) => <CompleteButton key={row.id} row={row} />)
+}
+```
+
+A refusal comes back as `failed` outcomes with their `reason`, and the summary
+lists what stops the row too.
 
 ### Your own layout
 
-`Cell({ cellKey, field, labelledBy, move })` is one bound control. `cells` is
+`Cell({ cellKey, field, labelledBy, move })` is one bound control, with its
+notes and markers. `cells` is
 the default control for each kind of field. Both are for layouts of your own
 that do not use `DataGrid`.

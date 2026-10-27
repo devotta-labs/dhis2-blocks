@@ -7,6 +7,8 @@ export interface SummaryItem {
     key: CellKey | string
     kind: MessageKind | 'unsent' | 'failed'
     text: string
+    /** The text names the cell's field ("Age is required"), so the summary names only the row. */
+    namesField?: true
 }
 
 const UNSENT = new Set<SyncState>(['queued', 'sending', 'waiting'])
@@ -53,6 +55,7 @@ export const summarise = (
                 key,
                 kind: 'failed',
                 text: i18n.t('Not saved: {{reason}}', {
+                    nsSeparator: '::',
                     reason: cell.reason ?? '',
                     interpolation: AS_IS,
                 }),
@@ -63,12 +66,12 @@ export const summarise = (
                 add({ key, kind: 'unsent', text: cell.reason })
             }
         }
-        // A draft its value type refuses, and a stored value the field's checks now reject; both untranslated.
+        // A draft its value type refuses, and a stored value the field's checks now reject; translated when made.
         if (cell?.error !== undefined) {
-            add({ key, kind: 'error', text: i18n.t(cell.error) })
+            add({ key, kind: 'error', text: cell.error })
         }
         if (cell?.warning !== undefined) {
-            add({ key, kind: 'warning', text: i18n.t(cell.warning) })
+            add({ key, kind: 'warning', text: cell.warning })
         }
     }
 
@@ -91,6 +94,7 @@ export const summarise = (
                     field: labels.get(column) ?? column,
                     interpolation: AS_IS,
                 }),
+                namesField: true,
             })
         }
         for (const { kind, text } of messages) {

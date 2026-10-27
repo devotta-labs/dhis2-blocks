@@ -5,6 +5,7 @@ import { cellKey } from '../model/types'
 import {
     control,
     focused,
+    ID_SCOPE,
     INTEGER,
     makeTable,
     mount,
@@ -101,13 +102,13 @@ test('Enter at the last row of the first table continues into the second', async
     )
     control(cellKey('t1r0', 'c0')).focus()
     await userEvent.keyboard('{Enter}')
-    expect(focused()).toBe(cellDomId(cellKey('t1r2', 'c0')))
+    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r2', 'c0')))
     await userEvent.keyboard('{Enter}')
-    expect(focused()).toBe(cellDomId(cellKey('t2r0', 'c0')))
+    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t2r0', 'c0')))
     await userEvent.keyboard('{ArrowUp}')
-    expect(focused()).toBe(cellDomId(cellKey('t1r2', 'c0')))
+    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r2', 'c0')))
     await userEvent.keyboard('{ArrowUp}')
-    expect(focused()).toBe(cellDomId(cellKey('t1r0', 'c0')))
+    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r0', 'c0')))
 })
 
 test('Enter after a run of Tabs returns to the column the run began in; an arrow or a click ends the run', async () => {
@@ -117,18 +118,18 @@ test('Enter after a run of Tabs returns to the column the run began in; an arrow
     control(cellKey('t1r0', 'c0')).focus()
     // Typing a row of values, as Excel's Tab-then-Enter is for.
     await userEvent.keyboard('1{Tab}2{Tab}3{Enter}')
-    expect(focused()).toBe(cellDomId(cellKey('t1r1', 'c0')))
+    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r1', 'c0')))
     expect(['c0', 'c1', 'c2'].map((c) => value(cellKey('t1r0', c)))).toEqual([
         '1',
         '2',
         '3',
     ])
     await userEvent.keyboard('{Tab}{ArrowRight}{Enter}')
-    expect(focused()).toBe(cellDomId(cellKey('t1r2', 'c2')))
+    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r2', 'c2')))
     await userEvent.keyboard('{ArrowLeft}{ArrowLeft}{Tab}')
     await userEvent.click(control(cellKey('t1r2', 'c2')))
     await userEvent.keyboard('{Enter}')
-    expect(focused()).toBe(cellDomId(cellKey('t1r3', 'c2')))
+    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r3', 'c2')))
 })
 
 test('pasting a 2×2 block fills four cells', async () => {
@@ -225,11 +226,11 @@ test('Ctrl+Z undoes the last change', async () => {
     expect(value(cellKey('t1r1', 'c0'))).toBeUndefined()
     expect(value(cellKey('t1r0', 'c0'))).toBe('7')
     // Focus goes to the cell that changed, so the undo is seen and heard.
-    expect(focused()).toBe(cellDomId(cellKey('t1r1', 'c0')))
+    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r1', 'c0')))
     // In Edit, Ctrl+Z belongs to the text.
     await userEvent.keyboard('{F2}{Control>}z{/Control}')
     expect(value(cellKey('t1r0', 'c0'))).toBe('7')
-    expect(focused()).toBe(cellDomId(cellKey('t1r1', 'c0')))
+    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r1', 'c0')))
 })
 
 test('one polite live region says the same text twice', async () => {
@@ -247,6 +248,42 @@ test('one polite live region says the same text twice', async () => {
     await expect
         .poll(() => said)
         .toEqual(['All changes saved', '', 'All changes saved'])
+})
+
+test('two things said at once are both said, in order, 150 ms apart', async () => {
+    const { announce } = await mount([makeTable()])
+    const region = page.getByRole('status').element()
+    const said: Array<[string, number]> = []
+    new MutationObserver(() => {
+        if (region.textContent) {
+            said.push([region.textContent, performance.now()])
+        }
+    }).observe(region, { childList: true, characterData: true, subtree: true })
+    announce('Cells pasted: 4')
+    announce('Enter a whole number')
+    await expect
+        .poll(() => said.map(([text]) => text))
+        .toEqual(['Cells pasted: 4', 'Enter a whole number'])
+    expect(said[1][1] - said[0][1]).toBeGreaterThanOrEqual(140)
+})
+
+test('a newer text replaces one still waiting to be said', async () => {
+    const { announce } = await mount([makeTable()])
+    const region = page.getByRole('status').element()
+    const said: string[] = []
+    new MutationObserver(() => {
+        if (region.textContent) {
+            said.push(region.textContent)
+        }
+    }).observe(region, { childList: true, characterData: true, subtree: true })
+    announce('Cells pasted: 4')
+    announce('Values not saved: 1')
+    announce('All changes saved')
+    await expect
+        .poll(() => said)
+        .toEqual(['Cells pasted: 4', 'All changes saved'])
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    expect(said).toEqual(['Cells pasted: 4', 'All changes saved'])
 })
 
 test('a value refused on Enter or on leaving the cell is announced', async () => {
@@ -338,7 +375,7 @@ test('"Add event" adds a row and focuses its first open cell; each button names 
     await expect.element(buttons.nth(1)).toHaveAccessibleDescription('Table t2')
     await buttons.nth(1).click()
     expect(added).toEqual(['t2'])
-    await expect.poll(focused).toBe(cellDomId(cellKey('t2r1', 'c1')))
+    await expect.poll(focused).toBe(cellDomId(ID_SCOPE, cellKey('t2r1', 'c1')))
 })
 
 test('a cell’s notes show outside the scrolling table', async () => {

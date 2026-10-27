@@ -56,6 +56,7 @@ export const rig = (
     const context: DataEntryContext = {
         store,
         effects: effectsStore,
+        idScope: 'data-entry',
         settings: GREGORIAN,
         announce: (text: string) => {
             announced.push(text)

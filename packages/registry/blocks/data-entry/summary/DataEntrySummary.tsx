@@ -1,13 +1,25 @@
 import i18n from '@dhis2/d2-i18n'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { useStore } from 'zustand'
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/dhis2/ui/alert-dialog'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
+import { rowLabel } from '../grid/headers'
 import type { SummaryItem } from '../logic/summary'
 import { cellKey } from '../model/types'
 import { FORM_MESSAGES, useDataEntryContext } from '../provider/context'
 import { useDataEntry } from '../provider/hooks'
+import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 
 // Labels and messages are shown as DHIS2 and the rules give them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
@@ -22,11 +34,13 @@ const TONES = {
 } satisfies Record<SummaryItem['kind'], string>
 
 const Item = ({
-    item: { key, kind, text },
+    item: { key, kind, text, namesField },
+    idScope,
     rows,
     fields,
 }: {
     item: SummaryItem
+    idScope: string
     rows: ReadonlyMap<string, string>
     fields: ReadonlyMap<string, string>
 }) => {
@@ -41,6 +55,7 @@ const Item = ({
                 {key === FORM_MESSAGES
                     ? text
                     : i18n.t('{{row}}: {{message}}', {
+                          nsSeparator: '::',
                           row,
                           message: text,
                           interpolation: AS_IS,
@@ -49,7 +64,7 @@ const Item = ({
         )
     }
     const column = key.slice(dot + 1)
-    const target = cellDomId(cellKey(rowId, column))
+    const target = cellDomId(idScope, cellKey(rowId, column))
     return (
         <li className={className}>
             <a
@@ -61,28 +76,97 @@ const Item = ({
                 }}
                 className="text-dhis2-blue-800 underline"
             >
-                {i18n.t('{{row}}, {{field}}: {{message}}', {
-                    row,
-                    field: fields.get(column) ?? column,
-                    message: text,
-                    interpolation: AS_IS,
-                })}
+                {namesField
+                    ? i18n.t('{{row}}: {{message}}', {
+                          nsSeparator: '::',
+                          row,
+                          message: text,
+                          interpolation: AS_IS,
+                      })
+                    : i18n.t('{{row}}, {{field}}: {{message}}', {
+                          nsSeparator: '::',
+                          row,
+                          field: fields.get(column) ?? column,
+                          message: text,
+                          interpolation: AS_IS,
+                      })}
             </a>
         </li>
     )
 }
 
-/** The form's messages, each a link to its cell, how many changes are not yet in DHIS2, and their download. */
+/** Asks before the changes that could not be saved are dropped from the device. */
+const DiscardFailed = ({ count }: { count: number }) => {
+    const discardFailed = useDataEntry((view) => view.discardFailed)
+    const [asking, setAsking] = useState(false)
+    return (
+        <>
+            <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setAsking(true)}
+            >
+                {i18n.t('Discard changes that could not be saved')}
+            </Button>
+            {asking ? (
+                <AlertDialog open onOpenChange={setAsking}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                {i18n.t('Discard {{changes}} changes?', {
+                                    changes: formatCount(count),
+                                })}
+                            </AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <AlertDialogDescription>
+                            {i18n.t(
+                                'They are not saved anywhere else. Download them first to keep a copy.'
+                            )}
+                        </AlertDialogDescription>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>
+                                {i18n.t('Cancel')}
+                            </AlertDialogCancel>
+                            <Button
+                                variant="destructive"
+                                onClick={() => {
+                                    setAsking(false)
+                                    void discardFailed()
+                                }}
+                            >
+                                {i18n.t('Discard')}
+                            </Button>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            ) : null}
+        </>
+    )
+}
+
+/**
+ * The form's messages, each a link to its cell, how many changes are not yet in DHIS2, their download, and a way to
+ * drop the ones that could not be saved.
+ */
 export const DataEntrySummary = ({ className }: { className?: string }) => {
     const summary = useDataEntry((view) => view.summary)
     const signIn = useDataEntry((view) => view.sync === 'signIn')
     const downloadUnsent = useDataEntry((view) => view.downloadUnsent)
-    const { tables } = useDataEntryContext()
+    const { tables, store, settings, idScope } = useDataEntryContext()
+    const cells = useStore(store, (state) => state.cells)
     const { rows, fields } = useMemo(
         () => ({
+            // Named as the grid names them: by their event date once they have one.
             rows: new Map(
                 tables.flatMap((table) =>
-                    table.rows.map(({ id, label }) => [id, label])
+                    table.rows.map((row) => [
+                        row.id,
+                        rowLabel(
+                            row,
+                            cells[cellKey(row.id, EVENT_DATE_COLUMN)]?.value,
+                            settings
+                        ),
+                    ])
                 )
             ),
             fields: new Map(
@@ -91,7 +175,7 @@ export const DataEntrySummary = ({ className }: { className?: string }) => {
                 )
             ),
         }),
-        [tables]
+        [tables, cells, settings]
     )
     return (
         <div
@@ -107,6 +191,7 @@ export const DataEntrySummary = ({ className }: { className?: string }) => {
                         <Item
                             key={`${item.key}-${index}`}
                             item={item}
+                            idScope={idScope}
                             rows={rows}
                             fields={fields}
                         />
@@ -116,19 +201,24 @@ export const DataEntrySummary = ({ className }: { className?: string }) => {
             {summary.unsent > 0 ? (
                 <p>
                     {i18n.t('Not yet sent to DHIS2: {{changes}}', {
+                        nsSeparator: '::',
                         changes: formatCount(summary.unsent),
                     })}
                 </p>
             ) : null}
             {summary.unsent + summary.failed > 0 ? (
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    className="self-start"
-                    onClick={downloadUnsent}
-                >
-                    {i18n.t('Download unsent changes')}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={downloadUnsent}
+                    >
+                        {i18n.t('Download unsent changes')}
+                    </Button>
+                    {summary.failed > 0 ? (
+                        <DiscardFailed count={summary.failed} />
+                    ) : null}
+                </div>
             ) : null}
         </div>
     )

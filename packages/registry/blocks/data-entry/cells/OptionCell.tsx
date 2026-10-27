@@ -9,7 +9,6 @@ import type { Option } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
 import { useCellView, useDataEntryContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
-import { CellStatus, describeCell } from './CellStatus'
 import { OptionList } from './OptionList'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
 import { composing, READY_CLASS, useCellMode } from './useCellMode'
@@ -46,6 +45,7 @@ export const OptionCell = memo(function OptionCell({
     move,
     readOnly,
     hidden = false,
+    aria,
 }: ControlProps) {
     const { store, settings, announce } = useDataEntryContext()
     const view = useCellView(cellKey)
@@ -111,13 +111,11 @@ export const OptionCell = memo(function OptionCell({
             store.getState().discardDraft(cellKey)
         }
     }
-    const { notes, aria } = describeCell(cellKey, view, readOnly)
-    const { mode, notesDismissed, typed, ready, inputProps } = useCellMode({
+    const { mode, typed, ready, inputProps } = useCellMode({
         commit: () => save(draft),
         revert,
         move,
         readOnly: locked,
-        hasNotes: notes.length > 0,
     })
     const pick = (code: string) => {
         save(code)
@@ -136,7 +134,7 @@ export const OptionCell = memo(function OptionCell({
           ? stored
           : (draft ?? view.draft ?? stored)
     return (
-        <div className="relative">
+        <>
             <input
                 {...inputProps}
                 {...aria}
@@ -158,7 +156,8 @@ export const OptionCell = memo(function OptionCell({
                 value={shown}
                 onChange={(event) => {
                     setDraft(event.target.value)
-                    list(0)
+                    // Emptied text highlights nothing, so Enter or Tab clears the cell.
+                    list(event.target.value.trim() === '' ? -1 : 0)
                     typed()
                 }}
                 onBlur={() => save(draft)}
@@ -239,7 +238,6 @@ export const OptionCell = memo(function OptionCell({
                     onPick={pick}
                 />
             ) : null}
-            <CellStatus view={view} notes={notes} dismissed={notesDismissed} />
-        </div>
+        </>
     )
 }) satisfies CellComponent

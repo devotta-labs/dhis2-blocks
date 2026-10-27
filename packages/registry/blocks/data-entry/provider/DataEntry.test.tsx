@@ -4,6 +4,8 @@ import type { CellComponent } from '../cells/cellProps'
 import { DataGrid } from '../grid/DataGrid'
 import { control, paste } from '../grid/__tests__/gridRig'
 import { cellKey } from '../model/types'
+import type { GridColumn } from '../model/types'
+import type { LoadedForm } from '../sources/types'
 import { DataEntrySummary } from '../summary/DataEntrySummary'
 import {
     BLOCKED,
@@ -438,6 +440,74 @@ test('an option a rule hid is refused when typed or pasted', async () => {
         error,
     })
     expect(await records(server)).toEqual([])
+})
+
+const SYMPTOMS: GridColumn = {
+    id: 'c4',
+    label: 'Symptoms',
+    field: {
+        valueType: 'MULTI_TEXT',
+        options: [
+            { code: 'A', name: 'Alpha' },
+            { code: 'B', name: 'Bravo' },
+            { code: 'C', name: 'Charlie' },
+        ],
+    },
+}
+
+/** The form with a multi-select column first, where its editor fits the narrow test page. */
+const withSymptoms = (form: LoadedForm): LoadedForm => {
+    const [table] = form.tables
+    return {
+        ...form,
+        tables: [
+            {
+                ...table,
+                columns: [SYMPTOMS, ...table.columns],
+                headerRows: [
+                    [
+                        { id: SYMPTOMS.id, label: SYMPTOMS.label, span: 1 },
+                        ...table.headerRows[0],
+                    ],
+                ],
+            },
+        ],
+    }
+}
+
+test('a multi-select keeps a hidden option it holds when another is unchecked', async () => {
+    const key = cellKey('r1', 'c4')
+    const memory = memorySource(
+        withSymptoms(visitForm({ values: [[key, 'A,C']] }))
+    )
+    memory.hold()
+    const { server, context } = await mount(memory.source)
+    context().effects.setState((state) => ({
+        cells: {
+            ...state.cells,
+            [key]: {
+                required: false,
+                messages: [],
+                hiddenOptions: new Set(['C']),
+            },
+        },
+    }))
+    control(key).focus()
+    await userEvent.keyboard('{Enter}')
+    // The hidden option stays listed, checked; unchecking the other leaves it alone.
+    await expect
+        .element(page.getByRole('checkbox', { name: 'Charlie' }))
+        .toBeChecked()
+    await userEvent.click(page.getByRole('checkbox', { name: 'Alpha' }))
+    await userEvent.click(page.getByRole('button', { name: 'Save' }))
+    expect(context().store.getState().cells[key]).toMatchObject({
+        value: 'C',
+        base: 'A,C',
+    })
+    expect(context().store.getState().cells[key]?.error).toBeUndefined()
+    await expect
+        .poll(() => records(server, KEY))
+        .toMatchObject([{ key, value: 'C', base: 'A,C', state: 'queued' }])
 })
 
 test('two forms of one program on one page share no DOM id', async () => {

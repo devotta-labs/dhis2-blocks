@@ -192,6 +192,12 @@ returns to the cell, where the next Enter moves on. A press outside the editor, 
 the editor last reported, or says why it cannot be saved. A rule that locks or hides the cell while its editor is open
 closes it unsaved and says why. A pasted block fills pop-up cells like any cell, except files and images.
 
+Long text opens a text area: Enter adds a line, Ctrl+Enter or ⌘+Enter saves, and a field mask is checked on save, which
+keeps the editor open with its message. A multi-select opens a search over checkboxes (the shared option search, 50 at
+most, in the option set's order, with the count line): a choice is saved with Save or by leaving the editor, as codes
+in option-set order joined by commas, and "Clear all" saves no value. Options a rule hid are not offered, unless the
+stored value holds one, which can still be unchecked.
+
 Dates are typed and shown in the system calendar and date format, and an empty date cell says the format
 ("Date format: DD-MM-YYYY"). A row is named by its event date in that format once it has one, its stage after it where
 the grid shows several; a new row is "New event" until its date is typed.
@@ -255,7 +261,8 @@ The `performance` measures `data-entry:rules` (the first slice) and `data-entry:
 
 - Only the first page of events loads: `pageSize` of them (default 50), in `order`.
 - Values are checked against their value type as they are typed; an option a rule hid is refused like any value that
-  is not an option.
+  is not an option, unless the cell already holds it (a multi-select is checked code by code), so a person can keep
+  or remove what was saved before the rule hid it.
 - Program rules run for the rows whose stage the grid shows: the source's `programStageIds` (for `eventSource`, the
   stages of the loaded events and of new rows, or the stage asked for when there are none). A row of any other stage is
   not evaluated.

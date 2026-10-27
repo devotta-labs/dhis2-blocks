@@ -21,6 +21,17 @@ const rows: GridRow[] = [
 const columns: GridColumn[] = [
     { id: 'c1', label: 'Children', field: { valueType: 'INTEGER' } },
     { id: 'c2', label: 'Referred', field: { valueType: 'BOOLEAN' } },
+    {
+        id: 'c3',
+        label: 'Symptoms',
+        field: {
+            valueType: 'MULTI_TEXT',
+            options: ['A', 'B', 'C', 'D'].map((code) => ({
+                code,
+                name: `Option ${code}`,
+            })),
+        },
+    },
 ]
 const headerRows: HeaderCell[][] = [
     columns.map(({ id, label }) => ({ id, label, span: 1 })),
@@ -156,6 +167,38 @@ test('a value the check refuses is kept as a draft with its error, for a person 
         ['r2.c1', '8', null],
         ['r1.c1', '7', null],
     ])
+})
+
+test('the check is asked about codes a person adds, not about ones the cell holds', () => {
+    const checked: string[] = []
+    const { enqueued, cell, commit } = setup(
+        [
+            ['r1.c1', '7'],
+            ['r1.c3', 'A,C'],
+        ],
+        (_key, code) => {
+            checked.push(code)
+            return ['7', 'C', 'D'].includes(code)
+                ? 'Choose one of the options'
+                : undefined
+        }
+    )
+    // A value the cell holds is not refused again.
+    expect(commit('r1.c1', '7')).toBe('unchanged')
+    // A multi-select keeps the hidden C it holds when it drops A.
+    expect(commit('r1.c3', 'C')).toBe('queued')
+    expect(cell('r1.c3').value).toBe('C')
+    expect(enqueued).toEqual([['r1.c3', 'C', 'A,C']])
+    // A hidden D it does not hold is refused, one code at a time.
+    expect(commit('r1.c3', 'C,D')).toBe('invalid')
+    expect(cell('r1.c3')).toMatchObject({
+        value: 'C',
+        draft: 'C,D',
+        error: 'Choose one of the options',
+    })
+    expect(commit('r1.c3', 'B,C')).toBe('queued')
+    expect(cell('r1.c3').value).toBe('B,C')
+    expect(checked).toEqual(['D', 'B'])
 })
 
 test('discarding a draft clears it with its error and queues nothing', () => {

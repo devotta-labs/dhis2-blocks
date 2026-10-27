@@ -3,7 +3,7 @@ import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field } from '@/components/dhis2-value-types'
 import { useCellView } from '../provider/context'
-import { CELL, HEADER, inputOf, rig } from './__tests__/harness'
+import { CELL, HEADER, inputOf, rig, withEditor } from './__tests__/harness'
 import type { CellComponent } from './cellProps'
 import { Cell } from './Cell'
 
@@ -137,7 +137,8 @@ test('a saved value that breaks the field rules is described, and not invalid', 
         .toHaveAccessibleDescription('Enter a whole number')
 })
 
-test('pop-up kinds show their value read-only and point to their own form', async () => {
+test('pop-up kinds without an editor show their value read-only and point to their own form', async () => {
+    withEditor('LONG_TEXT', undefined)
     const { cell } = await mount(
         { valueType: 'LONG_TEXT' },
         { value: 'Some notes' }
@@ -149,7 +150,8 @@ test('pop-up kinds show their value read-only and point to their own form', asyn
         .toHaveAccessibleDescription('Edit this field in its own form')
 })
 
-test('a multi-text option field stays read-only and points to its own form', async () => {
+test('a multi-text option field without an editor stays read-only and points to its own form', async () => {
+    withEditor('MULTI_TEXT', undefined)
     const { cell } = await mount(
         {
             valueType: 'MULTI_TEXT',

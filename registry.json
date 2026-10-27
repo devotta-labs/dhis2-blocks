@@ -614,11 +614,15 @@
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/alert-dialog",
                 "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/checkbox",
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/dhis2-value-display",
                 "devotta-labs/dhis2-blocks/dhis2-value-types",
-                "devotta-labs/dhis2-blocks/program-rules"
+                "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/label",
+                "devotta-labs/dhis2-blocks/program-rules",
+                "devotta-labs/dhis2-blocks/textarea"
             ],
             "files": [
                 {
@@ -660,6 +664,21 @@
                     "path": "packages/registry/blocks/data-entry/cells/cellProps.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/cells/cellProps.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/EditorButtons.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/EditorButtons.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/LongTextEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/LongTextEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/MultiSelectEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/MultiSelectEditor.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/cells/popupEditors.ts",

@@ -423,3 +423,32 @@ test('the editor is a dialog named "Edit <field>", above sticky cells, unclipped
     expect(editor.element().contains(shown)).toBe(true)
     expect((await visibleBox(editor.element())).top).toBeCloseTo(box.top, 0)
 })
+
+test('an editor near the right edge of a narrow screen opens towards the left, inside the screen', async () => {
+    withEditor('LONG_TEXT', Stub)
+    await page.viewport(360, 640)
+    onTestFinished(() => page.viewport(1280, 720))
+    const columns = ['First', 'Second', 'Third', 'Notes']
+    await mountGrid([
+        makeTable({
+            columns,
+            fields: [
+                { valueType: 'TEXT' },
+                { valueType: 'TEXT' },
+                { valueType: 'TEXT' },
+                LONG_TEXT,
+            ],
+        }),
+    ])
+    const cell = control(cellKey('t1r0', 'c3'))
+    cell.scrollIntoView({ inline: 'end' })
+    cell.focus()
+    await userEvent.keyboard('{Enter}')
+    const editor = page.getByRole('dialog', { name: 'Edit Notes 2026-10-20' })
+    await expect.element(editor).toBeVisible()
+    await nextFrame()
+    await nextFrame()
+    const box = editor.element().getBoundingClientRect()
+    expect(box.right).toBeLessThanOrEqual(window.innerWidth + 1)
+    expect(box.left).toBeGreaterThanOrEqual(-1)
+})

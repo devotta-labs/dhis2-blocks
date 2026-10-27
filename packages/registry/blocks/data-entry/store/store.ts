@@ -17,8 +17,12 @@ export interface DataEntryStoreOptions {
     settings: ValueSettings
     /** Called for every change that must be saved; the outbox writes it. */
     enqueue(key: CellKey, value: string | null, base: string | null): void
-    /** The translated message refusing a person's value its type accepts, or nothing; blank is never checked. */
-    check?(key: CellKey, value: string): string | undefined
+    /**
+     * The translated message refusing one option code a person's value adds to the cell, or nothing. A multi-select's
+     * value is checked code by code, and a code the cell already holds is not asked about; for any other field, a value
+     * the cell already holds is not. Blank is never checked.
+     */
+    check?(key: CellKey, code: string): string | undefined
 }
 
 type Source = 'person' | 'rule'
@@ -88,6 +92,26 @@ export const createDataEntryStore = ({
         return field === undefined || value === undefined
             ? undefined
             : checkStored(field, value)?.message
+    }
+
+    /** What `check` says of the codes `value` adds to `held`; a code a person keeps is never refused. */
+    const refusal = (
+        key: CellKey,
+        field: Field,
+        held: string | undefined,
+        value: string
+    ) => {
+        if (field.valueType !== 'MULTI_TEXT') {
+            return value === held ? undefined : check?.(key, value)
+        }
+        const kept = new Set(held?.split(','))
+        for (const code of value.split(',')) {
+            const message = kept.has(code) ? undefined : check?.(key, code)
+            if (message !== undefined) {
+                return message
+            }
+        }
+        return undefined
     }
 
     const loaded: Cells = {}
@@ -185,7 +209,7 @@ export const createDataEntryStore = ({
                         ? parsed.problem.message
                         : parsed.value === undefined || source === 'rule'
                           ? undefined
-                          : check?.(key, parsed.value)
+                          : refusal(key, field, cell.value, parsed.value)
                     if (!parsed.ok || error !== undefined) {
                         write(key, { ...cell, draft: text, error })
                         return 'invalid'

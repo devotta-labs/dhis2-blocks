@@ -1,5 +1,6 @@
 /// <reference types="@vitest/browser-playwright" />
 import { cdp, page, userEvent } from 'vitest/browser'
+import { withEditor } from '../cells/__tests__/harness'
 import { cellDomId } from '../cells/cellProps'
 import { cellKey } from '../model/types'
 import {
@@ -157,7 +158,8 @@ test('pasting a 2×2 block fills four cells', async () => {
     ])
 })
 
-test('a pasted block skips closed, locked, hidden and pop-up cells without shifting', async () => {
+test('a pasted block skips closed, locked, hidden and editorless pop-up cells without shifting', async () => {
+    withEditor('LONG_TEXT', undefined)
     const { value, announced } = await mount(
         [
             makeTable({

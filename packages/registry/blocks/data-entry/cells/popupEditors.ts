@@ -1,16 +1,21 @@
 import type { ReactNode } from 'react'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import { LongTextEditor } from './editors/LongTextEditor'
+import { MultiSelectEditor } from './editors/MultiSelectEditor'
 
-/** The value types a cell edits in a small editor that opens from it. */
-export type PopupValueType =
-    | 'LONG_TEXT'
-    | 'MULTI_TEXT'
-    | 'AGE'
-    | 'COORDINATE'
-    | 'ORGANISATION_UNIT'
-    | 'USERNAME'
-    | 'FILE_RESOURCE'
-    | 'IMAGE'
+/** The pop-up value types, which a cell edits in a small editor that opens from it, and each one's editor. */
+interface PopupEditors {
+    LONG_TEXT?: PopupEditor
+    MULTI_TEXT?: PopupEditor
+    AGE?: PopupEditor
+    COORDINATE?: PopupEditor
+    ORGANISATION_UNIT?: PopupEditor
+    USERNAME?: PopupEditor
+    FILE_RESOURCE?: PopupEditor
+    IMAGE?: PopupEditor
+}
+
+export type PopupValueType = keyof PopupEditors
 
 export interface PopupEditorProps {
     field: Field
@@ -39,8 +44,11 @@ export interface PopupEditorProps {
  */
 export type PopupEditor = (props: PopupEditorProps) => ReactNode
 
-/** The editor of each pop-up value type; a type without one shows its value read-only. */
-export const popupEditors: Partial<Record<PopupValueType, PopupEditor>> = {}
+/** The editors registered; a type without one shows its value read-only. */
+export const popupEditors: PopupEditors = {
+    LONG_TEXT: LongTextEditor,
+    MULTI_TEXT: MultiSelectEditor,
+}
 
 /** Value types whose typed text parses, so paste can fill them. */
 export const pasteablePopupTypes: ReadonlySet<PopupValueType> = new Set([

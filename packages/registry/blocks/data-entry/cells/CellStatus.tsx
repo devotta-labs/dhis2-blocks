@@ -122,7 +122,7 @@ export const CellNotes = createContext({
  * Elsewhere it hangs under the cell inside the table, and scrolls into view with it.
  */
 export const POPOVER_CLASS =
-    'absolute start-0 top-full supports-[anchor-name:--a]:fixed supports-[anchor-name:--a]:[position-anchor:--data-entry-cell] supports-[anchor-name:--a]:[top:anchor(bottom)] supports-[anchor-name:--a]:[inset-inline-start:anchor(start)] supports-[anchor-name:--a]:[position-try-fallbacks:flip-block]'
+    'absolute start-0 top-full supports-[anchor-name:--a]:fixed supports-[anchor-name:--a]:[position-anchor:--data-entry-cell] supports-[anchor-name:--a]:[top:anchor(bottom)] supports-[anchor-name:--a]:[inset-inline-start:anchor(start)] supports-[anchor-name:--a]:[position-try-fallbacks:flip-block,flip-inline,flip-block_flip-inline]'
 
 const NOTE_TONES = {
     error: 'border-dhis2-red-300',

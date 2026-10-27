@@ -91,8 +91,11 @@ export const rig = (
     }
 }
 
-/** Registers `editor` for `type` until the test ends. */
-export const withEditor = (type: PopupValueType, editor: PopupEditor) => {
+/** Registers `editor` for `type` until the test ends; `undefined` leaves the type without one. */
+export const withEditor = (
+    type: PopupValueType,
+    editor: PopupEditor | undefined
+) => {
     const before = popupEditors[type]
     popupEditors[type] = editor
     onTestFinished(() => {

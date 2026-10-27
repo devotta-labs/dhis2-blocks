@@ -32,6 +32,25 @@ export const formatCount = (count: number) => {
     }
 }
 
+/** "Showing … of … matches", when more match than a list draws; empty otherwise. */
+export const matchCount = (shown: number, total: number) =>
+    total > shown
+        ? i18n.t(
+              'Showing {{shown}} of {{total}} matches. Keep typing to narrow them.',
+              { shown: formatCount(shown), total: formatCount(total) }
+          )
+        : ''
+
+/** Says `text` in the grid's live region when it changes, not on every keystroke. */
+export const useAnnounced = (text: string) => {
+    const { announce } = useDataEntryContext()
+    useEffect(() => {
+        if (text !== '') {
+            announce(text)
+        }
+    }, [text, announce])
+}
+
 /**
  * An option set's field: the option's name in one input, and typing lists the matches to pick from. Only the cell
  * being typed in searches and draws a list, so a grid of option cells costs what one of text cells does. Typed text
@@ -47,7 +66,7 @@ export const OptionCell = memo(function OptionCell({
     hidden = false,
     aria,
 }: ControlProps) {
-    const { store, settings, announce } = useDataEntryContext()
+    const { store, settings } = useDataEntryContext()
     const view = useCellView(cellKey)
     // What has been typed and not yet saved; `null` shows the cell's own text.
     const [draft, setDraft] = useState<string | null>(null)
@@ -77,23 +96,8 @@ export const OptionCell = memo(function OptionCell({
     const listId = `${id}-options`
     // From the code, so a new top match is a new active option that a screen reader reads.
     const optionId = (code: string) => `${listId}-${encodeURIComponent(code)}`
-    const count =
-        matches.total > matches.codes.length
-            ? i18n.t(
-                  'Showing {{shown}} of {{total}} matches. Keep typing to narrow them.',
-                  {
-                      shown: formatCount(matches.codes.length),
-                      total: formatCount(matches.total),
-                  }
-              )
-            : ''
-    // Said in the grid's live region when it changes, not on every keystroke.
-    const said = open && !listed ? i18n.t('No matches') : count
-    useEffect(() => {
-        if (said !== '') {
-            announce(said)
-        }
-    }, [said, announce])
+    const count = matchCount(matches.codes.length, matches.total)
+    useAnnounced(open && !listed ? i18n.t('No matches') : count)
 
     const save = (text: string | null) => {
         setListing(false)

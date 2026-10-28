@@ -21,11 +21,20 @@ import { workingListSystemInfoQueryOptions } from '../api/systemInfo'
 import { createWorkingListValueTransformers } from '../registry/transformers'
 import { defaultWorkingListTranslate } from '../ui/WorkingListText'
 import { WorkingListInitializationError } from './errors'
+import type { WorkingListMeta } from './contracts'
 import type { WorkingListProviderStoreState } from './store'
 
 const RuntimeConfigSchema = z
     .object({ apiVersion: z.coerce.number().int().positive() })
     .passthrough()
+
+const getLifecycleMeta = (
+    error: WorkingListInitializationError | undefined,
+    ready: boolean
+): WorkingListMeta['lifecycle'] => {
+    if (error) return { status: 'error', error }
+    return { status: ready ? 'ready' : 'pending' }
+}
 
 interface UseWorkingListLifecycleOptions {
     client: WorkingListClient
@@ -195,11 +204,7 @@ export const useWorkingListLifecycle = ({
         updateStore((current) => ({
             meta: {
                 ...current.meta,
-                lifecycle: lifecycleError
-                    ? { status: 'error', error: lifecycleError }
-                    : lifecycleReady
-                      ? { status: 'ready' }
-                      : { status: 'pending' },
+                lifecycle: getLifecycleMeta(lifecycleError, lifecycleReady),
                 online,
                 program,
                 systemInfo,

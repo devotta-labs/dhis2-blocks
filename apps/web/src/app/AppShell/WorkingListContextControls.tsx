@@ -34,6 +34,53 @@ interface WorkingListContextControlsProps {
     organisationUnitContent: ReactNode
 }
 
+const ProgramAvailabilityNotice = ({
+    programOptions,
+    programsAreFiltered,
+    onShowAllPrograms,
+}: Pick<
+    WorkingListContextControlsProps,
+    'programOptions' | 'programsAreFiltered' | 'onShowAllPrograms'
+>) => {
+    if (!programOptions.some((option) => !option.excludeFromMenu)) {
+        return (
+            <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
+                <span>{i18n.t('No programs available.')}</span>
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    data-test="program-selector-no-programs"
+                    onClick={onShowAllPrograms}
+                >
+                    {i18n.t('Show all')}
+                </Button>
+            </div>
+        )
+    }
+
+    if (!programsAreFiltered) return null
+
+    return (
+        <>
+            <Separator className="my-2" />
+            <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
+                <span>
+                    {i18n.t(
+                        'Some programs are being filtered by the chosen organisation unit'
+                    )}
+                </span>
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={onShowAllPrograms}
+                >
+                    {i18n.t('Show all programs')}
+                </Button>
+            </div>
+        </>
+    )
+}
+
 export const WorkingListContextControls = ({
     onClear,
     clearDisabled,
@@ -56,10 +103,6 @@ export const WorkingListContextControls = ({
     organisationUnitDisabled,
     organisationUnitContent,
 }: WorkingListContextControlsProps) => {
-    const visibleProgramOptions = programOptions.filter(
-        (option) => !option.excludeFromMenu
-    )
-
     return (
         <ContextSelector ariaLabel={i18n.t('Working list context')}>
             <ProgramSelector
@@ -75,37 +118,11 @@ export const WorkingListContextControls = ({
                 loading={programLoading}
                 loadingLabel={programLoadingLabel}
             >
-                {visibleProgramOptions.length === 0 ? (
-                    <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
-                        <span>{i18n.t('No programs available.')}</span>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            data-test="program-selector-no-programs"
-                            onClick={onShowAllPrograms}
-                        >
-                            {i18n.t('Show all')}
-                        </Button>
-                    </div>
-                ) : programsAreFiltered ? (
-                    <>
-                        <Separator className="my-2" />
-                        <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
-                            <span>
-                                {i18n.t(
-                                    'Some programs are being filtered by the chosen organisation unit'
-                                )}
-                            </span>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={onShowAllPrograms}
-                            >
-                                {i18n.t('Show all programs')}
-                            </Button>
-                        </div>
-                    </>
-                ) : null}
+                <ProgramAvailabilityNotice
+                    programOptions={programOptions}
+                    programsAreFiltered={programsAreFiltered}
+                    onShowAllPrograms={onShowAllPrograms}
+                />
             </ProgramSelector>
 
             {showOrganisationUnit ? (

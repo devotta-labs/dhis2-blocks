@@ -135,8 +135,6 @@ const FilterEditor = ({
     const [error, setError] = useState<string>()
 
     const trueOnlyHasValue = value.kind === 'trueOnly' || value.kind === 'empty'
-    const showValueEditor =
-        !isTrueOnly && operator !== 'empty' && operator !== 'notEmpty'
 
     const apply = () => {
         try {
@@ -193,95 +191,121 @@ const FilterEditor = ({
                     }}
                 />
             )}
-            {isTrueOnly && (
-                <div
-                    className="flex flex-col gap-[4px]"
-                    role="group"
-                    aria-label={i18n.t('Values')}
-                >
-                    {operators.includes('empty') && (
-                        <Label
-                            data-test={`true-only-empty-${field.id}`}
-                            className="cursor-pointer"
+            {((): React.ReactNode => {
+                if (isTrueOnly)
+                    return (
+                        <div
+                            className="flex flex-col gap-[4px]"
+                            role="group"
+                            aria-label={i18n.t('Values')}
                         >
-                            <Checkbox
-                                checked={
-                                    operator === 'empty' &&
-                                    value.kind === 'empty'
-                                }
-                                onCheckedChange={(checked) => {
-                                    setOperator(checked ? 'empty' : 'equals')
-                                    setValue(
-                                        checked
-                                            ? { kind: 'empty', isEmpty: true }
-                                            : { kind: 'boolean', values: [] }
-                                    )
-                                }}
-                            />
-                            {translatedOperator('empty', translate)}
-                        </Label>
-                    )}
-                    {operators.includes('notEmpty') && (
-                        <Label
-                            data-test={`true-only-not-empty-${field.id}`}
-                            className="cursor-pointer"
-                        >
-                            <Checkbox
-                                checked={
-                                    operator === 'notEmpty' &&
-                                    value.kind === 'empty'
-                                }
-                                onCheckedChange={(checked) => {
-                                    setOperator(checked ? 'notEmpty' : 'equals')
-                                    setValue(
-                                        checked
-                                            ? { kind: 'empty', isEmpty: false }
-                                            : { kind: 'boolean', values: [] }
-                                    )
-                                }}
-                            />
-                            {translatedOperator('notEmpty', translate)}
-                        </Label>
-                    )}
-                    {(operators.includes('empty') ||
-                        operators.includes('notEmpty')) && (
-                        <Separator
-                            className="my-2"
-                            data-test="true-only-divider"
+                            {operators.includes('empty') && (
+                                <Label
+                                    data-test={`true-only-empty-${field.id}`}
+                                    className="cursor-pointer"
+                                >
+                                    <Checkbox
+                                        checked={
+                                            operator === 'empty' &&
+                                            value.kind === 'empty'
+                                        }
+                                        onCheckedChange={(checked) => {
+                                            setOperator(
+                                                checked ? 'empty' : 'equals'
+                                            )
+                                            setValue(
+                                                checked
+                                                    ? {
+                                                          kind: 'empty',
+                                                          isEmpty: true,
+                                                      }
+                                                    : {
+                                                          kind: 'boolean',
+                                                          values: [],
+                                                      }
+                                            )
+                                        }}
+                                    />
+                                    {translatedOperator('empty', translate)}
+                                </Label>
+                            )}
+                            {operators.includes('notEmpty') && (
+                                <Label
+                                    data-test={`true-only-not-empty-${field.id}`}
+                                    className="cursor-pointer"
+                                >
+                                    <Checkbox
+                                        checked={
+                                            operator === 'notEmpty' &&
+                                            value.kind === 'empty'
+                                        }
+                                        onCheckedChange={(checked) => {
+                                            setOperator(
+                                                checked ? 'notEmpty' : 'equals'
+                                            )
+                                            setValue(
+                                                checked
+                                                    ? {
+                                                          kind: 'empty',
+                                                          isEmpty: false,
+                                                      }
+                                                    : {
+                                                          kind: 'boolean',
+                                                          values: [],
+                                                      }
+                                            )
+                                        }}
+                                    />
+                                    {translatedOperator('notEmpty', translate)}
+                                </Label>
+                            )}
+                            {(operators.includes('empty') ||
+                                operators.includes('notEmpty')) && (
+                                <Separator
+                                    className="my-2"
+                                    data-test="true-only-divider"
+                                />
+                            )}
+                            <Label
+                                data-test={`true-only-yes-${field.id}`}
+                                className="cursor-pointer"
+                            >
+                                <Checkbox
+                                    checked={value.kind === 'trueOnly'}
+                                    onCheckedChange={(checked) => {
+                                        setOperator('equals')
+                                        setValue(
+                                            checked
+                                                ? {
+                                                      kind: 'trueOnly',
+                                                      value: true,
+                                                  }
+                                                : {
+                                                      kind: 'boolean',
+                                                      values: [],
+                                                  }
+                                        )
+                                    }}
+                                />
+                                {i18n.t('Yes')}
+                            </Label>
+                        </div>
+                    )
+                if (operator === 'empty' || operator === 'notEmpty') return null
+                return (
+                    <div data-testid={`filter-value-${field.id}`}>
+                        <EditorValue
+                            client={client}
+                            field={field}
+                            editor={definition.editor}
+                            value={value}
+                            capabilities={capabilities}
+                            calendarContext={calendarContext}
+                            onChange={setValue}
                         />
-                    )}
-                    <Label
-                        data-test={`true-only-yes-${field.id}`}
-                        className="cursor-pointer"
-                    >
-                        <Checkbox
-                            checked={value.kind === 'trueOnly'}
-                            onCheckedChange={(checked) => {
-                                setOperator('equals')
-                                setValue(
-                                    checked
-                                        ? { kind: 'trueOnly', value: true }
-                                        : { kind: 'boolean', values: [] }
-                                )
-                            }}
-                        />
-                        {i18n.t('Yes')}
-                    </Label>
-                </div>
-            )}
-            {showValueEditor && (
-                <div data-testid={`filter-value-${field.id}`}>
-                    <EditorValue
-                        client={client}
-                        field={field}
-                        editor={definition.editor}
-                        value={value}
-                        capabilities={capabilities}
-                        calendarContext={calendarContext}
-                        onChange={setValue}
-                    />
-                </div>
-            )}
+                    </div>
+                )
+            })()}
             {error && (
                 <p
                     className="text-[13px] text-[#c62828] [margin:10px_0_0]"

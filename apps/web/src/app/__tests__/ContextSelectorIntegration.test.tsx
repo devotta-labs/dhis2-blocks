@@ -212,6 +212,64 @@ const DirtyOrganisationUnitHarness = () => {
 }
 
 describe('working-list context-selector integration', () => {
+    it('updates the program notice status and gives empty menus precedence over filtering', async () => {
+        const props: React.ComponentProps<typeof WorkingListContextControls> = {
+            onClear: vi.fn(),
+            clearDisabled: false,
+            programOptions: [{ value: 'Program0001', label: 'Program A' }],
+            programValue: 'Program0001',
+            programOpen: true,
+            onProgramOpenChange: vi.fn(),
+            onProgramChange: vi.fn(),
+            onProgramClear: vi.fn(),
+            programLoading: false,
+            programLoadingLabel: 'Loading programs',
+            programsAreFiltered: true,
+            onShowAllPrograms: vi.fn(),
+            showOrganisationUnit: false,
+            organisationUnitOpen: false,
+            onOrganisationUnitOpenChange: vi.fn(),
+            onOrganisationUnitClear: vi.fn(),
+            organisationUnitLoading: false,
+            organisationUnitDisabled: false,
+            organisationUnitContent: null,
+        }
+        const screen = await render(<WorkingListContextControls {...props} />)
+        const filteredNotice = screen.getByText(
+            'Some programs are being filtered by the chosen organisation unit'
+        )
+        const emptyNotice = screen.getByText('No programs available.')
+
+        await expect.element(filteredNotice).toBeVisible()
+        await expect.element(emptyNotice).not.toBeInTheDocument()
+        await screen.getByRole('button', { name: 'Show all programs' }).click()
+        expect(props.onShowAllPrograms).toHaveBeenCalledOnce()
+
+        await screen.rerender(
+            <WorkingListContextControls
+                {...props}
+                programsAreFiltered={false}
+            />
+        )
+        await expect.element(filteredNotice).not.toBeInTheDocument()
+        await expect.element(emptyNotice).not.toBeInTheDocument()
+
+        await screen.rerender(
+            <WorkingListContextControls
+                {...props}
+                programOptions={[
+                    {
+                        value: 'Program0001',
+                        label: 'Program A',
+                        excludeFromMenu: true,
+                    },
+                ]}
+            />
+        )
+        await expect.element(emptyNotice).toBeVisible()
+        await expect.element(filteredNotice).not.toBeInTheDocument()
+    })
+
     it('lets the host progressively disclose and commit context controls', async () => {
         const screen = await render(<ContextSelectorHarness />)
 
@@ -309,6 +367,13 @@ describe('working-list context-selector integration', () => {
         await expect
             .element(screen.getByText('No programs available.'))
             .toBeVisible()
+        await expect
+            .element(
+                screen.getByText(
+                    'Some programs are being filtered by the chosen organisation unit'
+                )
+            )
+            .not.toBeInTheDocument()
         await screen.getByRole('button', { name: 'Show all' }).click()
         await expect
             .element(screen.getByTestId('committed-organisation-unit'))

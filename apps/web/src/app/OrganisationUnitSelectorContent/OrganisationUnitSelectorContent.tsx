@@ -11,6 +11,18 @@ import {
 } from './treeFilter'
 import styles from './OrganisationUnitSelectorContent.module.css'
 
+const SEARCH_STATUS = {
+    LOADING: 'LOADING',
+    ERROR: 'ERROR',
+    READY: 'READY',
+} as const
+
+const LOAD_MORE_STATUS = {
+    ERROR: 'ERROR',
+    AVAILABLE: 'AVAILABLE',
+    HIDDEN: 'HIDDEN',
+} as const
+
 interface OrganisationUnitSelectorContentProps {
     roots: OrganisationUnitReference[]
     allowedPaths: string[]
@@ -126,6 +138,16 @@ export const OrganisationUnitSelectorContent = ({
         () => buildOrganisationUnitTreeFilter(allowedPaths, visibleRoots),
         [allowedPaths, visibleRoots]
     )
+    const searchStatus = useMemo(() => {
+        if (searchLoading) return SEARCH_STATUS.LOADING
+        if (searchError) return SEARCH_STATUS.ERROR
+        return SEARCH_STATUS.READY
+    }, [searchLoading, searchError])
+    const loadMoreStatus = useMemo(() => {
+        if (searchLoadMoreError) return LOAD_MORE_STATUS.ERROR
+        if (searchHasMore) return LOAD_MORE_STATUS.AVAILABLE
+        return LOAD_MORE_STATUS.HIDDEN
+    }, [searchLoadMoreError, searchHasMore])
     // Keep the key stable while search pages append so expanded branches
     // survive; remount only when the term or the browse-mode root set changes.
     const stableTreeKey = searchRoots
@@ -149,98 +171,86 @@ export const OrganisationUnitSelectorContent = ({
             <div className="overflow-auto rounded-b-[3px]">
                 <div
                     className={
-                        searchLoading
+                        searchStatus === SEARCH_STATUS.LOADING
                             ? 'm-[4px] flex h-[calc(100vh-48px)] items-center justify-center'
                             : 'flex min-h-[42px] max-w-[100vw] flex-col bg-white p-[4px] pt-[8px]'
                     }
                     data-test="org-unit-tree"
                     data-testid="org-unit-tree"
                 >
-                    {((): React.ReactNode => {
-                        if (searchLoading)
-                            return (
-                                <Spinner
-                                    aria-label={i18n.t('Loading')}
-                                    className="size-12 border-6"
-                                />
-                            )
-                        if (searchError)
-                            return (
-                                <div
-                                    className="flex w-full flex-col items-center gap-[8px] px-[16px] py-[24px] text-center text-[14px] text-[#4a5768]"
-                                    data-test="org-unit-search-error"
+                    {searchStatus === SEARCH_STATUS.LOADING && (
+                        <Spinner
+                            aria-label={i18n.t('Loading')}
+                            className="size-12 border-6"
+                        />
+                    )}
+                    {searchStatus === SEARCH_STATUS.ERROR && (
+                        <div
+                            className="flex w-full flex-col items-center gap-[8px] px-[16px] py-[24px] text-center text-[14px] text-[#4a5768]"
+                            data-test="org-unit-search-error"
+                        >
+                            <span>
+                                {i18n.t('Could not search organisation units')}
+                            </span>
+                            {onSearchRetry ? (
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={onSearchRetry}
                                 >
+                                    {i18n.t('Try again')}
+                                </Button>
+                            ) : null}
+                        </div>
+                    )}
+                    {searchStatus === SEARCH_STATUS.READY && (
+                        <>
+                            <ControlledOrganisationUnitTree
+                                key={stableTreeKey}
+                                visibleRoots={visibleRoots}
+                                treeFilter={treeFilter}
+                                selected={selected}
+                                onSelect={onSelect}
+                                TreeComponent={TreeComponent}
+                            />
+                            {loadMoreStatus === LOAD_MORE_STATUS.ERROR && (
+                                <div className="flex w-full items-center justify-center gap-[8px] pb-[4px] text-[14px] text-[#4a5768]">
                                     <span>
                                         {i18n.t(
-                                            'Could not search organisation units'
+                                            'Could not load more organisation units'
                                         )}
                                     </span>
-                                    {onSearchRetry ? (
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={onSearchRetry}
-                                        >
-                                            {i18n.t('Try again')}
-                                        </Button>
-                                    ) : null}
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={onSearchLoadMore}
+                                    >
+                                        {i18n.t('Try again')}
+                                    </Button>
                                 </div>
-                            )
-                        return (
-                            <>
-                                <ControlledOrganisationUnitTree
-                                    key={stableTreeKey}
-                                    visibleRoots={visibleRoots}
-                                    treeFilter={treeFilter}
-                                    selected={selected}
-                                    onSelect={onSelect}
-                                    TreeComponent={TreeComponent}
-                                />
-                                {((): React.ReactNode => {
-                                    if (searchLoadMoreError)
-                                        return (
-                                            <div className="flex w-full items-center justify-center gap-[8px] pb-[4px] text-[14px] text-[#4a5768]">
-                                                <span>
-                                                    {i18n.t(
-                                                        'Could not load more organisation units'
-                                                    )}
-                                                </span>
-                                                <Button
-                                                    variant="secondary"
-                                                    size="sm"
-                                                    onClick={onSearchLoadMore}
-                                                >
-                                                    {i18n.t('Try again')}
-                                                </Button>
-                                            </div>
-                                        )
-                                    if (!searchHasMore) return null
-                                    return (
-                                        <div className="flex w-full justify-center pb-[4px]">
-                                            <Button
-                                                variant="secondary"
-                                                size="sm"
-                                                data-test="org-unit-search-load-more"
-                                                onClick={onSearchLoadMore}
-                                                disabled={searchLoadingMore}
-                                            >
-                                                {searchLoadingMore && (
-                                                    <Spinner
-                                                        aria-label={i18n.t(
-                                                            'Loading'
-                                                        )}
-                                                        data-icon="inline-start"
-                                                        className="size-4"
-                                                    />
-                                                )}
-                                                {i18n.t('Show more')}
-                                            </Button>
-                                        </div>
-                                    )
-                                })()}
-                            </>
-                        )
-                    })()}
+                            )}
+                            {loadMoreStatus === LOAD_MORE_STATUS.AVAILABLE && (
+                                <div className="flex w-full justify-center pb-[4px]">
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        data-test="org-unit-search-load-more"
+                                        onClick={onSearchLoadMore}
+                                        disabled={searchLoadingMore}
+                                    >
+                                        {searchLoadingMore && (
+                                            <Spinner
+                                                aria-label={i18n.t('Loading')}
+                                                data-icon="inline-start"
+                                                className="size-4"
+                                            />
+                                        )}
+                                        {i18n.t('Show more')}
+                                    </Button>
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
             </div>
         </div>

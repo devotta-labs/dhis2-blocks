@@ -135,6 +135,8 @@ const FilterEditor = ({
     const [error, setError] = useState<string>()
 
     const trueOnlyHasValue = value.kind === 'trueOnly' || value.kind === 'empty'
+    const showValueEditor =
+        !isTrueOnly && operator !== 'empty' && operator !== 'notEmpty'
 
     const apply = () => {
         try {
@@ -191,7 +193,7 @@ const FilterEditor = ({
                     }}
                 />
             )}
-            {isTrueOnly ? (
+            {isTrueOnly && (
                 <div
                     className="flex flex-col gap-[4px]"
                     role="group"
@@ -266,7 +268,8 @@ const FilterEditor = ({
                         {i18n.t('Yes')}
                     </Label>
                 </div>
-            ) : operator !== 'empty' && operator !== 'notEmpty' ? (
+            )}
+            {showValueEditor && (
                 <div data-testid={`filter-value-${field.id}`}>
                     <EditorValue
                         client={client}
@@ -278,7 +281,7 @@ const FilterEditor = ({
                         onChange={setValue}
                     />
                 </div>
-            ) : null}
+            )}
             {error && (
                 <p
                     className="text-[13px] text-[#c62828] [margin:10px_0_0]"

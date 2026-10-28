@@ -59,6 +59,9 @@ export const WorkingListContextControls = ({
     const visibleProgramOptions = programOptions.filter(
         (option) => !option.excludeFromMenu
     )
+    const noProgramsAvailable = visibleProgramOptions.length === 0
+    const showFilteredProgramsNotice =
+        !noProgramsAvailable && programsAreFiltered
 
     return (
         <ContextSelector ariaLabel={i18n.t('Working list context')}>
@@ -75,7 +78,7 @@ export const WorkingListContextControls = ({
                 loading={programLoading}
                 loadingLabel={programLoadingLabel}
             >
-                {visibleProgramOptions.length === 0 ? (
+                {noProgramsAvailable && (
                     <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
                         <span>{i18n.t('No programs available.')}</span>
                         <Button
@@ -87,7 +90,8 @@ export const WorkingListContextControls = ({
                             {i18n.t('Show all')}
                         </Button>
                     </div>
-                ) : programsAreFiltered ? (
+                )}
+                {showFilteredProgramsNotice && (
                     <>
                         <Separator className="my-2" />
                         <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
@@ -105,7 +109,7 @@ export const WorkingListContextControls = ({
                             </Button>
                         </div>
                     </>
-                ) : null}
+                )}
             </ProgramSelector>
 
             {showOrganisationUnit ? (

@@ -131,6 +131,9 @@ export const OrganisationUnitSelectorContent = ({
     const stableTreeKey = searchRoots
         ? treeKey
         : `${treeKey}-${visibleRoots.map((root) => root.id).join('-')}`
+    const showSearchError = !searchLoading && searchError
+    const showTree = !searchLoading && !searchError
+    const showLoadMore = !searchLoadMoreError && searchHasMore
 
     return (
         <div className="z-0 h-full w-full rounded-[3px] border border-[#e8edf2] bg-white">
@@ -156,12 +159,13 @@ export const OrganisationUnitSelectorContent = ({
                     data-test="org-unit-tree"
                     data-testid="org-unit-tree"
                 >
-                    {searchLoading ? (
+                    {searchLoading && (
                         <Spinner
                             aria-label={i18n.t('Loading')}
                             className="size-12 border-6"
                         />
-                    ) : searchError ? (
+                    )}
+                    {showSearchError && (
                         <div
                             className="flex w-full flex-col items-center gap-[8px] px-[16px] py-[24px] text-center text-[14px] text-[#4a5768]"
                             data-test="org-unit-search-error"
@@ -179,7 +183,8 @@ export const OrganisationUnitSelectorContent = ({
                                 </Button>
                             ) : null}
                         </div>
-                    ) : (
+                    )}
+                    {showTree && (
                         <>
                             <ControlledOrganisationUnitTree
                                 key={stableTreeKey}
@@ -189,7 +194,7 @@ export const OrganisationUnitSelectorContent = ({
                                 onSelect={onSelect}
                                 TreeComponent={TreeComponent}
                             />
-                            {searchLoadMoreError ? (
+                            {searchLoadMoreError && (
                                 <div className="flex w-full items-center justify-center gap-[8px] pb-[4px] text-[14px] text-[#4a5768]">
                                     <span>
                                         {i18n.t(
@@ -204,7 +209,8 @@ export const OrganisationUnitSelectorContent = ({
                                         {i18n.t('Try again')}
                                     </Button>
                                 </div>
-                            ) : searchHasMore ? (
+                            )}
+                            {showLoadMore && (
                                 <div className="flex w-full justify-center pb-[4px]">
                                     <Button
                                         variant="secondary"
@@ -223,7 +229,7 @@ export const OrganisationUnitSelectorContent = ({
                                         {i18n.t('Show more')}
                                     </Button>
                                 </div>
-                            ) : null}
+                            )}
                         </>
                     )}
                 </div>

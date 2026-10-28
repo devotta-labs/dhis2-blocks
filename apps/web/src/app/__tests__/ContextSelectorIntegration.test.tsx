@@ -106,16 +106,17 @@ const IncompatibleContextHarness = () => {
         string | undefined
     >('OrgUnit0001')
     const [programOpen, setProgramOpen] = useState(false)
+    const selectedProgramOptions = program
+        ? [
+              {
+                  value: program,
+                  label: 'Incompatible program',
+                  excludeFromMenu: true,
+              },
+          ]
+        : []
     const programOptions = organisationUnit
-        ? program
-            ? [
-                  {
-                      value: program,
-                      label: 'Incompatible program',
-                      excludeFromMenu: true,
-                  },
-              ]
-            : []
+        ? selectedProgramOptions
         : [{ value: 'Program0001', label: 'Incompatible program' }]
 
     return (

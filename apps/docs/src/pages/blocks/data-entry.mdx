@@ -109,6 +109,22 @@ interface EventSourceOptions {
 }
 ```
 
+## More events
+
+The first `pageSize` events load with the form. While a page comes back full,
+**Show more events** follows the grid: each press appends the next page in the
+same order and announces "Events shown: …". The button keeps focus, and says
+it is busy while the page loads. No total is asked for, since counting costs
+DHIS2 a query on large databases, so the button goes only once a page comes
+back short, and focus then moves past the grid. A page that cannot load says
+why, and the button stays to try again.
+
+A page's events join the end of their table, except those already shown, such
+as a new event saved here. A stage the table has no columns for adds its
+columns at the end, and the other rows show "Not in this stage" there. The
+page's unsent changes are put back on its cells, in the state they were left
+in, and its rows' rules run as they do on load: loading a page saves nothing.
+
 ## Typing
 
 Typing replaces the value, F2 edits it, Enter and the arrow keys save and
@@ -127,9 +143,73 @@ an empty date cell says the format. A row is named by its event date in that
 format once it has one, followed by its stage where the grid shows several; a
 new row is "New event" until its date is typed.
 
+## Pop-up editors
+
 `LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `ORGANISATION_UNIT`,
-`USERNAME`, `FILE_RESOURCE` and `IMAGE` show their value and are edited in
-their own form.
+`USERNAME`, `FILE_RESOURCE` and `IMAGE` show their value as DHIS2 displays it
+and are edited in a small editor, a dialog named "Edit …" that opens under the
+cell. Enter, F2, F4, Alt+↓, a click on the selected cell or a double-click
+opens it, and so does typing in a long text, org unit or username cell,
+starting from what was typed. Tab and Shift+Tab stay inside the editor, and the
+cell's notes hide while it is open.
+
+Escape or **Cancel** closes the editor without saving. **Save** saves through
+the cell's `commit` and returns to the cell, where the next Enter moves on; in
+long text, age, coordinate and the searches, Ctrl+Enter (⌘+Enter on a Mac)
+saves too. A press outside the editor, or focus moved out of it, saves what
+the editor holds, or says why it cannot be saved. A rule that locks or hides
+the cell while its editor is open closes it unsaved and says why. A block
+pasted from a spreadsheet fills pop-up cells like any cell, except files and
+images.
+
+- **Long text** opens a text area: Enter adds a line, and a field mask is
+  checked on save.
+- **Multi-select** opens a search over checkboxes. The choice is saved as the
+  option codes in option-set order, joined by commas, and **Clear all** saves no
+  value. Options a rule hid are not offered, unless the value holds one, which
+  can still be unchecked.
+- **Age** opens the date of birth, in the system calendar and date format, with
+  years, months and days beside it: typing in one fills the others. It is
+  stored as the date of birth.
+- **Coordinate** opens latitude and longitude fields, with no map and no
+  location from the device, and is stored as `[lng,lat]`. It is pasted as
+  `lat, lng`, or as `[lng,lat]` with brackets.
+- **Org unit** opens a search of the org units in the user's search scope, by
+  name, code or id, each listed with its path. The cell shows the org unit's
+  name: the names of the stored values load with the form.
+- **Username** opens a search of DHIS2's user lookup, each listed with the
+  user's name and username.
+- **File and image** offer **Choose a file** (**Choose an image**) and, when
+  the cell has a value, **Remove**. A chosen file is uploaded to DHIS2 at once,
+  since a file cannot wait on the device, and its id is then saved to the cell
+  like any value. While it uploads the editor says "Uploading …", and Cancel or
+  Escape stops the upload. A failed upload keeps the value and says why;
+  offline, the editor says "Connect to the internet to upload files". A file
+  DHIS2 holds shows its name and **Download**, and an image a small preview,
+  both from the event's own endpoints: file cells read each row as an event and
+  each column as a data element, as `eventSource` makes them.
+
+A search starts at two characters, once typing stops, and highlights the first
+result: ↑ and ↓ move the highlight, and Enter or a click saves a result. Each
+answer is announced ("Results: 2", or that none was found), and a failed search
+says "You are offline" or "Could not search. Try again.".
+
+## Every value type
+
+A source can load any data, not only DHIS2 events. This preview's source keeps
+a small form in the page's memory, with a column for each value type: typed in
+the cell, edited in a pop-up, or shown only. Its changes are saved in memory;
+org unit and user searches, and uploads, still go to the demo database. A
+saved file's **Download** and an image's preview do not work here: they need
+rows that are DHIS2 events.
+
+<ExampleCard slug="data-entry/value-types" />
+
+A source implements `DataEntrySource`. `key` names its unsent changes on the
+device, `load` returns the form (its tables, values, and what is read-only),
+and `save` takes the changes and says what became of each one. `setStatus`
+completes and reopens rows, `restoreRows` gives back the new rows found unsent
+after a reload, and `loadPage`, when a source has one, loads the next page.
 
 ## Program rules
 
@@ -198,15 +278,22 @@ in a stage that blocks entry, expired events (unless the user has
 
 ## Boundaries
 
-- Only the first page of events loads: `pageSize` of them (default 50), in
-  `order`.
+- Events load a page at a time, `pageSize` of them (default 50), in `order`.
+  Events added or deleted elsewhere between pages shift DHIS2's pages: a row
+  already shown is never shown twice, but one can be left out until the form
+  loads again.
 - The form loads once per mount, and not again when the app invalidates its
   queries. Changes made elsewhere show after the next load.
 - Program rules run only for rows whose stage the grid shows: the stages of the
-  loaded events and of new rows, or the stage asked for when there are none. A
-  row of any other stage is not evaluated.
+  loaded events, pages included, and of new rows, or the stage asked for when
+  there are none. A row of any other stage is not evaluated.
 - Opening the grid never changes data. Rule-assigned values and clearings are
   saved only with a row a person changes or completes.
+- `TRACKER_ASSOCIATE`, `REFERENCE` and `GEOJSON` show their value and are
+  edited in their own form.
+- An org unit pasted into a cell shows its id until the form loads again. One
+  picked but not yet sent, and a file uploaded but not yet sent, show their id
+  after a reload too: names load only for the values DHIS2 holds.
 
 ## Replace a control
 
@@ -278,15 +365,18 @@ and Escape hides them unless the control calls `preventDefault` on it.
 whether the cell has an error and needs a value. Paste and Ctrl+Z belong to the
 grid only in the default controls: a replacement keeps its own, and a block
 pasted from the cells around it still lands in it. The default controls give
-the pop-up types, such as `LONG_TEXT`, a read-only reason of their own; a
-replacement is how you edit them in the grid.
+value types this block does not know, and pop-up types without an editor, a
+read-only reason of their own ("Edit this field in its own form"); a
+replacement is not given it, and is how you edit them in the grid.
 
 `commit` returns `'queued'` when the value changed, `'unchanged'` when it did
 not, and `'invalid'` when the field's type or a rule refuses it. An invalid
 text stays as the cell's `draft` with its `error`, and nothing is saved. A cell
 that a rule locks, or whose row is read-only, is not written to. To keep a
-default control's editing, render it from `cells` instead, such as
-`<cells.text {...props} />`.
+default control's editing, render it from `cells` inside your control, with
+the props your control was given, such as `<cells.text {...props} />`. A
+default control reads its cell from the `Cell` around it, so it works only
+inside a `Cell`.
 
 ## API reference
 
@@ -336,6 +426,9 @@ interface DataEntryView {
     reopen(rowId: string): Promise<SaveOutcome[]>
     downloadUnsent(): void
     discardFailed(): Promise<void>
+    hasMore: boolean // the last page came back full: there may be more
+    loadingMore: boolean
+    loadMore(): Promise<void> // appends the next page; one at a time
 }
 ```
 

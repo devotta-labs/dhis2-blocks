@@ -12,6 +12,7 @@ import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
 import dataEntryEventProgramSource from './data-entry/EventProgramGrid.tsx?raw'
 import dataEntryPersonEventsSource from './data-entry/PersonEventsGrid.tsx?raw'
 import dataEntryTrackerRegisterSource from './data-entry/TrackerRegisterGrid.tsx?raw'
+import dataEntryValueTypesSource from './data-entry/ValueTypesGrid.tsx?raw'
 
 /**
  * Example registry.
@@ -121,6 +122,14 @@ const examples = [
         Component: lazy(() => import('./data-entry/PersonEventsGrid')),
         source: dataEntryPersonEventsSource,
         minHeight: 680,
+    },
+    {
+        slug: 'data-entry/value-types',
+        title: 'Every value type, from a source of your own',
+        live: true,
+        Component: lazy(() => import('./data-entry/ValueTypesGrid')),
+        source: dataEntryValueTypesSource,
+        minHeight: 360,
     },
 ] as const satisfies readonly ExampleDefinition[]
 

@@ -21,9 +21,17 @@ const FIRST_KEY_TYPES = new Set(['LONG_TEXT', 'ORGANISATION_UNIT', 'USERNAME'])
 // Values that are a file's id; the cell shows the file's name.
 const FILE_TYPES = new Set(['FILE_RESOURCE', 'IMAGE'])
 
-// shortcut: hidden fields still count as focusable; check visibility if an editor keeps hidden fields mounted.
 const FOCUSABLE =
     'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+
+/**
+ * The editor's fields, in page order; a hidden one, such as the file editor's file input, takes no focus. Boxes, not
+ * `checkVisibility`, which Safari lacks before 17.4.
+ */
+const fieldsOf = (box: HTMLElement) =>
+    Array.from(box.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+        (field) => field.getClientRects().length > 0
+    )
 
 // The field's name is said as the page shows it, not HTML-escaped.
 const AS_IS = { escapeValue: false }
@@ -183,7 +191,7 @@ export const PopupCell = memo(function PopupCell({
     useEffect(() => {
         const box = dialog.current
         if (box !== null && !box.contains(document.activeElement)) {
-            ;(box.querySelector<HTMLElement>(FOCUSABLE) ?? box).focus()
+            ;(fieldsOf(box).at(0) ?? box).focus()
         }
     }, [opened])
     // A non-modal dialog: a press anywhere else, or focus sent elsewhere (a screen reader, a script), leaves it.
@@ -231,9 +239,7 @@ export const PopupCell = memo(function PopupCell({
 
     // Tab and Shift+Tab loop over the editor's fields.
     const loop = (event: KeyboardEvent<HTMLDivElement>) => {
-        const fields = Array.from(
-            event.currentTarget.querySelectorAll<HTMLElement>(FOCUSABLE)
-        )
+        const fields = fieldsOf(event.currentTarget)
         const at = fields.findIndex((element) => element === event.target)
         const last = fields.length - 1
         if (

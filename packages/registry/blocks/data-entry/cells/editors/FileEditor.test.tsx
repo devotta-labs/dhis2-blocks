@@ -189,6 +189,17 @@ test('a file cell shows the name the form loaded, and asks for none itself', asy
     expect(reads).toEqual([])
 })
 
+test('the editor takes focus on "Choose a file", and Tab and Shift+Tab loop over its buttons', async () => {
+    const { cell } = await mount(FILE)
+    await open(cell)
+    // Not the file input the button opens, which is hidden.
+    await expect.element(button('Choose a file')).toHaveFocus()
+    await userEvent.keyboard('{Shift>}{Tab}{/Shift}')
+    await expect.element(button('Cancel')).toHaveFocus()
+    await userEvent.keyboard('{Tab}')
+    await expect.element(button('Choose a file')).toHaveFocus()
+})
+
 test('choosing a file uploads it and saves its id', async () => {
     const { cell, stored, enqueued, announced, uploads, reads, hold } =
         await mount(FILE)

@@ -109,6 +109,11 @@ stage" for the other rows. Its unsent changes are put back on its cells, in the 
 rules run as they do on load, with their people: loading a page saves nothing. A source pages with `loadPage(engine,
 page, signal)`, returning a `FormPage`: its rows per table, values, read-only and reopenable rows, names, and `hasMore`.
 
+A source of your own implements `DataEntrySource`: `key` names its unsent changes on the device, `load` returns the
+`LoadedForm` (its tables, values, and what is required or read-only), `save` takes the changes and says what became of
+each one, `setStatus` completes and reopens rows, and `restoreRows` gives back the new rows found unsent after a
+reload. Without `rules` the form loads no rule engine.
+
 The host decides where the buttons go. `complete(rowId)` refuses at once, with one `failed` outcome per reason, when
 the device is offline or someone else is signed in, and while the row has an error, an empty required field, or a
 change DHIS2 refused or that waits; otherwise it sends the row's unsent changes first (and refuses if sending pauses),

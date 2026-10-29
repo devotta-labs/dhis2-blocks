@@ -74,7 +74,8 @@ const Item = ({
                     event.preventDefault()
                     document.getElementById(target)?.focus()
                 }}
-                className="text-dhis2-blue-800 underline"
+                // At least 24 px tall, as WCAG 2.2 asks of a target with others close by.
+                className="inline-block py-1 text-dhis2-blue-800 underline"
             >
                 {namesField
                     ? i18n.t('{{row}}: {{message}}', {

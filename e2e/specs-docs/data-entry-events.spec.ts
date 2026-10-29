@@ -11,6 +11,8 @@ import {
     found,
     focusedRow,
     gridReady,
+    INPATIENT,
+    nextInpatientDate,
     openGrid,
     readEvent,
     readEvents,
@@ -27,7 +29,6 @@ const EVENT_PROGRAM = 'data-entry/event-program'
 const REGISTER = 'data-entry/tracker-register'
 const PERSON = 'data-entry/person-events'
 
-const INPATIENT = { program: 'eBAyeGv0exc', orgUnit: 'DiszpKrYNg8' }
 const RMNCH = 'WSGAb5XwJ3Y'
 const FIRST_VISIT = 'WZbXY0S00lP'
 const SIERRA_LEONE = 'ImspTQPwCqd'
@@ -59,17 +60,6 @@ const CHRONIC_FOLLOW_UPS = [
 ]
 
 const HIDDEN = /Hidden by rule/
-
-/** A date after every inpatient event, so a new event is the grid's first row after a reload. */
-const nextInpatientDate = async (request: APIRequestContext) => {
-    const [newest] = await readEvents(request, {
-        ...INPATIENT,
-        orgUnitMode: 'SELECTED',
-        order: 'occurredAt:desc',
-        pageSize: '1',
-    })
-    return addDays(newest?.occurredAt ?? '2030-01-01', 1)
-}
 
 const PersonEventSchema = z.object({
     occurredAt: z.string(),
@@ -546,7 +536,7 @@ test('fills the inpatient form by keyboard alone within 60 keystrokes per row', 
         '60', // Weight in kg
         addDays(date, -7), // Date of admission
         addDays(date, -1), // Date of discharge
-        '', // Place of Infection: edited in its own form
+        '', // Place of Infection: an org unit, left empty
         'Dis', // Mode of Discharge: Discharged
         'A00', // Diagnosis (ICD-10)
     ]) {

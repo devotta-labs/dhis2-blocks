@@ -70,6 +70,7 @@ interface FormOptions {
     canReopen?: string[]
     /** Stage `s1` blocks entry once completed, with this reason. */
     blockedWhenCompleted?: string
+    hasMore?: boolean
 }
 
 export const BLOCKED = 'Completed events in this stage cannot be edited'
@@ -81,6 +82,7 @@ export const visitForm = ({
     readOnlyRows = [],
     canReopen = [],
     blockedWhenCompleted,
+    hasMore = false,
 }: FormOptions = {}): LoadedForm => ({
     tables: [
         {
@@ -114,6 +116,7 @@ export const visitForm = ({
     },
     orgUnitNames: new Map(),
     fileNames: new Map(),
+    hasMore,
 })
 
 // Gates still closed when a test ends are opened, so no sync loop keeps its lock.

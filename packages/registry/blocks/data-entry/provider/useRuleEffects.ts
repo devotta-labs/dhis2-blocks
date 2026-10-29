@@ -34,9 +34,15 @@ export const useRuleEffects = ({
     const target = form?.rules
     const { rules, status } = useEventsRules({
         programId: target?.programId ?? '',
-        programStageIds: target?.programStageIds ?? [],
+        // A page may bring rows of another stage.
+        programStageIds: [
+            ...(target?.programStageIds ?? []),
+            ...tables.flatMap(({ rows }) =>
+                rows.flatMap(({ programStageId }) => programStageId ?? [])
+            ),
+        ],
         tracker: target?.tracker ?? false,
-        // The rows' people, new rows included; a one-person grid names its person before it has a row.
+        // The rows' people, new rows and pages included; a one-person grid names its person before it has a row.
         enrollmentIds: [
             ...(target?.enrollmentIds ?? []),
             ...tables.flatMap(({ rows }) =>

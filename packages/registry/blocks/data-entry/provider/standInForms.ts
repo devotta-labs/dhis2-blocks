@@ -35,6 +35,7 @@ export const emptyForm = (): OpenForm => ({
     reopen: async () => [],
     downloadUnsent: () => {},
     discardFailed: async () => {},
+    append: async () => {},
     close: () => {},
 })
 

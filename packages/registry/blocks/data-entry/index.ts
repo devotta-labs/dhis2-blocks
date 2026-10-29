@@ -34,6 +34,7 @@ export type { EventSourceOptions } from './sources/eventSource'
 export type {
     DataEngine,
     DataEntrySource,
+    FormPage,
     LoadedForm,
     RulesTarget,
 } from './sources/types'

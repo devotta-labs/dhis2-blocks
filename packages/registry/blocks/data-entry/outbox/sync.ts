@@ -1,4 +1,5 @@
 import { FetchError } from '@dhis2/app-runtime'
+import { z } from 'zod'
 import type { CellKey } from '../model/types'
 import { classify, PartlySaved, RETRY } from './failure'
 import type { Outbox, OutboxRecord } from './outbox'
@@ -14,6 +15,20 @@ export interface SaveOutcome {
 export type SyncOutcome = SaveOutcome & { value: string | null; at: number }
 
 export type SyncStatus = 'idle' | 'sending' | 'offline' | 'signIn' | 'retrying'
+
+/** What one tab tells the others it saved; from another tab, so parsed. */
+export const outcomesMessageSchema = z.object({
+    outcomes: z.array(
+        z.object({
+            sourceKey: z.string(),
+            key: z.templateLiteral([z.string(), '.', z.string()]),
+            result: z.enum(['saved', 'waiting', 'failed']),
+            reason: z.string().optional(),
+            value: z.string().nullable(),
+            at: z.number(),
+        })
+    ),
+})
 
 export interface SyncOptions {
     outbox: Outbox

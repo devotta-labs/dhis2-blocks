@@ -91,7 +91,7 @@ const toForm = (
     { program, events: { events }, me }: z.infer<typeof eventFormSchema>,
     options: EventSourceOptions,
     today: string
-): Omit<LoadedForm, 'orgUnitNames' | 'fileNames'> => {
+): Omit<LoadedForm, 'orgUnitNames' | 'fileNames' | 'hasMore'> => {
     const { programStageId, orgUnitId, enrollmentId, newRowStageId } = options
     const orgUnitMode = options.orgUnitMode ?? 'SELECTED'
     const tracker = program.programType === 'WITH_REGISTRATION'
@@ -108,6 +108,10 @@ const toForm = (
         ])
     )
     const eventStages = new Set(events.map((event) => event.programStage))
+    // Every stage's fields, not only the columns shown: a page may bring another stage's.
+    const allFields = [
+        ...new Set([...fieldsOf.values()].flatMap((ids) => [...ids])),
+    ]
 
     // The stages the rows belong to; with no rows yet, the stages asked for.
     const used = stages.filter(
@@ -340,9 +344,7 @@ const toForm = (
             stages.map(({ id: stage }) => [
                 stage,
                 new Set(
-                    Array.from(dataElements.keys()).filter(
-                        (id) => !fieldsOf.get(stage)?.has(id)
-                    )
+                    allFields.filter((id) => !fieldsOf.get(stage)?.has(id))
                 ),
             ])
         ),
@@ -470,6 +472,54 @@ export const eventSource = (options: EventSourceOptions): DataEntrySource => {
     const pageSize = options.pageSize ?? 50
     const order = options.order ?? 'occurredAt:desc'
     const saver = eventSaver(key, programId)
+    /** One page of the events, page 1 unless named, with the names of what its values hold. */
+    const loadEvents = async (
+        engine: DataEngine,
+        page: number | undefined,
+        signal?: AbortSignal
+    ): Promise<LoadedForm> => {
+        const loaded = eventFormSchema.parse(
+            await engine.query(
+                {
+                    program: {
+                        resource: 'programs',
+                        id: programId,
+                        params: { fields: PROGRAM_FIELDS },
+                    },
+                    events: {
+                        resource: 'tracker/events',
+                        params: {
+                            program: programId,
+                            programStage: programStageId,
+                            orgUnit: atOrgUnit ? orgUnitId : undefined,
+                            orgUnitMode: atOrgUnit ? orgUnitMode : undefined,
+                            enrollments: enrollmentId,
+                            pageSize,
+                            page,
+                            order,
+                            fields: EVENT_FIELDS,
+                        },
+                    },
+                    me: {
+                        resource: 'me',
+                        params: { fields: 'id,authorities' },
+                    },
+                },
+                { signal }
+            )
+        )
+        saver.remember(loaded.events.events.map(({ event }) => event))
+        const form = toForm(loaded, options, options.today ?? localToday())
+        // Asked once the values are known: cells show org units and files by name.
+        const [orgUnitNames, fileNames] = await loadNamesOf(
+            engine,
+            form,
+            signal
+        )
+        // No total is asked for: counting costs DHIS2 a query on large databases.
+        const hasMore = loaded.events.events.length === pageSize
+        return { ...form, orgUnitNames, fileNames, hasMore }
+    }
     return {
         key,
         // Everything that changes the load; the outbox keeps the program's one key, so no change is stranded.
@@ -484,48 +534,8 @@ export const eventSource = (options: EventSourceOptions): DataEntrySource => {
             options.newRowStageId ?? '-',
             options.today ?? '-',
         ].join(':'),
-        load: async (engine, signal) => {
-            const loaded = eventFormSchema.parse(
-                await engine.query(
-                    {
-                        program: {
-                            resource: 'programs',
-                            id: programId,
-                            params: { fields: PROGRAM_FIELDS },
-                        },
-                        events: {
-                            resource: 'tracker/events',
-                            params: {
-                                program: programId,
-                                programStage: programStageId,
-                                orgUnit: atOrgUnit ? orgUnitId : undefined,
-                                orgUnitMode: atOrgUnit
-                                    ? orgUnitMode
-                                    : undefined,
-                                enrollments: enrollmentId,
-                                pageSize,
-                                order,
-                                fields: EVENT_FIELDS,
-                            },
-                        },
-                        me: {
-                            resource: 'me',
-                            params: { fields: 'id,authorities' },
-                        },
-                    },
-                    { signal }
-                )
-            )
-            saver.remember(loaded.events.events.map(({ event }) => event))
-            const form = toForm(loaded, options, options.today ?? localToday())
-            // Asked once the values are known: cells show org units and files by name.
-            const [orgUnitNames, fileNames] = await loadNamesOf(
-                engine,
-                form,
-                signal
-            )
-            return { ...form, orgUnitNames, fileNames }
-        },
+        load: (engine, signal) => loadEvents(engine, undefined, signal),
+        loadPage: loadEvents,
         save: saver.save,
         setStatus: saver.setStatus,
         restoreRows: saver.restoreRows,

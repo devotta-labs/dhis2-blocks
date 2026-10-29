@@ -40,13 +40,33 @@ export interface LoadedForm {
         /** The stage's name, for a grid of several stages to show after each new row's event date. */
         stage?: string
     }
-    /** Each stage's closed columns: those of the table its events have no field for; never the event date. */
+    /**
+     * Each stage's closed columns: those its events have no field for, of every column the table has or a page may add;
+     * never the event date.
+     */
     closedByStage: ReadonlyMap<string, ReadonlySet<string>>
     /** The names of the org units the values hold, by id: an org unit cell shows its name. */
     orgUnitNames: ReadonlyMap<string, string>
     /** The names of the files and images the values hold, by id: a file cell shows its name. */
     fileNames: ReadonlyMap<string, string>
+    /** Whether a next page may hold more rows: this one came back full. */
+    hasMore: boolean
 }
+
+/**
+ * The rows of a page after the first, per table id, with their columns: those new to a table join it at its end. Its
+ * names, read-only rows and reopenable rows are those of its own rows.
+ */
+export type FormPage = Pick<
+    LoadedForm,
+    | 'tables'
+    | 'values'
+    | 'readOnlyRows'
+    | 'canReopen'
+    | 'orgUnitNames'
+    | 'fileNames'
+    | 'hasMore'
+>
 
 export interface DataEntrySource {
     /**
@@ -57,6 +77,12 @@ export interface DataEntrySource {
     /** Identifies what is loaded, for the load's cache; `key` when absent. */
     cacheKey?: string
     load(engine: DataEngine, signal?: AbortSignal): Promise<LoadedForm>
+    /** Page 2, 3, …: the rows after the load's, in its order and page size. */
+    loadPage?(
+        engine: DataEngine,
+        page: number,
+        signal?: AbortSignal
+    ): Promise<FormPage>
     save(
         engine: DataEngine,
         records: ReadonlyArray<OutboxRecord>,

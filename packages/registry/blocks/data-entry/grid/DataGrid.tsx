@@ -35,6 +35,7 @@ import {
 import { nextCell } from './navigation'
 import type { CellPosition, NavGrid, NavKey } from './navigation'
 import { isBlock, parseBlock, pasteTargets } from './paste'
+import { ShowMoreEvents } from './ShowMoreEvents'
 
 // Read by the field's value type, which can be any DHIS2 value type.
 const pasteable: ReadonlySet<string> = pasteablePopupTypes
@@ -569,6 +570,7 @@ export const DataGrid = ({
                 />
             ))}
             <div id={end} tabIndex={-1} className="outline-none" />
+            <ShowMoreEvents end={end} />
         </div>
     )
 }

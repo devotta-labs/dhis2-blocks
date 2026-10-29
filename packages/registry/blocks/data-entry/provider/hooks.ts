@@ -27,7 +27,16 @@ export interface DataEntryView {
      * device: their cells go back to what DHIS2 has.
      */
     discardFailed(): Promise<void>
+    /** Whether the source may have more rows than the form shows: a next page to load. */
+    hasMore: boolean
+    /** Whether a page is loading. */
+    loadingMore: boolean
+    /** Appends the next page; one at a time. Says how many events show, or why the page could not load. */
+    loadMore(): Promise<void>
 }
+
+/** A failure's message, for `DataEntryView.error` and what the live region says. */
+export const reasonOf = (error: Error | null) => error?.message ?? String(error)
 
 export const DataEntryViewContext = createContext<
     StoreApi<DataEntryView> | undefined

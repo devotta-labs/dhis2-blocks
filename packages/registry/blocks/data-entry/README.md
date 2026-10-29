@@ -2,7 +2,7 @@
 
 Grid data entry for DHIS2 events: one row per event and one column per data element, typed in like a spreadsheet.
 Every change is kept on the device before it is sent, so nothing typed is lost to a dropped connection, a reload or
-a crash. Program rules run for every row whose stage the grid shows, as Capture runs them. It builds on `dhis2-value-types` (what each value
+a crash. Program rules run for every row, as Capture runs them. It builds on `dhis2-value-types` (what each value
 type accepts), `dhis2-value-display` (the calendar) and `program-rules`.
 
 ```sh
@@ -82,6 +82,9 @@ interface DataEntryView {
     reopen(rowId: string): Promise<SaveOutcome[]>
     downloadUnsent(): void
     discardFailed(): Promise<void>
+    hasMore: boolean // the last page came back full: there may be more
+    loadingMore: boolean
+    loadMore(): Promise<void> // appends the next page; one at a time
 }
 
 interface EventSourceOptions {
@@ -95,6 +98,16 @@ interface EventSourceOptions {
     order?: 'occurredAt:asc' | 'occurredAt:desc' // default occurredAt:desc
 }
 ```
+
+The first `pageSize` events load with the form. While a page comes back full, "Show more events" follows the grid: each
+press appends the next page in the same order, and says "Events shown: …"; it keeps focus, and says it is busy while the
+page loads. No total is asked for, since counting costs DHIS2 a query on large databases, so the button goes only once a
+page comes back short (an empty one when the last was exactly full), and focus moves past the grid. A page that cannot
+load says why, and the button stays to try again. A page's events join the end of their table, except those already
+shown (a new event saved here, say); a stage the table has no columns for adds its columns at the end, "not in this
+stage" for the other rows. Its unsent changes are put back on its cells, in the state they were left in, and its rows'
+rules run as they do on load, with their people: loading a page saves nothing. A source pages with `loadPage(engine,
+page, signal)`, returning a `FormPage`: its rows per table, values, read-only and reopenable rows, names, and `hasMore`.
 
 The host decides where the buttons go. `complete(rowId)` refuses at once, with one `failed` outcome per reason, when
 the device is offline or someone else is signed in, and while the row has an error, an empty required field, or a
@@ -249,7 +262,8 @@ none of their effects.
 Opening the grid never changes data. In a row no one has changed, an assigned cell shows the value DHIS2 holds, locked
 with "Assigned by rule: …", and a hidden cell shows "Hidden"; the rule's value appears once the row is changed. The
 values rules assign, and the clearing of fields they hide, are saved only with a row a person changes or completes, or
-that has unsent changes; they are saved with the person's change. A cleared cell says "Cleared by rule: …" until it
+that has unsent changes; they are saved with the person's change. A value a page loads, or one put back when a failed
+change is discarded, is no change: it does not make the rules save. A cleared cell says "Cleared by rule: …" until it
 holds a value again, and text typed into a cell a rule hides is saved, then cleared the same way. A rule never changes
 the cell being typed in; it does once the person leaves the cell. A form whose rules are still loading cannot complete
 a row; if they cannot be loaded, the summary says so and nothing completes.
@@ -296,13 +310,13 @@ The `performance` measures `data-entry:rules` (the first slice) and `data-entry:
 
 ## Boundaries
 
-- Only the first page of events loads: `pageSize` of them (default 50), in `order`.
+- Events load a page at a time, `pageSize` of them (default 50) in `order`. Events added or deleted elsewhere between
+  pages shift DHIS2's pages: a row already shown is never shown twice, but one can be left out until the form loads
+  again.
 - Values are checked against their value type as they are typed; an option a rule hid is refused like any value that
   is not an option, unless the cell already holds it (a multi-select is checked code by code), so a person can keep
   or remove what was saved before the rule hid it.
-- Program rules run for the rows whose stage the grid shows: the source's `programStageIds` (for `eventSource`, the
-  stages of the loaded events and of new rows, or the stage asked for when there are none). A row of any other stage is
-  not evaluated.
+- Program rules run for the source's `programStageIds` and the stages of the rows shown, pages included.
 - Read-only, with the reason on each cell: events the user cannot write in that stage, skipped events, completed events
   in a stage that blocks entry, expired events (unless the user has `F_EDIT_EXPIRED`), and every event of a program with
   attribute categories. `TRACKER_ASSOCIATE`, `REFERENCE`, `GEOJSON`, and a pop-up type without an editor, show their

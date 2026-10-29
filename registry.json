@@ -736,6 +736,11 @@
                     "target": "@components/data-entry/grid/DataGrid.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/grid/ShowMoreEvents.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/ShowMoreEvents.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/grid/headers.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/grid/headers.ts"
@@ -804,6 +809,11 @@
                     "path": "packages/registry/blocks/data-entry/provider/afterPaint.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/provider/afterPaint.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/appendPage.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/appendPage.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/provider/completion.ts",

@@ -43,6 +43,7 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('Enter a longitude between -180 and 180'),
     i18n.t('Enter whole numbers of zero or more'),
     i18n.t('Event date'),
+    i18n.t('Events shown: {{shown}}', { nsSeparator: '::' }),
     i18n.t('Hidden'),
     i18n.t('Hidden by rule: {{rule}}', { nsSeparator: '::' }),
     i18n.t('Latitude'),
@@ -68,6 +69,7 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('Search organisation units'),
     i18n.t('Search users'),
     i18n.t('Selected options: {{options}}', { nsSeparator: '::' }),
+    i18n.t('Show more events'),
     i18n.t(
         'Showing {{shown}} of {{total}} matches. Keep typing to narrow them.'
     ),

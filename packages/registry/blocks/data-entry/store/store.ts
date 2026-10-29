@@ -6,6 +6,7 @@ import type {
     CellKey,
     CellState,
     CommitResult,
+    GridColumn,
     GridTable,
     PendingChange,
     SyncState,
@@ -52,10 +53,15 @@ export interface DataEntryState {
         sync: SyncState,
         reason?: string
     ): void
-    /** Puts changes the outbox still holds back on their cells; nothing is enqueued. */
+    /** Columns a page adds: their cells take values, checked as their field says. */
+    addColumns(columns: ReadonlyArray<GridColumn>): void
+    /** Puts changes the outbox still holds, or values a page loads, on their cells; nothing is enqueued. */
     restore(
         changes: ReadonlyArray<
-            PendingChange & { sync?: SyncState; reason?: string }
+            Pick<PendingChange, 'key' | 'value' | 'base'> & {
+                sync?: SyncState
+                reason?: string
+            }
         >
     ): void
 }
@@ -276,6 +282,11 @@ export const createDataEntryStore = ({
                     }
                     return undone
                 })
+            },
+            addColumns(columns) {
+                for (const { id, field } of columns) {
+                    fields.set(id, field)
+                }
             },
             markSync(sent, sync, reason) {
                 edit(({ read, write }) => {

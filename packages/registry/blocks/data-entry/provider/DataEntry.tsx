@@ -10,15 +10,17 @@ import { parseDateFormat } from '@/components/dhis2-value-types'
 import type { CellOverrides } from '../cells/cellProps'
 import { summarise } from '../logic/summary'
 import type { DataEntrySource, LoadedForm } from '../sources/types'
+import { usePages } from './appendPage'
 import {
     createAnnouncer,
     DataEntryReactContext,
     useDataEntryContext,
 } from './context'
 import type { DataEntryContext } from './context'
-import { DataEntryViewContext } from './hooks'
+import { DataEntryViewContext, reasonOf } from './hooks'
 import type { DataEntryView } from './hooks'
-import { openForm, summaryOf } from './openForm'
+import { summaryOf } from './formRows'
+import { openForm } from './openForm'
 import type { OpenForm } from './openForm'
 import { emptyForm, lockedForm } from './standInForms'
 import { useLeaveWarning } from './useLeaveWarning'
@@ -39,9 +41,6 @@ const accountSchema = z.object({
         dateFormat: z.string().optional(),
     }),
 })
-
-/** A failure's message, for `DataEntryView.error`. */
-const reasonOf = (error: Error | null) => error?.message ?? String(error)
 
 /** The one polite live region, saying what `announce` was given. */
 export const LiveRegion = () => {
@@ -158,6 +157,9 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
             reopen: placeholder.reopen,
             downloadUnsent: placeholder.downloadUnsent,
             discardFailed: placeholder.discardFailed,
+            hasMore: false,
+            loadingMore: false,
+            loadMore: async () => {},
         }))
     )
     const [opened, setOpened] = useState<OpenForm>()
@@ -220,12 +222,23 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
         queryClient,
     ])
 
+    // Every page loaded stays when the form locks.
+    const paged = usePages({
+        open: opened,
+        form,
+        source,
+        engine,
+        view,
+        announce: announcer.announce,
+        orgUnitNames,
+        fileNames,
+    })
     const lockedView = useMemo(
         () =>
-            locked && form !== undefined
-                ? lockedForm(form, settings, source.key)
+            locked && paged !== undefined
+                ? lockedForm(paged, settings, source.key)
                 : undefined,
-        [locked, form, settings, source.key]
+        [locked, paged, settings, source.key]
     )
     const active = lockedView ?? opened ?? placeholder
     const error =

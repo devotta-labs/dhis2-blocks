@@ -112,6 +112,9 @@ export const rig = (
         reopen: async () => [],
         downloadUnsent: () => {},
         discardFailed: async () => {},
+        hasMore: false,
+        loadingMore: false,
+        loadMore: async () => {},
     }))
     return {
         store,

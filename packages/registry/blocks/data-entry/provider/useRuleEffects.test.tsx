@@ -1,22 +1,12 @@
 /// <reference types="@vitest/browser-playwright" />
 import { FetchError } from '@dhis2/app-runtime'
-import type { CustomDataProvider } from '@dhis2/app-runtime'
-import type { ComponentProps } from 'react'
 import { page, userEvent } from 'vitest/browser'
-import { z } from 'zod'
-import {
-    RMNCH,
-    rmnchEnrollmentResponse,
-    rmnchResponses,
-} from '@/components/program-rules/__tests__/rmnch'
+import { RMNCH } from '@/components/program-rules/__tests__/rmnch'
 import { DataGrid } from '../grid/DataGrid'
 import { control } from '../grid/__tests__/gridRig'
 import { rowHeaderDomId } from '../grid/headers'
 import { cellKey } from '../model/types'
-import meAdmin from '../sources/__tests__/fixtures/me-admin.json'
-import rmnchProgram from '../sources/__tests__/fixtures/rmnch-program.json'
-import { eventSource } from '../sources/eventSource'
-import type { DataEngine, DataEntrySource } from '../sources/types'
+import type { DataEntrySource } from '../sources/types'
 import { DataEntrySummary } from '../summary/DataEntrySummary'
 import {
     change,
@@ -30,6 +20,14 @@ import {
     mount,
     withOutbox,
 } from './__tests__/rig'
+import {
+    antenatalOf,
+    eventId,
+    eventsOf,
+    rmnchForm,
+    rulesFor,
+} from './__tests__/rmnchRig'
+import type { FixtureEvent } from './__tests__/rmnchRig'
 import { rowIdOf } from './formRows'
 
 afterEach(cleanUp)
@@ -41,7 +39,6 @@ beforeEach(() => {
 
 const FIRST_VISIT = RMNCH.eventId
 const LATER_VISIT = 'H693QbyyYhi'
-const ANTENATAL = new Set<string>([RMNCH.stageId, 'edqlbukwRfQ'])
 const GESTATIONAL_AGE = RMNCH.gestationalAge
 const ASSIGNED = 'Assigned by rule: Calculate gestational age from LMP'
 const CLEARED =
@@ -49,39 +46,6 @@ const CLEARED =
 const LMP = cellKey(FIRST_VISIT, RMNCH.lmp)
 const HEMOGLOBIN = 'vANAXwtLwcT'
 const FOLLOW_UPS = RMNCH.chronicFollowUps.map((id) => cellKey(FIRST_VISIT, id))
-
-interface FixtureEvent {
-    event: string
-    enrollment: string
-    programStage: string
-    orgUnit: string
-    occurredAt: string
-    status: string
-    dataValues: Array<{ dataElement: string; value: string }>
-}
-
-/** Person `k`, a copy of the RMNCH person whose ids end in `k`; person 0 is the fixture's own. */
-const personId = (k: number) => `${RMNCH.enrollmentId.slice(0, -1)}${k}`
-const eventId = (id: string, k: number) =>
-    k === 0 ? id : `${id.slice(0, -1)}${k}`
-
-/** Person `k`'s events, as the server has them. */
-const eventsOf = (k: number): FixtureEvent[] =>
-    rmnchEnrollmentResponse.events.map((event) => ({
-        event: eventId(event.event, k),
-        enrollment: personId(k),
-        programStage: event.programStage,
-        orgUnit: event.orgUnit,
-        occurredAt: event.occurredAt,
-        status: event.status,
-        dataValues: event.dataValues.map(({ dataElement, value }) => ({
-            dataElement,
-            value,
-        })),
-    }))
-
-const antenatalOf = (k: number) =>
-    eventsOf(k).filter(({ programStage }) => ANTENATAL.has(programStage))
 
 /** The event with one value set, or removed when `value` is undefined. */
 const withValue = (
@@ -96,44 +60,7 @@ const withValue = (
     ],
 })
 
-/** What the server sends: plain JSON, no `undefined` members. */
-const json = <T,>(body: T) => z.json().parse(JSON.parse(JSON.stringify(body)))
-
-const answering = <T,>(answer: T) =>
-    // SAFETY: loading only calls `query`, which answers every request with the fixtures.
-    ({
-        query: async (_query: Parameters<DataEngine['query']>[0]) => answer,
-    }) as DataEngine
-
-/** The grid `eventSource` loads for these RMNCH events. */
-const rmnchForm = (events: ReadonlyArray<FixtureEvent>) =>
-    eventSource({
-        programId: RMNCH.programId,
-        orgUnitId: 'm7fBMpmVpSM',
-        order: 'occurredAt:asc',
-        today: '2026-10-26',
-    }).load(
-        answering({ program: rmnchProgram, events: { events }, me: meAdmin })
-    )
-
-/** The RMNCH rules, and every person asked for. */
-const RULES = {
-    programRules: async () => json(rmnchResponses.rules),
-    programRuleVariables: async () => json(rmnchResponses.variables),
-    constants: async () => json(rmnchResponses.constants),
-    programs: async () => json(rmnchResponses.program),
-    'tracker/enrollments': async (_type, query) =>
-        json({
-            pager: { page: 1, pageSize: 100 },
-            enrollments: String(query.params?.enrollments)
-                .split(',')
-                .map((id) => ({
-                    ...rmnchEnrollmentResponse,
-                    enrollment: id,
-                    events: eventsOf(Number(id.at(-1))),
-                })),
-        }),
-} satisfies ComponentProps<typeof CustomDataProvider>['data']
+const RULES = rulesFor()
 
 const rulesRan = () =>
     expect
@@ -251,6 +178,24 @@ test('a row whose only unsent change failed saves no rule changes when the grid 
     expect(
         context().store.getState().cells[cellKey(FIRST_VISIT, GESTATIONAL_AGE)]
     ).toBeUndefined()
+})
+
+test('discarding a change that could not be saved makes the rules save nothing in its row', async () => {
+    const server = freshServer()
+    await withOutbox(server, async (outbox) => {
+        await outbox.put(change(LMP, '2026-01-01'))
+        await outbox.mark([{ sourceKey: KEY, key: LMP }], 'failed', 'Too high')
+    })
+    const { memory, context, view } = await mountRmnch(eventsOf(0), server)
+    await view().discardFailed()
+    expect(context().store.getState().cells[LMP]).toMatchObject({
+        value: undefined,
+        sync: 'idle',
+    })
+    // The hidden follow-ups keep their values: the row has no change on its way.
+    await later(300)
+    expect(memory.sent).toEqual([])
+    expect(context().store.getState().cells[FOLLOW_UPS[0]]?.value).toBe('true')
 })
 
 test('completing a row saves its rule changes first, and keeps its rule effects', async () => {

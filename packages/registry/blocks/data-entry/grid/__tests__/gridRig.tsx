@@ -5,11 +5,14 @@ import type { StoreApi } from 'zustand/vanilla'
 import type { Field } from '@/components/dhis2-value-types'
 import type { CellOverrides } from '../../cells/cellProps'
 import type { CellEffects, CellMessage } from '../../logic/effects'
+import { summarise } from '../../logic/summary'
 import { cellKey } from '../../model/types'
 import type { CellKey, GridTable, HeaderCell } from '../../model/types'
 import { createAnnouncer, DataEntryReactContext } from '../../provider/context'
 import type { DataEntryContext, EffectsState } from '../../provider/context'
 import { LiveRegion } from '../../provider/DataEntry'
+import { DataEntryViewContext } from '../../provider/hooks'
+import type { DataEntryView } from '../../provider/hooks'
 import { createDataEntryStore } from '../../store/store'
 import { DataGrid } from '../DataGrid'
 
@@ -133,6 +136,21 @@ export const mount = async (
         announcer.announce(text)
     }
     const added: string[] = []
+    // One page: no "Show more events".
+    const view = createStore<DataEntryView>()(() => ({
+        status: 'ready',
+        tables,
+        summary: summarise({}, {}, new Map(), tables),
+        sync: 'idle',
+        addRow: () => {},
+        complete: async () => [],
+        reopen: async () => [],
+        downloadUnsent: () => {},
+        discardFailed: async () => {},
+        hasMore: false,
+        loadingMore: false,
+        loadMore: async () => {},
+    }))
     const Harness = () => {
         const [current, setTables] = useState(tables)
         const context = useMemo(
@@ -165,12 +183,16 @@ export const mount = async (
             [current]
         )
         return (
-            <DataEntryReactContext.Provider value={context}>
-                {above === undefined ? null : <div style={{ height: above }} />}
-                <DataGrid />
-                <button type="button">After</button>
-                <LiveRegion />
-            </DataEntryReactContext.Provider>
+            <DataEntryViewContext.Provider value={view}>
+                <DataEntryReactContext.Provider value={context}>
+                    {above === undefined ? null : (
+                        <div style={{ height: above }} />
+                    )}
+                    <DataGrid />
+                    <button type="button">After</button>
+                    <LiveRegion />
+                </DataEntryReactContext.Provider>
+            </DataEntryViewContext.Provider>
         )
     }
     await render(<Harness />)

@@ -15,7 +15,7 @@ import {
 import type { CellEffects } from '../logic/effects'
 import { rowRuleOutcome, ruleRowsOf, stageFields } from '../logic/ruleEffects'
 import { cellKey } from '../model/types'
-import type { CellKey, GridRow, GridTable } from '../model/types'
+import type { CellKey, CellState, GridRow, GridTable } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
 import { afterPaint } from './afterPaint'
@@ -70,6 +70,9 @@ const onScreen = (idScope: string, tableId: string, rowId: string) => {
     return box !== undefined && box.bottom > 0 && box.top < window.innerHeight
 }
 
+/** Whether the cell holds a change on its way to DHIS2: a failed one waits for the person to enter it again. */
+const onItsWay = ({ sync }: CellState) => sync !== 'idle' && sync !== 'failed'
+
 /** The row's own id, or every row of its person. */
 const personRows = (tables: ReadonlyArray<GridTable>, row: GridRow) =>
     row.enrollmentId === undefined
@@ -118,11 +121,7 @@ export const connectRules = ({
     // Opening the grid changes nothing: rules' values are saved only with a row someone is changing. A failed change is
     // not on its way: it waits for the person to enter it again.
     for (const [key, cell] of Object.entries(store.getState().cells)) {
-        if (
-            cell !== undefined &&
-            cell.sync !== 'idle' &&
-            cell.sync !== 'failed'
-        ) {
+        if (cell !== undefined && onItsWay(cell)) {
             touched.add(rowIdOf(key))
         }
     }
@@ -441,17 +440,21 @@ export const connectRules = ({
                 const rowId = rowIdOf(key)
                 const field = key.slice(rowId.length + 1)
                 const was = before.cells[cellKey(rowId, field)]
-                return cell === was ||
-                    cell?.source === 'rule' ||
-                    (cell?.value ?? '') === (was?.value ?? '')
+                return cell === undefined ||
+                    cell === was ||
+                    cell.source === 'rule' ||
+                    (cell.value ?? '') === (was?.value ?? '')
                     ? []
-                    : [{ rowId, field }]
+                    : [{ rowId, field, cell }]
             })
             if (edits.length === 0) {
                 return
             }
-            for (const { rowId } of edits) {
-                touched.add(rowId)
+            // A value a page loads, or put back as DHIS2 has it, is no change on its way.
+            for (const { rowId, cell } of edits) {
+                if (onItsWay(cell)) {
+                    touched.add(rowId)
+                }
             }
             const all = tables.getState().tables
             const ruleRows = ruleRowsOf(all, cells)

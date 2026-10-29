@@ -421,15 +421,13 @@ test('restore keeps the state and reason an unsent change was left in', () => {
     const { store, enqueued, cell } = setup()
     store.getState().restore([
         {
-            sourceKey: 's',
             key: 'r1.c1',
             value: '9',
             base: null,
-            at: 1,
             sync: 'failed',
             reason: 'E1302',
         },
-        { sourceKey: 's', key: 'r2.c1', value: '4', base: null, at: 2 },
+        { key: 'r2.c1', value: '4', base: null },
     ])
     expect(cell('r1.c1')).toMatchObject({ sync: 'failed', reason: 'E1302' })
     expect(cell('r2.c1')).toMatchObject({ sync: 'queued' })
@@ -560,4 +558,27 @@ test('an outcome for an older value that was not saved changes nothing', () => {
     const before = store.getState().cells
     store.getState().markSync([{ key: 'r1.c1', value: '6' }], 'failed', 'E1302')
     expect(store.getState().cells).toBe(before)
+})
+
+test('a page with a stage the table has no columns for adds those columns', () => {
+    const { store, cell, commit } = setup()
+    const weight: GridColumn = {
+        id: 'c4',
+        label: 'Weight',
+        field: { valueType: 'NUMBER' },
+    }
+    expect(() => commit('r1.c4', '3.5')).toThrow('No column for the cell r1.c4')
+    store.getState().addColumns([weight])
+    expect(commit('r1.c4', '3.5')).toBe('queued')
+    expect(commit('r2.c4', 'heavy')).toBe('invalid')
+    // A value a page loads into the new column is checked as its field says.
+    store
+        .getState()
+        .restore([
+            { key: 'r3.c4', value: 'heavy', base: 'heavy', sync: 'idle' },
+        ])
+    expect(cell('r3.c4')).toMatchObject({
+        value: 'heavy',
+        warning: 'Enter a number',
+    })
 })

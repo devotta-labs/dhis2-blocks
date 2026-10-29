@@ -1,26 +1,36 @@
 import { FetchError } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
-import { z } from 'zod'
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { formatCount } from '../cells/OptionCell'
-import { summarise } from '../logic/summary'
 import { cellKey } from '../model/types'
 import type { CellKey, GridRow, GridTable, PendingChange } from '../model/types'
 import { openOutbox, outboxName } from '../outbox/outbox'
 import type { Outbox, OutboxRecord } from '../outbox/outbox'
-import { startSync } from '../outbox/sync'
+import { outcomesMessageSchema, startSync } from '../outbox/sync'
 import type { SyncOutcome, SyncStatus } from '../outbox/sync'
-import type { DataEngine, DataEntrySource, LoadedForm } from '../sources/types'
+import type {
+    DataEngine,
+    DataEntrySource,
+    FormPage,
+    LoadedForm,
+} from '../sources/types'
 import { generateUid } from '../sources/uid'
 import { createDataEntryStore } from '../store/store'
 import type { DataEntryState } from '../store/store'
 import { afterPaint } from './afterPaint'
+import { appendPage, withPage } from './appendPage'
 import { completionChecks, refusalOf } from './completion'
 import type { EffectsState } from './context'
 import { discardFailed } from './discardFailed'
-import { formEffects, pendingRow, rowIdOf, withRows } from './formRows'
+import {
+    formEffects,
+    pendingRow,
+    rowIdOf,
+    summaryOf,
+    withRows,
+} from './formRows'
 import type { DataEntryView } from './hooks'
 import { userCheck } from './signedIn'
 import { saveUnsentFile } from './unsentFile'
@@ -44,6 +54,8 @@ export interface OpenForm extends Actions {
      */
     beforeComplete: Set<(rowId: string) => string | undefined>
     newRowTables: ReadonlySet<string>
+    /** Adds a page: its rows not shown yet, the columns new to a table, and their unsent changes. */
+    append(page: FormPage): Promise<void>
     /** Stops syncing; changes already handed to the outbox are kept. */
     close(): void
 }
@@ -65,33 +77,6 @@ interface OpenFormOptions {
 
 // Long enough that a burst of edits is announced once, after the last of them is saved.
 const SETTLE_MS = 500
-
-// What one tab tells the others it saved; from another tab, so parsed.
-const messageSchema = z.object({
-    outcomes: z.array(
-        z.object({
-            sourceKey: z.string(),
-            key: z.templateLiteral([z.string(), '.', z.string()]),
-            result: z.enum(['saved', 'waiting', 'failed']),
-            reason: z.string().optional(),
-            value: z.string().nullable(),
-            at: z.number(),
-        })
-    ),
-})
-
-/** The form's summary, from its cells, their effects and its tables. */
-export const summaryOf = ({
-    store,
-    effects,
-    tables,
-}: Pick<OpenForm, 'store' | 'effects' | 'tables'>) =>
-    summarise(
-        store.getState().cells,
-        effects.getState().cells,
-        effects.getState().rowMessages,
-        tables.getState().tables
-    )
 
 /**
  * Opens the user's outbox on this server, puts the form's unsent changes back on their cells (new rows included),
@@ -403,6 +388,7 @@ const connect = (
         onSignedInAsOther()
     })
     const beforeComplete = new Set<(rowId: string) => string | undefined>()
+    const grows = { store, effects, tables, rows, readOnlyRows, reopenable }
 
     const refusal = (key: CellKey, reason: string) =>
         refusalOf(source.key, key, reason)
@@ -420,7 +406,7 @@ const connect = (
     const name = outboxName(serverUrl, userId)
     const channel = new BroadcastChannel(name)
     channel.onmessage = ({ data }) => {
-        const parsed = messageSchema.safeParse(data)
+        const parsed = outcomesMessageSchema.safeParse(data)
         if (parsed.success) {
             apply(parsed.data.outcomes)
         }
@@ -559,6 +545,17 @@ const connect = (
             return paused === undefined
                 ? setStatus(rowId, 'ACTIVE')
                 : [refusal(cellKey(rowId, 'status'), paused)]
+        },
+        async append(page) {
+            const held = await appendPage({ ...grows, form }, page, () =>
+                outbox.list(source.key)
+            )
+            form = withPage(form, page)
+            // Changes counted as another grid's may be this form's now.
+            if (!closed) {
+                failedThere = failedElsewhere(held)
+                summarize()
+            }
         },
         downloadUnsent() {
             // A change made since the last paint is stored first, so the file has it.

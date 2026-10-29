@@ -210,6 +210,45 @@ test('assignments are saved only in rows a person changed, into open cells of th
     stop()
 })
 
+test('a change touches its row only while it is on its way to DHIS2: only there do the rules save', async () => {
+    const assigning = () => {
+        const effects = emptyEffects()
+        effects.assignedValues.set('c1', { value: '7', by })
+        return effects
+    }
+    const { store, queued, stop } = connect(standIn(assigning), {
+        rows: FIVE_ROWS,
+    })
+    const assigned = () => queued.filter((key) => key.endsWith('.c1')).sort()
+    // A value as a page loads it, and a failed change put back, are no change on its way.
+    store.getState().restore([
+        { key: cellKey('r1', 'c2'), value: 'A', base: 'A', sync: 'idle' },
+        {
+            key: cellKey('r2', 'c2'),
+            value: 'B',
+            base: null,
+            sync: 'failed',
+            reason: 'Refused',
+        },
+    ])
+    await later(50)
+    expect(assigned()).toEqual([])
+    // A change put back while it waits to be sent is; so is what a person types.
+    store.getState().restore([
+        {
+            key: cellKey('r3', 'c2'),
+            value: 'C',
+            base: null,
+            sync: 'queued',
+        },
+    ])
+    store.getState().commit(cellKey('r4', 'c2'), 'A')
+    await expect
+        .poll(assigned)
+        .toEqual([cellKey('r3', 'c1'), cellKey('r4', 'c1')])
+    stop()
+})
+
 test('what a rule cleared stays on the cell until it holds a value again', async () => {
     let hide = true
     const { store, effects, said, stop } = connect(

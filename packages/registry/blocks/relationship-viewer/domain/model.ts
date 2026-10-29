@@ -50,6 +50,8 @@ export interface NodeRecord {
     dataValues: readonly { dataElement: string; value: string }[]
     enrollments: readonly RecordEnrollment[]
     relationships: readonly RelationshipLink[]
+    /** Relationships whose other side DHIS2 did not name; counted as other links. */
+    unresolvedLinkCount?: number
 }
 
 export type NodeState =

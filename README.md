@@ -297,32 +297,41 @@ import {
     RelationshipViewerNotices,
     RelationshipViewerSummary,
     enrollmentStatus,
+    type RelationshipNode,
+    type RelationshipStatus,
 } from '@/components/relationship-viewer'
 
-const statuses = [
+const statuses: RelationshipStatus[] = [
     { key: 'confirmed', label: 'Confirmed', color: '#c0392b', attention: true },
     { key: 'other', label: 'Other', color: '#7f8c8d' },
 ]
 
-<RelationshipViewer
-    seeds={{ refs: [{ kind: 'trackedEntity', id: trackedEntityId }] }}
-    program={programId}
-    statuses={statuses}
-    statusOf={(node) =>
-        enrollmentStatus(node, programId) === 'ACTIVE' ? 'confirmed' : 'other'
-    }
->
-    <RelationshipViewerLayoutToggle />
-    <RelationshipViewerSummary />
-    <RelationshipViewerNotices />
-    <RelationshipViewerCanvas />
-    <RelationshipViewerLegend />
-    <RelationshipViewerList />
-</RelationshipViewer>
+const statusOf = (node: RelationshipNode) =>
+    enrollmentStatus(node, programId) === 'ACTIVE' ? 'confirmed' : 'other'
+
+export const Contacts = ({ trackedEntityId }: { trackedEntityId: string }) => (
+    <RelationshipViewer
+        seeds={{ refs: [{ kind: 'trackedEntity', id: trackedEntityId }] }}
+        program={programId}
+        statuses={statuses}
+        statusOf={statusOf}
+    >
+        <RelationshipViewerLayoutToggle />
+        <RelationshipViewerSummary />
+        <RelationshipViewerNotices />
+        <RelationshipViewerCanvas />
+        <RelationshipViewerLegend />
+        <RelationshipViewerList />
+    </RelationshipViewer>
+)
 ```
 
+Declare `statuses` and `statusOf` outside the component, or memoise them, so
+the graph's summary is not recomputed on every render.
+
 `seeds` is either `{ refs }` or `{ query }`, a tracker query that must name its
-`program`. `hops` (default 1) and `cap` (default 500) bound the traversal, and
+`program`. With a seed query, `program` may be left out; passing a different
+`program` throws. `hops` (default 1) and `cap` (default 500) bound the traversal, and
 every followed link that is not drawn is shown as a stub count, an "other
 links" count, a failed-node marker or the cap notice. Adjust the import path if
 the project's components alias differs from `@/components`.

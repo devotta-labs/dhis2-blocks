@@ -123,6 +123,30 @@ describe('RelationshipViewerList', () => {
         expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' })
     })
 
+    it('Enter on a name selects its row and marks it current', async () => {
+        const graph = await graphOf(chains(), ['A1'])
+        const { screen, actions } = await setup({
+            graph,
+            children: <RelationshipViewerList />,
+        })
+        const name = rowOf(screen.container, te('A2')).querySelector('button')!
+        expect(name.getAttribute('aria-current')).toBe(null)
+
+        name.focus()
+        await userEvent.keyboard('{Enter}')
+
+        expect(actions.select).toHaveBeenLastCalledWith(te('A2'))
+        await vi.waitFor(() =>
+            expect(name.getAttribute('aria-current')).toBe('true')
+        )
+        expect(
+            rowOf(screen.container, te('A2')).getAttribute('aria-selected')
+        ).toBe('true')
+        expect(
+            screen.container.querySelectorAll('[aria-current="true"]')
+        ).toHaveLength(1)
+    })
+
     it('expand and retry work from the keyboard', async () => {
         const graph = await graphOf(chains(), ['A1', 'B1'], { fail: ['B2'] })
         const { screen, actions } = await setup({

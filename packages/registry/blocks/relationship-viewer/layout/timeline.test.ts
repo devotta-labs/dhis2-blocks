@@ -5,6 +5,9 @@ import { orientEdges, timelineParents } from '../domain/orientation'
 import { defaultDateOf } from '../domain/rules'
 import { DAY_WIDTH, layoutTimeline, ROW_HEIGHT } from './timeline'
 
+// East of UTC: DHIS2 timestamps carry no offset, so they parse as local time.
+process.env.TZ = 'Africa/Nairobi'
+
 const te = (id: string): NodeKey => `trackedEntity:${id}`
 
 const layout = async (
@@ -87,7 +90,24 @@ test('no lane or ticks without dates, one tick for a single date', async () => {
     expect(one.noDateLaneX).toBeUndefined()
 })
 
-test('ticks are whole days labelled in UTC', async () => {
+test('ticks are local calendar days for DHIS2 timestamps', async () => {
+    expect(new Date(2026, 0, 1).getTimezoneOffset()).toBe(-180)
+    const records = withLinks(
+        [
+            person('A', { enrolledAt: '2026-01-01T00:00:00.000' }),
+            person('B', { enrolledAt: '2026-01-03T00:00:00.000' }),
+        ],
+        [link('AB', 'A', 'B')]
+    )
+    const { ticks } = await layout(records, ['A'])
+    expect(ticks.map((t) => t.label)).toEqual([
+        '2026-01-01',
+        '2026-01-02',
+        '2026-01-03',
+    ])
+})
+
+test('ticks are whole days', async () => {
     const { ticks } = await layout(tree(), ['A'])
     expect(ticks.map((t) => t.label)).toEqual([
         '2026-01-01',

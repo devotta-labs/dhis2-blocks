@@ -25,10 +25,11 @@ const row = (page: Page, name: string) =>
     })
 
 test.describe('live Relationship Viewer previews', () => {
-    test('from a case lists the hub and its 8 contacts', async ({ page }) => {
+    test('from a case lists the hub and its 9 contacts', async ({ page }) => {
         await openLivePreview(page, 'relationship-viewer/from-case', listReady)
 
-        await expect(rows(page)).toHaveCount(9)
+        // One contact is not enrolled in the program; it still loads.
+        await expect(rows(page)).toHaveCount(10)
         await expect
             .poll(async () => (await names(page).allTextContents()).sort())
             .toEqual([
@@ -41,7 +42,11 @@ test.describe('live Relationship Viewer previews', () => {
                 'Hub contact 6',
                 'Hub contact 7',
                 'Hub contact 8',
+                'Hub contact not enrolled',
             ])
+        await expect(row(page, 'Hub contact not enrolled')).toContainText(
+            'Contact'
+        )
     })
 
     test('contacts marked for follow-up are listed first', async ({ page }) => {
@@ -52,6 +57,7 @@ test.describe('live Relationship Viewer previews', () => {
             'Marked for follow-up',
             'Marked for follow-up',
             'Case',
+            'Contact',
             'Contact',
             'Contact',
             'Contact',

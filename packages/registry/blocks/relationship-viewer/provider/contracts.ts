@@ -23,6 +23,8 @@ export interface RelationshipViewerState {
     status: RelationshipViewerStatus
     error?: unknown
     graph?: RelationshipGraph
+    /** True while the graph is (re)loading, including while expanding or retrying. */
+    fetching: boolean
     layout: RelationshipViewerLayout
     selected?: NodeKey
 }
@@ -51,6 +53,7 @@ export interface RelationshipGraphResult {
     error?: unknown
     graph?: RelationshipGraph
     metadata?: RelationshipMetadata
+    fetching: boolean
     /** The program every node is read with: the `program` option, else the seed query's. */
     program: string | undefined
     expand(key: NodeKey): void

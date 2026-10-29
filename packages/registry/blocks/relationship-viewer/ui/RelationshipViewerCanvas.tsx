@@ -81,7 +81,8 @@ export function RelationshipViewerCanvas({
 }: {
     className?: string
 }) {
-    const { status, graph, layout, selected } = useRelationshipViewerState()
+    const { status, graph, fetching, layout, selected } =
+        useRelationshipViewerState()
     const { select, expand, retry } = useRelationshipViewerActions()
     const { statusOf, labelOf, dateOf, orientation, summary } =
         useRelationshipViewerMeta()
@@ -149,6 +150,7 @@ export function RelationshipViewerCanvas({
                 role="img"
                 aria-label={i18n.t('Relationship graph')}
                 aria-describedby={`${id}-desc`}
+                aria-busy={fetching}
                 viewBox={viewBox}
                 className="size-full cursor-grab touch-none select-none"
                 {...handlers}
@@ -340,6 +342,12 @@ export function RelationshipViewerCanvas({
                     })}
                 </g>
             </svg>
+            {fetching && (
+                <Spinner
+                    aria-label={i18n.t('Loading')}
+                    className="absolute top-2 left-2"
+                />
+            )}
             <Button
                 variant="secondary"
                 size="sm"

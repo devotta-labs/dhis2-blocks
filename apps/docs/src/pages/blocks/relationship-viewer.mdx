@@ -109,6 +109,10 @@ its `from` side. Records are cached with TanStack Query, so expanding a
 record does not read the records already drawn again. `cap` (default 500) bounds the
 number of drawn records; when it is reached a notice says so.
 
+A tracked entity is read with `program`. From DHIS2 42 that read fails for
+someone not enrolled in the program, so the record is read again without it
+and shows no enrollment.
+
 ## What the block does not show
 
 - **Relationships hidden by access.** DHIS2 leaves out a relationship
@@ -120,7 +124,8 @@ number of drawn records; when it is reached a notice says so.
 
 Nothing else is dropped silently: every followed link that is not drawn
 shows as a "Show more" count, a record that could not be loaded, or the cap
-notice.
+notice. A relationship whose other side DHIS2 does not name cannot be drawn,
+so it is counted with the other links.
 
 ## API reference
 
@@ -135,7 +140,8 @@ notice.
 - `statusOf: (node: RelationshipNode) => string` — **required.** Returns a
   status `key` for a record.
 - `program?: string` — the program whose enrollment the rules read. Defaults
-  to the seed query's program.
+  to the seed query's program; a `program` different from the seed query's
+  program throws.
 - `hops?: number` — how many links out from the seeds to draw. Defaults to 1.
 - `cap?: number` — the most records to draw. Defaults to 500.
 - `followTypes?: string[]` — relationship type IDs to follow. Defaults to
@@ -172,8 +178,9 @@ All parts accept `className`.
 
 For your own parts rendered inside `RelationshipViewer`:
 
-- `useRelationshipViewerState()` — loading status, the graph, the layout and
-  the selected record.
+- `useRelationshipViewerState()` — loading status, the graph, whether it is
+  fetching (while expanding or retrying, too), the layout and the selected
+  record.
 - `useRelationshipViewerMeta()` — the statuses, the status, label and date of
   each record, and the summary.
 - `useRelationshipViewerActions()` — select, change layout, expand a record,

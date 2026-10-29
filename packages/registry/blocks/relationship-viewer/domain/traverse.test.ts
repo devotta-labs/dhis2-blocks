@@ -118,6 +118,21 @@ test('counts links of unfollowed types as other links', async () => {
     expect([...g.edges.keys()]).toEqual(['AB'])
 })
 
+test('counts relationships with an unresolvable side as other links', async () => {
+    const [a, b] = withLinks([person('A'), person('B')], [link('AB', 'A', 'B')])
+    const g = await traverse(
+        [te('A')],
+        fakeFetch([{ ...a, unresolvedLinkCount: 2 }, b]),
+        opts()
+    )
+    expect(g.nodes.get(key('A'))).toMatchObject({
+        otherLinkCount: 2,
+        stubCount: 0,
+    })
+    expect(g.nodes.get(key('B'))?.otherLinkCount).toBe(0)
+    expect([...g.edges.keys()]).toEqual(['AB'])
+})
+
 test('caps the node count and marks the graph capped', async () => {
     const g = await traverse(
         [te('H1'), te('H2'), te('H3')],

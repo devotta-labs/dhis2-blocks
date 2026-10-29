@@ -49,6 +49,7 @@ interface Setup {
     graph?: RelationshipGraph
     status?: RelationshipViewerState['status']
     error?: unknown
+    fetching?: boolean
     dateOf?: DateOf
     statusKey?: (node: RelationshipNode) => string
     labelOf?: (node: RelationshipNode) => string
@@ -59,6 +60,7 @@ export const setup = async ({
     graph,
     status = 'ready',
     error,
+    fetching = false,
     dateOf = fixtureDateOf,
     statusKey = (node) => (node.seed ? 'case' : 'contact'),
     labelOf = (node) => node.ref.id,
@@ -94,7 +96,14 @@ export const setup = async ({
         const [selected, setSelected] = useState<NodeKey>()
         return (
             <RelationshipViewerProvider
-                state={{ status, error, graph, layout, selected }}
+                state={{
+                    status,
+                    error,
+                    graph,
+                    fetching,
+                    layout,
+                    selected,
+                }}
                 actions={{
                     ...actions,
                     select: (key) => {

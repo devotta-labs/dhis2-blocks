@@ -104,6 +104,7 @@ export async function traverse(
             const state = states[i]
             node.state = state
             if (state.status !== 'loaded') return
+            node.otherLinkCount += state.record.unresolvedLinkCount ?? 0
             const self = nodeKey(node.ref)
             const explore = node.hop < hops || !!expanded?.has(self)
             for (const link of state.record.relationships) {

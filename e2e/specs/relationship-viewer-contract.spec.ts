@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { test, expect } from '../fixtures/test'
 import type { APIRequestContext } from '@playwright/test'
+import { createRelationshipViewerClient } from '../../packages/registry/blocks/relationship-viewer/api/client'
 import {
     ENROLLMENT_FIELDS,
     EVENT_FIELDS,
@@ -8,6 +9,7 @@ import {
     RELATIONSHIP_TYPE_FIELDS,
     TRACKED_ENTITY_FIELDS,
     TRACKED_ENTITY_TYPE_FIELDS,
+    fetchNodeRecord,
 } from '../../packages/registry/blocks/relationship-viewer/api/fetchers'
 import {
     EnrollmentRecordSchema,
@@ -26,7 +28,42 @@ const EmbeddedRelationshipsSchema = z.object({
     relationships: z.array(z.object({ relationship: z.string() })),
 })
 
-const te = (id: string) => ({ kind: 'trackedEntity', id })
+const te = (id: string) => ({ kind: 'trackedEntity' as const, id })
+
+// The block's client over the test's DHIS2 session; a failed request carries its HTTP status.
+// `recordReads` collects the `program` of each tracked entity record read.
+const blockClient = (dhis2: APIRequestContext, recordReads: string[] = []) =>
+    createRelationshipViewerClient({
+        query: async (query) =>
+            Object.fromEntries(
+                await Promise.all(
+                    Object.entries(query).map(
+                        async ([key, { resource, id, params }]) => {
+                            if (resource === 'tracker/trackedEntities' && id) {
+                                recordReads.push(String(params?.program ?? ''))
+                            }
+                            const response = await dhis2.get(
+                                `/api/${resource}${id ? `/${id}` : ''}`,
+                                {
+                                    params: Object.fromEntries(
+                                        Object.entries(params ?? {}).map(
+                                            ([name, value]) => [
+                                                name,
+                                                String(value),
+                                            ]
+                                        )
+                                    ),
+                                }
+                            )
+                            if (!response.ok()) {
+                                throw { status: response.status() }
+                            }
+                            return [key, await response.json()]
+                        }
+                    )
+                )
+            ),
+    })
 
 // The block's relationships request for one node. With paging=false DHIS2 answers a bare
 // list; any paged answer carries a pager, so its absence shows nothing is cut to a page.
@@ -95,6 +132,51 @@ test.describe('relationship viewer server contract', () => {
             ])
         )
         expect(relationships[0]?.createdAt).toBeTruthy()
+    })
+
+    // 41 answers the program read; 42 and later refuse it, and the block reads again without it.
+    test('a contact not enrolled in the program loads', async ({ dhis2 }) => {
+        const withProgram = await dhis2.get(
+            '/api/tracker/trackedEntities/RvE2eTei040',
+            { params: { program: PROGRAM, fields: TRACKED_ENTITY_FIELDS } }
+        )
+        test.info().annotations.push({
+            type: 'program-status',
+            description: String(withProgram.status()),
+        })
+        expect([200, 403, 404, 409]).toContain(withProgram.status())
+        const recordReads: string[] = []
+
+        const record = await fetchNodeRecord(
+            blockClient(dhis2, recordReads),
+            te('RvE2eTei040'),
+            PROGRAM
+        )
+
+        expect(recordReads).toEqual(
+            withProgram.ok() ? [PROGRAM] : [PROGRAM, '']
+        )
+
+        expect(record).toMatchObject({
+            ref: te('RvE2eTei040'),
+            trackedEntityType: 'RvE2eTet001',
+            enrollments: [],
+            attributes: [
+                expect.objectContaining({
+                    attribute: NAME_ATTRIBUTE,
+                    value: 'Hub contact not enrolled',
+                }),
+            ],
+            relationships: [
+                expect.objectContaining({
+                    relationship: 'RvE2eRel018',
+                    relationshipType: 'RvE2eRlt002',
+                    bidirectional: true,
+                    from: te('RvE2eTei010'),
+                    to: te('RvE2eTei040'),
+                }),
+            ],
+        })
     })
 
     test("the program's enrollment carries followUp and enrolledAt", async ({
@@ -230,7 +312,7 @@ test.describe('relationship viewer server contract', () => {
 
         expect(
             await relationshipsOf(dhis2, 'trackedEntity', 'RvE2eTei010')
-        ).toHaveLength(8)
+        ).toHaveLength(9)
     })
 
     // Why the block reads tracker/relationships: if this starts failing, the server embeds both sides.

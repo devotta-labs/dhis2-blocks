@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { ContextSelector } from '@/components/context-selector'
+import { RelationshipViewer } from '@/components/relationship-viewer'
 import { WorkingList } from '@/components/working-list'
 import {
     Sidebar,
@@ -53,6 +54,13 @@ if (root !== null) {
             <WorkingList programId="program" orgUnitId="orgUnit">
                 {null}
             </WorkingList>
+            <RelationshipViewer
+                seeds={{ refs: [] }}
+                statuses={[]}
+                statusOf={() => ''}
+            >
+                {null}
+            </RelationshipViewer>
         </>
     )
 }

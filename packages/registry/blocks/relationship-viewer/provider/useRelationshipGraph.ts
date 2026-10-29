@@ -233,6 +233,7 @@ export function useRelationshipGraph({
         error,
         graph: graph.data,
         metadata: metadata.data,
+        fetching: graph.isFetching,
         program,
         expand,
         retry,

@@ -610,6 +610,7 @@
                 "d3-force@^3.0.0",
                 "zod@^4.4.3"
             ],
+            "devDependencies": ["@types/d3-force@^3.0.10"],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/alert",
                 "devotta-labs/dhis2-blocks/button",

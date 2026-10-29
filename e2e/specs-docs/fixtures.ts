@@ -100,6 +100,22 @@ const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
         return true
     }
 
+    // From DHIS2 42 the Relationship Viewer's program read of the seeded contact
+    // who is not enrolled answers 404; the block then reads it without program.
+    if (
+        (diagnostic.kind === 'http' ||
+            (diagnostic.kind === 'console' &&
+                diagnostic.message.includes('404'))) &&
+        /\/api(?:\/\d+)?\/tracker\/trackedEntities\/RvE2eTei040$/.test(
+            path ?? ''
+        ) &&
+        (diagnostic.url ?? diagnostic.location?.url ?? '').includes(
+            'program=RvE2ePrg001'
+        )
+    ) {
+        return true
+    }
+
     if (isAbortedBootstrapRead(diagnostic)) {
         // Navigating between examples aborts the adapter's bootstrap reads,
         // and React StrictMode remounts do the same under the dev server.

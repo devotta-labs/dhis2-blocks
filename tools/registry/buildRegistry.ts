@@ -119,8 +119,12 @@ const itemDependencies = (
     item: SourceItem,
     owners: Map<string, SourceItem>,
     names: Set<string>,
-    versions: Record<string, string>
-): Pick<RegistryItem, 'dependencies' | 'registryDependencies'> => {
+    versions: Record<string, string>,
+    devVersions: Record<string, string>
+): Pick<
+    RegistryItem,
+    'dependencies' | 'devDependencies' | 'registryDependencies'
+> => {
     const external = new Set<string>()
     // Every item styles itself with the DHIS2 tokens.
     const internal = new Set<string>([THEME_ITEM])
@@ -181,9 +185,18 @@ const itemDependencies = (
         }
         return `${dependency}@${version}`
     })
+    // A dependency that ships no types installs with its DefinitelyTyped package.
+    const devDependencies = [...external].sort().flatMap((dependency) => {
+        const types = `@types/${dependency.replace(/^@(.+)\//, '$1__')}`
+        const version = devVersions[types]
+        return version ? [`${types}@${version}`] : []
+    })
     return {
         ...(dependencies.length > 0 && {
             dependencies,
+        }),
+        ...(devDependencies.length > 0 && {
+            devDependencies,
         }),
         ...(internal.size > 0 && {
             registryDependencies: [...internal]
@@ -204,7 +217,7 @@ const buildRegistry = (): Registry => {
             item.files.map((file) => [file.source, item] as const)
         )
     )
-    const { dependencies: versions } = JSON.parse(
+    const { dependencies: versions, devDependencies: devVersions } = JSON.parse(
         readFileSync(join(SOURCE_ROOT, 'package.json'), 'utf8')
     )
     const tokens = parseThemeTokens(
@@ -233,7 +246,13 @@ const buildRegistry = (): Registry => {
                         title: item.metadata.title,
                         description: item.metadata.description,
                     }),
-                    ...itemDependencies(item, owners, names, versions),
+                    ...itemDependencies(
+                        item,
+                        owners,
+                        names,
+                        versions,
+                        devVersions
+                    ),
                     files: item.files.map(({ source, target }) => ({
                         path: toPosix(relative(REPO_ROOT, source)),
                         type: fileType,

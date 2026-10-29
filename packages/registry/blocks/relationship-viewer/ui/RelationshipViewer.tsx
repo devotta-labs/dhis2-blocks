@@ -63,6 +63,7 @@ export function RelationshipViewer(props: RelationshipViewerProps) {
         error,
         graph,
         metadata,
+        fetching,
         program: readProgram,
         expand,
         retry,
@@ -91,10 +92,14 @@ export function RelationshipViewer(props: RelationshipViewerProps) {
         [onLayoutChange, onSelectedChange, expand, retry]
     )
 
-    const dateOf = useMemo(
-        () => props.dateOf ?? defaultDateOf(readProgram),
-        [props.dateOf, readProgram]
-    )
+    const dateOf = useMemo<DateOf>(() => {
+        const read = props.dateOf ?? defaultDateOf(readProgram)
+        // An unparseable date is no date: the node goes in the no-date lane.
+        return (node) => {
+            const date = read(node)
+            return date && !Number.isNaN(date.getTime()) ? date : undefined
+        }
+    }, [props.dateOf, readProgram])
     const meta = useMemo<RelationshipViewerMeta>(() => {
         const drawn = graph ?? EMPTY_GRAPH
         const orientation = orientEdges(drawn, dateOf)
@@ -120,8 +125,8 @@ export function RelationshipViewer(props: RelationshipViewerProps) {
     }, [graph, metadata, dateOf, statuses, statusOf, labelOf, cap])
 
     const state = useMemo<RelationshipViewerState>(
-        () => ({ status, error, graph, layout, selected }),
-        [status, error, graph, layout, selected]
+        () => ({ status, error, graph, fetching, layout, selected }),
+        [status, error, graph, fetching, layout, selected]
     )
 
     return (

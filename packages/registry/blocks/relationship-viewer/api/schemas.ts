@@ -75,18 +75,23 @@ const RelationshipSchema = z
             : undefined
     )
 
-// The only allowed drop: a relationship with an unresolvable side.
-export const RelationshipListSchema = z.object({
-    relationships: z
-        .array(RelationshipSchema)
-        .nullish()
-        .transform((relationships) =>
-            (relationships ?? []).flatMap((r) => r ?? [])
-        ),
-})
+// A relationship with an unresolvable side cannot be drawn; it is counted instead.
+export const RelationshipListSchema = z
+    .object({ relationships: z.array(RelationshipSchema).nullish() })
+    .transform(({ relationships }) => {
+        const all = relationships ?? []
+        const resolved = all.flatMap((r) => r ?? [])
+        return {
+            relationships: resolved,
+            unresolvedLinkCount: all.length - resolved.length,
+        }
+    })
 
 // Records carry no relationships; they come from tracker/relationships.
-type RecordWithoutLinks = Omit<NodeRecord, 'relationships'>
+type RecordWithoutLinks = Omit<
+    NodeRecord,
+    'relationships' | 'unresolvedLinkCount'
+>
 
 const EnrollmentBase = z.object({
     enrollment: z.string(),

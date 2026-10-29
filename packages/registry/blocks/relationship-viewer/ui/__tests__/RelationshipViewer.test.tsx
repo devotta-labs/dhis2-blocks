@@ -207,11 +207,21 @@ describe('RelationshipViewer', () => {
         ])
         const before = seen.length
 
+        expect(first.state.fetching).toBe(false)
         first.actions.expand(te('A2'))
 
         await vi.waitFor(() => {
             expect(latest().state.graph?.nodes.size).toBe(5)
         })
+        // Busy while the next ring loads, over the graph already drawn.
+        expect(
+            seen
+                .slice(before)
+                .some(
+                    (s) => s.state.fetching && s.state.graph?.nodes.size === 3
+                )
+        ).toBe(true)
+        await vi.waitFor(() => expect(latest().state.fetching).toBe(false))
         expect(latest().state.graph?.nodes.has(te('A3'))).toBe(true)
         expect(latest().state.graph?.nodes.has(te('A2c'))).toBe(true)
         for (const { state } of seen.slice(before)) {
@@ -341,6 +351,26 @@ describe('RelationshipViewer', () => {
         expect(
             meta.dateOf(state.graph!.nodes.get(te('S1'))!)?.toISOString()
         ).toBe('2026-03-01T00:00:00.000Z')
+    })
+
+    it('an invalid date from dateOf counts as no date', async () => {
+        const { engine } = fakeEngine(superspreaders())
+        const { ready } = await renderViewer(engine, {
+            seeds: { refs: [{ kind: 'trackedEntity', id: 'H1' }] },
+            dateOf: (node) =>
+                new Date(node.seed ? 'not a date' : '2026-01-02T00:00:00.000'),
+        })
+
+        const { state, meta } = await ready()
+
+        expect(meta.dateOf(state.graph!.nodes.get(te('H1'))!)).toBeUndefined()
+        expect(meta.dateOf(state.graph!.nodes.get(te('H1c01'))!)).toEqual(
+            new Date('2026-01-02T00:00:00.000')
+        )
+        // Undated two-way links fall back to discovery order: the hub first.
+        expect(
+            [...meta.orientation.values()].every((o) => o.source === te('H1'))
+        ).toBe(true)
     })
 
     it('a program that differs from the seed query program throws', async () => {

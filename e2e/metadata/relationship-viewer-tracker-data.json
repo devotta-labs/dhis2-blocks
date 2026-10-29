@@ -284,6 +284,17 @@
                     "value": "2026-04-01"
                 }
             ]
+        },
+        {
+            "trackedEntity": "RvE2eTei040",
+            "trackedEntityType": "RvE2eTet001",
+            "orgUnit": "DiszpKrYNg8",
+            "attributes": [
+                {
+                    "attribute": "RvE2eAtt001",
+                    "value": "Hub contact not enrolled"
+                }
+            ]
         }
     ],
     "enrollments": [
@@ -670,6 +681,20 @@
             "to": {
                 "trackedEntity": {
                     "trackedEntity": "RvE2eTei018"
+                }
+            }
+        },
+        {
+            "relationship": "RvE2eRel018",
+            "relationshipType": "RvE2eRlt002",
+            "from": {
+                "trackedEntity": {
+                    "trackedEntity": "RvE2eTei010"
+                }
+            },
+            "to": {
+                "trackedEntity": {
+                    "trackedEntity": "RvE2eTei040"
                 }
             }
         },

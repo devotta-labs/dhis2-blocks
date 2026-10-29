@@ -45,15 +45,23 @@ function rowsOf(
     return rows
 }
 
+const pad = (n: number, width = 2): string => String(n).padStart(width, '0')
+
+/** Local calendar day: DHIS2 timestamps carry no offset, so they parse as local time. */
+const isoDay = (date: Date): string =>
+    `${pad(date.getFullYear(), 4)}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+
 function ticksOf(minTime: number, maxTime: number): TimelineLayout['ticks'] {
-    const span = Math.round((maxTime - minTime) / DAY_MS)
+    const min = new Date(minTime)
+    const max = new Date(maxTime)
+    const day = (d: Date, offset = 0): Date =>
+        new Date(d.getFullYear(), d.getMonth(), d.getDate() + offset)
+    // Rounded: a daylight-saving day is 23 or 25 hours long.
+    const span = Math.round((day(max).getTime() - day(min).getTime()) / DAY_MS)
     const count = Math.min(MAX_TICKS, span + 1)
     return Array.from({ length: count }, (_, i) => {
         const days = count === 1 ? 0 : Math.round((i * span) / (count - 1))
-        return {
-            x: days * DAY_WIDTH,
-            label: new Date(minTime + days * DAY_MS).toISOString().slice(0, 10),
-        }
+        return { x: days * DAY_WIDTH, label: isoDay(day(min, days)) }
     })
 }
 

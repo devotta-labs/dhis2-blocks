@@ -1,3 +1,4 @@
+import { ZodError } from 'zod'
 import {
     RelationshipViewerBoundaryError,
     createRelationshipViewerClient,
@@ -29,6 +30,25 @@ const wrap = (value: DataEngineValue) => ({ relationshipViewerResource: value })
 
 const item = (kind: string, id: string) => ({ [kind]: { [kind]: id } })
 const noLinks = wrap({ relationships: [] })
+// Refuses the record read that names a program, as DHIS2 does for a tracked
+// entity not enrolled in it, and records each record read's params.
+type RequestFailure =
+    | { status: number }
+    | { type: string; details: { httpStatusCode: number } }
+const refusesProgram = (failure: RequestFailure) => {
+    const records: unknown[] = []
+    const client = createRelationshipViewerClient({
+        query: async ({ relationshipViewerResource: request }) => {
+            if (request?.resource === 'tracker/relationships') {
+                return noLinks
+            }
+            records.push(request?.params)
+            if (request?.params?.program) throw failure
+            return wrap({ trackedEntity: 'TE000000001', enrollments: [] })
+        },
+    })
+    return { client, records }
+}
 const linksOf = (kind: string, id: string) => ({
     resource: 'tracker/relationships',
     params: { [kind]: id, paging: false, fields: RELATIONSHIP_FIELDS },
@@ -98,6 +118,45 @@ describe('fetchNodeRecord', () => {
             ],
             relationships: [],
         })
+    })
+
+    it.each([403, 404, 409])(
+        'reads a tracked entity without program when DHIS2 answers %i to it',
+        async (status) => {
+            const { client, records } = refusesProgram({
+                type: 'unknown',
+                details: { httpStatusCode: status },
+            })
+
+            const record = await fetchNodeRecord(
+                client,
+                { kind: 'trackedEntity', id: 'TE000000001' },
+                'Prog0000001'
+            )
+
+            expect(records).toEqual([
+                { program: 'Prog0000001', fields: TRACKED_ENTITY_FIELDS },
+                { fields: TRACKED_ENTITY_FIELDS },
+            ])
+            expect(record).toMatchObject({
+                ref: { kind: 'trackedEntity', id: 'TE000000001' },
+                enrollments: [],
+            })
+        }
+    )
+
+    it('keeps other record failures', async () => {
+        const failure = { status: 503 }
+        const { client, records } = refusesProgram(failure)
+
+        await expect(
+            fetchNodeRecord(
+                client,
+                { kind: 'trackedEntity', id: 'TE000000001' },
+                'Prog0000001'
+            )
+        ).rejects.toBe(failure)
+        expect(records).toHaveLength(1)
     })
 
     it('omits program when none is given', async () => {
@@ -241,6 +300,21 @@ describe('fetchNodeRecord', () => {
                 to: { kind: 'trackedEntity', id: 'TE000000001' },
             },
         ])
+        // The relationship with an unresolvable side is counted, not dropped silently.
+        expect(record.unresolvedLinkCount).toBe(1)
+    })
+
+    it('records with every side resolved carry no unresolved count', async () => {
+        const { client } = fakeEngine(
+            wrap({ trackedEntity: 'TE000000001' }),
+            noLinks
+        )
+        const record = await fetchNodeRecord(
+            client,
+            { kind: 'trackedEntity', id: 'TE000000001' },
+            undefined
+        )
+        expect(record).not.toHaveProperty('unresolvedLinkCount')
     })
 
     it('takes a one-way inbound link from the relationships list', async () => {
@@ -293,13 +367,18 @@ describe('fetchNodeRecord', () => {
 
     it('rejects malformed records with a boundary error', async () => {
         const { client } = fakeEngine(wrap({ trackedEntity: 7 }), noLinks)
+        // A short sentence; the Zod issues stay in `cause`.
         await expect(
             fetchNodeRecord(
                 client,
                 { kind: 'trackedEntity', id: 'TE000000001' },
                 undefined
             )
-        ).rejects.toBeInstanceOf(RelationshipViewerBoundaryError)
+        ).rejects.toMatchObject({
+            name: 'RelationshipViewerBoundaryError',
+            message: 'DHIS2 returned a malformed trackedEntity TE000000001.',
+            cause: expect.any(ZodError),
+        })
     })
 
     it('lets operational failures through unwrapped', async () => {

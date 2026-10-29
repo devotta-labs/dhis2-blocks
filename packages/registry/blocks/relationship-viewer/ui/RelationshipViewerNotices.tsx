@@ -3,6 +3,7 @@ import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import i18n from '@dhis2/d2-i18n'
 import React from 'react'
+import { RelationshipViewerBoundaryError } from '../api/client'
 import {
     useRelationshipViewerActions,
     useRelationshipViewerMeta,
@@ -20,10 +21,12 @@ export function RelationshipViewerNotices({
     const failed = [...(graph?.nodes.values() ?? [])].filter(
         (node) => node.state.status === 'failed'
     ).length
-    const message =
-        error instanceof Error && error.message
-            ? error.message
-            : i18n.t('The relationship graph could not be loaded.')
+    let message = i18n.t('The relationship graph could not be loaded.')
+    if (error instanceof RelationshipViewerBoundaryError) {
+        message = i18n.t('DHIS2 returned data the viewer could not read.')
+    } else if (error instanceof Error && error.message) {
+        message = error.message
+    }
     const retryButton = (
         <Button variant="secondary" size="sm" onClick={() => retry()}>
             {i18n.t('Retry')}

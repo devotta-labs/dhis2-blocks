@@ -19,7 +19,7 @@ import {
 
 /** The accessible equivalent of the canvas: the same nodes and links, operable from the keyboard. */
 export function RelationshipViewerList({ className }: { className?: string }) {
-    const { graph, selected } = useRelationshipViewerState()
+    const { graph, fetching, selected } = useRelationshipViewerState()
     const { select, expand, retry } = useRelationshipViewerActions()
     const { statusOf, labelOf } = useRelationshipViewerMeta()
     const selectedRow = useRef<HTMLButtonElement>(null)
@@ -70,6 +70,7 @@ export function RelationshipViewerList({ className }: { className?: string }) {
     return (
         <Table
             aria-label={i18n.t('Records in the relationship graph')}
+            aria-busy={fetching}
             className={className}
         >
             <TableHeader>
@@ -111,6 +112,7 @@ export function RelationshipViewerList({ className }: { className?: string }) {
                                     }
                                     variant="link"
                                     size="sm"
+                                    aria-current={key === selected || undefined}
                                 >
                                     {labelOf(node)}
                                 </Button>

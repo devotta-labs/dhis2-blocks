@@ -1,10 +1,12 @@
 import React from 'react'
 import { userEvent } from 'vitest/browser'
 import { chains, superspreaders } from '../../__tests__/fixtures'
+import { RelationshipViewerBoundaryError } from '../../api/client'
 import { dateOf as fixtureDateOf } from '../../__tests__/graph'
 import { RelationshipViewerCanvas } from '../RelationshipViewerCanvas'
 import { RelationshipViewerLayoutToggle } from '../RelationshipViewerLayoutToggle'
 import { RelationshipViewerLegend } from '../RelationshipViewerLegend'
+import { RelationshipViewerList } from '../RelationshipViewerList'
 import { RelationshipViewerNotices } from '../RelationshipViewerNotices'
 import { RelationshipViewerSummary } from '../RelationshipViewerSummary'
 import { graphOf, nodeAt, setup, te } from './harness'
@@ -190,6 +192,70 @@ describe('RelationshipViewer parts', () => {
             second.screen.getByRole('button', { name: 'Retry' })
         )
         expect(second.actions.retry).toHaveBeenCalledWith()
+        await second.screen.unmount()
+
+        const third = await setup({
+            status: 'error',
+            error: new RelationshipViewerBoundaryError(
+                'DHIS2 returned a malformed relationship metadata.',
+                new Error('[{"code":"invalid_type"}]')
+            ),
+            children: <RelationshipViewerNotices />,
+        })
+        await expect
+            .element(
+                third.screen.getByText(
+                    'DHIS2 returned data the viewer could not read.'
+                )
+            )
+            .toBeVisible()
+        expect(third.screen.container.textContent).not.toContain('invalid_type')
+    })
+
+    it('canvas and list say when the graph is busy', async () => {
+        const graph = await graphOf(chains(), ['A1'])
+        const idle = await setup({
+            graph,
+            children: (
+                <>
+                    <RelationshipViewerCanvas />
+                    <RelationshipViewerList />
+                </>
+            ),
+        })
+        expect(
+            idle.screen.container
+                .querySelector('svg[role="img"]')
+                ?.getAttribute('aria-busy')
+        ).toBe('false')
+        expect(idle.screen.container.querySelector('[role="status"]')).toBe(
+            null
+        )
+        await idle.screen.unmount()
+
+        const busy = await setup({
+            graph,
+            fetching: true,
+            children: (
+                <>
+                    <RelationshipViewerCanvas />
+                    <RelationshipViewerList />
+                </>
+            ),
+        })
+        expect(
+            busy.screen.container
+                .querySelector('svg[role="img"]')
+                ?.getAttribute('aria-busy')
+        ).toBe('true')
+        expect(
+            busy.screen.container
+                .querySelector('table')
+                ?.getAttribute('aria-busy')
+        ).toBe('true')
+        await expect
+            .element(busy.screen.getByRole('status', { name: 'Loading' }))
+            .toBeVisible()
     })
 
     it('empty seed query', async () => {

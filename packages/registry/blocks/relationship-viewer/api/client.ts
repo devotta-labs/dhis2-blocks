@@ -79,7 +79,7 @@ const RequestFailureSchema = z
 // FetchError messages end in "(NNN)", e.g. "An unknown error occurred - Not Found (404)".
 const MESSAGE_STATUS = /\((\d{3})\)$/
 
-const getErrorStatus = (cause: unknown) => {
+export const getErrorStatus = (cause: unknown) => {
     const candidate = RequestFailureSchema.safeParse(cause)
     if (!candidate.success) {
         return undefined

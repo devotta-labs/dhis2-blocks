@@ -2,6 +2,7 @@ import { ZodError, type ZodType } from 'zod'
 import type { RelationshipMetadata } from '../domain/labels'
 import type { NodeKind, NodeRecord, NodeRef } from '../domain/model'
 import {
+    getErrorStatus,
     RelationshipViewerBoundaryError,
     type DataEngineQueryParameters,
     type RelationshipViewerClient,
@@ -25,6 +26,8 @@ export const EVENT_FIELDS =
     'event,program,programStage,status,occurredAt,dataValues[dataElement,value]'
 
 const SEED_PAGE_SIZE = 50
+// What DHIS2 answers a tracked entity read with a `program` it is not enrolled in.
+const NOT_IN_PROGRAM = new Set([403, 404, 409])
 export const RELATIONSHIP_TYPE_FIELDS =
     'id,displayName,bidirectional,fromToName,toFromName,fromConstraint[relationshipEntity,trackerDataView[attributes,dataElements]],toConstraint[relationshipEntity,trackerDataView[attributes,dataElements]]'
 export const TRACKED_ENTITY_TYPE_FIELDS =
@@ -53,18 +56,21 @@ const NODE_RESOURCES = {
     {
         resource: string
         fields: string
-        schema: ZodType<Omit<NodeRecord, 'relationships'>>
+        schema: ZodType<
+            Omit<NodeRecord, 'relationships' | 'unresolvedLinkCount'>
+        >
     }
 >
 
 // Only schema violations become boundary errors; operational failures keep their status for retry.
-const asBoundary = async <T>(request: Promise<T>, context: string) => {
+// The Zod issues stay in `cause`; the message names what was malformed.
+const asBoundary = async <T>(request: Promise<T>, what: string) => {
     try {
         return await request
     } catch (cause) {
         if (cause instanceof ZodError) {
             throw new RelationshipViewerBoundaryError(
-                `${context}: ${cause.message}`,
+                `DHIS2 returned a malformed ${what}.`,
                 cause
             )
         }
@@ -87,9 +93,31 @@ export async function fetchNodeRecord(
         ref.kind === 'trackedEntity' && program
             ? { program, fields }
             : { fields }
-    const [record, { relationships }] = await asBoundary(
+    const readRecord = async () => {
+        try {
+            return await client.query(
+                { resource, id: ref.id, params },
+                schema,
+                signal
+            )
+        } catch (cause) {
+            // DHIS2 refuses `program` for a tracked entity not enrolled in it; read it without.
+            if (
+                params.program !== undefined &&
+                NOT_IN_PROGRAM.has(getErrorStatus(cause) ?? 0)
+            ) {
+                return client.query(
+                    { resource, id: ref.id, params: { fields } },
+                    schema,
+                    signal
+                )
+            }
+            throw cause
+        }
+    }
+    const [record, { relationships, unresolvedLinkCount }] = await asBoundary(
         Promise.all([
-            client.query({ resource, id: ref.id, params }, schema, signal),
+            readRecord(),
             client.query(
                 {
                     resource: 'tracker/relationships',
@@ -103,9 +131,13 @@ export async function fetchNodeRecord(
                 signal
             ),
         ]),
-        `Malformed ${ref.kind} ${ref.id}`
+        `${ref.kind} ${ref.id}`
     )
-    return { ...record, relationships }
+    return {
+        ...record,
+        relationships,
+        ...(unresolvedLinkCount > 0 && { unresolvedLinkCount }),
+    }
 }
 
 export async function fetchSeedPage(
@@ -128,7 +160,7 @@ export async function fetchSeedPage(
             SeedPageSchema,
             signal
         ),
-        `Malformed seed page ${page}`
+        `seed page ${page}`
     )
     return {
         refs: trackedEntities,
@@ -158,6 +190,6 @@ export function fetchRelationshipMetadata(
             MetadataSchema,
             signal
         ),
-        'Malformed relationship metadata'
+        'relationship metadata'
     )
 }

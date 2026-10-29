@@ -1,5 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
-import { createContext } from 'react'
+import { createContext, useContext } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import type { MessageKind } from '../logic/effects'
 import type { SyncState } from '../model/types'
@@ -107,14 +107,27 @@ const MARKERS = new Map<SyncState, string>([
     ['failed', 'bg-dhis2-red-600'],
 ])
 
+interface BoundCell {
+    view: CellView
+    /** Whether the cell's notes show. */
+    shown: boolean
+    show(): void
+}
+
 /**
- * Whether the cell's notes show, for the control `Cell` wraps: Escape hides them until focus next enters the cell
- * (WCAG 1.4.13). A control that takes Escape for itself calls `preventDefault`; else the cell hides its notes.
+ * What `Cell` tells the control it wraps: the cell's view, so the default controls subscribe to nothing, and whether
+ * its notes show. Escape hides them until focus next enters the cell (WCAG 1.4.13). A control that takes Escape for
+ * itself calls `preventDefault`; else the cell hides its notes.
  */
-export const CellNotes = createContext({
-    shown: false,
-    show: () => {},
-})
+export const CellContext = createContext<BoundCell | undefined>(undefined)
+
+export const useCellContext = (): BoundCell => {
+    const bound = useContext(CellContext)
+    if (bound === undefined) {
+        throw new Error('Default controls must be used inside Cell.')
+    }
+    return bound
+}
 
 /**
  * Places a popover under its cell, above the grid's sticky headers. Where the browser has anchor positioning it is

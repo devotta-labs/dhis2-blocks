@@ -2,8 +2,8 @@ import i18n from '@dhis2/d2-i18n'
 import { memo, useLayoutEffect, useRef } from 'react'
 import type { KeyboardEvent } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
-import { useCellView } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
+import { useCellContext } from './CellStatus'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
 import { navKeyOf } from './useCellMode'
 
@@ -21,15 +21,8 @@ const opensList = (event: KeyboardEvent) =>
     (event.altKey && event.key.startsWith('Arrow'))
 
 /** What a Yes/No field and a checkbox share: a value saved at once, and keys that only move. */
-const useChoice = ({
-    id,
-    cellKey,
-    labelledBy,
-    move,
-    readOnly,
-    aria,
-}: ControlProps) => {
-    const view = useCellView(cellKey)
+const useChoice = ({ id, labelledBy, move, readOnly, aria }: ControlProps) => {
+    const { view } = useCellContext()
     const locked = readOnly !== undefined
     return {
         view,

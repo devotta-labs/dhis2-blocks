@@ -6,8 +6,9 @@ import {
     typedText,
 } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
-import { useCellView, useDataEntryContext } from '../provider/context'
+import { useDataEntryContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
+import { useCellContext } from './CellStatus'
 import { READY_CLASS, useCellMode } from './useCellMode'
 
 // Borderless until it has focus, then a box. Invalid looks red only while it does not have focus, so the focus ring
@@ -32,7 +33,7 @@ export const TextCell = memo(function TextCell({
     aria,
 }: ControlProps) {
     const { store, settings } = useDataEntryContext()
-    const view = useCellView(cellKey)
+    const { view } = useCellContext()
     // What has been typed and not yet saved; `null` shows the cell's own text.
     const [draft, setDraft] = useState<string | null>(null)
     const locked = readOnly !== undefined

@@ -50,6 +50,7 @@ export default defineConfig({
                         'class-variance-authority',
                         'vitest-browser-react',
                         'zod',
+                        'zustand/react/shallow',
                     ],
                 },
                 test: {

@@ -8,9 +8,9 @@ import type { Field } from '@/components/dhis2-value-types'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
 import { cn } from '@/components/dhis2/ui/cn'
-import { useCellView, useDataEntryContext } from '../provider/context'
+import { useDataEntryContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
-import { POPOVER_CLASS } from './CellStatus'
+import { POPOVER_CLASS, useCellContext } from './CellStatus'
 import { storedFileUrl } from './editors/FileEditor'
 import { editorFor } from './popupEditors'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
@@ -90,7 +90,7 @@ export const PopupCell = memo(function PopupCell({
     const { store, settings, announce, orgUnitNames, fileNames } =
         useDataEntryContext()
     const { baseUrl } = useConfig()
-    const view = useCellView(cellKey)
+    const { view } = useCellContext()
     // Only org unit cells read the names, so a new name renders no other cell.
     const names = useStore(orgUnitNames, ({ names: all }) =>
         field.valueType === 'ORGANISATION_UNIT' ? all : undefined

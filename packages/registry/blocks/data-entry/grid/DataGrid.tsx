@@ -15,7 +15,7 @@ import type { StoreApi } from 'zustand/vanilla'
 import { cellKind } from '@/components/dhis2-value-types'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
-import { Cell, replacementFor } from '../cells/Cell'
+import { replacementFor, RowCell } from '../cells/Cell'
 import { cellDomId } from '../cells/cellProps'
 import type { CellOverrides } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
@@ -23,7 +23,7 @@ import { editorFor, pasteablePopupTypes } from '../cells/popupEditors'
 import type { CellMessage, MessageKind } from '../logic/effects'
 import { cellKey } from '../model/types'
 import type { CellKey, GridRow, GridTable } from '../model/types'
-import { useDataEntryContext } from '../provider/context'
+import { useDataEntryContext, useRowCells } from '../provider/context'
 import type { EffectsState } from '../provider/context'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import {
@@ -106,6 +106,7 @@ const positionsOf = (idScope: string, tables: ReadonlyArray<GridTable>) => {
 const ROW_HEADER_CLASS =
     'w-[min(12rem,30vw)] min-w-[min(12rem,30vw)] max-w-[min(12rem,30vw)]'
 const BORDER_CLASS = 'border-b border-e border-dhis2-grey-300'
+const CELL_CLASS = cn(BORDER_CLASS, 'min-w-28 p-0')
 const HEADER_CLASS = cn(
     BORDER_CLASS,
     'bg-dhis2-grey-100 px-2 py-1.5 text-start align-bottom text-[13px] font-medium text-dhis2-grey-800'
@@ -122,7 +123,7 @@ const MESSAGE_TONES = {
     warningOnComplete: 'border-dhis2-yellow-700',
 } satisfies Record<MessageKind, string>
 
-const RowHeader = ({
+const RowHeader = memo(function RowHeader({
     idScope,
     tableId,
     row,
@@ -130,7 +131,7 @@ const RowHeader = ({
     idScope: string
     tableId: string
     row: GridRow
-}) => {
+}) {
     const { effects, store, settings } = useDataEntryContext()
     const notes = useStore(
         effects,
@@ -200,7 +201,47 @@ const RowHeader = ({
             ) : null}
         </th>
     )
+})
+
+interface TableRowProps {
+    idScope: string
+    table: GridTable
+    row: GridRow
+    /** The ids of the column headers that name each column's cells. */
+    labels: ReadonlyArray<string>
+    move(key: NavKey): void
 }
+
+/** One row of a table: it reads its cells' states and effects, once for the row, and hands each cell its own. */
+const TableRow = memo(function TableRow({
+    idScope,
+    table,
+    row,
+    labels,
+    move,
+}: TableRowProps) {
+    const keys = table.columns.map(({ id }) => cellKey(row.id, id))
+    const { states, effects } = useRowCells(keys)
+    const rowHeader = rowHeaderDomId(idScope, table.id, row.id)
+    return (
+        <tr>
+            <RowHeader idScope={idScope} tableId={table.id} row={row} />
+            {table.columns.map((column, c) => (
+                <td key={column.id} className={CELL_CLASS}>
+                    <RowCell
+                        cellKey={keys[c]}
+                        field={column.field}
+                        labelledBy={`${labels[c]} ${rowHeader}`}
+                        move={move}
+                        closedReason={table.closed.get(keys[c])}
+                        cell={states[c]}
+                        effects={effects[c]}
+                    />
+                </td>
+            ))}
+        </tr>
+    )
+})
 
 interface TableViewProps {
     idScope: string
@@ -312,44 +353,16 @@ const TableView = memo(function TableView({
                         ))}
                     </thead>
                     <tbody>
-                        {table.rows.map((row) => {
-                            const rowHeader = rowHeaderDomId(
-                                idScope,
-                                table.id,
-                                row.id
-                            )
-                            return (
-                                <tr key={row.id}>
-                                    <RowHeader
-                                        idScope={idScope}
-                                        tableId={table.id}
-                                        row={row}
-                                    />
-                                    {table.columns.map((column, c) => {
-                                        const key = cellKey(row.id, column.id)
-                                        return (
-                                            <td
-                                                key={column.id}
-                                                className={cn(
-                                                    BORDER_CLASS,
-                                                    'min-w-28 p-0'
-                                                )}
-                                            >
-                                                <Cell
-                                                    cellKey={key}
-                                                    field={column.field}
-                                                    labelledBy={`${labels[c]} ${rowHeader}`}
-                                                    move={move}
-                                                    closedReason={table.closed.get(
-                                                        key
-                                                    )}
-                                                />
-                                            </td>
-                                        )
-                                    })}
-                                </tr>
-                            )
-                        })}
+                        {table.rows.map((row) => (
+                            <TableRow
+                                key={row.id}
+                                idScope={idScope}
+                                table={table}
+                                row={row}
+                                labels={labels}
+                                move={move}
+                            />
+                        ))}
                     </tbody>
                 </table>
             </div>

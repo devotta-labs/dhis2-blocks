@@ -184,7 +184,8 @@ returns `'queued'` when the value changed (it is on the device, then sent), `'un
 `'invalid'` when its type or a rule's hidden options refuse it: the text stays as the cell's `draft` with its `error`,
 and nothing is saved. A cell a rule locks, or whose row is read-only (`effects.readOnly`), is not written to
 (`'unchanged'`); text typed into a cell a rule has hidden, and not locked, is saved, and the rule then clears it. To keep
-a default control's editing, render it from `cells` (`<cells.text {...props} />`).
+a default control's editing, render it from `cells` (`<cells.text {...props} />`) in your control: a default control
+reads its cell from the `Cell` around it, so it is drawn only inside one.
 
 ## Typing
 

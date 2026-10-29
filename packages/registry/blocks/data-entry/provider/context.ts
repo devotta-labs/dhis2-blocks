@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo } from 'react'
 import { useStore } from 'zustand'
+import { useShallow } from 'zustand/react/shallow'
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import type { ValueSettings } from '@/components/dhis2-value-types'
@@ -121,19 +122,11 @@ export const useDataEntryContext = (): DataEntryContext => {
     return context
 }
 
-/** One cell's effects; for a cell that needs no more, so it re-renders only when these change. */
-const useCellEffects = (key: CellKey): CellEffects => {
-    const { effects } = useDataEntryContext()
-    return useStore(effects, (state) => state.cells[key] ?? EMPTY_EFFECTS)
-}
-
-/** One cell's state, effects and `commit`; it re-renders only when this cell changes in either store. */
-export const useCellView = (key: CellKey): CellView => {
+/** A cell's `commit`. */
+const useCommit = (key: CellKey) => {
     const { store, effects: effectsStore } = useDataEntryContext()
-    const cell = useStore(store, (state) => state.cells[key] ?? EMPTY_CELL)
-    const effects = useCellEffects(key)
     // The lock is read when committing, not when rendering: a rule may have locked the cell while its text was typed.
-    const commit = useCallback(
+    return useCallback(
         (text: string): CommitResult => {
             const { hiddenBy, readOnly } =
                 effectsStore.getState().cells[key] ?? EMPTY_EFFECTS
@@ -146,8 +139,49 @@ export const useCellView = (key: CellKey): CellView => {
         },
         [store, effectsStore, key]
     )
+}
+
+/** A cell's view from its state and effects, as its row hands them over. */
+export const useViewOf = (
+    key: CellKey,
+    cell: CellState,
+    effects: CellEffects
+): CellView => {
+    const commit = useCommit(key)
     return useMemo(
         () => ({ ...cell, effects, commit }),
         [cell, effects, commit]
     )
+}
+
+/** One cell's state, effects and `commit`; it re-renders only when this cell changes in either store. */
+export const useCellView = (key: CellKey): CellView => {
+    const { store, effects } = useDataEntryContext()
+    return useViewOf(
+        key,
+        useStore(store, (state) => state.cells[key] ?? EMPTY_CELL),
+        useStore(effects, (state) => state.cells[key] ?? EMPTY_EFFECTS)
+    )
+}
+
+/**
+ * The states and effects of a row's cells, in the order of `keys`: one subscription to each store for the whole row,
+ * and a new array only when one of its cells changed.
+ */
+export const useRowCells = (keys: ReadonlyArray<CellKey>) => {
+    const { store, effects } = useDataEntryContext()
+    return {
+        states: useStore(
+            store,
+            useShallow((state) =>
+                keys.map((key) => state.cells[key] ?? EMPTY_CELL)
+            )
+        ),
+        effects: useStore(
+            effects,
+            useShallow((state) =>
+                keys.map((key) => state.cells[key] ?? EMPTY_EFFECTS)
+            )
+        ),
+    }
 }

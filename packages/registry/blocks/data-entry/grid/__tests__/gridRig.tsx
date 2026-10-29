@@ -87,6 +87,8 @@ interface MountOptions {
     above?: string
     /** Called whenever a cell reads its effects or the grid reads its tables, as each does when it renders. */
     onRead?: (what: 'effects' | 'tables') => void
+    /** Called whenever anything subscribes to the cells' store or the effects store. */
+    onSubscribe?: () => void
     overrides?: CellOverrides
     /** Row id → the row's messages without a field. */
     rowMessages?: Array<[string, CellMessage[]]>
@@ -103,6 +105,7 @@ export const mount = async (
         closedOnNewRows = [],
         above,
         onRead,
+        onSubscribe,
         overrides,
         rowMessages = [],
     } = options
@@ -127,6 +130,17 @@ export const mount = async (
         getState: () => {
             onRead?.('effects')
             return effects.getState()
+        },
+        subscribe: (listener) => {
+            onSubscribe?.()
+            return effects.subscribe(listener)
+        },
+    }
+    const watched: typeof store = {
+        ...store,
+        subscribe: (listener) => {
+            onSubscribe?.()
+            return store.subscribe(listener)
         },
     }
     const announcer = createAnnouncer()
@@ -155,7 +169,7 @@ export const mount = async (
         const [current, setTables] = useState(tables)
         const context = useMemo(
             (): DataEntryContext => ({
-                store,
+                store: watched,
                 effects: counted,
                 idScope: ID_SCOPE,
                 overrides,
@@ -198,6 +212,7 @@ export const mount = async (
     await render(<Harness />)
     return {
         store,
+        effects,
         announce,
         announced,
         added,

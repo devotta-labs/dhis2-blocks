@@ -2,10 +2,17 @@ import i18n from '@dhis2/d2-i18n'
 import { memo, useMemo, useState } from 'react'
 import { cellKind } from '@/components/dhis2-value-types'
 import type { CellKind, Field } from '@/components/dhis2-value-types'
-import { useCellView, useDataEntryContext } from '../provider/context'
+import type { CellEffects } from '../logic/effects'
+import type { CellState } from '../model/types'
+import {
+    useCellView,
+    useDataEntryContext,
+    useViewOf,
+} from '../provider/context'
+import type { CellView } from '../provider/context'
 import { cellDomId } from './cellProps'
 import type { CellComponent, CellOverrides, CellProps } from './cellProps'
-import { CellNotes, CellStatus, describeCell } from './CellStatus'
+import { CellContext, CellStatus, describeCell } from './CellStatus'
 import { BooleanCell, TrueOnlyCell } from './ChoiceCells'
 import { OptionCell } from './OptionCell'
 import { PopupCell } from './PopupCell'
@@ -41,8 +48,7 @@ export const replacementFor = (
 ) => overrides?.fields?.[column] ?? overrides?.valueTypes?.[field.valueType]
 
 // One control whatever a rule does to the cell, so focus stays where it is.
-const OpenCell = (props: CellProps) => {
-    const view = useCellView(props.cellKey)
+const OpenCell = ({ view, ...props }: CellProps & { view: CellView }) => {
     const { hiddenBy, readOnly } = view.effects
     const { overrides, idScope, settings } = useDataEntryContext()
     const kind = cellKind(props.field)
@@ -76,9 +82,9 @@ const OpenCell = (props: CellProps) => {
     // Escape hides the notes until focus next enters the cell (WCAG 1.4.13).
     const [dismissed, setDismissed] = useState(false)
     const shown = notes.length > 0 && !dismissed
-    const cellNotes = useMemo(
-        () => ({ shown, show: () => setDismissed(false) }),
-        [shown]
+    const bound = useMemo(
+        () => ({ view, shown, show: () => setDismissed(false) }),
+        [view, shown]
     )
     const Control = replacement ?? cells[kind]
     return (
@@ -94,7 +100,7 @@ const OpenCell = (props: CellProps) => {
                 }
             }}
         >
-            <CellNotes.Provider value={cellNotes}>
+            <CellContext.Provider value={bound}>
                 <Control
                     {...props}
                     id={id}
@@ -102,11 +108,16 @@ const OpenCell = (props: CellProps) => {
                     hidden={hiddenBy !== undefined}
                     aria={aria}
                 />
-            </CellNotes.Provider>
+            </CellContext.Provider>
             <CellStatus view={view} notes={notes} dismissed={dismissed} />
         </div>
     )
 }
+
+// A cell on its own reads its state and effects itself.
+const SubscribedCell = (props: CellProps) => (
+    <OpenCell {...props} view={useCellView(props.cellKey)} />
+)
 
 /**
  * The cell for a field: closed, or one control that is typed, read-only (a rule, or a value type edited elsewhere) or
@@ -117,7 +128,26 @@ export const Cell = memo(function Cell({
     ...props
 }: CellProps & { closedReason?: string }) {
     return closedReason === undefined ? (
-        <OpenCell {...props} />
+        <SubscribedCell {...props} />
+    ) : (
+        <ClosedCell reason={closedReason} />
+    )
+})
+
+/** `Cell` in a grid's row, which reads the states and effects of all its cells and hands each cell its own. */
+export const RowCell = memo(function RowCell({
+    closedReason,
+    cell,
+    effects,
+    ...props
+}: CellProps & {
+    closedReason?: string
+    cell: CellState
+    effects: CellEffects
+}) {
+    const view = useViewOf(props.cellKey, cell, effects)
+    return closedReason === undefined ? (
+        <OpenCell {...props} view={view} />
     ) : (
         <ClosedCell reason={closedReason} />
     )

@@ -1,8 +1,8 @@
-import { useContext, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { FocusEvent, KeyboardEvent, MouseEvent } from 'react'
 import type { NavKey } from '../grid/navigation'
 import type { CommitResult } from '../model/types'
-import { CellNotes } from './CellStatus'
+import { useCellContext } from './CellStatus'
 
 /** Excel's three modes: Ready (selected, no cursor), Enter (typing) and Edit (inside the text). */
 export type CellMode = 'ready' | 'enter' | 'edit'
@@ -58,7 +58,7 @@ export const useCellMode = ({
 }: CellModeOptions) => {
     const [state, setMode] = useState<CellMode>('ready')
     const mode = readOnly ? 'ready' : state
-    const notes = useContext(CellNotes)
+    const notes = useCellContext()
     const ref = useRef<HTMLInputElement>(null)
     // Back in Ready (Escape, a save that went nowhere) the text is selected again once it shows the stored value.
     useLayoutEffect(() => {

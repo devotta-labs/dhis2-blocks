@@ -7,8 +7,9 @@ import {
 } from '@/components/dhis2-value-types'
 import type { Option } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
-import { useCellView, useDataEntryContext } from '../provider/context'
+import { useDataEntryContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
+import { useCellContext } from './CellStatus'
 import { OptionList } from './OptionList'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
 import { composing, READY_CLASS, useCellMode } from './useCellMode'
@@ -67,7 +68,7 @@ export const OptionCell = memo(function OptionCell({
     aria,
 }: ControlProps) {
     const { store, settings } = useDataEntryContext()
-    const view = useCellView(cellKey)
+    const { view } = useCellContext()
     // What has been typed and not yet saved; `null` shows the cell's own text.
     const [draft, setDraft] = useState<string | null>(null)
     const [listing, setListing] = useState(false)

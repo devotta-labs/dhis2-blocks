@@ -1,8 +1,12 @@
 /// <reference types="@vitest/browser-playwright" />
 import { cdp, page, userEvent } from 'vitest/browser'
 import { withEditor } from '../cells/__tests__/harness'
+import { cells } from '../cells/Cell'
 import { cellDomId } from '../cells/cellProps'
+import type { CellComponent } from '../cells/cellProps'
+import type { CellMessage } from '../logic/effects'
 import { cellKey } from '../model/types'
+import type { CellKey } from '../model/types'
 import {
     control,
     focused,
@@ -530,4 +534,65 @@ test('typing renders one cell, not the others or the table; 2,500 cells drawn', 
     expect(reads.tables).toBe(0)
     // A handful of reads for the typed and the newly focused cell, against one per cell for a grid redrawn.
     expect(reads.effects).toBeLessThan(25)
+})
+
+test('a 2,500-cell grid mounts notes only for cells that have them, subscribes by row, and typing renders one cell', async () => {
+    const noted = cellKey('t1r0', 'c0')
+    const typed = cellKey('t1r20', 'c20')
+    const check: CellMessage = { kind: 'warning', text: 'Low', source: 'rule' }
+    const rendered: CellKey[] = []
+    // The default control, counting its renders by cell.
+    const Counted: CellComponent = (props) => {
+        rendered.push(props.cellKey)
+        return <cells.number {...props} />
+    }
+    let subscriptions = 0
+    const { effects } = await mount(
+        [
+            makeTable({
+                columns: range(50, (i) => `Column ${i}`),
+                rows: range(50, (i) => `Row ${i}`),
+            }),
+        ],
+        {
+            effects: { [noted]: { messages: [check] } },
+            overrides: { valueTypes: { INTEGER: Counted } },
+            onSubscribe: () => (subscriptions += 1),
+        }
+    )
+    const controls = page.getByRole('textbox').elements()
+    expect(controls).toHaveLength(2_500)
+    // The rows subscribe to the stores and hand each cell its state.
+    expect(subscriptions).toBeLessThan(2_500)
+    // A cell without notes holds its control alone, described by nothing.
+    const notesOf = (key: CellKey) =>
+        control(key)
+            .getAttribute('aria-describedby')
+            ?.split(' ')
+            .map((id) => document.getElementById(id)?.textContent)
+    expect(
+        controls.filter(
+            (element) =>
+                element.parentElement?.childElementCount !== 1 ||
+                element.hasAttribute('aria-describedby')
+        )
+    ).toEqual([control(noted)])
+    expect(notesOf(noted)).toEqual(['Low'])
+    // A cell that gains a note gets its description node and the attribute naming it.
+    const later = cellKey('t1r1', 'c1')
+    effects.setState(({ cells: all }) => ({
+        cells: {
+            ...all,
+            [later]: {
+                required: false,
+                messages: [{ kind: 'error', text: 'Too high', source: 'rule' }],
+            },
+        },
+    }))
+    await expect.poll(() => notesOf(later)).toEqual(['Too high'])
+    control(typed).focus()
+    rendered.length = 0
+    await userEvent.keyboard('12{Enter}')
+    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r21', 'c20')))
+    expect(new Set(rendered)).toEqual(new Set([typed]))
 })

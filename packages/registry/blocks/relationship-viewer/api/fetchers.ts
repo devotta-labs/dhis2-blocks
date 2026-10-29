@@ -10,20 +10,24 @@ import {
     EnrollmentRecordSchema,
     EventRecordSchema,
     MetadataSchema,
+    RelationshipListSchema,
     SeedPageSchema,
     TrackedEntityRecordSchema,
 } from './schemas'
 
 const ITEM = 'trackedEntity[trackedEntity],enrollment[enrollment],event[event]'
-const RELATIONSHIP_FIELDS = `relationships[relationship,relationshipType,bidirectional,createdAt,from[${ITEM}],to[${ITEM}]]`
-export const TRACKED_ENTITY_FIELDS = `trackedEntity,trackedEntityType,attributes[attribute,displayName,value],enrollments[enrollment,program,status,followUp,enrolledAt,occurredAt],${RELATIONSHIP_FIELDS}`
-export const ENROLLMENT_FIELDS = `enrollment,trackedEntity,program,status,followUp,enrolledAt,occurredAt,attributes[attribute,displayName,value],${RELATIONSHIP_FIELDS}`
-export const EVENT_FIELDS = `event,program,programStage,status,occurredAt,dataValues[dataElement,value],${RELATIONSHIP_FIELDS}`
+export const RELATIONSHIP_FIELDS = `relationship,relationshipType,bidirectional,createdAt,from[${ITEM}],to[${ITEM}]`
+export const TRACKED_ENTITY_FIELDS =
+    'trackedEntity,trackedEntityType,attributes[attribute,displayName,value],enrollments[enrollment,program,status,followUp,enrolledAt,occurredAt]'
+export const ENROLLMENT_FIELDS =
+    'enrollment,trackedEntity,program,status,followUp,enrolledAt,occurredAt,attributes[attribute,displayName,value]'
+export const EVENT_FIELDS =
+    'event,program,programStage,status,occurredAt,dataValues[dataElement,value]'
 
 const SEED_PAGE_SIZE = 50
-const RELATIONSHIP_TYPE_FIELDS =
+export const RELATIONSHIP_TYPE_FIELDS =
     'id,displayName,bidirectional,fromToName,toFromName,fromConstraint[relationshipEntity,trackerDataView[attributes,dataElements]],toConstraint[relationshipEntity,trackerDataView[attributes,dataElements]]'
-const TRACKED_ENTITY_TYPE_FIELDS =
+export const TRACKED_ENTITY_TYPE_FIELDS =
     'id,trackedEntityTypeAttributes[displayInList,trackedEntityAttribute[id]]'
 
 export type SeedQuery = DataEngineQueryParameters & { program: string }
@@ -46,7 +50,11 @@ const NODE_RESOURCES = {
     },
 } satisfies Record<
     NodeKind,
-    { resource: string; fields: string; schema: ZodType<NodeRecord> }
+    {
+        resource: string
+        fields: string
+        schema: ZodType<Omit<NodeRecord, 'relationships'>>
+    }
 >
 
 // Only schema violations become boundary errors; operational failures keep their status for retry.
@@ -64,7 +72,11 @@ const asBoundary = async <T>(request: Promise<T>, context: string) => {
     }
 }
 
-export function fetchNodeRecord(
+/**
+ * One record and its relationships, in parallel. Record endpoints embed one-way
+ * relationships only on their `from` side; tracker/relationships returns both sides.
+ */
+export async function fetchNodeRecord(
     client: RelationshipViewerClient,
     ref: NodeRef,
     program: string | undefined,
@@ -75,10 +87,25 @@ export function fetchNodeRecord(
         ref.kind === 'trackedEntity' && program
             ? { program, fields }
             : { fields }
-    return asBoundary(
-        client.query({ resource, id: ref.id, params }, schema, signal),
+    const [record, { relationships }] = await asBoundary(
+        Promise.all([
+            client.query({ resource, id: ref.id, params }, schema, signal),
+            client.query(
+                {
+                    resource: 'tracker/relationships',
+                    params: {
+                        [ref.kind]: ref.id,
+                        paging: false,
+                        fields: RELATIONSHIP_FIELDS,
+                    },
+                },
+                RelationshipListSchema,
+                signal
+            ),
+        ]),
         `Malformed ${ref.kind} ${ref.id}`
     )
+    return { ...record, relationships }
 }
 
 export async function fetchSeedPage(
@@ -86,7 +113,7 @@ export async function fetchSeedPage(
     query: SeedQuery,
     page: number,
     signal?: AbortSignal
-): Promise<{ records: NodeRecord[]; hasMore: boolean }> {
+): Promise<{ refs: NodeRef[]; hasMore: boolean }> {
     const { trackedEntities } = await asBoundary(
         client.query(
             {
@@ -95,7 +122,7 @@ export async function fetchSeedPage(
                     ...query,
                     page,
                     pageSize: SEED_PAGE_SIZE,
-                    fields: TRACKED_ENTITY_FIELDS,
+                    fields: 'trackedEntity',
                 },
             },
             SeedPageSchema,
@@ -104,7 +131,7 @@ export async function fetchSeedPage(
         `Malformed seed page ${page}`
     )
     return {
-        records: trackedEntities,
+        refs: trackedEntities,
         hasMore: trackedEntities.length === SEED_PAGE_SIZE,
     }
 }

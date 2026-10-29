@@ -139,7 +139,7 @@ describe('RelationshipViewer', () => {
 
     it('seed query draws every seed', async () => {
         const seeds = Array.from({ length: 60 }, (_, i) => person(`S${i}`))
-        const { engine, calls } = fakeEngine(seeds, { seeds })
+        const { engine, calls, nodeCalls } = fakeEngine(seeds, { seeds })
         const { ready } = await renderViewer(engine, {
             seeds: { query: { program: FIXTURE_PROGRAM } },
         })
@@ -149,11 +149,17 @@ describe('RelationshipViewer', () => {
         expect(state.graph?.nodes.size).toBe(60)
         expect([...state.graph!.nodes.values()].every((n) => n.seed)).toBe(true)
         expect(state.graph?.capped).toBe(false)
-        // Seed pages fill the node cache, so no seed is fetched again.
-        expect(calls.filter((c) => c.startsWith('tracker/'))).toEqual([
+        expect(
+            calls.filter((c) => c.startsWith('tracker/trackedEntities?'))
+        ).toEqual([
             'tracker/trackedEntities?page=1',
             'tracker/trackedEntities?page=2',
         ])
+        // Seed pages yield refs; each seed is fetched once, like any node.
+        expect(seeds.every((s) => nodeCalls(s.ref.id) === 1)).toBe(true)
+        expect(
+            calls.filter((c) => c.startsWith('tracker/relationships'))
+        ).toHaveLength(60)
     })
 
     it('seed query past the cap stops paging and reports capped', async () => {
@@ -168,7 +174,9 @@ describe('RelationshipViewer', () => {
 
         expect(state.graph?.nodes.size).toBe(50)
         expect(state.graph?.capped).toBe(true)
-        expect(calls.filter((c) => c.startsWith('tracker/'))).toEqual([
+        expect(
+            calls.filter((c) => c.startsWith('tracker/trackedEntities?'))
+        ).toEqual([
             'tracker/trackedEntities?page=1',
             'tracker/trackedEntities?page=2',
         ])
@@ -276,7 +284,7 @@ describe('RelationshipViewer', () => {
             })
             expect(
                 ['A1', 'A1c', 'A2', 'A2c', 'A3'].map((id) => nodeCalls(id))
-            ).toEqual([0, 1, 1, 1, 1])
+            ).toEqual([1, 1, 1, 1, 1])
         } finally {
             vi.useRealTimers()
         }
@@ -300,12 +308,11 @@ describe('RelationshipViewer', () => {
             expect((await ready()).state.graph?.nodes.size).toBe(3)
 
             const nodeRequests = requests.filter((r) => r.id !== undefined)
-            expect(nodeRequests.map((r) => r.id)).toEqual(['A1c', 'A2'])
+            expect(nodeRequests.map((r) => r.id)).toEqual(['A1', 'A1c', 'A2'])
             for (const request of nodeRequests) {
                 expect(request.params?.program).toBe(FIXTURE_PROGRAM)
             }
-            // The seed is cached under the same program, so it is not fetched again.
-            expect(nodeCalls('A1')).toBe(0)
+            expect(nodeCalls('A1')).toBe(1)
         }
     )
 

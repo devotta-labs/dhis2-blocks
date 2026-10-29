@@ -6,6 +6,7 @@ import type { DataEngineLike, DataEngineQuery, DataEngineValue } from './client'
 import {
     ENROLLMENT_FIELDS,
     EVENT_FIELDS,
+    RELATIONSHIP_FIELDS,
     TRACKED_ENTITY_FIELDS,
     fetchNodeRecord,
     fetchRelationshipMetadata,
@@ -27,6 +28,11 @@ const fakeEngine = (...responses: Record<string, DataEngineValue>[]) => {
 const wrap = (value: DataEngineValue) => ({ relationshipViewerResource: value })
 
 const item = (kind: string, id: string) => ({ [kind]: { [kind]: id } })
+const noLinks = wrap({ relationships: [] })
+const linksOf = (kind: string, id: string) => ({
+    resource: 'tracker/relationships',
+    params: { [kind]: id, paging: false, fields: RELATIONSHIP_FIELDS },
+})
 
 describe('fetchNodeRecord', () => {
     it('requests a tracked entity with its program and fields', async () => {
@@ -46,7 +52,8 @@ describe('fetchNodeRecord', () => {
                         enrolledAt: '2026-01-02',
                     },
                 ],
-            })
+            }),
+            noLinks
         )
 
         const record = await fetchNodeRecord(
@@ -65,6 +72,12 @@ describe('fetchNodeRecord', () => {
                         fields: TRACKED_ENTITY_FIELDS,
                     },
                 },
+            },
+            {
+                relationshipViewerResource: linksOf(
+                    'trackedEntity',
+                    'TE000000001'
+                ),
             },
         ])
         expect(record).toEqual({
@@ -89,7 +102,8 @@ describe('fetchNodeRecord', () => {
 
     it('omits program when none is given', async () => {
         const { client, queries } = fakeEngine(
-            wrap({ trackedEntity: 'TE000000001' })
+            wrap({ trackedEntity: 'TE000000001' }),
+            noLinks
         )
         await fetchNodeRecord(
             client,
@@ -111,13 +125,15 @@ describe('fetchNodeRecord', () => {
                 enrolledAt: '2026-01-02',
                 attributes: null,
             }),
+            noLinks,
             wrap({
                 event: 'Ev000000001',
                 program: 'Prog0000001',
                 programStage: 'Stage000001',
                 occurredAt: '2026-02-03',
                 dataValues: [{ dataElement: 'de1', value: '7' }],
-            })
+            }),
+            noLinks
         )
 
         const enrollment = await fetchNodeRecord(
@@ -137,11 +153,13 @@ describe('fetchNodeRecord', () => {
                 id: 'En000000001',
                 params: { fields: ENROLLMENT_FIELDS },
             },
+            linksOf('enrollment', 'En000000001'),
             {
                 resource: 'tracker/events',
                 id: 'Ev000000001',
                 params: { fields: EVENT_FIELDS },
             },
+            linksOf('event', 'Ev000000001'),
         ])
         expect(enrollment).toEqual({
             ref: { kind: 'enrollment', id: 'En000000001' },
@@ -172,8 +190,8 @@ describe('fetchNodeRecord', () => {
 
     it('normalises relationship items of every kind', async () => {
         const { client } = fakeEngine(
+            wrap({ trackedEntity: 'TE000000001' }),
             wrap({
-                trackedEntity: 'TE000000001',
                 relationships: [
                     {
                         relationship: 'Rel00000001',
@@ -225,8 +243,56 @@ describe('fetchNodeRecord', () => {
         ])
     })
 
+    it('takes a one-way inbound link from the relationships list', async () => {
+        // The record endpoint omits one-way links where the record is the `to` side.
+        const { client } = fakeEngine(
+            wrap({ event: 'Ev000000001', relationships: [] }),
+            wrap({
+                relationships: [
+                    {
+                        relationship: 'Rel00000001',
+                        relationshipType: 'Type0000001',
+                        bidirectional: false,
+                        from: item('trackedEntity', 'TE000000001'),
+                        to: item('event', 'Ev000000001'),
+                    },
+                ],
+            })
+        )
+
+        const record = await fetchNodeRecord(
+            client,
+            { kind: 'event', id: 'Ev000000001' },
+            undefined
+        )
+
+        expect(record.relationships).toEqual([
+            {
+                relationship: 'Rel00000001',
+                relationshipType: 'Type0000001',
+                bidirectional: false,
+                from: { kind: 'trackedEntity', id: 'TE000000001' },
+                to: { kind: 'event', id: 'Ev000000001' },
+            },
+        ])
+    })
+
+    it('rejects malformed relationship lists with a boundary error', async () => {
+        const { client } = fakeEngine(
+            wrap({ trackedEntity: 'TE000000001' }),
+            wrap({ relationships: [{ relationship: 7 }] })
+        )
+        await expect(
+            fetchNodeRecord(
+                client,
+                { kind: 'trackedEntity', id: 'TE000000001' },
+                undefined
+            )
+        ).rejects.toBeInstanceOf(RelationshipViewerBoundaryError)
+    })
+
     it('rejects malformed records with a boundary error', async () => {
-        const { client } = fakeEngine(wrap({ trackedEntity: 7 }))
+        const { client } = fakeEngine(wrap({ trackedEntity: 7 }), noLinks)
         await expect(
             fetchNodeRecord(
                 client,
@@ -252,7 +318,7 @@ describe('fetchNodeRecord', () => {
 })
 
 describe('fetchSeedPage', () => {
-    it('seed pages report hasMore', async () => {
+    it('seed pages return refs and report hasMore', async () => {
         const full = Array.from({ length: 50 }, (_, i) => ({
             trackedEntity: `TE${i}`,
         }))
@@ -275,12 +341,13 @@ describe('fetchSeedPage', () => {
                 orgUnit: 'OU000000001',
                 page: 1,
                 pageSize: 50,
-                fields: TRACKED_ENTITY_FIELDS,
+                fields: 'trackedEntity',
             },
         })
-        expect(first.records).toHaveLength(50)
+        expect(first.refs).toHaveLength(50)
+        expect(first.refs[0]).toEqual({ kind: 'trackedEntity', id: 'TE0' })
         expect(first.hasMore).toBe(true)
-        expect(last.records).toHaveLength(3)
+        expect(last.refs).toHaveLength(3)
         expect(last.hasMore).toBe(false)
     })
 })

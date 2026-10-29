@@ -7,12 +7,15 @@ import type { NodeRecord, NodeRef } from '../../domain/model'
 
 const item = (ref: NodeRef) => ({ [ref.kind]: { [ref.kind]: ref.id } })
 
-// Tracked-entity fixtures only, in the JSON shape /api/tracker returns.
+// Tracked-entity fixtures only, in the JSON shapes /api/tracker returns.
 const toJson = (record: NodeRecord): DataEngineValue => ({
     trackedEntity: record.ref.id,
     trackedEntityType: record.trackedEntityType,
     attributes: record.attributes.map((a) => ({ ...a })),
     enrollments: record.enrollments.map((e) => ({ ...e })),
+})
+
+const linksJson = (record: NodeRecord): DataEngineValue => ({
     relationships: record.relationships.map((l) => ({
         relationship: l.relationship,
         relationshipType: l.relationshipType,
@@ -36,7 +39,8 @@ const relationshipType = (id: string, bidirectional: boolean) => ({
 })
 
 /**
- * Serves fixture records by id, seed pages from `seeds`, and metadata for the `exposed` and `contact` types.
+ * Serves fixture records by id, their relationships, seed pages from `seeds`, and metadata for the
+ * `exposed` and `contact` types.
  * `fail` holds record ids or resource names answered with a 404; tests mutate it to recover.
  */
 export const fakeEngine = (
@@ -50,11 +54,23 @@ export const fakeEngine = (
     const respond = (request: ResourceRequest) => {
         const { resource, id, params } = request
         requests.push(request)
-        calls.push(
-            id ? `${resource}/${id}` : `${resource}?page=${params?.page}`
-        )
+        const linksOf = String(params?.trackedEntity ?? '')
+        if (resource === 'tracker/relationships') {
+            calls.push(`${resource}?trackedEntity=${linksOf}`)
+        } else {
+            calls.push(
+                id ? `${resource}/${id}` : `${resource}?page=${params?.page}`
+            )
+        }
         if (fail.has(id ?? resource)) {
             throw { status: 404 }
+        }
+        if (resource === 'tracker/relationships') {
+            const record = records.find((r) => r.ref.id === linksOf)
+            if (!record) {
+                throw { status: 404 }
+            }
+            return linksJson(record)
         }
         if (resource === 'relationshipTypes') {
             return {
@@ -73,7 +89,7 @@ export const fakeEngine = (
             return {
                 trackedEntities: (opts.seeds ?? [])
                     .slice((page - 1) * size, page * size)
-                    .map(toJson),
+                    .map((r) => ({ trackedEntity: r.ref.id })),
             }
         }
         const record = records.find((r) => r.ref.id === id)

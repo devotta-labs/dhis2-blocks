@@ -22,7 +22,6 @@ import {
     parseNodeKey,
     type FetchRecord,
     type NodeKey,
-    type NodeRecord,
     type NodeRef,
 } from '../domain/model'
 import { traverse } from '../domain/traverse'
@@ -49,33 +48,21 @@ const nodeQuery = (
     retry: shouldRetryRelationshipRequest,
 })
 
-/** Pages seed records into the node cache and returns their refs. */
+/** Pages seed refs; traversal fetches each seed like any other node. */
 async function loadSeedRefs(
     client: RelationshipViewerClient,
-    queryClient: QueryClient,
     query: SeedQuery,
-    program: string | undefined,
     cap: number,
     signal: AbortSignal
 ): Promise<NodeRef[]> {
-    const records: NodeRecord[] = []
+    const refs: NodeRef[] = []
     // Page one past the cap so traversal refuses a seed and reports the graph as capped.
-    for (let page = 1, more = true; more && records.length <= cap; page++) {
+    for (let page = 1, more = true; more && refs.length <= cap; page++) {
         const result = await fetchSeedPage(client, query, page, signal)
-        records.push(...result.records)
+        refs.push(...result.refs)
         more = result.hasMore
     }
-    const kept = records.slice(0, cap + 1)
-    // fetchQuery rather than setQueryData, so the seed records get the node gcTime too.
-    await Promise.all(
-        kept.map((record) =>
-            queryClient.fetchQuery({
-                ...nodeQuery(client, record.ref, program),
-                queryFn: () => record,
-            })
-        )
-    )
-    return kept.map((record) => record.ref)
+    return refs.slice(0, cap + 1)
 }
 
 /** Reads known records from the cache however old; only unknown nodes are fetched. */
@@ -147,15 +134,7 @@ export function useRelationshipGraph({
             cap,
         ],
         queryFn: seedQuery
-            ? ({ signal }) =>
-                  loadSeedRefs(
-                      client,
-                      queryClient,
-                      seedQuery,
-                      program,
-                      cap,
-                      signal
-                  )
+            ? ({ signal }) => loadSeedRefs(client, seedQuery, cap, signal)
             : skipToken,
         staleTime: STALE_TIME,
         retry: shouldRetryRelationshipRequest,

@@ -76,10 +76,17 @@ const RelationshipSchema = z
     )
 
 // The only allowed drop: a relationship with an unresolvable side.
-const RelationshipsSchema = z
-    .array(RelationshipSchema)
-    .nullish()
-    .transform((relationships) => (relationships ?? []).flatMap((r) => r ?? []))
+export const RelationshipListSchema = z.object({
+    relationships: z
+        .array(RelationshipSchema)
+        .nullish()
+        .transform((relationships) =>
+            (relationships ?? []).flatMap((r) => r ?? [])
+        ),
+})
+
+// Records carry no relationships; they come from tracker/relationships.
+type RecordWithoutLinks = Omit<NodeRecord, 'relationships'>
 
 const EnrollmentBase = z.object({
     enrollment: z.string(),
@@ -108,26 +115,22 @@ export const TrackedEntityRecordSchema = z
             .array(EnrollmentBase.transform(toEnrollment))
             .nullish()
             .transform((enrollments) => enrollments ?? []),
-        relationships: RelationshipsSchema,
     })
-    .transform((te): NodeRecord => ({
+    .transform((te): RecordWithoutLinks => ({
         ref: { kind: 'trackedEntity', id: te.trackedEntity },
         trackedEntityType: te.trackedEntityType ?? undefined,
         attributes: te.attributes,
         dataValues: [],
         enrollments: te.enrollments,
-        relationships: te.relationships,
     }))
 
 export const EnrollmentRecordSchema = EnrollmentBase.extend({
     attributes: AttributesSchema,
-    relationships: RelationshipsSchema,
-}).transform((e): NodeRecord => ({
+}).transform((e): RecordWithoutLinks => ({
     ref: { kind: 'enrollment', id: e.enrollment },
     attributes: e.attributes,
     dataValues: [],
     enrollments: [toEnrollment(e)],
-    relationships: e.relationships,
 }))
 
 export const EventRecordSchema = z
@@ -137,9 +140,8 @@ export const EventRecordSchema = z
         programStage: z.string().nullish(),
         occurredAt: z.string().nullish(),
         dataValues: DataValuesSchema,
-        relationships: RelationshipsSchema,
     })
-    .transform((e): NodeRecord => ({
+    .transform((e): RecordWithoutLinks => ({
         ref: { kind: 'event', id: e.event },
         program: e.program ?? undefined,
         programStage: e.programStage ?? undefined,
@@ -147,11 +149,15 @@ export const EventRecordSchema = z
         attributes: [],
         dataValues: e.dataValues,
         enrollments: [],
-        relationships: e.relationships,
     }))
 
 export const SeedPageSchema = z.object({
-    trackedEntities: z.array(TrackedEntityRecordSchema),
+    trackedEntities: z.array(
+        z.object({ trackedEntity: z.string() }).transform((te): NodeRef => ({
+            kind: 'trackedEntity',
+            id: te.trackedEntity,
+        }))
+    ),
 })
 
 // Depending on the DHIS2 version the view lists UIDs or `{ id }` references.

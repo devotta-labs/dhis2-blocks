@@ -293,4 +293,23 @@ curl --fail --silent --show-error \
 echo "Corrupting one attribute value behind the importer's back ..."
 corrupt_data_quality_fixture
 
+echo "Importing idempotent relationship-viewer metadata and records ..."
+# Relationship types check their trackerDataView against attributes already
+# stored on the tracked entity type (E4314), so they import in a second pass.
+jq 'del(.relationshipTypes)' \
+    "$E2E_REPO_ROOT/e2e/metadata/relationship-viewer-metadata.json" \
+    >"$artifact_dir/relationship-viewer-metadata-base.json"
+post_and_require_ok \
+    '/api/metadata?importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&importReportMode=ERRORS' \
+    "$artifact_dir/relationship-viewer-metadata-base.json" \
+    "$artifact_dir/relationship-viewer-metadata-base-import.json"
+post_and_require_ok \
+    '/api/metadata?importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&importReportMode=ERRORS' \
+    "$E2E_REPO_ROOT/e2e/metadata/relationship-viewer-metadata.json" \
+    "$artifact_dir/relationship-viewer-metadata-import.json"
+post_and_require_ok \
+    '/api/tracker?async=false&importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&reportMode=FULL' \
+    "$E2E_REPO_ROOT/e2e/metadata/relationship-viewer-tracker-data.json" \
+    "$artifact_dir/relationship-viewer-tracker-import.json"
+
 echo "Supplemental working-list metadata and records are ready."

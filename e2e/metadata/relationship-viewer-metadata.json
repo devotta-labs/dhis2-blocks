@@ -1,0 +1,204 @@
+{
+    "trackedEntityAttributes": [
+        {
+            "id": "RvE2eAtt001",
+            "name": "Relationship viewer E2E name",
+            "shortName": "RV E2E name",
+            "formName": "Name",
+            "valueType": "TEXT",
+            "aggregationType": "NONE"
+        },
+        {
+            "id": "RvE2eAtt002",
+            "name": "Relationship viewer E2E last follow-up",
+            "shortName": "RV E2E last follow-up",
+            "formName": "Last follow-up",
+            "valueType": "DATE",
+            "aggregationType": "NONE"
+        }
+    ],
+    "trackedEntityTypes": [
+        {
+            "id": "RvE2eTet001",
+            "name": "Relationship viewer E2E person",
+            "shortName": "RV E2E person",
+            "featureType": "NONE",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "trackedEntityTypeAttributes": [
+                {
+                    "id": "RvE2eTta001",
+                    "trackedEntityAttribute": {
+                        "id": "RvE2eAtt001"
+                    },
+                    "displayInList": true,
+                    "searchable": true
+                },
+                {
+                    "id": "RvE2eTta002",
+                    "trackedEntityAttribute": {
+                        "id": "RvE2eAtt002"
+                    },
+                    "displayInList": true,
+                    "searchable": false
+                }
+            ]
+        }
+    ],
+    "programs": [
+        {
+            "id": "RvE2ePrg001",
+            "name": "Contact tracing",
+            "shortName": "Contact tracing",
+            "programType": "WITH_REGISTRATION",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "trackedEntityType": {
+                "id": "RvE2eTet001"
+            },
+            "organisationUnits": [
+                {
+                    "id": "DiszpKrYNg8"
+                }
+            ],
+            "programTrackedEntityAttributes": [
+                {
+                    "id": "RvE2ePta001",
+                    "trackedEntityAttribute": {
+                        "id": "RvE2eAtt001"
+                    },
+                    "mandatory": false,
+                    "searchable": true,
+                    "displayInList": true,
+                    "sortOrder": 1
+                },
+                {
+                    "id": "RvE2ePta002",
+                    "trackedEntityAttribute": {
+                        "id": "RvE2eAtt002"
+                    },
+                    "mandatory": false,
+                    "searchable": false,
+                    "displayInList": true,
+                    "sortOrder": 2
+                }
+            ],
+            "programStages": [
+                {
+                    "id": "RvE2eStg001"
+                }
+            ]
+        }
+    ],
+    "programStages": [
+        {
+            "id": "RvE2eStg001",
+            "name": "Follow-up visit",
+            "program": {
+                "id": "RvE2ePrg001"
+            },
+            "repeatable": true,
+            "featureType": "NONE",
+            "sharing": {
+                "public": "rwrw----"
+            }
+        }
+    ],
+    "relationshipTypes": [
+        {
+            "id": "RvE2eRlt001",
+            "name": "Exposed",
+            "bidirectional": false,
+            "fromToName": "Exposed",
+            "toFromName": "Exposed by",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "fromConstraint": {
+                "relationshipEntity": "TRACKED_ENTITY_INSTANCE",
+                "trackedEntityType": {
+                    "id": "RvE2eTet001"
+                },
+                "trackerDataView": {
+                    "attributes": ["RvE2eAtt001"],
+                    "dataElements": []
+                }
+            },
+            "toConstraint": {
+                "relationshipEntity": "TRACKED_ENTITY_INSTANCE",
+                "trackedEntityType": {
+                    "id": "RvE2eTet001"
+                },
+                "trackerDataView": {
+                    "attributes": ["RvE2eAtt001"],
+                    "dataElements": []
+                }
+            }
+        },
+        {
+            "id": "RvE2eRlt002",
+            "name": "Was in contact with",
+            "bidirectional": true,
+            "fromToName": "Was in contact with",
+            "toFromName": "Was in contact with",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "fromConstraint": {
+                "relationshipEntity": "TRACKED_ENTITY_INSTANCE",
+                "trackedEntityType": {
+                    "id": "RvE2eTet001"
+                },
+                "trackerDataView": {
+                    "attributes": ["RvE2eAtt001"],
+                    "dataElements": []
+                }
+            },
+            "toConstraint": {
+                "relationshipEntity": "TRACKED_ENTITY_INSTANCE",
+                "trackedEntityType": {
+                    "id": "RvE2eTet001"
+                },
+                "trackerDataView": {
+                    "attributes": ["RvE2eAtt001"],
+                    "dataElements": []
+                }
+            }
+        },
+        {
+            "id": "RvE2eRlt003",
+            "name": "Followed up in",
+            "bidirectional": false,
+            "fromToName": "Followed up in",
+            "toFromName": "Follow-up of",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "fromConstraint": {
+                "relationshipEntity": "TRACKED_ENTITY_INSTANCE",
+                "trackedEntityType": {
+                    "id": "RvE2eTet001"
+                },
+                "trackerDataView": {
+                    "attributes": ["RvE2eAtt001"],
+                    "dataElements": []
+                }
+            },
+            "toConstraint": {
+                "relationshipEntity": "PROGRAM_STAGE_INSTANCE",
+                "program": {
+                    "id": "RvE2ePrg001"
+                },
+                "programStage": {
+                    "id": "RvE2eStg001"
+                },
+                "trackerDataView": {
+                    "attributes": [],
+                    "dataElements": []
+                }
+            }
+        }
+    ]
+}

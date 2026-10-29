@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import type { CellKey, CommitResult } from '../model/types'
 import { AgeEditor } from './editors/AgeEditor'
 import { CoordinateEditor } from './editors/CoordinateEditor'
+import { FileEditor } from './editors/FileEditor'
 import { LongTextEditor } from './editors/LongTextEditor'
 import { MultiSelectEditor } from './editors/MultiSelectEditor'
 import { OrgUnitEditor } from './editors/OrgUnitEditor'
@@ -28,10 +30,12 @@ export interface PopupEditorProps {
     settings: ValueSettings
     /** The cell's own DOM id; editors name their fields with it. */
     cellId: string
+    /** The cell's key: its row and column, an event and a data element in a form of events. */
+    cellKey: CellKey
     labelledBy: string
     hiddenOptions?: ReadonlySet<string>
-    /** A stored value, or null to clear. The cell commits it. */
-    save(value: string | null): void
+    /** A stored value, or null to clear. The cell commits it, and says whether it took it. */
+    save(value: string | null): CommitResult
     /** The value as it would be saved (null clears), or why it cannot be. Call on every change; the cell saves it when focus leaves the editor, and with a problem saves nothing and announces it. */
     report(value: string | null, problem?: string): void
     cancel(): void
@@ -56,6 +60,8 @@ export const popupEditors: PopupEditors = {
     COORDINATE: CoordinateEditor,
     ORGANISATION_UNIT: OrgUnitEditor,
     USERNAME: UsernameEditor,
+    FILE_RESOURCE: FileEditor,
+    IMAGE: FileEditor,
 }
 
 /** Value types whose typed text parses, so paste can fill them. */

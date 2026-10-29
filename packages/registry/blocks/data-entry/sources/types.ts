@@ -44,6 +44,8 @@ export interface LoadedForm {
     closedByStage: ReadonlyMap<string, ReadonlySet<string>>
     /** The names of the org units the values hold, by id: an org unit cell shows its name. */
     orgUnitNames: ReadonlyMap<string, string>
+    /** The names of the files and images the values hold, by id: a file cell shows its name. */
+    fileNames: ReadonlyMap<string, string>
 }
 
 export interface DataEntrySource {

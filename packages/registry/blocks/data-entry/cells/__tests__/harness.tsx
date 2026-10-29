@@ -6,10 +6,14 @@ import { createStore } from 'zustand/vanilla'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import type { NavKey } from '../../grid/navigation'
 import type { CellEffects } from '../../logic/effects'
+import { summarise } from '../../logic/summary'
 import { cellKey } from '../../model/types'
 import type { CellKey, GridTable } from '../../model/types'
+import type { SyncStatus } from '../../outbox/sync'
 import { createAnnouncer, DataEntryReactContext } from '../../provider/context'
 import type { DataEntryContext, EffectsState } from '../../provider/context'
+import { DataEntryViewContext } from '../../provider/hooks'
+import type { DataEntryView } from '../../provider/hooks'
 import { createDataEntryStore } from '../../store/store'
 import type { CellOverrides } from '../cellProps'
 import { popupEditors } from '../popupEditors'
@@ -35,8 +39,12 @@ interface RigOptions {
     settings?: ValueSettings
     /** The names known for org unit ids. */
     orgUnitNames?: ReadonlyMap<string, string>
+    /** The names known for file ids, as the form loads them. */
+    fileNames?: ReadonlyMap<string, string>
     /** What the fake server answers, for editors that search it. */
     data?: ServerData
+    /** The form's sync state; `'idle'` by default. */
+    sync?: SyncStatus
 }
 
 /** One cell in a store of its own, with the effects store and what the cell asked of the grid. */
@@ -48,7 +56,9 @@ export const rig = (
         overrides,
         settings = GREGORIAN,
         orgUnitNames = new Map(),
+        fileNames = new Map(),
         data = {},
+        sync = 'idle',
     }: RigOptions = {}
 ) => {
     const enqueued: Array<[CellKey, string | null, string | null]> = []
@@ -90,7 +100,19 @@ export const rig = (
         addRow: () => {},
         overrides,
         orgUnitNames: createStore(() => ({ names: orgUnitNames })),
+        fileNames: createStore(() => ({ names: fileNames })),
     }
+    const view = createStore<DataEntryView>()(() => ({
+        status: 'ready',
+        tables: [table],
+        summary: summarise({}, {}, new Map(), [table]),
+        sync,
+        addRow: () => {},
+        complete: async () => [],
+        reopen: async () => [],
+        downloadUnsent: () => {},
+        discardFailed: async () => {},
+    }))
     return {
         store,
         effects: effectsStore,
@@ -104,10 +126,12 @@ export const rig = (
         /** What the grid would put around a cell: the header that names it. */
         ui: (cell: ReactNode) => (
             <CustomDataProvider data={data}>
-                <DataEntryReactContext.Provider value={context}>
-                    <span id={HEADER}>Age (years)</span>
-                    {cell}
-                </DataEntryReactContext.Provider>
+                <DataEntryViewContext.Provider value={view}>
+                    <DataEntryReactContext.Provider value={context}>
+                        <span id={HEADER}>Age (years)</span>
+                        {cell}
+                    </DataEntryReactContext.Provider>
+                </DataEntryViewContext.Provider>
             </CustomDataProvider>
         ),
         stored: () => store.getState().cells[CELL],

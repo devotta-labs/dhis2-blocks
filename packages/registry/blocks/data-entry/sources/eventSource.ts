@@ -9,6 +9,7 @@ import {
     EVENT_FIELDS,
     PROGRAM_FIELDS,
     eventFormSchema,
+    fileNamesSchema,
     orgUnitNamesSchema,
 } from './eventSchemas'
 import type { ProgramStage, TrackerEvent } from './eventSchemas'
@@ -51,8 +52,10 @@ const READ_ONLY = {
         i18n.t('This event was completed too long ago to edit'),
 }
 
-// An org unit value is its id.
+// An org unit value is its id, and so is a file's: both are DHIS2 ids.
 const ORG_UNIT: Field = { valueType: 'ORGANISATION_UNIT' }
+const ORG_UNIT_TYPES: ReadonlySet<string> = new Set([ORG_UNIT.valueType])
+const FILE_TYPES: ReadonlySet<string> = new Set(['FILE_RESOURCE', 'IMAGE'])
 // The most ids one names request lists: DHIS2 refuses a URL much longer.
 const IDS_PER_REQUEST = 200
 
@@ -88,7 +91,7 @@ const toForm = (
     { program, events: { events }, me }: z.infer<typeof eventFormSchema>,
     options: EventSourceOptions,
     today: string
-): Omit<LoadedForm, 'orgUnitNames'> => {
+): Omit<LoadedForm, 'orgUnitNames' | 'fileNames'> => {
     const { programStageId, orgUnitId, enrollmentId, newRowStageId } = options
     const orgUnitMode = options.orgUnitMode ?? 'SELECTED'
     const tracker = program.programType === 'WITH_REGISTRATION'
@@ -347,21 +350,24 @@ const toForm = (
 }
 
 /**
- * The names of the org units the org unit columns hold, 200 ids a request, sent together; none is made when they hold
- * none, and a value that is no id is not asked for. Names only help: a request that fails leaves its ids without names,
- * which the cells then show, and only an abort of the load stops it.
+ * The names of the ids the columns of these value types hold, 200 ids a request, sent together; none is made when they
+ * hold none, and a value that is no id is not asked for. Names only help: a request that fails leaves its ids without
+ * names, which the cells then show, and only an abort of the load stops it.
  */
-const loadOrgUnitNames = async (
-    engine: DataEngine,
+const loadNames = async (
     { tables, values }: Pick<LoadedForm, 'tables' | 'values'>,
+    valueTypes: ReadonlySet<string>,
+    nameSome: (
+        some: ReadonlyArray<string>
+    ) => Promise<ReadonlyArray<[string, string]>>,
     signal?: AbortSignal
 ): Promise<ReadonlyMap<string, string>> => {
     const ids = new Set<string>()
     for (const { rows, columns } of tables) {
-        const orgUnitColumns = columns.filter(
-            ({ field }) => field.valueType === ORG_UNIT.valueType
-        )
-        for (const { id: column } of orgUnitColumns) {
+        for (const { id: column, field } of columns) {
+            if (!valueTypes.has(field.valueType)) {
+                continue
+            }
             for (const { id: row } of rows) {
                 const value = values.get(cellKey(row, column))
                 if (
@@ -373,31 +379,6 @@ const loadOrgUnitNames = async (
             }
         }
     }
-    const nameSome = async (some: ReadonlyArray<string>) => {
-        try {
-            const { orgUnits } = orgUnitNamesSchema.parse(
-                await engine.query(
-                    {
-                        orgUnits: {
-                            resource: 'organisationUnits',
-                            params: {
-                                filter: `id:in:[${some.join(',')}]`,
-                                fields: 'id,displayName',
-                                paging: false,
-                            },
-                        },
-                    },
-                    { signal }
-                )
-            )
-            return orgUnits.organisationUnits
-        } catch (error) {
-            if (signal?.aborted) {
-                throw error
-            }
-            return []
-        }
-    }
     const list = [...ids]
     const answers = await Promise.all(
         Array.from(
@@ -405,13 +386,78 @@ const loadOrgUnitNames = async (
             (_, at) =>
                 nameSome(
                     list.slice(at * IDS_PER_REQUEST, (at + 1) * IDS_PER_REQUEST)
-                )
+                ).catch((error: Error) => {
+                    if (signal?.aborted) {
+                        throw error
+                    }
+                    return []
+                })
         )
     )
-    return new Map(
-        answers.flat().map(({ id, displayName }) => [id, displayName])
-    )
+    return new Map(answers.flat())
 }
+
+/** The names of the org units and the files the form's values hold, asked for together. */
+const loadNamesOf = (
+    engine: DataEngine,
+    form: Pick<LoadedForm, 'tables' | 'values'>,
+    signal?: AbortSignal
+) =>
+    Promise.all([
+        loadNames(
+            form,
+            ORG_UNIT_TYPES,
+            async (some) =>
+                orgUnitNamesSchema
+                    .parse(
+                        await engine.query(
+                            {
+                                orgUnits: {
+                                    resource: 'organisationUnits',
+                                    params: {
+                                        filter: `id:in:[${some.join(',')}]`,
+                                        fields: 'id,displayName',
+                                        paging: false,
+                                    },
+                                },
+                            },
+                            { signal }
+                        )
+                    )
+                    .orgUnits.organisationUnits.map(
+                        ({ id, displayName }): [string, string] => [
+                            id,
+                            displayName,
+                        ]
+                    ),
+            signal
+        ),
+        loadNames(
+            form,
+            FILE_TYPES,
+            async (some) =>
+                fileNamesSchema
+                    .parse(
+                        await engine.query(
+                            {
+                                files: {
+                                    resource: 'fileResources',
+                                    params: {
+                                        filter: `id:in:[${some.join(',')}]`,
+                                        fields: 'id,name',
+                                        paging: false,
+                                    },
+                                },
+                            },
+                            { signal }
+                        )
+                    )
+                    .files.fileResources.map(
+                        ({ id, name }): [string, string] => [id, name]
+                    ),
+            signal
+        ),
+    ])
 
 /** Events of a program as grid rows: the event date, then the data elements of the rows' stages. */
 export const eventSource = (options: EventSourceOptions): DataEntrySource => {
@@ -472,11 +518,13 @@ export const eventSource = (options: EventSourceOptions): DataEntrySource => {
             )
             saver.remember(loaded.events.events.map(({ event }) => event))
             const form = toForm(loaded, options, options.today ?? localToday())
-            // Asked once the values are known: cells show org units by name.
-            return {
-                ...form,
-                orgUnitNames: await loadOrgUnitNames(engine, form, signal),
-            }
+            // Asked once the values are known: cells show org units and files by name.
+            const [orgUnitNames, fileNames] = await loadNamesOf(
+                engine,
+                form,
+                signal
+            )
+            return { ...form, orgUnitNames, fileNames }
         },
         save: saver.save,
         setStatus: saver.setStatus,

@@ -109,6 +109,13 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
             })),
         [form]
     )
+    const fileNames = useMemo(
+        () =>
+            createStore<{ names: ReadonlyMap<string, string> }>()(() => ({
+                names: form?.fileNames ?? new Map(),
+            })),
+        [form]
+    )
     const userId = account.data?.me.id
     // The user this mount opened the form for. Once DHIS2 names someone else, the form stays locked until a reload.
     const [openedFor, setOpenedFor] = useState<string>()
@@ -284,8 +291,18 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
             addRow: active.addRow,
             overrides: cells,
             orgUnitNames,
+            fileNames,
         }),
-        [active, tables, idScope, settings, announcer, cells, orgUnitNames]
+        [
+            active,
+            tables,
+            idScope,
+            settings,
+            announcer,
+            cells,
+            orgUnitNames,
+            fileNames,
+        ]
     )
     return (
         <DataEntryViewContext.Provider value={view}>

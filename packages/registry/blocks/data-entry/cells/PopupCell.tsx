@@ -1,3 +1,4 @@
+import { useConfig } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import { memo, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
@@ -10,12 +11,15 @@ import { cn } from '@/components/dhis2/ui/cn'
 import { useCellView, useDataEntryContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { POPOVER_CLASS } from './CellStatus'
+import { storedFileUrl } from './editors/FileEditor'
 import { editorFor } from './popupEditors'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
 import { composing, READY_CLASS, useCellMode } from './useCellMode'
 
 // Editors that start from the text typed to open them: the text itself, or a search.
 const FIRST_KEY_TYPES = new Set(['LONG_TEXT', 'ORGANISATION_UNIT', 'USERNAME'])
+// Values that are a file's id; the cell shows the file's name.
+const FILE_TYPES = new Set(['FILE_RESOURCE', 'IMAGE'])
 
 // shortcut: hidden fields still count as focusable; check visibility if an editor keeps hidden fields mounted.
 const FOCUSABLE =
@@ -83,7 +87,9 @@ export const PopupCell = memo(function PopupCell({
     hidden = false,
     aria,
 }: ControlProps) {
-    const { store, settings, announce, orgUnitNames } = useDataEntryContext()
+    const { store, settings, announce, orgUnitNames, fileNames } =
+        useDataEntryContext()
+    const { baseUrl } = useConfig()
     const view = useCellView(cellKey)
     // Only org unit cells read the names, so a new name renders no other cell.
     const names = useStore(orgUnitNames, ({ names: all }) =>
@@ -91,6 +97,21 @@ export const PopupCell = memo(function PopupCell({
     )
     const Editor = editorFor(field.valueType)
     const locked = readOnly !== undefined || Editor === undefined
+    const file = FILE_TYPES.has(field.valueType)
+    // Only file cells read file names, each only its own, so a new name renders no other cell.
+    const fileName = useStore(fileNames, ({ names: all }) =>
+        file && view.value !== undefined ? all.get(view.value) : undefined
+    )
+    // A small preview of an image DHIS2 holds for the event, before its name; one that does not load leaves the name.
+    const image =
+        field.valueType === 'IMAGE' && !hidden
+            ? storedFileUrl(baseUrl, cellKey, view, true)
+            : undefined
+    const [unloadable, setUnloadable] = useState<string>()
+    const preview =
+        image === undefined || image === unloadable
+            ? undefined
+            : `${image}?dimension=SMALL`
     const [opened, setOpened] = useState<Opened | null>(null)
     // The open session, read by saves that come late (an upload), so they close only their own.
     const session = useRef<Opened | null>(null)
@@ -144,10 +165,11 @@ export const PopupCell = memo(function PopupCell({
         setOpened(next)
     }
     const save = (value: string | null) => {
-        commit(value)
+        const result = commit(value)
         if (session.current === opened) {
             saved.current = close()
         }
+        return result
     }
 
     // A rule that locks or hides the cell closes its editor unsaved, and says why.
@@ -223,13 +245,14 @@ export const PopupCell = memo(function PopupCell({
         }
     }
 
-    const stored =
-        field.valueType === 'AGE' && view.value !== undefined
-            ? typedText(DATE, view.value, settings)
-            : formatDhis2Value(view.value, metaOf(field), {
-                  calendar: settings.calendar,
-                  orgUnitNames: names,
-              })
+    const stored = file
+        ? (fileName ?? view.value ?? '')
+        : field.valueType === 'AGE' && view.value !== undefined
+          ? typedText(DATE, view.value, settings)
+          : formatDhis2Value(view.value, metaOf(field), {
+                calendar: settings.calendar,
+                orgUnitNames: names,
+            })
     // One line in the input, which would drop line breaks and run the lines together.
     const shown = hidden
         ? i18n.t('Hidden')
@@ -281,9 +304,20 @@ export const PopupCell = memo(function PopupCell({
                     CONTROL_CLASS,
                     READY_CLASS,
                     locked && LOCKED_CLASS,
-                    hidden && HIDDEN_CLASS
+                    hidden && HIDDEN_CLASS,
+                    preview !== undefined && 'ps-10'
                 )}
             />
+            {preview === undefined ? null : (
+                <img
+                    src={preview}
+                    // The cell says the file's name.
+                    alt=""
+                    loading="lazy"
+                    onError={() => setUnloadable(image)}
+                    className="pointer-events-none absolute start-2 top-1.5 size-6 rounded-dhis2-sm object-cover"
+                />
+            )}
             {opened === null || Editor === undefined ? null : (
                 <div
                     ref={dialog}
@@ -325,6 +359,7 @@ export const PopupCell = memo(function PopupCell({
                         value={view.value}
                         settings={settings}
                         cellId={id}
+                        cellKey={cellKey}
                         labelledBy={labelledBy}
                         hiddenOptions={view.effects.hiddenOptions}
                         save={save}

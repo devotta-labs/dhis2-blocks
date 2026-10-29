@@ -1,0 +1,53 @@
+{
+    "httpStatus": "Accepted",
+    "httpStatusCode": 202,
+    "status": "OK",
+    "response": {
+        "fileResource": {
+            "name": "data-entry-check.txt",
+            "created": "2026-10-29T07:31:54.653",
+            "lastUpdated": "2026-10-29T07:31:54.653",
+            "translations": [],
+            "createdBy": {
+                "id": "xE7jOejl9FI",
+                "code": null,
+                "name": "John Traore",
+                "displayName": "John Traore",
+                "username": "admin"
+            },
+            "favorites": [],
+            "lastUpdatedBy": {
+                "id": "xE7jOejl9FI",
+                "code": null,
+                "name": "John Traore",
+                "displayName": "John Traore",
+                "username": "admin"
+            },
+            "sharing": {
+                "owner": "xE7jOejl9FI",
+                "users": {},
+                "userGroups": {},
+                "public": "--------"
+            },
+            "contentType": "text/plain",
+            "contentLength": 1,
+            "contentMd5": "9dd4e461268c8034f5c8564e155c67a6",
+            "assigned": false,
+            "domain": "DATA_VALUE",
+            "hasMultipleStorageFiles": false,
+            "storageStatus": "PENDING",
+            "displayName": "data-entry-check.txt",
+            "favorite": false,
+            "user": {
+                "id": "xE7jOejl9FI",
+                "code": null,
+                "name": "John Traore",
+                "displayName": "John Traore",
+                "username": "admin"
+            },
+            "id": "lzVZJQy3Eqi",
+            "attributeValues": []
+        },
+        "responseType": "FileResource"
+    }
+}

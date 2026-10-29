@@ -113,6 +113,7 @@ export const visitForm = ({
         orgUnitId: ORG_UNIT,
     },
     orgUnitNames: new Map(),
+    fileNames: new Map(),
 })
 
 // Gates still closed when a test ends are opened, so no sync loop keeps its lock.

@@ -49,6 +49,8 @@ export interface DataEntryContext {
     overrides?: CellOverrides
     /** Names of org units by id: those the form's values hold, then those picked in an editor. Org unit cells show them. */
     orgUnitNames: StoreApi<{ names: ReadonlyMap<string, string> }>
+    /** Names of files by id: those the form's values hold, then those uploaded in an editor. File cells show them. */
+    fileNames: StoreApi<{ names: ReadonlyMap<string, string> }>
 }
 
 // Long enough for screen readers to notice the region emptied, so the same text said twice is heard twice.

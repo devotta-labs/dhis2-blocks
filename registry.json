@@ -681,6 +681,11 @@
                     "target": "@components/data-entry/cells/editors/EditorButtons.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/FileEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/FileEditor.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/cells/editors/LongTextEditor.tsx",
                     "type": "registry:file",
                     "target": "@components/data-entry/cells/editors/LongTextEditor.tsx"
@@ -709,6 +714,11 @@
                     "path": "packages/registry/blocks/data-entry/cells/editors/age.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/cells/editors/age.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/fileApi.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/fileApi.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/cells/popupEditors.ts",

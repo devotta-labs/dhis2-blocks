@@ -219,6 +219,22 @@ values load with the form (200 ids a request, sent together, only when there are
 org units showing their ids, and the form opens all the same), and a pick shows its name at once. A username cell shows
 the username.
 
+A file or image cell shows the file's name, and an image DHIS2 holds for the event a small preview beside it (the
+`SMALL` size; one that does not load leaves the name alone). The names of the stored files load with the form, as org
+unit names do and at the same time (`fileResources`, 200 ids a request); a request that fails leaves its files showing
+their ids. The editor offers "Choose a file" ("Choose an image", for images only) and, when the cell has a value,
+"Remove", which saves no value. A chosen file is uploaded to DHIS2 at once (`POST /api/fileResources`, domain
+`DATA_VALUE`), since a file cannot wait in the outbox; its id is then saved to the cell like any value, named from the
+upload's answer, even when the upload finishes after the person has left the cell, which is then said ("Uploaded …", or
+"Not saved: …" with the reason when the cell no longer takes it). A newer choice, "Remove" or Save in the cell stops an
+upload still running from before. While it uploads the editor says "Uploading …"; Cancel or Escape stops the upload
+and keeps the value. A failed upload keeps the value and says why: DHIS2's reason ("Could not upload the file: …"),
+"Connect to the internet to upload files" without a connection, or "Could not upload the file. Try again.". Offline,
+the editor says so and uploads nothing. A file DHIS2 holds for the event shows its name and "Download", and an image a
+preview, both from the event's own endpoints (`/api/tracker/events/{event}/dataValues/{dataElement}/file` and
+`/image`); a new file, not yet saved to the event, shows its name. File cells read each row as an event and each column
+as a data element, as the event source makes them.
+
 Dates are typed and shown in the system calendar and date format, and an empty date cell says the format
 ("Date format: DD-MM-YYYY"). A row is named by its event date in that format once it has one, its stage after it where
 the grid shows several; a new row is "New event" until its date is typed.
@@ -292,6 +308,6 @@ The `performance` measures `data-entry:rules` (the first slice) and `data-entry:
   attribute categories. `TRACKER_ASSOCIATE`, `REFERENCE`, `GEOJSON`, and a pop-up type without an editor, show their
   value and are edited in their own form.
 - An org unit pasted into a cell shows its id until the form loads again. One picked but not yet sent shows its id
-  after a reload too: names load only for the values DHIS2 holds.
+  after a reload too: names load only for the values DHIS2 holds. So does a file uploaded but not yet sent.
 - A form loads once per mount, and not again when the app invalidates its queries; changes made elsewhere show after
   the next load.

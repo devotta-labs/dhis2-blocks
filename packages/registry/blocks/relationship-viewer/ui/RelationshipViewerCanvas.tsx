@@ -66,11 +66,11 @@ const describe = (summary: OutbreakSummary) => {
     return summary.partial
         ? i18n.t(
               '{{records}} in {{clusters}} over {{generations}}; {{attention}}; some links are not loaded.',
-              values
+              { ...values, interpolation: { escapeValue: false } }
           )
         : i18n.t(
               '{{records}} in {{clusters}} over {{generations}}; {{attention}}.',
-              values
+              { ...values, interpolation: { escapeValue: false } }
           )
 }
 

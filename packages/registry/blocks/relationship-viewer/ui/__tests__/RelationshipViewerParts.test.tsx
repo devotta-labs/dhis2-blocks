@@ -1,131 +1,13 @@
-import React, { useState, type ReactNode } from 'react'
+import React from 'react'
 import { userEvent } from 'vitest/browser'
-import { render } from 'vitest-browser-react'
-import type {
-    DateOf,
-    NodeKey,
-    NodeRecord,
-    RelationshipGraph,
-    RelationshipStatus,
-} from '../../domain/model'
-import { generations, orientEdges } from '../../domain/orientation'
-import { summarize } from '../../domain/summary'
-import { traverse } from '../../domain/traverse'
-import { chains, fakeFetch, superspreaders } from '../../__tests__/fixtures'
+import { chains, superspreaders } from '../../__tests__/fixtures'
 import { dateOf as fixtureDateOf } from '../../__tests__/graph'
-import type {
-    RelationshipViewerActions,
-    RelationshipViewerLayout,
-    RelationshipViewerMeta,
-    RelationshipViewerState,
-} from '../../provider/contracts'
-import { RelationshipViewerProvider } from '../../provider/RelationshipViewerContext'
 import { RelationshipViewerCanvas } from '../RelationshipViewerCanvas'
 import { RelationshipViewerLayoutToggle } from '../RelationshipViewerLayoutToggle'
 import { RelationshipViewerLegend } from '../RelationshipViewerLegend'
 import { RelationshipViewerNotices } from '../RelationshipViewerNotices'
 import { RelationshipViewerSummary } from '../RelationshipViewerSummary'
-
-const STATUSES: RelationshipStatus[] = [
-    {
-        key: 'case',
-        label: 'Case',
-        color: 'red',
-        attention: true,
-        size: 'large',
-    },
-    { key: 'contact', label: 'Contact', color: 'blue' },
-]
-
-const te = (id: string): NodeKey => `trackedEntity:${id}`
-
-const graphOf = (
-    records: NodeRecord[],
-    seedIds: string[],
-    opts: { hops?: number; fail?: string[] } = {}
-): Promise<RelationshipGraph> =>
-    traverse(
-        seedIds.map((id) => ({ kind: 'trackedEntity' as const, id })),
-        fakeFetch(records, { fail: new Set(opts.fail) }),
-        { hops: opts.hops ?? 1, cap: 500, concurrency: 6 }
-    )
-
-interface Setup {
-    graph?: RelationshipGraph
-    status?: RelationshipViewerState['status']
-    error?: unknown
-    dateOf?: DateOf
-    children: ReactNode
-}
-
-const setup = async ({
-    graph,
-    status = 'ready',
-    error,
-    dateOf = fixtureDateOf,
-    children,
-}: Setup) => {
-    const drawn = graph ?? {
-        nodes: new Map(),
-        edges: new Map(),
-        order: [],
-        capped: false,
-    }
-    const statusKey = (node: { seed: boolean }) =>
-        node.seed ? 'case' : 'contact'
-    const orientation = orientEdges(drawn, dateOf)
-    const gens = generations(drawn, orientation)
-    const meta = {
-        statuses: STATUSES,
-        statusOf: (node: { seed: boolean }) =>
-            STATUSES.find((s) => s.key === statusKey(node)),
-        labelOf: (node: { ref: { id: string } }) => node.ref.id,
-        dateOf,
-        orientation,
-        generations: gens,
-        summary: summarize(drawn, orientation, gens, statusKey, STATUSES),
-        cap: 500,
-    }
-    const actions = {
-        setLayout: vi.fn<RelationshipViewerActions['setLayout']>(),
-        select: vi.fn<RelationshipViewerActions['select']>(),
-        expand: vi.fn<RelationshipViewerActions['expand']>(),
-        retry: vi.fn<RelationshipViewerActions['retry']>(),
-    }
-    const Harness = ({ meta }: { meta: RelationshipViewerMeta }) => {
-        const [layout, setLayout] = useState<RelationshipViewerLayout>('web')
-        return (
-            <RelationshipViewerProvider
-                state={{ status, error, graph, layout }}
-                actions={{
-                    ...actions,
-                    setLayout: (next) => {
-                        actions.setLayout(next)
-                        setLayout(next)
-                    },
-                }}
-                meta={meta}
-            >
-                {children}
-            </RelationshipViewerProvider>
-        )
-    }
-    const screen = await render(<Harness meta={meta} />)
-    return {
-        screen,
-        actions,
-        // What a host with inline rules does: equal meta, new objects.
-        rebuildMeta: () =>
-            screen.rerender(
-                <Harness
-                    meta={{ ...meta, orientation: new Map(meta.orientation) }}
-                />
-            ),
-    }
-}
-
-const nodeAt = (container: HTMLElement, key: NodeKey) =>
-    container.querySelector(`[data-node-key="${key}"]`)!
+import { graphOf, nodeAt, setup, te } from './harness'
 
 describe('RelationshipViewer parts', () => {
     it('draws one shape per node and one line per edge', async () => {

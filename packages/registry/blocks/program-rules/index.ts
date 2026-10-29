@@ -1,4 +1,4 @@
-export { loadRuleEngine } from './hooks/loadRuleEngine'
+export { loadRuleEngine, preloadRuleEngine } from './hooks/loadRuleEngine'
 export { programRulesQueryKeys } from './hooks/queryKeys'
 export { useEventsRules } from './hooks/useEventsRules'
 export type {

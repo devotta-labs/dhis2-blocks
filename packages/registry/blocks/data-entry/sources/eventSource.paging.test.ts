@@ -50,6 +50,8 @@ test('loadPage asks for the next page in the same order and size', async () => {
     const signal = new AbortController().signal
     const page = await inpatient(50).loadPage?.(next.engine, 2, signal)
 
+    // A page asks only for its own events: whether the program has rules is the first load's question.
+    expect(next.requests).toHaveLength(1)
     const [[request, options]] = next.requests
     expect(request.events.params).toEqual({
         program: 'eBAyeGv0exc',

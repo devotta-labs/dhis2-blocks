@@ -273,6 +273,12 @@ idle. An edit re-runs its row, and every row of that person when other events re
 once the browser has shown the edit, so typing never waits for rules; completing a row runs them first.
 The `performance` measures `data-entry:rules` (the first slice) and `data-entry:rules-edit` (each edit) time them.
 
+The rule engine is a large chunk, so only a program with rules loads it. The first load asks DHIS2 for one rule's id
+beside the form's own query (`RulesTarget.hasRules`), and the engine starts loading, and runs one empty evaluation to
+warm up, as soon as the form says there are some, while the rules themselves are still being fetched. The form never
+waits for that question: if it fails, or is still out when the form is ready, the form says there are no rules, and
+only the head start is lost; the rules load and report their own failures as usual.
+
 ## Saving
 
 - Every change goes to an IndexedDB outbox on this device, `dhis2-data-entry:<server>:<user id>`, before it is sent,

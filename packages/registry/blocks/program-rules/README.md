@@ -141,6 +141,7 @@ useProgramRuleContext({ programId: string, programStageId: string, enabled?: boo
     error?: Error
 }
 loadRuleEngine(): Promise<RuleEngineModule> // preload the engine earlier if you like
+preloadRuleEngine(): void // loadRuleEngine, then one throwaway evaluation to warm the engine; a failure is forgotten
 programRulesQueryKeys // React Query keys for invalidation
 ```
 

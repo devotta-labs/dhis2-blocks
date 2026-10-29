@@ -123,3 +123,8 @@ export const fileNamesSchema = z.object({
         fileResources: z.array(z.object({ id: z.string(), name: z.string() })),
     }),
 })
+
+/** The id of one of a program's rules, if it has any. */
+export const ruleIdSchema = z.object({
+    rules: z.object({ programRules: z.array(z.object({ id: z.string() })) }),
+})

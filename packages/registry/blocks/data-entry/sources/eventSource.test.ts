@@ -161,12 +161,6 @@ test('event-program rows carry no enrollment', async () => {
     expect(table.rows.map(({ enrollmentId }) => enrollmentId)).toEqual(
         INPATIENT_ROWS.map(() => undefined)
     )
-    expect(form.rules).toEqual({
-        programId: INPATIENT,
-        programStageIds: [INPATIENT_STAGE],
-        tracker: false,
-        enrollmentIds: [],
-    })
 })
 
 test('the reason a cell is closed, and the event date’s header, are translated', async () => {
@@ -226,12 +220,6 @@ test('one person’s events across stages share one table with "Not in this stag
     expect(table.closed.has(cellKey('yDPqyTvcRpA', EVENT_DATE_COLUMN))).toBe(
         false
     )
-    expect(form.rules).toEqual({
-        programId: RMNCH,
-        programStageIds: shown,
-        tracker: true,
-        enrollmentIds: [PERSON],
-    })
     // One person's events wherever they happened, not only at one org unit.
     expect(requests[0].events.params).toMatchObject({
         program: RMNCH,

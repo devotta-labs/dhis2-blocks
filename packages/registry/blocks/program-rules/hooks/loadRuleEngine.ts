@@ -1,5 +1,11 @@
+import { Result } from 'better-result'
 import { useEffect, useState } from 'react'
-import type { RuleEngineModule } from '../lib'
+import { buildRuleContext, evaluateEventRules } from '../lib'
+import type {
+    EventRuleInput,
+    ProgramRulesMetadata,
+    RuleEngineModule,
+} from '../lib'
 
 /** Where the engine's chunk comes from; tests make the import fail. */
 export const ruleEngineChunk = {
@@ -26,6 +32,55 @@ export const loadRuleEngine = (): Promise<RuleEngineModule> => {
         }
     )
     return pending
+}
+
+const NO_METADATA: ProgramRulesMetadata = {
+    programId: '',
+    programName: '',
+    programStages: [],
+    rules: [],
+    variables: [],
+    constants: [],
+    optionSets: [],
+    user: { roleIds: [], groupIds: [] },
+}
+
+const EMPTY_EVENT: EventRuleInput = {
+    event: {
+        id: '',
+        programStageId: '',
+        orgUnitId: '',
+        status: 'ACTIVE',
+        dataValues: {},
+    },
+    otherEvents: [],
+}
+
+let warming: Promise<void> | undefined
+
+/**
+ * Starts the import `useRuleEngine` waits on, then evaluates an empty event once so the first real evaluation does not
+ * pay for the engine's start-up. Call it as soon as a program is known to have rules. It says nothing when it fails:
+ * the failure is forgotten, so the next call tries again.
+ */
+export const preloadRuleEngine = (): void => {
+    warming ??= loadRuleEngine().then(
+        (engine) => {
+            const warm = Result.try(() =>
+                evaluateEventRules(
+                    engine,
+                    buildRuleContext(engine, NO_METADATA),
+                    EMPTY_EVENT
+                )
+            )
+            if (warm.isErr()) {
+                warming = undefined
+            }
+        },
+        () => {
+            warming = undefined
+        }
+    )
 }
 
 interface RuleEngineState {

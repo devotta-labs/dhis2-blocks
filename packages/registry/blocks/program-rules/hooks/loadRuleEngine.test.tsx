@@ -1,9 +1,28 @@
 import { renderHook } from 'vitest-browser-react'
-import { ruleEngineChunk, useRuleEngine } from './loadRuleEngine'
+import {
+    preloadRuleEngine,
+    ruleEngineChunk,
+    useRuleEngine,
+} from './loadRuleEngine'
 
 afterEach(() => vi.restoreAllMocks())
 
 // In its own file: once the engine has loaded, every later use on the page has it at once.
+test('a failed preload is forgotten, so the next attempt tries again', async () => {
+    const load = vi
+        .spyOn(ruleEngineChunk, 'load')
+        .mockRejectedValue(new TypeError('Failed to fetch the chunk'))
+    preloadRuleEngine()
+    await expect.poll(() => load.mock.calls.length).toBe(1)
+    // Asking again until the failure has settled: a failure that was kept would never import again.
+    await expect
+        .poll(() => {
+            preloadRuleEngine()
+            return load.mock.calls.length
+        })
+        .toBeGreaterThan(1)
+})
+
 test('a failed engine import is tried again by the next mount, and when the connection comes back', async () => {
     const fetchChunk = ruleEngineChunk.load
     const load = vi

@@ -7,6 +7,7 @@ import { useStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
 import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { parseDateFormat } from '@/components/dhis2-value-types'
+import { preloadRuleEngine } from '@/components/program-rules'
 import type { CellOverrides } from '../cells/cellProps'
 import { summarise } from '../logic/summary'
 import type { DataEntrySource, LoadedForm } from '../sources/types'
@@ -87,7 +88,14 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
         queryClient
             .fetchQuery({
                 queryKey: ['data-entry', 'form', cacheKey],
-                queryFn: ({ signal }) => source.load(engine, signal),
+                queryFn: async ({ signal }) => {
+                    const fetched = await source.load(engine, signal)
+                    // The engine loads while the rules' metadata does; a program without rules never asks for it.
+                    if (fetched.rules?.hasRules) {
+                        preloadRuleEngine()
+                    }
+                    return fetched
+                },
                 gcTime: 0,
             })
             .then(

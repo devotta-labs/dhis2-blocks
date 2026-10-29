@@ -56,6 +56,7 @@ import {
     rowsAffectedBy,
     scanExpression,
     loadRuleEngine,
+    preloadRuleEngine,
     programRulesQueryKeys,
     useEventsRules,
     useProgramRuleContext,
@@ -117,6 +118,9 @@ export const evaluateLoaded = async (
     const context = buildRuleContext(engine, metadata)
     return evaluateEventRules(engine, context, input)
 }
+
+// A host that knows a program has rules starts the engine early.
+export const startEngine = (): void => preloadRuleEngine()
 
 // The effect maps carry attributions the form can show.
 export const whyHidden = (effects: RuleEffects, fieldId: string): string[] =>

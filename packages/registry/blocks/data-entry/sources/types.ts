@@ -10,6 +10,11 @@ export interface RulesTarget {
     programStageIds: string[]
     tracker: boolean
     enrollmentIds: string[]
+    /**
+     * Whether the program has any rules, asked beside the form's first load (false if that failed or had not answered
+     * when the form was ready). Only a program that has loads the rule engine.
+     */
+    hasRules: boolean
 }
 
 export interface LoadedForm {

@@ -71,6 +71,10 @@ const engineFor = <E>(
     // SAFETY: loading only calls `query`, which answers every request from the fixtures.
     const engine = {
         query: async (request: Request, options: Options) => {
+            // Whether the program has rules is not what these tests count.
+            if (request.rules !== undefined) {
+                return { rules: { programRules: [] } }
+            }
             requests.push([request, options])
             return request.orgUnits === undefined
                 ? { program: inpatientProgram, events, me: meAdmin }

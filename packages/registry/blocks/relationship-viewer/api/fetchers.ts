@@ -15,7 +15,7 @@ import {
 } from './schemas'
 
 const ITEM = 'trackedEntity[trackedEntity],enrollment[enrollment],event[event]'
-export const RELATIONSHIP_FIELDS = `relationships[relationship,relationshipType,bidirectional,createdAt,from[${ITEM}],to[${ITEM}]]`
+const RELATIONSHIP_FIELDS = `relationships[relationship,relationshipType,bidirectional,createdAt,from[${ITEM}],to[${ITEM}]]`
 export const TRACKED_ENTITY_FIELDS = `trackedEntity,trackedEntityType,attributes[attribute,displayName,value],enrollments[enrollment,program,status,followUp,enrolledAt,occurredAt],${RELATIONSHIP_FIELDS}`
 export const ENROLLMENT_FIELDS = `enrollment,trackedEntity,program,status,followUp,enrolledAt,occurredAt,attributes[attribute,displayName,value],${RELATIONSHIP_FIELDS}`
 export const EVENT_FIELDS = `event,program,programStage,status,occurredAt,dataValues[dataElement,value],${RELATIONSHIP_FIELDS}`

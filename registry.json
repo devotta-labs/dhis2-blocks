@@ -599,6 +599,156 @@
             ]
         },
         {
+            "name": "relationship-viewer",
+            "type": "registry:block",
+            "title": "DHIS2 Relationship Viewer",
+            "description": "A composable React 18 Relationship Viewer block that draws the relationship graph around DHIS2 tracker records.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@tanstack/react-query@^5.101.4",
+                "d3-force@^3.0.0",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/spinner",
+                "devotta-labs/dhis2-blocks/table",
+                "devotta-labs/dhis2-blocks/toggle-group"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/api/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/api/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/api/fetchers.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/api/fetchers.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/api/keys.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/api/keys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/api/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/api/schemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/domain/labels.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/domain/labels.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/domain/model.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/domain/model.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/domain/orientation.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/domain/orientation.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/domain/rules.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/domain/rules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/domain/summary.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/domain/summary.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/domain/traverse.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/domain/traverse.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/layout/timeline.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/layout/timeline.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/layout/web.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/layout/web.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/provider/RelationshipViewerContext.tsx",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/provider/RelationshipViewerContext.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/provider/contracts.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/provider/contracts.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/provider/engineAdapter.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/provider/engineAdapter.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/provider/useRelationshipGraph.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/provider/useRelationshipGraph.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/ui/RelationshipViewer.tsx",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/ui/RelationshipViewer.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/ui/RelationshipViewerCanvas.tsx",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/ui/RelationshipViewerCanvas.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/ui/RelationshipViewerLayoutToggle.tsx",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/ui/RelationshipViewerLayoutToggle.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/ui/RelationshipViewerLegend.tsx",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/ui/RelationshipViewerLegend.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/ui/RelationshipViewerList.tsx",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/ui/RelationshipViewerList.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/ui/RelationshipViewerNotices.tsx",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/ui/RelationshipViewerNotices.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/ui/RelationshipViewerSummary.tsx",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/ui/RelationshipViewerSummary.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/ui/useViewBox.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/ui/useViewBox.ts"
+                }
+            ],
+            "docs": "Render RelationshipViewer beneath the DHIS2 app-runtime and TanStack Query providers. The minimal composition is RelationshipViewer with RelationshipViewerCanvas, RelationshipViewerLegend, RelationshipViewerSummary, RelationshipViewerNotices and RelationshipViewerList as children."
+        },
+        {
             "name": "sidebar",
             "type": "registry:block",
             "title": "Sidebar",

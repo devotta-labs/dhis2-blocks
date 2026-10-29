@@ -1,6 +1,6 @@
 import type { NodeRecord, RelationshipGraph, RelationshipNode } from './model'
 
-export type RelationshipEntity =
+type RelationshipEntity =
     | 'TRACKED_ENTITY_INSTANCE'
     | 'PROGRAM_INSTANCE'
     | 'PROGRAM_STAGE_INSTANCE'
@@ -13,7 +13,7 @@ export interface ConstraintMeta {
     }
 }
 
-export interface RelationshipTypeMeta {
+interface RelationshipTypeMeta {
     id: string
     displayName: string
     bidirectional: boolean

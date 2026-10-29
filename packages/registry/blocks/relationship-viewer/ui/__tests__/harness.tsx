@@ -21,7 +21,7 @@ import type {
 } from '../../provider/contracts'
 import { RelationshipViewerProvider } from '../../provider/RelationshipViewerContext'
 
-export const STATUSES: RelationshipStatus[] = [
+const STATUSES: RelationshipStatus[] = [
     {
         key: 'case',
         label: 'Case',

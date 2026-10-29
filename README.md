@@ -273,6 +273,63 @@ derives every item from source:
 The generator rejects imports that would break once installed, such as a
 relative import into another block or an `@/` alias the CLI cannot rewrite.
 
+## Relationship Viewer block
+
+The Relationship Viewer is a read-only source registry block that draws the
+relationships around DHIS2 tracker records as a web or a timeline. Install it
+from the GitHub registry in a project with Tailwind CSS enabled and a valid
+shadcn `components.json` configuration:
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/relationship-viewer
+```
+
+Render `RelationshipViewer` beneath the DHIS2 app-runtime provider and a
+TanStack `QueryClientProvider`. The minimal complete composition is:
+
+```tsx
+import {
+    RelationshipViewer,
+    RelationshipViewerCanvas,
+    RelationshipViewerLayoutToggle,
+    RelationshipViewerLegend,
+    RelationshipViewerList,
+    RelationshipViewerNotices,
+    RelationshipViewerSummary,
+    enrollmentStatus,
+} from '@/components/relationship-viewer'
+
+const statuses = [
+    { key: 'confirmed', label: 'Confirmed', color: '#c0392b', attention: true },
+    { key: 'other', label: 'Other', color: '#7f8c8d' },
+]
+
+<RelationshipViewer
+    seeds={{ refs: [{ kind: 'trackedEntity', id: trackedEntityId }] }}
+    program={programId}
+    statuses={statuses}
+    statusOf={(node) =>
+        enrollmentStatus(node, programId) === 'ACTIVE' ? 'confirmed' : 'other'
+    }
+>
+    <RelationshipViewerLayoutToggle />
+    <RelationshipViewerSummary />
+    <RelationshipViewerNotices />
+    <RelationshipViewerCanvas />
+    <RelationshipViewerLegend />
+    <RelationshipViewerList />
+</RelationshipViewer>
+```
+
+`seeds` is either `{ refs }` or `{ query }`, a tracker query that must name its
+`program`. `hops` (default 1) and `cap` (default 500) bound the traversal, and
+every followed link that is not drawn is shown as a stub count, an "other
+links" count, a failed-node marker or the cap notice. Adjust the import path if
+the project's components alias differs from `@/components`.
+
+DHIS2 omits relationships the user cannot read on both sides, so a record can
+have more links than the viewer shows.
+
 ## UI primitives
 
 The shared DHIS2-styled shadcn primitives live in `packages/registry/components` and are

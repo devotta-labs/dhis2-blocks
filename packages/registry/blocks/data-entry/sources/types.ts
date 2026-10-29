@@ -42,6 +42,8 @@ export interface LoadedForm {
     }
     /** Each stage's closed columns: those of the table its events have no field for; never the event date. */
     closedByStage: ReadonlyMap<string, ReadonlySet<string>>
+    /** The names of the org units the values hold, by id: an org unit cell shows its name. */
+    orgUnitNames: ReadonlyMap<string, string>
 }
 
 export interface DataEntrySource {

@@ -691,6 +691,21 @@
                     "target": "@components/data-entry/cells/editors/MultiSelectEditor.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/OrgUnitEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/OrgUnitEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/SearchEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/SearchEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/UsernameEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/UsernameEditor.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/cells/editors/age.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/cells/editors/age.ts"

@@ -149,6 +149,7 @@ export const mount = async (
                     return current
                 },
                 newRowTables: new Set(newRowTables),
+                orgUnitNames: createStore(() => ({ names: new Map() })),
                 addRow: (tableId) => {
                     added.push(tableId)
                     setTables((all) =>

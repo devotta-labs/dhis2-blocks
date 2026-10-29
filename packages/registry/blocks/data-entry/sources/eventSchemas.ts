@@ -107,3 +107,12 @@ export const eventFormSchema = z.object({
     events: z.object({ events: z.array(eventSchema) }),
     me: z.object({ authorities: z.array(z.string()) }),
 })
+
+/** The names of org units asked for by id. */
+export const orgUnitNamesSchema = z.object({
+    orgUnits: z.object({
+        organisationUnits: z.array(
+            z.object({ id: z.string(), displayName: z.string() })
+        ),
+    }),
+})

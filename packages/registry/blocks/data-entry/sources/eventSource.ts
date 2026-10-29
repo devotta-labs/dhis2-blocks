@@ -1,5 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import type { z } from 'zod'
+import { checkStored } from '@/components/dhis2-value-types'
+import type { Field } from '@/components/dhis2-value-types'
 import { cellKey } from '../model/types'
 import type { CellKey, GridColumn, GridRow } from '../model/types'
 import {
@@ -7,11 +9,17 @@ import {
     EVENT_FIELDS,
     PROGRAM_FIELDS,
     eventFormSchema,
+    orgUnitNamesSchema,
 } from './eventSchemas'
 import type { ProgramStage, TrackerEvent } from './eventSchemas'
 import { eventSaver } from './eventSave'
 import { completionExpired, expiryStart, localToday } from './expiry'
-import type { DataEntrySource, LoadedForm, RulesTarget } from './types'
+import type {
+    DataEngine,
+    DataEntrySource,
+    LoadedForm,
+    RulesTarget,
+} from './types'
 
 export interface EventSourceOptions {
     programId: string
@@ -42,6 +50,11 @@ const READ_ONLY = {
     expiredCompletion: () =>
         i18n.t('This event was completed too long ago to edit'),
 }
+
+// An org unit value is its id.
+const ORG_UNIT: Field = { valueType: 'ORGANISATION_UNIT' }
+// The most ids one names request lists: DHIS2 refuses a URL much longer.
+const IDS_PER_REQUEST = 200
 
 type DataElement =
     ProgramStage['programStageDataElements'][number]['dataElement']
@@ -75,7 +88,7 @@ const toForm = (
     { program, events: { events }, me }: z.infer<typeof eventFormSchema>,
     options: EventSourceOptions,
     today: string
-): LoadedForm => {
+): Omit<LoadedForm, 'orgUnitNames'> => {
     const { programStageId, orgUnitId, enrollmentId, newRowStageId } = options
     const orgUnitMode = options.orgUnitMode ?? 'SELECTED'
     const tracker = program.programType === 'WITH_REGISTRATION'
@@ -333,6 +346,73 @@ const toForm = (
     }
 }
 
+/**
+ * The names of the org units the org unit columns hold, 200 ids a request, sent together; none is made when they hold
+ * none, and a value that is no id is not asked for. Names only help: a request that fails leaves its ids without names,
+ * which the cells then show, and only an abort of the load stops it.
+ */
+const loadOrgUnitNames = async (
+    engine: DataEngine,
+    { tables, values }: Pick<LoadedForm, 'tables' | 'values'>,
+    signal?: AbortSignal
+): Promise<ReadonlyMap<string, string>> => {
+    const ids = new Set<string>()
+    for (const { rows, columns } of tables) {
+        const orgUnitColumns = columns.filter(
+            ({ field }) => field.valueType === ORG_UNIT.valueType
+        )
+        for (const { id: column } of orgUnitColumns) {
+            for (const { id: row } of rows) {
+                const value = values.get(cellKey(row, column))
+                if (
+                    value !== undefined &&
+                    checkStored(ORG_UNIT, value) === undefined
+                ) {
+                    ids.add(value)
+                }
+            }
+        }
+    }
+    const nameSome = async (some: ReadonlyArray<string>) => {
+        try {
+            const { orgUnits } = orgUnitNamesSchema.parse(
+                await engine.query(
+                    {
+                        orgUnits: {
+                            resource: 'organisationUnits',
+                            params: {
+                                filter: `id:in:[${some.join(',')}]`,
+                                fields: 'id,displayName',
+                                paging: false,
+                            },
+                        },
+                    },
+                    { signal }
+                )
+            )
+            return orgUnits.organisationUnits
+        } catch (error) {
+            if (signal?.aborted) {
+                throw error
+            }
+            return []
+        }
+    }
+    const list = [...ids]
+    const answers = await Promise.all(
+        Array.from(
+            { length: Math.ceil(list.length / IDS_PER_REQUEST) },
+            (_, at) =>
+                nameSome(
+                    list.slice(at * IDS_PER_REQUEST, (at + 1) * IDS_PER_REQUEST)
+                )
+        )
+    )
+    return new Map(
+        answers.flat().map(({ id, displayName }) => [id, displayName])
+    )
+}
+
 /** Events of a program as grid rows: the event date, then the data elements of the rows' stages. */
 export const eventSource = (options: EventSourceOptions): DataEntrySource => {
     const { programId, programStageId, orgUnitId, enrollmentId } = options
@@ -391,7 +471,12 @@ export const eventSource = (options: EventSourceOptions): DataEntrySource => {
                 )
             )
             saver.remember(loaded.events.events.map(({ event }) => event))
-            return toForm(loaded, options, options.today ?? localToday())
+            const form = toForm(loaded, options, options.today ?? localToday())
+            // Asked once the values are known: cells show org units by name.
+            return {
+                ...form,
+                orgUnitNames: await loadOrgUnitNames(engine, form, signal),
+            }
         },
         save: saver.save,
         setStatus: saver.setStatus,

@@ -4,6 +4,8 @@ import { AgeEditor } from './editors/AgeEditor'
 import { CoordinateEditor } from './editors/CoordinateEditor'
 import { LongTextEditor } from './editors/LongTextEditor'
 import { MultiSelectEditor } from './editors/MultiSelectEditor'
+import { OrgUnitEditor } from './editors/OrgUnitEditor'
+import { UsernameEditor } from './editors/UsernameEditor'
 
 /** The pop-up value types, which a cell edits in a small editor that opens from it, and each one's editor. */
 interface PopupEditors {
@@ -52,6 +54,8 @@ export const popupEditors: PopupEditors = {
     MULTI_TEXT: MultiSelectEditor,
     AGE: AgeEditor,
     COORDINATE: CoordinateEditor,
+    ORGANISATION_UNIT: OrgUnitEditor,
+    USERNAME: UsernameEditor,
 }
 
 /** Value types whose typed text parses, so paste can fill them. */

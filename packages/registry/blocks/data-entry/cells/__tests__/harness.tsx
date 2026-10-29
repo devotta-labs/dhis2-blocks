@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { CustomDataProvider } from '@dhis2/app-runtime'
+import type { ComponentProps, ReactNode } from 'react'
 import { onTestFinished } from 'vitest'
 import type { Locator } from 'vitest/browser'
 import { createStore } from 'zustand/vanilla'
@@ -16,6 +17,12 @@ import type { PopupEditor, PopupValueType } from '../popupEditors'
 
 const GREGORIAN = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 
+type ServerData = ComponentProps<typeof CustomDataProvider>['data']
+/** The request a fake server's answer is made for. */
+export type ServerRequest = Parameters<
+    Extract<ServerData[string], (...args: never) => void>
+>[1]
+
 export const CELL: CellKey = cellKey('r1', 'c1')
 /** The id of the header that names the cell. */
 export const HEADER = 'header'
@@ -26,12 +33,23 @@ interface RigOptions {
     overrides?: CellOverrides
     /** The system calendar and date format; Gregorian, year first, by default. */
     settings?: ValueSettings
+    /** The names known for org unit ids. */
+    orgUnitNames?: ReadonlyMap<string, string>
+    /** What the fake server answers, for editors that search it. */
+    data?: ServerData
 }
 
 /** One cell in a store of its own, with the effects store and what the cell asked of the grid. */
 export const rig = (
     field: Field,
-    { value, effects, overrides, settings = GREGORIAN }: RigOptions = {}
+    {
+        value,
+        effects,
+        overrides,
+        settings = GREGORIAN,
+        orgUnitNames = new Map(),
+        data = {},
+    }: RigOptions = {}
 ) => {
     const enqueued: Array<[CellKey, string | null, string | null]> = []
     const moves: NavKey[] = []
@@ -71,6 +89,7 @@ export const rig = (
         newRowTables: new Set(),
         addRow: () => {},
         overrides,
+        orgUnitNames: createStore(() => ({ names: orgUnitNames })),
     }
     return {
         store,
@@ -84,10 +103,12 @@ export const rig = (
         },
         /** What the grid would put around a cell: the header that names it. */
         ui: (cell: ReactNode) => (
-            <DataEntryReactContext.Provider value={context}>
-                <span id={HEADER}>Age (years)</span>
-                {cell}
-            </DataEntryReactContext.Provider>
+            <CustomDataProvider data={data}>
+                <DataEntryReactContext.Provider value={context}>
+                    <span id={HEADER}>Age (years)</span>
+                    {cell}
+                </DataEntryReactContext.Provider>
+            </CustomDataProvider>
         ),
         stored: () => store.getState().cells[CELL],
     }

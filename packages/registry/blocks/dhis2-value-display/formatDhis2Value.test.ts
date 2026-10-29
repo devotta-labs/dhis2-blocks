@@ -82,6 +82,14 @@ describe('formatDhis2Value', () => {
             )
         ).toBe('ou2')
     })
+    it('shows a username as stored, without a warning', () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        expect(formatDhis2Value('admin', { valueType: 'USERNAME' }, opts)).toBe(
+            'admin'
+        )
+        expect(warn).not.toHaveBeenCalled()
+        warn.mockRestore()
+    })
     it('returns the raw string for an unknown value type', () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
         expect(

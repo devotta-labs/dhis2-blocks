@@ -103,6 +103,7 @@ export const formatDhis2Value = (
         case 'TEXT':
         case 'LONG_TEXT':
         case 'TIME':
+        case 'USERNAME':
             return value
         case 'MULTI_TEXT':
             return value.split(',').join(', ')

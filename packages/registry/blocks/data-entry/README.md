@@ -208,6 +208,17 @@ read as number cells read them (`.5` is `0.5`; `+8` is refused). In both, Ctrl+E
 coordinate is pasted as `lat, lng` or, with brackets, `[lng,lat]`; an age is pasted as a date in the system calendar and
 date format.
 
+An org unit opens a search of the org units in the user's search scope, by name, code or id, each listed with its path;
+a username opens a search of DHIS2's user lookup, each listed with the user's name and username. A search starts at two
+characters, once typing stops, and highlights the first result: ↑ and ↓ move the highlight, Enter or a click saves a
+result, and Save or Ctrl+Enter saves the highlighted one (nothing, while the search still waits for its answer). Each
+answer is announced ("Results: 2", the count line, or that none was found); a failed search says "You are offline" or
+"Could not search. Try again.". The search opens on the cell's value; emptied, Save or leaving the editor clears it, and
+leaving never saves a result that was not picked. An org unit cell shows the org unit's name: the names of the stored
+values load with the form (200 ids a request, sent together, only when there are any; a request that fails leaves its
+org units showing their ids, and the form opens all the same), and a pick shows its name at once. A username cell shows
+the username.
+
 Dates are typed and shown in the system calendar and date format, and an empty date cell says the format
 ("Date format: DD-MM-YYYY"). A row is named by its event date in that format once it has one, its stage after it where
 the grid shows several; a new row is "New event" until its date is typed.
@@ -280,5 +291,7 @@ The `performance` measures `data-entry:rules` (the first slice) and `data-entry:
   in a stage that blocks entry, expired events (unless the user has `F_EDIT_EXPIRED`), and every event of a program with
   attribute categories. `TRACKER_ASSOCIATE`, `REFERENCE`, `GEOJSON`, and a pop-up type without an editor, show their
   value and are edited in their own form.
+- An org unit pasted into a cell shows its id until the form loads again. One picked but not yet sent shows its id
+  after a reload too: names load only for the values DHIS2 holds.
 - A form loads once per mount, and not again when the app invalidates its queries; changes made elsewhere show after
   the next load.

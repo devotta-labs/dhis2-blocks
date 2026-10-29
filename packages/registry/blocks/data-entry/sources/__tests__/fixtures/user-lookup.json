@@ -1,0 +1,18 @@
+{
+    "users": [
+        {
+            "id": "xE7jOejl9FI",
+            "username": "admin",
+            "firstName": "John",
+            "surname": "Traore",
+            "displayName": "John Traore"
+        },
+        {
+            "id": "BpltgWhrDCd",
+            "username": "dhis2-analytics-admin",
+            "firstName": "John",
+            "surname": "Traore",
+            "displayName": "John Traore"
+        }
+    ]
+}

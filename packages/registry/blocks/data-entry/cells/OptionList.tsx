@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from 'react'
+import type { ReactNode } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import { POPOVER_CLASS } from './CellStatus'
 
@@ -8,19 +9,21 @@ interface OptionListProps {
     labelledBy: string
     /** The matches drawn, best first. */
     codes: ReadonlyArray<string>
-    names: ReadonlyMap<string, string>
+    names: ReadonlyMap<string, ReactNode>
     /** The highlighted match, which Enter picks; -1 for none. */
     active: number
     /** "Showing … of … matches", when more match than are drawn; the cell announces it. */
     count: string
     optionId(code: string): string
     onPick(code: string): void
+    /** Drawn in place, in an editor, rather than over the grid under the cell. */
+    inline?: boolean
 }
 
 /**
  * The open list of an option cell, below it (above when there is no room): the matches, the highlighted one kept in
  * view, and the count when more match than are drawn. Focus stays in the cell, which points at the highlighted match
- * and announces the count.
+ * and announces the count. An editor's search lists its results in it too, in place.
  */
 export const OptionList = ({
     id,
@@ -31,6 +34,7 @@ export const OptionList = ({
     count,
     optionId,
     onPick,
+    inline = false,
 }: OptionListProps) => {
     const list = useRef<HTMLDivElement>(null)
     useLayoutEffect(() => {
@@ -41,8 +45,11 @@ export const OptionList = ({
         <div
             onMouseDown={(event) => event.preventDefault()}
             className={cn(
-                POPOVER_CLASS,
-                'z-50 w-max max-w-[min(30rem,90vw)] min-w-full overflow-hidden supports-[anchor-name:--a]:min-w-[anchor-size(width)] rounded-dhis2-sm border border-dhis2-grey-200 bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover'
+                'overflow-hidden rounded-dhis2-sm border border-dhis2-grey-200 bg-dhis2-popover text-dhis2-popover-foreground',
+                !inline && [
+                    POPOVER_CLASS,
+                    'z-50 w-max max-w-[min(30rem,90vw)] min-w-full supports-[anchor-name:--a]:min-w-[anchor-size(width)] shadow-dhis2-popover',
+                ]
             )}
         >
             <div

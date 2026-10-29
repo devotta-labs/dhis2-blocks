@@ -47,6 +47,8 @@ export interface DataEntryContext {
     newRowTables: ReadonlySet<string>
     addRow(tableId: string): void
     overrides?: CellOverrides
+    /** Names of org units by id: those the form's values hold, then those picked in an editor. Org unit cells show them. */
+    orgUnitNames: StoreApi<{ names: ReadonlyMap<string, string> }>
 }
 
 // Long enough for screen readers to notice the region emptied, so the same text said twice is heard twice.

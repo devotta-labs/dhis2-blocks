@@ -1,6 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import { memo, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
+import { useStore } from 'zustand'
 import { typedText } from '@/components/dhis2-value-types'
 import type { Field } from '@/components/dhis2-value-types'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
@@ -82,8 +83,12 @@ export const PopupCell = memo(function PopupCell({
     hidden = false,
     aria,
 }: ControlProps) {
-    const { store, settings, announce } = useDataEntryContext()
+    const { store, settings, announce, orgUnitNames } = useDataEntryContext()
     const view = useCellView(cellKey)
+    // Only org unit cells read the names, so a new name renders no other cell.
+    const names = useStore(orgUnitNames, ({ names: all }) =>
+        field.valueType === 'ORGANISATION_UNIT' ? all : undefined
+    )
     const Editor = editorFor(field.valueType)
     const locked = readOnly !== undefined || Editor === undefined
     const [opened, setOpened] = useState<Opened | null>(null)
@@ -223,6 +228,7 @@ export const PopupCell = memo(function PopupCell({
             ? typedText(DATE, view.value, settings)
             : formatDhis2Value(view.value, metaOf(field), {
                   calendar: settings.calendar,
+                  orgUnitNames: names,
               })
     // One line in the input, which would drop line breaks and run the lines together.
     const shown = hidden

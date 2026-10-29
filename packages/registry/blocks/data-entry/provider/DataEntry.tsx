@@ -102,6 +102,13 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
         // A source with the same keys is the same form.
     }, [queryClient, cacheKey, engine])
     const form = loaded.form
+    const orgUnitNames = useMemo(
+        () =>
+            createStore<{ names: ReadonlyMap<string, string> }>()(() => ({
+                names: form?.orgUnitNames ?? new Map(),
+            })),
+        [form]
+    )
     const userId = account.data?.me.id
     // The user this mount opened the form for. Once DHIS2 names someone else, the form stays locked until a reload.
     const [openedFor, setOpenedFor] = useState<string>()
@@ -276,8 +283,9 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
             newRowTables: active.newRowTables,
             addRow: active.addRow,
             overrides: cells,
+            orgUnitNames,
         }),
-        [active, tables, idScope, settings, announcer, cells]
+        [active, tables, idScope, settings, announcer, cells, orgUnitNames]
     )
     return (
         <DataEntryViewContext.Provider value={view}>

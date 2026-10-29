@@ -1,6 +1,9 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
+import relationshipViewerFromCaseSource from './relationship-viewer/RelationshipViewerFromCase.tsx?raw'
+import relationshipViewerOutbreakSource from './relationship-viewer/RelationshipViewerOutbreak.tsx?raw'
+import relationshipViewerOverdueSource from './relationship-viewer/RelationshipViewerOverdue.tsx?raw'
 import {
     WorkingListDefaultPlaceholder,
     WorkingListProgramPickerPlaceholder,
@@ -74,6 +77,36 @@ const examples = [
         source: workingListProgramPickerSource,
         minHeight: 730,
         Placeholder: WorkingListProgramPickerPlaceholder,
+    },
+    {
+        slug: 'relationship-viewer/from-case',
+        title: 'Relationships around one case',
+        live: true,
+        Component: lazy(
+            () => import('./relationship-viewer/RelationshipViewerFromCase')
+        ),
+        source: relationshipViewerFromCaseSource,
+        minHeight: 900,
+    },
+    {
+        slug: 'relationship-viewer/outbreak',
+        title: 'Outbreak timeline',
+        live: true,
+        Component: lazy(
+            () => import('./relationship-viewer/RelationshipViewerOutbreak')
+        ),
+        source: relationshipViewerOutbreakSource,
+        minHeight: 900,
+    },
+    {
+        slug: 'relationship-viewer/overdue',
+        title: 'Overdue follow-up rule',
+        live: true,
+        Component: lazy(
+            () => import('./relationship-viewer/RelationshipViewerOverdue')
+        ),
+        source: relationshipViewerOverdueSource,
+        minHeight: 700,
     },
     {
         slug: 'context-selector/basic',

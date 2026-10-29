@@ -1,0 +1,180 @@
+---
+title: Relationship Viewer
+description: A web or timeline of the relationships around tracker records, with an accessible list.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="relationship-viewer/from-case" />
+
+These previews use a small contact-tracing program from this repository's
+e2e seed data, which `pnpm docs:up` loads into the docs backend. Replace the
+IDs with records and a program from your own instance.
+
+## Installation
+
+<InstallCommand item="relationship-viewer" />
+
+## Usage
+
+Pass the records to start from, the statuses you want to show, and a rule
+that picks a status for each record. Then compose the parts your users need.
+
+```tsx
+import {
+    RelationshipViewer,
+    RelationshipViewerCanvas,
+    RelationshipViewerLayoutToggle,
+    RelationshipViewerLegend,
+    RelationshipViewerList,
+    RelationshipViewerNotices,
+    RelationshipViewerSummary,
+    isMarkedForFollowUp,
+    type RelationshipNode,
+    type RelationshipStatus,
+} from '@/components/relationship-viewer'
+
+const statuses: RelationshipStatus[] = [
+    {
+        key: 'followUp',
+        label: 'Marked for follow-up',
+        color: 'var(--color-dhis2-yellow-600)',
+        attention: true,
+    },
+    { key: 'other', label: 'Other', color: 'var(--color-dhis2-blue-600)' },
+]
+
+const statusOf = (node: RelationshipNode) =>
+    isMarkedForFollowUp(node, programId) ? 'followUp' : 'other'
+
+export const Contacts = ({ trackedEntityId }: { trackedEntityId: string }) => (
+    <RelationshipViewer
+        seeds={{ refs: [{ kind: 'trackedEntity', id: trackedEntityId }] }}
+        program={programId}
+        statuses={statuses}
+        statusOf={statusOf}
+    >
+        <RelationshipViewerLayoutToggle />
+        <RelationshipViewerSummary />
+        <RelationshipViewerNotices />
+        <RelationshipViewerCanvas />
+        <RelationshipViewerLegend />
+        <RelationshipViewerList />
+    </RelationshipViewer>
+)
+```
+
+Declare `statuses` and `statusOf` outside the component, or memoise them, so
+the graph's summary is not recomputed on every render. `program` names the
+enrollment the rules read; without it, a seed query's program is used.
+
+The viewer only reads. It has no edit actions and no links into Capture:
+compose your own details panel or actions from the selected record (see
+[Hooks](#hooks)).
+
+## Start from an outbreak
+
+`seeds` can also be a tracker query. It is passed to
+`/api/tracker/trackedEntities`, must name its `program`, and is paged through
+until it ends or the cap is reached. A seed query yields people only; each one
+is then read like any other record. This example starts on the timeline and
+draws two hops out:
+
+<ExampleCard slug="relationship-viewer/outbreak" />
+
+On the timeline, records are placed by their enrollment date (events by their
+occurred date); records without a date go in a separate "No date" lane. Pass
+`dateOf` to use another date.
+
+## Your own status rule
+
+Signals DHIS2 already has come with helpers: `isMarkedForFollowUp` and
+`enrollmentStatus`. Anything more specific is your own rule. Here a contact is
+overdue when their "Last follow-up" date attribute is more than 2 days before
+today:
+
+<ExampleCard slug="relationship-viewer/overdue" />
+
+Statuses marked `attention` get a ring as well as their colour, are listed
+first, and are counted in the summary. A "Show more" button on a record
+draws the links beyond `hops`.
+
+## How it reads DHIS2
+
+Every drawn record costs two requests, made in parallel: the record itself,
+and its relationships from `/api/tracker/relationships`. The second is
+needed because DHIS2 record endpoints embed a one-way relationship only on
+its `from` side. Records are cached with TanStack Query, so expanding a
+record does not read the records already drawn again. `cap` (default 500) bounds the
+number of drawn records; when it is reached a notice says so.
+
+## What the block does not show
+
+- **Relationships hidden by access.** DHIS2 leaves out a relationship
+  unless the user can read its type and both of its sides. The block cannot
+  detect this, so a record can have more links than the viewer shows.
+- **Relationship types you do not follow.** With `followTypes`, links of
+  other types are not drawn; each record shows them as a count of other
+  links instead.
+
+Nothing else is dropped silently: every followed link that is not drawn
+shows as a "Show more" count, a record that could not be loaded, or the cap
+notice.
+
+## API reference
+
+### RelationshipViewer
+
+- `seeds: { refs: NodeRef[] } | { query: SeedQuery }` — **required.** The
+  records to start from (`{ kind: 'trackedEntity' | 'enrollment' | 'event', id }`),
+  or a tracker query naming its `program`.
+- `statuses: RelationshipStatus[]` — **required.** Each status's `key`,
+  `label` and `color`, plus `attention?: boolean` and
+  `size?: 'small' | 'large'`.
+- `statusOf: (node: RelationshipNode) => string` — **required.** Returns a
+  status `key` for a record.
+- `program?: string` — the program whose enrollment the rules read. Defaults
+  to the seed query's program.
+- `hops?: number` — how many links out from the seeds to draw. Defaults to 1.
+- `cap?: number` — the most records to draw. Defaults to 500.
+- `followTypes?: string[]` — relationship type IDs to follow. Defaults to
+  all.
+- `dateOf?: (node: RelationshipNode) => Date | undefined` — a record's place
+  on the timeline. Defaults to `defaultDateOf(program)`.
+- `labelOf?: (node: RelationshipNode, defaultLabel: string) => string` —
+  overrides a record's label. By default it comes from the relationship
+  type's `trackerDataView`, then the tracked entity type's display
+  attributes, then the UID.
+- `layout?: 'web' | 'timeline'` and
+  `onLayoutChange?: (layout) => void` — the layout, controlled. Defaults to
+  `'web'`.
+- `selected?: NodeKey` and `onSelectedChange?: (key?: NodeKey) => void` — the
+  selected record, controlled. Build a key with `nodeKey(ref)`.
+
+### Parts
+
+- `RelationshipViewerCanvas` — the graph in the active layout, with zoom,
+  pan and a Fit button.
+- `RelationshipViewerLayoutToggle` — switch between web and timeline.
+- `RelationshipViewerLegend` — the statuses, record shapes and link kinds.
+- `RelationshipViewerSummary` — records per status, clusters, generations
+  and links out. It says when the picture is partial.
+- `RelationshipViewerNotices` — load errors, records that could not be
+  loaded, and the cap, each with a retry where it applies.
+- `RelationshipViewerList` — the accessible equivalent of the canvas: every
+  record with its status, hop, links and linked records. Selecting and
+  expanding work from here too.
+
+All parts accept `className`.
+
+### Hooks
+
+For your own parts rendered inside `RelationshipViewer`:
+
+- `useRelationshipViewerState()` — loading status, the graph, the layout and
+  the selected record.
+- `useRelationshipViewerMeta()` — the statuses, the status, label and date of
+  each record, and the summary.
+- `useRelationshipViewerActions()` — select, change layout, expand a record,
+  or retry what failed.

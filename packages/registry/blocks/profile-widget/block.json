@@ -1,0 +1,5 @@
+{
+    "title": "Profile widget",
+    "description": "A collapsible tracked entity profile with formatted attributes, an actions menu, changelog, status and delete dialogs.",
+    "docs": "Call useTrackedEntityProfile({ trackedEntityId, programId }) and compose ProfileWidget, ProfileWidgetHeader, ProfileWidgetTitle, ProfileWidgetContent and ProfileWidgetFieldList with one ProfileWidgetField and ProfileWidgetValue per data.fields entry. Gate ProfileWidgetMenuItem on data.permissions and open the controlled ProfileWidgetChangelogDialog, ProfileWidgetStatusDialog and ProfileWidgetDeleteDialog from useState. Use useProfileFields to format values from other sources. Requires a TanStack QueryClientProvider."
+}

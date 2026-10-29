@@ -1,0 +1,474 @@
+---
+title: Profile Widget
+description: A read-only tracked entity profile with formatted attributes, an actions menu, and changelog, status and delete dialogs.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="profile-widget/enrollment" />
+
+This is the Capture app's profile widget, rebuilt from parts. The preview
+loads Sarah Thompson, who is enrolled in the MNCH / PNC (Adult Woman) program
+of the Sierra Leone demo database. The menu actions change real data on the
+preview's DHIS2 server. To use another backend, replace the IDs in the code.
+
+## Installation
+
+<InstallCommand item="profile-widget" />
+
+## Usage
+
+A data hook loads and formats the profile, and presentational parts render it.
+There is no provider or data context between them: you call the hook, decide
+what to show while it loads or fails, and map its fields to rows.
+
+```tsx
+import { ErrorAlert } from '@/components/dhis2/ui/alert'
+import { Spinner } from '@/components/dhis2/ui/spinner'
+import {
+    ProfileWidget,
+    ProfileWidgetContent,
+    ProfileWidgetField,
+    ProfileWidgetFieldList,
+    ProfileWidgetHeader,
+    ProfileWidgetHeaderActions,
+    ProfileWidgetTitle,
+    ProfileWidgetToggle,
+    ProfileWidgetValue,
+    useTrackedEntityProfile,
+} from '@/components/profile-widget'
+
+export const PersonProfile = ({
+    trackedEntityId,
+    programId,
+}: {
+    trackedEntityId: string
+    programId?: string
+}) => {
+    const { data, error, isPending } = useTrackedEntityProfile({
+        trackedEntityId,
+        programId,
+    })
+
+    return (
+        <ProfileWidget>
+            <ProfileWidgetHeader>
+                <ProfileWidgetTitle>
+                    {data?.title ?? 'Profile'}
+                </ProfileWidgetTitle>
+                <ProfileWidgetHeaderActions>
+                    <ProfileWidgetToggle />
+                </ProfileWidgetHeaderActions>
+            </ProfileWidgetHeader>
+            <ProfileWidgetContent>
+                {isPending && <Spinner />}
+                {error && (
+                    <ErrorAlert title="The profile could not be loaded" />
+                )}
+                {data && (
+                    <ProfileWidgetFieldList>
+                        {data.fields.map((field) => (
+                            <ProfileWidgetField
+                                key={field.id}
+                                label={field.label}
+                            >
+                                <ProfileWidgetValue value={field.value} />
+                            </ProfileWidgetField>
+                        ))}
+                    </ProfileWidgetFieldList>
+                )}
+            </ProfileWidgetContent>
+        </ProfileWidget>
+    )
+}
+```
+
+The rest of the model follows from that:
+
+- **The hooks return `{ data, error, isPending }`**, the same shape as TanStack
+  Query. `useTrackedEntityProfile` also returns `isFetching` and `refetch`.
+- **The parts are presentational.** `ProfileWidget` only owns whether it is
+  open. Leave out `ProfileWidgetToggle` and the widget cannot be collapsed.
+- **The menu is yours.** `data.permissions` says which actions the user may
+  take. You render the menu items you want, in any order.
+- **The dialogs are controlled.** Each takes `open` and `onOpenChange`, so you
+  keep the dialog state with `useState` and any button on the page can open
+  them.
+
+The Capture-style widget at the top of the page is the full recipe: Capture's
+loading, error and empty states, a menu in Capture's order, and all three
+dialogs. Open its Code tab to copy it. The block does not ship it as a
+component, so you can change any part of it.
+
+```text
+ProfileWidget
+├─ ProfileWidgetHeader
+│  ├─ ProfileWidgetTitle               data.title
+│  └─ ProfileWidgetHeaderActions
+│     ├─ ProfileWidgetMenu             when any permission is not 'unavailable'
+│     │  └─ ProfileWidgetMenuItem ×3   gated on data.permissions
+│     └─ ProfileWidgetToggle
+└─ ProfileWidgetContent
+   └─ loading, error or empty state, otherwise
+      ProfileWidgetFieldList
+      └─ ProfileWidgetField × n
+         └─ ProfileWidgetValue
+
+Anywhere on the page: ProfileWidgetChangelogDialog, ProfileWidgetStatusDialog
+and ProfileWidgetDeleteDialog, opened from useState.
+```
+
+## Choosing the rows
+
+`data.attributes` holds every attribute the user can read, already formatted,
+in metadata order. `data.fields` holds the rows to show. By default these
+follow Capture:
+
+- With a program: the program's attributes marked _Display in list_, in
+  program order, then the tracked entity type's own _Display in list_
+  attributes that the program does not include.
+- Without a program: the tracked entity type's _Display in list_ attributes.
+- Attributes without a value stay in the list as empty rows.
+
+To choose other rows, pass `selectFields`. It receives `data.attributes` and
+returns the rows. It runs on every render and does not need to be stable.
+The default selector is exported as `selectDisplayInListAttributes`, so you
+can build on it:
+
+```tsx
+const profile = useTrackedEntityProfile({
+    trackedEntityId,
+    programId,
+    selectFields: (attributes) =>
+        selectDisplayInListAttributes(attributes).filter(
+            (attribute) =>
+                attribute.value.kind !== 'empty' &&
+                !hiddenByProgramRules.has(attribute.id)
+        ),
+})
+```
+
+The block does not run program rules. To hide a field that a rule hides,
+filter it out here.
+
+## Values from other sources
+
+`useProfileFields` formats any list of raw values the way the profile does:
+option names, dates in the system calendar, organisation unit names with
+their path, and links to files and images. Use it for event data values, or
+for anything else you load yourself, and render the result with the same
+`ProfileWidgetField` and `ProfileWidgetValue` parts.
+
+This example shows every attribute that has a value, then formats the data
+values of one of the tracked entity's events. The event section has its own
+loading and error state, so a failed event request never hides the
+attributes.
+
+<ExampleCard slug="profile-widget/visit" />
+
+Pass `undefined` while your own request is loading; the hook stays pending
+until you pass the inputs and every file name and organisation unit has
+loaded. For files and images, `fileEndpoint` is the API path of the value.
+The block adds `/file` or `/image` to it. For an event data value, the path
+is:
+
+```text
+tracker/events/{event}/dataValues/{dataElement}
+```
+
+## Actions and dialogs
+
+`data.permissions` has an entry for each action. Each entry is
+`{ status: 'available' }`, `{ status: 'disabled', reason }` or
+`{ status: 'unavailable' }`:
+
+<div className="overflow-x-auto">
+    <table>
+        <thead>
+            <tr>
+                <th>Permission</th>
+                <th>Unavailable when</th>
+                <th>Disabled when</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>`changelog`</td>
+                <td>
+                    The tracked entity type does not have _Enable change log_
+                    turned on. Servers before 2.43 do not have the setting, so
+                    it is always unavailable there.
+                </td>
+                <td>Never</td>
+            </tr>
+            <tr>
+                <td>`setInactive`</td>
+                <td>
+                    The user cannot write data for the tracked entity type, or
+                    the tracked entity has no organisation unit. An inactive
+                    tracked entity can still be activated again.
+                </td>
+                <td>Never</td>
+            </tr>
+            <tr>
+                <td>`delete`</td>
+                <td>
+                    The user cannot write data for the tracked entity type, or
+                    for the program when one is given, or the tracked entity is
+                    inactive.
+                </td>
+                <td>
+                    The user has neither the `F_TEI_CASCADE_DELETE` nor the
+                    `ALL` authority. `reason` explains this; pass it to
+                    `disabledReason` on the menu item.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+The dialogs do not need to sit inside the widget. Here the dialog state lives
+in the page, a toolbar above the widget opens the changelog and status
+dialogs, and the widget has no menu at all. Without a program, the rows are
+the tracked entity type's _Display in list_ attributes.
+
+<ExampleCard slug="profile-widget/toolbar" />
+
+What each dialog does:
+
+- **`ProfileWidgetChangelogDialog`** lists attribute changes ten per page,
+  with previous and next buttons. On 2.42 and later it also
+  filters by data item and sorts by date, user or data item. With a program,
+  only the program's attributes can be filtered on, because those are the
+  only changes the server returns for that program.
+- **`ProfileWidgetStatusDialog`** asks to deactivate the tracked entity, or
+  to activate it when it is inactive. Once saved, the profile reloads, the
+  dialog closes, and `onSuccess` receives the new `inactive` value.
+- **`ProfileWidgetDeleteDialog`** asks to delete the tracked entity, together
+  with its enrollments, events and relationships. Pass `labels={data.labels}`
+  so the warning uses the program's own words for enrollments and events.
+  Deleting cannot be undone. Once deleted, the dialog closes and `onSuccess`
+  runs. Navigate away there, or stop rendering the profile. The dialog never
+  reloads the deleted entity, not even on window focus or reconnect: a widget
+  that stays on screen keeps its last loaded values, and its cached data is
+  dropped when it unmounts.
+
+If saving fails, the dialog stays open and shows the server's error messages.
+To build your own confirmation, use the `useSetTrackedEntityInactive` and
+`useDeleteTrackedEntity` hooks that the dialogs are built on.
+
+## API reference
+
+### Parts
+
+All parts accept `className` and the props of their HTML element.
+
+<div className="overflow-x-auto">
+<table>
+    <thead>
+        <tr>
+            <th>Part</th>
+            <th>Renders</th>
+            <th>Props</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`ProfileWidget`</td>
+            <td>`<section>` labelled by the title</td>
+            <td>`defaultOpen?: boolean` (default `true`), or controlled `open` with `onOpenChange: (open: boolean) => void`. `render` replaces the element.</td>
+        </tr>
+        <tr>
+            <td>`ProfileWidgetHeader`</td>
+            <td>`<div>`</td>
+            <td>The row holding the title and actions.</td>
+        </tr>
+        <tr>
+            <td>`ProfileWidgetTitle`</td>
+            <td>`<h2>`</td>
+            <td>`render` changes the heading level, e.g. `render={<h3 />}`.</td>
+        </tr>
+        <tr>
+            <td>`ProfileWidgetHeaderActions`</td>
+            <td>`<div>`</td>
+            <td>Holds the menu, the toggle and anything else at the end of the header.</td>
+        </tr>
+        <tr>
+            <td>`ProfileWidgetToggle`</td>
+            <td>`<button>` with a chevron</td>
+            <td>`collapseLabel?` and `expandLabel?`. By default the toggle is named by the widget title, and "Collapse" or "Expand" is its tooltip (and its name when there is no title); these props, `aria-label` or `aria-labelledby` replace the name. Your `onClick` runs first; call `event.preventDefault()` to keep the widget as it is.</td>
+        </tr>
+        <tr>
+            <td>`ProfileWidgetContent`</td>
+            <td>`<div>`, hidden while collapsed</td>
+            <td>Base UI `Collapsible.Panel` props.</td>
+        </tr>
+        <tr>
+            <td>`ProfileWidgetFieldList`</td>
+            <td>`<dl>`</td>
+            <td>Name it with `aria-labelledby` when a widget has more than one list.</td>
+        </tr>
+        <tr>
+            <td>`ProfileWidgetField`</td>
+            <td>`<div>` with a `<dt>` and a `<dd>`</td>
+            <td>`label: ReactNode` goes in the `<dt>`, `children` in the `<dd>`.</td>
+        </tr>
+        <tr>
+            <td>`ProfileWidgetValue`</td>
+            <td>The formatted value</td>
+            <td>`value: ProfileFieldValue`, `className?`. It fetches nothing.</td>
+        </tr>
+        <tr>
+            <td>`ProfileWidgetMenu`</td>
+            <td>A "more" button and a dropdown menu</td>
+            <td>`label?: string` (default "More actions") names the button. `children` are menu items.</td>
+        </tr>
+        <tr>
+            <td>`ProfileWidgetMenuItem`</td>
+            <td>A menu item</td>
+            <td>`destructive?: boolean` shows red text. `disabled?: boolean` with `disabledReason?: string` explains why in a tooltip. Other props are Base UI `Menu.Item` props, such as `onClick`.</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+### Dialogs
+
+Every dialog takes `open: boolean` and `onOpenChange: (open: boolean) => void`.
+
+<div className="overflow-x-auto">
+<table>
+    <thead>
+        <tr>
+            <th>Dialog</th>
+            <th>Props</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`ProfileWidgetChangelogDialog`</td>
+            <td>`trackedEntityId: string`, `programId?: string`, and `attributes: readonly TrackedEntityAttributeField[]` (pass `data.attributes`; it labels the rows and fills the data item filter).</td>
+        </tr>
+        <tr>
+            <td>`ProfileWidgetStatusDialog`</td>
+            <td>`trackedEntity: ProfileTrackedEntity` (pass `data.trackedEntity`), `onSuccess?: (inactive: boolean) => void`.</td>
+        </tr>
+        <tr>
+            <td>`ProfileWidgetDeleteDialog`</td>
+            <td>`trackedEntity: ProfileTrackedEntity`, `labels?` (pass `data.labels`; it names enrollments and events in the warning), `onSuccess: () => void` (required: decide where to go once the tracked entity is gone).</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+### Hooks
+
+<div className="overflow-x-auto">
+<table>
+    <thead>
+        <tr>
+            <th>Hook</th>
+            <th>Takes</th>
+            <th>Returns</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>`useTrackedEntityProfile`</td>
+            <td>`{ trackedEntityId, programId?, selectFields? }`</td>
+            <td>`{ data, error, isPending, isFetching, refetch }`. `data` is described below.</td>
+        </tr>
+        <tr>
+            <td>`useProfileFields`</td>
+            <td>`readonly ProfileFieldInput[] | undefined`</td>
+            <td>`{ data: readonly ProfileField[] | undefined, error, isPending }`. `isPending` is also `true` while the inputs are `undefined`.</td>
+        </tr>
+        <tr>
+            <td>`useTrackedEntityChangelog`</td>
+            <td>`{ trackedEntityId, programId?, attributes, page, pageSize, attributeId?, order? }`. `page` starts at 1. `attributeId` and ordering by `username` or `attribute` need 2.42+.</td>
+            <td>`{ data: { entries, hasNextPage } | undefined, error, isPending, isFetching, refetch }`. `refetch` retries the current page.</td>
+        </tr>
+        <tr>
+            <td>`useSetTrackedEntityInactive`</td>
+            <td>Nothing</td>
+            <td>`{ setInactive({ trackedEntityId, inactive }), isPending }`. `setInactive` resolves to a `Result` from `better-result`.</td>
+        </tr>
+        <tr>
+            <td>`useDeleteTrackedEntity`</td>
+            <td>Nothing</td>
+            <td>`{ deleteTrackedEntity(trackedEntityId), isPending }`. `deleteTrackedEntity` resolves to a `Result`.</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+`data` from `useTrackedEntityProfile` contains:
+
+- `title` — "Person profile", or "Profile" when the type has no name.
+- `displayName` — the first two of the tracked entity type's _Display in
+  list_ values, joined with a space.
+- `attributes` — every readable attribute, formatted, as
+  `TrackedEntityAttributeField`s. Besides the `ProfileField` properties, each
+  has `origin` (`'trackedEntityType'`, `'program'` or `'both'`),
+  `displayInList` and `unique`.
+- `fields` — the rows: `selectFields(attributes)`. Each `ProfileField` has
+  `id`, `label`, `valueType`, `rawValue` (the server value) and `value`.
+- `labels` — the program's own words for `attributes`, `enrollments` and
+  `events` on 2.43+, otherwise those defaults.
+- `trackedEntity` — `id`, `programId`, `trackedEntityTypeId`,
+  `trackedEntityTypeName`, `orgUnitId` and `inactive`.
+- `permissions` — `changelog`, `setInactive` and `delete`, as described under
+  [Actions and dialogs](#actions-and-dialogs).
+
+A `ProfileFieldInput` for `useProfileFields` has `id`, `label`, `valueType`
+(the DHIS2 value type as a string; unknown types show as text), `value`
+(`string | null`), and optionally `options` and `fileEndpoint`.
+
+`ProfileWidgetValue` renders a `ProfileFieldValue`, which is one of:
+
+```ts
+type ProfileFieldValue =
+    | { kind: 'empty' }
+    | { kind: 'text'; text: string }
+    | { kind: 'file'; name: string; href: string }
+    | { kind: 'image'; href: string; previewHref: string; alt: string }
+    | { kind: 'organisationUnit'; name: string; path: readonly string[] }
+    | { kind: 'coordinate'; latitude: number; longitude: number }
+    | { kind: 'polygon' }
+```
+
+### Errors
+
+Errors are classes, so you can tell them apart with `instanceof`:
+
+- `TrackedEntityNotAccessibleError` — the tracked entity does not exist, or
+  the user cannot see it in the requested program. Has `trackedEntityId`,
+  `programId` and `httpStatus` (`403` or `404`).
+- `ProfileWidgetRequestError` — any other failed request. Has `operation`
+  and, when the server answered, `httpStatus`.
+- `ProfileWidgetInvalidResponseError` — the server answered with data the
+  block did not expect.
+- `TrackerImportError` — saving a status change or a delete failed. Its
+  `errorReports` list the server's messages.
+
+## Boundaries
+
+- **Read-only.** There is no edit form and no "View profile" dialog, and the
+  tracked entity's geometry is not shown. Program rules are not evaluated;
+  filter hidden fields with `selectFields`.
+- **The program must match an enrollment.** With `programId`, on 2.42+ the
+  tracked entity must be enrolled in, and owned in, that program. Otherwise the
+  server answers 404, and the hook returns a
+  `TrackedEntityNotAccessibleError`. 2.41 does not check the enrollment: it
+  returns the program's attributes whenever the user can reach the owner org
+  unit (the registering org unit when there is no owner), and answers 403
+  only when they cannot. Leave out `programId` to show the tracked entity
+  type's attributes only.
+- **The changelog needs 2.43+.** Earlier servers do not have the tracked
+  entity type's _Enable change log_ setting, so `permissions.changelog` is
+  always `unavailable` there. With a program, changes to the type's own
+  attributes that are not in the program do not appear.
+- **Host requirements.** Render the widget beneath the DHIS2 app-runtime
+  provider and a TanStack `QueryClientProvider`. Every query key starts with
+  `'profile-widget'`.

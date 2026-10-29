@@ -75,8 +75,8 @@ interface Upload {
  * A file, or an image, uploaded to DHIS2 as soon as it is chosen: a file cannot wait in the outbox, its id can. The
  * upload saves the id to the cell it was chosen in, even after the person has moved on, and then says so; a newer
  * choice, Remove or Save in the cell stops it, and so do Cancel and Escape, which keep the value. A file DHIS2 holds for
- * the event offers "Download" and an image a preview; a file not saved to the event yet shows its name. Each upload,
- * and why one failed, is said.
+ * the event offers "Download" in a new tab, and an image a preview, or its name when the image does not load; a file
+ * not saved to the event yet shows its name. Each upload, and why one failed, is said.
  */
 export const FileEditor = ({
     field,
@@ -96,6 +96,8 @@ export const FileEditor = ({
     )
     const [upload, setUpload] = useState<Upload>()
     const [problem, setProblem] = useState<string>()
+    // An image that does not load leaves its name, as in the cell.
+    const [unloadable, setUnloadable] = useState<string>()
     const picker = useRef<HTMLInputElement>(null)
     // Once the editor has closed, an upload that finishes says how it went.
     const closed = useRef(false)
@@ -205,19 +207,23 @@ export const FileEditor = ({
 
     return (
         <>
-            {url !== undefined && image ? (
+            {url !== undefined && image && url !== unloadable ? (
                 <img
-                    src={url}
+                    src={`${url}?dimension=MEDIUM`}
                     alt={name ?? ''}
+                    onError={() => setUnloadable(url)}
                     className="max-h-48 max-w-full self-start rounded-dhis2-sm object-contain"
                 />
             ) : value === undefined ? null : (
                 <p className="flex min-w-0 items-center gap-2">
                     <span className="truncate">{name ?? value}</span>
                     {url === undefined ? null : (
+                        // A new tab: across origins `download` is ignored, and the grid would be navigated away.
                         <a
                             href={url}
                             download
+                            target="_blank"
+                            rel="noopener"
                             className={buttonVariants({
                                 variant: 'link',
                                 size: 'sm',

@@ -156,14 +156,22 @@ test('the button is gone when there is nothing more', async () => {
     expect(asked).toEqual([2])
 })
 
-test('a page that cannot be loaded is said, and the button stays to try again', async () => {
+test('a page that cannot be loaded is said and shown beside the button, which stays to try again', async () => {
+    let answer = () => {}
     const { source, asked } = paged(visitForm({ hasMore: true }), [
         async () => {
             throw new Error('The connection dropped')
         },
-        async () => ({ ...visitForm({ rows: visits(3, 1) }), hasMore: true }),
+        () =>
+            new Promise((resolve) => {
+                answer = () =>
+                    resolve({
+                        ...visitForm({ rows: visits(3, 1) }),
+                        hasMore: true,
+                    })
+            }),
     ])
-    const { context } = await mount(source)
+    const { view, context } = await mount(source)
     await userEvent.click(showMore())
     await expect
         .element(page.getByRole('status'))
@@ -171,8 +179,28 @@ test('a page that cannot be loaded is said, and the button stays to try again', 
     await expect.element(showMore()).toHaveAttribute('aria-disabled', 'false')
     await expect.element(showMore()).toHaveFocus()
     expect(context().tables[0].rows).toHaveLength(2)
+    // Shown, not only said: the reason stays beside the button, which it describes.
+    expect(view().loadMoreError).toBe('The connection dropped')
+    await expect
+        .element(showMore())
+        .toHaveAccessibleDescription('The connection dropped')
+    const reason = document.getElementById(
+        showMore().element().getAttribute('aria-describedby') ?? ''
+    )
+    if (reason === null) {
+        throw new Error('No reason beside the button')
+    }
+    await expect
+        .element(page.elementLocator(reason))
+        .toHaveTextContent('The connection dropped')
+    await expect.element(page.elementLocator(reason)).toBeVisible()
 
+    // Trying again takes the reason away at once.
     await userEvent.click(showMore())
+    expect(view().loadMoreError).toBe(undefined)
+    await expect.poll(() => reason.isConnected).toBe(false)
+    await expect.element(showMore()).not.toHaveAttribute('aria-describedby')
+    answer()
     await expect.poll(() => context().tables[0].rows).toHaveLength(3)
     // The page that failed is asked for again.
     expect(asked).toEqual([2, 2])

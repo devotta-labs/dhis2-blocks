@@ -9,6 +9,7 @@ import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
 import { localToday } from '../../sources/expiry'
+import { futureBirth } from '../../store/store'
 import type { PopupEditorProps } from '../popupEditors'
 import { ageFromBirth, birthFromAge } from './age'
 import type { Age } from './age'
@@ -67,18 +68,24 @@ const readBirth = (
             problem: { message: parsed.problem.message, part: 'birth' },
         }
     }
-    return parsed.value !== undefined && parsed.value > today
-        ? {
-              value: null,
-              problem: {
-                  message: i18n.t(
-                      'Enter a date of birth that is not in the future'
-                  ),
-                  part: 'birth',
-              },
-          }
-        : { value: parsed.value ?? null }
+    const future =
+        parsed.value === undefined
+            ? undefined
+            : futureBirth(parsed.value, today)
+    return future === undefined
+        ? { value: parsed.value ?? null }
+        : { value: null, problem: { message: future, part: 'birth' } }
 }
+
+/** The parts as the cell keeps them when they cannot be saved; an empty part reads as the zero it counts as. */
+const partsText = (texts: Texts) =>
+    i18n.t('Years: {{years}}, months: {{months}}, days: {{days}}', {
+        nsSeparator: '::',
+        years: texts.years.trim() || '0',
+        months: texts.months.trim() || '0',
+        days: texts.days.trim() || '0',
+        interpolation: { escapeValue: false },
+    })
 
 /** An empty part counts as zero; all three empty is no age. */
 const readAge = (texts: Texts, field: Field, today: string): Reading => {
@@ -118,7 +125,8 @@ interface AgeEditorProps extends PopupEditorProps {
  * An age stored as its date of birth, edited as that date (typed in the system calendar and date format) or as years,
  * months and days: typing in one fills the other. Parts left empty count as zero, and are not filled in for the
  * person. Each change is reported, not saved: Save, Ctrl+Enter or ⌘+Enter saves it, and one that cannot be saved
- * (a date in the future, a part that is not a whole number) keeps the editor open with its message.
+ * (a date in the future, a part that is not a whole number) keeps the editor open with its message. Reported, such a
+ * change carries the date of birth or the parts as typed, for the cell to keep.
  */
 export const AgeEditor = ({
     field,
@@ -143,10 +151,16 @@ export const AgeEditor = ({
     // Said on a save that was refused, until the next change.
     const [shown, setShown] = useState<Reading['problem']>()
 
-    const settle = (next: Reading) => {
+    /** Reports what was typed; `text` is what the cell keeps if it cannot be saved. */
+    const settle = (next: Reading, text: string) => {
         setReading(next)
         setShown(undefined)
-        report(next.value, next.problem?.message)
+        report(
+            next.value,
+            next.problem === undefined
+                ? undefined
+                : { message: next.problem.message, text }
+        )
     }
     // Text that cannot be read leaves the other fields as they were.
     const typeBirth = (text: string) => {
@@ -156,7 +170,7 @@ export const AgeEditor = ({
             given.current = next.value
             setAge(textsOf(ageOf(field, next.value, today)))
         }
-        settle(next)
+        settle(next, text)
     }
     const typeAge = (part: keyof Age, text: string) => {
         const texts = { ...age, [part]: text }
@@ -175,7 +189,7 @@ export const AgeEditor = ({
                 next.value === null ? '' : typedText(DATE, next.value, settings)
             )
         }
-        settle(next)
+        settle(next, partsText(texts))
     }
     const commit = () => {
         if (reading.problem === undefined) {

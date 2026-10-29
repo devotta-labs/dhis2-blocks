@@ -91,6 +91,9 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('Values not saved: {{values}}', { nsSeparator: '::' }),
     i18n.t('Waiting for required fields: {{fields}}', { nsSeparator: '::' }),
     i18n.t('Years'),
+    i18n.t('Years: {{years}}, months: {{months}}, days: {{days}}', {
+        nsSeparator: '::',
+    }),
     i18n.t('Yes'),
     i18n.t('You are offline'),
     i18n.t('You do not have access to enter data in this stage'),

@@ -3,16 +3,19 @@ import i18n from '@dhis2/d2-i18n'
 import { memo, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { useStore } from 'zustand'
+import { createStore } from 'zustand/vanilla'
 import { typedText } from '@/components/dhis2-value-types'
 import type { Field } from '@/components/dhis2-value-types'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
 import { cn } from '@/components/dhis2/ui/cn'
 import { useDataEntryContext } from '../provider/context'
+import type { DataEntryContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { POPOVER_CLASS, useCellContext } from './CellStatus'
 import { storedFileUrl } from './editors/FileEditor'
 import { editorFor } from './popupEditors'
+import type { EditorProblem } from './popupEditors'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
 import { composing, READY_CLASS, useCellMode } from './useCellMode'
 
@@ -38,6 +41,11 @@ const AS_IS = { escapeValue: false }
 
 // An age is stored as the date of birth, shown as dates are typed: in the system calendar and date format.
 const DATE: Field = { valueType: 'DATE' }
+
+// What cells that show no names read instead: it never changes, so it renders nothing again.
+const NO_NAMES: DataEntryContext['orgUnitNames'] = createStore(() => ({
+    names: new Map(),
+}))
 
 // What `formatDhis2Value` reads, made once per field: option sets can hold thousands of options.
 const metas = new WeakMap<Field, ValueMeta>()
@@ -75,7 +83,7 @@ interface Opened {
 /** What the editor last said it would save. */
 interface Report {
     value: string | null
-    problem?: string
+    problem?: EditorProblem
 }
 
 /**
@@ -83,7 +91,8 @@ interface Report {
  * small dialog under it (Enter, F2, F4, Alt+↓, a click on the selected cell, a double-click, or typing for editors
  * that start from text). Focus loops inside the dialog until a save, Escape or Cancel brings it back to the cell; a
  * save goes through the cell's `commit`, as typing does, and so does what the editor last reported when focus leaves
- * it. A value type without an editor, or a cell a rule locks or hides, stays read-only.
+ * it, unless it cannot be saved: then the cell keeps it as its draft with the problem, as refused text. The editor
+ * opens on the stored value. A value type without an editor, or a cell a rule locks or hides, stays read-only.
  */
 export const PopupCell = memo(function PopupCell({
     id,
@@ -99,16 +108,15 @@ export const PopupCell = memo(function PopupCell({
         useDataEntryContext()
     const { baseUrl } = useConfig()
     const { view } = useCellContext()
-    // Only org unit cells read the names, so a new name renders no other cell.
-    const names = useStore(orgUnitNames, ({ names: all }) =>
-        field.valueType === 'ORGANISATION_UNIT' ? all : undefined
-    )
     const Editor = editorFor(field.valueType)
     const locked = readOnly !== undefined || Editor === undefined
     const file = FILE_TYPES.has(field.valueType)
-    // Only file cells read file names, each only its own, so a new name renders no other cell.
-    const fileName = useStore(fileNames, ({ names: all }) =>
-        file && view.value !== undefined ? all.get(view.value) : undefined
+    const orgUnit = field.valueType === 'ORGANISATION_UNIT'
+    // Org unit and file cells show their value's name, each reading only its own, so a new name renders no other cell.
+    const name = useStore(
+        orgUnit ? orgUnitNames : file ? fileNames : NO_NAMES,
+        ({ names }) =>
+            view.value === undefined ? undefined : names.get(view.value)
     )
     // A small preview of an image DHIS2 holds for the event, before its name; one that does not load leaves the name.
     const image =
@@ -156,12 +164,14 @@ export const PopupCell = memo(function PopupCell({
         }
         return back
     }
-    /** Focus left the editor for somewhere else: what it last reported is saved, or why it cannot be is said. */
+    /** Focus left the editor for somewhere else: what it last reported is saved, or kept as the cell's draft. */
     const leave = () => {
         const last = reported.current
         end()
         if (last?.problem !== undefined) {
-            announce(last.problem)
+            store
+                .getState()
+                .keepDraft(cellKey, last.problem.text, last.problem.message)
         } else if (last !== undefined) {
             commit(last.value)
         }
@@ -252,12 +262,15 @@ export const PopupCell = memo(function PopupCell({
     }
 
     const stored = file
-        ? (fileName ?? view.value ?? '')
+        ? (name ?? view.value ?? '')
         : field.valueType === 'AGE' && view.value !== undefined
           ? typedText(DATE, view.value, settings)
           : formatDhis2Value(view.value, metaOf(field), {
                 calendar: settings.calendar,
-                orgUnitNames: names,
+                orgUnitNames:
+                    orgUnit && view.value !== undefined && name !== undefined
+                        ? new Map([[view.value, name]])
+                        : undefined,
             })
     // One line in the input, which would drop line breaks and run the lines together.
     const shown = hidden

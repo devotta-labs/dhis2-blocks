@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-29T10:43:41.227Z\n"
-"PO-Revision-Date: 2026-10-29T10:43:41.227Z\n"
+"POT-Creation-Date: 2026-10-29T12:02:31.606Z\n"
+"PO-Revision-Date: 2026-10-29T12:02:31.606Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -372,6 +372,9 @@ msgstr "Waiting for required fields: {{fields}}"
 
 msgid "Years"
 msgstr "Years"
+
+msgid "Years: {{years}}, months: {{months}}, days: {{days}}"
+msgstr "Years: {{years}}, months: {{months}}, days: {{days}}"
 
 msgid "Yes"
 msgstr "Yes"

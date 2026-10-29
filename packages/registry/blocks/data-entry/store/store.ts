@@ -1,7 +1,9 @@
+import i18n from '@dhis2/d2-i18n'
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import { checkStored, parseTyped } from '@/components/dhis2-value-types'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import { localToday } from '../sources/expiry'
 import type {
     CellKey,
     CellState,
@@ -40,6 +42,11 @@ export interface DataEntryState {
     /** Drops a cell's draft and its error: nothing is enqueued and there is nothing to undo. */
     discardDraft(key: CellKey): void
     /**
+     * Keeps input a pop-up editor could not save as the cell's draft, with the editor's reason as its error, as a
+     * refused commit keeps text; nothing is enqueued.
+     */
+    keepDraft(key: CellKey, draft: string, error: string): void
+    /**
      * Reverts the person's last commit (every cell of it), as new changes. Returns the cells it changed, in the order
      * they were committed; none when there was nothing to undo.
      */
@@ -65,6 +72,12 @@ export interface DataEntryState {
         >
     ): void
 }
+
+/** Why a date of birth (`YYYY-MM-DD`) after `today` cannot be an age's; undefined for one up to today. */
+export const futureBirth = (birth: string, today: string) =>
+    birth > today
+        ? i18n.t('Enter a date of birth that is not in the future')
+        : undefined
 
 /** What a cell with no entry reads as; one stable object. */
 export const EMPTY_CELL: Readonly<CellState> = Object.freeze({
@@ -210,12 +223,24 @@ export const createDataEntryStore = ({
                     }
                     const cell = read(key) ?? EMPTY_CELL
                     const parsed = parseTyped(field, text, settings)
-                    // A rule's own values are not checked against what rules hide.
+                    // A value the cell holds is not checked again. An age is checked against the device's date; a
+                    // rule's own values are not checked against what rules hide.
                     const error = !parsed.ok
                         ? parsed.problem.message
-                        : parsed.value === undefined || source === 'rule'
+                        : parsed.value === undefined ||
+                            parsed.value === cell.value
                           ? undefined
-                          : refusal(key, field, cell.value, parsed.value)
+                          : ((field.valueType === 'AGE'
+                                ? futureBirth(parsed.value, localToday())
+                                : undefined) ??
+                            (source === 'rule'
+                                ? undefined
+                                : refusal(
+                                      key,
+                                      field,
+                                      cell.value,
+                                      parsed.value
+                                  )))
                     if (!parsed.ok || error !== undefined) {
                         write(key, { ...cell, draft: text, error })
                         return 'invalid'
@@ -265,6 +290,11 @@ export const createDataEntryStore = ({
                             error: undefined,
                         })
                     }
+                })
+            },
+            keepDraft(key, draft, error) {
+                edit(({ read, write }) => {
+                    write(key, { ...(read(key) ?? EMPTY_CELL), draft, error })
                 })
             },
             undo() {

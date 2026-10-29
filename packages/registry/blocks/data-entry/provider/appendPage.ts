@@ -203,7 +203,8 @@ interface PagesOptions {
 
 /**
  * The view's `loadMore` for the open form of a source with pages: each call appends the page after the last one, one
- * at a time, and says how many events show; a page that fails to load says why and is asked for again next time.
+ * at a time, and says how many events show; a page that fails to load says why, keeps why in `loadMoreError` until
+ * the next try, and is asked for again next time.
  * Returns the form as DHIS2 had it with every page loaded, for the form to show when it locks.
  */
 export const usePages = ({
@@ -236,7 +237,7 @@ export const usePages = ({
                     return
                 }
                 loading = true
-                view.setState({ loadingMore: true })
+                view.setState({ loadingMore: true, loadMoreError: undefined })
                 await source
                     .loadPage?.(engine, pages + 1, stop.signal)
                     .then(async (page) => {
@@ -268,10 +269,12 @@ export const usePages = ({
                             })
                         )
                     })
-                    // Said as the form says why it could not load.
+                    // Said as the form says why it could not load, and shown beside the button.
                     .catch((error: Error) => {
                         if (!stop.signal.aborted) {
-                            announce(reasonOf(error))
+                            const reason = reasonOf(error)
+                            view.setState({ loadMoreError: reason })
+                            announce(reason)
                         }
                     })
                 loading = false
@@ -285,6 +288,7 @@ export const usePages = ({
             view.setState({
                 hasMore: false,
                 loadingMore: false,
+                loadMoreError: undefined,
                 loadMore: NOTHING_MORE,
             })
         }

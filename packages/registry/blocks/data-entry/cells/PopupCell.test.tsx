@@ -1,4 +1,5 @@
 /// <reference types="@vitest/browser-playwright" />
+import { Profiler } from 'react'
 import { createPortal } from 'react-dom'
 import { onTestFinished } from 'vitest'
 import { cdp, page, userEvent } from 'vitest/browser'
@@ -29,7 +30,12 @@ const Stub = ({ value, firstKey, save, report, cancel }: PopupEditorProps) => (
             aria-label="Draft"
             defaultValue={firstKey ?? value}
             onChange={({ target: { value: text } }) =>
-                report(text, text.startsWith('!') ? PROBLEM : undefined)
+                report(
+                    text,
+                    text.startsWith('!')
+                        ? { message: PROBLEM, text }
+                        : undefined
+                )
             }
         />
         <button type="button" onClick={() => save('two\nlines')}>
@@ -111,9 +117,9 @@ test('Tab and Shift+Tab stay inside the editor; Cancel closes it', async () => {
     expect(enqueued).toEqual([])
 })
 
-test('a press outside the editor saves what it last reported, or says why it cannot', async () => {
+test('a press outside the editor saves what it last reported, or keeps what it cannot save as the cell’s draft', async () => {
     withEditor('LONG_TEXT', Stub)
-    const { cell, stored, enqueued, announced } = await mount(LONG_TEXT, {
+    const { cell, stored, enqueued } = await mount(LONG_TEXT, {
         value: 'Some notes',
     })
     const outside = page.getByText('Age (years)')
@@ -138,7 +144,43 @@ test('a press outside the editor saves what it last reported, or says why it can
     await userEvent.fill(draft, '!Seen')
     await userEvent.click(outside)
     await expect.element(dialog).not.toBeInTheDocument()
-    expect(stored()?.value).toBe('Seen at home')
+    // Kept as refused text is in any cell: shown, marked, its problem in the notes, nothing saved.
+    expect(stored()).toMatchObject({
+        value: 'Seen at home',
+        draft: '!Seen',
+        error: PROBLEM,
+    })
+    await expect.element(cell).toHaveValue('!Seen')
+    await expect.element(cell).toHaveAttribute('aria-invalid', 'true')
+    // Beside the cell's other notes, such as whether its value is saved.
+    await expect.element(cell).toHaveAccessibleDescription(new RegExp(PROBLEM))
+    expect(enqueued).toHaveLength(1)
+
+    // Reopened, the editor starts from the stored value; closing it keeps the draft.
+    inputOf(cell).focus()
+    await userEvent.keyboard('{Enter}')
+    await expect.element(draft).toHaveValue('Seen at home')
+    await userEvent.keyboard('{Escape}')
+    await expect.element(cell).toHaveValue('!Seen')
+    // Escape on the cell hides its notes, then drops the draft.
+    await userEvent.keyboard('{Escape}{Escape}')
+    expect(stored()).toMatchObject({ draft: undefined, error: undefined })
+    await expect.element(cell).toHaveValue('Seen at home')
+    await expect.element(cell).not.toHaveAttribute('aria-invalid')
+})
+
+test('in the grid, what an editor cannot save is said once, where the person is', async () => {
+    withEditor('LONG_TEXT', Stub)
+    const { announced } = await mountGrid([
+        makeTable({ columns: ['Notes'], fields: [LONG_TEXT] }),
+    ])
+    control(cellKey('t1r0', 'c0')).focus()
+    await userEvent.keyboard('{Enter}')
+    await userEvent.fill(draft, '!Seen')
+    await userEvent.click(page.getByRole('button', { name: 'After' }))
+    await expect.element(page.getByRole('dialog')).not.toBeInTheDocument()
+    await expect.poll(() => announced).toEqual([PROBLEM])
+    await nextFrame()
     expect(announced).toEqual([PROBLEM])
 })
 
@@ -375,6 +417,65 @@ test('a rule locking the cell closes its editor without saving', async () => {
     await expect.element(cell).toHaveFocus()
     expect(enqueued).toEqual([])
     expect(announced).toEqual([LOCKED, HIDDEN])
+})
+
+test('an org unit cell renders again only for its own name; other pop-up cells read no names', async () => {
+    const watch = (setup: ReturnType<typeof rig>) => {
+        const read: string[] = []
+        for (const [what, names] of [
+            ['org units', setup.orgUnitNames],
+            ['files', setup.fileNames],
+        ] as const) {
+            const { subscribe } = names
+            names.subscribe = (listener) => {
+                read.push(what)
+                return subscribe(listener)
+            }
+        }
+        return read
+    }
+    let commits = 0
+    const counted = (setup: ReturnType<typeof rig>, field: Field) =>
+        setup.ui(
+            <Profiler
+                id="cell"
+                onRender={() => {
+                    commits += 1
+                }}
+            >
+                <Cell
+                    cellKey={CELL}
+                    field={field}
+                    labelledBy={HEADER}
+                    move={setup.move}
+                />
+            </Profiler>
+        )
+    const ORG_UNIT: Field = { valueType: 'ORGANISATION_UNIT' }
+    const orgUnit = rig(ORG_UNIT, { value: 'ou1' })
+    const read = watch(orgUnit)
+    const screen = await render(counted(orgUnit, ORG_UNIT))
+    const cell = page.getByRole('textbox', { name: 'Age (years)' })
+    await expect.element(cell).toHaveValue('ou1')
+    expect(read).toEqual(['org units'])
+    const before = commits
+    orgUnit.orgUnitNames.setState({ names: new Map([['ou2', 'Bo']]) })
+    await nextFrame()
+    expect(commits).toBe(before)
+    orgUnit.orgUnitNames.setState({
+        names: new Map([
+            ['ou1', 'Ngelehun'],
+            ['ou2', 'Bo'],
+        ]),
+    })
+    await expect.element(cell).toHaveValue('Ngelehun')
+    await screen.unmount()
+
+    const notes = rig(LONG_TEXT, { value: 'Some notes' })
+    const none = watch(notes)
+    await render(counted(notes, LONG_TEXT))
+    await expect.element(cell).toHaveValue('Some notes')
+    expect(none).toEqual([])
 })
 
 test('a value type with no editor stays read-only with "Edit this field in its own form"', async () => {

@@ -3,6 +3,14 @@ import { page, userEvent } from 'vitest/browser'
 import type { Locator } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field } from '@/components/dhis2-value-types'
+import {
+    control,
+    makeTable,
+    mount as mountGrid,
+    paste,
+} from '../../grid/__tests__/gridRig'
+import { cellKey } from '../../model/types'
+import { addDays, localToday } from '../../sources/expiry'
 import { CELL, HEADER, inputOf, rig, withEditor } from '../__tests__/harness'
 import { Cell } from '../Cell'
 import type { PopupEditor } from '../popupEditors'
@@ -92,7 +100,7 @@ test('typing years, months or days fills the date of birth in the system calenda
 })
 
 test('a date of birth in the future is refused with its message', async () => {
-    const { cell, stored, enqueued, announced } = await mount({
+    const { cell, stored, enqueued } = await mount({
         value: '2020-02-29',
     })
     await open(cell)
@@ -116,13 +124,25 @@ test('a date of birth in the future is refused with its message', async () => {
     await expect.element(dialog).not.toBeInTheDocument()
     expect(stored()?.value).toBe('2026-10-27')
 
-    // Focus leaving with a future date saves nothing and says why.
+    // Focus leaving with a future date keeps it in the cell, refused, and saves nothing; Escape on the cell drops it.
     await open(cell)
     await userEvent.fill(birth, '2026-10-28')
     await userEvent.click(page.getByText('Age (years)'))
     await expect.element(dialog).not.toBeInTheDocument()
-    expect(stored()?.value).toBe('2026-10-27')
-    expect(announced).toEqual([FUTURE])
+    expect(stored()).toMatchObject({
+        value: '2026-10-27',
+        draft: '2026-10-28',
+        error: FUTURE,
+    })
+    await expect.element(cell).toHaveValue('2026-10-28')
+    await expect.element(cell).toHaveAttribute('aria-invalid', 'true')
+    // Beside the cell's other notes, such as whether its value is saved.
+    await expect.element(cell).toHaveAccessibleDescription(new RegExp(FUTURE))
+    expect(enqueued).toHaveLength(1)
+    inputOf(cell).focus()
+    await userEvent.keyboard('{Escape}{Escape}')
+    expect(stored()).toMatchObject({ draft: undefined, error: undefined })
+    await expect.element(cell).toHaveValue('2026-10-27')
 
     // A date the calendar does not have is refused with the date message.
     await open(cell)
@@ -132,7 +152,7 @@ test('a date of birth in the future is refused with its message', async () => {
 })
 
 test('negative or fractional parts are refused with "Enter whole numbers of zero or more"', async () => {
-    const { cell, stored, enqueued, announced } = await mount()
+    const { cell, stored, enqueued } = await mount()
     await open(cell)
     await userEvent.fill(years, '-1')
     await expect.element(dialog.getByText(WHOLE)).not.toBeInTheDocument()
@@ -170,13 +190,21 @@ test('negative or fractional parts are refused with "Enter whole numbers of zero
     await expect.element(dialog).not.toBeInTheDocument()
     expect(stored()?.value).toBe('2025-08-27')
 
-    // Focus leaving with a part that is not a whole number saves nothing and says why.
+    // Focus leaving with a part that is not a whole number keeps the parts in the cell, refused, and saves nothing.
     await open(cell)
     await userEvent.fill(days, '-3')
     await userEvent.click(page.getByText('Age (years)'))
     await expect.element(dialog).not.toBeInTheDocument()
-    expect(stored()?.value).toBe('2025-08-27')
-    expect(announced).toEqual([WHOLE])
+    const parts = 'Years: 1, months: 2, days: -3'
+    expect(stored()).toMatchObject({
+        value: '2025-08-27',
+        draft: parts,
+        error: WHOLE,
+    })
+    await expect.element(cell).toHaveValue(parts)
+    // Beside the cell's other notes, such as whether its value is saved.
+    await expect.element(cell).toHaveAccessibleDescription(new RegExp(WHOLE))
+    expect(enqueued).toHaveLength(1)
 })
 
 test('the editor opens on the stored date of birth and its age; a clear saves no value', async () => {
@@ -217,13 +245,19 @@ test('leaving the editor saves the date of birth the age last made', async () =>
     expect(stored()?.value).toBe('2023-10-27')
 })
 
-test('a stored date of birth that is not up to today leaves the age empty', async () => {
-    const { cell } = await mount({ value: '2027-01-01' })
+test('a stored date of birth that is not up to today leaves the age empty, and is kept when saved as it is', async () => {
+    const { cell, stored, enqueued } = await mount({ value: '2999-01-01' })
     await open(cell)
-    await expect.element(birth).toHaveValue('2027-01-01')
+    await expect.element(birth).toHaveValue('2999-01-01')
     await expect.element(years).toHaveValue('')
     await expect.element(months).toHaveValue('')
     await expect.element(days).toHaveValue('')
+    // A value the cell holds is not refused again.
+    await userEvent.click(save())
+    await expect.element(dialog).not.toBeInTheDocument()
+    expect(stored()).toMatchObject({ value: '2999-01-01', sync: 'idle' })
+    expect(stored()?.error).toBeUndefined()
+    expect(enqueued).toEqual([])
 })
 
 test('retyping an age part leaves the date of birth that was typed, and does not move it to another day', async () => {
@@ -281,4 +315,27 @@ test('a problem is shown next to the field it is about', async () => {
     // Under the parts, and not under the date of birth.
     expect(top(whole)).toBeGreaterThanOrEqual(bottom(months))
     await expect.element(birth).not.toHaveAccessibleDescription(WHOLE)
+})
+
+test('a pasted date of birth in the future is refused with the same problem; today is taken', async () => {
+    withEditor('AGE', Today)
+    const { value, store, announced } = await mountGrid([
+        makeTable({ columns: ['Age'], fields: [AGE] }),
+    ])
+    const key = cellKey('t1r0', 'c0')
+    const today = localToday()
+    const tomorrow = addDays(today, 1)
+    control(key).focus()
+    paste(control(key), tomorrow)
+    expect(store.getState().cells[key]).toMatchObject({
+        draft: tomorrow,
+        error: FUTURE,
+    })
+    expect(value(key)).toBeUndefined()
+    await expect
+        .element(page.elementLocator(control(key)))
+        .toHaveAccessibleDescription(FUTURE)
+    expect(announced).toEqual([FUTURE])
+    paste(control(key), today)
+    expect(value(key)).toBe(today)
 })

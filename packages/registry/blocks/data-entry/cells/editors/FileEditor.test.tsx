@@ -444,10 +444,13 @@ test('a stored image shows a preview from the event\'s image endpoint; a file sh
         .toBe(true)
     await expect.poll(() => thumbnail(image.cell)).toBeNull()
     expect(inputOf(image.cell).className).not.toContain('ps-10')
+    // The editor asks for a larger image, and one that does not load leaves the name, as in the cell.
     await open(image.cell)
     await expect
-        .element(dialog.getByRole('img', { name: STORED_NAME }))
-        .toHaveAttribute('src', EVENT_IMAGE)
+        .poll(() => requested(`${EVENT_IMAGE.slice(2)}?dimension=MEDIUM`))
+        .toBe(true)
+    await expect.element(dialog.getByText(STORED_NAME)).toBeVisible()
+    await expect.element(dialog.getByRole('img')).not.toBeInTheDocument()
     await expect.element(button('Choose an image')).toBeVisible()
     expect(picker().getAttribute('accept')).toBe('image/*')
     // A new image DHIS2 does not hold for the event yet shows its name.
@@ -465,8 +468,10 @@ test('a stored image shows a preview from the event\'s image endpoint; a file sh
     expect(thumbnail(file.cell)).toBeNull()
     await open(file.cell)
     await expect.element(dialog.getByText(STORED_NAME)).toBeVisible()
-    await expect
-        .element(dialog.getByRole('link', { name: 'Download' }))
-        .toHaveAttribute('href', EVENT_FILE)
+    const download = dialog.getByRole('link', { name: 'Download' })
+    await expect.element(download).toHaveAttribute('href', EVENT_FILE)
+    // In a new tab: across origins the browser ignores `download`, and the link would take the grid away.
+    await expect.element(download).toHaveAttribute('target', '_blank')
+    await expect.element(download).toHaveAttribute('rel', 'noopener')
     expect(picker().hasAttribute('accept')).toBe(false)
 })

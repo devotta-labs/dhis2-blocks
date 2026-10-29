@@ -119,20 +119,34 @@ test('out-of-range values are refused with their messages', async () => {
     expect(stored()?.value).toBeUndefined()
 })
 
-test('leaving the editor saves what was typed, or says why it cannot be saved; both fields empty clear the value', async () => {
-    const { cell, stored, announced } = await mount({ value: '[-11.4,8.2]' })
+test('leaving the editor saves what was typed, or keeps it in the cell when it cannot be saved; both fields empty clear the value', async () => {
+    const { cell, stored, enqueued } = await mount({ value: '[-11.4,8.2]' })
     await open(cell)
     await userEvent.fill(longitude, '-12')
     await userEvent.click(page.getByText('Age (years)'))
     await expect.element(dialog).not.toBeInTheDocument()
     expect(stored()?.value).toBe('[-12,8.2]')
 
+    // Kept as `lat, lng`, as a coordinate is typed, with the editor's message; nothing is saved.
     await open(cell)
     await userEvent.fill(latitude, '95')
     await userEvent.click(page.getByText('Age (years)'))
     await expect.element(dialog).not.toBeInTheDocument()
-    expect(stored()?.value).toBe('[-12,8.2]')
-    expect(announced).toEqual([LATITUDE])
+    expect(stored()).toMatchObject({
+        value: '[-12,8.2]',
+        draft: '95, -12',
+        error: LATITUDE,
+    })
+    await expect.element(cell).toHaveValue('95, -12')
+    await expect.element(cell).toHaveAttribute('aria-invalid', 'true')
+    // Beside the cell's other notes, such as whether its value is saved.
+    await expect.element(cell).toHaveAccessibleDescription(new RegExp(LATITUDE))
+    expect(enqueued).toHaveLength(1)
+    // Escape on the cell drops it.
+    inputOf(cell).focus()
+    await userEvent.keyboard('{Escape}{Escape}')
+    expect(stored()).toMatchObject({ draft: undefined, error: undefined })
+    await expect.element(cell).toHaveValue('8.2, -12')
 
     await open(cell)
     await userEvent.fill(latitude, '')

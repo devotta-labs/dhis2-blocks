@@ -23,6 +23,13 @@ interface PopupEditors {
 
 export type PopupValueType = keyof PopupEditors
 
+/** Why what an editor holds cannot be saved, and that input as one text the cell can show. */
+export interface EditorProblem {
+    message: string
+    /** The input as it would be typed: `lat, lng` for a coordinate, the date of birth or the parts for an age. */
+    text: string
+}
+
 export interface PopupEditorProps {
     field: Field
     /** The stored value, or undefined for none. */
@@ -36,8 +43,11 @@ export interface PopupEditorProps {
     hiddenOptions?: ReadonlySet<string>
     /** A stored value, or null to clear. The cell commits it, and says whether it took it. */
     save(value: string | null): CommitResult
-    /** The value as it would be saved (null clears), or why it cannot be. Call on every change; the cell saves it when focus leaves the editor, and with a problem saves nothing and announces it. */
-    report(value: string | null, problem?: string): void
+    /**
+     * The value as it would be saved (null clears), or why it cannot be. Call on every change; the cell saves it when
+     * focus leaves the editor, and with a problem saves nothing and keeps the problem's text as its draft.
+     */
+    report(value: string | null, problem?: EditorProblem): void
     cancel(): void
     /**
      * The text typed to open the editor, for editors that start with a search or text: one key, or several characters

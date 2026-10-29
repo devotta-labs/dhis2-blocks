@@ -117,7 +117,8 @@ same order and announces "Events shown: …". The button keeps focus, and says
 it is busy while the page loads. No total is asked for, since counting costs
 DHIS2 a query on large databases, so the button goes only once a page comes
 back short, and focus then moves past the grid. A page that cannot load says
-why, and the button stays to try again.
+why, and shows why beside the button until the next try; the button stays to
+try again.
 
 A page's events join the end of their table, except those already shown, such
 as a new event saved here. A stage the table has no columns for adds its
@@ -157,10 +158,13 @@ Escape or **Cancel** closes the editor without saving. **Save** saves through
 the cell's `commit` and returns to the cell, where the next Enter moves on; in
 long text, age, coordinate and the searches, Ctrl+Enter (⌘+Enter on a Mac)
 saves too. A press outside the editor, or focus moved out of it, saves what
-the editor holds, or says why it cannot be saved. A rule that locks or hides
-the cell while its editor is open closes it unsaved and says why. A block
-pasted from a spreadsheet fills pop-up cells like any cell, except files and
-images.
+the editor holds. What it cannot save stays in the cell as refused typing
+does, as its draft with the problem: a long text as typed, a coordinate as
+`lat, lng`, and an age as its date of birth or its years, months and days.
+Escape on the cell drops it, and the editor opens again on the stored value.
+A rule that locks or hides the cell while its editor is open closes it unsaved
+and says why. A block pasted from a spreadsheet fills pop-up cells like any
+cell, except files and images.
 
 - **Long text** opens a text area: Enter adds a line, and a field mask is
   checked on save.
@@ -170,7 +174,8 @@ images.
   can still be unchecked.
 - **Age** opens the date of birth, in the system calendar and date format, with
   years, months and days beside it: typing in one fills the others. It is
-  stored as the date of birth.
+  stored as the date of birth, and one in the future is refused, typed or
+  pasted.
 - **Coordinate** opens latitude and longitude fields, with no map and no
   location from the device, and is stored as `[lng,lat]`. It is pasted as
   `lat, lng`, or as `[lng,lat]` with brackets.
@@ -281,7 +286,8 @@ in a stage that blocks entry, expired events (unless the user has
 - Events load a page at a time, `pageSize` of them (default 50), in `order`.
   Events added or deleted elsewhere between pages shift DHIS2's pages: a row
   already shown is never shown twice, but one can be left out until the form
-  loads again.
+  loads again. Changing an event date here can move its row to a later page,
+  and so leave one event out the same way.
 - The form loads once per mount, and not again when the app invalidates its
   queries. Changes made elsewhere show after the next load.
 - Program rules run only for rows whose stage the grid shows: the stages of the
@@ -428,6 +434,7 @@ interface DataEntryView {
     discardFailed(): Promise<void>
     hasMore: boolean // the last page came back full: there may be more
     loadingMore: boolean
+    loadMoreError?: string // why the last page could not load, until the next try
     loadMore(): Promise<void> // appends the next page; one at a time
 }
 ```

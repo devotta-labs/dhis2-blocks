@@ -64,7 +64,16 @@ export const CoordinateEditor = ({
         setTexts(next)
         setShown([])
         const { value: reading, wrong } = read(next)
-        report(reading, wrong.length === 0 ? undefined : messages[wrong[0]])
+        report(
+            reading,
+            wrong.length === 0
+                ? undefined
+                : {
+                      message: messages[wrong[0]],
+                      // As a coordinate is typed in a cell or pasted.
+                      text: `${next.latitude.trim()}, ${next.longitude.trim()}`,
+                  }
+        )
     }
     const commit = () => {
         const { value: reading, wrong } = read(texts)

@@ -86,6 +86,10 @@ export const rig = (
         rowNotes: new Map(),
     }))
     const announced: string[] = []
+    const names = {
+        orgUnitNames: createStore(() => ({ names: orgUnitNames })),
+        fileNames: createStore(() => ({ names: fileNames })),
+    }
     const context: DataEntryContext = {
         store,
         effects: effectsStore,
@@ -99,8 +103,7 @@ export const rig = (
         newRowTables: new Set(),
         addRow: () => {},
         overrides,
-        orgUnitNames: createStore(() => ({ names: orgUnitNames })),
-        fileNames: createStore(() => ({ names: fileNames })),
+        ...names,
     }
     const view = createStore<DataEntryView>()(() => ({
         status: 'ready',
@@ -119,6 +122,8 @@ export const rig = (
     return {
         store,
         effects: effectsStore,
+        /** The names the cell shows for org unit and file ids. */
+        ...names,
         enqueued,
         moves,
         /** What the cell said in the grid's live region. */

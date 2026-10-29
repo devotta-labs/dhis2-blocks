@@ -32,7 +32,7 @@ export const LongTextEditor = ({
         if (parsed.ok) {
             report(parsed.value ?? null)
         } else {
-            report(null, parsed.problem.message)
+            report(null, { message: parsed.problem.message, text: next })
         }
     }
     useEffect(() => {

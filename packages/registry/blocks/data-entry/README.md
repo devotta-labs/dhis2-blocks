@@ -84,6 +84,7 @@ interface DataEntryView {
     discardFailed(): Promise<void>
     hasMore: boolean // the last page came back full: there may be more
     loadingMore: boolean
+    loadMoreError?: string // why the last page could not load, until the next try
     loadMore(): Promise<void> // appends the next page; one at a time
 }
 
@@ -103,11 +104,12 @@ The first `pageSize` events load with the form. While a page comes back full, "S
 press appends the next page in the same order, and says "Events shown: …"; it keeps focus, and says it is busy while the
 page loads. No total is asked for, since counting costs DHIS2 a query on large databases, so the button goes only once a
 page comes back short (an empty one when the last was exactly full), and focus moves past the grid. A page that cannot
-load says why, and the button stays to try again. A page's events join the end of their table, except those already
-shown (a new event saved here, say); a stage the table has no columns for adds its columns at the end, "not in this
-stage" for the other rows. Its unsent changes are put back on its cells, in the state they were left in, and its rows'
-rules run as they do on load, with their people: loading a page saves nothing. A source pages with `loadPage(engine,
-page, signal)`, returning a `FormPage`: its rows per table, values, read-only and reopenable rows, names, and `hasMore`.
+load says why, shows why beside the button (`loadMoreError`) until the next try, and the button stays to try again. A
+page's events join the end of their table, except those already shown (a new event saved here, say); a stage the table
+has no columns for adds its columns at the end, "not in this stage" for the other rows. Its unsent changes are put back
+on its cells, in the state they were left in, and its rows' rules run as they do on load, with their people: loading a
+page saves nothing. A source pages with `loadPage(engine, page, signal)`, returning a `FormPage`: its rows per table,
+values, read-only and reopenable rows, names, and `hasMore`.
 
 A source of your own implements `DataEntrySource`: `key` names its unsent changes on the device, `load` returns the
 `LoadedForm` (its tables, values, and what is required or read-only), `save` takes the changes and says what became of
@@ -186,7 +188,7 @@ reason of their own ("Edit this field in its own form"); a replacement is not gi
 
 `useCell(cellKey).commit(text)` saves what a person typed or chose, through the store the default controls use. It
 returns `'queued'` when the value changed (it is on the device, then sent), `'unchanged'` when it did not, and
-`'invalid'` when its type or a rule's hidden options refuse it: the text stays as the cell's `draft` with its `error`,
+`'invalid'` when its type, a rule's hidden options, or (for an age) a date of birth in the future refuse it: the text stays as the cell's `draft` with its `error`,
 and nothing is saved. A cell a rule locks, or whose row is read-only (`effects.readOnly`), is not written to
 (`'unchanged'`); text typed into a cell a rule has hidden, and not locked, is saved, and the rule then clears it. To keep
 a default control's editing, render it from `cells` (`<cells.text {...props} />`) in your control: a default control
@@ -203,13 +205,16 @@ highlights none, so Enter or Tab clears the cell. Delete clears a checkbox, and 
 
 Pop-up types (`LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `ORGANISATION_UNIT`, `USERNAME`, `FILE_RESOURCE` and
 `IMAGE`) show their value as DHIS2 displays it (an age as its date of birth, in the system date format) and are edited
-in a small editor, a dialog named "Edit …" that opens under the cell: Enter, F2, F4, Alt+↓, a click on the selected
-cell or a double-click opens it, and so does typing in long text, org unit and username cells, starting from the text
-typed (a key, or what a dead key or an input method composed). Tab and Shift+Tab stay inside the editor, and the cell's
-notes hide while it is open. Escape or Cancel closes it without saving; a save goes through the cell's `commit` and
-returns to the cell, where the next Enter moves on. A press outside the editor, or focus moved out of it, saves what
-the editor last reported, or says why it cannot be saved. A rule that locks or hides the cell while its editor is open
-closes it unsaved and says why. A pasted block fills pop-up cells like any cell, except files and images.
+in a small editor, a dialog named "Edit …" that opens under the cell: Enter, F2, F4, Alt+↓, a click on the selected cell
+or a double-click opens it, and so does typing in long text, org unit and username cells, starting from the text typed
+(a key, or what a dead key or an input method composed). Tab and Shift+Tab stay inside the editor, and the cell's notes
+hide while it is open. Escape or Cancel closes it without saving; a save goes through the cell's `commit` and returns to
+the cell, where the next Enter moves on. A press outside the editor, or focus moved out of it, saves what the editor
+last reported; what it cannot save stays in the cell as refused typing does, as its draft with the problem (a long text
+as typed, a coordinate as `lat, lng`, an age as its date of birth or as "Years: 1, months: 2, days: -3"), and Escape on
+the cell drops it. Opened again, the editor starts from the stored value, not the draft. A rule that locks or hides the
+cell while its editor is open closes it unsaved and says why. A pasted block fills pop-up cells like any cell, except
+files and images.
 
 Long text opens a text area: Enter adds a line, Ctrl+Enter or ⌘+Enter saves, and a field mask is checked on save, which
 keeps the editor open with its message. A multi-select opens a search over checkboxes (the shared option search, 50 at
@@ -225,7 +230,7 @@ fields (no map, and no location from the device) and is saved as `[lng,lat]`; a 
 longitude outside -180 to 180 keeps the editor open with a message, and both fields empty save no value. Numbers are
 read as number cells read them (`.5` is `0.5`; `+8` is refused). In both, Ctrl+Enter or ⌘+Enter in a field saves. A
 coordinate is pasted as `lat, lng` or, with brackets, `[lng,lat]`; an age is pasted as a date in the system calendar and
-date format.
+date format, and a date of birth in the future is refused there too.
 
 An org unit opens a search of the org units in the user's search scope, by name, code or id, each listed with its path;
 a username opens a search of DHIS2's user lookup, each listed with the user's name and username. A search starts at two
@@ -324,7 +329,7 @@ only the head start is lost; the rules load and report their own failures as usu
 
 - Events load a page at a time, `pageSize` of them (default 50) in `order`. Events added or deleted elsewhere between
   pages shift DHIS2's pages: a row already shown is never shown twice, but one can be left out until the form loads
-  again.
+  again. Changing an event date in this grid can move its row to a later page, and so leave one event out the same way.
 - Values are checked against their value type as they are typed; an option a rule hid is refused like any value that
   is not an option, unless the cell already holds it (a multi-select is checked code by code), so a person can keep
   or remove what was saved before the rule hid it.

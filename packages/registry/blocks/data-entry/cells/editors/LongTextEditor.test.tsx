@@ -90,7 +90,7 @@ test('opening with a typed key starts the text with that key, cursor at the end'
 })
 
 test('a field mask is checked on save and keeps the editor open with the message', async () => {
-    const { cell, stored, enqueued, announced } = await mount(MASKED, {
+    const { cell, stored, enqueued } = await mount(MASKED, {
         value: '123',
     })
     inputOf(cell).focus()
@@ -117,11 +117,27 @@ test('a field mask is checked on save and keeps the editor open with the message
     await expect.element(dialog).not.toBeInTheDocument()
     expect(stored()?.value).toBe('456')
 
-    // Focus leaving with text the mask refuses saves nothing and says why. (The next Enter would move on.)
+    // Focus leaving with text the mask refuses keeps it in the cell, refused, and saves nothing. (The next Enter would
+    // move on.)
     await userEvent.keyboard('{F2}')
     await userEvent.fill(text, '7')
     await userEvent.click(page.getByText('Age (years)'))
     await expect.element(dialog).not.toBeInTheDocument()
-    expect(stored()?.value).toBe('456')
-    expect(announced).toEqual([BAD_FORMAT])
+    expect(stored()).toMatchObject({
+        value: '456',
+        draft: '7',
+        error: BAD_FORMAT,
+    })
+    await expect.element(cell).toHaveValue('7')
+    await expect.element(cell).toHaveAttribute('aria-invalid', 'true')
+    // Beside the cell's other notes, such as whether its value is saved.
+    await expect
+        .element(cell)
+        .toHaveAccessibleDescription(new RegExp(BAD_FORMAT))
+    expect(enqueued).toHaveLength(1)
+    // Escape on the cell drops it.
+    inputOf(cell).focus()
+    await userEvent.keyboard('{Escape}{Escape}')
+    expect(stored()).toMatchObject({ draft: undefined, error: undefined })
+    await expect.element(cell).toHaveValue('456')
 })

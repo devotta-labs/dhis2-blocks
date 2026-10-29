@@ -43,6 +43,7 @@ export default defineConfig({
                         '@base-ui/react/toggle',
                         '@dhis2/ui-icons',
                         'class-variance-authority',
+                        'd3-force',
                     ],
                 },
                 test: {

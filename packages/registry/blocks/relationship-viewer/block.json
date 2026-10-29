@@ -1,0 +1,5 @@
+{
+    "title": "DHIS2 Relationship Viewer",
+    "description": "A composable React 18 Relationship Viewer block that draws the relationship graph around DHIS2 tracker records.",
+    "docs": "Render RelationshipViewer beneath the DHIS2 app-runtime and TanStack Query providers. The minimal composition is RelationshipViewer with RelationshipViewerCanvas, RelationshipViewerLegend, RelationshipViewerSummary, RelationshipViewerNotices and RelationshipViewerList as children."
+}

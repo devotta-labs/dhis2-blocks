@@ -46,10 +46,15 @@ test('y, n and Delete set a Yes/No field; all four arrows move', async () => {
     expect(stored()?.value).toBeUndefined()
 })
 
-test('a Yes/No field is also picked from its list', async () => {
+test('a Yes/No field lists and picks like an option set', async () => {
     const { stored } = await mount(BOOLEAN)
-    await userEvent.selectOptions(yesNo(), 'No')
+    yesNo().element().focus()
+    await userEvent.click(yesNo())
+    await userEvent.click(page.getByRole('option', { name: 'No' }))
     expect(stored()?.value).toBe('false')
+    // Typed and picked: the top match is highlighted, so Enter takes it.
+    await userEvent.keyboard('{F2}{Backspace}{Backspace}ye{Enter}')
+    expect(stored()?.value).toBe('true')
 })
 
 test('Space toggles a checkbox; arrows move', async () => {
@@ -108,7 +113,7 @@ test('a locked Yes/No field takes no keys, still moves and says why', async () =
         effects: { readOnly: reason },
     })
     await expect.element(yesNo()).toHaveAccessibleDescription(reason)
-    await expect.element(yesNo()).toHaveAttribute('aria-readonly', 'true')
+    await expect.element(yesNo()).toHaveAttribute('readonly')
     yesNo().element().focus()
     await userEvent.keyboard('n{Delete}{ArrowRight}')
     expect(stored()?.value).toBe('true')

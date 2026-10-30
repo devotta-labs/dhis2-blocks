@@ -204,7 +204,8 @@ too. A block copied from a spreadsheet pastes from the focused cell, skipping ce
 and moves to its first open cell; text its type refuses stays to be fixed, and no row is added. A note pasted into a long-text cell stays in that cell, line breaks kept, unless it
 holds a tab; a pasted value keeps its quotes unless it is one quoted field, as a spreadsheet wraps a cell. A value its type refuses stays in the cell with its error and is not saved; nothing
 typed is lost. In an option cell, typing lists the matches and Enter or Tab picks the highlighted one; emptied text
-highlights none, so Enter or Tab clears the cell. Delete clears a checkbox, and `y`, `n` and Delete set a Yes/No field.
+highlights none, so Enter or Tab clears the cell. A Yes/No field is an option cell with Yes and No, except that `y`,
+`n` and Delete set it at once. Delete clears a checkbox.
 
 Pop-up types (`LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `ORGANISATION_UNIT`, `USERNAME`, `FILE_RESOURCE` and
 `IMAGE`) show their value as DHIS2 displays it (an age as its date of birth, in the system date format) and are edited

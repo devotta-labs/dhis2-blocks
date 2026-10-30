@@ -1,10 +1,11 @@
 import i18n from '@dhis2/d2-i18n'
-import { memo, useLayoutEffect, useRef } from 'react'
+import { memo, useLayoutEffect, useMemo, useRef } from 'react'
 import type { KeyboardEvent } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
-import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
+import { OptionCell } from './OptionCell'
+import { HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
 import { navKeyOf } from './useCellMode'
 
 const YES_NO_KEYS = new Map([
@@ -14,13 +15,7 @@ const YES_NO_KEYS = new Map([
     ['backspace', ''],
 ])
 
-// Keys with which a select opens its list.
-const opensList = (event: KeyboardEvent) =>
-    event.key === ' ' ||
-    event.key === 'F4' ||
-    (event.altKey && event.key.startsWith('Arrow'))
-
-/** What a Yes/No field and a checkbox share: a value saved at once, and keys that only move. */
+/** A checkbox's control: a value saved at once, and keys that only move. */
 const useChoice = ({ id, labelledBy, move, readOnly, aria }: ControlProps) => {
     const { view } = useCellContext()
     const locked = readOnly !== undefined
@@ -53,73 +48,22 @@ const useChoice = ({ id, labelledBy, move, readOnly, aria }: ControlProps) => {
 }
 
 /**
- * A Yes/No field as a native select: `y`, `n` and Delete set it straight away, arrows move, and Space opens the
- * list. Locked or hidden by a rule, it is the same select, so focus survives.
+ * A Yes/No field as an option cell with two options, so it lists and picks like any option set: `y`, `n` and Delete
+ * set it straight away in Ready, arrows move, and F4 or Alt+Down lists both.
  */
 export const BooleanCell = memo(function BooleanCell(props: ControlProps) {
-    const { hidden = false } = props
-    const { view, locked, save, controlProps, navigate } = useChoice(props)
-    const value = hidden ? '' : (view.value ?? '')
-    return (
-        <select
-            {...controlProps}
-            value={value}
-            onChange={(event) => save(event.target.value)}
-            onMouseDown={(event) => {
-                // A click selects a locked cell; its list does not open.
-                if (locked) {
-                    event.preventDefault()
-                    event.currentTarget.focus()
-                }
-            }}
-            onKeyDown={(event) => {
-                if (navigate(event)) {
-                    return
-                }
-                if (opensList(event)) {
-                    if (locked) {
-                        event.preventDefault()
-                    }
-                    return
-                }
-                if (
-                    event.key === 'Tab' ||
-                    event.ctrlKey ||
-                    event.metaKey ||
-                    /^F\d/.test(event.key)
-                ) {
-                    return
-                }
-                // Each key is its own action: the select's type-ahead would join keys typed within a second.
-                event.preventDefault()
-                const text = YES_NO_KEYS.get(event.key.toLowerCase())
-                if (text !== undefined) {
-                    save(text)
-                }
-            }}
-            className={cn(
-                CONTROL_CLASS,
-                locked && LOCKED_CLASS,
-                hidden && HIDDEN_CLASS
-            )}
-        >
-            {hidden ? (
-                <option value="">{i18n.t('Hidden')}</option>
-            ) : (
-                <>
-                    <option value="" />
-                    <option value="true">{i18n.t('Yes')}</option>
-                    <option value="false">{i18n.t('No')}</option>
-                    {/* A stored value that is neither shows as it is, described by its warning. */}
-                    {value === '' ||
-                    value === 'true' ||
-                    value === 'false' ? null : (
-                        <option value={value}>{value}</option>
-                    )}
-                </>
-            )}
-        </select>
+    const { field } = props
+    const yesNo = useMemo(
+        () => ({
+            ...field,
+            options: [
+                { code: 'true', name: i18n.t('Yes') },
+                { code: 'false', name: i18n.t('No') },
+            ],
+        }),
+        [field]
     )
+    return <OptionCell {...props} field={yesNo} quickKeys={YES_NO_KEYS} />
 }) satisfies CellComponent
 
 /**

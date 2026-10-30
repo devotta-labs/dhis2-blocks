@@ -55,7 +55,8 @@ export const useAnnounced = (text: string) => {
 /**
  * An option set's field: the option's name in one input, and typing lists the matches to pick from. Only the cell
  * being typed in searches and draws a list, so a grid of option cells costs what one of text cells does. Typed text
- * that is no option is saved like any cell's and refused with its error.
+ * that is no option is saved like any cell's and refused with its error. `quickKeys` are keys that, in Ready, save
+ * their text at once instead of starting a search.
  */
 export const OptionCell = memo(function OptionCell({
     id,
@@ -66,7 +67,8 @@ export const OptionCell = memo(function OptionCell({
     readOnly,
     hidden = false,
     aria,
-}: ControlProps) {
+    quickKeys,
+}: ControlProps & { quickKeys?: ReadonlyMap<string, string> }) {
     const { store, settings } = useDataEntryContext()
     const { view } = useCellContext()
     // What has been typed and not yet saved; `null` shows the cell's own text.
@@ -174,6 +176,20 @@ export const OptionCell = memo(function OptionCell({
                     }
                 }}
                 onKeyDown={(event) => {
+                    const quick =
+                        mode === 'ready' &&
+                        !event.altKey &&
+                        !event.ctrlKey &&
+                        !event.metaKey &&
+                        !composing(event)
+                            ? quickKeys?.get(event.key.toLowerCase())
+                            : undefined
+                    if (quick !== undefined) {
+                        // Each key is its own action; `commit` refuses it if a rule has locked the cell.
+                        event.preventDefault()
+                        save(quick)
+                        return
+                    }
                     if (
                         !locked &&
                         !composing(event) &&

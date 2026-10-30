@@ -76,8 +76,7 @@ export const ColumnSettingsDialog = ({
             }}
         >
             <DialogContent
-                size="fluid"
-                position="middle"
+                className="max-h-[calc(100vh-2rem)] w-auto sm:max-w-[calc(100%-2rem)]"
                 closeLabel={translate('Close')}
             >
                 <DialogHeader>

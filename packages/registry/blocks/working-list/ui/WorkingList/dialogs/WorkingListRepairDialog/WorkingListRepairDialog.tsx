@@ -168,7 +168,7 @@ export const WorkingListRepairDialog = ({
             }}
         >
             <DialogContent
-                position="middle"
+                className="max-h-[calc(100vh-2rem)] sm:max-w-[600px]"
                 data-test="repair-working-list-dialog"
                 closeLabel={i18n.t('Close')}
             >

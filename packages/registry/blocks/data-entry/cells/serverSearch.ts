@@ -10,7 +10,7 @@ export const MIN_LENGTH = 2
 const DEBOUNCE_MS = 250
 
 /** A result of a search: the value it saves, and how the list shows it. */
-export interface SearchResult {
+interface SearchResult {
     value: string
     name: string
     /** Shown under the name. */

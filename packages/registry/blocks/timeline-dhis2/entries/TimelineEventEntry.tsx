@@ -8,7 +8,6 @@ import React, {
     type ReactNode,
 } from 'react'
 import { Badge } from '@/components/dhis2/ui/badge'
-import { Button, buttonVariants } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import {
     formatCalendarDate,
@@ -28,6 +27,10 @@ import type { EventEntryData } from '../types'
 import { useEventChangelog } from '../useEventChangelog'
 import { useSpansPrograms } from '../useSpansPrograms'
 import { TimelineSaves } from './TimelineChangeEntry'
+import {
+    TimelineEventAction,
+    TimelineEventNameContext,
+} from './TimelineEventAction'
 
 const TimelineEventContext =
     createContext<TimelineEntry<EventEntryData> | null>(null)
@@ -342,41 +345,6 @@ const EventNote = ({ note }: { note: Note }) => {
     )
 }
 
-const ACTION = cn(
-    buttonVariants({ variant: 'link', size: 'sm' }),
-    'h-auto border-0 p-0 text-sm! leading-5 tracking-normal'
-)
-
-/**
- * A text action in the event's action row, styled like "Show changes": the
- * host's "Open", say. With `href` it renders a link, otherwise a button.
- */
-export const TimelineEventAction = (
-    props:
-        | ({ href?: undefined } & ComponentPropsWithoutRef<typeof Button>)
-        | ({ href: string } & ComponentPropsWithoutRef<'a'>)
-) => {
-    if (props.href !== undefined) {
-        return (
-            <a
-                {...props}
-                data-slot="timeline-event-action"
-                className={cn(ACTION, props.className)}
-            />
-        )
-    }
-    return (
-        <Button
-            type="button"
-            {...props}
-            variant="link"
-            size="sm"
-            data-slot="timeline-event-action"
-            className={cn(ACTION, props.className)}
-        />
-    )
-}
-
 /** The event's notes: one shows as it is; more hide behind a count. */
 export const TimelineEventNotes = ({
     className,
@@ -524,6 +492,22 @@ export const TimelineEventChanges = ({
     )
 }
 
+/** "ANC 1st visit, 12 Jun 2026"; no date where the stage hides due dates. */
+const useEventName = (entry: TimelineEntry<EventEntryData>) => {
+    const { calendar, locale } = useTimelineMeta()
+    const { stage, event, status } = entry.data
+    const name = stage?.name ?? event.programStage
+    const hidesDate =
+        (status === 'scheduled' || status === 'overdue') && stage?.hideDueDate
+    const day = hidesDate ? undefined : storedDay(entry.at)
+    return day === undefined
+        ? name
+        : i18n.t('{{event}}, {{date}}', {
+              event: name,
+              date: formatCalendarDate(day, calendar, locale),
+          })
+}
+
 /**
  * One event: shares the entry with the parts composed inside it and with the
  * host's own children through `useTimelineEventEntry()`. Children default to
@@ -541,46 +525,51 @@ export const TimelineEventEntry = ({
     actions?: ReactNode
 }) => {
     const spansPrograms = useSpansPrograms()
+    const name = useEventName(entry)
     return (
         <TimelineEventContext.Provider value={entry}>
-            <div
-                {...props}
-                data-slot="timeline-event"
-                data-status={entry.data.status}
-                data-marker={MARKER[entry.data.status]}
-                className={cn(
-                    'group/event flex flex-col items-start gap-1 data-[status=skipped]:text-dhis2-grey-700',
-                    className
-                )}
-            >
-                {children ?? (
-                    <>
-                        <span className="flex flex-wrap items-center gap-x-2">
-                            <TimelineEventStage />
-                            {spansPrograms ? <TimelineEventProgram /> : null}
-                            <TimelineEventStatus />
-                        </span>
-                        <TimelineEventMeta>
-                            {/* Midnight is a date stored as a date-time. */}
-                            {storedTime(entry.at) === '00:00' ? null : (
-                                <TimelineTime entry={entry} />
-                            )}
-                            <TimelineEventOrgUnit />
-                            <TimelineEventCompletedBy />
-                        </TimelineEventMeta>
-                        <TimelineEventValues />
-                        <div
-                            data-slot="timeline-event-actions"
-                            className="flex flex-wrap items-baseline gap-x-4 gap-y-1 empty:hidden"
-                        >
-                            <TimelineEventNotes className="contents" />
-                            <TimelineEventChanges className="contents" />
-                            {actions}
-                        </div>
-                    </>
-                )}
-                {children === undefined ? null : actions}
-            </div>
+            <TimelineEventNameContext.Provider value={name}>
+                <div
+                    {...props}
+                    data-slot="timeline-event"
+                    data-status={entry.data.status}
+                    data-marker={MARKER[entry.data.status]}
+                    className={cn(
+                        'group/event flex flex-col items-start gap-1 data-[status=skipped]:text-dhis2-grey-700',
+                        className
+                    )}
+                >
+                    {children ?? (
+                        <>
+                            <span className="flex flex-wrap items-center gap-x-2">
+                                <TimelineEventStage />
+                                {spansPrograms ? (
+                                    <TimelineEventProgram />
+                                ) : null}
+                                <TimelineEventStatus />
+                            </span>
+                            <TimelineEventMeta>
+                                {/* Midnight is a date stored as a date-time. */}
+                                {storedTime(entry.at) === '00:00' ? null : (
+                                    <TimelineTime entry={entry} />
+                                )}
+                                <TimelineEventOrgUnit />
+                                <TimelineEventCompletedBy />
+                            </TimelineEventMeta>
+                            <TimelineEventValues />
+                            <div
+                                data-slot="timeline-event-actions"
+                                className="flex flex-wrap items-baseline gap-x-4 gap-y-1 empty:hidden"
+                            >
+                                <TimelineEventNotes className="contents" />
+                                <TimelineEventChanges className="contents" />
+                                {actions}
+                            </div>
+                        </>
+                    )}
+                    {children === undefined ? null : actions}
+                </div>
+            </TimelineEventNameContext.Provider>
         </TimelineEventContext.Provider>
     )
 }

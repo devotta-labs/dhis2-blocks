@@ -34,7 +34,11 @@ export {
     TimelineTime,
     type TimelineItemProps,
 } from './ui/TimelineParts'
-export { TimelineShowMore, useShowMore } from './ui/TimelineShowMore'
+export {
+    TimelineEnd,
+    TimelineShowMore,
+    useShowMore,
+} from './ui/TimelineShowMore'
 export {
     TimelineEmpty,
     TimelineError,

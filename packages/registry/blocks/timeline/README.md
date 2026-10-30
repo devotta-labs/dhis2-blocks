@@ -1,6 +1,6 @@
 # Timeline
 
-A read-only timeline. Pass it an array of entries and it lays them out by day in the system calendar, with a "Now" marker, an "Overdue" group and future entries above now. It never fetches: the DHIS2 layer gives you ordinary TanStack Query hooks that return entries, and you can filter, merge or replace that array however you like before it reaches the timeline.
+A read-only timeline. Pass it an array of entries and it lays them out by day in the system calendar, with a dated "Today" marker for now, an "Overdue" group and future entries above now. It never fetches: the DHIS2 layer gives you ordinary TanStack Query hooks that return entries, and you can filter, merge or replace that array however you like before it reaches the timeline.
 
 The block ships as two registry items: `timeline` (the generic layout, in `components/timeline/`) and `timeline-dhis2` (tracker hooks and entry parts for DHIS2 2.41, 2.42 and 2.43, in `components/timeline-dhis2/`).
 
@@ -19,6 +19,7 @@ import React from 'react'
 import {
     Timeline,
     TimelineEmpty,
+    TimelineEnd,
     TimelineError,
     TimelineFeed,
     TimelineLoading,
@@ -82,6 +83,10 @@ export const PatientHistory = ({
                 )}
             </TimelineFeed>
             <TimelineShowMore hasMore={hasMore} onShowMore={showMore} />
+            <TimelineEnd
+                hasMore={hasMore}
+                complete={history.notices.length === 0}
+            />
         </Timeline>
     )
 }

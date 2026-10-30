@@ -819,6 +819,11 @@
                     "target": "@components/timeline-dhis2/entries/TimelineChangeEntry.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/timeline-dhis2/entries/TimelineEventAction.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline-dhis2/entries/TimelineEventAction.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/timeline-dhis2/entries/TimelineEventEntry.tsx",
                     "type": "registry:file",
                     "target": "@components/timeline-dhis2/entries/TimelineEventEntry.tsx"

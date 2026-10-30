@@ -154,7 +154,10 @@ const ChangeRowItem = ({ change }: { change: ResolvedChange }) => {
             <span className="text-dhis2-grey-800">
                 {change.type === 'CREATE' ? null : (
                     <>
-                        <bdi data-slot="timeline-change-before">
+                        <bdi
+                            data-slot="timeline-change-before"
+                            className="text-dhis2-grey-600 line-through"
+                        >
                             <Value text={show(change.previousValue)} />
                         </bdi>{' '}
                         <span className="inline-block rtl:rotate-180">

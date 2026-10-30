@@ -2,6 +2,7 @@ import { useConfig } from '@dhis2/app-runtime'
 import {
     Timeline,
     TimelineEmpty,
+    TimelineEnd,
     TimelineError,
     TimelineFeed,
     TimelineLoading,
@@ -97,6 +98,10 @@ const CaseHistory = ({
                 )}
             </TimelineFeed>
             <TimelineShowMore hasMore={hasMore} onShowMore={showMore} />
+            <TimelineEnd
+                hasMore={hasMore}
+                complete={history.notices.length === 0}
+            />
         </Timeline>
     )
 }

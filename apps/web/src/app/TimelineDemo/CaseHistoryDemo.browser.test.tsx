@@ -186,7 +186,7 @@ describe('CaseHistoryDemo', () => {
         const feed = document.body.textContent ?? ''
         const order = [
             'Future visit',
-            'Now',
+            'Today · ',
             'Overdue',
             'Overdue visit',
             'Past visit',

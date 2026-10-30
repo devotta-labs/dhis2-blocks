@@ -1,12 +1,16 @@
 import i18n from '@dhis2/d2-i18n'
 import React, { useMemo, type ComponentPropsWithoutRef } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
-import { storedTime } from '@/components/dhis2-value-display/calendar'
+import {
+    formatCalendarDate,
+    storedTime,
+} from '@/components/dhis2-value-display/calendar'
 import type { TimelineEntry, TimelineGroup } from '../core/types'
 import {
     groupHeadingId,
     useOptionalTimeline,
     useTimeline,
+    useTimelineMeta,
 } from './TimelineContext'
 
 /**
@@ -116,25 +120,42 @@ export const TimelineGroupHeading = ({
     )
 }
 
-/** The "now" line between what is coming and what has happened. */
+/**
+ * The "now" line between what is coming and what has happened, dated so a
+ * screenshot or printout keeps its anchor: "Today · 30 Oct 2026".
+ */
 export const TimelineNow = ({
     className,
     children,
     ...props
-}: ComponentPropsWithoutRef<'div'>) => (
-    <div
-        {...props}
-        data-slot="timeline-now"
-        className={cn(
-            'my-2 flex items-center gap-2 text-xs font-medium tracking-wide text-dhis2-blue-800 uppercase',
-            className
-        )}
-    >
-        <span aria-hidden="true" className="h-px flex-1 bg-dhis2-blue-300" />
-        <span>{children ?? i18n.t('Now')}</span>
-        <span aria-hidden="true" className="h-px flex-1 bg-dhis2-blue-300" />
-    </div>
-)
+}: ComponentPropsWithoutRef<'div'>) => {
+    const { today, calendar, locale } = useTimelineMeta()
+    return (
+        <div
+            {...props}
+            data-slot="timeline-now"
+            className={cn(
+                'my-2 flex items-center gap-2 text-xs font-medium tracking-wide text-dhis2-blue-800 uppercase',
+                className
+            )}
+        >
+            <span
+                aria-hidden="true"
+                className="h-px flex-1 bg-dhis2-blue-300"
+            />
+            <span>
+                {children ??
+                    i18n.t('Today · {{date}}', {
+                        date: formatCalendarDate(today, calendar, locale),
+                    })}
+            </span>
+            <span
+                aria-hidden="true"
+                className="h-px flex-1 bg-dhis2-blue-300"
+            />
+        </div>
+    )
+}
 
 /** The time of day of an entry; nothing for an entry known only by its day. */
 export const TimelineTime = ({

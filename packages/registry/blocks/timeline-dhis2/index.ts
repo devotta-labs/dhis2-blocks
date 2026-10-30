@@ -13,8 +13,8 @@ export {
     TimelineSaves,
     useTimelineSave,
 } from './entries/TimelineChangeEntry'
+export { TimelineEventAction } from './entries/TimelineEventAction'
 export {
-    TimelineEventAction,
     TimelineEventChanges,
     TimelineEventCompletedBy,
     TimelineEventMeta,

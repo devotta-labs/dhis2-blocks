@@ -15,8 +15,8 @@ import {
     type ProgramMetadata,
     type RenderOptions,
 } from '../__tests__/fixtures/renderEntries'
+import { TimelineEventAction } from './TimelineEventAction'
 import {
-    TimelineEventAction,
     TimelineEventChanges,
     TimelineEventCompletedBy,
     TimelineEventEntry,

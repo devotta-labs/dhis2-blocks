@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-23T13:47:20.990Z\n"
-"PO-Revision-Date: 2026-10-23T13:47:20.990Z\n"
+"POT-Creation-Date: 2026-10-30T12:24:30.963Z\n"
+"PO-Revision-Date: 2026-10-30T12:24:30.963Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -190,6 +190,9 @@ msgstr "(empty)"
 msgid "+{{count}} more"
 msgstr "+{{count}} more"
 
+msgid "1 older entry shown"
+msgstr "1 older entry shown"
+
 msgid "Active"
 msgstr "Active"
 
@@ -268,9 +271,6 @@ msgstr "No changes"
 msgid "No history yet"
 msgstr "No history yet"
 
-msgid "Now"
-msgstr "Now"
-
 msgid "Older changes aren't shown."
 msgstr "Older changes aren't shown."
 
@@ -304,8 +304,14 @@ msgstr "Showing the most recent {{count}} events in {{program}}."
 msgid "Skipped"
 msgstr "Skipped"
 
+msgid "Start of the record"
+msgstr "Start of the record"
+
 msgid "The enrollments couldn't load."
 msgstr "The enrollments couldn't load."
+
+msgid "Today · {{date}}"
+msgstr "Today · {{date}}"
 
 msgid "Undated"
 msgstr "Undated"
@@ -313,8 +319,17 @@ msgstr "Undated"
 msgid "Yes"
 msgstr "Yes"
 
+msgid "{{action}}, {{event}}"
+msgstr "{{action}}, {{event}}"
+
 msgid "{{count}} notes"
 msgstr "{{count}} notes"
+
+msgid "{{count}} older entries shown"
+msgstr "{{count}} older entries shown"
+
+msgid "{{event}}, {{date}}"
+msgstr "{{event}}, {{date}}"
 
 msgid "{{name}} changed {{count}} field"
 msgstr "{{name}} changed {{count}} field"

@@ -92,8 +92,11 @@ const clinical = useMemo(
 ```
 
 `useShowMore(entries)` keeps the page short: it shows every upcoming and overdue
-entry and the newest past ones, and `TimelineShowMore` reveals more and moves
-focus to the first new entry.
+entry and the newest past ones, and `TimelineShowMore` reveals more, moves
+focus to the first new entry and announces how many arrived. Once nothing is
+left, `TimelineEnd` says "Start of the record". Pass
+`complete={history.notices.length === 0}`: a cap or a failed request means
+older entries may be missing, so it stays quiet and the notices explain.
 
 ## Your own data
 

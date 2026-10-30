@@ -50,7 +50,7 @@ interface Request {
 
 /**
  * Asks for more entries, then moves focus to the first one that arrives, in
- * reading order. When nothing arrives, focus stays on the button, or goes to
+ * reading order, and announces how many arrived. When nothing arrives, focus stays on the button, or goes to
  * the last entry if the button has gone. `onShowMore` can reveal entries
  * already in memory (`useShowMore`) or fetch the next server page; a fetch
  * must turn `loading` on in the same update, or the press counts as one that
@@ -73,6 +73,7 @@ export const TimelineShowMore = ({
     const { id } = meta
     const request = useRef<Request>()
     const button = useRef<HTMLButtonElement>(null)
+    const [announced, setAnnounced] = useState('')
 
     useEffect(() => {
         const pending = request.current
@@ -80,7 +81,8 @@ export const TimelineShowMore = ({
             return
         }
         const ordered = groups.flatMap((group) => group.entries)
-        const fresh = ordered.find((entry) => !pending.shown.has(entry.id))
+        const added = ordered.filter((entry) => !pending.shown.has(entry.id))
+        const [fresh] = added
         const itemOf = (entryId: string) =>
             document.querySelector<HTMLElement>(
                 `[data-timeline-id="${CSS.escape(id)}"][data-timeline-entry="${CSS.escape(entryId)}"]`
@@ -88,6 +90,13 @@ export const TimelineShowMore = ({
         if (fresh !== undefined) {
             request.current = undefined
             itemOf(fresh.id)?.focus()
+            setAnnounced(
+                added.length === 1
+                    ? i18n.t('1 older entry shown')
+                    : i18n.t('{{count}} older entries shown', {
+                          count: added.length,
+                      })
+            )
         } else if (loading) {
             pending.sawLoading = true
         } else if (pending.sawLoading) {
@@ -101,43 +110,93 @@ export const TimelineShowMore = ({
         }
     }, [entries, groups, loading, hasMore, id])
 
+    // Stays mounted after the last press, so its announcement is still heard.
+    const status = (
+        <span role="status" className="sr-only">
+            {announced}
+        </span>
+    )
     if (!hasMore) {
+        return status
+    }
+    return (
+        <>
+            {status}
+            <Button
+                variant="secondary"
+                size="sm"
+                {...props}
+                // Sits under the entries, at their indent, not across the page.
+                className={cn('ms-6 self-start text-sm!', className)}
+                ref={button}
+                type="button"
+                data-slot="timeline-show-more"
+                disabled={loading}
+                // Keeps focus on the button while it loads, not on <body>.
+                focusableWhenDisabled
+                aria-busy={loading}
+                onClick={() => {
+                    const pending: Request = {
+                        shown: new Set(entries.map((entry) => entry.id)),
+                        sawLoading: false,
+                    }
+                    request.current = pending
+                    onShowMore()
+                    // A press that starts no load and adds nothing leaves nothing
+                    // to wait for; the render that shows either has run by now.
+                    setTimeout(() => {
+                        if (
+                            request.current === pending &&
+                            !pending.sawLoading
+                        ) {
+                            request.current = undefined
+                        }
+                    }, 0)
+                }}
+            >
+                {children ??
+                    (loading
+                        ? i18n.t('Loading more')
+                        : i18n.t('Show older entries'))}
+            </Button>
+        </>
+    )
+}
+
+/**
+ * "Start of the record", under the oldest entry once `hasMore` is false. It
+ * is said only when `complete`: when a request failed or a cap left entries
+ * out, it shows nothing and the notices say what is missing. Oldest-first
+ * timelines start at the top, so it shows nothing there either.
+ */
+export const TimelineEnd = ({
+    hasMore,
+    complete,
+    className,
+    children,
+    ...props
+}: ComponentPropsWithoutRef<'p'> & {
+    hasMore: boolean
+    /** Every entry of the record was asked for and arrived: no cap, no failure. */
+    complete: boolean
+}) => {
+    const { state, meta } = useTimeline()
+    if (
+        hasMore ||
+        !complete ||
+        meta.order !== 'desc' ||
+        state.status !== 'success' ||
+        state.entries.length === 0
+    ) {
         return null
     }
     return (
-        <Button
-            variant="secondary"
-            size="sm"
+        <p
             {...props}
-            // Sits under the entries, at their indent, not across the page.
-            className={cn('ms-6 self-start text-sm!', className)}
-            ref={button}
-            type="button"
-            data-slot="timeline-show-more"
-            disabled={loading}
-            // Keeps focus on the button while it loads, not on <body>.
-            focusableWhenDisabled
-            aria-busy={loading}
-            onClick={() => {
-                const pending: Request = {
-                    shown: new Set(entries.map((entry) => entry.id)),
-                    sawLoading: false,
-                }
-                request.current = pending
-                onShowMore()
-                // A press that starts no load and adds nothing leaves nothing
-                // to wait for; the render that shows either has run by now.
-                setTimeout(() => {
-                    if (request.current === pending && !pending.sawLoading) {
-                        request.current = undefined
-                    }
-                }, 0)
-            }}
+            data-slot="timeline-end"
+            className={cn('m-0 ms-6 text-sm text-dhis2-grey-700', className)}
         >
-            {children ??
-                (loading
-                    ? i18n.t('Loading more')
-                    : i18n.t('Show older entries'))}
-        </Button>
+            {children ?? i18n.t('Start of the record')}
+        </p>
     )
 }

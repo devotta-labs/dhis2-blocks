@@ -18,7 +18,7 @@ import {
     TimelineItem,
     TimelineTime,
 } from './TimelineParts'
-import { TimelineShowMore, useShowMore } from './TimelineShowMore'
+import { TimelineEnd, TimelineShowMore, useShowMore } from './TimelineShowMore'
 import {
     TimelineEmpty,
     TimelineError,
@@ -207,11 +207,16 @@ describe('Timeline', () => {
         ])
     })
 
-    it('renders the now marker as visible text between future and past', async () => {
+    it('renders the now marker, dated today, between future and past', async () => {
         const { container } = await renderTimeline()
 
         expect(
-            textOrder(container, 'Oct 25, 2026', 'Now', 'Oct 20, 2026')
+            textOrder(
+                container,
+                'Oct 25, 2026',
+                'Today · Oct 22, 2026',
+                'Oct 20, 2026'
+            )
         ).toBe(true)
     })
 
@@ -447,18 +452,35 @@ describe('show more', () => {
         entry(`visit-${index}`, `2026-10-${String(10 + index)}T09:00`)
     )
 
-    const ShowMoreHost = () => {
+    const ShowMoreHost = ({
+        complete = true,
+        order = 'desc',
+    }: {
+        complete?: boolean
+        order?: 'asc' | 'desc'
+    }) => {
         const { entries, hasMore, showMore } = useShowMore(MANY, {
             step: 2,
             now: NOW,
         })
         return (
-            <Timeline entries={entries} calendar="gregorian" now={NOW}>
+            <Timeline
+                entries={entries}
+                calendar="gregorian"
+                now={NOW}
+                order={order}
+            >
                 <TimelineFeed<string>>{renderEntry}</TimelineFeed>
                 <TimelineShowMore hasMore={hasMore} onShowMore={showMore} />
+                <TimelineEnd hasMore={hasMore} complete={complete} />
             </Timeline>
         )
     }
+
+    const announced = (container: HTMLElement) =>
+        container.querySelector('[role=status]')?.textContent
+    const end = (container: HTMLElement) =>
+        container.querySelector('[data-slot=timeline-end]')?.textContent
 
     const shown = (container: HTMLElement) =>
         [...container.querySelectorAll('[data-timeline-entry]')].map((item) =>
@@ -484,9 +506,11 @@ describe('show more', () => {
                 document.activeElement?.getAttribute('data-timeline-entry')
             ).toBe('visit-2')
         )
+        expect(announced(container)).toBe('2 older entries shown')
+        expect(end(container)).toBeUndefined()
     })
 
-    it('hides the button once everything is shown', async () => {
+    it('hides the button once everything is shown and says the record starts there', async () => {
         const { container } = await render(<ShowMoreHost />)
 
         container.querySelector('button')?.click()
@@ -495,6 +519,22 @@ describe('show more', () => {
 
         await vi.waitFor(() => expect(shown(container)).toHaveLength(5))
         expect(container.querySelector('button')).toBeNull()
+        expect(announced(container)).toBe('1 older entry shown')
+        expect(end(container)).toBe('Start of the record')
+    })
+
+    it.each([
+        ['entries may be missing', { complete: false }],
+        ['the oldest entry is at the top', { order: 'asc' as const }],
+    ])('says nothing about the start when %s', async (_, props) => {
+        const { container } = await render(<ShowMoreHost {...props} />)
+
+        container.querySelector('button')?.click()
+        await vi.waitFor(() => expect(shown(container)).toHaveLength(4))
+        container.querySelector('button')?.click()
+
+        await vi.waitFor(() => expect(shown(container)).toHaveLength(5))
+        expect(end(container)).toBeUndefined()
     })
 
     it('focuses the first entry of a page the host fetched', async () => {

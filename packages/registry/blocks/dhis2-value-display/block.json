@@ -1,0 +1,4 @@
+{
+    "title": "DHIS2 Value Display",
+    "description": "Read-only formatting of DHIS2 values by value type, option set and system calendar, keeping the day a date was stored on."
+}

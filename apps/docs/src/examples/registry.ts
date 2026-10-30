@@ -9,6 +9,10 @@ import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
 import sidebarBasicSource from './sidebar/SidebarBasic.tsx?raw'
 import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
+import { TimelinePlaceholder } from './timeline/TimelinePlaceholder'
+import timelineCaseHistorySource from './timeline/TimelineCaseHistory.tsx?raw'
+import timelineEntryPartsSource from './timeline/TimelineEntryParts.tsx?raw'
+import timelineOwnDataSource from './timeline/TimelineOwnData.tsx?raw'
 
 /**
  * Example registry.
@@ -94,6 +98,31 @@ const examples = [
         ),
         source: contextSelectorStatesSource,
         minHeight: 340,
+    },
+    {
+        slug: 'timeline/case-history',
+        title: 'Case history',
+        live: true,
+        Component: lazy(() => import('./timeline/TimelineCaseHistory')),
+        source: timelineCaseHistorySource,
+        minHeight: 720,
+        Placeholder: TimelinePlaceholder,
+    },
+    {
+        slug: 'timeline/own-data',
+        title: 'Your own data',
+        live: false,
+        Component: lazy(() => import('./timeline/TimelineOwnData')),
+        source: timelineOwnDataSource,
+        minHeight: 420,
+    },
+    {
+        slug: 'timeline/entry-parts',
+        title: 'Entry parts outside a timeline',
+        live: false,
+        Component: lazy(() => import('./timeline/TimelineEntryParts')),
+        source: timelineEntryPartsSource,
+        minHeight: 260,
     },
 ] as const satisfies readonly ExampleDefinition[]
 

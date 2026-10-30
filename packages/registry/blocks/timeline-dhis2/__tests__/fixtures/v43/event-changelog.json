@@ -1,0 +1,105 @@
+{
+    "changeLogs": [
+        {
+            "change": {
+                "dataValue": {
+                    "dataElement": "dyYdfamSY2Z",
+                    "previousValue": "13"
+                }
+            },
+            "createdAt": "2026-10-22T19:11:41.596",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "type": "DELETE"
+        },
+        {
+            "change": {
+                "dataValue": {
+                    "currentValue": "13",
+                    "dataElement": "dyYdfamSY2Z"
+                }
+            },
+            "createdAt": "2026-10-22T19:11:40.388",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "type": "CREATE"
+        },
+        {
+            "change": {
+                "dataValue": {
+                    "currentValue": "26",
+                    "dataElement": "roKuXYfw1BW",
+                    "previousValue": "24"
+                }
+            },
+            "createdAt": "2026-10-22T19:11:40.388",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "type": "UPDATE"
+        },
+        {
+            "change": {
+                "dataValue": {
+                    "currentValue": "24",
+                    "dataElement": "roKuXYfw1BW"
+                }
+            },
+            "createdAt": "2026-10-22T19:11:40.201",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "type": "CREATE"
+        },
+        {
+            "change": {
+                "eventField": {
+                    "currentValue": "2026-06-10 00:00:00.000",
+                    "field": "scheduledAt"
+                }
+            },
+            "createdAt": "2026-10-22T19:11:40.201",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "type": "CREATE"
+        },
+        {
+            "change": {
+                "eventField": {
+                    "currentValue": "2026-06-12 00:00:00.000",
+                    "field": "occurredAt"
+                }
+            },
+            "createdAt": "2026-10-22T19:11:40.201",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "type": "CREATE"
+        }
+    ],
+    "pager": {
+        "page": 1,
+        "pageSize": 50
+    }
+}

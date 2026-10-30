@@ -12,6 +12,7 @@ import './locales'
 import { ErrorBoundary } from './app/ErrorBoundary'
 import { SyncUrlWithGlobalShell } from './app/SyncUrlWithGlobalShell'
 import { ContextSelectorShowcase } from './app/ContextSelectorShowcase'
+import { CaseHistoryDemo, UpdatedTodayDemo } from './app/TimelineDemo'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -46,6 +47,22 @@ const router = createHashRouter([
         element: (
             <ErrorBoundary>
                 <ContextSelectorShowcase />
+            </ErrorBoundary>
+        ),
+    },
+    {
+        path: '/timeline',
+        element: (
+            <ErrorBoundary>
+                <CaseHistoryDemo />
+            </ErrorBoundary>
+        ),
+    },
+    {
+        path: '/timeline/updated-today',
+        element: (
+            <ErrorBoundary>
+                <UpdatedTodayDemo />
             </ErrorBoundary>
         ),
     },

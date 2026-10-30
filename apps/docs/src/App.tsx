@@ -62,6 +62,7 @@ const router = createBrowserRouter([
             },
             docRoute('/blocks/working-list', './pages/blocks/working-list.mdx'),
             docRoute('/blocks/sidebar', './pages/blocks/sidebar.mdx'),
+            docRoute('/blocks/timeline', './pages/blocks/timeline.mdx'),
             docRoute(
                 '/blocks/context-selector',
                 './pages/blocks/context-selector.mdx'

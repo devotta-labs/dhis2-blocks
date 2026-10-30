@@ -561,12 +561,18 @@ export const AppShell = () => {
                 />
             )}
 
-            <footer className="mx-auto mt-8 flex w-full max-w-[1440px] justify-end px-6 [@media(max-width:900px)]:px-3">
+            <footer className="mx-auto mt-8 flex w-full max-w-[1440px] justify-end gap-4 px-6 [@media(max-width:900px)]:px-3">
                 <a
                     className="text-xs text-[#6c7787] underline-offset-2 hover:text-[#147cd7] hover:underline"
                     href="#/context-selector-showcase"
                 >
                     Context Selector showcase
+                </a>
+                <a
+                    className="text-xs text-[#6c7787] underline-offset-2 hover:text-[#147cd7] hover:underline"
+                    href="#/timeline"
+                >
+                    Timeline demo
                 </a>
             </footer>
         </div>

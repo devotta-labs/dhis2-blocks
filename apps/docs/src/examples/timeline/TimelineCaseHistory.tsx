@@ -12,6 +12,7 @@ import {
 import {
     TimelineHistoryEntry,
     useSystemCalendar,
+    TimelineEventAction,
     useTimelineEventEntry,
     useTrackedEntityHistory,
     type HistoryEntryData,
@@ -32,14 +33,13 @@ const OpenEvent = () => {
     const { baseUrl } = useConfig()
     const { data } = useTimelineEventEntry()
     return (
-        <a
-            className="text-sm text-dhis2-primary underline-offset-2 hover:underline"
+        <TimelineEventAction
             href={`${baseUrl}/dhis-web-capture/index.html#/enrollmentEventEdit?eventId=${data.event.event}`}
             target="_blank"
             rel="noreferrer"
         >
             Open
-        </a>
+        </TimelineEventAction>
     )
 }
 

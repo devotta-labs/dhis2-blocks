@@ -8,7 +8,7 @@ import React, {
     type ReactNode,
 } from 'react'
 import { Badge } from '@/components/dhis2/ui/badge'
-import { Button } from '@/components/dhis2/ui/button'
+import { Button, buttonVariants } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import {
     formatCalendarDate,
@@ -342,6 +342,41 @@ const EventNote = ({ note }: { note: Note }) => {
     )
 }
 
+const ACTION = cn(
+    buttonVariants({ variant: 'link', size: 'sm' }),
+    'h-auto border-0 p-0 text-sm! leading-5 tracking-normal'
+)
+
+/**
+ * A text action in the event's action row, styled like "Show changes": the
+ * host's "Open", say. With `href` it renders a link, otherwise a button.
+ */
+export const TimelineEventAction = (
+    props:
+        | ({ href?: undefined } & ComponentPropsWithoutRef<typeof Button>)
+        | ({ href: string } & ComponentPropsWithoutRef<'a'>)
+) => {
+    if (props.href !== undefined) {
+        return (
+            <a
+                {...props}
+                data-slot="timeline-event-action"
+                className={cn(ACTION, props.className)}
+            />
+        )
+    }
+    return (
+        <Button
+            type="button"
+            {...props}
+            variant="link"
+            size="sm"
+            data-slot="timeline-event-action"
+            className={cn(ACTION, props.className)}
+        />
+    )
+}
+
 /** The event's notes: one shows as it is; more hide behind a count. */
 export const TimelineEventNotes = ({
     className,
@@ -372,11 +407,7 @@ export const TimelineEventNotes = ({
             data-slot="timeline-event-notes"
             className={cn('flex flex-col items-start gap-1', className)}
         >
-            <Button
-                type="button"
-                variant="link"
-                size="sm"
-                className="h-auto border-0 p-0 text-sm! leading-5 tracking-normal"
+            <TimelineEventAction
                 aria-expanded={open}
                 aria-controls={listId}
                 onClick={() => setOpen(!open)}
@@ -384,7 +415,7 @@ export const TimelineEventNotes = ({
                 {open
                     ? i18n.t('Hide notes')
                     : i18n.t('{{count}} notes', { count: notes.length })}
-            </Button>
+            </TimelineEventAction>
             <div
                 id={listId}
                 hidden={!open}
@@ -475,17 +506,13 @@ export const TimelineEventChanges = ({
             data-slot="timeline-event-changes"
             className={cn('flex flex-col items-start gap-1', className)}
         >
-            <Button
-                type="button"
-                variant="link"
-                size="sm"
-                className="h-auto border-0 p-0 text-sm! leading-5 tracking-normal"
+            <TimelineEventAction
                 aria-expanded={open}
                 aria-controls={bodyId}
                 onClick={() => setOpen(!open)}
             >
                 {open ? i18n.t('Hide changes') : i18n.t('Show changes')}
-            </Button>
+            </TimelineEventAction>
             <div
                 id={bodyId}
                 hidden={!open}

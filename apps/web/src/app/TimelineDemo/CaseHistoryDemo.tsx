@@ -12,6 +12,7 @@ import {
 import {
     TimelineHistoryEntry,
     useSystemCalendar,
+    TimelineEventAction,
     useTimelineEventEntry,
     useTrackedEntityHistory,
     type HistoryEntryData,
@@ -34,14 +35,13 @@ export const OpenInCapture = () => {
         params.set('orgUnitId', orgUnit)
     }
     return (
-        <a
-            className="text-sm font-medium text-dhis2-primary underline-offset-2 hover:underline"
+        <TimelineEventAction
             href={`${baseUrl}/dhis-web-capture/index.html#/enrollmentEventEdit?${params.toString()}`}
             target="_blank"
             rel="noreferrer"
         >
             {i18n.t('Open in Capture')}
-        </a>
+        </TimelineEventAction>
     )
 }
 

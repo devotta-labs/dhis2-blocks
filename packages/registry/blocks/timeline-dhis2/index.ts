@@ -14,6 +14,7 @@ export {
     useTimelineSave,
 } from './entries/TimelineChangeEntry'
 export {
+    TimelineEventAction,
     TimelineEventChanges,
     TimelineEventCompletedBy,
     TimelineEventMeta,

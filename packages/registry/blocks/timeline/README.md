@@ -27,6 +27,7 @@ import {
     useShowMore,
 } from '@/components/timeline'
 import {
+    TimelineEventAction,
     TimelineHistoryEntry,
     useSystemCalendar,
     useTimelineEventEntry,
@@ -43,11 +44,11 @@ const OpenInCapture = () => {
         params.set('orgUnitId', orgUnit)
     }
     return (
-        <a
+        <TimelineEventAction
             href={`${baseUrl}/dhis-web-capture/index.html#/enrollmentEventEdit?${params.toString()}`}
         >
             Open in Capture
-        </a>
+        </TimelineEventAction>
     )
 }
 

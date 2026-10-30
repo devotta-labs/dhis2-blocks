@@ -16,6 +16,7 @@ import {
     type RenderOptions,
 } from '../__tests__/fixtures/renderEntries'
 import {
+    TimelineEventAction,
     TimelineEventChanges,
     TimelineEventCompletedBy,
     TimelineEventEntry,
@@ -275,7 +276,9 @@ describe('TimelineEventEntry', () => {
         const { container } = await renderEntries(
             <TimelineEventEntry
                 entry={entry}
-                actions={<a href="#open">Open</a>}
+                actions={
+                    <TimelineEventAction href="#open">Open</TimelineEventAction>
+                }
                 className="custom-event"
             />
         )
@@ -284,12 +287,15 @@ describe('TimelineEventEntry', () => {
         expect(frame.className).toContain('custom-event')
         expect(frame.textContent).toContain('First antenatal care visit')
         expect(frame.textContent).toContain('Ngelehun CHC')
-        expect(frame.textContent).toContain('Show changes')
-        // Host actions close the action row, after the part toggles.
-        expect(
-            elementIn(frame, '[data-slot=timeline-event-actions]')
-                .lastElementChild?.textContent
-        ).toBe('Open')
+        // Host actions close the action row and look like the part toggles.
+        const open = elementIn(
+            frame,
+            '[data-slot=timeline-event-actions]'
+        ).lastElementChild
+        expect(open?.tagName).toBe('A')
+        const toggle = getComputedStyle(buttonIn(frame))
+        expect(toggle.backgroundImage).toBe('none')
+        expect(open && getComputedStyle(open).font).toBe(toggle.font)
     })
 
     it('offers no changes for an event never edited and holding no values', async () => {

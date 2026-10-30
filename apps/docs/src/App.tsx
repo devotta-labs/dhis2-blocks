@@ -66,6 +66,10 @@ const router = createBrowserRouter([
                 '/blocks/context-selector',
                 './pages/blocks/context-selector.mdx'
             ),
+            docRoute(
+                '/blocks/tracked-entity-finder',
+                './pages/blocks/tracked-entity-finder.mdx'
+            ),
         ],
     },
     {

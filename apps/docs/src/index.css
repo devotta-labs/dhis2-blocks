@@ -5,6 +5,7 @@
 @source '../../../packages/registry/blocks/working-list';
 @source '../../../packages/registry/blocks/context-selector';
 @source '../../../packages/registry/blocks/sidebar';
+@source '../../../packages/registry/blocks/tracked-entity-finder';
 
 @import 'shadcn/tailwind.css';
 
@@ -126,13 +127,6 @@ body {
         Arial,
         sans-serif;
     -webkit-font-smoothing: antialiased;
-}
-
-button,
-input,
-select,
-textarea {
-    font: inherit;
 }
 
 /* The adapter defaults to a full viewport even in plugin mode. Inline

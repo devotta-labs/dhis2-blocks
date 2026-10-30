@@ -183,6 +183,7 @@ const checkInstall = (workDirectory: string): void => {
             join(registryOutput, 'working-list.json'),
             join(registryOutput, 'context-selector.json'),
             join(registryOutput, 'sidebar.json'),
+            join(registryOutput, 'tracked-entity-finder.json'),
             '-y',
             '--cwd',
             appDirectory,

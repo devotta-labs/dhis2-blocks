@@ -1,6 +1,5 @@
-import { cn } from '@/components/dhis2/ui/cn'
 import i18n from '@dhis2/d2-i18n'
-import React from 'react'
+import React, { useId } from 'react'
 import { isoDay } from '../domain/dates'
 import type { RelationshipNode, RelationshipStatus } from '../domain/model'
 import type { Stack } from '../domain/stacks'
@@ -14,6 +13,20 @@ import {
 } from './glyphs'
 
 const LEFT = -CARD_WIDTH / 2
+const RADIUS = 6
+
+/** The card's rounded shape, for clipping its status bar so the outline stays on top. */
+const CardClip = ({ id }: { id: string }) => (
+    <clipPath id={id}>
+        <rect
+            x={LEFT}
+            y={-CARD_HEIGHT / 2}
+            width={CARD_WIDTH}
+            height={CARD_HEIGHT}
+            rx={RADIUS}
+        />
+    </clipPath>
+)
 const TOP = -CARD_HEIGHT / 2
 const BAR = 4
 
@@ -38,6 +51,7 @@ export function TraceCard({
     date,
     days,
     selected,
+    startsChain,
     onSelect,
     onExpand,
     onRetry,
@@ -48,6 +62,7 @@ export function TraceCard({
     date: Date | undefined
     days: number | undefined
     selected: boolean
+    startsChain: boolean // a starting record nothing drawn leads to
     onSelect(): void
     onExpand(): void
     onRetry(): void
@@ -63,6 +78,7 @@ export function TraceCard({
         .filter(Boolean)
         .join(' · ')
     const attention = !failed && status?.attention
+    const clip = `${useId().replace(/:/g, '')}-clip`
 
     let border = { width: 1, className: 'stroke-dhis2-grey-400' }
     if (selected) border = { width: 2.5, className: 'stroke-dhis2-blue-600' }
@@ -79,25 +95,40 @@ export function TraceCard({
         >
             <title>{label}</title>
             <rect
+                x={LEFT}
+                y={TOP}
+                width={CARD_WIDTH}
+                height={CARD_HEIGHT}
+                rx={RADIUS}
+                className="fill-white"
+            />
+            {!failed && (
+                <>
+                    <CardClip id={clip} />
+                    <rect
+                        data-status-bar=""
+                        clipPath={`url(#${clip})`}
+                        x={LEFT}
+                        y={TOP}
+                        width={BAR}
+                        height={CARD_HEIGHT}
+                        style={{ fill: status?.color ?? NO_STATUS_FILL }}
+                    />
+                </>
+            )}
+            <rect
+                data-card-outline=""
                 data-attention-ring={attention ? '' : undefined}
                 x={LEFT}
                 y={TOP}
                 width={CARD_WIDTH}
                 height={CARD_HEIGHT}
-                rx={6}
+                rx={RADIUS}
+                fill="none"
                 strokeWidth={border.width}
                 strokeDasharray={failed ? '4 3' : undefined}
-                className={cn('fill-white', border.className)}
+                className={border.className}
             />
-            {!failed && (
-                <rect
-                    x={LEFT}
-                    y={TOP}
-                    width={BAR}
-                    height={CARD_HEIGHT}
-                    style={{ fill: status?.color ?? NO_STATUS_FILL }}
-                />
-            )}
             <NodeGlyph
                 kind={node.ref.kind}
                 r={4}
@@ -126,7 +157,7 @@ export function TraceCard({
             >
                 {dateLine}
             </text>
-            {node.seed && (
+            {startsChain && (
                 <g transform={`translate(${LEFT} ${-TOP})`}>
                     <SeedMark r={0} />
                 </g>
@@ -154,6 +185,7 @@ export function TraceStack({
     onOpen(): void
 }) {
     const total = stack.members.length
+    const clip = `${useId().replace(/:/g, '')}-clip`
     let at = 0
     return (
         <g data-stack="" className="cursor-pointer" onClick={onOpen}>
@@ -173,15 +205,18 @@ export function TraceStack({
                 y={TOP}
                 width={CARD_WIDTH}
                 height={CARD_HEIGHT}
-                rx={6}
-                className="fill-white stroke-dhis2-grey-400"
+                rx={RADIUS}
+                className="fill-white"
             />
+            <CardClip id={clip} />
             {split.map(({ status, count }) => {
                 const y = TOP + (at / total) * CARD_HEIGHT
                 at += count
                 return (
                     <rect
                         key={status?.key ?? ''}
+                        data-status-bar=""
+                        clipPath={`url(#${clip})`}
                         x={LEFT}
                         y={y}
                         width={BAR}
@@ -190,6 +225,16 @@ export function TraceStack({
                     />
                 )
             })}
+            <rect
+                data-card-outline=""
+                x={LEFT}
+                y={TOP}
+                width={CARD_WIDTH}
+                height={CARD_HEIGHT}
+                rx={RADIUS}
+                fill="none"
+                className="stroke-dhis2-grey-400"
+            />
             <text
                 x={LEFT + 12}
                 y={-14}

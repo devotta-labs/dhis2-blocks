@@ -3,7 +3,7 @@ import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { chains } from '../../__tests__/fixtures'
 import type { RelationshipNode, RelationshipStatus } from '../../domain/model'
-import { TraceCard } from '../TraceCard'
+import { TraceCard, TraceStack } from '../TraceCard'
 import { graphOf, te } from './harness'
 
 const CASE: RelationshipStatus = { key: 'case', label: 'Case', color: 'red' }
@@ -35,6 +35,7 @@ const card = async (
                 date={new Date(2026, 0, 3)}
                 days={2}
                 selected={false}
+                startsChain={false}
                 {...handlers}
                 {...props}
             />
@@ -91,15 +92,66 @@ describe('TraceCard', () => {
         expect(lines(screen.container)).toContain('2026-01-03 · +2 days')
     })
 
-    it('seeds carry the seed mark', async () => {
-        const seed = await card(await nodeOf('A1'))
+    it('only a card where a chain starts carries the mark', async () => {
+        const start = await card(await nodeOf('A1'), { startsChain: true })
         expect(
-            seed.screen.container.querySelector('[data-seed-mark]')
+            start.screen.container.querySelector('[data-seed-mark]')
         ).not.toBeNull()
-        const other = await card(await nodeOf('A2'))
+        // A1 is a seed, but here something drawn leads to it.
+        const midChain = await card(await nodeOf('A1'), { startsChain: false })
         expect(
-            other.screen.container.querySelector('[data-seed-mark]')
+            midChain.screen.container.querySelector('[data-seed-mark]')
         ).toBeNull()
+    })
+
+    it.each([
+        ['a card', false],
+        ['a stacked card', true],
+    ])('the status bar on %s sits inside its outline', async (_, stacked) => {
+        const node = await nodeOf()
+        const screen = await render(
+            <svg viewBox="-100 -40 220 80" width={440} height={160}>
+                {stacked ? (
+                    <TraceStack
+                        stack={{ hub: node.key, members: [node.key] }}
+                        split={[{ status: CASE, count: 1 }]}
+                        onOpen={() => {}}
+                    />
+                ) : (
+                    <TraceCard
+                        node={node}
+                        label="Fatmata Kamara"
+                        status={CASE}
+                        date={undefined}
+                        days={undefined}
+                        selected
+                        startsChain={false}
+                        onSelect={() => {}}
+                        onExpand={() => {}}
+                        onRetry={() => {}}
+                    />
+                )}
+            </svg>
+        )
+        const { container } = screen
+        const outline = container.querySelector('[data-card-outline]')!
+        const bars = container.querySelectorAll('[data-status-bar]')
+        expect(bars.length).toBeGreaterThan(0)
+        for (const bar of bars) {
+            // Clipped to the card's rounded shape, and under the outline.
+            const clip = /^url\(#(.+)\)$/.exec(
+                bar.getAttribute('clip-path') ?? ''
+            )?.[1]
+            expect(
+                container
+                    .querySelector(`clipPath[id="${clip}"] rect`)
+                    ?.getAttribute('rx')
+            ).toBe('6')
+            expect(
+                bar.compareDocumentPosition(outline) &
+                    Node.DOCUMENT_POSITION_FOLLOWING
+            ).toBeTruthy()
+        }
     })
 
     it('attention cards carry the ring cue', async () => {

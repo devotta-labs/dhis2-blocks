@@ -329,6 +329,9 @@ export function RelationshipViewerCanvas({
                             )
                         }
                         const nodeState = nodeStatus(node)
+                        // The mark says where a chain starts, so a starting record something drawn leads to has none.
+                        const startsChain =
+                            node.seed && generations.get(key) === 0
                         const handlers = {
                             onSelect: () => select(key),
                             onExpand: () => expand(key),
@@ -354,6 +357,7 @@ export function RelationshipViewerCanvas({
                                                 : undefined
                                         }
                                         selected={key === selected}
+                                        startsChain={startsChain}
                                         {...handlers}
                                     />
                                 </g>
@@ -366,6 +370,7 @@ export function RelationshipViewerCanvas({
                                     label={labelOf(node)}
                                     status={nodeState}
                                     selected={key === selected}
+                                    startsChain={startsChain}
                                     named={
                                         node.seed ||
                                         !!nodeState?.attention ||

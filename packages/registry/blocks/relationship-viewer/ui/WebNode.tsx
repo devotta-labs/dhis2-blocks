@@ -25,6 +25,7 @@ export function WebNode({
     label,
     status,
     selected,
+    startsChain,
     named,
     onSelect,
     onExpand,
@@ -34,6 +35,7 @@ export function WebNode({
     label: string
     status: RelationshipStatus | undefined
     selected: boolean
+    startsChain: boolean // a starting record nothing drawn leads to
     named: boolean // seed, attention or selected
     onSelect(): void
     onExpand(): void
@@ -88,7 +90,7 @@ export function WebNode({
                     selected ? 'stroke-dhis2-blue-600' : 'stroke-dhis2-grey-900'
                 }
             />
-            {node.seed && <SeedMark r={r + RING_GAP} />}
+            {startsChain && <SeedMark r={r + RING_GAP} />}
             {named && (
                 <text
                     data-label=""

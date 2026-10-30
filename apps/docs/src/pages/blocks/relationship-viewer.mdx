@@ -18,14 +18,17 @@ The viewer draws the same records in two layouts, each with its own job.
 
 - **Web** shows the shape of an outbreak: where the clusters are, which
   records link many others, and what needs action first. Records are small
-  marks with one signal each (status colour, an attention ring, a mark on the
-  records you started from). Only those starting records, attention records
-  and the selected record are named; everything else is a select away.
+  marks with one signal each (status colour, an attention ring). Starting
+  records, attention records and the selected record are named; everything
+  else is a select away.
 - **Trace** follows a case. Each record is a card in a column for its
   generation, so a chain reads left to right. A card shows the name, the
   status, the record's date and how many days after the record before it
-  ("+4 days"), with the status colour on its left edge. Starting records
-  carry the same mark as in the web.
+  ("+4 days"), with the status colour on its left edge.
+
+In both, an arrow marks where a chain starts: a starting record that nothing
+drawn leads to. A starting record someone else exposed sits mid-chain and has
+no arrow.
 
 In both, a record with four or more contacts that link only to it draws them
 as one group, "12 records", split by status. Contacts that need attention,

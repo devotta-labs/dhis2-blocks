@@ -112,29 +112,42 @@ export function RelationshipViewerCanvas({
         return next
     }, [graph, statusOf, selected, open])
     const drawnGraph = stacked?.graph
+    // Which records get label room, as a string, so a new statusOf with the same answers keeps the web in place.
+    const attention = useMemo(
+        () =>
+            drawnGraph
+                ? [...drawnGraph.nodes.values()]
+                      .filter(
+                          (node) =>
+                              node.state.status === 'loaded' &&
+                              statusOf(node)?.attention
+                      )
+                      .map((node) => node.key)
+                      .join('\n')
+                : '',
+        [drawnGraph, statusOf]
+    )
     // The last web picture, so a stack opening or a record expanding grows the picture instead of redrawing it.
     const lastWeb = useRef<ReadonlyMap<NodeKey, Point>>()
 
     // Only the drawn graph and layout re-run the force simulation; pan, zoom and selection do not.
     const web = useMemo(() => {
         if (!drawnGraph || !stacked || layout !== 'web') return undefined
+        const needsRoom = new Set(attention.split('\n'))
         // Room for the "12 records" or name label beside stacks, seeds and attention marks; selection does not move anything.
         const next = layoutWeb(
             drawnGraph,
             (key) => {
                 const node = drawnGraph.nodes.get(key)
                 const labelled =
-                    stacked.stacks.has(key) ||
-                    node?.seed ||
-                    (node?.state.status === 'loaded' &&
-                        statusOf(node)?.attention)
+                    stacked.stacks.has(key) || node?.seed || needsRoom.has(key)
                 return labelled ? LABELLED_SPACE : MARK_SPACE
             },
             lastWeb.current
         )
         lastWeb.current = next.positions
         return next
-    }, [drawnGraph, stacked, layout, statusOf])
+    }, [drawnGraph, stacked, layout, attention])
     const parents = useMemo(
         () => (drawnGraph ? parentsOf(drawnGraph, orientation) : undefined),
         [drawnGraph, orientation]

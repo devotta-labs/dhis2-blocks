@@ -129,7 +129,11 @@ export const setup = async ({
         rebuildMeta: () =>
             screen.rerender(
                 <Harness
-                    meta={{ ...meta, orientation: new Map(meta.orientation) }}
+                    meta={{
+                        ...meta,
+                        orientation: new Map(meta.orientation),
+                        statusOf: (node) => meta.statusOf(node),
+                    }}
                 />
             ),
     }

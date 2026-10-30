@@ -32,6 +32,7 @@ import type {
 } from './contracts'
 import { useRuntimeRelationshipViewerClient } from './engineAdapter'
 
+const NO_KEYS: ReadonlySet<NodeKey> = new Set()
 const STALE_TIME = 5 * 60_000
 const NODE_GC_TIME = 30 * 60_000
 const CONCURRENCY = 6
@@ -65,7 +66,7 @@ async function loadSeedRefs(
     return refs.slice(0, cap + 1)
 }
 
-/** Reads known records from the cache however old; only unknown nodes are fetched. */
+/** Reads known records from the cache however old; only unknown or invalidated nodes are fetched. */
 const cachedFetchRecord =
     (
         client: RelationshipViewerClient,
@@ -78,6 +79,10 @@ const cachedFetchRecord =
         const cached = queryClient.getQueryState(query.queryKey)
         if (cached?.status === 'error') {
             return Promise.reject(cached.error)
+        }
+        // An app that invalidates the block's keys after changing links expects the walk to read them again.
+        if (cached?.isInvalidated) {
+            return queryClient.fetchQuery(query)
         }
         return queryClient.ensureQueryData({
             ...query,
@@ -114,7 +119,10 @@ export function useRelationshipGraph({
 }): RelationshipGraphResult {
     const client = useRuntimeRelationshipViewerClient()
     const queryClient = useQueryClient()
-    const [expanded, setExpanded] = useState<ReadonlySet<NodeKey>>(new Set())
+    const [expansion, setExpansion] = useState<{
+        base: string
+        keys: ReadonlySet<NodeKey>
+    }>({ base: '', keys: NO_KEYS })
     const [nonce, setNonce] = useState(0)
     const seedQuery = 'query' in seeds ? seeds.query : undefined
     const program = effectiveProgram(programOption, seedQuery)
@@ -152,6 +160,9 @@ export function useRelationshipGraph({
         cap,
         followTypes ?? null,
     ]
+    // Expansions belong to one graph; new seeds, program, hops, cap or types start from none.
+    const base = hashKey(baseKey)
+    const expanded = expansion.base === base ? expansion.keys : NO_KEYS
     const graph = useQuery({
         queryKey: [...baseKey, [...expanded].sort(), nonce],
         queryFn: seedRefs
@@ -173,18 +184,20 @@ export function useRelationshipGraph({
         // Keep the drawn graph only while expanding or retrying; a new base loads from blank.
         placeholderData: (previous, previousQuery) =>
             previousQuery &&
-            hashKey(previousQuery.queryKey.slice(0, baseKey.length)) ===
-                hashKey(baseKey)
+            hashKey(previousQuery.queryKey.slice(0, baseKey.length)) === base
                 ? previous
                 : undefined,
     })
 
     const expand = useCallback(
         (key: NodeKey) =>
-            setExpanded((current) =>
-                current.has(key) ? current : new Set(current).add(key)
-            ),
-        []
+            setExpansion((current) => {
+                const keys = current.base === base ? current.keys : NO_KEYS
+                return keys.has(key)
+                    ? current
+                    : { base, keys: new Set(keys).add(key) }
+            }),
+        [base]
     )
 
     const { refetch: refetchMetadata, isError: metadataFailed } = metadata

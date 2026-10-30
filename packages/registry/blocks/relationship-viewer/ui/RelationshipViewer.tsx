@@ -1,5 +1,5 @@
 import React, { useMemo, useState, type ReactNode } from 'react'
-import { defaultLabel } from '../domain/labels'
+import { labelsOf } from '../domain/labels'
 import type {
     DateOf,
     NodeKey,
@@ -104,6 +104,7 @@ export function RelationshipViewer(props: RelationshipViewerProps) {
         const drawn = graph ?? EMPTY_GRAPH
         const orientation = orientEdges(drawn, dateOf)
         const gens = generations(drawn, orientation)
+        const labels = metadata && labelsOf(drawn, metadata)
         return {
             statuses,
             statusOf: (node) => {
@@ -111,9 +112,7 @@ export function RelationshipViewer(props: RelationshipViewerProps) {
                 return statuses.find((s) => s.key === key)
             },
             labelOf: (node) => {
-                const base = metadata
-                    ? defaultLabel(node, drawn, metadata)
-                    : node.ref.id
+                const base = labels?.get(node.key) ?? node.ref.id
                 return labelOf ? labelOf(node, base) : base
             },
             dateOf,

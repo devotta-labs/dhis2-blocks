@@ -1,4 +1,10 @@
-import type { NodeRecord, RelationshipGraph, RelationshipNode } from './model'
+import type {
+    NodeKey,
+    NodeRecord,
+    RelationshipEdge,
+    RelationshipGraph,
+    RelationshipNode,
+} from './model'
 
 type RelationshipEntity =
     | 'TRACKED_ENTITY_INSTANCE'
@@ -45,9 +51,9 @@ const join = (
         .join(' · ')
 }
 
-export function defaultLabel(
+function labelOf(
     node: RelationshipNode,
-    graph: RelationshipGraph,
+    edge: RelationshipEdge | undefined,
     metadata: RelationshipMetadata
 ): string {
     if (node.state.status !== 'loaded') {
@@ -55,13 +61,6 @@ export function defaultLabel(
     }
     const { record } = node.state
     const isEvent = node.ref.kind === 'event'
-    const edge =
-        (node.discoveredVia
-            ? graph.edges.get(node.discoveredVia)
-            : undefined) ??
-        [...graph.edges.values()].find(
-            (e) => e.from === node.key || e.to === node.key
-        )
     const type = edge && metadata.types.get(edge.type)
     const side = edge?.from === node.key ? type?.from : type?.to
     const view = side?.trackerDataView
@@ -78,4 +77,28 @@ export function defaultLabel(
           )
         : ''
     return configured || display || node.ref.id
+}
+
+/** Every node's label: its data view on the side of the link it was found through, or a starting record's first link. */
+export function labelsOf(
+    graph: RelationshipGraph,
+    metadata: RelationshipMetadata
+): Map<NodeKey, string> {
+    const firstLink = new Map<NodeKey, RelationshipEdge>()
+    for (const edge of graph.edges.values()) {
+        if (!firstLink.has(edge.from)) firstLink.set(edge.from, edge)
+        if (!firstLink.has(edge.to)) firstLink.set(edge.to, edge)
+    }
+    return new Map(
+        [...graph.nodes.values()].map((node) => [
+            node.key,
+            labelOf(
+                node,
+                (node.discoveredVia
+                    ? graph.edges.get(node.discoveredVia)
+                    : undefined) ?? firstLink.get(node.key),
+                metadata
+            ),
+        ])
+    )
 }

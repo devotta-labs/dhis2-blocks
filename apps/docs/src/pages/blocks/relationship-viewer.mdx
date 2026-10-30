@@ -132,6 +132,15 @@ its `from` side. Records are cached with TanStack Query, so expanding a
 record does not read the records already drawn again. `cap` (default 500) bounds the
 number of drawn records; when it is reached a notice says so.
 
+After your app adds or removes a relationship, invalidate the block's queries
+and the graph reads every drawn record again:
+
+```tsx
+import { relationshipViewerKeys } from '@/components/relationship-viewer'
+
+queryClient.invalidateQueries({ queryKey: relationshipViewerKeys.all })
+```
+
 A tracked entity is read with `program`. From DHIS2 42 that read fails for
 someone not enrolled in the program, so the record is read again without it
 and shows no enrollment.

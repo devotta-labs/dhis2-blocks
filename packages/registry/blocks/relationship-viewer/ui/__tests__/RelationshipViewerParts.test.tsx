@@ -416,6 +416,23 @@ describe('RelationshipViewer parts', () => {
         expect(actions.select).toHaveBeenCalledWith(te('A1'))
     })
 
+    it('equal statuses from a new statusOf keep the web where it is', async () => {
+        const graph = await graphOf(chains(), ['A1'], { hops: 3 })
+        const { screen, rebuildMeta } = await setup({
+            graph,
+            children: <RelationshipViewerCanvas />,
+        })
+        const places = () =>
+            [...screen.container.querySelectorAll('[data-node-key]')].map(
+                (node) => node.parentElement?.getAttribute('transform')
+            )
+        const before = places()
+
+        await rebuildMeta()
+
+        expect(places()).toEqual(before)
+    })
+
     it('an equal layout keeps the zoom', async () => {
         const graph = await graphOf(chains(), ['A1'])
         const { screen, rebuildMeta } = await setup({

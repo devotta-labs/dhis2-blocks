@@ -8,9 +8,11 @@ import type { NodeKey, RelationshipStatus } from '../../domain/model'
 import {
     chains,
     FIXTURE_PROGRAM,
+    link,
     person,
     superspreaders,
 } from '../../__tests__/fixtures'
+import { relationshipViewerKeys } from '../../index'
 import type {
     RelationshipViewerActions,
     RelationshipViewerMeta,
@@ -111,6 +113,7 @@ const renderViewer = async (
         seen,
         latest,
         ready,
+        queryClient,
         rerender: (extra: Partial<RelationshipViewerProps>) =>
             screen.rerender(element(extra)),
     }
@@ -461,6 +464,58 @@ describe('RelationshipViewer', () => {
             false
         )
         expect(latest().state.status).toBe('ready')
+    })
+
+    it('re-centring drops records expanded in the last graph', async () => {
+        const { engine } = fakeEngine(chains())
+        const { ready, latest, rerender } = await renderViewer(engine, {
+            seeds: { refs: [{ kind: 'trackedEntity', id: 'A1' }] },
+        })
+        const first = await ready()
+        first.actions.expand(te('A2'))
+        await vi.waitFor(() =>
+            expect(latest().state.graph?.nodes.has(te('A3'))).toBe(true)
+        )
+
+        await rerender({
+            seeds: { refs: [{ kind: 'trackedEntity', id: 'A3' }] },
+        })
+
+        await vi.waitFor(() => {
+            expect(latest().state.graph?.nodes.has(te('A3c'))).toBe(true)
+            expect(latest().state.fetching).toBe(false)
+        })
+        // One hop from A3; A2 sits at the edge and is not expanded here.
+        expect([...latest().state.graph!.nodes.keys()].sort()).toEqual(
+            [te('A2'), te('A3'), te('A3c'), te('A4')].sort()
+        )
+    })
+
+    it('a refresh after invalidating the block keys draws new links', async () => {
+        const records = chains()
+        const { engine } = fakeEngine(records)
+        const { ready, latest, queryClient } = await renderViewer(engine, {
+            seeds: { refs: [{ kind: 'trackedEntity', id: 'A1' }] },
+        })
+        await ready()
+        // A contact added elsewhere in the app.
+        const at = records.findIndex((r) => r.ref.id === 'A1')
+        records[at] = {
+            ...records[at],
+            relationships: [
+                ...records[at].relationships,
+                link('A1-new', 'A1', 'New1'),
+            ],
+        }
+        records.push(person('New1'))
+
+        await queryClient.invalidateQueries({
+            queryKey: relationshipViewerKeys.all,
+        })
+
+        await vi.waitFor(() =>
+            expect(latest().state.graph?.nodes.has(te('New1'))).toBe(true)
+        )
     })
 
     it('layout and selection work controlled and uncontrolled', async () => {

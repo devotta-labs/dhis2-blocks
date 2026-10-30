@@ -2,6 +2,7 @@
  * Public entry point for the installed Relationship Viewer source block.
  */
 export type { SeedQuery } from './api/fetchers'
+export { relationshipViewerKeys } from './api/keys'
 
 export type {
     DateOf,

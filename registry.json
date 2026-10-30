@@ -321,6 +321,21 @@
             ]
         },
         {
+            "name": "kbd",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/kbd.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/kbd.tsx"
+                }
+            ]
+        },
+        {
             "name": "label",
             "type": "registry:ui",
             "registryDependencies": [
@@ -599,6 +614,326 @@
             ]
         },
         {
+            "name": "data-entry",
+            "type": "registry:block",
+            "title": "Data Entry",
+            "description": "Grid data entry for DHIS2 events: typed cells, Excel-style keys, program rules, and unsent changes kept on the device until DHIS2 has them.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@3.2.1",
+                "@tanstack/react-query@^5.101.4",
+                "zod@^4.4.3",
+                "zustand@^5.0.15"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert-dialog",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/checkbox",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/dhis2-value-types",
+                "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/kbd",
+                "devotta-labs/dhis2-blocks/label",
+                "devotta-labs/dhis2-blocks/program-rules",
+                "devotta-labs/dhis2-blocks/textarea"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/Cell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/Cell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/CellStatus.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/CellStatus.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/ChoiceCells.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/ChoiceCells.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/OptionCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/OptionCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/OptionList.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/OptionList.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/PopupCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/PopupCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/TextCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/TextCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/cellProps.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/cellProps.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/AgeEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/AgeEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/CoordinateEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/CoordinateEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/EditorButtons.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/EditorButtons.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/FileEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/FileEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/LongTextEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/LongTextEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/MultiSelectEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/MultiSelectEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/age.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/age.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/editors/fileApi.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/editors/fileApi.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/popupEditors.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/popupEditors.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/serverSearch.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/serverSearch.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/cells/useCellMode.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/cells/useCellMode.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/grid/DataGrid.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/DataGrid.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/grid/ShowMoreEvents.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/ShowMoreEvents.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/grid/headers.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/headers.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/grid/navigation.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/navigation.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/grid/paste.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/paste.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/grid/useAddRow.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/useAddRow.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/logic/effects.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/logic/effects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/logic/ruleEffects.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/logic/ruleEffects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/logic/summary.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/logic/summary.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/model/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/model/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/outbox/download.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/outbox/download.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/outbox/failure.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/outbox/failure.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/outbox/outbox.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/outbox/outbox.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/outbox/sync.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/outbox/sync.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/DataEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/DataEntry.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/afterPaint.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/afterPaint.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/appendPage.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/appendPage.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/completion.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/completion.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/connectRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/connectRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/discardFailed.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/discardFailed.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/formRows.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/formRows.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/hooks.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/openForm.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/openForm.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/signedIn.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/signedIn.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/standInForms.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/standInForms.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/unsentFile.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/unsentFile.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/useLeaveWarning.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/useLeaveWarning.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/useRuleEffects.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/useRuleEffects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/eventSave.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/eventSave.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/eventSchemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/eventSchemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/eventSource.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/eventSource.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/expiry.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/expiry.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/hasRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/hasRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/uid.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/uid.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/store/store.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/store/store.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/summary/DataEntrySummary.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/summary/DataEntrySummary.tsx"
+                }
+            ]
+        },
+        {
             "name": "dhis2-value-display",
             "type": "registry:block",
             "title": "DHIS2 Value Display",
@@ -628,6 +963,174 @@
                     "path": "packages/registry/blocks/dhis2-value-display/types.ts",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-display/types.ts"
+                }
+            ]
+        },
+        {
+            "name": "dhis2-value-types",
+            "type": "registry:block",
+            "title": "DHIS2 Value Types",
+            "description": "How each DHIS2 value type is typed, checked, pasted and shown for editing, in the system calendar.",
+            "dependencies": [
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@3.2.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/dates.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/dates.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/fieldMask.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/fieldMask.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/optionSearch.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/optionSearch.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/valueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/valueTypes.ts"
+                }
+            ]
+        },
+        {
+            "name": "program-rules",
+            "type": "registry:block",
+            "title": "Program Rules",
+            "description": "DHIS2 program rules through the official rule engine: effects for one event or many, with attribution and dependency tracking.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/rule-engine@3.8.6",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/enrollment.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/enrollment.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/inputKey.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/inputKey.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/loadRuleEngine.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/loadRuleEngine.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/metadata.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/metadata.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/queryKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/queryKeys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/useEventsRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useEventsRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/useProgramRuleContext.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRuleContext.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/useProgramRuleEvaluator.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRuleEvaluator.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/useProgramRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/buildContext.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/buildContext.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/buildInput.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/buildInput.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/dependencyGraph.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/dependencyGraph.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/evaluate.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/evaluate.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/manyEvents.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/manyEvents.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/scanExpression.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/scanExpression.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/stages.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/stages.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/valueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/valueTypes.ts"
                 }
             ]
         },

@@ -16,6 +16,7 @@ packages/
       context-selector/ Capture-style controlled context-selector primitives
       working-list/     Working List block
       sidebar/          Composable modeling-app navigation with a collapse rail
+      data-entry/       Grid data entry for DHIS2 events
     test/               Shared Vitest browser setup
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
@@ -112,6 +113,48 @@ Collapsing preserves the open groups and selected page.
 
 See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
 examples.
+
+## Data Entry block
+
+Enter DHIS2 events in a grid, typed in like a spreadsheet: one row per event and
+one column per data element. Every change is kept on the device before it is
+sent, so nothing typed is lost to a dropped connection, a reload or a crash, and
+program rules run for the rows whose stage the grid shows, as Capture runs them.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/data-entry
+```
+
+The install also pulls in `dhis2-value-types` (what each value type accepts),
+`dhis2-value-display` (the calendar) and `program-rules`. Import from
+`@/components/data-entry`, and render `DataEntry` beneath the DHIS2 app-runtime
+provider and a TanStack `QueryClientProvider`:
+
+```tsx
+import {
+    DataEntry,
+    DataEntrySummary,
+    DataGrid,
+    eventSource,
+} from '@/components/data-entry'
+
+// Made once: a source with new keys loads the form again.
+const inpatient = eventSource({
+    programId: 'eBAyeGv0exc',
+    orgUnitId: 'DiszpKrYNg8',
+})
+
+export const InpatientGrid = () => (
+    <DataEntry source={inpatient}>
+        <DataGrid />
+        <DataEntrySummary />
+    </DataEntry>
+)
+```
+
+`eventSource` takes the events of a program, of one stage, or of one person
+(`enrollmentId`). See `/blocks/data-entry` for live examples of each, the
+keyboard, program rules, how changes are saved, and replacing a control.
 
 ## Working List block
 
@@ -289,7 +332,7 @@ pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/dhis2-theme
 
 Available items: `alert`, `alert-dialog`, `button`, `checkbox`, `cn`,
 `combobox`, `dhis2-theme`, `dialog`, `dropdown-menu`, `field`, `input`,
-`input-group`, `label`, `popover`, `portal-root`, `select`, `separator`,
+`input-group`, `kbd`, `label`, `popover`, `portal-root`, `select`, `separator`,
 `spinner`, `switch`, `table`, `textarea`, `toggle`, `toggle-group`, and
 `tooltip`. Items that import siblings (for example `combobox` imports `select`
 and `input-group`) install them too.

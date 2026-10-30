@@ -5,6 +5,7 @@
 @source '../../../packages/registry/blocks/working-list';
 @source '../../../packages/registry/blocks/context-selector';
 @source '../../../packages/registry/blocks/sidebar';
+@source '../../../packages/registry/blocks/data-entry';
 
 @import 'shadcn/tailwind.css';
 

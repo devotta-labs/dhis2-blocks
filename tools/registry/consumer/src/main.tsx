@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { ContextSelector } from '@/components/context-selector'
+import { DataEntry, DataGrid, eventSource } from '@/components/data-entry'
 import { WorkingList } from '@/components/working-list'
 import {
     Sidebar,
@@ -16,6 +17,8 @@ import {
 } from '@/components/sidebar'
 import { Host } from './host'
 import './index.css'
+
+const events = eventSource({ programId: 'program', orgUnitId: 'orgUnit' })
 
 // Type-level use only: the check compiles and bundles this file, never runs it.
 const root = document.getElementById('root')
@@ -53,6 +56,9 @@ if (root !== null) {
             <WorkingList programId="program" orgUnitId="orgUnit">
                 {null}
             </WorkingList>
+            <DataEntry source={events}>
+                <DataGrid />
+            </DataEntry>
         </>
     )
 }

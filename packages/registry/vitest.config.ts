@@ -8,6 +8,7 @@ const resolve = {
         '@/components/dhis2/ui': fileURLToPath(
             new URL('./components', import.meta.url)
         ),
+        '@/components': fileURLToPath(new URL('./blocks', import.meta.url)),
     },
 }
 
@@ -41,8 +42,15 @@ export default defineConfig({
                         '@base-ui/react/radio-group',
                         '@base-ui/react/switch',
                         '@base-ui/react/toggle',
+                        '@dhis2/app-runtime',
+                        '@dhis2/rule-engine',
                         '@dhis2/ui-icons',
+                        '@tanstack/react-query',
+                        'better-result',
                         'class-variance-authority',
+                        'vitest-browser-react',
+                        'zod',
+                        'zustand/react/shallow',
                     ],
                 },
                 test: {

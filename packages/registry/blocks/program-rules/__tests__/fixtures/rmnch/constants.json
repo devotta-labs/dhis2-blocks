@@ -1,0 +1,16 @@
+{
+    "constants": [
+        {
+            "name": "Commodity ordering overhead",
+            "value": 5.0,
+            "displayName": "Commodity ordering overhead",
+            "id": "Gfd3ppDfq8E"
+        },
+        {
+            "name": "Pi",
+            "value": 3.14,
+            "displayName": "Pi",
+            "id": "bCqvfPR02Im"
+        }
+    ]
+}

@@ -1,0 +1,284 @@
+{
+    "programType": "WITHOUT_REGISTRATION",
+    "categoryCombo": {
+        "id": "bjDvmb4bfuf",
+        "isDefault": true
+    },
+    "expiryDays": 0,
+    "completeEventsExpiryDays": 0,
+    "displayName": "Inpatient morbidity and mortality",
+    "id": "eBAyeGv0exc",
+    "programStages": [
+        {
+            "programStageDataElements": [
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Male",
+                                    "displayName": "Male"
+                                },
+                                {
+                                    "code": "Female",
+                                    "displayName": "Female"
+                                }
+                            ]
+                        },
+                        "displayFormName": "Gender",
+                        "id": "oZg33kd9taw"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Pregnant",
+                        "id": "SWfdB5lX0fk"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER",
+                        "displayFormName": "Age (years)",
+                        "id": "qrur9Dvnyt5"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "Height in cm",
+                        "id": "GieVkTxp4HH"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_POSITIVE",
+                        "displayFormName": "Weight in kg",
+                        "id": "vV9UWAZohSf"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "Date of admission",
+                        "id": "eMyVanycQSC"
+                    },
+                    "compulsory": true
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "Date of discharge",
+                        "id": "msodh3rEMJa"
+                    },
+                    "compulsory": true
+                },
+                {
+                    "dataElement": {
+                        "valueType": "ORGANISATION_UNIT",
+                        "displayFormName": "Place of Infection",
+                        "id": "S33cRBsnXPo"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "MODDISCH",
+                                    "displayName": "Discharged"
+                                },
+                                {
+                                    "code": "MODDIED",
+                                    "displayName": "Died"
+                                },
+                                {
+                                    "code": "MODTRANS",
+                                    "displayName": "Transferred"
+                                },
+                                {
+                                    "code": "MODABSC",
+                                    "displayName": "Absconded"
+                                }
+                            ]
+                        },
+                        "displayFormName": "Mode of Discharge",
+                        "id": "fWIAEtYVEGk"
+                    },
+                    "compulsory": true
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "A00",
+                                    "displayName": "A00 Cholera"
+                                },
+                                {
+                                    "code": "A000",
+                                    "displayName": "A000 Cholera due to Vibrio cholerae 01, biovar cholerae"
+                                },
+                                {
+                                    "code": "A001",
+                                    "displayName": "A001 Cholera due to Vibrio cholerae 01, biovar eltor"
+                                },
+                                {
+                                    "code": "A009",
+                                    "displayName": "A009 Cholera, unspecified"
+                                },
+                                {
+                                    "code": "A01",
+                                    "displayName": "A01 Typhoid and paratyphoid fevers"
+                                },
+                                {
+                                    "code": "A010",
+                                    "displayName": "A010 Typhoid fever"
+                                },
+                                {
+                                    "code": "A011",
+                                    "displayName": "A011 Paratyphoid fever A"
+                                },
+                                {
+                                    "code": "A012",
+                                    "displayName": "A012 Paratyphoid fever B"
+                                },
+                                {
+                                    "code": "A013",
+                                    "displayName": "A013 Paratyphoid fever C"
+                                },
+                                {
+                                    "code": "A014",
+                                    "displayName": "A014 Paratyphoid fever, unspecified"
+                                },
+                                {
+                                    "code": "A02",
+                                    "displayName": "A02 Other salmonella infections"
+                                },
+                                {
+                                    "code": "A020",
+                                    "displayName": "A020 Salmonella enteritis"
+                                },
+                                {
+                                    "code": "A021",
+                                    "displayName": "A021 Salmonella septicaemia"
+                                },
+                                {
+                                    "code": "A022",
+                                    "displayName": "A022 Localized salmonella infections"
+                                },
+                                {
+                                    "code": "A028",
+                                    "displayName": "A028 Other specified salmonella infections"
+                                },
+                                {
+                                    "code": "A029",
+                                    "displayName": "A029 Salmonella infection, unspecified"
+                                },
+                                {
+                                    "code": "A03",
+                                    "displayName": "A03 Shigellosis"
+                                },
+                                {
+                                    "code": "A030",
+                                    "displayName": "A030 Shigellosis due to Shigella dysenteriae"
+                                },
+                                {
+                                    "code": "A031",
+                                    "displayName": "A031 Shigellosis due to Shigella flexneri"
+                                },
+                                {
+                                    "code": "A032",
+                                    "displayName": "A032 Shigellosis due to Shigella boydii"
+                                }
+                            ]
+                        },
+                        "displayFormName": "Diagnosis (ICD-10)",
+                        "id": "K6uUAvq500H"
+                    },
+                    "compulsory": true
+                },
+                {
+                    "dataElement": {
+                        "valueType": "FILE_RESOURCE",
+                        "displayFormName": "Documentation",
+                        "id": "ulD2zW0TIy2"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "COORDINATE",
+                        "displayFormName": "Household location",
+                        "id": "F3ogKBuviRA"
+                    },
+                    "compulsory": false
+                }
+            ],
+            "validationStrategy": "ON_UPDATE_AND_INSERT",
+            "blockEntryForm": false,
+            "displayName": "Inpatient morbidity and mortality",
+            "access": {
+                "data": {
+                    "write": true
+                }
+            },
+            "id": "Zj7UnCAulEk",
+            "repeatable": false,
+            "programStageSections": [
+                {
+                    "dataElements": [
+                        {
+                            "id": "oZg33kd9taw"
+                        },
+                        {
+                            "id": "SWfdB5lX0fk"
+                        },
+                        {
+                            "id": "qrur9Dvnyt5"
+                        },
+                        {
+                            "id": "GieVkTxp4HH"
+                        },
+                        {
+                            "id": "vV9UWAZohSf"
+                        }
+                    ],
+                    "id": "d7ZILSbPgYh"
+                },
+                {
+                    "dataElements": [
+                        {
+                            "id": "eMyVanycQSC"
+                        },
+                        {
+                            "id": "K6uUAvq500H"
+                        },
+                        {
+                            "id": "msodh3rEMJa"
+                        },
+                        {
+                            "id": "S33cRBsnXPo"
+                        },
+                        {
+                            "id": "fWIAEtYVEGk"
+                        },
+                        {
+                            "id": "ulD2zW0TIy2"
+                        }
+                    ],
+                    "id": "OeSqs7pkKqI"
+                }
+            ]
+        }
+    ]
+}

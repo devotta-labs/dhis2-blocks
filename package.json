@@ -28,6 +28,7 @@
         "e2e:up": "bash scripts/e2e/up.sh",
         "e2e:down": "bash scripts/e2e/down.sh",
         "dev:docs": "pnpm --filter @dhis2-blocks/docs run dev",
+        "lab": "pnpm --filter @dhis2-blocks/docs run dev --open /lab.html",
         "build:docs": "turbo run build --filter=@dhis2-blocks/docs",
         "serve:docs": "pnpm --filter @dhis2-blocks/docs run serve",
         "docs:up": "bash scripts/docs/up.sh 42",

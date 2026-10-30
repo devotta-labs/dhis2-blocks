@@ -1,0 +1,131 @@
+import { z } from 'zod'
+
+export const PROGRAM_FIELDS =
+    'id,displayName,programType,expiryPeriodType,expiryDays,completeEventsExpiryDays,categoryCombo[id,isDefault],programStages[id,displayName,repeatable,validationStrategy,blockEntryForm,access[data[write]],programStageDataElements[compulsory,dataElement[id,displayFormName,valueType,fieldMask,optionSet[options[code,displayName]]]],programStageSections[id,dataElements[id]]]'
+
+/** The event date column's id; its cells are `<event>.occurredAt`. */
+export const EVENT_DATE_COLUMN = 'occurredAt'
+
+export const EVENT_FIELDS =
+    'event,enrollment,program,programStage,orgUnit,occurredAt,scheduledAt,completedAt,status,attributeOptionCombo,dataValues[dataElement,value]'
+
+const stageSchema = z.object({
+    id: z.string(),
+    displayName: z.string(),
+    repeatable: z.boolean(),
+    validationStrategy: z.enum(['ON_COMPLETE', 'ON_UPDATE_AND_INSERT']),
+    blockEntryForm: z.boolean(),
+    access: z.object({ data: z.object({ write: z.boolean() }) }),
+    programStageDataElements: z.array(
+        z.object({
+            compulsory: z.boolean(),
+            dataElement: z.object({
+                id: z.string(),
+                displayFormName: z.string(),
+                valueType: z.string(),
+                fieldMask: z.string().optional(),
+                optionSet: z
+                    .object({
+                        options: z.array(
+                            z.object({
+                                code: z.string(),
+                                displayName: z.string(),
+                            })
+                        ),
+                    })
+                    .optional(),
+            }),
+        })
+    ),
+    programStageSections: z
+        .array(
+            z.object({
+                id: z.string(),
+                dataElements: z.array(z.object({ id: z.string() })),
+            })
+        )
+        .default([]),
+})
+
+export type ProgramStage = z.infer<typeof stageSchema>
+
+const statusSchema = z.enum([
+    'ACTIVE',
+    'COMPLETED',
+    'SCHEDULE',
+    'SKIPPED',
+    'VISITED',
+    'OVERDUE',
+])
+
+const eventSchema = z.object({
+    event: z.string(),
+    enrollment: z.string().optional(),
+    programStage: z.string(),
+    orgUnit: z.string(),
+    occurredAt: z.string().optional(),
+    scheduledAt: z.string().optional(),
+    completedAt: z.string().optional(),
+    status: statusSchema,
+    dataValues: z.array(
+        z.object({ dataElement: z.string(), value: z.string() })
+    ),
+})
+
+export type TrackerEvent = z.infer<typeof eventSchema>
+
+/** An event's own fields: an update replaces them with what it is sent, so a save reads them first. */
+export const EVENT_LEVEL_FIELDS =
+    'event,program,programStage,orgUnit,enrollment,occurredAt,scheduledAt,status,attributeOptionCombo,geometry,assignedUser'
+
+export const eventFieldsSchema = z.object({
+    event: z.string(),
+    program: z.string(),
+    programStage: z.string(),
+    orgUnit: z.string(),
+    enrollment: z.string().optional(),
+    occurredAt: z.string().optional(),
+    scheduledAt: z.string().optional(),
+    status: statusSchema,
+    attributeOptionCombo: z.string().optional(),
+    geometry: z.object({ type: z.string(), coordinates: z.json() }).optional(),
+    assignedUser: z.object({ uid: z.string() }).optional(),
+})
+
+/** The program with its stages, one page of its events, the user's authorities and the server's calendar, as one query returns them. */
+export const eventFormSchema = z.object({
+    program: z.object({
+        id: z.string(),
+        displayName: z.string(),
+        programType: z.enum(['WITH_REGISTRATION', 'WITHOUT_REGISTRATION']),
+        expiryPeriodType: z.string().optional(),
+        expiryDays: z.number().optional(),
+        completeEventsExpiryDays: z.number().optional(),
+        categoryCombo: z.object({ id: z.string(), isDefault: z.boolean() }),
+        programStages: z.array(stageSchema),
+    }),
+    events: z.object({ events: z.array(eventSchema) }),
+    me: z.object({ authorities: z.array(z.string()) }),
+    systemInfo: z.object({ calendar: z.string().optional() }),
+})
+
+/** The names of org units asked for by id. */
+export const orgUnitNamesSchema = z.object({
+    orgUnits: z.object({
+        organisationUnits: z.array(
+            z.object({ id: z.string(), displayName: z.string() })
+        ),
+    }),
+})
+
+/** The names of files asked for by id. */
+export const fileNamesSchema = z.object({
+    files: z.object({
+        fileResources: z.array(z.object({ id: z.string(), name: z.string() })),
+    }),
+})
+
+/** The id of one of a program's rules, if it has any. */
+export const ruleIdSchema = z.object({
+    rules: z.object({ programRules: z.array(z.object({ id: z.string() })) }),
+})

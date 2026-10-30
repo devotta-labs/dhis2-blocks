@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-16T12:06:08.651Z\n"
-"PO-Revision-Date: 2026-10-16T12:06:08.651Z\n"
+"POT-Creation-Date: 2026-10-30T08:52:40.633Z\n"
+"PO-Revision-Date: 2026-10-30T08:52:40.634Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -139,6 +139,324 @@ msgstr "Could not load more organisation units"
 msgid "Show more"
 msgstr "Show more"
 
+msgid "{{field}} is required"
+msgstr "{{field}} is required"
+
+msgid "{{row}}, {{field}}: {{message}}"
+msgstr "{{row}}, {{field}}: {{message}}"
+
+msgid "{{row}}: {{message}}"
+msgstr "{{row}}: {{message}}"
+
+msgid "Add event"
+msgstr "Add event"
+
+msgid "All changes saved"
+msgstr "All changes saved"
+
+msgid "Assigned by rule: {{rule}}"
+msgstr "Assigned by rule: {{rule}}"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Cells pasted: {{cells}}"
+msgstr "Cells pasted: {{cells}}"
+
+msgid "Choose a file"
+msgstr "Choose a file"
+
+msgid "Choose an image"
+msgstr "Choose an image"
+
+msgid "Choose an image file"
+msgstr "Choose an image file"
+
+msgid "Clear all"
+msgstr "Clear all"
+
+msgid "Cleared by rule: {{rule}}"
+msgstr "Cleared by rule: {{rule}}"
+
+msgid "Completed"
+msgstr "Completed"
+
+msgid "Completed events in this stage cannot be edited"
+msgstr "Completed events in this stage cannot be edited"
+
+msgid "Connect to the internet to upload files"
+msgstr "Connect to the internet to upload files"
+
+msgid "Could not search. Try again."
+msgstr "Could not search. Try again."
+
+msgid "Could not upload the file. Try again."
+msgstr "Could not upload the file. Try again."
+
+msgid "Could not upload the file: {{reason}}"
+msgstr "Could not upload the file: {{reason}}"
+
+msgid "Ctrl+Enter or ⌘+Enter saves"
+msgstr "Ctrl+Enter or ⌘+Enter saves"
+
+msgid "Date format: {{format}}"
+msgstr "Date format: {{format}}"
+
+msgid "Date of birth"
+msgstr "Date of birth"
+
+msgid "Days"
+msgstr "Days"
+
+msgid "Discard"
+msgstr "Discard"
+
+msgid "Discard {{changes}} changes?"
+msgstr "Discard {{changes}} changes?"
+
+msgid "Discard changes that could not be saved"
+msgstr "Discard changes that could not be saved"
+
+msgid "Download"
+msgstr "Download"
+
+msgid "Download unsent changes"
+msgstr "Download unsent changes"
+
+msgid "Edit {{field}}"
+msgstr "Edit {{field}}"
+
+msgid "Edit this field in its own form"
+msgstr "Edit this field in its own form"
+
+msgid "Enter a date of birth that is not in the future"
+msgstr "Enter a date of birth that is not in the future"
+
+msgid "Enter a latitude between -90 and 90"
+msgstr "Enter a latitude between -90 and 90"
+
+msgid "Enter a longitude between -180 and 180"
+msgstr "Enter a longitude between -180 and 180"
+
+msgid "Enter whole numbers of zero or more"
+msgstr "Enter whole numbers of zero or more"
+
+msgid "Event date"
+msgstr "Event date"
+
+msgid "Events shown: {{shown}}"
+msgstr "Events shown: {{shown}}"
+
+msgid "Hidden"
+msgstr "Hidden"
+
+msgid "Hidden by rule: {{rule}}"
+msgstr "Hidden by rule: {{rule}}"
+
+msgid "Latitude"
+msgstr "Latitude"
+
+msgid "Longitude"
+msgstr "Longitude"
+
+msgid "Months"
+msgstr "Months"
+
+msgid "New event"
+msgstr "New event"
+
+msgid "No"
+msgstr "No"
+
+msgid "No matches"
+msgstr "No matches"
+
+msgid "No organisation units found"
+msgstr "No organisation units found"
+
+msgid "No users found"
+msgstr "No users found"
+
+msgid "Not in this stage"
+msgstr "Not in this stage"
+
+msgid "Not saved: {{reason}}"
+msgstr "Not saved: {{reason}}"
+
+msgid "Not yet sent to DHIS2"
+msgstr "Not yet sent to DHIS2"
+
+msgid "Not yet sent to DHIS2: {{changes}}"
+msgstr "Not yet sent to DHIS2: {{changes}}"
+
+msgid "Program rules are still loading"
+msgstr "Program rules are still loading"
+
+msgid "Program rules could not be loaded"
+msgstr "Program rules could not be loaded"
+
+msgid "Programs with attribute categories are not supported in this grid"
+msgstr "Programs with attribute categories are not supported in this grid"
+
+msgid "Remove"
+msgstr "Remove"
+
+msgid "Results: {{results}}"
+msgstr "Results: {{results}}"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Saved on this device"
+msgstr "Saved on this device"
+
+msgid "Scheduled"
+msgstr "Scheduled"
+
+msgid "Search users"
+msgstr "Search users"
+
+msgid "Selected options: {{options}}"
+msgstr "Selected options: {{options}}"
+
+msgid "Show more events"
+msgstr "Show more events"
+
+msgid "Showing {{shown}} of {{total}} matches"
+msgstr "Showing {{shown}} of {{total}} matches"
+
+msgid "Signed in as someone else. Reload to continue as that user."
+msgstr "Signed in as someone else. Reload to continue as that user."
+
+msgid "Sign in to keep saving"
+msgstr "Sign in to keep saving"
+
+msgid "Skip past the grid"
+msgstr "Skip past the grid"
+
+msgid "Skipped events cannot be edited"
+msgstr "Skipped events cannot be edited"
+
+msgid "They are not saved anywhere else. Download them first to keep a copy."
+msgstr "They are not saved anywhere else. Download them first to keep a copy."
+
+msgid "This device could not store the change"
+msgstr "This device could not store the change"
+
+msgid "This event has not been saved yet"
+msgstr "This event has not been saved yet"
+
+msgid "This event is in an expired period"
+msgstr "This event is in an expired period"
+
+msgid "This event was completed too long ago to edit"
+msgstr "This event was completed too long ago to edit"
+
+msgid "This event was deleted or you no longer have access to it"
+msgstr "This event was deleted or you no longer have access to it"
+
+msgid "This row cannot be completed"
+msgstr "This row cannot be completed"
+
+msgid "This row cannot be reopened"
+msgstr "This row cannot be reopened"
+
+msgid "Uploaded {{file}}"
+msgstr "Uploaded {{file}}"
+
+msgid "Uploading {{file}}"
+msgstr "Uploading {{file}}"
+
+msgid "Values not saved: {{values}}"
+msgstr "Values not saved: {{values}}"
+
+msgid "Waiting for required fields: {{fields}}"
+msgstr "Waiting for required fields: {{fields}}"
+
+msgid "Years"
+msgstr "Years"
+
+msgid "Years: {{years}}, months: {{months}}, days: {{days}}"
+msgstr "Years: {{years}}, months: {{months}}, days: {{days}}"
+
+msgid "Yes"
+msgstr "Yes"
+
+msgid "You are offline"
+msgstr "You are offline"
+
+msgid "You do not have access to enter data in this stage"
+msgstr "You do not have access to enter data in this stage"
+
+msgid "Choose one of the options"
+msgstr "Choose one of the options"
+
+msgid "Enter a number"
+msgstr "Enter a number"
+
+msgid "Enter a number between 0 and 1"
+msgstr "Enter a number between 0 and 1"
+
+msgid "Enter a percentage between 0 and 100"
+msgstr "Enter a percentage between 0 and 100"
+
+msgid "Enter a single letter"
+msgstr "Enter a single letter"
+
+msgid "Enter a valid coordinate"
+msgstr "Enter a valid coordinate"
+
+msgid "Enter a valid date"
+msgstr "Enter a valid date"
+
+msgid "Enter a valid date and time"
+msgstr "Enter a valid date and time"
+
+msgid "Enter a valid email address"
+msgstr "Enter a valid email address"
+
+msgid "Enter a valid phone number"
+msgstr "Enter a valid phone number"
+
+msgid "Enter a valid time"
+msgstr "Enter a valid time"
+
+msgid "Enter a valid URL"
+msgstr "Enter a valid URL"
+
+msgid "Enter a value in the required format"
+msgstr "Enter a value in the required format"
+
+msgid "Enter a whole number"
+msgstr "Enter a whole number"
+
+msgid "Enter a whole number between -2147483648 and 2147483647"
+msgstr "Enter a whole number between -2147483648 and 2147483647"
+
+msgid "Enter a whole number greater than zero"
+msgstr "Enter a whole number greater than zero"
+
+msgid "Enter a whole number less than zero"
+msgstr "Enter a whole number less than zero"
+
+msgid "Enter a whole number of zero or more"
+msgstr "Enter a whole number of zero or more"
+
+msgid "Only Yes can be selected"
+msgstr "Only Yes can be selected"
+
+msgid "Select a valid organisation unit"
+msgstr "Select a valid organisation unit"
+
+msgid "Select Yes or No"
+msgstr "Select Yes or No"
+
+msgid "Use a full stop for decimals"
+msgstr "Use a full stop for decimals"
+
+msgid "The enrollment of this event could not be read"
+msgstr "The enrollment of this event could not be read"
+
 msgid "Main navigation"
 msgstr "Main navigation"
 
@@ -195,9 +513,6 @@ msgstr "Available columns"
 
 msgid "Between"
 msgstr "Between"
-
-msgid "Cancel"
-msgstr "Cancel"
 
 msgid "Can only filter using one program stage."
 msgstr "Can only filter using one program stage."
@@ -270,9 +585,6 @@ msgstr "{{column}} was not moved."
 
 msgid "Columns"
 msgstr "Columns"
-
-msgid "Completed"
-msgstr "Completed"
 
 msgid "Completed enrollments"
 msgstr "Completed enrollments"
@@ -496,9 +808,6 @@ msgstr "No users match"
 msgid "No values match"
 msgstr "No values match"
 
-msgid "No"
-msgstr "No"
-
 msgid "Not empty"
 msgstr "Not empty"
 
@@ -538,9 +847,6 @@ msgstr "Proposed repair"
 msgid "Reference"
 msgstr "Reference"
 
-msgid "Remove"
-msgstr "Remove"
-
 msgid "Reorder {{column}}"
 msgstr "Reorder {{column}}"
 
@@ -577,9 +883,6 @@ msgstr "Row actions"
 msgid "Row has {{count}} data quality issues"
 msgstr "Row has {{count}} data quality issues"
 
-msgid "Save"
-msgstr "Save"
-
 msgid "Save changes to this view"
 msgstr "Save changes to this view"
 
@@ -605,14 +908,8 @@ msgstr "Save view"
 msgid "Saved views in this program"
 msgstr "Saved views in this program"
 
-msgid "Scheduled"
-msgstr "Scheduled"
-
 msgid "Scheduled date"
 msgstr "Scheduled date"
-
-msgid "Search users"
-msgstr "Search users"
 
 msgid "Search columns"
 msgstr "Search columns"
@@ -782,9 +1079,6 @@ msgstr "Working lists require DHIS2 41 or newer."
 
 msgid "Working lists require a tracker program with registration."
 msgstr "Working lists require a tracker program with registration."
-
-msgid "Yes"
-msgstr "Yes"
 
 msgid "{{count}} selected"
 msgstr "{{count}} selected"

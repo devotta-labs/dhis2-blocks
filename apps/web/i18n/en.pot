@@ -283,12 +283,6 @@ msgstr "This program needs 1 detail unless an ID is used."
 msgid "This program needs {{count}} details unless an ID is used."
 msgstr "This program needs {{count}} details unless an ID is used."
 
-msgid "No ID?"
-msgstr "No ID?"
-
-msgid "Search by ID instead"
-msgstr "Search by ID instead"
-
 msgid "A required value is missing"
 msgstr "A required value is missing"
 

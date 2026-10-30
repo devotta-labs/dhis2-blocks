@@ -1,7 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 
-// Extraction markers for the source-installed tracked entity finder and its
-// tracked-entity-finder-01 example block. Never invoked.
+// Extraction markers for the source-installed tracked entity finder. Never
+// invoked.
 export const trackedEntityFinderTranslationCatalog = () => [
     i18n.t('Search'),
     i18n.t('Searching…'),
@@ -51,6 +51,4 @@ export const trackedEntityFinderTranslationCatalog = () => [
     i18n.t('Nothing is searchable.'),
     i18n.t('This program needs 1 detail unless an ID is used.'),
     i18n.t('This program needs {{count}} details unless an ID is used.'),
-    i18n.t('No ID?'),
-    i18n.t('Search by ID instead'),
 ]

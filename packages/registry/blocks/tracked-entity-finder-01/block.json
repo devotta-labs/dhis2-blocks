@@ -1,5 +1,0 @@
-{
-    "title": "Find a person by ID, with a \"No ID?\" fallback",
-    "description": "An example composed from the tracked entity finder: search by a unique ID, or by first name and date of birth.",
-    "docs": "An example built from the tracked entity finder's public parts: an ID form, a No ID? link that swaps to a first name and date of birth form, and the default FinderResults. It is one way to compose the parts, not the only way. Replace the PROGRAM and attribute uid constants at the top of FindPerson.tsx with your program's, then edit the forms and results to suit your app."
-}

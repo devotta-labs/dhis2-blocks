@@ -1,6 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import { CalendarInput } from '@dhis2/ui'
-import React, { createContext, useContext, useId } from 'react'
+import React, { createContext, memo, useContext, useId } from 'react'
 import { Field, FieldLabel } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
 import type { FinderSystemInfo } from '../api/systemInfo'
@@ -95,13 +95,13 @@ export interface CalendarDateInputProps {
  * value is kept as ISO. If @dhis2/ui's CalendarInput cannot render the
  * calendar, a plain text input in the same format takes its place.
  */
-export const CalendarDateInput = ({
+export const CalendarDateInput = memo(function CalendarDateInput({
     label,
     value,
     onChange,
     info,
     invalid = false,
-}: CalendarDateInputProps) => {
+}: CalendarDateInputProps) {
     const id = useId()
     const CalendarInputComponent = useContext(CalendarInputContext)
     const shown = toShownText(value, info)
@@ -155,4 +155,4 @@ export const CalendarDateInput = ({
             </div>
         </CalendarErrorBoundary>
     )
-}
+})

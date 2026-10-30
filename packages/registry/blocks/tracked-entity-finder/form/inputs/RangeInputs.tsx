@@ -1,5 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
-import React, { useId, type ReactNode } from 'react'
+import React, { useCallback, useId, type ReactNode } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import {
     Field,
@@ -110,11 +110,21 @@ export const DateRangeInput = ({
     ...frame
 }: FieldInputProps) => {
     const { meta } = useFinderContext()
+    const range: { from?: string; to?: string } =
+        value?.kind === 'dateRange' ? value : {}
+    const { from, to } = range
+    // Each end's callback carries the other end, so it changes only with it.
+    const setFrom = useCallback(
+        (next: string) => setValue({ kind: 'dateRange', from: next, to }),
+        [setValue, to]
+    )
+    const setTo = useCallback(
+        (next: string) => setValue({ kind: 'dateRange', from, to: next }),
+        [setValue, from]
+    )
     if (!meta.info) {
         return null
     }
-    const range: { from?: string; to?: string } =
-        value?.kind === 'dateRange' ? value : {}
     const invalid = frame.error !== undefined
     return (
         <RangeFrame {...frame}>
@@ -122,19 +132,15 @@ export const DateRangeInput = ({
                 label={i18n.t('From')}
                 info={meta.info}
                 invalid={invalid}
-                value={range.from ?? ''}
-                onChange={(from) =>
-                    setValue({ kind: 'dateRange', from, to: range.to })
-                }
+                value={from ?? ''}
+                onChange={setFrom}
             />
             <CalendarDateInput
                 label={i18n.t('To')}
                 info={meta.info}
                 invalid={invalid}
-                value={range.to ?? ''}
-                onChange={(to) =>
-                    setValue({ kind: 'dateRange', from: range.from, to })
-                }
+                value={to ?? ''}
+                onChange={setTo}
             />
         </RangeFrame>
     )

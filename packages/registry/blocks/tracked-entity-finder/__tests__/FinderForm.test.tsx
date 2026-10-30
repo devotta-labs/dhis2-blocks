@@ -5,6 +5,10 @@ import React, {
     type ReactNode,
 } from 'react'
 import { page, userEvent } from 'vitest/browser'
+import {
+    CalendarInputProvider,
+    type StrictCalendarInputProps,
+} from '../calendar/CalendarDateInput'
 import { FinderField } from '../form/FinderField'
 import { FinderForm } from '../form/FinderForm'
 import { FinderHint } from '../form/FinderHint'
@@ -164,6 +168,54 @@ describe('FinderForm', () => {
         await expect
             .element(submission())
             .toHaveTextContent('firstName:like:Jo dob:eq:2001-02-03')
+    })
+
+    it('keeps both ends of a date range as each is typed', async () => {
+        await renderFinder(
+            <FinderForm>
+                <FinderField attribute="firstName" />
+                <FinderRangeField attribute="dob" />
+                <FinderSubmit />
+            </FinderForm>
+        )
+        const dob = page.getByRole('group', { name: 'Date of birth' })
+
+        await userEvent.fill(page.getByLabelText('First name'), 'Jo')
+        await userEvent.fill(dob.getByLabelText('From'), '2001-02-03')
+        await userEvent.tab()
+        await userEvent.fill(dob.getByLabelText('To'), '2002-03-04')
+        await userEvent.tab()
+        await page.getByRole('button', { name: 'Search' }).click()
+
+        await expect
+            .element(submission())
+            .toHaveTextContent('dob:ge:2001-02-03:le:2002-03-04')
+    })
+
+    it('does not re-render date inputs while another field is typed in', async () => {
+        let renders = 0
+        const CountingCalendarInput = (props: StrictCalendarInputProps) => {
+            renders += 1
+            return <input aria-label={props.label} />
+        }
+        await renderFinder(
+            <CalendarInputProvider component={CountingCalendarInput}>
+                <FinderForm>
+                    <FinderField attribute="firstName" />
+                    <FinderField attribute="dob" />
+                    <FinderRangeField attribute="visit" />
+                </FinderForm>
+            </CalendarInputProvider>
+        )
+        const firstName = page.getByLabelText('First name')
+        await expect.element(firstName).toBeEnabled()
+        const before = renders
+
+        await userEvent.type(firstName, 'Fatmata')
+
+        await expect.element(firstName).toHaveValue('Fatmata')
+        // The calendar is slow to render: typing elsewhere must not redo it.
+        expect(renders).toBe(before)
     })
 
     it('shows a field issue inline and marks the input invalid', async () => {

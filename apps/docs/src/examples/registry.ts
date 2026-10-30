@@ -90,7 +90,7 @@ const examples = [
     },
     {
         slug: 'relationship-viewer/outbreak',
-        title: 'Outbreak timeline',
+        title: 'Outbreak web',
         live: true,
         Component: lazy(
             () => import('./relationship-viewer/RelationshipViewerOutbreak')

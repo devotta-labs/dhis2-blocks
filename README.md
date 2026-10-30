@@ -276,7 +276,7 @@ relative import into another block or an `@/` alias the CLI cannot rewrite.
 ## Relationship Viewer block
 
 The Relationship Viewer is a read-only source registry block that draws the
-relationships around DHIS2 tracker records as a web or a timeline. Install it
+relationships around DHIS2 tracker records as a web or a trace. Install it
 from the GitHub registry in a project with Tailwind CSS enabled and a valid
 shadcn `components.json` configuration:
 

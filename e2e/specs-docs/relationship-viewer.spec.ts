@@ -69,30 +69,23 @@ test.describe('live Relationship Viewer previews', () => {
         ).toEqual(['Hub contact 1', 'Hub contact 2', 'Hub contact 3'])
     })
 
-    test('the outbreak example switches to the web layout', async ({
-        page,
-    }) => {
-        await openLivePreview(page, 'relationship-viewer/outbreak', listReady)
+    test('the case example opens on the trace', async ({ page }) => {
+        await openLivePreview(page, 'relationship-viewer/from-case', listReady)
 
-        const timeline = page.getByRole('button', {
-            name: 'Timeline',
-            exact: true,
-        })
+        const trace = page.getByRole('button', { name: 'Trace', exact: true })
         const web = page.getByRole('button', { name: 'Web', exact: true })
-        // Only the timeline draws a date axis; its ticks are ISO dates.
-        const axisDates = page
+        const cards = page
             .getByRole('img', { name: 'Relationship graph' })
-            .locator('text')
-            .filter({ hasText: /^\d{4}-\d{2}-\d{2}$/ })
+            .locator('[data-trace-card]')
 
-        await expect(timeline).toHaveAttribute('aria-pressed', 'true')
-        await expect(axisDates.first()).toBeAttached()
+        await expect(trace).toHaveAttribute('aria-pressed', 'true')
+        await expect(cards.first()).toBeAttached()
 
         await web.click()
 
         await expect(web).toHaveAttribute('aria-pressed', 'true')
-        await expect(timeline).toHaveAttribute('aria-pressed', 'false')
-        await expect(axisDates).toHaveCount(0)
+        await expect(trace).toHaveAttribute('aria-pressed', 'false')
+        await expect(cards).toHaveCount(0)
     })
 
     test('expanding a stub adds its neighbours', async ({ page }) => {

@@ -1,6 +1,6 @@
 ---
 title: Relationship Viewer
-description: A web or timeline of the relationships around tracker records, with an accessible list.
+description: A web or a trace of the relationships around tracker records, with an accessible list.
 ---
 
 import { ExampleCard } from '../../components/ExampleCard'
@@ -11,6 +11,26 @@ import { InstallCommand } from '../../components/InstallCommand'
 These previews use a small contact-tracing program from this repository's
 e2e seed data, which `pnpm docs:up` loads into the docs backend. Replace the
 IDs with records and a program from your own instance.
+
+## Two views
+
+The viewer draws the same records in two layouts, each with its own job.
+
+- **Web** shows the shape of an outbreak: where the clusters are, which
+  records link many others, and what needs action first. Records are small
+  marks with one signal each (status colour, an attention ring, a mark on the
+  records you started from). Only those starting records, attention records
+  and the selected record are named; everything else is a select away.
+- **Trace** follows a case. Each record is a card in a column for its
+  generation, so a chain reads left to right. A card shows the name, the
+  status, the record's date and how many days after the record before it
+  ("+4 days"), with the status colour on its left edge. Starting records
+  carry the same mark as in the web.
+
+In both, a record with four or more contacts that link only to it draws them
+as one group, "12 records", split by status. Contacts that need attention,
+starting records, the selected record and records with links not yet loaded
+never go into a group. Click a group to open it.
 
 ## Installation
 
@@ -78,14 +98,14 @@ compose your own details panel or actions from the selected record (see
 `seeds` can also be a tracker query. It is passed to
 `/api/tracker/trackedEntities`, must name its `program`, and is paged through
 until it ends or the cap is reached. A seed query yields people only; each one
-is then read like any other record. This example starts on the timeline and
-draws two hops out:
+is then read like any other record. This example draws two hops out on the
+web:
 
 <ExampleCard slug="relationship-viewer/outbreak" />
 
-On the timeline, records are placed by their enrollment date (events by their
-occurred date); records without a date go in a separate "No date" lane. Pass
-`dateOf` to use another date.
+A record's date is its enrollment date (an event's, its occurred date). The
+trace prints it on each card, and a two-way link points from the earlier
+record to the later one. Pass `dateOf` to use another date.
 
 ## Your own status rule
 
@@ -146,13 +166,14 @@ so it is counted with the other links.
 - `cap?: number` — the most records to draw. Defaults to 500.
 - `followTypes?: string[]` — relationship type IDs to follow. Defaults to
   all.
-- `dateOf?: (node: RelationshipNode) => Date | undefined` — a record's place
-  on the timeline. Defaults to `defaultDateOf(program)`.
+- `dateOf?: (node: RelationshipNode) => Date | undefined` — a record's date:
+  printed on trace cards and used to orient two-way links. Defaults to
+  `defaultDateOf(program)`.
 - `labelOf?: (node: RelationshipNode, defaultLabel: string) => string` —
   overrides a record's label. By default it comes from the relationship
   type's `trackerDataView`, then the tracked entity type's display
   attributes, then the UID.
-- `layout?: 'web' | 'timeline'` and
+- `layout?: 'web' | 'trace'` and
   `onLayoutChange?: (layout) => void` — the layout, controlled. Defaults to
   `'web'`.
 - `selected?: NodeKey` and `onSelectedChange?: (key?: NodeKey) => void` — the
@@ -162,10 +183,12 @@ so it is counted with the other links.
 
 - `RelationshipViewerCanvas` — the graph in the active layout, with zoom,
   pan and a Fit button.
-- `RelationshipViewerLayoutToggle` — switch between web and timeline.
-- `RelationshipViewerLegend` — the statuses, record shapes and link kinds.
+- `RelationshipViewerLayoutToggle` — switch between web and trace.
+- `RelationshipViewerLegend` — the statuses, record shapes, the starting
+  mark, groups and link kinds.
 - `RelationshipViewerSummary` — records per status, clusters, generations
-  and links out. It says when the picture is partial.
+  and links out. When the picture is partial it says how many links are not
+  loaded, on how many records.
 - `RelationshipViewerNotices` — load errors, records that could not be
   loaded, and the cap, each with a retry where it applies.
 - `RelationshipViewerList` — the accessible equivalent of the canvas: every

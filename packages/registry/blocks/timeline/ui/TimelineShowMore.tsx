@@ -110,7 +110,7 @@ export const TimelineShowMore = ({
             size="sm"
             {...props}
             // Sits under the entries, at their indent, not across the page.
-            className={cn('ml-6 self-start text-sm!', className)}
+            className={cn('ms-6 self-start text-sm!', className)}
             ref={button}
             type="button"
             data-slot="timeline-show-more"

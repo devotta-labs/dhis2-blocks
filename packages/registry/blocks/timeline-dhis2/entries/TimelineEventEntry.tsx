@@ -360,7 +360,7 @@ export const TimelineEventNotes = ({
                 data-slot="timeline-event-notes"
                 className={cn('flex flex-col items-start gap-1', className)}
             >
-                <ul className="order-first m-0 flex basis-full list-none flex-col gap-1 border-l-2 border-dhis2-grey-300 p-0 pl-3 text-sm">
+                <ul className="order-first m-0 flex basis-full list-none flex-col gap-1 border-s-2 border-dhis2-grey-300 p-0 ps-3 text-sm">
                     <EventNote note={notes[0]} />
                 </ul>
             </div>
@@ -388,7 +388,7 @@ export const TimelineEventNotes = ({
             <div
                 id={listId}
                 hidden={!open}
-                className="order-last mt-1 basis-full border-l-2 border-dhis2-grey-300 pl-3"
+                className="order-last mt-1 basis-full border-s-2 border-dhis2-grey-300 ps-3"
             >
                 {open ? (
                     <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
@@ -489,7 +489,7 @@ export const TimelineEventChanges = ({
             <div
                 id={bodyId}
                 hidden={!open}
-                className="order-last mt-1 basis-full border-l-2 border-dhis2-grey-300 pl-3"
+                className="order-last mt-1 basis-full border-s-2 border-dhis2-grey-300 ps-3"
             >
                 {open ? <ChangesBody entry={entry} /> : null}
             </div>

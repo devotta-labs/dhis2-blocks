@@ -9,6 +9,8 @@ import {
 } from '@/components/data-entry'
 import { useMemo, useState, type ReactNode } from 'react'
 import { ComposedGrid } from './ComposedGrid'
+import { RulesData } from './RulesData'
+import { RULES, rulesSource } from './rulesForm'
 import {
     DEFAULT_CONFIG,
     labSource,
@@ -311,9 +313,34 @@ const SaveLog = ({ log, clear }: { log: LogEntry[]; clear: () => void }) => (
     </section>
 )
 
-/** Try every grid shape and value type, or any program on the connected DHIS2. */
+const MODES = {
+    lab: 'Lab form',
+    rules: 'Rules',
+    live: 'Live DHIS2',
+}
+
+// The lab's program rules, each with the action it shows: try the values that set them off.
+const RuleList = () => (
+    <Section title={`Program rules (${RULES.length})`}>
+        <ol className="flex flex-col gap-2 text-sm">
+            {RULES.map((rule) => (
+                <li key={rule.name}>
+                    <span className="font-medium">{rule.name}</span>
+                    <span className="block text-xs text-dhis2-grey-700">
+                        {rule.shows}
+                    </span>
+                    <code className="block text-xs break-all text-dhis2-grey-600">
+                        {rule.condition}
+                    </code>
+                </li>
+            ))}
+        </ol>
+    </Section>
+)
+
+/** Try every grid shape and value type, the program rules, or any program on the connected DHIS2. */
 export const Lab = () => {
-    const [mode, setMode] = useState<'lab' | 'live'>('lab')
+    const [mode, setMode] = useState<keyof typeof MODES>('lab')
     const [config, setConfig] = useState(DEFAULT_CONFIG)
     const [live, setLive] = useState<EventSourceOptions>(
         PRESETS['Event program (inpatient)']
@@ -323,22 +350,26 @@ export const Lab = () => {
     const [log, setLog] = useState<LogEntry[]>([])
 
     // Made once per config or program: a source with a new key loads the form again.
-    const source = useMemo(
-        () =>
-            mode === 'lab'
-                ? labSource(config, (records) =>
-                      setLog((entries) =>
-                          [
-                              {
-                                  at: new Date().toLocaleTimeString(),
-                                  records,
-                              },
-                              ...entries,
-                          ].slice(0, 50)
-                      )
-                  )
-                : eventSource(live),
-        [mode, config, live]
+    const source = useMemo(() => {
+        const logSave = (records: ReadonlyArray<OutboxRecord>) =>
+            setLog((entries) =>
+                [
+                    { at: new Date().toLocaleTimeString(), records },
+                    ...entries,
+                ].slice(0, 50)
+            )
+        if (mode === 'lab') {
+            return labSource(config, logSave)
+        }
+        return mode === 'rules' ? rulesSource(logSave) : eventSource(live)
+    }, [mode, config, live])
+
+    const form = (
+        <DataEntry key={source.cacheKey ?? source.key} source={source}>
+            <Status />
+            {composed ? <ComposedGrid /> : <DataGrid />}
+            <DataEntrySummary />
+        </DataEntry>
     )
 
     return (
@@ -346,15 +377,21 @@ export const Lab = () => {
             <aside className="sticky top-0 flex h-screen w-72 shrink-0 flex-col gap-4 overflow-y-auto border-e border-dhis2-grey-300 bg-dhis2-grey-050 p-4">
                 <h1 className="text-base font-medium">Data entry lab</h1>
                 <div className="flex rounded border border-dhis2-grey-500 text-sm">
-                    {(['lab', 'live'] as const).map((each) => (
+                    {Object.entries(MODES).map(([each, label]) => (
                         <button
                             key={each}
                             type="button"
                             aria-pressed={mode === each}
-                            onClick={() => setMode(each)}
+                            onClick={() =>
+                                setMode(
+                                    each === 'rules' || each === 'live'
+                                        ? each
+                                        : 'lab'
+                                )
+                            }
                             className="flex-1 px-2 py-1 aria-pressed:bg-dhis2-blue-700 aria-pressed:text-white"
                         >
-                            {each === 'lab' ? 'Lab form' : 'Live DHIS2'}
+                            {label}
                         </button>
                     ))}
                 </div>
@@ -366,22 +403,20 @@ export const Lab = () => {
                 </Check>
                 {mode === 'lab' ? (
                     <LabControls config={config} setConfig={setConfig} />
-                ) : (
+                ) : null}
+                {mode === 'rules' ? <RuleList /> : null}
+                {mode === 'live' ? (
                     <LiveControls options={live} setOptions={setLive} />
-                )}
+                ) : null}
             </aside>
             <main
                 dir={rtl ? 'rtl' : 'ltr'}
                 className="flex min-w-0 flex-1 flex-col gap-4 p-6"
             >
-                <DataEntry key={source.cacheKey ?? source.key} source={source}>
-                    <Status />
-                    {composed ? <ComposedGrid /> : <DataGrid />}
-                    <DataEntrySummary />
-                </DataEntry>
-                {mode === 'lab' ? (
+                {mode === 'rules' ? <RulesData>{form}</RulesData> : form}
+                {mode === 'live' ? null : (
                     <SaveLog log={log} clear={() => setLog([])} />
-                ) : null}
+                )}
             </main>
         </div>
     )

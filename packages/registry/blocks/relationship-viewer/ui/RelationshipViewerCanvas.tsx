@@ -2,7 +2,7 @@ import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import i18n from '@dhis2/d2-i18n'
-import React, { useId, useMemo, useRef, useState } from 'react'
+import React, { useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { dayDifference } from '../domain/dates'
 import type {
     NodeKey,
@@ -148,11 +148,44 @@ export function RelationshipViewerCanvas({
     )
     const drawn = web ?? trace
     // A new graph or layout is a new scene and refits; redrawing the same one keeps the zoom.
-    const scene = useMemo(() => ({ graph, layout }), [graph, layout])
-    const { ref, viewBox, fit, handlers } = useViewBox(
+    // A scene is a layout over a set of starting records: expanding, retrying or opening a stack stays in it.
+    const scene = useMemo(
+        () =>
+            `${layout}|${(graph?.order ?? []).filter((key) => graph?.nodes.get(key)?.seed).join(',')}`,
+        [graph, layout]
+    )
+    const { ref, viewBox, fit, shift, handlers } = useViewBox(
         drawn?.bounds ?? EMPTY_BOUNDS,
         scene
     )
+
+    // Keep the record being worked on still: the one just expanded, the stack just opened, or the selection.
+    const opened = useRef<NodeKey>()
+    const previous = useRef<{
+        scene: string
+        graph: RelationshipGraph
+        positions: ReadonlyMap<NodeKey, Point>
+    }>()
+    useLayoutEffect(() => {
+        const last = previous.current
+        previous.current =
+            graph && drawn
+                ? { scene, graph, positions: drawn.positions }
+                : undefined
+        if (!last || !drawn || last.scene !== scene) return
+        const expanded = [...last.graph.nodes.values()].find(
+            (node) =>
+                node.stubCount > (graph?.nodes.get(node.key)?.stubCount ?? 0)
+        )?.key
+        const anchor = expanded ?? opened.current ?? selected
+        opened.current = undefined
+        const from = anchor && last.positions.get(anchor)
+        const to = anchor && drawn.positions.get(anchor)
+        if (from && to && (from.x !== to.x || from.y !== to.y)) {
+            shift(to.x - from.x, to.y - from.y)
+        }
+        // Runs once per new drawing; scene, graph and selection are read as they are then.
+    }, [drawn])
 
     if (status === 'loading') {
         return (
@@ -196,8 +229,10 @@ export function RelationshipViewerCanvas({
             .map(([s, count]) => ({ status: s, count }))
             .sort((a, b) => rank(a.status) - rank(b.status))
     }
-    const openStack = (hub: NodeKey) =>
+    const openStack = (hub: NodeKey, standIn: NodeKey) => {
+        opened.current = standIn
         setOpen((current) => new Set(current).add(hub))
+    }
 
     return (
         <div className={cn('relative h-96 w-full', className)}>
@@ -288,7 +323,7 @@ export function RelationshipViewerCanvas({
                                     <Drawing
                                         stack={stack}
                                         split={splitOf(stack)}
-                                        onOpen={() => openStack(stack.hub)}
+                                        onOpen={() => openStack(stack.hub, key)}
                                     />
                                 </g>
                             )

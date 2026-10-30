@@ -66,6 +66,20 @@ export function useViewBox<Scene>(
     const [view, setView] = useState<{ scene: Scene; box?: Box }>({ scene })
     const box = (view.scene === scene && view.box) || fitted
 
+    // What was last painted. Once a scene is on screen, a new drawing in it (an expand, a stack opening) keeps that
+    // view instead of refitting; a new scene, a resize or Fit refits.
+    const painted = useRef<{ scene: Scene; box: Box }>()
+    useEffect(() => {
+        painted.current = { scene, box }
+    })
+    useLayoutEffect(() => {
+        const last = painted.current
+        if (last?.scene === scene && !(view.scene === scene && view.box)) {
+            setView({ scene, box: last.box })
+        }
+        // Only a new drawing holds the view: not the view's own changes, and not a resize.
+    }, [minX, minY, maxX, maxY])
+
     const drag = useRef<{
         startX: number
         startY: number
@@ -151,6 +165,15 @@ export function useViewBox<Scene>(
         ref,
         viewBox: `${box.x} ${box.y} ${box.width} ${box.height}`,
         fit: () => setView({ scene }),
+        /** Moves the view by (dx, dy), so a point that moved by that much stays put on screen. */
+        shift: (dx: number, dy: number) =>
+            setView((current) => {
+                const from = (current.scene === scene && current.box) || fitted
+                return {
+                    scene,
+                    box: { ...from, x: from.x + dx, y: from.y + dy },
+                }
+            }),
         handlers: {
             onPointerDown,
             onPointerMove,

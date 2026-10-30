@@ -320,7 +320,9 @@ describe('RelationshipViewer parts', () => {
         expect(screen.container.querySelectorAll('[data-stack]')).toHaveLength(
             1
         )
-        expect(svg.getAttribute('viewBox')).toBe(zoomed)
+        // The view may move to keep the opened stack still; its zoom does not change.
+        const size = (viewBox: string | null) => viewBox?.split(' ').slice(2)
+        expect(size(svg.getAttribute('viewBox'))).toEqual(size(zoomed))
     })
 
     it('legend explains the seed mark and stacks', async () => {

@@ -1,6 +1,7 @@
 /* oxlint-disable anti-slop/no-module-mocking -- These tests replace only the app-runtime engine hook with a fixture engine. */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { type ReactNode } from 'react'
+import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { DataEngineLike } from '../../api/client'
 import type { NodeKey, RelationshipStatus } from '../../domain/model'
@@ -24,6 +25,7 @@ import {
     RelationshipViewer,
     type RelationshipViewerProps,
 } from '../RelationshipViewer'
+import { RelationshipViewerCanvas } from '../RelationshipViewerCanvas'
 import { fakeEngine } from './fakeEngine'
 
 interface MockRuntime {
@@ -231,6 +233,44 @@ describe('RelationshipViewer', () => {
             ['A1', 'A1c', 'A2', 'A2c', 'A3'].map((id) => nodeCalls(id))
         ).toEqual([1, 1, 1, 1, 1])
     })
+
+    it.each(['trace', 'web'] as const)(
+        'expanding a stub keeps the record where it was on screen (%s)',
+        async (layout) => {
+            runtime.engine = fakeEngine(chains()).engine
+            const queryClient = new QueryClient({
+                defaultOptions: { queries: { retry: false } },
+            })
+            const screen = await render(
+                <QueryClientProvider client={queryClient}>
+                    <RelationshipViewer
+                        seeds={{ refs: [{ kind: 'trackedEntity', id: 'A1' }] }}
+                        statuses={STATUSES}
+                        statusOf={(node) => (node.seed ? 'case' : 'contact')}
+                        layout={layout}
+                    >
+                        <RelationshipViewerCanvas />
+                    </RelationshipViewer>
+                </QueryClientProvider>
+            )
+            const node = (id: string) =>
+                screen.container.querySelector(`[data-node-key="${te(id)}"]`)
+            // The mark itself: the web glyph or the card's outline, not its stub badge.
+            const mark = () =>
+                node('A2')!.querySelector('[data-glyph]') ??
+                node('A2')!.querySelector('rect')!
+            await vi.waitFor(() => expect(node('A2')).not.toBeNull())
+            const before = mark().getBoundingClientRect()
+
+            await userEvent.click(node('A2')!.querySelector('[data-stub]')!)
+
+            await vi.waitFor(() => expect(node('A3')).not.toBeNull())
+            const after = mark().getBoundingClientRect()
+            expect(Math.abs(after.x - before.x)).toBeLessThan(1)
+            expect(Math.abs(after.y - before.y)).toBeLessThan(1)
+            expect(Math.abs(after.width - before.width)).toBeLessThan(1)
+        }
+    )
 
     it('retry refetches only failed nodes', async () => {
         const { engine, fail, nodeCalls } = fakeEngine(chains(), {

@@ -100,10 +100,6 @@ describe('RelationshipViewerList', () => {
             ),
         })
         const { container } = screen
-        const scrollIntoView = vi.spyOn(
-            rowOf(container, te('A2')).querySelector('button')!,
-            'scrollIntoView'
-        )
         expect(
             container.querySelectorAll('tr[aria-selected="true"]')
         ).toHaveLength(0)
@@ -120,7 +116,73 @@ describe('RelationshipViewerList', () => {
         expect(
             container.querySelectorAll('tr[aria-selected="true"]')
         ).toHaveLength(1)
-        expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' })
+    })
+
+    it('selecting in the canvas scrolls the row into view inside the list', async () => {
+        const graph = await graphOf(chains(), ['A1', 'B1', 'C1', 'D1'], {
+            hops: 2,
+        })
+        const { screen } = await setup({
+            graph,
+            children: (
+                <>
+                    <RelationshipViewerCanvas />
+                    <div
+                        data-scroller=""
+                        style={{ height: 120, overflow: 'auto' }}
+                    >
+                        <RelationshipViewerList />
+                    </div>
+                </>
+            ),
+        })
+        const { container } = screen
+        const scroller =
+            container.querySelector<HTMLElement>('[data-scroller]')!
+        const rows = container.querySelectorAll('tbody tr')
+        // SAFETY: every list row carries its node's key as data-node-key.
+        const last = rows[rows.length - 1].getAttribute(
+            'data-node-key'
+        ) as NodeKey
+
+        nodeAt(container, last)
+            .querySelector('[data-glyph]')!
+            .dispatchEvent(new MouseEvent('click', { bubbles: true }))
+
+        await vi.waitFor(() => {
+            const row = rowOf(container, last).getBoundingClientRect()
+            const area = scroller.getBoundingClientRect()
+            expect(scroller.scrollTop).toBeGreaterThan(0)
+            expect(row.top).toBeGreaterThanOrEqual(area.top)
+            expect(row.bottom).toBeLessThanOrEqual(area.bottom + 1)
+        })
+    })
+
+    it('selecting in the canvas never scrolls the page', async () => {
+        const graph = await graphOf(chains(), ['A1'])
+        const { screen } = await setup({
+            graph,
+            children: (
+                <>
+                    <RelationshipViewerCanvas />
+                    <div style={{ height: 3000 }} />
+                    <RelationshipViewerList />
+                </>
+            ),
+        })
+        const { container } = screen
+        window.scrollTo(0, 0)
+
+        nodeAt(container, te('A2'))
+            .querySelector('[data-glyph]')!
+            .dispatchEvent(new MouseEvent('click', { bubbles: true }))
+
+        await vi.waitFor(() =>
+            expect(
+                rowOf(container, te('A2')).getAttribute('aria-selected')
+            ).toBe('true')
+        )
+        expect(window.scrollY).toBe(0)
     })
 
     it('Enter on a name selects its row and marks it current', async () => {

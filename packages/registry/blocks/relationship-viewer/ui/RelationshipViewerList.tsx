@@ -17,6 +17,38 @@ import {
     useRelationshipViewerState,
 } from '../provider/RelationshipViewerContext'
 
+/**
+ * Scrolls the nearest scrolling ancestor so `row` shows below the sticky header. Never the page: the canvas the
+ * user clicked stays in view.
+ */
+const revealInList = (row: HTMLElement) => {
+    let area = row.parentElement
+    while (area && area !== document.body) {
+        const { overflowY } = getComputedStyle(area)
+        if (
+            (overflowY === 'auto' || overflowY === 'scroll') &&
+            area.scrollHeight > area.clientHeight
+        ) {
+            break
+        }
+        area = area.parentElement
+    }
+    if (!area || area === document.body) return
+    const box = area.getBoundingClientRect()
+    const header =
+        row.closest('table')?.querySelector('thead')?.getBoundingClientRect()
+            .height ?? 0
+    const { top, bottom } = row.getBoundingClientRect()
+    if (top < box.top + header) area.scrollTop -= box.top + header - top
+    else if (bottom > box.bottom) area.scrollTop += bottom - box.bottom
+}
+
+const HEAD = 'sticky top-0 z-10 px-2 py-1 text-xs whitespace-nowrap'
+const CELL = 'px-2 py-1 align-top text-[13px] leading-5'
+// Links that read as text in a dense row: no button padding or height.
+const INLINE_LINK = 'h-auto p-0 text-[13px] leading-5 tracking-normal'
+const SMALL_BUTTON = 'h-5 px-1.5 text-xs tracking-normal'
+
 /** The accessible equivalent of the canvas: the same nodes and links, operable from the keyboard. */
 export function RelationshipViewerList({ className }: { className?: string }) {
     const { graph, fetching, selected } = useRelationshipViewerState()
@@ -26,7 +58,8 @@ export function RelationshipViewerList({ className }: { className?: string }) {
 
     // Only a change of selection scrolls, not every render.
     useEffect(() => {
-        selectedRow.current?.scrollIntoView({ block: 'nearest' })
+        const row = selectedRow.current?.closest('tr')
+        if (row) revealInList(row)
     }, [selected])
 
     const attention = (key: NodeKey) => {
@@ -68,174 +101,198 @@ export function RelationshipViewerList({ className }: { className?: string }) {
     }
 
     return (
-        <Table
-            aria-label={i18n.t('Records in the relationship graph')}
-            aria-busy={fetching}
-            className={className}
-        >
-            <TableHeader>
-                <TableRow>
-                    <TableHead>{i18n.t('Name')}</TableHead>
-                    <TableHead>{i18n.t('Status')}</TableHead>
-                    <TableHead>{i18n.t('Hop')}</TableHead>
-                    <TableHead>{i18n.t('Links')}</TableHead>
-                    <TableHead>{i18n.t('Linked to')}</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {rows.map((key) => {
-                    const node = graph.nodes.get(key)
-                    if (!node) return null
-                    const failed = node.state.status === 'failed'
-                    const status = failed ? undefined : statusOf(node)
-                    const { count = 0, far = new Set<NodeKey>() } =
-                        linked.get(key) ?? {}
-                    return (
-                        <TableRow
-                            key={key}
-                            data-node-key={key}
-                            aria-selected={key === selected}
-                            data-state={
-                                key === selected ? 'selected' : undefined
-                            }
-                            className="cursor-pointer"
-                            onClick={() => select(key)}
-                        >
-                            <TableCell>
-                                {/* The click bubbles to the row, which selects. */}
-                                {/* TableRow does not forward refs (React 18), so the name button stands in for its row. */}
-                                <Button
-                                    ref={
-                                        key === selected
-                                            ? selectedRow
-                                            : undefined
-                                    }
-                                    variant="link"
-                                    size="sm"
-                                    aria-current={key === selected || undefined}
-                                >
-                                    {labelOf(node)}
-                                </Button>
-                            </TableCell>
-                            <TableCell>
-                                {failed ? (
-                                    <span className="inline-flex items-center gap-2">
-                                        {i18n.t('Could not load')}
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            aria-label={i18n.t(
-                                                'Retry {{name}}',
-                                                {
-                                                    name: labelOf(node),
-                                                    interpolation: {
-                                                        escapeValue: false,
-                                                    },
-                                                }
-                                            )}
-                                            onClick={(event) => {
-                                                event.stopPropagation()
-                                                retry(key)
-                                            }}
-                                        >
-                                            {i18n.t('Retry')}
-                                        </Button>
-                                    </span>
-                                ) : (
-                                    status?.label
-                                )}
-                            </TableCell>
-                            <TableCell>{node.hop}</TableCell>
-                            <TableCell>
-                                <div className="flex flex-col items-start gap-1">
-                                    <span>{count}</span>
-                                    {node.stubCount > 0 && (
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            aria-label={
-                                                node.stubCount === 1
-                                                    ? i18n.t(
-                                                          'Show one more for {{name}}',
-                                                          {
-                                                              name: labelOf(
-                                                                  node
-                                                              ),
-                                                              interpolation: {
-                                                                  escapeValue: false,
-                                                              },
-                                                          }
-                                                      )
-                                                    : i18n.t(
-                                                          'Show {{count}} more for {{name}}',
-                                                          {
-                                                              count: node.stubCount,
-                                                              name: labelOf(
-                                                                  node
-                                                              ),
-                                                              interpolation: {
-                                                                  escapeValue: false,
-                                                              },
-                                                          }
-                                                      )
-                                            }
-                                            onClick={(event) => {
-                                                event.stopPropagation()
-                                                expand(key)
-                                            }}
-                                        >
-                                            {node.stubCount === 1
-                                                ? i18n.t('Show one more')
-                                                : i18n.t(
-                                                      'Show {{count}} more',
-                                                      {
-                                                          count: node.stubCount,
-                                                      }
-                                                  )}
-                                        </Button>
-                                    )}
-                                    {node.otherLinkCount > 0 && (
-                                        <span>
-                                            {node.otherLinkCount === 1
-                                                ? i18n.t(
-                                                      'One other link not shown'
-                                                  )
-                                                : i18n.t(
-                                                      '{{count}} other links not shown',
-                                                      {
-                                                          count: node.otherLinkCount,
-                                                      }
-                                                  )}
+        // The table's own scroll box would stop the sticky header sticking in the host's scroll area.
+        <div className="[&>[data-slot=table-container]]:overflow-visible">
+            <Table
+                aria-label={i18n.t('Records in the relationship graph')}
+                aria-busy={fetching}
+                className={className}
+            >
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className={HEAD}>{i18n.t('Name')}</TableHead>
+                        <TableHead className={HEAD}>
+                            {i18n.t('Status')}
+                        </TableHead>
+                        <TableHead className={HEAD}>{i18n.t('Hop')}</TableHead>
+                        <TableHead className={HEAD}>
+                            {i18n.t('Links')}
+                        </TableHead>
+                        <TableHead className={HEAD}>
+                            {i18n.t('Linked to')}
+                        </TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {rows.map((key) => {
+                        const node = graph.nodes.get(key)
+                        if (!node) return null
+                        const failed = node.state.status === 'failed'
+                        const status = failed ? undefined : statusOf(node)
+                        const { count = 0, far = new Set<NodeKey>() } =
+                            linked.get(key) ?? {}
+                        return (
+                            <TableRow
+                                key={key}
+                                data-node-key={key}
+                                aria-selected={key === selected}
+                                data-state={
+                                    key === selected ? 'selected' : undefined
+                                }
+                                className="cursor-pointer"
+                                onClick={() => select(key)}
+                            >
+                                <TableCell className={CELL}>
+                                    {/* The click bubbles to the row, which selects. */}
+                                    {/* TableRow does not forward refs (React 18), so the name button stands in for its row. */}
+                                    <Button
+                                        ref={
+                                            key === selected
+                                                ? selectedRow
+                                                : undefined
+                                        }
+                                        variant="link"
+                                        size="sm"
+                                        // One line per record; a long name truncates and keeps its full text on hover.
+                                        className={cn(
+                                            INLINE_LINK,
+                                            'block max-w-56 truncate text-left'
+                                        )}
+                                        title={labelOf(node)}
+                                        aria-current={
+                                            key === selected || undefined
+                                        }
+                                    >
+                                        {labelOf(node)}
+                                    </Button>
+                                </TableCell>
+                                <TableCell className={CELL}>
+                                    {failed ? (
+                                        <span className="inline-flex flex-wrap items-center gap-1">
+                                            {i18n.t('Could not load')}
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                className={SMALL_BUTTON}
+                                                aria-label={i18n.t(
+                                                    'Retry {{name}}',
+                                                    {
+                                                        name: labelOf(node),
+                                                        interpolation: {
+                                                            escapeValue: false,
+                                                        },
+                                                    }
+                                                )}
+                                                onClick={(event) => {
+                                                    event.stopPropagation()
+                                                    retry(key)
+                                                }}
+                                            >
+                                                {i18n.t('Retry')}
+                                            </Button>
+                                        </span>
+                                    ) : (
+                                        <span className="whitespace-nowrap">
+                                            {status?.label}
                                         </span>
                                     )}
-                                </div>
-                            </TableCell>
-                            <TableCell>
-                                <div className="flex flex-wrap gap-1">
-                                    {[...far].map((farKey) => {
-                                        const other = graph.nodes.get(farKey)
-                                        return (
-                                            other && (
-                                                <Button
-                                                    key={farKey}
-                                                    variant="link"
-                                                    size="sm"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation()
-                                                        select(farKey)
-                                                    }}
-                                                >
-                                                    {labelOf(other)}
-                                                </Button>
+                                </TableCell>
+                                <TableCell className={cn(CELL, 'tabular-nums')}>
+                                    {node.hop}
+                                </TableCell>
+                                <TableCell className={CELL}>
+                                    <div className="flex flex-wrap items-center gap-1">
+                                        <span className="tabular-nums">
+                                            {count}
+                                        </span>
+                                        {node.stubCount > 0 && (
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                className={SMALL_BUTTON}
+                                                aria-label={
+                                                    node.stubCount === 1
+                                                        ? i18n.t(
+                                                              'Show one more for {{name}}',
+                                                              {
+                                                                  name: labelOf(
+                                                                      node
+                                                                  ),
+                                                                  interpolation:
+                                                                      {
+                                                                          escapeValue: false,
+                                                                      },
+                                                              }
+                                                          )
+                                                        : i18n.t(
+                                                              'Show {{count}} more for {{name}}',
+                                                              {
+                                                                  count: node.stubCount,
+                                                                  name: labelOf(
+                                                                      node
+                                                                  ),
+                                                                  interpolation:
+                                                                      {
+                                                                          escapeValue: false,
+                                                                      },
+                                                              }
+                                                          )
+                                                }
+                                                onClick={(event) => {
+                                                    event.stopPropagation()
+                                                    expand(key)
+                                                }}
+                                            >
+                                                {i18n.t('+{{stubs}}', {
+                                                    stubs: node.stubCount,
+                                                })}
+                                            </Button>
+                                        )}
+                                        {node.otherLinkCount > 0 && (
+                                            <span className="w-full text-xs text-dhis2-grey-700">
+                                                {node.otherLinkCount === 1
+                                                    ? i18n.t(
+                                                          'One other link not shown'
+                                                      )
+                                                    : i18n.t(
+                                                          '{{count}} other links not shown',
+                                                          {
+                                                              count: node.otherLinkCount,
+                                                          }
+                                                      )}
+                                            </span>
+                                        )}
+                                    </div>
+                                </TableCell>
+                                <TableCell className={CELL}>
+                                    <div className="flex flex-wrap gap-x-2">
+                                        {[...far].map((farKey) => {
+                                            const other =
+                                                graph.nodes.get(farKey)
+                                            return (
+                                                other && (
+                                                    <Button
+                                                        key={farKey}
+                                                        variant="link"
+                                                        size="sm"
+                                                        className={INLINE_LINK}
+                                                        onClick={(event) => {
+                                                            event.stopPropagation()
+                                                            select(farKey)
+                                                        }}
+                                                    >
+                                                        {labelOf(other)}
+                                                    </Button>
+                                                )
                                             )
-                                        )
-                                    })}
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    )
-                })}
-            </TableBody>
-        </Table>
+                                        })}
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        )
+                    })}
+                </TableBody>
+            </Table>
+        </div>
     )
 }

@@ -137,7 +137,6 @@ export const CalendarDateInput = memo(function CalendarDateInput({
         <CalendarErrorBoundary key={info.calendar} fallback={fallback}>
             <div className="contents" onKeyDownCapture={reportOnEnter}>
                 <CalendarInputComponent
-                    dense
                     strictValidation
                     label={label}
                     // CalendarInput gives the input this id and points its label at it.

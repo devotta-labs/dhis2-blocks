@@ -130,13 +130,6 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-button,
-input,
-select,
-textarea {
-    font: inherit;
-}
-
 /* The adapter defaults to a full viewport even in plugin mode. Inline
    examples follow their card's width and content height instead. Keep these
    overrides unlayered so they take precedence over the adapter's styled-jsx. */

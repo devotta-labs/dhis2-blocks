@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 export const Section = ({
     title,
@@ -43,7 +43,7 @@ export const NumberRow = ({
     value,
     onChange,
     min = 0,
-    max,
+    max = Infinity,
     suffix,
 }: {
     label: string
@@ -52,29 +52,48 @@ export const NumberRow = ({
     min?: number
     max?: number
     suffix?: string
-}) => (
-    <label className="flex items-center justify-between gap-2 text-sm">
-        {label}
-        <span className="flex items-center gap-1">
-            <input
-                type="number"
-                min={min}
-                max={max}
-                value={value}
-                onChange={(event) => {
-                    const next = Number(event.target.value)
-                    if (Number.isFinite(next)) {
-                        onChange(Math.min(max ?? Infinity, Math.max(min, next)))
-                    }
-                }}
-                className={`${box} w-20 text-end tabular-nums`}
-            />
-            {suffix ? (
-                <span className="w-5 text-dhis2-grey-700">{suffix}</span>
-            ) : null}
-        </span>
-    </label>
-)
+}) => {
+    // While typing, the field keeps the text as typed and applies it once it is in range; leaving the field or
+    // pressing Enter clamps whatever is left.
+    const [draft, setDraft] = useState<string>()
+    const parse = (text: string) =>
+        text.trim() === '' ? undefined : Number(text)
+    const commit = () => {
+        const next = draft === undefined ? undefined : parse(draft)
+        if (next !== undefined && Number.isFinite(next)) {
+            onChange(Math.min(max, Math.max(min, next)))
+        }
+        setDraft(undefined)
+    }
+    return (
+        <label className="flex items-center justify-between gap-2 text-sm">
+            {label}
+            <span className="flex items-center gap-1">
+                <input
+                    type="number"
+                    min={min}
+                    max={Number.isFinite(max) ? max : undefined}
+                    value={draft ?? value}
+                    onChange={(event) => {
+                        setDraft(event.target.value)
+                        const next = parse(event.target.value)
+                        if (next !== undefined && next >= min && next <= max) {
+                            onChange(next)
+                        }
+                    }}
+                    onBlur={commit}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Enter') commit()
+                    }}
+                    className={`${box} w-20 text-end tabular-nums`}
+                />
+                {suffix ? (
+                    <span className="w-5 text-dhis2-grey-700">{suffix}</span>
+                ) : null}
+            </span>
+        </label>
+    )
+}
 
 export const SelectRow = <T extends string>({
     label,

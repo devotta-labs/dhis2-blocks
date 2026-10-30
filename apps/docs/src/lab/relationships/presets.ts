@@ -61,7 +61,7 @@ const VIEW: LabView = {
         legend: true,
         list: true,
     },
-    height: 560,
+    height: 640,
 }
 
 export const DEFAULT_CONFIG: LabConfig = {

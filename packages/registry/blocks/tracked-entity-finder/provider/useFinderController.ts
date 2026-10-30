@@ -21,6 +21,11 @@ interface Registration {
 
 type Registrations = Readonly<Record<string, readonly Registration[]>>
 
+const getFinderStatus = (failed: boolean, ready: boolean): FinderStatus => {
+    if (failed) return 'error'
+    return ready ? 'ready' : 'loading'
+}
+
 export interface FinderControllerOptions {
     program: string
     onSelect: (person: FinderPerson) => void
@@ -51,12 +56,10 @@ export const useFinderController = ({
         [metadata.data]
     )
     // Dates need the server calendar, so the finder is ready only with both.
-    const status: FinderStatus =
-        metadata.isError || systemInfo.isError
-            ? 'error'
-            : model && systemInfo.data
-              ? 'ready'
-              : 'loading'
+    const status = getFinderStatus(
+        metadata.isError || systemInfo.isError,
+        Boolean(model && systemInfo.data)
+    )
 
     const [values, setValues] = useState<Readonly<Record<string, FieldValue>>>(
         {}

@@ -88,12 +88,14 @@ const isEpagomenal = (
 ): calendar is EpagomenalCalendar =>
     calendar === 'coptic' || calendar === 'ethiopian'
 
+const epagomenalDays = (year: number) => (year % 4 === 3 ? 6 : 5)
+
 const isValidEpagomenalDate = ({ year, month, day }: DateParts) =>
     year > 0 &&
     month >= 1 &&
     month <= 13 &&
     day >= 1 &&
-    day <= (month <= 12 ? 30 : year % 4 === 3 ? 6 : 5)
+    day <= (month <= 12 ? 30 : epagomenalDays(year))
 
 const gregorianToJulianDay = ({ year, month, day }: DateParts) => {
     const offset = Math.floor((14 - month) / 12)

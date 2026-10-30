@@ -2,13 +2,9 @@ import { Result } from 'better-result'
 import { useMemo, useState } from 'react'
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type { WorkingListClient } from '../api/client'
-import {
-    fieldsForConfiguration,
-    type ProgramFieldCatalog,
-} from '../api/metadata'
+import type { ProgramFieldCatalog } from '../api/metadata'
 import {
     repairSavedWorkingList,
-    replaceSavedWorkingList,
     type NormalizedSavedWorkingList,
 } from '../api/savedLists'
 import type { WorkingListConfiguration as InternalConfiguration } from '../domain/model'
@@ -16,19 +12,16 @@ import type {
     FilterParsingContext,
     FilterSerializationContext,
 } from '../registry/valueTypes'
-import {
-    internalConfigurationFingerprint,
-    isCurrentSelection,
-} from './configuration'
+import { isCurrentSelection } from './configuration'
 import { toTransportError } from './errorNormalization'
 import {
     IncompatibleSavedListError,
     NoSelectedSavedListError,
     OfflineMutationError,
     SavedListPermissionError,
-    WorkingListInvalidResponseError,
     type UpdateSelectedViewError,
 } from './errors'
+import { persistSavedList } from './persistSavedList'
 import { createSavedListRepairPlan } from './repair'
 import type { WorkingListPrivateActions } from './WorkingListPrivateContext'
 
@@ -87,12 +80,13 @@ export const useWorkingListRepair = ({
             parsingContext,
             serializationContext,
         })
+        if (result.status !== 'repaired') {
+            return { plan, result, canRepair: false }
+        }
         const expectedResource =
-            result.status === 'repaired'
-                ? result.configuration.mode === 'event'
-                    ? 'programStageWorkingLists'
-                    : 'trackedEntityInstanceFilters'
-                : undefined
+            result.configuration.mode === 'event'
+                ? 'programStageWorkingLists'
+                : 'trackedEntityInstanceFilters'
         return {
             plan,
             result,
@@ -101,7 +95,6 @@ export const useWorkingListRepair = ({
                 !repairPending &&
                 selectedList.sharing.access?.write === true &&
                 selectedList.sharing.access.update === true &&
-                result.status === 'repaired' &&
                 expectedResource === selectedList.resource,
         }
     }, [
@@ -192,36 +185,16 @@ export const useWorkingListRepair = ({
                 }
                 setRepairPending(true)
                 try {
-                    await replaceSavedWorkingList({
+                    const confirmed = await persistSavedList({
                         client,
-                        id: selectedId,
-                        resource: selectedList.resource,
-                        existingResource: selectedList.raw,
-                        name: selectedList.name,
+                        list: selectedList,
                         configuration: repaired,
-                        fields: fieldsForConfiguration(metadata, repaired),
+                        metadata,
                         capabilities,
-                        sharing: selectedList.sharing,
                         serializationContext,
+                        refreshSavedLists,
+                        operation: 'repairSelectedSavedList',
                     })
-                    const lists = await refreshSavedLists()
-                    const confirmed = lists.find(
-                        (list) => list.id === selectedId
-                    )
-                    if (
-                        !confirmed ||
-                        confirmed.compatibility !== 'compatible' ||
-                        internalConfigurationFingerprint(
-                            confirmed.configuration
-                        ) !== internalConfigurationFingerprint(repaired)
-                    ) {
-                        return Result.err(
-                            new WorkingListInvalidResponseError({
-                                operation: 'repairSelectedSavedList',
-                                message: `Repaired saved list ${selectedId} did not match the submitted repair after canonical refresh`,
-                            })
-                        )
-                    }
                     if (
                         isCurrentSelection(
                             latestRequestedIdRef.current,

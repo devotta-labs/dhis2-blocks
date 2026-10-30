@@ -20,6 +20,11 @@ import { WorkingListPagination } from './WorkingListPagination'
 const tableScrollClassName =
     'w-full min-w-0 max-w-full overflow-x-scroll [contain:layout] [overscroll-behavior-inline:contain]'
 
+const ariaSortByDirection = {
+    asc: 'ascending',
+    desc: 'descending',
+} as const
+
 interface WorkingListTableHeaderView {
     id: string
     fieldId: string
@@ -246,12 +251,11 @@ export const WorkingListTableView = ({
                                                 scope="col"
                                                 className="py-1.5 whitespace-nowrap"
                                                 aria-sort={
-                                                    header.sorted === 'asc'
-                                                        ? 'ascending'
-                                                        : header.sorted ===
-                                                            'desc'
-                                                          ? 'descending'
-                                                          : 'none'
+                                                    header.sorted
+                                                        ? ariaSortByDirection[
+                                                              header.sorted
+                                                          ]
+                                                        : 'none'
                                                 }
                                             >
                                                 <button

@@ -4,6 +4,7 @@ import {
     localDay,
     Timeline,
     TimelineEmpty,
+    TimelineEnd,
     TimelineError,
     TimelineFeed,
     TimelineLoading,
@@ -17,6 +18,7 @@ import {
 } from '@/components/timeline'
 import {
     isEntryOf,
+    TimelineEventAction,
     TimelineEventEntry,
     TimelineEventStage,
     TimelineEventStatus,
@@ -25,6 +27,7 @@ import {
 } from '@/components/timeline-dhis2'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { changelogData } from './fakeChangelog'
+import { Inspector } from './Inspector'
 import {
     DEFAULT_DATA,
     fakeHistory,
@@ -159,13 +162,9 @@ const LabTimeline = ({
         now,
     })
     const open = (
-        <button
-            type="button"
-            className="text-sm text-dhis2-blue-700 hover:underline"
-            onClick={() => act('Open pressed')}
-        >
+        <TimelineEventAction onClick={() => act('Open pressed')}>
             Open
-        </button>
+        </TimelineEventAction>
     )
     const render = (entry: TimelineEntry<HistoryEntryData>) => {
         if (view.renderer === 'compact' && isEntryOf(entry, 'event')) {
@@ -205,6 +204,10 @@ const LabTimeline = ({
             <TimelineShowMore
                 hasMore={shown.hasMore}
                 onShowMore={shown.showMore}
+            />
+            <TimelineEnd
+                hasMore={shown.hasMore}
+                complete={notices.length === 0}
             />
         </Timeline>
     )
@@ -371,31 +374,43 @@ export const TimelineLab = () => {
                 <DataControls data={data} set={setData} />
             </aside>
             <main className="flex min-w-0 flex-1 flex-col gap-3 bg-dhis2-grey-100 p-6">
-                <p className="text-sm text-dhis2-grey-700">
+                <p className="m-0 text-sm text-dhis2-grey-700">
                     {entries.length} entries
                     {counts.length > 0 ? ` (${counts.join(', ')})` : ''} · now
                     is {today}
                     {action === undefined ? null : ` · ${action}`}
                 </p>
-                <div
-                    dir={view.rtl ? 'rtl' : 'ltr'}
-                    className={`w-full rounded border border-dhis2-grey-300 bg-white ${WIDTHS[view.width]}`}
-                >
-                    <FakeServer
-                        // A new history starts over: shown entries, open notes and changes, fetched changes.
-                        key={`${JSON.stringify(data)}:${view.step}`}
-                        events={history.events}
-                        changes={data.changes}
+                <label className="flex items-center gap-2 self-start text-sm font-medium">
+                    <input
+                        type="checkbox"
+                        checked={view.inspect}
+                        onChange={(event) =>
+                            setView('inspect', event.target.checked)
+                        }
+                    />
+                    Inspect parts on hover
+                </label>
+                <Inspector on={view.inspect} entries={entries}>
+                    <div
+                        dir={view.rtl ? 'rtl' : 'ltr'}
+                        className={`w-full rounded border border-dhis2-grey-300 bg-white ${WIDTHS[view.width]}`}
                     >
-                        <LabTimeline
-                            entries={entries}
-                            view={view}
-                            now={now}
-                            notices={notices}
-                            act={act}
-                        />
-                    </FakeServer>
-                </div>
+                        <FakeServer
+                            // A new history starts over: shown entries, open notes and changes, fetched changes.
+                            key={`${JSON.stringify(data)}:${view.step}`}
+                            events={history.events}
+                            changes={data.changes}
+                        >
+                            <LabTimeline
+                                entries={entries}
+                                view={view}
+                                now={now}
+                                notices={notices}
+                                act={act}
+                            />
+                        </FakeServer>
+                    </div>
+                </Inspector>
             </main>
         </div>
     )

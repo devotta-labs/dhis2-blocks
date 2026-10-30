@@ -19,6 +19,8 @@ export interface ViewConfig {
     step: number
     renderer: 'standard' | 'actions' | 'compact'
     width: 'phone' | 'panel' | 'page'
+    /** Hovering a part outlines it and says where it comes from. */
+    inspect: boolean
 }
 
 export const DEFAULT_VIEW: ViewConfig = {
@@ -35,6 +37,7 @@ export const DEFAULT_VIEW: ViewConfig = {
     step: 10,
     renderer: 'actions',
     width: 'panel',
+    inspect: false,
 }
 
 const CALENDARS: Dhis2Calendar[] = [

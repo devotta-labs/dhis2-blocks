@@ -8,6 +8,7 @@ import {
     type OutboxRecord,
 } from '@/components/data-entry'
 import { useMemo, useState, type ReactNode } from 'react'
+import { ComposedGrid } from './ComposedGrid'
 import {
     DEFAULT_CONFIG,
     labSource,
@@ -318,6 +319,7 @@ export const Lab = () => {
         PRESETS['Event program (inpatient)']
     )
     const [rtl, setRtl] = useState(false)
+    const [composed, setComposed] = useState(false)
     const [log, setLog] = useState<LogEntry[]>([])
 
     // Made once per config or program: a source with a new key loads the form again.
@@ -359,6 +361,9 @@ export const Lab = () => {
                 <Check checked={rtl} onChange={setRtl}>
                     Right to left
                 </Check>
+                <Check checked={composed} onChange={setComposed}>
+                    Your own layout
+                </Check>
                 {mode === 'lab' ? (
                     <LabControls config={config} setConfig={setConfig} />
                 ) : (
@@ -371,7 +376,7 @@ export const Lab = () => {
             >
                 <DataEntry key={source.cacheKey ?? source.key} source={source}>
                     <Status />
-                    <DataGrid />
+                    {composed ? <ComposedGrid /> : <DataGrid />}
                     <DataEntrySummary />
                 </DataEntry>
                 {mode === 'lab' ? (

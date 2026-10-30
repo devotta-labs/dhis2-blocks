@@ -38,6 +38,8 @@ describe('calendar', () => {
         expect(storedDay('yesterday')).toBeUndefined())
     it('reads the stored time of a date-time', () =>
         expect(storedTime('2026-10-14T23:30:00.000')).toBe('23:30'))
+    it('reads the stored time of a space-separated date-time', () =>
+        expect(storedTime('2026-10-14 23:30:00')).toBe('23:30'))
     it('reads no time from a bare date', () =>
         expect(storedTime('2026-10-14')).toBeUndefined())
     it('falls back to gregorian for an unknown calendar', () =>

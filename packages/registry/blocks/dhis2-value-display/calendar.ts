@@ -28,7 +28,7 @@ export const parseDhis2Calendar = (value: unknown): Dhis2Calendar =>
     CALENDARS.find((calendar) => calendar === value) ?? 'gregorian'
 
 const STORED_DAY = /^\d{4}-\d{2}-\d{2}/
-const STORED_TIME = /^\d{4}-\d{2}-\d{2}T(\d{2}:\d{2})/
+const STORED_TIME = /^\d{4}-\d{2}-\d{2}[T ](\d{2}:\d{2})/
 
 /** The `YYYY-MM-DD` prefix exactly as stored, never routed through `Date`. */
 export const storedDay = (value: string): string | undefined =>

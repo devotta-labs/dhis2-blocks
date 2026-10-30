@@ -100,6 +100,91 @@ const Harness = () => {
 }
 
 describe('organisation-unit selector interaction reliability', () => {
+    it('renders loading, error, and ready states exclusively as search props change', async () => {
+        const props = {
+            roots: [],
+            allowedPaths: [],
+            searchValue: '',
+            treeKey: 'search',
+            treeComponent: TestOrganisationUnitTree,
+            onSearchChange: vi.fn(),
+            onSelect: vi.fn(),
+        }
+        const screen = await render(
+            <OrganisationUnitSelectorContent
+                {...props}
+                searchLoading
+                searchError
+            />
+        )
+        const loading = screen.getByRole('status', { name: 'Loading' })
+        const error = screen.getByText('Could not search organisation units')
+        const tree = screen.getByTestId('test-org-unit-tree')
+
+        await expect.element(loading).toBeVisible()
+        await expect.element(error).not.toBeInTheDocument()
+        await expect.element(tree).not.toBeInTheDocument()
+
+        await screen.rerender(
+            <OrganisationUnitSelectorContent {...props} searchError />
+        )
+        await expect.element(error).toBeVisible()
+        await expect.element(loading).not.toBeInTheDocument()
+        await expect.element(tree).not.toBeInTheDocument()
+
+        await screen.rerender(<OrganisationUnitSelectorContent {...props} />)
+        await expect.element(tree).toBeVisible()
+        await expect.element(error).not.toBeInTheDocument()
+        await expect.element(loading).not.toBeInTheDocument()
+    })
+
+    it('prioritizes load-more errors and updates pagination availability without replacing the tree', async () => {
+        const props = {
+            roots: [],
+            allowedPaths: [],
+            searchValue: '',
+            treeKey: 'search',
+            treeComponent: TestOrganisationUnitTree,
+            onSearchChange: vi.fn(),
+            onSelect: vi.fn(),
+            onSearchLoadMore: vi.fn(),
+        }
+        const screen = await render(
+            <OrganisationUnitSelectorContent
+                {...props}
+                searchHasMore
+                searchLoadMoreError
+            />
+        )
+        const tree = screen.getByTestId('test-org-unit-tree').element()
+        const error = screen.getByText('Could not load more organisation units')
+        const showMore = screen.getByRole('button', { name: 'Show more' })
+
+        await expect.element(error).toBeVisible()
+        await expect.element(showMore).not.toBeInTheDocument()
+        await screen.getByRole('button', { name: 'Try again' }).click()
+        expect(props.onSearchLoadMore).toHaveBeenCalledOnce()
+
+        await screen.rerender(
+            <OrganisationUnitSelectorContent
+                {...props}
+                searchHasMore
+                searchLoadingMore
+            />
+        )
+        await expect.element(error).not.toBeInTheDocument()
+        await expect.element(showMore).toBeDisabled()
+
+        await screen.rerender(
+            <OrganisationUnitSelectorContent {...props} searchHasMore />
+        )
+        await expect.element(showMore).toBeEnabled()
+
+        await screen.rerender(<OrganisationUnitSelectorContent {...props} />)
+        await expect.element(showMore).not.toBeInTheDocument()
+        expect(screen.getByTestId('test-org-unit-tree').element()).toBe(tree)
+    })
+
     it('honours the first collapse, expand, and selection clicks without remounting or reopening', async () => {
         const screen = await render(<Harness />)
         await screen.getByRole('button', { name: /Organisation unit/ }).click()

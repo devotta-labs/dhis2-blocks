@@ -47,6 +47,13 @@ const dateContents = (
     return DateFilterContentsSchema.parse(serialized.dateFilter)
 }
 
+const followUpContents = (
+    value: AppliedFilter['value']
+): WritableSavedCriteria['followUp'] => {
+    if (value.kind !== 'boolean') return undefined
+    return value.values[0] ? 'true' : 'false'
+}
+
 const commonCriteriaPayload = (
     configuration: WorkingListConfiguration,
     fields: FieldCatalog,
@@ -103,12 +110,7 @@ const commonCriteriaPayload = (
                 ] = dateContents(filter, serializationContext)
                 break
             case 'followUp':
-                criteria.followUp =
-                    filter.value.kind === 'boolean'
-                        ? filter.value.values[0]
-                            ? 'true'
-                            : 'false'
-                        : undefined
+                criteria.followUp = followUpContents(filter.value)
                 break
             case 'assignedUser':
             case 'eventAssignedUser':
@@ -319,6 +321,21 @@ const mergeCriteriaExtensions = (
     return merged
 }
 
+const getExistingCriteria = (
+    existingResource:
+        | TrackedEntityInstanceFilter
+        | ProgramStageWorkingList
+        | undefined,
+    resource: SavedListResource
+): WritableSavedCriteria | undefined => {
+    if (!existingResource) return undefined
+    return resource === 'programStageWorkingLists'
+        ? ProgramStageWorkingListSchema.parse(existingResource)
+              .programStageQueryCriteria
+        : TrackedEntityInstanceFilterSchema.parse(existingResource)
+              .entityQueryCriteria
+}
+
 export const buildSavedListPayload = ({
     name,
     configuration,
@@ -428,13 +445,7 @@ export const buildSavedListPayload = ({
     if (existingResource?.sortOrder !== undefined) {
         common.sortOrder = existingResource.sortOrder
     }
-    const existingCriteria = existingResource
-        ? resource === 'programStageWorkingLists'
-            ? ProgramStageWorkingListSchema.parse(existingResource)
-                  .programStageQueryCriteria
-            : TrackedEntityInstanceFilterSchema.parse(existingResource)
-                  .entityQueryCriteria
-        : undefined
+    const existingCriteria = getExistingCriteria(existingResource, resource)
     const criteria = mergeCriteriaExtensions(
         existingCriteria,
         commonCriteriaPayload(

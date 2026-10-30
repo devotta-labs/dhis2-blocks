@@ -71,9 +71,7 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('Search users'),
     i18n.t('Selected options: {{options}}', { nsSeparator: '::' }),
     i18n.t('Show more events'),
-    i18n.t(
-        'Showing {{shown}} of {{total}} matches. Keep typing to narrow them.'
-    ),
+    i18n.t('Showing {{shown}} of {{total}} matches'),
     i18n.t('Signed in as someone else. Reload to continue as that user.'),
     i18n.t('Sign in to keep saving'),
     i18n.t('Skip past the grid'),

@@ -36,10 +36,10 @@ export const formatCount = (count: number) => {
 /** "Showing … of … matches", when more match than a list draws; empty otherwise. */
 export const matchCount = (shown: number, total: number) =>
     total > shown
-        ? i18n.t(
-              'Showing {{shown}} of {{total}} matches. Keep typing to narrow them.',
-              { shown: formatCount(shown), total: formatCount(total) }
-          )
+        ? i18n.t('Showing {{shown}} of {{total}} matches', {
+              shown: formatCount(shown),
+              total: formatCount(total),
+          })
         : ''
 
 /** Says `text` in the grid's live region when it changes, not on every keystroke. */

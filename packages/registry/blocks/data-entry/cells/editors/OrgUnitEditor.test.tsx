@@ -250,7 +250,7 @@ test('more matches than listed are counted; Save does nothing while a search wai
     })
     inputOf(cell).focus()
     await userEvent.keyboard('many')
-    const count = 'Showing 2 of 120 matches. Keep typing to narrow them.'
+    const count = 'Showing 2 of 120 matches'
     await expect.element(dialog.getByText(count)).toBeVisible()
     expect(announced).toEqual([count])
 

@@ -325,8 +325,8 @@ msgstr "Selected options: {{options}}"
 msgid "Show more events"
 msgstr "Show more events"
 
-msgid "Showing {{shown}} of {{total}} matches. Keep typing to narrow them."
-msgstr "Showing {{shown}} of {{total}} matches. Keep typing to narrow them."
+msgid "Showing {{shown}} of {{total}} matches"
+msgstr "Showing {{shown}} of {{total}} matches"
 
 msgid "Signed in as someone else. Reload to continue as that user."
 msgstr "Signed in as someone else. Reload to continue as that user."

@@ -65,19 +65,13 @@ test('the picker shows 50 ranked matches and announces the count', async () => {
         .element(input)
         .toHaveAttribute('aria-activedescendant', options.first().element().id)
     await expect
-        .element(
-            page.getByText(
-                'Showing 50 of 14,240 matches. Keep typing to narrow them.'
-            )
-        )
+        .element(page.getByText('Showing 50 of 14,240 matches'))
         .toBeVisible()
     // Said once in the grid's live region; the list has none of its own.
     await expect.element(page.getByRole('status')).not.toBeInTheDocument()
     // Typing that leaves the count as it is says nothing more.
     await userEvent.keyboard(' ')
-    expect(announced).toEqual([
-        'Showing 50 of 14,240 matches. Keep typing to narrow them.',
-    ])
+    expect(announced).toEqual(['Showing 50 of 14,240 matches'])
 })
 
 test('Enter picks the top match and keeps the flow', async () => {
@@ -132,11 +126,7 @@ test('options a rule hid are not offered, drawn or counted', async () => {
         )
         .not.toBeInTheDocument()
     await expect
-        .element(
-            page.getByText(
-                'Showing 50 of 14,239 matches. Keep typing to narrow them.'
-            )
-        )
+        .element(page.getByText('Showing 50 of 14,239 matches'))
         .toBeVisible()
     await userEvent.keyboard('{Enter}')
     expect(stored()?.value).toBe('A00.0')

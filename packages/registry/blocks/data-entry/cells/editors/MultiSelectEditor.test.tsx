@@ -138,7 +138,7 @@ test('at most 50 options are listed, with the count line; a search that finds no
     inputOf(cell).focus()
     await userEvent.keyboard('{Enter}')
     expect(dialog.getByRole('checkbox').all()).toHaveLength(50)
-    const count = 'Showing 50 of 60 matches. Keep typing to narrow them.'
+    const count = 'Showing 50 of 60 matches'
     await expect.element(dialog.getByText(count)).toBeVisible()
     expect(announced).toContain(count)
     // Listed in the option set's order, not ranked: "Option 15" holds a 5 but no word starts with it.

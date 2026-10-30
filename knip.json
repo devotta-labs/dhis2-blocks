@@ -108,7 +108,7 @@
             }
         },
         "apps/docs": {
-            "entry": ["server/**/*.test.mjs"],
+            "entry": ["server/**/*.test.mjs", "src/lab/main.tsx"],
             "ignoreDependencies": ["typeface-roboto"],
             "project": [
                 "src/**/*.{ts,tsx,css}",

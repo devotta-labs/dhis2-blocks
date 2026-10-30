@@ -106,7 +106,8 @@ const positionsOf = (idScope: string, tables: ReadonlyArray<GridTable>) => {
 const ROW_HEADER_CLASS =
     'w-[min(12rem,30vw)] min-w-[min(12rem,30vw)] max-w-[min(12rem,30vw)]'
 const BORDER_CLASS = 'border-b border-e border-dhis2-grey-300'
-const CELL_CLASS = cn(BORDER_CLASS, 'min-w-28 p-0')
+// A fixed height, a minimum in a table, lets the cell's control fill the row however tall the row header makes it.
+const CELL_CLASS = cn(BORDER_CLASS, 'h-9 min-w-28 p-0')
 const HEADER_CLASS = cn(
     BORDER_CLASS,
     'bg-dhis2-grey-100 px-2 py-1.5 text-start align-bottom text-[13px] font-medium text-dhis2-grey-800'

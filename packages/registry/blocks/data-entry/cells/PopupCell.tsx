@@ -338,7 +338,7 @@ export const PopupCell = memo(function PopupCell({
                     alt=""
                     loading="lazy"
                     onError={() => setUnloadable(image)}
-                    className="pointer-events-none absolute start-2 top-1.5 size-6 rounded-dhis2-sm object-cover"
+                    className="pointer-events-none absolute start-2 top-1/2 size-6 -translate-y-1/2 rounded-dhis2-sm object-cover"
                 />
             )}
             {opened === null || Editor === undefined ? null : (

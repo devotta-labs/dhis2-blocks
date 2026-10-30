@@ -8,7 +8,6 @@ import {
 import {
     createSavedWorkingList,
     deleteSavedWorkingList,
-    replaceSavedWorkingList,
     type NormalizedSavedWorkingList,
 } from '../api/savedLists'
 import type { TrackerProgram } from '../api/schemas'
@@ -21,7 +20,6 @@ import type {
 import type { WorkingListTranslate } from '../ui/WorkingListText'
 import {
     canCommitMutationBaseline,
-    internalConfigurationFingerprint,
     isCurrentSelection,
     publicConfigurationFingerprint,
     toPublicConfiguration,
@@ -51,6 +49,7 @@ import {
     UnknownProgramStageError,
     WorkingListInvalidResponseError,
 } from './errors'
+import { persistSavedList } from './persistSavedList'
 import { downloadRowsAsCsv } from './results'
 import type {
     WorkingListProviderStore,
@@ -397,34 +396,16 @@ export const createWorkingListActions = ({
         setMutation('update', { status: 'pending', targetId: id })
         try {
             const snapshot = runtime.resolvedConfiguration
-            const fields = fieldsForConfiguration(runtime.metadata, snapshot)
-            await replaceSavedWorkingList({
+            await persistSavedList({
                 client,
-                id,
-                resource: list.resource,
-                existingResource: list.raw,
-                name: list.name,
+                list,
                 configuration: snapshot,
-                fields,
+                metadata: runtime.metadata,
                 capabilities,
-                sharing: list.sharing,
                 serializationContext: runtime.serializationContext,
+                refreshSavedLists,
+                operation: 'updateSelectedView',
             })
-            const lists = await refreshSavedLists()
-            const confirmed = lists.find((candidate) => candidate.id === id)
-            if (
-                !confirmed ||
-                confirmed.compatibility !== 'compatible' ||
-                internalConfigurationFingerprint(confirmed.configuration) !==
-                    internalConfigurationFingerprint(snapshot)
-            ) {
-                return Result.err(
-                    new WorkingListInvalidResponseError({
-                        operation: 'updateSelectedView',
-                        message: `Updated saved list ${id} did not match the submitted configuration after canonical refresh`,
-                    })
-                )
-            }
             const publicSnapshot = toPublicConfiguration(snapshot)
             updateStore((current) => {
                 if (

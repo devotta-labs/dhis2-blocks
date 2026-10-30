@@ -79,6 +79,49 @@ describe('filter editor popover stacking', () => {
         await expect
             .element(editor(textField).getByRole('combobox', { name: 'Match' }))
             .toHaveTextContent('Is empty')
+        await expect
+            .element(page.getByTestId(`filter-value-${textField.id}`))
+            .not.toBeInTheDocument()
+
+        await editor(textField).getByRole('combobox', { name: 'Match' }).click()
+        await page.getByRole('option', { name: 'Contains' }).click()
+        await expect
+            .element(page.getByTestId(`filter-value-${textField.id}`))
+            .toBeVisible()
+    })
+
+    it('keeps true-only values visible when selecting an empty operator', async () => {
+        const trueOnlyField: WorkingListField = {
+            ...textField,
+            id: 'consent',
+            displayName: 'Consent',
+            valueType: 'TRUE_ONLY',
+        }
+        await renderFilter(trueOnlyField)
+        await openEditor(trueOnlyField)
+
+        await editor(trueOnlyField)
+            .getByRole('checkbox', { name: 'Is empty', exact: true })
+            .click()
+        await expect
+            .element(
+                editor(trueOnlyField).getByRole('checkbox', {
+                    name: 'Is empty',
+                    exact: true,
+                })
+            )
+            .toBeChecked()
+        await expect
+            .element(
+                editor(trueOnlyField).getByRole('checkbox', {
+                    name: 'Yes',
+                    exact: true,
+                })
+            )
+            .toBeVisible()
+        await expect
+            .element(page.getByTestId(`filter-value-${trueOnlyField.id}`))
+            .not.toBeInTheDocument()
     })
 
     it('keeps the editor open while picking a date in the @dhis2/ui CalendarInput', async () => {

@@ -182,15 +182,10 @@ const WorkingListProviderInstance = ({
         if (savedListsQuery.data) setConfirmedLists(savedListsQuery.data)
     }, [savedListsQuery.data])
     const usingGeneratedLists = confirmedLists?.length === 0
-    const displayedLists = useMemo(
-        () =>
-            confirmedLists
-                ? confirmedLists.length
-                    ? confirmedLists
-                    : generatedLists
-                : [],
-        [confirmedLists, generatedLists]
-    )
+    const displayedLists = useMemo(() => {
+        if (!confirmedLists) return []
+        return usingGeneratedLists ? generatedLists : confirmedLists
+    }, [confirmedLists, generatedLists, usingGeneratedLists])
 
     const savedViewsError = savedListsQuery.error
         ? toTransportError(savedListsQuery.error, 'Loading saved working lists')

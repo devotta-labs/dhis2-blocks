@@ -133,12 +133,12 @@ export const rewriteLocationHeader = (location, target) => {
     const backend = new URL(target)
     const basePath = backend.pathname.replace(/\/$/, '')
 
-    const stripBasePath = (path) =>
-        basePath && path.startsWith(`${basePath}/`)
-            ? path.slice(basePath.length)
-            : path === basePath
-              ? '/'
-              : path
+    const stripBasePath = (path) => {
+        if (basePath && path.startsWith(`${basePath}/`)) {
+            return path.slice(basePath.length)
+        }
+        return path === basePath ? '/' : path
+    }
 
     if (location.startsWith('/')) {
         const path = stripBasePath(location)

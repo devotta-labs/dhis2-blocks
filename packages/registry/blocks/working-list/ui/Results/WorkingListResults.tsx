@@ -15,6 +15,7 @@ import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContex
 import type {
     WorkingListConfiguration,
     WorkingListDisplayRow,
+    WorkingListMeta,
     WorkingListResultTarget,
 } from '../../provider/contracts'
 import { WorkingListRepairDialog } from '../WorkingList/dialogs'
@@ -23,10 +24,26 @@ import {
     WorkingListDataTable,
     WorkingListTableSkeleton,
 } from '../WorkingListTable'
-import { useWorkingListText } from '../WorkingListText'
+import {
+    useWorkingListText,
+    type WorkingListTranslate,
+} from '../WorkingListText'
 
 const visuallyHiddenClassName =
     'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
+
+const getResultsAnnouncement = (
+    results: WorkingListMeta['results'],
+    translate: WorkingListTranslate
+): string => {
+    if (results.status === 'pending') {
+        return translate('Loading working list results…')
+    }
+    if (results.status === 'ready' && results.isUpdating) {
+        return translate('Updating working list results…')
+    }
+    return ''
+}
 
 export interface WorkingListTableProps extends Omit<
     ComponentPropsWithoutRef<'section'>,
@@ -180,11 +197,7 @@ const ReadyResults = ({
                 aria-live="polite"
                 data-testid="working-list-results-announcement"
             >
-                {results.status === 'pending'
-                    ? translate('Loading working list results…')
-                    : results.isUpdating
-                      ? translate('Updating working list results…')
-                      : ''}
+                {getResultsAnnouncement(results, translate)}
             </div>
             <WorkingListDataTable
                 allFields={tableFields}

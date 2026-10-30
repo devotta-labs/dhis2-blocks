@@ -164,13 +164,12 @@ export const useWorkingListResults = ({
         ]
     )
     const formattingContext = displayTransformers?.formattingContext
-    const resultsError =
-        pageQuery.error && !(pageData && !online)
-            ? pageQuery.error
-            : organisationUnitLabelsQuery.error &&
-                organisationUnitLabelsQuery.data === undefined
-              ? organisationUnitLabelsQuery.error
-              : undefined
+    const pageError = pageData && !online ? undefined : pageQuery.error
+    const organisationUnitLabelsError =
+        organisationUnitLabelsQuery.data === undefined
+            ? organisationUnitLabelsQuery.error
+            : undefined
+    const resultsError = pageError || organisationUnitLabelsError || undefined
     useEffect(() => {
         let results: WorkingListMeta['results']
         if (!resolvedConfiguration) {

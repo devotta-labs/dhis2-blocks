@@ -110,7 +110,7 @@ export const TimelineGroupHeading = ({
             id={groupHeadingId(meta.id, group)}
             data-slot="timeline-group-heading"
             className={cn(
-                'mb-2 text-xs font-medium tracking-wide text-dhis2-grey-600 uppercase',
+                'mb-2 text-xs font-medium tracking-wide text-dhis2-grey-700 uppercase',
                 group.phase === 'overdue' && 'text-dhis2-red-700',
                 className
             )}

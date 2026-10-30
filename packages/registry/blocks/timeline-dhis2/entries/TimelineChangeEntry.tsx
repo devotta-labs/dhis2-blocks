@@ -153,7 +153,7 @@ const ChangeRowItem = ({ change }: { change: ResolvedChange }) => {
                     <>
                         <bdi
                             data-slot="timeline-change-before"
-                            className="text-dhis2-grey-600 line-through"
+                            className="text-dhis2-grey-700 line-through"
                         >
                             <Value text={show(change.previousValue)} />
                         </bdi>{' '}

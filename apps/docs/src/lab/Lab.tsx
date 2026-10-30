@@ -4,10 +4,17 @@ import {
     DataGrid,
     eventSource,
     useDataEntry,
+    type DataEntrySource,
     type EventSourceOptions,
     type OutboxRecord,
 } from '@/components/data-entry'
-import { useMemo, useState, type ReactNode } from 'react'
+import {
+    createContext,
+    useContext,
+    useMemo,
+    useState,
+    type ReactNode,
+} from 'react'
 import { ComposedGrid } from './ComposedGrid'
 import { RulesData } from './RulesData'
 import { RULES, rulesSource } from './rulesForm'
@@ -313,6 +320,36 @@ const SaveLog = ({ log, clear }: { log: LogEntry[]; clear: () => void }) => (
     </section>
 )
 
+// What the form below shows, passed by context: the rules demo's wrapper is rendered once, and the form still follows.
+const FormContext = createContext<
+    { source: DataEntrySource; composed: boolean } | undefined
+>(undefined)
+
+const LabForm = () => {
+    const form = useContext(FormContext)
+    if (form === undefined) {
+        return null
+    }
+    return (
+        <DataEntry
+            key={form.source.cacheKey ?? form.source.key}
+            source={form.source}
+        >
+            <Status />
+            {form.composed ? <ComposedGrid /> : <DataGrid />}
+            <DataEntrySummary />
+        </DataEntry>
+    )
+}
+
+// One element for good: `CustomDataProvider` makes a new data engine each time it renders, and `DataEntry` loads its
+// form again for a new engine, so a lab re-render (a save logged, a toggle) would rebuild the grid and lose focus.
+const RULES_FORM = (
+    <RulesData>
+        <LabForm />
+    </RulesData>
+)
+
 const MODES = {
     lab: 'Lab form',
     rules: 'Rules',
@@ -364,13 +401,7 @@ export const Lab = () => {
         return mode === 'rules' ? rulesSource(logSave) : eventSource(live)
     }, [mode, config, live])
 
-    const form = (
-        <DataEntry key={source.cacheKey ?? source.key} source={source}>
-            <Status />
-            {composed ? <ComposedGrid /> : <DataGrid />}
-            <DataEntrySummary />
-        </DataEntry>
-    )
+    const form = useMemo(() => ({ source, composed }), [source, composed])
 
     return (
         <div className="flex min-h-screen [font-family:Roboto,Helvetica,Arial,sans-serif] text-dhis2-grey-900">
@@ -413,7 +444,9 @@ export const Lab = () => {
                 dir={rtl ? 'rtl' : 'ltr'}
                 className="flex min-w-0 flex-1 flex-col gap-4 p-6"
             >
-                {mode === 'rules' ? <RulesData>{form}</RulesData> : form}
+                <FormContext.Provider value={form}>
+                    {mode === 'rules' ? RULES_FORM : <LabForm />}
+                </FormContext.Provider>
                 {mode === 'live' ? null : (
                     <SaveLog log={log} clear={() => setLog([])} />
                 )}

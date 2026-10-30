@@ -1,8 +1,11 @@
 import {
     formatCalendarDate,
+    isoFromCoptic,
+    isoFromEthiopian,
     parseDhis2Calendar,
     storedDay,
     storedTime,
+    toMultiCalendarIdentifier,
 } from './calendar'
 
 describe('calendar', () => {
@@ -40,6 +43,38 @@ describe('calendar', () => {
         'formats %s in the %s calendar as %s, whatever the ICU version',
         (day, calendar, expected) =>
             expect(formatCalendarDate(day, calendar, 'en')).toBe(expected)
+    )
+    it('reads an Ethiopian day back as the ISO day the formatter shows it for', () => {
+        expect(isoFromEthiopian({ year: 2019, month: 2, day: 4 })).toBe(
+            '2026-10-14'
+        )
+        for (const iso of [
+            '2026-09-11',
+            '2027-09-11',
+            '2027-09-12',
+            '2024-01-01',
+        ]) {
+            const [year, month, day] = formatCalendarDate(iso, 'ethiopian')
+                .split('-')
+                .map(Number)
+            expect(isoFromEthiopian({ year, month, day })).toBe(iso)
+        }
+    })
+    it('reads a Coptic day back as the ISO day the formatter shows it for', () => {
+        for (const iso of ['2026-09-11', '2027-09-12', '2024-01-01']) {
+            const [year, month, day] = formatCalendarDate(iso, 'coptic')
+                .split('-')
+                .map(Number)
+            expect(isoFromCoptic({ year, month, day })).toBe(iso)
+        }
+    })
+    it.each([
+        ['ethiopian', 'ethiopic'],
+        ['gregorian', 'gregory'],
+        ['thai', 'buddhist'],
+        ['nepali', 'nepali'],
+    ] as const)('names %s as %s for the calendar library', (calendar, id) =>
+        expect(toMultiCalendarIdentifier(calendar)).toBe(id)
     )
     it('formats a Nepali day as YYYY-MM-DD in that calendar', () =>
         expect(formatCalendarDate('2026-10-14', 'nepali', 'en')).toMatch(

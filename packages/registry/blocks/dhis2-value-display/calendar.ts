@@ -28,7 +28,7 @@ export const parseDhis2Calendar = (value: unknown): Dhis2Calendar =>
  * Normalises DHIS2's server calendar names to the identifiers understood by
  * `@dhis2/multi-calendar-dates`.
  */
-const toMultiCalendarIdentifier = (
+export const toMultiCalendarIdentifier = (
     calendar: Dhis2Calendar
 ): MultiCalendarIdentifier =>
     (
@@ -132,6 +132,47 @@ const toCopticOrEthiopian = (
             : copticYear
     return `${pad(shown, 4)}-${pad(copticMonth)}-${pad(copticDay)}`
 }
+
+interface CalendarDate {
+    year: number
+    month: number
+    day: number
+}
+
+/** A Gregorian `YYYY-MM-DD` from a Julian Day Number, the inverse of `julianDayNumber`. */
+const isoFromJulianDay = (julianDay: number): string => {
+    const offset = julianDay + 32044
+    const century = Math.floor((4 * offset + 3) / 146097)
+    const dayOfCentury = offset - Math.floor((146097 * century) / 4)
+    const yearOfCentury = Math.floor((4 * dayOfCentury + 3) / 1461)
+    const dayOfYear = dayOfCentury - Math.floor((1461 * yearOfCentury) / 4)
+    const monthIndex = Math.floor((5 * dayOfYear + 2) / 153)
+    const year =
+        100 * century + yearOfCentury - 4800 + Math.floor(monthIndex / 10)
+    const month = monthIndex + 3 - 12 * Math.floor(monthIndex / 10)
+    const day = dayOfYear - Math.floor((153 * monthIndex + 2) / 5) + 1
+    return `${pad(year, 4)}-${pad(month)}-${pad(day)}`
+}
+
+/**
+ * A Coptic date as a Gregorian `YYYY-MM-DD`, by the arithmetic
+ * `toCopticOrEthiopian` inverts. A date the calendar does not have (a sixth
+ * Pagume in a common year, a 31st day) still lands on some day; convert that
+ * day back to catch it.
+ */
+export const isoFromCoptic = ({ year, month, day }: CalendarDate): string =>
+    isoFromJulianDay(
+        COPTIC_EPOCH -
+            1 +
+            365 * (year - 1) +
+            Math.floor(year / 4) +
+            30 * (month - 1) +
+            day
+    )
+
+/** An Ethiopian date as a Gregorian `YYYY-MM-DD`: Ethiopian 2019-02-04 is `2026-10-14`. */
+export const isoFromEthiopian = ({ year, month, day }: CalendarDate): string =>
+    isoFromCoptic({ year: year - ETHIOPIAN_YEAR_OFFSET, month, day })
 
 /**
  * A stored day in the system calendar: a short, locale-ordered date for the

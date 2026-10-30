@@ -303,6 +303,40 @@ describe('TimelineChangeEntry', () => {
         ).toBe('Referred toouOld → Bo Hospital')
     })
 
+    it.each(['ltr', 'rtl'] as const)(
+        'reads before → after in the %s direction, whatever script the values are in',
+        async (dir) => {
+            const saves = groupChangelogRows(
+                [row('attribute', 'name', 'UPDATE', 'فاطمة', 'Fatima')],
+                () => ({ name: 'الاسم', meta: { valueType: 'TEXT' } })
+            )
+            const { container } = await renderEntries(
+                <div dir={dir}>
+                    <TimelineSaves saves={saves} />
+                </div>
+            )
+
+            const before = container.querySelector(
+                '[data-slot=timeline-change-before]'
+            )
+            const arrow = before?.nextElementSibling
+            const after = arrow?.nextElementSibling
+            if (!before || !arrow || !after) {
+                throw new Error('no change row')
+            }
+            const left = (element: Element) =>
+                element.getBoundingClientRect().left
+            // In reading order: before, arrow, after; the arrow points at after.
+            const order = [before, arrow, after].map(left)
+            expect(order).toEqual(
+                [...order].sort((a, b) => (dir === 'ltr' ? a - b : b - a))
+            )
+            expect(getComputedStyle(arrow).rotate).toBe(
+                dir === 'rtl' ? '180deg' : 'none'
+            )
+        }
+    )
+
     it('shows a save that entered the record as its summary alone', async () => {
         const saves = groupChangelogRows([
             {

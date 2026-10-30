@@ -149,13 +149,22 @@ const ChangeRowItem = ({ change }: { change: ResolvedChange }) => {
             >
                 {change.name}
             </span>
+            {/* Each value is isolated so its script can't reorder the row, and
+                the arrow turns: before → after in the reading direction. */}
             <span className="text-dhis2-grey-800">
                 {change.type === 'CREATE' ? null : (
                     <>
-                        <Value text={show(change.previousValue)} /> →{' '}
+                        <bdi data-slot="timeline-change-before">
+                            <Value text={show(change.previousValue)} />
+                        </bdi>{' '}
+                        <span className="inline-block rtl:rotate-180">
+                            →
+                        </span>{' '}
                     </>
                 )}
-                <Value text={show(change.currentValue)} />
+                <bdi>
+                    <Value text={show(change.currentValue)} />
+                </bdi>
             </span>
         </li>
     )

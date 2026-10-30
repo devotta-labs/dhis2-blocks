@@ -2,8 +2,8 @@ import {
     RelationshipViewer,
     RelationshipViewerCanvas,
     RelationshipViewerLayoutToggle,
-    RelationshipViewerLegend,
     RelationshipViewerList,
+    RelationshipViewerLegend,
     RelationshipViewerNotices,
     RelationshipViewerSummary,
     type NodeKey,
@@ -177,7 +177,12 @@ const Viewer = ({
                                 </div>
                             )}
                         </div>
-                        {parts.list && <RelationshipViewerList />}
+                        {/* Its own scroll area: selecting in the canvas scrolls the list, never the page. */}
+                        {parts.list && (
+                            <div className="max-h-[360px] overflow-auto rounded border border-dhis2-grey-300">
+                                <RelationshipViewerList className="border-0" />
+                            </div>
+                        )}
                     </div>
                 </main>
                 {panel ? (

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { cellKind } from '@/components/dhis2-value-types'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import type { CellKey, CommitResult } from '../model/types'
 import { AgeEditor } from './editors/AgeEditor'
@@ -6,8 +7,6 @@ import { CoordinateEditor } from './editors/CoordinateEditor'
 import { FileEditor } from './editors/FileEditor'
 import { LongTextEditor } from './editors/LongTextEditor'
 import { MultiSelectEditor } from './editors/MultiSelectEditor'
-import { OrgUnitEditor } from './editors/OrgUnitEditor'
-import { UsernameEditor } from './editors/UsernameEditor'
 
 /** The pop-up value types, which a cell edits in a small editor that opens from it, and each one's editor. */
 interface PopupEditors {
@@ -15,8 +14,6 @@ interface PopupEditors {
     MULTI_TEXT?: PopupEditor
     AGE?: PopupEditor
     COORDINATE?: PopupEditor
-    ORGANISATION_UNIT?: PopupEditor
-    USERNAME?: PopupEditor
     FILE_RESOURCE?: PopupEditor
     IMAGE?: PopupEditor
 }
@@ -68,21 +65,31 @@ export const popupEditors: PopupEditors = {
     MULTI_TEXT: MultiSelectEditor,
     AGE: AgeEditor,
     COORDINATE: CoordinateEditor,
-    ORGANISATION_UNIT: OrgUnitEditor,
-    USERNAME: UsernameEditor,
     FILE_RESOURCE: FileEditor,
     IMAGE: FileEditor,
 }
 
-/** Value types whose typed text parses, so paste can fill them. A username is checked against DHIS2, which paste cannot do. */
-export const pasteablePopupTypes: ReadonlySet<PopupValueType> = new Set([
+/** Value types whose typed text parses, so paste can fill them. */
+const pasteable: ReadonlySet<string> = new Set<PopupValueType>([
     'LONG_TEXT',
     'MULTI_TEXT',
     'AGE',
     'COORDINATE',
-    'ORGANISATION_UNIT',
 ])
 
 /** The editor for a field's value type, which can be any DHIS2 value type. */
 export const editorFor = (valueType: string): PopupEditor | undefined =>
     Object.entries(popupEditors).find(([type]) => type === valueType)?.[1]
+
+/** Whether a pasted block fills a field's cells: not read-only kinds, pop-up kinds without an editor or whose text does not parse, or usernames. */
+export const takesPastedText = (field: Field) => {
+    const kind = cellKind(field)
+    if (kind === 'popup') {
+        return (
+            editorFor(field.valueType) !== undefined &&
+            pasteable.has(field.valueType)
+        )
+    }
+    // A username is checked against DHIS2 as it is typed, which paste cannot do.
+    return kind !== 'readOnly' && field.valueType !== 'USERNAME'
+}

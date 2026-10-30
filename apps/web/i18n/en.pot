@@ -313,9 +313,6 @@ msgstr "Saved on this device"
 msgid "Scheduled"
 msgstr "Scheduled"
 
-msgid "Search organisation units"
-msgstr "Search organisation units"
-
 msgid "Search users"
 msgstr "Search users"
 

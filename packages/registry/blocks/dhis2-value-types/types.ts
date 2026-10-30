@@ -13,7 +13,7 @@ export interface Field {
     fieldMask?: string
 }
 
-/** How a cell edits: typed, a control, a pop-up editor, or not at all. */
+/** How a cell edits: typed, a control, a search of the server, a pop-up editor, or not at all. */
 export type CellKind =
     | 'text'
     | 'number'
@@ -23,6 +23,7 @@ export type CellKind =
     | 'boolean'
     | 'trueOnly'
     | 'option'
+    | 'search'
     | 'popup'
     | 'readOnly'
 

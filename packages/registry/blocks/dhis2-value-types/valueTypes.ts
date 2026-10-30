@@ -253,8 +253,8 @@ const KINDS = new Map(
         MULTI_TEXT: 'popup',
         AGE: 'popup',
         COORDINATE: 'popup',
-        ORGANISATION_UNIT: 'popup',
-        USERNAME: 'popup',
+        ORGANISATION_UNIT: 'search',
+        USERNAME: 'search',
         FILE_RESOURCE: 'popup',
         IMAGE: 'popup',
     } satisfies Record<string, CellKind>)
@@ -278,7 +278,10 @@ const INPUT_MODES = new Map(
 
 export const cellKind = ({ valueType, options }: Field): CellKind => {
     const kind = KINDS.get(valueType) ?? 'readOnly'
-    return options !== undefined && kind !== 'popup' && kind !== 'readOnly'
+    return options !== undefined &&
+        kind !== 'popup' &&
+        kind !== 'search' &&
+        kind !== 'readOnly'
         ? 'option'
         : kind
 }

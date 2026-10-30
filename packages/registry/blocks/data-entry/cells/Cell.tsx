@@ -37,6 +37,7 @@ export const cells = Object.freeze({
     boolean: BooleanCell,
     trueOnly: TrueOnlyCell,
     option: OptionCell,
+    search: OptionCell,
     popup: PopupCell,
     readOnly: TextCell,
 } satisfies Record<CellKind, CellComponent>)

@@ -129,7 +129,6 @@ test('a note pasted into a long-text cell stays in it; tab-separated text still 
 test('a pasted block skips username cells, whose names are checked when typed', async () => {
     const editor = () => null
     withEditor('LONG_TEXT', editor)
-    withEditor('USERNAME', editor)
     const { value } = await mount([
         makeTable({
             columns: ['Age (years)', 'Notes', 'Seen by', 'Visits'],

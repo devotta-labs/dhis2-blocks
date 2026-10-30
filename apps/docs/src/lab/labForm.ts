@@ -299,6 +299,7 @@ const GROUPS = {
     boolean: 'Control in the cell',
     trueOnly: 'Control in the cell',
     option: 'Control in the cell',
+    search: 'Search in the cell',
     popup: 'Pop-up editor',
     readOnly: 'Read-only',
 } satisfies Record<CellKind, string>

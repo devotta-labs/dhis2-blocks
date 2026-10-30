@@ -67,8 +67,6 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('Save'),
     i18n.t('Saved on this device'),
     i18n.t('Scheduled'),
-    i18n.t('Search organisation units'),
-    i18n.t('Search users'),
     i18n.t('Selected options: {{options}}', { nsSeparator: '::' }),
     i18n.t('Show more events'),
     i18n.t('Showing {{shown}} of {{total}} matches'),

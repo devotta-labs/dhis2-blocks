@@ -48,11 +48,16 @@ export interface DataEntryContext {
     newRowTables: ReadonlySet<string>
     addRow(tableId: string): void
     overrides?: CellOverrides
-    /** Names of org units by id: those the form's values hold, then those picked in an editor. Org unit cells show them. */
+    /** Names of org units by id: those the form's values hold, then those picked in a cell. Org unit cells show them. */
     orgUnitNames: StoreApi<{ names: ReadonlyMap<string, string> }>
     /** Names of files by id: those the form's values hold, then those uploaded in an editor. File cells show them. */
     fileNames: StoreApi<{ names: ReadonlyMap<string, string> }>
 }
+
+/** What cells that show no names read instead: it never changes, so it renders nothing again. */
+export const NO_NAMES: DataEntryContext['orgUnitNames'] = createStore(() => ({
+    names: new Map(),
+}))
 
 // Long enough for screen readers to notice the region emptied, so the same text said twice is heard twice.
 const CLEARED_FOR_MS = 100

@@ -1,5 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import { memo, useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
+import { useStore } from 'zustand'
 import {
     optionIndex,
     searchOptions,
@@ -7,10 +9,12 @@ import {
 } from '@/components/dhis2-value-types'
 import type { Option } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
-import { useDataEntryContext } from '../provider/context'
+import { NO_NAMES, useDataEntryContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
 import { OptionList } from './OptionList'
+import { MIN_LENGTH, searchFor, useServerSearch } from './serverSearch'
+import type { Found } from './serverSearch'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
 import { addsRow, composing, READY_CLASS, useCellMode } from './useCellMode'
 
@@ -18,7 +22,7 @@ const NO_OPTIONS: ReadonlyArray<Option> = []
 const NO_MATCHES = {
     codes: [],
     total: 0,
-    names: new Map<string, string>(),
+    names: new Map<string, ReactNode>(),
 }
 
 export const formatCount = (count: number) => {
@@ -42,6 +46,22 @@ export const matchCount = (shown: number, total: number) =>
           })
         : ''
 
+/** What a search's answer says: why it failed, that it found nothing, or how many it lists. */
+const searchNews = (found: Found, none: string, count: string) => {
+    if (found.problem !== undefined) {
+        return found.problem
+    }
+    if (found.results.length === 0) {
+        return none
+    }
+    return count === ''
+        ? i18n.t('Results: {{results}}', {
+              nsSeparator: '::',
+              results: formatCount(found.results.length),
+          })
+        : count
+}
+
 /** Says `text` in the grid's live region when it changes, not on every keystroke. */
 export const useAnnounced = (text: string) => {
     const { announce } = useDataEntryContext()
@@ -57,6 +77,10 @@ export const useAnnounced = (text: string) => {
  * being typed in searches and draws a list, so a grid of option cells costs what one of text cells does. Typed text
  * that is no option is saved like any cell's and refused with its error. `quickKeys` are keys that, in Ready, save
  * their text at once instead of starting a search.
+ *
+ * An org unit or username field (the `search` kind) lists what the server finds instead, from two characters on and
+ * once typing stops, each result with its path or username under its name. It saves only a result that was picked, or
+ * no value once emptied; other typing is dropped when the cell is left. An org unit cell shows the org unit's name.
  */
 export const OptionCell = memo(function OptionCell({
     id,
@@ -69,8 +93,15 @@ export const OptionCell = memo(function OptionCell({
     aria,
     quickKeys,
 }: ControlProps & { quickKeys?: ReadonlyMap<string, string> }) {
-    const { store, settings } = useDataEntryContext()
+    const { store, settings, orgUnitNames } = useDataEntryContext()
     const { view } = useCellContext()
+    const server = searchFor(field.valueType)
+    const searching = server !== undefined
+    const orgUnit = field.valueType === 'ORGANISATION_UNIT'
+    // An org unit cell reads only its own name, so a new name renders no other cell.
+    const name = useStore(orgUnit ? orgUnitNames : NO_NAMES, ({ names }) =>
+        view.value === undefined ? undefined : names.get(view.value)
+    )
     // What has been typed and not yet saved; `null` shows the cell's own text.
     const [draft, setDraft] = useState<string | null>(null)
     const [listing, setListing] = useState(false)
@@ -87,29 +118,80 @@ export const OptionCell = memo(function OptionCell({
                 : options,
         [open, options, hiddenOptions]
     )
+    // Only what was typed is searched, not the stored value.
+    const query = open && searching && draft !== null ? draft.trim() : ''
+    const found = useServerSearch(server?.search, query)
+    // The answer for what the cell holds is still to come.
+    const waiting = query.length >= MIN_LENGTH && found === undefined
     const matches = useMemo(() => {
-        if (!open) {
+        if (!open || (searching && found === undefined)) {
             return NO_MATCHES
+        }
+        if (found !== undefined) {
+            return {
+                codes: found.results.map(({ value }) => value),
+                total: found.total,
+                names: new Map<string, ReactNode>(
+                    found.results.map(({ value, name: shown, detail }) => [
+                        value,
+                        <>
+                            {shown}
+                            <span className="block text-xs text-dhis2-grey-700">
+                                {detail}
+                            </span>
+                        </>,
+                    ])
+                ),
+            }
         }
         const index = optionIndex(offered)
         return { ...searchOptions(index, draft ?? ''), names: index.names }
-    }, [open, offered, draft])
+    }, [open, searching, found, offered, draft])
     const listed = matches.codes.length > 0
     const highlighted = Math.min(active, matches.codes.length - 1)
     const listId = `${id}-options`
     // From the code, so a new top match is a new active option that a screen reader reads.
     const optionId = (code: string) => `${listId}-${encodeURIComponent(code)}`
     const count = matchCount(matches.codes.length, matches.total)
-    useAnnounced(open && !listed ? i18n.t('No matches') : count)
+    // Why a search lists nothing, under the cell.
+    const note =
+        found !== undefined && !listed && server !== undefined
+            ? searchNews(found, server.none, count)
+            : undefined
+    // A search's answer is said as it arrives: while one waits there is nothing to say, so the same news is heard again.
+    const news = () => {
+        if (server === undefined) {
+            return open && !listed ? i18n.t('No matches') : count
+        }
+        return found === undefined ? '' : searchNews(found, server.none, count)
+    }
+    useAnnounced(news())
 
-    const save = (text: string | null) => {
+    const close = () => {
         setListing(false)
         setDraft(null)
-        // A rule can lock the cell while its text is being typed: the lock wins. Text in a cell a rule only hid is the
-        // person's, saved, then cleared by the rule, which says so; `commit` reads the cell's lock as it saves.
-        return text === null || (locked && !hidden)
+    }
+    // A rule can lock the cell while its text is being typed: the lock wins. Text in a cell a rule only hid is the
+    // person's, saved, then cleared by the rule, which says so; `commit` reads the cell's lock as it saves.
+    const commit = (text: string) =>
+        locked && !hidden ? undefined : view.commit(text)
+    const save = (text: string | null) => {
+        close()
+        // A search saves only what was picked, or no value once emptied.
+        return text === null || (searching && text.trim() !== '')
             ? undefined
-            : view.commit(text)
+            : commit(text)
+    }
+    /** Saves an option or a result; a picked org unit's name is the cell's at once. */
+    const choose = (code: string) => {
+        close()
+        const result = found?.results.find(({ value }) => value === code)
+        if (orgUnit && result !== undefined) {
+            orgUnitNames.setState(({ names }) => ({
+                names: new Map(names).set(code, result.name),
+            }))
+        }
+        return commit(code)
     }
     const revert = () => {
         setListing(false)
@@ -125,7 +207,7 @@ export const OptionCell = memo(function OptionCell({
         readOnly: locked,
     })
     const pick = (code: string) => {
-        save(code)
+        choose(code)
         ready()
     }
     /** Typing highlights the top match for Enter to pick; a click highlights none, so Enter still moves on. */
@@ -134,7 +216,9 @@ export const OptionCell = memo(function OptionCell({
         setActive(first)
     }
     const stored =
-        view.value === undefined ? '' : typedText(field, view.value, settings)
+        view.value === undefined
+            ? ''
+            : (name ?? typedText(field, view.value, settings))
     const entered = locked ? stored : (draft ?? view.draft ?? stored)
     const shown = hidden ? i18n.t('Hidden') : entered
     return (
@@ -202,6 +286,15 @@ export const OptionCell = memo(function OptionCell({
                         typed()
                         return
                     }
+                    if (
+                        waiting &&
+                        (event.key === 'Enter' || event.key === 'Tab') &&
+                        !composing(event)
+                    ) {
+                        // Nothing to pick yet: the search for what the cell holds has not answered.
+                        event.preventDefault()
+                        return
+                    }
                     if (listed && !composing(event)) {
                         if (
                             event.key === 'ArrowDown' ||
@@ -230,7 +323,7 @@ export const OptionCell = memo(function OptionCell({
                         }
                         if (event.key === 'Tab' && highlighted >= 0) {
                             // Picks, and leaves the move to the browser; the grid hears of a plain Tab.
-                            save(matches.codes[highlighted])
+                            choose(matches.codes[highlighted])
                             if (!event.shiftKey) {
                                 move('tab')
                             }
@@ -246,13 +339,13 @@ export const OptionCell = memo(function OptionCell({
                     hidden && HIDDEN_CLASS
                 )}
             />
-            {listed ? (
+            {listed || note !== undefined ? (
                 <OptionList
                     id={listId}
                     labelledBy={labelledBy}
                     codes={matches.codes}
                     names={matches.names}
-                    count={count}
+                    count={note ?? count}
                     active={highlighted}
                     optionId={optionId}
                     onPick={pick}

@@ -207,10 +207,21 @@ typed is lost. In an option cell, typing lists the matches and Enter or Tab pick
 highlights none, so Enter or Tab clears the cell. A Yes/No field is an option cell with Yes and No, except that `y`,
 `n` and Delete set it at once. Delete clears a checkbox.
 
-Pop-up types (`LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `ORGANISATION_UNIT`, `USERNAME`, `FILE_RESOURCE` and
-`IMAGE`) show their value as DHIS2 displays it (an age as its date of birth, in the system date format) and are edited
+Org unit and username cells search DHIS2 as they are typed in, and list what it finds under the cell: org units in
+the user's search scope, by name, code or id, each with its path; users through DHIS2's user lookup, each with the
+user's name and username. A search starts at two characters, once typing stops, and highlights the first result: ↑
+and ↓ move the highlight, and Enter, Tab or a click picks it. While the search for what the cell holds waits for its
+answer, Enter and Tab do nothing. Each answer is announced ("Results: 2", the count line, or that none was found); a
+failed search says "You are offline" or "Could not search. Try again." under the cell. Only a picked result is saved:
+other typing is dropped when the cell is left, and emptied text clears the cell. An org unit cell shows the org unit's
+name: the names of the stored values load with the form (200 ids a request, sent together, only when there are any; a
+request that fails leaves its org units showing their ids, and the form opens all the same), and a pick shows its name
+at once. A username cell shows the username. A pasted block fills org unit cells and skips username cells, which DHIS2
+checks as they are typed.
+
+Pop-up types (`LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `FILE_RESOURCE` and `IMAGE`) show their value as DHIS2 displays it (an age as its date of birth, in the system date format) and are edited
 in a small editor, a dialog named "Edit …" that opens under the cell: Enter, F2, F4, Alt+↓, a click on the selected cell
-or a double-click opens it, and so does typing in long text, org unit and username cells, starting from the text typed
+or a double-click opens it, and so does typing in long text cells, starting from the text typed
 (a key, or what a dead key or an input method composed). Tab and Shift+Tab stay inside the editor, and the cell's notes
 hide while it is open. Escape or Cancel closes it without saving; a save goes through the cell's `commit` and returns to
 the cell, where the next Enter moves on. A press outside the editor, or focus moved out of it, saves what the editor
@@ -218,7 +229,7 @@ last reported; what it cannot save stays in the cell as refused typing does, as 
 as typed, a coordinate as `lat, lng`, an age as its date of birth or as "Years: 1, months: 2, days: -3"), and Escape on
 the cell drops it. Opened again, the editor starts from the stored value, not the draft. A rule that locks or hides the
 cell while its editor is open closes it unsaved and says why. A pasted block fills pop-up cells like any cell, except
-usernames (DHIS2 checks those as they are typed), files and images.
+files and images.
 
 Long text opens a text area: Enter adds a line, Ctrl+Enter or ⌘+Enter saves, and a field mask is checked on save, which
 keeps the editor open with its message. A multi-select opens a search over checkboxes (the shared option search, 50 at
@@ -235,17 +246,6 @@ longitude outside -180 to 180 keeps the editor open with a message, and both fie
 read as number cells read them (`.5` is `0.5`; `+8` is refused). In both, Ctrl+Enter or ⌘+Enter in a field saves. A
 coordinate is pasted as `lat, lng` or, with brackets, `[lng,lat]`; an age is pasted as a date in the system calendar and
 date format, and a date of birth in the future is refused there too.
-
-An org unit opens a search of the org units in the user's search scope, by name, code or id, each listed with its path;
-a username opens a search of DHIS2's user lookup, each listed with the user's name and username. A search starts at two
-characters, once typing stops, and highlights the first result: ↑ and ↓ move the highlight, Enter or a click saves a
-result, and Save or Ctrl+Enter saves the highlighted one (nothing, while the search still waits for its answer). Each
-answer is announced ("Results: 2", the count line, or that none was found); a failed search says "You are offline" or
-"Could not search. Try again.". The search opens on the cell's value; emptied, Save or leaving the editor clears it, and
-leaving never saves a result that was not picked. An org unit cell shows the org unit's name: the names of the stored
-values load with the form (200 ids a request, sent together, only when there are any; a request that fails leaves its
-org units showing their ids, and the form opens all the same), and a pick shows its name at once. A username cell shows
-the username.
 
 A file or image cell shows the file's name, and an image DHIS2 holds for the event a small preview beside it (the
 `SMALL` size; one that does not load leaves the name alone). The names of the stored files load with the form, as org

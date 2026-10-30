@@ -147,19 +147,32 @@ an empty date cell says the format. A row is named by its event date in that
 format once it has one, followed by its stage where the grid shows several; a
 new row is "New event" until its date is typed.
 
+## Org unit and username cells
+
+Org unit and username cells search DHIS2 as they are typed in, and list what
+it finds under the cell: org units in the user's search scope, by name, code
+or id, each with its path; users through DHIS2's user lookup, each with the
+user's name and username. A search starts at two characters, once typing
+stops, and highlights the first result; ↑ and ↓ move the highlight, and Enter,
+Tab or a click picks it. Only a picked result is saved: other typing is
+dropped when the cell is left, and emptied text clears the cell. An org unit
+cell shows the org unit's name: the names of the stored values load with the
+form. A pasted block fills org unit cells and skips username cells, which
+DHIS2 checks as they are typed.
+
 ## Pop-up editors
 
-`LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `ORGANISATION_UNIT`,
-`USERNAME`, `FILE_RESOURCE` and `IMAGE` show their value as DHIS2 displays it
+`LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `FILE_RESOURCE` and `IMAGE`
+show their value as DHIS2 displays it
 and are edited in a small editor, a dialog named "Edit …" that opens under the
 cell. Enter, F2, F4, Alt+↓, a click on the selected cell or a double-click
-opens it, and so does typing in a long text, org unit or username cell,
-starting from what was typed. Tab and Shift+Tab stay inside the editor, and the
+opens it, and so does typing in a long text cell, starting from what was
+typed. Tab and Shift+Tab stay inside the editor, and the
 cell's notes hide while it is open.
 
 Escape or **Cancel** closes the editor without saving. **Save** saves through
 the cell's `commit` and returns to the cell, where the next Enter moves on; in
-long text, age, coordinate and the searches, Ctrl+Enter (⌘+Enter on a Mac)
+long text, age and coordinate, Ctrl+Enter (⌘+Enter on a Mac)
 saves too. A press outside the editor, or focus moved out of it, saves what
 the editor holds. What it cannot save stays in the cell as refused typing
 does, as its draft with the problem: a long text as typed, a coordinate as
@@ -182,11 +195,6 @@ cell, except files and images.
 - **Coordinate** opens latitude and longitude fields, with no map and no
   location from the device, and is stored as `[lng,lat]`. It is pasted as
   `lat, lng`, or as `[lng,lat]` with brackets.
-- **Org unit** opens a search of the org units in the user's search scope, by
-  name, code or id, each listed with its path. The cell shows the org unit's
-  name: the names of the stored values load with the form.
-- **Username** opens a search of DHIS2's user lookup, each listed with the
-  user's name and username.
 - **File and image** offer **Choose a file** (**Choose an image**) and, when
   the cell has a value, **Remove**. A chosen file is uploaded to DHIS2 at once,
   since a file cannot wait on the device, and its id is then saved to the cell

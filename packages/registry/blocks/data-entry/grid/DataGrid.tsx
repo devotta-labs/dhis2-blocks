@@ -12,7 +12,6 @@ import type { ClipboardEvent, KeyboardEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { useStore } from 'zustand'
 import type { StoreApi } from 'zustand/vanilla'
-import { cellKind } from '@/components/dhis2-value-types'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Kbd } from '@/components/dhis2/ui/kbd'
@@ -20,7 +19,7 @@ import { replacementFor, RowCell } from '../cells/Cell'
 import { cellDomId } from '../cells/cellProps'
 import type { CellOverrides } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
-import { editorFor, pasteablePopupTypes } from '../cells/popupEditors'
+import { takesPastedText } from '../cells/popupEditors'
 import { addsRow } from '../cells/useCellMode'
 import type { CellMessage, MessageKind } from '../logic/effects'
 import { cellKey } from '../model/types'
@@ -40,9 +39,6 @@ import { isBlock, pastedBlock, pasteTargets } from './paste'
 import { ShowMoreEvents } from './ShowMoreEvents'
 import { useAddRow } from './useAddRow'
 
-// Read by the field's value type, which can be any DHIS2 value type.
-const pasteable: ReadonlySet<string> = pasteablePopupTypes
-
 /** What `nextCell` and `pasteTargets` walk; each lookup is a map read, as they ask once per cell stepped over. */
 const navGrid = (
     tables: ReadonlyArray<GridTable>,
@@ -52,19 +48,13 @@ const navGrid = (
     tables: tables.map(({ rows, columns, closed }) => {
         const keyAt = (row: number, column: number) =>
             cellKey(rows[row].id, columns[column].id)
-        // Read-only kinds, pop-up kinds without an editor, and pop-up kinds whose text does not parse (files) are never
-        // pasted into, unless a replacement edits them.
-        const elsewhere = columns.map(({ id, field }) => {
-            const kind = cellKind(field)
-            const takesText =
-                kind === 'popup'
-                    ? editorFor(field.valueType) !== undefined &&
-                      pasteable.has(field.valueType)
-                    : kind !== 'readOnly'
-            return (
-                !takesText && replacementFor(overrides, id, field) === undefined
-            )
-        })
+        // Read-only kinds, pop-up kinds without an editor, pop-up kinds whose text does not parse (files) and usernames
+        // are never pasted into, unless a replacement edits them.
+        const elsewhere = columns.map(
+            ({ id, field }) =>
+                !takesPastedText(field) &&
+                replacementFor(overrides, id, field) === undefined
+        )
         const isOpen = (row: number, column: number) =>
             !closed.has(keyAt(row, column))
         return {

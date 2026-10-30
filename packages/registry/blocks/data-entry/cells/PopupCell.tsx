@@ -3,14 +3,12 @@ import i18n from '@dhis2/d2-i18n'
 import { memo, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { useStore } from 'zustand'
-import { createStore } from 'zustand/vanilla'
 import { typedText } from '@/components/dhis2-value-types'
 import type { Field } from '@/components/dhis2-value-types'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
 import { cn } from '@/components/dhis2/ui/cn'
-import { useDataEntryContext } from '../provider/context'
-import type { DataEntryContext } from '../provider/context'
+import { NO_NAMES, useDataEntryContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { POPOVER_CLASS, useCellContext } from './CellStatus'
 import { storedFileUrl } from './editors/FileEditor'
@@ -19,8 +17,8 @@ import type { EditorProblem } from './popupEditors'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
 import { composing, READY_CLASS, useCellMode } from './useCellMode'
 
-// Editors that start from the text typed to open them: the text itself, or a search.
-const FIRST_KEY_TYPES = new Set(['LONG_TEXT', 'ORGANISATION_UNIT', 'USERNAME'])
+// Editors that start from the text typed to open them.
+const FIRST_KEY_TYPES = new Set(['LONG_TEXT'])
 // Values that are a file's id; the cell shows the file's name.
 const FILE_TYPES = new Set(['FILE_RESOURCE', 'IMAGE'])
 
@@ -41,11 +39,6 @@ const AS_IS = { escapeValue: false }
 
 // An age is stored as the date of birth, shown as dates are typed: in the system calendar and date format.
 const DATE: Field = { valueType: 'DATE' }
-
-// What cells that show no names read instead: it never changes, so it renders nothing again.
-const NO_NAMES: DataEntryContext['orgUnitNames'] = createStore(() => ({
-    names: new Map(),
-}))
 
 // What `formatDhis2Value` reads, made once per field: option sets can hold thousands of options.
 const metas = new WeakMap<Field, ValueMeta>()
@@ -104,20 +97,15 @@ export const PopupCell = memo(function PopupCell({
     hidden = false,
     aria,
 }: ControlProps) {
-    const { store, settings, announce, orgUnitNames, fileNames } =
-        useDataEntryContext()
+    const { store, settings, announce, fileNames } = useDataEntryContext()
     const { baseUrl } = useConfig()
     const { view } = useCellContext()
     const Editor = editorFor(field.valueType)
     const locked = readOnly !== undefined || Editor === undefined
     const file = FILE_TYPES.has(field.valueType)
-    const orgUnit = field.valueType === 'ORGANISATION_UNIT'
-    const fileNameStore = file ? fileNames : NO_NAMES
-    // Org unit and file cells show their value's name, each reading only its own, so a new name renders no other cell.
-    const name = useStore(
-        orgUnit ? orgUnitNames : fileNameStore,
-        ({ names }) =>
-            view.value === undefined ? undefined : names.get(view.value)
+    // File cells show their file's name, each reading only its own, so a new name renders no other cell.
+    const name = useStore(file ? fileNames : NO_NAMES, ({ names }) =>
+        view.value === undefined ? undefined : names.get(view.value)
     )
     // A small preview of an image DHIS2 holds for the event, before its name; one that does not load leaves the name.
     const image =
@@ -270,10 +258,6 @@ export const PopupCell = memo(function PopupCell({
     } else {
         stored = formatDhis2Value(view.value, metaOf(field), {
             calendar: settings.calendar,
-            orgUnitNames:
-                orgUnit && view.value !== undefined && name !== undefined
-                    ? new Map([[view.value, name]])
-                    : undefined,
         })
     }
     // One line in the input, which would drop line breaks and run the lines together.

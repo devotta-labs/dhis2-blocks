@@ -419,7 +419,7 @@ test('a rule locking the cell closes its editor without saving', async () => {
     expect(announced).toEqual([LOCKED, HIDDEN])
 })
 
-test('an org unit cell renders again only for its own name; other pop-up cells read no names', async () => {
+test('a file cell renders again only for its own name; other pop-up cells read no names', async () => {
     const watch = (setup: ReturnType<typeof rig>) => {
         const read: string[] = []
         for (const [what, names] of [
@@ -451,24 +451,24 @@ test('an org unit cell renders again only for its own name; other pop-up cells r
                 />
             </Profiler>
         )
-    const ORG_UNIT: Field = { valueType: 'ORGANISATION_UNIT' }
-    const orgUnit = rig(ORG_UNIT, { value: 'ou1' })
-    const read = watch(orgUnit)
-    const screen = await render(counted(orgUnit, ORG_UNIT))
+    const FILE: Field = { valueType: 'FILE_RESOURCE' }
+    const file = rig(FILE, { value: 'fr1' })
+    const read = watch(file)
+    const screen = await render(counted(file, FILE))
     const cell = page.getByRole('textbox', { name: 'Age (years)' })
-    await expect.element(cell).toHaveValue('ou1')
-    expect(read).toEqual(['org units'])
+    await expect.element(cell).toHaveValue('fr1')
+    expect(read).toEqual(['files'])
     const before = commits
-    orgUnit.orgUnitNames.setState({ names: new Map([['ou2', 'Bo']]) })
+    file.fileNames.setState({ names: new Map([['fr2', 'scan.pdf']]) })
     await nextFrame()
     expect(commits).toBe(before)
-    orgUnit.orgUnitNames.setState({
+    file.fileNames.setState({
         names: new Map([
-            ['ou1', 'Ngelehun'],
-            ['ou2', 'Bo'],
+            ['fr1', 'report.pdf'],
+            ['fr2', 'scan.pdf'],
         ]),
     })
-    await expect.element(cell).toHaveValue('Ngelehun')
+    await expect.element(cell).toHaveValue('report.pdf')
     await screen.unmount()
 
     const notes = rig(LONG_TEXT, { value: 'Some notes' })

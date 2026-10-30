@@ -16,12 +16,12 @@ import type {
 } from './types'
 
 /** An event with no date has no place before or after now: it is Undated. */
-const phaseOf = (status: DerivedEventStatus): TimelinePhase =>
-    status === 'scheduled'
-        ? 'future'
-        : status === 'overdue'
-          ? 'overdue'
-          : 'past'
+const phaseOf = (status: DerivedEventStatus): TimelinePhase => {
+    if (status === 'scheduled') {
+        return 'future'
+    }
+    return status === 'overdue' ? 'overdue' : 'past'
+}
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
 

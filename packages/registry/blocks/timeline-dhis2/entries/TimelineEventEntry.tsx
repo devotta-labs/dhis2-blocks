@@ -318,12 +318,14 @@ const EventNote = ({ note }: { note: Note }) => {
     // Written on another day than the event's: say which, or it reads as the event's day.
     const day =
         note.storedAt === undefined ? undefined : storedDay(note.storedAt)
-    const when =
-        time === undefined
-            ? undefined
-            : day !== undefined && day !== storedDay(entry.at)
-              ? `${formatCalendarDate(day, calendar, locale)} ${time}`
-              : time
+    let when = time
+    if (
+        time !== undefined &&
+        day !== undefined &&
+        day !== storedDay(entry.at)
+    ) {
+        when = `${formatCalendarDate(day, calendar, locale)} ${time}`
+    }
     return (
         <li className="text-dhis2-grey-900">
             <span className="whitespace-pre-wrap">{note.value}</span>

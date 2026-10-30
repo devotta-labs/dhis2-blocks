@@ -40,6 +40,17 @@ export const useTimelineSave = (): ChangeSave => {
 const isEntry = (save: ChangeSave) =>
     save.changes.every((change) => change.type === 'CREATE')
 
+const summaryLabel = (name: string, count: number, entered: boolean) => {
+    if (entered) {
+        return count === 1
+            ? i18n.t('{{name}} entered {{count}} field', { name, count })
+            : i18n.t('{{name}} entered {{count}} fields', { name, count })
+    }
+    return count === 1
+        ? i18n.t('{{name}} changed {{count}} field', { name, count })
+        : i18n.t('{{name}} changed {{count}} fields', { name, count })
+}
+
 /** "Amina Bello changed 3 fields" (or "entered", for a first save), and when. */
 export const TimelineChangeSummary = ({
     withDay = true,
@@ -55,12 +66,12 @@ export const TimelineChangeSummary = ({
     const { calendar, locale } = useTimelineMeta()
     const day = storedDay(createdAt)
     const time = storedTime(createdAt)
-    const when =
-        day === undefined
-            ? undefined
-            : withDay
-              ? [formatCalendarDate(day, calendar, locale), time].join(' ')
-              : time
+    let when: string | undefined
+    if (day !== undefined) {
+        when = withDay
+            ? [formatCalendarDate(day, calendar, locale), time].join(' ')
+            : time
+    }
     return (
         <p
             {...props}
@@ -71,25 +82,7 @@ export const TimelineChangeSummary = ({
             )}
         >
             <span className="font-medium">
-                {entered
-                    ? changes.length === 1
-                        ? i18n.t('{{name}} entered {{count}} field', {
-                              name: user.displayName,
-                              count: changes.length,
-                          })
-                        : i18n.t('{{name}} entered {{count}} fields', {
-                              name: user.displayName,
-                              count: changes.length,
-                          })
-                    : changes.length === 1
-                      ? i18n.t('{{name}} changed {{count}} field', {
-                            name: user.displayName,
-                            count: changes.length,
-                        })
-                      : i18n.t('{{name}} changed {{count}} fields', {
-                            name: user.displayName,
-                            count: changes.length,
-                        })}
+                {summaryLabel(user.displayName, changes.length, entered)}
             </span>
             {when === undefined ? null : (
                 <time dateTime={createdAt} className="text-dhis2-grey-700">

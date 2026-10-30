@@ -9,6 +9,7 @@ import {
     TimelineNotices,
     TimelineShowMore,
     type TimelineNotice,
+    type TimelineStatus,
 } from '@/components/timeline'
 import {
     TimelineHistoryEntry,
@@ -110,15 +111,17 @@ const UpdatedToday = ({
         [events, today, info.programs, program, names.names]
     )
     // A failed later page is a notice: the pages already loaded stay.
-    const status =
-        pages.isError && pages.data === undefined
-            ? 'error'
-            : pages.isPending ||
-                info.pending ||
-                // A later page's org units keep the known names on show.
-                (names.pending && names.names.size === 0)
-              ? 'pending'
-              : 'success'
+    let status: TimelineStatus = 'success'
+    if (pages.isError && pages.data === undefined) {
+        status = 'error'
+    } else if (
+        pages.isPending ||
+        info.pending ||
+        // A later page's org units keep the known names on show.
+        (names.pending && names.names.size === 0)
+    ) {
+        status = 'pending'
+    }
     const notices: TimelineNotice[] = [
         ...(pages.isFetchNextPageError
             ? [

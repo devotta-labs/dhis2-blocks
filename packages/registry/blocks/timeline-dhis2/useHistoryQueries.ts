@@ -41,12 +41,12 @@ export const statusOf = (query: {
     data: unknown
     isError: boolean
     errorUpdateCount: number
-}): TimelineStatus =>
-    query.data !== undefined
-        ? 'success'
-        : query.isError || query.errorUpdateCount > 0
-          ? 'error'
-          : 'pending'
+}): TimelineStatus => {
+    if (query.data !== undefined) {
+        return 'success'
+    }
+    return query.isError || query.errorUpdateCount > 0 ? 'error' : 'pending'
+}
 
 /** Refetches without cancelling a request already on its way for the same key. */
 export const refetchOf = (query: Pick<UseQueryResult, 'refetch'>) => () =>
@@ -137,17 +137,13 @@ export const useProgramIds = ({
     const enrolledKey = entity.data?.enrollments
         .map((enrollment) => enrollment.program)
         .join(',')
-    const ids = useMemo(
-        () =>
-            programKey !== undefined
-                ? sortedUnique(programKey === '' ? [] : programKey.split(','))
-                : enrolledKey !== undefined
-                  ? sortedUnique(
-                        enrolledKey === '' ? [] : enrolledKey.split(',')
-                    )
-                  : undefined,
-        [programKey, enrolledKey]
-    )
+    const ids = useMemo(() => {
+        const key = programKey ?? enrolledKey
+        if (key === undefined) {
+            return undefined
+        }
+        return sortedUnique(key === '' ? [] : key.split(','))
+    }, [programKey, enrolledKey])
     if (given) {
         return {
             ids,

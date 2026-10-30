@@ -189,13 +189,18 @@ const ChangeLogRowSchema = z
     })
     .transform((row): ChangeLogRow | undefined => {
         const { attributeValue, dataValue, eventField } = row.change
-        const change = attributeValue
-            ? withValues('attribute', attributeValue.attribute, attributeValue)
-            : dataValue
-              ? withValues('dataElement', dataValue.dataElement, dataValue)
-              : eventField
-                ? withValues('eventField', eventField.field, eventField)
-                : undefined
+        let change: ChangeLogRow['change'] | undefined
+        if (attributeValue) {
+            change = withValues(
+                'attribute',
+                attributeValue.attribute,
+                attributeValue
+            )
+        } else if (dataValue) {
+            change = withValues('dataElement', dataValue.dataElement, dataValue)
+        } else if (eventField) {
+            change = withValues('eventField', eventField.field, eventField)
+        }
         if (change === undefined || !isChangeType(row.type)) {
             return undefined
         }

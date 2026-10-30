@@ -72,11 +72,7 @@ export const useEnrollmentEntries = ({
 
     const entityStatus = statusOf(entity)
     const firstStatus: TimelineStatus =
-        entityStatus !== 'success'
-            ? entityStatus
-            : info.pending
-              ? 'pending'
-              : 'success'
+        entityStatus === 'success' && info.pending ? 'pending' : entityStatus
     const shown = useSettledOnce(
         firstStatus !== 'pending',
         [trackedEntity, programKey].join('|')

@@ -1,4 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
+import { compareText } from '@/components/timeline/core/sort'
 import { httpStatusOf } from './client'
 import type { ChangeLogRow, TrackerUser } from './schemas'
 import type { ChangeSave, FieldInfo, ResolvedChange } from './types'
@@ -73,7 +74,7 @@ export const groupChangelogRows = (
     const saves = new Map<string, ChangeSave>()
     const seen = new Set<string>()
     const newestFirst = [...rows].sort((a, b) =>
-        a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0
+        compareText(b.createdAt, a.createdAt)
     )
     for (const row of newestFirst) {
         const { username } = row.createdBy

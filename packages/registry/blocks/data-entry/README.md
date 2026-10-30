@@ -200,7 +200,8 @@ reads its cell from the `Cell` around it, so it is drawn only inside one.
 Each cell works as a spreadsheet's does: typing replaces the value, F2 edits it, Enter and the arrows save and move,
 Tab moves with the page, Escape puts the value back. Left and Right move the way they point, in a right-to-left page
 too. A block copied from a spreadsheet pastes from the focused cell, skipping cells that cannot take it, and Ctrl+Z
-(Cmd+Z) undoes the last change. A note pasted into a long-text cell stays in that cell, line breaks kept, unless it
+(Cmd+Z) undoes the last change. In a table with "Add event", Ctrl+Enter (Cmd+Enter) saves what was typed, adds a row
+and moves to its first open cell; text its type refuses stays to be fixed, and no row is added. A note pasted into a long-text cell stays in that cell, line breaks kept, unless it
 holds a tab; a pasted value keeps its quotes unless it is one quoted field, as a spreadsheet wraps a cell. A value its type refuses stays in the cell with its error and is not saved; nothing
 typed is lost. In an option cell, typing lists the matches and Enter or Tab picks the highlighted one; emptied text
 highlights none, so Enter or Tab clears the cell. Delete clears a checkbox, and `y`, `n` and Delete set a Yes/No field.

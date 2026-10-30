@@ -12,7 +12,7 @@ import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
 import { OptionList } from './OptionList'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
-import { composing, READY_CLASS, useCellMode } from './useCellMode'
+import { addsRow, composing, READY_CLASS, useCellMode } from './useCellMode'
 
 const NO_OPTIONS: ReadonlyArray<Option> = []
 const NO_MATCHES = {
@@ -205,8 +205,10 @@ export const OptionCell = memo(function OptionCell({
                             return
                         }
                         if (event.key === 'Enter' && highlighted >= 0) {
-                            // Picks and stays; the next Enter moves on.
-                            event.preventDefault()
+                            // Picks and stays; the next Enter moves on. Ctrl+Enter picks, then the grid adds a row.
+                            if (!addsRow(event)) {
+                                event.preventDefault()
+                            }
                             pick(matches.codes[highlighted])
                             return
                         }

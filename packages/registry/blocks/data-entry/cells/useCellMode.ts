@@ -39,6 +39,14 @@ export const navKeyOf = (event: KeyboardEvent): NavKey | undefined => {
     }
 }
 
+/** Ctrl+Enter or ⌘+Enter: the grid adds a row to the cell's table. */
+export const addsRow = (event: KeyboardEvent) =>
+    event.key === 'Enter' &&
+    (event.ctrlKey || event.metaKey) &&
+    !event.altKey &&
+    !event.shiftKey &&
+    !composing(event)
+
 interface CellModeOptions {
     /** Saves what was typed and says how the store took it; `undefined` when nothing was typed. */
     commit(): CommitResult | undefined
@@ -130,6 +138,15 @@ export const useCellMode = ({
                     } else {
                         move(key)
                         // At the grid's edge nothing moves; the cell is selected again.
+                        setMode('ready')
+                    }
+                } else if (addsRow(event)) {
+                    // The typing is saved first; text that is not a value keeps the grid from adding the row.
+                    if (commit() === 'invalid') {
+                        event.preventDefault()
+                        setMode('edit')
+                        notes.show()
+                    } else {
                         setMode('ready')
                     }
                 } else if (event.key === 'F2') {

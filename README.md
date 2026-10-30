@@ -332,7 +332,7 @@ pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/dhis2-theme
 
 Available items: `alert`, `alert-dialog`, `button`, `checkbox`, `cn`,
 `combobox`, `dhis2-theme`, `dialog`, `dropdown-menu`, `field`, `input`,
-`input-group`, `label`, `popover`, `portal-root`, `select`, `separator`,
+`input-group`, `kbd`, `label`, `popover`, `portal-root`, `select`, `separator`,
 `spinner`, `switch`, `table`, `textarea`, `toggle`, `toggle-group`, and
 `tooltip`. Items that import siblings (for example `combobox` imports `select`
 and `input-group`) install them too.

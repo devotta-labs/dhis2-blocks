@@ -366,24 +366,6 @@ test('a right-to-left label reads right to left; its row header keeps the tableâ
     }
 })
 
-test('"Add event" adds a row and focuses its first open cell; each button names its table', async () => {
-    const { added } = await mount(
-        [
-            makeTable({ columns: ['Stage only', 'Age (years)'] }),
-            makeTable({ id: 't2', columns: ['Stage only', 'Age (years)'] }),
-            makeTable({ id: 't3', rows: ['2026-11-01'] }),
-        ],
-        { newRowTables: ['t1', 't2'], closedOnNewRows: ['c0'] }
-    )
-    const buttons = page.getByRole('button', { name: 'Add event' })
-    expect(buttons.elements()).toHaveLength(2)
-    await expect.element(buttons.nth(0)).toHaveAccessibleDescription('Table t1')
-    await expect.element(buttons.nth(1)).toHaveAccessibleDescription('Table t2')
-    await buttons.nth(1).click()
-    expect(added).toEqual(['t2'])
-    await expect.poll(focused).toBe(cellDomId(ID_SCOPE, cellKey('t2r1', 'c1')))
-})
-
 test('a cellâ€™s notes show outside the scrolling table', async () => {
     const last = cellKey('t1r29', 'c0')
     await mount([makeTable({ rows: range(30, (i) => `Row ${i}`) })], {

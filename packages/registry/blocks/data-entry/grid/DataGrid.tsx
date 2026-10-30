@@ -15,11 +15,13 @@ import type { StoreApi } from 'zustand/vanilla'
 import { cellKind } from '@/components/dhis2-value-types'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
+import { Kbd } from '@/components/dhis2/ui/kbd'
 import { replacementFor, RowCell } from '../cells/Cell'
 import { cellDomId } from '../cells/cellProps'
 import type { CellOverrides } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
 import { editorFor, pasteablePopupTypes } from '../cells/popupEditors'
+import { addsRow } from '../cells/useCellMode'
 import type { CellMessage, MessageKind } from '../logic/effects'
 import { cellKey } from '../model/types'
 import type { CellKey, GridRow, GridTable } from '../model/types'
@@ -36,6 +38,7 @@ import { nextCell } from './navigation'
 import type { CellPosition, NavGrid, NavKey } from './navigation'
 import { isBlock, pastedBlock, pasteTargets } from './paste'
 import { ShowMoreEvents } from './ShowMoreEvents'
+import { useAddRow } from './useAddRow'
 
 // Read by the field's value type, which can be any DHIS2 value type.
 const pasteable: ReadonlySet<string> = pasteablePopupTypes
@@ -249,6 +252,7 @@ interface TableViewProps {
     move(key: NavKey): void
     /** The table takes new rows: an "Add event" button follows it. */
     adds: boolean
+    /** Adds a row to the table and focuses its first open cell. */
     addRow(tableId: string): void
 }
 
@@ -267,29 +271,6 @@ const TableView = memo(function TableView({
         [idScope, table]
     )
     const titleId = `${idScope}-${table.id}-title`
-    // The rows before "Add event" was pressed; the row that then appears takes focus.
-    const rowsBefore = useRef<ReadonlySet<string>>()
-    useEffect(() => {
-        const before = rowsBefore.current
-        if (before === undefined) {
-            return
-        }
-        const added = table.rows.find(({ id }) => !before.has(id))
-        if (added === undefined) {
-            return
-        }
-        rowsBefore.current = undefined
-        const column = table.columns.find(
-            ({ id }) => !table.closed.has(cellKey(added.id, id))
-        )
-        if (column !== undefined) {
-            document
-                .getElementById(
-                    cellDomId(idScope, cellKey(added.id, column.id))
-                )
-                ?.focus()
-        }
-    }, [idScope, table])
     // Scroll padding as tall as the sticky header, however its labels wrap, so a focused cell never sits under it.
     useLayoutEffect(() => {
         const scroller = region.current
@@ -370,16 +351,19 @@ const TableView = memo(function TableView({
                 <Button
                     variant="secondary"
                     size="sm"
-                    className="self-start"
+                    className="gap-1.5 self-start pe-1"
                     aria-describedby={titleId}
-                    onClick={() => {
-                        rowsBefore.current = new Set(
-                            table.rows.map(({ id }) => id)
-                        )
-                        addRow(table.id)
-                    }}
+                    aria-keyshortcuts="Control+Enter Meta+Enter"
+                    onClick={() => addRow(table.id)}
                 >
                     {i18n.t('Add event')}
+                    {/* Screen readers hear the shortcut from aria-keyshortcuts; the button keeps its name. */}
+                    <Kbd aria-hidden>
+                        {/* Apple keyboards say ⌘ where others say Ctrl. */}
+                        {/Mac|iPhone|iPad/.test(navigator.platform)
+                            ? '⌘↵'
+                            : i18n.t('Ctrl ↵')}
+                    </Kbd>
                 </Button>
             ) : null}
         </div>
@@ -388,7 +372,8 @@ const TableView = memo(function TableView({
 
 /**
  * The form's tables (or one, by `tableId`), stacked: Enter and the arrows carry on from one table into the next,
- * Tab follows the page, a spreadsheet block pastes from the focused cell, Ctrl+Z undoes, and a skip link moves past it.
+ * Tab follows the page, a spreadsheet block pastes from the focused cell, Ctrl+Z undoes, Ctrl+Enter adds a row to the
+ * cell's table, and a skip link moves past it.
  */
 export const DataGrid = ({
     tableId,
@@ -463,6 +448,8 @@ export const DataGrid = ({
     }
     // One function for the grid's life, so no cell re-renders for it.
     const move = useCallback((key: NavKey) => moveTo.current?.(key), [])
+
+    const add = useAddRow(idScope, tables, addRow)
 
     // A value refused where the person is (Enter, an arrow, leaving the cell, a paste) is said aloud, once per text.
     useEffect(
@@ -553,6 +540,18 @@ export const DataGrid = ({
                 document.getElementById(cellDomId(idScope, undone[0]))?.focus()
             }
         }
+        // A cell that saved the typing lets the key through; one that kept the text, or an editor, stops it.
+        const at =
+            event.target instanceof HTMLElement
+                ? positions.get(event.target.id)
+                : undefined
+        if (addsRow(event) && !event.defaultPrevented && at !== undefined) {
+            const { id } = tables[at.table]
+            if (newRowTables.has(id)) {
+                event.preventDefault()
+                add(id)
+            }
+        }
     }
 
     return (
@@ -587,7 +586,7 @@ export const DataGrid = ({
                     table={table}
                     move={move}
                     adds={newRowTables.has(table.id)}
-                    addRow={addRow}
+                    addRow={add}
                 />
             ))}
             <div id={end} tabIndex={-1} className="outline-none" />

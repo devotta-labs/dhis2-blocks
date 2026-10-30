@@ -321,6 +321,21 @@
             ]
         },
         {
+            "name": "kbd",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/kbd.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/kbd.tsx"
+                }
+            ]
+        },
+        {
             "name": "label",
             "type": "registry:ui",
             "registryDependencies": [
@@ -620,6 +635,7 @@
                 "devotta-labs/dhis2-blocks/dhis2-value-display",
                 "devotta-labs/dhis2-blocks/dhis2-value-types",
                 "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/kbd",
                 "devotta-labs/dhis2-blocks/label",
                 "devotta-labs/dhis2-blocks/program-rules",
                 "devotta-labs/dhis2-blocks/textarea"
@@ -754,6 +770,11 @@
                     "path": "packages/registry/blocks/data-entry/grid/paste.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/grid/paste.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/grid/useAddRow.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/useAddRow.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/index.ts",

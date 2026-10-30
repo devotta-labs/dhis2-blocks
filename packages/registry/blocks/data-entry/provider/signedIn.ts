@@ -55,11 +55,10 @@ export const userCheck = (
                 return pauseReason('offline')
             }
             const who = await signedIn()
-            return who === 'here'
-                ? undefined
-                : who === 'other'
-                  ? signedInAsOther()
-                  : pauseReason('signIn')
+            if (who === 'here') {
+                return undefined
+            }
+            return who === 'other' ? signedInAsOther() : pauseReason('signIn')
         },
     }
 }

@@ -253,12 +253,8 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
         loaded.error ??
         (account.isLoadingError ? reasonOf(account.error) : undefined) ??
         failed
-    const status =
-        error !== undefined
-            ? 'error'
-            : active === placeholder
-              ? 'loading'
-              : 'ready'
+    const progress = active === placeholder ? 'loading' : 'ready'
+    const status = error === undefined ? progress : 'error'
     useEffect(() => {
         view.setState({
             status,

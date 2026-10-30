@@ -147,13 +147,9 @@ export const useProgramRuleContext = (
     options: UseProgramRuleContextOptions
 ): UseProgramRuleContextResult => {
     const { metadata, context, error } = useStageRuleContext(options)
+    const progress = context === undefined ? 'loading' : 'ready'
     return {
-        status:
-            error !== undefined
-                ? 'error'
-                : context === undefined
-                  ? 'loading'
-                  : 'ready',
+        status: error === undefined ? progress : 'error',
         metadata,
         context,
         error,

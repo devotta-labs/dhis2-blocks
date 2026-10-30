@@ -149,14 +149,13 @@ const toForm = (
     const rows: GridRow[] = events.map((event) => {
         const date = eventDate(event)
         const stageName = stageById.get(event.programStage)?.displayName ?? ''
+        let label = stageName
+        if (date !== undefined) {
+            label = shown.length > 1 ? `${date} · ${stageName}` : date
+        }
         return {
             id: event.event,
-            label:
-                date === undefined
-                    ? stageName
-                    : shown.length > 1
-                      ? `${date} · ${stageName}`
-                      : date,
+            label,
             stage: shown.length > 1 ? stageName : undefined,
             scheduledAt:
                 event.occurredAt === undefined

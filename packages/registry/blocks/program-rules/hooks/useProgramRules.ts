@@ -78,13 +78,9 @@ export const useProgramRules = ({
         [effects]
     )
 
+    const progress = effects === undefined ? 'loading' : 'ready'
     return {
-        status:
-            error !== undefined
-                ? 'error'
-                : effects === undefined
-                  ? 'loading'
-                  : 'ready',
+        status: error === undefined ? progress : 'error',
         effects,
         invalidRules: evaluator.invalidRules,
         explain,

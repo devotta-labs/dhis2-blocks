@@ -133,11 +133,8 @@ export const OptionCell = memo(function OptionCell({
     }
     const stored =
         view.value === undefined ? '' : typedText(field, view.value, settings)
-    const shown = hidden
-        ? i18n.t('Hidden')
-        : locked
-          ? stored
-          : (draft ?? view.draft ?? stored)
+    const entered = locked ? stored : (draft ?? view.draft ?? stored)
+    const shown = hidden ? i18n.t('Hidden') : entered
     return (
         <>
             <input

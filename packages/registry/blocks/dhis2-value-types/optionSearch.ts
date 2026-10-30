@@ -63,14 +63,14 @@ export const searchOptions = (
         }
         total += 1
         const code = index.lowerCodes[i]
-        const group =
-            code === exact
-                ? 0
-                : code.startsWith(words[0])
-                  ? 1
-                  : starts.every((start) => text.includes(start))
-                    ? 2
-                    : 3
+        let group = 3
+        if (code === exact) {
+            group = 0
+        } else if (code.startsWith(words[0])) {
+            group = 1
+        } else if (starts.every((start) => text.includes(start))) {
+            group = 2
+        }
         // Only the first `limit` of a group can be drawn; the rest only count.
         if (groups[group].length < limit) {
             groups[group].push(i)

@@ -225,22 +225,21 @@ export const createDataEntryStore = ({
                     const parsed = parseTyped(field, text, settings)
                     // A value the cell holds is not checked again. An age is checked against the device's date; a
                     // rule's own values are not checked against what rules hide.
-                    const error = !parsed.ok
-                        ? parsed.problem.message
-                        : parsed.value === undefined ||
-                            parsed.value === cell.value
-                          ? undefined
-                          : ((field.valueType === 'AGE'
+                    let error: string | undefined
+                    if (!parsed.ok) {
+                        error = parsed.problem.message
+                    } else if (
+                        parsed.value !== undefined &&
+                        parsed.value !== cell.value
+                    ) {
+                        error =
+                            (field.valueType === 'AGE'
                                 ? futureBirth(parsed.value, localToday())
                                 : undefined) ??
                             (source === 'rule'
                                 ? undefined
-                                : refusal(
-                                      key,
-                                      field,
-                                      cell.value,
-                                      parsed.value
-                                  )))
+                                : refusal(key, field, cell.value, parsed.value))
+                    }
                     if (!parsed.ok || error !== undefined) {
                         write(key, { ...cell, draft: text, error })
                         return 'invalid'

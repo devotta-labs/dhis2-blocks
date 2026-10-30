@@ -112,9 +112,10 @@ export const PopupCell = memo(function PopupCell({
     const locked = readOnly !== undefined || Editor === undefined
     const file = FILE_TYPES.has(field.valueType)
     const orgUnit = field.valueType === 'ORGANISATION_UNIT'
+    const fileNameStore = file ? fileNames : NO_NAMES
     // Org unit and file cells show their value's name, each reading only its own, so a new name renders no other cell.
     const name = useStore(
-        orgUnit ? orgUnitNames : file ? fileNames : NO_NAMES,
+        orgUnit ? orgUnitNames : fileNameStore,
         ({ names }) =>
             view.value === undefined ? undefined : names.get(view.value)
     )
@@ -261,17 +262,20 @@ export const PopupCell = memo(function PopupCell({
         }
     }
 
-    const stored = file
-        ? (name ?? view.value ?? '')
-        : field.valueType === 'AGE' && view.value !== undefined
-          ? typedText(DATE, view.value, settings)
-          : formatDhis2Value(view.value, metaOf(field), {
-                calendar: settings.calendar,
-                orgUnitNames:
-                    orgUnit && view.value !== undefined && name !== undefined
-                        ? new Map([[view.value, name]])
-                        : undefined,
-            })
+    let stored: string
+    if (file) {
+        stored = name ?? view.value ?? ''
+    } else if (field.valueType === 'AGE' && view.value !== undefined) {
+        stored = typedText(DATE, view.value, settings)
+    } else {
+        stored = formatDhis2Value(view.value, metaOf(field), {
+            calendar: settings.calendar,
+            orgUnitNames:
+                orgUnit && view.value !== undefined && name !== undefined
+                    ? new Map([[view.value, name]])
+                    : undefined,
+        })
+    }
     // One line in the input, which would drop line breaks and run the lines together.
     const shown = hidden
         ? i18n.t('Hidden')

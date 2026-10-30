@@ -146,13 +146,9 @@ export const useProgramRuleEvaluator = ({
     const error =
         contextError ?? neededFailure(enrollmentQuery, fetchEnrollment)
 
+    const progress = evaluate === undefined ? 'loading' : 'ready'
     return {
-        status:
-            error !== undefined
-                ? 'error'
-                : evaluate === undefined
-                  ? 'loading'
-                  : 'ready',
+        status: error === undefined ? progress : 'error',
         evaluate,
         invalidRules: context?.invalidRules ?? NO_INVALID_RULES,
         error,

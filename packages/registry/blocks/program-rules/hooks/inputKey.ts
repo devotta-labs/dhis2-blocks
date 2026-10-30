@@ -1,7 +1,7 @@
 import type { RuleEnrollmentInput, RuleEventInput } from '../lib'
 
 const sortedEntries = (values: Record<string, string>) =>
-    Object.entries(values).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    Object.entries(values).sort(([a], [b]) => (a < b ? -1 : Number(a > b)))
 
 const eventKey = (event: RuleEventInput) => [
     event.id,

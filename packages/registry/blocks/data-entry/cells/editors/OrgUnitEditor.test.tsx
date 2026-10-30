@@ -55,11 +55,12 @@ const mount = async (options: Parameters<typeof rig>[1] = {}) => {
                     await new Promise(() => {})
                 }
                 const query = String(params?.query)
-                return query.startsWith('ngel')
-                    ? search
-                    : query === 'many'
-                      ? { ...search, pager: { ...search.pager, total: 120 } }
-                      : NONE
+                if (query.startsWith('ngel')) {
+                    return search
+                }
+                return query === 'many'
+                    ? { ...search, pager: { ...search.pager, total: 120 } }
+                    : NONE
             },
         },
     })

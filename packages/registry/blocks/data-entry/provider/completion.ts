@@ -15,12 +15,12 @@ const AS_IS = { escapeValue: false }
 const UNSENT = new Set<SyncState>(['queued', 'sending'])
 
 /** Why nothing goes to DHIS2 while the sync loop is paused in this state. */
-export const pauseReason = (sync: SyncStatus) =>
-    sync === 'offline'
-        ? i18n.t('You are offline')
-        : sync === 'signIn'
-          ? i18n.t('Sign in to keep saving')
-          : undefined
+export const pauseReason = (sync: SyncStatus) => {
+    if (sync === 'offline') {
+        return i18n.t('You are offline')
+    }
+    return sync === 'signIn' ? i18n.t('Sign in to keep saving') : undefined
+}
 
 export const refusalOf = (
     sourceKey: string,
@@ -68,24 +68,26 @@ export const completionChecks = (
                         text
                     )
                 ),
-            ...rowCells(rowId).flatMap(([key, { sync, reason }]) =>
-                sync === 'failed'
-                    ? [
-                          refusal(
-                              key,
-                              i18n.t('Not saved: {{reason}}', {
-                                  nsSeparator: '::',
-                                  reason: reason ?? '',
-                                  interpolation: AS_IS,
-                              })
-                          ),
-                      ]
-                    : sync === 'waiting'
-                      ? [refusal(key, reason ?? '')]
-                      : afterSending && UNSENT.has(sync)
-                        ? [refusal(key, i18n.t('Not yet sent to DHIS2'))]
-                        : []
-            ),
+            ...rowCells(rowId).flatMap(([key, { sync, reason }]) => {
+                if (sync === 'failed') {
+                    return [
+                        refusal(
+                            key,
+                            i18n.t('Not saved: {{reason}}', {
+                                nsSeparator: '::',
+                                reason: reason ?? '',
+                                interpolation: AS_IS,
+                            })
+                        ),
+                    ]
+                }
+                if (sync === 'waiting') {
+                    return [refusal(key, reason ?? '')]
+                }
+                return afterSending && UNSENT.has(sync)
+                    ? [refusal(key, i18n.t('Not yet sent to DHIS2'))]
+                    : []
+            }),
         ],
         /**
          * Settles once none of the row's changes waits to be sent, or after as long as a save may take; early, with

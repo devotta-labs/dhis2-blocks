@@ -388,13 +388,14 @@ test('an event that has not happened yet is labelled by its scheduled date', asy
             rmnchProgram,
             {
                 ...rmnchEvents,
-                events: rmnchEvents.events.map((event, at) =>
-                    at === 1
-                        ? { ...event, ...scheduled }
-                        : at === 2
-                          ? { ...event, ...scheduled, scheduledAt: undefined }
-                          : event
-                ),
+                events: rmnchEvents.events.map((event, at) => {
+                    if (at === 1) {
+                        return { ...event, ...scheduled }
+                    }
+                    return at === 2
+                        ? { ...event, ...scheduled, scheduledAt: undefined }
+                        : event
+                }),
             },
             meAdmin
         ).engine

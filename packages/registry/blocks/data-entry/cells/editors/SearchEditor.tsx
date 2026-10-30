@@ -174,6 +174,18 @@ export const SearchEditor = ({
         }
     }
     const saveOnCtrl = saveOnCtrlEnter(commit)
+    const note =
+        message === undefined ? null : (
+            <p
+                className={
+                    fresh?.problem === undefined
+                        ? 'text-dhis2-grey-700'
+                        : 'text-xs text-dhis2-red-700'
+                }
+            >
+                {message}
+            </p>
+        )
     return (
         <>
             <Input
@@ -245,16 +257,8 @@ export const SearchEditor = ({
                         }
                     }}
                 />
-            ) : message === undefined ? null : (
-                <p
-                    className={
-                        fresh?.problem === undefined
-                            ? 'text-dhis2-grey-700'
-                            : 'text-xs text-dhis2-red-700'
-                    }
-                >
-                    {message}
-                </p>
+            ) : (
+                note
             )}
             <EditorButtons save={commit} cancel={cancel} />
         </>

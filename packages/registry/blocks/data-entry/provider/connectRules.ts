@@ -466,11 +466,12 @@ export const connectRules = ({
             rerun(
                 edits.flatMap(({ rowId, field }) => {
                     const row = rows.get(rowId)
-                    return row === undefined
-                        ? []
-                        : field === EVENT_DATE_COLUMN
-                          ? personRows(all, row)
-                          : rules.rowsAffectedBy(ruleRows, rowId, field)
+                    if (row === undefined) {
+                        return []
+                    }
+                    return field === EVENT_DATE_COLUMN
+                        ? personRows(all, row)
+                        : rules.rowsAffectedBy(ruleRows, rowId, field)
                 })
             )
         }),
@@ -483,13 +484,12 @@ export const connectRules = ({
             const is = rowsOf(now)
             const was = rowsOf(before)
             rerunNow([
-                ...[...is.values()].flatMap((row) =>
-                    was.get(row.id) === row
-                        ? []
-                        : was.has(row.id)
-                          ? [row.id]
-                          : personRows(now, row)
-                ),
+                ...[...is.values()].flatMap((row) => {
+                    if (was.get(row.id) === row) {
+                        return []
+                    }
+                    return was.has(row.id) ? [row.id] : personRows(now, row)
+                }),
                 ...[...was.values()].flatMap((row) =>
                     is.has(row.id) ? [] : personRows(now, row)
                 ),

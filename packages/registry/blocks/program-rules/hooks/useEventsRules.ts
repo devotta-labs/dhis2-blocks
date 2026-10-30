@@ -301,13 +301,9 @@ export const useEventsRules = ({
         (built?.isErr() ? built.error : undefined) ??
         neededFailure(personsQuery, fetchPersons)
 
+    const progress = rules === undefined ? 'loading' : 'ready'
     return {
-        status:
-            error !== undefined
-                ? 'error'
-                : rules === undefined
-                  ? 'loading'
-                  : 'ready',
+        status: error === undefined ? progress : 'error',
         rules,
         error,
     }

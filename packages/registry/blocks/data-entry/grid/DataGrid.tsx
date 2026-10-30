@@ -145,12 +145,11 @@ const RowHeader = memo(function RowHeader({
         store,
         (state) => state.cells[cellKey(row.id, EVENT_DATE_COLUMN)]?.value
     )
-    const marker =
-        row.status === 'COMPLETED'
-            ? i18n.t('Completed')
-            : row.status === 'SCHEDULE' || row.status === 'OVERDUE'
-              ? i18n.t('Scheduled')
-              : undefined
+    const scheduled =
+        row.status === 'SCHEDULE' || row.status === 'OVERDUE'
+            ? i18n.t('Scheduled')
+            : undefined
+    const marker = row.status === 'COMPLETED' ? i18n.t('Completed') : scheduled
     return (
         <th
             scope="row"
@@ -449,10 +448,11 @@ export const DataGrid = ({
             (key === 'left' || key === 'right') &&
             table instanceof HTMLTableElement &&
             getComputedStyle(table).direction === 'rtl'
+        const mirrored = key === 'left' ? 'right' : 'left'
         const to = nextCell(
             grid,
             from,
-            flipped ? (key === 'left' ? 'right' : 'left') : key,
+            flipped ? mirrored : key,
             tabStart.current
         )
         tabStart.current = undefined

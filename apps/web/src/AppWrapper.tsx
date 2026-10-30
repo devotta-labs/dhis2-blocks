@@ -12,7 +12,6 @@ import './locales'
 import { ErrorBoundary } from './app/ErrorBoundary'
 import { SyncUrlWithGlobalShell } from './app/SyncUrlWithGlobalShell'
 import { ContextSelectorShowcase } from './app/ContextSelectorShowcase'
-import { RelationshipViewerLab } from './app/RelationshipViewerLab'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -47,14 +46,6 @@ const router = createHashRouter([
         element: (
             <ErrorBoundary>
                 <ContextSelectorShowcase />
-            </ErrorBoundary>
-        ),
-    },
-    {
-        path: '/relationship-viewer',
-        element: (
-            <ErrorBoundary>
-                <RelationshipViewerLab />
             </ErrorBoundary>
         ),
     },

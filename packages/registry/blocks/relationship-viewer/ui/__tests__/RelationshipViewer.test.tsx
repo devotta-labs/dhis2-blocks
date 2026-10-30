@@ -432,14 +432,14 @@ describe('RelationshipViewer', () => {
             onSelectedChange,
         })
 
-        uncontrolled.latest().actions.setLayout('timeline')
+        uncontrolled.latest().actions.setLayout('trace')
         uncontrolled.latest().actions.select(te('H1'))
 
         await vi.waitFor(() => {
-            expect(uncontrolled.latest().state.layout).toBe('timeline')
+            expect(uncontrolled.latest().state.layout).toBe('trace')
             expect(uncontrolled.latest().state.selected).toBe(te('H1'))
         })
-        expect(onLayoutChange).toHaveBeenCalledWith('timeline')
+        expect(onLayoutChange).toHaveBeenCalledWith('trace')
         expect(onSelectedChange).toHaveBeenCalledWith(te('H1'))
 
         const onControlledLayout = vi.fn()
@@ -451,10 +451,10 @@ describe('RelationshipViewer', () => {
             onSelectedChange: onControlledSelected,
         })
 
-        controlled.latest().actions.setLayout('timeline')
+        controlled.latest().actions.setLayout('trace')
         controlled.latest().actions.select(te('H1'))
 
-        expect(onControlledLayout).toHaveBeenCalledWith('timeline')
+        expect(onControlledLayout).toHaveBeenCalledWith('trace')
         expect(onControlledSelected).toHaveBeenCalledWith(te('H1'))
         await controlled.rerender({ selected: te('H2') })
         expect(controlled.latest().state.layout).toBe('web')

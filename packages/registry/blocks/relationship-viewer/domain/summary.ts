@@ -16,6 +16,8 @@ export interface OutbreakSummary {
     maxOut: number
     meanOut: number // over nodes with ≥1 outgoing oriented edge, rounded to 1 decimal
     partial: boolean // any stub, failed node, or capped
+    unloadedLinkCount: number // sum of stub counts over drawn nodes
+    unloadedNodeCount: number // drawn nodes with at least one stub
 }
 
 export function summarize(
@@ -58,6 +60,8 @@ export function summarize(
             degrees.length === 0
                 ? 0
                 : Math.round((total / degrees.length) * 10) / 10,
+        unloadedLinkCount: nodes.reduce((sum, node) => sum + node.stubCount, 0),
+        unloadedNodeCount: nodes.filter((node) => node.stubCount > 0).length,
         partial:
             graph.capped ||
             nodes.some(

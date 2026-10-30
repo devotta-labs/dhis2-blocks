@@ -29,9 +29,7 @@ export function RelationshipViewerLayoutToggle({
             onValueChange={([next]) => next && setLayout(next)}
         >
             <ToggleGroupItem value="web">{i18n.t('Web')}</ToggleGroupItem>
-            <ToggleGroupItem value="timeline">
-                {i18n.t('Timeline')}
-            </ToggleGroupItem>
+            <ToggleGroupItem value="trace">{i18n.t('Trace')}</ToggleGroupItem>
         </ToggleGroup>
     )
 }

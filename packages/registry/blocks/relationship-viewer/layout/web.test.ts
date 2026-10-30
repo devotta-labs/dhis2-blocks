@@ -49,3 +49,42 @@ test('web layout of a 500-node graph takes under a second', async () => {
     layoutWeb(graph)
     expect(performance.now() - start).toBeLessThan(1000)
 })
+
+test('web layout keeps the space each node asks for', async () => {
+    const records = withLinks(
+        [person('A'), person('B')],
+        [link('AB', 'A', 'B')]
+    )
+    const graph = await build(records, ['A'])
+    const { positions } = layoutWeb(graph, () => 40)
+    const a = positions.get('trackedEntity:A')!
+    const b = positions.get('trackedEntity:B')!
+    expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(70)
+})
+
+test('a warm start keeps known nodes close to where they were', async () => {
+    const records = withLinks(
+        ['A', 'B', 'C', 'D', 'E'].map((id) => person(id)),
+        [link('AB', 'A', 'B'), link('BC', 'B', 'C'), link('CD', 'C', 'D')]
+    )
+    const before = layoutWeb(await build(records, ['A']), () => 10)
+    const grown = withLinks(
+        ['A', 'B', 'C', 'D', 'E'].map((id) => person(id)),
+        [
+            link('AB', 'A', 'B'),
+            link('BC', 'B', 'C'),
+            link('CD', 'C', 'D'),
+            link('DE', 'D', 'E'),
+        ]
+    )
+    const after = layoutWeb(
+        await build(grown, ['A']),
+        () => 10,
+        before.positions
+    )
+    for (const key of before.positions.keys()) {
+        const a = before.positions.get(key)!
+        const b = after.positions.get(key)!
+        expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeLessThan(30)
+    }
+})

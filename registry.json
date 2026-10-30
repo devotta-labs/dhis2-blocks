@@ -642,6 +642,11 @@
                     "target": "@components/relationship-viewer/api/schemas.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/relationship-viewer/domain/dates.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/domain/dates.ts"
+                },
+                {
                     "path": "packages/registry/blocks/relationship-viewer/domain/labels.ts",
                     "type": "registry:file",
                     "target": "@components/relationship-viewer/domain/labels.ts"
@@ -662,6 +667,11 @@
                     "target": "@components/relationship-viewer/domain/rules.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/relationship-viewer/domain/stacks.ts",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/domain/stacks.ts"
+                },
+                {
                     "path": "packages/registry/blocks/relationship-viewer/domain/summary.ts",
                     "type": "registry:file",
                     "target": "@components/relationship-viewer/domain/summary.ts"
@@ -677,9 +687,9 @@
                     "target": "@components/relationship-viewer/index.ts"
                 },
                 {
-                    "path": "packages/registry/blocks/relationship-viewer/layout/timeline.ts",
+                    "path": "packages/registry/blocks/relationship-viewer/layout/trace.ts",
                     "type": "registry:file",
-                    "target": "@components/relationship-viewer/layout/timeline.ts"
+                    "target": "@components/relationship-viewer/layout/trace.ts"
                 },
                 {
                     "path": "packages/registry/blocks/relationship-viewer/layout/web.ts",
@@ -740,6 +750,21 @@
                     "path": "packages/registry/blocks/relationship-viewer/ui/RelationshipViewerSummary.tsx",
                     "type": "registry:file",
                     "target": "@components/relationship-viewer/ui/RelationshipViewerSummary.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/ui/TraceCard.tsx",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/ui/TraceCard.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/ui/WebNode.tsx",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/ui/WebNode.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/relationship-viewer/ui/glyphs.tsx",
+                    "type": "registry:file",
+                    "target": "@components/relationship-viewer/ui/glyphs.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/relationship-viewer/ui/useViewBox.ts",

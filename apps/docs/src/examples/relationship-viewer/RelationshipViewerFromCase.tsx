@@ -9,10 +9,12 @@ import {
     isMarkedForFollowUp,
     type RelationshipNode,
     type RelationshipStatus,
+    type RelationshipViewerLayout,
 } from '@/components/relationship-viewer'
+import { useState } from 'react'
 
 /**
- * One case and everyone linked to it.
+ * One case and everyone linked to it, opening on the trace.
  *
  * `RvE2eTei010` and the "Contact tracing" program `RvE2ePrg001` are seeded by
  * this repository's e2e metadata. Replace them with a tracked entity and
@@ -43,23 +45,29 @@ const statusOf = (node: RelationshipNode) => {
     return 'contact'
 }
 
-const RelationshipViewerFromCase = () => (
-    <RelationshipViewer
-        seeds={{ refs: [{ kind: 'trackedEntity', id: 'RvE2eTei010' }] }}
-        program={PROGRAM}
-        hops={1}
-        statuses={statuses}
-        statusOf={statusOf}
-    >
-        <div className="flex flex-col gap-4">
-            <RelationshipViewerLayoutToggle />
-            <RelationshipViewerSummary />
-            <RelationshipViewerNotices />
-            <RelationshipViewerCanvas />
-            <RelationshipViewerLegend />
-            <RelationshipViewerList />
-        </div>
-    </RelationshipViewer>
-)
+const RelationshipViewerFromCase = () => {
+    const [layout, setLayout] = useState<RelationshipViewerLayout>('trace')
+
+    return (
+        <RelationshipViewer
+            seeds={{ refs: [{ kind: 'trackedEntity', id: 'RvE2eTei010' }] }}
+            program={PROGRAM}
+            hops={1}
+            statuses={statuses}
+            statusOf={statusOf}
+            layout={layout}
+            onLayoutChange={setLayout}
+        >
+            <div className="flex flex-col gap-4">
+                <RelationshipViewerLayoutToggle />
+                <RelationshipViewerSummary />
+                <RelationshipViewerNotices />
+                <RelationshipViewerCanvas />
+                <RelationshipViewerLegend />
+                <RelationshipViewerList />
+            </div>
+        </RelationshipViewer>
+    )
+}
 
 export default RelationshipViewerFromCase

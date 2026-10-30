@@ -11,7 +11,7 @@ import type {
 import type { Orientation } from '../domain/orientation'
 import type { OutbreakSummary } from '../domain/summary'
 
-export type RelationshipViewerLayout = 'web' | 'timeline'
+export type RelationshipViewerLayout = 'web' | 'trace'
 
 export type RelationshipViewerSeeds =
     | { refs: readonly NodeRef[] }

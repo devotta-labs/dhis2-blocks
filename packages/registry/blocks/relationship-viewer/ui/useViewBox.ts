@@ -1,5 +1,6 @@
 import {
     useEffect,
+    useLayoutEffect,
     useMemo,
     useRef,
     useState,
@@ -25,24 +26,46 @@ interface Box {
 const clamp = (value: number, min: number, max: number) =>
     Math.min(max, Math.max(min, value))
 
-/** Fits `bounds` with padding; wheel zooms on the pointer, dragging pans, `fit` resets. */
-export function useViewBox({ minX, minY, maxX, maxY }: Bounds) {
-    // Keyed on the numbers, so an equal bounds object keeps the current zoom and pan.
-    const fitted = useMemo<Box>(
-        () => ({
-            x: minX - PADDING,
-            y: minY - PADDING,
-            width: maxX - minX + 2 * PADDING,
-            height: maxY - minY + 2 * PADDING,
-        }),
-        [minX, minY, maxX, maxY]
-    )
-    // The view belongs to one fit; new bounds start from their own fit.
-    const [view, setView] = useState({ fitted, box: fitted })
-    const box = view.fitted === fitted ? view.box : fitted
-
+/**
+ * Fits `bounds` with padding; wheel zooms on the pointer, dragging pans, `fit` resets.
+ * A zoom or pan holds until `scene` changes, so redrawing the same scene (a stack opening, a resize) keeps the view.
+ */
+export function useViewBox<Scene>(
+    { minX, minY, maxX, maxY }: Bounds,
+    scene: Scene
+) {
     // A callback ref, so the wheel listener follows the svg as it mounts and unmounts.
     const [svg, ref] = useState<SVGSVGElement | null>(null)
+    const [size, setSize] = useState({ width: 0, height: 0 })
+    // Measured before paint, so the first frame is already the fitted view.
+    useLayoutEffect(() => {
+        if (!svg) return undefined
+        const measure = () =>
+            setSize({ width: svg.clientWidth, height: svg.clientHeight })
+        measure()
+        const observer = new ResizeObserver(measure)
+        observer.observe(svg)
+        return () => observer.disconnect()
+    }, [svg])
+
+    // Keyed on the numbers, so an equal bounds object keeps the current zoom and pan.
+    const fitted = useMemo<Box>(() => {
+        const width = maxX - minX + 2 * PADDING
+        const height = maxY - minY + 2 * PADDING
+        // Never enlarge past the drawn size: a small graph sits at 1:1, centred.
+        const boxWidth = Math.max(width, size.width)
+        const boxHeight = Math.max(height, size.height)
+        return {
+            x: minX - PADDING - (boxWidth - width) / 2,
+            y: minY - PADDING - (boxHeight - height) / 2,
+            width: boxWidth,
+            height: boxHeight,
+        }
+    }, [minX, minY, maxX, maxY, size.width, size.height])
+    // Undefined box: follow the fit.
+    const [view, setView] = useState<{ scene: Scene; box?: Box }>({ scene })
+    const box = (view.scene === scene && view.box) || fitted
+
     const drag = useRef<{
         startX: number
         startY: number
@@ -63,7 +86,7 @@ export function useViewBox({ minX, minY, maxX, maxY }: Bounds) {
                 event.clientY
             ).matrixTransform(matrix.inverse())
             setView((current) => {
-                const from = current.fitted === fitted ? current.box : fitted
+                const from = (current.scene === scene && current.box) || fitted
                 const width = clamp(
                     from.width *
                         (event.deltaY > 0 ? WHEEL_STEP : 1 / WHEEL_STEP),
@@ -72,7 +95,7 @@ export function useViewBox({ minX, minY, maxX, maxY }: Bounds) {
                 )
                 const k = width / from.width
                 return {
-                    fitted,
+                    scene,
                     box: {
                         x: point.x - (point.x - from.x) * k,
                         y: point.y - (point.y - from.y) * k,
@@ -84,7 +107,7 @@ export function useViewBox({ minX, minY, maxX, maxY }: Bounds) {
         }
         svg.addEventListener('wheel', onWheel, { passive: false })
         return () => svg.removeEventListener('wheel', onWheel)
-    }, [svg, fitted])
+    }, [svg, fitted, scene])
 
     const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
         const { clientX: x, clientY: y } = event
@@ -107,9 +130,9 @@ export function useViewBox({ minX, minY, maxX, maxY }: Bounds) {
         const dx = (x - last.x) / scale
         const dy = (y - last.y) / scale
         setView((current) => {
-            const from = current.fitted === fitted ? current.box : fitted
+            const from = (current.scene === scene && current.box) || fitted
             return {
-                fitted,
+                scene,
                 box: { ...from, x: from.x - dx, y: from.y - dy },
             }
         })
@@ -127,7 +150,7 @@ export function useViewBox({ minX, minY, maxX, maxY }: Bounds) {
     return {
         ref,
         viewBox: `${box.x} ${box.y} ${box.width} ${box.height}`,
-        fit: () => setView({ fitted, box: fitted }),
+        fit: () => setView({ scene }),
         handlers: {
             onPointerDown,
             onPointerMove,

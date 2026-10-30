@@ -139,3 +139,14 @@ test('stubs, failures and the cap make the summary partial', async () => {
     expect(capped.capped).toBe(true)
     expect((await summaryOf(capped)).partial).toBe(true)
 })
+
+test('unloaded links are counted per record', async () => {
+    // A1 exposes A1c and A2; A2's own two links are past the hop limit.
+    const stubbed = await summaryOf(await build(chains(), ['A1'], 1))
+    expect(stubbed.unloadedLinkCount).toBe(2)
+    expect(stubbed.unloadedNodeCount).toBe(1)
+
+    const lone = await summaryOf(await build([person('L')], ['L']))
+    expect(lone.unloadedLinkCount).toBe(0)
+    expect(lone.unloadedNodeCount).toBe(0)
+})

@@ -7,7 +7,7 @@ import {
     withLinks,
 } from '../__tests__/fixtures'
 import type { NodeKey, NodeRecord } from './model'
-import { generations, orientEdges, timelineParents } from './orientation'
+import { generations, orientEdges, parentsOf } from './orientation'
 
 import { build, dateOf } from '../__tests__/graph'
 
@@ -95,26 +95,26 @@ test('a cycle hanging off a rooted cluster still gets generations', async () => 
     expect(gens.size).toBe(4)
 })
 
-test('timeline parents are the earliest-discovered incoming source', async () => {
+test('parents are the earliest-discovered incoming source', async () => {
     const records = withLinks(
         ['A', 'B', 'C'].map((id) => person(id)),
         [link('BC', 'B', 'C'), link('AC', 'A', 'C'), link('AB', 'A', 'B')]
     )
     const graph = await build(records, ['A'])
-    const parents = timelineParents(graph, orientEdges(graph, dateOf))
+    const parents = parentsOf(graph, orientEdges(graph, dateOf))
     expect(parents.get(te('A'))).toBeUndefined()
     expect(parents.has(te('A'))).toBe(true)
     expect(parents.get(te('B'))).toBe(te('A'))
     expect(parents.get(te('C'))).toBe(te('A'))
 })
 
-test('a one-way cycle has no cyclic timeline parents', async () => {
+test('a one-way cycle has no cyclic parents', async () => {
     const records = withLinks(
         ['A', 'B', 'C'].map((id) => person(id)),
         [link('AB', 'A', 'B'), link('BC', 'B', 'C'), link('CA', 'C', 'A')]
     )
     const graph = await build(records, ['B'])
-    const parents = timelineParents(graph, orientEdges(graph, dateOf))
+    const parents = parentsOf(graph, orientEdges(graph, dateOf))
     expect(Object.fromEntries(parents)).toEqual({
         [te('B')]: undefined,
         [te('C')]: te('B'),

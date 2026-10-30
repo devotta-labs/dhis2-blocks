@@ -2,45 +2,34 @@ import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import i18n from '@dhis2/d2-i18n'
-import React, { useId, useMemo, type SVGAttributes } from 'react'
+import React, { useId, useMemo, useRef, useState } from 'react'
+import { dayDifference } from '../domain/dates'
 import type {
-    NodeKind,
+    NodeKey,
+    RelationshipGraph,
     RelationshipNode,
     RelationshipStatus,
 } from '../domain/model'
-import { timelineParents } from '../domain/orientation'
+import { parentsOf } from '../domain/orientation'
+import {
+    isStackable,
+    stackKey,
+    stackLeaves,
+    type Stack,
+    type Stacked,
+} from '../domain/stacks'
 import type { OutbreakSummary } from '../domain/summary'
-import { layoutTimeline, type TimelineLayout } from '../layout/timeline'
-import { layoutWeb, type Bounds } from '../layout/web'
+import { elbowPath, layoutTrace } from '../layout/trace'
+import { layoutWeb, type Bounds, type Point } from '../layout/web'
 import {
     useRelationshipViewerActions,
     useRelationshipViewerMeta,
     useRelationshipViewerState,
 } from '../provider/RelationshipViewerContext'
+import { radiusOf, STACK_RADIUS, type StatusCount } from './glyphs'
+import { TraceCard, TraceStack } from './TraceCard'
 import { useViewBox } from './useViewBox'
-
-const NO_STATUS_FILL = 'var(--color-dhis2-grey-500)'
-const RING_GAP = 3
-// Room above and right of the nodes for the 45° timeline date labels.
-const AXIS_HEIGHT = 56
-
-export const radiusOf = (status: RelationshipStatus | undefined) =>
-    status?.size === 'large' ? 9 : 5
-
-/** Tracked entity = circle, enrollment = square, event = diamond; `r` is the half-width. */
-export function NodeGlyph({
-    kind,
-    r,
-    ...props
-}: { kind: NodeKind; r: number } & SVGAttributes<SVGElement>) {
-    if (kind === 'enrollment') {
-        return <rect {...props} x={-r} y={-r} width={2 * r} height={2 * r} />
-    }
-    if (kind === 'event') {
-        return <polygon {...props} points={`0,${-r} ${r},0 0,${r} ${-r},0`} />
-    }
-    return <circle {...props} r={r} />
-}
+import { WebNode, WebStack } from './WebNode'
 
 // Each count gets its own singular and plural key: i18next 10 has no plural fallback for an untranslated key.
 const describe = (summary: OutbreakSummary) => {
@@ -74,6 +63,9 @@ const describe = (summary: OutbreakSummary) => {
           )
 }
 
+const LABELLED_SPACE = 36
+const MARK_SPACE = 10
+
 const EMPTY_BOUNDS: Bounds = { minX: 0, minY: 0, maxX: 0, maxY: 0 }
 
 export function RelationshipViewerCanvas({
@@ -84,40 +76,83 @@ export function RelationshipViewerCanvas({
     const { status, graph, fetching, layout, selected } =
         useRelationshipViewerState()
     const { select, expand, retry } = useRelationshipViewerActions()
-    const { statusOf, labelOf, dateOf, orientation, summary } =
-        useRelationshipViewerMeta()
+    const {
+        statuses,
+        statusOf,
+        labelOf,
+        dateOf,
+        orientation,
+        generations,
+        summary,
+    } = useRelationshipViewerMeta()
     const id = useId().replace(/:/g, '')
     const markerId = `${id}-arrow`
+    const [open, setOpen] = useState<ReadonlySet<NodeKey>>(new Set())
 
-    // Only the graph and layout re-run the force simulation; pan, zoom and selection do not.
-    const web = useMemo(
-        () => (graph && layout === 'web' ? layoutWeb(graph) : undefined),
-        [graph, layout]
+    // An equal set of stacks keeps the stacked graph object, so selecting a node outside every stack keeps the layout.
+    const last = useRef<{
+        graph?: RelationshipGraph
+        key: string
+        stacked?: Stacked
+    }>({ key: '' })
+    const stacked = useMemo(() => {
+        if (!graph) return undefined
+        const next = stackLeaves(
+            graph,
+            (node) =>
+                node.state.status === 'loaded' &&
+                isStackable(node, statusOf(node), selected),
+            open
+        )
+        const key = stackKey(next.stacks)
+        if (last.current.graph === graph && last.current.key === key) {
+            return last.current.stacked
+        }
+        last.current = { graph, key, stacked: next }
+        return next
+    }, [graph, statusOf, selected, open])
+    const drawnGraph = stacked?.graph
+    // The last web picture, so a stack opening or a record expanding grows the picture instead of redrawing it.
+    const lastWeb = useRef<ReadonlyMap<NodeKey, Point>>()
+
+    // Only the drawn graph and layout re-run the force simulation; pan, zoom and selection do not.
+    const web = useMemo(() => {
+        if (!drawnGraph || !stacked || layout !== 'web') return undefined
+        // Room for the "12 records" or name label beside stacks, seeds and attention marks; selection does not move anything.
+        const next = layoutWeb(
+            drawnGraph,
+            (key) => {
+                const node = drawnGraph.nodes.get(key)
+                const labelled =
+                    stacked.stacks.has(key) ||
+                    node?.seed ||
+                    (node?.state.status === 'loaded' &&
+                        statusOf(node)?.attention)
+                return labelled ? LABELLED_SPACE : MARK_SPACE
+            },
+            lastWeb.current
+        )
+        lastWeb.current = next.positions
+        return next
+    }, [drawnGraph, stacked, layout, statusOf])
+    const parents = useMemo(
+        () => (drawnGraph ? parentsOf(drawnGraph, orientation) : undefined),
+        [drawnGraph, orientation]
     )
-    const timeline = useMemo<TimelineLayout | undefined>(
+    const trace = useMemo(
         () =>
-            graph && layout === 'timeline'
-                ? layoutTimeline(
-                      graph,
-                      timelineParents(graph, orientation),
-                      dateOf
-                  )
+            drawnGraph && parents && layout === 'trace'
+                ? layoutTrace(drawnGraph, parents, generations)
                 : undefined,
-        [graph, layout, orientation, dateOf]
+        [drawnGraph, parents, layout, generations]
     )
-    const drawn = web ?? timeline
-    const fitBounds = useMemo(
-        () =>
-            timeline
-                ? {
-                      ...timeline.bounds,
-                      minY: timeline.bounds.minY - AXIS_HEIGHT,
-                      maxX: timeline.bounds.maxX + AXIS_HEIGHT,
-                  }
-                : (drawn?.bounds ?? EMPTY_BOUNDS),
-        [drawn, timeline]
+    const drawn = web ?? trace
+    // A new graph or layout is a new scene and refits; redrawing the same one keeps the zoom.
+    const scene = useMemo(() => ({ graph, layout }), [graph, layout])
+    const { ref, viewBox, fit, handlers } = useViewBox(
+        drawn?.bounds ?? EMPTY_BOUNDS,
+        scene
     )
-    const { ref, viewBox, fit, handlers } = useViewBox(fitBounds)
 
     if (status === 'loading') {
         return (
@@ -129,7 +164,9 @@ export function RelationshipViewerCanvas({
             </div>
         )
     }
-    if (status === 'error' || !graph || !drawn) return null
+    if (status === 'error' || !graph || !stacked || !drawnGraph || !drawn) {
+        return null
+    }
     if (graph.nodes.size === 0) {
         return (
             <p className={cn('p-6 text-center text-sm', className)}>
@@ -138,10 +175,29 @@ export function RelationshipViewerCanvas({
         )
     }
 
+    const { stacks } = stacked
     const nodeStatus = (node: RelationshipNode) =>
         node.state.status === 'loaded' ? statusOf(node) : undefined
-    const radius = (node: RelationshipNode) => radiusOf(nodeStatus(node))
-    const axisY = fitBounds.minY + AXIS_HEIGHT - 16
+    const radius = (key: NodeKey) => {
+        const node = drawnGraph.nodes.get(key)
+        if (stacks.has(key)) return STACK_RADIUS
+        return radiusOf(node && nodeStatus(node))
+    }
+    const rank = (s: RelationshipStatus | undefined) =>
+        s ? statuses.indexOf(s) : statuses.length
+    const splitOf = (stack: Stack): StatusCount[] => {
+        const counts = new Map<RelationshipStatus | undefined, number>()
+        for (const key of stack.members) {
+            const node = graph.nodes.get(key)
+            const s = node && nodeStatus(node)
+            counts.set(s, (counts.get(s) ?? 0) + 1)
+        }
+        return [...counts]
+            .map(([s, count]) => ({ status: s, count }))
+            .sort((a, b) => rank(a.status) - rank(b.status))
+    }
+    const openStack = (hub: NodeKey) =>
+        setOpen((current) => new Set(current).add(hub))
 
     return (
         <div className={cn('relative h-96 w-full', className)}>
@@ -172,60 +228,38 @@ export function RelationshipViewerCanvas({
                         />
                     </marker>
                 </defs>
-                {timeline && (
-                    <g aria-hidden="true" className="text-[10px]">
-                        {timeline.ticks.map((tick) => (
-                            <g key={tick.x}>
-                                <line
-                                    x1={tick.x}
-                                    x2={tick.x}
-                                    y1={axisY}
-                                    y2={fitBounds.maxY}
-                                    className="stroke-dhis2-grey-300"
-                                />
-                                <text
-                                    x={tick.x}
-                                    y={axisY - 4}
-                                    transform={`rotate(-45 ${tick.x} ${axisY - 4})`}
-                                    className="fill-dhis2-grey-700"
-                                >
-                                    {tick.label}
-                                </text>
-                            </g>
-                        ))}
-                        {timeline.noDateLaneX !== undefined && (
-                            <g>
-                                <line
-                                    x1={timeline.noDateLaneX}
-                                    x2={timeline.noDateLaneX}
-                                    y1={axisY}
-                                    y2={fitBounds.maxY}
-                                    strokeDasharray="3 3"
-                                    className="stroke-dhis2-grey-400"
-                                />
-                                <text
-                                    x={timeline.noDateLaneX}
-                                    y={axisY - 4}
-                                    textAnchor="middle"
-                                    className="fill-dhis2-grey-700"
-                                >
-                                    {i18n.t('No date')}
-                                </text>
-                            </g>
-                        )}
-                    </g>
-                )}
                 <g aria-hidden="true" className="stroke-dhis2-grey-500">
-                    {[...graph.edges.values()].map((edge) => {
+                    {[...drawnGraph.edges.values()].map((edge) => {
                         const from = drawn.positions.get(edge.from)
                         const to = drawn.positions.get(edge.to)
-                        const target = graph.nodes.get(edge.to)
-                        if (!from || !to || !target) return null
+                        if (!from || !to) return null
+                        const marker = edge.bidirectional
+                            ? undefined
+                            : `url(#${markerId})`
+                        if (trace) {
+                            const way = orientation.get(edge.id)
+                            return (
+                                <path
+                                    key={edge.id}
+                                    data-edge-id={edge.id}
+                                    d={elbowPath(
+                                        (way &&
+                                            trace.positions.get(way.source)) ??
+                                            from,
+                                        (way &&
+                                            trace.positions.get(way.target)) ??
+                                            to
+                                    )}
+                                    fill="none"
+                                    markerEnd={marker}
+                                />
+                            )
+                        }
                         // Stop one-way links at the target's edge so the arrowhead shows.
                         const length = Math.hypot(to.x - from.x, to.y - from.y)
                         const cut = edge.bidirectional
                             ? 0
-                            : Math.min(length, radius(target) + 2) /
+                            : Math.min(length, radius(edge.to) + 2) /
                               (length || 1)
                         return (
                             <line
@@ -235,108 +269,75 @@ export function RelationshipViewerCanvas({
                                 y1={from.y}
                                 x2={to.x - (to.x - from.x) * cut}
                                 y2={to.y - (to.y - from.y) * cut}
-                                markerEnd={
-                                    edge.bidirectional
-                                        ? undefined
-                                        : `url(#${markerId})`
-                                }
+                                markerEnd={marker}
                             />
                         )
                     })}
                 </g>
                 <g aria-hidden="true">
-                    {graph.order.map((key) => {
-                        const node = graph.nodes.get(key)
+                    {drawnGraph.order.map((key) => {
+                        const node = drawnGraph.nodes.get(key)
                         const at = drawn.positions.get(key)
                         if (!node || !at) return null
-                        const kind = node.ref.kind
-                        const r = radius(node)
-                        if (node.state.status === 'failed') {
+                        const stack = stacks.get(key)
+                        const place = `translate(${at.x} ${at.y})`
+                        if (stack) {
+                            const Drawing = trace ? TraceStack : WebStack
                             return (
-                                <g
-                                    key={key}
-                                    data-node-key={key}
-                                    data-failed=""
-                                    transform={`translate(${at.x} ${at.y})`}
-                                    className="cursor-pointer"
-                                    onClick={() => retry(key)}
-                                >
-                                    <title>{labelOf(node)}</title>
-                                    <NodeGlyph
-                                        data-glyph=""
-                                        kind={kind}
-                                        r={r}
-                                        fill="transparent"
-                                        strokeDasharray="2 2"
-                                        className="stroke-dhis2-grey-500"
+                                <g key={key} transform={place}>
+                                    <Drawing
+                                        stack={stack}
+                                        split={splitOf(stack)}
+                                        onOpen={() => openStack(stack.hub)}
                                     />
                                 </g>
                             )
                         }
                         const nodeState = nodeStatus(node)
-                        const emphasised = node.seed || key === selected
-                        return (
-                            <g
-                                key={key}
-                                data-node-key={key}
-                                transform={`translate(${at.x} ${at.y})`}
-                                className="cursor-pointer"
-                                onClick={() => select(key)}
-                            >
-                                <title>{labelOf(node)}</title>
-                                {nodeState?.attention && (
-                                    <NodeGlyph
-                                        data-attention-ring=""
-                                        kind={kind}
-                                        r={r + RING_GAP}
-                                        fill="none"
-                                        strokeWidth={1.5}
-                                        className="stroke-dhis2-grey-900"
+                        const handlers = {
+                            onSelect: () => select(key),
+                            onExpand: () => expand(key),
+                            onRetry: () => retry(key),
+                        }
+                        if (trace) {
+                            const parent = parents?.get(key)
+                            const parentNode = parent && graph.nodes.get(parent)
+                            const date = dateOf(node)
+                            return (
+                                <g key={key} transform={place}>
+                                    <TraceCard
+                                        node={node}
+                                        label={labelOf(node)}
+                                        status={nodeState}
+                                        date={date}
+                                        days={
+                                            parentNode
+                                                ? dayDifference(
+                                                      dateOf(parentNode),
+                                                      date
+                                                  )
+                                                : undefined
+                                        }
+                                        selected={key === selected}
+                                        {...handlers}
                                     />
-                                )}
-                                <NodeGlyph
-                                    data-glyph=""
-                                    kind={kind}
-                                    r={r}
-                                    style={{
-                                        fill:
-                                            nodeState?.color ?? NO_STATUS_FILL,
-                                    }}
-                                    strokeWidth={emphasised ? 2.5 : 1}
-                                    className={
+                                </g>
+                            )
+                        }
+                        return (
+                            <g key={key} transform={place}>
+                                <WebNode
+                                    node={node}
+                                    label={labelOf(node)}
+                                    status={nodeState}
+                                    selected={key === selected}
+                                    named={
+                                        node.seed ||
+                                        !!nodeState?.attention ||
                                         key === selected
-                                            ? 'stroke-dhis2-blue-600'
-                                            : 'stroke-dhis2-grey-900'
                                     }
+                                    {...handlers}
                                 />
-                                {node.stubCount > 0 && (
-                                    <g
-                                        data-stub=""
-                                        transform={`translate(${r + 6} ${-r - 6})`}
-                                        onClick={(event) => {
-                                            event.stopPropagation()
-                                            expand(key)
-                                        }}
-                                    >
-                                        <rect
-                                            x={-9}
-                                            y={-6}
-                                            width={18}
-                                            height={12}
-                                            rx={6}
-                                            className="fill-dhis2-grey-100 stroke-dhis2-grey-500"
-                                        />
-                                        <text
-                                            textAnchor="middle"
-                                            dominantBaseline="central"
-                                            className="fill-dhis2-grey-900 text-[8px]"
-                                        >
-                                            {i18n.t('+{{stubs}}', {
-                                                stubs: node.stubCount,
-                                            })}
-                                        </text>
-                                    </g>
-                                )}
                             </g>
                         )
                     })}

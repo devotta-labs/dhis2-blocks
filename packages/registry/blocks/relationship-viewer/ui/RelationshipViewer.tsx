@@ -94,7 +94,7 @@ export function RelationshipViewer(props: RelationshipViewerProps) {
 
     const dateOf = useMemo<DateOf>(() => {
         const read = props.dateOf ?? defaultDateOf(readProgram)
-        // An unparseable date is no date: the node goes in the no-date lane.
+        // An unparseable date is no date: the card shows none and orientation falls back to discovery order.
         return (node) => {
             const date = read(node)
             return date && !Number.isNaN(date.getTime()) ? date : undefined

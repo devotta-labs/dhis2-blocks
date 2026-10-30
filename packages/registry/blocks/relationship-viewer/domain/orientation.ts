@@ -109,7 +109,7 @@ export function generations(
     return gens
 }
 
-export function timelineParents(
+export function parentsOf(
     graph: RelationshipGraph,
     orientation: ReadonlyMap<string, Orientation>
 ): ReadonlyMap<NodeKey, NodeKey | undefined> {

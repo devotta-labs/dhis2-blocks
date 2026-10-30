@@ -2,7 +2,6 @@ import React from 'react'
 import { userEvent } from 'vitest/browser'
 import { chains, superspreaders } from '../../__tests__/fixtures'
 import { RelationshipViewerBoundaryError } from '../../api/client'
-import { dateOf as fixtureDateOf } from '../../__tests__/graph'
 import { RelationshipViewerCanvas } from '../RelationshipViewerCanvas'
 import { RelationshipViewerLayoutToggle } from '../RelationshipViewerLayoutToggle'
 import { RelationshipViewerLegend } from '../RelationshipViewerLegend'
@@ -20,6 +19,8 @@ describe('RelationshipViewer parts', () => {
         })
 
         const { container } = screen
+        // The contacts start stacked; open the stack to see every node.
+        await userEvent.click(container.querySelector('[data-stack]')!)
         expect(container.querySelectorAll('[data-node-key]')).toHaveLength(13)
         expect(container.querySelectorAll('[data-edge-id]')).toHaveLength(12)
         // Tracked entities are circles; the large seed is radius 9.
@@ -100,12 +101,10 @@ describe('RelationshipViewer parts', () => {
         expect(actions.retry).toHaveBeenCalledWith(te('A2'))
     })
 
-    it('layout toggle switches to timeline and shows the no-date lane', async () => {
+    it('layout toggle switches to the trace', async () => {
         const graph = await graphOf(chains(), ['A1'])
         const { screen, actions } = await setup({
             graph,
-            dateOf: (node) =>
-                node.key === te('A2') ? undefined : fixtureDateOf(node),
             children: (
                 <>
                     <RelationshipViewerLayoutToggle />
@@ -113,16 +112,228 @@ describe('RelationshipViewer parts', () => {
                 </>
             ),
         })
-        expect(screen.container.textContent).not.toContain('No date')
 
-        await userEvent.click(screen.getByRole('button', { name: 'Timeline' }))
+        await userEvent.click(screen.getByRole('button', { name: 'Trace' }))
 
-        expect(actions.setLayout).toHaveBeenCalledWith('timeline')
-        await expect.element(screen.getByText('No date')).toBeInTheDocument()
-        await expect.element(screen.getByText('2026-01-01')).toBeInTheDocument()
+        expect(actions.setLayout).toHaveBeenCalledWith('trace')
         await expect
-            .element(screen.getByRole('button', { name: 'Timeline' }))
+            .element(screen.getByRole('button', { name: 'Trace' }))
             .toHaveAttribute('aria-pressed', 'true')
+        expect(
+            screen.container.querySelectorAll('path[data-edge-id]')
+        ).toHaveLength(graph.edges.size)
+    })
+
+    it('trace draws one card per node', async () => {
+        const graph = await graphOf(chains(), ['A1'])
+        const { screen, actions } = await setup({
+            graph,
+            children: (
+                <>
+                    <RelationshipViewerLayoutToggle />
+                    <RelationshipViewerCanvas />
+                </>
+            ),
+        })
+        await userEvent.click(screen.getByRole('button', { name: 'Trace' }))
+
+        const cards = screen.container.querySelectorAll('[data-trace-card]')
+        expect(cards).toHaveLength(3)
+        await userEvent.click(
+            screen.container.querySelector(
+                `[data-trace-card][data-node-key="${te('A1c')}"]`
+            )!
+        )
+        expect(actions.select).toHaveBeenCalledWith(te('A1c'))
+    })
+
+    it("a hub's contacts draw as one stack", async () => {
+        const graph = await graphOf(superspreaders(), ['H1'])
+        const { screen } = await setup({
+            graph,
+            children: <RelationshipViewerCanvas />,
+        })
+        const { container } = screen
+        const stacks = container.querySelectorAll('[data-stack]')
+        expect(stacks).toHaveLength(1)
+        expect(stacks[0].textContent).toContain('12 records')
+        expect(container.querySelectorAll('[data-node-key]')).toHaveLength(1)
+    })
+
+    it('opening a stack draws its members', async () => {
+        const graph = await graphOf(superspreaders(), ['H1'])
+        const { screen } = await setup({
+            graph,
+            children: <RelationshipViewerCanvas />,
+        })
+        const { container } = screen
+        await userEvent.click(container.querySelector('[data-stack]')!)
+        expect(container.querySelectorAll('[data-node-key]')).toHaveLength(13)
+        expect(container.querySelector('[data-stack]')).toBeNull()
+    })
+
+    it('selecting a member from the list pulls it out', async () => {
+        const graph = await graphOf(superspreaders(), ['H1'])
+        const { screen } = await setup({
+            graph,
+            children: (
+                <>
+                    <RelationshipViewerCanvas />
+                    <RelationshipViewerList />
+                </>
+            ),
+        })
+        const { container } = screen
+        await userEvent.click(
+            container.querySelector(
+                `tr[data-node-key="${te('H1c05')}"] button`
+            )!
+        )
+        expect(
+            container.querySelector(`g[data-node-key="${te('H1c05')}"]`)
+        ).not.toBeNull()
+        expect(container.querySelector('[data-stack]')?.textContent).toContain(
+            '11 records'
+        )
+    })
+
+    it('selecting a node outside any stack keeps positions', async () => {
+        const graph = await graphOf(superspreaders(), ['H1', 'H2'])
+        const { screen } = await setup({
+            graph,
+            children: <RelationshipViewerCanvas />,
+        })
+        const { container } = screen
+        const transforms = () =>
+            [
+                ...container.querySelectorAll('[data-node-key], [data-stack]'),
+            ].map((g) => g.getAttribute('transform'))
+        const before = transforms()
+        expect(container.querySelectorAll('[data-stack]')).toHaveLength(2)
+
+        await userEvent.click(
+            nodeAt(container, te('H1')).querySelector('[data-glyph]')!
+        )
+
+        expect(transforms()).toEqual(before)
+    })
+
+    it('seeds carry the seed mark, selection does not', async () => {
+        const graph = await graphOf(chains(), ['A1'], { hops: 2 })
+        const { screen } = await setup({
+            graph,
+            children: <RelationshipViewerCanvas />,
+        })
+        const { container } = screen
+        const marks = () => container.querySelectorAll('[data-seed-mark]')
+        expect(marks()).toHaveLength(1)
+        expect(
+            nodeAt(container, te('A1')).querySelector('[data-seed-mark]')
+        ).not.toBeNull()
+
+        await userEvent.click(
+            nodeAt(container, te('A1c')).querySelector('[data-glyph]')!
+        )
+        expect(marks()).toHaveLength(1)
+    })
+
+    it('only seeds, attention nodes and the selected node are named', async () => {
+        const graph = await graphOf(chains(), ['A1'], { hops: 2 })
+        const { screen } = await setup({
+            graph,
+            children: <RelationshipViewerCanvas />,
+        })
+        const { container } = screen
+        const labels = () =>
+            [...container.querySelectorAll('[data-label]')].map(
+                (t) => t.textContent
+            )
+        expect(labels()).toEqual(['A1'])
+
+        await userEvent.click(
+            nodeAt(container, te('A1c')).querySelector('[data-glyph]')!
+        )
+        expect(labels().sort()).toEqual(['A1', 'A1c'])
+    })
+
+    it('the trace draws stacks as cards', async () => {
+        const graph = await graphOf(superspreaders(), ['H1'])
+        const { screen } = await setup({
+            graph,
+            children: (
+                <>
+                    <RelationshipViewerLayoutToggle />
+                    <RelationshipViewerCanvas />
+                </>
+            ),
+        })
+        await userEvent.click(screen.getByRole('button', { name: 'Trace' }))
+        const stacks = screen.container.querySelectorAll('[data-stack]')
+        expect(stacks).toHaveLength(1)
+        expect(stacks[0].textContent).toContain('12 records')
+        expect(
+            screen.container.querySelectorAll('[data-trace-card]')
+        ).toHaveLength(1)
+    })
+
+    it('fit never enlarges a small graph past its drawn size', async () => {
+        const graph = await graphOf(chains(), ['A1'])
+        const { screen } = await setup({
+            graph,
+            children: (
+                <>
+                    <RelationshipViewerLayoutToggle />
+                    <RelationshipViewerCanvas />
+                </>
+            ),
+        })
+        await userEvent.click(screen.getByRole('button', { name: 'Trace' }))
+        const svg = screen.container.querySelector('svg[role="img"]')!
+        await vi.waitFor(() => {
+            const [, , width, height] = svg
+                .getAttribute('viewBox')!
+                .split(' ')
+                .map(Number)
+            expect(width).toBeGreaterThanOrEqual(svg.clientWidth)
+            expect(height).toBeGreaterThanOrEqual(svg.clientHeight)
+        })
+    })
+
+    it('opening a stack keeps the zoom', async () => {
+        const graph = await graphOf(superspreaders(), ['H1', 'H2'])
+        const { screen } = await setup({
+            graph,
+            children: <RelationshipViewerCanvas />,
+        })
+        const svg = screen.container.querySelector('svg[role="img"]')!
+        const fitted = svg.getAttribute('viewBox')
+        svg.dispatchEvent(
+            new WheelEvent('wheel', { deltaY: -100, bubbles: true })
+        )
+        await vi.waitFor(() =>
+            expect(svg.getAttribute('viewBox')).not.toBe(fitted)
+        )
+        const zoomed = svg.getAttribute('viewBox')
+
+        await userEvent.click(screen.container.querySelector('[data-stack]')!)
+
+        expect(screen.container.querySelectorAll('[data-stack]')).toHaveLength(
+            1
+        )
+        expect(svg.getAttribute('viewBox')).toBe(zoomed)
+    })
+
+    it('legend explains the seed mark and stacks', async () => {
+        const graph = await graphOf(chains(), ['A1'])
+        const { screen } = await setup({
+            graph,
+            children: <RelationshipViewerLegend />,
+        })
+        await expect.element(screen.getByText('Starting point')).toBeVisible()
+        await expect.element(screen.getByText('Grouped records')).toBeVisible()
+        expect(
+            screen.container.querySelector('[data-seed-mark]')
+        ).not.toBeNull()
     })
 
     it('summary shows the numbers and the partial note', async () => {
@@ -146,7 +357,7 @@ describe('RelationshipViewer parts', () => {
         expect(valueOf('Most links out')).toBe('2')
         expect(valueOf('Mean links out')).toBe('2')
         await expect
-            .element(screen.getByText('Partial: some links are not loaded.'))
+            .element(screen.getByText('2 links not loaded on one record.'))
             .toBeVisible()
     })
 
@@ -369,7 +580,7 @@ describe('RelationshipViewer parts', () => {
                 </>
             ),
         })
-        await userEvent.click(screen.getByRole('button', { name: 'Timeline' }))
+        await userEvent.click(screen.getByRole('button', { name: 'Trace' }))
         const svg = screen.container.querySelector('svg[role="img"]')!
         const fitted = svg.getAttribute('viewBox')
         svg.dispatchEvent(

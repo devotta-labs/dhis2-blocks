@@ -1,10 +1,32 @@
 import { cn } from '@/components/dhis2/ui/cn'
 import i18n from '@dhis2/d2-i18n'
 import React from 'react'
+import type { OutbreakSummary } from '../domain/summary'
 import {
     useRelationshipViewerMeta,
     useRelationshipViewerState,
 } from '../provider/RelationshipViewerContext'
+
+// Each count gets its own singular and plural key: i18next 10 has no plural fallback for an untranslated key.
+const partialNote = ({
+    unloadedLinkCount,
+    unloadedNodeCount,
+}: OutbreakSummary) => {
+    if (unloadedLinkCount === 0) {
+        return i18n.t('Partial: some links are not loaded.')
+    }
+    return i18n.t('{{links}} not loaded on {{records}}.', {
+        links:
+            unloadedLinkCount === 1
+                ? i18n.t('One link')
+                : i18n.t('{{count}} links', { count: unloadedLinkCount }),
+        records:
+            unloadedNodeCount === 1
+                ? i18n.t('one record')
+                : i18n.t('{{count}} records', { count: unloadedNodeCount }),
+        interpolation: { escapeValue: false },
+    })
+}
 
 export function RelationshipViewerSummary({
     className,
@@ -40,9 +62,7 @@ export function RelationshipViewerSummary({
                 ))}
             </dl>
             {summary.partial && (
-                <p className="text-dhis2-grey-700">
-                    {i18n.t('Partial: some links are not loaded.')}
-                </p>
+                <p className="text-dhis2-grey-700">{partialNote(summary)}</p>
             )}
         </div>
     )

@@ -9,13 +9,11 @@ import {
     isMarkedForFollowUp,
     type RelationshipNode,
     type RelationshipStatus,
-    type RelationshipViewerLayout,
 } from '@/components/relationship-viewer'
-import { useState } from 'react'
 
 /**
  * Every person enrolled in a program at one organisation unit, and the links
- * between them, on a timeline.
+ * between them, on the web.
  *
  * The seed query is passed to `/api/tracker/trackedEntities` and must name its
  * program. `RvE2ePrg001` is seeded by this repository's e2e metadata at the
@@ -40,28 +38,22 @@ const statusOf = (node: RelationshipNode) => {
     return 'person'
 }
 
-const RelationshipViewerOutbreak = () => {
-    const [layout, setLayout] = useState<RelationshipViewerLayout>('timeline')
-
-    return (
-        <RelationshipViewer
-            seeds={{ query: { program: PROGRAM, orgUnits: 'DiszpKrYNg8' } }}
-            hops={2}
-            statuses={statuses}
-            statusOf={statusOf}
-            layout={layout}
-            onLayoutChange={setLayout}
-        >
-            <div className="flex flex-col gap-4">
-                <RelationshipViewerLayoutToggle />
-                <RelationshipViewerSummary />
-                <RelationshipViewerNotices />
-                <RelationshipViewerCanvas />
-                <RelationshipViewerLegend />
-                <RelationshipViewerList />
-            </div>
-        </RelationshipViewer>
-    )
-}
+const RelationshipViewerOutbreak = () => (
+    <RelationshipViewer
+        seeds={{ query: { program: PROGRAM, orgUnits: 'DiszpKrYNg8' } }}
+        hops={2}
+        statuses={statuses}
+        statusOf={statusOf}
+    >
+        <div className="flex flex-col gap-4">
+            <RelationshipViewerLayoutToggle />
+            <RelationshipViewerSummary />
+            <RelationshipViewerNotices />
+            <RelationshipViewerCanvas />
+            <RelationshipViewerLegend />
+            <RelationshipViewerList />
+        </div>
+    </RelationshipViewer>
+)
 
 export default RelationshipViewerOutbreak

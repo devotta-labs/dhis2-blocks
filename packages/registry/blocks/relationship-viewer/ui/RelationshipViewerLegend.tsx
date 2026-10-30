@@ -6,7 +6,7 @@ import {
     useRelationshipViewerMeta,
     useRelationshipViewerState,
 } from '../provider/RelationshipViewerContext'
-import { NodeGlyph, radiusOf } from './RelationshipViewerCanvas'
+import { NodeGlyph, radiusOf, SeedMark } from './glyphs'
 
 const kindLabels = () =>
     ({
@@ -87,6 +87,37 @@ export function RelationshipViewerLegend({
                         {labels[kind]}
                     </Row>
                 ))}
+            <Row
+                icon={
+                    <g transform="translate(3 -3)">
+                        <circle
+                            r={4}
+                            fill="none"
+                            className="stroke-dhis2-grey-900"
+                        />
+                        <SeedMark r={4} length={5} />
+                    </g>
+                }
+            >
+                {i18n.t('Starting point')}
+            </Row>
+            <Row
+                icon={
+                    <>
+                        {[4, 2, 0].map((offset) => (
+                            <circle
+                                key={offset}
+                                r={6}
+                                cx={offset - 2}
+                                cy={2 - offset}
+                                className="fill-white stroke-dhis2-grey-900"
+                            />
+                        ))}
+                    </>
+                }
+            >
+                {i18n.t('Grouped records')}
+            </Row>
             <Row
                 icon={
                     <path

@@ -1,4 +1,5 @@
 import {
+    forceCollide,
     forceLink,
     forceManyBody,
     forceSimulation,
@@ -55,8 +56,45 @@ interface SimNode extends SimulationNodeDatum {
 
 const TICKS = 300
 
-export function layoutWeb(graph: RelationshipGraph): GraphLayout {
-    const nodes: SimNode[] = graph.order.map((key) => ({ key }))
+const WARM_ALPHA = 0.3
+const JITTER = 8
+
+/**
+ * `space` is how far a node keeps others away (its mark plus any label); without it, only links and charge apply.
+ * `from` is a previous layout: when it knows most nodes, the simulation starts there and settles gently, so the picture stays put.
+ */
+export function layoutWeb(
+    graph: RelationshipGraph,
+    space?: (key: NodeKey) => number,
+    from?: ReadonlyMap<NodeKey, Point>
+): GraphLayout {
+    const random = lcg()
+    const neighbourOf = (key: NodeKey): Point | undefined => {
+        for (const edge of graph.edges.values()) {
+            const other =
+                (edge.from === key && edge.to) ||
+                (edge.to === key && edge.from) ||
+                undefined
+            const at = other && from?.get(other)
+            if (at) return at
+        }
+        return undefined
+    }
+    const known = graph.order.filter((key) => from?.has(key)).length
+    const warm = known * 2 > graph.order.length
+    const nodes: SimNode[] = graph.order.map((key) => {
+        const at = from?.get(key)
+        if (at) return { key, x: at.x, y: at.y }
+        // A node new to the picture starts beside a neighbour it already has.
+        const near = warm ? neighbourOf(key) : undefined
+        return near
+            ? {
+                  key,
+                  x: near.x + (random() - 0.5) * JITTER,
+                  y: near.y + (random() - 0.5) * JITTER,
+              }
+            : { key }
+    })
     const links: SimulationLinkDatum<SimNode>[] = [...graph.edges.values()]
         .filter((e) => graph.nodes.has(e.from) && graph.nodes.has(e.to))
         .map((e) => ({ source: e.from, target: e.to }))
@@ -72,6 +110,13 @@ export function layoutWeb(graph: RelationshipGraph): GraphLayout {
         .force('x', forceX().strength(0.05))
         .force('y', forceY().strength(0.05))
         .stop()
+    if (warm) simulation.alpha(WARM_ALPHA)
+    if (space) {
+        simulation.force(
+            'collide',
+            forceCollide<SimNode>((node) => space(node.key))
+        )
+    }
     simulation.tick(TICKS)
 
     const positions = new Map<NodeKey, Point>(

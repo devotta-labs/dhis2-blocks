@@ -460,13 +460,13 @@ test.describe('timeline', () => {
             ).toBeVisible()
             await expect(
                 latestSave
-                    .locator('li')
+                    .locator('[data-slot="timeline-change-row"]')
                     .filter({ hasText: 'Flow rate' })
                     .getByText('9.8 → 11.2', { exact: true })
             ).toBeVisible()
             await expect(
                 latestSave
-                    .locator('li')
+                    .locator('[data-slot="timeline-change-row"]')
                     .filter({ hasText: 'Water quality' })
                     .getByText('Needs treatment → Safe to drink', {
                         exact: true,

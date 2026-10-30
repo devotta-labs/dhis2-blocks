@@ -12,6 +12,7 @@ import {
     recordedEvent,
     recordedProgram,
     renderEntries,
+    stageOf,
     type ProgramMetadata,
     type RenderOptions,
 } from '../__tests__/fixtures/renderEntries'
@@ -32,16 +33,6 @@ import {
 const SECOND_VISIT = 'edqlbukwRfQ'
 const AT_BIRTH = 'PFDfvmGpsR3'
 const PREVIOUS_DELIVERIES = 'PUZaKR0Jh2k'
-
-const stageOf = (metadata: ProgramMetadata, id: string) => {
-    const stage = metadata.programStages.find(
-        (candidate) => candidate.id === id
-    )
-    if (stage === undefined) {
-        throw new Error(`no stage ${id}`)
-    }
-    return stage
-}
 
 const AllParts = () => (
     <>
@@ -145,7 +136,7 @@ describe('TimelineEventEntry', () => {
         expect(text).not.toContain('Gestational age')
     })
 
-    it('shows at most 5 values and "+N more"', async () => {
+    it('shows 5 values and the rest behind "Show N more"', async () => {
         const ids = Array.from({ length: 7 }, (_, index) => `extra${index}`)
         const event = withValues(
             recordedEvent('TlE2eEvt004'),
@@ -172,8 +163,17 @@ describe('TimelineEventEntry', () => {
         await expect
             .poll(() => container.querySelectorAll('dd'))
             .toHaveLength(5)
-        expect(container.textContent).toContain('+2 more')
-        expect(container.textContent).not.toContain('value extra6')
+        const more = buttonIn(container)
+        expect(more.textContent).toBe('Show 2 more')
+        expect(more.getAttribute('aria-expanded')).toBe('false')
+
+        more.click()
+
+        await expect
+            .poll(() => container.querySelectorAll('dd'))
+            .toHaveLength(7)
+        expect(more.textContent).toBe('Show fewer')
+        expect(more.getAttribute('aria-expanded')).toBe('true')
     })
 
     it('shows no values when the stage flags none', async () => {

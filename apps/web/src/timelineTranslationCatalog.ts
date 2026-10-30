@@ -8,7 +8,6 @@ import i18n from '@dhis2/d2-i18n'
  */
 export const timelineTranslationCatalog = () => [
     i18n.t('(empty)'),
-    i18n.t('+{{count}} more'),
     i18n.t('1 older entry shown'),
     i18n.t('Active'),
     i18n.t('All entries'),
@@ -44,9 +43,11 @@ export const timelineTranslationCatalog = () => [
     i18n.t('Retry'),
     i18n.t('Scheduled'),
     i18n.t('Show changes'),
+    i18n.t('Show fewer'),
     i18n.t('Show less'),
     i18n.t('Show more'),
     i18n.t('Show older entries'),
+    i18n.t('Show {{count}} more'),
     i18n.t('Showing the most recent {{count}} events in {{program}}.'),
     i18n.t('Skipped'),
     i18n.t('Start of the record'),

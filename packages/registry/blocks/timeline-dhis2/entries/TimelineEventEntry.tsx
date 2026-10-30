@@ -254,8 +254,9 @@ export const TimelineEventCompletedBy = ({
 const MAX_VALUES = 5
 
 /**
- * Up to 5 key data values. The host's `dataElementIds` win; otherwise the
- * stage's `displayInReports` elements; a stage that flags none shows none.
+ * Key data values, the first 5 with the rest behind "Show N more". The
+ * host's `dataElementIds` win; otherwise the stage's `displayInReports`
+ * elements; a stage that flags none shows none.
  */
 export const TimelineEventValues = ({
     dataElementIds,
@@ -266,6 +267,8 @@ export const TimelineEventValues = ({
 }) => {
     const { event, stage, orgUnitNames } = useTimelineEventEntry().data
     const { calendar, locale } = useTimelineMeta()
+    const [open, setOpen] = useState(false)
+    const listId = useId()
     if (stage === undefined) {
         return null
     }
@@ -293,20 +296,31 @@ export const TimelineEventValues = ({
             data-slot="timeline-event-values"
             className={cn('flex flex-col items-start gap-1', className)}
         >
-            <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm">
-                {values.slice(0, MAX_VALUES).map(({ id, name, text }) => (
-                    <React.Fragment key={id}>
-                        <dt className="text-dhis2-grey-700">{name}</dt>
-                        <dd className="m-0 text-dhis2-grey-900 group-data-[status=skipped]/event:text-dhis2-grey-700">
-                            {text}
-                        </dd>
-                    </React.Fragment>
-                ))}
+            <dl
+                id={listId}
+                className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm"
+            >
+                {(open ? values : values.slice(0, MAX_VALUES)).map(
+                    ({ id, name, text }) => (
+                        <React.Fragment key={id}>
+                            <dt className="text-dhis2-grey-700">{name}</dt>
+                            <dd className="m-0 text-dhis2-grey-900 group-data-[status=skipped]/event:text-dhis2-grey-700">
+                                {text}
+                            </dd>
+                        </React.Fragment>
+                    )
+                )}
             </dl>
             {hidden > 0 ? (
-                <span className="text-sm text-dhis2-grey-700">
-                    {i18n.t('+{{count}} more', { count: hidden })}
-                </span>
+                <TimelineEventAction
+                    aria-expanded={open}
+                    aria-controls={listId}
+                    onClick={() => setOpen(!open)}
+                >
+                    {open
+                        ? i18n.t('Show fewer')
+                        : i18n.t('Show {{count}} more', { count: hidden })}
+                </TimelineEventAction>
             ) : null}
         </div>
     )

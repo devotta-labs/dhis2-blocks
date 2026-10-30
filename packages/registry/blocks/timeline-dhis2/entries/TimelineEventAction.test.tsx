@@ -6,6 +6,7 @@ import {
     recordedEvent,
     recordedProgram,
     renderEntries,
+    stageOf,
 } from '../__tests__/fixtures/renderEntries'
 import { TimelineEventAction } from './TimelineEventAction'
 import { TimelineEventEntry } from './TimelineEventEntry'
@@ -55,13 +56,7 @@ describe('TimelineEventAction', () => {
 
     it('leaves out the due date of a stage that hides it', async () => {
         const program = recordedProgram((metadata) => {
-            const stage = metadata.programStages.find(
-                (candidate) => candidate.id === AT_BIRTH
-            )
-            if (stage === undefined) {
-                throw new Error('no stage')
-            }
-            stage.hideDueDate = true
+            stageOf(metadata, AT_BIRTH).hideDueDate = true
         })
         const container = await renderWithOpen(
             eventEntryOf(recordedEvent('TlE2eEvt006'), { program })

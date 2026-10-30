@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-30T12:24:30.963Z\n"
-"PO-Revision-Date: 2026-10-30T12:24:30.963Z\n"
+"POT-Creation-Date: 2026-10-30T12:32:05.703Z\n"
+"PO-Revision-Date: 2026-10-30T12:32:05.704Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -187,9 +187,6 @@ msgstr "Expand sidebar"
 msgid "(empty)"
 msgstr "(empty)"
 
-msgid "+{{count}} more"
-msgstr "+{{count}} more"
-
 msgid "1 older entry shown"
 msgstr "1 older entry shown"
 
@@ -292,11 +289,17 @@ msgstr "Scheduled"
 msgid "Show changes"
 msgstr "Show changes"
 
+msgid "Show fewer"
+msgstr "Show fewer"
+
 msgid "Show less"
 msgstr "Show less"
 
 msgid "Show older entries"
 msgstr "Show older entries"
+
+msgid "Show {{count}} more"
+msgstr "Show {{count}} more"
 
 msgid "Showing the most recent {{count}} events in {{program}}."
 msgstr "Showing the most recent {{count}} events in {{program}}."

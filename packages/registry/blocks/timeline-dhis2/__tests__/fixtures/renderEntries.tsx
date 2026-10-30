@@ -84,6 +84,17 @@ export interface ProgramMetadata {
 }
 
 /** The recorded program as the hooks resolve it, after `edit` changes a copy. */
+/** A stage of the recorded program's metadata, to edit before resolving it. */
+export const stageOf = (metadata: ProgramMetadata, id: string) => {
+    const stage = metadata.programStages.find(
+        (candidate) => candidate.id === id
+    )
+    if (stage === undefined) {
+        throw new Error(`no stage ${id}`)
+    }
+    return stage
+}
+
 export const recordedProgram = (
     edit?: (metadata: ProgramMetadata) => void
 ): ProgramInfo => {

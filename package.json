@@ -29,6 +29,7 @@
         "e2e:down": "bash scripts/e2e/down.sh",
         "dev:docs": "pnpm --filter @dhis2-blocks/docs run dev",
         "build:docs": "turbo run build --filter=@dhis2-blocks/docs",
+        "lab:relationships": "pnpm --filter @dhis2-blocks/docs run dev --open /relationship-lab.html",
         "serve:docs": "pnpm --filter @dhis2-blocks/docs run serve",
         "docs:up": "bash scripts/docs/up.sh 42",
         "docs:up:41": "bash scripts/docs/up.sh 41",

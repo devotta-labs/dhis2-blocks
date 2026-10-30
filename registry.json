@@ -606,7 +606,7 @@
             "dependencies": [
                 "@dhis2/app-runtime@^3.15.1",
                 "@dhis2/d2-i18n@1.2.0",
-                "@dhis2/multi-calendar-dates@2.1.2",
+                "@dhis2/multi-calendar-dates@3.2.1",
                 "@tanstack/react-query@^5.101.4",
                 "zod@^4.4.3",
                 "zustand@^5.0.15"
@@ -929,7 +929,7 @@
             "description": "Read-only formatting of DHIS2 values by value type, option set and system calendar, keeping the day a date was stored on.",
             "dependencies": [
                 "@dhis2/d2-i18n@1.2.0",
-                "@dhis2/multi-calendar-dates@2.1.2"
+                "@dhis2/multi-calendar-dates@3.2.1"
             ],
             "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
             "files": [
@@ -962,7 +962,7 @@
             "description": "How each DHIS2 value type is typed, checked, pasted and shown for editing, in the system calendar.",
             "dependencies": [
                 "@dhis2/d2-i18n@1.2.0",
-                "@dhis2/multi-calendar-dates@2.1.2"
+                "@dhis2/multi-calendar-dates@3.2.1"
             ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/dhis2-theme",
@@ -1170,7 +1170,7 @@
             "dependencies": [
                 "@dhis2/app-runtime@^3.15.1",
                 "@dhis2/d2-i18n@1.2.0",
-                "@dhis2/multi-calendar-dates@2.1.2",
+                "@dhis2/multi-calendar-dates@3.2.1",
                 "@dhis2/ui@^10.17.0",
                 "@dhis2/ui-icons@^10.17.0",
                 "@tanstack/react-query@^5.101.4",

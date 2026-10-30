@@ -343,11 +343,9 @@ only the head start is lost; the rules load and report their own failures as usu
   in a stage that blocks entry, expired events (unless the user has `F_EDIT_EXPIRED`), and every event of a program with
   attribute categories. `TRACKER_ASSOCIATE`, `REFERENCE`, `GEOJSON`, and a pop-up type without an editor, show their
   value and are edited in their own form.
-- An expiry period is built in the server's calendar (`system/info`, asked in the form's own query; pages reuse it): a
-  monthly one starts on the first day of the Ethiopian or Nepali month, not the Gregorian one. A program with no expiry
-  days never expires an event by its period, as in DHIS2. A two-week period on an Ethiopian or Coptic server, or a date
-  the calendar library cannot convert, is not worked out, so it never makes an event read-only; DHIS2 still refuses an
-  expired event when it is saved.
+- An expiry period is worked out only on a server on the Gregorian or ISO 8601 calendar (`system/info`, asked in the
+  form's own query; pages reuse it). On any other calendar no event is read-only for its period, and DHIS2 refuses an
+  expired event when it is saved. A program with no expiry days never expires an event by its period, as in DHIS2.
 - An org unit pasted into a cell shows its id until the form loads again. One picked but not yet sent shows its id
   after a reload too: names load only for the values DHIS2 holds. So does a file uploaded but not yet sent.
 - A form loads once per mount, and not again when the app invalidates its queries; changes made elsewhere show after

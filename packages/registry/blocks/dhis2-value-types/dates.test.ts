@@ -29,14 +29,7 @@ test('an Ethiopian date is the same day as its Gregorian one', () => {
     })
 })
 
-test.each([
-    'coptic',
-    'ethiopian',
-    'islamic',
-    'nepali',
-    'persian',
-    'thai',
-] as const)(
+test.each(['ethiopian', 'islamic', 'nepali', 'persian', 'thai'] as const)(
     '%s dates round-trip, and a day the calendar lacks is refused',
     (calendar) => {
         const s = { calendar, dateFormat: 'YYYY-MM-DD' } as const
@@ -54,6 +47,16 @@ test.each([
         })
     }
 )
+
+test('a Coptic date is shown as stored and refused when typed, as the calendar library cannot convert it', () => {
+    const s = { calendar: 'coptic', dateFormat: 'YYYY-MM-DD' } as const
+    const field = { valueType: 'DATE' }
+    expect(typedText(field, '2026-10-20', s)).toBe('2026-10-20')
+    expect(parseTyped(field, '1743-02-10', s)).toMatchObject({
+        ok: false,
+        problem: { message: 'Enter a valid date' },
+    })
+})
 
 test('the epagomenal days of the Ethiopian year are real only when the year has them', () => {
     const s = { calendar: 'ethiopian', dateFormat: 'YYYY-MM-DD' } as const

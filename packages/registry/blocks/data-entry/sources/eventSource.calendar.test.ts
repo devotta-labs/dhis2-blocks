@@ -6,7 +6,7 @@ import type { DataEngine } from './types'
 
 type Request = Parameters<DataEngine['query']>[0]
 
-// The first fixture event, moved to the 5th of the month the tests are set in.
+// The first fixture event, moved into the month before the tests' today.
 const events = {
     ...inpatientEvents,
     events: inpatientEvents.events.map((event, at) =>
@@ -42,38 +42,28 @@ const engineFor = (calendar: string, expiryDays = 1) => {
     return { engine, requests }
 }
 
-const source = (today = '2026-10-26') =>
+const source = (today = '2026-11-02') =>
     eventSource({ programId: 'eBAyeGv0exc', orgUnitId: 'DiszpKrYNg8', today })
 
 const load = (calendar: string, expiryDays?: number) =>
     source().load(engineFor(calendar, expiryDays).engine)
 
-test('the expiry period starts on the first day of the server calendar’s own month', async () => {
-    // Checked on 2026-10-25, one expiry day before today: 2026-10-05 is in that month on iso8601, and in the month
-    // before on the Ethiopian calendar, whose month starts on the 11th.
-    const iso = await load('iso8601')
-    expect(iso.readOnlyRows.size).toBe(0)
-
-    const ethiopian = await load('ethiopian')
-    expect(ethiopian.readOnlyRows).toEqual(EXPIRED)
+test('a Gregorian server expires an event of an earlier period; another calendar leaves it to the server', async () => {
+    expect((await load('iso8601')).readOnlyRows).toEqual(EXPIRED)
+    expect((await load('ethiopian')).readOnlyRows.size).toBe(0)
 })
 
 test('with no expiry days, an event of an earlier period stays writable, as DHIS2 never expires it', async () => {
-    expect((await load('ethiopian', 0)).readOnlyRows.size).toBe(0)
-})
-
-test('an expiry the calendar library cannot work out leaves the form to load, and the server to refuse', async () => {
-    // The library converts Nepali dates of 1970 to 2100 BS only.
-    const form = await source('2300-01-01').load(engineFor('nepali').engine)
-    expect(form.readOnlyRows.size).toBe(0)
+    expect((await load('iso8601', 0)).readOnlyRows.size).toBe(0)
 })
 
 test('a page builds its expiry in the calendar the load found, without asking again', async () => {
+    // Gregorian, the calendar it would assume, would expire the event.
     const { engine, requests } = engineFor('ethiopian')
     const events = source()
     await events.load(engine)
     const page = await events.loadPage?.(engine, 2)
-    expect(page?.readOnlyRows).toEqual(EXPIRED)
+    expect(page?.readOnlyRows.size).toBe(0)
     const forms = requests.filter((request) => 'events' in request)
     expect(forms.map((request) => 'systemInfo' in request)).toEqual([
         true,
@@ -82,8 +72,7 @@ test('a page builds its expiry in the calendar the load found, without asking ag
 })
 
 test('an unknown calendar is the Gregorian one', async () => {
-    const form = await load('julian')
-    expect(form.readOnlyRows.size).toBe(0)
+    expect((await load('julian')).readOnlyRows).toEqual(EXPIRED)
 })
 
 test('the calendar is asked for in the form’s own query', async () => {

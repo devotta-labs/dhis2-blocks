@@ -1,10 +1,5 @@
 import { convertToIso8601 } from '@dhis2/multi-calendar-dates'
-import {
-    formatCalendarDate,
-    isoFromCoptic,
-    isoFromEthiopian,
-    toMultiCalendarIdentifier,
-} from '@/components/dhis2-value-display'
+import { formatCalendarDate } from '@/components/dhis2-value-display'
 import type { Dhis2Calendar } from '@/components/dhis2-value-display'
 import type { DateFormat, ValueSettings } from './types'
 
@@ -61,18 +56,10 @@ const localToIso = (parts: DateParts, calendar: Dhis2Calendar): string => {
     if (calendar === 'gregorian' || calendar === 'iso8601') {
         return yearFirst(parts)
     }
-    // Fixed arithmetic: the multi-calendar library's handling of these depends on the browser's ICU data.
-    if (calendar === 'coptic') {
-        return isoFromCoptic(parts)
-    }
-    if (calendar === 'ethiopian') {
-        return isoFromEthiopian(parts)
-    }
-    const { year, month, day } = convertToIso8601(
-        yearFirst(parts),
-        toMultiCalendarIdentifier(calendar)
-    )
-    return yearFirst({ year, month, day })
+    // shortcut: the library cannot convert Coptic and throws, so a typed Coptic date is refused; upgrade when it can.
+    // SAFETY: the library maps DHIS2's calendar names itself; its types list only the names it maps them to.
+    const library = calendar as Parameters<typeof convertToIso8601>[1]
+    return yearFirst(convertToIso8601(yearFirst(parts), library))
 }
 
 /** An ISO day as the `YYYY-MM-DD` of the system calendar. */

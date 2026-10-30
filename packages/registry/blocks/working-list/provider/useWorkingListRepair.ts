@@ -80,12 +80,13 @@ export const useWorkingListRepair = ({
             parsingContext,
             serializationContext,
         })
+        if (result.status !== 'repaired') {
+            return { plan, result, canRepair: false }
+        }
         const expectedResource =
-            result.status === 'repaired'
-                ? result.configuration.mode === 'event'
-                    ? 'programStageWorkingLists'
-                    : 'trackedEntityInstanceFilters'
-                : undefined
+            result.configuration.mode === 'event'
+                ? 'programStageWorkingLists'
+                : 'trackedEntityInstanceFilters'
         return {
             plan,
             result,
@@ -94,7 +95,6 @@ export const useWorkingListRepair = ({
                 !repairPending &&
                 selectedList.sharing.access?.write === true &&
                 selectedList.sharing.access.update === true &&
-                result.status === 'repaired' &&
                 expectedResource === selectedList.resource,
         }
     }, [

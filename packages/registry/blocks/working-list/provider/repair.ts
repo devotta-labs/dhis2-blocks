@@ -43,15 +43,13 @@ export const createSavedListRepairPlan = (
         list.resource === 'programStageWorkingLists'
             ? ProgramStageWorkingListSchema.parse(list.raw).programStage.id
             : undefined
-    const defaults =
+    const programStageId =
         candidate?.mode === 'event'
-            ? (metadata.defaultEventColumnsByStage.get(
-                  candidate.programStageId
-              ) ?? [])
+            ? candidate.programStageId
             : rawProgramStageId
-              ? (metadata.defaultEventColumnsByStage.get(rawProgramStageId) ??
-                [])
-              : metadata.defaultTrackedEntityColumns
+    const defaults = programStageId
+        ? (metadata.defaultEventColumnsByStage.get(programStageId) ?? [])
+        : metadata.defaultTrackedEntityColumns
     const fields = candidate
         ? fieldsForConfiguration(metadata, candidate)
         : fieldsForProgramStage(metadata, rawProgramStageId)

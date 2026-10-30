@@ -101,19 +101,15 @@ export const MenuSelector = ({
         return <LoadingIndicator label={loadingLabel ?? i18n.t('Loading')} />
     }
 
+    const inactiveEmptyMessage = displayOnly ? readOnlyEmptyMessage : ''
+
     return (
         <SelectorBarItem
             disabled={disabled}
             displayOnly={displayOnly}
             label={normalizedLabel}
             value={value}
-            noValueMessage={
-                interactive
-                    ? emptyMessage
-                    : displayOnly
-                      ? readOnlyEmptyMessage
-                      : ''
-            }
+            noValueMessage={interactive ? emptyMessage : inactiveEmptyMessage}
             open={open}
             setOpen={
                 interactive ? (onOpenChange ?? ignoreOpenChange) : undefined

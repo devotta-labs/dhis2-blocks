@@ -100,12 +100,18 @@ const isEpagomenalCalendar = (
 
 const isEpagomenalLeapYear = (year: number) => year % 4 === 3
 
-const isValidEpagomenalDate = ({ year, month, day }: CalendarDateParts) =>
-    year > 0 &&
-    month >= 1 &&
-    month <= 13 &&
-    day >= 1 &&
-    day <= (month <= 12 ? 30 : isEpagomenalLeapYear(year) ? 6 : 5)
+const isValidEpagomenalDate = ({
+    year,
+    month,
+    day,
+}: CalendarDateParts): boolean => {
+    const epagomenalDays = isEpagomenalLeapYear(year) ? 6 : 5
+    const daysInMonth = month <= 12 ? 30 : epagomenalDays
+
+    return (
+        year > 0 && month >= 1 && month <= 13 && day >= 1 && day <= daysInMonth
+    )
+}
 
 /**
  * Validates the editor's canonical YYYY-MM-DD value in the server calendar.

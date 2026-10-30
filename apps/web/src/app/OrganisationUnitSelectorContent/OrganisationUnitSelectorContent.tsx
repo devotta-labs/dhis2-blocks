@@ -52,7 +52,7 @@ const Dhis2OrganisationUnitTree = (props: OrganisationUnitTreeRuntimeProps) => {
 
 interface ControlledOrganisationUnitTreeProps {
     visibleRoots: OrganisationUnitReference[]
-    treeFilter: string[]
+    allowedPaths: string[]
     selected?: OrganisationUnitReference
     onSelect: (organisationUnit: OrganisationUnitReference) => void
     TreeComponent: ComponentType<OrganisationUnitTreeRuntimeProps>
@@ -60,11 +60,15 @@ interface ControlledOrganisationUnitTreeProps {
 
 const ControlledOrganisationUnitTree = ({
     visibleRoots,
-    treeFilter,
+    allowedPaths,
     selected,
     onSelect,
     TreeComponent,
 }: ControlledOrganisationUnitTreeProps) => {
+    const treeFilter = useMemo(
+        () => buildOrganisationUnitTreeFilter(allowedPaths, visibleRoots),
+        [allowedPaths, visibleRoots]
+    )
     const [expanded, setExpanded] = useState(() =>
         getInitialOrganisationUnitExpandedPaths(visibleRoots, selected?.path)
     )
@@ -102,36 +106,138 @@ const ControlledOrganisationUnitTree = ({
     )
 }
 
-export const OrganisationUnitSelectorContent = ({
+const OrganisationUnitSearchPagination = ({
+    searchHasMore,
+    searchLoadingMore,
+    searchLoadMoreError,
+    onSearchLoadMore,
+}: Pick<
+    OrganisationUnitSelectorContentProps,
+    | 'searchHasMore'
+    | 'searchLoadingMore'
+    | 'searchLoadMoreError'
+    | 'onSearchLoadMore'
+>) => {
+    if (searchLoadMoreError) {
+        return (
+            <div className="flex w-full items-center justify-center gap-[8px] pb-[4px] text-[14px] text-[#4a5768]">
+                <span>{i18n.t('Could not load more organisation units')}</span>
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={onSearchLoadMore}
+                >
+                    {i18n.t('Try again')}
+                </Button>
+            </div>
+        )
+    }
+
+    if (!searchHasMore) return null
+
+    return (
+        <div className="flex w-full justify-center pb-[4px]">
+            <Button
+                variant="secondary"
+                size="sm"
+                data-test="org-unit-search-load-more"
+                onClick={onSearchLoadMore}
+                disabled={searchLoadingMore}
+            >
+                {searchLoadingMore && (
+                    <Spinner
+                        aria-label={i18n.t('Loading')}
+                        data-icon="inline-start"
+                        className="size-4"
+                    />
+                )}
+                {i18n.t('Show more')}
+            </Button>
+        </div>
+    )
+}
+
+const OrganisationUnitSearchResults = ({
     roots,
     allowedPaths,
     selected,
-    searchValue,
-    onSearchChange,
     searchRoots,
-    searchLoading = false,
-    searchError = false,
+    searchLoading,
+    searchError,
     onSearchRetry,
-    searchHasMore = false,
-    searchLoadingMore = false,
-    searchLoadMoreError = false,
+    searchHasMore,
+    searchLoadingMore,
+    searchLoadMoreError,
     onSearchLoadMore,
     treeKey,
     onSelect,
     treeComponent,
-}: OrganisationUnitSelectorContentProps) => {
+}: Omit<
+    OrganisationUnitSelectorContentProps,
+    'searchValue' | 'onSearchChange'
+>) => {
+    if (searchLoading) {
+        return (
+            <Spinner
+                aria-label={i18n.t('Loading')}
+                className="size-12 border-6"
+            />
+        )
+    }
+
+    if (searchError) {
+        return (
+            <div
+                className="flex w-full flex-col items-center gap-[8px] px-[16px] py-[24px] text-center text-[14px] text-[#4a5768]"
+                data-test="org-unit-search-error"
+            >
+                <span>{i18n.t('Could not search organisation units')}</span>
+                {onSearchRetry && (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={onSearchRetry}
+                    >
+                        {i18n.t('Try again')}
+                    </Button>
+                )}
+            </div>
+        )
+    }
+
     const TreeComponent = treeComponent ?? Dhis2OrganisationUnitTree
     const visibleRoots = searchRoots ?? roots
-    const treeFilter = useMemo(
-        () => buildOrganisationUnitTreeFilter(allowedPaths, visibleRoots),
-        [allowedPaths, visibleRoots]
-    )
     // Keep the key stable while search pages append so expanded branches
     // survive; remount only when the term or the browse-mode root set changes.
     const stableTreeKey = searchRoots
         ? treeKey
         : `${treeKey}-${visibleRoots.map((root) => root.id).join('-')}`
 
+    return (
+        <>
+            <ControlledOrganisationUnitTree
+                key={stableTreeKey}
+                visibleRoots={visibleRoots}
+                allowedPaths={allowedPaths}
+                selected={selected}
+                onSelect={onSelect}
+                TreeComponent={TreeComponent}
+            />
+            <OrganisationUnitSearchPagination
+                searchHasMore={searchHasMore}
+                searchLoadingMore={searchLoadingMore}
+                searchLoadMoreError={searchLoadMoreError}
+                onSearchLoadMore={onSearchLoadMore}
+            />
+        </>
+    )
+}
+
+export const OrganisationUnitSelectorContent = ({
+    searchValue,
+    onSearchChange,
+    ...searchResultsProps
+}: OrganisationUnitSelectorContentProps) => {
     return (
         <div className="z-0 h-full w-full rounded-[3px] border border-[#e8edf2] bg-white">
             <div className="rounded-t-[3px] bg-[#f8f9fa] p-[8px]">
@@ -149,83 +255,14 @@ export const OrganisationUnitSelectorContent = ({
             <div className="overflow-auto rounded-b-[3px]">
                 <div
                     className={
-                        searchLoading
+                        searchResultsProps.searchLoading
                             ? 'm-[4px] flex h-[calc(100vh-48px)] items-center justify-center'
                             : 'flex min-h-[42px] max-w-[100vw] flex-col bg-white p-[4px] pt-[8px]'
                     }
                     data-test="org-unit-tree"
                     data-testid="org-unit-tree"
                 >
-                    {searchLoading ? (
-                        <Spinner
-                            aria-label={i18n.t('Loading')}
-                            className="size-12 border-6"
-                        />
-                    ) : searchError ? (
-                        <div
-                            className="flex w-full flex-col items-center gap-[8px] px-[16px] py-[24px] text-center text-[14px] text-[#4a5768]"
-                            data-test="org-unit-search-error"
-                        >
-                            <span>
-                                {i18n.t('Could not search organisation units')}
-                            </span>
-                            {onSearchRetry ? (
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={onSearchRetry}
-                                >
-                                    {i18n.t('Try again')}
-                                </Button>
-                            ) : null}
-                        </div>
-                    ) : (
-                        <>
-                            <ControlledOrganisationUnitTree
-                                key={stableTreeKey}
-                                visibleRoots={visibleRoots}
-                                treeFilter={treeFilter}
-                                selected={selected}
-                                onSelect={onSelect}
-                                TreeComponent={TreeComponent}
-                            />
-                            {searchLoadMoreError ? (
-                                <div className="flex w-full items-center justify-center gap-[8px] pb-[4px] text-[14px] text-[#4a5768]">
-                                    <span>
-                                        {i18n.t(
-                                            'Could not load more organisation units'
-                                        )}
-                                    </span>
-                                    <Button
-                                        variant="secondary"
-                                        size="sm"
-                                        onClick={onSearchLoadMore}
-                                    >
-                                        {i18n.t('Try again')}
-                                    </Button>
-                                </div>
-                            ) : searchHasMore ? (
-                                <div className="flex w-full justify-center pb-[4px]">
-                                    <Button
-                                        variant="secondary"
-                                        size="sm"
-                                        data-test="org-unit-search-load-more"
-                                        onClick={onSearchLoadMore}
-                                        disabled={searchLoadingMore}
-                                    >
-                                        {searchLoadingMore && (
-                                            <Spinner
-                                                aria-label={i18n.t('Loading')}
-                                                data-icon="inline-start"
-                                                className="size-4"
-                                            />
-                                        )}
-                                        {i18n.t('Show more')}
-                                    </Button>
-                                </div>
-                            ) : null}
-                        </>
-                    )}
+                    <OrganisationUnitSearchResults {...searchResultsProps} />
                 </div>
             </div>
         </div>

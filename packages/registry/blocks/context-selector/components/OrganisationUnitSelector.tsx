@@ -45,18 +45,13 @@ export const OrganisationUnitSelector = ({
     }
 
     const interactive = !disabled && !readOnly
+    const inactiveEmptyMessage = readOnly ? i18n.t('None selected') : ''
 
     return (
         <SelectorBarItem
             label={label}
             value={value}
-            noValueMessage={
-                interactive
-                    ? placeholder
-                    : readOnly
-                      ? i18n.t('None selected')
-                      : ''
-            }
+            noValueMessage={interactive ? placeholder : inactiveEmptyMessage}
             disabled={disabled}
             displayOnly={readOnly && !disabled}
             open={interactive && requestedOpen}

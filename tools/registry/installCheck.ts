@@ -18,6 +18,11 @@ const UI_INSTALL_DIR = join('src', 'components', 'dhis2', 'ui')
 
 class AssertionError extends Error {}
 
+const formatError = (error: Error): string => {
+    if (error instanceof AssertionError) return error.message
+    return error.stack ?? error.message
+}
+
 const fail = (assertion: number, message: string): never => {
     throw new AssertionError(`Assertion ${assertion} failed: ${message}`)
 }
@@ -284,13 +289,7 @@ const main = (): void => {
         // An assertion's message says it all; anything else is a bug in the
         // check or its tooling, so keep the stack.
         console.error(
-            `\n${
-                error instanceof AssertionError
-                    ? error.message
-                    : error instanceof Error
-                      ? (error.stack ?? error.message)
-                      : String(error)
-            }`
+            `\n${error instanceof Error ? formatError(error) : String(error)}`
         )
     } finally {
         if (keep) {

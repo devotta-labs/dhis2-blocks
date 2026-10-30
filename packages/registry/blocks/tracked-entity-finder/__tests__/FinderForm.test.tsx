@@ -128,6 +128,44 @@ describe('FinderForm', () => {
         await expect.element(page.getByTestId('hint')).not.toBeInTheDocument()
     })
 
+    it('searches with a typed date when Enter is pressed in the date field', async () => {
+        await renderFinder(
+            <FinderForm>
+                <FinderField attribute="firstName" />
+                <FinderField attribute="weight" />
+                <FinderField attribute="dob" />
+                <FinderSubmit />
+            </FinderForm>
+        )
+
+        await userEvent.fill(page.getByLabelText('First name'), 'Jo')
+        await userEvent.fill(page.getByLabelText('Weight'), '70')
+        await userEvent.fill(page.getByLabelText('Date of birth'), '2001-02-03')
+        await userEvent.keyboard('{Enter}')
+
+        await expect
+            .element(submission())
+            .toHaveTextContent(/dob:eq:2001-02-03/)
+    })
+
+    it('searches on Enter when the typed date is the detail that was missing', async () => {
+        await renderFinder(
+            <FinderForm>
+                <FinderField attribute="firstName" />
+                <FinderField attribute="dob" />
+                <FinderSubmit />
+            </FinderForm>
+        )
+
+        await userEvent.fill(page.getByLabelText('First name'), 'Jo')
+        await userEvent.fill(page.getByLabelText('Date of birth'), '2001-02-03')
+        await userEvent.keyboard('{Enter}')
+
+        await expect
+            .element(submission())
+            .toHaveTextContent('firstName:like:Jo dob:eq:2001-02-03')
+    })
+
     it('shows a field issue inline and marks the input invalid', async () => {
         await renderFinder(
             <FinderForm>

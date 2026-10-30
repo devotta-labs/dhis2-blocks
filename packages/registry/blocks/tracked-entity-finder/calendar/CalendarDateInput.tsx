@@ -124,25 +124,35 @@ export const CalendarDateInput = ({
         </Field>
     )
 
+    // CalendarInput reports typed text only on blur, but Enter submits the
+    // form first: report it before the submit, or the search drops the date.
+    const reportOnEnter = (event: React.KeyboardEvent) => {
+        if (event.key === 'Enter' && event.target instanceof HTMLInputElement) {
+            report(event.target.value)
+        }
+    }
+
     return (
         // A new calendar gets a fresh try at CalendarInput.
         <CalendarErrorBoundary key={info.calendar} fallback={fallback}>
-            <CalendarInputComponent
-                dense
-                strictValidation
-                label={label}
-                // CalendarInput gives the input this id and points its label at it.
-                name={id}
-                calendar={toMultiCalendarIdentifier(info.calendar)}
-                locale={i18n.language}
-                format={info.dateFormat}
-                date={shown}
-                inputWidth="100%"
-                error={invalid}
-                onDateSelect={(selection) =>
-                    report(selection?.calendarDateString)
-                }
-            />
+            <div className="contents" onKeyDownCapture={reportOnEnter}>
+                <CalendarInputComponent
+                    dense
+                    strictValidation
+                    label={label}
+                    // CalendarInput gives the input this id and points its label at it.
+                    name={id}
+                    calendar={toMultiCalendarIdentifier(info.calendar)}
+                    locale={i18n.language}
+                    format={info.dateFormat}
+                    date={shown}
+                    inputWidth="100%"
+                    error={invalid}
+                    onDateSelect={(selection) =>
+                        report(selection?.calendarDateString)
+                    }
+                />
+            </div>
         </CalendarErrorBoundary>
     )
 }

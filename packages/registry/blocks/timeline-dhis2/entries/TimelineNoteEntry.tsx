@@ -65,7 +65,7 @@ export const TimelineNoteEntry = ({
             >
                 {note.value}
             </p>
-            <div className="flex flex-wrap items-baseline gap-x-1.5 text-sm text-dhis2-grey-700 [&>*+*]:before:pe-1.5 [&>*+*]:before:content-['·']">
+            <div className="flex flex-wrap items-baseline gap-x-1.5 text-sm text-dhis2-grey-700 [&>*:not(:last-child)]:after:inline-block [&>*:not(:last-child)]:after:ps-1.5 [&>*:not(:last-child)]:after:text-dhis2-grey-700 [&>*:not(:last-child)]:after:content-['·']">
                 {author === undefined ? null : <span>{author}</span>}
                 {spansPrograms ? (
                     <span>

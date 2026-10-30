@@ -225,7 +225,7 @@ export const TimelineEventMeta = ({
         {...props}
         data-slot="timeline-event-meta"
         className={cn(
-            "flex flex-wrap items-baseline gap-x-1.5 text-sm text-dhis2-grey-700 empty:hidden [&>*+*]:before:pe-1.5 [&>*+*]:before:content-['·']",
+            "flex flex-wrap items-baseline gap-x-1.5 text-sm text-dhis2-grey-700 empty:hidden [&>*:not(:last-child)]:after:inline-block [&>*:not(:last-child)]:after:ps-1.5 [&>*:not(:last-child)]:after:text-dhis2-grey-700 [&>*:not(:last-child)]:after:content-['·']",
             className
         )}
     />

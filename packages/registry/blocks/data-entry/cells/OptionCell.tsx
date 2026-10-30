@@ -278,7 +278,13 @@ export const OptionCell = memo(function OptionCell({
                         !locked &&
                         !composing(event) &&
                         (event.key === 'F4' ||
-                            (event.altKey && event.key === 'ArrowDown'))
+                            (event.altKey && event.key === 'ArrowDown') ||
+                            // In Ready a space would only empty the cell; once typing, it is part of the search.
+                            (mode === 'ready' &&
+                                event.key === ' ' &&
+                                !event.altKey &&
+                                !event.ctrlKey &&
+                                !event.metaKey))
                     ) {
                         // Every option, from the keyboard; as in Enter mode, Escape then closes the list.
                         event.preventDefault()

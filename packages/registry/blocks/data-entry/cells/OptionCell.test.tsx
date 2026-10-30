@@ -247,6 +247,20 @@ test('Alt+Down and F4 list every option from the keyboard; Escape closes the lis
     expect(stored()?.value).toBe('A00')
 })
 
+test('Space lists every option in Ready, so Enter after it keeps the value', async () => {
+    const { input, stored, moves } = await mount({ value: 'A01' })
+    inputOf(input).focus()
+    await userEvent.keyboard(' ')
+    await expect.element(list).toBeVisible()
+    await expect.element(input).not.toHaveAttribute('aria-activedescendant')
+    await userEvent.keyboard('{Enter}')
+    expect(stored()?.value).toBe('A01')
+    expect(moves).toEqual(['enter'])
+    // Once typing, a space is part of the search.
+    await userEvent.keyboard('a00 0{Enter}')
+    expect(stored()?.value).toBe('A00.0')
+})
+
 test('Tab picks the highlighted match and moves; Shift+Tab picks it and leaves the move to the browser', async () => {
     const { input, stored, moves } = await mount()
     inputOf(input).focus()
@@ -270,7 +284,7 @@ const GENDER: Field = {
     ],
 }
 
-test.each(['{Delete}', '{Backspace}', ' '])(
+test.each(['{Delete}', '{Backspace}'])(
     '%s, then Enter, clears the cell: nothing is highlighted to pick',
     async (key) => {
         const { input, stored, moves } = await mount(

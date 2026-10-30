@@ -139,19 +139,16 @@ const ChangeRowItem = ({ change }: { change: ResolvedChange }) => {
         )
     }
     return (
-        <li
-            data-slot="timeline-change-row"
-            className="flex flex-wrap items-baseline gap-x-2 text-sm"
-        >
-            <span
+        <div data-slot="timeline-change-row" className="contents">
+            <dt
                 data-slot="timeline-change-field"
-                className="font-medium text-dhis2-grey-900"
+                className="text-dhis2-grey-700"
             >
                 {change.name}
-            </span>
+            </dt>
             {/* Each value is isolated so its script can't reorder the row, and
                 the arrow turns: before → after in the reading direction. */}
-            <span className="text-dhis2-grey-800">
+            <dd className="m-0 text-dhis2-grey-900">
                 {change.type === 'CREATE' ? null : (
                     <>
                         <bdi
@@ -168,22 +165,28 @@ const ChangeRowItem = ({ change }: { change: ResolvedChange }) => {
                 <bdi>
                     <Value text={show(change.currentValue)} />
                 </bdi>
-            </span>
-        </li>
+            </dd>
+        </div>
     )
 }
 
-/** Each changed field with its value before → after. */
+/**
+ * Each changed field with its value before → after, laid out like an
+ * event's values: the field muted, the value dark.
+ */
 export const TimelineChangeList = ({
     className,
     ...props
-}: ComponentPropsWithoutRef<'ul'>) => {
+}: ComponentPropsWithoutRef<'dl'>) => {
     const { changes } = useTimelineSave()
     return (
-        <ul
+        <dl
             {...props}
             data-slot="timeline-change-list"
-            className={cn('m-0 flex list-none flex-col gap-0.5 p-0', className)}
+            className={cn(
+                'm-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm',
+                className
+            )}
         >
             {changes.map((change) => (
                 <ChangeRowItem
@@ -191,7 +194,7 @@ export const TimelineChangeList = ({
                     change={change}
                 />
             ))}
-        </ul>
+        </dl>
     )
 }
 

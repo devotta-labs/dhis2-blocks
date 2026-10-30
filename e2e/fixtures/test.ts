@@ -96,6 +96,21 @@ const isKnownBenignDiagnostic = (
     }
 
     if (
+        ((diagnostic.kind === 'http' && diagnostic.status === 404) ||
+            (diagnostic.kind === 'console' &&
+                diagnostic.message.includes('Failed to load resource'))) &&
+        /\/api(?:\/\d+)?\/tracker\/trackedEntities\/RvE2eTei040$/.test(
+            path ?? ''
+        ) &&
+        (diagnostic.url ?? '').includes('program=RvE2ePrg001')
+    ) {
+        // The seeded relationship-viewer contact outside the program: from
+        // DHIS2 42 a read with `program` is a 404, and the block reads the
+        // person again without it.
+        return true
+    }
+
+    if (
         diagnostic.kind === 'requestfailed' &&
         diagnostic.message === 'net::ERR_BLOCKED_BY_ORB' &&
         diagnostic.method === 'GET' &&

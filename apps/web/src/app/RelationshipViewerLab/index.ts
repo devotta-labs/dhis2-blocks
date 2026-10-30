@@ -1,0 +1,1 @@
+export { RelationshipViewerLab } from './RelationshipViewerLab'

@@ -15,6 +15,8 @@
 @source '../../../../../../packages/registry/blocks/working-list';
 @source '../../../packages/registry/blocks/context-selector';
 @source '../../../../../../packages/registry/blocks/context-selector';
+@source '../../../packages/registry/blocks/relationship-viewer';
+@source '../../../../../../packages/registry/blocks/relationship-viewer';
 
 :root {
     color: #212934;

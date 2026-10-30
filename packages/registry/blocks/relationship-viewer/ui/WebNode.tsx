@@ -119,13 +119,7 @@ const arc = (from: number, to: number, r: number): string => {
 }
 
 /** Status segments of one disc of radius `r`, in `split` order. */
-export function StatusPie({
-    split,
-    r,
-}: {
-    split: readonly StatusCount[]
-    r: number
-}) {
+function StatusPie({ split, r }: { split: readonly StatusCount[]; r: number }) {
     const total = split.reduce((sum, { count }) => sum + count, 0)
     let at = 0
     return (

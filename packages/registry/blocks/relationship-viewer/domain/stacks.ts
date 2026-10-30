@@ -6,7 +6,7 @@ import type {
     RelationshipStatus,
 } from './model'
 
-export const STACK_MIN = 4
+const STACK_MIN = 4
 
 export interface Stack {
     hub: NodeKey // the one node every member links to

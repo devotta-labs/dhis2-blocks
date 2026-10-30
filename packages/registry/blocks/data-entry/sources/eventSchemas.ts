@@ -92,7 +92,7 @@ export const eventFieldsSchema = z.object({
     assignedUser: z.object({ uid: z.string() }).optional(),
 })
 
-/** The program with its stages, one page of its events, and the user's authorities, as one query returns them. */
+/** The program with its stages, one page of its events, the user's authorities and the server's calendar, as one query returns them. */
 export const eventFormSchema = z.object({
     program: z.object({
         id: z.string(),
@@ -106,6 +106,7 @@ export const eventFormSchema = z.object({
     }),
     events: z.object({ events: z.array(eventSchema) }),
     me: z.object({ authorities: z.array(z.string()) }),
+    systemInfo: z.object({ calendar: z.string().optional() }),
 })
 
 /** The names of org units asked for by id. */

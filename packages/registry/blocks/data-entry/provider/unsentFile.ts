@@ -1,12 +1,11 @@
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { rowLabel } from '../grid/headers'
-import { cellKey } from '../model/types'
+import { cellKey, rowIdOf } from '../model/types'
 import type { GridRow, GridTable } from '../model/types'
 import { unsentChangesCsv } from '../outbox/download'
 import type { OutboxRecord } from '../outbox/outbox'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { DataEntryState } from '../store/store'
-import { rowIdOf } from './formRows'
 
 /**
  * Saves as a CSV file this form's changes the device holds, and the failed changes only this page holds (one it could

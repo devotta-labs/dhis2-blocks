@@ -52,10 +52,10 @@ searchOptions(index, query, limit = OPTION_LIMIT): { codes, total } // every wor
 ## Boundaries
 
 - Blank text is no value (`value: undefined`), never a problem. Whether a value is required is not decided here.
-- Numbers are stored in the form DHIS2 accepts: `00012` becomes `12`, `-0` becomes `0`, `.5` becomes `0.5` and `5.` becomes `5`; the digits after the point stay as typed (`2.50`). Exponents (`1e3`) are refused, and whole numbers must be safe integers. A decimal comma is refused rather than guessed, so "1,234" is never misread. `checkStored` flags stored numbers that are not in that form.
-- Phone numbers take digits, spaces and `+ ( ) # . / -`, up to 50 characters.
+- Numbers are stored in the form DHIS2 accepts: `00012` becomes `12`, `-0` becomes `0`, `.5` becomes `0.5` and `5.` becomes `5`; the digits after the point stay as typed (`2.50`). Exponents (`1e3`) are refused, and whole numbers must be between -2147483648 and 2147483647, as DHIS2 stores them. A decimal comma is refused rather than guessed, so "1,234" is never misread. `checkStored` flags stored numbers that are not in that form.
+- Phone numbers take digits, spaces and `+ ( ) # . / -`, 6 to 50 characters.
 - Yes/No fields read `yes`, `no`, `true`, `false`, `x`, `1` and `0` in any case. A yes-only field clears on a "no".
-- An option is found by code or by name, in any case, and a code wins over another option's name. An editable cell shows an option's name only when typing that name finds the same option, otherwise its code. A multi-select reads comma separated options.
+- An option is found by code or by name, in any case, and a code wins over another option's name. An editable cell shows an option's name only when typing that name finds the same option, otherwise its code. A multi-select reads comma separated options and keeps a repeated one once.
 - A field mask (DHIS2's TextPattern: `\d` digit, `\x` lower case, `\X` capital, `\w` letter or digit, also inside `[...]`; the rest a regular expression) must match the whole value. A blank mask, or one that is not a valid pattern, never blocks entry.
 - A date is converted through the system calendar and must convert back to itself, so a day the calendar does not have is refused. A date time is typed as the date, a space and `HH:mm`; a time may have a one-digit hour (`9:30` is stored `09:30`).
 - Pop-up types (`LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `ORGANISATION_UNIT`, `USERNAME`, `FILE_RESOURCE`, `IMAGE`) are checked and shown in their stored form. A value type this block does not know is `readOnly`.

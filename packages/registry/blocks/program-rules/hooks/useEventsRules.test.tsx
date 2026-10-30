@@ -52,6 +52,10 @@ const options = (
     ...overrides,
 })
 
+/** Enrollment ids a1, a2, … from `first` to `last`, none of them known to the server. */
+const people = (first: number, last: number) =>
+    Array.from({ length: last - first + 1 }, (_, i) => `a${first + i}`)
+
 const settle = async (read: () => string) => {
     await expect.poll(read, { timeout: 10_000 }).not.toBe('loading')
 }
@@ -166,7 +170,7 @@ describe('useEventsRules', () => {
         expect(requests).not.toContain('tracker/enrollments')
     })
 
-    it('loads no persons for a tracker program without people', async () => {
+    it('loads no persons for a tracker program without people, and never evaluates a row of a person not named', async () => {
         const { requests, wrapper } = serve(rmnchResponses)
         const { result } = await renderHook(
             () => useEventsRules(options({ enrollmentIds: [] })),
@@ -175,6 +179,9 @@ describe('useEventsRules', () => {
         await settle(() => result.current.status)
         expect(result.current.status).toBe('ready')
         expect(requests).not.toContain('tracker/enrollments')
+        expect(
+            result.current.rules?.evaluate([row(FIRST_VISIT)], [FIRST_VISIT])
+        ).toEqual({ effects: new Map(), failures: new Map() })
     })
 
     it('evaluates event-program rows alone', async () => {
@@ -450,6 +457,107 @@ describe('useEventsRules', () => {
         ]).toEqual(ids)
         expect(seen.every((rules) => rules !== undefined)).toBe(true)
         expect(result.current.status).toBe('ready')
+    })
+
+    it('requests only the chunk of 100 people that gained ids', async () => {
+        const { queries, wrapper } = serve(rmnchResponses)
+        const asked = () =>
+            queries
+                .filter(({ name }) => name === 'tracker/enrollments')
+                .map(({ query }) =>
+                    String(query.params?.enrollments).split(',')
+                )
+        const { result, rerender } = await renderHook(
+            (props?: { options: UseEventsRulesOptions }) =>
+                useEventsRules(props?.options ?? options()),
+            {
+                wrapper,
+                initialProps: {
+                    options: options({ enrollmentIds: people(1, 150) }),
+                },
+            }
+        )
+        await settle(() => result.current.status)
+        expect(asked()).toEqual([people(1, 100), people(101, 150)])
+        await rerender({
+            options: options({ enrollmentIds: people(1, 200) }),
+        })
+        await expect.poll(() => asked().length).toBeGreaterThan(2)
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        expect(asked().slice(2)).toEqual([people(101, 200)])
+    })
+
+    it('keeps the rules while a new chunk loads, and changes them once when it arrives', async () => {
+        const { requests, wrapper, hold } = serve(rmnchResponses)
+        const fullChunk = [RMNCH.enrollmentId, ...people(1, 99)]
+        const seen = new Set<EventsRules | undefined>()
+        const { result, rerender } = await renderHook(
+            (props?: { options: UseEventsRulesOptions }) => {
+                const hook = useEventsRules(props?.options ?? options())
+                seen.add(hook.rules)
+                return hook
+            },
+            {
+                wrapper,
+                initialProps: {
+                    options: options({ enrollmentIds: fullChunk }),
+                },
+            }
+        )
+        await settle(() => result.current.status)
+        const loaded = result.current.rules
+        if (loaded === undefined) {
+            throw new Error('the rules did not load')
+        }
+        const release = hold('tracker/enrollments')
+        seen.clear()
+        await rerender({
+            options: options({
+                enrollmentIds: [...fullChunk, SECOND_PERSON],
+            }),
+        })
+        await expect
+            .poll(
+                () =>
+                    requests.filter((name) => name === 'tracker/enrollments')
+                        .length
+            )
+            .toBeGreaterThan(1)
+        expect(result.current.rules).toBe(loaded)
+        // The new person's row waits for their chunk: it is left out, not failed.
+        const rows = [row(FIRST_VISIT), row('yDPqyTvcRpA', {}, SECOND_PERSON)]
+        const ids = [FIRST_VISIT, 'yDPqyTvcRpA']
+        const waiting = loaded.evaluate(rows, ids)
+        expect([...waiting.effects.keys()]).toEqual([FIRST_VISIT])
+        expect(waiting.failures.size).toBe(0)
+        release()
+        await expect.poll(() => result.current.rules !== loaded).toBe(true)
+        expect([
+            ...(result.current.rules?.evaluate(rows, ids).effects.keys() ?? []),
+        ]).toEqual(ids)
+        expect(seen).toEqual(new Set([loaded, result.current.rules]))
+    })
+
+    it('fails the rows of a person the server did not return', async () => {
+        const { wrapper } = serve(rmnchResponses)
+        const { result } = await renderHook(
+            () =>
+                useEventsRules(
+                    options({
+                        enrollmentIds: [RMNCH.enrollmentId, 'unknownPe01'],
+                    })
+                ),
+            { wrapper }
+        )
+        await settle(() => result.current.status)
+        const { effects, failures } = result.current.rules?.evaluate(
+            [row(FIRST_VISIT), row('yDPqyTvcRpA', {}, 'unknownPe01')],
+            [FIRST_VISIT, 'yDPqyTvcRpA']
+        ) ?? { effects: new Map(), failures: new Map() }
+        expect([...effects.keys()]).toEqual([FIRST_VISIT])
+        expect(failures.get('yDPqyTvcRpA')?.message).toBe(
+            'The enrollment of this event could not be read'
+        )
     })
 
     it('reports a failed batch for a new person', async () => {

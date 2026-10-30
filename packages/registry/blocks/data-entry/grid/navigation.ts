@@ -50,28 +50,14 @@ const vertical = (
     }
 }
 
-// Reading order after `from`: the rest of its row, then each following row, then the next tables.
-const tab = (grid: NavGrid, from: CellPosition): CellPosition | undefined => {
-    for (let table = from.table; table < grid.tables.length; table++) {
-        const { rows, columns, isOpen } = grid.tables[table]
-        const first =
-            table === from.table ? from.row * columns + from.column + 1 : 0
-        for (let i = first; i < rows * columns; i++) {
-            const row = Math.floor(i / columns)
-            const column = i % columns
-            if (isOpen(row, column)) return { table, row, column }
-        }
-    }
-}
-
 /**
  * Where focus goes; `tabStart` is the column a run of Tab presses began in (Excel's Tab-then-Enter). The caller
- * keeps it: set on the first Tab, cleared by Enter, an arrow, a click or typing.
+ * keeps it: set on the first Tab, cleared by Enter, an arrow, a click or typing. Tab itself is the browser's.
  */
 export const nextCell = (
     grid: NavGrid,
     from: CellPosition,
-    key: NavKey,
+    key: Exclude<NavKey, 'tab'>,
     tabStart?: number
 ): CellPosition | undefined => {
     switch (key) {
@@ -89,7 +75,5 @@ export const nextCell = (
                 { ...from, column: tabStart ?? from.column },
                 1
             )
-        case 'tab':
-            return tab(grid, from)
     }
 }

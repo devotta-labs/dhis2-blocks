@@ -1,5 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { useStore } from 'zustand'
 import {
     AlertDialog,
@@ -17,6 +17,7 @@ import { formatCount } from '../cells/OptionCell'
 import { rowLabel } from '../grid/headers'
 import type { SummaryItem } from '../logic/summary'
 import { cellKey } from '../model/types'
+import type { GridRow } from '../model/types'
 import { FORM_MESSAGES, useDataEntryContext } from '../provider/context'
 import { useDataEntry } from '../provider/hooks'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
@@ -33,20 +34,40 @@ const TONES = {
     unsent: 'border-dhis2-grey-500',
 } satisfies Record<SummaryItem['kind'], string>
 
-const Item = ({
-    item: { key, kind, text, namesField },
+interface ItemProps {
+    /** The item's cell, or its row for a message without a field. */
+    itemKey: SummaryItem['key']
+    kind: SummaryItem['kind']
+    text: string
+    namesField?: true
+    idScope: string
+    rows: ReadonlyMap<string, GridRow>
+    fields: ReadonlyMap<string, string>
+}
+
+/**
+ * One message, naming its row as the grid does, by the row's event date once it has one. It reads only that one cell,
+ * and takes plain props, so it draws again only when its own message or its row's date changes.
+ */
+const Item = memo(function Item({
+    itemKey: key,
+    kind,
+    text,
+    namesField,
     idScope,
     rows,
     fields,
-}: {
-    item: SummaryItem
-    idScope: string
-    rows: ReadonlyMap<string, string>
-    fields: ReadonlyMap<string, string>
-}) => {
+}: ItemProps) {
+    const { store, settings } = useDataEntryContext()
     const dot = key.indexOf('.')
     const rowId = dot < 0 ? key : key.slice(0, dot)
-    const row = rows.get(rowId) ?? rowId
+    const date = useStore(
+        store,
+        (state) => state.cells[cellKey(rowId, EVENT_DATE_COLUMN)]?.value
+    )
+    const gridRow = rows.get(rowId)
+    const row =
+        gridRow === undefined ? rowId : rowLabel(gridRow, date, settings)
     const className = cn('border-s-2 ps-2', TONES[kind])
     // A message without a field is the row's, or the whole form's: there is no cell to go to.
     if (dot < 0) {
@@ -94,7 +115,7 @@ const Item = ({
             </a>
         </li>
     )
-}
+})
 
 /** Asks before the changes that could not be saved are dropped from the device. */
 const DiscardFailed = ({ count }: { count: number }) => {
@@ -153,21 +174,12 @@ export const DataEntrySummary = ({ className }: { className?: string }) => {
     const summary = useDataEntry((view) => view.summary)
     const signIn = useDataEntry((view) => view.sync === 'signIn')
     const downloadUnsent = useDataEntry((view) => view.downloadUnsent)
-    const { tables, store, settings, idScope } = useDataEntryContext()
-    const cells = useStore(store, (state) => state.cells)
+    const { tables, idScope } = useDataEntryContext()
     const { rows, fields } = useMemo(
         () => ({
-            // Named as the grid names them: by their event date once they have one.
             rows: new Map(
                 tables.flatMap((table) =>
-                    table.rows.map((row) => [
-                        row.id,
-                        rowLabel(
-                            row,
-                            cells[cellKey(row.id, EVENT_DATE_COLUMN)]?.value,
-                            settings
-                        ),
-                    ])
+                    table.rows.map((row) => [row.id, row])
                 )
             ),
             fields: new Map(
@@ -176,7 +188,7 @@ export const DataEntrySummary = ({ className }: { className?: string }) => {
                 )
             ),
         }),
-        [tables, cells, settings]
+        [tables]
     )
     return (
         <div
@@ -191,7 +203,10 @@ export const DataEntrySummary = ({ className }: { className?: string }) => {
                     {summary.items.map((item, index) => (
                         <Item
                             key={`${item.key}-${index}`}
-                            item={item}
+                            itemKey={item.key}
+                            kind={item.kind}
+                            text={item.text}
+                            namesField={item.namesField}
                             idScope={idScope}
                             rows={rows}
                             fields={fields}

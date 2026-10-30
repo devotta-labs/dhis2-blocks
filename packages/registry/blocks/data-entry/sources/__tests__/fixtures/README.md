@@ -8,6 +8,7 @@ D=packages/registry/blocks/data-entry/sources/__tests__/fixtures; B=http://127.0
 P='id,displayName,programType,expiryPeriodType,expiryDays,completeEventsExpiryDays,categoryCombo[id,isDefault],programStages[id,displayName,repeatable,validationStrategy,blockEntryForm,access[data[write]],programStageDataElements[compulsory,dataElement[id,displayFormName,valueType,fieldMask,optionSet[options[code,displayName]]]],programStageSections[id,dataElements[id]]]'
 E='event,enrollment,program,programStage,orgUnit,occurredAt,scheduledAt,completedAt,status,attributeOptionCombo,dataValues[dataElement,value]'
 curl -s -u admin:district "$B/me?fields=id,authorities" > $D/me-admin.json
+curl -s -u admin:district "$B/system/info?fields=calendar" > $D/system-info.json
 curl -s -u admin:district -G "$B/programs/eBAyeGv0exc" --data-urlencode "fields=$P" | jq '(.. | objects | select(has("options")) | .options) |= .[:20]' > $D/inpatient-program.json
 curl -s -u admin:district -G "$B/tracker/events" -d program=eBAyeGv0exc -d orgUnit=DiszpKrYNg8 -d pageSize=5 -d order=occurredAt:desc --data-urlencode "fields=$E" > $D/inpatient-events.json
 curl -s -u admin:district -G "$B/programs/WSGAb5XwJ3Y" --data-urlencode "fields=$P" > $D/rmnch-program.json

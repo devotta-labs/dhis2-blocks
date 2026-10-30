@@ -3,6 +3,7 @@ import inpatientProgram from './__tests__/fixtures/inpatient-program.json'
 import meAdmin from './__tests__/fixtures/me-admin.json'
 import rmnchEvents from './__tests__/fixtures/rmnch-person-events.json'
 import rmnchProgram from './__tests__/fixtures/rmnch-program.json'
+import systemInfo from './__tests__/fixtures/system-info.json'
 import { eventSource } from './eventSource'
 import type { DataEngine } from './types'
 
@@ -31,7 +32,7 @@ const engineFor = <P, E>(
             }
             // The form's query is the heavier one: it answers after the question about rules, unless that is still out.
             await new Promise((resolve) => setTimeout(resolve))
-            return { program, events, me: meAdmin }
+            return { program, events, me: meAdmin, systemInfo }
         },
     } as DataEngine
     return { engine, requests }

@@ -34,7 +34,7 @@ import {
 } from './headers'
 import { nextCell } from './navigation'
 import type { CellPosition, NavGrid, NavKey } from './navigation'
-import { isBlock, parseBlock, pasteTargets } from './paste'
+import { isBlock, pastedBlock, pasteTargets } from './paste'
 import { ShowMoreEvents } from './ShowMoreEvents'
 
 // Read by the field's value type, which can be any DHIS2 value type.
@@ -506,10 +506,17 @@ export const DataGrid = ({
         }
         event.preventDefault()
         const text = event.clipboardData.getData('text/plain')
-        // A single value goes the same way, so a spreadsheet's quotes around it are dropped.
-        const entries = pasteTargets(grid, from, parseBlock(text)).map(
-            ({ at, text: cellText }) => ({ key: keyAt(at), text: cellText })
-        )
+        const longText =
+            tables[from.table].columns[from.column].field.valueType ===
+            'LONG_TEXT'
+        const entries = pasteTargets(
+            grid,
+            from,
+            pastedBlock(text, longText)
+        ).map(({ at, text: cellText }) => ({
+            key: keyAt(at),
+            text: cellText,
+        }))
         let filled = 0
         changeHere(event.target, () => {
             filled = store

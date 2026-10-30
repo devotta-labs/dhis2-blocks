@@ -19,6 +19,7 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('Cells pasted: {{cells}}', { nsSeparator: '::' }),
     i18n.t('Choose a file'),
     i18n.t('Choose an image'),
+    i18n.t('Choose an image file'),
     i18n.t('Clear all'),
     i18n.t('Cleared by rule: {{rule}}', { nsSeparator: '::' }),
     i18n.t('Completed'),
@@ -85,6 +86,7 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('This event is in an expired period'),
     i18n.t('This event was completed too long ago to edit'),
     i18n.t('This event was deleted or you no longer have access to it'),
+    i18n.t('This row cannot be completed'),
     i18n.t('This row cannot be reopened'),
     i18n.t('Uploaded {{file}}'),
     i18n.t('Uploading {{file}}'),
@@ -112,6 +114,7 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('Enter a valid URL'),
     i18n.t('Enter a value in the required format'),
     i18n.t('Enter a whole number'),
+    i18n.t('Enter a whole number between -2147483648 and 2147483647'),
     i18n.t('Enter a whole number greater than zero'),
     i18n.t('Enter a whole number less than zero'),
     i18n.t('Enter a whole number of zero or more'),
@@ -119,4 +122,6 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('Select a valid organisation unit'),
     i18n.t('Select Yes or No'),
     i18n.t('Use a full stop for decimals'),
+    // The program rules' failures, translated where they arise.
+    i18n.t('The enrollment of this event could not be read'),
 ]

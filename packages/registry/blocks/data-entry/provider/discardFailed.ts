@@ -1,9 +1,8 @@
 import type { StoreApi } from 'zustand/vanilla'
-import { cellKey } from '../model/types'
+import { cellKey, rowIdOf } from '../model/types'
 import type { PendingChange, SyncState } from '../model/types'
 import type { Outbox } from '../outbox/outbox'
 import type { DataEntryState } from '../store/store'
-import { rowIdOf } from './formRows'
 
 /**
  * Drops the program's changes that could not be saved from the outbox, those of its other grids too, and puts this

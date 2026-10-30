@@ -1,5 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import type { z } from 'zod'
+import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { checkStored } from '@/components/dhis2-value-types'
 import type { Field } from '@/components/dhis2-value-types'
 import { cellKey } from '../model/types'
@@ -11,11 +12,11 @@ import {
     eventFormSchema,
     fileNamesSchema,
     orgUnitNamesSchema,
-    ruleIdSchema,
 } from './eventSchemas'
 import type { ProgramStage, TrackerEvent } from './eventSchemas'
 import { eventSaver } from './eventSave'
 import { completionExpired, expiryStart, localToday } from './expiry'
+import { hasRulesIn } from './hasRules'
 import type {
     DataEngine,
     DataEntrySource,
@@ -89,7 +90,12 @@ const toColumn = ({
 })
 
 const toForm = (
-    { program, events: { events }, me }: z.infer<typeof eventFormSchema>,
+    {
+        program,
+        events: { events },
+        me,
+        systemInfo,
+    }: z.infer<typeof eventFormSchema>,
     options: EventSourceOptions,
     today: string,
     hasRules: boolean
@@ -190,11 +196,15 @@ const toForm = (
         me.authorities.includes('ALL') || me.authorities.includes(authority)
     const writable = (stage: ProgramStage | undefined) =>
         program.categoryCombo.isDefault && stage?.access.data.write === true
-    const opensOn = expiryStart(
-        program.expiryPeriodType,
-        program.expiryDays,
-        today
-    )
+    // DHIS2 never expires an event by its period when the program gives no expiry days.
+    const opensOn = program.expiryDays
+        ? expiryStart(
+              program.expiryPeriodType,
+              program.expiryDays,
+              today,
+              parseDhis2Calendar(systemInfo.calendar)
+          )
+        : undefined
     const expiredReason = (event: TrackerEvent) => {
         if (has('F_EDIT_EXPIRED')) {
             return undefined
@@ -463,34 +473,6 @@ const loadNamesOf = (
         ),
     ])
 
-/**
- * Whether the program has any rules, from the id of one of them. A request that fails, or an answer that is not
- * understood, says no: the form still opens, and the rules hook loads the rules and reports its own failures.
- */
-const hasRulesIn = (
-    engine: DataEngine,
-    programId: string,
-    signal?: AbortSignal
-): Promise<boolean> =>
-    engine
-        .query(
-            {
-                rules: {
-                    resource: 'programRules',
-                    params: {
-                        filter: `program.id:eq:${programId}`,
-                        fields: 'id',
-                        pageSize: 1,
-                    },
-                },
-            },
-            { signal }
-        )
-        .then(
-            (answer) => ruleIdSchema.parse(answer).rules.programRules.length > 0
-        )
-        .catch(() => false)
-
 /** Events of a program as grid rows: the event date, then the data elements of the rows' stages. */
 export const eventSource = (options: EventSourceOptions): DataEntrySource => {
     const { programId, programStageId, orgUnitId, enrollmentId } = options
@@ -502,40 +484,47 @@ export const eventSource = (options: EventSourceOptions): DataEntrySource => {
     const pageSize = options.pageSize ?? 50
     const order = options.order ?? 'occurredAt:desc'
     const saver = eventSaver(key, programId)
+    // The server's calendar as this source last loaded it: a page builds its expiry in it without asking again.
+    let systemInfo: z.infer<typeof eventFormSchema>['systemInfo'] | undefined
     /** One page of the events, page 1 unless named, with the names of what its values hold. */
     const loadEvents = async (
         engine: DataEngine,
         page: number | undefined,
         signal?: AbortSignal
     ): Promise<LoadedForm> => {
-        const loading = engine.query(
-            {
-                program: {
-                    resource: 'programs',
-                    id: programId,
-                    params: { fields: PROGRAM_FIELDS },
-                },
-                events: {
-                    resource: 'tracker/events',
-                    params: {
-                        program: programId,
-                        programStage: programStageId,
-                        orgUnit: atOrgUnit ? orgUnitId : undefined,
-                        orgUnitMode: atOrgUnit ? orgUnitMode : undefined,
-                        enrollments: enrollmentId,
-                        pageSize,
-                        page,
-                        order,
-                        fields: EVENT_FIELDS,
-                    },
-                },
-                me: {
-                    resource: 'me',
-                    params: { fields: 'id,authorities' },
+        const query: Parameters<DataEngine['query']>[0] = {
+            program: {
+                resource: 'programs',
+                id: programId,
+                params: { fields: PROGRAM_FIELDS },
+            },
+            events: {
+                resource: 'tracker/events',
+                params: {
+                    program: programId,
+                    programStage: programStageId,
+                    orgUnit: atOrgUnit ? orgUnitId : undefined,
+                    orgUnitMode: atOrgUnit ? orgUnitMode : undefined,
+                    enrollments: enrollmentId,
+                    pageSize,
+                    page,
+                    order,
+                    fields: EVENT_FIELDS,
                 },
             },
-            { signal }
-        )
+            me: {
+                resource: 'me',
+                params: { fields: 'id,authorities' },
+            },
+        }
+        // Expiry periods are built in the server's calendar.
+        if (page === undefined || systemInfo === undefined) {
+            query.systemInfo = {
+                resource: 'system/info',
+                params: { fields: 'calendar' },
+            }
+        }
+        const loading = engine.query(query, { signal })
         // Asked beside the form's query, on the first load only. The form never waits for the answer: a question still
         // out when the form is ready says no rules, and only the head start is lost.
         let hasRules = false
@@ -544,7 +533,8 @@ export const eventSource = (options: EventSourceOptions): DataEntrySource => {
                 hasRules = has
             })
         }
-        const loaded = eventFormSchema.parse(await loading)
+        const loaded = eventFormSchema.parse({ systemInfo, ...(await loading) })
+        systemInfo = loaded.systemInfo
         saver.remember(loaded.events.events.map(({ event }) => event))
         const form = toForm(
             loaded,

@@ -3,6 +3,7 @@ import inpatientEvents from './__tests__/fixtures/inpatient-events.json'
 import inpatientProgram from './__tests__/fixtures/inpatient-program.json'
 import meAdmin from './__tests__/fixtures/me-admin.json'
 import orgUnitNames from './__tests__/fixtures/org-unit-names.json'
+import systemInfo from './__tests__/fixtures/system-info.json'
 import { eventSource } from './eventSource'
 import type { DataEngine } from './types'
 
@@ -52,7 +53,12 @@ const engineFor = (answer: Promise<void>, refuseFiles = false) => {
             }
             requests.push([request, options])
             if (request.program !== undefined) {
-                return { program: inpatientProgram, events, me: meAdmin }
+                return {
+                    program: inpatientProgram,
+                    events,
+                    me: meAdmin,
+                    systemInfo,
+                }
             }
             await answer
             if (request.files !== undefined && refuseFiles) {

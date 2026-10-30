@@ -62,7 +62,10 @@ export interface DataEntryState {
     ): void
     /** Columns a page adds: their cells take values, checked as their field says. */
     addColumns(columns: ReadonlyArray<GridColumn>): void
-    /** Puts changes the outbox still holds, or values a page loads, on their cells; nothing is enqueued. */
+    /**
+     * Puts changes the outbox still holds, or values a page loads, on their cells; nothing is enqueued, and a cell's
+     * draft and its error stay.
+     */
     restore(
         changes: ReadonlyArray<
             Pick<PendingChange, 'key' | 'value' | 'base'> & {
@@ -340,12 +343,16 @@ export const createDataEntryStore = ({
                 })
             },
             restore(changes) {
-                edit(({ write }) => {
+                edit(({ read, write }) => {
                     for (const change of changes) {
                         const value = change.value ?? undefined
+                        // Text typed here and not yet accepted stays over the value restored under it.
+                        const was = read(change.key)
                         write(change.key, {
                             base: change.base ?? undefined,
                             value,
+                            draft: was?.draft,
+                            error: was?.error,
                             warning: warningOf(change.key, value),
                             sync: change.sync ?? 'queued',
                             reason: change.reason,

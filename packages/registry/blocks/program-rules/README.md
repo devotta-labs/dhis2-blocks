@@ -172,14 +172,14 @@ How the hook behaves:
 
 `useEventsRules` is for a grid with one row per event: any number of rows across stages, evaluated on the grid's live
 values. It loads the rule metadata and, for a program with rules, the engine, a rule context for each stage and, for a
-tracker program whose rules read the enrollment or other events, every person in one batched request.
+tracker program whose rules read the enrollment or other events, the people in batched requests of 100.
 
 ```ts
 useEventsRules({
     programId: string,
     programStageIds: ReadonlyArray<string>, // the stages the rows belong to
     tracker: boolean, // WITH_REGISTRATION programs; false evaluates every row alone
-    enrollmentIds: ReadonlyArray<string>, // the people the rows belong to
+    enrollmentIds: ReadonlyArray<string>, // the people the rows belong to, fetched in chunks of 100
     enabled?: boolean,
 }): {
     status: 'loading' | 'ready' | 'error'
@@ -220,19 +220,22 @@ const fresh = rules?.evaluate(rows, stale)
 ```
 
 - `evaluate` runs each requested row on its own: a row the engine fails on is in `failures` with its `Error`, and every
-  other row still gets its `effects`. A requested row in neither map was not evaluated: it is not in `rows`, its stage
-  was not passed in `programStageIds`, or its person is still loading. That is different from an entry with no
-  effects. A tracker row sees its person's other events: the server's, each replaced by its live row, plus the live
-  rows the server lacks (unsaved ones). The row itself is never one of its own `otherEvents`.
+  other row still gets its `effects`. A tracker row whose person the server did not return (deleted, or no access) is
+  in `failures` with `The enrollment of this event could not be read`: run without its enrollment, an ASSIGN that reads
+  attributes would clear the row's values. A requested row in neither map was not evaluated: it is not in `rows`, its
+  stage was not passed in `programStageIds`, or its person is still loading. That is different from an entry with no
+  effects. In a tracker program whose rules read the enrollment or other events, a row whose person is never put in
+  `enrollmentIds` is never evaluated. A tracker row sees its person's other events: the server's, each replaced by its
+  live row, plus the live rows the server lacks (unsaved ones). The row itself is never one of its own `otherEvents`.
 - `rowsAffectedBy` returns the row itself and, when the field is one that other events' rules read (a newest-event or
   previous-event variable), the person's other rows. It covers data value edits. When a row's event date changes, or a
   row is added or removed, re-evaluate every row of that person: which event is newest or previous changes. A deleted
   event stays in the cached person data until that cache is invalidated (below).
 - Event-program rows are always evaluated alone: their events share one hidden enrollment, so `rowsAffectedBy` returns
   only the row, and no person is fetched.
-- Every person is read in one `tracker/enrollments` request (in batches of 100 for more people), with their events
-  only when the rules read other events. Duplicate ids are fetched once. A person the server omits is evaluated
-  without enrollment data.
+- The people are read in chunks of 100, one `tracker/enrollments` request each, with their events only when the rules
+  read other events. Duplicate ids are fetched once. An id keeps its chunk, and new ids fill the last chunk, then new
+  ones: a page that adds people fetches only the chunk they join, never the people of the chunks before it.
 - Saving a grid row needs no invalidation: live rows already replace the server's copies. After deleting an event, or
   when a person's events change outside the grid's rows, invalidate the batched person cache, which is keyed apart
   from `programRulesQueryKeys.enrollment`:
@@ -241,7 +244,8 @@ const fresh = rules?.evaluate(rows, stale)
   actually change; an equal refetch keeps the same object, so it can be an effect dependency.
 - When `enrollmentIds` gain a person, `rules` stays defined and `status` stays `ready` while that person loads (the
   people already loaded stay in use), and `evaluate` leaves out the rows of a person that has not loaded yet. `rules`
-  changes when the person is added and again when they have loaded. A failed fetch reports its `error` as usual.
+  keeps its identity while they load and changes once as each chunk's data arrives. A failed fetch reports its `error`
+  as usual.
 - `invalidRules` lists each rule the engine cannot parse once, however many stages carry it.
 - `optionGroupOptions` maps the option group ids in each row's `optionGroups` effects to their option codes, merged
   across the stages, as `useProgramRules` exposes it for one stage.
@@ -252,8 +256,11 @@ const fresh = rules?.evaluate(rows, stale)
   nothing to show.
 
 The lib has the same pieces without React: `crossEventFields(metadata)`, `rowsAffectedBy(rows, crossFields, rowId,
-fieldId)` and `evaluateEventsRules(engine, contexts, { rows, persons, tracker }, rowIds)`, which returns the same
-`{ effects, failures }`, with `contexts` keyed by stage id and built from `metadataForStage(metadata, stageId)`.
+fieldId)` and `evaluateEventsRules(engine, contexts, { rows, persons, tracker, personsLoaded }, rowIds)`, which returns the
+same `{ effects, failures }`, with `contexts` keyed by stage id and built from `metadataForStage(metadata, stageId)`.
+`personsLoaded` says whether `persons` were fetched for the rows: then a tracker row whose person is missing fails with
+that reason instead of running without enrollment data. `rows` is indexed once per array, so a grid evaluating one
+row at a time over the same array pays for the index once; pass a new array when the rows change.
 
 ## Behaviour worth knowing
 

@@ -1,5 +1,5 @@
 import type { NavGrid } from './navigation'
-import { isBlock, parseBlock, pasteTargets } from './paste'
+import { isBlock, parseBlock, pastedBlock, pasteTargets } from './paste'
 
 test('a single value is not a block', () => expect(isBlock('12')).toBe(false))
 
@@ -132,4 +132,43 @@ test('pastes a single value into one cell', () => {
 
 test('an unterminated quote keeps its text', () => {
     expect(parseBlock('"a\tb\n')).toEqual([['a\tb\n']])
+})
+
+test('a note pasted into a long-text cell stays whole, its line breaks kept and one trailing one dropped', () => {
+    expect(pastedBlock('Seen at home\nFollow up\nCall back', true)).toEqual([
+        ['Seen at home\nFollow up\nCall back'],
+    ])
+    expect(pastedBlock('One\r\nTwo\r\n', true)).toEqual([['One\nTwo']])
+    const quotedLines = '"Patient refused treatment"\nWill return "next week"'
+    expect(pastedBlock(quotedLines, true)).toEqual([[quotedLines]])
+    expect(pastedBlock('"a"\n"b"', true)).toEqual([['"a"\n"b"']])
+})
+
+test('tab-separated text pasted into a long-text cell is still a block', () => {
+    expect(pastedBlock('a\tb\nc\td', true)).toEqual([
+        ['a', 'b'],
+        ['c', 'd'],
+    ])
+})
+
+test('a quoted note pasted into a long-text cell loses its quotes, as one copied from a spreadsheet cell', () => {
+    expect(pastedBlock('"line one\nline two"\r\n', true)).toEqual([
+        ['line one\nline two'],
+    ])
+})
+
+test('any other cell takes line breaks as rows', () => {
+    expect(pastedBlock('1\n2\n3', false)).toEqual([['1'], ['2'], ['3']])
+})
+
+test('a value that starts with a quote is pasted as typed unless it is one quoted field', () => {
+    expect(pastedBlock('"Hi" she said', false)).toEqual([['"Hi" she said']])
+    expect(pastedBlock('"Hi" she said', true)).toEqual([['"Hi" she said']])
+    expect(pastedBlock('"12"', false)).toEqual([['12']])
+    expect(pastedBlock('"a ""b"""', false)).toEqual([['a "b"']])
+})
+
+test('empty text pastes nothing', () => {
+    expect(pastedBlock('', false)).toEqual([])
+    expect(pastedBlock('', true)).toEqual([])
 })

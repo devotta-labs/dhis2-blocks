@@ -244,6 +244,7 @@ export const eventlessRow: EventsRuleRow = { enrollmentId: 'PE6abx7Zhn0' }
 export const missingTracker: EventsRuleInput = {
     rows: [],
     persons: new Map(),
+    personsLoaded: true,
 }
 
 // A grid hands the hook its stages and people; the rules evaluate its rows and name the rows an edit affects.

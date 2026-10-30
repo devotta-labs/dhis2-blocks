@@ -108,7 +108,7 @@ export const fetchRuleEnrollment = async (
 }
 
 /** The enrollment ids a single request may carry, to keep the URL short. */
-const ENROLLMENT_BATCH_SIZE = 100
+export const ENROLLMENT_BATCH_SIZE = 100
 
 /**
  * Many enrollments of one program by id, in parallel requests of up to 100. Enrollments the server omits (deleted or

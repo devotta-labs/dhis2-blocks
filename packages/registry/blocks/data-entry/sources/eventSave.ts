@@ -1,6 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import { z } from 'zod'
-import { cellKey } from '../model/types'
+import { cellKey, rowIdOf } from '../model/types'
 import type { CellKey, EventStatus, GridRow } from '../model/types'
 import { PartlySaved } from '../outbox/failure'
 import type { OutboxRecord } from '../outbox/outbox'
@@ -59,7 +59,6 @@ const currentSchema = z.object({
 
 type Outcome = Pick<SaveOutcome, 'sourceKey' | 'key'>
 
-const rowOf = (key: CellKey) => key.slice(0, key.indexOf('.'))
 const columnOf = (key: CellKey) => key.slice(key.indexOf('.') + 1)
 
 const dataValuesOf = (records: ReadonlyArray<OutboxRecord>) =>
@@ -139,7 +138,7 @@ export const outcomesFromReport = (
         }
     }
     return records.flatMap(({ sourceKey, key }): SaveOutcome[] => {
-        const event = rowOf(key)
+        const event = rowIdOf(key)
         const messages = refusals.get(event)
         if (messages !== undefined) {
             return [
@@ -235,7 +234,7 @@ export const eventSaver = (
         )
         for (const { key, result } of outcomes) {
             if (result === 'saved') {
-                held.add(rowOf(key))
+                held.add(rowIdOf(key))
             }
         }
         return outcomes
@@ -270,7 +269,7 @@ export const eventSaver = (
 
         const byEvent = new Map<string, OutboxRecord[]>()
         for (const record of records) {
-            const event = rowOf(record.key)
+            const event = rowIdOf(record.key)
             byEvent.set(event, [...(byEvent.get(event) ?? []), record])
         }
 
@@ -383,7 +382,7 @@ export const eventSaver = (
             readEvents(
                 engine,
                 programId,
-                [...new Set(records.map(({ key }) => rowOf(key)))],
+                [...new Set(records.map(({ key }) => rowIdOf(key)))],
                 signal
             )
         )
@@ -394,7 +393,7 @@ export const eventSaver = (
         const inPayload = new Set(events.map(({ event }) => event))
         const notSent = new Set(waiting.map(({ key }) => key))
         const sent = records.filter(
-            ({ key }) => inPayload.has(rowOf(key)) && !notSent.has(key)
+            ({ key }) => inPayload.has(rowIdOf(key)) && !notSent.has(key)
         )
         const created = new Set([...inPayload].filter((id) => !current.has(id)))
         return [
@@ -424,7 +423,7 @@ export const eventSaver = (
         ) =>
             inTurn(async () => {
                 const events = [
-                    ...new Set(records.map(({ key }) => rowOf(key))),
+                    ...new Set(records.map(({ key }) => rowIdOf(key))),
                 ]
                 const outcomes: SaveOutcome[] = []
                 for (let at = 0; at < events.length; at += CHUNK) {
@@ -434,7 +433,7 @@ export const eventSaver = (
                             ...(await saveChunk(
                                 engine,
                                 records.filter(({ key }) =>
-                                    ids.has(rowOf(key))
+                                    ids.has(rowIdOf(key))
                                 ),
                                 form
                             ))
@@ -504,7 +503,7 @@ export const eventSaver = (
             for (const { key, value, row } of [...records].sort(
                 (a, b) => a.at - b.at
             )) {
-                const id = rowOf(key)
+                const id = rowIdOf(key)
                 if (
                     !row?.isNew ||
                     held.has(id) ||

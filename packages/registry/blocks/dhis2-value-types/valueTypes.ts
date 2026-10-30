@@ -27,6 +27,11 @@ const decimalComma = () =>
 const notADate = () => problem('date', i18n.t('Enter a valid date'))
 const notADateTime = () =>
     problem('dateTime', i18n.t('Enter a valid date and time'))
+const outOfIntegerRange = () =>
+    problem(
+        'integerRange',
+        i18n.t('Enter a whole number between -2147483648 and 2147483647')
+    )
 const notInMask = () =>
     problem('fieldMask', i18n.t('Enter a value in the required format'))
 
@@ -45,7 +50,7 @@ const TIME = /^(?<hours>\d{2}):(?<minutes>\d{2})$/
 const COORDINATE = /^\[\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\]$/
 const EMAIL = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/
 // The server's own character set, which allows extensions such as "555 ext 12".
-const PHONE = /^[\d\s+()#./ext-]{1,50}$/
+const PHONE = /^[\d\s+()#./ext-]{6,50}$/
 const UID = /^[A-Za-z][A-Za-z0-9]{10}$/
 const URL_PROTOCOLS = new Set(['http:', 'https:', 'ftp:'])
 
@@ -89,12 +94,21 @@ export const coordinateNumber = (
         : undefined
 }
 
+// The range of the Java `int` DHIS2 stores whole numbers in.
+const INTEGER_MIN = -2147483648
+const INTEGER_MAX = 2147483647
+
 const whole =
     (pattern: RegExp, bad: () => ValueProblem): Check =>
-    (value) =>
-        pattern.test(value) && Number.isSafeInteger(Number(value))
+    (value) => {
+        if (!pattern.test(value)) {
+            return bad()
+        }
+        const number = Number(value)
+        return number >= INTEGER_MIN && number <= INTEGER_MAX
             ? undefined
-            : bad()
+            : outOfIntegerRange()
+    }
 
 const decimal =
     (accepts: (n: number) => boolean, bad: () => ValueProblem): Check =>
@@ -416,10 +430,10 @@ const toStored = (
 ): string | undefined => {
     const { options } = field
     if (options !== undefined && field.valueType === 'MULTI_TEXT') {
-        return text
+        const codes = text
             .split(',')
             .map((part) => lookupOf(options).resolve(part.trim()))
-            .join(',')
+        return [...new Set(codes)].join(',')
     }
     if (options !== undefined && kind === 'option') {
         return lookupOf(options).resolve(text)

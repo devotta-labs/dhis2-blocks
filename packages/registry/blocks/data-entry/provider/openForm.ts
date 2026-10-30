@@ -4,7 +4,7 @@ import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { formatCount } from '../cells/OptionCell'
-import { cellKey } from '../model/types'
+import { cellKey, rowIdOf } from '../model/types'
 import type { CellKey, GridRow, GridTable, PendingChange } from '../model/types'
 import { openOutbox, outboxName } from '../outbox/outbox'
 import type { Outbox, OutboxRecord } from '../outbox/outbox'
@@ -21,18 +21,12 @@ import { createDataEntryStore } from '../store/store'
 import type { DataEntryState } from '../store/store'
 import { afterPaint } from './afterPaint'
 import { appendPage, withPage } from './appendPage'
-import { completionChecks, refusalOf } from './completion'
+import { completionChecks, refusalOf, showStatus } from './completion'
 import type { EffectsState } from './context'
 import { discardFailed } from './discardFailed'
-import {
-    formEffects,
-    pendingRow,
-    rowIdOf,
-    summaryOf,
-    withRows,
-} from './formRows'
+import { formEffects, pendingRow, summaryOf, withRows } from './formRows'
 import type { DataEntryView } from './hooks'
-import { userCheck } from './signedIn'
+import { signedInAsOther, userCheck } from './signedIn'
 import { saveUnsentFile } from './unsentFile'
 
 type Actions = Pick<
@@ -225,8 +219,10 @@ const connect = (
     const countElsewhere = () =>
         outbox.list(source.key).then(
             (held) => {
-                failedThere = failedElsewhere(held)
-                summarize()
+                if (!closed) {
+                    failedThere = failedElsewhere(held)
+                    summarize()
+                }
             },
             // Closed meanwhile: there is no one to tell.
             () => {}
@@ -239,16 +235,23 @@ const connect = (
             string,
             Pick<SyncOutcome, 'result' | 'reason'> & { sent: SyncOutcome[] }
         >()
+        const later: SyncOutcome[] = []
         for (const outcome of outcomes) {
+            const last = lastAt.get(outcome.key) ?? 0
             // A refusal of an older change says nothing of the newer one in its cell.
             if (
                 outcome.sourceKey !== source.key ||
-                (outcome.result !== 'saved' &&
-                    outcome.at < (lastAt.get(outcome.key) ?? 0))
+                (outcome.result !== 'saved' && outcome.at < last)
             ) {
                 continue
             }
             applied = true
+            // Another tab changed the cell later: its value, and what became of it, replace this tab's.
+            if (outcome.at > last && inForm(outcome.key)) {
+                lastAt.set(outcome.key, outcome.at)
+                later.push(outcome)
+                continue
+            }
             const id = `${outcome.result}\n${outcome.reason ?? ''}`
             const group = groups.get(id) ?? {
                 result: outcome.result,
@@ -261,6 +264,18 @@ const connect = (
         for (const { result, reason, sent } of groups.values()) {
             store.getState().markSync(sent, result, reason)
         }
+        store.getState().restore(
+            later.map(({ key, value, result, reason }) => ({
+                key,
+                value,
+                base:
+                    result === 'saved'
+                        ? value
+                        : (store.getState().cells[key]?.base ?? null),
+                sync: result,
+                reason,
+            }))
+        )
         if (outcomes.some(({ key }) => !inForm(key))) {
             void countElsewhere()
         }
@@ -319,66 +334,25 @@ const connect = (
     }
 
     const setStatus = async (rowId: string, status: 'COMPLETED' | 'ACTIVE') => {
-        const outcomes = await source.setStatus(engine, rowId, status, form)
-        const saved = outcomes.some(
-            ({ key, result }) =>
-                key === cellKey(rowId, 'status') && result === 'saved'
-        )
-        const row = rows.get(rowId)
-        const table = tables
-            .getState()
-            .tables.find((each) => each.rows.some(({ id }) => id === rowId))
-        if (!saved || row === undefined || table === undefined) {
-            return outcomes
+        // Under the sync lock, so no tab's save sends a status read before this one. `complete` waits for the row's
+        // sends before it gets here, outside the lock, so nothing under it waits on the loop: no deadlock.
+        const outcomes = await sync
+            .exclusive(() => source.setStatus(engine, rowId, status, form))
+            .catch((error: Error) => {
+                // The loop stopped while this waited for the lock: someone else signed in.
+                if (closed || error.name !== 'AbortError') {
+                    throw error
+                }
+                return [refusal(cellKey(rowId, 'status'), signedInAsOther())]
+            })
+        if (
+            outcomes.some(
+                ({ key, result }) =>
+                    key === cellKey(rowId, 'status') && result === 'saved'
+            )
+        ) {
+            showStatus({ ...grows, form }, rowId, status)
         }
-        if (status === 'COMPLETED') {
-            const blocked =
-                row.programStageId === undefined
-                    ? undefined
-                    : form.readOnlyWhenCompleted.get(row.programStageId)
-            if (blocked !== undefined) {
-                readOnlyRows.set(rowId, blocked)
-            }
-            // As at load: a row the user could write in, and that had not expired.
-            if (
-                form.mayUncomplete &&
-                (form.canReopen.has(rowId) || !form.readOnlyRows.has(rowId))
-            ) {
-                reopenable.add(rowId)
-            }
-        } else {
-            // A row that could be reopened had no reason to be read-only but its completion.
-            readOnlyRows.delete(rowId)
-            reopenable.delete(rowId)
-        }
-        const updated = { ...row, status }
-        rows.set(rowId, updated)
-        effects.setState(({ cells }) => {
-            const next = { ...cells }
-            for (const { id } of table.columns) {
-                delete next[cellKey(rowId, id)]
-            }
-            return {
-                cells: formEffects(
-                    form.required,
-                    readOnlyRows,
-                    [{ ...table, rows: [updated] }],
-                    next
-                ),
-            }
-        })
-        tables.setState(({ tables: all }) => ({
-            tables: all.map((each) =>
-                each.id === table.id
-                    ? {
-                          ...each,
-                          rows: each.rows.map((other) =>
-                              other.id === rowId ? updated : other
-                          ),
-                      }
-                    : each
-            ),
-        }))
         return outcomes
     }
 
@@ -501,6 +475,12 @@ const connect = (
             }))
         },
         async complete(rowId) {
+            const locked = rows.has(rowId)
+                ? readOnlyRows.get(rowId)
+                : i18n.t('This row cannot be completed')
+            if (locked !== undefined) {
+                return [refusal(cellKey(rowId, 'status'), locked)]
+            }
             const paused = await notNow()
             if (paused !== undefined) {
                 return [refusal(cellKey(rowId, 'status'), paused)]
@@ -560,8 +540,10 @@ const connect = (
         downloadUnsent() {
             // A change made since the last paint is stored first, so the file has it.
             flush()
+            // A closed outbox still leaves the failed changes only this page holds.
             void outbox
                 .list(source.key)
+                .catch(() => [])
                 .then((held) =>
                     saveUnsentFile(
                         held,

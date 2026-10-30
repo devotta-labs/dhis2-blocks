@@ -87,6 +87,86 @@ test('a pasted block fills pop-up cells that read text and skips file cells', as
     expect(value(cellKey('t1r0', 'c1'))).toBe('Follow up')
 })
 
+test('a note pasted into a long-text cell stays in it; tab-separated text still fills a block', async () => {
+    withEditor('LONG_TEXT', () => null)
+    const { value, announced } = await mount([
+        makeTable({
+            columns: ['Notes', 'Visits'],
+            fields: [{ valueType: 'LONG_TEXT' }, INTEGER],
+            rows: ['a', 'b', 'c'],
+        }),
+    ])
+    const notes = control(cellKey('t1r0', 'c0'))
+    notes.focus()
+    const note = 'Seen at home\nFollow up in a week\nCall back'
+    expect(paste(notes, `${note}\n`)).toBe(true)
+    expect(value(cellKey('t1r0', 'c0'))).toBe(note)
+    // The rows below are other events: nothing reaches them.
+    for (const row of ['t1r1', 't1r2']) {
+        expect(value(cellKey(row, 'c0'))).toBeUndefined()
+    }
+    expect(announced).toEqual(['Cells pasted: 1'])
+    // Quotes around its lines do not make it a spreadsheet's block either.
+    const quoted = '"Patient refused treatment"\nWill return "next week"'
+    expect(paste(notes, quoted)).toBe(true)
+    expect(value(cellKey('t1r0', 'c0'))).toBe(quoted)
+    for (const row of ['t1r1', 't1r2']) {
+        expect(value(cellKey(row, 'c0'))).toBeUndefined()
+    }
+
+    expect(paste(notes, 'Seen\t3\nFollow up\t4')).toBe(true)
+    expect(
+        ['t1r0', 't1r1'].map((row) => [
+            value(cellKey(row, 'c0')),
+            value(cellKey(row, 'c1')),
+        ])
+    ).toEqual([
+        ['Seen', '3'],
+        ['Follow up', '4'],
+    ])
+})
+
+test('a pasted block skips username cells, whose names are checked when typed', async () => {
+    const editor = () => null
+    withEditor('LONG_TEXT', editor)
+    withEditor('USERNAME', editor)
+    const { value } = await mount([
+        makeTable({
+            columns: ['Age (years)', 'Notes', 'Seen by', 'Visits'],
+            fields: [
+                INTEGER,
+                { valueType: 'LONG_TEXT' },
+                { valueType: 'USERNAME' },
+                INTEGER,
+            ],
+        }),
+    ])
+    const age = control(cellKey('t1r0', 'c0'))
+    age.focus()
+    expect(paste(age, '7\tSeen at home\tadmin\t2')).toBe(true)
+    // The username cell is skipped, and the block does not shift past it.
+    expect(value(cellKey('t1r0', 'c2'))).toBeUndefined()
+    expect(value(cellKey('t1r0', 'c3'))).toBe('2')
+    // Pasted into the cell itself, nothing lands.
+    const seenBy = control(cellKey('t1r0', 'c2'))
+    seenBy.focus()
+    paste(seenBy, 'admin')
+    expect(value(cellKey('t1r0', 'c2'))).toBeUndefined()
+})
+
+test('a pasted value that starts with a quote keeps it unless it is one quoted field', async () => {
+    const key = cellKey('t1r0', 'c0')
+    const { value } = await mount([
+        makeTable({ fields: [{ valueType: 'TEXT' }] }),
+    ])
+    const input = control(key)
+    input.focus()
+    expect(paste(input, '"Hi" she said')).toBe(true)
+    expect(value(key)).toBe('"Hi" she said')
+    expect(paste(input, '"a ""b"""')).toBe(true)
+    expect(value(key)).toBe('a "b"')
+})
+
 test('in a right-to-left page, Left and Right move the way they point', async () => {
     document.documentElement.dir = 'rtl'
     try {

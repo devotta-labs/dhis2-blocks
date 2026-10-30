@@ -8,6 +8,7 @@ import {
 } from '@/components/program-rules/__tests__/rmnch'
 import meAdmin from '../../sources/__tests__/fixtures/me-admin.json'
 import rmnchProgram from '../../sources/__tests__/fixtures/rmnch-program.json'
+import systemInfo from '../../sources/__tests__/fixtures/system-info.json'
 import { eventSource } from '../../sources/eventSource'
 import type { DataEngine } from '../../sources/types'
 
@@ -66,7 +67,12 @@ export const rmnchSource = eventSource({
 /** The grid `eventSource` loads for these RMNCH events. */
 export const rmnchForm = (events: ReadonlyArray<FixtureEvent>) =>
     rmnchSource.load(
-        answering({ program: rmnchProgram, events: { events }, me: meAdmin })
+        answering({
+            program: rmnchProgram,
+            events: { events },
+            me: meAdmin,
+            systemInfo,
+        })
     )
 
 /** The person the server answers for an enrollment id: the RMNCH person with that id's events. */

@@ -116,10 +116,11 @@ A source of your own implements `DataEntrySource`: `key` names its unsent change
 each one, `setStatus` completes and reopens rows, and `restoreRows` gives back the new rows found unsent after a
 reload. Without `rules` the form loads no rule engine.
 
-The host decides where the buttons go. `complete(rowId)` refuses at once, with one `failed` outcome per reason, when
-the device is offline or someone else is signed in, and while the row has an error, an empty required field, or a
-change DHIS2 refused or that waits; otherwise it sends the row's unsent changes first (and refuses if sending pauses),
-then asks DHIS2. `reopen(rowId)` asks DHIS2 only for a completed row the user may reopen (`F_UNCOMPLETE_EVENT`, write
+The host decides where the buttons go. `complete(rowId)` refuses at once, with one `failed` outcome per reason, a row
+the form does not have ("This row cannot be completed") or a read-only one (with why it is), when the device is offline
+or someone else is signed in, and while the row has an error, an empty required field, or a change DHIS2 refused or
+that waits; otherwise it sends the row's unsent changes first (and refuses if sending pauses), then asks DHIS2.
+`reopen(rowId)` asks DHIS2 only for a completed row the user may reopen (`F_UNCOMPLETE_EVENT`, write
 access to the stage, not expired), whether it was completed when loaded or here, and refuses the same way offline. A saved
 status shows in the row's header and locks or unlocks the row where its stage blocks entry once completed.
 
@@ -199,7 +200,8 @@ reads its cell from the `Cell` around it, so it is drawn only inside one.
 Each cell works as a spreadsheet's does: typing replaces the value, F2 edits it, Enter and the arrows save and move,
 Tab moves with the page, Escape puts the value back. Left and Right move the way they point, in a right-to-left page
 too. A block copied from a spreadsheet pastes from the focused cell, skipping cells that cannot take it, and Ctrl+Z
-(Cmd+Z) undoes the last change. A value its type refuses stays in the cell with its error and is not saved; nothing
+(Cmd+Z) undoes the last change. A note pasted into a long-text cell stays in that cell, line breaks kept, unless it
+holds a tab; a pasted value keeps its quotes unless it is one quoted field, as a spreadsheet wraps a cell. A value its type refuses stays in the cell with its error and is not saved; nothing
 typed is lost. In an option cell, typing lists the matches and Enter or Tab picks the highlighted one; emptied text
 highlights none, so Enter or Tab clears the cell. Delete clears a checkbox, and `y`, `n` and Delete set a Yes/No field.
 
@@ -214,7 +216,7 @@ last reported; what it cannot save stays in the cell as refused typing does, as 
 as typed, a coordinate as `lat, lng`, an age as its date of birth or as "Years: 1, months: 2, days: -3"), and Escape on
 the cell drops it. Opened again, the editor starts from the stored value, not the draft. A rule that locks or hides the
 cell while its editor is open closes it unsaved and says why. A pasted block fills pop-up cells like any cell, except
-files and images.
+usernames (DHIS2 checks those as they are typed), files and images.
 
 Long text opens a text area: Enter adds a line, Ctrl+Enter or ⌘+Enter saves, and a field mask is checked on save, which
 keeps the editor open with its message. A multi-select opens a search over checkboxes (the shared option search, 50 at
@@ -247,7 +249,9 @@ A file or image cell shows the file's name, and an image DHIS2 holds for the eve
 `SMALL` size; one that does not load leaves the name alone). The names of the stored files load with the form, as org
 unit names do and at the same time (`fileResources`, 200 ids a request); a request that fails leaves its files showing
 their ids. The editor offers "Choose a file" ("Choose an image", for images only) and, when the cell has a value,
-"Remove", which saves no value. A chosen file is uploaded to DHIS2 at once (`POST /api/fileResources`, domain
+"Remove", which saves no value. An image cell uploads nothing that is not an image (a `type` that is set and does not
+start with `image/`; some systems give HEIC images none) and says "Choose an image file" at once, even while an earlier
+upload runs. A chosen file is uploaded to DHIS2 at once (`POST /api/fileResources`, domain
 `DATA_VALUE`), since a file cannot wait in the outbox; its id is then saved to the cell like any value, named from the
 upload's answer, even when the upload finishes after the person has left the cell, which is then said ("Uploaded …", or
 "Not saved: …" with the reason when the cell no longer takes it). A newer choice, "Remove" or Save in the cell stops an
@@ -301,7 +305,8 @@ only the head start is lost; the rules load and report their own failures as usu
   within its own minute. Two changes to one cell send only the latest. A chunk that fails keeps the chunks before it
   saved: refused as a whole, it refuses its events and those after it; otherwise only those are sent again. A change to
   an event DHIS2 no longer returns is refused ("This event was deleted or you no longer have access to it"). Another
-  tab's loop may send this tab's changes: the cells here still learn what became of them.
+  tab's loop may send this tab's changes: the cells here still learn what became of them. A cell changed later in
+  another tab shows that tab's value here once it is saved or refused. A status is saved while no tab is sending.
 - After a reload, a grid puts back its own unsent changes, and the new rows it adds (same stage, org unit and person)
   that DHIS2 does not hold yet; the program's other changes stay on the device and are sent with the rest.
 - Before every send, and before completing or reopening, the server is asked who is signed in. When it is someone else
@@ -338,6 +343,11 @@ only the head start is lost; the rules load and report their own failures as usu
   in a stage that blocks entry, expired events (unless the user has `F_EDIT_EXPIRED`), and every event of a program with
   attribute categories. `TRACKER_ASSOCIATE`, `REFERENCE`, `GEOJSON`, and a pop-up type without an editor, show their
   value and are edited in their own form.
+- An expiry period is built in the server's calendar (`system/info`, asked in the form's own query; pages reuse it): a
+  monthly one starts on the first day of the Ethiopian or Nepali month, not the Gregorian one. A program with no expiry
+  days never expires an event by its period, as in DHIS2. A two-week period on an Ethiopian or Coptic server, or a date
+  the calendar library cannot convert, is not worked out, so it never makes an event read-only; DHIS2 still refuses an
+  expired event when it is saved.
 - An org unit pasted into a cell shows its id until the form loads again. One picked but not yet sent shows its id
   after a reload too: names load only for the values DHIS2 holds. So does a file uploaded but not yet sent.
 - A form loads once per mount, and not again when the app invalidates its queries; changes made elsewhere show after

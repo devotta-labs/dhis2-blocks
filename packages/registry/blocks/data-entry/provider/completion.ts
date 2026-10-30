@@ -6,6 +6,8 @@ import type { CellKey, CellState, SyncState } from '../model/types'
 import type { SaveOutcome, SyncStatus } from '../outbox/sync'
 import { SAVE_TIMEOUT } from '../sources/eventSave'
 import type { DataEntryState } from '../store/store'
+import type { Growing } from './appendPage'
+import { formEffects } from './formRows'
 import type { DataEntryView } from './hooks'
 
 // Server reasons are shown as DHIS2 gives them, not HTML-escaped.
@@ -126,4 +128,70 @@ export const completionChecks = (
                 })
             }),
     }
+}
+
+/**
+ * Puts a status saved here on its row: completed in a stage that blocks entry, the row is read-only, and the user may
+ * reopen it as at load; reopened, it is neither.
+ */
+export const showStatus = (
+    { form, effects, tables, rows, readOnlyRows, reopenable }: Growing,
+    rowId: string,
+    status: 'COMPLETED' | 'ACTIVE'
+) => {
+    const row = rows.get(rowId)
+    const table = tables
+        .getState()
+        .tables.find((each) => each.rows.some(({ id }) => id === rowId))
+    if (row === undefined || table === undefined) {
+        return
+    }
+    if (status === 'COMPLETED') {
+        const blocked =
+            row.programStageId === undefined
+                ? undefined
+                : form.readOnlyWhenCompleted.get(row.programStageId)
+        if (blocked !== undefined) {
+            readOnlyRows.set(rowId, blocked)
+        }
+        // As at load: a row the user could write in, and that had not expired.
+        if (
+            form.mayUncomplete &&
+            (form.canReopen.has(rowId) || !form.readOnlyRows.has(rowId))
+        ) {
+            reopenable.add(rowId)
+        }
+    } else {
+        // A row that could be reopened had no reason to be read-only but its completion.
+        readOnlyRows.delete(rowId)
+        reopenable.delete(rowId)
+    }
+    const updated = { ...row, status }
+    rows.set(rowId, updated)
+    effects.setState(({ cells }) => {
+        const next = { ...cells }
+        for (const { id } of table.columns) {
+            delete next[cellKey(rowId, id)]
+        }
+        return {
+            cells: formEffects(
+                form.required,
+                readOnlyRows,
+                [{ ...table, rows: [updated] }],
+                next
+            ),
+        }
+    })
+    tables.setState(({ tables: all }) => ({
+        tables: all.map((each) =>
+            each.id === table.id
+                ? {
+                      ...each,
+                      rows: each.rows.map((other) =>
+                          other.id === rowId ? updated : other
+                      ),
+                  }
+                : each
+        ),
+    }))
 }

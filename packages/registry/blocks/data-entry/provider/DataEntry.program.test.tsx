@@ -4,6 +4,7 @@ import type { ComponentProps } from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { z } from 'zod'
 import { cellKey } from '../model/types'
+import { outboxName } from '../outbox/outbox'
 import inpatientEvents from '../sources/__tests__/fixtures/inpatient-events.json'
 import inpatientProgram from '../sources/__tests__/fixtures/inpatient-program.json'
 import meAdmin from '../sources/__tests__/fixtures/me-admin.json'
@@ -257,4 +258,82 @@ test('a change of another grid refused while this one is open is counted here at
     expect(await records(server)).toMatchObject([
         { key: 'x1.c1', state: 'failed' },
     ])
+})
+
+/** Holds the outbox's reads from now on: each answers only once `release` is called. */
+const holdReads = () => {
+    const held: Array<() => void> = []
+    const getAll = IDBObjectStore.prototype.getAll
+    vi.spyOn(IDBObjectStore.prototype, 'getAll').mockImplementation(function (
+        this: IDBObjectStore,
+        ...args: Parameters<IDBObjectStore['getAll']>
+    ) {
+        const read = getAll.apply(this, args)
+        // Listens before the outbox does, so the outbox hears of the answer only on release.
+        read.addEventListener('success', (event) => {
+            event.stopImmediatePropagation()
+            held.push(() => read.onsuccess?.(event))
+        })
+        return read
+    })
+    return {
+        held: () => held.length,
+        release: () => held.splice(0).forEach((answer) => answer()),
+    }
+}
+
+/** Another tab of the program refuses a change to a row this form does not show, and says so. */
+const refusedThere = async (server: string) => {
+    await withOutbox(server, async (outbox) => {
+        await outbox.put(change('x1.c1', '9'))
+        await outbox.mark(
+            [{ sourceKey: KEY, key: 'x1.c1' }],
+            'failed',
+            'Too high'
+        )
+    })
+    const tab = new BroadcastChannel(outboxName(server, USER))
+    tab.postMessage({
+        outcomes: [
+            {
+                sourceKey: KEY,
+                key: 'x1.c1',
+                result: 'failed',
+                reason: 'Too high',
+                value: '9',
+                at: 1,
+            },
+        ],
+    })
+    tab.close()
+}
+
+test('another tab’s refusal of a change this form does not show is counted once and not shown', async () => {
+    const server = freshServer()
+    const { context, view } = await mount(memorySource(visitForm()).source, {
+        server,
+        children: null,
+    })
+    await refusedThere(server)
+    await expect.poll(() => view().summary.failed).toBe(1)
+    await later(100)
+    expect(view().summary.failed).toBe(1)
+    expect(context().store.getState().cells['x1.c1']).toBeUndefined()
+})
+
+test('a form closed while it counts the other grids’ failed changes leaves the summary as it was', async () => {
+    const server = freshServer()
+    const { screen, view } = await mount(memorySource(visitForm()).source, {
+        server,
+        children: null,
+    })
+    await later(100)
+    const reads = holdReads()
+    await refusedThere(server)
+    await expect.poll(reads.held).toBe(1)
+    await screen.unmount()
+    const summary = view().summary
+    reads.release()
+    await later(100)
+    expect(view().summary).toBe(summary)
 })

@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-29T12:02:31.606Z\n"
-"PO-Revision-Date: 2026-10-29T12:02:31.606Z\n"
+"POT-Creation-Date: 2026-10-30T08:52:40.633Z\n"
+"PO-Revision-Date: 2026-10-30T08:52:40.634Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -168,6 +168,9 @@ msgstr "Choose a file"
 
 msgid "Choose an image"
 msgstr "Choose an image"
+
+msgid "Choose an image file"
+msgstr "Choose an image file"
 
 msgid "Clear all"
 msgstr "Clear all"
@@ -355,6 +358,9 @@ msgstr "This event was completed too long ago to edit"
 msgid "This event was deleted or you no longer have access to it"
 msgstr "This event was deleted or you no longer have access to it"
 
+msgid "This row cannot be completed"
+msgstr "This row cannot be completed"
+
 msgid "This row cannot be reopened"
 msgstr "This row cannot be reopened"
 
@@ -427,6 +433,9 @@ msgstr "Enter a value in the required format"
 msgid "Enter a whole number"
 msgstr "Enter a whole number"
 
+msgid "Enter a whole number between -2147483648 and 2147483647"
+msgstr "Enter a whole number between -2147483648 and 2147483647"
+
 msgid "Enter a whole number greater than zero"
 msgstr "Enter a whole number greater than zero"
 
@@ -447,6 +456,9 @@ msgstr "Select Yes or No"
 
 msgid "Use a full stop for decimals"
 msgstr "Use a full stop for decimals"
+
+msgid "The enrollment of this event could not be read"
+msgstr "The enrollment of this event could not be read"
 
 msgid "Main navigation"
 msgstr "Main navigation"

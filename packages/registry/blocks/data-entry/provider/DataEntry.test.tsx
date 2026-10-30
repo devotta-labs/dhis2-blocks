@@ -5,6 +5,7 @@ import { DataGrid } from '../grid/DataGrid'
 import { control, paste } from '../grid/__tests__/gridRig'
 import { cellKey } from '../model/types'
 import type { GridColumn } from '../model/types'
+import { outboxName } from '../outbox/outbox'
 import type { LoadedForm } from '../sources/types'
 import { DataEntrySummary } from '../summary/DataEntrySummary'
 import {
@@ -17,6 +18,7 @@ import {
     mount,
     notesOf,
     records,
+    USER,
     visit,
     visitForm,
 } from './__tests__/rig'
@@ -376,6 +378,59 @@ test('reopen is offered only for rows in canReopen', async () => {
     await expect
         .element(page.getByRole('rowheader', { name: 'Visit 2' }))
         .toHaveTextContent('Completed')
+})
+
+test('complete refuses a read-only row with its reason, and a row the form does not have', async () => {
+    const SKIPPED = 'Skipped events cannot be edited'
+    const memory = memorySource(
+        visitForm({
+            rows: [visit('r1', 'Visit 1'), visit('r2', 'Visit 2', 'SKIPPED')],
+            values: [['r2.c1', '1']],
+            readOnlyRows: [['r2', SKIPPED]],
+        })
+    )
+    const { view } = await mount(memory.source)
+    const refused = (row: string, reason: string) => [
+        { sourceKey: KEY, key: `${row}.status`, result: 'failed', reason },
+    ]
+    expect(await view().complete('r2')).toEqual(refused('r2', SKIPPED))
+    expect(await view().complete('r9')).toEqual(
+        refused('r9', 'This row cannot be completed')
+    )
+    expect(memory.statuses).toEqual([])
+})
+
+test('a status waits while any tab holds the sync lock, so no save read before it reopens the row', async () => {
+    const memory = memorySource(
+        visitForm({
+            rows: [visit('r1', 'Visit 1'), visit('r2', 'Visit 2', 'COMPLETED')],
+            values: [['r1.c1', '1']],
+            canReopen: ['r2'],
+        })
+    )
+    const { server, view } = await mount(memory.source)
+    // Another tab's loop, sending.
+    const holder = Promise.withResolvers<void>()
+    await new Promise<void>((granted) => {
+        void navigator.locks.request(
+            `dhis2-data-entry-sync:${outboxName(server, USER)}`,
+            () => {
+                granted()
+                return holder.promise
+            }
+        )
+    })
+    const completing = view().complete('r1')
+    const reopening = view().reopen('r2')
+    await later(300)
+    expect(memory.statuses).toEqual([])
+    holder.resolve()
+    expect(await completing).toMatchObject([{ result: 'saved' }])
+    expect(await reopening).toMatchObject([{ result: 'saved' }])
+    expect(memory.statuses.toSorted()).toEqual([
+        ['r1', 'COMPLETED'],
+        ['r2', 'ACTIVE'],
+    ])
 })
 
 test('a field override replaces one cell, a value type override every cell of that type', async () => {

@@ -2,7 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import { useEffect, useState } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
 import { formatCount } from '../cells/OptionCell'
-import { cellKey } from '../model/types'
+import { cellKey, rowIdOf } from '../model/types'
 import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import type {
@@ -13,7 +13,7 @@ import type {
 } from '../sources/types'
 import type { DataEntryState } from '../store/store'
 import type { EffectsState } from './context'
-import { formEffects, rowIdOf, withColumns, withRows } from './formRows'
+import { formEffects, withColumns, withRows } from './formRows'
 import { reasonOf } from './hooks'
 import type { DataEntryView } from './hooks'
 import type { OpenForm } from './openForm'
@@ -76,8 +76,8 @@ export const withPage = (form: LoadedForm, page: FormPage): LoadedForm => {
     }
 }
 
-/** What of the open form a page grows. */
-interface Growing {
+/** What of the open form a page grows, or a saved status changes. */
+export interface Growing {
     form: LoadedForm
     store: StoreApi<DataEntryState>
     effects: StoreApi<EffectsState>

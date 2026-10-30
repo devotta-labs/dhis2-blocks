@@ -54,6 +54,8 @@ export interface SyncHandle {
     nudge(): void
     /** Ends the loop. A round already in flight records what the server took, then stops. */
     stop(): void
+    /** Runs `task` under the lock the loop sends under, so no tab's loop sends while it runs. */
+    exclusive<T>(task: () => Promise<T>): Promise<T>
 }
 
 type Ref = Parameters<Outbox['remove']>[0][number]
@@ -191,16 +193,22 @@ export const startSync = ({
         }
     }
 
+    // Without Web Locks (an insecure page) tabs may both send; the requests are safe to repeat.
+    const exclusive = async <T>(task: () => Promise<T>): Promise<T> => {
+        if (!navigator.locks) {
+            return task()
+        }
+        // Awaited: the DOM types give the task's promise as the lock's result, though the lock resolves to its value.
+        return await navigator.locks.request(
+            lockName,
+            { signal: lockRequest.signal },
+            task
+        )
+    }
+
     const attempt = async (): Promise<'done' | 'retry' | 'signIn'> => {
         try {
-            // Without Web Locks (an insecure page) tabs may both send; the requests are safe to repeat.
-            await (navigator.locks
-                ? navigator.locks.request(
-                      lockName,
-                      { signal: lockRequest.signal },
-                      sendAll
-                  )
-                : sendAll())
+            await exclusive(sendAll)
             return 'done'
         } catch (error) {
             return error instanceof FetchError &&
@@ -274,6 +282,7 @@ export const startSync = ({
 
     return {
         nudge,
+        exclusive,
         stop() {
             stopped = true
             lockRequest.abort()

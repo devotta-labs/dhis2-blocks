@@ -9,6 +9,7 @@ import inpatientProgram from './fixtures/inpatient-program.json'
 import meAdmin from './fixtures/me-admin.json'
 import rmnchEvents from './fixtures/rmnch-person-events.json'
 import rmnchProgram from './fixtures/rmnch-program.json'
+import systemInfo from './fixtures/system-info.json'
 
 const TODAY = '2026-10-26'
 export const INPATIENT = 'eBAyeGv0exc'
@@ -67,11 +68,13 @@ export const INPATIENT_LOAD = {
     program: inpatientProgram,
     events: inpatientEvents,
     me: meAdmin,
+    systemInfo,
 }
 export const PERSON_LOAD = {
     program: rmnchProgram,
     events: rmnchEvents,
     me: meAdmin,
+    systemInfo,
 }
 
 type Query = Parameters<DataEngine['query']>[0]

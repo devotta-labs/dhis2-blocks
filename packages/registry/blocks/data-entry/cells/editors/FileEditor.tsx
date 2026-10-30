@@ -110,8 +110,9 @@ export const FileEditor = ({
     const disconnected = i18n.t('Connect to the internet to upload files')
     useAnnounced(offline ? disconnected : '')
     const busy = upload !== undefined
+    // A refusal shows at once, over an earlier upload still running.
     const status =
-        upload?.said ?? problem ?? (offline ? disconnected : undefined)
+        problem ?? upload?.said ?? (offline ? disconnected : undefined)
 
     /** Cancel: this editor's upload stops and the value stays. */
     const quit = () => {
@@ -137,6 +138,13 @@ export const FileEditor = ({
 
     const choose = (file: File) => {
         if (offline) {
+            return
+        }
+        // A dropped or "All files" file may not be an image; an empty type (HEIC on some systems) passes.
+        if (image && file.type !== '' && !file.type.startsWith('image/')) {
+            const refusal = i18n.t('Choose an image file')
+            setProblem(refusal)
+            announce(refusal)
             return
         }
         stopUpload(cellKey, running.get(cellKey))
@@ -242,7 +250,7 @@ export const FileEditor = ({
             {status === undefined ? null : (
                 <p
                     className={
-                        !busy && status === problem
+                        status === problem
                             ? 'text-xs text-dhis2-red-700'
                             : 'text-dhis2-grey-700'
                     }

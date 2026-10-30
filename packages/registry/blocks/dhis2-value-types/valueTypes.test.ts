@@ -229,6 +229,10 @@ test('a multi-select reads each comma separated option', () => {
         value: 'A,B',
     })
     expect(parseTyped(field, 'A, C', GREGORIAN)).toMatchObject({ ok: false })
+    expect(parseTyped(field, 'Alpha, alpha, B, a', GREGORIAN)).toEqual({
+        ok: true,
+        value: 'A,B',
+    })
 })
 
 test('a field mask must match the whole value', () => {
@@ -474,7 +478,8 @@ test.each([
     ['INTEGER', '-0', '0'],
     ['INTEGER', '-007', '-7'],
     ['INTEGER', '5.', '5'],
-    ['INTEGER', '9007199254740991', '9007199254740991'],
+    ['INTEGER', '2147483647', '2147483647'],
+    ['INTEGER', '-2147483648', '-2147483648'],
     ['INTEGER_POSITIVE', '0012', '12'],
     ['INTEGER_ZERO_OR_POSITIVE', '000', '0'],
     ['INTEGER_NEGATIVE', '-00012', '-12'],
@@ -502,13 +507,6 @@ test.each([
     ['PERCENTAGE', '1e1', 'Enter a percentage between 0 and 100'],
     ['UNIT_INTERVAL', '5e-1', 'Enter a number between 0 and 1'],
     ['INTEGER', '1e3', 'Enter a whole number'],
-    ['INTEGER', '9007199254740992', 'Enter a whole number'],
-    ['INTEGER', '-9007199254740992', 'Enter a whole number'],
-    [
-        'INTEGER_POSITIVE',
-        '99999999999999999999',
-        'Enter a whole number greater than zero',
-    ],
     ['INTEGER', '.5', 'Enter a whole number'],
     ['INTEGER', '5.0', 'Enter a whole number'],
 ])('%s refuses %s', (valueType, text, message) =>
@@ -556,6 +554,7 @@ test.each([
     ['+232-76/123.456'],
     ['1'.repeat(50)],
     ['555 123 ext 12'],
+    ['123456'],
 ])('PHONE_NUMBER accepts %s', (text) =>
     expect(parseTyped({ valueType: 'PHONE_NUMBER' }, text, GREGORIAN)).toEqual({
         ok: true,
@@ -563,7 +562,7 @@ test.each([
     })
 )
 
-test.each([['phone'], ['12a'], ['1'.repeat(51)]])(
+test.each([['phone'], ['12a'], ['12345'], ['1'.repeat(51)]])(
     'PHONE_NUMBER refuses %s',
     (text) =>
         expect(

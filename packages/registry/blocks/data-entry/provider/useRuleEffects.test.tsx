@@ -5,7 +5,7 @@ import { RMNCH } from '@/components/program-rules/__tests__/rmnch'
 import { DataGrid } from '../grid/DataGrid'
 import { control } from '../grid/__tests__/gridRig'
 import { rowHeaderDomId } from '../grid/headers'
-import { cellKey } from '../model/types'
+import { cellKey, rowIdOf } from '../model/types'
 import type { DataEntrySource } from '../sources/types'
 import { DataEntrySummary } from '../summary/DataEntrySummary'
 import {
@@ -28,7 +28,6 @@ import {
     rulesFor,
 } from './__tests__/rmnchRig'
 import type { FixtureEvent } from './__tests__/rmnchRig'
-import { rowIdOf } from './formRows'
 
 afterEach(cleanUp)
 beforeEach(() => {

@@ -57,12 +57,13 @@ const enrollmentsAnswer = (query: RequestedResource) =>
                   })),
           }
 
-/** The RMNCH program served through the app-runtime, with every request recorded by resource name. */
+/** The RMNCH program served through the app-runtime, with every request recorded by resource name and in full. */
 export const serve = (
     responses: Responses,
     initiallyFailing: ReadonlyArray<string> = []
 ) => {
     const requests: string[] = []
+    const queries: Array<{ name: string; query: RequestedResource }> = []
     const failing = [...initiallyFailing]
     const holds = new Map<string, Promise<void>>()
     /** Makes the answers of a resource wait until the returned function is called. */
@@ -83,6 +84,7 @@ export const serve = (
         <T,>(name: string, body: (query: RequestedResource) => T) =>
         async (_type: string, query: RequestedResource) => {
             requests.push(name)
+            queries.push({ name, query })
             await holds.get(name)
             if (failing.includes(name)) {
                 // An access error, so the hook's retry policy doesn't retry it.
@@ -127,5 +129,5 @@ export const serve = (
             </QueryClientProvider>
         </CustomDataProvider>
     )
-    return { requests, wrapper, failing, queryClient, hold }
+    return { requests, queries, wrapper, failing, queryClient, hold }
 }

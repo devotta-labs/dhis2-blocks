@@ -5,6 +5,7 @@ import { control } from '../grid/__tests__/gridRig'
 import { cellKey } from '../model/types'
 import meAdmin from '../sources/__tests__/fixtures/me-admin.json'
 import rmnchProgram from '../sources/__tests__/fixtures/rmnch-program.json'
+import systemInfo from '../sources/__tests__/fixtures/system-info.json'
 import type { CellKey } from '../model/types'
 import type { DataEntrySource, FormPage, LoadedForm } from '../sources/types'
 import {
@@ -377,6 +378,7 @@ const rmnchPaged = async (
                     program: rmnchProgram,
                     events: { events: next },
                     me: meAdmin,
+                    systemInfo,
                 }),
                 number
             ) ?? Promise.reject(new Error('eventSource pages')),

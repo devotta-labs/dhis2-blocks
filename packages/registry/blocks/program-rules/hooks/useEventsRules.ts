@@ -1,6 +1,6 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { Result } from 'better-result'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import {
     buildRuleContext,
     crossEventFields,
@@ -17,8 +17,9 @@ import {
     type RuleEnrollmentData,
     type RuleOrgUnitGroupMetadata,
 } from '../lib'
+import { indexRows } from '../lib/manyEvents'
 import { shouldRetryProgramRulesRequest, useProgramRulesClient } from './client'
-import { fetchRuleEnrollments } from './enrollment'
+import { ENROLLMENT_BATCH_SIZE, fetchRuleEnrollments } from './enrollment'
 import { useRuleEngine } from './loadRuleEngine'
 import { fetchOrgUnitGroups, fetchProgramRulesMetadata } from './metadata'
 import { programRulesQueryKeys } from './queryKeys'
@@ -31,7 +32,7 @@ export interface UseEventsRulesOptions {
     programStageIds: ReadonlyArray<string>
     /** WITH_REGISTRATION programs; false evaluates every row alone. */
     tracker: boolean
-    /** The people the rows belong to, fetched together in one request. */
+    /** The people the rows belong to, fetched in chunks of 100: adding people fetches only the chunk they join. */
     enrollmentIds: ReadonlyArray<string>
     enabled?: boolean
 }
@@ -40,9 +41,9 @@ export interface EventsRules {
     /**
      * Runs the rules of the rows named by `rowIds` against `rows`, the grid's live values, each row on its own: a row
      * the engine fails on is in `failures`, the others in `effects`. A row of a tracker program sees its person's other
-     * events: the server's, each replaced by its live row, plus the live rows the server lacks. A row that is not in
-     * `rows`, whose stage was not asked for, or whose person was added to `enrollmentIds` and has not loaded yet, is in
-     * neither map: it was not evaluated.
+     * events: the server's, each replaced by its live row, plus the live rows the server lacks; a row whose person the
+     * server did not return is in `failures`. A row that is not in `rows`, whose stage was not asked for, or whose
+     * person was added to `enrollmentIds` and has not loaded yet, is in neither map: it was not evaluated.
      */
     evaluate(
         rows: ReadonlyArray<EventsRuleRow>,
@@ -69,15 +70,29 @@ export interface EventsRules {
 export interface UseEventsRulesResult {
     status: ProgramRulesStatus
     /**
-     * Present once the engine, the metadata and the people the rules read have loaded, and from then on while a new
-     * person loads; for a program without rules, once the metadata has. Stable while its inputs are.
+     * Present once the engine, the metadata and the people the rules read have loaded (a first chunk of them), and from
+     * then on while more people load; for a program without rules, once the metadata has. Stable while its inputs are:
+     * adding people changes it only as each chunk's data arrives.
      */
     rules?: EventsRules
     error?: Error
 }
 
 const HOUR = 60 * 60_000
-const NO_PERSONS = new Map<string, RuleEnrollmentData>()
+
+/**
+ * One chunk's people as cached: entries, since a persisted query cache restores a Map as an empty object, with null for
+ * a person the server did not return.
+ */
+type ChunkPersons = Array<[string, RuleEnrollmentData | null]>
+
+interface LoadedPersons {
+    persons: ReadonlyMap<string, RuleEnrollmentData>
+    /** Every id a loaded chunk asked for, returned or not. */
+    answered: ReadonlySet<string>
+}
+
+const NO_PERSONS: LoadedPersons = { persons: new Map(), answered: new Set() }
 
 /** A program without rules: every row is evaluated, to nothing, and stands alone. */
 const NO_RULES: EventsRules = {
@@ -126,18 +141,43 @@ const buildContexts = (
               catch: asError,
           })
 
-/** The requested rows whose person has loaded; a row without a person has nothing to wait for. */
+/**
+ * The distinct ids in chunks of 100, in first-seen order: an id keeps its chunk while it is asked for, and new ids fill
+ * the last chunk, then new ones. A chunk whose ids did not change keeps its query key, so its people are not fetched again.
+ */
+const chunksOf = (
+    previous: ReadonlyArray<ReadonlyArray<string>>,
+    ids: ReadonlyArray<string>
+): string[][] => {
+    const wanted = new Set(ids)
+    const chunks = previous
+        .map((chunk) => chunk.filter((id) => wanted.has(id)))
+        .filter((chunk) => chunk.length > 0)
+    const placed = new Set(chunks.flat())
+    for (const id of wanted) {
+        if (placed.has(id)) {
+            continue
+        }
+        const last = chunks.at(-1)
+        if (last === undefined || last.length >= ENROLLMENT_BATCH_SIZE) {
+            chunks.push([id])
+        } else {
+            last.push(id)
+        }
+    }
+    return chunks
+}
+
+/** The requested rows whose person a loaded chunk answered for; a row without a person has nothing to wait for. */
 const withLoadedPerson = (
     rows: ReadonlyArray<EventsRuleRow>,
-    persons: ReadonlyMap<string, RuleEnrollmentData>,
+    answered: ReadonlySet<string>,
     rowIds: ReadonlyArray<string>
 ): string[] => {
-    const personOf = new Map(
-        rows.map((row) => [row.event.id, row.enrollmentId])
-    )
+    const { byId } = indexRows(rows)
     return rowIds.filter((rowId) => {
-        const enrollmentId = personOf.get(rowId)
-        return enrollmentId === undefined || persons.has(enrollmentId)
+        const enrollmentId = byId.get(rowId)?.enrollmentId
+        return enrollmentId === undefined || answered.has(enrollmentId)
     })
 }
 
@@ -164,8 +204,8 @@ const allOptionGroups = (
 /**
  * Program rules for a grid of events: any number of rows across stages, evaluated on the grid's live values. Loads the
  * rule metadata and, for a program with rules, the engine, a rule context for each stage and, for a tracker program
- * whose rules read the enrollment or other events, every person in one batched request. Shares the metadata query and
- * the engine with the other hooks.
+ * whose rules read the enrollment or other events, the people in batched requests of 100. Shares the metadata query
+ * and the engine with the other hooks.
  */
 export const useEventsRules = ({
     programId,
@@ -231,33 +271,63 @@ export const useEventsRules = ({
         requirements.some((needs) => needs.enrollment || needs.otherEvents)
     const personIds = [...new Set(enrollmentIds)]
     const fetchPersons = needsPersons && personIds.length > 0
-    const personsQuery = useQuery({
-        queryKey: programRulesQueryKeys.enrollments(personIds, withEvents),
-        // Cached as entries: a persisted query cache restores a Map as an empty object.
-        queryFn: async ({ signal }) => [
-            ...(await fetchRuleEnrollments(
-                client,
-                programId,
-                personIds,
-                withEvents,
-                signal
-            )),
-        ],
-        enabled: enabled && fetchPersons,
-        staleTime: 60_000,
-        retry: shouldRetryProgramRulesRequest,
-        // The people already loaded stay in use while a new one is fetched.
-        placeholderData: keepPreviousData,
+    // Rewritten on every render to the same chunks for the same ids, so a render React throws away does no harm.
+    const chunkMemory = useRef<string[][]>([])
+    const chunks = chunksOf(chunkMemory.current, personIds)
+    chunkMemory.current = chunks
+    // Each chunk's last data: a chunk that gains ids keeps its people in use while it loads again.
+    const lastData = useRef<ReadonlyArray<ChunkPersons | undefined>>([])
+    const personChunks = useQueries({
+        queries: chunks.map((ids, index) => ({
+            queryKey: programRulesQueryKeys.enrollments(ids, withEvents),
+            queryFn: async ({ signal }): Promise<ChunkPersons> => {
+                const found = await fetchRuleEnrollments(
+                    client,
+                    programId,
+                    ids,
+                    withEvents,
+                    signal
+                )
+                return ids.map((id) => [id, found.get(id) ?? null])
+            },
+            enabled: enabled && fetchPersons,
+            staleTime: 60_000,
+            retry: shouldRetryProgramRulesRequest,
+            placeholderData: () => lastData.current[index],
+        })),
+        // Shared structurally: `loaded` stays the same list until a chunk's data changes.
+        combine: (results) => ({
+            data: results.map(({ data }) => data),
+            loaded: results.flatMap(({ data }) =>
+                data === undefined ? [] : [data]
+            ),
+            error: results
+                .map((result) => neededFailure(result, true))
+                .find((failure) => failure !== undefined),
+        }),
     })
-    const loadingMorePersons = fetchPersons && personsQuery.isPlaceholderData
-    const fetchedPersons = personsQuery.data
-    const persons = useMemo(
-        () =>
-            fetchPersons
-                ? fetchedPersons && new Map(fetchedPersons)
-                : NO_PERSONS,
-        [fetchPersons, fetchedPersons]
-    )
+    useEffect(() => {
+        lastData.current = personChunks.data
+    }, [personChunks.data])
+    const loadedChunks = personChunks.loaded
+    const persons = useMemo((): LoadedPersons | undefined => {
+        if (!fetchPersons) {
+            return NO_PERSONS
+        }
+        if (loadedChunks.length === 0) {
+            return undefined
+        }
+        const entries = loadedChunks.flat()
+        return {
+            persons: new Map(
+                entries.flatMap(
+                    ([id, person]): Array<[string, RuleEnrollmentData]> =>
+                        person === null ? [] : [[id, person]]
+                )
+            ),
+            answered: new Set(entries.map(([id]) => id)),
+        }
+    }, [fetchPersons, loadedChunks])
 
     const rules = useMemo((): EventsRules | undefined => {
         if (metadata !== undefined && metadata.rules.length === 0) {
@@ -273,13 +343,19 @@ export const useEventsRules = ({
         }
         const crossFields = crossEventFields(metadata)
         return {
+            // A row whose person is still loading waits; one whose person the server did not return fails.
             evaluate: (rows, rowIds) =>
                 evaluateEventsRules(
                     engine,
                     contexts,
-                    { rows, persons, tracker },
-                    loadingMorePersons
-                        ? withLoadedPerson(rows, persons, rowIds)
+                    {
+                        rows,
+                        persons: persons.persons,
+                        tracker,
+                        personsLoaded: needsPersons,
+                    },
+                    needsPersons
+                        ? withLoadedPerson(rows, persons.answered, rowIds)
                         : rowIds
                 ),
             // An event program's events share one hidden enrollment and must never couple.
@@ -290,7 +366,7 @@ export const useEventsRules = ({
             invalidRules: distinctInvalidRules(contexts.values()),
             optionGroupOptions: allOptionGroups(contexts.values()),
         }
-    }, [engine, metadata, contexts, persons, tracker, loadingMorePersons])
+    }, [engine, metadata, contexts, persons, tracker, needsPersons])
 
     // A query only fails the hook while it is needed and has nothing to show:
     // a failed background refetch keeps the last good data, and so do we.
@@ -299,7 +375,7 @@ export const useEventsRules = ({
         neededFailure(metadataQuery, true) ??
         neededFailure(groupsQuery, groups.length > 0) ??
         (built?.isErr() ? built.error : undefined) ??
-        neededFailure(personsQuery, fetchPersons)
+        (fetchPersons ? personChunks.error : undefined)
 
     const progress = rules === undefined ? 'loading' : 'ready'
     return {

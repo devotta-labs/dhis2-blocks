@@ -12,8 +12,6 @@ import type { LoadedForm } from '../sources/types'
 import type { EffectsState } from './context'
 import type { OpenForm } from './openForm'
 
-export const rowIdOf = (key: string) => key.slice(0, key.indexOf('.'))
-
 /** The form's summary, from its cells, their effects and its tables. */
 export const summaryOf = ({
     store,

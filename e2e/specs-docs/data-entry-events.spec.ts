@@ -47,8 +47,6 @@ const DIAGNOSIS = 'K6uUAvq500H'
 const LMP = 'w4ky6EkVahL'
 const GESTATIONAL_AGE = 'roKuXYfw1BW'
 const CHRONIC_CONDITIONS = 'de0FEHSIoxh'
-const SMOKING = 'sWoqcoByYmD'
-const SMOKING_CESSATION = 'Ok9OQpitjQr'
 // The fields "Hide all fields for chronic conitions unless the w" hides.
 const CHRONIC_FOLLOW_UPS = [
     'UQ2Zo8CruPB',
@@ -308,35 +306,21 @@ test('register: an LMP after the visit is an error described on the cell', async
     await settled(page)
 })
 
-test('register: a person whose enrollment DHIS2 leaves out is evaluated without it, with no error', async ({
+test('register: a person whose enrollment DHIS2 leaves out has no rules run, and her row says why', async ({
     page,
     request,
 }) => {
-    // A woman whose newest smoking answer differs from her first visit's: her other events decide the rule. With no
-    // chronic conditions, which only her first visit asks, its follow-ups are hidden either way: her row was evaluated.
-    const { visit, events } = found(
+    // With no chronic conditions, the follow-ups are hidden while her rules run.
+    const { visit } = found(
         (await registerVisits(request)).find(
-            ({ visit: own, events: all }) =>
-                (valuesOf(own).get(SMOKING) === 'true') !==
-                    (newestValue(all, SMOKING) === 'true') &&
-                valuesOf(own).get(CHRONIC_CONDITIONS) !== 'true'
+            ({ visit: own }) => valuesOf(own).get(CHRONIC_CONDITIONS) !== 'true'
         ),
-        'woman whose smoking answer changed'
+        'woman without chronic conditions'
     )
-    const cessation = cell(page, visit.event, SMOKING_CESSATION)
-    const hiddenUnless = async (smokes: boolean) => {
-        await expect(
-            cell(page, visit.event, CHRONIC_FOLLOW_UPS[0])
-        ).toHaveAccessibleDescription(HIDDEN)
-        await (smokes
-            ? expect(cessation).not.toHaveAccessibleDescription(HIDDEN)
-            : expect(cessation).toHaveAccessibleDescription(
-                  /Hidden by rule: Hide smoking cessation if not smoking/
-              ))
-    }
+    const followUp = cell(page, visit.event, CHRONIC_FOLLOW_UPS[0])
 
     await openGrid(page, REGISTER)
-    await hiddenUnless(newestValue(events, SMOKING) === 'true')
+    await expect(followUp).toHaveAccessibleDescription(HIDDEN)
 
     // As for a woman the user may not read: DHIS2 leaves her out of the batch, no sharing is changed.
     await page.route('**/tracker/enrollments?*', async (route) => {
@@ -361,11 +345,12 @@ test('register: a person whose enrollment DHIS2 leaves out is evaluated without 
     await page.reload()
     await gridReady(page)
     expect((await batched).ok()).toBe(true)
-    await hiddenUnless(valuesOf(visit).get(SMOKING) === 'true')
-    // Her row says nothing: no message of its own, such as its rules failing, and no cell in error.
-    const herRow = page.getByRole('row').filter({ has: cessation })
-    await expect(herRow.getByRole('listitem')).toHaveCount(0)
-    await expect(herRow.locator('[aria-invalid="true"]')).toHaveCount(0)
+    // Her rules do not run without her enrollment, so nothing they decide is applied from missing data.
+    const herRow = page.getByRole('row').filter({ has: followUp })
+    await expect(herRow.getByRole('listitem')).toHaveText([
+        /The enrollment of this event could not be read/,
+    ])
+    await expect(followUp).not.toHaveAccessibleDescription(HIDDEN)
 })
 
 test('one woman: chronic conditions Yes and No show and hide the follow-ups in all her rows', async ({

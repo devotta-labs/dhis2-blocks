@@ -2,6 +2,7 @@ import inpatientEvents from './__tests__/fixtures/inpatient-events.json'
 import inpatientProgram from './__tests__/fixtures/inpatient-program.json'
 import meAdmin from './__tests__/fixtures/me-admin.json'
 import orgUnitNames from './__tests__/fixtures/org-unit-names.json'
+import systemInfo from './__tests__/fixtures/system-info.json'
 import { cellKey } from '../model/types'
 import { eventSource } from './eventSource'
 import type { DataEngine } from './types'
@@ -77,7 +78,7 @@ const engineFor = <E>(
             }
             requests.push([request, options])
             return request.orgUnits === undefined
-                ? { program: inpatientProgram, events, me: meAdmin }
+                ? { program: inpatientProgram, events, me: meAdmin, systemInfo }
                 : names(request)
         },
     } as DataEngine

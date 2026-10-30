@@ -6,6 +6,8 @@ export type CellKey = `${string}.${string}`
 export const cellKey = (rowId: string, columnId: string): CellKey =>
     `${rowId}.${columnId}`
 
+export const rowIdOf = (key: string) => key.slice(0, key.indexOf('.'))
+
 export type EventStatus =
     | 'ACTIVE'
     | 'COMPLETED'

@@ -74,14 +74,13 @@ export const popupEditors: PopupEditors = {
     IMAGE: FileEditor,
 }
 
-/** Value types whose typed text parses, so paste can fill them. */
+/** Value types whose typed text parses, so paste can fill them. A username is checked against DHIS2, which paste cannot do. */
 export const pasteablePopupTypes: ReadonlySet<PopupValueType> = new Set([
     'LONG_TEXT',
     'MULTI_TEXT',
     'AGE',
     'COORDINATE',
     'ORGANISATION_UNIT',
-    'USERNAME',
 ])
 
 /** The editor for a field's value type, which can be any DHIS2 value type. */

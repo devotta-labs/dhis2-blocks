@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { Result } from 'better-result'
 import { evaluateEventRules } from './evaluate'
 import type {
@@ -26,6 +27,8 @@ export interface EventsRuleInput {
     persons: ReadonlyMap<string, RuleEnrollmentData>
     /** Whether a row sees its person's other events. `false` for an event program. */
     tracker: boolean
+    /** Whether `persons` were fetched for the rows: then a tracker row whose person is missing fails instead of running. */
+    personsLoaded: boolean
 }
 
 /** What `evaluateEventsRules` returns: each evaluated row is in exactly one of the maps. */
@@ -96,9 +99,19 @@ const otherEventsOf = (
     ]
 }
 
-const rowsByPerson = (
-    rows: ReadonlyArray<EventsRuleRow>
-): Map<string, EventsRuleRow[]> => {
+interface RowIndex {
+    byId: Map<string, EventsRuleRow>
+    byPerson: Map<string, EventsRuleRow[]>
+}
+
+const rowIndexes = new WeakMap<ReadonlyArray<EventsRuleRow>, RowIndex>()
+
+/** The rows by id and by person, built once per array: a grid evaluates one row at a time over the same rows. */
+export const indexRows = (rows: ReadonlyArray<EventsRuleRow>): RowIndex => {
+    const cached = rowIndexes.get(rows)
+    if (cached !== undefined) {
+        return cached
+    }
     const byPerson = new Map<string, EventsRuleRow[]>()
     for (const row of rows) {
         if (row.enrollmentId !== undefined) {
@@ -107,13 +120,19 @@ const rowsByPerson = (
             byPerson.set(row.enrollmentId, same)
         }
     }
-    return byPerson
+    const index = {
+        byId: new Map(rows.map((row) => [row.event.id, row])),
+        byPerson,
+    }
+    rowIndexes.set(rows, index)
+    return index
 }
 
 /**
- * Runs the rules of the requested rows against the grid's live values, each row on its own: a row the engine fails on
- * is in `failures`, and the other rows still get their effects. `contexts` is keyed by program stage id; a row of a
- * stage without a context, or an id that is not in `input.rows`, is in neither map. Pure.
+ * Runs the rules of the requested rows against the grid's live values, each row on its own: a row the engine fails on,
+ * or a tracker row whose fetched person is missing, is in `failures`, and the other rows still get their effects.
+ * `contexts` is keyed by program stage id; a row of a stage without a context, or an id that is not in `input.rows`, is
+ * in neither map. `input.rows` is indexed once per array: pass a new array when the rows change.
  */
 export const evaluateEventsRules = (
     engine: RuleEngineModule,
@@ -121,10 +140,7 @@ export const evaluateEventsRules = (
     input: EventsRuleInput,
     rowIds: ReadonlyArray<string>
 ): EventsRulesEvaluation => {
-    const rows = new Map(input.rows.map((row) => [row.event.id, row]))
-    const rowsOfPerson = input.tracker
-        ? rowsByPerson(input.rows)
-        : new Map<string, EventsRuleRow[]>()
+    const { byId: rows, byPerson: rowsOfPerson } = indexRows(input.rows)
     const effects = new Map<string, RuleEffects>()
     const failures = new Map<string, Error>()
     for (const rowId of rowIds) {
@@ -141,6 +157,21 @@ export const evaluateEventsRules = (
             enrollmentId === undefined
                 ? undefined
                 : input.persons.get(enrollmentId)
+        // Without its person an ASSIGN that reads attributes assigns nothing, which would clear the row's values.
+        if (
+            input.tracker &&
+            input.personsLoaded &&
+            enrollmentId !== undefined &&
+            person === undefined
+        ) {
+            failures.set(
+                rowId,
+                new Error(
+                    i18n.t('The enrollment of this event could not be read')
+                )
+            )
+            continue
+        }
         const siblings =
             enrollmentId === undefined
                 ? []

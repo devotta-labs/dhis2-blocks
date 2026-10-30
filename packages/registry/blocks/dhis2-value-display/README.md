@@ -67,6 +67,19 @@ export const StoredAt = ({
 }
 ```
 
+## API
+
+```ts
+formatDhis2Value(value, meta, options): string // a stored value as shown for reading
+formatCalendarDate(isoDay, calendar, locale?): string // a stored day in the system calendar
+storedDay(value): string | undefined // the YYYY-MM-DD prefix as stored
+storedTime(value): string | undefined // the HH:mm of a stored date-time
+parseDhis2Calendar(value): Dhis2Calendar // systemInfo.calendar; unknown is gregorian
+toMultiCalendarIdentifier(calendar): MultiCalendarIdentifier // the name `@dhis2/multi-calendar-dates` knows the calendar by
+isoFromEthiopian({ year, month, day }): string // an Ethiopian date as the ISO YYYY-MM-DD: 2019-02-04 is "2026-10-14"
+isoFromCoptic({ year, month, day }): string // a Coptic date as the ISO YYYY-MM-DD
+```
+
 ## Boundaries
 
 - The day is read from the stored text, never through the viewer's time zone, and converted into the calendar you pass.

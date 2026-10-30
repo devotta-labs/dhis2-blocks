@@ -69,7 +69,13 @@ const row = (eventId: string, enrollmentId: string): EventsRuleRow => ({
 const input = (
     rows: EventsRuleRow[],
     overrides: Partial<EventsRuleInput> = {}
-): EventsRuleInput => ({ rows, persons, tracker: true, ...overrides })
+): EventsRuleInput => ({
+    rows,
+    persons,
+    tracker: true,
+    personsLoaded: true,
+    ...overrides,
+})
 
 const hiddenFollowUps = (
     rows: EventsRuleRow[],
@@ -198,10 +204,44 @@ describe('evaluateEventsRules', () => {
         ).toEqual(RMNCH.chronicFollowUps)
     })
 
-    it('evaluates a row whose person did not load', () => {
+    it('fails a row whose person the server did not return', () => {
+        const { effects, failures } = evaluateEventsRules(
+            engine,
+            contexts,
+            input([fixtureRow(FIRST_VISIT), fixtureRow(LATER_VISIT)], {
+                persons: new Map(),
+            }),
+            [LATER_VISIT]
+        )
+        expect(effects.size).toBe(0)
+        expect(failures.get(LATER_VISIT)?.message).toBe(
+            'The enrollment of this event could not be read'
+        )
+    })
+
+    it('evaluates a row without its person when no persons were fetched', () => {
         expect(
-            hiddenFollowUps([fixtureRow(LATER_VISIT)], { persons: new Map() })
+            hiddenFollowUps([fixtureRow(LATER_VISIT)], {
+                persons: new Map(),
+                personsLoaded: false,
+            })
         ).toEqual(RMNCH.chronicFollowUps)
+    })
+
+    it('indexes a rows array once, however many calls read it', () => {
+        const rows = [fixtureRow(FIRST_VISIT)]
+        const evaluated = () =>
+            evaluateEventsRules(engine, contexts, input(rows), [LATER_VISIT])
+                .effects.size
+        expect(evaluated()).toBe(0)
+        // A row pushed into the same array is not in its index: callers pass a new array when the rows change.
+        rows.push(fixtureRow(LATER_VISIT))
+        expect(evaluated()).toBe(0)
+        expect(
+            evaluateEventsRules(engine, contexts, input([...rows]), [
+                LATER_VISIT,
+            ]).effects.size
+        ).toBe(1)
     })
 
     it('returns no effects for a stage without rules', () => {

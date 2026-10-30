@@ -4,6 +4,8 @@ import { page, userEvent } from 'vitest/browser'
 import { DataGrid } from '../grid/DataGrid'
 import { control } from '../grid/__tests__/gridRig'
 import { cellKey } from '../model/types'
+import { outboxName } from '../outbox/outbox'
+import type { DataEntrySource } from '../sources/types'
 import { DataEntrySummary } from '../summary/DataEntrySummary'
 import {
     catchDownloads,
@@ -18,6 +20,8 @@ import {
     mount,
     notesOf,
     records,
+    USER,
+    visit,
     visitForm,
     withOutbox,
 } from './__tests__/rig'
@@ -122,6 +126,40 @@ test('the form locks too when the account, asked again, names someone else', asy
     await client.refetchQueries()
     await later(200)
     expect(notesOf(CHILDREN)).toContain(LOCKED)
+})
+
+test('a status waiting for the sync lock when someone else signs in is refused as signed in as someone else', async () => {
+    let user = USER
+    const memory = memorySource(
+        visitForm({
+            rows: [visit('r1', 'Visit 1'), visit('r2', 'Visit 2', 'COMPLETED')],
+            canReopen: ['r2'],
+        })
+    )
+    const { server, view } = await mount(memory.source, {
+        signedIn: () => user,
+    })
+    // Another tab's loop, sending.
+    const holder = Promise.withResolvers<void>()
+    await new Promise<void>((granted) => {
+        void navigator.locks.request(
+            `dhis2-data-entry-sync:${outboxName(server, USER)}`,
+            () => {
+                granted()
+                return holder.promise
+            }
+        )
+    })
+    const reopening = view().reopen('r2')
+    await later(300)
+    // Someone else signs in; the next request that asks who it is stops this form's loop.
+    user = 'userB'
+    expect(await view().complete('r1')).toMatchObject([{ reason: LOCKED }])
+    expect(await reopening).toMatchObject([
+        { key: cellKey('r2', 'status'), result: 'failed', reason: LOCKED },
+    ])
+    holder.resolve()
+    expect(memory.statuses).toEqual([])
 })
 
 test('a failure asking for the account again leaves the form as it was', async () => {
@@ -291,6 +329,111 @@ test('outcomes another tab’s loop received reach this tab’s cells', async ()
         .poll(() => second.context().store.getState().cells[CHILDREN])
         .toMatchObject({ value: '5', base: '5', sync: 'saved' })
     expect(sender.sent.flat().map(({ key }) => key)).toContain(CHILDREN)
+})
+
+const refusing = (source: DataEntrySource): DataEntrySource => ({
+    ...source,
+    save: async (_engine, sent) =>
+        sent.map(({ sourceKey, key }) => ({
+            sourceKey,
+            key,
+            result: 'failed',
+            reason: 'Too high',
+        })),
+})
+
+test.each([
+    [
+        'saved',
+        (source: DataEntrySource) => source,
+        { value: '2', base: '2', sync: 'saved' },
+        { unsent: 0, failed: 0 },
+    ],
+    [
+        'refused',
+        refusing,
+        { value: '2', base: '0', sync: 'failed', reason: 'Too high' },
+        { unsent: 0, failed: 1 },
+    ],
+])(
+    'a cell another tab changed later shows that tab’s value as %s',
+    async (_, sourceOf, cell, summary) => {
+        const server = freshServer()
+        const form = () => visitForm({ values: [[CHILDREN, '0']] })
+        const offline = memorySource(form())
+        offline.fail()
+        const here = await mount(offline.source, { server, children: null })
+        const there = await mount(sourceOf(memorySource(form()).source), {
+            server,
+            children: null,
+        })
+        here.context().store.getState().commit(CHILDREN, '1')
+        await expect
+            .poll(() => records(server, KEY))
+            .toMatchObject([{ value: '1' }])
+        // The newer change replaces this tab's in the outbox; the other tab sends it.
+        there.context().store.getState().commit(CHILDREN, '2')
+        await expect
+            .poll(() => here.context().store.getState().cells[CHILDREN])
+            .toMatchObject(cell)
+        expect(here.view().summary).toMatchObject(summary)
+    }
+)
+
+test('a draft held here survives another tab’s saved value, which is under it', async () => {
+    const server = freshServer()
+    const form = () => visitForm({ values: [[CHILDREN, '0']] })
+    const here = await mount(memorySource(form()).source, {
+        server,
+        children: null,
+    })
+    const there = await mount(memorySource(form()).source, {
+        server,
+        children: null,
+    })
+    // Not a whole number: kept here as a draft with its error, and nothing is sent.
+    here.context().store.getState().commit(CHILDREN, 'abc')
+    const held = here.context().store.getState().cells[CHILDREN]
+    expect(held).toMatchObject({ draft: 'abc', error: expect.any(String) })
+    there.context().store.getState().commit(CHILDREN, '2')
+    await expect
+        .poll(() => here.context().store.getState().cells[CHILDREN])
+        .toMatchObject({
+            value: '2',
+            base: '2',
+            sync: 'saved',
+            draft: 'abc',
+            error: held?.error,
+        })
+})
+
+/** Another tab opens a newer version of the outbox: this page's connection closes itself. */
+const upgradeOutbox = (server: string) =>
+    new Promise<void>((resolve, reject) => {
+        const opening = indexedDB.open(outboxName(server, USER), 2)
+        opening.onsuccess = () => {
+            opening.result.close()
+            resolve()
+        }
+        opening.onerror = () => reject(opening.error)
+    })
+
+test('the download still holds what only this page has once its outbox has closed', async () => {
+    const { server, context, view } = await mount(
+        memorySource(visitForm()).source
+    )
+    await upgradeOutbox(server)
+    control(CHILDREN).focus()
+    await userEvent.keyboard('5{Enter}')
+    await expect
+        .poll(() => context().store.getState().cells[CHILDREN]?.sync)
+        .toBe('failed')
+    const files = catchDownloads()
+    view().downloadUnsent()
+    await expect.poll(() => files).toHaveLength(1)
+    expect(await files[0].text()).toBe(
+        'form,row,field,value,state,reason\nVisits,Visit 1,Children,5,failed,This device could not store the change\n'
+    )
 })
 
 test('the unsent changes download as UTF-8 that Excel reads', async () => {

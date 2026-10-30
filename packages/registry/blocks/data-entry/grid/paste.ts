@@ -41,6 +41,23 @@ export const isBlock = (text: string): boolean => {
 }
 
 /**
+ * What a paste lays out, from `text`. A note pasted into a long-text cell stays in it, its line breaks as \n, unless
+ * it holds a tab; everything else is parsed when it is a block or exactly one quoted field with each " doubled (a
+ * spreadsheet's way of wrapping a cell), and otherwise pasted whole, so `"Hi" she said` keeps its quotes.
+ */
+export const pastedBlock = (text: string, longText: boolean): string[][] => {
+    if (text === '') {
+        return []
+    }
+    const note = text.replace(/\r?\n$/, '')
+    const quoted = /^"(?:[^"]|"")*"$/.test(note)
+    if (longText && !text.includes('\t') && !quoted) {
+        return [[note.replace(/\r\n/g, '\n')]]
+    }
+    return isBlock(text) || quoted ? parseBlock(text) : [[text]]
+}
+
+/**
  * The cells a block lands on, laid out from `from`: read-only and closed cells are skipped without shifting the
  * rest, and what falls past the table's last row or column is dropped, never spilled into the next table.
  */

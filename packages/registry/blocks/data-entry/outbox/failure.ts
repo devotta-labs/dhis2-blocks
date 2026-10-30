@@ -42,7 +42,10 @@ export const classify = (
     error: Pick<FetchError, 'type' | 'message' | 'details'>
 ): Failure => {
     const body = bodySchema.parse(error.details)
-    const status = body.httpStatusCode
+    // A page that is not JSON (an nginx 413, say) has its status only at the end of the message.
+    const [, code] = /\((\d{3})\)$/.exec(error.message) ?? []
+    const status =
+        body.httpStatusCode ?? (code === undefined ? undefined : Number(code))
     const reason = body.message ?? error.message
     if (error.type === 'access') {
         // A 401 with no JSON message arrives as 'Unauthorized', a 403 as 'Forbidden'.

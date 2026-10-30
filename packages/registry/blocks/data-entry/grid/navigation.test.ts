@@ -126,22 +126,8 @@ test('Enter at the end of the last table does nothing', () => {
     expect(nextCell(grid, at(0, 1, 0), 'enter')).toBeUndefined()
 })
 
-test('Tab moves to the next open cell in the row', () => {
-    const grid = gridOf({ rows: 2, columns: 4, closed: ['0,1'] })
-    expect(nextCell(grid, at(0, 0, 0), 'tab')).toEqual(at(0, 0, 2))
-})
-
-test('Tab at the end of a row wraps to the first open cell of the next row', () => {
-    const grid = gridOf({ rows: 2, columns: 3, closed: ['1,0'] })
-    expect(nextCell(grid, at(0, 0, 2), 'tab')).toEqual(at(0, 1, 1))
-})
-
-test('Tab at the end of a table continues in the next one', () => {
-    const grid = gridOf({ rows: 1, columns: 2 }, { rows: 1, columns: 2 })
-    expect(nextCell(grid, at(0, 0, 1), 'tab')).toEqual(at(1, 0, 0))
-})
-
-test('Tab at the end of the last table does nothing', () => {
-    const grid = gridOf({ rows: 1, columns: 2 })
-    expect(nextCell(grid, at(0, 0, 1), 'tab')).toBeUndefined()
+test('Tab is left to the browser: nextCell takes no Tab key', () => {
+    const grid = gridOf({ rows: 1, columns: 3 })
+    // @ts-expect-error The grid only notes where a run of Tabs began; the browser moves focus.
+    expect(nextCell(grid, at(0, 0, 0), 'tab')).toBeUndefined()
 })

@@ -115,6 +115,7 @@ const dialog = page.getByRole('dialog', { name: 'Edit Age (years)' })
 const button = (name: string) => dialog.getByRole('button', { name })
 const chosen = new File(['x'], NAME, { type: 'text/plain' })
 const chosenLater = new File(['y'], LATER_NAME, { type: 'text/plain' })
+const chosenImage = new File(['x'], 'scan.png', { type: 'image/png' })
 
 /** The editor's file input, which its "Choose" button opens. */
 const picker = () => {
@@ -228,6 +229,37 @@ test('choosing a file uploads it and saves its id', async () => {
     expect(reads).toEqual([])
     // The person saw it finish in the editor: nothing more is said.
     expect(announced).toEqual([`Uploading ${NAME}`])
+})
+
+test('an image cell does not upload a file that is not an image, and says so at once as it does a failed upload', async () => {
+    const { cell, stored, enqueued, uploads, announced, hold } =
+        await mount(IMAGE)
+    await open(cell)
+    await userEvent.upload(picker(), chosen)
+    await expect.element(dialog.getByText('Choose an image file')).toBeVisible()
+    expect(announced).toEqual(['Choose an image file'])
+    expect(uploads).toEqual([])
+    expect(stored()?.value).toBeUndefined()
+    expect(enqueued).toEqual([])
+
+    // An image goes up, and the refusal goes with the choice that caused it. Some systems give a HEIC image no type;
+    // set by hand, as an upload through the test driver would type it by its name.
+    const untyped = new DataTransfer()
+    untyped.items.add(new File(['x'], 'photo.heic'))
+    Object.assign(picker(), { files: untyped.files })
+    picker().dispatchEvent(new Event('change', { bubbles: true }))
+    await expect.poll(() => stored()?.value).toBe(UPLOADED)
+    expect(uploads).toHaveLength(1)
+
+    // Chosen while an image uploads, a file that is not one is refused in place of "Uploading".
+    const release = hold()
+    await open(cell)
+    await userEvent.upload(picker(), chosenImage)
+    await expect.element(dialog.getByText('Uploading scan.png')).toBeVisible()
+    await userEvent.upload(picker(), chosen)
+    await expect.element(dialog.getByText('Choose an image file')).toBeVisible()
+    release()
+    await expect.poll(() => uploads).toHaveLength(2)
 })
 
 test('offline, the editor says "Connect to the internet to upload files" and uploads nothing', async () => {
@@ -454,7 +486,7 @@ test('a stored image shows a preview from the event\'s image endpoint; a file sh
     await expect.element(button('Choose an image')).toBeVisible()
     expect(picker().getAttribute('accept')).toBe('image/*')
     // A new image DHIS2 does not hold for the event yet shows its name.
-    await userEvent.upload(picker(), chosen)
+    await userEvent.upload(picker(), chosenImage)
     await expect.poll(() => image.stored()?.value).toBe(UPLOADED)
     expect(thumbnail(image.cell)).toBeNull()
     await open(image.cell)

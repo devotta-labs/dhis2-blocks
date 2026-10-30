@@ -5,6 +5,7 @@ import inpatientProgram from './__tests__/fixtures/inpatient-program.json'
 import meAdmin from './__tests__/fixtures/me-admin.json'
 import rmnchEvents from './__tests__/fixtures/rmnch-person-events.json'
 import rmnchProgram from './__tests__/fixtures/rmnch-program.json'
+import systemInfo from './__tests__/fixtures/system-info.json'
 import { EVENT_DATE_COLUMN } from './eventSchemas'
 import { eventSource } from './eventSource'
 import type { EventSourceOptions } from './eventSource'
@@ -41,7 +42,7 @@ const engineFor = <P, E, M>(program: P, events: E, me: M) => {
     const engine = {
         query: async (request: Request) => {
             requests.push(request)
-            return { program, events, me }
+            return { program, events, me, systemInfo }
         },
     } as DataEngine
     return { engine, requests }

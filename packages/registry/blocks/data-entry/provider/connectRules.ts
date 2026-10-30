@@ -14,12 +14,11 @@ import {
 } from '../logic/effects'
 import type { CellEffects } from '../logic/effects'
 import { rowRuleOutcome, ruleRowsOf, stageFields } from '../logic/ruleEffects'
-import { cellKey } from '../model/types'
+import { cellKey, rowIdOf } from '../model/types'
 import type { CellKey, CellState, GridRow, GridTable } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
 import { afterPaint } from './afterPaint'
-import { rowIdOf } from './formRows'
 import type { OpenForm } from './openForm'
 
 // Loading evaluates rows for about this long at once (a row at least), then for about a frame's time whenever the

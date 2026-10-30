@@ -13,6 +13,7 @@ import {
 } from '@/components/relationship-viewer'
 import { CustomDataProvider } from '@dhis2/app-runtime'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { PanelRightCloseIcon, PanelRightOpenIcon } from 'lucide-react'
 import { useMemo, useState, type ComponentProps, type ReactNode } from 'react'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
@@ -61,6 +62,7 @@ interface Saved {
     config: LabConfig
     live: Live
     width: Width
+    panel: boolean
 }
 
 const STORAGE_KEY = 'relationship-viewer-lab'
@@ -70,6 +72,7 @@ const INITIAL: Saved = {
     config: DEFAULT_CONFIG,
     live: LIVE_PRESETS[0],
     width: 'full',
+    panel: true,
 }
 
 // shortcut: trusts whatever this browser saved earlier; Reset clears a broken save.
@@ -105,6 +108,8 @@ interface ViewerProps {
     onRecentre: (node: RelationshipNode) => void
     widthClass: string
     readouts: ReactNode
+    panel: boolean
+    onPanel: (open: boolean) => void
 }
 
 /** The block exactly as a host composes it, with every prop from the lab's controls. */
@@ -118,6 +123,8 @@ const Viewer = ({
     onRecentre,
     widthClass,
     readouts,
+    panel,
+    onPanel,
 }: ViewerProps) => {
     const statuses = useMemo(
         () => statusesFor(view.attentionRule),
@@ -173,11 +180,42 @@ const Viewer = ({
                         {parts.list && <RelationshipViewerList />}
                     </div>
                 </main>
-                <aside className="sticky top-0 flex h-screen w-80 shrink-0 flex-col gap-6 overflow-y-auto border-s border-dhis2-grey-300 p-4">
-                    <HostPanel onRecentre={onRecentre} />
-                    <StateReadout />
-                    {readouts}
-                </aside>
+                {panel ? (
+                    <aside className="sticky top-0 flex h-screen w-80 shrink-0 flex-col gap-6 overflow-y-auto border-s border-dhis2-grey-300 p-4">
+                        <button
+                            type="button"
+                            aria-expanded
+                            aria-label="Hide the side panel"
+                            title="Hide the side panel"
+                            className="self-end rounded p-1 text-dhis2-grey-700 hover:bg-dhis2-grey-100"
+                            onClick={() => onPanel(false)}
+                        >
+                            <PanelRightCloseIcon
+                                aria-hidden
+                                className="size-4"
+                            />
+                        </button>
+                        <HostPanel onRecentre={onRecentre} />
+                        <StateReadout />
+                        {readouts}
+                    </aside>
+                ) : (
+                    <aside className="sticky top-0 flex h-screen w-10 shrink-0 justify-center border-s border-dhis2-grey-300 bg-dhis2-grey-050 py-4">
+                        <button
+                            type="button"
+                            aria-expanded={false}
+                            aria-label="Show the side panel"
+                            title="Show the side panel"
+                            className="h-fit rounded p-1 text-dhis2-grey-700 hover:bg-dhis2-grey-100"
+                            onClick={() => onPanel(true)}
+                        >
+                            <PanelRightOpenIcon
+                                aria-hidden
+                                className="size-4"
+                            />
+                        </button>
+                    </aside>
+                )}
             </div>
         </RelationshipViewer>
     )
@@ -295,6 +333,8 @@ export const RelationshipLab = () => {
     )
     const viewer = {
         view: config.view,
+        panel: saved.panel,
+        onPanel: (open: boolean) => update({ panel: open }),
         selected,
         onSelected: (key: NodeKey | undefined) => {
             note(`onSelectedChange(${key ?? 'undefined'})`)

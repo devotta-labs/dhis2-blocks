@@ -20,6 +20,11 @@ export const uncontrolledProps: WorkingListCalendarProps = {
     onRecordClick: () => undefined,
 }
 
+export const labelledProps: WorkingListCalendarProps = {
+    recordLabel: (row, cellText) =>
+        `${cellText('NationalId1')} · ${row.trackedEntityId ?? row.id}`,
+}
+
 export const controlledProps: WorkingListCalendarProps = {
     selectedDay: null,
     onSelectedDayChange: () => undefined,

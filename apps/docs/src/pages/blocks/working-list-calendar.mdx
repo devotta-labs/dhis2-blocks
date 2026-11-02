@@ -62,6 +62,27 @@ between table and calendar leaves the saved view and the table's page as they
 were. If a saved filter limits the dates, the calendar opens inside them and
 stops at their edges.
 
+## Record names
+
+Each record is named by the first two columns of the list that have a value,
+in the order users see them in the table and formatted the same way: option
+names rather than codes, dates in the system calendar. The calendar's own
+date column is left out, and a record with nothing to show reads "Unnamed
+record". Changing the visible columns or their order changes the names.
+
+When your app knows its own model, pass `recordLabel`. It gets the row and
+a `cellText(fieldId)` helper that formats any field as the table does:
+
+```tsx
+<WorkingListCalendar
+    recordLabel={(row, cellText) =>
+        `${cellText(caseIdAttributeId)} · ${cellText(nameAttributeId)}`
+    }
+>
+    {/* … */}
+</WorkingListCalendar>
+```
+
 ## Which date places a record
 
 `dateField` picks the date:

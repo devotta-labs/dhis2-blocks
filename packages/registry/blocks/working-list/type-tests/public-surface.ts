@@ -30,7 +30,11 @@ import type {
     WorkingListView,
     WorkingListViewSwitcherProps,
 } from '..'
-import { WorkingList, useWorkingListDateRange } from '..'
+import {
+    WorkingList,
+    useWorkingListCellText,
+    useWorkingListDateRange,
+} from '..'
 
 export type SupportedWorkingListTypes = [
     AppliedFilter,
@@ -73,6 +77,9 @@ export const dateRangeOptions: WorkingListDateRangeOptions = {
 
 export const readDateRange = (): WorkingListDateRangeResults =>
     useWorkingListDateRange(dateRangeOptions)
+
+export const readCellText = (row: WorkingListDisplayRow): string =>
+    useWorkingListCellText()(row, 'Attribute01')
 
 export const uncontrolledRootProps: WorkingListProps = {
     children: null,

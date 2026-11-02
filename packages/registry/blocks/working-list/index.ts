@@ -28,6 +28,7 @@ export {
     useWorkingListMeta,
     useWorkingListState,
 } from './provider/WorkingListContext'
+export { useWorkingListCellText } from './provider/useWorkingListCellText'
 export { useWorkingListDateRange } from './provider/useWorkingListDateRange'
 export type {
     WorkingListDatedRecord,

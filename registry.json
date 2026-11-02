@@ -834,6 +834,11 @@
                     "target": "@components/working-list/provider/store.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/working-list/provider/useWorkingListCellText.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/useWorkingListCellText.ts"
+                },
+                {
                     "path": "packages/registry/blocks/working-list/provider/useWorkingListDateRange.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/provider/useWorkingListDateRange.ts"
@@ -1170,8 +1175,7 @@
                 "@dhis2/d2-i18n@1.2.0",
                 "@dhis2/multi-calendar-dates@3.2.1",
                 "@dhis2/ui-icons@^10.17.0",
-                "prop-types@^15.8.1",
-                "zod@^4.4.3"
+                "prop-types@^15.8.1"
             ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/alert",

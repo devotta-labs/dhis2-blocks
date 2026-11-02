@@ -101,6 +101,18 @@ export const toResultTargets = ({
     return targets
 }
 
+/** A cell as the table shows it, as plain text; an invalid value shows as sent. */
+export const cellText = (
+    row: WorkingListDisplayRow,
+    field: WorkingListField,
+    formattingContext?: CellFormattingContext
+) => {
+    const cell = row.values[field.id]
+    if (cell && !cell.valid) return cell.raw == null ? '' : String(cell.raw)
+    const display = getCellDisplayValue(cell?.value, field, formattingContext)
+    return display.kind === 'image' ? display.alt : display.text
+}
+
 interface VisibleRowsCsvOptions {
     rows: readonly WorkingListDisplayRow[]
     columns: readonly string[]
@@ -120,22 +132,14 @@ export const visibleRowsAsCsv = ({
         .map((id) => fields.get(id))
         .filter((field): field is WorkingListField => Boolean(field))
     const escape = (value: string) => `"${value.replaceAll('"', '""')}"`
-    const cellText = (row: WorkingListDisplayRow, field: WorkingListField) => {
-        const cell = row.values[field.id]
-        if (cell && !cell.valid) return cell.raw == null ? '' : String(cell.raw)
-        const display = getCellDisplayValue(
-            cell?.value,
-            field,
-            formattingContext
-        )
-        return display.kind === 'image' ? display.alt : display.text
-    }
     return [
         visibleFields
             .map((field) => escape(fieldDisplayName(field, translate)))
             .join(','),
         ...rows.map((row) =>
-            visibleFields.map((field) => escape(cellText(row, field))).join(',')
+            visibleFields
+                .map((field) => escape(cellText(row, field, formattingContext)))
+                .join(',')
         ),
     ].join('\n')
 }

@@ -11,15 +11,17 @@ import React, {
 import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import {
+    useWorkingListCellText,
     useWorkingListDateRange,
     useWorkingListMeta,
     useWorkingListState,
     type WorkingListDatedRecord,
     type WorkingListDateRangeResults,
+    type WorkingListDisplayRow,
     type WorkingListMeta,
     type WorkingListResultTarget,
 } from '@/components/working-list'
-import { recordLabel } from './recordLabel'
+import { defaultRecordLabel } from './recordLabel'
 
 const TRACKED_ENTITY_DATE_FIELDS = ['enrolledAt', 'enrollmentOccurredAt']
 const EVENT_DATE_FIELDS = ['eventOccurredAt', 'eventScheduledAt']
@@ -124,6 +126,15 @@ export type WorkingListCalendarProps = Omit<
         onRecordClick?: (target: WorkingListResultTarget) => void
         /** Most records loaded per month. Defaults to 1000. */
         limit?: number
+        /**
+         * Names a record in the grid and the day list. `cellText` formats any
+         * of the row's fields as the table shows it. Defaults to the first two
+         * visible columns that have a value, leaving out the calendar's date.
+         */
+        recordLabel?: (
+            row: WorkingListDisplayRow,
+            cellText: (fieldId: string) => string
+        ) => string
     }
 
 const resolveDateField = (
@@ -176,10 +187,10 @@ const isOutside = (day: string, bounds: { start?: string; end?: string }) =>
 
 const toCalendarRecord = (
     record: WorkingListDatedRecord,
-    labelFieldIds: readonly string[]
+    label: string
 ): WorkingListCalendarRecord => ({
     id: record.row.id,
-    label: recordLabel(record.row, labelFieldIds),
+    label: label.trim() || i18n.t('Unnamed record'),
     date: record.date,
     target: record.target,
 })
@@ -188,6 +199,7 @@ const ReadyCalendar = ({
     dateField: requestedDateField,
     onRecordClick,
     limit,
+    recordLabel,
     selectedDay: controlledSelectedDay,
     defaultSelectedDay = null,
     onSelectedDayChange,
@@ -198,7 +210,7 @@ const ReadyCalendar = ({
     const mode = useWorkingListState((state) => state.configuration.mode)
     const columns = useWorkingListState((state) => state.configuration.columns)
     const systemInfo = useWorkingListMeta((meta) => meta.systemInfo)
-    const fields = useWorkingListMeta((meta) => meta.fields)
+    const cellText = useWorkingListCellText()
     const dateField = resolveDateField(mode, requestedDateField)
     const calendar = systemInfo?.calendar ?? 'gregorian'
     const timeZone = systemInfo?.serverTimeZoneId ?? 'UTC'
@@ -257,18 +269,17 @@ const ReadyCalendar = ({
         setFilterBounds(results.filterBounds)
     }
 
-    const labelFieldIds = useMemo(
-        () =>
-            columns.filter((id) =>
-                fields.some(
-                    (field) =>
-                        field.id === id &&
-                        field.source === 'trackedEntityAttribute' &&
-                        field.valueType === 'TEXT' &&
-                        !field.unique
-                )
-            ),
-        [columns, fields]
+    const labelFor = useCallback(
+        (row: WorkingListDisplayRow) => {
+            const text = (fieldId: string) => cellText(row, fieldId)
+            return recordLabel
+                ? recordLabel(row, text)
+                : defaultRecordLabel(
+                      columns.filter((id) => id !== dateField),
+                      text
+                  )
+        },
+        [cellText, columns, dateField, recordLabel]
     )
     const records = results.status === 'ready' ? results.records : undefined
     const recordsByDay = useMemo(() => {
@@ -277,11 +288,11 @@ const ReadyCalendar = ({
             const day = byDay.get(record.date) ?? []
             // A server can send a record twice; it still sits on its day once.
             if (day.some(({ id }) => id === record.row.id)) continue
-            day.push(toCalendarRecord(record, labelFieldIds))
+            day.push(toCalendarRecord(record, labelFor(record.row)))
             byDay.set(record.date, day)
         }
         return byDay
-    }, [labelFieldIds, records])
+    }, [labelFor, records])
 
     const weeks = picker.calendarWeekDays.map((week) =>
         week.map((day) => ({
@@ -370,6 +381,7 @@ export const WorkingListCalendar = (props: WorkingListCalendarProps) => {
         dateField: _dateField,
         onRecordClick: _onRecordClick,
         limit: _limit,
+        recordLabel: _recordLabel,
         selectedDay: _selectedDay,
         defaultSelectedDay: _defaultSelectedDay,
         onSelectedDayChange: _onSelectedDayChange,

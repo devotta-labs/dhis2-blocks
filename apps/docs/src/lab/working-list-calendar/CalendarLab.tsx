@@ -303,23 +303,9 @@ export const CalendarLab = () => {
             title="Working list calendar lab"
             status={
                 mode === 'lab' ? (
-                    <>
-                        <span className="truncate">
-                            {activePreset ? (
-                                <>
-                                    {activePreset.name.toUpperCase()}{' '}
-                                    <span className="text-(--lab-ink-4)">
-                                        {activePreset.note}
-                                    </span>
-                                </>
-                            ) : (
-                                'CUSTOM'
-                            )}
-                        </span>
-                        <span className="ms-auto shrink-0 text-(--lab-ink-4)">
-                            {world.people.length} REC · {world.today}
-                        </span>
-                    </>
+                    <span className="truncate">
+                        {activePreset?.name.toUpperCase() ?? 'CUSTOM'}
+                    </span>
                 ) : (
                     <span className="truncate">
                         LIVE · {live.programId} / {live.orgUnitId}

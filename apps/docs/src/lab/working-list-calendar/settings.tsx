@@ -36,25 +36,29 @@ export const PresetControls = ({
     onPick: (preset: Preset) => void
 }) => (
     <Section title="Presets">
-        {presetGroups.map((group) => (
-            <div key={group} className="flex flex-wrap gap-1">
-                <span className="w-full text-[10px] tracking-[0.1em] text-(--lab-ink-3) uppercase">
-                    {group}
-                </span>
-                {PRESETS.filter((each) => each.group === group).map((each) => (
-                    <button
-                        key={each.name}
-                        type="button"
-                        title={each.note}
-                        aria-pressed={selected === each.name}
-                        className="tracking-normal normal-case"
-                        onClick={() => onPick(each)}
-                    >
-                        {each.name}
-                    </button>
-                ))}
-            </div>
-        ))}
+        <div className="flex flex-col gap-3">
+            {presetGroups.map((group) => (
+                <div key={group} className="flex flex-wrap gap-1">
+                    <span className="w-full text-[10px] tracking-[0.1em] text-(--lab-ink-3) uppercase">
+                        {group}
+                    </span>
+                    {PRESETS.filter((each) => each.group === group).map(
+                        (each) => (
+                            <button
+                                key={each.name}
+                                type="button"
+                                title={each.note}
+                                aria-pressed={selected === each.name}
+                                className="tracking-normal normal-case"
+                                onClick={() => onPick(each)}
+                            >
+                                {each.name}
+                            </button>
+                        )
+                    )}
+                </div>
+            ))}
+        </div>
     </Section>
 )
 

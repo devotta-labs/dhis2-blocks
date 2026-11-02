@@ -5,9 +5,9 @@
  */
 @layer base {
     .lab {
-        --lab-desk: #c3c8c4;
-        --lab-paper: #efeeea;
-        --lab-paper-inset: #e2e1dc;
+        --lab-desk: #c8cbca;
+        --lab-paper: #f2f2f0;
+        --lab-paper-inset: #e6e6e3;
         --lab-ink: #1b1b19;
         --lab-ink-2: #444441;
         --lab-ink-3: #5d5c57;
@@ -49,6 +49,12 @@
         line-height: 1.4;
         font-variant-numeric: tabular-nums;
         color: var(--lab-ink);
+    }
+
+    /* Thin scrollbars on every pane and the canvas, never inside the block. */
+    .lab-chrome,
+    .lab-chrome *,
+    .lab-graticule {
         scrollbar-color: var(--lab-ink-4) transparent;
         scrollbar-width: thin;
     }
@@ -158,7 +164,7 @@
     .lab-graticule {
         background-color: var(--lab-paper-inset);
         background-image: radial-gradient(
-            var(--lab-rule) 1px,
+            var(--lab-rule-faint) 1px,
             transparent 1.5px
         );
         background-size: 16px 16px;

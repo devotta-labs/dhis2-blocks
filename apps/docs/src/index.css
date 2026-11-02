@@ -11,12 +11,11 @@
 
 @plugin '@tailwindcss/typography';
 
-/* Keep fallback metrics for this navigation if a font misses first paint. */
 @font-face {
     font-family: Roboto;
     font-style: normal;
     font-weight: 400;
-    font-display: optional;
+    font-display: swap;
     src: url('typeface-roboto/files/roboto-latin-400.woff2') format('woff2');
 }
 
@@ -24,7 +23,7 @@
     font-family: Roboto;
     font-style: normal;
     font-weight: 500;
-    font-display: optional;
+    font-display: swap;
     src: url('typeface-roboto/files/roboto-latin-500.woff2') format('woff2');
 }
 
@@ -32,7 +31,7 @@
     font-family: Roboto;
     font-style: normal;
     font-weight: 700;
-    font-display: optional;
+    font-display: swap;
     src: url('typeface-roboto/files/roboto-latin-700.woff2') format('woff2');
 }
 
@@ -40,7 +39,7 @@
     font-family: Roboto;
     font-style: italic;
     font-weight: 400;
-    font-display: optional;
+    font-display: swap;
     src: url('typeface-roboto/files/roboto-latin-400italic.woff2')
         format('woff2');
 }
@@ -127,13 +126,6 @@ body {
         Arial,
         sans-serif;
     -webkit-font-smoothing: antialiased;
-}
-
-button,
-input,
-select,
-textarea {
-    font: inherit;
 }
 
 /* The adapter defaults to a full viewport even in plugin mode. Inline

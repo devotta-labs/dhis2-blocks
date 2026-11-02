@@ -1,13 +1,4 @@
-import { CustomDataProvider, Provider } from '@dhis2/app-runtime'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import {
-    Component,
-    useCallback,
-    useMemo,
-    useState,
-    type ComponentProps,
-    type ReactNode,
-} from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import {
     ToggleGroup,
     ToggleGroupItem,
@@ -31,13 +22,9 @@ import {
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
 import { LabLayout } from '../LabLayout'
+import { CanvasBoundary, LabServerScope } from '../LabServer'
 import { NetworkControls } from '../NetworkControls'
-import {
-    throughNetwork,
-    type LabNetwork,
-    type Log,
-    type RequestLogEntry,
-} from '../network'
+import type { LabNetwork, RequestLogEntry } from '../network'
 import { Section, Segmented } from './controls'
 import {
     LAB_ORG_UNIT,
@@ -50,7 +37,6 @@ import {
     type LabData,
     type LabServer,
     type LabView,
-    type World,
 } from './labData'
 import {
     EVENT_SAVED_VIEW,
@@ -124,99 +110,6 @@ const save = (saved: Saved) => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
     } catch {
         // Storage is a convenience; the lab works without it.
-    }
-}
-
-/** A fake DHIS2 under the blocks: the shipped request code, answered from the lab's people. */
-const LabServerScope = ({
-    config,
-    world,
-    log,
-    children,
-}: {
-    config: LabConfig
-    world: World
-    log: Log
-    children: ReactNode
-}) => {
-    const [queryClient] = useState(
-        () =>
-            new QueryClient({
-                defaultOptions: {
-                    queries: { refetchOnWindowFocus: false, retry: false },
-                },
-            })
-    )
-    const data = useMemo(() => {
-        const respond = (
-            _type: string,
-            query: LabRequest,
-            options?: { signal?: AbortSignal }
-        ) =>
-            throughNetwork(
-                config.network,
-                query,
-                () => answer(config, world, query),
-                log,
-                options?.signal
-            )
-        // SAFETY: answer() returns plain JSON shaped like DHIS2's responses.
-        return Object.fromEntries(
-            RESOURCES.map((resource) => [resource, respond])
-        ) as ComponentProps<typeof CustomDataProvider>['data']
-    }, [config, world, log])
-    return (
-        <Provider
-            config={{ baseUrl: '..', apiVersion: config.server.apiVersion }}
-            userInfo={undefined}
-            plugin={false}
-            parentAlertsAdd={undefined}
-            showAlertsInPlugin={false}
-        >
-            <CustomDataProvider data={data}>
-                <QueryClientProvider client={queryClient}>
-                    {children}
-                </QueryClientProvider>
-            </CustomDataProvider>
-        </Provider>
-    )
-}
-
-/** Keeps the lab usable when a scenario crashes the blocks, and shows why. */
-interface CanvasBoundaryState {
-    error?: Error
-}
-
-class CanvasBoundary extends Component<
-    { children: ReactNode },
-    CanvasBoundaryState
-> {
-    state: CanvasBoundaryState = {}
-
-    static getDerivedStateFromError(error: Error) {
-        return { error }
-    }
-
-    render() {
-        const { error } = this.state
-        if (!error) return this.props.children
-        return (
-            <div className="flex flex-col gap-2 p-4 text-sm" role="alert">
-                <strong className="text-dhis2-red-700">
-                    The blocks crashed: {error.message}
-                </strong>
-                <pre className="m-0 overflow-x-auto text-xs whitespace-pre-wrap text-dhis2-grey-700">
-                    {error.stack?.split('\n').slice(0, 6).join('\n')}
-                </pre>
-                <button
-                    type="button"
-                    className="self-start rounded border border-dhis2-grey-500 bg-white px-1.5 py-0.5"
-                    onClick={() => this.setState({ error: undefined })}
-                >
-                    Try again
-                </button>
-            </div>
-        )
     }
 }
 
@@ -397,6 +290,10 @@ export const CalendarLab = () => {
     )
 
     const world = useMemo(() => generateWorld(config.data), [config.data])
+    const respond = useCallback(
+        (request: LabRequest) => answer(config, world, request),
+        [config, world]
+    )
     const activePreset = PRESETS.find((each) => each.name === saved.preset)
     const widthClass =
         WIDTHS.find(([option]) => option === width)?.[2] ?? 'max-w-none'
@@ -542,8 +439,10 @@ export const CalendarLab = () => {
                     {mode === 'lab' ? (
                         <LabServerScope
                             key={run}
-                            config={config}
-                            world={world}
+                            network={config.network}
+                            apiVersion={config.server.apiVersion}
+                            resources={RESOURCES}
+                            respond={respond}
                             log={setRequests}
                         >
                             <LabComposition

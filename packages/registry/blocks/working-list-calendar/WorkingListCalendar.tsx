@@ -416,6 +416,17 @@ const DatedCalendar = (props: WorkingListCalendarProps) => {
     const dateField = resolveDateField(mode, props.dateField)
     const bounds = useWorkingListDateBounds(dateField)
     if (!bounds) return <CalendarLoading />
+    // shortcut: @dhis2/multi-calendar-dates 3.2.1 throws on Coptic dates;
+    // drop this once its date picker handles them.
+    if (bounds.calendar === 'coptic') {
+        return (
+            <p className="m-0 p-4 text-sm text-dhis2-grey-700">
+                {i18n.t(
+                    'The calendar layout does not support the Coptic calendar yet. Use the table instead.'
+                )}
+            </p>
+        )
+    }
     return <ReadyCalendar {...props} dateField={dateField} bounds={bounds} />
 }
 

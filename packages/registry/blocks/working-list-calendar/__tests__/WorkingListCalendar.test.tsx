@@ -144,6 +144,7 @@ interface HarnessOptions {
     ) => DataEngineValue | Promise<DataEngineValue>
     filters?: AppliedFilter[]
     selection?: WorkingListMeta['selection']
+    calendar?: 'gregorian' | 'coptic'
 }
 
 const renderInList = (
@@ -152,6 +153,7 @@ const renderInList = (
         respond = () => ({ trackedEntities: [] }),
         filters,
         selection = { status: 'ready', selectedSavedListId: 'SavedList01' },
+        calendar = 'gregorian',
     }: HarnessOptions = {}
 ) => {
     const requests: ResourceRequest[] = []
@@ -204,7 +206,7 @@ const renderInList = (
         serializationContext: transformers.serializationContext,
         parsingContext: transformers.parsingContext,
         calendarContext: {
-            calendar: 'gregorian',
+            calendar,
             dateFormat: 'YYYY-MM-DD',
             locale: 'en',
             timeZone: 'UTC',
@@ -370,6 +372,20 @@ describe('working list calendar in a list', () => {
             .getByRole('button', { name: 'Use the default working list' })
             .click()
         expect(actions.clearViewSelection).toHaveBeenCalled()
+    })
+
+    it('says the Coptic calendar is not supported yet', async () => {
+        const view = await renderInList(
+            <WorkingListCalendar>
+                <WorkingListCalendarGrid />
+            </WorkingListCalendar>,
+            { calendar: 'coptic' }
+        ).screen
+
+        await expect
+            .element(view.getByText(/does not support the Coptic calendar/))
+            .toBeVisible()
+        expect(view.container.querySelector('table')).toBeNull()
     })
 
     it('reports an event date on a tracked-entity list as an error', async () => {

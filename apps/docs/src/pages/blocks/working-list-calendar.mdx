@@ -221,5 +221,8 @@ const BusiestDay = () => {
   element dates have no date filter on the DHIS2 tracker API.
 - The calendar loads at most 1000 records for the weeks on screen (`limit`),
   including the neighbouring months' days, and says so when they hold more.
+- Coptic instances are not supported yet: the date picker in
+  `@dhis2/multi-calendar-dates` cannot show Coptic dates, so the calendar says
+  so and the table stays the way to see the list.
 - Months only: there is no week or day layout. The month and year selects
   jump anywhere; previous and next stop at a saved filter's dates.

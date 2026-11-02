@@ -199,6 +199,14 @@ const TrackedEntityAttributeValueSchema = z
     })
     .passthrough()
 
+export const TRACKER_ENROLLMENT_STATUSES = [
+    'ACTIVE',
+    'COMPLETED',
+    'CANCELLED',
+] as const
+
+export const TrackerEnrollmentStatusSchema = z.enum(TRACKER_ENROLLMENT_STATUSES)
+
 const TrackedEntitySchema = z
     .object({
         trackedEntity: z.string().min(1),
@@ -220,6 +228,7 @@ const TrackedEntitySchema = z
                     .object({
                         enrollment: z.string().min(1),
                         program: z.string().min(1).optional(),
+                        status: TrackerEnrollmentStatusSchema.optional(),
                         enrolledAt: z.string().optional(),
                         occurredAt: z.string().optional(),
                     })
@@ -272,14 +281,6 @@ export const TRACKER_EVENT_STATUSES = [
 ] as const
 
 export const TrackerEventStatusSchema = z.enum(TRACKER_EVENT_STATUSES)
-
-export const TRACKER_ENROLLMENT_STATUSES = [
-    'ACTIVE',
-    'COMPLETED',
-    'CANCELLED',
-] as const
-
-export const TrackerEnrollmentStatusSchema = z.enum(TRACKER_ENROLLMENT_STATUSES)
 
 const EventSchema = z
     .object({

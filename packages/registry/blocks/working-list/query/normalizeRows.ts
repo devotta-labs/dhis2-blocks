@@ -290,6 +290,7 @@ export const normalizeTrackedEntityValues = (
               )
             : undefined,
     }
+    values.enrollmentStatus = { valid: true, value: enrollment?.status }
     values.enrollmentOccurredAt = {
         valid: true,
         value: enrollment?.occurredAt

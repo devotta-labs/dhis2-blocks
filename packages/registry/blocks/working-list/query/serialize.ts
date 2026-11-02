@@ -23,7 +23,7 @@ import {
 } from '../registry/valueTypes'
 
 const TRACKED_ENTITY_LIST_FIELDS =
-    'trackedEntity,createdAt,updatedAt,inactive,attributes[attribute,value],programOwners[orgUnit,program],enrollments[enrollment,program,enrolledAt,occurredAt]'
+    'trackedEntity,createdAt,updatedAt,inactive,attributes[attribute,value],programOwners[orgUnit,program],enrollments[enrollment,program,status,enrolledAt,occurredAt]'
 
 const EVENT_LIST_FIELDS =
     'event,status,program,programStage,enrollment,trackedEntity,occurredAt,scheduledAt,createdAt,updatedAt,orgUnit,assignedUser[uid,username,firstName,surname],dataValues[dataElement,value]'

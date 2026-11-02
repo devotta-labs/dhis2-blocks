@@ -1,3 +1,4 @@
+import { useWorkingListDateBounds } from '@/components/working-list'
 import {
     useWorkingListCalendar,
     useWorkingListCalendarDay,
@@ -128,6 +129,7 @@ export const LogPanel = ({
 export const CalendarReadout = () => {
     const calendar = useWorkingListCalendar()
     const { results } = calendar
+    const bounds = useWorkingListDateBounds(calendar.dateField)
     const rows: Array<[string, string]> = [
         ['dateField', calendar.dateField],
         ['visibleMonth', String(calendar.visibleMonth)],
@@ -142,10 +144,7 @@ export const CalendarReadout = () => {
             'truncated',
             results.status === 'ready' ? String(results.truncated) : '—',
         ],
-        [
-            'filterBounds',
-            `${results.filterBounds.start ?? '…'} → ${results.filterBounds.end ?? '…'}`,
-        ],
+        ['filterBounds', `${bounds?.start ?? '…'} → ${bounds?.end ?? '…'}`],
         [
             'atFilterStart / End',
             `${calendar.atFilterStart} / ${calendar.atFilterEnd}`,

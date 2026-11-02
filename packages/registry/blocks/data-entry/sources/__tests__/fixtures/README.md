@@ -47,7 +47,7 @@ The file fixtures were captured on 2026-10-29 from the same server:
 curl -s -u admin:district -F "file=@data-entry-check.txt;type=text/plain" -F domain=DATA_VALUE "$B/fileResources" > $D/file-upload.json
 curl -s -u admin:district -F "file=@tiny.txt;type=text/plain" -F domain=NOT_A_DOMAIN "$B/fileResources" > $D/file-upload-refused.json
 curl -s -u admin:district -G "$B/fileResources/Yqp5K9rz3I2" -d fields=name > $D/file-name.json
-curl -s -u admin:district -G "$B/fileResources" --data-urlencode "filter=id:in:[Yqp5K9rz3I2,KV56VHt4vhw]" -d fields=id,name -d paging=false > $D/file-names.json
+for id in Yqp5K9rz3I2 KV56VHt4vhw; do curl -s -u admin:district -G "$B/fileResources/$id" -d fields=id,name; done | jq -s '{fileResources: .}' > $D/file-names.json
 ```
 
 `file-upload.json` is a real upload of a one-byte text file: DHIS2 answers HTTP 202 with the file resource, unassigned
@@ -60,6 +60,7 @@ upload without its file part answers an HTML page instead. `file-name.json` is t
 `/api/tracker/events/{event}/dataValues/{dataElement}/file`, and an image at `.../image` (`dimension` optional); for
 that event they answer 409 "The content is being processed and is not available yet" and 400 "File is not an image",
 since the demo database holds no file content. `/api/fileResources/{id}/data` refuses a data value's file (403).
-`file-names.json` is the request a load makes for the names of the files its values hold: with `paging=false` the
-answer has no pager. The seeded non-admin `wl_e2e_reader`, a role with no authorities, gets the same answer (HTTP 200).
+`file-names.json` combines the individual file metadata responses. A load reads each unique file by id, at most eight
+requests at a time. On DHIS2 42 the collection endpoint requires `ALL` authority and returns 403 even for the demo
+admin; the individual metadata endpoints return these names without that authority.
 The image endpoint's `dimension` is one of `SMALL`, `MEDIUM`, `LARGE` and `ORIGINAL`, in any case.

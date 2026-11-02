@@ -28,7 +28,7 @@ const Column = ({
 }) => (
     <div className="flex min-h-0 min-w-0 flex-col">
         <div className="flex items-center gap-2 px-2 pt-1.5 pb-1">
-            <span className="bg-(--lab-ink) px-1 text-[10.5px] tracking-[0.1em] text-(--lab-paper)">
+            <span className="bg-(--lab-bar) px-1 text-[10.5px] tracking-[0.1em] text-(--lab-bar-ink)">
                 {title}
             </span>
             {onClear && (

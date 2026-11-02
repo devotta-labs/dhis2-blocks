@@ -16,6 +16,29 @@
         --lab-rule-faint: rgb(27 27 23 / 0.12);
         --lab-fault: #9e2f1a;
         --lab-caution: #b7791f;
+        /* Pane title bars and section labels. */
+        --lab-bar: var(--lab-ink);
+        --lab-bar-ink: var(--lab-paper);
+        --lab-bar-hover: var(--lab-ink-2);
+    }
+
+    /* The same instrument after dark: lit ink on unlit panes. */
+    .lab[data-theme='dark'] {
+        color-scheme: dark;
+        --lab-desk: #0e100f;
+        --lab-paper: #1a1c1b;
+        --lab-paper-inset: #232625;
+        --lab-ink: #e4e2da;
+        --lab-ink-2: #c4c2ba;
+        --lab-ink-3: #a3a19a;
+        --lab-ink-4: #6f6e69;
+        --lab-rule: rgb(228 226 218 / 0.28);
+        --lab-rule-faint: rgb(228 226 218 / 0.1);
+        --lab-fault: #e57a60;
+        --lab-caution: #e2ab4f;
+        --lab-bar: #2a2d2b;
+        --lab-bar-ink: #a3a19a;
+        --lab-bar-hover: #343836;
     }
 
     .lab-chrome {
@@ -45,8 +68,8 @@
 
     .lab-chrome legend {
         padding: 0 4px;
-        background: var(--lab-ink);
-        color: var(--lab-paper);
+        background: var(--lab-bar);
+        color: var(--lab-bar-ink);
         font-size: 10.5px;
         letter-spacing: 0.1em;
         text-transform: uppercase;

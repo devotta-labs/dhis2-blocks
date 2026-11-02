@@ -97,7 +97,10 @@ export class CanvasBoundary extends Component<
         const { error } = this.state
         if (!error) return this.props.children
         return (
-            <div className="flex flex-col gap-2 p-4 text-sm" role="alert">
+            <div
+                className="flex flex-col gap-2 bg-white p-4 text-sm"
+                role="alert"
+            >
                 <strong className="text-dhis2-red-700">
                     The block crashed: {error.message}
                 </strong>

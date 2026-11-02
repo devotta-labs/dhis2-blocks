@@ -24,10 +24,10 @@ const ME_QUERY = {
 /** Stands in for the block under test. Replace it with the block's parts. */
 const Subject = () => {
     const { loading, error, data, refetch } = useDataQuery(ME_QUERY)
-    if (loading) return <p className="m-0">Loading…</p>
+    if (loading) return <p className="m-0 bg-white p-3">Loading…</p>
     if (error) {
         return (
-            <p className="m-0" role="alert">
+            <p className="m-0 bg-white p-3" role="alert">
                 {error.message}{' '}
                 <button type="button" onClick={() => void refetch()}>
                     Try again
@@ -35,7 +35,11 @@ const Subject = () => {
             </p>
         )
     }
-    return <pre className="m-0">{JSON.stringify(data?.me, null, 2)}</pre>
+    return (
+        <pre className="m-0 bg-white p-3">
+            {JSON.stringify(data?.me, null, 2)}
+        </pre>
+    )
 }
 
 /** The smallest lab: a block on a fake server, its network controls and its requests. Copy this folder to start one. */

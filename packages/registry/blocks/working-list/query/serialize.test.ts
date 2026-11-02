@@ -362,6 +362,34 @@ describe('Date windows on a working-list request', () => {
         })
     })
 
+    it('keeps a scheduled list from today on inside the window', () => {
+        const scheduled = scheduledEvents([
+            {
+                field: systemField('eventStatus'),
+                operator: 'in',
+                value: { kind: 'options', values: ['SCHEDULE'] },
+            },
+        ])
+        const range = {
+            fieldId: 'eventScheduledAt',
+            start: '2026-10-26',
+            end: '2026-12-06',
+        }
+        const params = serializeWorkingListRequest({
+            context: { programId: 'Program0001', orgUnitId: 'OrgUnit0001' },
+            configuration: scheduled,
+            pagination: { page: 1, pageSize: 200 },
+            capabilities: resolveWorkingListCapabilities({ apiVersion: 43 }),
+            fields,
+            today: '2026-11-18',
+            range,
+        }).params
+        expect(params).toMatchObject({
+            scheduledAfter: '2026-11-18',
+            scheduledBefore: '2026-12-06',
+        })
+    })
+
     it('reads the saved filter bounds from a request', () => {
         expect(
             requestDateBounds(

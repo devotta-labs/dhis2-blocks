@@ -11,14 +11,16 @@ import React, {
 import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import {
-    useWorkingListCellText,
+    WorkingListSelectionError,
+    useWorkingListDateBounds,
     useWorkingListDateRange,
     useWorkingListMeta,
     useWorkingListState,
+    type WorkingListDateBounds,
     type WorkingListDatedRecord,
+    type WorkingListDateFieldId,
     type WorkingListDateRangeResults,
     type WorkingListDisplayRow,
-    type WorkingListMeta,
     type WorkingListResultTarget,
 } from '@/components/working-list'
 import { defaultRecordLabel } from './recordLabel'
@@ -30,11 +32,7 @@ import {
 const TRACKED_ENTITY_DATE_FIELDS = ['enrolledAt', 'enrollmentOccurredAt']
 const EVENT_DATE_FIELDS = ['eventOccurredAt', 'eventScheduledAt']
 
-export type WorkingListCalendarDateField =
-    | 'enrolledAt'
-    | 'enrollmentOccurredAt'
-    | 'eventOccurredAt'
-    | 'eventScheduledAt'
+export type WorkingListCalendarDateField = WorkingListDateFieldId
 
 export interface WorkingListCalendarRecord {
     id: string
@@ -149,7 +147,7 @@ export type WorkingListCalendarProps = Omit<
         dateField?: WorkingListCalendarDateField
         /** Opens a record. Without it, records are listed but not interactive. */
         onRecordClick?: (target: WorkingListResultTarget) => void
-        /** Most records loaded per month. Defaults to 1000. */
+        /** Most records loaded for the weeks shown. Defaults to 1000. */
         limit?: number
         /**
          * Names a record in the grid and the day list. `cellText` formats any
@@ -184,7 +182,7 @@ const resolveDateField = (
 type PickerCalendar = NonNullable<
     Parameters<typeof useDatePicker>[0]['options']['calendar']
 >
-type SystemCalendar = NonNullable<WorkingListMeta['systemInfo']>['calendar']
+type SystemCalendar = WorkingListDateBounds['calendar']
 
 // useDatePicker maps DHIS2 calendar ids at runtime, but its types accept only
 // Temporal ids and the library does not export its map.
@@ -232,8 +230,14 @@ const toCalendarRecord = (
     status,
 })
 
+type ReadyCalendarProps = WorkingListCalendarProps & {
+    dateField: WorkingListCalendarDateField
+    bounds: WorkingListDateBounds
+}
+
 const ReadyCalendar = ({
-    dateField: requestedDateField,
+    dateField,
+    bounds,
     onRecordClick,
     limit,
     recordLabel,
@@ -244,17 +248,10 @@ const ReadyCalendar = ({
     display: controlledDisplay,
     defaultDisplay = 'counts',
     onDisplayChange,
-    className,
     children,
-    ...props
-}: WorkingListCalendarProps) => {
-    const mode = useWorkingListState((state) => state.configuration.mode)
+}: ReadyCalendarProps) => {
     const columns = useWorkingListState((state) => state.configuration.columns)
-    const systemInfo = useWorkingListMeta((meta) => meta.systemInfo)
-    const cellText = useWorkingListCellText()
-    const dateField = resolveDateField(mode, requestedDateField)
-    const calendar = systemInfo?.calendar ?? 'gregorian'
-    const timeZone = systemInfo?.serverTimeZoneId ?? 'UTC'
+    const { calendar, timeZone, locale } = bounds
 
     const [uncontrolledSelectedDay, setUncontrolledSelectedDay] =
         useState(defaultSelectedDay)
@@ -283,23 +280,20 @@ const ReadyCalendar = ({
         [controlledDisplay, onDisplayChange]
     )
 
-    // The picker opens on `date` and follows it when it changes, so the
-    // filter's bounds can move the calendar once they are known.
-    const [filterBounds, setFilterBounds] = useState<{
-        start?: string
-        end?: string
-    }>({})
+    // The picker opens on `date` and moves when it changes. Clearing the
+    // selection keeps the month in view, so only a newly selected day or,
+    // before any selection, the filter's dates move it.
+    const [lastSelectedDay, setLastSelectedDay] = useState(selectedDate)
+    if (selectedDate !== null && selectedDate !== lastSelectedDay) {
+        setLastSelectedDay(selectedDate)
+    }
     const anchor = useMemo(
-        () => clampDay(todayIn(calendar, timeZone), filterBounds),
-        [calendar, filterBounds, timeZone]
+        () => clampDay(todayIn(calendar, timeZone), bounds),
+        [bounds, calendar, timeZone]
     )
     const picker = useDatePicker({
-        date: selectedDate ?? anchor,
-        options: {
-            calendar: PICKER_CALENDARS[calendar],
-            timeZone,
-            locale: i18n.language ?? globalThis.navigator?.language ?? 'en',
-        },
+        date: selectedDate ?? lastSelectedDay ?? anchor,
+        options: { calendar: PICKER_CALENDARS[calendar], timeZone, locale },
         onDateSelect: (payload) =>
             selectDay(payload?.calendarDateString ?? null),
     })
@@ -314,52 +308,45 @@ const ReadyCalendar = ({
         end: gridDays.at(-1)?.dateValue ?? anchor,
         limit,
     })
-    if (
-        results.filterBounds.start !== filterBounds.start ||
-        results.filterBounds.end !== filterBounds.end
-    ) {
-        setFilterBounds(results.filterBounds)
-    }
 
-    const labelFor = useCallback(
-        (row: WorkingListDisplayRow) => {
-            const text = (fieldId: string) => cellText(row, fieldId)
-            return recordLabel
-                ? recordLabel(row, text)
-                : defaultRecordLabel(
-                      columns.filter((id) => id !== dateField),
-                      text
-                  )
-        },
-        [cellText, columns, dateField, recordLabel]
-    )
-    const statusFor = useCallback(
-        (row: WorkingListDisplayRow) => {
-            const text = (fieldId: string) => cellText(row, fieldId)
-            return recordStatus
-                ? recordStatus(row, text)
-                : defaultRecordStatus(row, text, todayIn('iso8601', timeZone))
-        },
-        [cellText, recordStatus, timeZone]
-    )
-    const records = results.status === 'ready' ? results.records : undefined
+    const ready = results.status === 'ready' ? results : undefined
+    const records = ready?.records
+    const cellText = ready?.cellText
+    const isoToday = todayIn('iso8601', timeZone)
     const recordsByDay = useMemo(() => {
         const byDay = new Map<string, WorkingListCalendarRecord[]>()
-        for (const record of records ?? []) {
-            const day = byDay.get(record.date) ?? []
+        if (!records || !cellText) return byDay
+        const labelColumns = columns.filter((id) => id !== dateField)
+        const placed = new Set<string>()
+        for (const record of records) {
             // A server can send a record twice; it still sits on its day once.
-            if (day.some(({ id }) => id === record.row.id)) continue
+            if (placed.has(record.row.id)) continue
+            placed.add(record.row.id)
+            const text = (fieldId: string) => cellText(record.row, fieldId)
+            const day = byDay.get(record.date) ?? []
             day.push(
                 toCalendarRecord(
                     record,
-                    labelFor(record.row),
-                    statusFor(record.row)
+                    recordLabel
+                        ? recordLabel(record.row, text)
+                        : defaultRecordLabel(labelColumns, text),
+                    recordStatus
+                        ? recordStatus(record.row, text)
+                        : defaultRecordStatus(record.row, text, isoToday)
                 )
             )
             byDay.set(record.date, day)
         }
         return byDay
-    }, [labelFor, records, statusFor])
+    }, [
+        cellText,
+        columns,
+        dateField,
+        isoToday,
+        recordLabel,
+        recordStatus,
+        records,
+    ])
 
     const weeks = picker.calendarWeekDays.map((week) =>
         week.map((day) => ({
@@ -367,7 +354,7 @@ const ReadyCalendar = ({
             label: day.label,
             isToday: day.isToday,
             isInCurrentMonth: day.isInCurrentMonth,
-            isDisabled: isOutside(day.dateValue, filterBounds),
+            isDisabled: isOutside(day.dateValue, bounds),
             records: recordsByDay.get(day.dateValue) ?? [],
         }))
     )
@@ -399,36 +386,38 @@ const ReadyCalendar = ({
             return `${day.label} ${month} ${year}`
         },
         atFilterStart: Boolean(
-            filterBounds.start && firstDay && firstDay <= filterBounds.start
+            bounds.start && firstDay && firstDay <= bounds.start
         ),
-        atFilterEnd: Boolean(
-            filterBounds.end && lastDay && lastDay >= filterBounds.end
-        ),
+        atFilterEnd: Boolean(bounds.end && lastDay && lastDay >= bounds.end),
         results,
         onRecordClick,
     }
 
     return (
         <WorkingListCalendarContext.Provider value={value}>
-            <section
-                aria-label={i18n.t('Calendar')}
-                {...props}
-                data-slot="working-list-calendar"
-                className={cn('@container', className)}
-            >
-                {/* Wide calendars put the day list in a column of its own. */}
-                <div className="grid items-start gap-3 @3xl:grid-cols-[minmax(0,1fr)_18rem]">
-                    {children}
-                </div>
-            </section>
+            {/* Wide calendars put the day list in a column of its own. */}
+            <div className="grid items-start gap-3 @3xl:grid-cols-[minmax(0,1fr)_18rem]">
+                {children}
+            </div>
         </WorkingListCalendarContext.Provider>
     )
 }
 
-const unavailableMessage = (status: 'pending' | 'error' | 'ready') =>
-    status === 'error'
-        ? i18n.t('This working list is unavailable.')
-        : i18n.t('Loading the working list…')
+const CalendarLoading = () => (
+    <p className="m-0 flex items-center gap-2 p-4 text-sm text-dhis2-grey-700">
+        <Spinner />
+        {i18n.t('Loading the working list…')}
+    </p>
+)
+
+/** Places records by the date that fits the list's mode. */
+const DatedCalendar = (props: WorkingListCalendarProps) => {
+    const mode = useWorkingListState((state) => state.configuration.mode)
+    const dateField = resolveDateField(mode, props.dateField)
+    const bounds = useWorkingListDateBounds(dateField)
+    if (!bounds) return <CalendarLoading />
+    return <ReadyCalendar {...props} dateField={dateField} bounds={bounds} />
+}
 
 /**
  * Shows the working list's records on a month calendar. Render it inside
@@ -439,16 +428,9 @@ const unavailableMessage = (status: 'pending' | 'error' | 'ready') =>
 export const WorkingListCalendar = (props: WorkingListCalendarProps) => {
     // List state can be read only once the list has an active configuration.
     const readiness = useWorkingListMeta((meta) => {
-        if (
-            meta.lifecycle.status === 'error' ||
-            meta.selection.status === 'error'
-        ) {
-            return 'error'
-        }
+        if (meta.selection.status === 'error') return 'error'
         return meta.activeConfiguration.status === 'ready' ? 'ready' : 'pending'
     })
-    if (readiness === 'ready') return <ReadyCalendar {...props} />
-
     const {
         dateField: _dateField,
         onRecordClick: _onRecordClick,
@@ -465,19 +447,18 @@ export const WorkingListCalendar = (props: WorkingListCalendarProps) => {
         children: _children,
         ...sectionProps
     } = props
+
     return (
         <section
             aria-label={i18n.t('Calendar')}
             aria-busy={readiness === 'pending'}
             {...sectionProps}
             data-slot="working-list-calendar"
-            className={cn(
-                'flex items-center gap-2 p-4 text-sm text-dhis2-grey-700',
-                className
-            )}
+            className={cn('@container', className)}
         >
-            {readiness === 'pending' && <Spinner />}
-            {unavailableMessage(readiness)}
+            {readiness === 'ready' && <DatedCalendar {...props} />}
+            {readiness === 'pending' && <CalendarLoading />}
+            {readiness === 'error' && <WorkingListSelectionError />}
         </section>
     )
 }

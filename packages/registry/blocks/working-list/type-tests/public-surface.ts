@@ -12,7 +12,9 @@ import type {
     WorkingListColumnSelectorProps,
     WorkingListConfiguration,
     WorkingListDataQualityMode,
+    WorkingListDateBounds,
     WorkingListDatedRecord,
+    WorkingListDateFieldId,
     WorkingListDateRangeOptions,
     WorkingListDateRangeResults,
     WorkingListDisplayRow,
@@ -32,7 +34,8 @@ import type {
 } from '..'
 import {
     WorkingList,
-    useWorkingListCellText,
+    WorkingListSelectionError,
+    useWorkingListDateBounds,
     useWorkingListDateRange,
 } from '..'
 
@@ -50,7 +53,9 @@ export type SupportedWorkingListTypes = [
     WorkingListColumnSelectorProps,
     WorkingListConfiguration,
     WorkingListDataQualityMode,
+    WorkingListDateBounds,
     WorkingListDatedRecord,
+    WorkingListDateFieldId,
     WorkingListDateRangeOptions,
     WorkingListDateRangeResults,
     WorkingListDisplayRow,
@@ -78,8 +83,24 @@ export const dateRangeOptions: WorkingListDateRangeOptions = {
 export const readDateRange = (): WorkingListDateRangeResults =>
     useWorkingListDateRange(dateRangeOptions)
 
-export const readCellText = (row: WorkingListDisplayRow): string =>
-    useWorkingListCellText()(row, 'Attribute01')
+export const readDateBounds = (): string | undefined =>
+    useWorkingListDateBounds('enrolledAt')?.start
+
+export const readCellText = (row: WorkingListDisplayRow): string => {
+    const results = useWorkingListDateRange(dateRangeOptions)
+    return results.status === 'ready'
+        ? results.cellText(row, 'Attribute01')
+        : ''
+}
+
+export const unboundedDateRange: WorkingListDateRangeOptions = {
+    // @ts-expect-error Only system dates with an API date range bound a request.
+    fieldId: 'createdAt',
+    start: '2026-11-01',
+    end: '2026-11-30',
+}
+
+export const selectionError = WorkingListSelectionError
 
 export const uncontrolledRootProps: WorkingListProps = {
     children: null,

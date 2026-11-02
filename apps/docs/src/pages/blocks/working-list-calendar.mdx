@@ -65,7 +65,8 @@ anywhere else inside `WorkingListCalendar` and pass a `className` to suit.
 The calendar reads the list's filters but never changes them. Switching
 between table and calendar leaves the saved view and the table's page as they
 were. If a saved filter limits the dates, the calendar opens inside them and
-stops at their edges.
+stops at their edges. When the selected saved list cannot load, the calendar
+offers the same repair or way back to the default list as the table.
 
 ## What each day shows
 
@@ -197,7 +198,8 @@ first one. To keep it yourself, for example in the URL, pass `selectedDay` and
 ## Your own layout
 
 `useWorkingListCalendar()` inside `WorkingListCalendar` returns the visible
-month's weeks, each day's records, the selection and the loading state:
+month's weeks, each day's records, the selection and the loading state.
+Clearing the selection keeps the month in view.
 
 ```tsx
 import { useWorkingListCalendar } from '@/components/working-list-calendar'
@@ -217,7 +219,7 @@ const BusiestDay = () => {
 
 - Only the four system dates above can place records. Attribute and data
   element dates have no date filter on the DHIS2 tracker API.
-- The calendar loads at most 1000 records a month (`limit`) and says so when a
-  month holds more.
+- The calendar loads at most 1000 records for the weeks on screen (`limit`),
+  including the neighbouring months' days, and says so when they hold more.
 - Months only: there is no week or day layout. The month and year selects
   jump anywhere; previous and next stop at a saved filter's dates.

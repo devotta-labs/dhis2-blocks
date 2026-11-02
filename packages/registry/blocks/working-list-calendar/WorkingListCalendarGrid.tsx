@@ -88,7 +88,7 @@ const ResultsStatus = () => {
         return (
             <p className="m-0 text-sm text-dhis2-grey-700">
                 {i18n.t(
-                    'Showing the first {{count}} records this month. Narrow the filters to see the rest.',
+                    'Showing the first {{count}} records in these weeks. Narrow the filters to see the rest.',
                     { count: results.records.length }
                 )}
             </p>

@@ -1,15 +1,16 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useCallback, useMemo } from 'react'
 import { z } from 'zod'
 import { shouldRetryWorkingListRequest } from '../api/client'
 import { fieldsForConfiguration } from '../api/metadata'
+import type { WorkingListSystemInfo } from '../api/systemInfo'
+import type { WorkingListPagination } from '../domain/model'
 import { fetchWorkingListPage, type WorkingListPage } from '../query/fetchers'
 import { workingListQueryKeys } from '../query/keys'
 import {
     intersectDateBounds,
     requestDateBounds,
     serializeWorkingListRequest,
-    type DateBounds,
 } from '../query/serialize'
 import type {
     WorkingListConfiguration,
@@ -18,24 +19,44 @@ import type {
 } from './contracts'
 import { toResultsError } from './errorNormalization'
 import type { WorkingListResultsError } from './errors'
-import { toDisplayRows, toResultTargets } from './results'
+import { cellText, toDisplayRows, toResultTargets } from './results'
+import { useReferenceFormatting } from './useReferenceFormatting'
 import { useWorkingListState } from './WorkingListContext'
 import { useWorkingListPrivateUi } from './WorkingListPrivateContext'
 
 const RANGE_PAGE_SIZE = 200
 
+/**
+ * A system date the API can bound a request by: `enrolledAt` or
+ * `enrollmentOccurredAt` for tracked entities, `eventOccurredAt` or
+ * `eventScheduledAt` for events.
+ */
+export type WorkingListDateFieldId =
+    | 'enrolledAt'
+    | 'enrollmentOccurredAt'
+    | 'eventOccurredAt'
+    | 'eventScheduledAt'
+
 export interface WorkingListDateRangeOptions {
-    /**
-     * The system date field to read: `enrolledAt` or `enrollmentOccurredAt`
-     * for tracked entities, `eventOccurredAt` or `eventScheduledAt` for events.
-     */
-    fieldId: string
+    fieldId: WorkingListDateFieldId
     /** First day, inclusive, in the system calendar (YYYY-MM-DD). */
     start: string
     /** Last day, inclusive, in the system calendar (YYYY-MM-DD). */
     end: string
     /** Stops loading once this many records are in. Defaults to 1000. */
     limit?: number
+}
+
+export interface WorkingListDateBounds {
+    /** The DHIS2 system calendar the list's dates are written in. */
+    calendar: WorkingListSystemInfo['calendar']
+    /** The DHIS2 server time zone, which decides what today is. */
+    timeZone: string
+    locale: string
+    /** First day the saved filters allow on the field (YYYY-MM-DD). */
+    start?: string
+    /** Last day the saved filters allow on the field (YYYY-MM-DD). */
+    end?: string
 }
 
 export interface WorkingListDatedRecord {
@@ -45,10 +66,7 @@ export interface WorkingListDatedRecord {
     date: string
 }
 
-export type WorkingListDateRangeResults = {
-    /** The days the saved filters allow on the field, in the system calendar. */
-    filterBounds: DateBounds
-} & (
+export type WorkingListDateRangeResults =
     | { status: 'pending' }
     | { status: 'error'; error: WorkingListResultsError; retry(): void }
     | {
@@ -57,8 +75,38 @@ export type WorkingListDateRangeResults = {
           /** More records match than `limit` allowed. */
           truncated: boolean
           isUpdating: boolean
+          /**
+           * Formats a record's field as the table shows it, in plain text:
+           * option names, dates in the system calendar, organisation unit
+           * names, Yes/No. Unknown fields give an empty string.
+           */
+          cellText(row: WorkingListDisplayRow, fieldId: string): string
       }
-)
+
+/**
+ * Loads up to `limit` records. Once the first page comes back full, every
+ * page that can still fit under the limit loads at once.
+ */
+export const fetchDateRangePages = async (
+    fetchPage: (pagination: WorkingListPagination) => Promise<WorkingListPage>,
+    limit: number
+) => {
+    const pageSize = Math.min(RANGE_PAGE_SIZE, limit)
+    const first = await fetchPage({ page: 1, pageSize })
+    const rest = first.hasNextPage
+        ? await Promise.all(
+              Array.from({ length: Math.ceil(limit / pageSize) - 1 }, (_, i) =>
+                  fetchPage({ page: i + 2, pageSize })
+              )
+          )
+        : []
+    const pages = [first, ...rest]
+    const loaded = pages.reduce((sum, page) => sum + page.records.length, 0)
+    return {
+        pages,
+        truncated: Boolean(pages.at(-1)?.hasNextPage) || loaded > limit,
+    }
+}
 
 const datedRecords = (
     pages: readonly WorkingListPage[],
@@ -85,17 +133,8 @@ const datedRecords = (
         })
     })
 
-/**
- * Reads the current list through a date window instead of a page. The window
- * narrows the saved filters without changing them, so a date layout never
- * dirties the saved view or moves the table's page.
- */
-export const useWorkingListDateRange = ({
-    fieldId,
-    start,
-    end,
-    limit = 1000,
-}: WorkingListDateRangeOptions): WorkingListDateRangeResults => {
+/** The list's request and the API dates its saved filters allow on `fieldId`. */
+const useDateFieldRequest = (fieldId: WorkingListDateFieldId) => {
     const {
         client,
         programId,
@@ -104,14 +143,10 @@ export const useWorkingListDateRange = ({
         metadata,
         resolvedConfiguration,
         serializationContext,
-        parsingContext,
         translate,
     } = useWorkingListPrivateUi()
-    const configuration = useWorkingListState((state) => state.configuration)
-    const toApiDate = serializationContext?.toApiDate
-    const fromApiDate = parsingContext?.fromApiDate
-
-    const plan = useMemo(() => {
+    return useMemo(() => {
+        const toApiDate = serializationContext?.toApiDate
         if (!resolvedConfiguration || !metadata || !toApiDate) return undefined
         const input = {
             client,
@@ -123,37 +158,89 @@ export const useWorkingListDateRange = ({
             serializationContext,
             translate,
         }
-        const filterBounds = requestDateBounds(
-            serializeWorkingListRequest(input),
-            fieldId
-        )
-        const range = { fieldId, start: toApiDate(start), end: toApiDate(end) }
-        const rangeInput = intersectDateBounds(filterBounds, range)
-            ? { ...input, range }
-            : undefined
         return {
-            filterBounds,
-            rangeInput,
-            queryKey: rangeInput
-                ? workingListQueryKeys.recordRequest(
-                      serializeWorkingListRequest(rangeInput)
-                  )
-                : undefined,
+            input,
+            toApiDate,
+            filterBounds: requestDateBounds(
+                serializeWorkingListRequest(input),
+                fieldId
+            ),
         }
     }, [
         capabilities,
         client,
-        end,
         fieldId,
         metadata,
         orgUnitId,
         programId,
         resolvedConfiguration,
         serializationContext,
-        start,
-        toApiDate,
         translate,
     ])
+}
+
+/**
+ * The days the saved filters allow on `fieldId`, and the calendar, time zone
+ * and locale to show them in. `undefined` until the list is ready.
+ */
+export const useWorkingListDateBounds = (
+    fieldId: WorkingListDateFieldId
+): WorkingListDateBounds | undefined => {
+    const { calendarContext, parsingContext } = useWorkingListPrivateUi()
+    const request = useDateFieldRequest(fieldId)
+    const fromApiDate = parsingContext?.fromApiDate
+    return useMemo(() => {
+        if (!request || !calendarContext || !fromApiDate) return undefined
+        const { start, end } = request.filterBounds
+        return {
+            calendar: calendarContext.calendar,
+            timeZone: calendarContext.timeZone,
+            locale: calendarContext.locale,
+            start: start === undefined ? undefined : fromApiDate(start),
+            end: end === undefined ? undefined : fromApiDate(end),
+        }
+    }, [calendarContext, fromApiDate, request])
+}
+
+/**
+ * Reads the current list through a date window instead of a page. The window
+ * narrows the saved filters without changing them, so a date layout never
+ * dirties the saved view or moves the table's page.
+ */
+export const useWorkingListDateRange = ({
+    fieldId,
+    start,
+    end,
+    limit = 1000,
+}: WorkingListDateRangeOptions): WorkingListDateRangeResults => {
+    const { client, programId, systemInfo, locale, translate, parsingContext } =
+        useWorkingListPrivateUi()
+    const configuration = useWorkingListState((state) => state.configuration)
+    const request = useDateFieldRequest(fieldId)
+    const fromApiDate = parsingContext?.fromApiDate
+
+    const plan = useMemo(() => {
+        if (!request) return undefined
+        try {
+            const range = {
+                fieldId,
+                start: request.toApiDate(start),
+                end: request.toApiDate(end),
+            }
+            // A window outside the saved filter has nothing to load.
+            if (!intersectDateBounds(request.filterBounds, range)) return {}
+            const rangeInput = { ...request.input, range }
+            return {
+                rangeInput,
+                queryKey: workingListQueryKeys.recordRequest(
+                    serializeWorkingListRequest(rangeInput)
+                ),
+            }
+        } catch (error) {
+            // An invalid day, or an event date on a tracked-entity list.
+            return { error }
+        }
+    }, [end, fieldId, request, start])
 
     const rangeInput = plan?.rangeInput
     const query = useQuery({
@@ -162,85 +249,85 @@ export const useWorkingListDateRange = ({
             'date-range',
             rangeInput ? limit : 'idle',
         ],
-        queryFn: async ({ signal }) => {
+        queryFn: ({ signal }) => {
             if (!rangeInput) throw new Error('Date range is not ready')
-            const pages: WorkingListPage[] = []
-            let loaded = 0
-            let hasNextPage = true
-            while (hasNextPage && loaded < limit) {
-                const page = await fetchWorkingListPage({
-                    ...rangeInput,
-                    pagination: {
-                        page: pages.length + 1,
-                        pageSize: Math.min(RANGE_PAGE_SIZE, limit),
-                    },
-                    signal,
-                })
-                pages.push(page)
-                loaded += page.records.length
-                hasNextPage = page.hasNextPage
-            }
-            return { pages, truncated: hasNextPage || loaded > limit }
+            return fetchDateRangePages(
+                (pagination) =>
+                    fetchWorkingListPage({ ...rangeInput, pagination, signal }),
+                limit
+            )
         },
         enabled: Boolean(rangeInput),
-        placeholderData: keepPreviousData,
         staleTime: 20_000,
         retry: shouldRetryWorkingListRequest,
     })
 
     const data = rangeInput ? query.data : undefined
+    const pages = useMemo(() => data?.pages ?? [], [data])
+    const fields = request?.input.fields
+    const references = useReferenceFormatting({
+        client,
+        pages,
+        fields,
+        systemInfo,
+        locale,
+        translate,
+    })
+    const { formattingContext } = references
+    const formatCell = useCallback(
+        (row: WorkingListDisplayRow, cellFieldId: string) => {
+            const field = fields?.get(cellFieldId)
+            return field ? cellText(row, field, formattingContext) : ''
+        },
+        [fields, formattingContext]
+    )
     const records = useMemo(
         () =>
-            data && fromApiDate
+            fromApiDate
                 ? datedRecords(
-                      data.pages,
+                      pages,
                       fieldId,
                       programId,
                       configuration,
                       fromApiDate
                   ).slice(0, limit)
                 : [],
-        [configuration, data, fieldId, fromApiDate, limit, programId]
-    )
-    const filterBounds = useMemo(
-        () => ({
-            start:
-                plan?.filterBounds.start && fromApiDate
-                    ? fromApiDate(plan.filterBounds.start)
-                    : undefined,
-            end:
-                plan?.filterBounds.end && fromApiDate
-                    ? fromApiDate(plan.filterBounds.end)
-                    : undefined,
-        }),
-        [fromApiDate, plan]
+        [configuration, fieldId, fromApiDate, limit, pages, programId]
     )
 
-    if (!plan) return { filterBounds, status: 'pending' }
-    // A window outside the saved filter has nothing to load.
+    if (!plan) return { status: 'pending' }
+    if (plan.error !== undefined) {
+        return {
+            status: 'error',
+            error: toResultsError(plan.error),
+            retry: () => undefined,
+        }
+    }
     if (!rangeInput) {
         return {
-            filterBounds,
             status: 'ready',
             records: [],
             truncated: false,
             isUpdating: false,
+            cellText: formatCell,
         }
     }
-    if (query.isError) {
+    if (query.isError || references.error) {
         return {
-            filterBounds,
             status: 'error',
-            error: toResultsError(query.error),
-            retry: () => void query.refetch(),
+            error: toResultsError(query.error ?? references.error),
+            retry: () =>
+                void (query.isError
+                    ? query.refetch()
+                    : references.organisationUnitLabelsQuery.refetch()),
         }
     }
-    if (!data) return { filterBounds, status: 'pending' }
+    if (!data || !references.ready) return { status: 'pending' }
     return {
-        filterBounds,
         status: 'ready',
         records,
         truncated: data.truncated,
-        isUpdating: query.isFetching,
+        isUpdating: query.isFetching || references.isFetching,
+        cellText: formatCell,
     }
 }

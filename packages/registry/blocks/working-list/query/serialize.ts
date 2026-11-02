@@ -231,6 +231,20 @@ export const serializeWorkingListRequest = ({
         params.filterAttributes = filterAttributes
     }
 
+    if (
+        configuration.mode === 'event' &&
+        params.status === 'SCHEDULE' &&
+        params.scheduledAfter === undefined
+    ) {
+        const serverToday = today ?? serializationContext?.today
+        if (!serverToday) {
+            throw new Error(
+                'Scheduled event requests require today in the server time zone'
+            )
+        }
+        params.scheduledAfter = serverToday
+    }
+
     if (range) {
         if (
             getSystemFilterDefinition(range.fieldId)?.field.scope === 'event' &&
@@ -266,15 +280,6 @@ export const serializeWorkingListRequest = ({
 
     params.programStage = configuration.programStageId
     params.fields = EVENT_LIST_FIELDS
-    if (params.status === 'SCHEDULE' && params.scheduledAfter === undefined) {
-        const serverToday = today ?? serializationContext?.today
-        if (!serverToday) {
-            throw new Error(
-                'Scheduled event requests require today in the server time zone'
-            )
-        }
-        params.scheduledAfter = serverToday
-    }
     return { resource: 'tracker/events', params }
 }
 

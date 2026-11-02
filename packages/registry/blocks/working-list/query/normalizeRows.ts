@@ -219,9 +219,34 @@ const collectIssues = (
               ]
     )
 
+export type TrackedEntityEnrollment = NonNullable<
+    TrackedEntity['enrollments']
+>[number]
+
 export interface NormalizeTrackedEntityOptions {
     programId?: string
+    /** Whether an enrollment satisfies the request's enrollment filters. */
+    matchesEnrollment?: (enrollment: TrackedEntityEnrollment) => boolean
     translate?: RowIssueTranslate
+}
+
+// A program can enroll a tracked entity more than once. The row describes the
+// enrollment the request matched, the active one first, then the latest.
+const rowEnrollment = (
+    enrollments: readonly TrackedEntityEnrollment[],
+    { programId, matchesEnrollment }: NormalizeTrackedEntityOptions
+) => {
+    const inProgram = enrollments.filter(
+        (candidate) => !programId || candidate.program === programId
+    )
+    const matching = matchesEnrollment
+        ? inProgram.filter(matchesEnrollment)
+        : inProgram
+    return [...(matching.length ? matching : inProgram)].sort(
+        (a, b) =>
+            Number(b.status === 'ACTIVE') - Number(a.status === 'ACTIVE') ||
+            (b.enrolledAt ?? '').localeCompare(a.enrolledAt ?? '')
+    )[0]
 }
 
 /**
@@ -275,10 +300,7 @@ export const normalizeTrackedEntityValues = (
               )
             : undefined,
     }
-    const enrollment = trackedEntity.enrollments?.find(
-        (candidate) =>
-            !options.programId || candidate.program === options.programId
-    )
+    const enrollment = rowEnrollment(trackedEntity.enrollments ?? [], options)
     values.enrolledAt = {
         valid: true,
         value: enrollment?.enrolledAt

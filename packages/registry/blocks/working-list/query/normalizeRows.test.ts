@@ -295,6 +295,50 @@ describe('metadata-aware row normalization', () => {
         })
     })
 
+    it('describes the enrollment the request matched', () => {
+        const enrollments = [
+            {
+                enrollment: 'Enrollment01',
+                program: 'Program0001',
+                status: 'ACTIVE' as const,
+                enrolledAt: '2026-01-05T00:00:00.000',
+            },
+            {
+                enrollment: 'Enrollment02',
+                program: 'Program0001',
+                status: 'COMPLETED' as const,
+                enrolledAt: '2026-11-02T00:00:00.000',
+            },
+            {
+                enrollment: 'Enrollment03',
+                program: 'Program0001',
+                status: 'COMPLETED' as const,
+                enrolledAt: '2024-03-01T00:00:00.000',
+            },
+        ]
+        const status = (
+            matchesEnrollment?: (enrollment: { status?: string }) => boolean
+        ) =>
+            normalizeTrackedEntityValues(
+                { ...record([]), enrollments },
+                fields,
+                { programId: 'Program0001', matchesEnrollment }
+            ).values.enrolledAt
+
+        expect(
+            status((enrollment) => enrollment.status === 'COMPLETED')
+        ).toEqual({ valid: true, value: '2026-11-02T00:00:00.000' })
+        // Without a match the active enrollment describes the row.
+        expect(status(() => false)).toEqual({
+            valid: true,
+            value: '2026-01-05T00:00:00.000',
+        })
+        expect(status()).toEqual({
+            valid: true,
+            value: '2026-01-05T00:00:00.000',
+        })
+    })
+
     it('picks the program owner matching the requested program', () => {
         const normalized = normalizeTrackedEntityValues(
             {

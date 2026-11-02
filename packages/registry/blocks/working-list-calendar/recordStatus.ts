@@ -1,6 +1,10 @@
 import i18n from '@dhis2/d2-i18n'
 import { z } from 'zod'
-import type { WorkingListDisplayRow } from '@/components/working-list'
+import {
+    TRACKER_ENROLLMENT_STATUSES,
+    TRACKER_EVENT_STATUSES,
+    type WorkingListDisplayRow,
+} from '@/components/working-list'
 
 export type WorkingListCalendarTone =
     | 'neutral'
@@ -16,15 +20,8 @@ export interface WorkingListCalendarStatus {
     tone: WorkingListCalendarTone
 }
 
-const EnrollmentStatusSchema = z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED'])
-const EventStatusSchema = z.enum([
-    'ACTIVE',
-    'COMPLETED',
-    'OVERDUE',
-    'SCHEDULE',
-    'SKIPPED',
-    'VISITED',
-])
+const EnrollmentStatusSchema = z.enum(TRACKER_ENROLLMENT_STATUSES)
+const EventStatusSchema = z.enum(TRACKER_EVENT_STATUSES)
 
 const ENROLLMENT_TONES = {
     ACTIVE: 'info',

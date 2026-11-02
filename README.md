@@ -127,7 +127,8 @@ Render `WorkingListCalendar` inside `WorkingList`, beside or instead of
 `WorkingListTable`, and compose `WorkingListCalendarNavigation`,
 `WorkingListCalendarGrid` and `WorkingListCalendarDayRecords` inside it.
 `dateField` picks the date that places records. The calendar reads the list's
-filters through `useWorkingListDateRange` and never changes the saved view.
+filters through `useWorkingListDateBounds` and `useWorkingListDateRange` and
+never changes the saved view.
 See `/blocks/working-list-calendar`.
 
 ## Working List block

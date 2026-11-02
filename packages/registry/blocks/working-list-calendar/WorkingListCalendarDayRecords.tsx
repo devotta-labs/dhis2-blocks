@@ -85,9 +85,11 @@ export const WorkingListCalendarDayRecords = ({
                     <h3 className="m-0 flex items-baseline justify-between gap-2 text-sm font-medium text-dhis2-grey-900">
                         {dayName(selectedDay)}
                         <span className="text-xs font-normal text-dhis2-grey-700 tabular-nums">
-                            {i18n.t('{{count}} records', {
-                                count: selectedDay.records.length,
-                            })}
+                            {selectedDay.records.length === 1
+                                ? i18n.t('1 record')
+                                : i18n.t('{{count}} records', {
+                                      count: selectedDay.records.length,
+                                  })}
                         </span>
                     </h3>
                     <RecordList day={selectedDay} />

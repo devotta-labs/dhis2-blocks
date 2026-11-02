@@ -112,7 +112,7 @@ const renderCalendar = (
             records: [],
             truncated: false,
             isUpdating: false,
-            filterBounds: {},
+            cellText: () => '',
         },
         onRecordClick,
         ...overrides,
@@ -219,7 +219,7 @@ describe('working list calendar parts', () => {
                 records: [],
                 truncated: true,
                 isUpdating: false,
-                filterBounds: {},
+                cellText: () => '',
             },
         })
         const screen = await render(tree)
@@ -236,7 +236,6 @@ describe('working list calendar parts', () => {
                 status: 'error',
                 error: new WorkingListResultsError({ message: 'offline' }),
                 retry,
-                filterBounds: {},
             },
         })
         const screen = await render(tree)
@@ -353,6 +352,13 @@ describe('working list calendar parts', () => {
 
         await screen.getByRole('button', { name: 'Names' }).click()
         expect(setDisplay).toHaveBeenCalledWith('records')
+    })
+
+    it('counts a single record in the singular', async () => {
+        const { tree } = renderCalendar({ selectedDay: weeks[0][6] })
+        const screen = await render(tree)
+
+        await expect.element(screen.getByText('1 record')).toBeVisible()
     })
 
     it('lists the selected day with each status', async () => {

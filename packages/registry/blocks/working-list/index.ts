@@ -12,6 +12,7 @@ export {
     WorkingListTable,
     WorkingListToolbar,
     WorkingListToolbarActions,
+    WorkingListSelectionError,
     WorkingListViewSwitcher,
     type WorkingListProps,
     type WorkingListTableProps,
@@ -28,13 +29,21 @@ export {
     useWorkingListMeta,
     useWorkingListState,
 } from './provider/WorkingListContext'
-export { useWorkingListCellText } from './provider/useWorkingListCellText'
-export { useWorkingListDateRange } from './provider/useWorkingListDateRange'
+export {
+    useWorkingListDateBounds,
+    useWorkingListDateRange,
+} from './provider/useWorkingListDateRange'
 export type {
+    WorkingListDateBounds,
     WorkingListDatedRecord,
+    WorkingListDateFieldId,
     WorkingListDateRangeOptions,
     WorkingListDateRangeResults,
 } from './provider/useWorkingListDateRange'
+export {
+    TRACKER_ENROLLMENT_STATUSES,
+    TRACKER_EVENT_STATUSES,
+} from './api/schemas'
 export { WORKING_LIST_PAGE_SIZES } from './provider/contracts'
 export type {
     AppliedFilter,

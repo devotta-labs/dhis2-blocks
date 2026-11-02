@@ -834,9 +834,9 @@
                     "target": "@components/working-list/provider/store.ts"
                 },
                 {
-                    "path": "packages/registry/blocks/working-list/provider/useWorkingListCellText.ts",
+                    "path": "packages/registry/blocks/working-list/provider/useReferenceFormatting.ts",
                     "type": "registry:file",
-                    "target": "@components/working-list/provider/useWorkingListCellText.ts"
+                    "target": "@components/working-list/provider/useReferenceFormatting.ts"
                 },
                 {
                     "path": "packages/registry/blocks/working-list/provider/useWorkingListDateRange.ts",

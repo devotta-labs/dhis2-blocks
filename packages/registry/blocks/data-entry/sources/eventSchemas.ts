@@ -118,11 +118,9 @@ export const orgUnitNamesSchema = z.object({
     }),
 })
 
-/** The names of files asked for by id. */
-export const fileNamesSchema = z.object({
-    files: z.object({
-        fileResources: z.array(z.object({ id: z.string(), name: z.string() })),
-    }),
+/** The name of a file asked for by id. */
+export const fileNameSchema = z.object({
+    file: z.object({ name: z.string() }),
 })
 
 /** The id of one of a program's rules, if it has any. */

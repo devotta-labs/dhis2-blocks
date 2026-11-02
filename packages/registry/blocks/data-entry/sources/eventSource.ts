@@ -10,7 +10,7 @@ import {
     EVENT_FIELDS,
     PROGRAM_FIELDS,
     eventFormSchema,
-    fileNamesSchema,
+    fileNameSchema,
     orgUnitNamesSchema,
 } from './eventSchemas'
 import type { ProgramStage, TrackerEvent } from './eventSchemas'
@@ -364,7 +364,7 @@ const toForm = (
 }
 
 /**
- * The names of the ids the columns of these value types hold, 200 ids a request, sent together; none is made when they
+ * The names of the ids the columns of these value types hold, in bounded parallel requests; none is made when they
  * hold none, and a value that is no id is not asked for. Names only help: a request that fails leaves its ids without
  * names, which the cells then show, and only an abort of the load stops it.
  */
@@ -374,7 +374,8 @@ const loadNames = async (
     nameSome: (
         some: ReadonlyArray<string>
     ) => Promise<ReadonlyArray<[string, string]>>,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    idsPerRequest = IDS_PER_REQUEST
 ): Promise<ReadonlyMap<string, string>> => {
     const ids = new Set<string>()
     for (const { rows, columns } of tables) {
@@ -394,19 +395,24 @@ const loadNames = async (
         }
     }
     const list = [...ids]
-    const answers = await Promise.all(
-        Array.from(
-            { length: Math.ceil(list.length / IDS_PER_REQUEST) },
-            (_, at) =>
-                nameSome(
-                    list.slice(at * IDS_PER_REQUEST, (at + 1) * IDS_PER_REQUEST)
-                ).catch((error: Error) => {
+    const batches = Array.from(
+        { length: Math.ceil(list.length / idsPerRequest) },
+        (_, at) => list.slice(at * idsPerRequest, (at + 1) * idsPerRequest)
+    )
+    const pending = batches.values()
+    const answers: Array<ReadonlyArray<[string, string]>> = []
+    await Promise.all(
+        Array.from({ length: Math.min(8, batches.length) }, async () => {
+            for (const some of pending) {
+                const names = await nameSome(some).catch((error: Error) => {
                     if (signal?.aborted) {
                         throw error
                     }
                     return []
                 })
-        )
+                answers.push(names)
+            }
+        })
     )
     return new Map(answers.flat())
 }
@@ -449,27 +455,24 @@ const loadNamesOf = (
         loadNames(
             form,
             FILE_TYPES,
-            async (some) =>
-                fileNamesSchema
-                    .parse(
-                        await engine.query(
-                            {
-                                files: {
-                                    resource: 'fileResources',
-                                    params: {
-                                        filter: `id:in:[${some.join(',')}]`,
-                                        fields: 'id,name',
-                                        paging: false,
-                                    },
-                                },
+            async ([id]) => {
+                // Listing file resources requires ALL authority; reading one does not.
+                const { file } = fileNameSchema.parse(
+                    await engine.query(
+                        {
+                            file: {
+                                resource: 'fileResources',
+                                id,
+                                params: { fields: 'name' },
                             },
-                            { signal }
-                        )
+                        },
+                        { signal }
                     )
-                    .files.fileResources.map(
-                        ({ id, name }): [string, string] => [id, name]
-                    ),
-            signal
+                )
+                return [[id, file.name]]
+            },
+            signal,
+            1
         ),
     ])
 

@@ -131,8 +131,6 @@ test('every value type: each editor opens by its name, passes axe and closes wit
         ['symptoms', 'Multi-select'],
         ['age', 'Age'],
         ['coordinate', 'Coordinate'],
-        ['orgUnit', 'Organisation unit'],
-        ['username', 'Username'],
         ['file', 'File'],
         ['image', 'Image'],
     ]) {
@@ -153,6 +151,22 @@ test('every value type: each editor opens by its name, passes axe and closes wit
         await expect(target).toBeFocused()
     }
 
+    for (const [column, query, name] of [
+        ['orgUnit', 'Ngelehun', /Ngelehun CHC/],
+        ['username', 'admin', /admin/],
+    ] as const) {
+        const target = cell(page, 'row1', column)
+        await target.click()
+        await page.keyboard.type(query)
+        const list = page.getByRole('listbox')
+        await expect(list.getByRole('option', { name }).first()).toBeVisible()
+        await expect(target).toBeFocused()
+        await expectNoAxeViolations(page)
+        await page.keyboard.press('Escape')
+        await expect(list).toBeHidden()
+        await expect(target).toBeFocused()
+    }
+
     const empty = cell(page, 'row3', 'longText')
     await empty.focus()
     await page.keyboard.press('Enter')
@@ -162,7 +176,7 @@ test('every value type: each editor opens by its name, passes axe and closes wit
     await settled(page)
 })
 
-test('inpatient: an org unit and a coordinate picked in their editors save', async ({
+test('inpatient: an org unit picked in the cell and a coordinate picked in its editor save', async ({
     page,
     request,
     shared,
@@ -173,13 +187,14 @@ test('inpatient: an org unit and a coordinate picked in their editors save', asy
     const rowId = await addRow(page)
     shared.adds(rowId)
 
-    // Typing in the cell opens the search with what was typed.
+    // Typing searches in the cell, with focus kept there.
     const place = cell(page, rowId, PLACE_OF_INFECTION)
     await place.click()
     await page.keyboard.type('N')
-    const search = editor(page, 'Place of Infection')
-    await expect(search).toBeVisible()
     await page.keyboard.type('gelehun')
+    const search = page.getByRole('listbox')
+    await expect(search).toBeVisible()
+    await expect(place).toBeFocused()
     await expect(search.getByRole('option')).toHaveCount(2)
     await announced(page, 'Results: 2')
     await expectNoAxeViolations(page)

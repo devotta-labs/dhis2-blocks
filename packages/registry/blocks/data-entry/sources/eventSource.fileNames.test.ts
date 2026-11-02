@@ -41,8 +41,12 @@ const events = {
     })),
 }
 
-/** DHIS2 for the load: names are answered once `answer` lets them, or refused for files when `refuseFiles`. */
-const engineFor = (answer: Promise<void>, refuseFiles = false) => {
+/** DHIS2 for the load: file metadata is readable by id, not through the privileged collection endpoint. */
+const engineFor = (
+    answer: Promise<void>,
+    refuseFiles: boolean | string = false,
+    loadedEvents = events
+) => {
     const requests: Array<[Request, Options]> = []
     // SAFETY: loading only calls `query`, which answers every request from the fixtures.
     const engine = {
@@ -55,24 +59,29 @@ const engineFor = (answer: Promise<void>, refuseFiles = false) => {
             if (request.program !== undefined) {
                 return {
                     program: inpatientProgram,
-                    events,
+                    events: loadedEvents,
                     me: meAdmin,
                     systemInfo,
                 }
             }
             await answer
-            if (request.files !== undefined && refuseFiles) {
-                throw new Error('Forbidden')
+            if (request.file !== undefined) {
+                if (refuseFiles === true || request.file.id === refuseFiles) {
+                    throw new Error('Forbidden')
+                }
+                return {
+                    file: fileNames.fileResources.find(
+                        ({ id }) => id === request.file.id
+                    ) ?? { name: `File ${request.file.id}` },
+                }
             }
-            return request.files === undefined
-                ? { orgUnits: orgUnitNames }
-                : { files: fileNames }
+            return { orgUnits: orgUnitNames }
         },
     } as DataEngine
     return { engine, requests }
 }
 
-test('the form loads the names of stored files in one request, sent with the org unit names request', async () => {
+test('the form reads each stored file by id alongside the org unit names request', async () => {
     let answer = () => {}
     const { engine, requests } = engineFor(
         new Promise((resolve) => {
@@ -81,23 +90,22 @@ test('the form loads the names of stored files in one request, sent with the org
     )
     const signal = new AbortController().signal
     const loading = inpatient.load(engine, signal)
-    // Both names requests are made before either answers.
-    await expect.poll(() => requests.length).toBe(3)
+    // Both files and the org units are requested before any names answer.
+    await expect.poll(() => requests.length).toBe(4)
     answer()
     const form = await loading
-    expect(requests.find(([request]) => request.files !== undefined)).toEqual([
-        {
-            files: {
-                resource: 'fileResources',
-                params: {
-                    filter: `id:in:[${DOC},${SUMMARY}]`,
-                    fields: 'id,name',
-                    paging: false,
+    expect(requests.filter(([request]) => request.file !== undefined)).toEqual(
+        [DOC, SUMMARY].map((id) => [
+            {
+                file: {
+                    resource: 'fileResources',
+                    id,
+                    params: { fields: 'name' },
                 },
             },
-        },
-        { signal },
-    ])
+            { signal },
+        ])
+    )
     expect(form.fileNames).toEqual(
         new Map([
             [DOC, 'doc.pdf'],
@@ -105,6 +113,46 @@ test('the form loads the names of stored files in one request, sent with the org
         ])
     )
     expect(form.orgUnitNames.get(CHC)).toBe('Ngelehun CHC')
+})
+
+test('a refused file lookup does not discard another file name', async () => {
+    const { engine } = engineFor(Promise.resolve(), DOC)
+    const form = await inpatient.load(engine)
+    expect(form.fileNames).toEqual(
+        new Map([[SUMMARY, 'Good health activity summary.doc']])
+    )
+})
+
+test('file lookups are deduplicated and at most eight run together', async () => {
+    const ids = Array.from(
+        { length: 20 },
+        (_, at) => `fl${String(at).padStart(9, '0')}`
+    )
+    const many = {
+        ...events,
+        events: [...ids, ids[0]].map((id, at) => ({
+            ...events.events[0],
+            event: `ev${String(at).padStart(9, '0')}`,
+            dataValues: [{ dataElement: DOCUMENTATION, value: id }],
+        })),
+    }
+    let answer = () => {}
+    const { engine, requests } = engineFor(
+        new Promise((resolve) => {
+            answer = resolve
+        }),
+        false,
+        many
+    )
+    const loading = inpatient.load(engine)
+    await expect
+        .poll(() => requests.filter(([request]) => request.file).length)
+        .toBe(8)
+    answer()
+    const form = await loading
+    expect(requests.filter(([request]) => request.file)).toHaveLength(20)
+    expect(form.fileNames.size).toBe(20)
+    expect(form.fileNames.get(ids[19])).toBe(`File ${ids[19]}`)
 })
 
 test('a file names request that fails leaves those files without names, and the form opens', async () => {

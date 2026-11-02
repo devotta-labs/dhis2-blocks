@@ -22,10 +22,11 @@ import {
 } from '@/components/working-list'
 import {
     WorkingListCalendar,
+    WorkingListCalendarCellRecords,
     WorkingListCalendarDayRecords,
+    WorkingListCalendarDisplayToggle,
     WorkingListCalendarGrid,
     WorkingListCalendarNavigation,
-    useWorkingListCalendar,
 } from '@/components/working-list-calendar'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
@@ -43,6 +44,8 @@ import {
     LAB_PROGRAM,
     generateWorld,
     recordLabelFor,
+    recordStatusFor,
+    weekendFor,
     type LabConfig,
     type LabData,
     type LabServer,
@@ -57,7 +60,7 @@ import {
     hasTrackedEntityView,
     type LabRequest,
 } from './labServer'
-import { LogPanel } from './panels'
+import { CalendarReadout, LogPanel, PlainCount } from './panels'
 import { DEFAULT_CONFIG, PRESETS } from './presets'
 import {
     DataControls,
@@ -217,44 +220,6 @@ class CanvasBoundary extends Component<
     }
 }
 
-/** What the calendar holds right now, read through its public hook. */
-const CalendarReadout = () => {
-    const calendar = useWorkingListCalendar()
-    const { results } = calendar
-    const rows: Array<[string, string]> = [
-        ['dateField', calendar.dateField],
-        ['visibleMonth', String(calendar.visibleMonth)],
-        ['selectedDay', calendar.selectedDay?.date ?? 'null'],
-        ['results.status', results.status],
-        [
-            'records',
-            results.status === 'ready' ? String(results.records.length) : '—',
-        ],
-        [
-            'truncated',
-            results.status === 'ready' ? String(results.truncated) : '—',
-        ],
-        [
-            'filterBounds',
-            `${results.filterBounds.start ?? '…'} → ${results.filterBounds.end ?? '…'}`,
-        ],
-        [
-            'atFilterStart / End',
-            `${calendar.atFilterStart} / ${calendar.atFilterEnd}`,
-        ],
-    ]
-    return (
-        <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 rounded border border-dashed border-dhis2-grey-500 bg-dhis2-grey-050 p-2 font-mono text-xs">
-            {rows.map(([name, value]) => (
-                <div key={name} className="contents">
-                    <dt className="text-dhis2-grey-700">{name}</dt>
-                    <dd className="m-0">{value}</dd>
-                </div>
-            ))}
-        </dl>
-    )
-}
-
 const LabComposition = ({
     view,
     programId,
@@ -280,7 +245,12 @@ const LabComposition = ({
 
     const calendar = (
         <WorkingListCalendar
+            // The display is a default, so a new choice remounts the calendar.
+            key={view.display}
             className="p-2"
+            defaultDisplay={view.display}
+            onDisplayChange={(display) => note(`onDisplayChange('${display}')`)}
+            recordStatus={recordStatusFor(view)}
             dateField={
                 view.dateField === 'default' ? undefined : view.dateField
             }
@@ -294,8 +264,25 @@ const LabComposition = ({
             }
             {...dayProps}
         >
-            {view.navigation && <WorkingListCalendarNavigation />}
-            {view.grid && <WorkingListCalendarGrid />}
+            {view.navigation && (
+                <div className="flex flex-wrap items-center gap-2">
+                    <WorkingListCalendarNavigation />
+                    {view.displayToggle && (
+                        <WorkingListCalendarDisplayToggle className="ms-auto" />
+                    )}
+                </div>
+            )}
+            {view.grid && (
+                <WorkingListCalendarGrid
+                    weekend={weekendFor(view)}
+                    weekendColumns={view.weekendColumns}
+                >
+                    {view.cell === 'records' && (
+                        <WorkingListCalendarCellRecords max={view.perDay} />
+                    )}
+                    {view.cell === 'plainCount' && <PlainCount />}
+                </WorkingListCalendarGrid>
+            )}
             {view.dayRecords && <WorkingListCalendarDayRecords />}
             {view.readout && <CalendarReadout />}
         </WorkingListCalendar>

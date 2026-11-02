@@ -43,7 +43,7 @@ const programJson = ({ data }: LabConfig) => ({
             [ATTRIBUTES.lastName, 'Last name', data.names !== 'unnamed'],
             [ATTRIBUTES.nationalId, 'National ID', true],
             [ATTRIBUTES.sex, 'Sex', true],
-            [ATTRIBUTES.village, 'Village', false],
+            [ATTRIBUTES.location, 'Location', false],
         ] as const
     ).map(([id, displayName, displayInList]) => ({
         displayInList,
@@ -110,8 +110,8 @@ const dateFilter = ({ server }: LabConfig, today: string) => {
 const COLUMN_ORDERS = {
     program: undefined,
     optionFirst: [ATTRIBUTES.sex, ATTRIBUTES.firstName, ATTRIBUTES.lastName],
-    villageFirst: [
-        ATTRIBUTES.village,
+    locationFirst: [
+        ATTRIBUTES.location,
         ATTRIBUTES.firstName,
         ATTRIBUTES.lastName,
     ],
@@ -204,7 +204,7 @@ const attributeValues = (person: LabPerson) =>
         [ATTRIBUTES.firstName, person.firstName],
         [ATTRIBUTES.lastName, person.lastName],
         [ATTRIBUTES.nationalId, person.nationalId],
-        [ATTRIBUTES.village, person.village],
+        [ATTRIBUTES.location, person.location],
         [ATTRIBUTES.sex, person.sex],
     ].flatMap(([attribute, value]) =>
         value === undefined ? [] : [{ attribute, value }]
@@ -222,6 +222,7 @@ const trackedEntityJson = (person: LabPerson) => ({
         {
             enrollment: `${person.id}En`,
             program: LAB_PROGRAM,
+            status: person.enrollmentStatus,
             enrolledAt: person.enrolledAt,
             occurredAt: person.occurredAt,
         },

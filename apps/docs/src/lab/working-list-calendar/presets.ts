@@ -17,6 +17,7 @@ export const DEFAULT_CONFIG: LabConfig = {
         missingDates: 0,
         badDates: 0,
         duplicates: 0,
+        locations: 4,
     },
     server: {
         records: 'ok',
@@ -40,6 +41,13 @@ export const DEFAULT_CONFIG: LabConfig = {
         toolbar: true,
         readout: true,
         recordLabel: 'default',
+        display: 'counts',
+        displayToggle: true,
+        perDay: 3,
+        cell: 'records',
+        weekend: 'none',
+        weekendColumns: 'show',
+        recordStatus: 'default',
         labelFields: [
             ATTRIBUTES.nationalId,
             ATTRIBUTES.firstName,
@@ -128,6 +136,87 @@ export const PRESETS: readonly Preset[] = [
         { view: { layout: 'toggle' } }
     ),
     preset(
+        'Design',
+        'Counts by status',
+        'The default: each day counts its records by enrollment status.',
+        { data: { records: 300, spanDays: 20 } }
+    ),
+    preset(
+        'Design',
+        'Names',
+        'Names in each day, coloured by status, three per day then "+N more".',
+        { data: { records: 300, spanDays: 20 }, view: { display: 'records' } }
+    ),
+    preset(
+        'Design',
+        'Names, six per day',
+        'More names per day before "+N more".',
+        {
+            data: { records: 300, spanDays: 20 },
+            view: { display: 'records', perDay: 6 },
+        }
+    ),
+    preset(
+        'Design',
+        'Overdue appointments',
+        'Visits counted by status; past visits never done show as overdue.',
+        {
+            data: { ...events, records: 200, spanDays: 30 },
+            view: { dateField: 'eventScheduledAt' },
+        }
+    ),
+    preset(
+        'Design',
+        'Narrow Saturday and Sunday',
+        'Weekend columns shrink to counts.',
+        {
+            data: { records: 300, spanDays: 20 },
+            view: { weekend: 'satSun', weekendColumns: 'narrow' },
+        }
+    ),
+    preset(
+        'Design',
+        'Hide a Friday and Saturday weekend',
+        'Weekend columns disappear; their records are counted above the grid.',
+        {
+            data: { records: 300, spanDays: 20 },
+            view: { weekend: 'friSat', weekendColumns: 'hide' },
+        }
+    ),
+    preset(
+        'Design',
+        'Status by location',
+        "A recordStatus of the app's own colours records by location.",
+        {
+            data: { records: 300, spanDays: 20 },
+            view: { recordStatus: 'location' },
+        }
+    ),
+    preset(
+        'Design',
+        'Status by location, ten locations',
+        'Ten statuses per day: how the counts cope when there are many groups.',
+        {
+            data: { records: 300, spanDays: 20, locations: 10 },
+            view: { recordStatus: 'location' },
+        }
+    ),
+    preset(
+        'Design',
+        'Just a count (own cell part)',
+        "A cell part of the app's own on useWorkingListCalendarDay: the day's count, big and centred.",
+        { data: { records: 300, spanDays: 20 }, view: { cell: 'plainCount' } }
+    ),
+    preset(
+        'Design',
+        'No status',
+        'A recordStatus that returns nothing: one neutral count per day.',
+        {
+            data: { records: 300, spanDays: 20 },
+            view: { recordStatus: 'none' },
+        }
+    ),
+    preset(
         'Density',
         'Empty',
         'No records anywhere: an empty grid and one line.',
@@ -197,9 +286,9 @@ export const PRESETS: readonly Preset[] = [
     ),
     preset(
         'Names',
-        'Village first',
-        'A saved view puts Village first, so it leads each label.',
-        { server: { columns: 'villageFirst' } }
+        'Location first',
+        'A saved view puts Location first, so it leads each label.',
+        { server: { columns: 'locationFirst' } }
     ),
     preset(
         'Names',

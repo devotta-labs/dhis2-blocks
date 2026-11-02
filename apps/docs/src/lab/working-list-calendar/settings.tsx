@@ -15,7 +15,7 @@ const LABEL_FIELDS: ReadonlyArray<readonly [string, string]> = [
     [ATTRIBUTES.lastName, 'Last name'],
     [ATTRIBUTES.nationalId, 'National ID (unique)'],
     [ATTRIBUTES.sex, 'Sex (option set)'],
-    [ATTRIBUTES.village, 'Village (not in list)'],
+    [ATTRIBUTES.location, 'Location (not in list)'],
     ['enrolledAt', 'Enrollment date'],
     ['enrollmentOccurredAt', 'Incident date'],
     ['eventOccurredAt', 'Visit date (events)'],
@@ -135,6 +135,13 @@ export const DataControls = ({
                 suffix="%"
                 onChange={(duplicates) => set({ duplicates })}
             />
+            <NumberRow
+                label="Locations"
+                value={data.locations}
+                min={1}
+                max={12}
+                onChange={(locations) => set({ locations })}
+            />
         </Section>
     )
 }
@@ -204,7 +211,7 @@ export const ServerControls = ({
                 options={[
                     ['program', 'Program order'],
                     ['optionFirst', 'Sex (option set) first'],
-                    ['villageFirst', 'Village first'],
+                    ['locationFirst', 'Location first'],
                     ['idFirst', 'National ID first'],
                 ]}
                 onChange={(columns) => set({ columns })}
@@ -275,6 +282,68 @@ export const ViewControls = ({
             >
                 onRecordClick
             </Check>
+            <SelectRow
+                label="defaultDisplay"
+                value={view.display}
+                options={[
+                    ['counts', 'Counts'],
+                    ['records', 'Names'],
+                ]}
+                onChange={(display) => set({ display })}
+            />
+            <Check
+                checked={view.displayToggle}
+                onChange={(displayToggle) => set({ displayToggle })}
+            >
+                WorkingListCalendarDisplayToggle
+            </Check>
+            <NumberRow
+                label="Names per day (max)"
+                value={view.perDay}
+                max={20}
+                onChange={(perDay) => set({ perDay })}
+            />
+            <SelectRow
+                label="Grid children"
+                value={view.cell}
+                options={[
+                    ['records', 'WorkingListCalendarCellRecords'],
+                    ['plainCount', "The lab's own count part"],
+                    ['none', 'None'],
+                ]}
+                onChange={(cell) => set({ cell })}
+            />
+            <SelectRow
+                label="Weekend"
+                value={view.weekend}
+                options={[
+                    ['none', 'None'],
+                    ['satSun', 'Saturday and Sunday'],
+                    ['friSat', 'Friday and Saturday'],
+                    ['sun', 'Sunday only'],
+                ]}
+                onChange={(weekend) => set({ weekend })}
+            />
+            <SelectRow
+                label="Weekend columns"
+                value={view.weekendColumns}
+                options={[
+                    ['show', 'Show'],
+                    ['narrow', 'Narrow'],
+                    ['hide', 'Hide'],
+                ]}
+                onChange={(weekendColumns) => set({ weekendColumns })}
+            />
+            <SelectRow
+                label="recordStatus"
+                value={view.recordStatus}
+                options={[
+                    ['default', '(default: status, overdue)'],
+                    ['none', 'Returns undefined'],
+                    ['location', 'By location'],
+                ]}
+                onChange={(recordStatus) => set({ recordStatus })}
+            />
             <SelectRow
                 label="recordLabel"
                 value={view.recordLabel}

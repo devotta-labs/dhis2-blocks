@@ -1,6 +1,8 @@
 import type {
     WorkingListCalendarDateField,
     WorkingListCalendarProps,
+    WorkingListCalendarTone,
+    WorkingListCalendarWeekday,
 } from '@/components/working-list-calendar'
 import type { LabNetwork } from '../network'
 
@@ -11,7 +13,7 @@ export const ATTRIBUTES = {
     firstName: 'labFirstNam',
     lastName: 'labLastName',
     nationalId: 'labNationId',
-    village: 'labVillage1',
+    location: 'labLocatio1',
     sex: 'labSex00001',
 }
 export const WEIGHT = 'labWeight01'
@@ -40,6 +42,8 @@ export interface LabData {
     badDates: number
     /** Share of records sent twice (%). */
     duplicates: number
+    /** How many locations people live in, for the status-by-location rule. */
+    locations: number
 }
 
 export interface LabServer {
@@ -51,7 +55,7 @@ export interface LabServer {
     /** A saved view whose date filter limits the calendar. */
     savedFilter: 'none' | 'thisMonth' | 'last30' | 'next90' | 'fixedPast'
     /** A saved view that reorders the list's columns. */
-    columns: 'program' | 'optionFirst' | 'villageFirst' | 'idFirst'
+    columns: 'program' | 'optionFirst' | 'locationFirst' | 'idFirst'
 }
 
 export interface LabView {
@@ -69,6 +73,17 @@ export interface LabView {
     recordLabel: 'default' | 'fields' | 'blank' | 'rowId'
     /** Fields `recordLabel: 'fields'` joins, in order; '' leaves a slot out. */
     labelFields: [string, string, string]
+    /** What days show on mount; the toggle part can change it. */
+    display: 'counts' | 'records'
+    displayToggle: boolean
+    /** Names per day in the names display. */
+    perDay: number
+    /** What fills each day under its number. */
+    cell: 'records' | 'plainCount' | 'none'
+    weekend: 'none' | 'satSun' | 'friSat' | 'sun'
+    weekendColumns: 'show' | 'narrow' | 'hide'
+    /** What the lab passes as recordStatus; `default` passes nothing. */
+    recordStatus: 'default' | 'none' | 'location'
 }
 
 export interface LabConfig {
@@ -83,8 +98,9 @@ export interface LabPerson {
     firstName?: string
     lastName?: string
     nationalId: string
-    village: string
+    location: string
     sex: 'F' | 'M'
+    enrollmentStatus: 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
     /** Server-format timestamps; `undefined` when the record has none. */
     enrolledAt?: string
     occurredAt?: string
@@ -114,6 +130,13 @@ const EVERYDAY = [
 
 // Matches EVERYDAY, so the option-set presets read sensibly.
 const SEXES = ['F', 'F', 'M', 'F', 'M', 'F', 'M', 'F'] as const
+
+const ENROLLMENT_STATUSES = [
+    ...Array<'ACTIVE'>(7).fill('ACTIVE'),
+    'COMPLETED',
+    'COMPLETED',
+    'CANCELLED',
+] as const
 
 const LONG = [
     [
@@ -226,7 +249,11 @@ export const generateWorld = (data: LabData, today = isoToday()): World => {
             firstName,
             lastName,
             nationalId: `SL-${pad(100000 + index, 6)}`,
-            village: ['Bo', 'Kenema', 'Makeni', 'Kono'][index % 4] ?? 'Bo',
+            location:
+                LOCATIONS[
+                    index %
+                        Math.max(1, Math.min(LOCATIONS.length, data.locations))
+                ] ?? 'Bo',
             sex: SEXES[index % SEXES.length] ?? 'F',
             enrolledAt: stamp,
             // The incident date sits two days before enrollment, or is as broken as it.
@@ -234,10 +261,13 @@ export const generateWorld = (data: LabData, today = isoToday()): World => {
                 stamp === timestamp(date)
                     ? timestamp(addDays(date, -2))
                     : stamp,
+            // Mostly active, some completed, a few cancelled.
+            enrollmentStatus: ENROLLMENT_STATUSES[index % 10] ?? 'ACTIVE',
             visit: {
                 id: `labEv${pad(index, 6)}`,
-                status: future ? 'SCHEDULE' : 'COMPLETED',
-                occurredAt: future ? undefined : stamp,
+                // One past visit in four was never done, so it is overdue.
+                status: future || index % 4 === 0 ? 'SCHEDULE' : 'COMPLETED',
+                occurredAt: future || index % 4 === 0 ? undefined : stamp,
                 scheduledAt: stamp,
             },
         }
@@ -264,6 +294,60 @@ export const recordLabelFor = (
             return () => ''
         case 'rowId':
             return (row) => row.id
+        default:
+            return undefined
+    }
+}
+
+const WEEKENDS = {
+    none: [],
+    satSun: [6, 7],
+    friSat: [5, 6],
+    sun: [7],
+} satisfies Record<LabView['weekend'], WorkingListCalendarWeekday[]>
+
+export const weekendFor = (view: LabView) => WEEKENDS[view.weekend]
+
+const LOCATIONS = [
+    'Bo',
+    'Kenema',
+    'Makeni',
+    'Kono',
+    'Freetown',
+    'Port Loko',
+    'Kailahun',
+    'Pujehun',
+    'Bonthe',
+    'Kambia',
+    'Moyamba',
+    'Tonkolili',
+]
+
+const TONES: readonly WorkingListCalendarTone[] = [
+    'info',
+    'positive',
+    'warning',
+    'critical',
+    'neutral',
+]
+
+/** The recordStatus the lab passes for its status setting. */
+export const recordStatusFor = (
+    view: LabView
+): WorkingListCalendarProps['recordStatus'] => {
+    switch (view.recordStatus) {
+        case 'none':
+            return () => undefined
+        case 'location':
+            return (_row, cellText) => {
+                const location = cellText(ATTRIBUTES.location)
+                // Tones repeat after five locations, as they would in an app.
+                const tone =
+                    TONES[
+                        Math.max(0, LOCATIONS.indexOf(location)) % TONES.length
+                    ] ?? 'neutral'
+                return { id: location, label: location, tone }
+            }
         default:
             return undefined
     }

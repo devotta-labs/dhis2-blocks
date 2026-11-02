@@ -1,3 +1,4 @@
+import type { LabNetwork } from '../network'
 import type { LabConfig, LabData, LabServer, LabView } from './labData'
 
 export const DEFAULT_CONFIG: LabConfig = {
@@ -12,15 +13,14 @@ export const DEFAULT_CONFIG: LabConfig = {
         duplicates: 0,
     },
     server: {
-        latency: 250,
         records: 'ok',
-        metadata: 'ok',
         calendar: 'gregorian',
         dateFormat: 'YYYY-MM-DD',
         timeZone: 'Africa/Freetown',
         apiVersion: 42,
         savedFilter: 'none',
     },
+    network: { delay: 250, endpoints: {} },
     view: {
         dateField: 'default',
         limit: 1000,
@@ -50,6 +50,7 @@ const preset = (
     changes: {
         data?: Partial<LabData>
         server?: Partial<LabServer>
+        network?: Partial<LabNetwork>
         view?: Partial<LabView>
     } = {}
 ): Preset => ({
@@ -59,11 +60,17 @@ const preset = (
     config: {
         data: { ...DEFAULT_CONFIG.data, ...changes.data },
         server: { ...DEFAULT_CONFIG.server, ...changes.server },
+        network: { ...DEFAULT_CONFIG.network, ...changes.network },
         view: { ...DEFAULT_CONFIG.view, ...changes.view },
     },
 })
 
 const events = { mode: 'event' } as const
+
+const records = (endpoint: LabNetwork['endpoints'][string]) => ({
+    'tracker/trackedEntities': endpoint,
+    'tracker/events': endpoint,
+})
 
 export const PRESETS: readonly Preset[] = [
     preset(
@@ -252,27 +259,44 @@ export const PRESETS: readonly Preset[] = [
     preset(
         'Server',
         'Slow',
-        'Three seconds per request: watch the loading line.',
+        'Three seconds per record request: watch the loading line.',
+        { network: { endpoints: records({ delay: 3000 }) } }
+    ),
+    preset(
+        'Server',
+        'Slow lookups',
+        'Records are quick, organisation unit and user names take five seconds: the records should not wait for them.',
         {
-            server: { latency: 3000 },
+            network: {
+                endpoints: {
+                    organisationUnits: { delay: 5000 },
+                    users: { delay: 5000 },
+                },
+            },
         }
     ),
+    preset(
+        'Server',
+        'Slow metadata',
+        'The program takes five seconds: everything that needs it waits, nothing else should.',
+        { network: { endpoints: { programs: { delay: 5000 } } } }
+    ),
     preset('Server', 'Records never arrive', 'The record request hangs.', {
-        server: { records: 'hangs' },
+        network: { endpoints: records({ behaviour: 'hangs' }) },
     }),
     preset(
         'Server',
         'Records fail',
         'A 500 on every record request; try again.',
         {
-            server: { records: 'fails' },
+            network: { endpoints: records({ behaviour: 'fails' }) },
         }
     ),
     preset(
         'Server',
         'Metadata fails',
         'The program cannot load: the list shows its error and the calendar says it is unavailable.',
-        { server: { metadata: 'fails' } }
+        { network: { endpoints: { programs: { behaviour: 'fails' } } } }
     ),
     preset(
         'Server',

@@ -7,10 +7,8 @@ export const Section = ({
     title: string
     children: ReactNode
 }) => (
-    <fieldset className="flex min-w-0 flex-col gap-1.5 border-t border-dhis2-grey-300 pt-3">
-        <legend className="pe-2 text-xs font-medium tracking-wide text-dhis2-grey-700 uppercase">
-            {title}
-        </legend>
+    <fieldset className="flex flex-col gap-1">
+        <legend>{title}</legend>
         {children}
     </fieldset>
 )
@@ -24,7 +22,7 @@ export const Check = ({
     onChange: (checked: boolean) => void
     children: ReactNode
 }) => (
-    <label className="flex items-center gap-2 text-sm">
+    <label className="flex items-center gap-2">
         <input
             type="checkbox"
             checked={checked}
@@ -33,9 +31,6 @@ export const Check = ({
         {children}
     </label>
 )
-
-export const box =
-    'rounded border border-dhis2-grey-500 bg-white px-1.5 py-0.5 text-sm'
 
 /** A number field that applies typed values once they are in range. */
 export const NumberRow = ({
@@ -64,7 +59,7 @@ export const NumberRow = ({
         setDraft(undefined)
     }
     return (
-        <label className="flex items-center justify-between gap-2 text-sm">
+        <label className="flex items-center justify-between gap-2">
             {label}
             <span className="flex items-center gap-1">
                 <input
@@ -83,9 +78,9 @@ export const NumberRow = ({
                     onKeyDown={(event) => {
                         if (event.key === 'Enter') commit()
                     }}
-                    className={`${box} w-20 text-end tabular-nums`}
+                    className="w-20 text-end"
                 />
-                <span className="w-5 text-dhis2-grey-700">{suffix}</span>
+                <span className="w-5 text-(--lab-ink-3)">{suffix}</span>
             </span>
         </label>
     )
@@ -102,7 +97,7 @@ export const SelectRow = <T extends string>({
     options: ReadonlyArray<readonly [T, string]>
     onChange: (value: T) => void
 }) => (
-    <label className="flex items-center justify-between gap-2 text-sm">
+    <label className="flex items-center justify-between gap-2">
         {label}
         <select
             value={value}
@@ -113,7 +108,7 @@ export const SelectRow = <T extends string>({
                     )?.[0] ?? value
                 )
             }
-            className={`${box} max-w-40`}
+            className="max-w-40"
         >
             {options.map(([option, name]) => (
                 <option key={option} value={option}>
@@ -133,13 +128,13 @@ export const Segmented = <T extends string>({
     options: ReadonlyArray<readonly [T, string]>
     onChange: (value: T) => void
 }) => (
-    <div className="flex rounded border border-dhis2-grey-500 bg-white p-0.5">
+    <div className="flex border border-(--lab-ink)">
         {options.map(([option, name]) => (
             <button
                 key={option}
                 type="button"
                 aria-pressed={value === option}
-                className="flex-1 rounded px-2 py-0.5 text-sm aria-pressed:bg-dhis2-blue-700 aria-pressed:text-white"
+                className="flex-1 border-0"
                 onClick={() => onChange(option)}
             >
                 {name}

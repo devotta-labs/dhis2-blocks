@@ -1,5 +1,38 @@
 import { Check, NumberRow, Section, SelectRow } from './controls'
 import type { LabData, LabServer, LabView } from './labData'
+import { PRESETS, type Preset } from './presets'
+
+const presetGroups = [...new Set(PRESETS.map(({ group }) => group))]
+
+export const PresetControls = ({
+    selected,
+    onPick,
+}: {
+    selected?: string
+    onPick: (preset: Preset) => void
+}) => (
+    <Section title="Presets">
+        {presetGroups.map((group) => (
+            <div key={group} className="flex flex-wrap gap-1">
+                <span className="w-full text-[10px] tracking-[0.1em] text-(--lab-ink-3) uppercase">
+                    {group}
+                </span>
+                {PRESETS.filter((each) => each.group === group).map((each) => (
+                    <button
+                        key={each.name}
+                        type="button"
+                        title={each.note}
+                        aria-pressed={selected === each.name}
+                        className="tracking-normal normal-case"
+                        onClick={() => onPick(each)}
+                    >
+                        {each.name}
+                    </button>
+                ))}
+            </div>
+        ))}
+    </Section>
+)
 
 export const DataControls = ({
     data,
@@ -145,28 +178,10 @@ export const ServerControls = ({
                 label="Records"
                 value={server.records}
                 options={[
-                    ['ok', 'Answer'],
+                    ['ok', 'Answer the window'],
                     ['ignoresWindow', 'Ignore the window'],
-                    ['fails', 'Fail (500)'],
-                    ['hangs', 'Never answer'],
                 ]}
                 onChange={(records) => set({ records })}
-            />
-            <SelectRow
-                label="Program metadata"
-                value={server.metadata}
-                options={[
-                    ['ok', 'Answer'],
-                    ['fails', 'Fail (500)'],
-                ]}
-                onChange={(metadata) => set({ metadata })}
-            />
-            <NumberRow
-                label="Latency"
-                value={server.latency}
-                max={20000}
-                suffix="ms"
-                onChange={(latency) => set({ latency })}
             />
             <NumberRow
                 label="API version"

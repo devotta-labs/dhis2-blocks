@@ -1,4 +1,5 @@
 import type { WorkingListCalendarDateField } from '@/components/working-list-calendar'
+import type { LabNetwork } from '../network'
 
 export const LAB_PROGRAM = 'labProgram1'
 export const LAB_STAGE = 'labStage001'
@@ -38,9 +39,7 @@ export interface LabData {
 }
 
 export interface LabServer {
-    latency: number
-    records: 'ok' | 'fails' | 'hangs' | 'ignoresWindow'
-    metadata: 'ok' | 'fails'
+    records: 'ok' | 'ignoresWindow'
     calendar: LabCalendar
     dateFormat: 'YYYY-MM-DD' | 'DD-MM-YYYY'
     timeZone: string
@@ -65,6 +64,7 @@ export interface LabView {
 export interface LabConfig {
     data: LabData
     server: LabServer
+    network: LabNetwork
     view: LabView
 }
 

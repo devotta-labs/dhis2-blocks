@@ -20,38 +20,8 @@ export interface LabRequest {
     params?: Params
 }
 
-export interface RequestLogEntry {
-    id: number
-    at: string
-    request: LabRequest
-    ms?: number
-    outcome: 'pending' | 'ok' | 'failed' | 'aborted'
-    detail?: string
-}
-
 export const TE_SAVED_VIEW = 'labTeFilter'
 export const EVENT_SAVED_VIEW = 'labVisits1'
-
-/** Thrown like the app-runtime's errors, with the status the block reads. */
-const httpError = (status: number, message: string) =>
-    Object.assign(new Error(message), {
-        details: { httpStatusCode: status, message },
-    })
-
-const wait = (ms: number, signal?: AbortSignal) =>
-    new Promise<void>((resolve, reject) => {
-        const abort = () => {
-            clearTimeout(timer)
-            reject(new DOMException('Aborted', 'AbortError'))
-        }
-        const timer = setTimeout(() => {
-            signal?.removeEventListener('abort', abort)
-            resolve()
-        }, ms)
-        signal?.addEventListener('abort', abort, { once: true })
-    })
-
-const never = () => new Promise<never>(() => {})
 
 const text = (value: Params[string]) =>
     value === undefined || value === null ? undefined : String(value)
@@ -306,23 +276,14 @@ const events = ({ server }: LabConfig, world: World, params: Params) => {
     }
 }
 
-const isRecordRequest = (resource: string) =>
-    resource === 'tracker/trackedEntities' || resource === 'tracker/events'
-
+/** What the lab's DHIS2 answers; how slowly, or whether at all, is the lab network's call. */
 export const answer = async (
     config: LabConfig,
     world: World,
-    request: LabRequest,
-    signal?: AbortSignal
+    request: LabRequest
 ) => {
     const { server } = config
     const params = request.params ?? {}
-    await wait(
-        isRecordRequest(request.resource)
-            ? server.latency
-            : Math.min(server.latency, 300),
-        signal
-    )
     switch (request.resource) {
         case 'system/info':
             return {
@@ -331,9 +292,6 @@ export const answer = async (
                 serverTimeZoneId: server.timeZone,
             }
         case 'programs':
-            if (server.metadata === 'fails') {
-                throw httpError(500, 'Program metadata failed')
-            }
             return request.id ? programJson(config) : { programs: [] }
         case 'trackedEntityInstanceFilters':
             return {
@@ -380,10 +338,6 @@ export const answer = async (
         default:
             break
     }
-    if (server.records === 'hangs') return never()
-    if (server.records === 'fails') {
-        throw httpError(500, 'Internal server error')
-    }
     return request.resource === 'tracker/events'
         ? events(config, world, params)
         : trackedEntities(config, world, params)
@@ -401,56 +355,3 @@ export const RESOURCES = [
     'tracker/trackedEntities',
     'tracker/events',
 ]
-
-export type Log = (
-    update: (entries: RequestLogEntry[]) => RequestLogEntry[]
-) => void
-
-let nextRequest = 0
-
-/** `answer`, with each request and how it ended landing in the log. */
-export const answerLogged = async (
-    config: LabConfig,
-    world: World,
-    request: LabRequest,
-    log: Log,
-    signal?: AbortSignal
-) => {
-    const id = ++nextRequest
-    const started = performance.now()
-    log((entries) =>
-        [
-            {
-                id,
-                at: new Date().toLocaleTimeString(),
-                request,
-                outcome: 'pending' as const,
-            },
-            ...entries,
-        ].slice(0, 150)
-    )
-    const settle = (outcome: RequestLogEntry['outcome'], detail?: string) =>
-        log((entries) =>
-            entries.map((entry) =>
-                entry.id === id
-                    ? {
-                          ...entry,
-                          outcome,
-                          detail,
-                          ms: Math.round(performance.now() - started),
-                      }
-                    : entry
-            )
-        )
-    try {
-        const result = await answer(config, world, request, signal)
-        settle('ok')
-        return result
-    } catch (error) {
-        settle(
-            signal?.aborted ? 'aborted' : 'failed',
-            error instanceof Error ? error.message : 'Request failed'
-        )
-        throw error
-    }
-}

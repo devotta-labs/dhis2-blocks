@@ -29,7 +29,15 @@ import {
 } from '@/components/working-list-calendar'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
-import { Section, Segmented, box } from './controls'
+import { LabLayout } from '../LabLayout'
+import { NetworkControls } from '../NetworkControls'
+import {
+    throughNetwork,
+    type LabNetwork,
+    type Log,
+    type RequestLogEntry,
+} from '../network'
+import { Section, Segmented } from './controls'
 import {
     LAB_ORG_UNIT,
     LAB_PROGRAM,
@@ -44,14 +52,17 @@ import {
     EVENT_SAVED_VIEW,
     RESOURCES,
     TE_SAVED_VIEW,
-    answerLogged,
+    answer,
     type LabRequest,
-    type Log,
-    type RequestLogEntry,
 } from './labServer'
-import { CallbackLog, RequestLog } from './panels'
+import { LogPanel } from './panels'
 import { DEFAULT_CONFIG, PRESETS } from './presets'
-import { DataControls, ServerControls, ViewControls } from './settings'
+import {
+    DataControls,
+    PresetControls,
+    ServerControls,
+    ViewControls,
+} from './settings'
 
 type Width = 'phone' | 'tablet' | 'desktop' | 'full'
 
@@ -91,6 +102,10 @@ const load = (): Saved => {
             config: {
                 data: { ...DEFAULT_CONFIG.data, ...parsed.config?.data },
                 server: { ...DEFAULT_CONFIG.server, ...parsed.config?.server },
+                network: {
+                    ...DEFAULT_CONFIG.network,
+                    ...parsed.config?.network,
+                },
                 view: { ...DEFAULT_CONFIG.view, ...parsed.config?.view },
             },
         }
@@ -132,7 +147,14 @@ const LabServerScope = ({
             _type: string,
             query: LabRequest,
             options?: { signal?: AbortSignal }
-        ) => answerLogged(config, world, query, log, options?.signal)
+        ) =>
+            throughNetwork(
+                config.network,
+                query,
+                () => answer(config, world, query),
+                log,
+                options?.signal
+            )
         // SAFETY: answer() returns plain JSON shaped like DHIS2's responses.
         return Object.fromEntries(
             RESOURCES.map((resource) => [resource, respond])
@@ -183,7 +205,7 @@ class CanvasBoundary extends Component<
                 </pre>
                 <button
                     type="button"
-                    className={`${box} self-start`}
+                    className="self-start rounded border border-dhis2-grey-500 bg-white px-1.5 py-0.5"
                     onClick={() => this.setState({ error: undefined })}
                 >
                     Try again
@@ -336,8 +358,6 @@ const LabComposition = ({
     )
 }
 
-const presetGroups = [...new Set(PRESETS.map(({ group }) => group))]
-
 const defaultViewFor = ({ data, server }: LabConfig) => {
     if (data.mode === 'event') return EVENT_SAVED_VIEW
     return server.savedFilter === 'none' ? undefined : TE_SAVED_VIEW
@@ -369,6 +389,10 @@ export const CalendarLab = () => {
         update({ preset: undefined, config: { ...config, server } })
         restart()
     }
+    const setNetwork = (network: LabNetwork) => {
+        update({ preset: undefined, config: { ...config, network } })
+        restart()
+    }
     const setView = (view: LabView) =>
         update({ preset: undefined, config: { ...config, view } })
     const note = useCallback(
@@ -388,176 +412,174 @@ export const CalendarLab = () => {
         WIDTHS.find(([option]) => option === width)?.[2] ?? 'max-w-none'
 
     return (
-        <div className="flex min-h-screen [font-family:Roboto,Helvetica,Arial,sans-serif] text-dhis2-grey-900">
-            <aside className="sticky top-0 flex h-screen w-80 shrink-0 flex-col gap-4 overflow-y-auto border-e border-dhis2-grey-300 bg-dhis2-grey-050 p-4">
-                <h1 className="m-0 text-base font-medium">
-                    Working list calendar lab
-                </h1>
-                <Segmented
-                    value={mode}
-                    options={[
-                        ['lab', 'Lab data'],
-                        ['live', 'Live DHIS2'],
-                    ]}
-                    onChange={(next) => {
-                        update({ mode: next })
-                        restart()
-                    }}
-                />
-                {mode === 'lab' ? (
+        <LabLayout
+            title="Working list calendar lab"
+            status={
+                mode === 'lab' ? (
                     <>
-                        <Section title="Presets">
-                            {presetGroups.map((group) => (
-                                <div
-                                    key={group}
-                                    className="flex flex-col gap-0.5"
-                                >
-                                    <span className="text-xs text-dhis2-grey-700">
-                                        {group}
+                        <span className="truncate">
+                            {activePreset ? (
+                                <>
+                                    {activePreset.name.toUpperCase()}{' '}
+                                    <span className="text-(--lab-ink-4)">
+                                        {activePreset.note}
                                     </span>
-                                    {PRESETS.filter(
-                                        (each) => each.group === group
-                                    ).map((each) => (
-                                        <button
-                                            key={each.name}
-                                            type="button"
-                                            title={each.note}
-                                            aria-pressed={
-                                                saved.preset === each.name
-                                            }
-                                            className="rounded px-1.5 py-0.5 text-start text-sm text-dhis2-blue-700 hover:bg-dhis2-blue-050 aria-pressed:bg-dhis2-blue-700 aria-pressed:text-white"
-                                            onClick={() => {
-                                                update({
-                                                    preset: each.name,
-                                                    config: each.config,
-                                                })
-                                                setCallbacks([])
-                                                restart()
-                                            }}
-                                        >
-                                            {each.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            ))}
-                        </Section>
-                        <DataControls data={config.data} onChange={setData} />
-                        <ServerControls
-                            server={config.server}
-                            onChange={setServer}
-                        />
+                                </>
+                            ) : (
+                                'CUSTOM'
+                            )}
+                        </span>
+                        <span className="ms-auto shrink-0 text-(--lab-ink-4)">
+                            {world.people.length} REC · {world.today}
+                        </span>
                     </>
                 ) : (
-                    <Section title="Live DHIS2">
-                        <label className="flex flex-col gap-0.5 text-sm">
-                            Program
-                            <input
-                                className={box}
-                                value={live.programId}
-                                onChange={(event) =>
-                                    update({
-                                        live: {
-                                            ...live,
-                                            programId:
-                                                event.target.value.trim(),
-                                        },
-                                    })
-                                }
-                            />
-                        </label>
-                        <label className="flex flex-col gap-0.5 text-sm">
-                            Organisation unit
-                            <input
-                                className={box}
-                                value={live.orgUnitId}
-                                onChange={(event) =>
-                                    update({
-                                        live: {
-                                            ...live,
-                                            orgUnitId:
-                                                event.target.value.trim(),
-                                        },
-                                    })
-                                }
-                            />
-                        </label>
-                    </Section>
-                )}
-                <ViewControls view={config.view} onChange={setView} />
-                <Section title="Canvas">
+                    <span className="truncate">
+                        LIVE · {live.programId} / {live.orgUnitId}
+                    </span>
+                )
+            }
+            panel={{
+                title: 'Logs',
+                children: (
+                    <LogPanel
+                        callbacks={callbacks}
+                        requests={mode === 'lab' ? requests : undefined}
+                        onClearCallbacks={() => setCallbacks([])}
+                        onClearRequests={() => setRequests([])}
+                    />
+                ),
+            }}
+            sidebar={
+                <>
                     <Segmented
-                        value={width}
-                        options={WIDTHS.map(([option, name]) => [option, name])}
-                        onChange={(next) => update({ width: next })}
+                        value={mode}
+                        options={[
+                            ['lab', 'Lab data'],
+                            ['live', 'Live DHIS2'],
+                        ]}
+                        onChange={(next) => {
+                            update({ mode: next })
+                            restart()
+                        }}
                     />
-                    <button
-                        type="button"
-                        className={`${box} self-start`}
-                        onClick={restart}
-                    >
-                        Restart
-                    </button>
-                </Section>
-                <CallbackLog
-                    entries={callbacks}
-                    onClear={() => setCallbacks([])}
-                />
-                {mode === 'lab' && (
-                    <RequestLog
-                        entries={requests}
-                        onClear={() => setRequests([])}
-                    />
-                )}
-            </aside>
-            <main className="flex min-w-0 flex-1 flex-col gap-3 bg-dhis2-grey-200 p-4">
-                {mode === 'lab' && activePreset && (
-                    <p className="m-0 text-sm text-dhis2-grey-800">
-                        <strong>{activePreset.name}:</strong>{' '}
-                        {activePreset.note}
-                    </p>
-                )}
-                {mode === 'lab' && (
-                    <p className="m-0 text-xs text-dhis2-grey-700">
-                        {world.people.length} records generated around{' '}
-                        {world.today}
-                    </p>
-                )}
-                <div className={`w-full ${widthClass} bg-white`}>
-                    <CanvasBoundary key={run}>
-                        {mode === 'lab' ? (
-                            <LabServerScope
-                                key={run}
-                                config={config}
-                                world={world}
-                                log={setRequests}
-                            >
-                                <LabComposition
-                                    view={config.view}
-                                    programId={LAB_PROGRAM}
-                                    orgUnitId={LAB_ORG_UNIT}
-                                    defaultViewId={defaultViewFor(config)}
-                                    note={note}
+                    {mode === 'lab' ? (
+                        <>
+                            <PresetControls
+                                selected={saved.preset}
+                                onPick={(each) => {
+                                    update({
+                                        preset: each.name,
+                                        config: each.config,
+                                    })
+                                    setCallbacks([])
+                                    restart()
+                                }}
+                            />
+                            <DataControls
+                                data={config.data}
+                                onChange={setData}
+                            />
+                            <ServerControls
+                                server={config.server}
+                                onChange={setServer}
+                            />
+                            <Section title="Network">
+                                <NetworkControls
+                                    network={config.network}
+                                    endpoints={RESOURCES}
+                                    onChange={setNetwork}
                                 />
-                            </LabServerScope>
-                        ) : (
-                            <LivePreviewHost
-                                key={run}
-                                placeholder={
-                                    <PreviewSpinner className="h-96" />
-                                }
-                            >
-                                <LabComposition
-                                    key={`${live.programId}/${live.orgUnitId}`}
-                                    view={config.view}
-                                    programId={live.programId}
-                                    orgUnitId={live.orgUnitId}
-                                    note={note}
+                            </Section>
+                        </>
+                    ) : (
+                        <Section title="Live DHIS2">
+                            <label className="flex flex-col gap-0.5">
+                                Program
+                                <input
+                                    value={live.programId}
+                                    onChange={(event) =>
+                                        update({
+                                            live: {
+                                                ...live,
+                                                programId:
+                                                    event.target.value.trim(),
+                                            },
+                                        })
+                                    }
                                 />
-                            </LivePreviewHost>
-                        )}
-                    </CanvasBoundary>
-                </div>
-            </main>
-        </div>
+                            </label>
+                            <label className="flex flex-col gap-0.5">
+                                Organisation unit
+                                <input
+                                    value={live.orgUnitId}
+                                    onChange={(event) =>
+                                        update({
+                                            live: {
+                                                ...live,
+                                                orgUnitId:
+                                                    event.target.value.trim(),
+                                            },
+                                        })
+                                    }
+                                />
+                            </label>
+                        </Section>
+                    )}
+                    <ViewControls view={config.view} onChange={setView} />
+                    <Section title="Canvas">
+                        <Segmented
+                            value={width}
+                            options={WIDTHS.map(([option, name]) => [
+                                option,
+                                name,
+                            ])}
+                            onChange={(next) => update({ width: next })}
+                        />
+                        <button
+                            type="button"
+                            className="self-start"
+                            onClick={restart}
+                        >
+                            Restart
+                        </button>
+                    </Section>
+                </>
+            }
+        >
+            <div className={`w-full ${widthClass} bg-white`}>
+                <CanvasBoundary key={run}>
+                    {mode === 'lab' ? (
+                        <LabServerScope
+                            key={run}
+                            config={config}
+                            world={world}
+                            log={setRequests}
+                        >
+                            <LabComposition
+                                view={config.view}
+                                programId={LAB_PROGRAM}
+                                orgUnitId={LAB_ORG_UNIT}
+                                defaultViewId={defaultViewFor(config)}
+                                note={note}
+                            />
+                        </LabServerScope>
+                    ) : (
+                        <LivePreviewHost
+                            key={run}
+                            placeholder={<PreviewSpinner className="h-96" />}
+                        >
+                            <LabComposition
+                                key={`${live.programId}/${live.orgUnitId}`}
+                                view={config.view}
+                                programId={live.programId}
+                                orgUnitId={live.orgUnitId}
+                                note={note}
+                            />
+                        </LivePreviewHost>
+                    )}
+                </CanvasBoundary>
+            </div>
+        </LabLayout>
     )
 }

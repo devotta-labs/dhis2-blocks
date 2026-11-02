@@ -1,0 +1,159 @@
+/*
+ * The lab's look: pale instrument panes on a grey desk, inked like a terminal. `.lab` holds the tokens;
+ * `.lab-chrome` dresses the panes' own elements and never the block under test. Everything sits in the base
+ * layer, so a lab's utilities still win.
+ */
+@layer base {
+    .lab {
+        --lab-desk: #c3c8c4;
+        --lab-paper: #efeeea;
+        --lab-paper-inset: #e2e1dc;
+        --lab-ink: #1b1b19;
+        --lab-ink-2: #444441;
+        --lab-ink-3: #5d5c57;
+        --lab-ink-4: #8e8d87;
+        --lab-rule: rgb(27 27 23 / 0.3);
+        --lab-rule-faint: rgb(27 27 23 / 0.12);
+        --lab-fault: #9e2f1a;
+        --lab-caution: #b7791f;
+    }
+
+    .lab-chrome {
+        font-family:
+            ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas,
+            monospace;
+        font-size: 12px;
+        line-height: 1.4;
+        font-variant-numeric: tabular-nums;
+        color: var(--lab-ink);
+        scrollbar-color: var(--lab-ink-4) transparent;
+        scrollbar-width: thin;
+    }
+
+    .lab-chrome ::selection {
+        background: var(--lab-ink);
+        color: var(--lab-paper);
+    }
+
+    /* A section is a box with its name set into the border. */
+    .lab-chrome fieldset {
+        margin: 0;
+        min-width: 0;
+        border: 1px solid var(--lab-rule);
+        padding: 6px 8px 8px;
+    }
+
+    .lab-chrome legend {
+        padding: 0 4px;
+        background: var(--lab-ink);
+        color: var(--lab-paper);
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+
+    .lab-chrome input:not([type='checkbox'], [type='radio']),
+    .lab-chrome select {
+        appearance: none;
+        min-height: 20px;
+        border: 1px solid var(--lab-rule);
+        border-radius: 0;
+        padding: 0 4px;
+        background-color: var(--lab-paper-inset);
+        color: inherit;
+        font: inherit;
+    }
+
+    .lab-chrome input::placeholder {
+        color: var(--lab-ink-4);
+    }
+
+    .lab-chrome input::-webkit-inner-spin-button,
+    .lab-chrome input::-webkit-outer-spin-button {
+        appearance: none;
+        margin: 0;
+    }
+
+    .lab-chrome select {
+        padding-inline-end: 16px;
+        background-image:
+            linear-gradient(45deg, transparent 50%, var(--lab-ink) 50%),
+            linear-gradient(135deg, var(--lab-ink) 50%, transparent 50%);
+        background-position:
+            right 8px center,
+            right 4px center;
+        background-size: 4px 4px;
+        background-repeat: no-repeat;
+    }
+
+    /* A checkbox is a square lamp: lit when on. */
+    .lab-chrome input[type='checkbox'] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        margin: 0;
+        border: 1px solid var(--lab-ink);
+        background: var(--lab-paper-inset);
+        flex-shrink: 0;
+    }
+
+    .lab-chrome input[type='checkbox']:checked {
+        background: var(--lab-ink);
+        box-shadow: inset 0 0 0 2px var(--lab-paper-inset);
+    }
+
+    .lab-chrome button {
+        border: 1px solid var(--lab-rule);
+        border-radius: 0;
+        padding: 0 6px;
+        min-height: 20px;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+
+    .lab-chrome button:hover {
+        background: var(--lab-rule-faint);
+    }
+
+    .lab-chrome button[aria-pressed='true'] {
+        border-color: var(--lab-ink);
+        background: var(--lab-ink);
+        color: var(--lab-paper);
+    }
+
+    .lab-chrome :focus-visible {
+        outline: 2px solid var(--lab-ink);
+        outline-offset: -1px;
+    }
+
+    /* The scope behind the block under test. */
+    .lab-graticule {
+        background-color: var(--lab-paper-inset);
+        background-image: radial-gradient(
+            var(--lab-rule) 1px,
+            transparent 1.5px
+        );
+        background-size: 16px 16px;
+    }
+
+    .lab-blink {
+        animation: lab-blink 1s steps(1) infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .lab-blink {
+            animation: none;
+        }
+    }
+}
+
+@keyframes lab-blink {
+    50% {
+        opacity: 0;
+    }
+}

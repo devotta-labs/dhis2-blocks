@@ -10,7 +10,8 @@ const config = (changes: {
     server?: Partial<LabConfig['server']>
 }): LabConfig => ({
     data: { ...DEFAULT_CONFIG.data, ...changes.data },
-    server: { ...DEFAULT_CONFIG.server, latency: 0, ...changes.server },
+    server: { ...DEFAULT_CONFIG.server, ...changes.server },
+    network: DEFAULT_CONFIG.network,
     view: DEFAULT_CONFIG.view,
 })
 

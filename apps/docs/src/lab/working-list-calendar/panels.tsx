@@ -1,83 +1,121 @@
-import { Section } from './controls'
-import type { RequestLogEntry } from './labServer'
+import type { ReactNode } from 'react'
+import type { RequestLogEntry } from '../network'
+import { RequestWaterfall } from '../RequestWaterfall'
 
-export const RequestLog = ({
-    entries,
+const tone = {
+    pending: 'text-(--lab-caution)',
+    ok: 'text-(--lab-ink-3)',
+    failed: 'text-(--lab-fault)',
+    aborted: 'text-(--lab-ink-4)',
+}
+
+const code = { pending: 'WAIT', ok: 'OK', failed: 'FAIL', aborted: 'ABRT' }
+
+/** One column of the panel: its name set in ink, an optional clear, and a list that scrolls on its own. */
+const Column = ({
+    title,
     onClear,
+    children,
 }: {
-    entries: RequestLogEntry[]
-    onClear: () => void
+    title: string
+    onClear?: () => void
+    children: ReactNode
 }) => (
-    <Section title={`Requests (${entries.length})`}>
-        <button
-            type="button"
-            className="self-start text-xs text-dhis2-blue-700"
-            onClick={onClear}
-        >
-            Clear
-        </button>
-        <ol className="m-0 flex max-h-80 list-none flex-col gap-1 overflow-y-auto p-0 font-mono text-[11px]">
-            {entries.map((entry) => {
-                const params = Object.entries(entry.request.params ?? {})
-                    .filter(([name]) => name !== 'fields')
-                    .map(([name, value]) => `${name}=${String(value)}`)
-                    .join(' ')
-                return (
-                    <li
-                        key={entry.id}
-                        className="rounded bg-white p-1"
-                        title={params}
-                    >
-                        <span
-                            className={
-                                entry.outcome === 'failed'
-                                    ? 'text-dhis2-red-700'
-                                    : 'text-dhis2-grey-700'
-                            }
-                        >
-                            {entry.at} {entry.outcome}
-                            {entry.ms === undefined ? '' : ` ${entry.ms}ms`}
-                        </span>{' '}
-                        <strong>
-                            {entry.request.resource}
-                            {entry.request.id ? `/${entry.request.id}` : ''}
-                        </strong>
-                        <div className="break-all text-dhis2-grey-700">
-                            {params}
-                        </div>
-                        {entry.detail && (
-                            <div className="text-dhis2-red-700">
-                                {entry.detail}
-                            </div>
-                        )}
-                    </li>
-                )
-            })}
-        </ol>
-    </Section>
+    <div className="flex min-h-0 min-w-0 flex-col">
+        <div className="flex items-center gap-2 px-2 pt-1.5 pb-1">
+            <span className="bg-(--lab-ink) px-1 text-[10.5px] tracking-[0.1em] text-(--lab-paper)">
+                {title}
+            </span>
+            {onClear && (
+                <button
+                    type="button"
+                    className="ms-auto border-0 text-(--lab-ink-3)"
+                    onClick={onClear}
+                >
+                    clr
+                </button>
+            )}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 text-[11px]">
+            {children}
+        </div>
+    </div>
 )
 
-export const CallbackLog = ({
-    entries,
-    onClear,
-}: {
-    entries: string[]
-    onClear: () => void
-}) => (
-    <Section title={`Callbacks (${entries.length})`}>
-        <button
-            type="button"
-            className="self-start text-xs text-dhis2-blue-700"
-            onClick={onClear}
-        >
-            Clear
-        </button>
-        <ol className="m-0 flex max-h-48 list-none flex-col gap-0.5 overflow-y-auto p-0 font-mono text-[11px]">
-            {entries.map((entry, index) => (
-                <li key={`${entries.length - index}`} className="break-all">
-                    {entry}
+const RequestLog = ({ entries }: { entries: RequestLogEntry[] }) => (
+    <ol className="m-0 flex list-none flex-col p-0">
+        {entries.map((entry) => {
+            const params = Object.entries(entry.request.params ?? {})
+                .filter(([name]) => name !== 'fields')
+                .map(([name, value]) => `${name}=${String(value)}`)
+                .join(' ')
+            return (
+                <li
+                    key={entry.id}
+                    className="border-b border-(--lab-rule-faint) py-0.5"
+                    title={params}
+                >
+                    <span className="text-(--lab-ink-3)">{entry.at}</span>{' '}
+                    <span className={tone[entry.outcome]}>
+                        {code[entry.outcome]}
+                        {entry.ms === undefined ? '' : ` ${entry.ms}`}
+                    </span>{' '}
+                    {entry.request.resource}
+                    {entry.request.id ? `/${entry.request.id}` : ''}
+                    {params && (
+                        <div className="break-all text-(--lab-ink-3)">
+                            {params}
+                        </div>
+                    )}
+                    {entry.detail && (
+                        <div className="text-(--lab-fault)">{entry.detail}</div>
+                    )}
                 </li>
-            ))}
-        </ol>
-    </Section>
+            )
+        })}
+    </ol>
+)
+
+/** The lab's bottom panel: callbacks, then (with lab data) each request and the waterfall they make. */
+export const LogPanel = ({
+    callbacks,
+    requests,
+    onClearCallbacks,
+    onClearRequests,
+}: {
+    callbacks: string[]
+    requests?: RequestLogEntry[]
+    onClearCallbacks: () => void
+    onClearRequests: () => void
+}) => (
+    <div className="grid h-full grid-cols-[1fr_1.4fr_2fr] divide-x divide-(--lab-rule)">
+        <Column
+            title={`CALLBACKS ${callbacks.length}`}
+            onClear={onClearCallbacks}
+        >
+            <ol className="m-0 flex list-none flex-col p-0">
+                {callbacks.map((entry, index) => (
+                    <li
+                        key={`${callbacks.length - index}`}
+                        className="border-b border-(--lab-rule-faint) py-0.5 break-all"
+                    >
+                        {entry}
+                    </li>
+                ))}
+            </ol>
+        </Column>
+        {requests && (
+            <>
+                <Column
+                    title={`REQUESTS ${requests.length}`}
+                    onClear={onClearRequests}
+                >
+                    <RequestLog entries={requests} />
+                </Column>
+                <Column title="WATERFALL">
+                    <RequestWaterfall requests={requests} />
+                </Column>
+            </>
+        )}
+    </div>
 )

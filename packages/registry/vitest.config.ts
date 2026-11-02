@@ -8,6 +8,7 @@ const resolve = {
         '@/components/dhis2/ui': fileURLToPath(
             new URL('./components', import.meta.url)
         ),
+        '@/components': fileURLToPath(new URL('./blocks', import.meta.url)),
     },
 }
 

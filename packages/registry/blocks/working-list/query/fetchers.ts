@@ -27,7 +27,11 @@ import {
     type RowIssueTranslate,
     type WorkingListRowIssue,
 } from './normalizeRows'
-import { planTrackedEntityJoin, serializeWorkingListRequest } from './serialize'
+import {
+    planTrackedEntityJoin,
+    serializeWorkingListRequest,
+    type WorkingListDateRange,
+} from './serialize'
 
 export interface TrackedEntityWorkingListPage {
     mode: 'trackedEntity'
@@ -65,6 +69,7 @@ export interface FetchWorkingListPageInput {
     /** Localizes data-quality issue messages. Defaults to DHIS2 i18n. */
     translate?: RowIssueTranslate
     today?: string
+    range?: WorkingListDateRange
     signal?: AbortSignal
 }
 

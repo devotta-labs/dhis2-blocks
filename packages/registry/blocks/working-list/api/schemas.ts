@@ -215,7 +215,16 @@ const TrackedEntitySchema = z
                 .passthrough()
         ),
         enrollments: z
-            .array(z.object({ enrollment: z.string().min(1) }).passthrough())
+            .array(
+                z
+                    .object({
+                        enrollment: z.string().min(1),
+                        program: z.string().min(1).optional(),
+                        enrolledAt: z.string().optional(),
+                        occurredAt: z.string().optional(),
+                    })
+                    .passthrough()
+            )
             .optional(),
     })
     .passthrough()

@@ -15,6 +15,7 @@ packages/
     blocks/
       context-selector/ Capture-style controlled context-selector primitives
       working-list/     Working List block
+      working-list-calendar/ Month calendar layout for a Working List
       sidebar/          Composable modeling-app navigation with a collapse rail
     test/               Shared Vitest browser setup
 e2e/                    Real-DHIS2 Playwright coverage
@@ -112,6 +113,22 @@ Collapsing preserves the open groups and selected page.
 
 See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
 examples.
+
+## Working List Calendar block
+
+Shows a Working List's records on a month calendar in the DHIS2 system
+calendar. It installs the Working List block with it.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list-calendar
+```
+
+Render `WorkingListCalendar` inside `WorkingList`, beside or instead of
+`WorkingListTable`, and compose `WorkingListCalendarNavigation`,
+`WorkingListCalendarGrid` and `WorkingListCalendarDayRecords` inside it.
+`dateField` picks the date that places records. The calendar reads the list's
+filters through `useWorkingListDateRange` and never changes the saved view.
+See `/blocks/working-list-calendar`.
 
 ## Working List block
 

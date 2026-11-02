@@ -1,0 +1,125 @@
+---
+title: Working List Calendar
+description: A working list's records on a month calendar, in the system calendar.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="working-list-calendar/tabs" />
+
+The calendar is another way to look at a [Working List](/blocks/working-list):
+the same saved view, filters and organisation unit, with each record placed on
+one of its dates. It answers "who is due this week?" or "what happened on the
+14th?" at a glance.
+
+## Installation
+
+<InstallCommand item="working-list-calendar" />
+
+This also installs the Working List block.
+
+## Usage
+
+Render `WorkingListCalendar` inside `WorkingList`, beside or instead of
+`WorkingListTable`, and compose its parts:
+
+```tsx
+import {
+    WorkingList,
+    WorkingListToolbar,
+    WorkingListFilterControls,
+} from '@/components/working-list'
+import {
+    WorkingListCalendar,
+    WorkingListCalendarDayRecords,
+    WorkingListCalendarGrid,
+    WorkingListCalendarNavigation,
+} from '@/components/working-list-calendar'
+
+export const AppointmentsCalendar = () => (
+    <WorkingList programId={programId} orgUnitId={orgUnitId}>
+        <WorkingListToolbar>
+            <WorkingListFilterControls />
+        </WorkingListToolbar>
+        <WorkingListCalendar onRecordClick={(record) => openRecord(record)}>
+            <WorkingListCalendarNavigation />
+            <WorkingListCalendarGrid />
+            <WorkingListCalendarDayRecords />
+        </WorkingListCalendar>
+    </WorkingList>
+)
+```
+
+The grid shows full weeks, so the first and last rows include days from the
+neighbouring months, muted but with their records. Each day shows its first
+three records. Selecting a day lists all of its
+records in `WorkingListCalendarDayRecords`, where `onRecordClick` opens them
+with the same record target as the table's `onRowClick`.
+
+The calendar reads the list's filters but never changes them. Switching
+between table and calendar leaves the saved view and the table's page as they
+were. If a saved filter limits the dates, the calendar opens inside them and
+stops at their edges.
+
+## Which date places a record
+
+`dateField` picks the date:
+
+| `dateField`                 | Lists            | Date            |
+| --------------------------- | ---------------- | --------------- |
+| `enrolledAt` (default)      | Tracked entities | Enrollment date |
+| `enrollmentOccurredAt`      | Tracked entities | Incident date   |
+| `eventOccurredAt` (default) | Events           | Report date     |
+| `eventScheduledAt`          | Events           | Scheduled date  |
+
+A field that does not fit the list's current mode falls back to that mode's
+default, so the calendar keeps working when the user switches between a
+tracked-entity and an event view.
+
+```tsx
+<WorkingListCalendar dateField="eventScheduledAt">
+    {/* … */}
+</WorkingListCalendar>
+```
+
+## Selected day
+
+The selected day is uncontrolled by default; `defaultSelectedDay` sets the
+first one. To keep it yourself, for example in the URL, pass `selectedDay` and
+`onSelectedDayChange` together. Days are system-calendar dates written
+`YYYY-MM-DD`.
+
+```tsx
+<WorkingListCalendar selectedDay={day} onSelectedDayChange={setDay}>
+    {/* … */}
+</WorkingListCalendar>
+```
+
+## Your own layout
+
+`useWorkingListCalendar()` inside `WorkingListCalendar` returns the visible
+month's weeks, each day's records, the selection and the loading state:
+
+```tsx
+import { useWorkingListCalendar } from '@/components/working-list-calendar'
+
+const BusiestDay = () => {
+    const { weeks, dayName } = useWorkingListCalendar()
+    const busiest = weeks
+        .flat()
+        .filter((day) => day.isInCurrentMonth)
+        .sort((a, b) => b.records.length - a.records.length)[0]
+
+    return busiest ? <p>Busiest: {dayName(busiest)}</p> : null
+}
+```
+
+## Boundaries
+
+- Only the four system dates above can place records. Attribute and data
+  element dates have no date filter on the DHIS2 tracker API.
+- The calendar loads at most 1000 records a month (`limit`) and says so when a
+  month holds more.
+- Months only: there is no week or day layout. The month and year selects
+  jump anywhere; previous and next stop at a saved filter's dates.

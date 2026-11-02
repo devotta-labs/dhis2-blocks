@@ -28,6 +28,12 @@ export {
     useWorkingListMeta,
     useWorkingListState,
 } from './provider/WorkingListContext'
+export { useWorkingListDateRange } from './provider/useWorkingListDateRange'
+export type {
+    WorkingListDatedRecord,
+    WorkingListDateRangeOptions,
+    WorkingListDateRangeResults,
+} from './provider/useWorkingListDateRange'
 export { WORKING_LIST_PAGE_SIZES } from './provider/contracts'
 export type {
     AppliedFilter,

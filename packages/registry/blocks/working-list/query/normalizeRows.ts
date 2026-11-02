@@ -275,6 +275,32 @@ export const normalizeTrackedEntityValues = (
               )
             : undefined,
     }
+    const enrollment = trackedEntity.enrollments?.find(
+        (candidate) =>
+            !options.programId || candidate.program === options.programId
+    )
+    values.enrolledAt = {
+        valid: true,
+        value: enrollment?.enrolledAt
+            ? String(
+                  parseSystemValue(
+                      enrollment.enrolledAt,
+                      fields.get('enrolledAt')
+                  )
+              )
+            : undefined,
+    }
+    values.enrollmentOccurredAt = {
+        valid: true,
+        value: enrollment?.occurredAt
+            ? String(
+                  parseSystemValue(
+                      enrollment.occurredAt,
+                      fields.get('enrollmentOccurredAt')
+                  )
+              )
+            : undefined,
+    }
     const ownerField = fields.get('programOwnerId')
     const owners = trackedEntity.programOwners.map((programOwner) =>
         String(parseSystemValue(programOwner.orgUnit, ownerField))

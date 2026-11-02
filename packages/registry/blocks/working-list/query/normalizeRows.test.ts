@@ -259,6 +259,37 @@ describe('metadata-aware row normalization', () => {
         })
     })
 
+    it('carries the selected program enrollment dates', () => {
+        const normalized = normalizeTrackedEntityValues(
+            {
+                ...record([]),
+                enrollments: [
+                    {
+                        enrollment: 'Enrollment01',
+                        program: 'OtherProgrm',
+                        enrolledAt: '2025-01-01T00:00:00.000',
+                    },
+                    {
+                        enrollment: 'Enrollment02',
+                        program: 'Program0001',
+                        enrolledAt: '2026-11-02T00:00:00.000',
+                        occurredAt: '2026-10-30T00:00:00.000',
+                    },
+                ],
+            },
+            fields,
+            { programId: 'Program0001' }
+        )
+        expect(normalized.values.enrolledAt).toEqual({
+            valid: true,
+            value: '2026-11-02T00:00:00.000',
+        })
+        expect(normalized.values.enrollmentOccurredAt).toEqual({
+            valid: true,
+            value: '2026-10-30T00:00:00.000',
+        })
+    })
+
     it('picks the program owner matching the requested program', () => {
         const normalized = normalizeTrackedEntityValues(
             {

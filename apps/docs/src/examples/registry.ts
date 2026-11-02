@@ -7,6 +7,7 @@ import {
 } from './working-list/WorkingListPlaceholders'
 import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
+import workingListCalendarTabsSource from './working-list-calendar/WorkingListCalendarTabs.tsx?raw'
 import sidebarBasicSource from './sidebar/SidebarBasic.tsx?raw'
 import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
 
@@ -74,6 +75,17 @@ const examples = [
         source: workingListProgramPickerSource,
         minHeight: 730,
         Placeholder: WorkingListProgramPickerPlaceholder,
+    },
+    {
+        slug: 'working-list-calendar/tabs',
+        title: 'Working List as a calendar',
+        live: true,
+        Component: lazy(
+            () => import('./working-list-calendar/WorkingListCalendarTabs')
+        ),
+        source: workingListCalendarTabsSource,
+        minHeight: 900,
+        Placeholder: WorkingListDefaultPlaceholder,
     },
     {
         slug: 'context-selector/basic',

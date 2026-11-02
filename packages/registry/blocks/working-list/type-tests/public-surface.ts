@@ -12,6 +12,9 @@ import type {
     WorkingListColumnSelectorProps,
     WorkingListConfiguration,
     WorkingListDataQualityMode,
+    WorkingListDatedRecord,
+    WorkingListDateRangeOptions,
+    WorkingListDateRangeResults,
     WorkingListDisplayRow,
     WorkingListFilterControlsProps,
     WorkingListMeta,
@@ -27,7 +30,7 @@ import type {
     WorkingListView,
     WorkingListViewSwitcherProps,
 } from '..'
-import { WorkingList } from '..'
+import { WorkingList, useWorkingListDateRange } from '..'
 
 export type SupportedWorkingListTypes = [
     AppliedFilter,
@@ -43,6 +46,9 @@ export type SupportedWorkingListTypes = [
     WorkingListColumnSelectorProps,
     WorkingListConfiguration,
     WorkingListDataQualityMode,
+    WorkingListDatedRecord,
+    WorkingListDateRangeOptions,
+    WorkingListDateRangeResults,
     WorkingListDisplayRow,
     WorkingListFilterControlsProps,
     WorkingListMeta,
@@ -58,6 +64,15 @@ export type SupportedWorkingListTypes = [
     WorkingListView,
     WorkingListViewSwitcherProps,
 ]
+
+export const dateRangeOptions: WorkingListDateRangeOptions = {
+    fieldId: 'eventScheduledAt',
+    start: '2026-11-01',
+    end: '2026-11-30',
+}
+
+export const readDateRange = (): WorkingListDateRangeResults =>
+    useWorkingListDateRange(dateRangeOptions)
 
 export const uncontrolledRootProps: WorkingListProps = {
     children: null,

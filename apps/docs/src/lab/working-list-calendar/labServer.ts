@@ -42,6 +42,7 @@ const programJson = ({ data }: LabConfig) => ({
             [ATTRIBUTES.firstName, 'First name', data.names !== 'unnamed'],
             [ATTRIBUTES.lastName, 'Last name', data.names !== 'unnamed'],
             [ATTRIBUTES.nationalId, 'National ID', true],
+            [ATTRIBUTES.sex, 'Sex', true],
             [ATTRIBUTES.village, 'Village', false],
         ] as const
     ).map(([id, displayName, displayInList]) => ({
@@ -52,6 +53,16 @@ const programJson = ({ data }: LabConfig) => ({
             displayName,
             valueType: 'TEXT',
             unique: id === ATTRIBUTES.nationalId,
+            optionSet:
+                id === ATTRIBUTES.sex
+                    ? {
+                          id: 'labSexOpSet',
+                          options: [
+                              { code: 'F', displayName: 'Female' },
+                              { code: 'M', displayName: 'Male' },
+                          ],
+                      }
+                    : null,
         },
     })),
     programStages: [
@@ -96,23 +107,42 @@ const dateFilter = ({ server }: LabConfig, today: string) => {
     }
 }
 
+const COLUMN_ORDERS = {
+    program: undefined,
+    optionFirst: [ATTRIBUTES.sex, ATTRIBUTES.firstName, ATTRIBUTES.lastName],
+    villageFirst: [
+        ATTRIBUTES.village,
+        ATTRIBUTES.firstName,
+        ATTRIBUTES.lastName,
+    ],
+    idFirst: [ATTRIBUTES.nationalId, ATTRIBUTES.firstName],
+}
+
+/** Whether the lab's tracked-entity saved view exists for this config. */
+export const hasTrackedEntityView = ({ server }: LabConfig) =>
+    server.savedFilter !== 'none' || server.columns !== 'program'
+
 const savedViews = (config: LabConfig, today: string) => {
     const filter = dateFilter(config, today)
+    const displayColumnOrder = COLUMN_ORDERS[config.server.columns]
     const eventField =
         config.view.dateField === 'eventOccurredAt'
             ? 'eventOccurredAt'
             : 'eventScheduledAt'
     return {
-        trackedEntityInstanceFilters: filter
+        trackedEntityInstanceFilters: hasTrackedEntityView(config)
             ? [
                   {
                       id: TE_SAVED_VIEW,
-                      displayName: 'Enrolled in range',
+                      displayName: filter
+                          ? 'Enrolled in range'
+                          : 'Reordered columns',
                       sortOrder: 0,
                       program: { id: LAB_PROGRAM },
                       access: { read: true, update: true, delete: true },
                       entityQueryCriteria: {
                           enrollmentCreatedDate: filter,
+                          displayColumnOrder,
                       },
                   },
               ]
@@ -125,9 +155,10 @@ const savedViews = (config: LabConfig, today: string) => {
                 program: { id: LAB_PROGRAM },
                 programStage: { id: LAB_STAGE },
                 access: { read: true, update: true, delete: true },
-                programStageQueryCriteria: filter
-                    ? { [eventField]: filter }
-                    : {},
+                programStageQueryCriteria: {
+                    ...(filter && { [eventField]: filter }),
+                    displayColumnOrder,
+                },
             },
         ],
     }
@@ -174,6 +205,7 @@ const attributeValues = (person: LabPerson) =>
         [ATTRIBUTES.lastName, person.lastName],
         [ATTRIBUTES.nationalId, person.nationalId],
         [ATTRIBUTES.village, person.village],
+        [ATTRIBUTES.sex, person.sex],
     ].flatMap(([attribute, value]) =>
         value === undefined ? [] : [{ attribute, value }]
     )

@@ -1,5 +1,11 @@
 import type { LabNetwork } from '../network'
-import type { LabConfig, LabData, LabServer, LabView } from './labData'
+import {
+    ATTRIBUTES,
+    type LabConfig,
+    type LabData,
+    type LabServer,
+    type LabView,
+} from './labData'
 
 export const DEFAULT_CONFIG: LabConfig = {
     data: {
@@ -19,6 +25,7 @@ export const DEFAULT_CONFIG: LabConfig = {
         timeZone: 'Africa/Freetown',
         apiVersion: 42,
         savedFilter: 'none',
+        columns: 'program',
     },
     network: { delay: 250, endpoints: {} },
     view: {
@@ -32,6 +39,12 @@ export const DEFAULT_CONFIG: LabConfig = {
         dayRecords: true,
         toolbar: true,
         readout: true,
+        recordLabel: 'default',
+        labelFields: [
+            ATTRIBUTES.nationalId,
+            ATTRIBUTES.firstName,
+            ATTRIBUTES.lastName,
+        ],
     },
 }
 
@@ -173,8 +186,38 @@ export const PRESETS: readonly Preset[] = [
     preset(
         'Names',
         'No name columns',
-        'Name attributes are not shown in the list, so labels fall back to the record id.',
+        'Name attributes are not shown in the list: labels use the next columns, the ID and sex.',
         { data: { names: 'unnamed' } }
+    ),
+    preset(
+        'Names',
+        'Option set first',
+        'A saved view puts Sex first: labels show the option name, "Female Amina", not the code.',
+        { server: { columns: 'optionFirst' } }
+    ),
+    preset(
+        'Names',
+        'Village first',
+        'A saved view puts Village first, so it leads each label.',
+        { server: { columns: 'villageFirst' } }
+    ),
+    preset(
+        'Names',
+        'ID first',
+        'A saved view puts the unique national ID first.',
+        { server: { columns: 'idFirst' } }
+    ),
+    preset(
+        'Names',
+        'Custom recordLabel',
+        'The app names records itself from chosen fields: "SL-100000 · Amina · Bangura".',
+        { view: { recordLabel: 'fields' } }
+    ),
+    preset(
+        'Names',
+        'recordLabel returns nothing',
+        'An override that gives an empty string: every record reads "Unnamed record".',
+        { view: { recordLabel: 'blank' } }
     ),
     preset(
         'Bad data',

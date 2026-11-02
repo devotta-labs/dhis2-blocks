@@ -1,4 +1,7 @@
-import type { WorkingListCalendarDateField } from '@/components/working-list-calendar'
+import type {
+    WorkingListCalendarDateField,
+    WorkingListCalendarProps,
+} from '@/components/working-list-calendar'
 import type { LabNetwork } from '../network'
 
 export const LAB_PROGRAM = 'labProgram1'
@@ -9,6 +12,7 @@ export const ATTRIBUTES = {
     lastName: 'labLastName',
     nationalId: 'labNationId',
     village: 'labVillage1',
+    sex: 'labSex00001',
 }
 export const WEIGHT = 'labWeight01'
 
@@ -46,6 +50,8 @@ export interface LabServer {
     apiVersion: number
     /** A saved view whose date filter limits the calendar. */
     savedFilter: 'none' | 'thisMonth' | 'last30' | 'next90' | 'fixedPast'
+    /** A saved view that reorders the list's columns. */
+    columns: 'program' | 'optionFirst' | 'villageFirst' | 'idFirst'
 }
 
 export interface LabView {
@@ -59,6 +65,10 @@ export interface LabView {
     dayRecords: boolean
     toolbar: boolean
     readout: boolean
+    /** What the lab passes as recordLabel; `default` passes nothing. */
+    recordLabel: 'default' | 'fields' | 'blank' | 'rowId'
+    /** Fields `recordLabel: 'fields'` joins, in order; '' leaves a slot out. */
+    labelFields: [string, string, string]
 }
 
 export interface LabConfig {
@@ -74,6 +84,7 @@ export interface LabPerson {
     lastName?: string
     nationalId: string
     village: string
+    sex: 'F' | 'M'
     /** Server-format timestamps; `undefined` when the record has none. */
     enrolledAt?: string
     occurredAt?: string
@@ -100,6 +111,9 @@ const EVERYDAY = [
     ['Ibrahim', 'Jalloh'],
     ['Hawa', 'Kargbo'],
 ]
+
+// Matches EVERYDAY, so the option-set presets read sensibly.
+const SEXES = ['F', 'F', 'M', 'F', 'M', 'F', 'M', 'F'] as const
 
 const LONG = [
     [
@@ -213,6 +227,7 @@ export const generateWorld = (data: LabData, today = isoToday()): World => {
             lastName,
             nationalId: `SL-${pad(100000 + index, 6)}`,
             village: ['Bo', 'Kenema', 'Makeni', 'Kono'][index % 4] ?? 'Bo',
+            sex: SEXES[index % SEXES.length] ?? 'F',
             enrolledAt: stamp,
             // The incident date sits two days before enrollment, or is as broken as it.
             occurredAt:
@@ -231,4 +246,25 @@ export const generateWorld = (data: LabData, today = isoToday()): World => {
         (_, index) => noise(index, 3) * 100 < data.duplicates
     )
     return { today, people: [...people, ...duplicates] }
+}
+
+/** The recordLabel the lab passes for its label setting. */
+export const recordLabelFor = (
+    view: LabView
+): WorkingListCalendarProps['recordLabel'] => {
+    switch (view.recordLabel) {
+        case 'fields':
+            return (_row, cellText) =>
+                view.labelFields
+                    .filter(Boolean)
+                    .map((fieldId) => cellText(fieldId))
+                    .filter(Boolean)
+                    .join(' · ')
+        case 'blank':
+            return () => ''
+        case 'rowId':
+            return (row) => row.id
+        default:
+            return undefined
+    }
 }

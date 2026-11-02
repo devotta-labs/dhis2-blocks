@@ -1,6 +1,30 @@
 import { Check, NumberRow, Section, SelectRow } from './controls'
-import type { LabData, LabServer, LabView } from './labData'
+import {
+    ATTRIBUTES,
+    WEIGHT,
+    type LabData,
+    type LabServer,
+    type LabView,
+} from './labData'
 import { PRESETS, type Preset } from './presets'
+
+/** Fields a chosen-fields label can use: attributes, system dates and a data element. */
+const LABEL_FIELDS: ReadonlyArray<readonly [string, string]> = [
+    ['', '(none)'],
+    [ATTRIBUTES.firstName, 'First name'],
+    [ATTRIBUTES.lastName, 'Last name'],
+    [ATTRIBUTES.nationalId, 'National ID (unique)'],
+    [ATTRIBUTES.sex, 'Sex (option set)'],
+    [ATTRIBUTES.village, 'Village (not in list)'],
+    ['enrolledAt', 'Enrollment date'],
+    ['enrollmentOccurredAt', 'Incident date'],
+    ['eventOccurredAt', 'Visit date (events)'],
+    ['eventScheduledAt', 'Due date (events)'],
+    [WEIGHT, 'Weight (events)'],
+    ['createdAt', 'Registration date'],
+    ['programOwnerId', 'Owner org unit'],
+    ['labUnknown1', 'Unknown field'],
+]
 
 const presetGroups = [...new Set(PRESETS.map(({ group }) => group))]
 
@@ -175,6 +199,17 @@ export const ServerControls = ({
                 onChange={(savedFilter) => set({ savedFilter })}
             />
             <SelectRow
+                label="Saved view columns"
+                value={server.columns}
+                options={[
+                    ['program', 'Program order'],
+                    ['optionFirst', 'Sex (option set) first'],
+                    ['villageFirst', 'Village first'],
+                    ['idFirst', 'National ID first'],
+                ]}
+                onChange={(columns) => set({ columns })}
+            />
+            <SelectRow
                 label="Records"
                 value={server.records}
                 options={[
@@ -240,6 +275,33 @@ export const ViewControls = ({
             >
                 onRecordClick
             </Check>
+            <SelectRow
+                label="recordLabel"
+                value={view.recordLabel}
+                options={[
+                    ['default', '(default: visible columns)'],
+                    ['fields', 'Chosen fields'],
+                    ['blank', 'Returns ""'],
+                    ['rowId', 'row.id'],
+                ]}
+                onChange={(recordLabel) => set({ recordLabel })}
+            />
+            {view.recordLabel === 'fields' &&
+                view.labelFields.map((fieldId, slot) => (
+                    <SelectRow
+                        key={slot}
+                        label={`Label field ${slot + 1}`}
+                        value={fieldId}
+                        options={LABEL_FIELDS}
+                        onChange={(next) => {
+                            const labelFields: LabView['labelFields'] = [
+                                ...view.labelFields,
+                            ]
+                            labelFields[slot] = next
+                            set({ labelFields })
+                        }}
+                    />
+                ))}
             <Check
                 checked={view.controlledDay}
                 onChange={(controlledDay) => set({ controlledDay })}

@@ -42,6 +42,7 @@ import {
     LAB_ORG_UNIT,
     LAB_PROGRAM,
     generateWorld,
+    recordLabelFor,
     type LabConfig,
     type LabData,
     type LabServer,
@@ -53,6 +54,7 @@ import {
     RESOURCES,
     TE_SAVED_VIEW,
     answer,
+    hasTrackedEntityView,
     type LabRequest,
 } from './labServer'
 import { LogPanel } from './panels'
@@ -283,6 +285,7 @@ const LabComposition = ({
                 view.dateField === 'default' ? undefined : view.dateField
             }
             limit={view.limit}
+            recordLabel={recordLabelFor(view)}
             onRecordClick={
                 view.clickable
                     ? (target) =>
@@ -358,9 +361,9 @@ const LabComposition = ({
     )
 }
 
-const defaultViewFor = ({ data, server }: LabConfig) => {
-    if (data.mode === 'event') return EVENT_SAVED_VIEW
-    return server.savedFilter === 'none' ? undefined : TE_SAVED_VIEW
+const defaultViewFor = (config: LabConfig) => {
+    if (config.data.mode === 'event') return EVENT_SAVED_VIEW
+    return hasTrackedEntityView(config) ? TE_SAVED_VIEW : undefined
 }
 
 /** The working list calendar lab: every prop, part and kind of data, beside the requests it makes. */

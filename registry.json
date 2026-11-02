@@ -1175,7 +1175,8 @@
                 "@dhis2/d2-i18n@1.2.0",
                 "@dhis2/multi-calendar-dates@3.2.1",
                 "@dhis2/ui-icons@^10.17.0",
-                "prop-types@^15.8.1"
+                "prop-types@^15.8.1",
+                "zod@^4.4.3"
             ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/alert",
@@ -1184,6 +1185,7 @@
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/select",
                 "devotta-labs/dhis2-blocks/spinner",
+                "devotta-labs/dhis2-blocks/toggle-group",
                 "devotta-labs/dhis2-blocks/working-list"
             ],
             "files": [
@@ -1193,9 +1195,19 @@
                     "target": "@components/working-list-calendar/WorkingListCalendar.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list-calendar/WorkingListCalendarCell.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarDayRecords.tsx",
                     "type": "registry:file",
                     "target": "@components/working-list-calendar/WorkingListCalendarDayRecords.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarDisplayToggle.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list-calendar/WorkingListCalendarDisplayToggle.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarGrid.tsx",
@@ -1216,6 +1228,11 @@
                     "path": "packages/registry/blocks/working-list-calendar/recordLabel.ts",
                     "type": "registry:file",
                     "target": "@components/working-list-calendar/recordLabel.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list-calendar/recordStatus.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list-calendar/recordStatus.ts"
                 }
             ],
             "docs": "Install alongside the working-list block and render WorkingListCalendar inside WorkingList, beside or instead of WorkingListTable. Compose WorkingListCalendarNavigation, WorkingListCalendarGrid and WorkingListCalendarDayRecords inside it, or build your own layout with useWorkingListCalendar. dateField picks the date that places records: enrolledAt or enrollmentOccurredAt for tracked entities, eventOccurredAt or eventScheduledAt for events. The calendar reads the list's saved view and filters but never changes them. The selected day works uncontrolled or as a controlled selectedDay/onSelectedDayChange pair."

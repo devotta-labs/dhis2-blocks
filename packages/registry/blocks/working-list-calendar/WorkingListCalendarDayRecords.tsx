@@ -5,10 +5,29 @@ import { cn } from '@/components/dhis2/ui/cn'
 import {
     useWorkingListCalendar,
     type WorkingListCalendarDay,
+    type WorkingListCalendarRecord,
 } from './WorkingListCalendar'
+import { TONE_DOT } from './WorkingListCalendarCell'
+
+const RecordName = ({ record }: { record: WorkingListCalendarRecord }) => {
+    const { onRecordClick } = useWorkingListCalendar()
+    const { target } = record
+    if (onRecordClick && target) {
+        return (
+            <Button
+                variant="link"
+                size="sm"
+                className="h-auto min-w-0 justify-start px-0 text-start whitespace-normal text-dhis2-grey-900"
+                onClick={() => onRecordClick(target)}
+            >
+                {record.label}
+            </Button>
+        )
+    }
+    return <span className="text-sm text-dhis2-grey-900">{record.label}</span>
+}
 
 const RecordList = ({ day }: { day: WorkingListCalendarDay }) => {
-    const { onRecordClick } = useWorkingListCalendar()
     if (day.records.length === 0) {
         return (
             <p className="m-0 text-sm text-dhis2-grey-700">
@@ -17,30 +36,34 @@ const RecordList = ({ day }: { day: WorkingListCalendarDay }) => {
         )
     }
     return (
-        <ul className="m-0 flex list-none flex-col gap-1 p-0">
-            {day.records.map(({ id, label, target }) => (
-                <li key={id}>
-                    {onRecordClick && target ? (
-                        <Button
-                            variant="link"
-                            size="sm"
-                            className="px-0"
-                            onClick={() => onRecordClick(target)}
-                        >
-                            {label}
-                        </Button>
-                    ) : (
-                        <span className="text-sm text-dhis2-grey-900">
-                            {label}
-                        </span>
-                    )}
+        <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+            {day.records.map((record) => (
+                <li key={record.id} className="flex items-start gap-2">
+                    <span
+                        aria-hidden="true"
+                        className={cn(
+                            'mt-1.5 size-2 shrink-0 rounded-full',
+                            TONE_DOT[record.status?.tone ?? 'neutral']
+                        )}
+                    />
+                    <span className="flex min-w-0 flex-col">
+                        <RecordName record={record} />
+                        {record.status?.label && (
+                            <span className="text-xs text-dhis2-grey-700">
+                                {record.status.label}
+                            </span>
+                        )}
+                    </span>
                 </li>
             ))}
         </ul>
     )
 }
 
-/** Every record on the selected day, which is where "+N more" leads. */
+/**
+ * Every record on the selected day, which is where a day's counts and
+ * "+N more" lead. On a wide calendar it takes a column beside the grid.
+ */
 export const WorkingListCalendarDayRecords = ({
     className,
     ...props
@@ -52,12 +75,20 @@ export const WorkingListCalendarDayRecords = ({
             aria-live="polite"
             {...props}
             data-slot="working-list-calendar-day-records"
-            className={cn('flex flex-col gap-2', className)}
+            className={cn(
+                'flex flex-col gap-2 rounded-dhis2-sm border border-dhis2-grey-300 bg-white p-3 @3xl:sticky @3xl:top-2 @3xl:col-start-2 @3xl:row-span-6 @3xl:row-start-1',
+                className
+            )}
         >
             {selectedDay ? (
                 <>
-                    <h3 className="m-0 text-sm font-medium text-dhis2-grey-900">
+                    <h3 className="m-0 flex items-baseline justify-between gap-2 text-sm font-medium text-dhis2-grey-900">
                         {dayName(selectedDay)}
+                        <span className="text-xs font-normal text-dhis2-grey-700 tabular-nums">
+                            {i18n.t('{{count}} records', {
+                                count: selectedDay.records.length,
+                            })}
+                        </span>
                     </h3>
                     <RecordList day={selectedDay} />
                 </>

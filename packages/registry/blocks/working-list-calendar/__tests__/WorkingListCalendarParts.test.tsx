@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { type ReactNode } from 'react'
 import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { WorkingListResultsError } from '@/components/working-list'
@@ -7,14 +7,25 @@ import {
     type WorkingListCalendarContextValue,
     type WorkingListCalendarDay,
 } from '../WorkingListCalendar'
+import { WorkingListCalendarCellRecords } from '../WorkingListCalendarCell'
 import { WorkingListCalendarDayRecords } from '../WorkingListCalendarDayRecords'
+import { WorkingListCalendarDisplayToggle } from '../WorkingListCalendarDisplayToggle'
 import { WorkingListCalendarGrid } from '../WorkingListCalendarGrid'
 import { WorkingListCalendarNavigation } from '../WorkingListCalendarNavigation'
+import type { WorkingListCalendarStatus } from '../recordStatus'
 
-const record = (id: string, date: string) => ({
+const ACTIVE = { id: 'ACTIVE', label: 'Active', tone: 'info' as const }
+const OVERDUE = { id: 'OVERDUE', label: 'Overdue', tone: 'critical' as const }
+
+const record = (
+    id: string,
+    date: string,
+    status: WorkingListCalendarStatus = ACTIVE
+) => ({
     id,
     label: `Person ${id}`,
     date,
+    status,
     target: {
         mode: 'trackedEntity' as const,
         programId: 'Program0001',
@@ -44,10 +55,11 @@ const weeks = [
         }),
         day('2026-11-01', {
             records: ['A', 'B', 'C', 'D', 'E'].map((id) =>
-                record(id, '2026-11-01')
+                record(id, '2026-11-01', id < 'D' ? ACTIVE : OVERDUE)
             ),
         }),
-        ...['02', '03', '04', '05', '06'].map((d) => day(`2026-11-${d}`)),
+        ...['02', '03', '04', '05'].map((d) => day(`2026-11-${d}`)),
+        day('2026-11-06', { records: [record('S', '2026-11-06')] }),
     ],
     [
         ...['07', '08', '09', '10', '11', '12'].map((d) => day(`2026-11-${d}`)),
@@ -56,8 +68,10 @@ const weeks = [
 ]
 
 const renderCalendar = (
-    overrides: Partial<WorkingListCalendarContextValue> = {}
+    overrides: Partial<WorkingListCalendarContextValue> = {},
+    grid: ReactNode = <WorkingListCalendarGrid data-consumer="grid" />
 ) => {
+    const setDisplay = vi.fn()
     const selectDay = vi.fn()
     const onRecordClick = vi.fn()
     const navigateTo = vi.fn()
@@ -87,6 +101,8 @@ const renderCalendar = (
         visibleMonth: 11,
         selectedDay: null,
         selectDay,
+        display: 'records',
+        setDisplay,
         dayName: (calendarDay) =>
             `${calendarDay.label} ${calendarDay.date.startsWith('2026-10') ? 'October' : 'November'} 2026`,
         atFilterStart: false,
@@ -104,7 +120,8 @@ const renderCalendar = (
     const tree = (
         <WorkingListCalendarContext.Provider value={value}>
             <WorkingListCalendarNavigation />
-            <WorkingListCalendarGrid data-consumer="grid" />
+            <WorkingListCalendarDisplayToggle />
+            {grid}
             <WorkingListCalendarDayRecords />
         </WorkingListCalendarContext.Provider>
     )
@@ -115,8 +132,12 @@ const renderCalendar = (
         navigateTo,
         navigateToMonth,
         navigateToYear,
+        setDisplay,
     }
 }
+
+const dayButton = (container: HTMLElement, date: string) =>
+    container.querySelector<HTMLElement>(`[data-date="${date}"]`)
 
 describe('working list calendar parts', () => {
     it('shows the first records of a day and counts the rest', async () => {
@@ -261,5 +282,113 @@ describe('working list calendar parts', () => {
         await screen.getByRole('combobox', { name: 'Year' }).click()
         await screen.getByRole('option', { name: '2025' }).click()
         expect(navigateToYear).toHaveBeenCalledWith(2025)
+    })
+
+    it('counts records by status in the counts display', async () => {
+        const { tree } = renderCalendar({ display: 'counts' })
+        const screen = await render(tree)
+
+        const firstDay = dayButton(screen.container, '2026-11-01')
+        expect(firstDay?.textContent).toContain('3Active')
+        expect(firstDay?.textContent).toContain('2Overdue')
+        expect(firstDay?.textContent).not.toContain('Person A')
+    })
+
+    it('shows as many names as asked', async () => {
+        const { tree } = renderCalendar(
+            {},
+            <WorkingListCalendarGrid>
+                <WorkingListCalendarCellRecords max={1} />
+            </WorkingListCalendarGrid>
+        )
+        const screen = await render(tree)
+
+        const text = dayButton(screen.container, '2026-11-01')?.textContent
+        expect(text).toContain('Person A')
+        expect(text).not.toContain('Person B')
+        expect(text).toContain('+4 more')
+    })
+
+    it('narrows weekend columns to counts', async () => {
+        const { tree } = renderCalendar(
+            {},
+            <WorkingListCalendarGrid weekend={[6, 7]} weekendColumns="narrow" />
+        )
+        const screen = await render(tree)
+
+        const sunday = dayButton(screen.container, '2026-11-06')
+        expect(sunday?.dataset.weekend).toBe('true')
+        expect(sunday?.textContent).not.toContain('Person S')
+        expect(sunday?.textContent).toContain('1')
+        expect(
+            dayButton(screen.container, '2026-11-01')?.textContent
+        ).toContain('Person A')
+    })
+
+    it('hides weekend columns and says what they hold', async () => {
+        const { tree } = renderCalendar(
+            {},
+            <WorkingListCalendarGrid weekend={[6, 7]} weekendColumns="hide" />
+        )
+        const screen = await render(tree)
+
+        expect(dayButton(screen.container, '2026-11-05')).toBeNull()
+        expect(dayButton(screen.container, '2026-11-06')).toBeNull()
+        await expect
+            .element(
+                screen.getByText('1 record falls on a hidden weekend day.')
+            )
+            .toBeVisible()
+        dayButton(screen.container, '2026-11-01')?.focus()
+        await userEvent.keyboard('{ArrowDown}')
+        // Five visible columns: down from Tuesday the 1st is Tuesday the 8th.
+        expect(document.activeElement).toBe(
+            dayButton(screen.container, '2026-11-08')
+        )
+    })
+
+    it('switches between counts and names from the toggle', async () => {
+        const { tree, setDisplay } = renderCalendar({ display: 'counts' })
+        const screen = await render(tree)
+
+        await screen.getByRole('button', { name: 'Names' }).click()
+        expect(setDisplay).toHaveBeenCalledWith('records')
+    })
+
+    it('lists the selected day with each status', async () => {
+        const { tree } = renderCalendar({ selectedDay: weeks[0][1] })
+        const screen = await render(tree)
+
+        await expect.element(screen.getByText('5 records')).toBeVisible()
+        await expect.element(screen.getByText('Overdue').first()).toBeVisible()
+    })
+
+    it('caps status counts and keeps tied groups in one order', async () => {
+        const status = (label: string): WorkingListCalendarStatus => ({
+            id: label,
+            label,
+            tone: 'neutral',
+        })
+        const busy = day('2026-11-01', {
+            records: [
+                record('A', '2026-11-01', status('Kono')),
+                record('B', '2026-11-01', status('Bo')),
+                record('C', '2026-11-01', status('Makeni')),
+                record('D', '2026-11-01', status('Kenema')),
+                record('E', '2026-11-01', status('Kenema')),
+            ],
+        })
+        const { tree } = renderCalendar(
+            { display: 'counts', weeks: [[busy]] },
+            <WorkingListCalendarGrid>
+                <WorkingListCalendarCellRecords max={2} />
+            </WorkingListCalendarGrid>
+        )
+        const screen = await render(tree)
+
+        // Kenema leads with two; Bo beats Kono and Makeni on the tie.
+        expect(dayButton(screen.container, '2026-11-01')?.textContent).toBe(
+            '12Kenema1Bo+2 more'
+        )
     })
 })

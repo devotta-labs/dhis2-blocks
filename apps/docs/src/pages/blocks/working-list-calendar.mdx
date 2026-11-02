@@ -33,6 +33,7 @@ import {
 import {
     WorkingListCalendar,
     WorkingListCalendarDayRecords,
+    WorkingListCalendarDisplayToggle,
     WorkingListCalendarGrid,
     WorkingListCalendarNavigation,
 } from '@/components/working-list-calendar'
@@ -43,7 +44,10 @@ export const AppointmentsCalendar = () => (
             <WorkingListFilterControls />
         </WorkingListToolbar>
         <WorkingListCalendar onRecordClick={(record) => openRecord(record)}>
-            <WorkingListCalendarNavigation />
+            <div className="flex items-center gap-2">
+                <WorkingListCalendarNavigation />
+                <WorkingListCalendarDisplayToggle className="ms-auto" />
+            </div>
             <WorkingListCalendarGrid />
             <WorkingListCalendarDayRecords />
         </WorkingListCalendar>
@@ -52,15 +56,88 @@ export const AppointmentsCalendar = () => (
 ```
 
 The grid shows full weeks, so the first and last rows include days from the
-neighbouring months, muted but with their records. Each day shows its first
-three records. Selecting a day lists all of its
-records in `WorkingListCalendarDayRecords`, where `onRecordClick` opens them
-with the same record target as the table's `onRowClick`.
+neighbouring months, muted but with their records. Selecting a day lists all
+of its records in `WorkingListCalendarDayRecords`, where `onRecordClick` opens
+them with the same record target as the table's `onRowClick`. On a wide
+calendar the day list takes a column of its own beside the grid; place it
+anywhere else inside `WorkingListCalendar` and pass a `className` to suit.
 
 The calendar reads the list's filters but never changes them. Switching
 between table and calendar leaves the saved view and the table's page as they
 were. If a saved filter limits the dates, the calendar opens inside them and
 stops at their edges.
+
+## What each day shows
+
+By default each day counts its records by status: "6 Active, 2 Completed".
+For a busy clinic that says more than a column of names. Users switch to
+names with `WorkingListCalendarDisplayToggle`; leave it out and the calendar
+stays on the display you chose. `defaultDisplay="records"` starts on names,
+and `display` with `onDisplayChange` keeps the choice yourself, for example
+in the URL or the user's settings.
+
+The grid's children are what each day shows under its number. The default is
+`WorkingListCalendarCellRecords`, which shows up to `max` status counts
+(largest first) or `max` names, 3 by default, with the records left over on
+a "+N more" row:
+
+```tsx
+<WorkingListCalendarGrid>
+    <WorkingListCalendarCellRecords max={5} />
+</WorkingListCalendarGrid>
+```
+
+For something else, write a cell part of your own with
+`useWorkingListCalendarDay()`, which gives it the day it draws. A plain count
+of the day's records, without statuses, is a few lines:
+
+```tsx
+const DayCount = () => {
+    const { day } = useWorkingListCalendarDay()
+    if (day.records.length === 0) return null
+    return <span>{day.records.length} records</span>
+}
+
+;<WorkingListCalendarGrid>
+    <DayCount />
+</WorkingListCalendarGrid>
+```
+
+## Status colours
+
+Records are coloured and counted by status. For tracked entities that is the
+enrollment status; for events it is the event status, with scheduled visits
+before today counted as overdue. Pass `recordStatus` for a rule of your own,
+returning an `id` to count by, a `label` and a `tone` (`neutral`, `info`,
+`positive`, `warning` or `critical`):
+
+```tsx
+<WorkingListCalendar
+    recordStatus={(row, cellText) => {
+        const risk = cellText(riskAttributeId)
+        return {
+            id: risk,
+            label: risk,
+            tone: risk === 'High' ? 'critical' : 'neutral',
+        }
+    }}
+>
+    {/* … */}
+</WorkingListCalendar>
+```
+
+## Weekends
+
+Pass the days that count as the weekend, as ISO weekdays (1 is Monday, 7 is
+Sunday), and how their columns show. Weekends differ by country, so there is
+no default:
+
+```tsx
+<WorkingListCalendarGrid weekend={[5, 6]} weekendColumns="narrow" />
+```
+
+`narrow` keeps the columns but shows only counts in them; `hide` removes
+them and says above the grid how many records fall on the hidden days.
 
 ## Record names
 

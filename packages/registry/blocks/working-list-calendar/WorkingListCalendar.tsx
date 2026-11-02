@@ -22,6 +22,10 @@ import {
     type WorkingListResultTarget,
 } from '@/components/working-list'
 import { defaultRecordLabel } from './recordLabel'
+import {
+    defaultRecordStatus,
+    type WorkingListCalendarStatus,
+} from './recordStatus'
 
 const TRACKED_ENTITY_DATE_FIELDS = ['enrolledAt', 'enrollmentOccurredAt']
 const EVENT_DATE_FIELDS = ['eventOccurredAt', 'eventScheduledAt']
@@ -38,7 +42,12 @@ export interface WorkingListCalendarRecord {
     /** The record's day in the system calendar (YYYY-MM-DD). */
     date: string
     target?: WorkingListResultTarget
+    /** Colours the record and groups it in the day counts. */
+    status?: WorkingListCalendarStatus
 }
+
+/** What a day shows: how many records of each status, or their names. */
+export type WorkingListCalendarDisplay = 'counts' | 'records'
 
 export interface WorkingListCalendarDay {
     /** The day in the system calendar (YYYY-MM-DD). */
@@ -74,6 +83,8 @@ export interface WorkingListCalendarContextValue {
     >
     selectedDay: WorkingListCalendarDay | null
     selectDay(date: string | null): void
+    display: WorkingListCalendarDisplay
+    setDisplay(display: WorkingListCalendarDisplay): void
     /** A day's full name for labels, e.g. "14 November 2026". */
     dayName(day: WorkingListCalendarDay): string
     /** The month has days before the saved filter's start / after its end. */
@@ -111,11 +122,25 @@ type SelectedDayProps =
           onSelectedDayChange: (date: string | null) => void
       }
 
+type DisplayProps =
+    | {
+          display?: never
+          /** What days show on mount. Defaults to counts. */
+          defaultDisplay?: WorkingListCalendarDisplay
+          onDisplayChange?: (display: WorkingListCalendarDisplay) => void
+      }
+    | {
+          display: WorkingListCalendarDisplay
+          defaultDisplay?: never
+          onDisplayChange: (display: WorkingListCalendarDisplay) => void
+      }
+
 export type WorkingListCalendarProps = Omit<
     ComponentPropsWithoutRef<'section'>,
     'onSelect'
 > &
-    SelectedDayProps & {
+    SelectedDayProps &
+    DisplayProps & {
         /**
          * The date that places each record. Defaults to the enrollment date
          * for tracked entities and the report date for events. A field that
@@ -135,6 +160,15 @@ export type WorkingListCalendarProps = Omit<
             row: WorkingListDisplayRow,
             cellText: (fieldId: string) => string
         ) => string
+        /**
+         * Colours a record and groups it in the day counts. Defaults to the
+         * enrollment status, or the event status with past scheduled visits
+         * marked overdue. Return `undefined` for no status.
+         */
+        recordStatus?: (
+            row: WorkingListDisplayRow,
+            cellText: (fieldId: string) => string
+        ) => WorkingListCalendarStatus | undefined
     }
 
 const resolveDateField = (
@@ -167,10 +201,11 @@ export const PICKER_CALENDARS = {
 
 const pad = (value: number, length = 2) => String(value).padStart(length, '0')
 
-/** Today in the system calendar, written the way the date picker writes days. */
+/** Today in `calendar`, written the way the date picker writes days. */
 const todayIn = (calendar: string, timeZone: string) => {
     const now = getNowInCalendar(calendar, timeZone)
-    return `${pad(now.eraYear ?? now.year, 4)}-${pad(now.month)}-${pad(now.day)}`
+    const year = calendar === 'iso8601' ? now.year : (now.eraYear ?? now.year)
+    return `${pad(year, 4)}-${pad(now.month)}-${pad(now.day)}`
 }
 
 /** Moves `day` inside `bounds`, so the calendar opens where records can be. */
@@ -187,12 +222,14 @@ const isOutside = (day: string, bounds: { start?: string; end?: string }) =>
 
 const toCalendarRecord = (
     record: WorkingListDatedRecord,
-    label: string
+    label: string,
+    status: WorkingListCalendarStatus | undefined
 ): WorkingListCalendarRecord => ({
     id: record.row.id,
     label: label.trim() || i18n.t('Unnamed record'),
     date: record.date,
     target: record.target,
+    status,
 })
 
 const ReadyCalendar = ({
@@ -200,9 +237,13 @@ const ReadyCalendar = ({
     onRecordClick,
     limit,
     recordLabel,
+    recordStatus,
     selectedDay: controlledSelectedDay,
     defaultSelectedDay = null,
     onSelectedDayChange,
+    display: controlledDisplay,
+    defaultDisplay = 'counts',
+    onDisplayChange,
     className,
     children,
     ...props
@@ -229,6 +270,17 @@ const ReadyCalendar = ({
             onSelectedDayChange?.(date)
         },
         [controlledSelectedDay, onSelectedDayChange]
+    )
+
+    const [uncontrolledDisplay, setUncontrolledDisplay] =
+        useState(defaultDisplay)
+    const display = controlledDisplay ?? uncontrolledDisplay
+    const setDisplay = useCallback(
+        (next: WorkingListCalendarDisplay) => {
+            if (controlledDisplay === undefined) setUncontrolledDisplay(next)
+            onDisplayChange?.(next)
+        },
+        [controlledDisplay, onDisplayChange]
     )
 
     // The picker opens on `date` and follows it when it changes, so the
@@ -281,6 +333,15 @@ const ReadyCalendar = ({
         },
         [cellText, columns, dateField, recordLabel]
     )
+    const statusFor = useCallback(
+        (row: WorkingListDisplayRow) => {
+            const text = (fieldId: string) => cellText(row, fieldId)
+            return recordStatus
+                ? recordStatus(row, text)
+                : defaultRecordStatus(row, text, todayIn('iso8601', timeZone))
+        },
+        [cellText, recordStatus, timeZone]
+    )
     const records = results.status === 'ready' ? results.records : undefined
     const recordsByDay = useMemo(() => {
         const byDay = new Map<string, WorkingListCalendarRecord[]>()
@@ -288,11 +349,17 @@ const ReadyCalendar = ({
             const day = byDay.get(record.date) ?? []
             // A server can send a record twice; it still sits on its day once.
             if (day.some(({ id }) => id === record.row.id)) continue
-            day.push(toCalendarRecord(record, labelFor(record.row)))
+            day.push(
+                toCalendarRecord(
+                    record,
+                    labelFor(record.row),
+                    statusFor(record.row)
+                )
+            )
             byDay.set(record.date, day)
         }
         return byDay
-    }, [labelFor, records])
+    }, [labelFor, records, statusFor])
 
     const weeks = picker.calendarWeekDays.map((week) =>
         week.map((day) => ({
@@ -320,6 +387,8 @@ const ReadyCalendar = ({
         navigation: picker,
         selectedDay,
         selectDay,
+        display,
+        setDisplay,
         dayName: (day) => {
             const month =
                 picker.months.find(({ value }) => value === monthOf(day.date))
@@ -345,9 +414,12 @@ const ReadyCalendar = ({
                 aria-label={i18n.t('Calendar')}
                 {...props}
                 data-slot="working-list-calendar"
-                className={cn('flex flex-col gap-2', className)}
+                className={cn('@container', className)}
             >
-                {children}
+                {/* Wide calendars put the day list in a column of its own. */}
+                <div className="grid items-start gap-3 @3xl:grid-cols-[minmax(0,1fr)_18rem]">
+                    {children}
+                </div>
             </section>
         </WorkingListCalendarContext.Provider>
     )
@@ -382,6 +454,10 @@ export const WorkingListCalendar = (props: WorkingListCalendarProps) => {
         onRecordClick: _onRecordClick,
         limit: _limit,
         recordLabel: _recordLabel,
+        recordStatus: _recordStatus,
+        display: _display,
+        defaultDisplay: _defaultDisplay,
+        onDisplayChange: _onDisplayChange,
         selectedDay: _selectedDay,
         defaultSelectedDay: _defaultSelectedDay,
         onSelectedDayChange: _onSelectedDayChange,

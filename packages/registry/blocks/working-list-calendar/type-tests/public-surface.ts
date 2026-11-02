@@ -1,18 +1,32 @@
 import type {
     WorkingListCalendarContextValue,
+    WorkingListCalendarDisplay,
+    WorkingListCalendarGridProps,
+    WorkingListCalendarStatus,
+    WorkingListCalendarTone,
+    WorkingListCalendarWeekday,
     WorkingListCalendarDateField,
     WorkingListCalendarDay,
     WorkingListCalendarProps,
     WorkingListCalendarRecord,
 } from '..'
+import { useWorkingListCalendarDay } from '..'
 
 export type SupportedWorkingListCalendarTypes = [
     WorkingListCalendarContextValue,
+    WorkingListCalendarDisplay,
+    WorkingListCalendarGridProps,
+    WorkingListCalendarStatus,
+    WorkingListCalendarTone,
+    WorkingListCalendarWeekday,
     WorkingListCalendarDateField,
     WorkingListCalendarDay,
     WorkingListCalendarProps,
     WorkingListCalendarRecord,
 ]
+
+export const readCellDay = (): number =>
+    useWorkingListCalendarDay().day.records.length
 
 export const uncontrolledProps: WorkingListCalendarProps = {
     dateField: 'eventScheduledAt',
@@ -23,6 +37,35 @@ export const uncontrolledProps: WorkingListCalendarProps = {
 export const labelledProps: WorkingListCalendarProps = {
     recordLabel: (row, cellText) =>
         `${cellText('NationalId1')} · ${row.trackedEntityId ?? row.id}`,
+}
+
+export const statusProps: WorkingListCalendarProps = {
+    defaultDisplay: 'records',
+    recordStatus: (_row, cellText) => ({
+        id: cellText('Priority001'),
+        label: cellText('Priority001'),
+        tone: 'warning',
+    }),
+}
+
+export const controlledDisplay: WorkingListCalendarProps = {
+    display: 'counts',
+    onDisplayChange: () => undefined,
+}
+
+// @ts-expect-error A controlled display requires its change callback.
+export const displayWithoutCallback: WorkingListCalendarProps = {
+    display: 'counts',
+}
+
+export const fridaySaturdayWeekend: WorkingListCalendarGridProps = {
+    weekend: [5, 6],
+    weekendColumns: 'narrow',
+}
+
+export const badWeekday: WorkingListCalendarGridProps = {
+    // @ts-expect-error Weekdays run from 1 (Monday) to 7 (Sunday).
+    weekend: [0],
 }
 
 export const controlledProps: WorkingListCalendarProps = {

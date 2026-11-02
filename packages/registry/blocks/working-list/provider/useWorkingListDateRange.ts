@@ -172,7 +172,7 @@ export const useWorkingListDateRange = ({
                     ...rangeInput,
                     pagination: {
                         page: pages.length + 1,
-                        pageSize: RANGE_PAGE_SIZE,
+                        pageSize: Math.min(RANGE_PAGE_SIZE, limit),
                     },
                     signal,
                 })
@@ -180,7 +180,7 @@ export const useWorkingListDateRange = ({
                 loaded += page.records.length
                 hasNextPage = page.hasNextPage
             }
-            return { pages, truncated: hasNextPage }
+            return { pages, truncated: hasNextPage || loaded > limit }
         },
         enabled: Boolean(rangeInput),
         placeholderData: keepPreviousData,
@@ -198,9 +198,9 @@ export const useWorkingListDateRange = ({
                       programId,
                       configuration,
                       fromApiDate
-                  )
+                  ).slice(0, limit)
                 : [],
-        [configuration, data, fieldId, fromApiDate, programId]
+        [configuration, data, fieldId, fromApiDate, limit, programId]
     )
     const filterBounds = useMemo(
         () => ({

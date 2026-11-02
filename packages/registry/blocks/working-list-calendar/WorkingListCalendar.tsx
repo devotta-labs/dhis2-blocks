@@ -275,6 +275,8 @@ const ReadyCalendar = ({
         const byDay = new Map<string, WorkingListCalendarRecord[]>()
         for (const record of records ?? []) {
             const day = byDay.get(record.date) ?? []
+            // A server can send a record twice; it still sits on its day once.
+            if (day.some(({ id }) => id === record.row.id)) continue
             day.push(toCalendarRecord(record, labelFieldIds))
             byDay.set(record.date, day)
         }
@@ -354,7 +356,12 @@ const unavailableMessage = (status: 'pending' | 'error' | 'ready') =>
 export const WorkingListCalendar = (props: WorkingListCalendarProps) => {
     // List state can be read only once the list has an active configuration.
     const readiness = useWorkingListMeta((meta) => {
-        if (meta.selection.status === 'error') return 'error'
+        if (
+            meta.lifecycle.status === 'error' ||
+            meta.selection.status === 'error'
+        ) {
+            return 'error'
+        }
         return meta.activeConfiguration.status === 'ready' ? 'ready' : 'pending'
     })
     if (readiness === 'ready') return <ReadyCalendar {...props} />

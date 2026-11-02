@@ -71,7 +71,7 @@ export const WorkingListCalendarNavigation = ({
                 <SelectTrigger
                     size="sm"
                     aria-label={i18n.t('Year')}
-                    className="w-24"
+                    className="w-28"
                 >
                     <SelectValue />
                 </SelectTrigger>

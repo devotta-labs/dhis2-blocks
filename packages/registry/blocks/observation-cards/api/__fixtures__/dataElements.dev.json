@@ -1,0 +1,110 @@
+{
+    "dataElements": [
+        {
+            "valueType": "BOOLEAN",
+            "legendSets": [],
+            "displayName": "WHOMCH Extreme pallor",
+            "displayFormName": "Clinical signs of extreme pallor",
+            "id": "EyfTU3ibMmJ"
+        },
+        {
+            "valueType": "NUMBER",
+            "legendSets": [],
+            "displayName": "WHOMCH Hemoglobin value",
+            "displayFormName": "WHOMCH Hemoglobin value",
+            "id": "vANAXwtLwcT"
+        },
+        {
+            "valueType": "TEXT",
+            "optionSet": {
+                "options": [
+                    {
+                        "code": "Negative",
+                        "name": "Negative"
+                    },
+                    {
+                        "code": "Positive",
+                        "name": "Positive"
+                    },
+                    {
+                        "code": "Not performed",
+                        "name": "Not performed"
+                    }
+                ]
+            },
+            "legendSets": [],
+            "displayName": "WHOMCH HIV rapid test",
+            "displayFormName": "HIV test result",
+            "id": "Itl05OEupgQ"
+        },
+        {
+            "valueType": "BOOLEAN",
+            "legendSets": [],
+            "displayName": "WHOMCH Smoking",
+            "displayFormName": "WHOMCH Smoking",
+            "id": "sWoqcoByYmD"
+        },
+        {
+            "valueType": "INTEGER",
+            "legendSets": [
+                {
+                    "legends": [
+                        {
+                            "name": "30 - 40",
+                            "startValue": 30.0,
+                            "endValue": 40.0,
+                            "color": "#d9f0a3"
+                        },
+                        {
+                            "name": "10 - 20",
+                            "startValue": 10.0,
+                            "endValue": 20.0,
+                            "color": "#ffffe5"
+                        },
+                        {
+                            "name": "70 - 80",
+                            "startValue": 70.0,
+                            "endValue": 80.0,
+                            "color": "#238443"
+                        }
+                    ]
+                }
+            ],
+            "displayName": "Age in years",
+            "displayFormName": "Age (years)",
+            "id": "qrur9Dvnyt5"
+        },
+        {
+            "valueType": "TEXT",
+            "optionSet": {
+                "options": [
+                    {
+                        "code": "ACT x6",
+                        "name": "ACT x6",
+                        "style": {
+                            "color": "ffef78"
+                        }
+                    },
+                    {
+                        "code": "ACT x12",
+                        "name": "ACT x12",
+                        "style": {
+                            "color": "fff7b9"
+                        }
+                    },
+                    {
+                        "code": "ACT x18",
+                        "name": "ACT x18",
+                        "style": {
+                            "color": "ffef78"
+                        }
+                    }
+                ]
+            },
+            "legendSets": [],
+            "displayName": "XX MAL RDT TRK - Treatment Pf",
+            "displayFormName": "XX MAL RDT TRK - Treatment Pf",
+            "id": "CLC5VYdZBay"
+        }
+    ]
+}

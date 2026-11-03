@@ -1,0 +1,133 @@
+{
+    "programStages": [
+        {
+            "programStageDataElements": [],
+            "displayName": "Previous deliveries",
+            "access": {
+                "data": {
+                    "read": true
+                }
+            },
+            "id": "PUZaKR0Jh2k"
+        },
+        {
+            "programStageDataElements": [
+                {
+                    "dataElement": {
+                        "id": "Itl05OEupgQ"
+                    }
+                },
+                {
+                    "dataElement": {
+                        "id": "EyfTU3ibMmJ"
+                    }
+                },
+                {
+                    "dataElement": {
+                        "id": "vANAXwtLwcT"
+                    }
+                },
+                {
+                    "dataElement": {
+                        "id": "sWoqcoByYmD"
+                    }
+                }
+            ],
+            "displayName": "First antenatal care visit",
+            "access": {
+                "data": {
+                    "read": true
+                }
+            },
+            "id": "WZbXY0S00lP"
+        },
+        {
+            "programStageDataElements": [
+                {
+                    "dataElement": {
+                        "id": "vANAXwtLwcT"
+                    }
+                },
+                {
+                    "dataElement": {
+                        "id": "EyfTU3ibMmJ"
+                    }
+                },
+                {
+                    "dataElement": {
+                        "id": "Itl05OEupgQ"
+                    }
+                },
+                {
+                    "dataElement": {
+                        "id": "sWoqcoByYmD"
+                    }
+                }
+            ],
+            "displayName": "Second antenatal care visit",
+            "access": {
+                "data": {
+                    "read": true
+                }
+            },
+            "id": "edqlbukwRfQ"
+        },
+        {
+            "programStageDataElements": [
+                {
+                    "dataElement": {
+                        "id": "Itl05OEupgQ"
+                    }
+                },
+                {
+                    "dataElement": {
+                        "id": "EyfTU3ibMmJ"
+                    }
+                },
+                {
+                    "dataElement": {
+                        "id": "vANAXwtLwcT"
+                    }
+                },
+                {
+                    "dataElement": {
+                        "id": "sWoqcoByYmD"
+                    }
+                }
+            ],
+            "displayName": "Care at birth",
+            "access": {
+                "data": {
+                    "read": true
+                }
+            },
+            "id": "PFDfvmGpsR3"
+        },
+        {
+            "programStageDataElements": [
+                {
+                    "dataElement": {
+                        "id": "Itl05OEupgQ"
+                    }
+                },
+                {
+                    "dataElement": {
+                        "id": "EyfTU3ibMmJ"
+                    }
+                },
+                {
+                    "dataElement": {
+                        "id": "vANAXwtLwcT"
+                    }
+                }
+            ],
+            "displayName": "Postpartum care visit",
+            "access": {
+                "data": {
+                    "read": true
+                }
+            },
+            "id": "bbKtnxRZKEP"
+        }
+    ]
+}

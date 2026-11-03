@@ -137,6 +137,25 @@
             ]
         },
         {
+            "name": "badge",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "class-variance-authority@^0.7.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/badge.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/badge.tsx"
+                }
+            ]
+        },
+        {
             "name": "button",
             "type": "registry:ui",
             "dependencies": [
@@ -167,6 +186,22 @@
                     "path": "packages/registry/components/card.tsx",
                     "type": "registry:ui",
                     "target": "@components/dhis2/ui/card.tsx"
+                }
+            ]
+        },
+        {
+            "name": "chart",
+            "type": "registry:ui",
+            "dependencies": ["recharts@^3.8.0"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/chart.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/chart.tsx"
                 }
             ]
         },
@@ -414,6 +449,21 @@
                     "path": "packages/registry/components/separator.tsx",
                     "type": "registry:ui",
                     "target": "@components/dhis2/ui/separator.tsx"
+                }
+            ]
+        },
+        {
+            "name": "skeleton",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/skeleton.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/skeleton.tsx"
                 }
             ]
         },

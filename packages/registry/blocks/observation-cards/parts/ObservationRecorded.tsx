@@ -119,11 +119,11 @@ function PartialNote() {
                     <span
                         tabIndex={0}
                         data-slot="partial-note"
-                        className="ms-auto cursor-default rounded-dhis2-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-primary"
+                        className="ms-auto inline-flex cursor-default rounded-dhis2-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-primary"
                     />
                 }
             >
-                <span aria-hidden="true">
+                <span aria-hidden="true" className="inline-flex">
                     <CardNote tone="info">
                         {i18n.t('Restricted access')}
                     </CardNote>

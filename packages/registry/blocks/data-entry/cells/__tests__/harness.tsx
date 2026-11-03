@@ -100,6 +100,7 @@ export const rig = (
         },
         announcements: createAnnouncer().announcements,
         tables: [table],
+        records: new Map(),
         newRowTables: new Set(),
         addRow: () => {},
         overrides,
@@ -108,6 +109,7 @@ export const rig = (
     const view = createStore<DataEntryView>()(() => ({
         status: 'ready',
         tables: [table],
+        records: new Map(),
         summary: summarise({}, {}, new Map(), [table]),
         sync,
         addRow: () => {},

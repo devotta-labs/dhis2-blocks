@@ -148,20 +148,21 @@ test('columns are the event date, then the stage’s data elements', async () =>
     )
 })
 
-test('event-program rows carry no enrollment', async () => {
+test('event-program records carry no enrollment', async () => {
     const form = await loadInpatient(inpatientProgram, inpatientEvents, meAdmin)
     const [table] = form.tables
 
-    expect(table.rows[0]).toEqual({
+    expect(table.rows[0]).toEqual({ id: 'NGxc7JpmqqD', label: '2026-12-25' })
+    expect(form.records.get('NGxc7JpmqqD')).toEqual({
+        kind: 'event',
         id: 'NGxc7JpmqqD',
-        label: '2026-12-25',
         programStageId: INPATIENT_STAGE,
         orgUnitId: NGELEHUN,
         status: 'COMPLETED',
     })
-    expect(table.rows.map(({ enrollmentId }) => enrollmentId)).toEqual(
-        INPATIENT_ROWS.map(() => undefined)
-    )
+    expect(
+        table.rows.map(({ id }) => form.records.get(id)?.enrollmentId)
+    ).toEqual(INPATIENT_ROWS.map(() => undefined))
 })
 
 test('the reason a cell is closed, and the event date’s header, are translated', async () => {
@@ -203,6 +204,10 @@ test('one person’s events across stages share one table with "Not in this stag
         id: 'yDPqyTvcRpA',
         label: '2026-04-14 · Second antenatal care visit',
         stage: 'Second antenatal care visit',
+    })
+    expect(form.records.get('yDPqyTvcRpA')).toEqual({
+        kind: 'event',
+        id: 'yDPqyTvcRpA',
         programStageId: SECOND_VISIT,
         enrollmentId: PERSON,
         orgUnitId: PERSON_ORG_UNIT,
@@ -375,11 +380,9 @@ test('an event that has not happened yet is labelled by its scheduled date', asy
         withEvent(0, scheduled),
         meAdmin
     )
-    expect(form.tables[0].rows[0]).toMatchObject({
-        label: '2026-11-02',
-        // For the grid to show in the system's calendar and format.
-        scheduledAt: '2026-11-02',
-    })
+    expect(form.tables[0].rows[0]).toMatchObject({ label: '2026-11-02' })
+    // For the grid to show in the system's calendar and format.
+    expect(form.records.get('NGxc7JpmqqD')?.scheduledAt).toBe('2026-11-02')
     expect(form.values.has(cellKey('NGxc7JpmqqD', EVENT_DATE_COLUMN))).toBe(
         false
     )
@@ -412,14 +415,14 @@ test('an event that has not happened yet is labelled by its scheduled date', asy
 
 test('a completed event in a blockEntryForm stage is read-only; reopening needs F_UNCOMPLETE_EVENT', async () => {
     const open = await loadInpatient(inpatientProgram, inpatientEvents, meAdmin)
-    expect(open.readOnlyRows.size).toBe(0)
+    expect(open.readOnlyRecords.size).toBe(0)
     expect(open.canReopen).toEqual(new Set(INPATIENT_ROWS))
     expect(open.readOnlyWhenCompleted.size).toBe(0)
     expect(open.mayUncomplete).toBe(true)
 
     const blocking = withStage({ blockEntryForm: true })
     const blocked = await loadInpatient(blocking, inpatientEvents, meAdmin)
-    expect(blocked.readOnlyRows).toEqual(
+    expect(blocked.readOnlyRecords).toEqual(
         new Map(
             INPATIENT_ROWS.map((id) => [
                 id,
@@ -457,7 +460,7 @@ test('a completed event in a blockEntryForm stage is read-only; reopening needs 
         withEvent(0, { status: 'ACTIVE' }),
         meAdmin
     )
-    expect(active.readOnlyRows.has('NGxc7JpmqqD')).toBe(false)
+    expect(active.readOnlyRecords.has('NGxc7JpmqqD')).toBe(false)
     expect(active.canReopen.has('NGxc7JpmqqD')).toBe(false)
 })
 
@@ -467,7 +470,7 @@ test('a skipped event is read-only', async () => {
         withEvent(1, { status: 'SKIPPED' }),
         meAdmin
     )
-    expect(form.readOnlyRows).toEqual(
+    expect(form.readOnlyRecords).toEqual(
         new Map([['wAiGPfJGMxt', 'Skipped events cannot be edited']])
     )
 })
@@ -478,7 +481,7 @@ test('no data write access to the stage makes its events read-only', async () =>
         inpatientEvents,
         meAdmin
     )
-    expect(form.readOnlyRows).toEqual(
+    expect(form.readOnlyRecords).toEqual(
         new Map(
             INPATIENT_ROWS.map((id) => [
                 id,
@@ -503,7 +506,7 @@ test('an expired event is read-only unless the user has F_EDIT_EXPIRED', async (
         events,
         withAuthorities(['F_UNCOMPLETE_EVENT'])
     )
-    expect(form.readOnlyRows).toEqual(
+    expect(form.readOnlyRecords).toEqual(
         new Map([['NGxc7JpmqqD', 'This event is in an expired period']])
     )
     expect(form.canReopen.has('NGxc7JpmqqD')).toBe(false)
@@ -514,7 +517,7 @@ test('an expired event is read-only unless the user has F_EDIT_EXPIRED', async (
         events,
         withAuthorities(['F_UNCOMPLETE_EVENT', 'F_EDIT_EXPIRED'])
     )
-    expect(allowed.readOnlyRows.size).toBe(0)
+    expect(allowed.readOnlyRecords.size).toBe(0)
     expect(allowed.canReopen.has('NGxc7JpmqqD')).toBe(true)
 })
 
@@ -532,7 +535,7 @@ test('a scheduled event expires by its scheduled date', async () => {
     })
 
     const form = await loadInpatient(program, events, withAuthorities([]))
-    expect(form.readOnlyRows).toEqual(
+    expect(form.readOnlyRecords).toEqual(
         new Map([['NGxc7JpmqqD', 'This event is in an expired period']])
     )
 
@@ -541,7 +544,7 @@ test('a scheduled event expires by its scheduled date', async () => {
         events,
         withAuthorities(['F_EDIT_EXPIRED'])
     )
-    expect(allowed.readOnlyRows.size).toBe(0)
+    expect(allowed.readOnlyRecords.size).toBe(0)
 })
 
 test('an event completed longer ago than completeEventsExpiryDays is read-only unless the user has F_EDIT_EXPIRED', async () => {
@@ -550,7 +553,7 @@ test('an event completed longer ago than completeEventsExpiryDays is read-only u
     const events = withEvent(0, { status: 'ACTIVE', completedAt: undefined })
 
     const form = await loadInpatient(program, events, withAuthorities([]))
-    expect(form.readOnlyRows).toEqual(
+    expect(form.readOnlyRecords).toEqual(
         new Map(
             INPATIENT_ROWS.slice(1).map((id) => [
                 id,
@@ -564,7 +567,7 @@ test('an event completed longer ago than completeEventsExpiryDays is read-only u
         events,
         withAuthorities(['F_EDIT_EXPIRED'])
     )
-    expect(allowed.readOnlyRows.size).toBe(0)
+    expect(allowed.readOnlyRecords.size).toBe(0)
 })
 
 test('a program with a non-default category combo loads read-only with the reason', async () => {
@@ -576,7 +579,7 @@ test('a program with a non-default category combo loads read-only with the reaso
         inpatientEvents,
         meAdmin
     )
-    expect(form.readOnlyRows).toEqual(
+    expect(form.readOnlyRecords).toEqual(
         new Map(
             INPATIENT_ROWS.map((id) => [
                 id,

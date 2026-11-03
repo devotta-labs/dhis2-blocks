@@ -169,11 +169,6 @@ const toForm = (
             id: event.event,
             label,
             stage: shown.length > 1 ? stageName : undefined,
-            scheduledAt: dueDay(event),
-            programStageId: event.programStage,
-            enrollmentId: tracker ? event.enrollment : undefined,
-            orgUnitId: event.orgUnit,
-            status: event.status,
         }
     })
 
@@ -241,12 +236,12 @@ const toForm = (
         return expiredReason(event)
     }
 
-    const readOnlyRows = new Map<string, string>()
+    const readOnlyRecords = new Map<string, string>()
     const canReopen = new Set<string>()
     for (const event of events) {
         const reason = readOnlyReason(event)
         if (reason !== undefined) {
-            readOnlyRows.set(event.event, reason)
+            readOnlyRecords.set(event.event, reason)
         }
         if (
             event.status === 'COMPLETED' &&
@@ -355,7 +350,7 @@ const toForm = (
                 ),
             ])
         ),
-        readOnlyRows,
+        readOnlyRecords,
         canReopen,
         readOnlyWhenCompleted: new Map(
             stages

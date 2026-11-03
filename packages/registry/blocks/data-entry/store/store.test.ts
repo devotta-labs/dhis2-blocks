@@ -1,13 +1,12 @@
 import { cellKey } from '../model/types'
 import type {
     CellKey,
-    EventStatus,
+    EventRecord,
     GridColumn,
     GridRow,
     GridTable,
     HeaderCell,
     PendingChange,
-    PendingRow,
 } from '../model/types'
 import { EMPTY_CELL, createDataEntryStore } from './store'
 
@@ -21,10 +20,9 @@ const fieldsOf = (tables: GridTable[]) =>
 
 const GREGORIAN = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 
-const ACTIVE: EventStatus = 'ACTIVE'
 const rows: GridRow[] = [
-    { id: 'r1', label: 'Visit 1', status: ACTIVE },
-    { id: 'r2', label: 'Visit 2', status: ACTIVE },
+    { id: 'r1', label: 'Visit 1' },
+    { id: 'r2', label: 'Visit 2' },
 ]
 const columns: GridColumn[] = [
     { id: 'c1', label: 'Children', field: { valueType: 'INTEGER' } },
@@ -404,13 +402,15 @@ test('cells nobody touched have no entry', () => {
 
 test('restore puts unsent changes back as saved on this device', () => {
     const { store, enqueued, cell } = setup([['r1.c1', '5']])
-    const row: PendingRow = {
+    const record: EventRecord = {
+        kind: 'event',
+        id: 'r1',
         programStageId: 'ps',
         orgUnitId: 'ou',
-        isNew: false,
+        status: 'ACTIVE',
     }
     const changes: PendingChange[] = [
-        { sourceKey: 's', key: 'r1.c1', value: '9', base: '5', at: 1, row },
+        { sourceKey: 's', key: 'r1.c1', value: '9', base: '5', at: 1, record },
         { sourceKey: 's', key: 'r2.c1', value: null, base: '3', at: 2 },
     ]
     store.getState().restore(changes)

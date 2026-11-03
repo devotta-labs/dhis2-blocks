@@ -1,19 +1,20 @@
 import { typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
-import type { GridRow, GridTable } from '../model/types'
+import type { DataRecord, GridRow, GridTable } from '../model/types'
 
 const EVENT_DATE = { valueType: 'DATE' }
 
 /**
- * What names a row: once it has an event date (or, until then, the day it is scheduled for), that date in the system
- * calendar and date format (and its stage in a grid of several stages); before, the label its source gave it.
+ * What names a row: once it has an event date (or, until then, the day its record is scheduled for), that date in the
+ * system calendar and date format (and its stage in a grid of several stages); before, the label its source gave it.
  */
 export const rowLabel = (
     row: GridRow,
+    record: DataRecord | undefined,
     date: string | undefined,
     settings: ValueSettings
 ) => {
-    const day = date ?? row.scheduledAt
+    const day = date ?? record?.scheduledAt
     if (day === undefined) {
         return row.label
     }

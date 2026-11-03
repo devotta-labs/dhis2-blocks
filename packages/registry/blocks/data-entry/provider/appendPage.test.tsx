@@ -1,12 +1,13 @@
 /// <reference types="@vitest/browser-playwright" />
 import { createStore } from 'zustand/vanilla'
 import { cellKey } from '../model/types'
-import type { CellKey, GridRow, GridTable } from '../model/types'
+import type { CellKey } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import { createDataEntryStore } from '../store/store'
 import { change, visit, visitForm } from './__tests__/rig'
 import { appendPage } from './appendPage'
 import type { EffectsState } from './context'
+import type { FormTables } from './openForm'
 
 /** `visitForm`'s open stores, as `openForm` makes them. */
 const opened = () => {
@@ -24,13 +25,11 @@ const opened = () => {
             rowMessages: new Map(),
             rowNotes: new Map(),
         })),
-        tables: createStore<{ tables: ReadonlyArray<GridTable> }>()(() => ({
+        tables: createStore<FormTables>()(() => ({
             tables: form.tables,
+            records: form.records,
         })),
-        rows: new Map(
-            form.tables[0].rows.map((row): [string, GridRow] => [row.id, row])
-        ),
-        readOnlyRows: new Map<string, string>(),
+        readOnlyRecords: new Map<string, string>(),
         reopenable: new Set<string>(),
     }
 }

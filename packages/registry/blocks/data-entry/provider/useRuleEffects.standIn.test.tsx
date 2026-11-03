@@ -4,13 +4,14 @@ import type { StoreApi } from 'zustand/vanilla'
 import { emptyEffects } from '@/components/program-rules'
 import type { EventsRules, RuleEffects } from '@/components/program-rules'
 import { cellKey } from '../model/types'
-import type { CellKey, GridTable } from '../model/types'
+import type { CellKey } from '../model/types'
 import { createDataEntryStore } from '../store/store'
 import type { DataEntryState } from '../store/store'
 import { rowHeaderDomId } from '../grid/headers'
 import { holdIdle, later, visit, visitForm } from './__tests__/rig'
 import { connectRules } from './connectRules'
 import type { EffectsState } from './context'
+import type { FormTables } from './openForm'
 import { formEffects } from './formRows'
 
 // Stand-in rules, to reach what the RMNCH rules never do: failures, slow rules, values the stand-in chooses.
@@ -87,14 +88,20 @@ const connect = (
             enqueue: (key) => queued.push(key),
         }),
         effects: createStore<EffectsState>()(() => ({
-            cells: formEffects(form.required, form.readOnlyRows, form.tables),
+            cells: formEffects(
+                form.required,
+                form.readOnlyRecords,
+                form.tables,
+                form.records
+            ),
             rowMessages: new Map(),
             rowNotes: new Map(),
         })),
-        tables: createStore<{ tables: ReadonlyArray<GridTable> }>()(() => ({
+        tables: createStore<FormTables>()(() => ({
             tables: form.tables,
+            records: form.records,
         })),
-        readOnlyRows: form.readOnlyRows,
+        readOnlyRecords: form.readOnlyRecords,
         beforeComplete: new Set<(rowId: string) => string | undefined>(),
     }
     before?.(open.store)
@@ -179,7 +186,7 @@ test('assignments are saved only in rows a person changed, into open cells of th
             [cellKey('r1', 'c2'), 'A'],
             [cellKey('r2', 'c2'), 'A'],
         ],
-        readOnlyRows: [['r2', 'Locked']],
+        readOnlyRecords: [['r2', 'Locked']],
     })
     // Opening changes nothing: the cell shows its stored value, locked by the rule.
     expect(queued).toEqual([])

@@ -1,7 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import { z } from 'zod'
 import { cellKey, rowIdOf } from '../model/types'
-import type { CellKey, EventStatus, GridRow } from '../model/types'
+import type { CellKey, DataRecord, EventStatus, GridRow } from '../model/types'
 import { PartlySaved } from '../outbox/failure'
 import type { OutboxRecord } from '../outbox/outbox'
 import type { SaveOutcome } from '../outbox/sync'
@@ -315,9 +315,11 @@ export const eventSaver = (
                 continue
             }
 
-            const newRow = changes.find((change) => change.row?.isNew)?.row
+            const record = changes.find(
+                (change) => change.record?.isNew
+            )?.record
             // DHIS2 had it, here or in another grid, so it was deleted or is out of the user's reach.
-            if (held.has(event) || newRow === undefined) {
+            if (held.has(event) || record === undefined) {
                 for (const { sourceKey: source, key } of changes) {
                     waiting.push({
                         sourceKey: source,
@@ -337,7 +339,7 @@ export const eventSaver = (
             )
             const missing = [
                 EVENT_DATE_COLUMN,
-                ...requiredIn(newRow.programStageId, 'ACTIVE'),
+                ...requiredIn(record.programStageId, 'ACTIVE'),
             ].filter((column) => !filled.has(column))
             if (missing.length > 0) {
                 const reason = i18n.t(
@@ -361,9 +363,9 @@ export const eventSaver = (
             events.push({
                 event,
                 program: programId,
-                programStage: newRow.programStageId,
-                orgUnit: newRow.orgUnitId,
-                enrollment: newRow.enrollmentId,
+                programStage: record.programStageId,
+                orgUnit: record.orgUnitId,
+                enrollment: record.enrollmentId,
                 occurredAt: date,
                 status: 'ACTIVE',
                 dataValues: dataValuesOf(changes),
@@ -492,7 +494,7 @@ export const eventSaver = (
 
         /**
          * One row per new event of the form's new-row target (its stage, org unit and enrollment) that DHIS2 does not
-         * hold, in the order they were made, labelled by its event date.
+         * hold, in the order they were made, labelled by its event date; with the record its changes save to.
          */
         restoreRows: async (
             engine: DataEngine,
@@ -500,16 +502,17 @@ export const eventSaver = (
             { newRows: target }: LoadedForm
         ) => {
             const rows = new Map<string, GridRow>()
-            for (const { key, value, row } of [...records].sort(
+            const kept = new Map<string, DataRecord>()
+            for (const { key, value, record } of [...records].sort(
                 (a, b) => a.at - b.at
             )) {
                 const id = rowIdOf(key)
                 if (
-                    !row?.isNew ||
+                    !record?.isNew ||
                     held.has(id) ||
-                    row.programStageId !== target?.programStageId ||
-                    row.orgUnitId !== target.orgUnitId ||
-                    row.enrollmentId !== target.enrollmentId
+                    record.programStageId !== target?.programStageId ||
+                    record.orgUnitId !== target.orgUnitId ||
+                    record.enrollmentId !== target.enrollmentId
                 ) {
                     continue
                 }
@@ -517,26 +520,26 @@ export const eventSaver = (
                     id,
                     label: i18n.t('New event'),
                     stage: target?.stage,
-                    programStageId: row.programStageId,
-                    orgUnitId: row.orgUnitId,
-                    enrollmentId: row.enrollmentId,
-                    status: 'ACTIVE',
-                    isNew: true,
                 }
                 if (columnOf(key) === EVENT_DATE_COLUMN && value !== null) {
                     restored.label = value
                 }
                 rows.set(id, restored)
+                kept.set(id, record)
             }
             if (rows.size === 0) {
-                return []
+                return { rows: [], records: [] }
             }
             // One saved since, from another grid or beyond the page loaded, is DHIS2's: its changes are ordinary ones.
             // Unasked, the rows show as new; a save reads what DHIS2 holds first either way.
             const saved = await withinLimit(timeout, (signal) =>
                 readEvents(engine, programId, [...rows.keys()], signal)
             ).catch(() => new Map<string, EventFields>())
-            return [...rows.values()].filter(({ id }) => !saved.has(id))
+            const unsaved = ({ id }: { id: string }) => !saved.has(id)
+            return {
+                rows: [...rows.values()].filter(unsaved),
+                records: [...kept.values()].filter(unsaved),
+            }
         },
     }
 }

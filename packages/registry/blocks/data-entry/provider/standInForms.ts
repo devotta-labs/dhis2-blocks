@@ -1,14 +1,13 @@
 import { createStore } from 'zustand/vanilla'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { cellKey } from '../model/types'
-import type { GridTable } from '../model/types'
 import type { LoadedForm } from '../sources/types'
 import { createDataEntryStore } from '../store/store'
 import { refusalOf } from './completion'
 import { FORM_MESSAGES } from './context'
 import type { EffectsState } from './context'
 import { formEffects } from './formRows'
-import type { OpenForm } from './openForm'
+import type { FormTables, OpenForm } from './openForm'
 import { signedInAsOther } from './signedIn'
 
 /** What the provider shows until a form is open: no tables, no cells, nothing to do. */
@@ -24,10 +23,11 @@ export const emptyForm = (): OpenForm => ({
         rowMessages: new Map(),
         rowNotes: new Map(),
     })),
-    tables: createStore<{ tables: ReadonlyArray<GridTable> }>()(() => ({
+    tables: createStore<FormTables>()(() => ({
         tables: [],
+        records: new Map(),
     })),
-    readOnlyRows: new Map(),
+    readOnlyRecords: new Map(),
     beforeComplete: new Set(),
     newRowTables: new Set(),
     addRow: () => {},
@@ -49,7 +49,7 @@ export const lockedForm = (
     sourceKey: string
 ): OpenForm => {
     const reason = signedInAsOther()
-    const readOnlyRows = new Map(
+    const readOnlyRecords = new Map(
         form.tables.flatMap(({ rows }) =>
             rows.map(({ id }): [string, string] => [id, reason])
         )
@@ -66,7 +66,12 @@ export const lockedForm = (
             enqueue: () => {},
         }),
         effects: createStore<EffectsState>()(() => ({
-            cells: formEffects(form.required, readOnlyRows, form.tables),
+            cells: formEffects(
+                form.required,
+                readOnlyRecords,
+                form.tables,
+                form.records
+            ),
             rowMessages: new Map([
                 [
                     FORM_MESSAGES,
@@ -75,10 +80,11 @@ export const lockedForm = (
             ]),
             rowNotes: new Map(),
         })),
-        tables: createStore<{ tables: ReadonlyArray<GridTable> }>()(() => ({
+        tables: createStore<FormTables>()(() => ({
             tables: form.tables,
+            records: form.records,
         })),
-        readOnlyRows,
+        readOnlyRecords,
         complete: refuse,
         reopen: refuse,
     }

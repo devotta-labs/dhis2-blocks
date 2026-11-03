@@ -26,8 +26,14 @@ export interface FixtureEvent {
 
 /** Person `k`, a copy of the RMNCH person whose ids end in `k`; person 0 is the fixture's own. */
 export const personId = (k: number) => `${RMNCH.enrollmentId.slice(0, -1)}${k}`
-export const eventId = (id: string, k: number) =>
-    k === 0 ? id : `${id.slice(0, -1)}${k}`
+/** Person `k`'s copy of an event id: its last character made `k`, or `0` where `k` is already the id's own. */
+export const eventId = (id: string, k: number) => {
+    if (k === 0) {
+        return id
+    }
+    // Event ids are unique: person `k` never shares one with person 0.
+    return `${id.slice(0, -1)}${id.at(-1) === String(k) ? 0 : k}`
+}
 
 /** Person `k`'s events, as the server has them. */
 export const eventsOf = (k: number): FixtureEvent[] =>

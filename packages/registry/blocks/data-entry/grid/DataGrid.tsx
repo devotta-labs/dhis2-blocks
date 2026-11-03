@@ -126,7 +126,8 @@ const RowHeader = memo(function RowHeader({
     tableId: string
     row: GridRow
 }) {
-    const { effects, store, settings } = useDataEntryContext()
+    const { effects, store, settings, records } = useDataEntryContext()
+    const record = records.get(row.id)
     const notes = useStore(
         effects,
         (state) => state.rowNotes.get(row.id) ?? NO_NOTES
@@ -139,11 +140,12 @@ const RowHeader = memo(function RowHeader({
         store,
         (state) => state.cells[cellKey(row.id, EVENT_DATE_COLUMN)]?.value
     )
+    const status = record?.status
     const scheduled =
-        row.status === 'SCHEDULE' || row.status === 'OVERDUE'
+        status === 'SCHEDULE' || status === 'OVERDUE'
             ? i18n.t('Scheduled')
             : undefined
-    const marker = row.status === 'COMPLETED' ? i18n.t('Completed') : scheduled
+    const marker = status === 'COMPLETED' ? i18n.t('Completed') : scheduled
     return (
         <th
             scope="row"
@@ -156,7 +158,7 @@ const RowHeader = memo(function RowHeader({
             {/* Cells are named by the label alone; the marker is said once, with the row. The label sets its own
                 direction, so the header keeps the table's and stays at its start. */}
             <span id={rowHeaderDomId(idScope, tableId, row.id)} dir="auto">
-                {rowLabel(row, date, settings)}
+                {rowLabel(row, record, date, settings)}
             </span>
             {marker === undefined ? null : (
                 <>

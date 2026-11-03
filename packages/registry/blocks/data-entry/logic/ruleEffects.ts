@@ -4,8 +4,8 @@ import type {
     EventsRuleRow,
     RuleEffects,
 } from '@/components/program-rules'
-import { cellKey } from '../model/types'
-import type { GridTable } from '../model/types'
+import { cellKey, formOf } from '../model/types'
+import type { DataRecord, GridTable } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
 import type { DataEntryState } from '../store/store'
@@ -177,39 +177,33 @@ export const rowRuleOutcome = (effects: RuleEffects, row: RowFields) => {
     return { cells, assignments, rowMessages: messagesOf('form'), notes }
 }
 
-/** Every row as the rules read it: the grid's live values, empty ones left out. */
+/**
+ * Every event record as the rules read it: each field of its form that has a value, shown in a column or not, and its
+ * event date; the live values, empty ones left out.
+ */
 export const ruleRowsOf = (
-    tables: ReadonlyArray<GridTable>,
+    records: Iterable<DataRecord>,
+    fieldsByForm: LoadedForm['fieldsByForm'],
     cells: DataEntryState['cells']
 ): EventsRuleRow[] =>
-    tables.flatMap(({ rows, columns }) =>
-        rows.flatMap(
-            ({ id, programStageId, orgUnitId, status, enrollmentId }) => {
-                if (programStageId === undefined || orgUnitId === undefined) {
-                    return []
-                }
-                const { [EVENT_DATE_COLUMN]: occurredAt, ...dataValues } =
-                    Object.fromEntries(
-                        columns.flatMap(
-                            ({ id: column }): Array<[string, string]> => {
-                                const value = cells[cellKey(id, column)]?.value
-                                return value ? [[column, value]] : []
-                            }
-                        )
-                    )
-                return [
-                    {
-                        event: {
-                            id,
-                            programStageId,
-                            orgUnitId,
-                            status: status ?? 'ACTIVE',
-                            occurredAt,
-                            dataValues,
-                        },
-                        enrollmentId,
-                    },
-                ]
-            }
-        )
-    )
+    Array.from(records, (record) => {
+        const valueOf = (field: string) =>
+            cells[cellKey(record.id, field)]?.value
+        const fields = fieldsByForm.get(formOf(record)) ?? NONE
+        return {
+            event: {
+                id: record.id,
+                programStageId: record.programStageId,
+                orgUnitId: record.orgUnitId,
+                status: record.status,
+                occurredAt: valueOf(EVENT_DATE_COLUMN) || undefined,
+                dataValues: Object.fromEntries(
+                    [...fields].flatMap((field): Array<[string, string]> => {
+                        const value = valueOf(field)
+                        return value ? [[field, value]] : []
+                    })
+                ),
+            },
+            enrollmentId: record.enrollmentId,
+        }
+    })

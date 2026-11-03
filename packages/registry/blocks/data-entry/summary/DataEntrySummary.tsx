@@ -58,7 +58,7 @@ const Item = memo(function Item({
     rows,
     fields,
 }: ItemProps) {
-    const { store, settings } = useDataEntryContext()
+    const { store, settings, records } = useDataEntryContext()
     const dot = key.indexOf('.')
     const rowId = dot < 0 ? key : key.slice(0, dot)
     const date = useStore(
@@ -67,7 +67,9 @@ const Item = memo(function Item({
     )
     const gridRow = rows.get(rowId)
     const row =
-        gridRow === undefined ? rowId : rowLabel(gridRow, date, settings)
+        gridRow === undefined
+            ? rowId
+            : rowLabel(gridRow, records.get(rowId), date, settings)
     const className = cn('border-s-2 ps-2', TONES[kind])
     // A message without a field is the row's, or the whole form's: there is no cell to go to.
     if (dot < 0) {

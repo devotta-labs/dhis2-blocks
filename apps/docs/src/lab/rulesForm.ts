@@ -401,9 +401,6 @@ export const rulesSource = (
     const rows = SAMPLES.map((_, at) => ({
         id: `visit${at + 1}`,
         label: `Visit ${at + 1}`,
-        programStageId: STAGE,
-        orgUnitId: ORG_UNIT,
-        status: 'ACTIVE' as const,
     }))
     const stored = new Map<CellKey, string>(
         SAMPLES.flatMap((values, at) =>
@@ -443,14 +440,14 @@ export const rulesSource = (
             ],
             values: new Map(stored),
             records: new Map(
-                rows.map((row) => [
-                    row.id,
+                rows.map(({ id }) => [
+                    id,
                     {
                         kind: 'event' as const,
-                        id: row.id,
-                        programStageId: row.programStageId,
-                        orgUnitId: row.orgUnitId,
-                        status: row.status,
+                        id,
+                        programStageId: STAGE,
+                        orgUnitId: ORG_UNIT,
+                        status: 'ACTIVE' as const,
                     },
                 ])
             ),
@@ -471,7 +468,7 @@ export const rulesSource = (
                     ]),
                 ],
             ]),
-            readOnlyRows: new Map(),
+            readOnlyRecords: new Map(),
             canReopen: new Set(rows.map(({ id }) => id)),
             readOnlyWhenCompleted: new Map(),
             mayUncomplete: true,
@@ -505,6 +502,6 @@ export const rulesSource = (
         },
         setStatus: async (_engine, rowId) =>
             saved([{ sourceKey: key, key: `${rowId}.status` }]),
-        restoreRows: async () => [],
+        restoreRows: async () => ({ rows: [], records: [] }),
     }
 }

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { PendingChange } from '../model/types'
+import { statusSchema } from '../sources/eventSchemas'
 
 export interface OutboxRecord extends PendingChange {
     state: 'queued' | 'waiting' | 'failed'
@@ -37,12 +38,16 @@ const recordSchema = z.object({
     value: z.string().nullable(),
     base: z.string().nullable(),
     at: z.number(),
-    row: z
+    record: z
         .object({
+            kind: z.literal('event'),
+            id: z.string(),
             programStageId: z.string(),
             orgUnitId: z.string(),
             enrollmentId: z.string().optional(),
-            isNew: z.boolean(),
+            status: statusSchema,
+            scheduledAt: z.string().optional(),
+            isNew: z.boolean().optional(),
         })
         .optional(),
     state: z.enum(['queued', 'waiting', 'failed']),

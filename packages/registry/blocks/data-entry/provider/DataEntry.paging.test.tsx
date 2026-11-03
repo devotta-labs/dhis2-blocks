@@ -282,7 +282,7 @@ test('a page restores unsent changes for its rows', async () => {
 test('a row already shown keeps what the form knows of it when a page brings it back completed', async () => {
     const back = visitForm({
         rows: [visit('r1', 'Visit 1', 'COMPLETED'), ...visits(3, 1)],
-        readOnlyRows: [
+        readOnlyRecords: [
             ['r1', BLOCKED],
             ['r3', BLOCKED],
         ],
@@ -306,7 +306,9 @@ test('a row already shown keeps what the form knows of it when a page brings it 
     const { view, context } = await mount(source)
     await view().loadMore()
     const [table] = context().tables
-    expect(table.rows.map(({ id, status }) => [id, status])).toEqual([
+    expect(
+        table.rows.map(({ id }) => [id, context().records.get(id)?.status])
+    ).toEqual([
         ['r1', 'ACTIVE'],
         ['r2', 'ACTIVE'],
         ['r3', 'ACTIVE'],
@@ -325,6 +327,25 @@ test('a row already shown keeps what the form knows of it when a page brings it 
         ['r1', 'COMPLETED'],
         ['r1', 'ACTIVE'],
     ])
+})
+
+test('a page keeps the status a row was saved with here', async () => {
+    const back = visitForm({
+        rows: [visit('e1', 'Visit 1'), visit('e2', 'Visit 2')],
+    })
+    const { source } = paged(
+        visitForm({
+            rows: [visit('e1', 'Visit 1')],
+            values: [[cellKey('e1', 'c1'), '1']],
+            hasMore: true,
+        }),
+        [async () => ({ ...back, hasMore: false })]
+    )
+    const { view } = await mount(source)
+    expect(await view().complete('e1')).toMatchObject([{ result: 'saved' }])
+    await view().loadMore()
+    await expect.poll(() => view().records.get('e2')?.status).toBe('ACTIVE')
+    expect(view().records.get('e1')?.status).toBe('COMPLETED')
 })
 
 test('a form that locks keeps the rows of every page loaded', async () => {

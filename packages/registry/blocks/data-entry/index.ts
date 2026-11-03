@@ -19,7 +19,6 @@ export type {
     GridTable,
     HeaderCell,
     PendingChange,
-    PendingRow,
     SyncState,
 } from './model/types'
 export type { OutboxRecord } from './outbox/outbox'

@@ -14,6 +14,7 @@ import { control } from '../../grid/__tests__/gridRig'
 import { cellKey } from '../../model/types'
 import type {
     CellKey,
+    DataRecord,
     EventStatus,
     GridColumn,
     GridRow,
@@ -51,22 +52,21 @@ const COLUMNS: GridColumn[] = [
     { id: 'c3', label: 'Notes', field: { valueType: 'TEXT' } },
 ]
 
+/** A row of the visits table, with the status of the event it saves to. */
+interface Visit extends GridRow {
+    status: EventStatus
+}
+
 export const visit = (
     id: string,
     label: string,
     status: EventStatus = 'ACTIVE'
-): GridRow => ({
-    id,
-    label,
-    programStageId: STAGE,
-    orgUnitId: ORG_UNIT,
-    status,
-})
+): Visit => ({ id, label, status })
 
 interface FormOptions {
-    rows?: GridRow[]
+    rows?: Visit[]
     values?: Array<[CellKey, string]>
-    readOnlyRows?: Array<[string, string]>
+    readOnlyRecords?: Array<[string, string]>
     canReopen?: string[]
     /** Stage `s1` blocks entry once completed, with this reason. */
     blockedWhenCompleted?: string
@@ -79,7 +79,7 @@ export const BLOCKED = 'Completed events in this stage cannot be edited'
 export const visitForm = ({
     rows = [visit('r1', 'Visit 1'), visit('r2', 'Visit 2')],
     values = [],
-    readOnlyRows = [],
+    readOnlyRecords = [],
     canReopen = [],
     blockedWhenCompleted,
     hasMore = false,
@@ -88,7 +88,7 @@ export const visitForm = ({
         {
             id: 't1',
             title: 'Visits',
-            rows,
+            rows: rows.map(({ id, label }) => ({ id, label })),
             columns: COLUMNS,
             headerRows: [
                 COLUMNS.map(({ id, label }) => ({ id, label, span: 1 })),
@@ -98,7 +98,7 @@ export const visitForm = ({
     ],
     values: new Map(values),
     records: new Map(
-        rows.map(({ id, status = 'ACTIVE' }) => [
+        rows.map(({ id, status }) => [
             id,
             {
                 kind: 'event',
@@ -114,7 +114,7 @@ export const visitForm = ({
     required: new Map([[STAGE, new Set(['c1'])]]),
     strategy: new Map([[STAGE, 'ON_COMPLETE']]),
     sections: new Map(),
-    readOnlyRows: new Map(readOnlyRows),
+    readOnlyRecords: new Map(readOnlyRecords),
     canReopen: new Set(canReopen),
     closedByStage: new Map([[STAGE, new Set(['c3'])]]),
     readOnlyWhenCompleted: new Map(
@@ -176,25 +176,23 @@ export const memorySource = (form: LoadedForm, key = KEY) => {
         },
         // Only the new rows this form adds: same stage and org unit.
         restoreRows: async (_engine, records, { newRows }) => {
-            const rows = new Map<string, GridRow>()
-            for (const { key: restored, row } of records) {
-                const id = restored.slice(0, restored.indexOf('.'))
+            const restored = new Map<string, DataRecord>()
+            for (const { record } of records) {
                 if (
-                    row?.isNew &&
-                    row.programStageId === newRows?.programStageId &&
-                    row.orgUnitId === newRows.orgUnitId
+                    record?.isNew &&
+                    record.programStageId === newRows?.programStageId &&
+                    record.orgUnitId === newRows.orgUnitId
                 ) {
-                    rows.set(id, {
-                        id,
-                        label: 'New event',
-                        programStageId: row.programStageId,
-                        orgUnitId: row.orgUnitId,
-                        status: 'ACTIVE',
-                        isNew: true,
-                    })
+                    restored.set(record.id, record)
                 }
             }
-            return [...rows.values()]
+            return {
+                rows: [...restored.keys()].map((id) => ({
+                    id,
+                    label: 'New event',
+                })),
+                records: [...restored.values()],
+            }
         },
     }
     return {

@@ -14,8 +14,14 @@ import {
 } from '../logic/effects'
 import type { CellEffects } from '../logic/effects'
 import { rowRuleOutcome, ruleRowsOf, stageFields } from '../logic/ruleEffects'
-import { cellKey, rowIdOf } from '../model/types'
-import type { CellKey, CellState, GridRow, GridTable } from '../model/types'
+import { cellKey, formOf, rowIdOf } from '../model/types'
+import type {
+    CellKey,
+    CellState,
+    DataRecord,
+    GridRow,
+    GridTable,
+} from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
 import { afterPaint } from './afterPaint'
@@ -72,22 +78,23 @@ const onScreen = (idScope: string, tableId: string, rowId: string) => {
 /** Whether the cell holds a change on its way to DHIS2: a failed one waits for the person to enter it again. */
 const onItsWay = ({ sync }: CellState) => sync !== 'idle' && sync !== 'failed'
 
-/** The row's own id, or every row of its person. */
-const personRows = (tables: ReadonlyArray<GridTable>, row: GridRow) =>
-    row.enrollmentId === undefined
-        ? [row.id]
-        : tables.flatMap(({ rows }) =>
-              rows
-                  .filter(
-                      ({ enrollmentId }) => enrollmentId === row.enrollmentId
-                  )
-                  .map(({ id }) => id)
-          )
+/** The record's own id, or every record of its person. */
+const personRows = (
+    records: ReadonlyMap<string, DataRecord>,
+    record: DataRecord
+) =>
+    record.enrollmentId === undefined
+        ? [record.id]
+        : [...records.values()]
+              .filter(
+                  ({ enrollmentId }) => enrollmentId === record.enrollmentId
+              )
+              .map(({ id }) => id)
 
 interface ConnectOptions {
     open: Pick<
         OpenForm,
-        'store' | 'effects' | 'tables' | 'readOnlyRows' | 'beforeComplete'
+        'store' | 'effects' | 'tables' | 'readOnlyRecords' | 'beforeComplete'
     >
     form: LoadedForm
     rules: EventsRules
@@ -107,7 +114,7 @@ interface ConnectOptions {
  * are committed as the rule's. Returns how to stop.
  */
 export const connectRules = ({
-    open: { store, effects, tables, readOnlyRows, beforeComplete },
+    open: { store, effects, tables, readOnlyRecords, beforeComplete },
     form,
     rules,
     settings,
@@ -155,7 +162,7 @@ export const connectRules = ({
         for (const { row, table, outcome, raw } of results) {
             if (
                 outcome instanceof Error ||
-                readOnlyRows.has(row.id) ||
+                readOnlyRecords.has(row.id) ||
                 !touched.has(row.id)
             ) {
                 continue
@@ -215,16 +222,18 @@ export const connectRules = ({
         })
 
         const after = store.getState().cells
+        const { records } = tables.getState()
         const state = effects.getState()
         let cells = state.cells
         let rowMessages = state.rowMessages
         let rowNotes = state.rowNotes
         for (const { row, table, outcome } of results) {
-            const readOnly = readOnlyRows.get(row.id)
+            const readOnly = readOnlyRecords.get(row.id)
+            const record = records.get(row.id)
             const required =
-                (row.programStageId === undefined
+                (record === undefined
                     ? undefined
-                    : form.required.get(row.programStageId)) ?? NONE
+                    : form.required.get(formOf(record))) ?? NONE
             for (const { id } of table.columns) {
                 const key = cellKey(row.id, id)
                 const rule =
@@ -296,8 +305,12 @@ export const connectRules = ({
         said: Set<string>,
         until = Infinity
     ) => {
-        const all = tables.getState().tables
-        const ruleRows = ruleRowsOf(all, store.getState().cells)
+        const { tables: all, records } = tables.getState()
+        const ruleRows = ruleRowsOf(
+            records.values(),
+            form.fieldsByForm,
+            store.getState().cells
+        )
         const places = new Map(
             all.flatMap((table) =>
                 table.rows.map(
@@ -318,14 +331,17 @@ export const connectRules = ({
             done += 1
             const evaluation = rules.evaluate(ruleRows, [rowId])
             const place = places.get(rowId)
+            const record = records.get(rowId)
             const raw = evaluation.effects.get(rowId)
             const outcome =
                 evaluation.failures.get(rowId) ??
-                (raw === undefined || place?.row.programStageId === undefined
+                (raw === undefined ||
+                place === undefined ||
+                record === undefined
                     ? undefined
                     : rowRuleOutcome(
                           raw,
-                          fieldsOf(place.table, place.row.programStageId)
+                          fieldsOf(place.table, record.programStageId)
                       ))
             // A row in neither map was not evaluated: it keeps its last effects.
             if (place !== undefined && outcome !== undefined) {
@@ -455,42 +471,40 @@ export const connectRules = ({
                     touched.add(rowId)
                 }
             }
-            const all = tables.getState().tables
-            const ruleRows = ruleRowsOf(all, cells)
-            const rows = new Map(
-                all.flatMap(({ rows: each }) =>
-                    each.map((row) => [row.id, row])
-                )
+            const { records } = tables.getState()
+            const ruleRows = ruleRowsOf(
+                records.values(),
+                form.fieldsByForm,
+                cells
             )
             rerun(
                 edits.flatMap(({ rowId, field }) => {
-                    const row = rows.get(rowId)
-                    if (row === undefined) {
+                    const record = records.get(rowId)
+                    if (record === undefined) {
                         return []
                     }
                     return field === EVENT_DATE_COLUMN
-                        ? personRows(all, row)
+                        ? personRows(records, record)
                         : rules.rowsAffectedBy(ruleRows, rowId, field)
                 })
             )
         }),
-        // A new or removed row re-runs its person's rows; a saved status, which rewrote the row's effects, the row.
-        tables.subscribe(({ tables: now }, { tables: before }) => {
-            const rowsOf = (all: ReadonlyArray<GridTable>) =>
-                new Map(
-                    all.flatMap(({ rows }) => rows.map((row) => [row.id, row]))
-                )
-            const is = rowsOf(now)
-            const was = rowsOf(before)
+        // A new or removed record re-runs its person's rows; a saved status, which rewrote the row's effects, the row.
+        tables.subscribe(({ records: is }, { records: was }) => {
+            if (is === was) {
+                return
+            }
             rerunNow([
-                ...[...is.values()].flatMap((row) => {
-                    if (was.get(row.id) === row) {
+                ...[...is.values()].flatMap((record) => {
+                    if (was.get(record.id) === record) {
                         return []
                     }
-                    return was.has(row.id) ? [row.id] : personRows(now, row)
+                    return was.has(record.id)
+                        ? [record.id]
+                        : personRows(is, record)
                 }),
-                ...[...was.values()].flatMap((row) =>
-                    is.has(row.id) ? [] : personRows(now, row)
+                ...[...was.values()].flatMap((record) =>
+                    is.has(record.id) ? [] : personRows(is, record)
                 ),
             ])
         }),

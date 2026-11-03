@@ -7,7 +7,12 @@ import type { CellOverrides } from '../../cells/cellProps'
 import type { CellEffects, CellMessage } from '../../logic/effects'
 import { summarise } from '../../logic/summary'
 import { cellKey } from '../../model/types'
-import type { CellKey, GridTable, HeaderCell } from '../../model/types'
+import type {
+    CellKey,
+    DataRecord,
+    GridTable,
+    HeaderCell,
+} from '../../model/types'
 import { createAnnouncer, DataEntryReactContext } from '../../provider/context'
 import type { DataEntryContext, EffectsState } from '../../provider/context'
 import { LiveRegion } from '../../provider/DataEntry'
@@ -66,7 +71,7 @@ const withNewRow = (
     const id = `${table.id}r${table.rows.length}`
     return {
         ...table,
-        rows: [...table.rows, { id, label: 'New event', isNew: true }],
+        rows: [...table.rows, { id, label: 'New event' }],
         closed: new Map([
             ...table.closed,
             ...closedColumns.map((column): [CellKey, string] => [
@@ -92,6 +97,8 @@ interface MountOptions {
     overrides?: CellOverrides
     /** Row id → the row's messages without a field. */
     rowMessages?: Array<[string, CellMessage[]]>
+    /** What rows save to, with their status. */
+    records?: DataRecord[]
 }
 
 /** A grid over `tables` in a context of its own; `addRow` appends a row to its table. */
@@ -109,6 +116,9 @@ export const mount = async (
         overrides,
         rowMessages = [],
     } = options
+    const records = new Map(
+        (options.records ?? []).map((record) => [record.id, record])
+    )
     const store = createDataEntryStore({
         fields: new Map(
             tables.flatMap((each) =>
@@ -161,6 +171,7 @@ export const mount = async (
     const view = createStore<DataEntryView>()(() => ({
         status: 'ready',
         tables,
+        records,
         summary: summarise({}, {}, new Map(), tables),
         sync: 'idle',
         addRow: () => {},
@@ -187,6 +198,7 @@ export const mount = async (
                     onRead?.('tables')
                     return current
                 },
+                records,
                 newRowTables: new Set(newRowTables),
                 orgUnitNames: createStore(() => ({ names: new Map() })),
                 fileNames: createStore(() => ({ names: new Map() })),

@@ -1,5 +1,5 @@
 import { cellKey } from '../../model/types'
-import type { PendingRow } from '../../model/types'
+import type { EventRecord } from '../../model/types'
 import type { OutboxRecord } from '../../outbox/outbox'
 import { eventSource } from '../eventSource'
 import type { DataEngine, DataEntrySource } from '../types'
@@ -37,15 +37,22 @@ export const SOURCE = 'events:test'
 export const REFUSED_AGE =
     importOneRefused.validationReport.errorReports[0].message
 
-export const NEW_INPATIENT: PendingRow = {
+/** A record a change saves to; `change` gives it the change's row id. */
+type ChangeRecord = Omit<EventRecord, 'id'>
+
+export const NEW_INPATIENT: ChangeRecord = {
+    kind: 'event',
     programStageId: INPATIENT_STAGE,
     orgUnitId: NGELEHUN,
+    status: 'ACTIVE',
     isNew: true,
 }
-export const NEW_VISIT: PendingRow = {
+export const NEW_VISIT: ChangeRecord = {
+    kind: 'event',
     programStageId: SECOND_VISIT,
     orgUnitId: PERSON_ORG_UNIT,
     enrollmentId: PERSON,
+    status: 'ACTIVE',
     isNew: true,
 }
 
@@ -181,7 +188,7 @@ export const change = (
     rowId: string,
     columnId: string,
     value: string | null,
-    row?: PendingRow
+    record?: ChangeRecord
 ): OutboxRecord => ({
     sourceKey: SOURCE,
     key: cellKey(rowId, columnId),
@@ -189,7 +196,7 @@ export const change = (
     base: null,
     at: ++clock,
     state: 'queued',
-    row,
+    record: record && { ...record, id: rowId },
 })
 
 export const saved = (record: OutboxRecord) => ({

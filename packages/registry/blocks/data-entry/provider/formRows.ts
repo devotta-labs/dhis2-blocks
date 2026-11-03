@@ -1,12 +1,12 @@
 import i18n from '@dhis2/d2-i18n'
 import { summarise } from '../logic/summary'
-import { cellKey } from '../model/types'
+import { cellKey, formOf } from '../model/types'
 import type {
     CellKey,
+    DataRecord,
     GridColumn,
     GridRow,
     GridTable,
-    PendingRow,
 } from '../model/types'
 import type { LoadedForm } from '../sources/types'
 import type { EffectsState } from './context'
@@ -25,33 +25,24 @@ export const summaryOf = ({
         tables.getState().tables
     )
 
-/** What a change says of its row, for a source to save it; a row with no stage or org unit says nothing. */
-export const pendingRow = (row: GridRow | undefined): PendingRow | undefined =>
-    row?.programStageId === undefined || row.orgUnitId === undefined
-        ? undefined
-        : {
-              programStageId: row.programStageId,
-              orgUnitId: row.orgUnitId,
-              enrollmentId: row.enrollmentId,
-              isNew: row.isNew ?? false,
-          }
-
 /**
- * What the form says of the tables' cells, written into `cells`: the required fields of each row's stage, or why the
- * whole row is read-only (then nothing in it is asked for).
+ * What the form says of the tables' cells, written into `cells`: the required fields of each row's record's form, or
+ * why the whole record is read-only (then nothing in it is asked for).
  */
 export const formEffects = (
     required: LoadedForm['required'],
-    readOnlyRows: ReadonlyMap<string, string>,
+    readOnlyRecords: ReadonlyMap<string, string>,
     tables: ReadonlyArray<GridTable>,
+    records: ReadonlyMap<string, DataRecord>,
     cells: EffectsState['cells'] = {}
 ) => {
     for (const { rows, columns } of tables) {
         for (const row of rows) {
-            const readOnly = readOnlyRows.get(row.id)
+            const readOnly = readOnlyRecords.get(row.id)
+            const record = records.get(row.id)
             const asked =
-                readOnly === undefined && row.programStageId !== undefined
-                    ? required.get(row.programStageId)
+                readOnly === undefined && record !== undefined
+                    ? required.get(formOf(record))
                     : undefined
             for (const { id } of columns) {
                 if (readOnly !== undefined || asked?.has(id)) {
@@ -67,17 +58,18 @@ export const formEffects = (
     return cells
 }
 
-/** The columns a row has no field for, by its stage. */
-const closedOn = (form: LoadedForm, row: GridRow) =>
-    (row.programStageId === undefined
+/** The columns a row has no field for, by its record's stage. */
+const closedOn = (form: LoadedForm, record: DataRecord | undefined) =>
+    (record === undefined
         ? undefined
-        : form.closedByStage.get(row.programStageId)) ?? new Set<string>()
+        : form.closedByStage.get(record.programStageId)) ?? new Set<string>()
 
-/** The table with new rows added at its end, each closed where its stage has no field. */
+/** The table with new rows added at its end, each closed where its record's stage has no field. */
 export const withRows = (
     form: LoadedForm,
     table: GridTable,
-    rows: ReadonlyArray<GridRow>
+    rows: ReadonlyArray<GridRow>,
+    records: ReadonlyMap<string, DataRecord>
 ): GridTable => {
     const notInStage = i18n.t('Not in this stage')
     return {
@@ -86,20 +78,24 @@ export const withRows = (
         closed: new Map([
             ...table.closed,
             ...rows.flatMap((row) =>
-                Array.from(closedOn(form, row), (column): [CellKey, string] => [
-                    cellKey(row.id, column),
-                    notInStage,
-                ])
+                Array.from(
+                    closedOn(form, records.get(row.id)),
+                    (column): [CellKey, string] => [
+                        cellKey(row.id, column),
+                        notInStage,
+                    ]
+                )
             ),
         ]),
     }
 }
 
-/** The table with columns added at its end, closed in its rows whose stage has no field for them. */
+/** The table with columns added at its end, closed in its rows whose record's stage has no field for them. */
 export const withColumns = (
     form: LoadedForm,
     table: GridTable,
-    columns: ReadonlyArray<GridColumn>
+    columns: ReadonlyArray<GridColumn>,
+    records: ReadonlyMap<string, DataRecord>
 ): GridTable => {
     const notInStage = i18n.t('Not in this stage')
     return {
@@ -121,7 +117,7 @@ export const withColumns = (
         closed: new Map([
             ...table.closed,
             ...table.rows.flatMap((row) => {
-                const closed = closedOn(form, row)
+                const closed = closedOn(form, records.get(row.id))
                 return columns
                     .filter(({ id }) => closed.has(id))
                     .map(({ id }): [CellKey, string] => [

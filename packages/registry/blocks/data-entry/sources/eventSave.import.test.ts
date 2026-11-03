@@ -438,21 +438,28 @@ test('restores new rows from the outbox', async () => {
         change(NEW, EVENT_DATE_COLUMN, '2026-10-26', NEW_INPATIENT),
     ]
     const restored = {
+        kind: 'event',
         programStageId: INPATIENT_STAGE,
         orgUnitId: NGELEHUN,
         status: 'ACTIVE',
         isNew: true,
     }
     // A was loaded, so a new-row change to it restores no row.
-    expect(await grid.restoreRows(records)).toEqual([
-        { id: NEW, label: '2026-10-26', ...restored },
-        { id: other, label: 'New event', ...restored },
-    ])
+    expect(await grid.restoreRows(records)).toEqual({
+        rows: [
+            { id: NEW, label: '2026-10-26' },
+            { id: other, label: 'New event' },
+        ],
+        records: [
+            { id: NEW, ...restored },
+            { id: other, ...restored },
+        ],
+    })
 })
 
 test('a restored row of a grid of several stages names its stage', async () => {
     const grid = await person()
-    expect(await grid.restoreRows(NEW_VISIT_RECORDS())).toMatchObject([
+    expect((await grid.restoreRows(NEW_VISIT_RECORDS())).rows).toMatchObject([
         { id: NEW, stage: 'Second antenatal care visit' },
     ])
 })
@@ -461,7 +468,7 @@ test('restores no row for a new event saved since', async () => {
     const grid = await person()
     const records = NEW_VISIT_RECORDS()
     await grid.save(...records)
-    expect(await grid.restoreRows(records)).toEqual([])
+    expect(await grid.restoreRows(records)).toEqual({ rows: [], records: [] })
 })
 
 test('restores only the new rows this form adds, and none DHIS2 already holds', async () => {
@@ -487,7 +494,9 @@ test('restores only the new rows this form adds, and none DHIS2 already holds', 
             enrollmentId: 'RiLEKhWHlxZ',
         }),
     ]
-    expect((await grid.restoreRows(records)).map(({ id }) => id)).toEqual([NEW])
+    expect((await grid.restoreRows(records)).rows.map(({ id }) => id)).toEqual([
+        NEW,
+    ])
     expect(grid.reads.at(-1)).toMatchObject({
         current: {
             params: { events: [NEW, savedElsewhere].join(',') },
@@ -507,7 +516,7 @@ test('a form that adds no rows restores none, and reads nothing', async () => {
     )
     expect(
         await grid.restoreRows([change(NEW, AGE, '6', NEW_INPATIENT)])
-    ).toEqual([])
+    ).toEqual({ rows: [], records: [] })
     expect(grid.reads).toEqual([])
 })
 
@@ -522,6 +531,6 @@ test('new rows are restored when DHIS2 cannot be asked which it holds', async ()
                 records,
                 grid.form
             )
-        ).map(({ id }) => id)
+        ).rows.map(({ id }) => id)
     ).toEqual([NEW])
 })

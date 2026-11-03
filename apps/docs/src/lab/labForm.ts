@@ -350,16 +350,7 @@ export const labSource = (
     const rowsOf = (tableId: string, page: number): GridRow[] =>
         Array.from({ length: config.rows }, (_, at) => {
             const n = page * config.rows + at + 1
-            return {
-                id: `${tableId}-row${n}`,
-                label: `Row ${n}`,
-                programStageId: STAGE,
-                orgUnitId: ORG_UNIT,
-                status:
-                    config.completedRow && page === 0 && at === 0
-                        ? 'COMPLETED'
-                        : 'ACTIVE',
-            }
+            return { id: `${tableId}-row${n}`, label: `Row ${n}` }
         })
 
     // Every fifth cell, in a diagonal, has no control.
@@ -405,7 +396,7 @@ export const labSource = (
             records: new Map(
                 tables.flatMap(({ rows }) =>
                     rows.map(
-                        (row) =>
+                        (row, at) =>
                             [
                                 row.id,
                                 {
@@ -413,13 +404,18 @@ export const labSource = (
                                     id: row.id,
                                     programStageId: STAGE,
                                     orgUnitId: ORG_UNIT,
-                                    status: row.status ?? 'ACTIVE',
+                                    status:
+                                        config.completedRow &&
+                                        page === 0 &&
+                                        at === 0
+                                            ? ('COMPLETED' as const)
+                                            : ('ACTIVE' as const),
                                 },
                             ] as const
                     )
                 )
             ),
-            readOnlyRows: new Map(
+            readOnlyRecords: new Map(
                 config.readOnlyRow && firstRows[1] !== undefined
                     ? [[firstRows[1].id, 'This row is read-only in the lab']]
                     : []
@@ -517,6 +513,6 @@ export const labSource = (
                 () => undefined
             ),
         // shortcut: unsent new rows are not shown again after a reload; the lab starts afresh on each load anyway.
-        restoreRows: async () => [],
+        restoreRows: async () => ({ rows: [], records: [] }),
     }
 }

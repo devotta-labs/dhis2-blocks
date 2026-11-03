@@ -127,8 +127,15 @@ test('ignores an outcome for a cell the source was not given', async () => {
 
 test('restores unsent new rows after a reload', async () => {
     const { server, outbox, lockName } = await setup()
-    const row = { programStageId: 's1', orgUnitId: 'ou1', isNew: true }
-    await outbox.put(change({ row }))
+    const record = {
+        kind: 'event',
+        id: 'r1',
+        programStageId: 's1',
+        orgUnitId: 'ou1',
+        status: 'ACTIVE',
+        isNew: true,
+    } as const
+    await outbox.put(change({ record }))
     const first = begin(outbox, lockName, async () => [])
     await vi.waitFor(() => expect(first.statuses.at(-1)).toBe('idle'))
     first.sync.stop()
@@ -138,7 +145,9 @@ test('restores unsent new rows after a reload', async () => {
     const { save, calls } = answering('saved')
     const second = begin(reopened, lockName, save)
     await vi.waitFor(() => expect(second.outcomes).toHaveLength(1))
-    expect(calls[0]?.records).toMatchObject([{ key: 'r1.c1', value: '5', row }])
+    expect(calls[0]?.records).toMatchObject([
+        { key: 'r1.c1', value: '5', record },
+    ])
     expect(await reopened.list()).toEqual([])
 })
 

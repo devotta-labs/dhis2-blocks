@@ -5,7 +5,14 @@ import type { StoreApi } from 'zustand/vanilla'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { formatCount } from '../cells/OptionCell'
 import { cellKey, rowIdOf } from '../model/types'
-import type { CellKey, GridRow, GridTable, PendingChange } from '../model/types'
+import type {
+    CellKey,
+    DataRecord,
+    EventRecord,
+    GridRow,
+    GridTable,
+    PendingChange,
+} from '../model/types'
 import { openOutbox, outboxName } from '../outbox/outbox'
 import type { Outbox, OutboxRecord } from '../outbox/outbox'
 import { outcomesMessageSchema, startSync } from '../outbox/sync'
@@ -24,7 +31,7 @@ import { appendPage, withPage } from './appendPage'
 import { completionChecks, refusalOf, showStatus } from './completion'
 import type { EffectsState } from './context'
 import { discardFailed } from './discardFailed'
-import { formEffects, pendingRow, summaryOf, withRows } from './formRows'
+import { formEffects, summaryOf, withRows } from './formRows'
 import type { DataEntryView } from './hooks'
 import { signedInAsOther, userCheck } from './signedIn'
 import { saveUnsentFile } from './unsentFile'
@@ -34,14 +41,20 @@ type Actions = Pick<
     'addRow' | 'complete' | 'reopen' | 'downloadUnsent' | 'discardFailed'
 >
 
+/** The open form's tables, with the rows added since it loaded, and the records their cells save to. */
+export interface FormTables {
+    tables: ReadonlyArray<GridTable>
+    /** By record id, each with its status as last saved. */
+    records: ReadonlyMap<string, DataRecord>
+}
+
 /** A loaded form wired to its stores, the outbox and the sync loop. */
 export interface OpenForm extends Actions {
     store: StoreApi<DataEntryState>
     effects: StoreApi<EffectsState>
-    /** The form's tables, with the rows added since it loaded and each row's status as last saved. */
-    tables: StoreApi<{ tables: ReadonlyArray<GridTable> }>
-    /** Why a whole row is read-only, as statuses saved since loading left it. */
-    readOnlyRows: ReadonlyMap<string, string>
+    tables: StoreApi<FormTables>
+    /** Why a whole record is read-only, as statuses saved since loading left it. */
+    readOnlyRecords: ReadonlyMap<string, string>
     /**
      * Called with a row's id as it starts completing, before its checks: rules save what they say of it here, or say
      * why it cannot complete yet.
@@ -81,12 +94,12 @@ export const openForm = async (options: OpenFormOptions): Promise<OpenForm> => {
     const outbox = await openOutbox(options.serverUrl, options.userId)
     try {
         const unsent = await outbox.list(options.source.key)
-        const restoredRows = await options.source.restoreRows(
+        const restored = await options.source.restoreRows(
             options.engine,
             unsent,
             options.form
         )
-        return connect(outbox, unsent, restoredRows, options)
+        return connect(outbox, unsent, restored, options)
     } catch (error) {
         outbox.close()
         throw error
@@ -96,7 +109,7 @@ export const openForm = async (options: OpenFormOptions): Promise<OpenForm> => {
 const connect = (
     outbox: Outbox,
     unsent: ReadonlyArray<OutboxRecord>,
-    restoredRows: ReadonlyArray<GridRow>,
+    restored: { rows: GridRow[]; records: DataRecord[] },
     {
         source,
         form,
@@ -111,24 +124,22 @@ const connect = (
 ): OpenForm => {
     let closed = false
     // What statuses saved here have changed since the form loaded.
-    const readOnlyRows = new Map(form.readOnlyRows)
+    const readOnlyRecords = new Map(form.readOnlyRecords)
     const reopenable = new Set(form.canReopen)
 
     const newRowTable = form.newRows?.tableId ?? form.tables.at(0)?.id
-    const tables = createStore<{ tables: ReadonlyArray<GridTable> }>()(() => ({
+    const records = new Map([
+        ...form.records,
+        ...restored.records.map((record) => [record.id, record] as const),
+    ])
+    const tables = createStore<FormTables>()(() => ({
         tables: form.tables.map((table) =>
-            table.id === newRowTable && restoredRows.length > 0
-                ? withRows(form, table, restoredRows)
+            table.id === newRowTable && restored.rows.length > 0
+                ? withRows(form, table, restored.rows, records)
                 : table
         ),
+        records,
     }))
-    const rows = new Map(
-        tables
-            .getState()
-            .tables.flatMap((table) =>
-                table.rows.map((row): [string, GridRow] => [row.id, row])
-            )
-    )
     /** Whether the cell is in this form: the outbox also holds changes made in the program's other grids. */
     const inForm = (key: string) => {
         const rowId = rowIdOf(key)
@@ -144,8 +155,9 @@ const connect = (
     const effects = createStore<EffectsState>()(() => ({
         cells: formEffects(
             form.required,
-            readOnlyRows,
-            tables.getState().tables
+            readOnlyRecords,
+            tables.getState().tables,
+            records
         ),
         rowMessages: new Map(),
         rowNotes: new Map(),
@@ -188,7 +200,7 @@ const connect = (
                 value,
                 base,
                 at,
-                row: pendingRow(rows.get(rowIdOf(key))),
+                record: tables.getState().records.get(rowIdOf(key)),
             })
             // Every cell changed until the next paint goes to the outbox in one write, after the rules that change
             // asks for: they were asked first, so what they commit joins the person's change in one save.
@@ -362,7 +374,7 @@ const connect = (
         onSignedInAsOther()
     })
     const beforeComplete = new Set<(rowId: string) => string | undefined>()
-    const grows = { store, effects, tables, rows, readOnlyRows, reopenable }
+    const grows = { store, effects, tables, readOnlyRecords, reopenable }
 
     const refusal = (key: CellKey, reason: string) =>
         refusalOf(source.key, key, reason)
@@ -436,7 +448,7 @@ const connect = (
         store,
         effects,
         tables,
-        readOnlyRows,
+        readOnlyRecords,
         beforeComplete,
         newRowTables: new Set(
             form.newRows === undefined ? [] : [form.newRows.tableId]
@@ -449,34 +461,45 @@ const connect = (
             if (closed || newRows?.tableId !== tableId || table === undefined) {
                 return
             }
-            const row: GridRow = {
+            const record: EventRecord = {
+                kind: 'event',
                 id: generateUid(),
-                label: i18n.t('New event'),
-                stage: newRows.stage,
                 programStageId: newRows.programStageId,
                 orgUnitId: newRows.orgUnitId,
                 enrollmentId: newRows.enrollmentId,
                 status: 'ACTIVE',
                 isNew: true,
             }
-            rows.set(row.id, row)
+            const row: GridRow = {
+                id: record.id,
+                label: i18n.t('New event'),
+                stage: newRows.stage,
+            }
+            const known = new Map(tables.getState().records).set(
+                record.id,
+                record
+            )
             effects.setState(({ cells }) => ({
                 cells: formEffects(
                     form.required,
-                    readOnlyRows,
+                    readOnlyRecords,
                     [{ ...table, rows: [row] }],
+                    known,
                     { ...cells }
                 ),
             }))
             tables.setState(({ tables: all }) => ({
                 tables: all.map((each) =>
-                    each.id === tableId ? withRows(form, each, [row]) : each
+                    each.id === tableId
+                        ? withRows(form, each, [row], known)
+                        : each
                 ),
+                records: known,
             }))
         },
         async complete(rowId) {
-            const locked = rows.has(rowId)
-                ? readOnlyRows.get(rowId)
+            const locked = tables.getState().records.has(rowId)
+                ? readOnlyRecords.get(rowId)
                 : i18n.t('This row cannot be completed')
             if (locked !== undefined) {
                 return [refusal(cellKey(rowId, 'status'), locked)]
@@ -549,7 +572,7 @@ const connect = (
                         held,
                         inForm,
                         store.getState().cells,
-                        tables.getState().tables,
+                        tables.getState(),
                         settings
                     )
                 )

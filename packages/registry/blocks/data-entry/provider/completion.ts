@@ -1,7 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import type { StoreApi } from 'zustand/vanilla'
 import { blocksCompletion } from '../logic/summary'
-import { cellKey } from '../model/types'
+import { cellKey, formOf } from '../model/types'
 import type { CellKey, CellState, SyncState } from '../model/types'
 import type { SaveOutcome, SyncStatus } from '../outbox/sync'
 import { SAVE_TIMEOUT } from '../sources/eventSave'
@@ -131,43 +131,38 @@ export const completionChecks = (
 }
 
 /**
- * Puts a status saved here on its row: completed in a stage that blocks entry, the row is read-only, and the user may
- * reopen it as at load; reopened, it is neither.
+ * Puts a status saved here on its record: completed in a stage that blocks entry, the record is read-only, and the
+ * user may reopen it as at load; reopened, it is neither. The effects of its row's cells are written again.
  */
 export const showStatus = (
-    { form, effects, tables, rows, readOnlyRows, reopenable }: Growing,
+    { form, effects, tables, readOnlyRecords, reopenable }: Growing,
     rowId: string,
     status: 'COMPLETED' | 'ACTIVE'
 ) => {
-    const row = rows.get(rowId)
-    const table = tables
-        .getState()
-        .tables.find((each) => each.rows.some(({ id }) => id === rowId))
-    if (row === undefined || table === undefined) {
+    const { tables: all, records } = tables.getState()
+    const record = records.get(rowId)
+    const table = all.find((each) => each.rows.some(({ id }) => id === rowId))
+    if (record === undefined || table === undefined) {
         return
     }
     if (status === 'COMPLETED') {
-        const blocked =
-            row.programStageId === undefined
-                ? undefined
-                : form.readOnlyWhenCompleted.get(row.programStageId)
+        const blocked = form.readOnlyWhenCompleted.get(formOf(record))
         if (blocked !== undefined) {
-            readOnlyRows.set(rowId, blocked)
+            readOnlyRecords.set(rowId, blocked)
         }
-        // As at load: a row the user could write in, and that had not expired.
+        // As at load: a record the user could write in, and that had not expired.
         if (
             form.mayUncomplete &&
-            (form.canReopen.has(rowId) || !form.readOnlyRows.has(rowId))
+            (form.canReopen.has(rowId) || !form.readOnlyRecords.has(rowId))
         ) {
             reopenable.add(rowId)
         }
     } else {
-        // A row that could be reopened had no reason to be read-only but its completion.
-        readOnlyRows.delete(rowId)
+        // A record that could be reopened had no reason to be read-only but its completion.
+        readOnlyRecords.delete(rowId)
         reopenable.delete(rowId)
     }
-    const updated = { ...row, status }
-    rows.set(rowId, updated)
+    const updated = new Map(records).set(rowId, { ...record, status })
     effects.setState(({ cells }) => {
         const next = { ...cells }
         for (const { id } of table.columns) {
@@ -176,22 +171,17 @@ export const showStatus = (
         return {
             cells: formEffects(
                 form.required,
-                readOnlyRows,
-                [{ ...table, rows: [updated] }],
+                readOnlyRecords,
+                [
+                    {
+                        ...table,
+                        rows: table.rows.filter(({ id }) => id === rowId),
+                    },
+                ],
+                updated,
                 next
             ),
         }
     })
-    tables.setState(({ tables: all }) => ({
-        tables: all.map((each) =>
-            each.id === table.id
-                ? {
-                      ...each,
-                      rows: each.rows.map((other) =>
-                          other.id === rowId ? updated : other
-                      ),
-                  }
-                : each
-        ),
-    }))
+    tables.setState({ records: updated })
 }

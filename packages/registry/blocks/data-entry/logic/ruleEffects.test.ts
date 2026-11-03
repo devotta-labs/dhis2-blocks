@@ -1,5 +1,5 @@
 import type { Attribution, RuleEffects } from '@/components/program-rules'
-import { rowRuleOutcome } from './ruleEffects'
+import { rowRuleOutcome, ruleRowsOf } from './ruleEffects'
 
 const by = (ruleName: string): Attribution => ({
     ruleId: ruleName,
@@ -235,4 +235,36 @@ test('form messages keep their kind; row notes collect display texts and key-val
     expect(outcome.cells.get('a')?.messages).toEqual([
         { kind: 'error', text: 'Too high', source: 'rule' },
     ])
+})
+
+test('a rule row holds every field of its stage, shown or not', () => {
+    const [row] = ruleRowsOf(
+        [
+            {
+                kind: 'event',
+                id: 'r1',
+                programStageId: 's1',
+                orgUnitId: 'ou',
+                status: 'ACTIVE',
+            },
+        ],
+        new Map([['s1', new Set(['a', 'b'])]]),
+        {
+            'r1.a': { value: '1', sync: 'idle', source: 'person' },
+            'r1.b': { value: '2', sync: 'idle', source: 'person' },
+            'r1.occurredAt': {
+                value: '2026-10-01',
+                sync: 'idle',
+                source: 'person',
+            },
+        }
+    )
+    expect(row?.event).toMatchObject({
+        id: 'r1',
+        programStageId: 's1',
+        orgUnitId: 'ou',
+        status: 'ACTIVE',
+        dataValues: { a: '1', b: '2' },
+        occurredAt: '2026-10-01',
+    })
 })

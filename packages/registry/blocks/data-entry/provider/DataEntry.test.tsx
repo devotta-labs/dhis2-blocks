@@ -42,7 +42,7 @@ test('a typed value is saved on this device, then saved', async () => {
                 key: CHILDREN,
                 value: '5',
                 base: null,
-                row: { programStageId: 's1', orgUnitId: 'o1', isNew: false },
+                record: { id: 'r1', programStageId: 's1', orgUnitId: 'o1' },
                 state: 'queued',
             },
         ])
@@ -73,7 +73,12 @@ test('unsent changes come back after the provider remounts', async () => {
             {
                 key: cellKey(added, 'c1'),
                 value: '3',
-                row: { programStageId: 's1', orgUnitId: 'o1', isNew: true },
+                record: {
+                    id: added,
+                    programStageId: 's1',
+                    orgUnitId: 'o1',
+                    isNew: true,
+                },
             },
         ])
     await first.screen.unmount()
@@ -167,6 +172,17 @@ test('complete is refused while a required field is empty', async () => {
         .toHaveTextContent('Completed')
 })
 
+test('a completed row’s record says so in the view', async () => {
+    const memory = memorySource(visitForm({ values: [[CHILDREN, '2']] }))
+    const { view } = await mount(memory.source)
+    expect(view().records.get('r1')?.status).toBe('ACTIVE')
+    expect(await view().complete('r1')).toMatchObject([{ result: 'saved' }])
+    await expect.poll(() => view().records.get('r1')?.status).toBe('COMPLETED')
+    await expect
+        .element(page.getByRole('rowheader', { name: 'Visit 1' }))
+        .toHaveTextContent('Completed')
+})
+
 test('complete checks only the row it completes', async () => {
     const memory = memorySource(
         visitForm({
@@ -218,7 +234,7 @@ test('a status saved in this session changes what the row allows', async () => {
                 ['r1.c1', '1'],
                 ['r2.c1', '1'],
             ],
-            readOnlyRows: [['r2', BLOCKED]],
+            readOnlyRecords: [['r2', BLOCKED]],
             canReopen: ['r2'],
             blockedWhenCompleted: BLOCKED,
         })
@@ -287,9 +303,10 @@ test('a new row names its stage when the form gives one', async () => {
     })
     const { context } = await mount(memory.source)
     await userEvent.click(page.getByRole('button', { name: 'Add event' }))
-    expect(context().tables[0].rows.at(-1)).toMatchObject({
+    const added = context().tables[0].rows.at(-1)
+    expect(added).toMatchObject({ stage: 'Antenatal visit' })
+    expect(context().records.get(added?.id ?? '')).toMatchObject({
         isNew: true,
-        stage: 'Antenatal visit',
     })
 })
 
@@ -386,7 +403,7 @@ test('complete refuses a read-only row with its reason, and a row the form does 
         visitForm({
             rows: [visit('r1', 'Visit 1'), visit('r2', 'Visit 2', 'SKIPPED')],
             values: [['r2.c1', '1']],
-            readOnlyRows: [['r2', SKIPPED]],
+            readOnlyRecords: [['r2', SKIPPED]],
         })
     )
     const { view } = await mount(memory.source)

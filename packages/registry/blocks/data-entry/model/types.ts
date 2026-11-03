@@ -25,7 +25,7 @@ export interface EventRecord {
     /** Set only in tracker programs. */
     enrollmentId?: string
     status: EventStatus
-    /** The day (`YYYY-MM-DD`) a scheduled event is due. */
+    /** The day (`YYYY-MM-DD`) a scheduled event is due: it names the row, as its event date would, until it has one. */
     scheduledAt?: string
     isNew?: boolean
 }
@@ -42,13 +42,6 @@ export interface GridRow {
     label: string
     /** The stage's name, shown after the event date in a grid of several stages. */
     stage?: string
-    /** The day (`YYYY-MM-DD`) a scheduled event is due: it names the row, as its event date would, until it has one. */
-    scheduledAt?: string
-    programStageId?: string
-    enrollmentId?: string
-    orgUnitId?: string
-    status?: EventStatus
-    isNew?: boolean
 }
 
 export interface GridColumn {
@@ -96,20 +89,14 @@ export interface CellState {
     source: 'person' | 'rule'
 }
 
-export interface PendingRow {
-    programStageId: string
-    orgUnitId: string
-    enrollmentId?: string
-    isNew: boolean
-}
-
 export interface PendingChange {
     sourceKey: string
     key: CellKey
     value: string | null
     base: string | null
     at: number
-    row?: PendingRow
+    /** What the cell saves to, as the form held it when the change was made. */
+    record?: DataRecord
 }
 
 export type CommitResult = 'invalid' | 'unchanged' | 'queued'

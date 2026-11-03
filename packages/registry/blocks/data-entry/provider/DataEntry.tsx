@@ -158,6 +158,7 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
         createStore<DataEntryView>()(() => ({
             status: 'loading',
             tables: [],
+            records: new Map(),
             summary: summarise({}, {}, new Map(), []),
             sync: 'idle',
             addRow: placeholder.addRow,
@@ -286,11 +287,12 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
     )
 
     const tables = useStore(active.tables, (state) => state.tables)
-    useEffect(() => view.setState({ tables }), [view, tables])
+    const records = useStore(active.tables, (state) => state.records)
+    useEffect(() => view.setState({ tables, records }), [view, tables, records])
     useRuleEffects({
         open: opened,
         form,
-        tables,
+        records,
         settings,
         announce: announcer.announce,
         idScope,
@@ -304,6 +306,7 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
             announce: announcer.announce,
             announcements: announcer.announcements,
             tables,
+            records,
             newRowTables: active.newRowTables,
             addRow: active.addRow,
             overrides: cells,
@@ -313,6 +316,7 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
         [
             active,
             tables,
+            records,
             idScope,
             settings,
             announcer,

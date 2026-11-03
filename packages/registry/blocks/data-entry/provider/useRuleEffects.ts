@@ -2,7 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import { useEffect, useRef } from 'react'
 import { useEventsRules } from '@/components/program-rules'
 import type { ValueSettings } from '@/components/dhis2-value-types'
-import type { CellKey, GridTable } from '../model/types'
+import type { CellKey, DataRecord } from '../model/types'
 import type { LoadedForm } from '../sources/types'
 import { connectRules } from './connectRules'
 import { FORM_MESSAGES } from './context'
@@ -11,8 +11,8 @@ import type { OpenForm } from './openForm'
 interface RuleEffectsOptions {
     open?: OpenForm
     form?: LoadedForm
-    /** The open form's tables, as the provider renders them. */
-    tables: ReadonlyArray<GridTable>
+    /** The open form's records, as the provider renders them. */
+    records: ReadonlyMap<string, DataRecord>
     settings: ValueSettings
     announce(text: string): void
     /** Starts the form's DOM ids. */
@@ -26,28 +26,25 @@ interface RuleEffectsOptions {
 export const useRuleEffects = ({
     open,
     form,
-    tables,
+    records,
     settings,
     announce,
     idScope,
 }: RuleEffectsOptions) => {
+    const held = [...records.values()]
     const target = form?.rules
     const { rules, status } = useEventsRules({
         programId: target?.programId ?? '',
-        // A page may bring rows of another stage.
+        // A page may bring records of another stage.
         programStageIds: [
             ...(target?.programStageIds ?? []),
-            ...tables.flatMap(({ rows }) =>
-                rows.flatMap(({ programStageId }) => programStageId ?? [])
-            ),
+            ...held.map(({ programStageId }) => programStageId),
         ],
         tracker: target?.tracker ?? false,
-        // The rows' people, new rows and pages included; a one-person grid names its person before it has a row.
+        // The records' people, new rows and pages included; a one-person grid names its person before it has a row.
         enrollmentIds: [
             ...(target?.enrollmentIds ?? []),
-            ...tables.flatMap(({ rows }) =>
-                rows.flatMap(({ enrollmentId }) => enrollmentId ?? [])
-            ),
+            ...held.flatMap(({ enrollmentId }) => enrollmentId ?? []),
         ],
         enabled: target !== undefined,
     })

@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react'
 import { useStore } from 'zustand'
 import type { StoreApi } from 'zustand/vanilla'
 import type { summarise } from '../logic/summary'
-import type { GridTable } from '../model/types'
+import type { DataRecord, GridTable } from '../model/types'
 import type { SaveOutcome, SyncStatus } from '../outbox/sync'
 
 /** What `useDataEntry` selects from: the form's state and its actions. */
@@ -12,6 +12,8 @@ export interface DataEntryView {
     error?: string
     /** The form's tables as the grid shows them, new rows included: lay out controls of your own by their rows. */
     tables: ReadonlyArray<GridTable>
+    /** What each row's cells save to, by row id: its stage, org unit and status as last saved, new rows included. */
+    records: ReadonlyMap<string, DataRecord>
     summary: ReturnType<typeof summarise>
     sync: SyncStatus
     /** Adds a new row to a table that takes them; the grid focuses its first open cell. */

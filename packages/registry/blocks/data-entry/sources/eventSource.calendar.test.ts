@@ -49,12 +49,12 @@ const load = (calendar: string, expiryDays?: number) =>
     source().load(engineFor(calendar, expiryDays).engine)
 
 test('a Gregorian server expires an event of an earlier period; another calendar leaves it to the server', async () => {
-    expect((await load('iso8601')).readOnlyRows).toEqual(EXPIRED)
-    expect((await load('ethiopian')).readOnlyRows.size).toBe(0)
+    expect((await load('iso8601')).readOnlyRecords).toEqual(EXPIRED)
+    expect((await load('ethiopian')).readOnlyRecords.size).toBe(0)
 })
 
 test('with no expiry days, an event of an earlier period stays writable, as DHIS2 never expires it', async () => {
-    expect((await load('iso8601', 0)).readOnlyRows.size).toBe(0)
+    expect((await load('iso8601', 0)).readOnlyRecords.size).toBe(0)
 })
 
 test('a page builds its expiry in the calendar the load found, without asking again', async () => {
@@ -63,7 +63,7 @@ test('a page builds its expiry in the calendar the load found, without asking ag
     const events = source()
     await events.load(engine)
     const page = await events.loadPage?.(engine, 2)
-    expect(page?.readOnlyRows.size).toBe(0)
+    expect(page?.readOnlyRecords.size).toBe(0)
     const forms = requests.filter((request) => 'events' in request)
     expect(forms.map((request) => 'systemInfo' in request)).toEqual([
         true,
@@ -72,7 +72,7 @@ test('a page builds its expiry in the calendar the load found, without asking ag
 })
 
 test('an unknown calendar is the Gregorian one', async () => {
-    expect((await load('julian')).readOnlyRows).toEqual(EXPIRED)
+    expect((await load('julian')).readOnlyRecords).toEqual(EXPIRED)
 })
 
 test('the calendar is asked for in the form’s own query', async () => {

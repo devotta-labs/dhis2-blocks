@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
 import { formatCount } from '../cells/OptionCell'
 import { cellKey, rowIdOf } from '../model/types'
-import type { CellKey, GridRow, GridTable } from '../model/types'
+import type { CellKey, DataRecord, GridTable } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import type {
     DataEngine,
@@ -16,17 +16,18 @@ import type { EffectsState } from './context'
 import { formEffects, withColumns, withRows } from './formRows'
 import { reasonOf } from './hooks'
 import type { DataEntryView } from './hooks'
-import type { OpenForm } from './openForm'
+import type { FormTables, OpenForm } from './openForm'
 
 /**
  * The table with the rows of `more` that `fresh` takes and the columns it lacks, at its end; their closed cells by
- * stage, and those `more` closed in its own fresh rows. A row already shown keeps what is known of it.
+ * their records' stages, and those `more` closed in its own fresh rows. A row already shown keeps what is known of it.
  */
 const grow = (
     form: LoadedForm,
     table: GridTable,
     more: GridTable | undefined,
-    fresh: (rowId: string) => boolean
+    fresh: (rowId: string) => boolean,
+    records: ReadonlyMap<string, DataRecord>
 ) => {
     if (more === undefined) {
         return { table, rows: [], columns: [] }
@@ -34,7 +35,12 @@ const grow = (
     const shown = new Set(table.columns.map(({ id }) => id))
     const columns = more.columns.filter(({ id }) => !shown.has(id))
     const rows = more.rows.filter(({ id }) => fresh(id))
-    const next = withRows(form, withColumns(form, table, columns), rows)
+    const next = withRows(
+        form,
+        withColumns(form, table, columns, records),
+        rows,
+        records
+    )
     const closed = [...more.closed].filter(([key]) => fresh(rowIdOf(key)))
     return {
         table: { ...next, closed: new Map([...next.closed, ...closed]) },
@@ -43,12 +49,19 @@ const grow = (
     }
 }
 
+/** The records of `known`, then those of `page` it does not hold: a record already held keeps what is known of it. */
+const withRecords = (
+    known: ReadonlyMap<string, DataRecord>,
+    page: ReadonlyMap<string, DataRecord>
+) => new Map([...known, ...[...page].filter(([id]) => !known.has(id))])
+
 /** The form as DHIS2 had it, with a page: its rows the form does not hold yet, their values, and what is known of them. */
 export const withPage = (form: LoadedForm, page: FormPage): LoadedForm => {
     const held = new Set(
         form.tables.flatMap(({ rows }) => rows.map(({ id }) => id))
     )
     const fresh = (rowId: string) => !held.has(rowId)
+    const records = withRecords(form.records, page.records)
     return {
         ...form,
         tables: form.tables.map(
@@ -57,16 +70,18 @@ export const withPage = (form: LoadedForm, page: FormPage): LoadedForm => {
                     form,
                     table,
                     page.tables.find(({ id }) => id === table.id),
-                    fresh
+                    fresh,
+                    records
                 ).table
         ),
         values: new Map([
             ...form.values,
             ...[...page.values].filter(([key]) => fresh(rowIdOf(key))),
         ]),
-        readOnlyRows: new Map([
-            ...form.readOnlyRows,
-            ...[...page.readOnlyRows].filter(([id]) => fresh(id)),
+        records,
+        readOnlyRecords: new Map([
+            ...form.readOnlyRecords,
+            ...[...page.readOnlyRecords].filter(([id]) => fresh(id)),
         ]),
         canReopen: new Set([
             ...form.canReopen,
@@ -81,24 +96,36 @@ export interface Growing {
     form: LoadedForm
     store: StoreApi<DataEntryState>
     effects: StoreApi<EffectsState>
-    tables: StoreApi<{ tables: ReadonlyArray<GridTable> }>
-    /** Every row of the form, by id. */
-    rows: Map<string, GridRow>
-    readOnlyRows: Map<string, string>
+    tables: StoreApi<FormTables>
+    readOnlyRecords: Map<string, string>
     reopenable: Set<string>
 }
 
 /**
  * Appends a page to the open form: to each of its tables, the rows it does not show yet and the columns it lacks, at
- * its end, then the unsent changes `list` reads for the cells that now exist. It writes nothing. Resolves to what the
- * outbox holds once the page is in.
+ * its end, with the records it does not hold yet; then the unsent changes `list` reads for the cells that now exist.
+ * It writes nothing. Resolves to what the outbox holds once the page is in.
  */
 export const appendPage = async (
-    { form, store, effects, tables, rows, readOnlyRows, reopenable }: Growing,
+    { form, store, effects, tables, readOnlyRecords, reopenable }: Growing,
     page: FormPage,
     list: () => Promise<ReadonlyArray<OutboxRecord>>
 ) => {
     const held = await list()
+    const known = tables.getState().records
+    const records = withRecords(known, page.records)
+    for (const id of page.records.keys()) {
+        if (known.has(id)) {
+            continue
+        }
+        const reason = page.readOnlyRecords.get(id)
+        if (reason !== undefined) {
+            readOnlyRecords.set(id, reason)
+        }
+        if (page.canReopen.has(id)) {
+            reopenable.add(id)
+        }
+    }
     const fresh = new Set<string>()
     const cells = new Set<CellKey>()
     const grown = tables.getState().tables.map((table) => {
@@ -106,18 +133,11 @@ export const appendPage = async (
             form,
             table,
             page.tables.find(({ id }) => id === table.id),
-            (rowId) => !rows.has(rowId)
+            (rowId) => !known.has(rowId),
+            records
         )
         for (const row of next.rows) {
             fresh.add(row.id)
-            rows.set(row.id, row)
-            const reason = page.readOnlyRows.get(row.id)
-            if (reason !== undefined) {
-                readOnlyRows.set(row.id, reason)
-            }
-            if (page.canReopen.has(row.id)) {
-                reopenable.add(row.id)
-            }
         }
         for (const row of next.table.rows) {
             const columnsOf = fresh.has(row.id)
@@ -146,15 +166,16 @@ export const appendPage = async (
     effects.setState(({ cells: now }) => ({
         cells: formEffects(
             form.required,
-            readOnlyRows,
+            readOnlyRecords,
             grown.map((table) => ({
                 ...table,
                 rows: table.rows.filter(({ id }) => fresh.has(id)),
             })),
+            records,
             { ...now }
         ),
     }))
-    tables.setState({ tables: grown })
+    tables.setState({ tables: grown, records })
 
     const unsent = restored.filter(({ state }) => state !== 'failed')
     if (unsent.length === 0) {

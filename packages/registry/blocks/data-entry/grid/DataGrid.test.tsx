@@ -313,11 +313,15 @@ test('row headers mark completed and scheduled events', async () => {
         ],
     })
     const statuses = ['COMPLETED', 'SCHEDULE', 'OVERDUE', 'ACTIVE'] as const
-    const marked = {
-        ...plain,
-        rows: plain.rows.map((row, i) => ({ ...row, status: statuses[i] })),
-    }
-    await mount([marked])
+    await mount([plain], {
+        records: plain.rows.map(({ id }, i) => ({
+            kind: 'event',
+            id,
+            programStageId: 's1',
+            orgUnitId: 'o1',
+            status: statuses[i],
+        })),
+    })
     await expect
         .element(page.getByRole('rowheader', { name: '2026-10-20 Completed' }))
         .toBeVisible()

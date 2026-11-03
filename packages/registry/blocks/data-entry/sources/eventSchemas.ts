@@ -49,7 +49,7 @@ const stageSchema = z.object({
 
 export type ProgramStage = z.infer<typeof stageSchema>
 
-const statusSchema = z.enum([
+export const statusSchema = z.enum([
     'ACTIVE',
     'COMPLETED',
     'SCHEDULE',

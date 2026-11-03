@@ -70,6 +70,7 @@ interface DataEntryView {
     status: 'loading' | 'ready' | 'error'
     error?: string // why the form could not be loaded, while status is 'error'
     tables: ReadonlyArray<GridTable> // the form's tables as the grid shows them, new rows included
+    records: ReadonlyMap<string, DataRecord> // what each row's cells save to, by row id: its stage, org unit and status
     summary: {
         items: SummaryItem[]
         unsent: number
@@ -109,12 +110,12 @@ page's events join the end of their table, except those already shown (a new eve
 has no columns for adds its columns at the end, "not in this stage" for the other rows. Its unsent changes are put back
 on its cells, in the state they were left in, and its rows' rules run as they do on load, with their people: loading a
 page saves nothing. A source pages with `loadPage(engine, page, signal)`, returning a `FormPage`: its rows per table,
-values, read-only and reopenable rows, names, and `hasMore`.
+records, values, read-only and reopenable records, names, and `hasMore`.
 
 A source of your own implements `DataEntrySource`: `key` names its unsent changes on the device, `load` returns the
 `LoadedForm` (its tables, values, and what is required or read-only), `save` takes the changes and says what became of
 each one, `setStatus` completes and reopens rows, and `restoreRows` gives back the new rows found unsent after a
-reload. Without `rules` the form loads no rule engine.
+reload, with their records. Without `rules` the form loads no rule engine.
 
 The host decides where the buttons go. `complete(rowId)` refuses at once, with one `failed` outcome per reason, a row
 the form does not have ("This row cannot be completed") or a read-only one (with why it is), when the device is offline
@@ -124,25 +125,25 @@ that waits; otherwise it sends the row's unsent changes first (and refuses if se
 access to the stage, not expired), whether it was completed when loaded or here, and refuses the same way offline. A saved
 status shows in the row's header and locks or unlocks the row where its stage blocks entry once completed.
 
-`tables` gives the rows to lay such buttons out by:
+`tables` gives the rows to lay such buttons out by, and `records` each row's status:
 
 ```tsx
 // A "Complete" button for each active row, beside the grid, named by the row's event date once it has one.
 const CompleteButton = ({ row }: { row: GridRow }) => {
     const complete = useDataEntry((view) => view.complete)
+    const status = useDataEntry((view) => view.records.get(row.id)?.status)
     const { value: date } = useCell(`${row.id}.occurredAt`)
-    return (
+    return status === 'ACTIVE' ? (
         <button type="button" onClick={() => void complete(row.id)}>
             Complete {date ?? row.label}
         </button>
-    )
+    ) : null
 }
 
 const CompleteButtons = () => {
     const tables = useDataEntry((view) => view.tables)
     return tables
         .flatMap(({ rows }) => rows)
-        .filter(({ status }) => status === 'ACTIVE')
         .map((row) => <CompleteButton key={row.id} row={row} />)
 }
 ```

@@ -165,7 +165,7 @@ const formOf = (values: ReadonlyMap<CellKey, string>): LoadedForm => ({
     required: new Map(),
     strategy: new Map(),
     sections: new Map(),
-    readOnlyRows: new Map(),
+    readOnlyRecords: new Map(),
     canReopen: new Set(),
     readOnlyWhenCompleted: new Map(),
     mayUncomplete: false,
@@ -191,7 +191,7 @@ const inMemory: DataEntrySource = {
         }),
     // Rows here are never completed, and none is added.
     setStatus: async () => [],
-    restoreRows: async () => [],
+    restoreRows: async () => ({ rows: [], records: [] }),
 }
 
 // Replace with your app's loading and error states.

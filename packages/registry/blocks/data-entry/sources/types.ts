@@ -38,9 +38,9 @@ export interface LoadedForm {
     strategy: ReadonlyMap<string, 'ON_COMPLETE' | 'ON_UPDATE_AND_INSERT'>
     /** Each stage's sections (section id → its data element ids); a rule hides a section only in its own stage. */
     sections: ReadonlyMap<string, ReadonlyMap<string, ReadonlyArray<string>>>
-    /** Why a whole row is read-only, by row id, from Capture's edit rules. */
-    readOnlyRows: ReadonlyMap<string, string>
-    /** Completed rows the user may reopen (`F_UNCOMPLETE_EVENT`, stage write access, not expired). */
+    /** Why a whole record is read-only, by record id, from Capture's edit rules. */
+    readOnlyRecords: ReadonlyMap<string, string>
+    /** Completed records the user may reopen (`F_UNCOMPLETE_EVENT`, stage write access, not expired). */
     canReopen: ReadonlySet<string>
     /** Stages whose events cannot be edited once completed, with the reason; for statuses saved after loading. */
     readOnlyWhenCompleted: ReadonlyMap<string, string>
@@ -70,14 +70,14 @@ export interface LoadedForm {
 
 /**
  * The rows of a page after the first, per table id, with their columns: those new to a table join it at its end. Its
- * names, read-only rows and reopenable rows are those of its own rows.
+ * records, names, read-only and reopenable records are those of its own rows.
  */
 export type FormPage = Pick<
     LoadedForm,
     | 'tables'
     | 'values'
     | 'records'
-    | 'readOnlyRows'
+    | 'readOnlyRecords'
     | 'canReopen'
     | 'orgUnitNames'
     | 'fileNames'
@@ -111,12 +111,12 @@ export interface DataEntrySource {
         form: LoadedForm
     ): Promise<SaveOutcome[]>
     /**
-     * Rows for this form's unsent new events found in the outbox after a reload: those of its `newRows` target that
-     * DHIS2 does not hold yet.
+     * Rows for this form's unsent new events found in the outbox after a reload, with their records: those of its
+     * `newRows` target that DHIS2 does not hold yet.
      */
     restoreRows(
         engine: DataEngine,
         records: ReadonlyArray<OutboxRecord>,
         form: LoadedForm
-    ): Promise<GridRow[]>
+    ): Promise<{ rows: GridRow[]; records: DataRecord[] }>
 }

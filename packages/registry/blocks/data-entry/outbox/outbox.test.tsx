@@ -77,9 +77,12 @@ test('keeps the base the first change was made against', async () => {
             value: '6',
             base: '5',
             at: 2,
-            row: {
+            record: {
+                kind: 'event',
+                id: 'r1',
                 programStageId: 's1',
                 orgUnitId: 'ou1',
+                status: 'ACTIVE',
                 isNew: true,
             },
         })
@@ -91,7 +94,14 @@ test('keeps the base the first change was made against', async () => {
             value: '6',
             base: '4',
             at: 2,
-            row: { programStageId: 's1', orgUnitId: 'ou1', isNew: true },
+            record: {
+                kind: 'event',
+                id: 'r1',
+                programStageId: 's1',
+                orgUnitId: 'ou1',
+                status: 'ACTIVE',
+                isNew: true,
+            },
             state: 'queued',
         },
     ])
@@ -105,6 +115,20 @@ test('a replacement is queued again and drops the earlier reason', async () => {
     const [record] = await outbox.list()
     expect(record).toMatchObject({ value: '6', state: 'queued' })
     expect(record?.reason).toBeUndefined()
+})
+
+test('a change keeps the record it saves to', async () => {
+    const outbox = await open(freshServer(), 'userA')
+    const record = {
+        kind: 'event',
+        id: 'e1',
+        programStageId: 's1',
+        orgUnitId: 'ou',
+        status: 'ACTIVE',
+        isNew: true,
+    } as const
+    await outbox.put(change({ key: 'e1.c1', record }))
+    expect(await outbox.list()).toMatchObject([{ key: 'e1.c1', record }])
 })
 
 test('keeps cells of different sources and keys apart', async () => {

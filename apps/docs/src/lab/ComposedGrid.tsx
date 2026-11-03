@@ -38,11 +38,21 @@ const STEPS = new Map<NavKey, readonly [number, number]>([
     ['right', [0, 1]],
 ])
 
+const RowStatus = ({ rowId }: { rowId: string }) => {
+    const status = useDataEntry((view) => view.records.get(rowId)?.status)
+    return (
+        <span className="rounded-full bg-dhis2-grey-200 px-1.5 text-xs">
+            {status ?? 'ACTIVE'}
+        </span>
+    )
+}
+
 const Actions = ({ row }: { row: GridRow }) => {
     const complete = useDataEntry((view) => view.complete)
     const reopen = useDataEntry((view) => view.reopen)
+    const status = useDataEntry((view) => view.records.get(row.id)?.status)
     const [refusal, setRefusal] = useState<string>()
-    const completed = row.status === 'COMPLETED'
+    const completed = status === 'COMPLETED'
     return (
         <span className="flex flex-col items-start gap-0.5">
             <button
@@ -117,11 +127,7 @@ const ComposedTable = ({
                 return <span>{row.label}</span>
             }
             if (element.id === 'row:status') {
-                return (
-                    <span className="rounded-full bg-dhis2-grey-200 px-1.5 text-xs">
-                        {row.status ?? 'ACTIVE'}
-                    </span>
-                )
+                return <RowStatus rowId={row.id} />
             }
             return <Actions row={row} />
         }

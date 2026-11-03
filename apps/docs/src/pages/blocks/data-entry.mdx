@@ -458,20 +458,22 @@ change that waits or that DHIS2 refused. Otherwise it sends the row's unsent
 changes first, then asks DHIS2. `reopen(rowId)` asks DHIS2 only for a
 completed row the user may reopen. A saved status shows in the row's header
 and locks or unlocks the row where its stage blocks entry once completed.
-`tables` gives the rows to lay such buttons out by:
+`tables` gives the rows to lay such buttons out by, and `records` each row's
+status:
 
 ```tsx
 // A "Complete" button for each active row, beside the grid, named by the
 // row's event date once it has one.
 const CompleteButton = ({ row }: { row: GridRow }) => {
     const complete = useDataEntry((view) => view.complete)
+    const status = useDataEntry((view) => view.records.get(row.id)?.status)
     const { value: date } = useCell(`${row.id}.occurredAt`)
 
-    return (
+    return status === 'ACTIVE' ? (
         <button type="button" onClick={() => void complete(row.id)}>
             Complete {date ?? row.label}
         </button>
-    )
+    ) : null
 }
 
 const CompleteButtons = () => {
@@ -479,7 +481,6 @@ const CompleteButtons = () => {
 
     return tables
         .flatMap(({ rows }) => rows)
-        .filter(({ status }) => status === 'ACTIVE')
         .map((row) => <CompleteButton key={row.id} row={row} />)
 }
 ```

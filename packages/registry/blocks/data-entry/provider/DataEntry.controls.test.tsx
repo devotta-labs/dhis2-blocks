@@ -70,7 +70,7 @@ test('a replacement control saves through useCell as the built-in controls do', 
                 key: NOTES,
                 value: 'Seen at home',
                 base: null,
-                row: { programStageId: 's1', orgUnitId: 'o1', isNew: false },
+                record: { id: 'r1', programStageId: 's1', orgUnitId: 'o1' },
                 state: 'queued',
             },
         ])
@@ -129,7 +129,7 @@ test('commit checks the value as the built-in controls do', async () => {
 test('commit writes nothing to a cell that is locked', async () => {
     const memory = memorySource(
         visitForm({
-            readOnlyRows: [['r2', 'Completed events cannot be edited']],
+            readOnlyRecords: [['r2', 'Completed events cannot be edited']],
         })
     )
     // Nothing is sent, so the outbox keeps what was queued for the test to read.

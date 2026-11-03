@@ -6,6 +6,7 @@ import { unsentChangesCsv } from '../outbox/download'
 import type { OutboxRecord } from '../outbox/outbox'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { DataEntryState } from '../store/store'
+import type { FormTables } from './openForm'
 
 /**
  * Saves as a CSV file this form's changes the device holds, and the failed changes only this page holds (one it could
@@ -17,7 +18,7 @@ export const saveUnsentFile = (
     held: ReadonlyArray<OutboxRecord>,
     inForm: (key: string) => boolean,
     cells: DataEntryState['cells'],
-    tables: ReadonlyArray<GridTable>,
+    { tables, records }: FormTables,
     settings: ValueSettings
 ) => {
     const saved = held.filter(
@@ -64,6 +65,7 @@ export const saveUnsentFile = (
                         ? rowId
                         : rowLabel(
                               row,
+                              records.get(rowId),
                               cells[cellKey(rowId, EVENT_DATE_COLUMN)]?.value,
                               settings
                           ),

@@ -141,7 +141,14 @@ test('a restore puts back only this form’s cells; the program’s other change
         change('x1.c1', '9', { at: 1 }),
         change('n2.c1', '4', {
             at: 2,
-            row: { programStageId: 's1', orgUnitId: 'o2', isNew: true },
+            record: {
+                kind: 'event',
+                id: 'n2',
+                programStageId: 's1',
+                orgUnitId: 'o2',
+                status: 'ACTIVE',
+                isNew: true,
+            },
         }),
         change('r1.c9', '3', { at: 3 }),
     ]

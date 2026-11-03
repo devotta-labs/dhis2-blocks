@@ -13,7 +13,7 @@ const slot = (container: HTMLElement, name: string) =>
     container.querySelector<HTMLElement>(`[data-slot="${name}"]`)
 
 describe('ObservationCard states', () => {
-    it('pending shows a skeleton and the label is not yet known', async () => {
+    it('pending shows a skeleton and a generic name until the label is known', async () => {
         // An empty label is no label.
         const { container } = await renderWith(
             <ObservationCard dataElement={DE} label="" />,
@@ -24,8 +24,9 @@ describe('ObservationCard states', () => {
             container.querySelectorAll('[data-slot="skeleton"]').length
         ).toBeGreaterThan(0)
         expect(container.querySelector('[role="heading"]')).toBeNull()
-        expect(cardOf(container)?.getAttribute('aria-busy')).toBe('true')
-        expect(cardOf(container)?.hasAttribute('aria-label')).toBe(false)
+        const card = cardOf(container)
+        expect(card?.getAttribute('aria-busy')).toBe('true')
+        expect(card?.getAttribute('aria-label')).toBe('Observation')
         expect(container.textContent).toContain('Loading')
         expect(container.textContent).not.toContain('Never recorded')
     })

@@ -95,10 +95,18 @@ const readDataElement = (
           }
 }
 
+/**
+ * Each field falls back on its own, so one odd stage never fails the program:
+ * every card would say it couldn't load.
+ */
 const ProgramStageSchema = z
     .object({
-        id: z.string().min(1),
-        displayName: z.string(),
+        // A stage without an id is left out of the stages, since no event can
+        // name it; its data elements are still read.
+        id: z.string().min(1).optional().catch(undefined),
+        displayName: z.string().optional().catch(undefined),
+        // An access block that can't be read never claims the stage is
+        // readable, so a restriction is never hidden.
         access: z
             .object({
                 data: z
@@ -107,11 +115,12 @@ const ProgramStageSchema = z
                     .optional(),
             })
             .passthrough()
-            .optional(),
+            .optional()
+            .catch({ data: { read: false } }),
         // An entry without an id is dropped: no card can ask for it.
         programStageDataElements: z
             .array(z.unknown())
-            .default([])
+            .catch([])
             .transform((entries) =>
                 entries.flatMap((entry) => {
                     const parsed = z
@@ -127,25 +136,43 @@ const ProgramStageSchema = z
 
 /** `programs/<id>`: the stages and, nested in them, the data elements. */
 export const ProgramMetadataResponseSchema = z
-    .object({ programStages: z.array(ProgramStageSchema).default([]) })
+    .object({
+        // A stage that isn't even an object is dropped on its own.
+        programStages: z
+            .array(z.unknown())
+            .default([])
+            .transform((stages) =>
+                stages.flatMap((stage) => {
+                    const parsed = ProgramStageSchema.safeParse(stage)
+                    return parsed.success ? [parsed.data] : []
+                })
+            ),
+    })
     .passthrough()
     .transform((program): ProgramMetadata => {
         const read = program.programStages.flatMap(
             (stage) => stage.programStageDataElements
         )
         return {
-            stages: program.programStages.map((stage) => ({
-                id: stage.id,
-                displayName: stage.displayName,
-                // The request asks for access[data[read]]. A server that does
-                // not report it (older versions) is not denying anything, so
-                // an absent field means readable; only an explicit `false`
-                // hides data.
-                canReadData: stage.access?.data?.read ?? true,
-                dataElementIds: stage.programStageDataElements.map(
-                    (entry) => entry.id
-                ),
-            })),
+            stages: program.programStages.flatMap(
+                ({ id, displayName, access, programStageDataElements }) =>
+                    id === undefined
+                        ? []
+                        : [
+                              {
+                                  id,
+                                  displayName: displayName ?? id,
+                                  // The request asks for access[data[read]]. A server that does
+                                  // not report it (older versions) is not denying anything, so
+                                  // an absent field means readable; only an explicit `false`
+                                  // hides data.
+                                  canReadData: access?.data?.read ?? true,
+                                  dataElementIds: programStageDataElements.map(
+                                      (entry) => entry.id
+                                  ),
+                              },
+                          ]
+            ),
             // A data element several stages capture is kept once.
             dataElements: new Map(
                 read.flatMap((entry): [string, DataElementMetadata][] =>

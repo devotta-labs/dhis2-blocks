@@ -300,6 +300,58 @@ describe('ProgramMetadataResponseSchema', () => {
         expect(metadata.stages[0]?.dataElementIds).toEqual(['ok', 'bad'])
     })
 
+    it('one odd stage never fails the program', () => {
+        const element = (id: string) => ({
+            dataElement: { id, displayName: id, valueType: 'NUMBER' },
+        })
+        const metadata = ProgramMetadataResponseSchema.parse({
+            programStages: [
+                {
+                    id: 'good',
+                    displayName: 'Good',
+                    programStageDataElements: [element('a')],
+                },
+                // No name, and an access block that can't be read.
+                {
+                    id: 'odd',
+                    access: { data: { read: 'yes' } },
+                    programStageDataElements: [element('b')],
+                },
+                // No id: left out of the stages, but its data element is still read.
+                {
+                    displayName: 'No id',
+                    programStageDataElements: [element('c')],
+                },
+                // Not a stage at all.
+                'nonsense',
+                { id: 'broken', programStageDataElements: 'nonsense' },
+            ],
+        })
+
+        expect(metadata.stages).toEqual([
+            {
+                id: 'good',
+                displayName: 'Good',
+                canReadData: true,
+                dataElementIds: ['a'],
+            },
+            // Unreadable access never claims the stage is readable.
+            {
+                id: 'odd',
+                displayName: 'odd',
+                canReadData: false,
+                dataElementIds: ['b'],
+            },
+            {
+                id: 'broken',
+                displayName: 'broken',
+                canReadData: true,
+                dataElementIds: [],
+            },
+        ])
+        expect([...metadata.dataElements.keys()]).toEqual(['a', 'b', 'c'])
+    })
+
     it('drops a data element entry without an id', () => {
         const metadata = elements(ok, { displayName: 'No id' })
 

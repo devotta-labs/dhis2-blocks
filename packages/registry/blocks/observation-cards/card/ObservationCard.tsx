@@ -75,7 +75,8 @@ function Frame({
         <Card
             data-slot="observation-card"
             role="group"
-            aria-label={name || undefined}
+            // Until the metadata names the card, a generic name, so a screen reader never meets an unnamed group.
+            aria-label={name || i18n.t('Observation')}
             aria-busy={busy || undefined}
             data-tone={stale ? 'stale' : 'default'}
             className={cn(

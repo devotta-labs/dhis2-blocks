@@ -35,7 +35,7 @@ export interface ObservationSeries {
     points: ObservationPoint[]
     latest?: ObservationPoint
     previous?: ObservationPoint
-    /** latest.numericValue - previous.numericValue, numeric types only. */
+    /** latest.numericValue - previous.numericValue, numeric types without an option set only. */
     change?: number
     /** First legend set, sorted by startValue. */
     legends?: ObservationLegendBand[]

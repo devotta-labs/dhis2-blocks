@@ -353,6 +353,30 @@ describe('buildSeries', () => {
         ])
     })
 
+    it('has no change between numeric option codes', () => {
+        const series = build(
+            [
+                event('e1', '2026-01-01T00:00:00.000Z', '4'),
+                event('e2', '2026-02-01T00:00:00.000Z', '3'),
+            ],
+            {
+                dataElement: {
+                    valueType: 'INTEGER_POSITIVE',
+                    optionSet: {
+                        options: [
+                            { code: '3', name: 'Moderate' },
+                            { code: '4', name: 'Severe' },
+                        ],
+                    },
+                },
+            }
+        )
+
+        expect(series.previous?.value).toBe('4')
+        expect(series.latest?.value).toBe('3')
+        expect(series.change).toBeUndefined()
+    })
+
     it('has no legends when the element has no legend set', () => {
         expect(build([]).legends).toBeUndefined()
     })

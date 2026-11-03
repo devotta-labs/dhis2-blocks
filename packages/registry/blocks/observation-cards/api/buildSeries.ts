@@ -180,7 +180,9 @@ export function buildSeries({
     const points = dated.sort(compareDated).map(({ point }) => point)
     const latest = points.at(-1)
     const previous = points.at(-2)
+    // Option codes are categories, so a difference between two codes means nothing.
     const change =
+        dataElement.optionSet === undefined &&
         latest?.numericValue !== undefined &&
         previous?.numericValue !== undefined
             ? difference(latest.numericValue, previous.numericValue)

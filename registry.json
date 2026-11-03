@@ -742,6 +742,11 @@
                     "target": "@components/data-entry/grid/DataGrid.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/grid/RowHeader.tsx",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/grid/RowHeader.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/grid/ShowMoreEvents.tsx",
                     "type": "registry:file",
                     "target": "@components/data-entry/grid/ShowMoreEvents.tsx"
@@ -782,6 +787,11 @@
                     "target": "@components/data-entry/logic/ruleEffects.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/logic/slotOrder.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/logic/slotOrder.ts"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/logic/summary.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/logic/summary.ts"
@@ -817,6 +827,11 @@
                     "target": "@components/data-entry/provider/DataEntry.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/provider/addRow.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/addRow.ts"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/provider/afterPaint.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/provider/afterPaint.ts"
@@ -847,6 +862,11 @@
                     "target": "@components/data-entry/provider/discardFailed.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/provider/formKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/formKeys.ts"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/provider/formRows.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/provider/formRows.ts"
@@ -865,6 +885,11 @@
                     "path": "packages/registry/blocks/data-entry/provider/signedIn.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/provider/signedIn.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/provider/slotOrderEffects.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/provider/slotOrderEffects.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/provider/standInForms.ts",
@@ -887,9 +912,59 @@
                     "target": "@components/data-entry/provider/useRuleEffects.ts"
                 },
                 {
-                    "path": "packages/registry/blocks/data-entry/sources/eventSave.ts",
+                    "path": "packages/registry/blocks/data-entry/register/compileLayout.ts",
                     "type": "registry:file",
-                    "target": "@components/data-entry/sources/eventSave.ts"
+                    "target": "@components/data-entry/register/compileLayout.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/register/layout.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/register/layout.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/register/metadata.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/register/metadata.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/register/newPerson.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/register/newPerson.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/register/registerLoad.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/register/registerLoad.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/register/registerSource.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/register/registerSource.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/register/restore.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/register/restore.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/register/scheduled.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/register/scheduled.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/register/slots.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/register/slots.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/eventEdit.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/eventEdit.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/eventRestore.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/eventRestore.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/sources/eventSchemas.ts",
@@ -907,9 +982,34 @@
                     "target": "@components/data-entry/sources/expiry.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/data-entry/sources/fieldOf.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/fieldOf.ts"
+                },
+                {
                     "path": "packages/registry/blocks/data-entry/sources/hasRules.ts",
                     "type": "registry:file",
                     "target": "@components/data-entry/sources/hasRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/trackerPayload.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/trackerPayload.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/trackerReasons.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/trackerReasons.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/trackerReport.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/trackerReport.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/data-entry/sources/trackerSave.ts",
+                    "type": "registry:file",
+                    "target": "@components/data-entry/sources/trackerSave.ts"
                 },
                 {
                     "path": "packages/registry/blocks/data-entry/sources/types.ts",

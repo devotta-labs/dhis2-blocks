@@ -14,19 +14,27 @@ import type {
     DataEntrySource,
     DataEntryView,
     DataRecord,
+    EnrollmentRecord,
     EventRecord,
     EventSourceOptions,
     EventStatus,
+    FieldRef,
     FormPage,
     GridColumn,
     GridRow,
     GridTable,
     HeaderCell,
+    LayoutColumn,
+    LayoutNode,
     LoadedForm,
     MessageKind,
     NavKey,
+    NewRow,
     OutboxRecord,
     PendingChange,
+    PersonRecord,
+    RegisterLayout,
+    RegisterSourceOptions,
     RulesTarget,
     SaveOutcome,
     SummaryItem,
@@ -39,8 +47,11 @@ import {
     DataEntry,
     DataEntrySummary,
     DataGrid,
+    compileLayout,
     eventSource,
     keyOf,
+    registerLayoutSchema,
+    registerSource,
     useCell,
     useDataEntry,
 } from '../index'
@@ -60,19 +71,27 @@ export type SupportedDataEntryTypes = [
     DataEntrySource,
     DataEntryView,
     DataRecord,
+    EnrollmentRecord,
     EventRecord,
     EventSourceOptions,
     EventStatus,
+    FieldRef,
     FormPage,
     GridColumn,
     GridRow,
     GridTable,
     HeaderCell,
+    LayoutColumn,
+    LayoutNode,
     LoadedForm,
     MessageKind,
     NavKey,
+    NewRow,
     OutboxRecord,
     PendingChange,
+    PersonRecord,
+    RegisterLayout,
+    RegisterSourceOptions,
     RulesTarget,
     SaveOutcome,
     SummaryItem,
@@ -89,6 +108,60 @@ export const sourceKeys: [string, string | undefined] = [
     source.key,
     source.cacheKey,
 ]
+
+// A paper register: one person a row, the layout its columns, the period its enrolments.
+const layout: RegisterLayout = {
+    programId: 'ImmReg00001',
+    columns: [
+        { field: { attribute: 'w75KJ2mc4zz' } },
+        { field: { enrollment: 'enrolledAt' } },
+        {
+            group: 'DPT',
+            children: [
+                {
+                    field: {
+                        stage: 'ImmVaccin01',
+                        where: { ImmVaccine1: 'DPT', ImmDose0001: '1' },
+                        eventDate: true,
+                    },
+                    label: '1',
+                },
+            ],
+        },
+    ],
+}
+const registerOptions: RegisterSourceOptions = {
+    programId: 'ImmReg00001',
+    orgUnitId: 'DiszpKrYNg8',
+    enrolledFrom: '2026-10-01',
+    enrolledTo: '2026-10-31',
+    layout,
+}
+export const register = registerSource(registerOptions)
+export const checked: RegisterLayout = registerLayoutSchema.parse(layout)
+export const refs: FieldRef[] = layout.columns.flatMap(
+    (node: LayoutNode): FieldRef[] => ('field' in node ? [node.field] : [])
+)
+export const column: LayoutColumn = {
+    field: { attribute: 'w75KJ2mc4zz' },
+    total: 'count',
+    show: 'code',
+}
+export const compile: typeof compileLayout = compileLayout
+// @ts-expect-error A register needs its period: the first and last enrolment day.
+export const noPeriod: RegisterSourceOptions = {
+    programId: 'p',
+    orgUnitId: 'o',
+    layout,
+}
+// What a new row is and what a person's records are.
+export const rowOf = (row: NewRow): string => row.row.id
+export const personOf = (
+    record: DataRecord
+): PersonRecord | EnrollmentRecord | undefined =>
+    record.kind === 'trackedEntity' || record.kind === 'enrollment'
+        ? record
+        : undefined
 
 // A field's control replaced for one field, and for a value type everywhere.
 const Notes: CellComponent = ({ cellKey, readOnly }) =>

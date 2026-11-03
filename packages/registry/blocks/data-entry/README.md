@@ -161,6 +161,80 @@ const CompleteButtons = () => {
 
 A refusal comes back as `failed` outcomes with their `reason`; the summary lists what stops the row too.
 
+## Registers
+
+A paper register is one person a row. `registerSource(options): DataEntrySource` loads a program's enrolments at one
+org unit, enrolled in a period, oldest first, a page of `pageSize` (default 25) at a time, with their attributes and
+events. Each row's cells save to the person, the enrolment and the events the layout's slots pick; the table's
+**Add person** and **Show more people** buttons are labelled for people.
+
+```ts
+interface RegisterSourceOptions {
+    programId: string
+    orgUnitId: string // where new people are enrolled
+    enrolledFrom: string // the period's first enrolment day, YYYY-MM-DD, included
+    enrolledTo: string // and its last, included
+    layout: RegisterLayout
+    pageSize?: number // default 25
+    today?: string // the day expiry is checked against; the device's date by default
+}
+
+interface RegisterLayout {
+    programId: string
+    title?: string
+    numbered?: boolean // a heading row of column numbers 1, 2, 3…
+    rowLabel?: FieldRef[] // what names a row; the first two text attributes by default
+    columns: LayoutNode[] // in the paper's order
+}
+type LayoutNode = LayoutColumn | { group: string; children: LayoutNode[] } // a group is a heading over its children
+interface LayoutColumn {
+    field: FieldRef
+    label?: string // the paper's heading; the field's form name by default
+    width?: 'narrow' | 'normal' | 'wide'
+    vertical?: boolean // a rotated heading
+    total?: 'count' | 'sum'
+    show?: 'name' | 'code' // option cells show the code, as the paper's legend has it
+}
+type FieldRef =
+    | { attribute: string }
+    | { enrollment: 'enrolledAt' | 'occurredAt' }
+    | ({
+          stage: string
+          occurrence?: number
+          where?: Record<string, string>
+      } & ({ dataElement: string } | { eventDate: true }))
+```
+
+`compileLayout(layout, metadata)` turns a layout into the grid's columns and heading rows, or says what the program
+cannot do for it; `registerSource` does this on load and fails the form with those messages. `registerLayoutSchema`
+(zod) checks a layout that is stored or written by hand. `NewRow`, `PersonRecord` and `EnrollmentRecord` are the types
+of what a row is made of.
+
+**Slots.** A column of a stage is in one slot of the person's row: the stage's only event (a non-repeatable stage), the
+nth event of a repeatable stage by date (`occurrence`, from 1; `occurredAt`, else `scheduledAt`), or the event whose
+data elements hold given values (`where`: data element id to option code or value). A slot has an `occurrence` or a
+`where`, not both. An event fills at most one slot. A scheduled event fills its slot, and typing its date makes it
+happen. A new event in a `where` slot is made with those values, which no column shows. Events that fit no slot, or
+several that fit one, are said on the row ("2 more visits of … not in this register").
+
+**New rows.** A new person, an enrolment and an event per slot, with device ids, at `orgUnitId`. The layout must have a
+column for each mandatory attribute (those DHIS2 generates are reserved when the row is added) and the enrolment date,
+and a repeatable stage's slot needs its date column. The events Capture schedules on enrolment are made too, dated as
+Capture dates them, and fill their slots. A row that is not typed in saves nothing.
+
+**What saves and what waits.** One import carries the changed people, enrolments and events together. A new person
+waits for the mandatory attributes of its type and program, an enrolment for its date and its person, an event for its
+date (a single stage's slot with no date column takes the enrolment date), its enrolment, and the required fields of a
+stage that checks them on every save; each waiting cell says what it waits for ("Waiting for: Last name"). A refused
+person makes its enrolment and events wait for it. DHIS2's refusals (a unique attribute, say) land on the cell. Unsent
+changes belong to the program (`register:<programId>`), and a reload puts back a person's unsent events on their row.
+
+**Read-only**, with the reason on each cell: a program or person type the user cannot write, a cancelled enrolment,
+and events by the event grid's rules (completed in a stage that blocks entry, expired, skipped). Attribute file and
+image cells show their value and are edited in their own form. A register offers no Complete or Reopen per row.
+
+Program rules run for each person row, including attribute and enrolment cells, with the person as typed.
+
 ## Replace a control
 
 ```tsx

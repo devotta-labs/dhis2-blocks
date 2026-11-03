@@ -126,6 +126,99 @@ columns at the end, and the other rows show "Not in this stage" there. The
 page's unsent changes are put back on its cells, in the state they were left
 in, and its rows' rules run as they do on load: loading a page saves nothing.
 
+## Registers
+
+A paper register is one person a row: the person's attributes, the enrolment
+date, and a date or a few values for each visit or dose. `registerSource`
+shows a program's enrolments at one organisation unit, enrolled in a period,
+oldest first, one row per person, and lays the columns out as the paper does.
+`layout` is that paper as data: columns, with groups for the headings above
+them.
+
+<ExampleCard slug="data-entry/immunisation-register" />
+
+The immunisation register is a program with one repeatable stage, a
+vaccination per event, with Vaccine and Dose data elements. "DPT 2" is the
+event whose Vaccine is `DPT` and Dose is `2`, so each date column is a `where`
+slot: typing the date makes that event, with the vaccine and dose no column
+shows.
+
+A cohort register follows each person through a program's stages. The first
+visit is the one event of its stage, and the later visits are the events of a
+repeatable stage in date order, as `occurrence` 1, 2 and 3:
+
+<ExampleCard slug="data-entry/cohort-anc-register" />
+
+```ts
+interface RegisterSourceOptions {
+    programId: string
+    orgUnitId: string // the register's organisation unit; new people are enrolled here
+    enrolledFrom: string // the period's first enrolment day, YYYY-MM-DD, included
+    enrolledTo: string // and its last, included
+    layout: RegisterLayout
+    pageSize?: number // people a page, default 25
+    today?: string // the day expiry is checked against, YYYY-MM-DD; the device's date by default
+}
+
+interface RegisterLayout {
+    programId: string
+    title?: string
+    numbered?: boolean // a heading row of column numbers 1, 2, 3…
+    rowLabel?: FieldRef[] // what names a row; the first two text attributes by default
+    columns: LayoutNode[] // columns and groups, in the paper's order
+}
+
+type LayoutNode = LayoutColumn | { group: string; children: LayoutNode[] }
+
+interface LayoutColumn {
+    field: FieldRef
+    label?: string // the paper's heading; the field's form name by default
+    width?: 'narrow' | 'normal' | 'wide'
+    vertical?: boolean
+    total?: 'count' | 'sum'
+    show?: 'name' | 'code' // option cells show the code the paper's legend has
+}
+
+type FieldRef =
+    | { attribute: string }
+    | { enrollment: 'enrolledAt' | 'occurredAt' }
+    | ({
+          stage: string
+          occurrence?: number
+          where?: Record<string, string>
+      } & ({ dataElement: string } | { eventDate: true }))
+```
+
+A stage's column is in one **slot**: the event of a non-repeatable stage, the
+nth event of a repeatable stage by date (`occurrence`, counting from 1), or the
+event holding given values (`where`, a data element id and the option code or
+value it holds). A slot has an `occurrence` or a `where`, not both. Events
+that fit no slot, or several, are said on the row ("2 more visits of … not in
+this register"). `compileLayout(layout, metadata)` says what a program cannot
+do for a layout, such as a field it does not have, before anything loads, and
+`registerLayoutSchema` checks a layout you store or write by hand.
+
+New people are added with **Add person** (Ctrl+Enter): a person, an enrolment
+and an event per slot, at the organisation unit. The layout must have a column
+for each mandatory attribute and for the enrolment date. The events Capture
+schedules on enrolment are made too, dated as Capture dates them, and fill
+their slots.
+
+What saves and what waits:
+
+- One save sends the people, enrolments and events that changed, together.
+  Only cells that were typed in are saved: an empty slot costs nothing.
+- A new person waits for the attributes its type and program require, an
+  enrolment for its date and its person, and an event for its date, its
+  enrolment and the required fields of a stage that checks them. A waiting
+  cell says what it waits for ("Waiting for: Last name").
+- Generated attributes are reserved when the row is added.
+
+Read-only, with the reason on each cell: a program the user cannot enter data
+in, people of a type the user cannot change, a cancelled enrolment, and the
+event rules of the grid above (completed in a stage that blocks entry, expired,
+skipped). A register has no Complete or Reopen per row.
+
 ## Typing
 
 Typing replaces the value, F2 edits it, Enter and the arrow keys save and

@@ -9,7 +9,9 @@ import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
 import sidebarBasicSource from './sidebar/SidebarBasic.tsx?raw'
 import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
+import dataEntryCohortAncSource from './data-entry/CohortAncRegister.tsx?raw'
 import dataEntryEventProgramSource from './data-entry/EventProgramGrid.tsx?raw'
+import dataEntryImmunisationSource from './data-entry/ImmunisationRegister.tsx?raw'
 import dataEntryPersonEventsSource from './data-entry/PersonEventsGrid.tsx?raw'
 import dataEntryTrackerRegisterSource from './data-entry/TrackerRegisterGrid.tsx?raw'
 import dataEntryValueTypesSource from './data-entry/ValueTypesGrid.tsx?raw'
@@ -122,6 +124,22 @@ const examples = [
         Component: lazy(() => import('./data-entry/PersonEventsGrid')),
         source: dataEntryPersonEventsSource,
         minHeight: 680,
+    },
+    {
+        slug: 'data-entry/immunisation-register',
+        title: 'A child immunisation register',
+        live: true,
+        Component: lazy(() => import('./data-entry/ImmunisationRegister')),
+        source: dataEntryImmunisationSource,
+        minHeight: 560,
+    },
+    {
+        slug: 'data-entry/cohort-anc-register',
+        title: 'An antenatal care cohort register',
+        live: true,
+        Component: lazy(() => import('./data-entry/CohortAncRegister')),
+        source: dataEntryCohortAncSource,
+        minHeight: 560,
     },
     {
         slug: 'data-entry/value-types',

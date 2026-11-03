@@ -1,0 +1,245 @@
+{
+    "optionSets": [
+        {
+            "id": "ImmVaccSet1",
+            "name": "Immunisation vaccine",
+            "valueType": "TEXT",
+            "options": [
+                {
+                    "id": "ImmVacOpt01"
+                },
+                {
+                    "id": "ImmVacOpt02"
+                },
+                {
+                    "id": "ImmVacOpt03"
+                },
+                {
+                    "id": "ImmVacOpt04"
+                }
+            ]
+        },
+        {
+            "id": "ImmDoseSet1",
+            "name": "Immunisation dose",
+            "valueType": "TEXT",
+            "options": [
+                {
+                    "id": "ImmDosOpt01"
+                },
+                {
+                    "id": "ImmDosOpt02"
+                },
+                {
+                    "id": "ImmDosOpt03"
+                },
+                {
+                    "id": "ImmDosOpt04"
+                }
+            ]
+        }
+    ],
+    "options": [
+        {
+            "id": "ImmVacOpt01",
+            "name": "BCG",
+            "code": "BCG",
+            "sortOrder": 1,
+            "optionSet": {
+                "id": "ImmVaccSet1"
+            }
+        },
+        {
+            "id": "ImmVacOpt02",
+            "name": "OPV",
+            "code": "OPV",
+            "sortOrder": 2,
+            "optionSet": {
+                "id": "ImmVaccSet1"
+            }
+        },
+        {
+            "id": "ImmVacOpt03",
+            "name": "DPT",
+            "code": "DPT",
+            "sortOrder": 3,
+            "optionSet": {
+                "id": "ImmVaccSet1"
+            }
+        },
+        {
+            "id": "ImmVacOpt04",
+            "name": "MEASLES",
+            "code": "MEASLES",
+            "sortOrder": 4,
+            "optionSet": {
+                "id": "ImmVaccSet1"
+            }
+        },
+        {
+            "id": "ImmDosOpt01",
+            "name": "0",
+            "code": "0",
+            "sortOrder": 1,
+            "optionSet": {
+                "id": "ImmDoseSet1"
+            }
+        },
+        {
+            "id": "ImmDosOpt02",
+            "name": "1",
+            "code": "1",
+            "sortOrder": 2,
+            "optionSet": {
+                "id": "ImmDoseSet1"
+            }
+        },
+        {
+            "id": "ImmDosOpt03",
+            "name": "2",
+            "code": "2",
+            "sortOrder": 3,
+            "optionSet": {
+                "id": "ImmDoseSet1"
+            }
+        },
+        {
+            "id": "ImmDosOpt04",
+            "name": "3",
+            "code": "3",
+            "sortOrder": 4,
+            "optionSet": {
+                "id": "ImmDoseSet1"
+            }
+        }
+    ],
+    "dataElements": [
+        {
+            "id": "ImmVaccine1",
+            "name": "Vaccine",
+            "shortName": "Vaccine",
+            "domainType": "TRACKER",
+            "valueType": "TEXT",
+            "aggregationType": "NONE",
+            "optionSet": {
+                "id": "ImmVaccSet1"
+            }
+        },
+        {
+            "id": "ImmDose0001",
+            "name": "Dose",
+            "shortName": "Dose",
+            "domainType": "TRACKER",
+            "valueType": "TEXT",
+            "aggregationType": "NONE",
+            "optionSet": {
+                "id": "ImmDoseSet1"
+            }
+        }
+    ],
+    "programs": [
+        {
+            "id": "ImmReg00001",
+            "name": "Child immunisation register",
+            "shortName": "Child immunisation",
+            "programType": "WITH_REGISTRATION",
+            "trackedEntityType": {
+                "id": "nEenWmSyUEp"
+            },
+            "displayIncidentDate": false,
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "organisationUnits": [
+                {
+                    "id": "DiszpKrYNg8"
+                }
+            ],
+            "programTrackedEntityAttributes": [
+                {
+                    "id": "ImmPrgAt001",
+                    "trackedEntityAttribute": {
+                        "id": "w75KJ2mc4zz"
+                    },
+                    "mandatory": true,
+                    "searchable": false,
+                    "displayInList": true,
+                    "sortOrder": 1
+                },
+                {
+                    "id": "ImmPrgAt002",
+                    "trackedEntityAttribute": {
+                        "id": "zDhUuAYrxNC"
+                    },
+                    "mandatory": true,
+                    "searchable": false,
+                    "displayInList": true,
+                    "sortOrder": 2
+                },
+                {
+                    "id": "ImmPrgAt003",
+                    "trackedEntityAttribute": {
+                        "id": "gHGyrwKPzej"
+                    },
+                    "mandatory": true,
+                    "searchable": false,
+                    "displayInList": true,
+                    "sortOrder": 3
+                },
+                {
+                    "id": "ImmPrgAt004",
+                    "trackedEntityAttribute": {
+                        "id": "cejWyOfXge6"
+                    },
+                    "mandatory": false,
+                    "searchable": false,
+                    "displayInList": true,
+                    "sortOrder": 4
+                }
+            ],
+            "programStages": [
+                {
+                    "id": "ImmVaccin01"
+                }
+            ]
+        }
+    ],
+    "programStages": [
+        {
+            "id": "ImmVaccin01",
+            "name": "Vaccination",
+            "program": {
+                "id": "ImmReg00001"
+            },
+            "repeatable": true,
+            "validationStrategy": "ON_COMPLETE",
+            "autoGenerateEvent": false,
+            "featureType": "NONE",
+            "publicAccess": "rwrw----",
+            "sharing": {
+                "public": "rwrw----"
+            },
+            "programStageDataElements": [
+                {
+                    "id": "ImmStgDe001",
+                    "dataElement": {
+                        "id": "ImmVaccine1"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 1
+                },
+                {
+                    "id": "ImmStgDe002",
+                    "dataElement": {
+                        "id": "ImmDose0001"
+                    },
+                    "compulsory": false,
+                    "displayInReports": true,
+                    "sortOrder": 2
+                }
+            ]
+        }
+    ]
+}

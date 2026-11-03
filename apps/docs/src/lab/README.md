@@ -8,6 +8,7 @@ linked from nowhere and left out of the docs build.
 ```sh
 pnpm lab:example    # the smallest lab, to copy
 pnpm lab:calendar   # the working list calendar, every prop and kind of data
+pnpm lab:observations # observation cards, every card state one click away
 ```
 
 ## Start a lab
@@ -24,15 +25,16 @@ Knip already treats `src/lab/*/main.tsx` as an entry and Vitest already runs
 
 ## Shared parts
 
-| Part                         | What it does                                                                                                                                          |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LabLayout`                  | The page: a sidebar of the lab's controls, the block on its scope, a status line above it, an optional panel below.                                   |
-| `LabServerScope`             | app-runtime and TanStack Query with every listed resource answered by `respond`, through the lab network. Change its `key` for a fresh cache.         |
-| `CanvasBoundary`             | Catches a crash in the block and shows it, so the lab's controls keep working. Give it the same `key` as the scope.                                   |
-| `NetworkControls`            | A default delay, then each resource's delay and whether it answers, fails with a 500 or hangs.                                                        |
-| `RequestWaterfall`           | Every request on a timeline, with its outcome. Feed it the log that `LabServerScope` writes.                                                          |
-| `throughNetwork` (`network`) | What `LabServerScope` uses: waits, fails or hangs as the endpoint says, then answers and logs. Use it directly only for requests outside app-runtime. |
-| `lab.css`                    | The lab's own look (`--lab-*` tokens). `LabLayout` loads it; it never styles the block under test.                                                    |
+| Part                         | What it does                                                                                                                                                                              |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LabLayout`                  | The page: a sidebar of the lab's controls, the block on its scope, a status line above it, an optional panel below.                                                                       |
+| `LabServerScope`             | app-runtime and TanStack Query with every listed resource answered by `respond`, through the lab network. `systemInfo` sets `useConfig().systemInfo`; change its `key` for a fresh cache. |
+| `CanvasBoundary`             | Catches a crash in the block and shows it, so the lab's controls keep working. Give it the same `key` as the scope.                                                                       |
+| `NetworkControls`            | A default delay, then each resource's delay and whether it answers, fails with a 500 or hangs.                                                                                            |
+| `RequestWaterfall`           | Every request on a timeline, with its outcome. Feed it the log that `LabServerScope` writes.                                                                                              |
+| `throughNetwork` (`network`) | What `LabServerScope` uses: waits, fails or hangs as the endpoint says, then answers and logs. Use it directly only for requests outside app-runtime.                                     |
+| `controls`                   | The sidebar's rows: `Section`, `Check`, `NumberRow`, `SelectRow`, `Segmented`, and `PresetControls` for a lab's named presets.                                                            |
+| `lab.css`                    | The lab's own look (`--lab-*` tokens). `LabLayout` loads it; it never styles the block under test.                                                                                        |
 
 ## Writing the server
 

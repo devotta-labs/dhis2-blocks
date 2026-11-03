@@ -142,3 +142,42 @@ export const Segmented = <T extends string>({
         ))}
     </div>
 )
+
+/** A lab's named presets, grouped; each button's title says what to look for. */
+export const PresetControls = <
+    P extends { group: string; name: string; note: string },
+>({
+    presets,
+    selected,
+    onPick,
+}: {
+    presets: readonly P[]
+    selected?: string
+    onPick: (preset: P) => void
+}) => (
+    <Section title="Presets">
+        <div className="flex flex-col gap-3">
+            {[...new Set(presets.map(({ group }) => group))].map((group) => (
+                <div key={group} className="flex flex-wrap gap-1">
+                    <span className="w-full text-[10px] tracking-[0.1em] text-(--lab-ink-3) uppercase">
+                        {group}
+                    </span>
+                    {presets
+                        .filter((each) => each.group === group)
+                        .map((each) => (
+                            <button
+                                key={each.name}
+                                type="button"
+                                title={each.note}
+                                aria-pressed={selected === each.name}
+                                className="tracking-normal normal-case"
+                                onClick={() => onPick(each)}
+                            >
+                                {each.name}
+                            </button>
+                        ))}
+                </div>
+            ))}
+        </div>
+    </Section>
+)

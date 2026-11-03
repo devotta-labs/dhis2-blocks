@@ -25,6 +25,7 @@ export const LabServerScope = <Request extends NetworkRequest>({
     respond,
     log,
     apiVersion = 43,
+    systemInfo,
     children,
 }: {
     network: LabNetwork
@@ -33,6 +34,10 @@ export const LabServerScope = <Request extends NetworkRequest>({
     respond: (request: Request) => object | Promise<object>
     log: Log
     apiVersion?: number
+    /** What app-runtime's `useConfig().systemInfo` returns, for blocks that read it there. */
+    systemInfo?: ComponentProps<typeof Provider>['config']['systemInfo'] & {
+        calendar?: string
+    }
     children: ReactNode
 }) => {
     const [queryClient] = useState(
@@ -63,7 +68,7 @@ export const LabServerScope = <Request extends NetworkRequest>({
     }, [log, network, resources, respond])
     return (
         <Provider
-            config={{ baseUrl: '..', apiVersion }}
+            config={{ baseUrl: '..', apiVersion, systemInfo }}
             userInfo={undefined}
             plugin={false}
             parentAlertsAdd={undefined}

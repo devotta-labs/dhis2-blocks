@@ -25,7 +25,7 @@ import { LabLayout } from '../LabLayout'
 import { CanvasBoundary, LabServerScope } from '../LabServer'
 import { NetworkControls } from '../NetworkControls'
 import type { LabNetwork, RequestLogEntry } from '../network'
-import { Section, Segmented } from './controls'
+import { PresetControls, Section, Segmented } from '../controls'
 import {
     LAB_ORG_UNIT,
     LAB_PROGRAM,
@@ -48,12 +48,7 @@ import {
 } from './labServer'
 import { CalendarReadout, LogPanel, PlainCount } from './panels'
 import { DEFAULT_CONFIG, PRESETS } from './presets'
-import {
-    DataControls,
-    PresetControls,
-    ServerControls,
-    ViewControls,
-} from './settings'
+import { DataControls, ServerControls, ViewControls } from './settings'
 
 type Width = 'phone' | 'tablet' | 'desktop' | 'full'
 
@@ -339,6 +334,7 @@ export const CalendarLab = () => {
                     {mode === 'lab' ? (
                         <>
                             <PresetControls
+                                presets={PRESETS}
                                 selected={saved.preset}
                                 onPick={(each) => {
                                     update({

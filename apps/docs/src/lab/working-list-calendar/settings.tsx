@@ -1,4 +1,4 @@
-import { Check, NumberRow, Section, SelectRow } from './controls'
+import { Check, NumberRow, Section, SelectRow } from '../controls'
 import {
     ATTRIBUTES,
     WEIGHT,
@@ -6,7 +6,6 @@ import {
     type LabServer,
     type LabView,
 } from './labData'
-import { PRESETS, type Preset } from './presets'
 
 /** Fields a chosen-fields label can use: attributes, system dates and a data element. */
 const LABEL_FIELDS: ReadonlyArray<readonly [string, string]> = [
@@ -25,42 +24,6 @@ const LABEL_FIELDS: ReadonlyArray<readonly [string, string]> = [
     ['programOwnerId', 'Owner org unit'],
     ['labUnknown1', 'Unknown field'],
 ]
-
-const presetGroups = [...new Set(PRESETS.map(({ group }) => group))]
-
-export const PresetControls = ({
-    selected,
-    onPick,
-}: {
-    selected?: string
-    onPick: (preset: Preset) => void
-}) => (
-    <Section title="Presets">
-        <div className="flex flex-col gap-3">
-            {presetGroups.map((group) => (
-                <div key={group} className="flex flex-wrap gap-1">
-                    <span className="w-full text-[10px] tracking-[0.1em] text-(--lab-ink-3) uppercase">
-                        {group}
-                    </span>
-                    {PRESETS.filter((each) => each.group === group).map(
-                        (each) => (
-                            <button
-                                key={each.name}
-                                type="button"
-                                title={each.note}
-                                aria-pressed={selected === each.name}
-                                className="tracking-normal normal-case"
-                                onClick={() => onPick(each)}
-                            >
-                                {each.name}
-                            </button>
-                        )
-                    )}
-                </div>
-            ))}
-        </div>
-    </Section>
-)
 
 export const DataControls = ({
     data,

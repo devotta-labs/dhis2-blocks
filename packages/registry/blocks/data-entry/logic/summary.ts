@@ -1,4 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
+import { recordIdOf } from '../model/types'
 import type { CellKey, CellState, GridTable, SyncState } from '../model/types'
 import type { CellEffects, CellMessage, MessageKind } from './effects'
 
@@ -20,6 +21,39 @@ const BLOCKS_COMPLETION = new Set<SummaryItem['kind']>([
 // Server reasons and field names are shown as DHIS2 gives them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
+/**
+ * A cell's field's name: the heading of the column that shows it (a slot's own, where several slots show the field),
+ * else the field's name, else its id.
+ */
+export const fieldNamer = (
+    tables: ReadonlyArray<GridTable>,
+    fieldNames: ReadonlyMap<string, string> = new Map()
+) => {
+    // By slot and field id; a column with no slot is under the empty slot.
+    const headings = new Map<string, string>()
+    const slotOf = new Map<string, string>()
+    for (const { rows, columns } of tables) {
+        for (const { id, fieldId = id, slot = '', label } of columns) {
+            headings.set(`${slot}.${fieldId}`, label)
+        }
+        for (const { slots = {} } of rows) {
+            for (const [slot, record] of Object.entries(slots)) {
+                slotOf.set(record, slot)
+            }
+        }
+    }
+    return (key: CellKey | string) => {
+        const record = recordIdOf(key)
+        const field = key.slice(record.length + 1)
+        return (
+            headings.get(`${slotOf.get(record) ?? ''}.${field}`) ??
+            headings.get(`.${field}`) ??
+            fieldNames.get(field) ??
+            field
+        )
+    }
+}
+
 /** Whether the item stops completion: an error, or an empty required cell. */
 export const blocksCompletion = ({ kind }: SummaryItem) =>
     BLOCKS_COMPLETION.has(kind)
@@ -33,7 +67,9 @@ export const summarise = (
     effects: Partial<Record<CellKey, CellEffects>>,
     /** Record id → the messages without a field. */
     rowMessages: ReadonlyMap<string, ReadonlyArray<CellMessage>>,
-    tables: ReadonlyArray<GridTable>
+    tables: ReadonlyArray<GridTable>,
+    /** Every field's name, for a required field no column shows. */
+    fieldNames?: ReadonlyMap<string, string>
 ) => {
     const items: SummaryItem[] = []
     let unsent = 0
@@ -75,23 +111,20 @@ export const summarise = (
         }
     }
 
-    const labels = new Map(
-        tables.flatMap(({ columns }) =>
-            columns.map(({ id, fieldId = id, label }) => [fieldId, label])
-        )
-    )
+    // Named only when a required cell is empty: building the names reads every row.
+    let nameOf: ReturnType<typeof fieldNamer> | undefined
     for (const [key, cellEffects] of Object.entries(effects)) {
         if (cellEffects === undefined) {
             continue
         }
         const { required, messages } = cellEffects
         if (required && !values.get(key)) {
-            const column = key.slice(key.indexOf('.') + 1)
+            nameOf ??= fieldNamer(tables, fieldNames)
             add({
                 key,
                 kind: 'errorOnComplete',
                 text: i18n.t('{{field}} is required', {
-                    field: labels.get(column) ?? column,
+                    field: nameOf(key),
                     interpolation: AS_IS,
                 }),
                 namesField: true,

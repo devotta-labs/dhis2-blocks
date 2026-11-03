@@ -1,5 +1,6 @@
 import type { ValueSettings } from '@/components/dhis2-value-types'
-import { rowLabel } from '../grid/headers'
+import { columnFields, nameFrom, rowLabel } from '../grid/headers'
+import { fieldNamer } from '../logic/summary'
 import { cellKey, recordIdOf, rowsByRecord } from '../model/types'
 import type { GridRow, GridTable } from '../model/types'
 import { unsentChangesCsv } from '../outbox/download'
@@ -45,15 +46,11 @@ export const saveUnsentFile = (
             table.rows.map((row): [GridRow, GridTable] => [row, table])
         )
     )
-    const labels = new Map(
-        tables.flatMap(({ columns }) =>
-            columns.map(({ id, fieldId = id, label }) => [fieldId, label])
-        )
-    )
+    const fields = columnFields(tables)
+    const nameOf = fieldNamer(tables)
     const csv = unsentChangesCsv(
         [...saved, ...onlyHere].map(({ key, value, state, reason }) => {
             const rowId = recordIdOf(key)
-            const column = key.slice(rowId.length + 1)
             const row = rows.get(rowId)
             const table = row === undefined ? undefined : tableOf.get(row)
             return {
@@ -62,13 +59,21 @@ export const saveUnsentFile = (
                 row:
                     row === undefined
                         ? rowId
-                        : rowLabel(
+                        : nameFrom(
+                              row.labelFrom ?? [],
+                              (row.labelFrom ?? []).map(
+                                  (label) => cells[label]?.value
+                              ),
+                              fields,
+                              settings
+                          ) ||
+                          rowLabel(
                               row,
                               records.get(row.id),
                               cells[cellKey(row.id, EVENT_DATE_COLUMN)]?.value,
                               settings
                           ),
-                field: labels.get(column) ?? column,
+                field: nameOf(key),
                 value: value ?? '',
                 state,
                 reason: reason ?? '',

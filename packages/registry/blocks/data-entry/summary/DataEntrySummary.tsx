@@ -1,6 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import { memo, useMemo, useState } from 'react'
-import { useStore } from 'zustand'
+import type { Field } from '@/components/dhis2-value-types'
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -14,13 +14,14 @@ import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
-import { rowLabel } from '../grid/headers'
+import { columnFields } from '../grid/headers'
+import { useRowLabel } from '../grid/RowHeader'
+import { fieldNamer } from '../logic/summary'
 import type { SummaryItem } from '../logic/summary'
 import { cellKey, rowsByRecord } from '../model/types'
 import type { GridRow } from '../model/types'
 import { FORM_MESSAGES, useDataEntryContext } from '../provider/context'
 import { useDataEntry } from '../provider/hooks'
-import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 
 // Labels and messages are shown as DHIS2 and the rules give them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
@@ -42,12 +43,16 @@ interface ItemProps {
     namesField?: true
     idScope: string
     rows: ReadonlyMap<string, GridRow>
-    fields: ReadonlyMap<string, string>
+    /** The fields the columns show, by id: a person's row is named through them. */
+    fields: ReadonlyMap<string, Field>
+    /** A cell's field's name. */
+    nameOf(key: string): string
 }
 
 /**
- * One message, naming its row as the grid does, by the row's event date once it has one. It reads only that one cell,
- * and takes plain props, so it draws again only when its own message or its row's date changes.
+ * One message, naming its row as the grid does (by the row's event date once it has one, a person by their name) and
+ * its field by the heading of its column. It reads only the cells that name its row, and takes plain props, so it
+ * draws again only when its own message or its row's name changes.
  */
 const Item = memo(function Item({
     itemKey: key,
@@ -57,21 +62,12 @@ const Item = memo(function Item({
     idScope,
     rows,
     fields,
+    nameOf,
 }: ItemProps) {
-    const { store, settings, records } = useDataEntryContext()
     const dot = key.indexOf('.')
     const rowId = dot < 0 ? key : key.slice(0, dot)
-    // The row that shows the record, named by its own record's date.
-    const gridRow = rows.get(rowId)
-    const named = gridRow?.id ?? rowId
-    const date = useStore(
-        store,
-        (state) => state.cells[cellKey(named, EVENT_DATE_COLUMN)]?.value
-    )
-    const row =
-        gridRow === undefined
-            ? rowId
-            : rowLabel(gridRow, records.get(named), date, settings)
+    // The row that shows the record, named as the grid names it.
+    const row = useRowLabel(rows.get(rowId), fields) ?? rowId
     const className = cn('border-s-2 ps-2', TONES[kind])
     // A message without a field is the row's, or the whole form's: there is no cell to go to.
     if (dot < 0) {
@@ -112,7 +108,7 @@ const Item = memo(function Item({
                     : i18n.t('{{row}}, {{field}}: {{message}}', {
                           nsSeparator: '::',
                           row,
-                          field: fields.get(column) ?? column,
+                          field: nameOf(key),
                           message: text,
                           interpolation: AS_IS,
                       })}
@@ -178,20 +174,14 @@ export const DataEntrySummary = ({ className }: { className?: string }) => {
     const summary = useDataEntry((view) => view.summary)
     const signIn = useDataEntry((view) => view.sync === 'signIn')
     const downloadUnsent = useDataEntry((view) => view.downloadUnsent)
-    const { tables, idScope } = useDataEntryContext()
-    const { rows, fields } = useMemo(
+    const { tables, idScope, fieldNames } = useDataEntryContext()
+    const { rows, fields, nameOf } = useMemo(
         () => ({
             rows: rowsByRecord(tables),
-            fields: new Map(
-                tables.flatMap((table) =>
-                    table.columns.map(({ id, fieldId = id, label }) => [
-                        fieldId,
-                        label,
-                    ])
-                )
-            ),
+            fields: columnFields(tables),
+            nameOf: fieldNamer(tables, fieldNames),
         }),
-        [tables]
+        [tables, fieldNames]
     )
     return (
         <div
@@ -213,6 +203,7 @@ export const DataEntrySummary = ({ className }: { className?: string }) => {
                             idScope={idScope}
                             rows={rows}
                             fields={fields}
+                            nameOf={nameOf}
                         />
                     ))}
                 </ul>

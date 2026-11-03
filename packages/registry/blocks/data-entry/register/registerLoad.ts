@@ -399,5 +399,6 @@ export const toForm = (
         rules,
         rowKind: 'person',
         rowNotes,
+        slots: compiled.slots,
     }
 }

@@ -10,9 +10,8 @@ import {
 } from 'react'
 import type { ClipboardEvent, KeyboardEvent } from 'react'
 import { flushSync } from 'react-dom'
-import { useStore } from 'zustand'
-import { useShallow } from 'zustand/react/shallow'
 import type { StoreApi } from 'zustand/vanilla'
+import type { Field } from '@/components/dhis2-value-types'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Kbd } from '@/components/dhis2/ui/kbd'
@@ -22,21 +21,20 @@ import type { CellOverrides } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
 import { takesPastedText } from '../cells/popupEditors'
 import { addsRow } from '../cells/useCellMode'
-import type { CellMessage, MessageKind } from '../logic/effects'
-import { cellKey, indexCells, keyOf, recordsOf } from '../model/types'
+import { indexCells, keyOf } from '../model/types'
 import type { CellKey, GridRow, GridTable } from '../model/types'
 import { useDataEntryContext, useRowCells } from '../provider/context'
 import type { EffectsState } from '../provider/context'
-import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import {
+    columnFields,
     columnHeaderIds,
     headerDomId,
     rowHeaderDomId,
-    rowLabel,
 } from './headers'
 import { nextCell } from './navigation'
 import type { CellPosition, NavGrid, NavKey } from './navigation'
 import { isBlock, pastedBlock, pasteTargets } from './paste'
+import { BORDER_CLASS, ROW_HEADER_CLASS, RowHeader } from './RowHeader'
 import { ShowMoreEvents } from './ShowMoreEvents'
 import { useAddRow } from './useAddRow'
 
@@ -87,11 +85,6 @@ const positionsOf = (
         ])
     )
 
-// The row header column's width, at most 30% of the screen so the page reflows when zoomed; sticky group labels and
-// scroll padding keep clear of it.
-const ROW_HEADER_CLASS =
-    'w-[min(12rem,30vw)] min-w-[min(12rem,30vw)] max-w-[min(12rem,30vw)]'
-const BORDER_CLASS = 'border-b border-e border-dhis2-grey-300'
 // A fixed height, a minimum in a table, lets the cell's control fill the row however tall the row header makes it.
 const CELL_CLASS = cn(BORDER_CLASS, 'h-9 min-w-28 p-0')
 const HEADER_CLASS = cn(
@@ -99,111 +92,14 @@ const HEADER_CLASS = cn(
     'bg-dhis2-grey-100 px-2 py-1.5 text-start align-bottom text-[13px] font-medium text-dhis2-grey-800'
 )
 
-const NO_NOTES: ReadonlyArray<string> = []
-const NO_MESSAGES: ReadonlyArray<CellMessage> = []
-
-// Marked as a cell's notes are, on the header's light background.
-const MESSAGE_TONES = {
-    error: 'border-dhis2-red-600',
-    errorOnComplete: 'border-dhis2-red-600',
-    warning: 'border-dhis2-yellow-700',
-    warningOnComplete: 'border-dhis2-yellow-700',
-} satisfies Record<MessageKind, string>
-
-const RowHeader = memo(function RowHeader({
-    idScope,
-    tableId,
-    row,
-}: {
-    idScope: string
-    tableId: string
-    row: GridRow
-}) {
-    const { effects, store, settings, records } = useDataEntryContext()
-    const record = records.get(row.id)
-    // Every record the row's cells save to: a register's row shows what the rules say of each of its events.
-    const notes = useStore(
-        effects,
-        useShallow((state) =>
-            recordsOf(row).flatMap((id) => state.rowNotes.get(id) ?? NO_NOTES)
-        )
-    )
-    const messages = useStore(
-        effects,
-        useShallow((state) =>
-            recordsOf(row).flatMap(
-                (id) => state.rowMessages.get(id) ?? NO_MESSAGES
-            )
-        )
-    )
-    const date = useStore(
-        store,
-        (state) => state.cells[cellKey(row.id, EVENT_DATE_COLUMN)]?.value
-    )
-    const status = record?.kind === 'event' ? record.status : undefined
-    const scheduled =
-        status === 'SCHEDULE' || status === 'OVERDUE'
-            ? i18n.t('Scheduled')
-            : undefined
-    const marker = status === 'COMPLETED' ? i18n.t('Completed') : scheduled
-    return (
-        <th
-            scope="row"
-            className={cn(
-                BORDER_CLASS,
-                ROW_HEADER_CLASS,
-                'sticky start-0 z-10 bg-white px-2 py-1 text-start align-middle font-normal text-dhis2-grey-900 [overflow-wrap:anywhere]'
-            )}
-        >
-            {/* Cells are named by the label alone; the marker is said once, with the row. The label sets its own
-                direction, so the header keeps the table's and stays at its start. */}
-            <span id={rowHeaderDomId(idScope, tableId, row.id)} dir="auto">
-                {rowLabel(row, record, date, settings)}
-            </span>
-            {marker === undefined ? null : (
-                <>
-                    {' '}
-                    <span className="inline-block rounded-full bg-dhis2-grey-200 px-1.5 text-xs text-dhis2-grey-800">
-                        {marker}
-                    </span>
-                </>
-            )}
-            {notes.map((note, i) => (
-                <span
-                    key={i}
-                    dir="auto"
-                    className="block text-xs text-dhis2-grey-700"
-                >
-                    {note}
-                </span>
-            ))}
-            {/* What the row's rules, or their failure, say without a field. */}
-            {messages.length > 0 ? (
-                <ul className="mt-0.5 flex flex-col gap-0.5">
-                    {messages.map(({ kind, text }, i) => (
-                        <li
-                            key={i}
-                            dir="auto"
-                            className={cn(
-                                'border-s-2 ps-1.5 text-xs text-dhis2-grey-900',
-                                MESSAGE_TONES[kind]
-                            )}
-                        >
-                            {text}
-                        </li>
-                    ))}
-                </ul>
-            ) : null}
-        </th>
-    )
-})
-
 interface TableRowProps {
     idScope: string
     table: GridTable
     row: GridRow
     /** The ids of the column headers that name each column's cells. */
     labels: ReadonlyArray<string>
+    /** The table's fields by id. */
+    fields: ReadonlyMap<string, Field>
     move(key: NavKey): void
 }
 
@@ -213,6 +109,7 @@ const TableRow = memo(function TableRow({
     table,
     row,
     labels,
+    fields,
     move,
 }: TableRowProps) {
     const keys = table.columns.map((column) => keyOf(row, column))
@@ -220,7 +117,12 @@ const TableRow = memo(function TableRow({
     const rowHeader = rowHeaderDomId(idScope, table.id, row.id)
     return (
         <tr>
-            <RowHeader idScope={idScope} tableId={table.id} row={row} />
+            <RowHeader
+                idScope={idScope}
+                tableId={table.id}
+                row={row}
+                fields={fields}
+            />
             {table.columns.map((column, c) => (
                 <td key={column.id} className={CELL_CLASS}>
                     <RowCell
@@ -242,8 +144,9 @@ interface TableViewProps {
     idScope: string
     table: GridTable
     move(key: NavKey): void
-    /** The table takes new rows: an "Add event" button follows it. */
+    /** The table takes new rows: an "Add event" (or "Add person") button follows it. */
     adds: boolean
+    rowKind?: 'event' | 'person'
     /** Adds a row to the table and focuses its first open cell. */
     addRow(tableId: string): void
 }
@@ -254,6 +157,7 @@ const TableView = memo(function TableView({
     table,
     move,
     adds,
+    rowKind,
     addRow,
 }: TableViewProps) {
     const region = useRef<HTMLDivElement>(null)
@@ -262,6 +166,7 @@ const TableView = memo(function TableView({
         () => columnHeaderIds(idScope, table),
         [idScope, table]
     )
+    const fields = useMemo(() => columnFields([table]), [table])
     const titleId = `${idScope}-${table.id}-title`
     // Scroll padding as tall as the sticky header, however its labels wrap, so a focused cell never sits under it.
     useLayoutEffect(() => {
@@ -334,6 +239,7 @@ const TableView = memo(function TableView({
                                 table={table}
                                 row={row}
                                 labels={labels}
+                                fields={fields}
                                 move={move}
                             />
                         ))}
@@ -349,7 +255,9 @@ const TableView = memo(function TableView({
                     aria-keyshortcuts="Control+Enter Meta+Enter"
                     onClick={() => addRow(table.id)}
                 >
-                    {i18n.t('Add event')}
+                    {rowKind === 'person'
+                        ? i18n.t('Add person')
+                        : i18n.t('Add event')}
                     {/* Screen readers hear the shortcut from aria-keyshortcuts; the button keeps its name. */}
                     <Kbd aria-hidden>
                         {/* Apple keyboards say ⌘ where others say Ctrl. */}
@@ -384,6 +292,7 @@ export const DataGrid = ({
         announce,
         newRowTables,
         addRow,
+        rowKind,
     } = useDataEntryContext()
     const tables = useMemo(
         () =>
@@ -579,11 +488,12 @@ export const DataGrid = ({
                     table={table}
                     move={move}
                     adds={newRowTables.has(table.id)}
+                    rowKind={rowKind}
                     addRow={add}
                 />
             ))}
             <div id={end} tabIndex={-1} className="outline-none" />
-            <ShowMoreEvents end={end} />
+            <ShowMoreEvents end={end} people={rowKind === 'person'} />
         </div>
     )
 }

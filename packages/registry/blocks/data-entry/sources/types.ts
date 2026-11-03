@@ -2,6 +2,7 @@ import type { useDataEngine } from '@dhis2/app-runtime'
 import type { Field } from '@/components/dhis2-value-types'
 import type { CellKey, DataRecord, GridRow, GridTable } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
+import type { SlotDef } from '../register/compileLayout'
 import type { SaveOutcome } from '../outbox/sync'
 
 export type DataEngine = ReturnType<typeof useDataEngine>
@@ -69,6 +70,8 @@ export interface LoadedForm {
     rowKind?: 'event' | 'person'
     /** Notes the source has on rows, by record id, such as the events a register leaves out. */
     rowNotes?: ReadonlyMap<string, string[]>
+    /** A register's slots: the dates of a stage's occurrence slots are checked to be in order. */
+    slots?: ReadonlyArray<SlotDef>
 }
 
 /**

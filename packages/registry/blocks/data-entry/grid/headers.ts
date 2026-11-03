@@ -1,12 +1,14 @@
 import { typedText } from '@/components/dhis2-value-types'
-import type { ValueSettings } from '@/components/dhis2-value-types'
-import type { DataRecord, GridRow, GridTable } from '../model/types'
+import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import { recordIdOf } from '../model/types'
+import type { CellKey, DataRecord, GridRow, GridTable } from '../model/types'
 
 const EVENT_DATE = { valueType: 'DATE' }
 
 /**
  * What names a row: once it has an event date (or, until then, the day its record is scheduled for), that date in the
  * system calendar and date format (and its stage in a grid of several stages); before, the label its source gave it.
+ * A row named by its cells (`labelFrom`) has the label its source gave it until they hold a name (`nameFrom`).
  */
 export const rowLabel = (
     row: GridRow,
@@ -14,6 +16,9 @@ export const rowLabel = (
     date: string | undefined,
     settings: ValueSettings
 ) => {
+    if (row.labelFrom !== undefined) {
+        return row.label
+    }
     const day =
         date ?? (record?.kind === 'event' ? record.scheduledAt : undefined)
     if (day === undefined) {
@@ -22,6 +27,39 @@ export const rowLabel = (
     const shown = typedText(EVENT_DATE, day, settings)
     return row.stage === undefined ? shown : `${shown} · ${row.stage}`
 }
+
+/** Each field a column shows, by field id: what a row's label cells are shown through. */
+export const columnFields = (
+    tables: ReadonlyArray<GridTable>
+): ReadonlyMap<string, Field> =>
+    new Map(
+        tables.flatMap(({ columns }) =>
+            columns.map(({ id, fieldId = id, field }) => [fieldId, field])
+        )
+    )
+
+/**
+ * A row's name from its label cells' values (`labelFrom`), each as its column shows it, joined by a space; empty when
+ * none holds one.
+ */
+export const nameFrom = (
+    labelFrom: ReadonlyArray<CellKey>,
+    values: ReadonlyArray<string | undefined>,
+    fields: ReadonlyMap<string, Field>,
+    settings: ValueSettings
+) =>
+    labelFrom
+        .flatMap((key, i) => {
+            const value = values[i]
+            const field = fields.get(key.slice(recordIdOf(key).length + 1))
+            if (!value) {
+                return []
+            }
+            return [
+                field === undefined ? value : typedText(field, value, settings),
+            ]
+        })
+        .join(' ')
 
 // Header ids repeat across tables (a column id means the same field everywhere), so the table's id is part of each;
 // `scope` is the form's, so two forms on a page never share one.

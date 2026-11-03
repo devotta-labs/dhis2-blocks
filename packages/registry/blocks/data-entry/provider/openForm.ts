@@ -23,15 +23,17 @@ import type {
 } from '../sources/types'
 import { createDataEntryStore } from '../store/store'
 import type { DataEntryState } from '../store/store'
+import { addRow } from './addRow'
 import { afterPaint } from './afterPaint'
 import { appendPage, withPage } from './appendPage'
 import { completionChecks, refusalOf, showStatus } from './completion'
 import type { EffectsState } from './context'
 import { discardFailed } from './discardFailed'
 import { formKeys } from './formKeys'
-import { formEffects, newEventRow, summaryOf, withRows } from './formRows'
+import { formEffects, summaryOf, withRows } from './formRows'
 import type { DataEntryView } from './hooks'
 import { signedInAsOther, userCheck } from './signedIn'
+import { watchSlotOrder } from './slotOrderEffects'
 import { saveUnsentFile } from './unsentFile'
 
 type Actions = Pick<
@@ -150,7 +152,7 @@ const connect = (
             records
         ),
         rowMessages: new Map(),
-        rowNotes: new Map(),
+        rowNotes: new Map(form.rowNotes),
     }))
 
     // Each cell's changes get strictly later times, so an outcome for one never removes the next from the outbox.
@@ -203,6 +205,8 @@ const connect = (
             effects.getState().cells[key]?.hiddenOptions?.has(value)
                 ? i18n.t('Choose one of the options')
                 : undefined,
+        // Read-only records stay as DHIS2 has them, whatever path a change comes by.
+        locked: (key) => readOnlyRecords.has(recordIdOf(key)),
     })
     store
         .getState()
@@ -212,17 +216,22 @@ const connect = (
                 .map((record) => ({ ...record, sync: record.state }))
         )
 
-    // Changes made in the program's other grids that could not be saved: counted, downloaded and discarded here too,
-    // so none is stuck where no grid shows it.
-    const failedElsewhere = (held: ReadonlyArray<OutboxRecord>) =>
-        held.filter(({ key, state }) => state === 'failed' && !inForm(key))
-            .length
-    let failedThere = failedElsewhere(unsent)
+    // Changes of the source no cell of the form holds (made in the program's other grids, or for people on pages not
+    // loaded yet) that could not be saved, or wait: counted here, so none is stuck where no grid shows it. The failed
+    // ones are downloaded and discarded here too.
+    const elsewhere = (held: ReadonlyArray<OutboxRecord>) => {
+        const there = held.filter(({ key }) => !inForm(key))
+        return {
+            failed: there.filter(({ state }) => state === 'failed').length,
+            unsent: there.filter(({ state }) => state === 'waiting').length,
+        }
+    }
+    let there = elsewhere(unsent)
     const countElsewhere = () =>
         outbox.list(source.key).then(
             (held) => {
                 if (!closed) {
-                    failedThere = failedElsewhere(held)
+                    there = elsewhere(held)
                     summarize()
                 }
             },
@@ -329,9 +338,13 @@ const connect = (
     }
 
     const summarize = () => {
-        const summary = summaryOf({ store, effects, tables })
+        const summary = summaryOf({ store, effects, tables }, form.fieldNames)
         view.setState({
-            summary: { ...summary, failed: summary.failed + failedThere },
+            summary: {
+                ...summary,
+                unsent: summary.unsent + there.unsent,
+                failed: summary.failed + there.failed,
+            },
         })
     }
 
@@ -378,6 +391,7 @@ const connect = (
         store.subscribe(summarize),
         effects.subscribe(summarize),
         tables.subscribe(summarize),
+        watchSlotOrder({ store, effects, tables }, form.slots ?? []),
     ]
 
     // Created last, once nothing before can throw: the channel and the loop outlive this call.
@@ -447,40 +461,9 @@ const connect = (
             form.newRows === undefined ? [] : [form.newRows.tableId]
         ),
         addRow(tableId) {
-            const { newRows } = form
-            const table = tables
-                .getState()
-                .tables.find(({ id }) => id === tableId)
-            if (
-                closed ||
-                newRows?.tableId !== tableId ||
-                newRows.programStageId === undefined ||
-                table === undefined
-            ) {
-                return
+            if (!closed) {
+                addRow({ ...grows, form }, source, settings, tableId)
             }
-            const { record, row } = newEventRow(newRows, newRows.programStageId)
-            const known = new Map(tables.getState().records).set(
-                record.id,
-                record
-            )
-            effects.setState(({ cells }) => ({
-                cells: formEffects(
-                    form,
-                    readOnlyRecords,
-                    [{ ...table, rows: [row] }],
-                    known,
-                    { ...cells }
-                ),
-            }))
-            tables.setState(({ tables: all }) => ({
-                tables: all.map((each) =>
-                    each.id === tableId
-                        ? withRows(form, each, [row], known)
-                        : each
-                ),
-                records: known,
-            }))
         },
         async complete(recordId) {
             // Only an event completes.
@@ -543,7 +526,7 @@ const connect = (
             form = withPage(form, page)
             // Changes counted as another grid's may be this form's now.
             if (!closed) {
-                failedThere = failedElsewhere(held)
+                there = elsewhere(held)
                 summarize()
             }
         },

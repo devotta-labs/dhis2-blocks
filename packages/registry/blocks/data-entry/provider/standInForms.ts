@@ -77,7 +77,7 @@ export const lockedForm = (
                     [{ kind: 'error', text: reason, source: 'server' }],
                 ],
             ]),
-            rowNotes: new Map(),
+            rowNotes: new Map(form.rowNotes),
         })),
         tables: createStore<FormTables>()(() => ({
             tables: form.tables,

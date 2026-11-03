@@ -47,8 +47,12 @@ export interface DataEntryContext {
     tables: ReadonlyArray<GridTable>
     /** What the rows' cells save to, by record id (a row's own id names its record), with its status as last saved. */
     records: ReadonlyMap<string, DataRecord>
-    /** Ids of the tables that take new rows: each has an "Add event" button. */
+    /** Ids of the tables that take new rows: each has an "Add event" (or "Add person") button. */
     newRowTables: ReadonlySet<string>
+    /** What a row is to the user: an event (the default) or a person. */
+    rowKind?: 'event' | 'person'
+    /** Every field's display name, shown in a column or not, by id. */
+    fieldNames?: ReadonlyMap<string, string>
     addRow(tableId: string): void
     overrides?: CellOverrides
     /** Names of org units by id: those the form's values hold, then those picked in a cell. Org unit cells show them. */

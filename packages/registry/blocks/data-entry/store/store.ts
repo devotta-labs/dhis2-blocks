@@ -25,6 +25,8 @@ export interface DataEntryStoreOptions {
      * the cell already holds is not. Blank is never checked.
      */
     check?(key: CellKey, code: string): string | undefined
+    /** Whether the cell's record cannot be changed: no commit, the rules' included, and no undo writes to it. */
+    locked?(key: CellKey): boolean
 }
 
 type Source = 'person' | 'rule'
@@ -93,6 +95,7 @@ export const createDataEntryStore = ({
     settings,
     enqueue,
     check,
+    locked,
 }: DataEntryStoreOptions): StoreApi<DataEntryState> => {
     const fieldOf = (key: CellKey) =>
         fields.get(key.slice(key.indexOf('.') + 1))
@@ -212,6 +215,9 @@ export const createDataEntryStore = ({
                     if (field === undefined) {
                         throw new Error(`No field for the cell ${key}`)
                     }
+                    if (locked?.(key)) {
+                        return 'unchanged'
+                    }
                     const cell = read(key) ?? EMPTY_CELL
                     const parsed = parseTyped(field, text, settings)
                     // A value the cell holds is not checked again. An age is checked against the device's date; a
@@ -295,7 +301,7 @@ export const createDataEntryStore = ({
                 return edit(({ read, queue }) => {
                     const undone: CellKey[] = []
                     for (const { key, previous } of last.slice().reverse()) {
-                        if (read(key)?.value !== previous) {
+                        if (!locked?.(key) && read(key)?.value !== previous) {
                             queue(key, previous, 'person')
                             undone.unshift(key)
                         }

@@ -176,7 +176,7 @@ export const appendPage = async (
             })),
         ...restored.map((record) => ({ ...record, sync: record.state })),
     ])
-    effects.setState(({ cells: now }) => ({
+    effects.setState(({ cells: now, rowNotes }) => ({
         cells: formEffects(
             form,
             readOnlyRecords,
@@ -184,6 +184,11 @@ export const appendPage = async (
             records,
             { ...now }
         ),
+        // The source's notes on the new rows, as the load's are.
+        rowNotes: new Map([
+            ...rowNotes,
+            ...[...(page.rowNotes ?? [])].filter(([id]) => fresh.has(id)),
+        ]),
     }))
     tables.setState({ tables: grown, records })
 
@@ -291,10 +296,15 @@ export const usePages = ({
                                 0
                             )
                         announce(
-                            i18n.t('Events shown: {{shown}}', {
-                                nsSeparator: '::',
-                                shown: formatCount(shown),
-                            })
+                            form.rowKind === 'person'
+                                ? i18n.t('People shown: {{shown}}', {
+                                      nsSeparator: '::',
+                                      shown: formatCount(shown),
+                                  })
+                                : i18n.t('Events shown: {{shown}}', {
+                                      nsSeparator: '::',
+                                      shown: formatCount(shown),
+                                  })
                         )
                     })
                     // Said as the form says why it could not load, and shown beside the button.

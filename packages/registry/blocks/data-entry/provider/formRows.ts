@@ -15,17 +15,17 @@ import { generateUid } from '../sources/uid'
 import type { EffectsState } from './context'
 import type { OpenForm } from './openForm'
 
-/** The form's summary, from its cells, their effects and its tables. */
-export const summaryOf = ({
-    store,
-    effects,
-    tables,
-}: Pick<OpenForm, 'store' | 'effects' | 'tables'>) =>
+/** The form's summary, from its cells, their effects, its tables and its fields' names. */
+export const summaryOf = (
+    { store, effects, tables }: Pick<OpenForm, 'store' | 'effects' | 'tables'>,
+    fieldNames: ReadonlyMap<string, string>
+) =>
     summarise(
         store.getState().cells,
         effects.getState().cells,
         effects.getState().rowMessages,
-        tables.getState().tables
+        tables.getState().tables,
+        fieldNames
     )
 
 /**

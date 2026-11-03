@@ -269,10 +269,13 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
     }, [view, status, error, active])
     // Locked, nothing is sent: the form's last sync state no longer applies.
     useEffect(() => {
-        if (lockedView !== undefined) {
-            view.setState({ sync: 'idle', summary: summaryOf(lockedView) })
+        if (lockedView !== undefined && paged !== undefined) {
+            view.setState({
+                sync: 'idle',
+                summary: summaryOf(lockedView, paged.fieldNames),
+            })
         }
-    }, [view, lockedView])
+    }, [view, lockedView, paged])
 
     useEffect(() => {
         if (opened !== undefined && !measured.current) {
@@ -309,12 +312,15 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
             records,
             newRowTables: active.newRowTables,
             addRow: active.addRow,
+            rowKind: form?.rowKind,
+            fieldNames: form?.fieldNames,
             overrides: cells,
             orgUnitNames,
             fileNames,
         }),
         [
             active,
+            form,
             tables,
             records,
             idScope,

@@ -3,7 +3,7 @@ import { useId, useLayoutEffect, useRef } from 'react'
 import { Button } from '@/components/dhis2/ui/button'
 import { useDataEntry } from '../provider/hooks'
 
-const MoreButton = ({ end }: { end: string }) => {
+const MoreButton = ({ end, people }: { end: string; people: boolean }) => {
     const loading = useDataEntry((view) => view.loadingMore)
     const loadMore = useDataEntry((view) => view.loadMore)
     const error = useDataEntry((view) => view.loadMoreError)
@@ -33,7 +33,9 @@ const MoreButton = ({ end }: { end: string }) => {
                 className="aria-disabled:cursor-not-allowed aria-disabled:text-dhis2-grey-600"
                 onClick={() => void loadMore()}
             >
-                {i18n.t('Show more events')}
+                {people
+                    ? i18n.t('Show more people')
+                    : i18n.t('Show more events')}
             </Button>
             {/* Said once when the page fails; shown until the next try. */}
             {error === undefined ? null : (
@@ -46,8 +48,16 @@ const MoreButton = ({ end }: { end: string }) => {
 }
 
 /**
- * "Show more events" while the source may have more, with why the last page could not load beside it; `end` takes the
- * focus it held once there is nothing more.
+ * "Show more events" ("Show more people" in a register) while the source may have more, with why the last page could
+ * not load beside it; `end` takes the focus it held once there is nothing more.
  */
-export const ShowMoreEvents = ({ end }: { end: string }) =>
-    useDataEntry((view) => view.hasMore) ? <MoreButton end={end} /> : null
+export const ShowMoreEvents = ({
+    end,
+    people = false,
+}: {
+    end: string
+    people?: boolean
+}) =>
+    useDataEntry((view) => view.hasMore) ? (
+        <MoreButton end={end} people={people} />
+    ) : null

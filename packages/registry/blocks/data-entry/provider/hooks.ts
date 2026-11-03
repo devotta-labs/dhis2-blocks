@@ -39,9 +39,9 @@ export interface DataEntryView {
     hasMore: boolean
     /** Whether a page is loading. */
     loadingMore: boolean
-    /** Why the last page could not load, until the next try starts; "Show more events" shows it. */
+    /** Why the last page could not load, until the next try starts; "Show more events" (or "Show more people") shows it. */
     loadMoreError?: string
-    /** Appends the next page; one at a time. Says how many events show, or why the page could not load. */
+    /** Appends the next page; one at a time. Says how many rows show, or why the page could not load. */
     loadMore(): Promise<void>
 }
 

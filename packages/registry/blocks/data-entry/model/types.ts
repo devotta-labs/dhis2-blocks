@@ -1,6 +1,6 @@
 import type { Field } from '@/components/dhis2-value-types'
 
-/** `<rowId>.<columnId>`; row ids contain no dot. */
+/** `<recordId>.<fieldId>`; record ids contain no dot. */
 export type CellKey = `${string}.${string}`
 
 export const cellKey = (rowId: string, columnId: string): CellKey =>
@@ -42,13 +42,38 @@ export interface GridRow {
     label: string
     /** The stage's name, shown after the event date in a grid of several stages. */
     stage?: string
+    /** Slot name → the record the columns of that slot save to, for a row that shows cells of several records. */
+    slots?: Readonly<Record<string, string>>
 }
 
 export interface GridColumn {
     id: string
     label: string
     field: Field
+    /** The row's slot whose record the cells save to; without one, they save to the row's own id. */
+    slot?: string
+    /** The field the cells hold, when the column's id is not it. */
+    fieldId?: string
 }
+
+/** The cell's key: the column's slot's record (else the row's own id) and its field (else its id). */
+export const keyOf = (row: GridRow, column: GridColumn): CellKey => {
+    const field = column.fieldId ?? column.id
+    if (column.slot === undefined) {
+        return cellKey(row.id, field)
+    }
+    const record = row.slots?.[column.slot]
+    if (record === undefined) {
+        throw new Error(`The row ${row.id} has no slot ${column.slot}`)
+    }
+    return cellKey(record, field)
+}
+
+/** The records a row's cells can save to: its own id, then its slots' records. */
+export const recordsOf = (row: GridRow): string[] => [
+    row.id,
+    ...Object.values(row.slots ?? {}),
+]
 
 export interface HeaderCell {
     id: string
@@ -106,3 +131,47 @@ export interface PendingChange {
 }
 
 export type CommitResult = 'invalid' | 'unchanged' | 'queued'
+
+export interface CellPlace {
+    table: number
+    row: number
+    column: number
+}
+
+/** Where every open cell of the tables is, by key. */
+export const indexCells = (
+    tables: ReadonlyArray<GridTable>
+): ReadonlyMap<CellKey, CellPlace> => {
+    const index = new Map<CellKey, CellPlace>()
+    tables.forEach(({ id, rows, columns, closed }, table) => {
+        // Closed cells count too: a key two cells of a table share is a layout error, wherever it shows.
+        const seen = new Set<CellKey>()
+        rows.forEach((gridRow, row) => {
+            columns.forEach((gridColumn, column) => {
+                const key = keyOf(gridRow, gridColumn)
+                if (seen.has(key)) {
+                    throw new Error(
+                        `Two cells of the table ${id} save to ${key}`
+                    )
+                }
+                seen.add(key)
+                if (!closed.has(key)) {
+                    index.set(key, { table, row, column })
+                }
+            })
+        })
+    })
+    return index
+}
+
+/** The row that shows each record. */
+export const rowsByRecord = (
+    tables: ReadonlyArray<GridTable>
+): ReadonlyMap<string, GridRow> =>
+    new Map(
+        tables.flatMap(({ rows }) =>
+            rows.flatMap((row) =>
+                recordsOf(row).map((id) => [id, row] as const)
+            )
+        )
+    )

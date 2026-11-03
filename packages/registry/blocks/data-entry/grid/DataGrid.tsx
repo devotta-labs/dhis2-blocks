@@ -11,6 +11,7 @@ import {
 import type { ClipboardEvent, KeyboardEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { useStore } from 'zustand'
+import { useShallow } from 'zustand/react/shallow'
 import type { StoreApi } from 'zustand/vanilla'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
@@ -22,7 +23,7 @@ import { formatCount } from '../cells/OptionCell'
 import { takesPastedText } from '../cells/popupEditors'
 import { addsRow } from '../cells/useCellMode'
 import type { CellMessage, MessageKind } from '../logic/effects'
-import { cellKey } from '../model/types'
+import { cellKey, indexCells, keyOf, recordsOf } from '../model/types'
 import type { CellKey, GridRow, GridTable } from '../model/types'
 import { useDataEntryContext, useRowCells } from '../provider/context'
 import type { EffectsState } from '../provider/context'
@@ -47,13 +48,13 @@ const navGrid = (
 ): NavGrid => ({
     tables: tables.map(({ rows, columns, closed }) => {
         const keyAt = (row: number, column: number) =>
-            cellKey(rows[row].id, columns[column].id)
+            keyOf(rows[row], columns[column])
         // Read-only kinds, pop-up kinds without an editor, pop-up kinds whose text does not parse (files) and usernames
         // are never pasted into, unless a replacement edits them.
         const elsewhere = columns.map(
-            ({ id, field }) =>
+            ({ id, fieldId = id, field }) =>
                 !takesPastedText(field) &&
-                replacementFor(overrides, id, field) === undefined
+                replacementFor(overrides, fieldId, field) === undefined
         )
         const isOpen = (row: number, column: number) =>
             !closed.has(keyAt(row, column))
@@ -75,24 +76,16 @@ const navGrid = (
 })
 
 /** Where each cell control is, by its DOM id; closed cells have no control. */
-const positionsOf = (idScope: string, tables: ReadonlyArray<GridTable>) => {
-    const positions = new Map<string, CellPosition>()
-    tables.forEach(({ rows, columns, closed }, table) => {
-        rows.forEach(({ id: rowId }, row) => {
-            columns.forEach(({ id: columnId }, column) => {
-                const key = cellKey(rowId, columnId)
-                if (!closed.has(key)) {
-                    positions.set(cellDomId(idScope, key), {
-                        table,
-                        row,
-                        column,
-                    })
-                }
-            })
-        })
-    })
-    return positions
-}
+const positionsOf = (
+    idScope: string,
+    tables: ReadonlyArray<GridTable>
+): ReadonlyMap<string, CellPosition> =>
+    new Map(
+        Array.from(indexCells(tables), ([key, place]) => [
+            cellDomId(idScope, key),
+            place,
+        ])
+    )
 
 // The row header column's width, at most 30% of the screen so the page reflows when zoomed; sticky group labels and
 // scroll padding keep clear of it.
@@ -128,13 +121,20 @@ const RowHeader = memo(function RowHeader({
 }) {
     const { effects, store, settings, records } = useDataEntryContext()
     const record = records.get(row.id)
+    // Every record the row's cells save to: a register's row shows what the rules say of each of its events.
     const notes = useStore(
         effects,
-        (state) => state.rowNotes.get(row.id) ?? NO_NOTES
+        useShallow((state) =>
+            recordsOf(row).flatMap((id) => state.rowNotes.get(id) ?? NO_NOTES)
+        )
     )
     const messages = useStore(
         effects,
-        (state) => state.rowMessages.get(row.id) ?? NO_MESSAGES
+        useShallow((state) =>
+            recordsOf(row).flatMap(
+                (id) => state.rowMessages.get(id) ?? NO_MESSAGES
+            )
+        )
     )
     const date = useStore(
         store,
@@ -215,7 +215,7 @@ const TableRow = memo(function TableRow({
     labels,
     move,
 }: TableRowProps) {
-    const keys = table.columns.map(({ id }) => cellKey(row.id, id))
+    const keys = table.columns.map((column) => keyOf(row, column))
     const { states, effects } = useRowCells(keys)
     const rowHeader = rowHeaderDomId(idScope, table.id, row.id)
     return (
@@ -401,7 +401,7 @@ export const DataGrid = ({
         [idScope, tables]
     )
     const keyAt = ({ table, row, column }: CellPosition) =>
-        cellKey(tables[table].rows[row].id, tables[table].columns[column].id)
+        keyOf(tables[table].rows[row], tables[table].columns[column])
     const end = useId()
 
     // The DOM id of the cell that has focus, or last had it.

@@ -1,6 +1,6 @@
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { rowLabel } from '../grid/headers'
-import { cellKey, rowIdOf } from '../model/types'
+import { cellKey, rowIdOf, rowsByRecord } from '../model/types'
 import type { GridRow, GridTable } from '../model/types'
 import { unsentChangesCsv } from '../outbox/download'
 import type { OutboxRecord } from '../outbox/outbox'
@@ -39,24 +39,23 @@ export const saveUnsentFile = (
               ]
             : []
     )
-    const rows = new Map(
+    const rows = rowsByRecord(tables)
+    const tableOf = new Map(
         tables.flatMap((table) =>
-            table.rows.map((row): [string, [GridTable, GridRow]] => [
-                row.id,
-                [table, row],
-            ])
+            table.rows.map((row): [GridRow, GridTable] => [row, table])
         )
     )
     const labels = new Map(
         tables.flatMap(({ columns }) =>
-            columns.map(({ id, label }) => [id, label])
+            columns.map(({ id, fieldId = id, label }) => [fieldId, label])
         )
     )
     const csv = unsentChangesCsv(
         [...saved, ...onlyHere].map(({ key, value, state, reason }) => {
             const rowId = rowIdOf(key)
             const column = key.slice(rowId.length + 1)
-            const [table, row] = rows.get(rowId) ?? []
+            const row = rows.get(rowId)
+            const table = row === undefined ? undefined : tableOf.get(row)
             return {
                 form: table?.title ?? '',
                 // As the grid names it.
@@ -65,8 +64,8 @@ export const saveUnsentFile = (
                         ? rowId
                         : rowLabel(
                               row,
-                              records.get(rowId),
-                              cells[cellKey(rowId, EVENT_DATE_COLUMN)]?.value,
+                              records.get(row.id),
+                              cells[cellKey(row.id, EVENT_DATE_COLUMN)]?.value,
                               settings
                           ),
                 field: labels.get(column) ?? column,

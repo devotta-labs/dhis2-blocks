@@ -4,7 +4,7 @@ import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { formatCount } from '../cells/OptionCell'
-import { cellKey, rowIdOf } from '../model/types'
+import { cellKey, indexCells, rowIdOf } from '../model/types'
 import type {
     CellKey,
     DataRecord,
@@ -140,17 +140,18 @@ const connect = (
         ),
         records,
     }))
+    // The cell index, made again only when the tables change.
+    let indexed:
+        | { of: FormTables['tables']; cells: ReturnType<typeof indexCells> }
+        | undefined
     /** Whether the cell is in this form: the outbox also holds changes made in the program's other grids. */
     const inForm = (key: string) => {
-        const rowId = rowIdOf(key)
-        const column = key.slice(rowId.length + 1)
-        return tables
-            .getState()
-            .tables.some(
-                (table) =>
-                    table.rows.some(({ id }) => id === rowId) &&
-                    table.columns.some(({ id }) => id === column)
-            )
+        const now = tables.getState().tables
+        if (indexed?.of !== now) {
+            indexed = { of: now, cells: indexCells(now) }
+        }
+        // SAFETY: a string that is no cell key is in no index.
+        return indexed.cells.has(key as CellKey)
     }
     const effects = createStore<EffectsState>()(() => ({
         cells: formEffects(

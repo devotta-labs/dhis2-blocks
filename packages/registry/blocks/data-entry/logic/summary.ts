@@ -31,7 +31,7 @@ export const blocksCompletion = ({ kind }: SummaryItem) =>
 export const summarise = (
     cells: Partial<Record<CellKey, CellState>>,
     effects: Partial<Record<CellKey, CellEffects>>,
-    /** Row id → the messages without a field. */
+    /** Record id → the messages without a field. */
     rowMessages: ReadonlyMap<string, ReadonlyArray<CellMessage>>,
     tables: ReadonlyArray<GridTable>
 ) => {
@@ -77,7 +77,7 @@ export const summarise = (
 
     const labels = new Map(
         tables.flatMap(({ columns }) =>
-            columns.map(({ id, label }) => [id, label])
+            columns.map(({ id, fieldId = id, label }) => [fieldId, label])
         )
     )
     for (const [key, cellEffects] of Object.entries(effects)) {

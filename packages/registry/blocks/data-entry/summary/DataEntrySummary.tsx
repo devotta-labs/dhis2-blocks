@@ -16,7 +16,7 @@ import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
 import { rowLabel } from '../grid/headers'
 import type { SummaryItem } from '../logic/summary'
-import { cellKey } from '../model/types'
+import { cellKey, rowsByRecord } from '../model/types'
 import type { GridRow } from '../model/types'
 import { FORM_MESSAGES, useDataEntryContext } from '../provider/context'
 import { useDataEntry } from '../provider/hooks'
@@ -61,15 +61,17 @@ const Item = memo(function Item({
     const { store, settings, records } = useDataEntryContext()
     const dot = key.indexOf('.')
     const rowId = dot < 0 ? key : key.slice(0, dot)
+    // The row that shows the record, named by its own record's date.
+    const gridRow = rows.get(rowId)
+    const named = gridRow?.id ?? rowId
     const date = useStore(
         store,
-        (state) => state.cells[cellKey(rowId, EVENT_DATE_COLUMN)]?.value
+        (state) => state.cells[cellKey(named, EVENT_DATE_COLUMN)]?.value
     )
-    const gridRow = rows.get(rowId)
     const row =
         gridRow === undefined
             ? rowId
-            : rowLabel(gridRow, records.get(rowId), date, settings)
+            : rowLabel(gridRow, records.get(named), date, settings)
     const className = cn('border-s-2 ps-2', TONES[kind])
     // A message without a field is the row's, or the whole form's: there is no cell to go to.
     if (dot < 0) {
@@ -179,14 +181,13 @@ export const DataEntrySummary = ({ className }: { className?: string }) => {
     const { tables, idScope } = useDataEntryContext()
     const { rows, fields } = useMemo(
         () => ({
-            rows: new Map(
-                tables.flatMap((table) =>
-                    table.rows.map((row) => [row.id, row])
-                )
-            ),
+            rows: rowsByRecord(tables),
             fields: new Map(
                 tables.flatMap((table) =>
-                    table.columns.map(({ id, label }) => [id, label])
+                    table.columns.map(({ id, fieldId = id, label }) => [
+                        fieldId,
+                        label,
+                    ])
                 )
             ),
         }),

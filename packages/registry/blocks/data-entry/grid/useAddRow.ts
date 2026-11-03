@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { cellDomId } from '../cells/cellProps'
-import { cellKey } from '../model/types'
+import { keyOf } from '../model/types'
 import type { GridTable } from '../model/types'
 
 /** Adds a row to a table, then focuses the row's first open cell once it appears; one function for the grid's life. */
@@ -28,15 +28,11 @@ export const useAddRow = (
             return
         }
         adding.current = undefined
-        const column = table.columns.find(
-            ({ id }) => !table.closed.has(cellKey(added.id, id))
-        )
-        if (column !== undefined) {
-            document
-                .getElementById(
-                    cellDomId(idScope, cellKey(added.id, column.id))
-                )
-                ?.focus()
+        const key = table.columns
+            .map((column) => keyOf(added, column))
+            .find((each) => !table.closed.has(each))
+        if (key !== undefined) {
+            document.getElementById(cellDomId(idScope, key))?.focus()
         }
     }, [idScope, tables])
     return useCallback((tableId: string) => addTo.current?.(tableId), [])

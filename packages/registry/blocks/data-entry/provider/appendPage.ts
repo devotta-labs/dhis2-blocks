@@ -2,7 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import { useEffect, useState } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
 import { formatCount } from '../cells/OptionCell'
-import { cellKey, rowIdOf } from '../model/types'
+import { keyOf, recordsOf, rowIdOf } from '../model/types'
 import type { CellKey, DataRecord, GridTable } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import type {
@@ -137,14 +137,14 @@ export const appendPage = async (
             records
         )
         for (const row of next.rows) {
-            fresh.add(row.id)
+            recordsOf(row).forEach((id) => fresh.add(id))
         }
         for (const row of next.table.rows) {
             const columnsOf = fresh.has(row.id)
                 ? next.table.columns
                 : next.columns
-            for (const { id } of columnsOf) {
-                cells.add(cellKey(row.id, id))
+            for (const column of columnsOf) {
+                cells.add(keyOf(row, column))
             }
         }
         return next.table

@@ -14,8 +14,14 @@ import {
 } from '../logic/effects'
 import type { CellEffects } from '../logic/effects'
 import { rowRuleOutcome, ruleRowsOf, stageFields } from '../logic/ruleEffects'
-import { cellKey, formOf, rowIdOf } from '../model/types'
-import type { CellKey, CellState, DataRecord, GridRow } from '../model/types'
+import {
+    cellKey,
+    formOf,
+    recordsOf,
+    rowIdOf,
+    rowsByRecord,
+} from '../model/types'
+import type { CellKey, CellState, DataRecord } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
 import { afterPaint } from './afterPaint'
@@ -32,9 +38,9 @@ const AS_IS = { escapeValue: false }
 const NONE: ReadonlySet<string> = new Set()
 const NO_NOTES: ReadonlyArray<string> = []
 
-/** What one row's rules said, or why they failed; `raw` names the rules behind its values. */
+/** What one record's rules said, or why they failed; `raw` names the rules behind its values. */
 interface RowResult {
-    row: GridRow
+    recordId: string
     outcome: ReturnType<typeof rowRuleOutcome> | Error
     raw?: RuleEffects
 }
@@ -151,16 +157,16 @@ export const connectRules = ({
                 : undefined
         const entries: Array<{ key: CellKey; text: string }> = []
         const notes: Array<string | undefined> = []
-        for (const { row, outcome, raw } of results) {
+        for (const { recordId, outcome, raw } of results) {
             if (
                 outcome instanceof Error ||
-                readOnlyRecords.has(row.id) ||
-                !touched.has(row.id)
+                readOnlyRecords.has(recordId) ||
+                !touched.has(recordId)
             ) {
                 continue
             }
             for (const [field, value] of outcome.assignments) {
-                const key = cellKey(row.id, field)
+                const key = cellKey(recordId, field)
                 const now = values[key]?.value
                 const definition = form.fields.get(field)
                 if (definition === undefined || (now ?? '') === (value ?? '')) {
@@ -168,7 +174,7 @@ export const connectRules = ({
                 }
                 // A rule never overwrites what is being typed: it runs again once the person leaves the cell.
                 if (cellDomId(idScope, key) === typing) {
-                    held.set(typing, row.id)
+                    held.set(typing, recordId)
                     continue
                 }
                 entries.push({
@@ -215,9 +221,9 @@ export const connectRules = ({
         let cells = state.cells
         let rowMessages = state.rowMessages
         let rowNotes = state.rowNotes
-        for (const { row, outcome } of results) {
-            const readOnly = readOnlyRecords.get(row.id)
-            const record = records.get(row.id)
+        for (const { recordId, outcome } of results) {
+            const readOnly = readOnlyRecords.get(recordId)
+            const record = records.get(recordId)
             const required =
                 (record === undefined
                     ? undefined
@@ -231,7 +237,7 @@ export const connectRules = ({
                           ...(form.fieldsByForm.get(formOf(record)) ?? NONE),
                       ]
             for (const id of ids) {
-                const key = cellKey(row.id, id)
+                const key = cellKey(recordId, id)
                 const rule =
                     outcome instanceof Error ? undefined : outcome.cells.get(id)
                 // A read-only row asks for nothing, as the form's own effects say.
@@ -269,7 +275,7 @@ export const connectRules = ({
             const failed = outcome instanceof Error
             rowMessages = withRow(
                 rowMessages,
-                row.id,
+                recordId,
                 failed
                     ? [{ kind: 'error', text: outcome.message, source: 'rule' }]
                     : outcome.rowMessages,
@@ -277,7 +283,7 @@ export const connectRules = ({
             )
             rowNotes = withRow(
                 rowNotes,
-                row.id,
+                recordId,
                 failed ? NO_NOTES : outcome.notes,
                 sameNotes
             )
@@ -307,9 +313,7 @@ export const connectRules = ({
             form.fieldsByForm,
             store.getState().cells
         )
-        const places = new Map(
-            all.flatMap(({ rows }) => rows.map((row) => [row.id, row] as const))
-        )
+        const shown = rowsByRecord(all)
         const results: RowResult[] = []
         let done = 0
         while (
@@ -319,17 +323,16 @@ export const connectRules = ({
             const rowId = rowIds[done]
             done += 1
             const evaluation = rules.evaluate(ruleRows, [rowId])
-            const row = places.get(rowId)
             const record = records.get(rowId)
             const raw = evaluation.effects.get(rowId)
             const outcome =
                 evaluation.failures.get(rowId) ??
-                (raw === undefined || row === undefined || record === undefined
+                (raw === undefined || record === undefined
                     ? undefined
                     : rowRuleOutcome(raw, fieldsOf(formOf(record))))
-            // A row in neither map was not evaluated: it keeps its last effects.
-            if (row !== undefined && outcome !== undefined) {
-                results.push({ row, outcome, raw })
+            // A record in neither map was not evaluated: it keeps its last effects. One no row shows has none.
+            if (shown.has(rowId) && outcome !== undefined) {
+                results.push({ recordId: rowId, outcome, raw })
                 seen.add(rowId)
             }
         }
@@ -396,12 +399,12 @@ export const connectRules = ({
         }
     }
 
-    // The visible rows first, then the rest in their order.
+    // The records of the visible rows first, then the rest in their rows' order.
     const order = tables.getState().tables.flatMap(({ id: tableId, rows }) =>
-        rows.map(({ id }) => ({
-            id,
-            visible: onScreen(idScope, tableId, id),
-        }))
+        rows.flatMap((row) => {
+            const visible = onScreen(idScope, tableId, row.id)
+            return recordsOf(row).map((id) => ({ id, visible }))
+        })
     )
     const offScreen = order
         .filter(({ visible }) => !visible)

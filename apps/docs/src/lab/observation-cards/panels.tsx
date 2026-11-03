@@ -43,13 +43,13 @@ const rowsOf = (state: ReturnType<typeof useObservation>) => {
     }
 }
 
-/** What `useObservation` returns for a card, beside the cards. */
+/** What `useObservation` returns for a card, under it. */
 export const SeriesReadout = ({ dataElement }: { dataElement: string }) => {
     const state = useObservation(dataElement)
     return (
         <dl
             aria-label="useObservation"
-            className="m-0 grid w-80 shrink-0 grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 rounded border border-dashed border-dhis2-grey-500 bg-dhis2-grey-050 p-2 font-mono text-xs break-all"
+            className="m-0 grid w-full grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 rounded border border-dashed border-dhis2-grey-500 bg-dhis2-grey-050 p-2 font-mono text-xs break-all"
         >
             <dt className="text-dhis2-grey-700">status</dt>
             <dd className="m-0">{state.status}</dd>

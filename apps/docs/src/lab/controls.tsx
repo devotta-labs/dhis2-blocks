@@ -13,6 +13,22 @@ export const Section = ({
     </fieldset>
 )
 
+/** A collapsible group inside a section; its summary says what it holds. */
+export const Disclosure = ({
+    summary,
+    defaultOpen = false,
+    children,
+}: {
+    summary: ReactNode
+    defaultOpen?: boolean
+    children: ReactNode
+}) => (
+    <details open={defaultOpen}>
+        <summary>{summary}</summary>
+        <div className="flex flex-col gap-1">{children}</div>
+    </details>
+)
+
 export const Check = ({
     checked,
     onChange,

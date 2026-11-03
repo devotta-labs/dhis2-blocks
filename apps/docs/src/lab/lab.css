@@ -81,6 +81,31 @@
         text-transform: uppercase;
     }
 
+    /* A disclosure is a box within a section; open, its summary rules off its rows. */
+    .lab-chrome details {
+        border: 1px solid var(--lab-rule-faint);
+    }
+
+    .lab-chrome summary {
+        padding: 2px 6px;
+        cursor: pointer;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .lab-chrome summary:hover {
+        background: var(--lab-paper-inset);
+    }
+
+    .lab-chrome details[open] > summary {
+        border-bottom: 1px solid var(--lab-rule-faint);
+    }
+
+    .lab-chrome details > div {
+        padding: 6px;
+    }
+
     .lab-chrome input:not([type='checkbox'], [type='radio']),
     .lab-chrome select {
         appearance: none;

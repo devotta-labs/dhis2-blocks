@@ -6,7 +6,7 @@ import {
     ObservationsProvider,
     ObservationValue,
 } from '@/components/observation-cards'
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
 import { PresetControls, Section, Segmented } from '../controls'
@@ -16,20 +16,25 @@ import { NetworkControls } from '../NetworkControls'
 import type { LabNetwork, RequestLogEntry } from '../network'
 import { RequestWaterfall } from '../RequestWaterfall'
 import {
+    CARD_ELEMENTS,
+    cardLabel,
     generateLabData,
+    isLabElement,
     LAB_PERSON,
     LAB_PROGRAM,
     NOT_IN_PROGRAM,
-    SMOKER,
-    SUBJECT,
-    subjectLabel,
-    WEIGHT,
+    type LabCard,
     type LabSettings,
 } from './labData'
 import { answer, RESOURCES } from './labServer'
 import { SeriesReadout } from './panels'
-import { DEFAULT_SETTINGS, PRESETS } from './presets'
-import { CardControls, DataControls, ServerControls } from './settings'
+import { cardDefaults, DEFAULT_SETTINGS, PRESETS } from './presets'
+import {
+    CardControls,
+    CardDataControls,
+    ServerControls,
+    VisitControls,
+} from './settings'
 
 interface Live {
     programId: string
@@ -71,6 +76,15 @@ const DEFAULT_SAVED: Saved = {
     },
 }
 
+/** Saved cards over each position's defaults; anything unrecognised falls back to them. */
+const savedCards = (cards: ReadonlyArray<Partial<LabCard>> = []): LabCard[] =>
+    CARD_ELEMENTS.map((_, index) => {
+        const card = cards[index]
+        return card && isLabElement(card.element)
+            ? { ...cardDefaults(index), ...card }
+            : cardDefaults(index)
+    })
+
 const load = (): Saved => {
     try {
         const stored = localStorage.getItem(STORAGE_KEY)
@@ -79,7 +93,11 @@ const load = (): Saved => {
         return {
             ...DEFAULT_SAVED,
             ...parsed,
-            settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
+            settings: {
+                ...DEFAULT_SETTINGS,
+                ...parsed.settings,
+                cards: savedCards(parsed.settings?.cards),
+            },
             live: { ...DEFAULT_SAVED.live, ...parsed.live },
         }
     } catch {
@@ -95,7 +113,7 @@ const save = (saved: Saved) => {
     }
 }
 
-/** The cards on a grid of the chosen width, with the first card's series beside them. */
+/** The cards on a grid of the chosen width, each with its `useObservation` readout under it. */
 const Cards = ({
     cards,
     settings,
@@ -103,32 +121,48 @@ const Cards = ({
     cards: CardSpec[]
     settings: LabSettings
 }) => (
-    <div className="flex flex-wrap items-start gap-4">
-        <div
-            className="grid gap-4"
-            style={{
-                gridTemplateColumns: `repeat(${settings.cardsPerRow}, ${settings.cardWidth}px)`,
-            }}
-        >
-            {cards.map(({ dataElement, unit }) => (
-                <ObservationCard
-                    key={dataElement}
-                    dataElement={dataElement}
-                    unit={unit}
-                    staleAfterDays={settings.staleAfterDays || undefined}
-                >
-                    {settings.arrangement === 'composed' ? (
-                        <>
-                            <ObservationLabel />
-                            <ObservationValue />
-                            <ObservationSparkline points={6} />
-                            <ObservationRecorded />
-                        </>
-                    ) : null}
-                </ObservationCard>
-            ))}
-        </div>
-        {cards[0] && <SeriesReadout dataElement={cards[0].dataElement} />}
+    <div
+        className="grid gap-x-4"
+        style={{
+            gridTemplateColumns: `repeat(${settings.cardsPerRow}, ${settings.cardWidth}px)`,
+        }}
+    >
+        {cards.map(({ dataElement, unit }, index) => {
+            // Each card's row of the grid has a readout row under it, so cards in a row still share a height.
+            const column = (index % settings.cardsPerRow) + 1
+            const row = Math.floor(index / settings.cardsPerRow) * 2 + 1
+            return (
+                <Fragment key={dataElement}>
+                    <div
+                        style={{ gridColumn: column, gridRow: row }}
+                        className="grid"
+                    >
+                        <ObservationCard
+                            dataElement={dataElement}
+                            unit={unit}
+                            staleAfterDays={
+                                settings.staleAfterDays || undefined
+                            }
+                        >
+                            {settings.arrangement === 'composed' ? (
+                                <>
+                                    <ObservationLabel />
+                                    <ObservationValue />
+                                    <ObservationSparkline points={6} />
+                                    <ObservationRecorded />
+                                </>
+                            ) : null}
+                        </ObservationCard>
+                    </div>
+                    <div
+                        style={{ gridColumn: column, gridRow: row + 1 }}
+                        className="mt-2 mb-4"
+                    >
+                        <SeriesReadout dataElement={dataElement} />
+                    </div>
+                </Fragment>
+            )
+        })}
     </div>
 )
 
@@ -167,15 +201,11 @@ export const ObservationsLab = () => {
 
     const data = useMemo(() => generateLabData(settings), [settings])
     const respond = useMemo(() => answer(settings, data), [settings, data])
-    const { label, unit } = subjectLabel(settings)
-    const labCards: CardSpec[] = [
-        {
-            dataElement: settings.notInProgram ? NOT_IN_PROGRAM : SUBJECT,
-            unit,
-        },
-        { dataElement: WEIGHT, unit: 'kg' },
-        { dataElement: SMOKER },
-    ]
+    const labCards: CardSpec[] = settings.cards.map((card, index) => ({
+        dataElement:
+            (card.notInProgram ? NOT_IN_PROGRAM : CARD_ELEMENTS)[index] ?? '',
+        unit: cardLabel(card).unit,
+    }))
 
     return (
         <LabLayout
@@ -183,7 +213,7 @@ export const ObservationsLab = () => {
             status={
                 <span className="truncate">
                     {mode === 'lab'
-                        ? `${(saved.preset ?? 'Custom').toUpperCase()} · ${label} · ${requestCounts(requests)}`
+                        ? `${(saved.preset ?? 'Custom').toUpperCase()} · ${requestCounts(requests)}`
                         : `LIVE · ${live.programId} / ${live.personId} / ${live.dataElementId}`}
                 </span>
             }
@@ -221,7 +251,11 @@ export const ObservationsLab = () => {
                                     restart()
                                 }}
                             />
-                            <DataControls
+                            <VisitControls
+                                settings={settings}
+                                onChange={change}
+                            />
+                            <CardDataControls
                                 settings={settings}
                                 onChange={change}
                             />

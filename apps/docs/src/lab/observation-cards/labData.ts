@@ -3,70 +3,41 @@ import type { LabNetwork } from '../network'
 
 export const LAB_PROGRAM = 'labProgram1'
 export const LAB_PERSON = 'labPerson01'
-/** The data element the settings shape; the first card shows it. */
-export const SUBJECT = 'labSubject1'
-/** A data element no stage of the lab program captures. */
-export const NOT_IN_PROGRAM = 'labMissing1'
-export const WEIGHT = 'labWeight01'
-export const SMOKER = 'labSmoker01'
+/** Each card's data element, by position; every stage captures all three. */
+export const CARD_ELEMENTS = ['labCardDe01', 'labCardDe02', 'labCardDe03']
+/** Data elements no stage of the lab program captures, one per card. */
+export const NOT_IN_PROGRAM = ['labMissing1', 'labMissing2', 'labMissing3']
 const VISIT_STAGE = 'labVisitStg'
 const REVIEW_STAGE = 'labReviewSt'
 
-type LabValueType =
-    | 'NUMBER'
-    | 'INTEGER_POSITIVE'
-    | 'PERCENTAGE'
-    | 'BOOLEAN'
-    | 'TRUE_ONLY'
-    | 'TEXT'
-    | 'DATE'
-    | 'COORDINATE'
-
-export interface LabSettings {
-    /** Readings of the first card's data element (0–500). */
-    readings: number
-    spread: 'steady' | 'flat' | 'crossing' | 'jumpy'
-    valueType: LabValueType
-    legendSet: boolean
-    /** An option set on the data element, with or without style colours. */
-    optionSet: 'none' | 'plain' | 'coloured'
-    daysSinceLast: number
-    /** The cards' `staleAfterDays`; 0 leaves it unset. */
-    staleAfterDays: number
-    /** A second stage capturing the element that the user cannot read. */
-    unreadableStage: boolean
-    enrollments: number
-    /** SCHEDULE and SKIPPED events carrying values that must not count. */
-    scheduledSkipped: boolean
-    /** For TRUE_ONLY: the latest visit leaves the box unticked. */
-    trueOnlyUntick: boolean
-    calendar: Dhis2Calendar
-    longLabel: boolean
-    /** The first card asks for a data element the program doesn't capture. */
-    notInProgram: boolean
-    cardWidth: number
-    cardsPerRow: number
-    arrangement: 'default' | 'composed'
-    network: LabNetwork
-}
-
 interface Domain {
-    unit: string
     min: number
     max: number
     decimals: number
-    /** Band starts, ascending, then the last band's end. */
-    bands: number[]
-    names: string[]
+    /** Band starts, ascending, then the last band's end; no legend set without them. */
+    bands?: number[]
+    names?: string[]
 }
 
-const BAND_COLOURS = ['#d32f2f', '#f57c00', '#fbc02d', '#388e3c']
+interface ElementSpec {
+    name: string
+    valueType: string
+    unit?: string
+    /** The unit spelled out, for the long label. */
+    longUnit?: string
+    domain?: Domain
+    /** Coded 1–4 with an option set, like RMNCH's numeric option codes. */
+    options?: boolean
+}
 
-const NUMERIC = new Map<LabValueType, Domain>([
-    [
-        'NUMBER',
-        {
-            unit: 'g/dL',
+/** The data elements a card can show, each with the readings the lab makes up for it. */
+const ELEMENTS = {
+    haemoglobin: {
+        name: 'Haemoglobin',
+        valueType: 'NUMBER',
+        unit: 'g/dL',
+        longUnit: 'grams per decilitre',
+        domain: {
             min: 6,
             max: 16,
             decimals: 1,
@@ -78,45 +49,111 @@ const NUMERIC = new Map<LabValueType, Domain>([
                 'Normal',
             ],
         },
-    ],
-    [
-        'INTEGER_POSITIVE',
-        {
-            unit: 'mmHg',
+    },
+    weight: {
+        name: 'Weight',
+        valueType: 'NUMBER',
+        unit: 'kg',
+        longUnit: 'kilograms',
+        domain: { min: 58, max: 70, decimals: 1 },
+    },
+    systolic: {
+        name: 'Systolic blood pressure',
+        valueType: 'INTEGER_POSITIVE',
+        unit: 'mmHg',
+        longUnit: 'millimetres of mercury',
+        domain: {
             min: 85,
             max: 175,
             decimals: 0,
             bands: [0, 90, 120, 140, 300],
             names: ['Low', 'Normal', 'Elevated', 'High'],
         },
-    ],
-    [
-        'PERCENTAGE',
-        {
-            unit: '%',
+    },
+    saturation: {
+        name: 'Oxygen saturation',
+        valueType: 'PERCENTAGE',
+        domain: {
             min: 82,
             max: 100,
             decimals: 0,
             bands: [0, 90, 95, 101],
             names: ['Low', 'Borderline', 'Normal'],
         },
-    ],
-])
+    },
+    severity: {
+        name: 'Anaemia severity',
+        valueType: 'INTEGER_POSITIVE',
+        options: true,
+    },
+    smoker: { name: 'Smokes tobacco', valueType: 'BOOLEAN' },
+    dangerSigns: { name: 'Danger signs present', valueType: 'TRUE_ONLY' },
+    note: { name: 'Clinician note', valueType: 'TEXT' },
+    lmp: { name: 'Last menstrual period', valueType: 'DATE' },
+    location: { name: 'Home location', valueType: 'COORDINATE' },
+} satisfies Record<string, ElementSpec>
 
-const LABELS = {
-    NUMBER: 'Haemoglobin',
-    INTEGER_POSITIVE: 'Systolic blood pressure',
-    PERCENTAGE: 'Oxygen saturation',
-    BOOLEAN: 'Smokes tobacco',
-    TRUE_ONLY: 'Danger signs present',
-    TEXT: 'Clinician note',
-    DATE: 'Last menstrual period',
-    COORDINATE: 'Home location',
-} satisfies Record<LabValueType, string>
+export type LabElement = keyof typeof ELEMENTS
 
-const LONG_LABEL =
-    'Haemoglobin concentration measured at the antenatal care visit by point-of-care test'
-const LONG_UNIT = 'grams per decilitre'
+export const elementSpec = (element: LabElement): ElementSpec =>
+    ELEMENTS[element]
+
+/** Whether a name, such as one from the lab's saved settings, is one of the lab's elements. */
+export const isLabElement = (value: string | undefined): value is LabElement =>
+    value !== undefined && Object.hasOwn(ELEMENTS, value)
+
+/** The element's value type first, then its name, such as "NUMBER · Haemoglobin". */
+export const elementTitle = (element: LabElement) => {
+    const spec = elementSpec(element)
+    const type = spec.options
+        ? `${spec.valueType} (option set)`
+        : spec.valueType
+    return `${type} · ${spec.name}`
+}
+
+/** The data element choices for a card, labelled by value type. */
+export const ELEMENT_CHOICES = Object.keys(ELEMENTS)
+    .filter(isLabElement)
+    .map((element) => [element, elementTitle(element)] as const)
+
+/** What the lab's DHIS2 holds for one card's data element. */
+export interface LabCard {
+    element: LabElement
+    /** Numbers, and yes/no: climbing takes up the habit halfway, jumpy flips at random. */
+    spread: 'steady' | 'flat' | 'climbing' | 'jumpy'
+    /** For numbers with bands. */
+    legendSet: boolean
+    /** For option sets: style colours on the options. */
+    optionColours: boolean
+    /** For TRUE_ONLY: the latest visit leaves the box unticked. */
+    trueOnlyUntick: boolean
+    neverRecorded: boolean
+    longLabel: boolean
+    /** The card asks for a data element the program doesn't capture. */
+    notInProgram: boolean
+}
+
+export interface LabSettings {
+    /** Completed visits for the person (0–500); each records every card's value. */
+    visits: number
+    irregularVisits: boolean
+    daysSinceLast: number
+    /** The cards' `staleAfterDays`; 0 leaves it unset. */
+    staleAfterDays: number
+    /** The specialist review stage, every fourth visit, is not data-readable. */
+    unreadableStage: boolean
+    enrollments: number
+    /** SCHEDULE and SKIPPED events carrying values that must not count. */
+    scheduledSkipped: boolean
+    calendar: Dhis2Calendar
+    cards: LabCard[]
+    cardWidth: number
+    cardsPerRow: number
+    arrangement: 'default' | 'composed'
+    network: LabNetwork
+}
+
+const BAND_COLOURS = ['#d32f2f', '#f57c00', '#fbc02d', '#388e3c']
 
 const OPTIONS = [
     ['1', 'None', '#388e3c'],
@@ -133,14 +170,12 @@ const NOTES = [
 ]
 
 /** The card's label and unit as the lab shows them. */
-export const subjectLabel = (settings: LabSettings) => {
-    if (settings.longLabel) return { label: LONG_LABEL, unit: LONG_UNIT }
+export const cardLabel = (card: LabCard) => {
+    const { name, unit, longUnit } = elementSpec(card.element)
+    if (!card.longLabel) return { label: name, unit }
     return {
-        label:
-            settings.optionSet === 'none'
-                ? LABELS[settings.valueType]
-                : 'Anaemia severity',
-        unit: NUMERIC.get(settings.valueType)?.unit,
+        label: `${name} measured at the antenatal care visit by point-of-care test`,
+        unit: longUnit ?? unit,
     }
 }
 
@@ -171,21 +206,21 @@ const round = (value: number, decimals: number) =>
 
 /** Readings' numeric values, oldest first. */
 const numericValues = (
-    settings: LabSettings,
+    count: number,
+    spread: LabCard['spread'],
     domain: Domain,
     random: () => number
 ) => {
-    const count = settings.readings
     const mid = (domain.min + domain.max) / 2
     const range = domain.max - domain.min
     return Array.from({ length: count }, (_, index) => {
         const t = count <= 1 ? 1 : index / (count - 1)
-        switch (settings.spread) {
+        switch (spread) {
             case 'flat':
                 return round(mid, domain.decimals)
-            case 'crossing': {
+            case 'climbing': {
                 // Climbs through every band to land exactly on the top band's start, which belongs to that band.
-                const top = domain.bands.at(-2) ?? domain.max
+                const top = domain.bands?.at(-2) ?? domain.max
                 return round(
                     domain.min + (top - domain.min) * t,
                     domain.decimals
@@ -202,14 +237,15 @@ const numericValues = (
     })
 }
 
-/** Readings' values as the tracker API sends them, oldest first. */
-const subjectValues = (
-    settings: LabSettings,
+/** One card's values as the tracker API sends them, oldest first; undefined sends none. */
+const cardValues = (
+    card: LabCard,
     dates: string[],
     random: () => number
 ): Array<string | undefined> => {
-    const domain = NUMERIC.get(settings.valueType)
-    if (settings.optionSet !== 'none') {
+    const spec: ElementSpec = ELEMENTS[card.element]
+    if (card.neverRecorded) return dates.map(() => undefined)
+    if (spec.options) {
         let code = 1
         return dates.map((_, index) => {
             code = Math.min(4, Math.max(1, code + Math.round(random() * 2 - 1)))
@@ -217,15 +253,22 @@ const subjectValues = (
             return index === dates.length - 1 ? '3' : String(code)
         })
     }
-    if (domain) return numericValues(settings, domain, random).map(String)
+    if (spec.domain) {
+        return numericValues(
+            dates.length,
+            card.spread,
+            spec.domain,
+            random
+        ).map(String)
+    }
     return dates.map((date, index) => {
         const last = index === dates.length - 1
-        switch (settings.valueType) {
+        switch (spec.valueType) {
             case 'BOOLEAN':
-                return last || random() < 0.3 ? 'true' : 'false'
+                return booleanValue(card.spread, index, dates.length, random)
             case 'TRUE_ONLY':
                 // An unticked TRUE_ONLY box sends no value at all.
-                return last && settings.trueOnlyUntick ? undefined : 'true'
+                return last && card.trueOnlyUntick ? undefined : 'true'
             case 'DATE':
                 return addDays(date, -20 - Math.floor(random() * 20))
             case 'COORDINATE':
@@ -236,92 +279,91 @@ const subjectValues = (
     })
 }
 
-/** Days between readings, oldest first; jumpy data visits irregularly. */
-const gaps = (settings: LabSettings, random: () => number) =>
-    Array.from({ length: settings.readings }, () =>
-        settings.spread === 'jumpy'
+const booleanValue = (
+    spread: LabCard['spread'],
+    index: number,
+    count: number,
+    random: () => number
+) => {
+    switch (spread) {
+        case 'flat':
+            return 'false'
+        case 'climbing':
+            // Took up the habit halfway, so the latest is Yes.
+            return index >= count / 2 ? 'true' : 'false'
+        case 'jumpy':
+            return random() < 0.5 ? 'true' : 'false'
+        default:
+            return random() < 0.2 ? 'true' : 'false'
+    }
+}
+
+/** Days between visits, oldest first. */
+const gaps = (settings: LabSettings, count: number, random: () => number) =>
+    Array.from({ length: count }, () =>
+        settings.irregularVisits
             ? 3 + Math.floor(random() * 60)
             : 12 + Math.floor(random() * 5)
     )
 
-const dataElementJson = (settings: LabSettings) => {
-    const domain = NUMERIC.get(settings.valueType)
-    const { label } = subjectLabel(settings)
+const dataElementJson = (card: LabCard, index: number) => {
+    const spec: ElementSpec = ELEMENTS[card.element]
+    const bands = spec.domain?.bands
+    const names = spec.domain?.names
     return {
-        id: SUBJECT,
-        displayName: LABELS[settings.valueType],
-        displayFormName: label,
-        valueType: settings.valueType,
+        id: CARD_ELEMENTS[index],
+        displayName: spec.name,
+        displayFormName: cardLabel(card).label,
+        valueType: spec.valueType,
         legendSets:
-            settings.legendSet && domain
+            card.legendSet && bands && names
                 ? [
                       {
-                          legends: domain.names.map((name, index) => ({
+                          legends: names.map((name, band) => ({
                               name,
                               color: BAND_COLOURS[
-                                  BAND_COLOURS.length -
-                                      domain.names.length +
-                                      index
+                                  BAND_COLOURS.length - names.length + band
                               ],
-                              startValue: domain.bands[index],
-                              endValue: domain.bands[index + 1],
+                              startValue: bands[band],
+                              endValue: bands[band + 1],
                           })),
                       },
                   ]
                 : [],
-        optionSet:
-            settings.optionSet === 'none'
-                ? undefined
-                : {
-                      options: OPTIONS.map(([code, name, color]) => ({
-                          code,
-                          name,
-                          style:
-                              settings.optionSet === 'coloured'
-                                  ? { color }
-                                  : {},
-                      })),
-                  },
+        optionSet: spec.options
+            ? {
+                  options: OPTIONS.map(([code, name, color]) => ({
+                      code,
+                      name,
+                      style: card.optionColours ? { color } : {},
+                  })),
+              }
+            : undefined,
     }
 }
 
-const programJson = (settings: LabSettings) => ({
-    id: LAB_PROGRAM,
-    programStages: [
-        {
-            id: VISIT_STAGE,
-            displayName: 'Antenatal visit',
-            access: { data: { read: true } },
-            programStageDataElements: [
-                { dataElement: dataElementJson(settings) },
-                {
-                    dataElement: {
-                        id: WEIGHT,
-                        displayName: 'Weight',
-                        valueType: 'NUMBER',
-                        legendSets: [],
-                    },
-                },
-                {
-                    dataElement: {
-                        id: SMOKER,
-                        displayName: 'Smokes tobacco',
-                        valueType: 'BOOLEAN',
-                        legendSets: [],
-                    },
-                },
-            ],
-        },
-        {
-            id: REVIEW_STAGE,
-            displayName: 'Specialist review',
-            access: { data: { read: !settings.unreadableStage } },
-            programStageDataElements: [
-                { dataElement: dataElementJson(settings) },
-            ],
-        },
-    ],
-})
+const programJson = (settings: LabSettings) => {
+    const dataElements = settings.cards.map((card, index) => ({
+        dataElement: dataElementJson(card, index),
+    }))
+    return {
+        id: LAB_PROGRAM,
+        programStages: [
+            {
+                id: VISIT_STAGE,
+                displayName: 'Antenatal visit',
+                access: { data: { read: true } },
+                programStageDataElements: dataElements,
+            },
+            {
+                id: REVIEW_STAGE,
+                displayName: 'Specialist review',
+                access: { data: { read: !settings.unreadableStage } },
+                programStageDataElements: dataElements,
+            },
+        ],
+    }
+}
 
 interface LabEvent {
     event: string
@@ -344,28 +386,29 @@ interface LabEvent {
  */
 export const generateLabData = (settings: LabSettings, today = isoToday()) => {
     const random = seeded(20261102)
-    const readings = Math.max(0, Math.min(500, Math.round(settings.readings)))
+    const visits = Math.max(0, Math.min(500, Math.round(settings.visits)))
     const enrollmentCount = Math.max(1, Math.min(3, settings.enrollments))
-    const sized = { ...settings, readings }
-    const steps = gaps(sized, random)
+    const steps = gaps(settings, visits, random)
     const dates: string[] = []
     let offset = -settings.daysSinceLast
-    for (let index = readings - 1; index >= 0; index--) {
+    for (let index = visits - 1; index >= 0; index--) {
         dates.unshift(addDays(today, offset))
         offset -= steps[index] ?? 14
     }
-    const values = subjectValues(sized, dates, random)
+    // Each card draws from its own sequence, so changing one card leaves the others' readings alone.
+    const values = settings.cards.map((card, index) =>
+        cardValues(card, dates, seeded(20261102 + 7919 * (index + 1)))
+    )
     const enrollments = Array.from({ length: enrollmentCount }, (_, index) => ({
         enrollment: uid('labEnrol', index + 1),
         trackedEntity: LAB_PERSON,
         program: LAB_PROGRAM,
         status: index === enrollmentCount - 1 ? 'ACTIVE' : 'COMPLETED',
-        enrolledAt: `${dates[Math.floor((index * readings) / enrollmentCount)] ?? today}T00:00:00.000`,
+        enrolledAt: `${dates[Math.floor((index * visits) / enrollmentCount)] ?? today}T00:00:00.000`,
     }))
     const enrollmentOf = (index: number) =>
-        enrollments[
-            Math.floor((index * enrollmentCount) / Math.max(1, readings))
-        ]?.enrollment ?? enrollments[0].enrollment
+        enrollments[Math.floor((index * enrollmentCount) / Math.max(1, visits))]
+            ?.enrollment ?? enrollments[0].enrollment
     const event = (
         index: number,
         fields: Pick<LabEvent, 'programStage' | 'status' | 'dataValues'> & {
@@ -374,7 +417,7 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
     ): LabEvent => ({
         event: uid('labEvent', index),
         trackedEntity: LAB_PERSON,
-        enrollment: enrollmentOf(Math.min(index, readings - 1)),
+        enrollment: enrollmentOf(Math.min(index, visits - 1)),
         program: LAB_PROGRAM,
         programStage: fields.programStage,
         status: fields.status,
@@ -384,68 +427,42 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
         dataValues: fields.dataValues,
     })
 
-    const events = dates.map((date, index) => {
-        // Every fourth visit is a specialist review, which captures only the subject.
-        const review = index % 4 === 3
-        const value = values[index]
-        return event(index, {
+    const events = dates.map((date, index) =>
+        event(index, {
             date,
-            programStage: review ? REVIEW_STAGE : VISIT_STAGE,
-            status: index === readings - 1 ? 'ACTIVE' : 'COMPLETED',
-            dataValues: [
-                ...(value === undefined
-                    ? []
-                    : [{ dataElement: SUBJECT, value }]),
-                ...(review
-                    ? []
-                    : [
-                          {
-                              dataElement: WEIGHT,
-                              value: String(round(62 + random() * 4, 1)),
-                          },
-                          {
-                              dataElement: SMOKER,
-                              // The jumpy person took up smoking halfway, so one preset shows Yes.
-                              value:
-                                  random() < 0.2 ||
-                                  (settings.spread === 'jumpy' &&
-                                      index >= readings / 2)
-                                      ? 'true'
-                                      : 'false',
-                          },
-                      ]),
-            ],
+            // Every fourth visit is a specialist review.
+            programStage: index % 4 === 3 ? REVIEW_STAGE : VISIT_STAGE,
+            status: index === visits - 1 ? 'ACTIVE' : 'COMPLETED',
+            dataValues: CARD_ELEMENTS.flatMap((dataElement, card) => {
+                const value = values[card]?.[index]
+                return value === undefined ? [] : [{ dataElement, value }]
+            }),
         })
-    })
+    )
     if (settings.scheduledSkipped) {
         // Values that would stand out if a SCHEDULE or SKIPPED event were counted.
-        const outlier = NUMERIC.get(settings.valueType)
-            ? '999'
-            : 'MUST NOT SHOW'
+        const outliers = settings.cards.map((card, index) => ({
+            dataElement: CARD_ELEMENTS[index] ?? '',
+            value: elementSpec(card.element).domain ? '999' : 'MUST NOT SHOW',
+        }))
         const extra = dates.flatMap((date, index) =>
             index % 5 === 2
                 ? [
-                      event(readings + index, {
+                      event(visits + index, {
                           date: addDays(date, 2),
                           programStage: VISIT_STAGE,
                           status: 'SKIPPED',
-                          dataValues: [
-                              { dataElement: SUBJECT, value: outlier },
-                              { dataElement: WEIGHT, value: '999' },
-                          ],
+                          dataValues: outliers,
                       }),
                   ]
                 : []
         )
         extra.push(
-            event(readings * 2, {
+            event(visits * 2, {
                 date: addDays(today, 14),
                 programStage: VISIT_STAGE,
                 status: 'SCHEDULE',
-                dataValues: [
-                    { dataElement: SUBJECT, value: outlier },
-                    { dataElement: WEIGHT, value: '999' },
-                ],
+                dataValues: outliers,
             })
         )
         events.push(...extra)

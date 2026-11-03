@@ -33,7 +33,7 @@ Knip already treats `src/lab/*/main.tsx` as an entry and Vitest already runs
 | `NetworkControls`            | A default delay, then each resource's delay and whether it answers, fails with a 500 or hangs.                                                                                            |
 | `RequestWaterfall`           | Every request on a timeline, with its outcome. Feed it the log that `LabServerScope` writes.                                                                                              |
 | `throughNetwork` (`network`) | What `LabServerScope` uses: waits, fails or hangs as the endpoint says, then answers and logs. Use it directly only for requests outside app-runtime.                                     |
-| `controls`                   | The sidebar's rows: `Section`, `Check`, `NumberRow`, `SelectRow`, `Segmented`, and `PresetControls` for a lab's named presets.                                                            |
+| `controls`                   | The sidebar's rows: `Section`, `Disclosure`, `Check`, `NumberRow`, `SelectRow`, `Segmented`, and `PresetControls` for a lab's named presets.                                              |
 | `lab.css`                    | The lab's own look (`--lab-*` tokens). `LabLayout` loads it; it never styles the block under test.                                                                                        |
 
 ## Writing the server

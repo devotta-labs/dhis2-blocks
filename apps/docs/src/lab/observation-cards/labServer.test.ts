@@ -4,7 +4,12 @@ import {
     ProgramMetadataResponseSchema,
 } from '@/components/observation-cards/api/schemas'
 import { describe, expect, it } from 'vitest'
-import { generateLabData, LAB_PERSON, LAB_PROGRAM, SMOKER } from './labData'
+import {
+    CARD_ELEMENTS,
+    generateLabData,
+    LAB_PERSON,
+    LAB_PROGRAM,
+} from './labData'
 import { answer } from './labServer'
 import { DEFAULT_SETTINGS, PRESETS } from './presets'
 
@@ -121,9 +126,41 @@ describe('the observations lab server', () => {
                 (a.occurredAt ?? '').localeCompare(b.occurredAt ?? '')
             )
             .flatMap(({ dataValues }) =>
-                dataValues.filter(({ dataElement }) => dataElement === SMOKER)
+                dataValues.filter(
+                    ({ dataElement }) => dataElement === CARD_ELEMENTS[2]
+                )
             )
         expect(smoker.at(-1)?.value).toBe('true')
+    })
+
+    it("gives each card its own data element, and changing one card leaves the others' readings alone", () => {
+        const settings = settingsOf('Dates and text')
+        const metadata = ProgramMetadataResponseSchema.parse(
+            answer(settings)({ resource: 'programs', id: LAB_PROGRAM })
+        )
+        expect(
+            CARD_ELEMENTS.map((id) => metadata.dataElements.get(id)?.valueType)
+        ).toEqual(['DATE', 'TEXT', 'INTEGER_POSITIVE'])
+
+        const valuesOf = (events: ReturnType<typeof eventsPage>, id: string) =>
+            events.flatMap(({ dataValues }) =>
+                dataValues
+                    .filter(({ dataElement }) => dataElement === id)
+                    .map(({ value }) => value)
+            )
+        const before = eventsPage(DEFAULT_SETTINGS)
+        const after = eventsPage({
+            ...DEFAULT_SETTINGS,
+            cards: DEFAULT_SETTINGS.cards.map((card, index) =>
+                index === 0 ? { ...card, spread: 'jumpy' } : card
+            ),
+        })
+        expect(valuesOf(after, CARD_ELEMENTS[0])).not.toEqual(
+            valuesOf(before, CARD_ELEMENTS[0])
+        )
+        for (const id of CARD_ELEMENTS.slice(1)) {
+            expect(valuesOf(after, id)).toEqual(valuesOf(before, id))
+        }
     })
 
     it('answers nothing for another person', () => {

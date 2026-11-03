@@ -1,67 +1,38 @@
-import { Check, NumberRow, Section, SelectRow } from '../controls'
-import type { LabSettings } from './labData'
+import { Check, Disclosure, NumberRow, Section, SelectRow } from '../controls'
+import {
+    CARD_ELEMENTS,
+    ELEMENT_CHOICES,
+    elementSpec,
+    elementTitle,
+    type LabCard,
+    type LabSettings,
+} from './labData'
 
 type Change = (changes: Partial<LabSettings>) => void
 
-/** What the lab's DHIS2 holds: the readings and the data element's metadata. */
-export const DataControls = ({
+/** The person's visits, which every card's readings come from. */
+export const VisitControls = ({
     settings,
     onChange,
 }: {
     settings: LabSettings
     onChange: Change
 }) => (
-    <Section title="Data">
+    <Section title="Visits">
         <NumberRow
-            label="Readings"
-            value={settings.readings}
+            label="Visits"
+            value={settings.visits}
             max={500}
-            onChange={(readings) => onChange({ readings })}
-        />
-        <SelectRow
-            label="Value spread"
-            value={settings.spread}
-            options={[
-                ['steady', 'Steady'],
-                ['flat', 'Flat'],
-                ['crossing', 'Crossing legend ranges'],
-                ['jumpy', 'Jumpy, irregular visits'],
-            ]}
-            onChange={(spread) => onChange({ spread })}
-        />
-        <SelectRow
-            label="Value type"
-            value={settings.valueType}
-            options={[
-                ['NUMBER', 'NUMBER'],
-                ['INTEGER_POSITIVE', 'INTEGER_POSITIVE'],
-                ['PERCENTAGE', 'PERCENTAGE'],
-                ['BOOLEAN', 'BOOLEAN'],
-                ['TRUE_ONLY', 'TRUE_ONLY'],
-                ['TEXT', 'TEXT'],
-                ['DATE', 'DATE'],
-                ['COORDINATE', 'COORDINATE (unsupported)'],
-            ]}
-            onChange={(valueType) => onChange({ valueType })}
+            onChange={(visits) => onChange({ visits })}
         />
         <Check
-            checked={settings.legendSet}
-            onChange={(legendSet) => onChange({ legendSet })}
+            checked={settings.irregularVisits}
+            onChange={(irregularVisits) => onChange({ irregularVisits })}
         >
-            Legend set (numbers)
+            Irregular gaps between visits
         </Check>
-        <SelectRow
-            label="Option set"
-            value={settings.optionSet}
-            options={[
-                ['none', 'None'],
-                ['plain', 'Without colours'],
-                ['coloured', 'With style colours'],
-            ]}
-            onChange={(optionSet) => onChange({ optionSet })}
-        />
         <NumberRow
-            label="Days since last reading"
+            label="Days since last visit"
             value={settings.daysSinceLast}
             max={3650}
             onChange={(daysSinceLast) => onChange({ daysSinceLast })}
@@ -77,7 +48,7 @@ export const DataControls = ({
             checked={settings.unreadableStage}
             onChange={(unreadableStage) => onChange({ unreadableStage })}
         >
-            Unreadable stage
+            Review stage unreadable (every 4th visit)
         </Check>
         <Check
             checked={settings.scheduledSkipped}
@@ -85,24 +56,119 @@ export const DataControls = ({
         >
             Scheduled and skipped events mixed in
         </Check>
-        <Check
-            checked={settings.trueOnlyUntick}
-            onChange={(trueOnlyUntick) => onChange({ trueOnlyUntick })}
-        >
-            TRUE_ONLY: latest unticked
-        </Check>
-        <Check
-            checked={settings.longLabel}
-            onChange={(longLabel) => onChange({ longLabel })}
-        >
-            Long label and unit
-        </Check>
-        <Check
-            checked={settings.notInProgram}
-            onChange={(notInProgram) => onChange({ notInProgram })}
-        >
-            First card: data element not in program
-        </Check>
+    </Section>
+)
+
+/** One card's data element and its readings; only the rows that apply to its type show. */
+const CardData = ({
+    card,
+    onChange,
+}: {
+    card: LabCard
+    onChange: (changes: Partial<LabCard>) => void
+}) => {
+    const spec = elementSpec(card.element)
+    const hasBands = spec.domain?.bands !== undefined
+    const hasSpread = spec.domain !== undefined || spec.valueType === 'BOOLEAN'
+    return (
+        <>
+            <SelectRow
+                label="Data element"
+                value={card.element}
+                options={ELEMENT_CHOICES}
+                onChange={(element) => onChange({ element })}
+            />
+            {hasSpread ? (
+                <SelectRow
+                    label="Values"
+                    value={card.spread}
+                    options={[
+                        ['steady', 'Steady'],
+                        ['flat', 'Same every visit'],
+                        [
+                            'climbing',
+                            hasBands ? 'Climbing through legends' : 'Climbing',
+                        ],
+                        ['jumpy', 'Jumpy'],
+                    ]}
+                    onChange={(spread) => onChange({ spread })}
+                />
+            ) : null}
+            {hasBands ? (
+                <Check
+                    checked={card.legendSet}
+                    onChange={(legendSet) => onChange({ legendSet })}
+                >
+                    Legend set
+                </Check>
+            ) : null}
+            {spec.options ? (
+                <Check
+                    checked={card.optionColours}
+                    onChange={(optionColours) => onChange({ optionColours })}
+                >
+                    Option colours
+                </Check>
+            ) : null}
+            {spec.valueType === 'TRUE_ONLY' ? (
+                <Check
+                    checked={card.trueOnlyUntick}
+                    onChange={(trueOnlyUntick) => onChange({ trueOnlyUntick })}
+                >
+                    Unticked at the latest visit
+                </Check>
+            ) : null}
+            <Check
+                checked={card.neverRecorded}
+                onChange={(neverRecorded) => onChange({ neverRecorded })}
+            >
+                Never recorded
+            </Check>
+            <Check
+                checked={card.longLabel}
+                onChange={(longLabel) => onChange({ longLabel })}
+            >
+                Long label and unit
+            </Check>
+            <Check
+                checked={card.notInProgram}
+                onChange={(notInProgram) => onChange({ notInProgram })}
+            >
+                Asks for a data element not in the program
+            </Check>
+        </>
+    )
+}
+
+/** Each card's data, folded under its name so it's clear which card a row changes. */
+export const CardDataControls = ({
+    settings,
+    onChange,
+}: {
+    settings: LabSettings
+    onChange: Change
+}) => (
+    <Section title="Data per card">
+        {settings.cards.map((card, index) => (
+            <Disclosure
+                key={CARD_ELEMENTS[index]}
+                defaultOpen={index === 0}
+                summary={`Card ${index + 1} · ${elementTitle(card.element)}`}
+            >
+                <CardData
+                    card={card}
+                    onChange={(changes) =>
+                        onChange({
+                            cards: settings.cards.map((each, position) =>
+                                position === index
+                                    ? { ...each, ...changes }
+                                    : each
+                            ),
+                        })
+                    }
+                />
+            </Disclosure>
+        ))}
     </Section>
 )
 
@@ -132,7 +198,7 @@ export const ServerControls = ({
     </Section>
 )
 
-/** The cards' props and the lab's layout around them; the block keeps its own look. */
+/** Every card's props and the lab's layout around them; the block keeps its own look. */
 export const CardControls = ({
     settings,
     onChange,
@@ -140,7 +206,7 @@ export const CardControls = ({
     settings: LabSettings
     onChange: Change
 }) => (
-    <Section title="Cards">
+    <Section title="Props and layout">
         <SelectRow
             label="Card"
             value={settings.arrangement}

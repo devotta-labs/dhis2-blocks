@@ -1,4 +1,4 @@
-export interface ObservationLegend {
+export interface ObservationLegendBand {
     name: string
     color: string
     startValue: number
@@ -37,7 +37,7 @@ export interface ObservationSeries {
     /** latest.numericValue - previous.numericValue, numeric types only. */
     change?: number
     /** First legend set, sorted by startValue. */
-    legends?: ObservationLegend[]
+    legends?: ObservationLegendBand[]
     options?: ObservationOption[]
     /** A stage capturing this element is not data-readable. */
     partial: boolean
@@ -48,7 +48,7 @@ export interface DataElementMetadata {
     displayName: string
     displayFormName?: string
     valueType: string
-    legendSets?: { legends: ObservationLegend[] }[]
+    legendSets?: { legends: ObservationLegendBand[] }[]
     optionSet?: {
         options: { code: string; name: string; style?: { color?: string } }[]
     }

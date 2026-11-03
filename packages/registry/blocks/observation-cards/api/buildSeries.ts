@@ -1,6 +1,6 @@
 import type {
     DataElementMetadata,
-    ObservationLegend,
+    ObservationLegendBand,
     ObservationOption,
     ObservationPoint,
     ObservationSeries,
@@ -19,7 +19,7 @@ const NUMERIC_VALUE_TYPES = new Set([
 ])
 
 /** Value types whose readings carry a `numericValue`. */
-const isNumericValueType = (valueType: string): boolean =>
+export const isNumericValueType = (valueType: string): boolean =>
     NUMERIC_VALUE_TYPES.has(valueType)
 
 const ELIGIBLE_STATUSES = new Set(['ACTIVE', 'COMPLETED'])
@@ -32,7 +32,7 @@ const HAS_ZONE = /(Z|[+-]\d{2}(:?\d{2})?)$/i
  * strings are read as UTC so they order consistently with zoned strings.
  * Returns NaN when the string is not a date.
  */
-const toInstant = (iso: string): number => {
+export const toInstant = (iso: string): number => {
     if (DATE_ONLY.test(iso)) {
         return Date.parse(`${iso}T00:00:00Z`)
     }
@@ -71,7 +71,7 @@ const compareDated = (a: DatedPoint, b: DatedPoint): number => {
 
 const buildLegends = (
     dataElement: DataElementMetadata
-): ObservationLegend[] | undefined => {
+): ObservationLegendBand[] | undefined => {
     const legends = dataElement.legendSets?.[0]?.legends
     if (!legends || legends.length === 0) {
         return undefined

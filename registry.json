@@ -682,6 +682,145 @@
             ]
         },
         {
+            "name": "observation-cards",
+            "type": "registry:block",
+            "title": "DHIS2 Observation Cards",
+            "description": "Composable cards for one person's measurements over time and last recorded values, coloured by DHIS2 legend sets.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "prop-types@^15.8.1",
+                "recharts@^3.8.0",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/badge",
+                "devotta-labs/dhis2-blocks/card",
+                "devotta-labs/dhis2-blocks/chart",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/skeleton",
+                "devotta-labs/dhis2-blocks/tooltip"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/buildSeries.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/buildSeries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/queries.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/queries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/queryKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/queryKeys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/runtimeClient.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/runtimeClient.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/schemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/card/ObservationCard.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/card/ObservationCard.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/card/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/card/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/card/frame.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/card/frame.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/format/display.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/format/display.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/hooks.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/parts/ObservationChange.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/parts/ObservationChange.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/parts/ObservationLabel.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/parts/ObservationLabel.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/parts/ObservationLegend.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/parts/ObservationLegend.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/parts/ObservationRecorded.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/parts/ObservationRecorded.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/parts/ObservationSparkline.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/parts/ObservationSparkline.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/parts/ObservationValue.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/parts/ObservationValue.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/provider/ObservationsProvider.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/provider/ObservationsProvider.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/provider/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/provider/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/provider/env.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/provider/env.ts"
+                }
+            ],
+            "docs": "Wrap the cards in ObservationsProvider with a trackedEntity and a program; it loads the program's metadata and the person's events once for every card inside. Render one ObservationCard per data element uid, with an optional unit, label and staleAfterDays. Without children a card picks its arrangement from the value type: numbers show the latest value, its legend, the change since the previous reading and a sparkline; other types show the last recorded value. To compose a different card, place the parts ObservationLabel, ObservationLegend, ObservationValue, ObservationChange, ObservationSparkline and ObservationRecorded inside it. The card shows the loading, error and never recorded states itself, and the recorded date can be placed but never dropped. Use useObservation for custom layouts. See the observation cards docs page for examples."
+        },
+        {
             "name": "sidebar",
             "type": "registry:block",
             "title": "Sidebar",

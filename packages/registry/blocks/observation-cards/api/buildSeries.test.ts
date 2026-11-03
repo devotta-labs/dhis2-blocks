@@ -1,7 +1,7 @@
 import { buildSeries } from './buildSeries'
 import type {
     DataElementMetadata,
-    ObservationLegend,
+    ObservationLegendBand,
     StageMetadata,
     TrackerEventRecord,
 } from './types'
@@ -311,7 +311,12 @@ describe('buildSeries', () => {
             name: string,
             startValue: number,
             endValue: number
-        ): ObservationLegend => ({ name, color: '#000', startValue, endValue })
+        ): ObservationLegendBand => ({
+            name,
+            color: '#000',
+            startValue,
+            endValue,
+        })
         const series = build([], {
             dataElement: {
                 legendSets: [

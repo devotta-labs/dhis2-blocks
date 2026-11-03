@@ -15,6 +15,7 @@ import {
 } from './eventSchemas'
 import type { ProgramStage, TrackerEvent } from './eventSchemas'
 import { eventSaver } from './eventSave'
+import { fieldOf } from './fieldOf'
 import { completionExpired, expiryStart, localToday } from './expiry'
 import { hasRulesIn } from './hasRules'
 import type {
@@ -86,23 +87,10 @@ const dataElementsOf = (list: ProgramStage[]) =>
         )
     )
 
-const toColumn = ({
-    id,
-    displayFormName,
-    valueType,
-    fieldMask,
-    optionSet,
-}: DataElement): GridColumn => ({
-    id,
-    label: displayFormName,
-    field: {
-        valueType,
-        fieldMask,
-        options: optionSet?.options.map(({ code, displayName }) => ({
-            code,
-            name: displayName,
-        })),
-    },
+const toColumn = (dataElement: DataElement): GridColumn => ({
+    id: dataElement.id,
+    label: dataElement.displayFormName,
+    field: fieldOf(dataElement),
 })
 
 const toForm = (

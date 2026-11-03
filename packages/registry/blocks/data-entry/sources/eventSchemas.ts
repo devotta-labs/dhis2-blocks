@@ -9,6 +9,20 @@ export const EVENT_DATE_COLUMN = 'occurredAt'
 export const EVENT_FIELDS =
     'event,enrollment,program,programStage,orgUnit,occurredAt,scheduledAt,completedAt,status,attributeOptionCombo,dataValues[dataElement,value]'
 
+/** The options of an option set, as the program query returns them. */
+export const optionSetSchema = z.object({
+    options: z.array(z.object({ code: z.string(), displayName: z.string() })),
+})
+
+/** A data element as the program query returns it. */
+export const dataElementSchema = z.object({
+    id: z.string(),
+    displayFormName: z.string(),
+    valueType: z.string(),
+    fieldMask: z.string().optional(),
+    optionSet: optionSetSchema.optional(),
+})
+
 const stageSchema = z.object({
     id: z.string(),
     displayName: z.string(),
@@ -19,22 +33,7 @@ const stageSchema = z.object({
     programStageDataElements: z.array(
         z.object({
             compulsory: z.boolean(),
-            dataElement: z.object({
-                id: z.string(),
-                displayFormName: z.string(),
-                valueType: z.string(),
-                fieldMask: z.string().optional(),
-                optionSet: z
-                    .object({
-                        options: z.array(
-                            z.object({
-                                code: z.string(),
-                                displayName: z.string(),
-                            })
-                        ),
-                    })
-                    .optional(),
-            }),
+            dataElement: dataElementSchema,
         })
     ),
     programStageSections: z

@@ -1,0 +1,100 @@
+{
+    "displayIncidentDate": false,
+    "trackedEntityType": { "id": "nEenWmSyUEp" },
+    "displayName": "Child immunisation register",
+    "id": "ImmReg00001",
+    "programStages": [
+        {
+            "minDaysFromStart": 0,
+            "programStageDataElements": [
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "BCG", "displayName": "BCG" },
+                                { "code": "OPV", "displayName": "OPV" },
+                                { "code": "DPT", "displayName": "DPT" },
+                                { "code": "MEASLES", "displayName": "MEASLES" }
+                            ]
+                        },
+                        "displayFormName": "Vaccine",
+                        "id": "ImmVaccine1"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "0", "displayName": "0" },
+                                { "code": "1", "displayName": "1" },
+                                { "code": "2", "displayName": "2" },
+                                { "code": "3", "displayName": "3" }
+                            ]
+                        },
+                        "displayFormName": "Dose",
+                        "id": "ImmDose0001"
+                    },
+                    "compulsory": false
+                }
+            ],
+            "autoGenerateEvent": false,
+            "validationStrategy": "ON_COMPLETE",
+            "generatedByEnrollmentDate": false,
+            "openAfterEnrollment": false,
+            "displayName": "Vaccination",
+            "id": "ImmVaccin01",
+            "repeatable": true
+        }
+    ],
+    "programTrackedEntityAttributes": [
+        {
+            "mandatory": true,
+            "trackedEntityAttribute": {
+                "valueType": "TEXT",
+                "unique": false,
+                "generated": false,
+                "displayFormName": "First name",
+                "id": "w75KJ2mc4zz"
+            }
+        },
+        {
+            "mandatory": true,
+            "trackedEntityAttribute": {
+                "valueType": "TEXT",
+                "unique": false,
+                "generated": false,
+                "displayFormName": "Last name",
+                "id": "zDhUuAYrxNC"
+            }
+        },
+        {
+            "mandatory": true,
+            "trackedEntityAttribute": {
+                "valueType": "DATE",
+                "unique": false,
+                "generated": false,
+                "displayFormName": "Birth date",
+                "id": "gHGyrwKPzej"
+            }
+        },
+        {
+            "mandatory": false,
+            "trackedEntityAttribute": {
+                "valueType": "TEXT",
+                "optionSet": {
+                    "options": [
+                        { "code": "Male", "displayName": "Male" },
+                        { "code": "Female", "displayName": "Female" }
+                    ]
+                },
+                "unique": false,
+                "generated": false,
+                "displayFormName": "Gender",
+                "id": "cejWyOfXge6"
+            }
+        }
+    ]
+}

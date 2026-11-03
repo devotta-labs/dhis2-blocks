@@ -1,6 +1,8 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
+import { PersonVitalsPlaceholder } from './observation-cards/ObservationCardsPlaceholders'
+import personVitalsSource from './observation-cards/PersonVitals.tsx?raw'
 import {
     WorkingListDefaultPlaceholder,
     WorkingListProgramPickerPlaceholder,
@@ -86,6 +88,15 @@ const examples = [
         source: workingListCalendarTabsSource,
         minHeight: 900,
         Placeholder: WorkingListDefaultPlaceholder,
+    },
+    {
+        slug: 'observation-cards/person-vitals',
+        title: 'Observation cards',
+        live: true,
+        Component: lazy(() => import('./observation-cards/PersonVitals')),
+        source: personVitalsSource,
+        minHeight: 220,
+        Placeholder: PersonVitalsPlaceholder,
     },
     {
         slug: 'context-selector/basic',

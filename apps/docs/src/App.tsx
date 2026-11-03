@@ -70,6 +70,10 @@ const router = createBrowserRouter([
                 '/blocks/context-selector',
                 './pages/blocks/context-selector.mdx'
             ),
+            docRoute(
+                '/blocks/observation-cards',
+                './pages/blocks/observation-cards.mdx'
+            ),
         ],
     },
     {

@@ -26,6 +26,7 @@ export const docsNavigation: readonly NavigationGroup[] = [
             },
             { title: 'Context Selector', href: '/blocks/context-selector' },
             { title: 'Sidebar', href: '/blocks/sidebar' },
+            { title: 'Observation Cards', href: '/blocks/observation-cards' },
         ],
     },
 ]

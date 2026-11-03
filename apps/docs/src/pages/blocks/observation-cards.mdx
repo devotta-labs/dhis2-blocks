@@ -44,9 +44,9 @@ export function PersonVitals({ personId }: { personId: string }) {
 
 The provider loads the program's metadata and the person's events once, for
 every card inside it. Cards are read-only. They read the readings from every
-stage of the program the user can see, and look for the data element in the
-program's stages, so a data element the program doesn't capture shows a setup
-message. List a program's data elements with:
+stage the user can see that captures the data element, as DHIS2's own forms
+show them: a value left on a stage that no longer captures the element doesn't
+count. A data element the program doesn't capture shows a setup message. List a program's data elements with:
 
 ```
 GET /api/programs/<program>?fields=programStages[programStageDataElements[dataElement[id,displayName,valueType]]]

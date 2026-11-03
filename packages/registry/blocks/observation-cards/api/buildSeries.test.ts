@@ -78,6 +78,31 @@ describe('buildSeries', () => {
         expect(ids(series)).toEqual(['e1', 'e3a', 'e3b', 'e4', 'e5'])
     })
 
+    it('leaves out a value from a stage that no longer captures the element', () => {
+        const series = build(
+            [
+                event('visit', '2026-01-01T00:00:00.000Z', '12'),
+                // Saved before the element was taken off this stage's form.
+                event('old', '2026-02-01T00:00:00.000Z', '8', {
+                    programStage: 'stageOld',
+                }),
+            ],
+            {
+                stages: [
+                    stage(),
+                    stage({
+                        id: 'stageOld',
+                        displayName: 'Old',
+                        dataElementIds: [],
+                    }),
+                ],
+            }
+        )
+
+        expect(ids(series)).toEqual(['visit'])
+        expect(series.latest?.value).toBe('12')
+    })
+
     it('reads the element from every stage that captures it', () => {
         const series = build(
             [

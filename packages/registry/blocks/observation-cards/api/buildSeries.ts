@@ -130,6 +130,11 @@ export function buildSeries({
         if (Number.isNaN(occurredInstant)) {
             continue
         }
+        // Only stages that capture the element now: DHIS2 shows no other stage's
+        // value for it, so a card must not either.
+        if (!capturingStageIds.has(event.programStage)) {
+            continue
+        }
 
         const rawValue = event.dataValues.find(
             (dv) => dv.dataElement === dataElement.id
@@ -137,9 +142,6 @@ export function buildSeries({
 
         let value: string
         if (isTrueOnly) {
-            if (!capturingStageIds.has(event.programStage)) {
-                continue
-            }
             value = rawValue === 'true' ? 'true' : 'false'
         } else {
             if (rawValue === undefined || rawValue.trim() === '') {

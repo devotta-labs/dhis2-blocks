@@ -8,21 +8,23 @@ import { legendFor, normaliseColor, readableTextColor } from '../format/display'
 export function MetadataBadge({
     name,
     color,
+    className,
 }: {
     name: string
     color?: string
+    className?: string
 }) {
     const background = normaliseColor(color)
     if (background === undefined) {
         return (
-            <Badge variant="outline" className="max-w-full">
+            <Badge variant="outline" className={cn('max-w-full', className)}>
                 {name}
             </Badge>
         )
     }
     return (
         <Badge
-            className="max-w-full"
+            className={cn('max-w-full', className)}
             style={{
                 backgroundColor: background,
                 color: readableTextColor(background),

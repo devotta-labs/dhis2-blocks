@@ -187,7 +187,9 @@ describe('the default arrangement', () => {
         expect(text).toContain('up 6 g/dL since Mar 8, 2026')
         expect(text).toContain('Recorded Mar 12, 2026 · Antenatal visit')
         expect(text).not.toContain('hidden by your access')
-        expect(container.querySelector('[data-slot="chart"]')).not.toBeNull()
+        await expect
+            .poll(() => container.querySelector('[data-slot="chart"]'))
+            .not.toBeNull()
     })
 
     it('falling change shows a down arrow and the absolute value', async () => {
@@ -459,8 +461,34 @@ describe('the default arrangement', () => {
         const note = slot(container, 'stale-note')
         expect(note?.classList).toContain('text-dhis2-yellow-800')
         expect(note?.querySelector('[aria-hidden="true"] svg')).not.toBeNull()
-        expect(note?.textContent).toBe(
+        // Sighted users read "Out of date"; a screen reader hears the threshold.
+        expect(
+            [...(note?.querySelectorAll('[aria-hidden="true"]') ?? [])]
+                .map((part) => part.textContent)
+                .join('')
+        ).toBe('Out of date')
+        expect(note?.querySelector('.sr-only')?.textContent).toBe(
             'Out of date: last recorded over 30 days ago'
+        )
+        expect(slot(container, 'observation-recorded')?.classList).toContain(
+            'bg-dhis2-yellow-050'
+        )
+    })
+
+    it('stale point greys the sparkline too', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(NOW)
+        const { container } = await renderWith(
+            <ObservationCard dataElement={DE} staleAfterDays={30} />,
+            { readings: march(70, 72) }
+        )
+        await expect
+            .poll(() => container.querySelector('.recharts-line-curve'))
+            .not.toBeNull()
+        const curve = container.querySelector('.recharts-line-curve')
+        // --color-dhis2-grey-500
+        expect(curve && getComputedStyle(curve).stroke).toBe(
+            'rgb(160, 173, 186)'
         )
     })
 
@@ -494,9 +522,10 @@ describe('the default arrangement', () => {
             <ObservationCard dataElement={DE} staleAfterDays={1} />,
             bloodGroup
         )
-        expect(slot(container, 'stale-note')?.textContent).toBe(
-            'Out of date: last recorded over 1 day ago'
-        )
+        expect(
+            slot(container, 'stale-note')?.querySelector('.sr-only')
+                ?.textContent
+        ).toBe('Out of date: last recorded over 1 day ago')
     })
 
     it('a recent point is not stale', async () => {

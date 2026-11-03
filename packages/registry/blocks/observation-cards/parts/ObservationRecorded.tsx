@@ -9,7 +9,7 @@ import { IconWarningFilled16 } from '@dhis2/ui-icons'
 import React, { useLayoutEffect, type ComponentPropsWithoutRef } from 'react'
 import type { ObservationPoint } from '../api/types'
 import { useObservationCard } from '../card/context'
-import { CardNote, FOOTER_BAND } from '../card/frame'
+import { CardNote, FOOTER_BAND, STALE_BAND } from '../card/frame'
 import {
     formatRecordedDate,
     isStale,
@@ -35,23 +35,23 @@ const staleNote = (days: number): string =>
           })
 
 /**
- * When a reading was recorded, as "3 days ago", with a warning icon once it is
- * out of date. Hovering or focusing it shows the date and program stage; a
- * screen reader hears those in full instead of the short form.
+ * When a reading was recorded, as "3 days ago", followed by "Out of date" once
+ * it is. Hovering or focusing it shows the date and program stage; a screen
+ * reader hears those in full instead of the short form.
  */
 function RecordedNote({
     point,
     staleAfterDays,
+    stale,
+    now,
     display,
 }: {
     point: ObservationPoint
     staleAfterDays?: number
+    stale: boolean
+    now: Date
     display: DisplayOptions
 }) {
-    // Read per render so tests can stub the clock.
-    const now = new Date()
-    const stale =
-        staleAfterDays !== undefined && isStale(point, staleAfterDays, now)
     const recorded = i18n.t('Recorded {{date}} · {{stage}}', {
         date: formatRecordedDate(point, display),
         stage: point.source.programStageName,
@@ -65,18 +65,22 @@ function RecordedNote({
                     <span
                         tabIndex={0}
                         data-slot="recorded-note"
-                        className="inline-flex cursor-default items-center gap-1 rounded-dhis2-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-primary"
+                        className="inline-flex cursor-default flex-wrap items-center gap-x-2 gap-y-1 rounded-dhis2-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-primary"
                     />
                 }
             >
-                <span aria-hidden="true">
+                {/* A dotted underline says there is more on hover or focus. */}
+                <span
+                    aria-hidden="true"
+                    className="underline decoration-current/40 decoration-dotted underline-offset-2"
+                >
                     {relativeTime(point, now, display.locale)}
                 </span>
                 <span className="sr-only">{recorded}</span>
-                {stale ? (
+                {stale && staleAfterDays !== undefined ? (
                     <span
                         data-slot="stale-note"
-                        className="inline-flex text-dhis2-yellow-800"
+                        className="inline-flex items-center gap-1 font-medium text-dhis2-yellow-800"
                     >
                         <span
                             aria-hidden="true"
@@ -84,6 +88,7 @@ function RecordedNote({
                         >
                             <IconWarningFilled16 />
                         </span>
+                        <span aria-hidden="true">{i18n.t('Out of date')}</span>
                         <span className="sr-only">
                             {staleNote(staleAfterDays)}
                         </span>
@@ -92,7 +97,7 @@ function RecordedNote({
             </TooltipTrigger>
             <TooltipContent>
                 <span className="block">{recorded}</span>
-                {stale ? (
+                {stale && staleAfterDays !== undefined ? (
                     <span className="block">{staleNote(staleAfterDays)}</span>
                 ) : null}
             </TooltipContent>
@@ -145,16 +150,21 @@ export function RecordedFooter({
     if (latest === undefined && !partial) {
         return null
     }
+    // Read per render so tests can stub the clock.
+    const now = new Date()
+    const stale = latest !== undefined && isStale(latest, staleAfterDays, now)
     return (
         <div
             {...props}
             data-slot="observation-recorded"
-            className={cn(FOOTER_BAND, className)}
+            className={cn(FOOTER_BAND, stale && STALE_BAND, className)}
         >
             {latest ? (
                 <RecordedNote
                     point={latest}
                     staleAfterDays={staleAfterDays}
+                    stale={stale}
+                    now={now}
                     display={display}
                 />
             ) : null}

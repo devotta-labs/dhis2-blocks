@@ -49,4 +49,5 @@ message for a data element the program doesn't capture and a short
 production one (the full message is logged instead). Where nothing replaces
 it, the full message shows.
 
-See the docs page at `/blocks/observation-cards` for every part and example.
+See the docs page at `/blocks/observation-cards` for the provider and card
+reference and a composed example.

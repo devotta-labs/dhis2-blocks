@@ -5,6 +5,7 @@ import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { useConfig } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import React, { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { buildSeries } from '../api/buildSeries'
 import type { ObservationSeries } from '../api/types'
 import {
     displayLocale,
@@ -23,6 +24,7 @@ import {
 } from '../parts/ObservationRecorded'
 import { ObservationSparkline } from '../parts/ObservationSparkline'
 import { ObservationValue } from '../parts/ObservationValue'
+import { useObservationsContext } from '../provider/context'
 import { isProduction } from '../provider/env'
 import { ObservationCardContext } from './context'
 import { CardHeading, CardNote, FOOTER_BAND } from './frame'
@@ -35,8 +37,9 @@ export interface ObservationCardProps {
     /** Overrides the data element's own name. */
     label?: string
     /**
-     * Once the latest reading is older than this many days, greys the value
-     * and adds an "Out of date" warning. Off when unset.
+     * Once the latest reading is older than this many days, greys the card,
+     * turns its footer yellow and adds "Out of date" beside the recorded date.
+     * Off when unset.
      */
     staleAfterDays?: number
     className?: string
@@ -83,6 +86,50 @@ function Frame({
         >
             {children}
         </Card>
+    )
+}
+
+/**
+ * Whether the loaded card will show a trend, so its skeleton takes the same
+ * shape. Until the program's metadata says, a trend, the taller of the two.
+ */
+const usePendingTrend = (dataElement: string): boolean => {
+    const { metadata } = useObservationsContext()
+    const element = metadata?.dataElements.get(dataElement)
+    return (
+        element === undefined ||
+        showsTrend(
+            buildSeries({ dataElement: element, stages: [], events: [] })
+        )
+    )
+}
+
+/** The loading card, in the shape of the arrangement it will become. */
+function LoadingContent({
+    heading,
+    trend,
+}: {
+    heading: ReactNode
+    trend: boolean
+}) {
+    return (
+        <>
+            {heading ?? <Skeleton className="my-0.5 h-4 w-24" />}
+            <span className="sr-only">{i18n.t('Loading')}</span>
+            <Skeleton className="h-[30px] w-24" />
+            {trend ? (
+                <>
+                    <Skeleton className="my-0.5 h-4 w-40 max-w-full" />
+                    {/* Dropped below 13rem, as the sparkline is. */}
+                    <div className="@container mt-auto w-full">
+                        <Skeleton className="hidden h-10 w-full @[13rem]:block" />
+                    </div>
+                </>
+            ) : null}
+            <div className={cn(FOOTER_BAND, trend && 'mt-0')}>
+                <Skeleton className="my-0.5 h-3 w-20 max-w-full" />
+            </div>
+        </>
     )
 }
 
@@ -157,6 +204,7 @@ export function ObservationCard({
     children,
 }: ObservationCardProps) {
     const state = useObservation(dataElement)
+    const pendingTrend = usePendingTrend(dataElement)
     const display = useDisplayOptions()
     const [recordedNotes, setRecordedNotes] = useState(0)
     const registerRecorded = useCallback(() => {
@@ -169,13 +217,7 @@ export function ObservationCard({
         case 'pending':
             return (
                 <Frame name={label} busy className={className}>
-                    {heading ?? <Skeleton className="h-4 w-24" />}
-                    <span className="sr-only">{i18n.t('Loading')}</span>
-                    <Skeleton className="h-7 w-24" />
-                    <Skeleton className="my-0.5 h-4 w-40 max-w-full" />
-                    <div className={FOOTER_BAND}>
-                        <Skeleton className="my-0.5 h-3 w-36 max-w-full" />
-                    </div>
+                    <LoadingContent heading={heading} trend={pendingTrend} />
                 </Frame>
             )
         case 'error':

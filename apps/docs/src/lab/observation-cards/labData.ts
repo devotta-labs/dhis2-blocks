@@ -405,7 +405,13 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
                           },
                           {
                               dataElement: SMOKER,
-                              value: random() < 0.2 ? 'true' : 'false',
+                              // The jumpy person took up smoking halfway, so one preset shows Yes.
+                              value:
+                                  random() < 0.2 ||
+                                  (settings.spread === 'jumpy' &&
+                                      index >= readings / 2)
+                                      ? 'true'
+                                      : 'false',
                           },
                       ]),
             ],

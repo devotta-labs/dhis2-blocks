@@ -231,6 +231,7 @@ describe('ObservationSparkline', () => {
 
     it('hides the chart from assistive technology and exposes the summary', async () => {
         const { container } = await sparklineCard({ readings: march(70, 71) })
+        await expect.poll(() => slot(container, 'chart')).not.toBeNull()
         const chart = slot(container, 'chart')
         expect(chart?.getAttribute('aria-hidden')).toBe('true')
         const summary = slot(container, 'observation-sparkline')?.querySelector(
@@ -245,21 +246,18 @@ describe('ObservationSparkline', () => {
         expect(slot(none.container, 'observation-sparkline')).toBeNull()
     })
 
-    it('writes an apostrophe and an ampersand in the summary literally', async () => {
+    it('plots no option codes, even numeric ones', async () => {
         const { container } = await sparklineCard({
             valueType: 'INTEGER',
-            readings: march(1, 2),
+            readings: march(1, 2, 3),
             options: [
-                { code: '1', name: 'Mother & child' },
-                { code: '2', name: "Child's choice" },
+                { code: '1', name: 'Mild' },
+                { code: '2', name: 'Moderate' },
+                { code: '3', name: 'Severe' },
             ],
         })
-        const summary = slot(container, 'observation-sparkline')?.querySelector(
-            '.sr-only'
-        )?.textContent
-        expect(summary).toContain("latest Child's choice")
-        expect(summary).not.toContain('&#39;')
-        expect(summary).not.toContain('&amp;')
+        expect(slot(container, 'observation-sparkline')).toBeNull()
+        expect(container.textContent).not.toContain('readings')
     })
 
     it('has no axe violations', async () => {
@@ -341,9 +339,10 @@ describe('a composed card', () => {
         expect(container.textContent).toContain(
             'Recorded Mar 12, 2026 · Antenatal visit'
         )
-        expect(slot(container, 'stale-note')?.textContent).toBe(
-            'Out of date: last recorded over 30 days ago'
-        )
+        expect(
+            slot(container, 'stale-note')?.querySelector('.sr-only')
+                ?.textContent
+        ).toBe('Out of date: last recorded over 30 days ago')
         expect(container.textContent).toContain(
             'Some visits are hidden by your access'
         )
@@ -425,6 +424,7 @@ describe('calendars and sizes', () => {
     })
 
     it('a 160px card has no horizontal overflow and no sparkline', async () => {
+        const warnings = vi.spyOn(console, 'warn')
         const { container } = await renderWith(
             <div style={{ width: 160 }}>
                 <ObservationCard dataElement={DE} unit="copies/mL" />
@@ -448,8 +448,11 @@ describe('calendars and sizes', () => {
         expect(card?.clientWidth).toBeLessThanOrEqual(160)
         expect(card?.scrollWidth).toBeLessThanOrEqual(card?.clientWidth ?? 0)
         expect(row?.scrollWidth).toBeLessThanOrEqual(row?.clientWidth ?? 0)
-        // The sparkline is the first thing a narrow card drops.
-        expect(slot(container, 'chart')?.checkVisibility()).toBe(false)
+        // The sparkline is the first thing a narrow card drops, without mounting the chart.
+        await new Promise((resolve) => requestAnimationFrame(resolve))
+        expect(slot(container, 'chart')).toBeNull()
+        expect(warnings).not.toHaveBeenCalled()
+        warnings.mockRestore()
         // Its summary stays for screen readers.
         const summary = slot(container, 'observation-sparkline')?.querySelector(
             '.sr-only'

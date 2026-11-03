@@ -102,7 +102,7 @@ export const PRESETS: readonly Preset[] = [
     preset(
         'Values',
         'Jumpy RMNCH-like',
-        'Systolic pressure jumping between bands at irregular visits, like real RMNCH data.',
+        'Systolic pressure jumping between bands at irregular visits, like real RMNCH data. The person took up smoking halfway, so Smokes tobacco shows Yes.',
         { valueType: 'INTEGER_POSITIVE', spread: 'jumpy', readings: 30 }
     ),
     preset(

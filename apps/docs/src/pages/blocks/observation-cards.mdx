@@ -108,8 +108,9 @@ calendar, and the program stage. Screen readers hear the full date and stage
 instead of the short phrase.
 
 Set `staleAfterDays` on a card to flag old readings. Once the latest reading is
-older than that many days, its text turns grey and a warning icon with "Out of
-date" joins the recorded date. Without it, nothing is ever marked out of date.
+older than that many days, its text turns grey, the footer turns yellow and a
+warning icon with "Out of date" joins the recorded date; hover or focus it to
+read the threshold. Without it, nothing is ever marked out of date.
 Pick the number for each data element, since a haemoglobin reading and a
 smoking status go stale at different speeds.
 
@@ -132,8 +133,8 @@ smoking status go stale at different speeds.
 - `dataElement: string` — **required.** The uid of the data element to show.
 - `unit?: string` — shown after a number, such as `g/dL`.
 - `label?: string` — replaces the data element's form name as the heading.
-- `staleAfterDays?: number` — greys the value and adds "Out of date" once the
-  latest reading is older than this. Off when unset.
+- `staleAfterDays?: number` — greys the card, turns its footer yellow and adds
+  "Out of date" once the latest reading is older than this. Off when unset.
 - `className?: string` — applied to the card.
 - `children?: ReactNode` — the parts to show. Without children, the card
   picks them by value type.

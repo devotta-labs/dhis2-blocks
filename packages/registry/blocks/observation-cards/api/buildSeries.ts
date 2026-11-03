@@ -48,6 +48,22 @@ const parseNumber = (value: string): number | undefined => {
     return Number.isFinite(parsed) ? parsed : undefined
 }
 
+/** Digits after the point in `value` as JavaScript writes it, exponent included. */
+const decimalsOf = (value: number): number => {
+    const [, fraction = '', exponent = '0'] =
+        /(?:\.(\d+))?(?:e([+-]\d+))?$/.exec(String(value)) ?? []
+    return Math.max(0, fraction.length - Number(exponent))
+}
+
+/** `latest - previous` without float noise: 10.8 - 10.6 is 0.2, not 0.20000000000000107. */
+const difference = (latest: number, previous: number): number =>
+    Number(
+        (latest - previous).toFixed(
+            // toFixed takes at most 100 digits.
+            Math.min(100, Math.max(decimalsOf(latest), decimalsOf(previous)))
+        )
+    )
+
 interface DatedPoint {
     point: ObservationPoint
     occurredInstant: number
@@ -167,7 +183,7 @@ export function buildSeries({
     const change =
         latest?.numericValue !== undefined &&
         previous?.numericValue !== undefined
-            ? latest.numericValue - previous.numericValue
+            ? difference(latest.numericValue, previous.numericValue)
             : undefined
 
     return {

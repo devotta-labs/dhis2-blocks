@@ -4,7 +4,7 @@ import {
     ProgramMetadataResponseSchema,
 } from '@/components/observation-cards/api/schemas'
 import { describe, expect, it } from 'vitest'
-import { generateLabData, LAB_PERSON, LAB_PROGRAM } from './labData'
+import { generateLabData, LAB_PERSON, LAB_PROGRAM, SMOKER } from './labData'
 import { answer } from './labServer'
 import { DEFAULT_SETTINGS, PRESETS } from './presets'
 
@@ -110,6 +110,20 @@ describe('the observations lab server', () => {
         expect(statuses).toEqual(
             new Set(['ACTIVE', 'COMPLETED', 'SCHEDULE', 'SKIPPED'])
         )
+    })
+
+    it('has a preset whose smoker card shows Yes', () => {
+        const smoker = eventsPage(settingsOf('Jumpy RMNCH-like'))
+            .filter(
+                ({ status }) => status === 'ACTIVE' || status === 'COMPLETED'
+            )
+            .sort((a, b) =>
+                (a.occurredAt ?? '').localeCompare(b.occurredAt ?? '')
+            )
+            .flatMap(({ dataValues }) =>
+                dataValues.filter(({ dataElement }) => dataElement === SMOKER)
+            )
+        expect(smoker.at(-1)?.value).toBe('true')
     })
 
     it('answers nothing for another person', () => {

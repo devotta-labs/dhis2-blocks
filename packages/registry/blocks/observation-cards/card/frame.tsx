@@ -7,9 +7,17 @@ import {
 } from '@dhis2/ui-icons'
 import React, { type ComponentPropsWithoutRef, type ReactNode } from 'react'
 
-/** A full-width tinted band at the card's foot, for when and how a value was recorded. */
+/**
+ * A full-width tinted band at the card's foot, for when and how a value was
+ * recorded. A sparkline right above it takes the free space instead, so it
+ * sits on the band.
+ */
 export const FOOTER_BAND =
-    '-mx-4 -mb-4 mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-b-dhis2-md border-t border-dhis2-grey-300 bg-dhis2-grey-050 px-4 py-2 text-xs text-dhis2-grey-700'
+    '-mx-4 -mb-4 mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-b-dhis2-md border-t border-dhis2-grey-300 bg-dhis2-grey-050 px-4 py-2 text-xs text-dhis2-grey-700 [[data-slot=observation-sparkline]+&]:mt-0'
+
+/** The footer band once the value is out of date: the DHIS2 warning tint. */
+export const STALE_BAND =
+    'border-dhis2-yellow-200 bg-dhis2-yellow-050 text-dhis2-yellow-900'
 
 /** The card's name, as a level-3 heading. */
 export function CardHeading({

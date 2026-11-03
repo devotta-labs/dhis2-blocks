@@ -284,6 +284,20 @@ describe('buildSeries', () => {
         expect(series.change).toBe(6)
     })
 
+    it('rounds the change to the precision of its two readings', () => {
+        const change = (previous: string, latest: string) =>
+            build([
+                event('e1', '2026-01-01T00:00:00.000Z', previous),
+                event('e2', '2026-02-01T00:00:00.000Z', latest),
+            ]).change
+
+        // 10.8 - 10.6 is 0.20000000000000107 in floating point.
+        expect(change('10.6', '10.8')).toBe(0.2)
+        expect(change('0.1', '0.3')).toBe(0.2)
+        expect(change('1e-7', '3e-7')).toBe(2e-7)
+        expect(change('77', '79.25')).toBe(2.25)
+    })
+
     it('has no change for text types', () => {
         const series = build(
             [

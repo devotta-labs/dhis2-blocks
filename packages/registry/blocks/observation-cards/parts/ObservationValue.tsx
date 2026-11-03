@@ -33,7 +33,12 @@ export function ObservationValue({ unit, className }: ObservationValueProps) {
                 data-slot="observation-value"
                 className={cn('flex min-w-0', className)}
             >
-                <MetadataBadge name={text} color={color} />
+                {/* The value's own size, wrapping rather than clipping a long name; the radius keeps one line a pill. */}
+                <MetadataBadge
+                    name={text}
+                    color={color}
+                    className="h-auto min-h-7 rounded-[14px] px-2.5 py-1 text-sm leading-5 break-words whitespace-normal"
+                />
             </p>
         )
     }
@@ -44,7 +49,7 @@ export function ObservationValue({ unit, className }: ObservationValueProps) {
         <p
             data-slot="observation-value"
             className={cn(
-                'flex min-w-0 flex-wrap items-baseline gap-x-1',
+                'flex min-w-0 flex-wrap items-baseline gap-x-1 gap-y-1',
                 className
             )}
         >

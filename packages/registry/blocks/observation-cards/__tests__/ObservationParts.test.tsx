@@ -17,6 +17,10 @@ const NOW = new Date('2026-06-01T12:00:00.000Z')
 const cardOf = (container: HTMLElement) =>
     container.querySelector<HTMLElement>('[data-slot="observation-card"]')
 
+/** The line's own dots, not recharts' hover dot: the pointer can rest over a chart from an earlier test. */
+const plottedDots = (container: HTMLElement) =>
+    container.querySelectorAll('.recharts-line-dots .recharts-dot').length
+
 const slot = (container: HTMLElement, name: string) =>
     container.querySelector<HTMLElement>(`[data-slot="${name}"]`)
 
@@ -145,9 +149,7 @@ describe('ObservationSparkline', () => {
         expect(container.textContent).toContain(
             '1 reading on Mar 2, 2026, latest 72'
         )
-        await expect
-            .poll(() => container.querySelectorAll('.recharts-dot').length)
-            .toBe(1)
+        await expect.poll(() => plottedDots(container)).toBe(1)
     })
 
     it('caps to the last few points', async () => {
@@ -186,9 +188,7 @@ describe('ObservationSparkline', () => {
         const { container } = await sparklineCard({
             readings: march(70, 72, 71),
         })
-        await expect
-            .poll(() => container.querySelectorAll('.recharts-dot').length)
-            .toBe(1)
+        await expect.poll(() => plottedDots(container)).toBe(1)
     })
 
     it('fits the scale to the readings rather than starting at zero', async () => {
@@ -401,6 +401,10 @@ describe('a composed card', () => {
 })
 
 describe('calendars and sizes', () => {
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
     it('dates show in the Ethiopian calendar', async () => {
         const { container } = await renderWith(
             <ObservationCard dataElement={DE} />,
@@ -452,7 +456,6 @@ describe('calendars and sizes', () => {
         await new Promise((resolve) => requestAnimationFrame(resolve))
         expect(slot(container, 'chart')).toBeNull()
         expect(warnings).not.toHaveBeenCalled()
-        warnings.mockRestore()
         // Its summary stays for screen readers.
         const summary = slot(container, 'observation-sparkline')?.querySelector(
             '.sr-only'
@@ -461,6 +464,23 @@ describe('calendars and sizes', () => {
             '2 readings from Mar 3, 2026 to Mar 12, 2026, latest 1,234,567.891'
         )
         expect(summary?.checkVisibility()).toBe(true)
+    })
+
+    it('a narrow card widened past 13rem mounts the chart', async () => {
+        const { container } = await renderWith(
+            <div data-testid="box" style={{ width: 160 }}>
+                <ObservationCard dataElement={DE} />
+            </div>,
+            { readings: march(70, 72) }
+        )
+        await new Promise((resolve) => requestAnimationFrame(resolve))
+        expect(slot(container, 'chart')).toBeNull()
+
+        const box = container.querySelector<HTMLElement>('[data-testid="box"]')
+        if (box) {
+            box.style.width = '360px'
+        }
+        await expect.poll(() => plottedDots(container)).toBe(1)
     })
 
     it('a card in a plain flex row sizes from its content', async () => {

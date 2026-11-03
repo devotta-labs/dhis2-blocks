@@ -5,7 +5,7 @@ import {
 } from '@/components/dhis2/ui/chart'
 import { cn } from '@/components/dhis2/ui/cn'
 import i18n from '@dhis2/d2-i18n'
-import React, { useEffect, useState } from 'react'
+import React, { useLayoutEffect, useState } from 'react'
 import { Line, LineChart, YAxis } from 'recharts'
 import { useObservationCard } from '../card/context'
 import {
@@ -49,10 +49,12 @@ export function ObservationSparkline({
     const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null)
     // The container query hides the wrapper in a narrow card; the chart mounts only while it shows, so recharts never measures a hidden box.
     const [shown, setShown] = useState(false)
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!wrapper) {
             return undefined
         }
+        // Measured now, so the chart mounts before paint; the observer only follows later resizes.
+        setShown(wrapper.getBoundingClientRect().width > 0)
         const observer = new ResizeObserver(([entry]) =>
             setShown((entry?.contentRect.width ?? 0) > 0)
         )

@@ -33,6 +33,11 @@ export const useObservation = (dataElement: string): ObservationState => {
     const state = useMemo((): ObservationState => {
         // A wrong id is wrong for every person, so it outranks their errors.
         const element = metadata?.dataElements.get(dataElement)
+        const invalid = metadata?.invalidDataElements.get(dataElement)
+        // Captured, but its metadata can't be read: only this card fails.
+        if (invalid && !element) {
+            return { status: 'error', error: invalid.error }
+        }
         if (metadata && !element) {
             return {
                 status: 'misconfigured',

@@ -1,6 +1,7 @@
 export interface ObservationLegendBand {
     name: string
-    color: string
+    /** Absent when the legend has no colour; it then shows as an outline badge. */
+    color?: string
     startValue: number
     endValue: number
 }
@@ -71,8 +72,16 @@ export interface TrackerEventRecord {
     dataValues: { dataElement: string; value: string }[]
 }
 
+/** A captured data element whose metadata could not be read. */
+export interface InvalidDataElement {
+    displayName?: string
+    error: Error
+}
+
 /** A program's stages and every data element they capture, keyed by id. */
 export interface ProgramMetadata {
     stages: StageMetadata[]
     dataElements: Map<string, DataElementMetadata>
+    /** Captured elements with unreadable metadata: only their own cards error. */
+    invalidDataElements: Map<string, InvalidDataElement>
 }

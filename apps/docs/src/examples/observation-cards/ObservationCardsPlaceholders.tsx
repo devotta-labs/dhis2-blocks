@@ -35,5 +35,6 @@ export const PersonVitalsPlaceholder = () => (
         </span>
         <LoadingCard />
         <LoadingCard />
+        <LoadingCard />
     </div>
 )

@@ -5,10 +5,10 @@ import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { useConfig } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import React, { useCallback, useMemo, useState, type ReactNode } from 'react'
-import { buildSeries } from '../api/buildSeries'
 import type { ObservationSeries } from '../api/types'
 import {
     displayLocale,
+    elementShowsTrend,
     isStale,
     isSupportedValueType,
     showsTrend,
@@ -90,18 +90,21 @@ function Frame({
 }
 
 /**
- * Whether the loaded card will show a trend, so its skeleton takes the same
- * shape. Until the program's metadata says, a trend, the taller of the two.
+ * What the program's metadata already says about the card's data element:
+ * its name, for cards that never get a series, and whether the loaded card
+ * will show a trend, so its skeleton takes the same shape. Until the metadata
+ * says, a trend, the taller of the two.
  */
-const usePendingTrend = (dataElement: string): boolean => {
+const useElementMetadata = (dataElement: string) => {
     const { metadata } = useObservationsContext()
     const element = metadata?.dataElements.get(dataElement)
-    return (
-        element === undefined ||
-        showsTrend(
-            buildSeries({ dataElement: element, stages: [], events: [] })
-        )
-    )
+    return {
+        name:
+            element?.displayFormName ||
+            element?.displayName ||
+            metadata?.invalidDataElements.get(dataElement)?.displayName,
+        pendingTrend: element === undefined || elementShowsTrend(element),
+    }
 }
 
 /** The loading card, in the shape of the arrangement it will become. */
@@ -204,25 +207,29 @@ export function ObservationCard({
     children,
 }: ObservationCardProps) {
     const state = useObservation(dataElement)
-    const pendingTrend = usePendingTrend(dataElement)
+    const { name, pendingTrend } = useElementMetadata(dataElement)
     const display = useDisplayOptions()
     const [recordedNotes, setRecordedNotes] = useState(0)
     const registerRecorded = useCallback(() => {
         setRecordedNotes((count) => count + 1)
         return () => setRecordedNotes((count) => count - 1)
     }, [])
-    const heading = label ? <CardHeading>{label}</CardHeading> : null
+    // An empty label is no label.
+    const hostLabel = label || undefined
+    // Before there is a series, the element's name from the metadata, once known.
+    const earlyName = hostLabel ?? name
+    const heading = earlyName ? <CardHeading>{earlyName}</CardHeading> : null
 
     switch (state.status) {
         case 'pending':
             return (
-                <Frame name={label} busy className={className}>
+                <Frame name={earlyName} busy className={className}>
                     <LoadingContent heading={heading} trend={pendingTrend} />
                 </Frame>
             )
         case 'error':
             return (
-                <Frame name={label} className={className}>
+                <Frame name={earlyName} className={className}>
                     {heading}
                     <p data-slot="observation-error" className="text-sm">
                         <CardNote tone="error">
@@ -233,7 +240,7 @@ export function ObservationCard({
             )
         case 'misconfigured':
             return (
-                <Frame name={label} className={className}>
+                <Frame name={earlyName} className={className}>
                     {heading}
                     {/* The provider logs the full message in production. */}
                     <p
@@ -249,7 +256,7 @@ export function ObservationCard({
             )
         default: {
             const { series } = state
-            const title = label ?? series.label
+            const title = hostLabel ?? series.label
             const stale =
                 series.latest !== undefined &&
                 isStale(series.latest, staleAfterDays, new Date())

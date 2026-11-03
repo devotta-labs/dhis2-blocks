@@ -1,6 +1,7 @@
 import React, { type ErrorInfo, type ReactNode } from 'react'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
+import { ObservationCard } from '../card/ObservationCard'
 import { ObservationsProvider } from '../provider/ObservationsProvider'
 import {
     createFakeServer,
@@ -106,6 +107,119 @@ describe('ObservationsProvider', () => {
             .element(page.getByTestId('weight'))
             .toHaveTextContent('ready 82')
         expect(seen.slice(before)).not.toContain('ready 70')
+    })
+
+    it("switching program shows pending before the new program's series", async () => {
+        const server = createFakeServer({ deferEventsFor: 'prog2' })
+        const Wrapper = createWrapper()
+        const seen: string[] = []
+        const ui = (program: string) => (
+            <Wrapper>
+                <ObservationsProvider
+                    trackedEntity="te1"
+                    program={program}
+                    client={server.client}
+                >
+                    <Probe id="weight" dataElement={WEIGHT} seen={seen} />
+                </ObservationsProvider>
+            </Wrapper>
+        )
+
+        const screen = await render(ui('prog1'))
+        await expect
+            .element(page.getByTestId('weight'))
+            .toHaveTextContent('ready 70')
+
+        const before = seen.length
+        await screen.rerender(ui('prog2'))
+        await expect
+            .element(page.getByTestId('weight'))
+            .toHaveTextContent('pending')
+        await expect.poll(() => server.countOf('tracker/events')).toBe(2)
+
+        // Every render since the switch, not only the last one.
+        expect(seen.slice(before)).not.toContain('ready 70')
+        expect(seen.slice(before).every((state) => state === 'pending')).toBe(
+            true
+        )
+
+        server.release()
+        await expect
+            .element(page.getByTestId('weight'))
+            .toHaveTextContent('ready 64')
+        expect(seen.slice(before)).not.toContain('ready 70')
+    })
+
+    it("one element's bad metadata errors only its own card", async () => {
+        const server = createFakeServer({
+            extraDataElements: [
+                {
+                    id: 'nocolour001',
+                    displayName: 'No colour',
+                    valueType: 'NUMBER',
+                    legendSets: [
+                        {
+                            legends: [
+                                { name: 'Low', startValue: 0, endValue: 5 },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    id: 'badlegend01',
+                    displayName: 'Bad legend',
+                    valueType: 'NUMBER',
+                    legendSets: [{ legends: [{ name: 'Low', color: '#f00' }] }],
+                },
+                {
+                    id: 'broken00001',
+                    displayName: 'Broken',
+                    valueType: 'TEXT',
+                    optionSet: { options: [{ code: 'A' }] },
+                },
+            ],
+        })
+        const Wrapper = createWrapper()
+
+        const { container } = await render(
+            <Wrapper>
+                <ObservationsProvider
+                    trackedEntity="te1"
+                    program="prog1"
+                    client={server.client}
+                >
+                    <Probe id="weight" dataElement={WEIGHT} />
+                    <Probe id="nocolour" dataElement="nocolour001" />
+                    <Probe id="badlegend" dataElement="badlegend01" />
+                    <Probe id="broken" dataElement="broken00001" />
+                    <ObservationCard dataElement="broken00001" />
+                </ObservationsProvider>
+            </Wrapper>
+        )
+
+        await expect
+            .element(page.getByTestId('weight'))
+            .toHaveTextContent('ready 70')
+        await expect
+            .element(page.getByTestId('nocolour'))
+            .toHaveTextContent('ready none')
+        await expect
+            .element(page.getByTestId('badlegend'))
+            .toHaveTextContent('ready none')
+        await expect
+            .element(page.getByTestId('broken'))
+            .toHaveTextContent(
+                "error Data element broken00001 has metadata this card can't read"
+            )
+        // The card shows the error state, named from the metadata.
+        await expect
+            .element(page.getByText("Couldn't load this value"))
+            .toBeVisible()
+        expect(
+            container
+                .querySelector('[data-slot="observation-card"]')
+                ?.getAttribute('aria-label')
+        ).toBe('Broken')
     })
 
     it('two providers keep their series apart', async () => {

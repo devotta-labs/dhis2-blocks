@@ -215,4 +215,95 @@ describe('ProgramMetadataResponseSchema', () => {
         expect(element?.displayFormName).toBeUndefined()
         expect(element?.optionSet).toBeUndefined()
     })
+
+    const elements = (...dataElements: unknown[]) =>
+        ProgramMetadataResponseSchema.parse({
+            programStages: [
+                {
+                    id: 's1',
+                    displayName: 'Stage',
+                    programStageDataElements: dataElements.map(
+                        (dataElement) => ({ dataElement })
+                    ),
+                },
+            ],
+        })
+
+    const ok = { id: 'ok', displayName: 'OK', valueType: 'NUMBER' }
+
+    it('keeps a legend with no colour, without one', () => {
+        const legends = elements({
+            ...ok,
+            legendSets: [
+                {
+                    legends: [
+                        { name: 'Low', startValue: 0, endValue: 5 },
+                        {
+                            name: 'High',
+                            color: null,
+                            startValue: 5,
+                            endValue: 9,
+                        },
+                    ],
+                },
+            ],
+        }).dataElements.get('ok')?.legendSets?.[0]?.legends
+
+        expect(legends).toEqual([
+            { name: 'Low', color: undefined, startValue: 0, endValue: 5 },
+            { name: 'High', color: undefined, startValue: 5, endValue: 9 },
+        ])
+    })
+
+    it('drops a malformed legend on its own', () => {
+        const legends = elements({
+            ...ok,
+            legendSets: [
+                {
+                    legends: [
+                        { name: 'Low', color: '#f00', startValue: 'x' },
+                        {
+                            name: 'High',
+                            color: '#0f0',
+                            startValue: 5,
+                            endValue: 9,
+                        },
+                    ],
+                },
+            ],
+        }).dataElements.get('ok')?.legendSets?.[0]?.legends
+
+        expect(legends).toEqual([
+            { name: 'High', color: '#0f0', startValue: 5, endValue: 9 },
+        ])
+    })
+
+    it('a malformed data element is invalid on its own, with its name kept', () => {
+        const metadata = elements(ok, {
+            id: 'bad',
+            displayName: 'Bad',
+            valueType: 'TEXT',
+            // A broken option set is never dropped: it would show raw codes.
+            optionSet: { options: [{ code: 'A' }] },
+        })
+
+        expect([...metadata.dataElements.keys()]).toEqual(['ok'])
+        expect(metadata.invalidDataElements.get('bad')).toEqual({
+            displayName: 'Bad',
+            error: expect.objectContaining({
+                message: expect.stringContaining(
+                    "Data element bad has metadata this card can't read"
+                ),
+            }),
+        })
+        // Still captured, so its card is an error rather than misconfigured.
+        expect(metadata.stages[0]?.dataElementIds).toEqual(['ok', 'bad'])
+    })
+
+    it('drops a data element entry without an id', () => {
+        const metadata = elements(ok, { displayName: 'No id' })
+
+        expect(metadata.stages[0]?.dataElementIds).toEqual(['ok'])
+        expect(metadata.invalidDataElements.size).toBe(0)
+    })
 })

@@ -82,7 +82,11 @@ const metadataFor = (observation: FakeObservation): ProgramMetadata => {
               }
             : undefined,
     }
-    return { stages, dataElements: new Map([[DE, element]]) }
+    return {
+        stages,
+        dataElements: new Map([[DE, element]]),
+        invalidDataElements: new Map(),
+    }
 }
 
 const eventsFor = ({ readings = [] }: FakeObservation): TrackerEventRecord[] =>
@@ -103,11 +107,20 @@ const contextFor = (
         case 'pending':
             return base
         case 'error':
-            return { ...base, error: new Error('boom') }
+            // A failed person request after the program's metadata loaded.
+            return {
+                ...base,
+                metadata: metadataFor(observation),
+                error: new Error('boom'),
+            }
         case 'misconfigured':
             return {
                 ...base,
-                metadata: { stages: [], dataElements: new Map() },
+                metadata: {
+                    stages: [],
+                    dataElements: new Map(),
+                    invalidDataElements: new Map(),
+                },
                 events: [],
             }
         default:

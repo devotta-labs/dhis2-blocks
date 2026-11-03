@@ -14,7 +14,9 @@ export const WEIGHT = 'weightDE0001'
 export const TEMP = 'tempDE00001'
 export const HEIGHT = 'heightDE0001'
 
-const programResponse: EngineValue = {
+const programResponse = (
+    extraDataElements: EngineValue[] = []
+): EngineValue => ({
     programStages: [
         {
             id: 'stage1',
@@ -42,12 +44,13 @@ const programResponse: EngineValue = {
                         valueType: 'NUMBER',
                     },
                 },
+                ...extraDataElements.map((dataElement) => ({ dataElement })),
             ],
         },
     ],
-}
+})
 
-/** One weight reading per person, so each person's series is recognisable. */
+/** One weight reading per person and program, so each series is recognisable. */
 const eventsFor = (trackedEntity: string, weight: string): EngineValue => ({
     events: [
         {
@@ -66,9 +69,15 @@ const WEIGHTS = new Map([
     ['te2', '82'],
 ])
 
+/** prog2 has its own weights, so a program switch is visible. */
+const weightFor = (trackedEntity: string, program: string) =>
+    program === 'prog2' ? '64' : (WEIGHTS.get(trackedEntity) ?? '0')
+
 interface FakeServerOptions {
-    /** Holds this person's events request open until `release` is called. */
+    /** Holds this person's, or this program's, events request open until `release` is called. */
     deferEventsFor?: string
+    /** More data elements the program's stage captures, as the server sends them. */
+    extraDataElements?: EngineValue[]
     noEnrollment?: boolean
     /** Answers events requests with a 400, which is never retried. */
     eventsFail?: boolean
@@ -85,9 +94,12 @@ export const createFakeServer = (options: FakeServerOptions = {}) => {
             const [[key, request]] = Object.entries(query)
             requests.push(request)
             const trackedEntity = String(request.params?.trackedEntity)
+            const program = String(request.params?.program)
             switch (request.resource) {
                 case 'programs':
-                    return { [key]: programResponse }
+                    return {
+                        [key]: programResponse(options.extraDataElements),
+                    }
                 case 'tracker/enrollments':
                     return {
                         [key]: {
@@ -102,13 +114,18 @@ export const createFakeServer = (options: FakeServerOptions = {}) => {
                             httpStatusCode: 400,
                         })
                     }
-                    if (trackedEntity === options.deferEventsFor) {
+                    if (
+                        options.deferEventsFor !== undefined &&
+                        [trackedEntity, program].includes(
+                            options.deferEventsFor
+                        )
+                    ) {
                         await held
                     }
                     return {
                         [key]: eventsFor(
                             trackedEntity,
-                            WEIGHTS.get(trackedEntity) ?? '0'
+                            weightFor(trackedEntity, program)
                         ),
                     }
             }

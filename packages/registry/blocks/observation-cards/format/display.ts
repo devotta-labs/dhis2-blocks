@@ -6,6 +6,7 @@ import type { Dhis2Calendar } from '@/components/dhis2-value-display'
 import i18n from '@dhis2/d2-i18n'
 import { isNumericValueType, toInstant } from '../api/buildSeries'
 import type {
+    DataElementMetadata,
     ObservationLegendBand,
     ObservationPoint,
     ObservationSeries,
@@ -30,8 +31,15 @@ const LATEST_ONLY_TYPES = new Set([
 ])
 
 /** Numeric readings plot and compare; option codes do not, even numeric ones. */
+const trends = (hasOptions: boolean, valueType: string): boolean =>
+    !hasOptions && isNumericValueType(valueType)
+
 export const showsTrend = (series: ObservationSeries): boolean =>
-    series.options === undefined && isNumericValueType(series.valueType)
+    trends(series.options !== undefined, series.valueType)
+
+/** showsTrend from metadata alone, before any reading has loaded. */
+export const elementShowsTrend = (element: DataElementMetadata): boolean =>
+    trends(element.optionSet !== undefined, element.valueType)
 
 /** Types a card can show; an option set supports any type. */
 export const isSupportedValueType = (series: ObservationSeries): boolean =>
@@ -115,9 +123,7 @@ export const changeLine = (
                   interpolation: NO_ESCAPE,
               })
             : ''
-    const rounded = Math.round(Math.abs(change) * 100) / 100
-    // A change that rounds to nothing would otherwise read "↑ 0".
-    if (rounded === 0) {
+    if (change === 0) {
         return {
             text:
                 i18n.t('No change since {{date}}', {
@@ -126,9 +132,10 @@ export const changeLine = (
                 }) + move,
         }
     }
+    // `change` is already at the readings' precision, and takes their type's form, so a PERCENTAGE keeps its "%".
     const size = formatDhis2Value(
-        String(rounded),
-        { valueType: 'NUMBER' },
+        String(Math.abs(change)),
+        { valueType: series.valueType },
         options
     )
     return {
@@ -197,13 +204,12 @@ export const relativeTime = (
     if (size < 30) {
         return format.format(sign * size, 'day')
     }
-    if (size < DAYS_PER_YEAR) {
-        return format.format(
-            sign * Math.max(1, Math.trunc(size / DAYS_PER_MONTH)),
-            'month'
-        )
+    // Rounded, not truncated, so 59 days reads "2 months ago" and an old reading never looks newer.
+    const months = Math.round(size / DAYS_PER_MONTH)
+    if (months < 12) {
+        return format.format(sign * months, 'month')
     }
-    return format.format(sign * Math.trunc(size / DAYS_PER_YEAR), 'year')
+    return format.format(sign * Math.round(size / DAYS_PER_YEAR), 'year')
 }
 
 /**

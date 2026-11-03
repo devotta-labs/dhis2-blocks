@@ -15,10 +15,12 @@ const PROGRAM = 'WSGAb5XwJ3Y'
 const HAEMOGLOBIN = 'vANAXwtLwcT'
 /** Yes or no: shows the last recorded value. */
 const SMOKING = 'sWoqcoByYmD'
+/** Yes or no, from the same visits. */
+const EXTREME_PALLOR = 'EyfTU3ibMmJ'
 
 /**
- * One person's haemoglobin trend and smoking status. Each card is one data
- * element; the provider loads the person's events once for both.
+ * One person's haemoglobin trend, smoking status and extreme pallor. Each card
+ * is one data element; the provider loads the person's events once for all.
  */
 export default function PersonVitals() {
     return (
@@ -26,6 +28,7 @@ export default function PersonVitals() {
             <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
                 <ObservationCard dataElement={HAEMOGLOBIN} unit="g/dL" />
                 <ObservationCard dataElement={SMOKING} staleAfterDays={180} />
+                <ObservationCard dataElement={EXTREME_PALLOR} />
             </div>
         </ObservationsProvider>
     )

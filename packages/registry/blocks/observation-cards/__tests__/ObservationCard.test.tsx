@@ -14,8 +14,9 @@ const slot = (container: HTMLElement, name: string) =>
 
 describe('ObservationCard states', () => {
     it('pending shows a skeleton and the label is not yet known', async () => {
+        // An empty label is no label.
         const { container } = await renderWith(
-            <ObservationCard dataElement={DE} />,
+            <ObservationCard dataElement={DE} label="" />,
             {},
             'pending'
         )
@@ -43,7 +44,7 @@ describe('ObservationCard states', () => {
         ).toBeGreaterThan(0)
     })
 
-    it('error shows "Couldn\'t load this value" and never "Never recorded"', async () => {
+    it('error shows "Couldn\'t load this value", named from the metadata', async () => {
         const { container } = await renderWith(
             <ObservationCard dataElement={DE} />,
             {},
@@ -54,6 +55,9 @@ describe('ObservationCard states', () => {
         expect(
             slot(container, 'observation-error')?.querySelector('svg')
         ).not.toBeNull()
+        expect(cardOf(container)?.getAttribute('aria-label')).toBe(
+            'Haemoglobin'
+        )
     })
 
     it('a misconfigured card shows the full setup message in development', async () => {
@@ -265,7 +269,8 @@ describe('the default arrangement', () => {
     })
 
     it('names the card by its label for screen readers', async () => {
-        await renderWith(<ObservationCard dataElement={DE} />, {
+        // An empty label is no label: the element's own name is used.
+        await renderWith(<ObservationCard dataElement={DE} label="" />, {
             readings: march(10),
         })
         await expect
@@ -502,7 +507,7 @@ describe('the default arrangement', () => {
         const trigger = slot(container, 'recorded-note')
         expect(
             trigger?.querySelector('[aria-hidden="true"]')?.textContent
-        ).toBe('2 months ago')
+        ).toBe('3 months ago')
         trigger?.focus()
         await expect
             .element(

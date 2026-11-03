@@ -5,6 +5,7 @@ import type {
 } from '../api/types'
 import {
     changeLine,
+    elementShowsTrend,
     formatPointValue,
     isStale,
     isSupportedValueType,
@@ -42,10 +43,12 @@ const series = (
     ...overrides,
 })
 
+const decimals = (value: number) => String(value).split('.')[1]?.length ?? 0
+
 const reading = (value: number, occurredAt: string) =>
     point(String(value), { numericValue: value, occurredAt })
 
-/** A numeric series whose previous reading is on 1 March. */
+/** A numeric series whose previous reading is on 1 March; its change is at the readings' precision, as buildSeries gives it. */
 const trend = (
     from: number,
     to: number,
@@ -57,7 +60,9 @@ const trend = (
         points: [previous, latest],
         previous,
         latest,
-        change: to - from,
+        change: Number(
+            (to - from).toFixed(Math.max(decimals(from), decimals(to)))
+        ),
         ...overrides,
     })
 }
@@ -182,19 +187,36 @@ describe('changeLine', () => {
         })
     })
 
-    it('rounds float noise to at most 2 decimals', () => {
+    it("shows the change at the readings' precision", () => {
         expect(changeLine(trend(10, 11.4), undefined, GREGORIAN)?.text).toBe(
             '1.4 since Mar 1, 2026'
         )
         expect(changeLine(trend(70, 71.456), undefined, GREGORIAN)?.text).toBe(
-            '1.46 since Mar 1, 2026'
+            '1.456 since Mar 1, 2026'
         )
     })
 
-    it('a change that rounds to nothing says so, with no direction', () => {
-        expect(changeLine(trend(10, 10.001), 'kg', GREGORIAN)).toEqual({
+    it('a small change is never read as no change', () => {
+        expect(changeLine(trend(0.501, 0.504), undefined, GREGORIAN)).toEqual({
+            direction: 'up',
+            text: '0.003 since Mar 1, 2026',
+        })
+    })
+
+    it('only an exact zero says no change, with no direction', () => {
+        expect(changeLine(trend(10, 10), 'kg', GREGORIAN)).toEqual({
             text: 'No change since Mar 1, 2026',
         })
+    })
+
+    it('a PERCENTAGE change reads like its values, with the %', () => {
+        expect(
+            changeLine(
+                trend(40, 42.5, { valueType: 'PERCENTAGE' }),
+                undefined,
+                GREGORIAN
+            )?.text
+        ).toBe('2.5% since Mar 1, 2026')
     })
 
     it('names a legend move', () => {
@@ -270,6 +292,21 @@ describe('value type support', () => {
             showsTrend(
                 series('INTEGER', { options: [{ code: '1', name: 'One' }] })
             )
+        ).toBe(false)
+    })
+
+    it('elementShowsTrend follows the same rule from metadata', () => {
+        const element = { id: 'de1', displayName: 'Element' }
+        expect(elementShowsTrend({ ...element, valueType: 'NUMBER' })).toBe(
+            true
+        )
+        expect(elementShowsTrend({ ...element, valueType: 'TEXT' })).toBe(false)
+        expect(
+            elementShowsTrend({
+                ...element,
+                valueType: 'INTEGER',
+                optionSet: { options: [{ code: '1', name: 'One' }] },
+            })
         ).toBe(false)
     })
 
@@ -355,6 +392,16 @@ describe('relativeTime', () => {
     it('counts months under a year', () => {
         expect(relativeTime(at('2025-10-10T12:00:00.000'), now, 'en')).toBe(
             '5 months ago'
+        )
+    })
+
+    it('rounds to the nearest month or year, so an old reading never looks newer', () => {
+        // 59 days and 729 days before 12 March 2026.
+        expect(relativeTime(at('2026-01-12T12:00:00.000'), now, 'en')).toBe(
+            '2 months ago'
+        )
+        expect(relativeTime(at('2024-03-13T12:00:00.000'), now, 'en')).toBe(
+            '2 years ago'
         )
     })
 

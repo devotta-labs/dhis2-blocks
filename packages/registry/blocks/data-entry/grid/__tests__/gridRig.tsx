@@ -36,6 +36,8 @@ interface TableOptions {
     rows?: string[]
     /** A header row above the column labels. */
     groups?: HeaderCell[]
+    /** The heading rows in full, for headings that span rows; replaces the column labels and `groups`. */
+    headerRows?: HeaderCell[][]
     closed?: CellKey[]
 }
 
@@ -45,6 +47,7 @@ export const makeTable = ({
     fields = [],
     rows = ['2026-10-20'],
     groups,
+    headerRows,
     closed = [],
 }: TableOptions = {}): GridTable => {
     const gridColumns = columns.map((label, i) => ({
@@ -58,7 +61,8 @@ export const makeTable = ({
         title: `Table ${id}`,
         rows: rows.map((label, i) => ({ id: `${id}r${i}`, label })),
         columns: gridColumns,
-        headerRows: groups === undefined ? [leaves] : [groups, leaves],
+        headerRows:
+            headerRows ?? (groups === undefined ? [leaves] : [groups, leaves]),
         closed: new Map(closed.map((key) => [key, 'Not used'])),
     }
 }

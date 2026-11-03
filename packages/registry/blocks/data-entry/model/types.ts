@@ -53,7 +53,13 @@ export interface GridColumn {
 export interface HeaderCell {
     id: string
     label: string
+    /** How many columns the heading covers. */
     span: number
+    /**
+     * How many heading rows it covers, its own and the ones below (default 1); those rows list no cell for its
+     * columns.
+     */
+    rowSpan?: number
 }
 
 export interface GridTable {

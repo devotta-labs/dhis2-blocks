@@ -163,3 +163,31 @@ test('Ctrl+Enter in a pop-up editor saves it without adding a row', async () => 
     await expect.poll(() => value(cellKey('t1r0', 'c0'))).toBe('Seen')
     expect(added).toEqual([])
 })
+
+test('a heading that spans rows renders with rowSpan and names its cells', async () => {
+    await mount([
+        makeTable({
+            columns: ['Name', 'Initiated', 'Completed'],
+            headerRows: [
+                [
+                    { id: 'name', label: 'Name', span: 1, rowSpan: 2 },
+                    { id: 'ifa', label: 'IFA', span: 2 },
+                ],
+                [
+                    { id: 'init', label: 'Initiated', span: 1 },
+                    { id: 'done', label: 'Completed', span: 1 },
+                ],
+            ],
+        }),
+    ])
+    const name = page.getByRole('columnheader', { name: 'Name' })
+    await expect.element(name).toHaveAttribute('rowspan', '2')
+    await expect
+        .element(page.getByRole('textbox', { name: 'Name 2026-10-20' }))
+        .toBeVisible()
+    await expect
+        .element(
+            page.getByRole('textbox', { name: 'IFA Initiated 2026-10-20' })
+        )
+        .toBeVisible()
+})

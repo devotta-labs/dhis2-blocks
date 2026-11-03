@@ -304,11 +304,12 @@ const TableView = memo(function TableView({
                                         )}
                                     />
                                 ) : null}
-                                {cells.map(({ id, label, span }) => (
+                                {cells.map(({ id, label, span, rowSpan }) => (
                                     <th
                                         key={id}
                                         id={headerDomId(idScope, table.id, id)}
                                         colSpan={span}
+                                        rowSpan={rowSpan}
                                         scope="col"
                                         className={cn(HEADER_CLASS, 'min-w-28')}
                                     >

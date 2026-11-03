@@ -452,6 +452,7 @@ export const rulesSource = (
                 ])
             ),
             fields: new Map(columns.map(({ id, field }) => [id, field])),
+            fieldNames: new Map(columns.map(({ id, label }) => [id, label])),
             fieldsByForm: new Map([
                 [STAGE, new Set(columns.map(({ id }) => id))],
             ]),

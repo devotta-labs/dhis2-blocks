@@ -271,6 +271,23 @@ test('unsent changes come back in the state they were left in; failed ones are n
         .toEqual([['r2.c1', 'r1.c3']])
 })
 
+test('a restored row the source cannot check yet is read-only, with why', async () => {
+    const memory = memorySource(visitForm())
+    const restoreRows = memory.source.restoreRows
+    const why =
+        'Not checked with DHIS2 yet. Reload the page when you are online.'
+    const { context } = await mount({
+        ...memory.source,
+        restoreRows: async (engine, unsent, form) => ({
+            ...(await restoreRows(engine, unsent, form)),
+            readOnlyRecords: new Map([['r2', why]]),
+        }),
+    })
+    expect(control(cellKey('r2', 'c1')).hasAttribute('readonly')).toBe(true)
+    expect(context().effects.getState().cells['r2.c1']?.readOnly).toBe(why)
+    expect(control(CHILDREN).hasAttribute('readonly')).toBe(false)
+})
+
 test('another program’s unsent changes stay in the outbox, unsent and not shown', async () => {
     const server = freshServer()
     const theirs = change('x1.c1', '9', { sourceKey: 'memory:other' })

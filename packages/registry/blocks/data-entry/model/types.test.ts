@@ -74,8 +74,12 @@ test('two cells saving to one key are an error', () => {
     )
 })
 
-test('records of a row: its own id, then its slots’', () => {
+test('records of a row: its own id, then its slots’, each once', () => {
     expect(recordsOf(AMINA)).toEqual(['p1', 'e2'])
+    // A register's row is its enrolment, which is also a slot.
+    expect(
+        recordsOf({ id: 'en1', slots: { person: 'p1', enrollment: 'en1' } })
+    ).toEqual(['en1', 'p1'])
 })
 
 const NAME: GridColumn = { id: 'name', label: 'Name', field: INTEGER }

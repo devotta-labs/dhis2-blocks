@@ -2,8 +2,8 @@ import { z } from 'zod'
 import { recordIdOf } from '../model/types'
 import type { DataRecord } from '../model/types'
 import type { SaveOutcome } from '../outbox/sync'
-import { waitingForParent } from './trackerPayload'
 import type { SentObjects } from './trackerPayload'
+import { waitingForParent } from './trackerReasons'
 
 /** What a tracker import answers: the refused objects, by uid and tracker type. */
 export const importReportSchema = z.object({

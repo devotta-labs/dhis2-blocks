@@ -57,7 +57,7 @@ export const statusSchema = z.enum([
     'OVERDUE',
 ])
 
-const eventSchema = z.object({
+export const eventSchema = z.object({
     event: z.string(),
     enrollment: z.string().optional(),
     programStage: z.string(),

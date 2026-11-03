@@ -375,6 +375,105 @@ test('a visit in a slot with no date column takes the enrolment date', () => {
     })
 })
 
+test('a scheduled visit in a slot with no date column takes the enrolment date when a value is typed', () => {
+    // DHIS2 scheduled care at birth when the woman was enrolled: it has no date, and its slot no date column.
+    const birth: EventRecord = {
+        ...SCHEDULED_VISIT,
+        id: 'EvtBirth001',
+        programStageId: ROW.birth.programStageId,
+        slot: 'birth',
+    }
+    const place = edit(birth, DELIVERY_PLACE, 'Home')
+    const { payload, waiting } = buildImport(
+        [place],
+        registerForm([ENROLLMENT, birth]),
+        holding({
+            events: [
+                {
+                    ...SCHEDULED,
+                    event: birth.id,
+                    programStage: birth.programStageId,
+                },
+            ],
+            enrollments: [HELD_ENROLLMENT],
+        }),
+        CONTEXT
+    )
+    expect(waiting).toEqual([])
+    expect(payload.events).toEqual([
+        expect.objectContaining({
+            event: birth.id,
+            status: 'ACTIVE',
+            occurredAt: HELD_ENROLLMENT.enrolledAt,
+            scheduledAt: SCHEDULED.scheduledAt,
+            dataValues: [{ dataElement: DELIVERY_PLACE, value: 'Home' }],
+        }),
+    ])
+})
+
+test('a new person waits for its type’s mandatory attributes, not for its enrolment’s required date', () => {
+    const form = {
+        ...ROW_FORM,
+        required: new Map([
+            [PROGRAM, new Set([ENROLLED_AT])],
+            [PERSON_TYPE, new Set([FIRST_NAME, LAST_NAME])],
+        ]),
+    }
+    const { payload, waiting } = buildImport(typed(ROW), form, NOTHING_HELD, {
+        ...CONTEXT,
+    })
+    expect(waiting).toEqual([])
+    expect(payload.trackedEntities).toEqual([
+        expect.objectContaining({ trackedEntity: ROW.person.id }),
+    ])
+})
+
+test('a new event is created with the values its where slot holds, which no column shows', () => {
+    const dose = {
+        ...ROW.anc2,
+        createdWith: { Vaccine0001: 'DPT', Dose0000001: '2' },
+    }
+    const { payload } = buildImport(
+        [...typed({ ...ROW, anc2: dose }), edit(dose, GESTATIONAL_AGE, '20')],
+        registerForm(recordsOf({ ...ROW, anc2: dose })),
+        NOTHING_HELD,
+        CONTEXT
+    )
+    expect(payload.events).toContainEqual(
+        expect.objectContaining({
+            event: dose.id,
+            dataValues: [
+                { dataElement: 'Vaccine0001', value: 'DPT' },
+                { dataElement: 'Dose0000001', value: '2' },
+                { dataElement: GESTATIONAL_AGE, value: '20' },
+            ],
+        })
+    )
+})
+
+test('a value the clerk typed into a where slot’s field is sent once, as typed', () => {
+    const dose = {
+        ...ROW.anc2,
+        createdWith: { Vaccine0001: 'DPT', Dose0000001: '2' },
+    }
+    const row = { ...ROW, anc2: dose }
+    const { payload } = buildImport(
+        [...typed(row), edit(dose, 'Dose0000001', '3')],
+        registerForm(recordsOf(row)),
+        NOTHING_HELD,
+        CONTEXT
+    )
+    expect(payload.events).toContainEqual(
+        expect.objectContaining({
+            event: dose.id,
+            dataValues: [
+                { dataElement: 'Vaccine0001', value: 'DPT' },
+                { dataElement: 'Dose0000001', value: '3' },
+            ],
+        })
+    )
+})
+
 test('a held visit’s waits and refusals name the cell by its slot’s column', () => {
     const visit: EventRecord = { ...SCHEDULED_VISIT, slot: 'anc2#1' }
     const value = edit(visit, GESTATIONAL_AGE, '20')

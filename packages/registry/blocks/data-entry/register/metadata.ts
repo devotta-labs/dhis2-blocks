@@ -4,9 +4,9 @@ import type { Field } from '@/components/dhis2-value-types'
 import { dataElementSchema, optionSetSchema } from '../sources/eventSchemas'
 import { fieldOf } from '../sources/fieldOf'
 
-/** What a register needs of its program: one query's fields. */
+/** What a register needs of its program, for its layout and its edit rules: one query's fields. */
 export const REGISTER_PROGRAM_FIELDS =
-    'id,displayName,displayIncidentDate,displayEnrollmentDateLabel,displayIncidentDateLabel,trackedEntityType[id],programTrackedEntityAttributes[mandatory,trackedEntityAttribute[id,displayFormName,valueType,fieldMask,generated,unique,optionSet[options[code,displayName]]]],programStages[id,displayName,repeatable,validationStrategy,autoGenerateEvent,minDaysFromStart,generatedByEnrollmentDate,reportDateToUse,openAfterEnrollment,programStageDataElements[compulsory,dataElement[id,displayFormName,valueType,fieldMask,optionSet[options[code,displayName]]]]]'
+    'id,displayName,displayIncidentDate,displayEnrollmentDateLabel,displayIncidentDateLabel,expiryPeriodType,expiryDays,completeEventsExpiryDays,access[data[write]],categoryCombo[isDefault],trackedEntityType[id,access[data[write]]],programTrackedEntityAttributes[mandatory,trackedEntityAttribute[id,displayFormName,valueType,fieldMask,generated,unique,optionSet[options[code,displayName]]]],programStages[id,displayName,repeatable,validationStrategy,autoGenerateEvent,minDaysFromStart,generatedByEnrollmentDate,reportDateToUse,openAfterEnrollment,blockEntryForm,access[data[write]],programStageDataElements[compulsory,dataElement[id,displayFormName,valueType,fieldMask,optionSet[options[code,displayName]]]],programStageSections[id,dataElements[id]]]'
 
 /** The program as `REGISTER_PROGRAM_FIELDS` returns it. */
 export const registerProgramSchema = z.object({

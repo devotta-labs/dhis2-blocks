@@ -4,12 +4,14 @@ import { cellKey, formOf, keyOf, recordsOf, recordIdOf } from '../model/types'
 import type {
     CellKey,
     DataRecord,
+    EventRecord,
     GridColumn,
     GridRow,
     GridTable,
 } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
+import { generateUid } from '../sources/uid'
 import type { EffectsState } from './context'
 import type { OpenForm } from './openForm'
 
@@ -107,7 +109,10 @@ const closedOn = (
             : [[key, reason]]
     })
 
-/** The table with new rows added at its end, each closed where its record's stage has no field. */
+/**
+ * The table with new rows added at its end, each closed where its record's stage has no field. A row with the id of
+ * one shown replaces it in place: a register's person, back with the slot events typed before a reload.
+ */
 export const withRows = (
     form: LoadedForm,
     table: GridTable,
@@ -115,9 +120,14 @@ export const withRows = (
     records: ReadonlyMap<string, DataRecord>
 ): GridTable => {
     const notInStage = i18n.t('Not in this stage')
+    const byId = new Map(rows.map((row) => [row.id, row]))
+    const shown = new Set(table.rows.map(({ id }) => id))
     return {
         ...table,
-        rows: [...table.rows, ...rows],
+        rows: [
+            ...table.rows.map((row) => byId.get(row.id) ?? row),
+            ...rows.filter(({ id }) => !shown.has(id)),
+        ],
         closed: new Map([
             ...table.closed,
             ...rows.flatMap((row) =>
@@ -158,4 +168,26 @@ export const withColumns = (
             ),
         ]),
     }
+}
+
+/** A new event row for the form's new-row target, in `programStageId`, with the record its cells save to. */
+export const newEventRow = (
+    target: NonNullable<LoadedForm['newRows']>,
+    programStageId: string
+) => {
+    const record: EventRecord = {
+        kind: 'event',
+        id: generateUid(),
+        programStageId,
+        orgUnitId: target.orgUnitId,
+        enrollmentId: target.enrollmentId,
+        status: 'ACTIVE',
+        isNew: true,
+    }
+    const row: GridRow = {
+        id: record.id,
+        label: i18n.t('New event'),
+        stage: target.stage,
+    }
+    return { record, row }
 }

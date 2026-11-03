@@ -50,6 +50,8 @@ const recordSchema = z.object({
                 scheduledAt: z.string().optional(),
                 isNew: z.boolean().optional(),
                 slot: z.string().optional(),
+                createdWith: z.record(z.string(), z.string()).optional(),
+                trackedEntityId: z.string().optional(),
             }),
             z.object({
                 kind: z.literal('enrollment'),

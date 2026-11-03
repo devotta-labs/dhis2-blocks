@@ -29,6 +29,8 @@ export interface LoadedForm {
      * has none here throws "No field for the cell".
      */
     fields: ReadonlyMap<string, Field>
+    /** Every field's display name, shown in a column or not, by id. */
+    fieldNames: ReadonlyMap<string, string>
     /** Each form's field ids (an event's stage's data elements), by form id; never the event date. */
     fieldsByForm: ReadonlyMap<string, ReadonlySet<string>>
     /**
@@ -50,7 +52,8 @@ export interface LoadedForm {
     rules?: RulesTarget
     newRows?: {
         tableId: string
-        programStageId: string
+        /** The stage of a new row's one event; absent when the source makes its new rows itself (`newRow`). */
+        programStageId?: string
         orgUnitId: string
         enrollmentId?: string
         /** The stage's name, for a grid of several stages to show after each new row's event date. */
@@ -62,6 +65,10 @@ export interface LoadedForm {
     fileNames: ReadonlyMap<string, string>
     /** Whether a next page may hold more rows: this one came back full. */
     hasMore: boolean
+    /** What a row is to the user: an event (the default) or a person. */
+    rowKind?: 'event' | 'person'
+    /** Notes the source has on rows, by record id, such as the events a register leaves out. */
+    rowNotes?: ReadonlyMap<string, string[]>
 }
 
 /**
@@ -78,7 +85,15 @@ export type FormPage = Pick<
     | 'orgUnitNames'
     | 'fileNames'
     | 'hasMore'
+    | 'rowNotes'
 >
+
+/** A row the source makes, with its records and the values it starts with (such as reserved generated ids). */
+export interface NewRow {
+    row: GridRow
+    records: DataRecord[]
+    values: ReadonlyMap<CellKey, string>
+}
 
 export interface DataEntrySource {
     /**
@@ -107,12 +122,19 @@ export interface DataEntrySource {
         form: LoadedForm
     ): Promise<SaveOutcome[]>
     /**
-     * Rows for this form's unsent new events found in the outbox after a reload, with their records: those of its
-     * `newRows` target that DHIS2 does not hold yet.
+     * Rows for this form's unsent new records found in the outbox after a reload, with their records: those of its
+     * `newRows` target that DHIS2 does not hold yet. A row with the id of a loaded row replaces it. `readOnlyRecords`
+     * says why a restored record cannot be edited yet.
      */
     restoreRows(
         engine: DataEngine,
         records: ReadonlyArray<OutboxRecord>,
         form: LoadedForm
-    ): Promise<{ rows: GridRow[]; records: DataRecord[] }>
+    ): Promise<{
+        rows: GridRow[]
+        records: DataRecord[]
+        readOnlyRecords?: ReadonlyMap<string, string>
+    }>
+    /** A new row for the table, when the source makes its own: a register's person, enrolment and slot events. */
+    newRow?(tableId: string): NewRow
 }

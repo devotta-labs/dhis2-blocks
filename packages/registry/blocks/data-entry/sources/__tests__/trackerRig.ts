@@ -89,6 +89,7 @@ export const registerForm = (
     orgUnitNames: new Map(),
     fileNames: new Map(),
     hasMore: false,
+    fieldNames: new Map(),
 })
 
 /** A new person's row: the person, the enrolment and three slot events, with these ids. */

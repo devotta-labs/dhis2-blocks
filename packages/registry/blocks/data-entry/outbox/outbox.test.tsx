@@ -142,6 +142,8 @@ test('changes keep enrolment and person records', async () => {
             enrollmentId: 'en1',
             status: 'ACTIVE',
             slot: 'dose1',
+            createdWith: { vaccine: 'DPT', dose: '1' },
+            trackedEntityId: 'te1',
             isNew: true,
         },
         {

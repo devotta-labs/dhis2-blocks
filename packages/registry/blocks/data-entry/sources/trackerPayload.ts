@@ -15,6 +15,12 @@ import type {
     EventFields,
     PersonFields,
 } from './eventSchemas'
+import {
+    eventWait,
+    goneReason,
+    waitingFor,
+    waitingForParent,
+} from './trackerReasons'
 import type { LoadedForm } from './types'
 
 /** What DHIS2 holds now of the records about to be saved, by id; a record it does not return is new or gone. */
@@ -48,6 +54,7 @@ export type SentObjects = ReadonlyMap<
 const ENROLLED_AT = 'enrolledAt'
 /** The incident date's field: its cells are `<enrolment>.occurredAt`. */
 const INCIDENT_DATE = 'occurredAt'
+const ENROLLMENT_DATES = new Set<string>([ENROLLED_AT, INCIDENT_DATE])
 
 /**
  * An update replaces the event's own fields with what is sent, so they are sent as DHIS2 holds them, and merges
@@ -84,30 +91,6 @@ const incidentDate = (
     return change.value === null ? undefined : withTime(change.value, held)
 }
 
-const goneReason = (kind: DataRecord['kind']) => {
-    switch (kind) {
-        case 'event':
-            return i18n.t(
-                'This event was deleted or you no longer have access to it'
-            )
-        case 'enrollment':
-            return i18n.t(
-                'This enrolment was deleted or you no longer have access to it'
-            )
-        case 'trackedEntity':
-            return i18n.t(
-                'This person was deleted or you no longer have access to it'
-            )
-    }
-}
-
-const waitingFor = (fields: ReadonlyArray<string>) =>
-    i18n.t('Waiting for: {{fields}}', {
-        nsSeparator: '::',
-        fields: fields.join(', '),
-        interpolation: AS_IS,
-    })
-
 /** The record a record belongs to: an event's enrolment, an enrolment's person. */
 export const belongsTo = (record: DataRecord | undefined) => {
     switch (record?.kind) {
@@ -119,12 +102,6 @@ export const belongsTo = (record: DataRecord | undefined) => {
             return undefined
     }
 }
-
-/** Why the records of a person or enrolment that is not saved yet wait. */
-export const waitingForParent = (kind: DataRecord['kind']) =>
-    kind === 'trackedEntity'
-        ? i18n.t('Waiting for the person to be saved')
-        : i18n.t('Waiting for the enrolment to be saved')
 
 /**
  * What to send of the records' changes, and the changes that wait or are refused before sending. A change to a
@@ -243,8 +220,9 @@ export const buildImport = (
     }
     /** Refuses a change to anything an enrolment does not save (only its dates); the others are returned. */
     const refuseForeign = (changes: ReadonlyArray<OutboxRecord>) => {
-        const dates = new Set([ENROLLED_AT, INCIDENT_DATE])
-        const foreign = changes.filter(({ key }) => !dates.has(fieldOf(key)))
+        const foreign = changes.filter(
+            ({ key }) => !ENROLLMENT_DATES.has(fieldOf(key))
+        )
         for (const change of foreign) {
             hold(
                 [change],
@@ -330,9 +308,10 @@ export const buildImport = (
         }
         const attributes = changesOf(id).filter(({ value }) => value !== null)
         const filled = new Set(attributes.map(({ key }) => fieldOf(key)))
+        // The enrolment's own required date is its own wait, not an attribute.
         const missing = [
             ...requiredOf(programId, person.trackedEntityTypeId),
-        ].filter((attribute) => !filled.has(attribute))
+        ].filter((field) => !filled.has(field) && !ENROLLMENT_DATES.has(field))
         const dated = newEnrollments.some(
             (enrollment) =>
                 enrollment.trackedEntityId === id &&
@@ -454,12 +433,20 @@ export const buildImport = (
         changes
             .filter(({ key }) => fieldOf(key) !== EVENT_DATE_COLUMN)
             .map(({ key, value }) => ({ dataElement: fieldOf(key), value }))
-    const eventWait = (fields: ReadonlyArray<string>) =>
-        i18n.t('Waiting for required fields: {{fields}}', {
-            nsSeparator: '::',
-            fields: fields.join(', '),
-            interpolation: AS_IS,
-        })
+
+    /** A slot with no date column (a non-repeatable stage) happens on the enrolment date. */
+    const datedByEnrollment = (slot: string | undefined) =>
+        slot !== undefined &&
+        !columns.some(
+            (column) =>
+                column.slot === slot &&
+                (column.fieldId ?? column.id) === EVENT_DATE_COLUMN
+        )
+    const enrolledAtOf = (enrollment: string | undefined) =>
+        enrollment === undefined
+            ? undefined
+            : (typedIn(enrollment, ENROLLED_AT) ??
+              held.enrollments.get(enrollment)?.enrolledAt)
 
     for (const id of ofKind('event')) {
         const date = typedIn(id, EVENT_DATE_COLUMN)
@@ -475,9 +462,13 @@ export const buildImport = (
             if (sent.length === 0) {
                 continue
             }
+            // A scheduled event in a slot with no date column takes the enrolment date, as a new one does.
+            const fromEnrollment = datedByEnrollment(slotOf(id))
+                ? enrolledAtOf(base.enrollment)
+                : undefined
             const occurredAt =
                 date === undefined
-                    ? base.occurredAt
+                    ? (base.occurredAt ?? fromEnrollment)
                     : withTime(date, base.occurredAt)
             // A scheduled event holds no values (DHIS2 refuses them) until it has a date.
             if (occurredAt === undefined) {
@@ -502,27 +493,17 @@ export const buildImport = (
         if (gone(id, 'event') || event?.kind !== 'event') {
             continue
         }
-        // A slot with no date column (a non-repeatable stage) happens on the enrolment date.
-        const datedByEnrollment =
-            event.slot !== undefined &&
-            !columns.some(
-                (column) =>
-                    column.slot === event.slot &&
-                    (column.fieldId ?? column.id) === EVENT_DATE_COLUMN
-            )
-        const enrolledAt =
-            event.enrollmentId === undefined
-                ? undefined
-                : (typedIn(event.enrollmentId, ENROLLED_AT) ??
-                  held.enrollments.get(event.enrollmentId)?.enrolledAt)
-        const occurredAt = datedByEnrollment ? enrolledAt : date
+        const byEnrollment = datedByEnrollment(event.slot)
+        const occurredAt = byEnrollment
+            ? enrolledAtOf(event.enrollmentId)
+            : date
         const filled = new Set(
             changesOf(id)
                 .filter(({ value }) => value !== null)
                 .map(({ key }) => fieldOf(key))
         )
         const missing = [
-            ...(datedByEnrollment ? [] : [EVENT_DATE_COLUMN]),
+            ...(byEnrollment ? [] : [EVENT_DATE_COLUMN]),
             ...requiredIn(event.programStageId, 'ACTIVE'),
         ].filter((field) => !filled.has(field))
         if (missing.length > 0) {
@@ -554,7 +535,18 @@ export const buildImport = (
             ...(event.scheduledAt !== undefined && {
                 scheduledAt: event.scheduledAt,
             }),
-            dataValues: valuesOf(changesOf(id)),
+            // A where slot's values, unless the clerk typed that field too.
+            dataValues: [
+                ...Object.entries(event.createdWith ?? {})
+                    .filter(
+                        ([dataElement]) =>
+                            !changesOf(id).some(
+                                ({ key }) => fieldOf(key) === dataElement
+                            )
+                    )
+                    .map(([dataElement, value]) => ({ dataElement, value })),
+                ...valuesOf(changesOf(id)),
+            ],
         })
         objects.set(id, { kind: 'event', parent: event.enrollmentId })
     }

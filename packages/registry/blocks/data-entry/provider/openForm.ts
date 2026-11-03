@@ -8,8 +8,6 @@ import { cellKey, recordIdOf } from '../model/types'
 import type {
     CellKey,
     DataRecord,
-    EventRecord,
-    GridRow,
     GridTable,
     PendingChange,
 } from '../model/types'
@@ -23,7 +21,6 @@ import type {
     FormPage,
     LoadedForm,
 } from '../sources/types'
-import { generateUid } from '../sources/uid'
 import { createDataEntryStore } from '../store/store'
 import type { DataEntryState } from '../store/store'
 import { afterPaint } from './afterPaint'
@@ -32,7 +29,7 @@ import { completionChecks, refusalOf, showStatus } from './completion'
 import type { EffectsState } from './context'
 import { discardFailed } from './discardFailed'
 import { formKeys } from './formKeys'
-import { formEffects, summaryOf, withRows } from './formRows'
+import { formEffects, newEventRow, summaryOf, withRows } from './formRows'
 import type { DataEntryView } from './hooks'
 import { signedInAsOther, userCheck } from './signedIn'
 import { saveUnsentFile } from './unsentFile'
@@ -110,7 +107,7 @@ export const openForm = async (options: OpenFormOptions): Promise<OpenForm> => {
 const connect = (
     outbox: Outbox,
     unsent: ReadonlyArray<OutboxRecord>,
-    restored: { rows: GridRow[]; records: DataRecord[] },
+    restored: Awaited<ReturnType<DataEntrySource['restoreRows']>>,
     {
         source,
         form,
@@ -125,7 +122,10 @@ const connect = (
 ): OpenForm => {
     let closed = false
     // What statuses saved here have changed since the form loaded.
-    const readOnlyRecords = new Map(form.readOnlyRecords)
+    const readOnlyRecords = new Map([
+        ...form.readOnlyRecords,
+        ...(restored.readOnlyRecords ?? []),
+    ])
     const reopenable = new Set(form.canReopen)
 
     const newRowTable = form.newRows?.tableId ?? form.tables.at(0)?.id
@@ -451,23 +451,15 @@ const connect = (
             const table = tables
                 .getState()
                 .tables.find(({ id }) => id === tableId)
-            if (closed || newRows?.tableId !== tableId || table === undefined) {
+            if (
+                closed ||
+                newRows?.tableId !== tableId ||
+                newRows.programStageId === undefined ||
+                table === undefined
+            ) {
                 return
             }
-            const record: EventRecord = {
-                kind: 'event',
-                id: generateUid(),
-                programStageId: newRows.programStageId,
-                orgUnitId: newRows.orgUnitId,
-                enrollmentId: newRows.enrollmentId,
-                status: 'ACTIVE',
-                isNew: true,
-            }
-            const row: GridRow = {
-                id: record.id,
-                label: i18n.t('New event'),
-                stage: newRows.stage,
-            }
+            const { record, row } = newEventRow(newRows, newRows.programStageId)
             const known = new Map(tables.getState().records).set(
                 record.id,
                 record

@@ -160,6 +160,7 @@ const formOf = (values: ReadonlyMap<CellKey, string>): LoadedForm => ({
         ])
     ),
     fields: new Map(COLUMNS.map(({ id, field }) => [id, field])),
+    fieldNames: new Map(COLUMNS.map(({ id, label }) => [id, label])),
     fieldsByForm: new Map([['values', new Set(COLUMNS.map(({ id }) => id))]]),
     // Nothing required, no sections, no stages to block entry, no rules.
     required: new Map(),

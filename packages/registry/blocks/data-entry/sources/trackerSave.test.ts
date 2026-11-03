@@ -5,6 +5,7 @@ import importEnrollmentRefused from './__tests__/fixtures/import-enrollment-refu
 import importPersonRefused from './__tests__/fixtures/import-person-refused.json'
 import importUniqueClash from './__tests__/fixtures/import-unique-clash.json'
 import {
+    DELIVERY_PLACE,
     FIRST_NAME,
     IMPORTED,
     LAST_NAME,
@@ -311,5 +312,55 @@ test('sending a refused person again creates all three with the same ids', async
         ['PsnRefused1'],
         ['EnrRefused1'],
         ['EvtRefused1', 'EvtRefused2'],
+    ])
+})
+
+test('a value typed into a held scheduled visit with no date column reads its enrolment for the date', async () => {
+    const enrolled = { ...REFUSED.enrollment, isNew: false }
+    const birth = {
+        ...REFUSED.birth,
+        isNew: false,
+        status: 'SCHEDULE' as const,
+    }
+    const fake = trackerEngine({
+        events: [
+            {
+                event: birth.id,
+                program: PROGRAM,
+                programStage: birth.programStageId,
+                orgUnit: NGELEHUN,
+                enrollment: enrolled.id,
+                scheduledAt: '2026-10-05T00:00:00.000',
+                status: 'SCHEDULE',
+            },
+        ],
+        enrollments: [
+            {
+                enrollment: enrolled.id,
+                program: PROGRAM,
+                trackedEntity: REFUSED.person.id,
+                orgUnit: NGELEHUN,
+                enrolledAt: '2026-10-05T00:00:00.000',
+                status: 'ACTIVE',
+            },
+        ],
+    })
+    const place = edit(birth, DELIVERY_PLACE, 'Home')
+    const saved = await trackerSaver(SOURCE, PROGRAM).save(
+        fake.engine,
+        [place],
+        registerForm([enrolled, birth])
+    )
+    expect(saved).toEqual(outcomes([place], 'saved'))
+    expect(fake.sent()).toEqual([
+        {
+            events: [
+                expect.objectContaining({
+                    event: birth.id,
+                    status: 'ACTIVE',
+                    occurredAt: '2026-10-05T00:00:00.000',
+                }),
+            ],
+        },
     ])
 })

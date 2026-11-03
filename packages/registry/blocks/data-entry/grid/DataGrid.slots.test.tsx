@@ -86,6 +86,7 @@ const register = (values: Array<[CellKey, string]> = []): LoadedForm => ({
     orgUnitNames: new Map(),
     fileNames: new Map(),
     hasMore: false,
+    fieldNames: new Map(),
 })
 
 /** The register over a source that keeps its saves waiting, so the outbox holds every change. */

@@ -1,7 +1,24 @@
 {
     "displayIncidentDate": false,
-    "trackedEntityType": { "id": "nEenWmSyUEp" },
+    "trackedEntityType": {
+        "access": {
+            "data": {
+                "write": true
+            }
+        },
+        "id": "nEenWmSyUEp"
+    },
+    "categoryCombo": {
+        "isDefault": true
+    },
+    "expiryDays": 0,
+    "completeEventsExpiryDays": 0,
     "displayName": "Child immunisation register",
+    "access": {
+        "data": {
+            "write": true
+        }
+    },
     "id": "ImmReg00001",
     "programStages": [
         {
@@ -12,10 +29,22 @@
                         "valueType": "TEXT",
                         "optionSet": {
                             "options": [
-                                { "code": "BCG", "displayName": "BCG" },
-                                { "code": "OPV", "displayName": "OPV" },
-                                { "code": "DPT", "displayName": "DPT" },
-                                { "code": "MEASLES", "displayName": "MEASLES" }
+                                {
+                                    "code": "BCG",
+                                    "displayName": "BCG"
+                                },
+                                {
+                                    "code": "OPV",
+                                    "displayName": "OPV"
+                                },
+                                {
+                                    "code": "DPT",
+                                    "displayName": "DPT"
+                                },
+                                {
+                                    "code": "MEASLES",
+                                    "displayName": "MEASLES"
+                                }
                             ]
                         },
                         "displayFormName": "Vaccine",
@@ -28,10 +57,22 @@
                         "valueType": "TEXT",
                         "optionSet": {
                             "options": [
-                                { "code": "0", "displayName": "0" },
-                                { "code": "1", "displayName": "1" },
-                                { "code": "2", "displayName": "2" },
-                                { "code": "3", "displayName": "3" }
+                                {
+                                    "code": "0",
+                                    "displayName": "0"
+                                },
+                                {
+                                    "code": "1",
+                                    "displayName": "1"
+                                },
+                                {
+                                    "code": "2",
+                                    "displayName": "2"
+                                },
+                                {
+                                    "code": "3",
+                                    "displayName": "3"
+                                }
                             ]
                         },
                         "displayFormName": "Dose",
@@ -42,11 +83,18 @@
             ],
             "autoGenerateEvent": false,
             "validationStrategy": "ON_COMPLETE",
+            "blockEntryForm": false,
             "generatedByEnrollmentDate": false,
             "openAfterEnrollment": false,
             "displayName": "Vaccination",
+            "access": {
+                "data": {
+                    "write": true
+                }
+            },
             "id": "ImmVaccin01",
-            "repeatable": true
+            "repeatable": true,
+            "programStageSections": []
         }
     ],
     "programTrackedEntityAttributes": [
@@ -86,8 +134,14 @@
                 "valueType": "TEXT",
                 "optionSet": {
                     "options": [
-                        { "code": "Male", "displayName": "Male" },
-                        { "code": "Female", "displayName": "Female" }
+                        {
+                            "code": "Male",
+                            "displayName": "Male"
+                        },
+                        {
+                            "code": "Female",
+                            "displayName": "Female"
+                        }
                     ]
                 },
                 "unique": false,

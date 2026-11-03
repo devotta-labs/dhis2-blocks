@@ -151,9 +151,9 @@ const readRecords = async (
                 break
             default:
                 events.push(id)
-                // A new event's enrolment, when the form knows it: whether it is saved, and its date.
+                // An event's enrolment, when the form knows it: whether it is saved, and its date for a slot with none.
                 if (
-                    record?.isNew &&
+                    record?.kind === 'event' &&
                     record.enrollmentId !== undefined &&
                     recordOf(record.enrollmentId)?.kind === 'enrollment'
                 ) {

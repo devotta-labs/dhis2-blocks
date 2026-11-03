@@ -29,8 +29,12 @@ export interface EventRecord {
     /** The day (`YYYY-MM-DD`) a scheduled event is due: it names the row, as its event date would, until it has one. */
     scheduledAt?: string
     isNew?: boolean
-    /** The register slot a new event fills. */
+    /** The register slot the event fills. */
     slot?: string
+    /** Values a new event is created with that no column shows: a `where` slot's (data element id → code). */
+    createdWith?: Readonly<Record<string, string>>
+    /** A new person's event: that person, so a reload can rebuild their row, with its ids, from the outbox alone. */
+    trackedEntityId?: string
 }
 
 /** A person's enrolment in a program; its fields are `enrolledAt` and `occurredAt`, as DHIS2 names them. */
@@ -76,6 +80,8 @@ export interface GridRow {
     stage?: string
     /** Slot name → the record the columns of that slot save to, for a row that shows cells of several records. */
     slots?: Readonly<Record<string, string>>
+    /** Names the row by these cells' values, joined by a space. */
+    labelFrom?: ReadonlyArray<CellKey>
 }
 
 export interface GridColumn {
@@ -101,10 +107,9 @@ export const keyOf = (row: GridRow, column: GridColumn): CellKey => {
     return cellKey(record, field)
 }
 
-/** The records a row's cells can save to: its own id, then its slots' records. */
+/** The records a row's cells can save to: its own id, then its slots' records, each once. */
 export const recordsOf = (row: Pick<GridRow, 'id' | 'slots'>): string[] => [
-    row.id,
-    ...Object.values(row.slots ?? {}),
+    ...new Set([row.id, ...Object.values(row.slots ?? {})]),
 ]
 
 export interface HeaderCell {

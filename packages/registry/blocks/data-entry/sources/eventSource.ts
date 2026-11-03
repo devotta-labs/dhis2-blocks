@@ -1,9 +1,8 @@
 import i18n from '@dhis2/d2-i18n'
 import type { z } from 'zod'
-import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { checkStored } from '@/components/dhis2-value-types'
 import type { Field } from '@/components/dhis2-value-types'
-import { cellKey } from '../model/types'
+import { cellKey, keyOf } from '../model/types'
 import type { CellKey, DataRecord, GridColumn, GridRow } from '../model/types'
 import {
     EVENT_DATE_COLUMN,
@@ -15,8 +14,9 @@ import {
 } from './eventSchemas'
 import type { ProgramStage, TrackerEvent } from './eventSchemas'
 import { fieldOf } from './fieldOf'
+import { blockedReason, eventEditRules } from './eventEdit'
 import { restoreEventRows } from './eventRestore'
-import { completionExpired, expiryStart, localToday } from './expiry'
+import { localToday } from './expiry'
 import { hasRulesIn } from './hasRules'
 import { trackerSaver } from './trackerSave'
 import type {
@@ -40,20 +40,6 @@ export interface EventSourceOptions {
     order?: 'occurredAt:asc' | 'occurredAt:desc'
     /** The date (`YYYY-MM-DD`) the expiry rules are checked against; the device's date by default. */
     today?: string
-}
-
-// Translated when used, so the reasons follow the user's language.
-const READ_ONLY = {
-    categories: () =>
-        i18n.t(
-            'Programs with attribute categories are not supported in this grid'
-        ),
-    noWrite: () => i18n.t('You do not have access to enter data in this stage'),
-    skipped: () => i18n.t('Skipped events cannot be edited'),
-    blocked: () => i18n.t('Completed events in this stage cannot be edited'),
-    expiredPeriod: () => i18n.t('This event is in an expired period'),
-    expiredCompletion: () =>
-        i18n.t('This event was completed too long ago to edit'),
 }
 
 // An org unit value is its id, and so is a file's: both are DHIS2 ids.
@@ -178,51 +164,13 @@ const toForm = (
         }
     }
 
-    const has = (authority: string) =>
-        me.authorities.includes('ALL') || me.authorities.includes(authority)
-    const writable = (stage: ProgramStage | undefined) =>
-        program.categoryCombo.isDefault && stage?.access.data.write === true
-    // DHIS2 never expires an event by its period when the program gives no expiry days.
-    const opensOn = program.expiryDays
-        ? expiryStart(
-              program.expiryPeriodType,
-              program.expiryDays,
-              today,
-              parseDhis2Calendar(systemInfo.calendar)
-          )
-        : undefined
-    const expiredReason = (event: TrackerEvent) => {
-        if (has('F_EDIT_EXPIRED')) {
-            return undefined
-        }
-        const date = eventDate(event)
-        if (opensOn !== undefined && date !== undefined && date < opensOn) {
-            return READ_ONLY.expiredPeriod()
-        }
-        return completionExpired(
-            event.completedAt,
-            program.completeEventsExpiryDays,
-            today
-        )
-            ? READ_ONLY.expiredCompletion()
-            : undefined
-    }
-    const readOnlyReason = (event: TrackerEvent) => {
-        const stage = stageById.get(event.programStage)
-        if (!program.categoryCombo.isDefault) {
-            return READ_ONLY.categories()
-        }
-        if (!writable(stage)) {
-            return READ_ONLY.noWrite()
-        }
-        if (event.status === 'SKIPPED') {
-            return READ_ONLY.skipped()
-        }
-        if (event.status === 'COMPLETED' && stage?.blockEntryForm) {
-            return READ_ONLY.blocked()
-        }
-        return expiredReason(event)
-    }
+    const { has, writable, readOnlyReason, mayReopen } = eventEditRules({
+        program,
+        stages: stageById,
+        authorities: me.authorities,
+        calendar: systemInfo.calendar,
+        today,
+    })
 
     const readOnlyRecords = new Map<string, string>()
     const canReopen = new Set<string>()
@@ -231,12 +179,7 @@ const toForm = (
         if (reason !== undefined) {
             readOnlyRecords.set(event.event, reason)
         }
-        if (
-            event.status === 'COMPLETED' &&
-            has('F_UNCOMPLETE_EVENT') &&
-            writable(stageById.get(event.programStage)) &&
-            expiredReason(event) === undefined
-        ) {
+        if (mayReopen(event)) {
             canReopen.add(event.event)
         }
     }
@@ -313,6 +256,13 @@ const toForm = (
                 toColumn(element).field,
             ]),
         ]),
+        fieldNames: new Map([
+            [EVENT_DATE_COLUMN, i18n.t('Event date')],
+            ...Array.from(everyElement, ([id, element]): [string, string] => [
+                id,
+                element.displayFormName,
+            ]),
+        ]),
         fieldsByForm: fieldsOf,
         required: new Map(
             stages.map((stage) => [
@@ -343,12 +293,12 @@ const toForm = (
         readOnlyWhenCompleted: new Map(
             stages
                 .filter(({ blockEntryForm }) => blockEntryForm)
-                .map(({ id }) => [id, READ_ONLY.blocked()])
+                .map(({ id }) => [id, blockedReason()])
         ),
         mayUncomplete: has('F_UNCOMPLETE_EVENT'),
         rules,
         newRows:
-            newRowStage !== undefined && writable(newRowStage)
+            newRowStage !== undefined && writable(newRowStage.id)
                 ? {
                       tableId: program.id,
                       programStageId: newRowStage.id,
@@ -378,12 +328,12 @@ const loadNames = async (
 ): Promise<ReadonlyMap<string, string>> => {
     const ids = new Set<string>()
     for (const { rows, columns } of tables) {
-        for (const { id: column, field } of columns) {
-            if (!valueTypes.has(field.valueType)) {
+        for (const column of columns) {
+            if (!valueTypes.has(column.field.valueType)) {
                 continue
             }
-            for (const { id: row } of rows) {
-                const value = values.get(cellKey(row, column))
+            for (const row of rows) {
+                const value = values.get(keyOf(row, column))
                 if (
                     value !== undefined &&
                     checkStored(ORG_UNIT, value) === undefined
@@ -412,7 +362,7 @@ const loadNames = async (
 }
 
 /** The names of the org units and the files the form's values hold, asked for together. */
-const loadNamesOf = (
+export const loadNamesOf = (
     engine: DataEngine,
     form: Pick<LoadedForm, 'tables' | 'values'>,
     signal?: AbortSignal

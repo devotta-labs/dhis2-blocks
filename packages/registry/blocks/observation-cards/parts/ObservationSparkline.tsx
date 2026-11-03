@@ -134,10 +134,10 @@ export function ObservationSparkline({
     return (
         // The query container is here, not on the card, so the card still sizes
         // from its content; the summary stays readable when the chart is hidden.
-        // mt-auto keeps it on the card's foot, so sparklines in a grid row line up.
+        // Right above the recorded note, it sits on the card's foot, so sparklines in a grid row line up; anywhere else it stays where it is placed.
         <div
             data-slot="observation-sparkline"
-            className="@container mt-auto w-full"
+            className="@container w-full [&:has(+[data-slot=observation-recorded])]:mt-auto"
         >
             <span className="sr-only">{summary}</span>
             <div

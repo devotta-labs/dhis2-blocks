@@ -3,7 +3,12 @@ import i18n from '@dhis2/d2-i18n'
 import { IconArrowDown16, IconArrowUp16 } from '@dhis2/ui-icons'
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { useObservationCard } from '../card/context'
-import { changeLine, showsTrend, type ChangeLine } from '../format/display'
+import {
+    categoryChangeLine,
+    changeLine,
+    showsTrend,
+    type ChangeLine,
+} from '../format/display'
 
 export type ObservationChangeProps = Omit<
     ComponentPropsWithoutRef<'p'>,
@@ -35,7 +40,8 @@ function Direction({
 
 /**
  * The change since the previous reading, and the legend move when there is
- * one. Nothing when there is no earlier reading.
+ * one. For an option or yes/no value, when it last changed and from what.
+ * Nothing when there is no earlier reading.
  */
 export function ObservationChange({
     className,
@@ -45,7 +51,7 @@ export function ObservationChange({
     // Option codes are categories: a difference between them means nothing.
     const change = showsTrend(series)
         ? changeLine(series, unit, display)
-        : undefined
+        : categoryChangeLine(series, display)
     if (change === undefined) {
         return null
     }

@@ -109,7 +109,7 @@ describe('ObservationChange', () => {
         ).not.toBeNull()
     })
 
-    it('names no change between option codes, even numeric ones', async () => {
+    it('names the earlier option, never a difference between option codes', async () => {
         const { container } = await renderWith(
             <ObservationCard dataElement={DE}>
                 <ObservationChange />
@@ -123,8 +123,9 @@ describe('ObservationChange', () => {
                 ],
             }
         )
-        expect(slot(container, 'observation-change')).toBeNull()
-        expect(container.textContent).not.toContain('since')
+        expect(slot(container, 'observation-change')?.textContent).toBe(
+            'Changed from Mild on Mar 2, 2026'
+        )
     })
 })
 

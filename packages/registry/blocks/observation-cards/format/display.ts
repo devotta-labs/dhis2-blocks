@@ -76,19 +76,22 @@ export const formatPointValue = (
     point: ObservationPoint,
     options: DisplayOptions
 ): string =>
-    formatDhis2Value(
-        point.value,
-        {
-            valueType: series.valueType,
-            optionSet: series.options && {
-                options: series.options.map(({ code, name }) => ({
-                    code,
-                    displayName: name,
-                })),
-            },
-        },
-        options
-    )
+    // DHIS2 stores nothing for an unticked TRUE_ONLY box, so it isn't a recorded No.
+    series.valueType === 'TRUE_ONLY' && point.value !== 'true'
+        ? i18n.t('Not ticked')
+        : formatDhis2Value(
+              point.value,
+              {
+                  valueType: series.valueType,
+                  optionSet: series.options && {
+                      options: series.options.map(({ code, name }) => ({
+                          code,
+                          displayName: name,
+                      })),
+                  },
+              },
+              options
+          )
 
 /** The day a reading was recorded on, in the system calendar. */
 export const formatRecordedDate = (
@@ -113,23 +116,12 @@ export const changeLine = (
         return undefined
     }
     const date = formatRecordedDate(previous, options)
-    const now = legendFor(legends, latest?.numericValue)
-    const was = legendFor(legends, previous.numericValue)
-    const move =
-        now && was && now.name !== was.name
-            ? i18n.t(', now {{legend}} (was {{previous}})', {
-                  legend: now.name,
-                  previous: was.name,
-                  interpolation: NO_ESCAPE,
-              })
-            : ''
     if (change === 0) {
         return {
-            text:
-                i18n.t('No change since {{date}}', {
-                    date,
-                    interpolation: NO_ESCAPE,
-                }) + move,
+            text: i18n.t('No change since {{date}}', {
+                date,
+                interpolation: NO_ESCAPE,
+            }),
         }
     }
     // `change` is already at the readings' precision, and takes their type's form, so a PERCENTAGE keeps its "%".
@@ -138,14 +130,107 @@ export const changeLine = (
         { valueType: series.valueType },
         options
     )
-    return {
-        direction: change > 0 ? 'up' : 'down',
-        text:
-            i18n.t('{{change}} since {{date}}', {
-                change: [size, unit].filter(Boolean).join(' '),
-                date,
+    const amount = [size, unit].filter(Boolean).join(' ')
+    const now = legendFor(legends, latest?.numericValue)
+    const was = legendFor(legends, previous.numericValue)
+    // One string per sentence, so translators can reorder all of it.
+    const text =
+        now && was && now.name !== was.name
+            ? i18n.t(
+                  '{{change}} since {{date}}, now {{legend}} (was {{previous}})',
+                  {
+                      change: amount,
+                      date,
+                      legend: now.name,
+                      previous: was.name,
+                      interpolation: NO_ESCAPE,
+                  }
+              )
+            : i18n.t('{{change}} since {{date}}', {
+                  change: amount,
+                  date,
+                  interpolation: NO_ESCAPE,
+              })
+    return { direction: change > 0 ? 'up' : 'down', text }
+}
+
+/**
+ * A TRUE_ONLY box is ticked or left empty, so its line says when it was
+ * ticked rather than what it changed from.
+ */
+const trueOnlyLine = (
+    latest: ObservationPoint,
+    before: ObservationPoint | undefined,
+    since: ObservationPoint,
+    options: DisplayOptions
+): ChangeLine => {
+    if (latest.value === 'true') {
+        return {
+            text: i18n.t('Ticked since {{date}}', {
+                date: formatRecordedDate(since, options),
                 interpolation: NO_ESCAPE,
-            }) + move,
+            }),
+        }
+    }
+    // The run before an unticked latest is ticked, so `before` is the last tick.
+    return before === undefined
+        ? {
+              text: i18n.t('Not ticked since {{date}}', {
+                  date: formatRecordedDate(since, options),
+                  interpolation: NO_ESCAPE,
+              }),
+          }
+        : {
+              text: i18n.t('Last ticked on {{date}}', {
+                  date: formatRecordedDate(before, options),
+                  interpolation: NO_ESCAPE,
+              }),
+          }
+}
+
+/** Short categories whose earlier value reads well in a sentence. */
+const CATEGORY_TYPES = new Set(['BOOLEAN', 'TRUE_ONLY'])
+
+/**
+ * When an option or yes/no value last changed, and from what; or how long it
+ * has held. Nothing for one reading, or for other types.
+ */
+export const categoryChangeLine = (
+    series: ObservationSeries,
+    options: DisplayOptions
+): ChangeLine | undefined => {
+    const { points, latest } = series
+    if (
+        latest === undefined ||
+        points.length < 2 ||
+        (series.options === undefined && !CATEGORY_TYPES.has(series.valueType))
+    ) {
+        return undefined
+    }
+    // The run of readings ending at the latest that all hold its value.
+    let start = points.length - 1
+    while (start > 0 && points[start - 1]?.value === latest.value) {
+        start -= 1
+    }
+    const before = points[start - 1]
+    const since = points[start] ?? latest
+    if (series.valueType === 'TRUE_ONLY') {
+        return trueOnlyLine(latest, before, since, options)
+    }
+    if (before === undefined) {
+        return {
+            text: i18n.t('No change since {{date}}', {
+                date: formatRecordedDate(since, options),
+                interpolation: NO_ESCAPE,
+            }),
+        }
+    }
+    return {
+        text: i18n.t('Changed from {{previous}} on {{date}}', {
+            previous: formatPointValue(series, before, options),
+            date: formatRecordedDate(since, options),
+            interpolation: NO_ESCAPE,
+        }),
     }
 }
 

@@ -13,7 +13,7 @@ export interface ObservationOption {
 }
 
 export interface ObservationPoint {
-    /** Tracker API value; TRUE_ONLY gaps are 'false'. */
+    /** Tracker API value; an unticked TRUE_ONLY box at a capturing stage is 'false', shown as Not ticked. */
     value: string
     /** Set for numeric types when the value parses. */
     numericValue?: number

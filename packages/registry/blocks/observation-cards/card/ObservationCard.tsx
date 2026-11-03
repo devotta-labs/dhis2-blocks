@@ -142,16 +142,16 @@ const Notice = ({ children }: { children: ReactNode }) => (
 
 /** No children: numeric readings get the trend, everything else the last recorded value. */
 function DefaultArrangement({ series }: { series: ObservationSeries }) {
-    const trend = showsTrend(series)
     return (
         <>
+            <ObservationLabel />
+            {/* The legend wraps under the value, so values in a row stay level. */}
             <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                <ObservationLabel />
+                <ObservationValue />
                 <ObservationLegend />
             </div>
-            <ObservationValue />
-            {trend ? <ObservationChange /> : null}
-            {trend ? <ObservationSparkline /> : null}
+            <ObservationChange />
+            {showsTrend(series) ? <ObservationSparkline /> : null}
             <ObservationRecorded />
         </>
     )

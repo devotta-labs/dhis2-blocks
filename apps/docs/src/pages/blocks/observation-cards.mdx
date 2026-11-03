@@ -11,7 +11,8 @@ import { InstallCommand } from '../../components/InstallCommand'
 This preview reads one person in the WHO RMNCH Tracker in the Sierra Leone
 demo database. Haemoglobin is a number, so its card shows the latest value,
 the change since the previous reading and a sparkline. Smoking and extreme
-pallor are yes or no, so their cards show the last recorded value. All three
+pallor are yes or no, so their cards show the last recorded value and when
+it last changed. All three
 cards share one load of the person's events. Copy the example's code to start from it, and edit the uids at
 the top of the file.
 
@@ -54,7 +55,11 @@ GET /api/programs/<program>?fields=programStages[programStageDataElements[dataEl
 A card without children picks its arrangement from the value type. A number
 gets its label, legend, latest value, change since the previous reading, a
 sparkline and the recorded date. Everything else gets its label, last recorded
-value and recorded date. Option sets show the option's name in the option's
+value and recorded date. Yes or no values and option sets also say when the
+value last changed and from what, such as "Changed from No on Mar 3, 2026",
+or how long it has held. DHIS2 stores nothing for an unticked yes-only
+(TRUE_ONLY) box, so a visit that left it empty reads "Not ticked", not No, with
+when it was last ticked. Option sets show the option's name in the option's
 colour. A card shows its own loading, error and never recorded states, and
 says "This value type can't be shown here" for a value type it doesn't support.
 Users who can't read some stages that capture the value see a "Restricted

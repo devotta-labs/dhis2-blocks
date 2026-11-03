@@ -15,7 +15,8 @@ metadata and the person's events once for every card inside it.
 
 Without children a card picks its arrangement from the value type: numbers
 get the latest value, legend, change since the previous reading and a
-sparkline; everything else gets the last recorded value. To build a
+sparkline; everything else gets the last recorded value, and yes or no
+values and option sets say when it last changed. To build a
 different card, place the parts yourself:
 
 ```tsx

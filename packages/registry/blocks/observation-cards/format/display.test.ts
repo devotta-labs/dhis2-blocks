@@ -4,6 +4,7 @@ import type {
     ObservationSeries,
 } from '../api/types'
 import {
+    categoryChangeLine,
     changeLine,
     elementShowsTrend,
     formatPointValue,
@@ -106,10 +107,10 @@ describe('legendFor', () => {
 })
 
 describe('formatPointValue', () => {
-    it("TRUE_ONLY 'false' reads No", () => {
+    it('an unticked TRUE_ONLY box reads Not ticked, never No', () => {
         expect(
             formatPointValue(series('TRUE_ONLY'), point('false'), GREGORIAN)
-        ).toBe('No')
+        ).toBe('Not ticked')
         expect(
             formatPointValue(series('TRUE_ONLY'), point('true'), GREGORIAN)
         ).toBe('Yes')
@@ -436,5 +437,83 @@ describe('relativeTime', () => {
         expect(relativeTime(at('2026-03-09T12:00:00.000'), now, 'fr')).toBe(
             'il y a 3 jours'
         )
+    })
+})
+
+describe('categoryChangeLine', () => {
+    const at = (value: string, day: string) =>
+        point(value, { occurredAt: `2026-03-${day}T00:00:00.000` })
+    const yesNo = (...points: ObservationPoint[]) =>
+        series('BOOLEAN', { points, latest: points.at(-1) })
+
+    it('names the earlier value and the day the latest one was first recorded', () => {
+        expect(
+            categoryChangeLine(
+                yesNo(at('false', '01'), at('true', '03'), at('true', '05')),
+                GREGORIAN
+            )
+        ).toEqual({ text: 'Changed from No on Mar 3, 2026' })
+    })
+
+    it('says since when the value has held, when it never changed', () => {
+        expect(
+            categoryChangeLine(
+                yesNo(at('true', '01'), at('true', '05')),
+                GREGORIAN
+            )?.text
+        ).toBe('No change since Mar 1, 2026')
+    })
+
+    it('uses option names', () => {
+        const points = [at('S', '01'), at('N', '04')]
+        expect(
+            categoryChangeLine(
+                series('TEXT', {
+                    points,
+                    latest: points.at(-1),
+                    options: [
+                        { code: 'S', name: 'Smoker' },
+                        { code: 'N', name: 'Non-smoker' },
+                    ],
+                }),
+                GREGORIAN
+            )?.text
+        ).toBe('Changed from Smoker on Mar 4, 2026')
+    })
+
+    it('says when a TRUE_ONLY box was ticked, never what it changed from', () => {
+        const ticks = (...points: ObservationPoint[]) =>
+            series('TRUE_ONLY', { points, latest: points.at(-1) })
+        expect(
+            categoryChangeLine(
+                ticks(at('true', '01'), at('true', '03'), at('false', '05')),
+                GREGORIAN
+            )?.text
+        ).toBe('Last ticked on Mar 3, 2026')
+        expect(
+            categoryChangeLine(
+                ticks(at('false', '01'), at('true', '03'), at('true', '05')),
+                GREGORIAN
+            )?.text
+        ).toBe('Ticked since Mar 3, 2026')
+        expect(
+            categoryChangeLine(
+                ticks(at('false', '01'), at('false', '05')),
+                GREGORIAN
+            )?.text
+        ).toBe('Not ticked since Mar 1, 2026')
+    })
+
+    it('says nothing for one reading or for free text', () => {
+        expect(categoryChangeLine(yesNo(at('true', '01')), GREGORIAN)).toBe(
+            undefined
+        )
+        const points = [at('First', '01'), at('Second', '02')]
+        expect(
+            categoryChangeLine(
+                series('TEXT', { points, latest: points.at(-1) }),
+                GREGORIAN
+            )
+        ).toBe(undefined)
     })
 })

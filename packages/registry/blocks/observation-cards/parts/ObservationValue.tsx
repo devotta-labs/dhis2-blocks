@@ -1,7 +1,7 @@
 import { cn } from '@/components/dhis2/ui/cn'
 import React from 'react'
 import { useObservationCard } from '../card/context'
-import { formatPointValue } from '../format/display'
+import { formatPointValue, isUnticked } from '../format/display'
 import { MetadataBadge } from './ObservationLegend'
 
 export interface ObservationValueProps {
@@ -55,11 +55,13 @@ export function ObservationValue({ unit, className }: ObservationValueProps) {
         >
             <span
                 data-slot="value-text"
-                className={
+                className={cn(
                     TEXT_TYPES.has(series.valueType)
                         ? 'line-clamp-3 min-w-0 text-base [overflow-wrap:anywhere]'
-                        : 'min-w-0 text-3xl leading-none font-semibold tabular-nums [overflow-wrap:anywhere]'
-                }
+                        : 'min-w-0 text-3xl leading-none font-semibold tabular-nums [overflow-wrap:anywhere]',
+                    // Greyed, so an empty box never reads as a finding.
+                    isUnticked(series, latest) && 'text-dhis2-grey-600'
+                )}
             >
                 {text}
             </span>

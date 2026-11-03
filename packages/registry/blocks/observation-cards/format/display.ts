@@ -70,15 +70,20 @@ export const legendFor = (
     return value === highest.endValue ? highest : undefined
 }
 
+/** DHIS2 stores nothing for an unticked TRUE_ONLY box, so it isn't a recorded No. */
+export const isUnticked = (
+    series: ObservationSeries,
+    point: ObservationPoint
+): boolean => series.valueType === 'TRUE_ONLY' && point.value !== 'true'
+
 /** A reading as shown: option names, Yes or No, dates in the system calendar. */
 export const formatPointValue = (
     series: ObservationSeries,
     point: ObservationPoint,
     options: DisplayOptions
 ): string =>
-    // DHIS2 stores nothing for an unticked TRUE_ONLY box, so it isn't a recorded No.
-    series.valueType === 'TRUE_ONLY' && point.value !== 'true'
-        ? i18n.t('Not ticked')
+    isUnticked(series, point)
+        ? i18n.t('Not recorded')
         : formatDhis2Value(
               point.value,
               {
@@ -155,33 +160,28 @@ export const changeLine = (
 }
 
 /**
- * A TRUE_ONLY box is ticked or left empty, so its line says when it was
- * ticked rather than what it changed from.
+ * A TRUE_ONLY box is ticked or left empty, so its line says when it was last
+ * recorded as Yes rather than what it changed from.
  */
 const trueOnlyLine = (
     latest: ObservationPoint,
     before: ObservationPoint | undefined,
     since: ObservationPoint,
     options: DisplayOptions
-): ChangeLine => {
+): ChangeLine | undefined => {
     if (latest.value === 'true') {
         return {
-            text: i18n.t('Ticked since {{date}}', {
+            text: i18n.t('Yes since {{date}}', {
                 date: formatRecordedDate(since, options),
                 interpolation: NO_ESCAPE,
             }),
         }
     }
-    // The run before an unticked latest is ticked, so `before` is the last tick.
+    // The run before an empty latest is ticked, so `before` is the last Yes; never ticked needs no line.
     return before === undefined
-        ? {
-              text: i18n.t('Not ticked since {{date}}', {
-                  date: formatRecordedDate(since, options),
-                  interpolation: NO_ESCAPE,
-              }),
-          }
+        ? undefined
         : {
-              text: i18n.t('Last ticked on {{date}}', {
+              text: i18n.t('Last recorded Yes on {{date}}', {
                   date: formatRecordedDate(before, options),
                   interpolation: NO_ESCAPE,
               }),

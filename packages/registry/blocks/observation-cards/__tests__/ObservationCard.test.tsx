@@ -356,7 +356,7 @@ describe('the default arrangement', () => {
         ).toBe('GONE')
     })
 
-    it("TRUE_ONLY unticked at last visit shows Not ticked with that visit's date", async () => {
+    it('TRUE_ONLY unticked at last visit shows Not recorded with the last Yes', async () => {
         const { container } = await renderWith(
             <ObservationCard dataElement={DE} />,
             {
@@ -368,9 +368,9 @@ describe('the default arrangement', () => {
                 ],
             }
         )
-        expect(slot(container, 'value-text')?.textContent).toBe('Not ticked')
+        expect(slot(container, 'value-text')?.textContent).toBe('Not recorded')
         expect(slot(container, 'observation-change')?.textContent).toBe(
-            'Last ticked on Feb 1, 2026'
+            'Last recorded Yes on Feb 1, 2026'
         )
         expect(container.textContent).toContain('Recorded Mar 12, 2026')
     })

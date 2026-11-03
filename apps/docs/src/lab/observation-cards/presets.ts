@@ -119,7 +119,7 @@ export const PRESETS: readonly Preset[] = [
     preset(
         'Values',
         'TRUE_ONLY untick',
-        'Danger signs ticked at every visit except the latest, which reads "Not ticked" with when it was last ticked.',
+        'Danger signs ticked at every visit except the latest, which reads "Not recorded" with the last Yes.',
         { cards: cards({ element: 'dangerSigns', trueOnlyUntick: true }) }
     ),
     preset(

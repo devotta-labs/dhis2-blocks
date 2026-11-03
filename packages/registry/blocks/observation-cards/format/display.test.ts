@@ -107,10 +107,10 @@ describe('legendFor', () => {
 })
 
 describe('formatPointValue', () => {
-    it('an unticked TRUE_ONLY box reads Not ticked, never No', () => {
+    it('an unticked TRUE_ONLY box reads Not recorded, never No', () => {
         expect(
             formatPointValue(series('TRUE_ONLY'), point('false'), GREGORIAN)
-        ).toBe('Not ticked')
+        ).toBe('Not recorded')
         expect(
             formatPointValue(series('TRUE_ONLY'), point('true'), GREGORIAN)
         ).toBe('Yes')
@@ -481,7 +481,7 @@ describe('categoryChangeLine', () => {
         ).toBe('Changed from Smoker on Mar 4, 2026')
     })
 
-    it('says when a TRUE_ONLY box was ticked, never what it changed from', () => {
+    it('says when a TRUE_ONLY box was last recorded Yes, never what it changed from', () => {
         const ticks = (...points: ObservationPoint[]) =>
             series('TRUE_ONLY', { points, latest: points.at(-1) })
         expect(
@@ -489,19 +489,19 @@ describe('categoryChangeLine', () => {
                 ticks(at('true', '01'), at('true', '03'), at('false', '05')),
                 GREGORIAN
             )?.text
-        ).toBe('Last ticked on Mar 3, 2026')
+        ).toBe('Last recorded Yes on Mar 3, 2026')
         expect(
             categoryChangeLine(
                 ticks(at('false', '01'), at('true', '03'), at('true', '05')),
                 GREGORIAN
             )?.text
-        ).toBe('Ticked since Mar 3, 2026')
+        ).toBe('Yes since Mar 3, 2026')
         expect(
             categoryChangeLine(
                 ticks(at('false', '01'), at('false', '05')),
                 GREGORIAN
-            )?.text
-        ).toBe('Not ticked since Mar 1, 2026')
+            )
+        ).toBe(undefined)
     })
 
     it('says nothing for one reading or for free text', () => {

@@ -31,7 +31,10 @@ export const useRuleEffects = ({
     announce,
     idScope,
 }: RuleEffectsOptions) => {
-    const held = [...records.values()]
+    // Event rules: the stages and people of the event records.
+    const held = [...records.values()].flatMap((record) =>
+        record.kind === 'event' ? [record] : []
+    )
     const target = form?.rules
     const { rules, status } = useEventsRules({
         programId: target?.programId ?? '',

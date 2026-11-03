@@ -4,7 +4,7 @@ import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { formatCount } from '../cells/OptionCell'
-import { cellKey, rowIdOf } from '../model/types'
+import { cellKey, recordIdOf } from '../model/types'
 import type {
     CellKey,
     DataRecord,
@@ -57,10 +57,10 @@ export interface OpenForm extends Actions {
     /** Why a whole record is read-only, as statuses saved since loading left it. */
     readOnlyRecords: ReadonlyMap<string, string>
     /**
-     * Called with a row's id as it starts completing, before its checks: rules save what they say of it here, or say
-     * why it cannot complete yet.
+     * Called with a record's id as it starts completing, before its checks: rules save what they say of it here, or
+     * say why it cannot complete yet.
      */
-    beforeComplete: Set<(rowId: string) => string | undefined>
+    beforeComplete: Set<(recordId: string) => string | undefined>
     newRowTables: ReadonlySet<string>
     /** Adds a page: its rows not shown yet, the columns new to a table, and their unsent changes. */
     append(page: FormPage): Promise<void>
@@ -190,7 +190,7 @@ const connect = (
                 value,
                 base,
                 at,
-                record: tables.getState().records.get(rowIdOf(key)),
+                record: tables.getState().records.get(recordIdOf(key)),
             })
             // Every cell changed until the next paint goes to the outbox in one write, after the rules that change
             // asks for: they were asked first, so what they commit joins the person's change in one save.
@@ -335,25 +335,28 @@ const connect = (
         })
     }
 
-    const setStatus = async (rowId: string, status: 'COMPLETED' | 'ACTIVE') => {
-        // Under the sync lock, so no tab's save sends a status read before this one. `complete` waits for the row's
+    const setStatus = async (
+        recordId: string,
+        status: 'COMPLETED' | 'ACTIVE'
+    ) => {
+        // Under the sync lock, so no tab's save sends a status read before this one. `complete` waits for the record's
         // sends before it gets here, outside the lock, so nothing under it waits on the loop: no deadlock.
         const outcomes = await sync
-            .exclusive(() => source.setStatus(engine, rowId, status, form))
+            .exclusive(() => source.setStatus(engine, recordId, status, form))
             .catch((error: Error) => {
                 // The loop stopped while this waited for the lock: someone else signed in.
                 if (closed || error.name !== 'AbortError') {
                     throw error
                 }
-                return [refusal(cellKey(rowId, 'status'), signedInAsOther())]
+                return [refusal(cellKey(recordId, 'status'), signedInAsOther())]
             })
         if (
             outcomes.some(
                 ({ key, result }) =>
-                    key === cellKey(rowId, 'status') && result === 'saved'
+                    key === cellKey(recordId, 'status') && result === 'saved'
             )
         ) {
-            showStatus({ ...grows, form }, rowId, status)
+            showStatus({ ...grows, form }, recordId, status)
         }
         return outcomes
     }
@@ -363,7 +366,7 @@ const connect = (
         sync.stop()
         onSignedInAsOther()
     })
-    const beforeComplete = new Set<(rowId: string) => string | undefined>()
+    const beforeComplete = new Set<(recordId: string) => string | undefined>()
     const grows = { store, effects, tables, readOnlyRecords, reopenable }
 
     const refusal = (key: CellKey, reason: string) =>
@@ -487,57 +490,59 @@ const connect = (
                 records: known,
             }))
         },
-        async complete(rowId) {
-            const locked = tables.getState().records.has(rowId)
-                ? readOnlyRecords.get(rowId)
-                : i18n.t('This row cannot be completed')
+        async complete(recordId) {
+            // Only an event completes.
+            const locked =
+                tables.getState().records.get(recordId)?.kind === 'event'
+                    ? readOnlyRecords.get(recordId)
+                    : i18n.t('This row cannot be completed')
             if (locked !== undefined) {
-                return [refusal(cellKey(rowId, 'status'), locked)]
+                return [refusal(cellKey(recordId, 'status'), locked)]
             }
             const paused = await notNow()
             if (paused !== undefined) {
-                return [refusal(cellKey(rowId, 'status'), paused)]
+                return [refusal(cellKey(recordId, 'status'), paused)]
             }
             for (const prepare of beforeComplete) {
-                const notYet = prepare(rowId)
+                const notYet = prepare(recordId)
                 if (notYet !== undefined) {
-                    return [refusal(cellKey(rowId, 'status'), notYet)]
+                    return [refusal(cellKey(recordId, 'status'), notYet)]
                 }
             }
-            const now = refusals(rowId, false)
+            const now = refusals(recordId, false)
             if (now.length > 0) {
                 return now
             }
-            // The row's changes go first, so DHIS2 completes what the person sees.
+            // The record's changes go first, so DHIS2 completes what the person sees.
             flush()
             sync.nudge()
-            const stopped = await sentFrom(rowId)
+            const stopped = await sentFrom(recordId)
             if (stopped !== undefined) {
-                return [refusal(cellKey(rowId, 'status'), stopped)]
+                return [refusal(cellKey(recordId, 'status'), stopped)]
             }
-            const later = refusals(rowId, true)
+            const later = refusals(recordId, true)
             if (later.length > 0) {
                 return later
             }
-            // Asked again: someone else may have signed in while the row's changes were on their way.
+            // Asked again: someone else may have signed in while the record's changes were on their way.
             const notAnyMore = await notNow()
             return notAnyMore === undefined
-                ? setStatus(rowId, 'COMPLETED')
-                : [refusal(cellKey(rowId, 'status'), notAnyMore)]
+                ? setStatus(recordId, 'COMPLETED')
+                : [refusal(cellKey(recordId, 'status'), notAnyMore)]
         },
-        async reopen(rowId) {
-            if (!reopenable.has(rowId)) {
+        async reopen(recordId) {
+            if (!reopenable.has(recordId)) {
                 return [
                     refusal(
-                        cellKey(rowId, 'status'),
+                        cellKey(recordId, 'status'),
                         i18n.t('This row cannot be reopened')
                     ),
                 ]
             }
             const paused = await notNow()
             return paused === undefined
-                ? setStatus(rowId, 'ACTIVE')
-                : [refusal(cellKey(rowId, 'status'), paused)]
+                ? setStatus(recordId, 'ACTIVE')
+                : [refusal(cellKey(recordId, 'status'), paused)]
         },
         async append(page) {
             const held = await appendPage({ ...grows, form }, page, () =>

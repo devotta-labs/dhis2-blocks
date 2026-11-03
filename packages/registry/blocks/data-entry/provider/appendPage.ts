@@ -2,7 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import { useEffect, useState } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
 import { formatCount } from '../cells/OptionCell'
-import { keyOf, recordsOf, rowIdOf } from '../model/types'
+import { keyOf, recordsOf, recordIdOf } from '../model/types'
 import type { CellKey, DataRecord, GridTable } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import type {
@@ -41,7 +41,10 @@ const grow = (
         rows,
         records
     )
-    const closed = [...more.closed].filter(([key]) => fresh(rowIdOf(key)))
+    const added = new Set(rows.flatMap(recordsOf))
+    const closed = [...more.closed].filter(([key]) =>
+        added.has(recordIdOf(key))
+    )
     return {
         table: { ...next, closed: new Map([...next.closed, ...closed]) },
         rows,
@@ -55,12 +58,12 @@ const withRecords = (
     page: ReadonlyMap<string, DataRecord>
 ) => new Map([...known, ...[...page].filter(([id]) => !known.has(id))])
 
-/** The form as DHIS2 had it, with a page: its rows the form does not hold yet, their values, and what is known of them. */
+/**
+ * The form as DHIS2 had it, with a page: its rows and records the form does not hold yet, their values, and what is
+ * known of them.
+ */
 export const withPage = (form: LoadedForm, page: FormPage): LoadedForm => {
-    const held = new Set(
-        form.tables.flatMap(({ rows }) => rows.map(({ id }) => id))
-    )
-    const fresh = (rowId: string) => !held.has(rowId)
+    const fresh = (recordId: string) => !form.records.has(recordId)
     const records = withRecords(form.records, page.records)
     return {
         ...form,
@@ -76,7 +79,7 @@ export const withPage = (form: LoadedForm, page: FormPage): LoadedForm => {
         ),
         values: new Map([
             ...form.values,
-            ...[...page.values].filter(([key]) => fresh(rowIdOf(key))),
+            ...[...page.values].filter(([key]) => fresh(recordIdOf(key))),
         ]),
         records,
         readOnlyRecords: new Map([
@@ -127,6 +130,7 @@ export const appendPage = async (
             reopenable.add(id)
         }
     }
+    // The records the form gets from the page: one it holds already had its changes put back.
     const fresh = new Set<string>()
     const cells = new Set<CellKey>()
     const grown = tables.getState().tables.map((table) => {
@@ -134,18 +138,21 @@ export const appendPage = async (
             form,
             table,
             page.tables.find(({ id }) => id === table.id),
-            (rowId) => !known.has(rowId),
+            (recordId) => !known.has(recordId),
             records
         )
         for (const row of next.rows) {
-            recordsOf(row).forEach((id) => fresh.add(id))
+            recordsOf(row)
+                .filter((id) => !known.has(id))
+                .forEach((id) => fresh.add(id))
         }
         for (const row of next.table.rows) {
-            const columnsOf = fresh.has(row.id)
-                ? next.table.columns
-                : next.columns
-            for (const column of columnsOf) {
-                cells.add(keyOf(row, column))
+            const added = fresh.has(row.id)
+            for (const column of added ? next.table.columns : next.columns) {
+                const key = keyOf(row, column)
+                if (!added || fresh.has(recordIdOf(key))) {
+                    cells.add(key)
+                }
             }
         }
         return next.table
@@ -156,11 +163,11 @@ export const appendPage = async (
     const restored = held.filter(
         ({ key }) =>
             cells.has(key) ||
-            (fresh.has(rowIdOf(key)) && isRecordField(form, records, key))
+            (fresh.has(recordIdOf(key)) && isRecordField(form, records, key))
     )
     store.getState().restore([
         ...Array.from(page.values)
-            .filter(([key]) => fresh.has(rowIdOf(key)))
+            .filter(([key]) => fresh.has(recordIdOf(key)))
             .map(([key, value]) => ({
                 key,
                 value,
@@ -173,10 +180,7 @@ export const appendPage = async (
         cells: formEffects(
             form,
             readOnlyRecords,
-            grown.map((table) => ({
-                ...table,
-                rows: table.rows.filter(({ id }) => fresh.has(id)),
-            })),
+            [{ rows: [...fresh].map((id) => ({ id })) }],
             records,
             { ...now }
         ),

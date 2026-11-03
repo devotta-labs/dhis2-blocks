@@ -1,6 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import { summarise } from '../logic/summary'
-import { cellKey, formOf, keyOf, recordsOf, rowIdOf } from '../model/types'
+import { cellKey, formOf, keyOf, recordsOf, recordIdOf } from '../model/types'
 import type {
     CellKey,
     DataRecord,
@@ -27,14 +27,16 @@ export const summaryOf = ({
     )
 
 /**
- * What the form says of the rows' cells, written into `cells`: for each record the rows save to, its event date and
+ * What the form says of the rows' cells, written into `cells`: for each record the rows save to, an event's date and
  * every field of its form, shown in a column or not, the required ones, or why the whole record is read-only (then
  * nothing in it is asked for).
  */
 export const formEffects = (
     { required, fieldsByForm }: Pick<LoadedForm, 'required' | 'fieldsByForm'>,
     readOnlyRecords: ReadonlyMap<string, string>,
-    tables: ReadonlyArray<GridTable>,
+    tables: ReadonlyArray<{
+        rows: ReadonlyArray<Pick<GridRow, 'id' | 'slots'>>
+    }>,
     records: ReadonlyMap<string, DataRecord>,
     cells: EffectsState['cells'] = {}
 ) => {
@@ -50,7 +52,7 @@ export const formEffects = (
                     ? required.get(formOf(record))
                     : undefined
             for (const field of [
-                EVENT_DATE_COLUMN,
+                ...(record.kind === 'event' ? [EVENT_DATE_COLUMN] : []),
                 ...(fieldsByForm.get(formOf(record)) ?? []),
             ]) {
                 if (readOnly !== undefined || asked?.has(field)) {
@@ -66,13 +68,13 @@ export const formEffects = (
     return cells
 }
 
-/** Whether the record's form has the field, shown in a column or not: its event date, or one of its form's fields. */
+/** Whether the record's form has the field, shown in a column or not: an event's date, or one of its form's fields. */
 const holds = (
     { fieldsByForm }: Pick<LoadedForm, 'fieldsByForm'>,
     record: DataRecord,
     field: string
 ) =>
-    field === EVENT_DATE_COLUMN ||
+    (record.kind === 'event' && field === EVENT_DATE_COLUMN) ||
     (fieldsByForm.get(formOf(record))?.has(field) ?? false)
 
 /** Whether the key is a field of one of `records`, shown in a column or not: rules may assign one no column shows. */
@@ -81,14 +83,14 @@ export const isRecordField = (
     records: ReadonlyMap<string, DataRecord>,
     key: string
 ) => {
-    const record = records.get(rowIdOf(key))
+    const record = records.get(recordIdOf(key))
     return (
         record !== undefined &&
         holds(form, record, key.slice(record.id.length + 1))
     )
 }
 
-/** The row's cells in `columns` that have no field: their record's form does not hold it; never the event date. */
+/** The row's cells in `columns` that have no field: their record's form does not hold it; never an event's date. */
 const closedOn = (
     form: LoadedForm,
     row: GridRow,
@@ -98,7 +100,7 @@ const closedOn = (
 ) =>
     columns.flatMap((column): Array<[CellKey, string]> => {
         const key = keyOf(row, column)
-        const record = records.get(rowIdOf(key))
+        const record = records.get(recordIdOf(key))
         return record === undefined ||
             holds(form, record, column.fieldId ?? column.id)
             ? []

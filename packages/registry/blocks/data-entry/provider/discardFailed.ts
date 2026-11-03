@@ -1,5 +1,5 @@
 import type { StoreApi } from 'zustand/vanilla'
-import { cellKey, rowIdOf } from '../model/types'
+import { cellKey, recordIdOf } from '../model/types'
 import type { PendingChange, SyncState } from '../model/types'
 import type { Outbox } from '../outbox/outbox'
 import type { DataEntryState } from '../store/store'
@@ -16,7 +16,7 @@ export const discardFailed = async (
 ) => {
     const failed = Object.entries(store.getState().cells).flatMap(
         ([key, cell]) => {
-            const rowId = rowIdOf(key)
+            const rowId = recordIdOf(key)
             return cell?.sync === 'failed'
                 ? [
                       {

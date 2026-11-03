@@ -88,5 +88,5 @@ test('a scheduled event’s record carries its due day', async () => {
         orgUnitId: NGELEHUN,
         today: TODAY,
     }).load(fakeEngine(loaded, []).engine)
-    expect(form.records.get(A)?.scheduledAt).toBe('2026-11-02')
+    expect(form.records.get(A)).toMatchObject({ scheduledAt: '2026-11-02' })
 })

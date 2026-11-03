@@ -53,8 +53,8 @@ export const lockedForm = (
     const readOnlyRecords = new Map(
         [...form.records.keys()].map((id): [string, string] => [id, reason])
     )
-    const refuse = async (rowId: string) => [
-        refusalOf(sourceKey, cellKey(rowId, 'status'), reason),
+    const refuse = async (recordId: string) => [
+        refusalOf(sourceKey, cellKey(recordId, 'status'), reason),
     ]
     return {
         ...emptyForm(),

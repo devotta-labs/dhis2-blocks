@@ -1,6 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import { z } from 'zod'
-import { cellKey, rowIdOf } from '../model/types'
+import { cellKey, recordIdOf } from '../model/types'
 import type { CellKey, DataRecord, EventStatus, GridRow } from '../model/types'
 import { PartlySaved } from '../outbox/failure'
 import type { OutboxRecord } from '../outbox/outbox'
@@ -138,7 +138,7 @@ export const outcomesFromReport = (
         }
     }
     return records.flatMap(({ sourceKey, key }): SaveOutcome[] => {
-        const event = rowIdOf(key)
+        const event = recordIdOf(key)
         const messages = refusals.get(event)
         if (messages !== undefined) {
             return [
@@ -234,7 +234,7 @@ export const eventSaver = (
         )
         for (const { key, result } of outcomes) {
             if (result === 'saved') {
-                held.add(rowIdOf(key))
+                held.add(recordIdOf(key))
             }
         }
         return outcomes
@@ -269,7 +269,7 @@ export const eventSaver = (
 
         const byEvent = new Map<string, OutboxRecord[]>()
         for (const record of records) {
-            const event = rowIdOf(record.key)
+            const event = recordIdOf(record.key)
             byEvent.set(event, [...(byEvent.get(event) ?? []), record])
         }
 
@@ -319,7 +319,7 @@ export const eventSaver = (
                 (change) => change.record?.isNew
             )?.record
             // DHIS2 had it, here or in another grid, so it was deleted or is out of the user's reach.
-            if (held.has(event) || record === undefined) {
+            if (held.has(event) || record?.kind !== 'event') {
                 for (const { sourceKey: source, key } of changes) {
                     waiting.push({
                         sourceKey: source,
@@ -384,7 +384,7 @@ export const eventSaver = (
             readEvents(
                 engine,
                 programId,
-                [...new Set(records.map(({ key }) => rowIdOf(key)))],
+                [...new Set(records.map(({ key }) => recordIdOf(key)))],
                 signal
             )
         )
@@ -395,7 +395,7 @@ export const eventSaver = (
         const inPayload = new Set(events.map(({ event }) => event))
         const notSent = new Set(waiting.map(({ key }) => key))
         const sent = records.filter(
-            ({ key }) => inPayload.has(rowIdOf(key)) && !notSent.has(key)
+            ({ key }) => inPayload.has(recordIdOf(key)) && !notSent.has(key)
         )
         const created = new Set([...inPayload].filter((id) => !current.has(id)))
         return [
@@ -425,7 +425,7 @@ export const eventSaver = (
         ) =>
             inTurn(async () => {
                 const events = [
-                    ...new Set(records.map(({ key }) => rowIdOf(key))),
+                    ...new Set(records.map(({ key }) => recordIdOf(key))),
                 ]
                 const outcomes: SaveOutcome[] = []
                 for (let at = 0; at < events.length; at += CHUNK) {
@@ -435,7 +435,7 @@ export const eventSaver = (
                             ...(await saveChunk(
                                 engine,
                                 records.filter(({ key }) =>
-                                    ids.has(rowIdOf(key))
+                                    ids.has(recordIdOf(key))
                                 ),
                                 form
                             ))
@@ -506,9 +506,10 @@ export const eventSaver = (
             for (const { key, value, record } of [...records].sort(
                 (a, b) => a.at - b.at
             )) {
-                const id = rowIdOf(key)
+                const id = recordIdOf(key)
                 if (
-                    !record?.isNew ||
+                    record?.kind !== 'event' ||
+                    !record.isNew ||
                     held.has(id) ||
                     record.programStageId !== target?.programStageId ||
                     record.orgUnitId !== target.orgUnitId ||

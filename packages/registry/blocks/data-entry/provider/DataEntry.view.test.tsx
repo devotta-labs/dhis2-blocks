@@ -119,3 +119,18 @@ test('a form that cannot be loaded says why', async () => {
     )
     expect(view().error).toBe('You have no access to this program')
 })
+
+test('a completed row’s record says so in the view', async () => {
+    const memory = memorySource(
+        visitForm({ values: [[cellKey('r1', 'c1'), '2']] })
+    )
+    const { view } = await mount(memory.source)
+    expect(view().records.get('r1')).toMatchObject({ status: 'ACTIVE' })
+    expect(await view().complete('r1')).toMatchObject([{ result: 'saved' }])
+    await expect
+        .poll(() => view().records.get('r1'))
+        .toMatchObject({ status: 'COMPLETED' })
+    await expect
+        .element(page.getByRole('rowheader', { name: 'Visit 1' }))
+        .toHaveTextContent('Completed')
+})

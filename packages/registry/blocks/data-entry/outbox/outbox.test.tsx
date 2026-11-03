@@ -131,6 +131,48 @@ test('a change keeps the record it saves to', async () => {
     expect(await outbox.list()).toMatchObject([{ key: 'e1.c1', record }])
 })
 
+test('changes keep enrolment and person records', async () => {
+    const outbox = await open(freshServer(), 'userA')
+    const records = [
+        {
+            kind: 'event',
+            id: 'e1',
+            programStageId: 's1',
+            orgUnitId: 'ou',
+            enrollmentId: 'en1',
+            status: 'ACTIVE',
+            slot: 'dose1',
+            isNew: true,
+        },
+        {
+            kind: 'enrollment',
+            id: 'en1',
+            programId: 'p1',
+            trackedEntityId: 'te1',
+            orgUnitId: 'ou',
+            status: 'ACTIVE',
+            isNew: true,
+        },
+        {
+            kind: 'trackedEntity',
+            id: 'te1',
+            trackedEntityTypeId: 'tet1',
+            orgUnitId: 'ou',
+            isNew: true,
+        },
+    ] as const
+    await outbox.putMany(
+        records.map((record) => change({ key: `${record.id}.f1`, record }))
+    )
+    const listed = await outbox.list()
+    expect(
+        records.map(
+            (record) =>
+                listed.find(({ key }) => key === `${record.id}.f1`)?.record
+        )
+    ).toEqual(records)
+})
+
 test('keeps cells of different sources and keys apart', async () => {
     const outbox = await open(freshServer(), 'userA')
     await outbox.put(change())

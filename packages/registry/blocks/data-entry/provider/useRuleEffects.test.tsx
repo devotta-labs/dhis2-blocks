@@ -5,7 +5,7 @@ import { RMNCH } from '@/components/program-rules/__tests__/rmnch'
 import { DataGrid } from '../grid/DataGrid'
 import { control } from '../grid/__tests__/gridRig'
 import { rowHeaderDomId } from '../grid/headers'
-import { cellKey, rowIdOf } from '../model/types'
+import { cellKey, recordIdOf } from '../model/types'
 import type { DataEntrySource } from '../sources/types'
 import { DataEntrySummary } from '../summary/DataEntrySummary'
 import {
@@ -139,7 +139,7 @@ test('opening the grid changes nothing; a person’s first change in a row saves
             ...FOLLOW_UPS,
         ])
     )
-    expect(new Set(sentKeys(memory).map(rowIdOf))).toEqual(
+    expect(new Set(sentKeys(memory).map(recordIdOf))).toEqual(
         new Set([FIRST_VISIT])
     )
     // The later visit, untouched, keeps the value DHIS2 holds (none), locked by its rule, and saves nothing.
@@ -160,7 +160,7 @@ test('a row with unsent changes saves its rule changes when the grid opens', asy
     await expect
         .poll(() => sentKeys(memory))
         .toEqual(expect.arrayContaining([LMP, ...FOLLOW_UPS]))
-    expect(new Set(sentKeys(memory).map(rowIdOf))).toEqual(
+    expect(new Set(sentKeys(memory).map(recordIdOf))).toEqual(
         new Set([FIRST_VISIT])
     )
 })
@@ -217,7 +217,7 @@ test('completing a row saves its rule changes first, and keeps its rule effects'
         { result: 'saved' },
     ])
     expect(sentFirst).toEqual(expect.arrayContaining(FOLLOW_UPS))
-    expect(new Set(sentFirst.map(rowIdOf))).toEqual(new Set([FIRST_VISIT]))
+    expect(new Set(sentFirst.map(recordIdOf))).toEqual(new Set([FIRST_VISIT]))
     expect(memory.statuses).toEqual([[FIRST_VISIT, 'COMPLETED']])
     // The saved status rewrote the row's effects from the form; the rules' come back.
     await expect

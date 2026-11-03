@@ -183,7 +183,10 @@ export const ruleRowsOf = (
     fieldsByForm: LoadedForm['fieldsByForm'],
     cells: DataEntryState['cells']
 ): EventsRuleRow[] =>
-    Array.from(records, (record) => {
+    Array.from(records).flatMap((record) => {
+        if (record.kind !== 'event') {
+            return []
+        }
         const valueOf = (field: string) =>
             cells[cellKey(record.id, field)]?.value
         const fields = fieldsByForm.get(formOf(record)) ?? NONE

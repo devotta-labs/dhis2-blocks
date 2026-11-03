@@ -22,12 +22,12 @@ export interface DataEntryView {
     /** Adds a new row to a table that takes them; the grid focuses its first open cell. */
     addRow(tableId: string): void
     /**
-     * Completes a row, unless one of its messages stops completion: those come back as its `failed` outcomes. Rejects
-     * when DHIS2 cannot be reached.
+     * Completes an event record (in an event grid, the row's id), unless one of its messages stops completion: those
+     * come back as its `failed` outcomes. Rejects when DHIS2 cannot be reached.
      */
-    complete(rowId: string): Promise<SaveOutcome[]>
-    /** Reopens a completed row the user may reopen. Rejects when DHIS2 cannot be reached. */
-    reopen(rowId: string): Promise<SaveOutcome[]>
+    complete(recordId: string): Promise<SaveOutcome[]>
+    /** Reopens a completed event record the user may reopen. Rejects when DHIS2 cannot be reached. */
+    reopen(recordId: string): Promise<SaveOutcome[]>
     /** Saves every change of the form DHIS2 does not have as a CSV file, those that could not be saved included. */
     downloadUnsent(): void
     /**

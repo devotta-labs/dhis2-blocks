@@ -1,7 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import type { StoreApi } from 'zustand/vanilla'
 import { blocksCompletion } from '../logic/summary'
-import { cellKey, formOf, rowIdOf } from '../model/types'
+import { cellKey, formOf, recordIdOf, rowsByRecord } from '../model/types'
 import type { CellKey, CellState, SyncState } from '../model/types'
 import type { SaveOutcome, SyncStatus } from '../outbox/sync'
 import { SAVE_TIMEOUT } from '../sources/eventSave'
@@ -30,7 +30,7 @@ export const refusalOf = (
     reason: string
 ): SaveOutcome => ({ sourceKey, key, result: 'failed', reason })
 
-/** What `complete` checks of a row before it asks DHIS2, and the wait for the row's changes to be sent. */
+/** What `complete` checks of a record before it asks DHIS2, and the wait for the record's changes to be sent. */
 export const completionChecks = (
     sourceKey: string,
     store: StoreApi<DataEntryState>,
@@ -38,39 +38,44 @@ export const completionChecks = (
 ) => {
     const refusal = (key: CellKey, reason: string) =>
         refusalOf(sourceKey, key, reason)
-    const rowCells = (rowId: string) =>
+    const recordCells = (recordId: string) =>
         Object.entries(store.getState().cells).flatMap(
             ([key, cell]): Array<[CellKey, CellState]> =>
-                cell !== undefined && key.startsWith(`${rowId}.`)
-                    ? [[cellKey(rowId, key.slice(rowId.length + 1)), cell]]
+                cell !== undefined && key.startsWith(`${recordId}.`)
+                    ? [
+                          [
+                              cellKey(recordId, key.slice(recordId.length + 1)),
+                              cell,
+                          ],
+                      ]
                     : []
         )
     return {
         /**
-         * What stops the row completing: its errors and empty required fields (its own: `r1.…` and `r1`, never
+         * What stops the record completing: its errors and empty required fields (its own: `r1.…` and `r1`, never
          * `r10.…`), changes refused or waiting, and once its changes were given time to go, any DHIS2 still lacks.
          */
-        refusals: (rowId: string, afterSending: boolean) => [
+        refusals: (recordId: string, afterSending: boolean) => [
             ...view
                 .getState()
                 .summary.items.filter(
                     (item) =>
-                        (item.key === rowId ||
-                            item.key.startsWith(`${rowId}.`)) &&
+                        (item.key === recordId ||
+                            item.key.startsWith(`${recordId}.`)) &&
                         blocksCompletion(item)
                 )
                 .map(({ key, text }) =>
                     refusal(
                         cellKey(
-                            rowId,
-                            key === rowId
+                            recordId,
+                            key === recordId
                                 ? 'status'
-                                : key.slice(rowId.length + 1)
+                                : key.slice(recordId.length + 1)
                         ),
                         text
                     )
                 ),
-            ...rowCells(rowId).flatMap(([key, { sync, reason }]) => {
+            ...recordCells(recordId).flatMap(([key, { sync, reason }]) => {
                 if (sync === 'failed') {
                     return [
                         refusal(
@@ -92,13 +97,15 @@ export const completionChecks = (
             }),
         ],
         /**
-         * Settles once none of the row's changes waits to be sent, or after as long as a save may take; early, with
-         * the reason, when sending pauses (offline, or signed out) after the row's changes were nudged.
+         * Settles once none of the record's changes waits to be sent, or after as long as a save may take; early, with
+         * the reason, when sending pauses (offline, or signed out) after the record's changes were nudged.
          */
-        sentFrom: (rowId: string) =>
+        sentFrom: (recordId: string) =>
             new Promise<string | undefined>((resolve) => {
                 const waiting = () =>
-                    rowCells(rowId).some(([, { sync }]) => UNSENT.has(sync))
+                    recordCells(recordId).some(([, { sync }]) =>
+                        UNSENT.has(sync)
+                    )
                 if (!navigator.onLine) {
                     resolve(pauseReason('offline'))
                     return
@@ -131,53 +138,52 @@ export const completionChecks = (
 }
 
 /**
- * Puts a status saved here on its record: completed in a stage that blocks entry, the record is read-only, and the
- * user may reopen it as at load; reopened, it is neither. The effects of its row's cells are written again.
+ * Puts a status saved here on its event record: completed in a stage that blocks entry, the record is read-only, and
+ * the user may reopen it as at load; reopened, it is neither. The effects of the record's cells are written again.
  */
 export const showStatus = (
     { form, effects, tables, readOnlyRecords, reopenable }: Growing,
-    rowId: string,
+    recordId: string,
     status: 'COMPLETED' | 'ACTIVE'
 ) => {
     const { tables: all, records } = tables.getState()
-    const record = records.get(rowId)
-    const table = all.find((each) => each.rows.some(({ id }) => id === rowId))
-    if (record === undefined || table === undefined) {
+    const record = records.get(recordId)
+    const row = rowsByRecord(all).get(recordId)
+    if (record?.kind !== 'event' || row === undefined) {
         return
     }
     if (status === 'COMPLETED') {
         const blocked = form.readOnlyWhenCompleted.get(formOf(record))
         if (blocked !== undefined) {
-            readOnlyRecords.set(rowId, blocked)
+            readOnlyRecords.set(recordId, blocked)
         }
         // As at load: a record the user could write in, and that had not expired.
         if (
             form.mayUncomplete &&
-            (form.canReopen.has(rowId) || !form.readOnlyRecords.has(rowId))
+            (form.canReopen.has(recordId) ||
+                !form.readOnlyRecords.has(recordId))
         ) {
-            reopenable.add(rowId)
+            reopenable.add(recordId)
         }
     } else {
         // A record that could be reopened had no reason to be read-only but its completion.
-        readOnlyRecords.delete(rowId)
-        reopenable.delete(rowId)
+        readOnlyRecords.delete(recordId)
+        reopenable.delete(recordId)
     }
-    const updated = new Map(records).set(rowId, { ...record, status })
+    const updated = new Map(records).set(recordId, { ...record, status })
     effects.setState(({ cells }) => {
-        // Every cell of the row is made again, shown in a column or not.
+        // Every cell of the record is made again, shown in a column or not.
         const next = Object.fromEntries(
-            Object.entries(cells).filter(([key]) => rowIdOf(key) !== rowId)
+            Object.entries(cells).filter(
+                ([key]) => recordIdOf(key) !== recordId
+            )
         )
         return {
             cells: formEffects(
                 form,
                 readOnlyRecords,
-                [
-                    {
-                        ...table,
-                        rows: table.rows.filter(({ id }) => id === rowId),
-                    },
-                ],
+                // The record alone: its row's other records keep their effects.
+                [{ rows: [{ id: recordId }] }],
                 updated,
                 next
             ),

@@ -173,17 +173,6 @@ test('complete is refused while a required field is empty', async () => {
         .toHaveTextContent('Completed')
 })
 
-test('a completed row’s record says so in the view', async () => {
-    const memory = memorySource(visitForm({ values: [[CHILDREN, '2']] }))
-    const { view } = await mount(memory.source)
-    expect(view().records.get('r1')?.status).toBe('ACTIVE')
-    expect(await view().complete('r1')).toMatchObject([{ result: 'saved' }])
-    await expect.poll(() => view().records.get('r1')?.status).toBe('COMPLETED')
-    await expect
-        .element(page.getByRole('rowheader', { name: 'Visit 1' }))
-        .toHaveTextContent('Completed')
-})
-
 test('complete checks only the row it completes', async () => {
     const memory = memorySource(
         visitForm({

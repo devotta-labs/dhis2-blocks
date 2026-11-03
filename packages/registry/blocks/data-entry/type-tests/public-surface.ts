@@ -150,11 +150,11 @@ export const useUnsent = (): number =>
     useDataEntry((view) => view.summary.unsent)
 export const useActions = () =>
     useDataEntry((view) => view.complete) satisfies (
-        rowId: string
+        recordId: string
     ) => Promise<SaveOutcome[]>
 export const useReopen = () =>
     useDataEntry((view) => view.reopen) satisfies (
-        rowId: string
+        recordId: string
     ) => Promise<SaveOutcome[]>
 export const useAddRow = () =>
     useDataEntry((view) => view.addRow) satisfies (tableId: string) => void
@@ -168,7 +168,8 @@ export const cellOf = (row: GridRow, column: GridColumn): CellKey =>
 // What a row's cells save to, and the form the record has fields of.
 export const useRecord = (rowId: string): DataRecord | undefined =>
     useDataEntry((view) => view.records.get(rowId))
-export const eventOf = (record: DataRecord): EventRecord => record
+export const eventOf = (record: DataRecord): EventRecord | undefined =>
+    record.kind === 'event' ? record : undefined
 // @ts-expect-error A row's slots name records by slot: a record id is a string, not a record.
 export const badSlots: GridRow = { id: 'r', label: 'R', slots: { person: 1 } }
 // The form's rows, to lay out controls of your own by, such as a "Complete" button per row.

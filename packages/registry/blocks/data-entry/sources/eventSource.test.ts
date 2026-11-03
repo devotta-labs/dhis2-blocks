@@ -160,9 +160,9 @@ test('event-program records carry no enrollment', async () => {
         orgUnitId: NGELEHUN,
         status: 'COMPLETED',
     })
-    expect(
-        table.rows.map(({ id }) => form.records.get(id)?.enrollmentId)
-    ).toEqual(INPATIENT_ROWS.map(() => undefined))
+    for (const { id } of table.rows) {
+        expect(form.records.get(id)).toMatchObject({ enrollmentId: undefined })
+    }
 })
 
 test('the reason a cell is closed, and the event date’s header, are translated', async () => {
@@ -388,7 +388,9 @@ test('an event that has not happened yet is labelled by its scheduled date', asy
     )
     expect(form.tables[0].rows[0]).toMatchObject({ label: '2026-11-02' })
     // For the grid to show in the system's calendar and format.
-    expect(form.records.get('NGxc7JpmqqD')?.scheduledAt).toBe('2026-11-02')
+    expect(form.records.get('NGxc7JpmqqD')).toMatchObject({
+        scheduledAt: '2026-11-02',
+    })
     expect(form.values.has(cellKey('NGxc7JpmqqD', EVENT_DATE_COLUMN))).toBe(
         false
     )

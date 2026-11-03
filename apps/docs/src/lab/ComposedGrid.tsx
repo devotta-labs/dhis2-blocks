@@ -2,6 +2,7 @@ import {
     Cell,
     useDataEntry,
     type CellKey,
+    type DataRecord,
     type GridColumn,
     type GridRow,
     type GridTable,
@@ -38,8 +39,12 @@ const STEPS = new Map<NavKey, readonly [number, number]>([
     ['right', [0, 1]],
 ])
 
+// A row's event status; a person has none.
+const statusOf = (record: DataRecord | undefined) =>
+    record?.kind === 'trackedEntity' ? undefined : record?.status
+
 const RowStatus = ({ rowId }: { rowId: string }) => {
-    const status = useDataEntry((view) => view.records.get(rowId)?.status)
+    const status = useDataEntry((view) => statusOf(view.records.get(rowId)))
     return (
         <span className="rounded-full bg-dhis2-grey-200 px-1.5 text-xs">
             {status ?? 'ACTIVE'}
@@ -50,7 +55,7 @@ const RowStatus = ({ rowId }: { rowId: string }) => {
 const Actions = ({ row }: { row: GridRow }) => {
     const complete = useDataEntry((view) => view.complete)
     const reopen = useDataEntry((view) => view.reopen)
-    const status = useDataEntry((view) => view.records.get(row.id)?.status)
+    const status = useDataEntry((view) => statusOf(view.records.get(row.id)))
     const [refusal, setRefusal] = useState<string>()
     const completed = status === 'COMPLETED'
     return (

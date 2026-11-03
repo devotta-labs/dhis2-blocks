@@ -306,13 +306,13 @@ test('a row already shown keeps what the form knows of it when a page brings it 
     const { view, context } = await mount(source)
     await view().loadMore()
     const [table] = context().tables
-    expect(
-        table.rows.map(({ id }) => [id, context().records.get(id)?.status])
-    ).toEqual([
-        ['r1', 'ACTIVE'],
-        ['r2', 'ACTIVE'],
-        ['r3', 'ACTIVE'],
-    ])
+    expect(table.rows.map(({ id }) => context().records.get(id))).toMatchObject(
+        [
+            { id: 'r1', status: 'ACTIVE' },
+            { id: 'r2', status: 'ACTIVE' },
+            { id: 'r3', status: 'ACTIVE' },
+        ]
+    )
     // The page's facts hold for its new row only.
     expect(table.closed.has(cellKey('r1', 'c2'))).toBe(false)
     expect(table.closed.get(cellKey('r3', 'c2'))).toBe('Not used')
@@ -344,8 +344,10 @@ test('a page keeps the status a row was saved with here', async () => {
     const { view } = await mount(source)
     expect(await view().complete('e1')).toMatchObject([{ result: 'saved' }])
     await view().loadMore()
-    await expect.poll(() => view().records.get('e2')?.status).toBe('ACTIVE')
-    expect(view().records.get('e1')?.status).toBe('COMPLETED')
+    await expect
+        .poll(() => view().records.get('e2'))
+        .toMatchObject({ status: 'ACTIVE' })
+    expect(view().records.get('e1')).toMatchObject({ status: 'COMPLETED' })
 })
 
 test('a form that locks keeps the rows of every page loaded', async () => {

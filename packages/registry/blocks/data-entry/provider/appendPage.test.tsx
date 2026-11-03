@@ -5,7 +5,7 @@ import type { CellKey } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import { createDataEntryStore } from '../store/store'
 import { change, HIDDEN_FIELD, visit, visitForm } from './__tests__/rig'
-import { appendPage } from './appendPage'
+import { appendPage, withPage } from './appendPage'
 import type { EffectsState } from './context'
 import type { FormTables } from './openForm'
 
@@ -137,4 +137,45 @@ test('a page puts back the unsent value a rule gave its rows’ field no column 
         value: '5',
         sync: 'queued',
     })
+})
+
+test('a page naming a record the form holds restores its changes once', async () => {
+    const open = opened()
+    const person = {
+        kind: 'trackedEntity',
+        id: 'pA',
+        trackedEntityTypeId: 'tet',
+        orgUnitId: 'o1',
+    } as const
+    const name = cellKey('pA', 'name')
+    // The form holds the person, whose name no column shows, and has put back its unsent change.
+    open.form = {
+        ...open.form,
+        records: new Map([...open.form.records, ['pA', person]]),
+        fieldsByForm: new Map([
+            ...open.form.fieldsByForm,
+            ['tet', new Set(['name'])],
+        ]),
+    }
+    open.tables.setState({ records: open.form.records })
+    const restore = vi.spyOn(open.store.getState(), 'restore')
+    open.store.getState().restore([{ ...queued(name, '5', 1), sync: 'queued' }])
+
+    // The page's new row names the person again, with the value DHIS2 has.
+    const page = {
+        ...visitForm({
+            rows: [visit('r3', 'r3')],
+            values: [[name, '4']],
+        }),
+        hasMore: false,
+    }
+    page.tables[0].rows[0].slots = { person: 'pA' }
+    page.records = new Map([...page.records, ['pA', person]])
+    await appendPage(open, page, async () => [queued(name, '5', 1)])
+
+    const restoredNames = restore.mock.calls
+        .flatMap(([cells]) => cells)
+        .filter(({ key }) => key === name)
+    expect(restoredNames).toHaveLength(1)
+    expect(withPage(open.form, page).values.get(name)).toBeUndefined()
 })

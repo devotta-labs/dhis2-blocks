@@ -18,7 +18,7 @@ import {
     cellKey,
     formOf,
     recordsOf,
-    rowIdOf,
+    recordIdOf,
     rowsByRecord,
 } from '../model/types'
 import type { CellKey, CellState, DataRecord } from '../model/types'
@@ -77,18 +77,23 @@ const onScreen = (idScope: string, tableId: string, rowId: string) => {
 /** Whether the cell holds a change on its way to DHIS2: a failed one waits for the person to enter it again. */
 const onItsWay = ({ sync }: CellState) => sync !== 'idle' && sync !== 'failed'
 
-/** The record's own id, or every record of its person. */
+/** The record's own id, or, for an event of an enrolment, every event of that enrolment. */
 const personRows = (
     records: ReadonlyMap<string, DataRecord>,
     record: DataRecord
-) =>
-    record.enrollmentId === undefined
+) => {
+    const enrollmentId =
+        record.kind === 'event' ? record.enrollmentId : undefined
+    return enrollmentId === undefined
         ? [record.id]
         : [...records.values()]
               .filter(
-                  ({ enrollmentId }) => enrollmentId === record.enrollmentId
+                  (other) =>
+                      other.kind === 'event' &&
+                      other.enrollmentId === enrollmentId
               )
               .map(({ id }) => id)
+}
 
 interface ConnectOptions {
     open: Pick<
@@ -127,7 +132,7 @@ export const connectRules = ({
     // not on its way: it waits for the person to enter it again.
     for (const [key, cell] of Object.entries(store.getState().cells)) {
         if (cell !== undefined && onItsWay(cell)) {
-            touched.add(rowIdOf(key))
+            touched.add(recordIdOf(key))
         }
     }
     // Rows evaluated at least once; a row still waiting for its idle turn is not run early.
@@ -228,12 +233,14 @@ export const connectRules = ({
                 (record === undefined
                     ? undefined
                     : form.required.get(formOf(record))) ?? NONE
-            // The event date and every field of the record's form, shown in a column or not.
+            // An event's date and every field of the record's form, shown in a column or not.
             const ids =
                 record === undefined
                     ? []
                     : [
-                          EVENT_DATE_COLUMN,
+                          ...(record.kind === 'event'
+                              ? [EVENT_DATE_COLUMN]
+                              : []),
                           ...(form.fieldsByForm.get(formOf(record)) ?? NONE),
                       ]
             for (const id of ids) {
@@ -339,7 +346,7 @@ export const connectRules = ({
         const changed = apply(results, said)
         const next = new Set(
             changed.flatMap(({ key }) => {
-                const rowId = rowIdOf(key)
+                const rowId = recordIdOf(key)
                 // The row's own rules ran with the value; the person's other rows read it through cross-event fields.
                 return rules
                     .rowsAffectedBy(
@@ -439,7 +446,7 @@ export const connectRules = ({
         // A person's change re-runs the rows it can affect; an event date, every row of that person.
         store.subscribe(({ cells }, before) => {
             const edits = Object.entries(cells).flatMap(([key, cell]) => {
-                const rowId = rowIdOf(key)
+                const rowId = recordIdOf(key)
                 const field = key.slice(rowId.length + 1)
                 const was = before.cells[cellKey(rowId, field)]
                 return cell === undefined ||
@@ -505,13 +512,13 @@ export const connectRules = ({
         }
     }
     document.addEventListener('focusout', onFocusOut)
-    // Completing touches the row: what its rules say is saved before it is checked and sent.
-    const prepare = (rowId: string) => {
+    // Completing touches the record: what its rules say is saved before it is checked and sent.
+    const prepare = (recordId: string) => {
         // An edit whose rules wait for a paint runs now: completion checks what they say.
         flush()
-        if (!stopped && !(touched.has(rowId) && seen.has(rowId))) {
-            touched.add(rowId)
-            measured('data-entry:rules-edit', () => run([rowId]))
+        if (!stopped && !(touched.has(recordId) && seen.has(recordId))) {
+            touched.add(recordId)
+            measured('data-entry:rules-edit', () => run([recordId]))
         }
         return undefined
     }

@@ -102,7 +102,7 @@ export interface DataEntrySource {
     ): Promise<SaveOutcome[]>
     setStatus(
         engine: DataEngine,
-        rowId: string,
+        recordId: string,
         status: 'COMPLETED' | 'ACTIVE',
         form: LoadedForm
     ): Promise<SaveOutcome[]>

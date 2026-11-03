@@ -1,21 +1,37 @@
 import { formOf, indexCells, keyOf, recordsOf, rowsByRecord } from './types'
 import type {
     CellKey,
-    EventRecord,
+    DataRecord,
     GridColumn,
     GridRow,
     GridTable,
 } from './types'
 
-test('an event’s form is its stage', () => {
-    const record: EventRecord = {
-        kind: 'event',
-        id: 'event1',
-        programStageId: 'stage1',
-        orgUnitId: 'orgUnit1',
-        status: 'ACTIVE',
-    }
-    expect(formOf(record)).toBe('stage1')
+test('a record’s form: an event’s stage, an enrolment’s program, a person’s type', () => {
+    const records: DataRecord[] = [
+        {
+            kind: 'event',
+            id: 'event1',
+            programStageId: 'stage1',
+            orgUnitId: 'orgUnit1',
+            status: 'ACTIVE',
+        },
+        {
+            kind: 'enrollment',
+            id: 'enrollment1',
+            programId: 'program1',
+            trackedEntityId: 'person1',
+            orgUnitId: 'orgUnit1',
+            status: 'ACTIVE',
+        },
+        {
+            kind: 'trackedEntity',
+            id: 'person1',
+            trackedEntityTypeId: 'type1',
+            orgUnitId: 'orgUnit1',
+        },
+    ]
+    expect(records.map(formOf)).toEqual(['stage1', 'program1', 'type1'])
 })
 
 const INTEGER = { valueType: 'INTEGER' } as const

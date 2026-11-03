@@ -185,7 +185,8 @@ export const memorySource = (form: LoadedForm, key = KEY) => {
             const restored = new Map<string, DataRecord>()
             for (const { record } of records) {
                 if (
-                    record?.isNew &&
+                    record?.kind === 'event' &&
+                    record.isNew &&
                     record.programStageId === newRows?.programStageId &&
                     record.orgUnitId === newRows.orgUnitId
                 ) {

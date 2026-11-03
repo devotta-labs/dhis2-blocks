@@ -1,6 +1,6 @@
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { rowLabel } from '../grid/headers'
-import { cellKey, rowIdOf, rowsByRecord } from '../model/types'
+import { cellKey, recordIdOf, rowsByRecord } from '../model/types'
 import type { GridRow, GridTable } from '../model/types'
 import { unsentChangesCsv } from '../outbox/download'
 import type { OutboxRecord } from '../outbox/outbox'
@@ -52,7 +52,7 @@ export const saveUnsentFile = (
     )
     const csv = unsentChangesCsv(
         [...saved, ...onlyHere].map(({ key, value, state, reason }) => {
-            const rowId = rowIdOf(key)
+            const rowId = recordIdOf(key)
             const column = key.slice(rowId.length + 1)
             const row = rows.get(rowId)
             const table = row === undefined ? undefined : tableOf.get(row)

@@ -14,7 +14,8 @@ export const rowLabel = (
     date: string | undefined,
     settings: ValueSettings
 ) => {
-    const day = date ?? record?.scheduledAt
+    const day =
+        date ?? (record?.kind === 'event' ? record.scheduledAt : undefined)
     if (day === undefined) {
         return row.label
     }

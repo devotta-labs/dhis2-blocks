@@ -140,7 +140,7 @@ const RowHeader = memo(function RowHeader({
         store,
         (state) => state.cells[cellKey(row.id, EVENT_DATE_COLUMN)]?.value
     )
-    const status = record?.status
+    const status = record?.kind === 'event' ? record.status : undefined
     const scheduled =
         status === 'SCHEDULE' || status === 'OVERDUE'
             ? i18n.t('Scheduled')

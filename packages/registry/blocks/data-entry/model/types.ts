@@ -3,10 +3,11 @@ import type { Field } from '@/components/dhis2-value-types'
 /** `<recordId>.<fieldId>`; record ids contain no dot. */
 export type CellKey = `${string}.${string}`
 
-export const cellKey = (rowId: string, columnId: string): CellKey =>
-    `${rowId}.${columnId}`
+export const cellKey = (recordId: string, fieldId: string): CellKey =>
+    `${recordId}.${fieldId}`
 
-export const rowIdOf = (key: string) => key.slice(0, key.indexOf('.'))
+/** The record a cell key belongs to. */
+export const recordIdOf = (key: string) => key.slice(0, key.indexOf('.'))
 
 export type EventStatus =
     | 'ACTIVE'
@@ -28,13 +29,44 @@ export interface EventRecord {
     /** The day (`YYYY-MM-DD`) a scheduled event is due: it names the row, as its event date would, until it has one. */
     scheduledAt?: string
     isNew?: boolean
+    /** The register slot a new event fills. */
+    slot?: string
 }
 
-/** What a group of cells saves to. Registers add enrolments and people. */
-export type DataRecord = EventRecord
+/** A person's enrolment in a program; its fields are `enrolledAt` and `occurredAt`, as DHIS2 names them. */
+export interface EnrollmentRecord {
+    kind: 'enrollment'
+    id: string
+    programId: string
+    trackedEntityId: string
+    orgUnitId: string
+    status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
+    isNew?: boolean
+}
 
-/** The form whose fields a record has: an event's stage. */
-export const formOf = (record: DataRecord): string => record.programStageId
+/** A tracked entity, such as a person; its fields are its attributes. */
+export interface PersonRecord {
+    kind: 'trackedEntity'
+    id: string
+    trackedEntityTypeId: string
+    orgUnitId: string
+    isNew?: boolean
+}
+
+/** What a group of cells saves to. */
+export type DataRecord = EventRecord | EnrollmentRecord | PersonRecord
+
+/** An event's stage, an enrolment's program, a person's tracked entity type. */
+export const formOf = (record: DataRecord): string => {
+    switch (record.kind) {
+        case 'event':
+            return record.programStageId
+        case 'enrollment':
+            return record.programId
+        case 'trackedEntity':
+            return record.trackedEntityTypeId
+    }
+}
 
 export interface GridRow {
     id: string
@@ -70,7 +102,7 @@ export const keyOf = (row: GridRow, column: GridColumn): CellKey => {
 }
 
 /** The records a row's cells can save to: its own id, then its slots' records. */
-export const recordsOf = (row: GridRow): string[] => [
+export const recordsOf = (row: Pick<GridRow, 'id' | 'slots'>): string[] => [
     row.id,
     ...Object.values(row.slots ?? {}),
 ]

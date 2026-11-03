@@ -39,16 +39,35 @@ const recordSchema = z.object({
     base: z.string().nullable(),
     at: z.number(),
     record: z
-        .object({
-            kind: z.literal('event'),
-            id: z.string(),
-            programStageId: z.string(),
-            orgUnitId: z.string(),
-            enrollmentId: z.string().optional(),
-            status: statusSchema,
-            scheduledAt: z.string().optional(),
-            isNew: z.boolean().optional(),
-        })
+        .discriminatedUnion('kind', [
+            z.object({
+                kind: z.literal('event'),
+                id: z.string(),
+                programStageId: z.string(),
+                orgUnitId: z.string(),
+                enrollmentId: z.string().optional(),
+                status: statusSchema,
+                scheduledAt: z.string().optional(),
+                isNew: z.boolean().optional(),
+                slot: z.string().optional(),
+            }),
+            z.object({
+                kind: z.literal('enrollment'),
+                id: z.string(),
+                programId: z.string(),
+                trackedEntityId: z.string(),
+                orgUnitId: z.string(),
+                status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']),
+                isNew: z.boolean().optional(),
+            }),
+            z.object({
+                kind: z.literal('trackedEntity'),
+                id: z.string(),
+                trackedEntityTypeId: z.string(),
+                orgUnitId: z.string(),
+                isNew: z.boolean().optional(),
+            }),
+        ])
         .optional(),
     state: z.enum(['queued', 'waiting', 'failed']),
     reason: z.string().optional(),

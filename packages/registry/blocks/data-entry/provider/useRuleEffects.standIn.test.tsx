@@ -120,6 +120,7 @@ const connect = (
         announce: (text) => said.push(text),
         cleared: new Map(),
         touched: new Set(),
+        ruleNotes: new Map(),
         idScope: 'data-entry',
     })
     return { ...open, queued, said, stop }

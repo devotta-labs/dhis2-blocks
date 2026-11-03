@@ -48,10 +48,12 @@ import {
     buildRuleContext,
     crossEventFields,
     emptyEffects,
+    evaluateEnrollmentRules,
     evaluateEventRules,
     evaluateEventsRules,
     explainField,
     expressionReferences,
+    metadataForEnrollment,
     metadataForStage,
     rowsAffectedBy,
     scanExpression,
@@ -284,4 +286,36 @@ export const missingTrackerOption: UseEventsRulesOptions = {
     programId: 'WSGAb5XwJ3Y',
     programStageIds: [],
     enrollmentIds: [],
+}
+
+// A person row brings its live enrolment; enrolment rules run on program-wide rules, with the person's events.
+export const liveRow: EventsRuleRow = {
+    event,
+    enrollmentId: 'PE6abx7Zhn0',
+    enrollment: loadedPerson.enrollment,
+}
+export const evaluatePerson = async (
+    metadata: ProgramRulesMetadata
+): Promise<RuleEffects> => {
+    const engine = await loadRuleEngine()
+    const context = buildRuleContext(engine, metadataForEnrollment(metadata))
+    return evaluateEnrollmentRules(engine, context, {
+        enrollment: loadedPerson.enrollment,
+        events: [],
+    })
+}
+// A register asks for enrolment rules; they are keyed by enrolment id.
+export const usePersonRules = (): Map<string, RuleEffects> => {
+    const { rules } = useEventsRules({
+        programId: 'WSGAb5XwJ3Y',
+        programStageIds: [],
+        tracker: true,
+        enrollmentIds: ['PE6abx7Zhn0'],
+        enrollments: true,
+    })
+    return (
+        rules?.evaluateEnrollments?.([
+            { enrollment: loadedPerson.enrollment, events: [] },
+        ]).effects ?? new Map()
+    )
 }

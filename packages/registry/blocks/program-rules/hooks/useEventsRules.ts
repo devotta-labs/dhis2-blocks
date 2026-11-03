@@ -5,7 +5,9 @@ import {
     buildRuleContext,
     crossEventFields,
     emptyEffects,
+    evaluateEnrollmentRules,
     evaluateEventsRules,
+    metadataForEnrollment,
     metadataForStage,
     rowsAffectedBy,
     type EventsRuleRow,
@@ -14,10 +16,13 @@ import {
     type ProgramRulesMetadata,
     type RuleContext,
     type RuleEngineModule,
+    type RuleEffects,
     type RuleEnrollmentData,
+    type RuleEnrollmentInput,
+    type RuleEventInput,
     type RuleOrgUnitGroupMetadata,
 } from '../lib'
-import { indexRows } from '../lib/manyEvents'
+import { indexRows, withLiveEvents } from '../lib/manyEvents'
 import { shouldRetryProgramRulesRequest, useProgramRulesClient } from './client'
 import { ENROLLMENT_BATCH_SIZE, fetchRuleEnrollments } from './enrollment'
 import { useRuleEngine } from './loadRuleEngine'
@@ -34,6 +39,8 @@ export interface UseEventsRulesOptions {
     tracker: boolean
     /** The people the rows belong to, fetched in chunks of 100: adding people fetches only the chunk they join. */
     enrollmentIds: ReadonlyArray<string>
+    /** Whether the grid runs enrolment rules too (`EventsRules.evaluateEnrollments`): a row is a person. */
+    enrollments?: boolean
     enabled?: boolean
 }
 
@@ -61,6 +68,21 @@ export interface EventsRules {
         rowId: string,
         fieldId: string
     ): string[]
+    /**
+     * Runs the program-wide rules of each enrolment, as Capture's registration form and enrolment page do, on its live
+     * attributes and dates and `events` (none for a person not yet in DHIS2), keyed by enrolment id. A fetched person's
+     * events the unit lacks are added, so rules see every event as DHIS2 holds it; a unit whose person is still loading
+     * is in neither map. Present when `enrollments` was asked for, for a program with rules.
+     */
+    evaluateEnrollments?(
+        units: ReadonlyArray<{
+            enrollment: RuleEnrollmentInput
+            events: ReadonlyArray<RuleEventInput>
+        }>
+    ): {
+        effects: Map<string, RuleEffects>
+        failures: Map<string, Error>
+    }
     /** Rules the engine cannot parse, each listed once however many stages carry it. */
     invalidRules: InvalidRule[]
     /** optionGroupId → option codes, to resolve option group effects */
@@ -114,32 +136,41 @@ const NO_RULES: EventsRules = {
 
 type StageContexts = Result<Map<string, RuleContext>, Error>
 
+/** A context per stage, and with `enrollments` one for the enrolment under the program's id. */
 const buildContexts = (
     engine: RuleEngineModule | undefined,
     metadata: ProgramRulesMetadata | undefined,
     stageIds: ReadonlyArray<string>,
+    enrollments: boolean,
     orgUnitGroups?: ReadonlyArray<RuleOrgUnitGroupMetadata>
-): StageContexts | undefined =>
-    engine === undefined || metadata === undefined
-        ? undefined
-        : Result.try({
-              try: () =>
-                  new Map(
-                      stageIds.map((stageId): [string, RuleContext] => {
-                          const forStage = metadataForStage(metadata, stageId)
-                          return [
-                              stageId,
-                              buildRuleContext(
-                                  engine,
-                                  orgUnitGroups === undefined
-                                      ? forStage
-                                      : { ...forStage, orgUnitGroups }
-                              ),
-                          ]
-                      })
-                  ),
-              catch: asError,
-          })
+): StageContexts | undefined => {
+    if (engine === undefined || metadata === undefined) {
+        return undefined
+    }
+    const build = (forKey: ProgramRulesMetadata) =>
+        buildRuleContext(
+            engine,
+            orgUnitGroups === undefined ? forKey : { ...forKey, orgUnitGroups }
+        )
+    return Result.try({
+        try: () =>
+            new Map([
+                ...stageIds.map((stageId): [string, RuleContext] => [
+                    stageId,
+                    build(metadataForStage(metadata, stageId)),
+                ]),
+                ...(enrollments
+                    ? [
+                          [
+                              metadata.programId,
+                              build(metadataForEnrollment(metadata)),
+                          ] as const,
+                      ]
+                    : []),
+            ]),
+        catch: asError,
+    })
+}
 
 /**
  * The distinct ids in chunks of 100, in first-seen order: an id keeps its chunk while it is asked for, and new ids fill
@@ -181,6 +212,44 @@ const withLoadedPerson = (
     })
 }
 
+type EnrollmentUnits = Parameters<
+    NonNullable<EventsRules['evaluateEnrollments']>
+>[0]
+
+/** Each enrolment's rules over its events and the fetched person's (`loaded`), whose person a chunk answered for. */
+const evaluateUnits = (
+    engine: RuleEngineModule,
+    context: RuleContext,
+    loaded: LoadedPersons | undefined,
+    units: EnrollmentUnits
+) => {
+    const effects = new Map<string, RuleEffects>()
+    const failures = new Map<string, Error>()
+    for (const { enrollment, events } of units) {
+        if (loaded !== undefined && !loaded.answered.has(enrollment.id)) {
+            continue
+        }
+        const server = loaded?.persons.get(enrollment.id)?.events
+        const evaluation = Result.try({
+            try: () =>
+                evaluateEnrollmentRules(engine, context, {
+                    enrollment,
+                    events:
+                        server === undefined
+                            ? events
+                            : withLiveEvents(server, events),
+                }),
+            catch: asError,
+        })
+        if (evaluation.isOk()) {
+            effects.set(enrollment.id, evaluation.value)
+        } else {
+            failures.set(enrollment.id, evaluation.error)
+        }
+    }
+    return { effects, failures }
+}
+
 /** Program-wide rules sit in every stage's context, so the same rule would be listed once per stage. */
 const distinctInvalidRules = (
     contexts: Iterable<RuleContext>
@@ -212,6 +281,7 @@ export const useEventsRules = ({
     programStageIds,
     tracker,
     enrollmentIds,
+    enrollments = false,
     enabled = true,
 }: UseEventsRulesOptions): UseEventsRulesResult => {
     const client = useProgramRulesClient()
@@ -237,8 +307,8 @@ export const useEventsRules = ({
         [stageKey]
     )
     const baseContexts = useMemo(
-        () => buildContexts(engine, metadata, stageIds),
-        [engine, metadata, stageIds]
+        () => buildContexts(engine, metadata, stageIds, enrollments),
+        [engine, metadata, stageIds, enrollments]
     )
     const requirements = [
         ...((baseContexts?.isOk() ? baseContexts.value : undefined)?.values() ??
@@ -259,8 +329,14 @@ export const useEventsRules = ({
         () =>
             groupsQuery.data === undefined
                 ? undefined
-                : buildContexts(engine, metadata, stageIds, groupsQuery.data),
-        [engine, metadata, stageIds, groupsQuery.data]
+                : buildContexts(
+                      engine,
+                      metadata,
+                      stageIds,
+                      enrollments,
+                      groupsQuery.data
+                  ),
+        [engine, metadata, stageIds, enrollments, groupsQuery.data]
     )
     const built = groups.length > 0 ? groupedContexts : baseContexts
     const contexts = built?.isOk() ? built.value : undefined
@@ -342,6 +418,9 @@ export const useEventsRules = ({
             return undefined
         }
         const crossFields = crossEventFields(metadata)
+        const enrollmentContext = enrollments
+            ? contexts.get(metadata.programId)
+            : undefined
         return {
             // A row whose person is still loading waits; one whose person the server did not return fails.
             evaluate: (rows, rowIds) =>
@@ -358,6 +437,15 @@ export const useEventsRules = ({
                         ? withLoadedPerson(rows, persons.answered, rowIds)
                         : rowIds
                 ),
+            evaluateEnrollments:
+                enrollmentContext &&
+                ((units) =>
+                    evaluateUnits(
+                        engine,
+                        enrollmentContext,
+                        needsPersons ? persons : undefined,
+                        units
+                    )),
             // An event program's events share one hidden enrollment and must never couple.
             rowsAffectedBy: (rows, rowId, fieldId) =>
                 tracker
@@ -366,7 +454,15 @@ export const useEventsRules = ({
             invalidRules: distinctInvalidRules(contexts.values()),
             optionGroupOptions: allOptionGroups(contexts.values()),
         }
-    }, [engine, metadata, contexts, persons, tracker, needsPersons])
+    }, [
+        engine,
+        metadata,
+        contexts,
+        persons,
+        tracker,
+        needsPersons,
+        enrollments,
+    ])
 
     // A query only fails the hook while it is needed and has nothing to show:
     // a failed background refetch keeps the last good data, and so do we.

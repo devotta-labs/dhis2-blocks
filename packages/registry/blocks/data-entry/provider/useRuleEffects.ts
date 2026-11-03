@@ -31,9 +31,12 @@ export const useRuleEffects = ({
     announce,
     idScope,
 }: RuleEffectsOptions) => {
-    // Event rules: the stages and people of the event records.
+    // Event rules: the stages and people of the event records; a register's enrolments run enrolment rules too.
     const held = [...records.values()].flatMap((record) =>
         record.kind === 'event' ? [record] : []
+    )
+    const enrollments = [...records.values()].flatMap((record) =>
+        record.kind === 'enrollment' ? [record.id] : []
     )
     const target = form?.rules
     const { rules, status } = useEventsRules({
@@ -48,7 +51,9 @@ export const useRuleEffects = ({
         enrollmentIds: [
             ...(target?.enrollmentIds ?? []),
             ...held.flatMap(({ enrollmentId }) => enrollmentId ?? []),
+            ...enrollments,
         ],
+        enrollments: form?.rowKind === 'person',
         enabled: target !== undefined,
     })
 
@@ -86,20 +91,26 @@ export const useRuleEffects = ({
         }
     }, [open, target, status])
 
-    // One per open form, so what rules cleared and the rows people touched outlive the people refetching.
+    // One per open form, so what rules cleared and noted and the rows people touched outlive the people refetching.
     const session = useRef<{
         open: OpenForm
         cleared: Map<CellKey, string>
         touched: Set<string>
+        ruleNotes: Map<string, ReadonlyArray<string>>
     }>(undefined)
     useEffect(() => {
         if (open === undefined || form === undefined || rules === undefined) {
             return undefined
         }
         if (session.current?.open !== open) {
-            session.current = { open, cleared: new Map(), touched: new Set() }
+            session.current = {
+                open,
+                cleared: new Map(),
+                touched: new Set(),
+                ruleNotes: new Map(),
+            }
         }
-        const { cleared, touched } = session.current
+        const { cleared, touched, ruleNotes } = session.current
         return connectRules({
             open,
             form,
@@ -108,6 +119,7 @@ export const useRuleEffects = ({
             announce,
             cleared,
             touched,
+            ruleNotes,
             idScope,
         })
     }, [open, form, rules, settings, announce, idScope])

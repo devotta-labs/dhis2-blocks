@@ -8,6 +8,7 @@ import type {
     RuleEffects,
     RuleEngineModule,
     RuleEnrollmentData,
+    RuleEnrollmentInput,
     RuleEventInput,
 } from './types'
 
@@ -19,6 +20,11 @@ export interface EventsRuleRow {
      * enrollment and must never couple.
      */
     enrollmentId?: string
+    /**
+     * The person as the grid holds them, attributes as typed: used in place of the fetched one, and the only one a
+     * person not yet in DHIS2 has.
+     */
+    enrollment?: RuleEnrollmentInput
 }
 
 export interface EventsRuleInput {
@@ -80,24 +86,29 @@ export const rowsAffectedBy = (
     ]
 }
 
+/** The server's events, each replaced by its live one, plus the live events the server lacks. */
+export const withLiveEvents = (
+    server: ReadonlyArray<RuleEventInput>,
+    live: ReadonlyArray<RuleEventInput>
+): RuleEventInput[] => {
+    const liveById = new Map(live.map((e) => [e.id, e]))
+    const serverIds = new Set(server.map((e) => e.id))
+    return [
+        ...server.map((e) => liveById.get(e.id) ?? e),
+        ...live.filter((e) => !serverIds.has(e.id)),
+    ]
+}
+
 /** The row's person's server events, each replaced by its live row, plus the live rows the server lacks. Never the row itself. */
 const otherEventsOf = (
     row: EventsRuleRow,
     person: RuleEnrollmentData | undefined,
     siblings: ReadonlyArray<EventsRuleRow>
-): RuleEventInput[] => {
-    const live = new Map(
-        siblings
-            .filter((s) => s.event.id !== row.event.id)
-            .map((s) => [s.event.id, s.event])
+): RuleEventInput[] =>
+    withLiveEvents(
+        (person?.events ?? []).filter((e) => e.id !== row.event.id),
+        siblings.flatMap((s) => (s.event.id === row.event.id ? [] : [s.event]))
     )
-    const server = (person?.events ?? []).filter((e) => e.id !== row.event.id)
-    const serverIds = new Set(server.map((e) => e.id))
-    return [
-        ...server.map((e) => live.get(e.id) ?? e),
-        ...[...live.values()].filter((e) => !serverIds.has(e.id)),
-    ]
-}
 
 interface RowIndex {
     byId: Map<string, EventsRuleRow>
@@ -130,7 +141,7 @@ export const indexRows = (rows: ReadonlyArray<EventsRuleRow>): RowIndex => {
 
 /**
  * Runs the rules of the requested rows against the grid's live values, each row on its own: a row the engine fails on,
- * or a tracker row whose fetched person is missing, is in `failures`, and the other rows still get their effects.
+ * or a tracker row with no enrolment of its own whose fetched person is missing, is in `failures`, and the other rows still get their effects.
  * `contexts` is keyed by program stage id; a row of a stage without a context, or an id that is not in `input.rows`, is
  * in neither map. `input.rows` is indexed once per array: pass a new array when the rows change.
  */
@@ -162,7 +173,8 @@ export const evaluateEventsRules = (
             input.tracker &&
             input.personsLoaded &&
             enrollmentId !== undefined &&
-            person === undefined
+            person === undefined &&
+            row.enrollment === undefined
         ) {
             failures.set(
                 rowId,
@@ -179,7 +191,7 @@ export const evaluateEventsRules = (
         const ruleInput: EventRuleInput = input.tracker
             ? {
                   event: row.event,
-                  enrollment: person?.enrollment,
+                  enrollment: row.enrollment ?? person?.enrollment,
                   otherEvents: otherEventsOf(row, person, siblings),
               }
             : { event: row.event, otherEvents: [] }

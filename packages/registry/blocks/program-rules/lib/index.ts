@@ -1,6 +1,11 @@
 export { buildRuleContext } from './buildContext'
 export { assignedVariable } from './dependencyGraph'
-export { emptyEffects, evaluateEventRules, explainField } from './evaluate'
+export {
+    emptyEffects,
+    evaluateEnrollmentRules,
+    evaluateEventRules,
+    explainField,
+} from './evaluate'
 export {
     crossEventFields,
     evaluateEventsRules,
@@ -15,7 +20,7 @@ export {
     type ExpressionReference,
     type ExpressionReferences,
 } from './scanExpression'
-export { metadataForStage } from './stages'
+export { metadataForEnrollment, metadataForStage } from './stages'
 export type {
     Attribution,
     EventRuleInput,

@@ -239,15 +239,18 @@ test('form messages keep their kind; row notes collect display texts and key-val
 
 test('a rule row holds every field of its stage, shown or not', () => {
     const [row] = ruleRowsOf(
-        [
-            {
-                kind: 'event',
-                id: 'r1',
-                programStageId: 's1',
-                orgUnitId: 'ou',
-                status: 'ACTIVE',
-            },
-        ],
+        new Map([
+            [
+                'r1',
+                {
+                    kind: 'event',
+                    id: 'r1',
+                    programStageId: 's1',
+                    orgUnitId: 'ou',
+                    status: 'ACTIVE',
+                },
+            ],
+        ]),
         new Map([['s1', new Set(['a', 'b'])]]),
         {
             'r1.a': { value: '1', sync: 'idle', source: 'person' },

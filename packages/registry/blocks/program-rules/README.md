@@ -17,6 +17,13 @@ pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/program-rules
 ```ts
 buildRuleContext(engine: RuleEngineModule, metadata: ProgramRulesMetadata): RuleContext
 evaluateEventRules(engine: RuleEngineModule, context: RuleContext, input: EventRuleInput): RuleEffects
+evaluateEnrollmentRules(
+    engine: RuleEngineModule,
+    context: RuleContext, // built from metadataForEnrollment(metadata)
+    input: { enrollment: RuleEnrollmentInput; events: ReadonlyArray<RuleEventInput> }
+): RuleEffects // an enrolment's rules, as Capture's registration form and enrolment page run them
+metadataForStage(metadata: ProgramRulesMetadata, programStageId: string): ProgramRulesMetadata // program-wide and the stage's rules
+metadataForEnrollment(metadata: ProgramRulesMetadata): ProgramRulesMetadata // the rules with no stage
 explainField(effects: RuleEffects, fieldId: string): Attribution[]
 emptyEffects(): RuleEffects // effects with nothing in them
 scanExpression(expression: string): ExpressionReferences // names read, deduplicated, by kind
@@ -27,6 +34,11 @@ assignedVariable(action: ProgramRuleActionMetadata): string | undefined // the v
 `engine` is the `@dhis2/rule-engine` module itself. The lib only imports its types, so the ~214 KB (gzip)
 engine never enters an initial bundle. Build the context once per program and stage; evaluation is pure and
 synchronous.
+
+`evaluateEnrollmentRules` calls the engine's `evaluateEnrollment`, as Capture does: pass `events: []` for a person being
+registered and the enrolment's events for one DHIS2 holds. Effects on attributes (hide, assign, mandatory, messages,
+options) come only from it: the engine drops attribute actions when it evaluates an event. An enrolment with no
+enrolment date is enrolled today, as Capture builds it.
 
 `expressionReferences` is the one reading of expression syntax the lib has: the dependency graph is built from
 it, and a test checks it against the engine's own parser on real and generated metadata. Anything that shows or
@@ -180,6 +192,7 @@ useEventsRules({
     programStageIds: ReadonlyArray<string>, // the stages the rows belong to
     tracker: boolean, // WITH_REGISTRATION programs; false evaluates every row alone
     enrollmentIds: ReadonlyArray<string>, // the people the rows belong to, fetched in chunks of 100
+    enrollments?: boolean, // a row is a person: also run enrolment rules (evaluateEnrollments)
     enabled?: boolean,
 }): {
     status: 'loading' | 'ready' | 'error'
@@ -189,6 +202,9 @@ useEventsRules({
             rowIds: ReadonlyArray<string>
         ): { effects: Map<string, RuleEffects>; failures: Map<string, Error> } // rowId → effects, rowId → why it failed
         rowsAffectedBy(rows: ReadonlyArray<EventsRuleRow>, rowId: string, fieldId: string): string[]
+        evaluateEnrollments?(
+            units: ReadonlyArray<{ enrollment: RuleEnrollmentInput; events: ReadonlyArray<RuleEventInput> }>
+        ): { effects: Map<string, RuleEffects>; failures: Map<string, Error> } // enrollmentId → effects, → why it failed
         invalidRules: InvalidRule[]
         optionGroupOptions: Map<string, Set<string>> // optionGroupId → option codes, across every stage
     }
@@ -197,6 +213,7 @@ useEventsRules({
 interface EventsRuleRow {
     event: RuleEventInput // the grid's live values, empty values left out
     enrollmentId?: string // tracker programs only
+    enrollment?: RuleEnrollmentInput // the person as the grid holds them; wins over the fetched one
 }
 ```
 
@@ -246,6 +263,15 @@ const fresh = rules?.evaluate(rows, stale)
   people already loaded stay in use), and `evaluate` leaves out the rows of a person that has not loaded yet. `rules`
   keeps its identity while they load and changes once as each chunk's data arrives. A failed fetch reports its `error`
   as usual.
+- A row with its own `enrollment` (a register's row, attributes as typed) is evaluated with it in place of the fetched
+  person's, and is evaluated even when the server has no such person (one not registered yet): it never fails with
+  `The enrollment of this event could not be read`. Its other events are still the fetched person's, with live rows
+  over them.
+- With `enrollments: true`, `evaluateEnrollments` runs the program-wide rules of each unit, keyed by enrolment id, on
+  its live attributes and dates. A person the server holds also gets their fetched events the unit lacks, so rules see
+  every event as DHIS2 holds it; a unit whose person is still loading is in neither map. Put every enrolment in
+  `enrollmentIds`, new ones included, or a unit can wait for a person nobody asked for. It is absent without
+  `enrollments`, and for a program without rules.
 - `invalidRules` lists each rule the engine cannot parse once, however many stages carry it.
 - `optionGroupOptions` maps the option group ids in each row's `optionGroups` effects to their option codes, merged
   across the stages, as `useProgramRules` exposes it for one stage.
@@ -257,7 +283,8 @@ const fresh = rules?.evaluate(rows, stale)
 
 The lib has the same pieces without React: `crossEventFields(metadata)`, `rowsAffectedBy(rows, crossFields, rowId,
 fieldId)` and `evaluateEventsRules(engine, contexts, { rows, persons, tracker, personsLoaded }, rowIds)`, which returns the
-same `{ effects, failures }`, with `contexts` keyed by stage id and built from `metadataForStage(metadata, stageId)`.
+same `{ effects, failures }`, with `contexts` keyed by stage id and built from `metadataForStage(metadata, stageId)`;
+`evaluateEnrollmentRules` with a context built from `metadataForEnrollment(metadata)` runs a person's enrolment rules.
 `personsLoaded` says whether `persons` were fetched for the rows: then a tracker row whose person is missing fails with
 that reason instead of running without enrollment data. `rows` is indexed once per array, so a grid evaluating one
 row at a time over the same array pays for the index once; pass a new array when the rows change.

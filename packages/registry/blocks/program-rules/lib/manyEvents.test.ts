@@ -3,6 +3,7 @@ import {
     RuleEnrollmentResponseSchema,
     toRuleEnrollmentData,
 } from '../hooks/enrollment'
+import { eventInput, programMetadata, rule } from '../__tests__/metadata'
 import {
     RMNCH,
     rmnchEnrollmentResponse,
@@ -226,6 +227,73 @@ describe('evaluateEventsRules', () => {
                 personsLoaded: false,
             })
         ).toEqual(RMNCH.chronicFollowUps)
+    })
+
+    // An event rule that reads an attribute: the fetched person is female.
+    const genderContexts = new Map([
+        [
+            'stage',
+            buildRuleContext(
+                engine,
+                programMetadata({
+                    variables: [
+                        {
+                            id: 'var_gender',
+                            name: 'gender',
+                            sourceType: 'TEI_ATTRIBUTE',
+                            useCodeForOptionSet: false,
+                            attributeId: 'gender',
+                            fieldValueType: 'TEXT',
+                        },
+                    ],
+                    rules: [
+                        rule('r', "A{gender} == 'Male'", [
+                            { id: 'a', type: 'HIDEFIELD', dataElementId: 'x' },
+                        ]),
+                    ],
+                })
+            ),
+        ],
+    ])
+    const enrolled = (id: string, gender: string) => ({
+        id,
+        enrolledAt: '2026-10-01',
+        orgUnitId: 'ou',
+        attributes: { gender },
+    })
+    const genderRow = (enrollmentId: string): EventsRuleRow => ({
+        event: { ...eventInput().event, id: `event-${enrollmentId}` },
+        enrollmentId,
+    })
+    const hidesX = (row: EventsRuleRow) => {
+        const { effects, failures } = evaluateEventsRules(
+            engine,
+            genderContexts,
+            input([row], {
+                persons: new Map([
+                    [
+                        'P1',
+                        { enrollment: enrolled('P1', 'Female'), events: [] },
+                    ],
+                ]),
+            }),
+            [row.event.id]
+        )
+        expect(failures.size).toBe(0)
+        return effects.get(row.event.id)?.hiddenFields.has('x')
+    }
+
+    it('a row’s own enrolment is used in place of the fetched one', () => {
+        expect(hidesX(genderRow('P1'))).toBe(false)
+        expect(
+            hidesX({ ...genderRow('P1'), enrollment: enrolled('P1', 'Male') })
+        ).toBe(true)
+    })
+
+    it('a new person’s row is evaluated with its own enrolment', () => {
+        expect(
+            hidesX({ ...genderRow('New'), enrollment: enrolled('New', 'Male') })
+        ).toBe(true)
     })
 
     it('indexes a rows array once, however many calls read it', () => {

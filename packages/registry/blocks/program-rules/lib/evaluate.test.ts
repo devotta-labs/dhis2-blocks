@@ -7,7 +7,12 @@ import {
 } from '../__tests__/metadata'
 import { RMNCH, rmnchInput, rmnchMetadata } from '../__tests__/rmnch'
 import { buildRuleContext } from './buildContext'
-import { evaluateEventRules, explainField } from './evaluate'
+import {
+    evaluateEnrollmentRules,
+    evaluateEventRules,
+    explainField,
+} from './evaluate'
+import { metadataForEnrollment } from './stages'
 import type { ProgramRulesMetadata } from './types'
 
 const rmnch = buildRuleContext(engine, rmnchMetadata())
@@ -265,6 +270,75 @@ describe('evaluateEventRules on a synthetic program', () => {
             })
         )
         expect(effects.assignedValues.get('x')?.value).toBeNull()
+    })
+})
+
+describe('evaluateEnrollmentRules', () => {
+    // A rule on a stage never runs on an enrolment.
+    const metadata = programMetadata({
+        variables: [
+            {
+                id: 'var_gender',
+                name: 'gender',
+                sourceType: 'TEI_ATTRIBUTE',
+                useCodeForOptionSet: false,
+                attributeId: 'gender',
+                fieldValueType: 'TEXT',
+            },
+        ],
+        rules: [
+            rule('hideMaiden', "A{gender} == 'Male'", [
+                { id: 'hide', type: 'HIDEFIELD', attributeId: 'maidenName' },
+            ]),
+            rule('assignCode', 'true', [
+                {
+                    id: 'assign',
+                    type: 'ASSIGN',
+                    attributeId: 'code',
+                    data: "d2:concatenate('C-', A{gender})",
+                },
+            ]),
+            rule(
+                'stageOnly',
+                'true',
+                [{ id: 'stageHide', type: 'HIDEFIELD', attributeId: 'other' }],
+                { programStageId: 'stage' }
+            ),
+        ],
+    })
+    const context = buildRuleContext(engine, metadataForEnrollment(metadata))
+    const evaluateFor = (gender: string) =>
+        evaluateEnrollmentRules(engine, context, {
+            enrollment: {
+                id: 'enrollment',
+                enrolledAt: '2026-10-01',
+                orgUnitId: 'ou',
+                attributes: { gender },
+            },
+            events: [],
+        })
+
+    it('enrolment rules hide and assign attributes', () => {
+        const male = evaluateFor('Male')
+        expect([...male.hiddenFields.keys()]).toEqual(['maidenName'])
+        expect(male.assignedValues.get('code')).toEqual({
+            value: 'C-Male',
+            by: expect.objectContaining({ actionId: 'assign' }),
+        })
+        expect(evaluateFor('Female').hiddenFields.size).toBe(0)
+    })
+
+    it('runs on a new person with no enrolment date, as Capture dates it today', () => {
+        const effects = evaluateEnrollmentRules(engine, context, {
+            enrollment: {
+                id: 'new',
+                enrolledAt: '',
+                orgUnitId: 'ou',
+                attributes: { gender: 'Male' },
+            },
+            events: [],
+        })
+        expect([...effects.hiddenFields.keys()]).toEqual(['maidenName'])
     })
 })
 

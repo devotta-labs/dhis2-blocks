@@ -31,7 +31,7 @@ const normalisedValues = (
         return normalised === null ? [] : [[fieldId, normalised]]
     })
 
-const toEngineEvent = (
+export const toEngineEvent = (
     engine: RuleEngineModule,
     context: InputContext,
     event: RuleEventInput
@@ -54,15 +54,15 @@ const toEngineEvent = (
         )
     )
 
-const toEngineEnrollment = (
+/** As Capture builds it: an enrolment with no enrolment date (one being registered) is enrolled today. */
+export const toEngineEnrollment = (
     engine: RuleEngineModule,
     context: InputContext,
     enrollment: RuleEnrollmentInput
-): Engine.RuleEnrollmentJs | null => {
-    const enrolledAt = toLocalDate(engine, enrollment.enrolledAt)
-    if (enrolledAt === null) {
-        return null
-    }
+): Engine.RuleEnrollmentJs => {
+    const enrolledAt =
+        toLocalDate(engine, enrollment.enrolledAt) ??
+        engine.RuleLocalDate.currentDate()
     return new engine.RuleEnrollmentJs(
         enrollment.id,
         context.programName,

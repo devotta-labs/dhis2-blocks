@@ -1,5 +1,10 @@
 import i18n from '@dhis2/d2-i18n'
-import type { EventsRules, RuleEffects } from '@/components/program-rules'
+import {
+    emptyEffects,
+    type EventsRules,
+    type RuleEffects,
+    type RuleEventInput,
+} from '@/components/program-rules'
 import { typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { cellDomId } from '../cells/cellProps'
@@ -13,7 +18,16 @@ import {
     withRow,
 } from '../logic/effects'
 import type { CellEffects } from '../logic/effects'
-import { rowRuleOutcome, ruleRowsOf, stageFields } from '../logic/ruleEffects'
+import {
+    enrollmentUnitOf,
+    eventsByEnrollment,
+    isEmptySlot,
+    partsOf,
+    personRows,
+    rowRuleOutcome,
+    ruleRowsOf,
+    stageFields,
+} from '../logic/ruleEffects'
 import {
     cellKey,
     formOf,
@@ -77,24 +91,6 @@ const onScreen = (idScope: string, tableId: string, rowId: string) => {
 /** Whether the cell holds a change on its way to DHIS2: a failed one waits for the person to enter it again. */
 const onItsWay = ({ sync }: CellState) => sync !== 'idle' && sync !== 'failed'
 
-/** The record's own id, or, for an event of an enrolment, every event of that enrolment. */
-const personRows = (
-    records: ReadonlyMap<string, DataRecord>,
-    record: DataRecord
-) => {
-    const enrollmentId =
-        record.kind === 'event' ? record.enrollmentId : undefined
-    return enrollmentId === undefined
-        ? [record.id]
-        : [...records.values()]
-              .filter(
-                  (other) =>
-                      other.kind === 'event' &&
-                      other.enrollmentId === enrollmentId
-              )
-              .map(({ id }) => id)
-}
-
 interface ConnectOptions {
     open: Pick<
         OpenForm,
@@ -108,6 +104,8 @@ interface ConnectOptions {
     cleared: Map<CellKey, string>
     /** Rows a person changed or completed, or with unsent changes: only there are the rules' values saved. */
     touched: Set<string>
+    /** Record → the notes the rules last wrote on it, after the source's own, across reconnections. */
+    ruleNotes: Map<string, ReadonlyArray<string>>
     /** Starts the form's DOM ids. */
     idScope: string
 }
@@ -125,6 +123,7 @@ export const connectRules = ({
     announce,
     cleared,
     touched,
+    ruleNotes,
     idScope,
 }: ConnectOptions) => {
     let stopped = false
@@ -141,12 +140,42 @@ export const connectRules = ({
     const held = new Map<string, string>()
 
     const fieldsCache = new Map<string, ReturnType<typeof stageFields>>()
-    const fieldsOf = (stageId: string) => {
+    const fieldsOf = (
+        records: ReadonlyMap<string, DataRecord>,
+        record: DataRecord
+    ) => {
+        const formIds = partsOf(records, record).map(formOf)
+        const cacheKey = formIds.join(',')
         const fields =
-            fieldsCache.get(stageId) ??
-            stageFields(form, stageId, rules.optionGroupOptions)
-        fieldsCache.set(stageId, fields)
+            fieldsCache.get(cacheKey) ??
+            stageFields(form, formIds, rules.optionGroupOptions)
+        fieldsCache.set(cacheKey, fields)
         return fields
+    }
+
+    /**
+     * The records to run again after `field` of `rowId` changed: for a data value, the row, the person's rows that read
+     * it and a register's enrolment; for an event date, an attribute or an enrolment date, every row of that person.
+     */
+    const affectedBy = (
+        records: ReadonlyMap<string, DataRecord>,
+        ruleRows: ReturnType<typeof ruleRowsOf>,
+        rowId: string,
+        field: string
+    ) => {
+        const record = records.get(rowId)
+        if (record === undefined) {
+            return []
+        }
+        if (record.kind !== 'event' || field === EVENT_DATE_COLUMN) {
+            return personRows(records, record)
+        }
+        const rows = rules.rowsAffectedBy(ruleRows, rowId, field)
+        // A register's enrolment rules read its events.
+        return record.enrollmentId !== undefined &&
+            records.get(record.enrollmentId)?.kind === 'enrollment'
+            ? [...rows, record.enrollmentId]
+            : rows
     }
 
     /**
@@ -160,18 +189,28 @@ export const connectRules = ({
             active instanceof HTMLElement && typingIn(active)
                 ? active.id
                 : undefined
+        const { records } = tables.getState()
         const entries: Array<{ key: CellKey; text: string }> = []
         const notes: Array<string | undefined> = []
         for (const { recordId, outcome, raw } of results) {
-            if (
-                outcome instanceof Error ||
-                readOnlyRecords.has(recordId) ||
-                !touched.has(recordId)
-            ) {
+            const record = records.get(recordId)
+            if (outcome instanceof Error || record === undefined) {
                 continue
             }
+            const parts = partsOf(records, record)
             for (const [field, value] of outcome.assignments) {
-                const key = cellKey(recordId, field)
+                // The person's attribute, else the record's own field.
+                const owner =
+                    parts.find((part) =>
+                        form.fieldsByForm.get(formOf(part))?.has(field)
+                    ) ?? record
+                if (
+                    readOnlyRecords.has(owner.id) ||
+                    !(touched.has(owner.id) || touched.has(recordId))
+                ) {
+                    continue
+                }
+                const key = cellKey(owner.id, field)
                 const now = values[key]?.value
                 const definition = form.fields.get(field)
                 if (definition === undefined || (now ?? '') === (value ?? '')) {
@@ -221,61 +260,61 @@ export const connectRules = ({
         })
 
         const after = store.getState().cells
-        const { records } = tables.getState()
         const state = effects.getState()
         let cells = state.cells
         let rowMessages = state.rowMessages
         let rowNotes = state.rowNotes
         for (const { recordId, outcome } of results) {
-            const readOnly = readOnlyRecords.get(recordId)
             const record = records.get(recordId)
-            const required =
-                (record === undefined
-                    ? undefined
-                    : form.required.get(formOf(record))) ?? NONE
-            // An event's date and every field of the record's form, shown in a column or not.
-            const ids =
-                record === undefined
-                    ? []
-                    : [
-                          ...(record.kind === 'event'
-                              ? [EVENT_DATE_COLUMN]
-                              : []),
-                          ...(form.fieldsByForm.get(formOf(record)) ?? NONE),
-                      ]
-            for (const id of ids) {
-                const key = cellKey(recordId, id)
-                const rule =
-                    outcome instanceof Error ? undefined : outcome.cells.get(id)
-                // A read-only row asks for nothing, as the form's own effects say.
-                let next: CellEffects =
-                    readOnly === undefined
-                        ? (rule ?? { required: required.has(id), messages: [] })
-                        : {
-                              ...rule,
-                              readOnly,
-                              required: false,
-                              messages: rule?.messages ?? [],
-                          }
-                const note = cleared.get(key)
-                if (note !== undefined && !after[key]?.value) {
-                    next = {
-                        ...next,
-                        messages: [
-                            ...next.messages,
-                            { kind: 'warning', text: note, source: 'rule' },
-                        ],
+            for (const part of record === undefined
+                ? []
+                : partsOf(records, record)) {
+                const readOnly = readOnlyRecords.get(part.id)
+                const required = form.required.get(formOf(part)) ?? NONE
+                // An event's date and every field of the record's form, shown in a column or not.
+                const ids = [
+                    ...(part.kind === 'event' ? [EVENT_DATE_COLUMN] : []),
+                    ...(form.fieldsByForm.get(formOf(part)) ?? NONE),
+                ]
+                for (const id of ids) {
+                    const key = cellKey(part.id, id)
+                    const rule =
+                        outcome instanceof Error
+                            ? undefined
+                            : outcome.cells.get(id)
+                    // A read-only row asks for nothing, as the form's own effects say.
+                    let next: CellEffects =
+                        readOnly === undefined
+                            ? (rule ?? {
+                                  required: required.has(id),
+                                  messages: [],
+                              })
+                            : {
+                                  ...rule,
+                                  readOnly,
+                                  required: false,
+                                  messages: rule?.messages ?? [],
+                              }
+                    const note = cleared.get(key)
+                    if (note !== undefined && !after[key]?.value) {
+                        next = {
+                            ...next,
+                            messages: [
+                                ...next.messages,
+                                { kind: 'warning', text: note, source: 'rule' },
+                            ],
+                        }
+                    } else if (note !== undefined) {
+                        cleared.delete(key)
                     }
-                } else if (note !== undefined) {
-                    cleared.delete(key)
-                }
-                const kept = saysNothing(next) ? undefined : next
-                if (!sameEffects(kept, cells[key])) {
-                    cells = cells === state.cells ? { ...cells } : cells
-                    if (kept === undefined) {
-                        delete cells[key]
-                    } else {
-                        cells[key] = kept
+                    const kept = saysNothing(next) ? undefined : next
+                    if (!sameEffects(kept, cells[key])) {
+                        cells = cells === state.cells ? { ...cells } : cells
+                        if (kept === undefined) {
+                            delete cells[key]
+                        } else {
+                            cells[key] = kept
+                        }
                     }
                 }
             }
@@ -288,10 +327,21 @@ export const connectRules = ({
                     : outcome.rowMessages,
                 sameMessages
             )
+            // The source's notes on the record (a register's on the events it leaves out) come first and stay.
+            const written = rowNotes.get(recordId) ?? NO_NOTES
+            const last = ruleNotes.get(recordId) ?? NO_NOTES
+            const offset = written.length - last.length
+            const own =
+                offset >= 0 &&
+                last.every((note, at) => written[offset + at] === note)
+                    ? written.slice(0, offset)
+                    : written
+            const said = failed ? NO_NOTES : outcome.notes
+            ruleNotes.set(recordId, said)
             rowNotes = withRow(
                 rowNotes,
                 recordId,
-                failed ? NO_NOTES : outcome.notes,
+                own.length === 0 ? said : [...own, ...said],
                 sameNotes
             )
         }
@@ -315,11 +365,27 @@ export const connectRules = ({
         until = Infinity
     ) => {
         const { tables: all, records } = tables.getState()
-        const ruleRows = ruleRowsOf(
-            records.values(),
-            form.fieldsByForm,
-            store.getState().cells
-        )
+        const cells = store.getState().cells
+        const ruleRows = ruleRowsOf(records, form.fieldsByForm, cells)
+        let byEnrollment: ReadonlyMap<string, RuleEventInput[]> | undefined
+        // An enrolment runs its enrolment rules; any other record, its event rules.
+        const evaluateRecord = (rowId: string, record?: DataRecord) => {
+            if (record?.kind !== 'enrollment') {
+                return rules.evaluate(ruleRows, [rowId])
+            }
+            const unit = enrollmentUnitOf(
+                records,
+                rowId,
+                cells,
+                form.fieldsByForm,
+                // Gathered on the first enrolment's turn.
+                () =>
+                    (byEnrollment ??= eventsByEnrollment(ruleRows)).get(
+                        rowId
+                    ) ?? []
+            )
+            return unit && rules.evaluateEnrollments?.([unit])
+        }
         const shown = rowsByRecord(all)
         const results: RowResult[] = []
         let done = 0
@@ -329,14 +395,18 @@ export const connectRules = ({
         ) {
             const rowId = rowIds[done]
             done += 1
-            const evaluation = rules.evaluate(ruleRows, [rowId])
             const record = records.get(rowId)
-            const raw = evaluation.effects.get(rowId)
+            // An empty slot has no rules: it shows the form's own effects, whatever the rules said while it had a value.
+            const empty =
+                record !== undefined &&
+                isEmptySlot(record, cells, form.fieldsByForm)
+            const evaluation = empty ? undefined : evaluateRecord(rowId, record)
+            const raw = empty ? emptyEffects() : evaluation?.effects.get(rowId)
             const outcome =
-                evaluation.failures.get(rowId) ??
+                evaluation?.failures.get(rowId) ??
                 (raw === undefined || record === undefined
                     ? undefined
-                    : rowRuleOutcome(raw, fieldsOf(formOf(record))))
+                    : rowRuleOutcome(raw, fieldsOf(records, record)))
             // A record in neither map was not evaluated: it keeps its last effects. One no row shows has none.
             if (shown.has(rowId) && outcome !== undefined) {
                 results.push({ recordId: rowId, outcome, raw })
@@ -347,14 +417,14 @@ export const connectRules = ({
         const next = new Set(
             changed.flatMap(({ key }) => {
                 const rowId = recordIdOf(key)
-                // The row's own rules ran with the value; the person's other rows read it through cross-event fields.
-                return rules
-                    .rowsAffectedBy(
-                        ruleRows,
-                        rowId,
-                        key.slice(rowId.length + 1)
-                    )
-                    .filter((other) => other !== rowId && seen.has(other))
+                // The row's own rules ran with the value; the person's other rows read it through cross-event fields,
+                // and their events read the person's attributes.
+                return affectedBy(
+                    records,
+                    ruleRows,
+                    rowId,
+                    key.slice(rowId.length + 1)
+                ).filter((other) => other !== rowId && seen.has(other))
             })
         )
         return { done, next: [...next] }
@@ -443,7 +513,8 @@ export const connectRules = ({
     cancel = schedule()
 
     const unsubscribes = [
-        // A person's change re-runs the rows it can affect; an event date, every row of that person.
+        // A person's change re-runs the rows it can affect; an event date, an attribute or an enrolment date, every row
+        // of that person.
         store.subscribe(({ cells }, before) => {
             const edits = Object.entries(cells).flatMap(([key, cell]) => {
                 const rowId = recordIdOf(key)
@@ -466,21 +537,11 @@ export const connectRules = ({
                 }
             }
             const { records } = tables.getState()
-            const ruleRows = ruleRowsOf(
-                records.values(),
-                form.fieldsByForm,
-                cells
-            )
+            const ruleRows = ruleRowsOf(records, form.fieldsByForm, cells)
             rerun(
-                edits.flatMap(({ rowId, field }) => {
-                    const record = records.get(rowId)
-                    if (record === undefined) {
-                        return []
-                    }
-                    return field === EVENT_DATE_COLUMN
-                        ? personRows(records, record)
-                        : rules.rowsAffectedBy(ruleRows, rowId, field)
-                })
+                edits.flatMap(({ rowId, field }) =>
+                    affectedBy(records, ruleRows, rowId, field)
+                )
             )
         }),
         // A new or removed record re-runs its person's rows; a saved status, which rewrote the row's effects, the row.

@@ -1,4 +1,9 @@
-import { buildEngineInput } from './buildInput'
+import type * as Engine from '@dhis2/rule-engine'
+import {
+    buildEngineInput,
+    toEngineEnrollment,
+    toEngineEvent,
+} from './buildInput'
 import type {
     Attribution,
     EventRuleInput,
@@ -7,6 +12,8 @@ import type {
     RuleDisplayItem,
     RuleEffects,
     RuleEngineModule,
+    RuleEnrollmentInput,
+    RuleEventInput,
     RuleMessage,
 } from './types'
 
@@ -60,19 +67,11 @@ const optionGroupsOf = (effects: RuleEffects, field: string) => {
     return groups
 }
 
-/** Runs every rule for one event and sorts the effects by what they do. Pure. */
-export const evaluateEventRules = (
-    engine: RuleEngineModule,
+/** The engine's effects sorted by what they do; effects of actions the context does not know are dropped. */
+const sortEffects = (
     context: RuleContext,
-    input: EventRuleInput
+    raw: ReadonlyArray<Engine.RuleEffectJs>
 ): RuleEffects => {
-    const built = buildEngineInput(engine, context, input)
-    const raw = context.engine.evaluateEvent(
-        built.event,
-        built.enrollment,
-        built.otherEvents,
-        context.engineContext
-    )
     const effects = emptyEffects()
     for (const effect of raw) {
         const values = effect.ruleAction.values
@@ -172,6 +171,46 @@ export const evaluateEventRules = (
     }
     return effects
 }
+
+/** Runs every rule for one event and sorts the effects by what they do. Pure. */
+export const evaluateEventRules = (
+    engine: RuleEngineModule,
+    context: RuleContext,
+    input: EventRuleInput
+): RuleEffects => {
+    const built = buildEngineInput(engine, context, input)
+    return sortEffects(
+        context,
+        context.engine.evaluateEvent(
+            built.event,
+            built.enrollment,
+            built.otherEvents,
+            context.engineContext
+        )
+    )
+}
+
+/**
+ * Runs the rules of an enrolment, as Capture's registration form and enrolment page do: on its attributes and dates,
+ * with `events` its events (none for a person not yet registered). Pass a context built without stage rules
+ * (`metadataForEnrollment`). Pure.
+ */
+export const evaluateEnrollmentRules = (
+    engine: RuleEngineModule,
+    context: RuleContext,
+    input: {
+        enrollment: RuleEnrollmentInput
+        events: ReadonlyArray<RuleEventInput>
+    }
+): RuleEffects =>
+    sortEffects(
+        context,
+        context.engine.evaluateEnrollment(
+            toEngineEnrollment(engine, context, input.enrollment),
+            input.events.map((event) => toEngineEvent(engine, context, event)),
+            context.engineContext
+        )
+    )
 
 /** Every rule action that hid, required, assigned, messaged or filtered the options of a field, once each. */
 export const explainField = (

@@ -12,3 +12,11 @@ export const metadataForStage = (
             rule.programStageId === programStageId
     ),
 })
+
+/** The metadata with only the program-wide rules: those an enrolment runs. */
+export const metadataForEnrollment = (
+    metadata: ProgramRulesMetadata
+): ProgramRulesMetadata => ({
+    ...metadata,
+    rules: metadata.rules.filter((rule) => rule.programStageId === undefined),
+})

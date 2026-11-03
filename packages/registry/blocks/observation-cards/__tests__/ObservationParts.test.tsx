@@ -1,5 +1,6 @@
 import axe from 'axe-core'
 import React from 'react'
+import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import {
     ObservationCard,
@@ -494,5 +495,23 @@ describe('calendars and sizes', () => {
         expect(
             cardOf(container)?.getBoundingClientRect().width
         ).toBeGreaterThan(150)
+    })
+})
+
+describe('the recorded note', () => {
+    it('opens its date at once on click, not only after the hover delay', async () => {
+        const { container } = await renderWith(
+            <ObservationCard dataElement={DE} />,
+            {
+                readings: [{ value: '12', day: '2026-03-12' }],
+            }
+        )
+        expect(
+            document.querySelector('[data-slot="tooltip-content"]')
+        ).toBeNull()
+        await page.elementLocator(slot(container, 'recorded-note')!).click()
+        expect(
+            document.querySelector('[data-slot="tooltip-content"]')?.textContent
+        ).toBe('Recorded Mar 12, 2026 · Antenatal visit')
     })
 })

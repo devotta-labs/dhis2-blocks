@@ -6,7 +6,11 @@ import {
 } from '@/components/dhis2/ui/tooltip'
 import i18n from '@dhis2/d2-i18n'
 import { IconWarningFilled16 } from '@dhis2/ui-icons'
-import React, { useLayoutEffect, type ComponentPropsWithoutRef } from 'react'
+import React, {
+    useLayoutEffect,
+    useState,
+    type ComponentPropsWithoutRef,
+} from 'react'
 import type { ObservationPoint } from '../api/types'
 import { useObservationCard } from '../card/context'
 import { CardNote, FOOTER_BAND, STALE_BAND } from '../card/frame'
@@ -35,9 +39,21 @@ const staleNote = (days: number): string =>
           })
 
 /**
+ * A tooltip that opens at once on click or tap, as well as on hover after the
+ * usual delay, so the full text is one click away and reachable on touch.
+ */
+const useClickableTooltip = () => {
+    const [open, setOpen] = useState(false)
+    return {
+        root: { open, onOpenChange: setOpen },
+        trigger: { closeOnClick: false, onClick: () => setOpen(true) },
+    }
+}
+
+/**
  * When a reading was recorded, as "3 days ago", followed by "Out of date" once
- * it is. Hovering or focusing it shows the date and program stage; a screen
- * reader hears those in full instead of the short form.
+ * it is. Clicking, focusing or hovering it shows the date and program stage;
+ * a screen reader hears those in full instead of the short form.
  */
 function RecordedNote({
     point,
@@ -57,10 +73,12 @@ function RecordedNote({
         stage: point.source.programStageName,
         interpolation: NO_ESCAPE,
     })
+    const tooltip = useClickableTooltip()
 
     return (
-        <Tooltip>
+        <Tooltip {...tooltip.root}>
             <TooltipTrigger
+                {...tooltip.trigger}
                 render={
                     <span
                         tabIndex={0}
@@ -107,14 +125,16 @@ function RecordedNote({
 
 /**
  * The note shown when the user can't read some stages that capture the value:
- * "Restricted access", with the full reason on hover or focus. A screen reader
+ * "Restricted access", with the full reason on click, focus or hover. A screen reader
  * hears the full reason instead.
  */
 function PartialNote() {
     const reason = i18n.t('Some visits are hidden by your access')
+    const tooltip = useClickableTooltip()
     return (
-        <Tooltip>
+        <Tooltip {...tooltip.root}>
             <TooltipTrigger
+                {...tooltip.trigger}
                 render={
                     <span
                         tabIndex={0}

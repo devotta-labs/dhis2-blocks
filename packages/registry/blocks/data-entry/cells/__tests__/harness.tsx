@@ -72,7 +72,7 @@ export const rig = (
         closed: new Map(),
     }
     const store = createDataEntryStore({
-        tables: [table],
+        fields: new Map([['c1', field]]),
         values: new Map(value === undefined ? [] : [[CELL, value]]),
         settings,
         enqueue: (key, saved, base) => enqueued.push([key, saved, base]),

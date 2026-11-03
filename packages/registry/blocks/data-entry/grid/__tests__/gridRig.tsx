@@ -110,7 +110,14 @@ export const mount = async (
         rowMessages = [],
     } = options
     const store = createDataEntryStore({
-        tables,
+        fields: new Map(
+            tables.flatMap((each) =>
+                each.columns.map(({ id, field }): [string, Field] => [
+                    id,
+                    field,
+                ])
+            )
+        ),
         values: new Map(values),
         settings: GREGORIAN,
         enqueue: () => {},

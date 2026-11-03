@@ -32,6 +32,7 @@ const visits = () => {
     const columns = [EVENT_DATE, ...table.columns]
     return {
         ...form,
+        fields: new Map([...form.fields, [EVENT_DATE.id, EVENT_DATE.field]]),
         tables: [
             {
                 ...table,

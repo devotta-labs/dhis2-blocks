@@ -81,7 +81,7 @@ const connect = (
     const queued: CellKey[] = []
     const open = {
         store: createDataEntryStore({
-            tables: form.tables,
+            fields: form.fields,
             values: form.values,
             settings,
             enqueue: (key) => queued.push(key),

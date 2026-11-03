@@ -14,7 +14,7 @@ import { signedInAsOther } from './signedIn'
 /** What the provider shows until a form is open: no tables, no cells, nothing to do. */
 export const emptyForm = (): OpenForm => ({
     store: createDataEntryStore({
-        tables: [],
+        fields: new Map(),
         values: new Map(),
         settings: { calendar: 'gregorian', dateFormat: 'YYYY-MM-DD' },
         enqueue: () => {},
@@ -60,7 +60,7 @@ export const lockedForm = (
     return {
         ...emptyForm(),
         store: createDataEntryStore({
-            tables: form.tables,
+            fields: form.fields,
             values: form.values,
             settings,
             enqueue: () => {},

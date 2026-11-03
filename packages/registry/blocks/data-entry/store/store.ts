@@ -8,14 +8,13 @@ import type {
     CellKey,
     CellState,
     CommitResult,
-    GridColumn,
-    GridTable,
     PendingChange,
     SyncState,
 } from '../model/types'
 
 export interface DataEntryStoreOptions {
-    tables: ReadonlyArray<GridTable>
+    /** Every field any record may hold, shown by a table or not, by field id: what a cell's value is checked against. */
+    fields: ReadonlyMap<string, Field>
     values: ReadonlyMap<CellKey, string>
     settings: ValueSettings
     /** Called for every change that must be saved; the outbox writes it. */
@@ -60,8 +59,6 @@ export interface DataEntryState {
         sync: SyncState,
         reason?: string
     ): void
-    /** Columns a page adds: their cells take values, checked as their field says. */
-    addColumns(columns: ReadonlyArray<GridColumn>): void
     /**
      * Puts changes the outbox still holds, or values a page loads, on their cells; nothing is enqueued, and a cell's
      * draft and its error stay.
@@ -91,24 +88,15 @@ export const EMPTY_CELL: Readonly<CellState> = Object.freeze({
 type Cells = DataEntryState['cells']
 
 export const createDataEntryStore = ({
-    tables,
+    fields,
     values,
     settings,
     enqueue,
     check,
 }: DataEntryStoreOptions): StoreApi<DataEntryState> => {
-    // A column id means the same field in every table.
-    const fields = new Map<string, Field>(
-        tables.flatMap((table) =>
-            table.columns.map((column): [string, Field] => [
-                column.id,
-                column.field,
-            ])
-        )
-    )
     const fieldOf = (key: CellKey) =>
         fields.get(key.slice(key.indexOf('.') + 1))
-    /** What is wrong with a saved value, if anything; nothing is checked for a cell with no column. */
+    /** What is wrong with a saved value, if anything; nothing is checked for a cell with no field. */
     const warningOf = (key: CellKey, value: string | undefined) => {
         const field = fieldOf(key)
         return field === undefined || value === undefined
@@ -222,7 +210,7 @@ export const createDataEntryStore = ({
                 const results = entries.map(({ key, text }): CommitResult => {
                     const field = fieldOf(key)
                     if (field === undefined) {
-                        throw new Error(`No column for the cell ${key}`)
+                        throw new Error(`No field for the cell ${key}`)
                     }
                     const cell = read(key) ?? EMPTY_CELL
                     const parsed = parseTyped(field, text, settings)
@@ -314,11 +302,6 @@ export const createDataEntryStore = ({
                     }
                     return undone
                 })
-            },
-            addColumns(columns) {
-                for (const { id, field } of columns) {
-                    fields.set(id, field)
-                }
             },
             markSync(sent, sync, reason) {
                 edit(({ read, write }) => {

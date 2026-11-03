@@ -176,7 +176,7 @@ const connect = (
         )
     }
     const store = createDataEntryStore({
-        tables: form.tables,
+        fields: form.fields,
         values: form.values,
         settings,
         enqueue(key, value, base) {

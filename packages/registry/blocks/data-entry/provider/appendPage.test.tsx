@@ -14,7 +14,7 @@ const opened = () => {
     return {
         form,
         store: createDataEntryStore({
-            tables: form.tables,
+            fields: form.fields,
             values: form.values,
             settings: { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' },
             enqueue: () => {},

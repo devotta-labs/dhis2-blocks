@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
 import { formatCount } from '../cells/OptionCell'
 import { cellKey, rowIdOf } from '../model/types'
-import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
+import type { CellKey, GridRow, GridTable } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import type {
     DataEngine,
@@ -100,7 +100,6 @@ export const appendPage = async (
 ) => {
     const held = await list()
     const fresh = new Set<string>()
-    const columns: GridColumn[] = []
     const cells = new Set<CellKey>()
     const grown = tables.getState().tables.map((table) => {
         const next = grow(
@@ -109,7 +108,6 @@ export const appendPage = async (
             page.tables.find(({ id }) => id === table.id),
             (rowId) => !rows.has(rowId)
         )
-        columns.push(...next.columns)
         for (const row of next.rows) {
             fresh.add(row.id)
             rows.set(row.id, row)
@@ -134,7 +132,6 @@ export const appendPage = async (
 
     // The values go in before the rows that show them, so the rules first see a row with its values.
     const restored = held.filter(({ key }) => cells.has(key))
-    store.getState().addColumns(columns)
     store.getState().restore([
         ...Array.from(page.values)
             .filter(([key]) => fresh.has(rowIdOf(key)))

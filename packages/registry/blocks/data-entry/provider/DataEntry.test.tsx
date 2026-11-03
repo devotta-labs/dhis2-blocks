@@ -515,6 +515,7 @@ const withSymptoms = (form: LoadedForm): LoadedForm => {
     const [table] = form.tables
     return {
         ...form,
+        fields: new Map([...form.fields, [SYMPTOMS.id, SYMPTOMS.field]]),
         tables: [
             {
                 ...table,

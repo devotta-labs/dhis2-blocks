@@ -11,6 +11,14 @@ import type {
 } from '../model/types'
 import { EMPTY_CELL, createDataEntryStore } from './store'
 
+/** The fields of the tables' columns, by column id. */
+const fieldsOf = (tables: GridTable[]) =>
+    new Map(
+        tables.flatMap((each) =>
+            each.columns.map(({ id, field }) => [id, field])
+        )
+    )
+
 const GREGORIAN = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 
 const ACTIVE: EventStatus = 'ACTIVE'
@@ -51,7 +59,7 @@ const setup = (
 ) => {
     const enqueued: Array<[CellKey, string | null, string | null]> = []
     const store = createDataEntryStore({
-        tables: [table],
+        fields: fieldsOf([table]),
         values: new Map(initial),
         settings: GREGORIAN,
         enqueue: (key, value, base) => enqueued.push([key, value, base]),
@@ -560,25 +568,28 @@ test('an outcome for an older value that was not saved changes nothing', () => {
     expect(store.getState().cells).toBe(before)
 })
 
-test('a page with a stage the table has no columns for adds those columns', () => {
-    const { store, cell, commit } = setup()
-    const weight: GridColumn = {
-        id: 'c4',
-        label: 'Weight',
-        field: { valueType: 'NUMBER' },
-    }
-    expect(() => commit('r1.c4', '3.5')).toThrow('No column for the cell r1.c4')
-    store.getState().addColumns([weight])
-    expect(commit('r1.c4', '3.5')).toBe('queued')
-    expect(commit('r2.c4', 'heavy')).toBe('invalid')
-    // A value a page loads into the new column is checked as its field says.
+test('commits to a field the form holds but no table shows', () => {
+    const enqueue = vi.fn()
+    const store = createDataEntryStore({
+        fields: new Map([['f1', { valueType: 'INTEGER' }]]),
+        values: new Map(),
+        settings: GREGORIAN,
+        enqueue,
+    })
+    expect(store.getState().commit('r1.f1', '7')).toBe('queued')
+    expect(enqueue).toHaveBeenCalledWith('r1.f1', '7', null)
+    expect(() => store.getState().commit('r1.unknown', '7')).toThrow(
+        'No field for the cell r1.unknown'
+    )
+    // A field no table shows still checks what is typed and what is loaded.
+    expect(store.getState().commit('r2.f1', 'heavy')).toBe('invalid')
     store
         .getState()
         .restore([
-            { key: 'r3.c4', value: 'heavy', base: 'heavy', sync: 'idle' },
+            { key: 'r3.f1', value: 'heavy', base: 'heavy', sync: 'idle' },
         ])
-    expect(cell('r3.c4')).toMatchObject({
+    expect(store.getState().cells['r3.f1']).toMatchObject({
         value: 'heavy',
-        warning: 'Enter a number',
+        warning: 'Enter a whole number',
     })
 })

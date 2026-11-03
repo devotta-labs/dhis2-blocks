@@ -9,10 +9,13 @@ export { DataGrid } from './grid/DataGrid'
 export type { NavKey } from './grid/navigation'
 export type { CellEffects, CellMessage, MessageKind } from './logic/effects'
 export type { SummaryItem } from './logic/summary'
+export { keyOf } from './model/types'
 export type {
     CellKey,
     CellState,
     CommitResult,
+    DataRecord,
+    EventRecord,
     EventStatus,
     GridColumn,
     GridRow,

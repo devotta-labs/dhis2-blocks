@@ -13,6 +13,8 @@ import type {
     DataEngine,
     DataEntrySource,
     DataEntryView,
+    DataRecord,
+    EventRecord,
     EventSourceOptions,
     EventStatus,
     FormPage,
@@ -38,6 +40,7 @@ import {
     DataEntrySummary,
     DataGrid,
     eventSource,
+    keyOf,
     useCell,
     useDataEntry,
 } from '../index'
@@ -56,6 +59,8 @@ export type SupportedDataEntryTypes = [
     DataEngine,
     DataEntrySource,
     DataEntryView,
+    DataRecord,
+    EventRecord,
     EventSourceOptions,
     EventStatus,
     FormPage,
@@ -157,6 +162,15 @@ export const useDownload = () =>
     useDataEntry((view) => view.downloadUnsent) satisfies () => void
 export const useDiscard = () =>
     useDataEntry((view) => view.discardFailed) satisfies () => Promise<void>
+// A row's cell for a column, named as the grid names it: through the record the column's slot picks.
+export const cellOf = (row: GridRow, column: GridColumn): CellKey =>
+    keyOf(row, column)
+// What a row's cells save to, and the form the record has fields of.
+export const useRecord = (rowId: string): DataRecord | undefined =>
+    useDataEntry((view) => view.records.get(rowId))
+export const eventOf = (record: DataRecord): EventRecord => record
+// @ts-expect-error A row's slots name records by slot: a record id is a string, not a record.
+export const badSlots: GridRow = { id: 'r', label: 'R', slots: { person: 1 } }
 // The form's rows, to lay out controls of your own by, such as a "Complete" button per row.
 export const useRows = (): GridRow[] =>
     useDataEntry((view) => view.tables).flatMap(({ rows }) => rows)

@@ -63,6 +63,7 @@ useCell(cellKey): CellView // one cell's value, draft, error, sync state and eff
 useDataEntry(select): T // anything else, and the actions; select a value, not a new object
 eventSource(options): DataEntrySource // the events of a program, a stage or one person
 cells: Record<CellKind, CellComponent> // the default control per kind of field
+keyOf(row, column): CellKey // the key of the cell a row has for a column: its slot's record (else the row's own id) and its field
 ```
 
 ```ts
@@ -114,8 +115,17 @@ records, values, read-only and reopenable records, names, and `hasMore`.
 
 A source of your own implements `DataEntrySource`: `key` names its unsent changes on the device, `load` returns the
 `LoadedForm` (its tables, values, and what is required or read-only), `save` takes the changes and says what became of
-each one, `setStatus` completes and reopens rows, and `restoreRows` gives back the new rows found unsent after a
-reload, with their records. Without `rules` the form loads no rule engine.
+each one, `setStatus` completes and reopens rows, and `restoreRows` resolves to `{ rows, records }`: the new rows found
+unsent after a reload, with their records. Without `rules` the form loads no rule engine.
+
+`LoadedForm` also says what each row's cells save to: `records` by row id, `fields` (every field a record may hold,
+shown or not, by id), `fieldsByForm` (each form's field ids) and `readOnlyRecords` (why a record is read-only, by
+record id).
+
+A row's cells save to the record whose id is the row's, unless a column names a `slot` (`GridColumn.slot`): the row's
+`slots` (`GridRow.slots`) map that name to the id of another record in `LoadedForm.records`, so one row can show cells of
+several records. A column whose id is not its field's says the field in `fieldId`, and `keyOf(row, column)` gives the
+cell's key either way. `GridRow.stage` is the stage's name, shown after the event date in a grid of several stages.
 
 The host decides where the buttons go. `complete(rowId)` refuses at once, with one `failed` outcome per reason, a row
 the form does not have ("This row cannot be completed") or a read-only one (with why it is), when the device is offline

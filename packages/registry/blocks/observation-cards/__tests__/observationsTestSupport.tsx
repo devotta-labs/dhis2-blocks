@@ -81,6 +81,8 @@ interface FakeServerOptions {
     noEnrollment?: boolean
     /** Answers events requests with a 400, which is never retried. */
     eventsFail?: boolean
+    /** Every person's weight, as a different server might hold it. */
+    weight?: string
 }
 
 export const createFakeServer = (options: FakeServerOptions = {}) => {
@@ -125,7 +127,7 @@ export const createFakeServer = (options: FakeServerOptions = {}) => {
                     return {
                         [key]: eventsFor(
                             trackedEntity,
-                            weightFor(trackedEntity, program)
+                            options.weight ?? weightFor(trackedEntity, program)
                         ),
                     }
             }

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import React, { useCallback, useMemo, useRef, type ReactNode } from 'react'
 import {
+    cacheIdOf,
     resourceClientOf,
     shouldRetryObservationsRequest,
     type ObservationsClient,
@@ -40,10 +41,9 @@ const ObservationsScope = ({
     children,
 }: ObservationsProviderProps) => {
     const runtimeClient = useObservationsClient()
-    const resourceClient = useMemo(
-        () => resourceClientOf(client ?? runtimeClient),
-        [client, runtimeClient]
-    )
+    const chosen = client ?? runtimeClient
+    const resourceClient = useMemo(() => resourceClientOf(chosen), [chosen])
+    const clientId = cacheIdOf(chosen)
     const teId = trackedEntity.trim()
     const progId = program.trim()
     // Nothing to ask for yet: every query waits, so every card stays pending.
@@ -51,7 +51,7 @@ const ObservationsScope = ({
     const subject = { trackedEntityId: teId, programId: progId }
 
     const metadata = useQuery({
-        queryKey: observationQueryKeys.programMetadata(progId),
+        queryKey: observationQueryKeys.programMetadata(clientId, progId),
         queryFn: async ({ signal }) =>
             unwrap(await fetchProgramMetadata(resourceClient, progId, signal)),
         enabled,
@@ -59,14 +59,14 @@ const ObservationsScope = ({
     })
     // No visible enrollment means no access, never "nothing recorded".
     const enrollment = useQuery({
-        queryKey: observationQueryKeys.enrollments(teId, progId),
+        queryKey: observationQueryKeys.enrollments(clientId, teId, progId),
         queryFn: async ({ signal }) =>
             unwrap(await fetchEnrollment(resourceClient, subject, signal)),
         enabled,
         retry: shouldRetryObservationsRequest,
     })
     const events = useQuery({
-        queryKey: observationQueryKeys.events(teId, progId),
+        queryKey: observationQueryKeys.events(clientId, teId, progId),
         queryFn: async ({ signal }) =>
             unwrap(await fetchEvents(resourceClient, subject, signal)),
         enabled,

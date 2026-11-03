@@ -1,7 +1,7 @@
 import { useDataEngine } from '@dhis2/app-runtime'
 import { useMemo } from 'react'
 import {
-    createObservationsClient,
+    createRuntimeObservationsClient,
     type DataEngineLike,
     type ObservationsClient,
 } from './client'
@@ -10,7 +10,7 @@ export const useObservationsClient = (): ObservationsClient => {
     const engine = useDataEngine()
     return useMemo(
         () =>
-            createObservationsClient({
+            createRuntimeObservationsClient({
                 query: (query, options) =>
                     // SAFETY: the observations query is app-runtime's data-query shape, and the client validates every response with its schema.
                     engine.query(

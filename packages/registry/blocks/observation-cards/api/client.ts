@@ -160,16 +160,45 @@ export const createObservationsResourceClient = (
     },
 })
 
-/** An observations client for a custom data engine (the default is app-runtime's). */
-export const createObservationsClient = (
-    engine: DataEngineLike
+/** Each client's place in the query cache, so two engines never share results. */
+const cacheIds = new WeakMap<ObservationsClient, number>()
+let lastCacheId = 0
+
+const newClient = (
+    engine: DataEngineLike,
+    cacheId: number
 ): ObservationsClient => {
     const client: ObservationsClient = Object.freeze({
         [CLIENT]: true as const,
     })
     resourceClients.set(client, createObservationsResourceClient(engine))
+    cacheIds.set(client, cacheId)
     return client
 }
+
+/**
+ * An observations client for a custom data engine (the default is
+ * app-runtime's). Create it once, outside render: each client caches its own
+ * results.
+ */
+export const createObservationsClient = (
+    engine: DataEngineLike
+): ObservationsClient => {
+    lastCacheId += 1
+    return newClient(engine, lastCacheId)
+}
+
+/**
+ * Internal: app-runtime's client. An app has one data engine, so its results
+ * share cache id 0 however often the client is rebuilt.
+ */
+export const createRuntimeObservationsClient = (
+    engine: DataEngineLike
+): ObservationsClient => newClient(engine, 0)
+
+/** Internal: the client's part of every query key. */
+export const cacheIdOf = (client: ObservationsClient): number =>
+    cacheIds.get(client) ?? 0
 
 /** Internal: the request runner an observations client stands for. */
 export const resourceClientOf = (

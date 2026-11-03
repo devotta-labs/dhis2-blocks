@@ -131,7 +131,9 @@ smoking status go stale at different speeds.
 - `children?: ReactNode` — the cards and any of your own UI that uses
   `useObservation`. The provider renders only its children.
 - `client?: ObservationsClient` — a custom data engine, from
-  `createObservationsClient`. Defaults to the DHIS2 app runtime.
+  `createObservationsClient`. Defaults to the DHIS2 app runtime. Create it
+  once, outside render: each client keeps its own cache, so two engines never
+  share results.
 
 ### ObservationCard
 

@@ -256,6 +256,39 @@ describe('ObservationsProvider', () => {
         expect(server.countOf('tracker/events')).toBe(2)
     })
 
+    it('two clients for the same person keep their series apart', async () => {
+        const production = createFakeServer()
+        const staging = createFakeServer({ weight: '99' })
+        const Wrapper = createWrapper()
+
+        await render(
+            <Wrapper>
+                <ObservationsProvider
+                    trackedEntity="te1"
+                    program="prog1"
+                    client={production.client}
+                >
+                    <Probe id="production" dataElement={WEIGHT} />
+                </ObservationsProvider>
+                <ObservationsProvider
+                    trackedEntity="te1"
+                    program="prog1"
+                    client={staging.client}
+                >
+                    <Probe id="staging" dataElement={WEIGHT} />
+                </ObservationsProvider>
+            </Wrapper>
+        )
+
+        await expect
+            .element(page.getByTestId('production'))
+            .toHaveTextContent('ready 70')
+        await expect
+            .element(page.getByTestId('staging'))
+            .toHaveTextContent('ready 99')
+        expect(staging.countOf('tracker/events')).toBe(1)
+    })
+
     it('a data element outside the program is misconfigured, not empty', async () => {
         const server = createFakeServer()
         const Wrapper = createWrapper()

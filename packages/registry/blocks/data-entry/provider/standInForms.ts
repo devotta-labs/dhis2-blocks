@@ -67,7 +67,7 @@ export const lockedForm = (
         }),
         effects: createStore<EffectsState>()(() => ({
             cells: formEffects(
-                form.required,
+                form,
                 readOnlyRecords,
                 form.tables,
                 form.records

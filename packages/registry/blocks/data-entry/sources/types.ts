@@ -55,11 +55,6 @@ export interface LoadedForm {
         /** The stage's name, for a grid of several stages to show after each new row's event date. */
         stage?: string
     }
-    /**
-     * Each stage's closed columns: those its events have no field for, of every column the table has or a page may add;
-     * never the event date.
-     */
-    closedByStage: ReadonlyMap<string, ReadonlySet<string>>
     /** The names of the org units the values hold, by id: an org unit cell shows its name. */
     orgUnitNames: ReadonlyMap<string, string>
     /** The names of the files and images the values hold, by id: a file cell shows its name. */

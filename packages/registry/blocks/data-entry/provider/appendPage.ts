@@ -165,7 +165,7 @@ export const appendPage = async (
     ])
     effects.setState(({ cells: now }) => ({
         cells: formEffects(
-            form.required,
+            form,
             readOnlyRecords,
             grown.map((table) => ({
                 ...table,

@@ -5,7 +5,7 @@ import type {
     RuleEffects,
 } from '@/components/program-rules'
 import { cellKey, formOf } from '../model/types'
-import type { DataRecord, GridTable } from '../model/types'
+import type { DataRecord } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
 import type { DataEntryState } from '../store/store'
@@ -13,7 +13,7 @@ import type { CellEffects, CellMessage } from './effects'
 
 /** What a row's stage holds, for reading its rule effects. */
 interface RowFields {
-    /** The stage's data elements; effects on any other field are dropped. */
+    /** The stage's data elements, shown or not; effects on any other field are dropped. */
     stageFields: ReadonlySet<string>
     /** The stage's compulsory data elements. */
     required: ReadonlySet<string>
@@ -29,30 +29,27 @@ interface RowFields {
 
 const NONE: ReadonlySet<string> = new Set()
 
-/** What a stage's rows hold in the table: its columns but the event date and those closed to the stage. */
+/** What a stage's rows hold: every field of the stage's form, shown in a column or not. */
 export const stageFields = (
-    form: Pick<LoadedForm, 'closedByStage' | 'required' | 'sections'>,
-    table: GridTable,
+    form: Pick<LoadedForm, 'fields' | 'fieldsByForm' | 'required' | 'sections'>,
     stageId: string,
     optionGroups: RowFields['optionGroups']
 ): RowFields => {
-    const closed = form.closedByStage.get(stageId) ?? NONE
-    const columns = table.columns.filter(
-        ({ id }) => id !== EVENT_DATE_COLUMN && !closed.has(id)
-    )
+    const ids = form.fieldsByForm.get(stageId) ?? NONE
+    const fields = Array.from(ids, (id) => ({ id, field: form.fields.get(id) }))
     return {
-        stageFields: new Set(columns.map(({ id }) => id)),
+        stageFields: ids,
         required: form.required.get(stageId) ?? NONE,
         options: new Map(
-            columns.flatMap(({ id, field: { options } }) =>
-                options === undefined
+            fields.flatMap(({ id, field }) =>
+                field?.options === undefined
                     ? []
-                    : [[id, new Set(options.map(({ code }) => code))]]
+                    : [[id, new Set(field.options.map(({ code }) => code))]]
             )
         ),
         multiText: new Set(
-            columns
-                .filter(({ field }) => field.valueType === 'MULTI_TEXT')
+            fields
+                .filter(({ field }) => field?.valueType === 'MULTI_TEXT')
                 .map(({ id }) => id)
         ),
         optionGroups,

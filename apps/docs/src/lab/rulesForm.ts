@@ -484,7 +484,6 @@ export const rulesSource = (
                 programStageId: STAGE,
                 orgUnitId: ORG_UNIT,
             },
-            closedByStage: new Map(),
             orgUnitNames: new Map(),
             fileNames: new Map(),
             hasMore: false,

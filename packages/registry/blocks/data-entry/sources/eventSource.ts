@@ -134,7 +134,6 @@ const toForm = (
     const eventStages = new Set(events.map((event) => event.programStage))
     // Every stage's fields, not only the columns shown: a page may bring another stage's.
     const everyElement = dataElementsOf(stages)
-    const allFields = [...everyElement.keys()]
 
     // The stages the rows belong to; with no rows yet, the stages asked for.
     const used = stages.filter(
@@ -372,14 +371,6 @@ const toForm = (
                               : undefined,
                   }
                 : undefined,
-        closedByStage: new Map(
-            stages.map(({ id: stage }) => [
-                stage,
-                new Set(
-                    allFields.filter((id) => !fieldsOf.get(stage)?.has(id))
-                ),
-            ])
-        ),
     }
 }
 

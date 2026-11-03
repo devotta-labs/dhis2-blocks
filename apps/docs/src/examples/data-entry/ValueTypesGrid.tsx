@@ -169,7 +169,6 @@ const formOf = (values: ReadonlyMap<CellKey, string>): LoadedForm => ({
     canReopen: new Set(),
     readOnlyWhenCompleted: new Map(),
     mayUncomplete: false,
-    closedByStage: new Map(),
     // An org unit cell shows the name of the id it holds.
     orgUnitNames: new Map([['DiszpKrYNg8', 'Ngelehun CHC']]),
     fileNames: new Map(),

@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-query'
 import { useContext } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
+import type { Field } from '@/components/dhis2-value-types'
 import { cleanup, render } from 'vitest-browser-react'
 import type { StoreApi } from 'zustand/vanilla'
 import type { CellOverrides } from '../../cells/cellProps'
@@ -34,6 +35,8 @@ export const USER = 'userA'
 export const KEY = 'memory:visits'
 const STAGE = 's1'
 const ORG_UNIT = 'o1'
+/** A field of the stage no column shows. */
+export const HIDDEN_FIELD = 'hiddenField'
 
 const COLUMNS: GridColumn[] = [
     { id: 'c1', label: 'Children', field: { valueType: 'INTEGER' } },
@@ -75,7 +78,7 @@ interface FormOptions {
 
 export const BLOCKED = 'Completed events in this stage cannot be edited'
 
-/** One table of visits: Children (required), Referral (options A, B, C) and Notes, closed on new rows. */
+/** One table of visits: Children (required), Referral (options A, B, C) and Notes, which the stage has no field for. */
 export const visitForm = ({
     rows = [visit('r1', 'Visit 1'), visit('r2', 'Visit 2')],
     values = [],
@@ -109,14 +112,17 @@ export const visitForm = ({
             },
         ])
     ),
-    fields: new Map(COLUMNS.map(({ id, field }) => [id, field])),
-    fieldsByForm: new Map([[STAGE, new Set(COLUMNS.map(({ id }) => id))]]),
+    fields: new Map([
+        ...COLUMNS.map(({ id, field }): [string, Field] => [id, field]),
+        [HIDDEN_FIELD, { valueType: 'INTEGER' }],
+    ]),
+    // Notes is another stage's field; the hidden one is the stage's, with no column.
+    fieldsByForm: new Map([[STAGE, new Set(['c1', 'c2', HIDDEN_FIELD])]]),
     required: new Map([[STAGE, new Set(['c1'])]]),
     strategy: new Map([[STAGE, 'ON_COMPLETE']]),
     sections: new Map(),
     readOnlyRecords: new Map(readOnlyRecords),
     canReopen: new Set(canReopen),
-    closedByStage: new Map([[STAGE, new Set(['c3'])]]),
     readOnlyWhenCompleted: new Map(
         blockedWhenCompleted === undefined
             ? []

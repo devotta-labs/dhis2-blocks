@@ -314,9 +314,15 @@ test('new rows: one org unit for event programs, a named stage for one person', 
         programStageId: INPATIENT_STAGE,
         orgUnitId: NGELEHUN,
     })
-    expect(selected.closedByStage).toEqual(
-        new Map([[INPATIENT_STAGE, new Set()]])
-    )
+    expect(
+        selected.tables[0].columns
+            .map(({ id }) => id)
+            .filter(
+                (id) =>
+                    id !== EVENT_DATE_COLUMN &&
+                    !selected.fieldsByForm.get(INPATIENT_STAGE)?.has(id)
+            )
+    ).toEqual([])
     const descendants = await loadInpatient(
         inpatientProgram,
         inpatientEvents,
@@ -339,10 +345,10 @@ test('new rows: one org unit for event programs, a named stage for one person', 
         stage: 'Second antenatal care visit',
     })
     // First visit only; in both visits; the event date.
-    const closedColumns = repeatable.closedByStage.get(SECOND_VISIT)
-    expect(closedColumns?.has('de0FEHSIoxh')).toBe(true)
-    expect(closedColumns?.has('roKuXYfw1BW')).toBe(false)
-    expect(closedColumns?.has(EVENT_DATE_COLUMN)).toBe(false)
+    const secondVisitFields = repeatable.fieldsByForm.get(SECOND_VISIT)
+    expect(secondVisitFields?.has('de0FEHSIoxh')).toBe(false)
+    expect(secondVisitFields?.has('roKuXYfw1BW')).toBe(true)
+    expect(secondVisitFields?.has(EVENT_DATE_COLUMN)).toBe(false)
     expect((await personLoad({})).newRows).toBeUndefined()
     // A stage that is not repeatable takes one event per person.
     expect(

@@ -6,7 +6,13 @@ import { cellKey } from '../model/types'
 import type { GridColumn } from '../model/types'
 import type { LoadedForm } from '../sources/types'
 import { DataEntrySummary } from '../summary/DataEntrySummary'
-import { cleanUp, memorySource, mount, visitForm } from './__tests__/rig'
+import {
+    cleanUp,
+    HIDDEN_FIELD,
+    memorySource,
+    mount,
+    visitForm,
+} from './__tests__/rig'
 
 afterEach(cleanUp)
 
@@ -77,6 +83,27 @@ test('a row is named by its event date in the system’s format, and a new row o
         .toBeInTheDocument()
     // The form's tables, for a host to lay out its own controls by.
     expect(view().tables).toBe(context().tables)
+})
+
+test('a compulsory field with no column is asked for as soon as the form opens, with no rules', async () => {
+    const form = visitForm()
+    const [stage] = form.fieldsByForm.keys()
+    const { view } = await mount(
+        memorySource({
+            ...form,
+            required: new Map([[stage, new Set(['c1', HIDDEN_FIELD])]]),
+        }).source
+    )
+    const { items, canComplete } = view().summary
+    expect(canComplete).toBe(false)
+    expect(
+        items
+            .filter(({ key }) => key.endsWith(`.${HIDDEN_FIELD}`))
+            .map(({ key, kind }) => [key, kind])
+    ).toEqual([
+        [cellKey('r1', HIDDEN_FIELD), 'errorOnComplete'],
+        [cellKey('r2', HIDDEN_FIELD), 'errorOnComplete'],
+    ])
 })
 
 test('a form that cannot be loaded says why', async () => {

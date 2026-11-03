@@ -15,13 +15,7 @@ import {
 import type { CellEffects } from '../logic/effects'
 import { rowRuleOutcome, ruleRowsOf, stageFields } from '../logic/ruleEffects'
 import { cellKey, formOf, rowIdOf } from '../model/types'
-import type {
-    CellKey,
-    CellState,
-    DataRecord,
-    GridRow,
-    GridTable,
-} from '../model/types'
+import type { CellKey, CellState, DataRecord, GridRow } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
 import { afterPaint } from './afterPaint'
@@ -41,7 +35,6 @@ const NO_NOTES: ReadonlyArray<string> = []
 /** What one row's rules said, or why they failed; `raw` names the rules behind its values. */
 interface RowResult {
     row: GridRow
-    table: GridTable
     outcome: ReturnType<typeof rowRuleOutcome> | Error
     raw?: RuleEffects
 }
@@ -137,12 +130,11 @@ export const connectRules = ({
     const held = new Map<string, string>()
 
     const fieldsCache = new Map<string, ReturnType<typeof stageFields>>()
-    const fieldsOf = (table: GridTable, stageId: string) => {
-        const id = `${table.id}\n${stageId}`
+    const fieldsOf = (stageId: string) => {
         const fields =
-            fieldsCache.get(id) ??
-            stageFields(form, table, stageId, rules.optionGroupOptions)
-        fieldsCache.set(id, fields)
+            fieldsCache.get(stageId) ??
+            stageFields(form, stageId, rules.optionGroupOptions)
+        fieldsCache.set(stageId, fields)
         return fields
     }
 
@@ -159,7 +151,7 @@ export const connectRules = ({
                 : undefined
         const entries: Array<{ key: CellKey; text: string }> = []
         const notes: Array<string | undefined> = []
-        for (const { row, table, outcome, raw } of results) {
+        for (const { row, outcome, raw } of results) {
             if (
                 outcome instanceof Error ||
                 readOnlyRecords.has(row.id) ||
@@ -169,13 +161,9 @@ export const connectRules = ({
             }
             for (const [field, value] of outcome.assignments) {
                 const key = cellKey(row.id, field)
-                const column = table.columns.find(({ id }) => id === field)
                 const now = values[key]?.value
-                if (
-                    column === undefined ||
-                    table.closed.has(key) ||
-                    (now ?? '') === (value ?? '')
-                ) {
+                const definition = form.fields.get(field)
+                if (definition === undefined || (now ?? '') === (value ?? '')) {
                     continue
                 }
                 // A rule never overwrites what is being typed: it runs again once the person leaves the cell.
@@ -188,7 +176,7 @@ export const connectRules = ({
                     text:
                         value === null
                             ? ''
-                            : typedText(column.field, value, settings),
+                            : typedText(definition, value, settings),
                 })
                 const by =
                     raw?.assignedValues.get(field)?.by ??
@@ -227,14 +215,22 @@ export const connectRules = ({
         let cells = state.cells
         let rowMessages = state.rowMessages
         let rowNotes = state.rowNotes
-        for (const { row, table, outcome } of results) {
+        for (const { row, outcome } of results) {
             const readOnly = readOnlyRecords.get(row.id)
             const record = records.get(row.id)
             const required =
                 (record === undefined
                     ? undefined
                     : form.required.get(formOf(record))) ?? NONE
-            for (const { id } of table.columns) {
+            // The event date and every field of the record's form, shown in a column or not.
+            const ids =
+                record === undefined
+                    ? []
+                    : [
+                          EVENT_DATE_COLUMN,
+                          ...(form.fieldsByForm.get(formOf(record)) ?? NONE),
+                      ]
+            for (const id of ids) {
                 const key = cellKey(row.id, id)
                 const rule =
                     outcome instanceof Error ? undefined : outcome.cells.get(id)
@@ -312,14 +308,7 @@ export const connectRules = ({
             store.getState().cells
         )
         const places = new Map(
-            all.flatMap((table) =>
-                table.rows.map(
-                    (row): [string, { row: GridRow; table: GridTable }] => [
-                        row.id,
-                        { row, table },
-                    ]
-                )
-            )
+            all.flatMap(({ rows }) => rows.map((row) => [row.id, row] as const))
         )
         const results: RowResult[] = []
         let done = 0
@@ -330,22 +319,17 @@ export const connectRules = ({
             const rowId = rowIds[done]
             done += 1
             const evaluation = rules.evaluate(ruleRows, [rowId])
-            const place = places.get(rowId)
+            const row = places.get(rowId)
             const record = records.get(rowId)
             const raw = evaluation.effects.get(rowId)
             const outcome =
                 evaluation.failures.get(rowId) ??
-                (raw === undefined ||
-                place === undefined ||
-                record === undefined
+                (raw === undefined || row === undefined || record === undefined
                     ? undefined
-                    : rowRuleOutcome(
-                          raw,
-                          fieldsOf(place.table, record.programStageId)
-                      ))
+                    : rowRuleOutcome(raw, fieldsOf(formOf(record))))
             // A row in neither map was not evaluated: it keeps its last effects.
-            if (place !== undefined && outcome !== undefined) {
-                results.push({ ...place, outcome, raw })
+            if (row !== undefined && outcome !== undefined) {
+                results.push({ row, outcome, raw })
                 seen.add(rowId)
             }
         }

@@ -8,6 +8,7 @@ import type {
     GridRow,
     GridTable,
 } from '../model/types'
+import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
 import type { EffectsState } from './context'
 import type { OpenForm } from './openForm'
@@ -26,25 +27,32 @@ export const summaryOf = ({
     )
 
 /**
- * What the form says of the tables' cells, written into `cells`: the required fields of each row's record's form, or
- * why the whole record is read-only (then nothing in it is asked for).
+ * What the form says of the rows' cells, written into `cells`: for each row's record, its event date and every field of
+ * its form, shown in a column or not, the required ones, or why the whole record is read-only (then nothing in it is
+ * asked for).
  */
 export const formEffects = (
-    required: LoadedForm['required'],
+    { required, fieldsByForm }: Pick<LoadedForm, 'required' | 'fieldsByForm'>,
     readOnlyRecords: ReadonlyMap<string, string>,
     tables: ReadonlyArray<GridTable>,
     records: ReadonlyMap<string, DataRecord>,
     cells: EffectsState['cells'] = {}
 ) => {
-    for (const { rows, columns } of tables) {
+    for (const { rows } of tables) {
         for (const row of rows) {
             const readOnly = readOnlyRecords.get(row.id)
             const record = records.get(row.id)
+            if (record === undefined) {
+                continue
+            }
             const asked =
-                readOnly === undefined && record !== undefined
+                readOnly === undefined
                     ? required.get(formOf(record))
                     : undefined
-            for (const { id } of columns) {
+            for (const id of [
+                EVENT_DATE_COLUMN,
+                ...(fieldsByForm.get(formOf(record)) ?? []),
+            ]) {
                 if (readOnly !== undefined || asked?.has(id)) {
                     cells[cellKey(row.id, id)] = {
                         readOnly,
@@ -58,11 +66,22 @@ export const formEffects = (
     return cells
 }
 
-/** The columns a row has no field for, by its record's stage. */
-const closedOn = (form: LoadedForm, record: DataRecord | undefined) =>
-    (record === undefined
-        ? undefined
-        : form.closedByStage.get(record.programStageId)) ?? new Set<string>()
+/** The columns a row has no field for: those its record's form does not hold; never the event date. */
+const closedOn = (
+    form: LoadedForm,
+    columns: ReadonlyArray<GridColumn>,
+    record: DataRecord | undefined
+) => {
+    const fields =
+        record === undefined ? undefined : form.fieldsByForm.get(formOf(record))
+    return new Set(
+        record === undefined
+            ? []
+            : columns
+                  .map(({ id }) => id)
+                  .filter((id) => id !== EVENT_DATE_COLUMN && !fields?.has(id))
+    )
+}
 
 /** The table with new rows added at its end, each closed where its record's stage has no field. */
 export const withRows = (
@@ -79,7 +98,7 @@ export const withRows = (
             ...table.closed,
             ...rows.flatMap((row) =>
                 Array.from(
-                    closedOn(form, records.get(row.id)),
+                    closedOn(form, table.columns, records.get(row.id)),
                     (column): [CellKey, string] => [
                         cellKey(row.id, column),
                         notInStage,
@@ -117,7 +136,7 @@ export const withColumns = (
         closed: new Map([
             ...table.closed,
             ...table.rows.flatMap((row) => {
-                const closed = closedOn(form, records.get(row.id))
+                const closed = closedOn(form, columns, records.get(row.id))
                 return columns
                     .filter(({ id }) => closed.has(id))
                     .map(({ id }): [CellKey, string] => [

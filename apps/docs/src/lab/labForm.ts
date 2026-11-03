@@ -481,7 +481,6 @@ export const labSource = (
             sections: new Map(),
             readOnlyWhenCompleted: new Map(),
             mayUncomplete: true,
-            closedByStage: new Map(),
             newRows: config.addRows
                 ? {
                       tableId: tableIds[0],

@@ -1,7 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import type { StoreApi } from 'zustand/vanilla'
 import { blocksCompletion } from '../logic/summary'
-import { cellKey, formOf } from '../model/types'
+import { cellKey, formOf, rowIdOf } from '../model/types'
 import type { CellKey, CellState, SyncState } from '../model/types'
 import type { SaveOutcome, SyncStatus } from '../outbox/sync'
 import { SAVE_TIMEOUT } from '../sources/eventSave'
@@ -164,13 +164,13 @@ export const showStatus = (
     }
     const updated = new Map(records).set(rowId, { ...record, status })
     effects.setState(({ cells }) => {
-        const next = { ...cells }
-        for (const { id } of table.columns) {
-            delete next[cellKey(rowId, id)]
-        }
+        // Every cell of the row is made again, shown in a column or not.
+        const next = Object.fromEntries(
+            Object.entries(cells).filter(([key]) => rowIdOf(key) !== rowId)
+        )
         return {
             cells: formEffects(
-                form.required,
+                form,
                 readOnlyRecords,
                 [
                     {

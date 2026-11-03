@@ -154,7 +154,7 @@ const connect = (
     }
     const effects = createStore<EffectsState>()(() => ({
         cells: formEffects(
-            form.required,
+            form,
             readOnlyRecords,
             tables.getState().tables,
             records
@@ -481,7 +481,7 @@ const connect = (
             )
             effects.setState(({ cells }) => ({
                 cells: formEffects(
-                    form.required,
+                    form,
                     readOnlyRecords,
                     [{ ...table, rows: [row] }],
                     known,

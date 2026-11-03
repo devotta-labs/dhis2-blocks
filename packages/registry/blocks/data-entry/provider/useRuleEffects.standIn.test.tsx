@@ -8,7 +8,13 @@ import type { CellKey } from '../model/types'
 import { createDataEntryStore } from '../store/store'
 import type { DataEntryState } from '../store/store'
 import { rowHeaderDomId } from '../grid/headers'
-import { holdIdle, later, visit, visitForm } from './__tests__/rig'
+import {
+    HIDDEN_FIELD,
+    holdIdle,
+    later,
+    visit,
+    visitForm,
+} from './__tests__/rig'
 import { connectRules } from './connectRules'
 import type { EffectsState } from './context'
 import type { FormTables } from './openForm'
@@ -89,7 +95,7 @@ const connect = (
         }),
         effects: createStore<EffectsState>()(() => ({
             cells: formEffects(
-                form.required,
+                form,
                 form.readOnlyRecords,
                 form.tables,
                 form.records
@@ -214,6 +220,49 @@ test('assignments are saved only in rows a person changed, into open cells of th
         cellKey('r1', 'c1'),
         cellKey('r1', 'c3'),
     ])
+    stop()
+})
+
+test('a value a rule assigns to a field with no column is saved with the row', async () => {
+    const assigning = () => {
+        const effects = emptyEffects()
+        effects.assignedValues.set(HIDDEN_FIELD, { value: '5', by })
+        return effects
+    }
+    const { store, queued, stop } = connect(standIn(assigning))
+    const hidden = cellKey('r1', HIDDEN_FIELD)
+    expect(queued).toEqual([])
+    store.getState().commit(cellKey('r1', 'c2'), 'A')
+    await expect.poll(() => queued).toContain(hidden)
+    expect(store.getState().cells[hidden]).toMatchObject({
+        value: '5',
+        source: 'rule',
+    })
+    // Only the row a person changed.
+    expect(store.getState().cells[cellKey('r2', HIDDEN_FIELD)]).toBeUndefined()
+    stop()
+})
+
+test('no rule value is committed in a read-only record, shown or not', async () => {
+    const assigning = () => {
+        const effects = emptyEffects()
+        effects.assignedValues.set(HIDDEN_FIELD, { value: '5', by })
+        effects.assignedValues.set('c1', { value: '7', by })
+        return effects
+    }
+    const { store, queued, stop } = connect(standIn(assigning), {
+        readOnlyRecords: [['r2', 'Locked']],
+    })
+    store.getState().commit(cellKey('r2', 'c2'), 'A')
+    store.getState().commit(cellKey('r1', 'c2'), 'A')
+    // The open record's rules ran; the locked one's did not save anything.
+    await expect.poll(() => queued).toContain(cellKey('r1', HIDDEN_FIELD))
+    await later(50)
+    expect(queued.filter((key) => key.startsWith('r2.'))).toEqual([
+        cellKey('r2', 'c2'),
+    ])
+    expect(store.getState().cells[cellKey('r2', HIDDEN_FIELD)]).toBeUndefined()
+    expect(store.getState().cells[cellKey('r2', 'c1')]).toBeUndefined()
     stop()
 })
 

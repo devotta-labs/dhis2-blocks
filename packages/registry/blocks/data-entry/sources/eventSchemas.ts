@@ -91,6 +91,42 @@ export const eventFieldsSchema = z.object({
     assignedUser: z.object({ uid: z.string() }).optional(),
 })
 
+export type EventFields = z.infer<typeof eventFieldsSchema>
+
+const geometrySchema = z.object({ type: z.string(), coordinates: z.json() })
+
+/** An enrolment's own fields: an update replaces them with what it is sent, so a save reads them first. */
+export const ENROLLMENT_LEVEL_FIELDS =
+    'enrollment,program,trackedEntity,orgUnit,enrolledAt,occurredAt,status,followUp,geometry'
+
+export const enrollmentFieldsSchema = z.object({
+    enrollment: z.string(),
+    program: z.string(),
+    trackedEntity: z.string(),
+    orgUnit: z.string(),
+    enrolledAt: z.string(),
+    occurredAt: z.string().optional(),
+    status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']),
+    followUp: z.boolean().optional(),
+    geometry: geometrySchema.optional(),
+})
+
+export type EnrollmentFields = z.infer<typeof enrollmentFieldsSchema>
+
+/** A person's own fields: an update replaces them with what it is sent (an omitted `inactive` turns false). */
+export const PERSON_LEVEL_FIELDS =
+    'trackedEntity,trackedEntityType,orgUnit,inactive,geometry'
+
+export const personFieldsSchema = z.object({
+    trackedEntity: z.string(),
+    trackedEntityType: z.string(),
+    orgUnit: z.string(),
+    inactive: z.boolean().optional(),
+    geometry: geometrySchema.optional(),
+})
+
+export type PersonFields = z.infer<typeof personFieldsSchema>
+
 /** The program with its stages, one page of its events, the user's authorities and the server's calendar, as one query returns them. */
 export const eventFormSchema = z.object({
     program: z.object({

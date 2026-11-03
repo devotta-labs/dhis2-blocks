@@ -2,7 +2,7 @@ import { FetchError } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import { z } from 'zod'
 import { sessionLapsed } from '../outbox/sync'
-import { SAVE_TIMEOUT, withinLimit } from '../sources/eventSave'
+import { SAVE_TIMEOUT, withinLimit } from '../sources/trackerSave'
 import type { DataEngine } from '../sources/types'
 import { pauseReason } from './completion'
 

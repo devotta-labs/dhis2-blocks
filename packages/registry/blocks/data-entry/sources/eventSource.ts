@@ -14,10 +14,11 @@ import {
     orgUnitNamesSchema,
 } from './eventSchemas'
 import type { ProgramStage, TrackerEvent } from './eventSchemas'
-import { eventSaver } from './eventSave'
 import { fieldOf } from './fieldOf'
+import { restoreEventRows } from './eventRestore'
 import { completionExpired, expiryStart, localToday } from './expiry'
 import { hasRulesIn } from './hasRules'
+import { trackerSaver } from './trackerSave'
 import type {
     DataEngine,
     DataEntrySource,
@@ -482,7 +483,7 @@ export const eventSource = (options: EventSourceOptions): DataEntrySource => {
     const key = `events:${programId}`
     const pageSize = options.pageSize ?? 50
     const order = options.order ?? 'occurredAt:desc'
-    const saver = eventSaver(key, programId)
+    const saver = trackerSaver(key, programId)
     // The server's calendar as this source last loaded it: a page builds its expiry in it without asking again.
     let systemInfo: z.infer<typeof eventFormSchema>['systemInfo'] | undefined
     /** One page of the events, page 1 unless named, with the names of what its values hold. */
@@ -569,6 +570,10 @@ export const eventSource = (options: EventSourceOptions): DataEntrySource => {
         loadPage: loadEvents,
         save: saver.save,
         setStatus: saver.setStatus,
-        restoreRows: saver.restoreRows,
+        restoreRows: (engine, records, form) =>
+            restoreEventRows(engine, records, form, {
+                programId,
+                remembered: saver.remembered,
+            }),
     }
 }

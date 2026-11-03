@@ -63,3 +63,19 @@ since the demo database holds no file content. `/api/fileResources/{id}/data` re
 `file-names.json` is the request a load makes for the names of the files its values hold: with `paging=false` the
 answer has no pager. The seeded non-admin `wl_e2e_reader`, a role with no authorities, gets the same answer (HTTP 200).
 The image endpoint's `dimension` is one of `SMALL`, `MEDIUM`, `LARGE` and `ORIGINAL`, in any case.
+
+The tracker import reports were captured on 2026-11-03 from the same server (2.42.6), validate-only, as the tracker
+saver sends them: one flat `{ trackedEntities, enrollments, events }` payload of new people, each with an enrolment in
+RMNCH (`WSGAb5XwJ3Y`) at Ngelehun CHC and dated first and second antenatal care visits, posted to
+`$B/tracker?async=false&importStrategy=CREATE_AND_UPDATE&atomicMode=OBJECT&importMode=VALIDATE`:
+
+- `import-person-refused.json`: person `PsnRefused1` with the birth date `not-a-date`. DHIS2 refuses the person
+  (E1007) and its enrolment `EnrRefused1` (E5000); the events `EvtRefused1` and `EvtRefused2` are ignored with no
+  report of their own (2.43 reports E5000 on each).
+- `import-enrollment-refused.json`: person `PsnNoLastN1` without the program's mandatory Last name. DHIS2 refuses the
+  enrolment `EnrNoLastN1` (E1018, naming the attribute in `args[0]`) and its events (E5000); the person passes.
+- `import-unique-clash.json`: people `PsnClashA01` and `PsnClashB01` with one Unique ID value, `8350217748`. DHIS2
+  refuses both (E1064) and their enrolments (E5000); their events are ignored with no report.
+
+HTTP is 200 and `status` is `OK` for all three. The Unique ID values were never used on the server; validating writes
+nothing.

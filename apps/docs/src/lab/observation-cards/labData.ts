@@ -10,6 +10,12 @@ export const NOT_IN_PROGRAM = ['labMissing1', 'labMissing2', 'labMissing3']
 const VISIT_STAGE = 'labVisitStg'
 const REVIEW_STAGE = 'labReviewSt'
 
+// Legend colours as a DHIS2 admin might set them, each dark or light enough for black or white text to pass AA.
+const RED = '#c62828'
+const ORANGE = '#ef6c00'
+const YELLOW = '#fbc02d'
+const GREEN = '#2e7d32'
+
 interface Domain {
     min: number
     max: number
@@ -17,6 +23,8 @@ interface Domain {
     /** Band starts, ascending, then the last band's end; no legend set without them. */
     bands?: number[]
     names?: string[]
+    /** Each band's colour, by what it means rather than its position. */
+    colours?: string[]
 }
 
 interface ElementSpec {
@@ -48,6 +56,7 @@ const ELEMENTS = {
                 'Mild anaemia',
                 'Normal',
             ],
+            colours: [RED, ORANGE, YELLOW, GREEN],
         },
     },
     weight: {
@@ -68,6 +77,7 @@ const ELEMENTS = {
             decimals: 0,
             bands: [0, 90, 120, 140, 300],
             names: ['Low', 'Normal', 'Elevated', 'High'],
+            colours: [YELLOW, GREEN, ORANGE, RED],
         },
     },
     saturation: {
@@ -79,6 +89,7 @@ const ELEMENTS = {
             decimals: 0,
             bands: [0, 90, 95, 101],
             names: ['Low', 'Borderline', 'Normal'],
+            colours: [RED, YELLOW, GREEN],
         },
     },
     severity: {
@@ -153,13 +164,11 @@ export interface LabSettings {
     network: LabNetwork
 }
 
-const BAND_COLOURS = ['#d32f2f', '#f57c00', '#fbc02d', '#388e3c']
-
 const OPTIONS = [
-    ['1', 'None', '#388e3c'],
-    ['2', 'Mild', '#fbc02d'],
-    ['3', 'Moderate', '#f57c00'],
-    ['4', 'Severe', '#d32f2f'],
+    ['1', 'None', GREEN],
+    ['2', 'Mild', YELLOW],
+    ['3', 'Moderate', ORANGE],
+    ['4', 'Severe', RED],
 ] as const
 
 const NOTES = [
@@ -321,9 +330,7 @@ const dataElementJson = (card: LabCard, index: number) => {
                       {
                           legends: names.map((name, band) => ({
                               name,
-                              color: BAND_COLOURS[
-                                  BAND_COLOURS.length - names.length + band
-                              ],
+                              color: spec.domain?.colours?.[band],
                               startValue: bands[band],
                               endValue: bands[band + 1],
                           })),

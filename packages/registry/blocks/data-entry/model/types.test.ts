@@ -1,5 +1,11 @@
-import { formOf, indexCells, keyOf, recordsOf } from './types'
-import type { EventRecord, GridColumn, GridRow, GridTable } from './types'
+import { formOf, indexCells, keyOf, recordsOf, rowsByRecord } from './types'
+import type {
+    CellKey,
+    EventRecord,
+    GridColumn,
+    GridRow,
+    GridTable,
+} from './types'
 
 test('an event’s form is its stage', () => {
     const record: EventRecord = {
@@ -54,4 +60,44 @@ test('two cells saving to one key are an error', () => {
 
 test('records of a row: its own id, then its slots’', () => {
     expect(recordsOf(AMINA)).toEqual(['p1', 'e2'])
+})
+
+const NAME: GridColumn = { id: 'name', label: 'Name', field: INTEGER }
+const register = (
+    columns: GridColumn[],
+    closed: Array<[CellKey, string]> = []
+): GridTable => ({
+    id: 't1',
+    title: 'Register',
+    rows: [AMINA],
+    columns,
+    headerRows: [],
+    closed: new Map(closed),
+})
+
+test('the cell index leaves closed cells out', () => {
+    const index = indexCells([
+        register([NAME, VISIT_2_DATE], [['e2.occurredAt', 'Not used']]),
+    ])
+    expect([...index]).toEqual([['p1.name', { table: 0, row: 0, column: 0 }]])
+})
+
+test('a closed cell saving to another cell’s key is an error too', () => {
+    const again: GridColumn = { ...NAME, id: 'again', fieldId: 'name' }
+    expect(() =>
+        indexCells([register([NAME, again], [['p1.name', 'Not used']])])
+    ).toThrowError(new Error('Two cells of the table t1 save to p1.name'))
+})
+
+test('each record’s row: its own and its slots’', () => {
+    const baraka: GridRow = { id: 'p2', label: 'Baraka' }
+    const rows = rowsByRecord([
+        register([NAME]),
+        { ...register([NAME]), id: 't2', rows: [baraka] },
+    ])
+    expect([...rows]).toEqual([
+        ['p1', AMINA],
+        ['e2', AMINA],
+        ['p2', baraka],
+    ])
 })

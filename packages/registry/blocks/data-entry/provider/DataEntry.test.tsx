@@ -46,6 +46,7 @@ test('a typed value is saved on this device, then saved', async () => {
                 state: 'queued',
             },
         ])
+    expect((await records(server, KEY))[0].record?.isNew).toBeFalsy()
 
     memory.release()
     await expect

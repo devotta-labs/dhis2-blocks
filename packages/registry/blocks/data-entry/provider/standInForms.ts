@@ -49,10 +49,9 @@ export const lockedForm = (
     sourceKey: string
 ): OpenForm => {
     const reason = signedInAsOther()
+    // Every record the form holds, a slot's too: its cells are read-only as well.
     const readOnlyRecords = new Map(
-        form.tables.flatMap(({ rows }) =>
-            rows.map(({ id }): [string, string] => [id, reason])
-        )
+        [...form.records.keys()].map((id): [string, string] => [id, reason])
     )
     const refuse = async (rowId: string) => [
         refusalOf(sourceKey, cellKey(rowId, 'status'), reason),

@@ -71,7 +71,7 @@ interface DataEntryView {
     status: 'loading' | 'ready' | 'error'
     error?: string // why the form could not be loaded, while status is 'error'
     tables: ReadonlyArray<GridTable> // the form's tables as the grid shows them, new rows included
-    records: ReadonlyMap<string, DataRecord> // what each row's cells save to, by row id: its stage, org unit and status
+    records: ReadonlyMap<string, DataRecord> // what the rows' cells save to, by record id (a row's own id names its record)
     summary: {
         items: SummaryItem[]
         unsent: number
@@ -118,8 +118,9 @@ A source of your own implements `DataEntrySource`: `key` names its unsent change
 each one, `setStatus` completes and reopens rows, and `restoreRows` resolves to `{ rows, records }`: the new rows found
 unsent after a reload, with their records. Without `rules` the form loads no rule engine.
 
-`LoadedForm` also says what each row's cells save to: `records` by row id, `fields` (every field a record may hold,
-shown or not, by id), `fieldsByForm` (each form's field ids) and `readOnlyRecords` (why a record is read-only, by
+`LoadedForm` also says what the rows' cells save to: `records` by record id (a row's own id names its record),
+`fields` (every field a record may hold, shown or not, by id, and every column any page may add; a cell whose column
+has no field there throws), `fieldsByForm` (each form's field ids) and `readOnlyRecords` (why a record is read-only, by
 record id).
 
 A row's cells save to the record whose id is the row's, unless a column names a `slot` (`GridColumn.slot`): the row's

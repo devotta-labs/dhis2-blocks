@@ -45,7 +45,7 @@ export interface DataEntryContext {
     /** What `announce` last said, for the grid's live region to show. */
     announcements: StoreApi<Announcement>
     tables: ReadonlyArray<GridTable>
-    /** What each row's cells save to, by row id, with its status as last saved. */
+    /** What the rows' cells save to, by record id (a row's own id names its record), with its status as last saved. */
     records: ReadonlyMap<string, DataRecord>
     /** Ids of the tables that take new rows: each has an "Add event" button. */
     newRowTables: ReadonlySet<string>

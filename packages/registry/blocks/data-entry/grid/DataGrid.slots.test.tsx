@@ -8,6 +8,7 @@ import {
     KEY,
     memorySource,
     mount,
+    notesOf,
     records,
 } from '../provider/__tests__/rig'
 import type { LoadedForm } from '../sources/types'
@@ -158,4 +159,18 @@ test('a message on a slot’s record names the row and shows in its header', asy
     await expect
         .element(page.getByRole('rowheader'))
         .toHaveTextContent('Check the date')
+})
+
+test('once someone else signs in, every slot’s cells are read-only with the reason', async () => {
+    let user = 'userA'
+    const { client } = await mount(memorySource(register()).source, {
+        signedIn: () => user,
+    })
+    user = 'userB'
+    await client.refetchQueries()
+    const locked = 'Signed in as someone else. Reload to continue as that user.'
+    await expect.poll(() => notesOf(FIRST)).toContain(locked)
+    expect(notesOf(SECOND)).toContain(locked)
+    expect(control(FIRST).hasAttribute('readonly')).toBe(true)
+    expect(control(SECOND).hasAttribute('readonly')).toBe(true)
 })

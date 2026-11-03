@@ -66,6 +66,28 @@ export const formEffects = (
     return cells
 }
 
+/** Whether the record's form has the field, shown in a column or not: its event date, or one of its form's fields. */
+const holds = (
+    { fieldsByForm }: Pick<LoadedForm, 'fieldsByForm'>,
+    record: DataRecord,
+    field: string
+) =>
+    field === EVENT_DATE_COLUMN ||
+    (fieldsByForm.get(formOf(record))?.has(field) ?? false)
+
+/** Whether the key is a field of one of `records`, shown in a column or not: rules may assign one no column shows. */
+export const isRecordField = (
+    form: Pick<LoadedForm, 'fieldsByForm'>,
+    records: ReadonlyMap<string, DataRecord>,
+    key: string
+) => {
+    const record = records.get(rowIdOf(key))
+    return (
+        record !== undefined &&
+        holds(form, record, key.slice(record.id.length + 1))
+    )
+}
+
 /** The row's cells in `columns` that have no field: their record's form does not hold it; never the event date. */
 const closedOn = (
     form: LoadedForm,
@@ -77,10 +99,8 @@ const closedOn = (
     columns.flatMap((column): Array<[CellKey, string]> => {
         const key = keyOf(row, column)
         const record = records.get(rowIdOf(key))
-        const field = column.fieldId ?? column.id
         return record === undefined ||
-            field === EVENT_DATE_COLUMN ||
-            form.fieldsByForm.get(formOf(record))?.has(field)
+            holds(form, record, column.fieldId ?? column.id)
             ? []
             : [[key, reason]]
     })

@@ -4,7 +4,7 @@ import { cellKey } from '../model/types'
 import type { CellKey } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import { createDataEntryStore } from '../store/store'
-import { change, visit, visitForm } from './__tests__/rig'
+import { change, HIDDEN_FIELD, visit, visitForm } from './__tests__/rig'
 import { appendPage } from './appendPage'
 import type { EffectsState } from './context'
 import type { FormTables } from './openForm'
@@ -127,4 +127,14 @@ test('the outbox is read once when the page restores nothing waiting to be sent'
         return []
     })
     expect(reads).toBe(1)
+})
+
+test('a page puts back the unsent value a rule gave its rows’ field no column shows', async () => {
+    const open = opened()
+    const hidden = cellKey('r3', HIDDEN_FIELD)
+    await appendPage(open, PAGE, async () => [queued(hidden, '5', 1)])
+    expect(open.store.getState().cells[hidden]).toMatchObject({
+        value: '5',
+        sync: 'queued',
+    })
 })

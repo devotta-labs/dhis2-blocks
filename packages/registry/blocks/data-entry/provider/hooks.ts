@@ -12,7 +12,10 @@ export interface DataEntryView {
     error?: string
     /** The form's tables as the grid shows them, new rows included: lay out controls of your own by their rows. */
     tables: ReadonlyArray<GridTable>
-    /** What each row's cells save to, by row id: its stage, org unit and status as last saved, new rows included. */
+    /**
+     * What the rows' cells save to, by record id (a row's own id names its record): its stage, org unit and status as
+     * last saved, new rows included.
+     */
     records: ReadonlyMap<string, DataRecord>
     summary: ReturnType<typeof summarise>
     sync: SyncStatus

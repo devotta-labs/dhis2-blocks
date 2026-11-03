@@ -13,7 +13,7 @@ import type {
 } from '../sources/types'
 import type { DataEntryState } from '../store/store'
 import type { EffectsState } from './context'
-import { formEffects, withColumns, withRows } from './formRows'
+import { formEffects, isRecordField, withColumns, withRows } from './formRows'
 import { reasonOf } from './hooks'
 import type { DataEntryView } from './hooks'
 import type { FormTables, OpenForm } from './openForm'
@@ -103,8 +103,9 @@ export interface Growing {
 
 /**
  * Appends a page to the open form: to each of its tables, the rows it does not show yet and the columns it lacks, at
- * its end, with the records it does not hold yet; then the unsent changes `list` reads for the cells that now exist.
- * It writes nothing. Resolves to what the outbox holds once the page is in.
+ * its end, with the records it does not hold yet; then the unsent changes `list` reads for the cells that now exist
+ * and for the new records' fields no column shows. It writes nothing. Resolves to what the outbox holds once the page
+ * is in.
  */
 export const appendPage = async (
     { form, store, effects, tables, readOnlyRecords, reopenable }: Growing,
@@ -151,7 +152,12 @@ export const appendPage = async (
     })
 
     // The values go in before the rows that show them, so the rules first see a row with its values.
-    const restored = held.filter(({ key }) => cells.has(key))
+    // A new record's fields no column shows are the form's too: rules may have assigned them.
+    const restored = held.filter(
+        ({ key }) =>
+            cells.has(key) ||
+            (fresh.has(rowIdOf(key)) && isRecordField(form, records, key))
+    )
     store.getState().restore([
         ...Array.from(page.values)
             .filter(([key]) => fresh.has(rowIdOf(key)))

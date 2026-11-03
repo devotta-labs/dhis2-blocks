@@ -74,6 +74,7 @@ test('a replacement control saves through useCell as the built-in controls do', 
                 state: 'queued',
             },
         ])
+    expect((await records(server, KEY))[0].record?.isNew).toBeFalsy()
 
     memory.release()
     await expect

@@ -21,11 +21,12 @@ export interface RulesTarget {
 export interface LoadedForm {
     tables: GridTable[]
     values: ReadonlyMap<CellKey, string>
-    /** What each row's cells save to, by row id. */
+    /** What the rows' cells save to, by record id: a row's own id names its record, a slot names another. */
     records: ReadonlyMap<string, DataRecord>
     /**
      * Every field any record of the source may hold, shown or not, by id: the event date is one, as a `DATE` under
-     * `EVENT_DATE_COLUMN`.
+     * `EVENT_DATE_COLUMN`. It covers every column any page may add too: pages carry no fields, and a cell whose column
+     * has none here throws "No field for the cell".
      */
     fields: ReadonlyMap<string, Field>
     /** Each form's field ids (an event's stage's data elements), by form id; never the event date. */

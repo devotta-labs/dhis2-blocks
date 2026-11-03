@@ -92,7 +92,19 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
     </nav>
 )
 
-export const DocsShell = () => {
+const primaryLink = ({ isActive }: { isActive: boolean }) =>
+    [
+        'text-sm transition-colors',
+        isActive
+            ? 'font-medium text-foreground'
+            : 'text-muted-foreground hover:text-foreground',
+    ].join(' ')
+
+/**
+ * The header, theme and mobile navigation every page shares. Docs pages add
+ * their sidebar through `DocsLayout`; the playground fills the rest itself.
+ */
+export const SiteShell = () => {
     const [mobileOpen, setMobileOpen] = useState(false)
     const { dark, toggle } = useDarkMode()
     const location = useLocation()
@@ -151,31 +163,17 @@ export const DocsShell = () => {
                         aria-label="Primary"
                         className="ml-5 hidden items-center gap-5 md:flex"
                     >
-                        <NavLink
-                            to="/installation"
-                            className={({ isActive }) =>
-                                [
-                                    'text-sm transition-colors',
-                                    isActive
-                                        ? 'font-medium text-foreground'
-                                        : 'text-muted-foreground hover:text-foreground',
-                                ].join(' ')
-                            }
-                        >
+                        <NavLink to="/installation" className={primaryLink}>
                             Docs
                         </NavLink>
                         <NavLink
                             to="/blocks/working-list"
-                            className={({ isActive }) =>
-                                [
-                                    'text-sm transition-colors',
-                                    isActive
-                                        ? 'font-medium text-foreground'
-                                        : 'text-muted-foreground hover:text-foreground',
-                                ].join(' ')
-                            }
+                            className={primaryLink}
                         >
                             Blocks
+                        </NavLink>
+                        <NavLink to="/playground" className={primaryLink}>
+                            Playground
                         </NavLink>
                     </nav>
 
@@ -200,29 +198,36 @@ export const DocsShell = () => {
                 </div>
             </header>
 
-            <div className="mx-auto flex max-w-[1536px] pt-14">
-                <aside className="fixed top-14 bottom-0 hidden w-60 shrink-0 overflow-y-auto border-r border-border py-8 pr-4 md:block">
-                    <SidebarContent />
-                </aside>
+            {mobileOpen && (
+                <div className="fixed inset-0 top-14 z-40 md:hidden">
+                    <button
+                        type="button"
+                        aria-label="Close navigation"
+                        className="absolute inset-0 bg-black/40"
+                        onClick={closeMobile}
+                    />
+                    <aside className="absolute inset-y-0 left-0 w-64 overflow-y-auto border-r border-border bg-background p-4">
+                        <SidebarContent onNavigate={closeMobile} />
+                    </aside>
+                </div>
+            )}
 
-                {mobileOpen && (
-                    <div className="fixed inset-0 top-14 z-40 md:hidden">
-                        <button
-                            type="button"
-                            aria-label="Close navigation"
-                            className="absolute inset-0 bg-black/40"
-                            onClick={closeMobile}
-                        />
-                        <aside className="absolute inset-y-0 left-0 w-64 overflow-y-auto border-r border-border bg-background p-4">
-                            <SidebarContent onNavigate={closeMobile} />
-                        </aside>
-                    </div>
-                )}
-
-                <main className="min-w-0 flex-1 px-4 py-8 md:pl-72 md:pr-8 lg:pr-12">
-                    <Outlet />
-                </main>
+            <div className="pt-14">
+                <Outlet />
             </div>
         </div>
     )
 }
+
+/** A docs page: the documentation sidebar beside the page. */
+export const DocsLayout = () => (
+    <div className="mx-auto flex max-w-[1536px]">
+        <aside className="fixed top-14 bottom-0 hidden w-60 shrink-0 overflow-y-auto border-r border-border py-8 pr-4 md:block">
+            <SidebarContent />
+        </aside>
+
+        <main className="min-w-0 flex-1 px-4 py-8 md:pl-72 md:pr-8 lg:pr-12">
+            <Outlet />
+        </main>
+    </div>
+)

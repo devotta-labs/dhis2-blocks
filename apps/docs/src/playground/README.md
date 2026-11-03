@@ -1,0 +1,65 @@
+# Playground
+
+The playground is a page of the docs, `/playground/<block>`, where a block
+runs against a fake DHIS2. You choose what the server answers, how slowly, and
+whether it fails or never answers, and watch every request the block makes.
+The picker at the top of the Settings sidebar switches blocks, and the header's
+Playground link opens the first one. It runs with the docs:
+
+```sh
+pnpm dev:docs   # then open /playground
+```
+
+Each block's page is a **lab**: its own controls, presets and fake server on
+the shared parts below. A lab is loaded only when its page opens.
+
+## Add a block
+
+1. Copy `observation-cards/` to `src/playground/<block>/` (the smaller of the
+   two labs) and rename `ObservationsLab`.
+2. Add the block to `PLAYGROUND_BLOCKS` in `blocks.ts`, with the slug of its
+   docs page (`/blocks/<slug>`), and its lab to `LABS` in `PlaygroundPage.tsx`.
+   The picker and the docs navigation read `PLAYGROUND_BLOCKS`.
+3. Replace the canvas with the block's parts, `RESOURCES` with every resource
+   the block asks for, and `answer` with the server.
+4. Give it presets: named settings for the cases worth showing, grouped.
+   `usePresetParam` keeps the chosen one in the URL (`?preset=`), so a link
+   opens the same case.
+
+Vitest already runs `src/playground/**/*.test.ts`, so a new lab needs no other
+config.
+
+## Shared parts
+
+| Part                         | What it does                                                                                                                                                                                        |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LabLayout`                  | The page: a Settings sidebar of the block picker over the lab's controls, the block on its canvas, an optional panel below, folded until opened. On a phone the controls fold away above the block. |
+| `LabServerScope`             | app-runtime and TanStack Query with every listed resource answered by `respond`, through the lab network. `systemInfo` sets `useConfig().systemInfo`; change its `key` for a fresh cache.           |
+| `CanvasBoundary`             | Catches a crash in the block and shows it, so the lab's controls keep working. Give it the same `key` as the scope.                                                                                 |
+| `NetworkControls`            | A default delay, then each resource's delay and whether it answers, fails with a 500 or hangs.                                                                                                      |
+| `LogPanel`                   | The bottom panel: the block's callbacks when it has any, then each request and their `RequestWaterfall`. Feed it the log that `LabServerScope` writes.                                              |
+| `usePresetParam`             | The lab's preset in the URL: read once over the saved settings, written on every change.                                                                                                            |
+| `throughNetwork` (`network`) | What `LabServerScope` uses: waits, fails or hangs as the endpoint says, then answers and logs. Use it directly only for requests outside app-runtime.                                               |
+| `controls`                   | The sidebar's rows: `Section`, `Disclosure`, `Check`, `NumberRow`, `SelectRow`, `Segmented`, and `PresetControls` for a lab's named presets.                                                        |
+| `lab.css`                    | The lab's own look (`--lab-*` tokens), dark with the docs' theme. `LabLayout` loads it; it never styles the block under test.                                                                       |
+
+## Writing the server
+
+- Answer with JSON shaped like DHIS2's response for that resource and API
+  version. Blocks parse responses at their boundary, so a wrong shape shows up
+  as the block's own error, which is worth seeing too.
+- Keep the server a plain function of the lab's settings and the request, in
+  its own file, so it can have a Vitest test (`<block>/labServer.test.ts`).
+- Generate data from settings (counts, spread, bad values, dates around
+  today) rather than writing fixtures, and keep named presets of those
+  settings for the cases worth showing; each lab's `labData.ts` and
+  `presets.ts` do this.
+- Read the requests in the waterfall: a lab is the cheapest place to see a
+  waterfall, a duplicate request or a missing abort.
+
+## Live DHIS2
+
+A lab can also run the block against a real instance through
+`LivePreviewHost`, the same sign-in proxy the live examples use, on the dev
+server and on the published docs. Each lab switches between lab data and live
+DHIS2 in its sidebar, with default ids that exist on the docs' instance.

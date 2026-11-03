@@ -159,10 +159,8 @@ export const Segmented = <T extends string>({
     </div>
 )
 
-/** A lab's named presets, grouped; each button's title says what to look for. */
-export const PresetControls = <
-    P extends { group: string; name: string; note: string },
->({
+/** A lab's named presets, grouped. */
+export const PresetControls = <P extends { group: string; name: string }>({
     presets,
     selected,
     onPick,
@@ -184,7 +182,6 @@ export const PresetControls = <
                             <button
                                 key={each.name}
                                 type="button"
-                                title={each.note}
                                 aria-pressed={selected === each.name}
                                 className="tracking-normal normal-case"
                                 onClick={() => onPick(each)}

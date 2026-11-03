@@ -22,9 +22,11 @@ import {
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
 import { LabLayout } from '../LabLayout'
+import { LogPanel } from '../LogPanel'
 import { CanvasBoundary, LabServerScope } from '../LabServer'
 import { NetworkControls } from '../NetworkControls'
 import type { LabNetwork, RequestLogEntry } from '../network'
+import { usePresetParam } from '../usePresetParam'
 import { PresetControls, Section, Segmented } from '../controls'
 import {
     LAB_ORG_UNIT,
@@ -46,7 +48,7 @@ import {
     hasTrackedEntityView,
     type LabRequest,
 } from './labServer'
-import { CalendarReadout, LogPanel, PlainCount } from './panels'
+import { CalendarReadout, PlainCount } from './panels'
 import { DEFAULT_CONFIG, PRESETS } from './presets'
 import { DataControls, ServerControls, ViewControls } from './settings'
 
@@ -77,7 +79,7 @@ const DEFAULT_SAVED: Saved = {
     width: 'desktop',
 }
 
-const load = (): Saved => {
+const stored = (): Saved => {
     try {
         const stored = localStorage.getItem(STORAGE_KEY)
         if (!stored) return DEFAULT_SAVED
@@ -98,6 +100,15 @@ const load = (): Saved => {
     } catch {
         return DEFAULT_SAVED
     }
+}
+
+/** The saved settings, or the linked preset's over them. */
+const load = (preset?: string): Saved => {
+    const saved = stored()
+    const linked = PRESETS.find((each) => each.name === preset)
+    return linked
+        ? { ...saved, mode: 'lab', preset: linked.name, config: linked.config }
+        : saved
 }
 
 const save = (saved: Saved) => {
@@ -243,7 +254,8 @@ const defaultViewFor = (config: LabConfig) => {
 
 /** The working list calendar lab: every prop, part and kind of data, beside the requests it makes. */
 export const CalendarLab = () => {
-    const [saved, setSaved] = useState(load)
+    const [linkedPreset, setLinkedPreset] = usePresetParam()
+    const [saved, setSaved] = useState(() => load(linkedPreset))
     const { mode, config, live, width } = saved
     const [run, setRun] = useState(0)
     const [requests, setRequests] = useState<RequestLogEntry[]>([])
@@ -253,6 +265,7 @@ export const CalendarLab = () => {
         const merged = { ...saved, ...next }
         setSaved(merged)
         save(merged)
+        setLinkedPreset(merged.mode === 'lab' ? merged.preset : undefined)
     }
     const restart = () => {
         setRequests([])
@@ -289,24 +302,11 @@ export const CalendarLab = () => {
         (request: LabRequest) => answer(config, world, request),
         [config, world]
     )
-    const activePreset = PRESETS.find((each) => each.name === saved.preset)
     const widthClass =
         WIDTHS.find(([option]) => option === width)?.[2] ?? 'max-w-none'
 
     return (
         <LabLayout
-            title="Working list calendar lab"
-            status={
-                mode === 'lab' ? (
-                    <span className="truncate">
-                        {activePreset?.name.toUpperCase() ?? 'CUSTOM'}
-                    </span>
-                ) : (
-                    <span className="truncate">
-                        LIVE · {live.programId} / {live.orgUnitId}
-                    </span>
-                )
-            }
             panel={{
                 title: 'Logs',
                 children: (

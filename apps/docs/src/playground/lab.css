@@ -22,8 +22,8 @@
         --lab-bar-hover: var(--lab-ink-2);
     }
 
-    /* The same instrument after dark: lit ink on unlit panes. */
-    .lab[data-theme='dark'] {
+    /* The same instrument after dark, with the docs: lit ink on unlit panes. */
+    .dark .lab {
         color-scheme: dark;
         --lab-desk: #0e100f;
         --lab-paper: #1a1c1b;

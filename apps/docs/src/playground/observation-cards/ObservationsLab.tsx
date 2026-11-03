@@ -11,10 +11,11 @@ import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
 import { PresetControls, Section, Segmented } from '../controls'
 import { LabLayout } from '../LabLayout'
+import { LogPanel } from '../LogPanel'
 import { CanvasBoundary, LabServerScope } from '../LabServer'
 import { NetworkControls } from '../NetworkControls'
 import type { LabNetwork, RequestLogEntry } from '../network'
-import { RequestWaterfall } from '../RequestWaterfall'
+import { usePresetParam } from '../usePresetParam'
 import {
     CARD_ELEMENTS,
     cardLabel,
@@ -85,7 +86,7 @@ const savedCards = (cards: ReadonlyArray<Partial<LabCard>> = []): LabCard[] =>
             : cardDefaults(index)
     })
 
-const load = (): Saved => {
+const stored = (): Saved => {
     try {
         const stored = localStorage.getItem(STORAGE_KEY)
         if (!stored) return DEFAULT_SAVED
@@ -103,6 +104,20 @@ const load = (): Saved => {
     } catch {
         return DEFAULT_SAVED
     }
+}
+
+/** The saved settings, or the linked preset's over them. */
+const load = (preset?: string): Saved => {
+    const saved = stored()
+    const linked = PRESETS.find((each) => each.name === preset)
+    return linked
+        ? {
+              ...saved,
+              mode: 'lab',
+              preset: linked.name,
+              settings: linked.settings,
+          }
+        : saved
 }
 
 const save = (saved: Saved) => {
@@ -166,21 +181,10 @@ const Cards = ({
     </div>
 )
 
-/** Settled requests per resource; StrictMode's remount aborts each first request, counted apart. */
-const requestCounts = (requests: RequestLogEntry[]) => {
-    const settled = requests.filter(({ outcome }) => outcome !== 'aborted')
-    const counts = RESOURCES.map(
-        (resource) =>
-            `${resource} ${settled.filter(({ request }) => request.resource === resource).length}`
-    )
-    return [...counts, `${requests.length - settled.length} aborted`].join(
-        ' · '
-    )
-}
-
 /** The observation cards lab: every card state, one click each, beside the requests it makes. */
 export const ObservationsLab = () => {
-    const [saved, setSaved] = useState(load)
+    const [linkedPreset, setLinkedPreset] = usePresetParam()
+    const [saved, setSaved] = useState(() => load(linkedPreset))
     const { mode, settings, live } = saved
     const [run, setRun] = useState(0)
     const [requests, setRequests] = useState<RequestLogEntry[]>([])
@@ -189,6 +193,7 @@ export const ObservationsLab = () => {
         const merged = { ...saved, ...next }
         setSaved(merged)
         save(merged)
+        setLinkedPreset(merged.mode === 'lab' ? merged.preset : undefined)
     }
     const restart = () => {
         setRequests([])
@@ -209,19 +214,16 @@ export const ObservationsLab = () => {
 
     return (
         <LabLayout
-            title="Observation cards lab"
-            status={
-                <span className="truncate">
-                    {mode === 'lab'
-                        ? `${(saved.preset ?? 'Custom').toUpperCase()} · ${requestCounts(requests)}`
-                        : `LIVE · ${live.programId} / ${live.personId} / ${live.dataElementId}`}
-                </span>
-            }
             panel={
                 mode === 'lab'
                     ? {
-                          title: 'Requests',
-                          children: <RequestWaterfall requests={requests} />,
+                          title: 'Logs',
+                          children: (
+                              <LogPanel
+                                  requests={requests}
+                                  onClearRequests={() => setRequests([])}
+                              />
+                          ),
                       }
                     : undefined
             }

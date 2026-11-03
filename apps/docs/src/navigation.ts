@@ -1,3 +1,5 @@
+import { PLAYGROUND_BLOCKS } from './playground/blocks'
+
 interface NavigationLink {
     title: string
     href: string
@@ -28,5 +30,12 @@ export const docsNavigation: readonly NavigationGroup[] = [
             { title: 'Sidebar', href: '/blocks/sidebar' },
             { title: 'Observation Cards', href: '/blocks/observation-cards' },
         ],
+    },
+    {
+        title: 'Playground',
+        items: PLAYGROUND_BLOCKS.map(({ slug, title }) => ({
+            title,
+            href: `/playground/${slug}`,
+        })),
     },
 ]

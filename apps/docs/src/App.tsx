@@ -1,7 +1,8 @@
 import { createElement, lazy, Suspense, type ComponentType } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { DocPage } from './components/DocPage'
-import { DocsShell } from './components/DocsShell'
+import { DocsLayout, SiteShell } from './components/DocsShell'
+import { PlaygroundPage } from './playground/PlaygroundPage'
 import { PreviewRoot } from './preview/PreviewRoot'
 
 type DocsPageModule = {
@@ -51,29 +52,38 @@ const docRoute = (path: string, modulePath: string) => ({
 
 const router = createBrowserRouter([
     {
-        element: <DocsShell />,
+        element: <SiteShell />,
         children: [
-            docRoute('/', './pages/index.mdx'),
-            docRoute('/installation', './pages/installation.mdx'),
-            // The former name of the installation page.
             {
-                path: '/getting-started',
-                element: <Navigate to="/installation" replace />,
+                element: <DocsLayout />,
+                children: [
+                    docRoute('/', './pages/index.mdx'),
+                    docRoute('/installation', './pages/installation.mdx'),
+                    // The former name of the installation page.
+                    {
+                        path: '/getting-started',
+                        element: <Navigate to="/installation" replace />,
+                    },
+                    docRoute(
+                        '/blocks/working-list',
+                        './pages/blocks/working-list.mdx'
+                    ),
+                    docRoute(
+                        '/blocks/working-list-calendar',
+                        './pages/blocks/working-list-calendar.mdx'
+                    ),
+                    docRoute('/blocks/sidebar', './pages/blocks/sidebar.mdx'),
+                    docRoute(
+                        '/blocks/context-selector',
+                        './pages/blocks/context-selector.mdx'
+                    ),
+                    docRoute(
+                        '/blocks/observation-cards',
+                        './pages/blocks/observation-cards.mdx'
+                    ),
+                ],
             },
-            docRoute('/blocks/working-list', './pages/blocks/working-list.mdx'),
-            docRoute(
-                '/blocks/working-list-calendar',
-                './pages/blocks/working-list-calendar.mdx'
-            ),
-            docRoute('/blocks/sidebar', './pages/blocks/sidebar.mdx'),
-            docRoute(
-                '/blocks/context-selector',
-                './pages/blocks/context-selector.mdx'
-            ),
-            docRoute(
-                '/blocks/observation-cards',
-                './pages/blocks/observation-cards.mdx'
-            ),
+            { path: '/playground/:slug?', element: <PlaygroundPage /> },
         ],
     },
     {

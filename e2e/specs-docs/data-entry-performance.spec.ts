@@ -1,4 +1,5 @@
 import type { Browser, Page, TestInfo } from '@playwright/test'
+import { z } from 'zod'
 import { gridReady, TRACKER_IMPORT } from './data-entry.support'
 import { expect, test } from './fixtures'
 
@@ -6,15 +7,17 @@ import { expect, test } from './fixtures'
  * Budgets for the register example (50 first visits by 50 columns) on the
  * production preview, with the CPU slowed 4×. The edit is made offline, so it
  * stays on the device; the keypresses are made online, their imports answered
- * by the test. The shared docs DHIS2 is never changed.
+ * by the test. The cohort register's budget is for 25 women by 41 columns, its page of women answered by the test.
+ * The shared docs DHIS2 is never changed.
  */
 const REGISTER = 'data-entry/tracker-register'
+const COHORT = 'data-entry/cohort-anc-register'
 const DIASTOLIC = 'dyYdfamSY2Z'
 
-const openSlowed = async (page: Page) => {
+const openSlowed = async (page: Page, example = REGISTER) => {
     const cdp = await page.context().newCDPSession(page)
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })
-    await page.goto(`/preview/${REGISTER}`)
+    await page.goto(`/preview/${example}`)
     await gridReady(page)
 }
 
@@ -48,10 +51,13 @@ const onThreeLoads = async (
     page: Page,
     browser: Browser,
     testInfo: TestInfo,
-    name: string
+    name: string,
+    example = REGISTER,
+    prepare: (on: Page) => Promise<void> = async () => {}
 ) => {
     const measureOn = async (on: Page) => {
-        await openSlowed(on)
+        await prepare(on)
+        await openSlowed(on, example)
         const [ms] = await durations(on, name)
         return ms ?? Infinity
     }
@@ -84,6 +90,90 @@ const medianWithinBudget = (
         budget
     )
 
+const WOMEN = 25
+
+// What the copies rewrite: each record's own id. The rules' batch carries no person id.
+const CopiedSchema = z.looseObject({
+    enrollment: z.string(),
+    trackedEntity: z.string().optional(),
+    events: z.array(z.looseObject({ event: z.string() })).optional(),
+})
+const AnswerSchema = z.looseObject({ enrollments: z.array(CopiedSchema) })
+
+/** Copy `copy` of an id: 11 characters no object on the server has, the same in every answer. */
+const copyId = (id: string, copy: number) =>
+    `${id.slice(0, 8)}x${String(copy).padStart(2, '0')}`
+
+/** Copy `copy` of an enrolment (0 is the enrolment itself), with its person and events under their copies' ids. */
+const copyOf = (enrollment: z.infer<typeof CopiedSchema>, copy: number) => {
+    const ids = [
+        enrollment.enrollment,
+        enrollment.trackedEntity,
+        ...(enrollment.events ?? []).map(({ event }) => event),
+    ].flatMap((id) => (id === undefined || copy === 0 ? [] : [id]))
+    return CopiedSchema.parse(
+        JSON.parse(
+            ids.reduce(
+                (text, id) =>
+                    text.replaceAll(`"${id}"`, `"${copyId(id, copy)}"`),
+                JSON.stringify(enrollment)
+            )
+        )
+    )
+}
+
+/**
+ * Answers the cohort register's page of women with 25: the demo's real ones at Ngelehun CHC in January 2027, then
+ * copies of them under fresh ids; the rules' batch read of those women gets the same copies.
+ */
+const twentyFiveWomen = async (page: Page) => {
+    // The copy's enrolment id: the real one it copies, and which copy it is.
+    const copies = new Map<string, { real: string; copy: number }>()
+    await page.route('**/tracker/enrollments?*', async (route) => {
+        const url = new URL(route.request().url())
+        const asked = url.searchParams.get('enrollments')?.split(',')
+        if (asked === undefined) {
+            const response = await route.fetch()
+            const body = AnswerSchema.parse(await response.json())
+            const real = body.enrollments
+            expect(real.length, 'women in January 2027').toBeGreaterThan(0)
+            const enrollments = Array.from({ length: WOMEN }, (_, at) => {
+                const copy = Math.floor(at / real.length)
+                const of = real[at % real.length]!
+                copies.set(copyId(of.enrollment, copy), {
+                    real: of.enrollment,
+                    copy,
+                })
+                return copyOf(of, copy)
+            })
+            await route.fulfill({ response, json: { ...body, enrollments } })
+            return
+        }
+        const wanted = asked.map(
+            (id) => copies.get(id) ?? { real: id, copy: 0 }
+        )
+        url.searchParams.set(
+            'enrollments',
+            [...new Set(wanted.map(({ real }) => real))].join(',')
+        )
+        const response = await route.fetch({ url: url.toString() })
+        const body = AnswerSchema.parse(await response.json())
+        const byId = new Map(
+            body.enrollments.map((one) => [one.enrollment, one])
+        )
+        await route.fulfill({
+            response,
+            json: {
+                ...body,
+                enrollments: wanted.flatMap(({ real, copy }) => {
+                    const one = byId.get(real)
+                    return one === undefined ? [] : [copyOf(one, copy)]
+                }),
+            },
+        })
+    })
+}
+
 /** The diastolic blood pressure column, top row first. */
 const diastolic = (page: Page) => page.locator(`tbody [id$=".${DIASTOLIC}"]`)
 
@@ -101,6 +191,28 @@ test('register shows its 2,500 cells within 1 s', async ({
     )
     await expect(page.locator('tbody td')).toHaveCount(2500)
     medianWithinBudget(testInfo, 'data-entry:ready', loads, 1000)
+})
+
+test('cohort register shows 25 women by 41 columns within 1 s', async ({
+    page,
+    browser,
+}, testInfo) => {
+    const loads = await onThreeLoads(
+        page,
+        browser,
+        testInfo,
+        'data-entry:ready',
+        COHORT,
+        twentyFiveWomen
+    )
+    await expect(page.locator('tbody tr')).toHaveCount(WOMEN)
+    await expect(page.locator('tbody td')).toHaveCount(WOMEN * 41)
+    medianWithinBudget(
+        testInfo,
+        'data-entry:ready (cohort register)',
+        loads,
+        1000
+    )
 })
 
 test('rules for the first rows within 300 ms, an edit within 100 ms', async ({

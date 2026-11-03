@@ -116,12 +116,13 @@ const isKnownBenignDiagnostic = (
         DATA_ENTRY_SPEC.test(specFile) &&
         diagnostic.kind === 'console' &&
         /rule-engine[^/]*\.m?js$/.test(path ?? '') &&
-        /^Rule .+ raised an error: Failed to coerce value 'null'/.test(
+        /^Rule .+ raised an error: (?:Failed to coerce value 'null'|Unknown variable: 'event_date')/.test(
             diagnostic.message
         )
     ) {
         // The DHIS2 rule engine logs, and skips, a rule that reads a value the
-        // person lacks, such as an attribute of a person DHIS2 left out.
+        // person lacks, such as an attribute of a person DHIS2 left out, or the
+        // event date in a rule a register runs for the enrolment.
         return true
     }
 

@@ -97,6 +97,20 @@ export const visitForm = ({
         },
     ],
     values: new Map(values),
+    records: new Map(
+        rows.map(({ id, status = 'ACTIVE' }) => [
+            id,
+            {
+                kind: 'event',
+                id,
+                programStageId: STAGE,
+                orgUnitId: ORG_UNIT,
+                status,
+            },
+        ])
+    ),
+    fields: new Map(COLUMNS.map(({ id, field }) => [id, field])),
+    fieldsByForm: new Map([[STAGE, new Set(COLUMNS.map(({ id }) => id))]]),
     required: new Map([[STAGE, new Set(['c1'])]]),
     strategy: new Map([[STAGE, 'ON_COMPLETE']]),
     sections: new Map(),

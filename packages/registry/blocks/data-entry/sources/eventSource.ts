@@ -4,7 +4,7 @@ import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { checkStored } from '@/components/dhis2-value-types'
 import type { Field } from '@/components/dhis2-value-types'
 import { cellKey } from '../model/types'
-import type { CellKey, GridColumn, GridRow } from '../model/types'
+import type { CellKey, DataRecord, GridColumn, GridRow } from '../model/types'
 import {
     EVENT_DATE_COLUMN,
     EVENT_FIELDS,
@@ -70,6 +70,22 @@ const dateOf = (dateTime: string | undefined) => dateTime?.slice(0, 10)
 const eventDate = ({ occurredAt, scheduledAt }: TrackerEvent) =>
     dateOf(occurredAt ?? scheduledAt)
 
+/** The day an event is due while it has no event date. */
+const dueDay = ({ occurredAt, scheduledAt }: TrackerEvent) =>
+    occurredAt === undefined ? dateOf(scheduledAt) : undefined
+
+const dataElementsOf = (list: ProgramStage[]) =>
+    new Map(
+        list.flatMap(({ programStageDataElements }) =>
+            programStageDataElements.map(
+                ({ dataElement }): [string, DataElement] => [
+                    dataElement.id,
+                    dataElement,
+                ]
+            )
+        )
+    )
+
 const toColumn = ({
     id,
     displayFormName,
@@ -117,9 +133,8 @@ const toForm = (
     )
     const eventStages = new Set(events.map((event) => event.programStage))
     // Every stage's fields, not only the columns shown: a page may bring another stage's.
-    const allFields = [
-        ...new Set([...fieldsOf.values()].flatMap((ids) => [...ids])),
-    ]
+    const everyElement = dataElementsOf(stages)
+    const allFields = [...everyElement.keys()]
 
     // The stages the rows belong to; with no rows yet, the stages asked for.
     const used = stages.filter(
@@ -133,16 +148,7 @@ const toForm = (
                       programStageId === undefined || id === programStageId
               )
 
-    const dataElements = new Map(
-        shown.flatMap(({ programStageDataElements }) =>
-            programStageDataElements.map(
-                ({ dataElement }): [string, DataElement] => [
-                    dataElement.id,
-                    dataElement,
-                ]
-            )
-        )
-    )
+    const dataElements = dataElementsOf(shown)
     const columns: GridColumn[] = [
         {
             id: EVENT_DATE_COLUMN,
@@ -163,10 +169,7 @@ const toForm = (
             id: event.event,
             label,
             stage: shown.length > 1 ? stageName : undefined,
-            scheduledAt:
-                event.occurredAt === undefined
-                    ? dateOf(event.scheduledAt)
-                    : undefined,
+            scheduledAt: dueDay(event),
             programStageId: event.programStage,
             enrollmentId: tracker ? event.enrollment : undefined,
             orgUnitId: event.orgUnit,
@@ -306,6 +309,28 @@ const toForm = (
             },
         ],
         values,
+        records: new Map<string, DataRecord>(
+            events.map((event) => [
+                event.event,
+                {
+                    kind: 'event',
+                    id: event.event,
+                    programStageId: event.programStage,
+                    orgUnitId: event.orgUnit,
+                    enrollmentId: tracker ? event.enrollment : undefined,
+                    status: event.status,
+                    scheduledAt: dueDay(event),
+                },
+            ])
+        ),
+        fields: new Map([
+            [EVENT_DATE_COLUMN, { valueType: 'DATE' }],
+            ...Array.from(everyElement, ([id, element]): [string, Field] => [
+                id,
+                toColumn(element).field,
+            ]),
+        ]),
+        fieldsByForm: fieldsOf,
         required: new Map(
             stages.map((stage) => [
                 stage.id,

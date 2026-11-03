@@ -146,6 +146,21 @@ const formOf = (values: ReadonlyMap<CellKey, string>): LoadedForm => ({
         },
     ],
     values,
+    // One event record per row, in the one stage, which holds every column.
+    records: new Map(
+        Object.keys(SAMPLES).map((id) => [
+            id,
+            {
+                kind: 'event' as const,
+                id,
+                programStageId: 'values',
+                orgUnitId: 'DiszpKrYNg8',
+                status: 'ACTIVE' as const,
+            },
+        ])
+    ),
+    fields: new Map(COLUMNS.map(({ id, field }) => [id, field])),
+    fieldsByForm: new Map([['values', new Set(COLUMNS.map(({ id }) => id))]]),
     // Nothing required, no sections, no stages to block entry, no rules.
     required: new Map(),
     strategy: new Map(),

@@ -16,6 +16,26 @@ export type EventStatus =
     | 'VISITED'
     | 'OVERDUE'
 
+/** A DHIS2 event that cells save to. */
+export interface EventRecord {
+    kind: 'event'
+    id: string
+    programStageId: string
+    orgUnitId: string
+    /** Set only in tracker programs. */
+    enrollmentId?: string
+    status: EventStatus
+    /** The day (`YYYY-MM-DD`) a scheduled event is due. */
+    scheduledAt?: string
+    isNew?: boolean
+}
+
+/** What a group of cells saves to. Registers add enrolments and people. */
+export type DataRecord = EventRecord
+
+/** The form whose fields a record has: an event's stage. */
+export const formOf = (record: DataRecord): string => record.programStageId
+
 export interface GridRow {
     id: string
     /** Names the row until it has an event date; then the date does, in the system calendar and format. */

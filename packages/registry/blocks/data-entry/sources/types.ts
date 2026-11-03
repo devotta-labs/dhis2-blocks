@@ -1,5 +1,6 @@
 import type { useDataEngine } from '@dhis2/app-runtime'
-import type { CellKey, GridRow, GridTable } from '../model/types'
+import type { Field } from '@/components/dhis2-value-types'
+import type { CellKey, DataRecord, GridRow, GridTable } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import type { SaveOutcome } from '../outbox/sync'
 
@@ -20,6 +21,15 @@ export interface RulesTarget {
 export interface LoadedForm {
     tables: GridTable[]
     values: ReadonlyMap<CellKey, string>
+    /** What each row's cells save to, by row id. */
+    records: ReadonlyMap<string, DataRecord>
+    /**
+     * Every field any record of the source may hold, shown or not, by id: the event date is one, as a `DATE` under
+     * `EVENT_DATE_COLUMN`.
+     */
+    fields: ReadonlyMap<string, Field>
+    /** Each form's field ids (an event's stage's data elements), by form id; never the event date. */
+    fieldsByForm: ReadonlyMap<string, ReadonlySet<string>>
     /**
      * Compulsory data elements per stage, and each stage's validation strategy: every stage of the program, so a save
      * checks the changes made in its other grids too.
@@ -66,6 +76,7 @@ export type FormPage = Pick<
     LoadedForm,
     | 'tables'
     | 'values'
+    | 'records'
     | 'readOnlyRows'
     | 'canReopen'
     | 'orgUnitNames'

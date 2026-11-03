@@ -402,6 +402,23 @@ export const labSource = (
         return {
             tables,
             values: new Map(stored),
+            records: new Map(
+                tables.flatMap(({ rows }) =>
+                    rows.map(
+                        (row) =>
+                            [
+                                row.id,
+                                {
+                                    kind: 'event' as const,
+                                    id: row.id,
+                                    programStageId: STAGE,
+                                    orgUnitId: ORG_UNIT,
+                                    status: row.status ?? 'ACTIVE',
+                                },
+                            ] as const
+                    )
+                )
+            ),
             readOnlyRows: new Map(
                 config.readOnlyRow && firstRows[1] !== undefined
                     ? [[firstRows[1].id, 'This row is read-only in the lab']]
@@ -446,6 +463,10 @@ export const labSource = (
         key,
         load: async (): Promise<LoadedForm> => ({
             ...pageOf(0),
+            fields: new Map(columns.map(({ id, field }) => [id, field])),
+            fieldsByForm: new Map([
+                [STAGE, new Set(columns.map(({ id }) => id))],
+            ]),
             required: new Map(
                 config.required
                     ? [

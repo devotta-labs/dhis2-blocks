@@ -442,6 +442,22 @@ export const rulesSource = (
                 },
             ],
             values: new Map(stored),
+            records: new Map(
+                rows.map((row) => [
+                    row.id,
+                    {
+                        kind: 'event' as const,
+                        id: row.id,
+                        programStageId: row.programStageId,
+                        orgUnitId: row.orgUnitId,
+                        status: row.status,
+                    },
+                ])
+            ),
+            fields: new Map(columns.map(({ id, field }) => [id, field])),
+            fieldsByForm: new Map([
+                [STAGE, new Set(columns.map(({ id }) => id))],
+            ]),
             required: new Map(),
             strategy: new Map([[STAGE, 'ON_UPDATE_AND_INSERT']]),
             sections: new Map([

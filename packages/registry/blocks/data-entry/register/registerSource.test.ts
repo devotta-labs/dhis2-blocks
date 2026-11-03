@@ -22,6 +22,9 @@ import {
     enrolledAs,
     immunisationRegister,
 } from './__tests__/registerRig'
+import type { OutboxRecord } from '../outbox/outbox'
+import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
+import type { NewRow } from '../sources/types'
 import type { RegisterLayout } from './layout'
 
 describe('loading', () => {
@@ -341,16 +344,21 @@ describe('new rows', () => {
         expect([...(second?.values.values() ?? [])]).toEqual(['8350217747'])
     })
 
-    test('a new person’s save brings the events Capture schedules, in their slots', async () => {
+    /** A new row of `source`, typed in full and saved by `saving` (the same tab, or another); what was imported. */
+    const savedRow = async (
+        source = ancRegister(),
+        saving = source,
+        extra: (made: NewRow) => OutboxRecord[] = () => []
+    ) => {
         const fake = ancEngine()
-        const source = ancRegister()
-        const form = await source.load(fake.engine)
+        await source.load(fake.engine)
+        const form = await saving.load(fake.engine)
         const made = source.newRow?.(RMNCH)
         if (made === undefined) {
             throw new Error('No new row')
         }
         const [person, enrollment] = made.records
-        await source.save(
+        await saving.save(
             fake.engine,
             [
                 edit(person, UNIQUE_ID, '8350217746'),
@@ -358,22 +366,99 @@ describe('new rows', () => {
                 edit(person, LAST_NAME, 'Koroma'),
                 edit(person, BIRTH_DATE, '1999-02-01'),
                 edit(enrollment, ENROLLED_AT, '2026-10-20'),
+                ...extra(made),
             ],
             form
         )
         const [imported] = fake.mutations
-        expect(imported.type === 'create' && imported.data).toMatchObject({
-            events: [
-                {
-                    event: made.row.slots?.[FIRST_VISIT],
-                    programStage: FIRST_VISIT,
-                    enrollment: enrollment.id,
-                    orgUnit: NGELEHUN,
-                    status: 'SCHEDULE',
-                    scheduledAt: '2026-10-20',
-                    occurredAt: '2026-10-20',
+        return {
+            made,
+            events: imported.type === 'create' ? imported.data.events : [],
+        }
+    }
+
+    test('a new person’s save brings the events Capture schedules, in their slots, waiting for the slot’s date', async () => {
+        const { made, events } = await savedRow()
+        // Its slot has a date column: it is scheduled, undated, until the clerk types the date the paper has.
+        expect(events).toEqual([
+            {
+                event: made.row.slots?.[FIRST_VISIT],
+                program: RMNCH,
+                programStage: FIRST_VISIT,
+                enrollment: made.row.id,
+                orgUnit: NGELEHUN,
+                status: 'SCHEDULE',
+                scheduledAt: '2026-10-20',
+            },
+        ])
+    })
+
+    test('a scheduled event in a slot with no date column is dated as Capture dates it', async () => {
+        const layout = {
+            ...ANC_LAYOUT,
+            columns: ANC_LAYOUT.columns.filter(
+                (column) =>
+                    !(
+                        'field' in column &&
+                        'stage' in column.field &&
+                        column.field.stage === FIRST_VISIT &&
+                        'eventDate' in column.field
+                    )
+            ),
+        }
+        const { events } = await savedRow(
+            immunisationRegister({ programId: RMNCH, layout })
+        )
+        expect(events).toEqual([
+            expect.objectContaining({
+                programStage: FIRST_VISIT,
+                status: 'SCHEDULE',
+                scheduledAt: '2026-10-20',
+                occurredAt: '2026-10-20',
+            }),
+        ])
+    })
+
+    test('a person made in another tab gets their scheduled event in the slot typed there, once', async () => {
+        const { made, events } = await savedRow(
+            ancRegister(),
+            ancRegister(),
+            (row) => [edit(row.records[2], EVENT_DATE_COLUMN, '2026-10-21')]
+        )
+        expect(events).toEqual([
+            expect.objectContaining({
+                event: made.row.slots?.[FIRST_VISIT],
+                programStage: FIRST_VISIT,
+                status: 'ACTIVE',
+                occurredAt: '2026-10-21',
+                scheduledAt: '2026-10-20',
+            }),
+        ])
+    })
+
+    test('a new row’s events in a stage the user may not enter data in are read-only, as an event grid’s are', async () => {
+        const source = ancRegister()
+        await source.load(
+            engineFor({
+                program: {
+                    ...rmnch,
+                    programStages: rmnch.programStages.map((stage) =>
+                        stage.id === SECOND_VISIT
+                            ? { ...stage, access: { data: { write: false } } }
+                            : stage
+                    ),
                 },
-            ],
-        })
+                enrollments: { enrollments: [] },
+            }).engine
+        )
+        const made = source.newRow?.(RMNCH)
+        expect(made?.readOnlyRecords).toEqual(
+            new Map([
+                [
+                    made?.row.slots?.[`${SECOND_VISIT}#1`],
+                    'You do not have access to enter data in this stage',
+                ],
+            ])
+        )
     })
 })

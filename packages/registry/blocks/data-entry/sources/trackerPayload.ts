@@ -30,11 +30,14 @@ export interface HeldRecords {
     people: ReadonlyMap<string, PersonFields>
 }
 
-/** The scheduled events a new enrolment brings, as event payloads, with the ids of its row's slot events. */
+/**
+ * The scheduled events a new enrolment brings, as event payloads, with the ids of its row's slot events: `slotEvents`
+ * are the import's own events of the enrolment, by slot.
+ */
 export type ScheduledEvents = (
     enrollment: EnrollmentRecord,
     enrolledAt: string,
-    form: LoadedForm
+    slotEvents: ReadonlyMap<string, string>
 ) => unknown[]
 
 /** A flat tracker import: people, enrolments and events, each naming the one it belongs to. */
@@ -418,8 +421,20 @@ export const buildImport = (
             kind: 'enrollment',
             parent: enrollment.trackedEntityId,
         })
+        // The enrolment's slot events in this import, by slot: whichever tab or load made them, they are its row's.
+        const slotEvents = new Map(
+            ids.flatMap((event) => {
+                const record = recordOf(event)
+                return record?.kind === 'event' &&
+                    record.enrollmentId === id &&
+                    record.slot !== undefined
+                    ? [[record.slot, event] as const]
+                    : []
+            })
+        )
         scheduled.push(
-            ...(extra.scheduledEvents?.(enrollment, enrolledAt, form) ?? [])
+            ...(extra.scheduledEvents?.(enrollment, enrolledAt, slotEvents) ??
+                [])
         )
     }
 

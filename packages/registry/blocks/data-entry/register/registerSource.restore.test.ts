@@ -1,11 +1,6 @@
 import { expect, test } from 'vitest'
 import { cellKey, recordIdOf, recordsOf } from '../model/types'
-import type {
-    EnrollmentRecord,
-    EventRecord,
-    GridRow,
-    PersonRecord,
-} from '../model/types'
+import type { EventRecord, GridRow, PersonRecord } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import {
@@ -19,60 +14,20 @@ import {
     LAST_NAME,
     NGELEHUN,
     OPV_1,
-    PERSON_TYPE,
     PROGRAM,
     VACCINATION,
     VACCINE,
     edit,
     engineFor,
     enrolledAs,
-    immunisationRegister,
 } from './__tests__/registerRig'
-
-// A new person typed before a reload, with the ids their row was made with.
-const PERSON: PersonRecord = {
-    kind: 'trackedEntity',
-    id: 'PsnTyped001',
-    trackedEntityTypeId: PERSON_TYPE,
-    orgUnitId: NGELEHUN,
-    isNew: true,
-}
-const ENROLMENT: EnrollmentRecord = {
-    kind: 'enrollment',
-    id: 'EnrTyped001',
-    programId: PROGRAM,
-    trackedEntityId: PERSON.id,
-    orgUnitId: NGELEHUN,
-    status: 'ACTIVE',
-    isNew: true,
-}
-const OPV: EventRecord = {
-    kind: 'event',
-    id: 'EvtTyped001',
-    programStageId: VACCINATION,
-    orgUnitId: NGELEHUN,
-    enrollmentId: ENROLMENT.id,
-    status: 'ACTIVE',
-    isNew: true,
-    slot: OPV_1,
-    createdWith: { [VACCINE]: 'OPV', [DOSE]: '1' },
-    trackedEntityId: PERSON.id,
-}
-
-/** A loaded immunisation register, with the rows and records it restores from `outbox`. */
-const restoring = async (
-    outbox: OutboxRecord[],
-    answers: Parameters<typeof engineFor>[0] = {}
-) => {
-    const source = immunisationRegister()
-    const form = await source.load(engineFor(answers).engine)
-    const restored = await source.restoreRows(
-        engineFor(answers).engine,
-        outbox,
-        form
-    )
-    return { source, form, ...restored }
-}
+import {
+    ENROLMENT,
+    OPV,
+    PERSON,
+    restoredDose,
+    restoring,
+} from './__tests__/restoreRig'
 
 /** The new person comes back as one row, with the ids their changes name, holding every typed cell. */
 const expectTheirRow = (rows: GridRow[], outbox: OutboxRecord[]) => {
@@ -204,17 +159,6 @@ const expectRefused = async (
     ])
     expect(fake.mutations).toEqual([])
 }
-
-const restoredDose = (enrollmentId: string, slot: string): EventRecord => ({
-    kind: 'event',
-    id: 'EvtTyped003',
-    programStageId: VACCINATION,
-    orgUnitId: NGELEHUN,
-    enrollmentId,
-    status: 'ACTIVE',
-    isNew: true,
-    slot,
-})
 
 test('a restored event for a cancelled enrolment’s row is refused with the row’s reason', async () => {
     await expectRefused(

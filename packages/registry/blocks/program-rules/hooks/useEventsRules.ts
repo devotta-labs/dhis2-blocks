@@ -39,6 +39,11 @@ export interface UseEventsRulesOptions {
     tracker: boolean
     /** The people the rows belong to, fetched in chunks of 100: adding people fetches only the chunk they join. */
     enrollmentIds: ReadonlyArray<string>
+    /**
+     * People not on the server yet (a register's new rows): never fetched, their rows evaluated at once on what the
+     * grid holds of them, offline too.
+     */
+    newEnrollmentIds?: ReadonlyArray<string>
     /** Whether the grid runs enrolment rules too (`EventsRules.evaluateEnrollments`): a row is a person. */
     enrollments?: boolean
     enabled?: boolean
@@ -115,6 +120,7 @@ interface LoadedPersons {
 }
 
 const NO_PERSONS: LoadedPersons = { persons: new Map(), answered: new Set() }
+const NONE: ReadonlyArray<string> = []
 
 /** A program without rules: every row is evaluated, to nothing, and stands alone. */
 const NO_RULES: EventsRules = {
@@ -281,6 +287,7 @@ export const useEventsRules = ({
     programStageIds,
     tracker,
     enrollmentIds,
+    newEnrollmentIds = NONE,
     enrollments = false,
     enabled = true,
 }: UseEventsRulesOptions): UseEventsRulesResult => {
@@ -345,7 +352,10 @@ export const useEventsRules = ({
     const needsPersons =
         tracker &&
         requirements.some((needs) => needs.enrollment || needs.otherEvents)
-    const personIds = [...new Set(enrollmentIds)]
+    const isNew = new Set(newEnrollmentIds)
+    // A stable key, so the same new people keep the same `persons`.
+    const newPeople = [...isNew].sort().join(',')
+    const personIds = [...new Set(enrollmentIds)].filter((id) => !isNew.has(id))
     const fetchPersons = needsPersons && personIds.length > 0
     // Rewritten on every render to the same chunks for the same ids, so a render React throws away does no harm.
     const chunkMemory = useRef<string[][]>([])
@@ -387,8 +397,12 @@ export const useEventsRules = ({
     }, [personChunks.data])
     const loadedChunks = personChunks.loaded
     const persons = useMemo((): LoadedPersons | undefined => {
+        // New people are answered already: the server has none of them.
+        const fresh = newPeople === '' ? [] : newPeople.split(',')
         if (!fetchPersons) {
-            return NO_PERSONS
+            return fresh.length === 0
+                ? NO_PERSONS
+                : { persons: new Map(), answered: new Set(fresh) }
         }
         if (loadedChunks.length === 0) {
             return undefined
@@ -401,9 +415,9 @@ export const useEventsRules = ({
                         person === null ? [] : [[id, person]]
                 )
             ),
-            answered: new Set(entries.map(([id]) => id)),
+            answered: new Set([...entries.map(([id]) => id), ...fresh]),
         }
-    }, [fetchPersons, loadedChunks])
+    }, [fetchPersons, loadedChunks, newPeople])
 
     const rules = useMemo((): EventsRules | undefined => {
         if (metadata !== undefined && metadata.rules.length === 0) {

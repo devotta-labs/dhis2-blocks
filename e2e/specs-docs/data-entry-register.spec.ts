@@ -4,6 +4,7 @@ import { z } from 'zod'
 import {
     focusedRow,
     gridReady,
+    keepOffline,
     settled,
     TRACKER_IMPORT,
 } from './data-entry.support'
@@ -300,4 +301,133 @@ test('a person missing a mandatory attribute waits and says what for', async ({
     // Still nothing sent a moment later, when a late save would have gone out.
     await page.waitForTimeout(2_000)
     expect(sent.size).toBe(0)
+})
+
+/** The register's people in October whose enrolment is not in `before`, as the test checks them. */
+const newEnrollments = async (
+    request: APIRequestContext,
+    before: ReadonlySet<string>
+) =>
+    (await octoberEnrollments(request))
+        .filter(({ enrollment }) => !before.has(enrollment))
+        .map(summaryOf)
+
+const enrollmentsNow = async (request: APIRequestContext) =>
+    new Set(
+        (await octoberEnrollments(request)).map(({ enrollment }) => enrollment)
+    )
+
+/** The next tracker import's response. */
+const nextImport = (page: Page) =>
+    page.waitForResponse(
+        (response) =>
+            response.request().method() === 'POST' &&
+            TRACKER_IMPORT.test(new URL(response.url()).pathname)
+    )
+
+test('a new person still waiting at a reload comes back once, and finishing them saves one person', async ({
+    page,
+    request,
+    sent,
+}) => {
+    const before = await enrollmentsNow(request)
+    const lastName = `Waiting${Date.now()}`
+    const person = await addPerson(page)
+    // No enrolment date: nothing can be sent. Each cell saying so shows the outbox holds it.
+    await typeAcross(page, ['Isatu', lastName, '2026-10-05'])
+    for (const field of [FIRST_NAME, LAST_NAME, BIRTH_DATE]) {
+        await expect(
+            page.locator(`[id$="-cell-${person}.${field}"]`)
+        ).toHaveAccessibleDescription(/Waiting for: /)
+    }
+
+    page.once('dialog', (dialog) => dialog.accept())
+    await page.reload()
+    await gridReady(page)
+    const name = `Isatu ${lastName}`
+    await expect(page.getByRole('rowheader', { name })).toHaveCount(1)
+    await expect(
+        page.locator(`[id$="-cell-${person}.${LAST_NAME}"]`)
+    ).toHaveValue(lastName)
+    await expect(
+        page.locator(`[id$="-cell-${person}.${BIRTH_DATE}"]`)
+    ).toHaveValue('2026-10-05')
+
+    const saved = nextImport(page)
+    await page.getByRole('textbox', { name: `Registered Date ${name}` }).focus()
+    await typeAcross(page, ['2026-10-19'])
+    expect((await saved).ok()).toBe(true)
+    await settled(page)
+    await expect
+        .poll(() => newEnrollments(request, before), { timeout: 30_000 })
+        .toEqual([
+            {
+                trackedEntity: person,
+                enrolledAt: '2026-10-19',
+                attributes: {
+                    [FIRST_NAME]: 'Isatu',
+                    [LAST_NAME]: lastName,
+                    [BIRTH_DATE]: '2026-10-05',
+                },
+                events: [],
+            },
+        ])
+    expect([...sent]).toEqual([person])
+})
+
+test('a saved person’s dose unsent at a reload comes back on their row and is saved once', async ({
+    page,
+    context,
+    request,
+    sent,
+}) => {
+    const before = await enrollmentsNow(request)
+    await page.addInitScript(keepOffline)
+    const lastName = `Unsent${Date.now()}`
+    const person = await addPerson(page)
+    const firstSave = nextImport(page)
+    await typeAcross(page, ['Isatu', lastName, '2026-10-05', '', '2026-10-19'])
+    expect((await firstSave).ok()).toBe(true)
+    await settled(page)
+
+    // Offline, the dose waits on the device.
+    await context.setOffline(true)
+    const name = `Isatu ${lastName}`
+    const dose = page.getByRole('textbox', { name: `BCG Dose 0 ${name}` })
+    await dose.focus()
+    await typeAcross(page, ['2026-10-20'])
+    await expect(dose).toHaveAccessibleDescription(/Saved on this device/)
+
+    // The browser cannot load the page while offline; the page keeps reporting offline across the reload instead.
+    await page.evaluate(() =>
+        sessionStorage.setItem('data-entry-e2e', 'offline')
+    )
+    await context.setOffline(false)
+    page.once('dialog', (dialog) => dialog.accept())
+    await page.reload()
+    await gridReady(page)
+    await expect(page.getByRole('rowheader', { name })).toHaveCount(1)
+    await expect(dose).toHaveValue('2026-10-20')
+    await expect(dose).toHaveAccessibleDescription(/Saved on this device/)
+    await page.evaluate(() => {
+        sessionStorage.removeItem('data-entry-e2e')
+        window.dispatchEvent(new Event('online'))
+    })
+    await settled(page)
+    await expect
+        .poll(() => newEnrollments(request, before), { timeout: 30_000 })
+        .toEqual([
+            expect.objectContaining({
+                trackedEntity: person,
+                events: [
+                    {
+                        programStage: STAGE,
+                        date: '2026-10-20',
+                        [VACCINE]: 'BCG',
+                        [DOSE]: '0',
+                    },
+                ],
+            }),
+        ])
+    expect([...sent]).toEqual([person])
 })

@@ -12,6 +12,7 @@ import {
     focusedRow,
     gridReady,
     INPATIENT,
+    keepOffline,
     nextInpatientDate,
     openGrid,
     readEvent,
@@ -408,22 +409,6 @@ test('one woman: chronic conditions Yes and No show and hide the follow-ups in a
         )
         .toBe('false')
 })
-
-// Reported offline whatever the network is, so the page can reload from the server while its outbox waits.
-const keepOffline = () => {
-    const native = Object.getOwnPropertyDescriptor(
-        Navigator.prototype,
-        'onLine'
-    )
-    Object.defineProperty(Navigator.prototype, 'onLine', {
-        configurable: true,
-        get(this: Navigator) {
-            return sessionStorage.getItem('data-entry-e2e') === 'offline'
-                ? false
-                : native?.get?.call(this)
-        },
-    })
-}
 
 test('keeps a new row through offline and reload', async ({
     page,

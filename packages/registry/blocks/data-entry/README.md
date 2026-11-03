@@ -207,20 +207,21 @@ type FieldRef =
 
 `compileLayout(layout, metadata)` turns a layout into the grid's columns and heading rows, or says what the program
 cannot do for it; `registerSource` does this on load and fails the form with those messages. `registerLayoutSchema`
-(zod) checks a layout that is stored or written by hand. `NewRow`, `PersonRecord` and `EnrollmentRecord` are the types
-of what a row is made of.
+(zod) checks a layout that is stored or written by hand, and refuses a misspelt key of an event ref at its path. `NewRow`,
+`PersonRecord` and `EnrollmentRecord` are the types of what a row is made of.
 
 **Slots.** A column of a stage is in one slot of the person's row: the stage's only event (a non-repeatable stage), the
 nth event of a repeatable stage by date (`occurrence`, from 1; `occurredAt`, else `scheduledAt`), or the event whose
 data elements hold given values (`where`: data element id to option code or value). A slot has an `occurrence` or a
-`where`, not both. An event fills at most one slot. A scheduled event fills its slot, and typing its date makes it
+`where`, not both, and a column of a repeatable stage needs one of them. An event fills at most one slot. A scheduled event fills its slot, and typing its date makes it
 happen. A new event in a `where` slot is made with those values, which no column shows. Events that fit no slot, or
 several that fit one, are said on the row ("2 more visits of … not in this register").
 
 **New rows.** A new person, an enrolment and an event per slot, with device ids, at `orgUnitId`. The layout must have a
 column for each mandatory attribute (those DHIS2 generates are reserved when the row is added) and the enrolment date,
-and a repeatable stage's slot needs its date column. The events Capture schedules on enrolment are made too, dated as
-Capture dates them, and fill their slots. A row that is not typed in saves nothing.
+and a repeatable stage's slot needs its date column. The events Capture schedules on enrolment are made too and fill
+their slots: one in a slot with a date column stays scheduled, undated, until the clerk types its date; one in a slot
+without is dated as Capture dates it. A row that is not typed in saves nothing.
 
 **What saves and what waits.** One import carries the changed people, enrolments and events together. A new person
 waits for the mandatory attributes of its type and program, an enrolment for its date and its person, an event for its

@@ -234,6 +234,24 @@ export const compileLayout = (
             )
             return undefined
         }
+        // A repeatable stage has many events: a column names which, or it would take whichever comes first.
+        if (
+            occurrence === undefined &&
+            where === undefined &&
+            stage.repeatable
+        ) {
+            errors.push(
+                i18n.t(
+                    'Column "{{label}}": {{stage}} is repeatable, so the column needs an occurrence or a where',
+                    {
+                        label: label ?? stage.name,
+                        stage: stage.name,
+                        interpolation: AS_IS,
+                    }
+                )
+            )
+            return undefined
+        }
         const unknown = Object.keys(where ?? {}).find(
             (id) => !stage.dataElements.has(id)
         )

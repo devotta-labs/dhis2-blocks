@@ -192,17 +192,20 @@ type FieldRef =
 A stage's column is in one **slot**: the event of a non-repeatable stage, the
 nth event of a repeatable stage by date (`occurrence`, counting from 1), or the
 event holding given values (`where`, a data element id and the option code or
-value it holds). A slot has an `occurrence` or a `where`, not both. Events
+value it holds). A slot has an `occurrence` or a `where`, not both, and a
+column of a repeatable stage needs one of them. Events
 that fit no slot, or several, are said on the row ("2 more visits of … not in
 this register"). `compileLayout(layout, metadata)` says what a program cannot
 do for a layout, such as a field it does not have, before anything loads, and
-`registerLayoutSchema` checks a layout you store or write by hand.
+`registerLayoutSchema` checks a layout you store or write by hand, refusing a
+misspelt key at its path.
 
 New people are added with **Add person** (Ctrl+Enter): a person, an enrolment
 and an event per slot, at the organisation unit. The layout must have a column
 for each mandatory attribute and for the enrolment date. The events Capture
-schedules on enrolment are made too, dated as Capture dates them, and fill
-their slots.
+schedules on enrolment are made too and fill their slots. One in a slot with a
+date column stays scheduled until its date is typed, as the paper has it; one
+in a slot without is dated as Capture dates it.
 
 What saves and what waits:
 

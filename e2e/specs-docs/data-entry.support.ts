@@ -375,6 +375,25 @@ export const addRow = async (page: Page) => {
     return focusedRow(page)
 }
 
+/**
+ * Reported offline whatever the network is, so the page can reload from the server while its outbox waits: an init
+ * script, on while `sessionStorage['data-entry-e2e']` is `offline`.
+ */
+export const keepOffline = () => {
+    const native = Object.getOwnPropertyDescriptor(
+        Navigator.prototype,
+        'onLine'
+    )
+    Object.defineProperty(Navigator.prototype, 'onLine', {
+        configurable: true,
+        get(this: Navigator) {
+            return sessionStorage.getItem('data-entry-e2e') === 'offline'
+                ? false
+                : native?.get?.call(this)
+        },
+    })
+}
+
 /** Nothing waits to be sent: every change is saved or refused. */
 export const settled = (page: Page) =>
     expect(

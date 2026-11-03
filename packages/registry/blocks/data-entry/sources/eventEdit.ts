@@ -20,6 +20,9 @@ const READ_ONLY = {
 /** Why a completed event of a stage that blocks its entry form cannot be edited. */
 export const blockedReason = READ_ONLY.blocked
 
+/** Why an event of a stage the user may not enter data in cannot be edited. */
+export const noWriteReason = READ_ONLY.noWrite
+
 /** What the edit rules read of an event. */
 export interface EditedEvent {
     programStage: string

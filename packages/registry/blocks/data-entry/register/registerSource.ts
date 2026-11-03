@@ -4,11 +4,12 @@ import { cellKey, recordIdOf } from '../model/types'
 import type { CellKey, DataRecord, EventRecord, GridRow } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import type { SaveOutcome } from '../outbox/sync'
+import { noWriteReason } from '../sources/eventEdit'
 import { loadNamesOf } from '../sources/eventSource'
 import { localToday } from '../sources/expiry'
 import { hasRulesIn } from '../sources/hasRules'
 import type { ScheduledEvents } from '../sources/trackerPayload'
-import { SAVE_TIMEOUT, trackerSaver, withinLimit } from '../sources/trackerSave'
+import { trackerSaver, withinLimit } from '../sources/trackerSave'
 import type { DataEngine, DataEntrySource, LoadedForm } from '../sources/types'
 import { generateUid } from '../sources/uid'
 import { compileLayout } from './compileLayout'
@@ -26,6 +27,7 @@ import {
     toForm,
 } from './registerLoad'
 import {
+    RESTORE_TIMEOUT,
     heldSlotRefusal,
     readHeld,
     slotTaken,
@@ -69,6 +71,8 @@ export const registerSource = (
               engine: DataEngine
               /** Why every row is read-only, when the user may not enter data in the program. */
               rowReason?: string
+              /** The stages the user may not enter data in. */
+              noWrite: ReadonlySet<string>
           }
         | undefined
     // The server's calendar as this source last loaded it: a page builds its expiry in it without asking again.
@@ -117,8 +121,8 @@ export const registerSource = (
             const taken = [...(restored.get(row.id) ?? [])].filter(
                 ([slot, event]) => {
                     const shown = row.slots?.[slot]
-                    // Saved since: the row shows it already, and its changes are ordinary ones.
-                    if (shown === event.id) {
+                    // Saved since: DHIS2 holds it, in whichever slot it ranks it now, and its changes are ordinary ones.
+                    if (shown === event.id || saver.remembered.has(event.id)) {
                         refused.delete(event.id)
                         unchecked.delete(event.id)
                         return false
@@ -154,7 +158,22 @@ export const registerSource = (
         return { rows: placed, events }
     }
 
-    const scheduledEvents: ScheduledEvents = (enrollment, enrolledAt) => {
+    /** Why a new row's records cannot be edited: its events in stages the user may not enter data in. */
+    const newRowReasons = (records: ReadonlyArray<DataRecord>) =>
+        new Map(
+            records.flatMap((record): Array<[string, string]> =>
+                record.kind === 'event' &&
+                loaded?.noWrite.has(record.programStageId)
+                    ? [[record.id, noWriteReason()]]
+                    : []
+            )
+        )
+
+    const scheduledEvents: ScheduledEvents = (
+        enrollment,
+        enrolledAt,
+        slotEvents
+    ) => {
         if (loaded === undefined) {
             return []
         }
@@ -171,7 +190,11 @@ export const registerSource = (
             // @dhis2/multi-calendar-dates cannot add days on a Coptic calendar (reported upstream): none are scheduled.
             return []
         }
-        const slots = madeHere.get(enrollment.id) ?? {}
+        // The import's own slot events first: the row may have been made in another tab, or by an earlier load.
+        const slots = {
+            ...madeHere.get(enrollment.id),
+            ...Object.fromEntries(slotEvents),
+        }
         return due.map(({ stageId, scheduledAt, occurredAt }) => {
             // The stage's own slot, or its first visit's; a stage the layout does not show gets an event of its own.
             const slot = compiled.slots.find(
@@ -188,7 +211,9 @@ export const registerSource = (
                 enrollment: enrollment.id,
                 status: 'SCHEDULE',
                 scheduledAt,
-                ...(occurredAt !== undefined && { occurredAt }),
+                // A slot with a date column waits for the clerk's date, so the screen shows what DHIS2 holds.
+                ...(occurredAt !== undefined &&
+                    !slot?.hasDateColumn && { occurredAt }),
             }
         })
     }
@@ -232,6 +257,15 @@ export const registerSource = (
             today: options.today ?? localToday(),
             hasRules,
         })
+        // What DHIS2 holds of the page, events the layout leaves out included: none is restored as new.
+        saver.remember([
+            ...[...page1.records.values()]
+                .filter(({ isNew }) => !isNew)
+                .map(({ id }) => id),
+            ...parsed.enrollments.enrollments.flatMap(({ events }) =>
+                events.map(({ event }) => event)
+            ),
+        ])
         // Unsent slot events restored for the people this page loads take their slots.
         const back = placeRestored(
             page1.tables.flatMap((table) => table.rows),
@@ -250,11 +284,6 @@ export const registerSource = (
                 ...back.events.map((event) => [event.id, event] as const),
             ]),
         }
-        saver.remember(
-            [...form.records.values()]
-                .filter(({ isNew }) => !isNew)
-                .map(({ id }) => id)
-        )
         loaded = {
             metadata,
             compiled: compiled.compiled,
@@ -263,6 +292,11 @@ export const registerSource = (
             rowReason: program.access.data.write
                 ? undefined
                 : READ_ONLY.program(),
+            noWrite: new Set(
+                program.programStages
+                    .filter(({ access }) => !access.data.write)
+                    .map(({ id }) => id)
+            ),
         }
         // A new person needs write access to the program and to its type.
         const mayAdd =
@@ -356,7 +390,11 @@ export const registerSource = (
                 []) {
                 values.set(cellKey(person.id, attribute), value)
             }
-            return { ...made, values }
+            return {
+                ...made,
+                values,
+                readOnlyRecords: newRowReasons(made.records),
+            }
         },
         /**
          * Rows for the unsent changes after a reload. DHIS2 is asked which of the people and enrolments they name it
@@ -394,7 +432,7 @@ export const registerSource = (
             const { held, failure } =
                 personIds.length + enrollmentIds.length === 0
                     ? { held: { people: new Map(), enrollments: new Map() } }
-                    : await withinLimit(SAVE_TIMEOUT, (signal) =>
+                    : await withinLimit(RESTORE_TIMEOUT, (signal) =>
                           readHeld(
                               engine,
                               {
@@ -492,6 +530,9 @@ export const registerSource = (
                         i18n.t('New person'),
                 })
                 records.push(...made.records)
+                for (const [id, reason] of newRowReasons(made.records)) {
+                    readOnlyRecords.set(id, reason)
+                }
                 if (failure !== undefined) {
                     for (const { id } of made.records) {
                         readOnlyRecords.set(id, failure)

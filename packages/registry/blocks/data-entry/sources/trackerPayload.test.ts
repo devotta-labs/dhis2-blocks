@@ -339,15 +339,25 @@ test('a new enrolment’s scheduled events go in its import, once each', () => {
     const asked: unknown[] = []
     const { payload } = buildImport(typed(ROW), ROW_FORM, NOTHING_HELD, {
         ...CONTEXT,
-        scheduledEvents: (enrollment, enrolledAt, form) => {
-            asked.push([enrollment, enrolledAt, form])
+        scheduledEvents: (enrollment, enrolledAt, slotEvents) => {
+            asked.push([enrollment, enrolledAt, slotEvents])
             return [
                 scheduled(enrollment, SECOND_VISIT, ROW.anc2.id),
                 scheduled(enrollment, 'bbKtnxRZKEP', 'EvtPostpar1'),
             ]
         },
     })
-    expect(asked).toEqual([[ROW.enrollment, '2026-10-05', ROW_FORM]])
+    // The slot events typed in this import, whichever tab made the row.
+    expect(asked).toEqual([
+        [
+            ROW.enrollment,
+            '2026-10-05',
+            new Map([
+                ['anc1', ROW.anc1.id],
+                ['anc2#1', ROW.anc2.id],
+            ]),
+        ],
+    ])
     // The typed visit fills the scheduled slot: it is created once, dated, keeping its due date.
     expect(payload.events).toEqual([
         expect.objectContaining({ event: ROW.anc1.id }),

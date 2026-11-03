@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import immunisation from './__tests__/fixtures/immunisation-program.json'
 import rmnch from './__tests__/fixtures/rmnch-register-program.json'
 import { compileLayout } from './compileLayout'
-import { registerLayoutSchema } from './layout'
 import type { LayoutNode, RegisterLayout } from './layout'
 import { registerMetadataOf, registerProgramSchema } from './metadata'
 
@@ -267,6 +266,20 @@ describe('compileLayout', () => {
         ).toEqual(['Column "Birth": Care at birth is not repeatable'])
     })
 
+    test('a column of a repeatable stage that names no event is refused, naming the column', () => {
+        expect(
+            errorsOf(
+                layoutOf([
+                    ...PERSON,
+                    { field: { stage: ANC, eventDate: true }, label: 'ANC' },
+                ]),
+                RMNCH
+            )
+        ).toEqual([
+            'Column "ANC": Second antenatal care visit is repeatable, so the column needs an occurrence or a where',
+        ])
+    })
+
     test('a repeatable slot with data columns but no date column is refused', () => {
         expect(
             errorsOf(
@@ -524,46 +537,5 @@ describe('compileLayout', () => {
                 RMNCH
             )
         ).toEqual(['Column "nope": the program has no field nope'])
-    })
-
-    test('a layout the schema refuses names the path', () => {
-        const result = registerLayoutSchema.safeParse(
-            // SAFETY: the point is a field the type refuses.
-            layoutOf([{ field: { stage: 's' } as never }])
-        )
-
-        expect(result.success).toBe(false)
-        expect(
-            registerLayoutSchema.safeParse(
-                layoutOf([
-                    {
-                        field: {
-                            stage: 's',
-                            occurrence: 1,
-                            where: { a: 'b' },
-                            eventDate: true,
-                        },
-                    },
-                ])
-            ).success
-        ).toBe(false)
-        expect(
-            registerLayoutSchema.safeParse(
-                layoutOf([
-                    {
-                        group: 'G',
-                        children: [
-                            {
-                                field: {
-                                    stage: 's',
-                                    occurrence: 2,
-                                    eventDate: true,
-                                },
-                            },
-                        ],
-                    },
-                ])
-            ).success
-        ).toBe(true)
     })
 })

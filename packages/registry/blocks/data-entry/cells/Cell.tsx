@@ -3,6 +3,7 @@ import { memo, useMemo, useState } from 'react'
 import { cellKind } from '@/components/dhis2-value-types'
 import type { CellKind, Field } from '@/components/dhis2-value-types'
 import type { CellEffects } from '../logic/effects'
+import { recordIdOf } from '../model/types'
 import type { CellState } from '../model/types'
 import {
     useCellView,
@@ -49,18 +50,25 @@ export const replacementFor = (
     field: Field
 ) => overrides?.fields?.[column] ?? overrides?.valueTypes?.[field.valueType]
 
+const PERSON_FILES: ReadonlySet<string> = new Set(['FILE_RESOURCE', 'IMAGE'])
+
 // One control whatever a rule does to the cell, so focus stays where it is.
 const OpenCell = ({ view, ...props }: CellProps & { view: CellView }) => {
     const { hiddenBy, readOnly } = view.effects
-    const { overrides, idScope, settings } = useDataEntryContext()
+    const { overrides, idScope, settings, records } = useDataEntryContext()
     const kind = cellKind(props.field)
     const column = props.cellKey.slice(props.cellKey.indexOf('.') + 1)
     const replacement = replacementFor(overrides, column, props.field)
+    // A person's file or image is uploaded in their own form: the editor uploads an event's.
+    const personFile =
+        PERSON_FILES.has(props.field.valueType) &&
+        records.get(recordIdOf(props.cellKey))?.kind === 'trackedEntity'
     // A value type no default control edits (unknown, or a pop-up type without an editor) is edited elsewhere; a
     // replacement is how a host edits it here.
     const elsewhere =
         replacement === undefined &&
         (kind === 'readOnly' ||
+            personFile ||
             (kind === 'popup' &&
                 editorFor(props.field.valueType) === undefined))
             ? i18n.t('Edit this field in its own form')

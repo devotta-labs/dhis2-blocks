@@ -96,6 +96,8 @@ export interface NewRow {
     row: GridRow
     records: DataRecord[]
     values: ReadonlyMap<CellKey, string>
+    /** Why some of its records cannot be edited, by record id: a register's events in a stage the user may not enter data in. */
+    readOnlyRecords?: ReadonlyMap<string, string>
 }
 
 export interface DataEntrySource {

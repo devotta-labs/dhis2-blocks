@@ -439,3 +439,70 @@ test('a change that waits for a person on no row shown is counted as not sent', 
     // Counted, with no cell to link to.
     expect(view().summary.items).toEqual([])
 })
+
+test('a new person’s visit in a stage the user may not enter data in is read-only, with why', async () => {
+    const noWrite = 'You do not have access to enter data in this stage'
+    const memory = memorySource(register())
+    const { context } = await mount({
+        ...memory.source,
+        newRow: () => {
+            const made = newRow()
+            const visit = made.row.slots?.[VISIT_1] ?? ''
+            return { ...made, readOnlyRecords: new Map([[visit, noWrite]]) }
+        },
+    })
+    await userEvent.click(page.getByRole('button', { name: 'Add person' }))
+    await expect.element(header(2)).toHaveTextContent('New person')
+    const { [VISIT_1]: visit = '', [VISIT_2]: other = '' } =
+        context().tables[0].rows[2].slots ?? {}
+    const cell = control(cellKey(visit, 'occurredAt'))
+    expect(cell).toHaveAttribute('readonly')
+    expect(cell).toHaveAccessibleDescription(noWrite)
+    expect(control(cellKey(other, 'occurredAt'))).not.toHaveAttribute(
+        'readonly'
+    )
+    // Nothing typed into it is kept.
+    cell.focus()
+    await userEvent.keyboard('2026-10-05{Enter}')
+    expect(
+        context().store.getState().cells[cellKey(visit, 'occurredAt')]?.value
+    ).toBeUndefined()
+})
+
+test('a person’s file or image is shown read-only, to be edited in their own form', async () => {
+    const PHOTO = 'photo'
+    const form = register()
+    const [shown] = form.tables
+    const photo: GridColumn = {
+        id: 'person:photo',
+        label: 'Photo',
+        field: { valueType: 'IMAGE' },
+        slot: 'person',
+        fieldId: PHOTO,
+    }
+    const memory = memorySource({
+        ...form,
+        tables: [
+            {
+                ...shown,
+                columns: [...shown.columns, photo],
+                headerRows: [[...shown.headerRows[0], { ...photo, span: 1 }]],
+            },
+        ],
+        values: new Map([
+            ...form.values,
+            [cellKey('ap', PHOTO), 'FileRes0001'],
+        ]),
+        fields: new Map([...form.fields, [PHOTO, photo.field]]),
+        fieldsByForm: new Map([
+            ...form.fieldsByForm,
+            [TYPE, new Set([FIRST, LAST, CHILD_ID, PHOTO])],
+        ]),
+        fileNames: new Map([['FileRes0001', 'amina.jpg']]),
+    })
+    await mount({ ...memory.source, newRow })
+    const cell = control(cellKey('ap', PHOTO))
+    expect(cell).toHaveValue('amina.jpg')
+    expect(cell).toHaveAttribute('readonly')
+    expect(cell).toHaveAccessibleDescription('Edit this field in its own form')
+})

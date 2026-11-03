@@ -192,6 +192,7 @@ useEventsRules({
     programStageIds: ReadonlyArray<string>, // the stages the rows belong to
     tracker: boolean, // WITH_REGISTRATION programs; false evaluates every row alone
     enrollmentIds: ReadonlyArray<string>, // the people the rows belong to, fetched in chunks of 100
+    newEnrollmentIds?: ReadonlyArray<string>, // people not on the server yet: never fetched, evaluated at once
     enrollments?: boolean, // a row is a person: also run enrolment rules (evaluateEnrollments)
     enabled?: boolean,
 }): {
@@ -257,8 +258,8 @@ const fresh = rules?.evaluate(rows, stale)
   when a person's events change outside the grid's rows, invalidate the batched person cache, which is keyed apart
   from `programRulesQueryKeys.enrollment`:
   `queryClient.invalidateQueries({ queryKey: [...programRulesQueryKeys.all, 'enrollments'] })`.
-- `rules` changes only when the stages, `tracker`, the rule metadata, the org unit groups or the people's data
-  actually change; an equal refetch keeps the same object, so it can be an effect dependency.
+- `rules` changes only when the stages, `tracker`, the rule metadata, the org unit groups, the new people or the
+  people's data actually change; an equal refetch keeps the same object, so it can be an effect dependency.
 - When `enrollmentIds` gain a person, `rules` stays defined and `status` stays `ready` while that person loads (the
   people already loaded stay in use), and `evaluate` leaves out the rows of a person that has not loaded yet. `rules`
   keeps its identity while they load and changes once as each chunk's data arrives. A failed fetch reports its `error`
@@ -270,8 +271,10 @@ const fresh = rules?.evaluate(rows, stale)
 - With `enrollments: true`, `evaluateEnrollments` runs the program-wide rules of each unit, keyed by enrolment id, on
   its live attributes and dates. A person the server holds also gets their fetched events the unit lacks, so rules see
   every event as DHIS2 holds it; a unit whose person is still loading is in neither map. Put every enrolment in
-  `enrollmentIds`, new ones included, or a unit can wait for a person nobody asked for. It is absent without
-  `enrollments`, and for a program without rules.
+  `enrollmentIds`, or in `newEnrollmentIds` when the server cannot hold it yet (a register's new person), or a unit can
+  wait for a person nobody asked for. It is absent without `enrollments`, and for a program without rules.
+- A person in `newEnrollmentIds` is never fetched: their rows and unit are evaluated at once, offline too, on what the
+  grid holds of them.
 - `invalidRules` lists each rule the engine cannot parse once, however many stages carry it.
 - `optionGroupOptions` maps the option group ids in each row's `optionGroups` effects to their option codes, merged
   across the stages, as `useProgramRules` exposes it for one stage.

@@ -176,6 +176,9 @@ const heldOf = ({
 // Ids per request, so each stays well within URL limits.
 const CHUNK = 100
 
+/** How long a reload waits for DHIS2's answer about unsent changes before they wait unsent: the form opens after it. */
+export const RESTORE_TIMEOUT = 15_000
+
 /**
  * What DHIS2 holds of the people and enrolments unsent changes name: each person's enrolment in the program (`null`
  * for a person DHIS2 holds without one), and each enrolment, 100 ids a request. Throws when DHIS2 cannot be asked.
@@ -252,7 +255,7 @@ export const slotTaken = () =>
 
 /**
  * Why a restored slot event cannot go into an enrolment DHIS2 holds: `rowReason` (the enrolment is read-only), else
- * another of its events fills the slot. None when the event is free to save.
+ * another of its events fills the slot. None when the event is free to save, or DHIS2 holds it already.
  */
 export const heldSlotRefusal = (
     held: HeldEnrollment,
@@ -260,6 +263,10 @@ export const heldSlotRefusal = (
     slots: ReadonlyArray<SlotDef>,
     rowReason: string | undefined
 ) => {
+    // DHIS2 holds the event: its changes are ordinary updates, wherever DHIS2 ranks it now.
+    if (held.events.some(({ id }) => id === event.id)) {
+        return undefined
+    }
     if (rowReason !== undefined) {
         return rowReason
     }

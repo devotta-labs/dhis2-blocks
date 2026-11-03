@@ -38,6 +38,10 @@ export const useRuleEffects = ({
     const enrollments = [...records.values()].flatMap((record) =>
         record.kind === 'enrollment' ? [record.id] : []
     )
+    // A new person cannot be on DHIS2 yet: their rules run on what the grid holds, offline too.
+    const newEnrollmentIds = [...records.values()].flatMap((record) =>
+        record.kind === 'enrollment' && record.isNew ? [record.id] : []
+    )
     const target = form?.rules
     const { rules, status } = useEventsRules({
         programId: target?.programId ?? '',
@@ -53,6 +57,7 @@ export const useRuleEffects = ({
             ...held.flatMap(({ enrollmentId }) => enrollmentId ?? []),
             ...enrollments,
         ],
+        newEnrollmentIds,
         enrollments: form?.rowKind === 'person',
         enabled: target !== undefined,
     })

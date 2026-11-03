@@ -172,14 +172,15 @@ const rulesRan = () =>
 /** The register loaded as DHIS2 answers it (`answers`), kept in memory, with its rules. */
 const mountRegister = async (
     answers: Parameters<typeof engineFor>[0] = {},
-    layout = LAYOUT
+    layout = LAYOUT,
+    data: typeof RULES_DATA = RULES_DATA
 ) => {
     const register = immunisationRegister({ layout })
     const form = await register.load(engineFor(answers).engine)
     const memory = memorySource(form)
     const mounted = await mount(
         { ...memory.source, newRow: register.newRow },
-        { data: RULES_DATA }
+        { data }
     )
     await rulesRan()
     const effects = () => mounted.context().effects.getState()
@@ -381,4 +382,37 @@ test('an enrolment rule never assigns on a read-only person', async () => {
         .toBe('2026-10-05')
     await later(300)
     expect(context().store.getState().cells[AMARA_GENDER]?.value).toBe('Female')
+})
+
+test('a new person’s rules run at once, without asking DHIS2 for them: offline too', async () => {
+    const asked: string[] = []
+    const known = new Set(enrollments.enrollments.map((e) => e.enrollment))
+    const { effects, view, context } = await mountRegister({}, LAYOUT, {
+        ...RULES_DATA,
+        // Offline for anyone the register did not load.
+        'tracker/enrollments': async (type, query) => {
+            const ids = String(query.params?.enrollments).split(',')
+            asked.push(...ids)
+            if (ids.some((id) => !known.has(id))) {
+                throw new Error('Failed to fetch')
+            }
+            return RULES_DATA['tracker/enrollments'](type, query)
+        },
+    })
+    view().addRow(PROGRAM)
+    const newPerson = () =>
+        [...context().records.values()].find(
+            (record) => record.kind === 'trackedEntity' && record.isNew
+        )?.id
+    await expect.poll(newPerson).toBeDefined()
+    const name = cellKey(newPerson() ?? '', FIRST_NAME)
+    control(name).focus()
+    await userEvent.keyboard('Mo{Enter}')
+    await expect
+        .poll(() => effects().cells[name]?.messages)
+        .toEqual([
+            { kind: 'warning', text: 'Is the name right?', source: 'rule' },
+        ])
+    expect(asked.every((id) => known.has(id))).toBe(true)
+    expect(effects().rowMessages.get('') ?? []).toEqual([])
 })

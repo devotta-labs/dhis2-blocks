@@ -133,6 +133,7 @@ describe('compileLayout', () => {
             occurrence: 2,
             hasDateColumn: true,
             label: 'Second antenatal care visit 2',
+            stageName: 'Second antenatal care visit',
         })
     })
 
@@ -178,6 +179,8 @@ describe('compileLayout', () => {
             occurrence: undefined,
             hasDateColumn: true,
             label: 'Vaccination: DPT 2',
+            stageName: 'Vaccination',
+            valuesLabel: 'DPT 2',
         })
         expect(compiled.columns.map((c) => c.id).slice(4)).toEqual([
             `${name}:occurredAt`,

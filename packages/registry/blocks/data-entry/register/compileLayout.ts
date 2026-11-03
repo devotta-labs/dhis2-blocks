@@ -23,6 +23,10 @@ export interface SlotDef {
     hasDateColumn: boolean
     /** "Second antenatal care visit 2", "Vaccination: DPT 2". */
     label: string
+    /** The stage's name, on every event slot. */
+    stageName?: string
+    /** A `where` slot's option names as the label shows them: "DPT 2". */
+    valuesLabel?: string
 }
 
 /** A grid column with the paper's presentation, which the grid draws in a later phase. */
@@ -59,7 +63,13 @@ const eventSlotOf = (
     stage: RegisterStage,
     { occurrence, where }: EventSlot
 ): SlotDef => {
-    const base = { stageId, occurrence, where, hasDateColumn: false }
+    const base = {
+        stageId,
+        stageName: stage.name,
+        occurrence,
+        where,
+        hasDateColumn: false,
+    }
     if (occurrence !== undefined) {
         return {
             ...base,
@@ -89,6 +99,7 @@ const eventSlotOf = (
         name: `${stageId}?${pairs.join('&')}`,
         kind: 'where',
         label: `${stage.name}: ${values.join(' ')}`,
+        valuesLabel: values.join(' '),
     }
 }
 

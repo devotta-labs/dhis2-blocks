@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { useMemo, type ReactNode } from 'react'
 import {
     Calendar,
@@ -101,7 +102,7 @@ const ReadyCalendar = ({
             return {
                 id: row.id,
                 date,
-                label: label.trim() || 'Unnamed record',
+                label: label.trim() || i18n.t('Unnamed record'),
                 disabled: !target,
                 status: recordStatus ? recordStatus(row, text) : defaultStatus,
             }
@@ -140,7 +141,7 @@ const DatedCalendar = (props: ListCalendarProps) => {
             ? props.dateField
             : fields[0]
     const bounds = useWorkingListDateBounds(dateField)
-    if (!bounds) return <p>Loading the working list…</p>
+    if (!bounds) return <p>{i18n.t('Loading the working list…')}</p>
     if (bounds.calendar === 'coptic') return <Calendar calendar="coptic" />
     return <ReadyCalendar {...props} dateField={dateField} bounds={bounds} />
 }
@@ -153,12 +154,14 @@ export const ListCalendar = ({ className, ...props }: ListCalendarProps) => {
     })
     return (
         <section
-            aria-label="Calendar"
+            aria-label={i18n.t('Calendar')}
             aria-busy={readiness === 'pending'}
             className={`@container ${className ?? ''}`}
         >
             {readiness === 'ready' && <DatedCalendar {...props} />}
-            {readiness === 'pending' && <p>Loading the working list…</p>}
+            {readiness === 'pending' && (
+                <p>{i18n.t('Loading the working list…')}</p>
+            )}
             {readiness === 'error' && <WorkingListSelectionError />}
         </section>
     )

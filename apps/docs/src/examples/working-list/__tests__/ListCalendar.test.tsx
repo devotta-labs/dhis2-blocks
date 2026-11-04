@@ -1,8 +1,9 @@
+import i18n from '@dhis2/d2-i18n'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import React, { useState, type ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useWorkingListDateRange } from '@/components/working-list'
 import { resolveWorkingListCapabilities } from '@/components/working-list/api/capabilities'
 import type {
@@ -37,6 +38,15 @@ import {
     useCalendarDay,
 } from '@/components/calendar'
 import { ListCalendar } from '../ListCalendar'
+
+i18n.addResources('nb', 'translation', {
+    Calendar: 'Kalender',
+    'Loading the working list…': 'Laster arbeidslisten…',
+    'Unnamed record': 'Navnløs post',
+})
+afterEach(async () => {
+    await i18n.changeLanguage('en')
+})
 
 const program: TrackerProgram = {
     id: 'Program0001',
@@ -238,6 +248,7 @@ const renderInList = (
 
 describe('working list calendar in a list', () => {
     it('waits for the active working list before reading its state', async () => {
+        await i18n.changeLanguage('nb')
         const { screen, requests } = renderInList(
             <ListCalendar>
                 <CalendarGrid />
@@ -248,7 +259,12 @@ describe('working list calendar in a list', () => {
         )
         const view = await screen
         await expect
-            .element(view.getByText('Loading the working list…'))
+            .element(view.getByText('Laster arbeidslisten…'))
+            .toBeVisible()
+        await expect
+            .element(
+                view.getByRole('region', { name: 'Kalender', exact: true })
+            )
             .toBeVisible()
         expect(requests).toEqual([])
     })
@@ -296,6 +312,7 @@ describe('working list calendar in a list', () => {
     })
 
     it('falls back from a blank custom label and deduplicates repeated records', async () => {
+        await i18n.changeLanguage('nb')
         const record = entity('EntityAaaa1', 'Amina', '2026-11-14T00:00:00')
         const open = vi.fn()
         const view = await renderInList(
@@ -314,7 +331,7 @@ describe('working list calendar in a list', () => {
                 view.getByRole('button', { name: '14 November 2026, 1 record' })
             )
             .toBeVisible()
-        await view.getByRole('button', { name: 'Unnamed record' }).click()
+        await view.getByRole('button', { name: 'Navnløs post' }).click()
         expect(open).toHaveBeenCalledWith(
             expect.objectContaining({ trackedEntityId: 'EntityAaaa1' })
         )

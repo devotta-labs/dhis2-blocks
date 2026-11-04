@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { resourceClientOf, type TrackedEntityFinderClient } from '../api/client'
 import { programMetadataQueryOptions } from '../api/queries'
-import { useTrackedEntityFinderClient } from '../api/runtimeClient'
 import type { FinderPerson } from '../api/search'
 import { systemInfoQueryOptions } from '../api/systemInfo'
 import { buildProgramModel } from '../rules/programModel'
@@ -21,7 +20,7 @@ const getFinderStatus = (failed: boolean, ready: boolean): FinderStatus => {
 export interface FinderControllerOptions {
     program: string
     onSelect: (person: FinderPerson) => void
-    client?: TrackedEntityFinderClient
+    client: TrackedEntityFinderClient
 }
 
 /**
@@ -34,11 +33,7 @@ export const useFinderController = ({
     onSelect,
     client,
 }: FinderControllerOptions): FinderContextValue => {
-    const runtimeClient = useTrackedEntityFinderClient()
-    const resourceClient = useMemo(
-        () => resourceClientOf(client ?? runtimeClient),
-        [client, runtimeClient]
-    )
+    const resourceClient = useMemo(() => resourceClientOf(client), [client])
     const metadata = useQuery(
         programMetadataQueryOptions(resourceClient, program)
     )

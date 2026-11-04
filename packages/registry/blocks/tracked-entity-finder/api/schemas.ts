@@ -51,6 +51,9 @@ const LinkSchema = z.object({
     searchable: z.boolean().default(false),
     displayInList: z.boolean().default(false),
     sortOrder: z.number().nullish(),
+    preferredSearchOperator: z.string().nullish(),
+    blockedSearchOperators: z.array(z.string()).nullish(),
+    minCharactersToSearch: z.number().nullish(),
     trackedEntityAttribute: AttributeSchema,
 })
 
@@ -75,10 +78,13 @@ const toAttributeMetadata = (link: AttributeLink): AttributeMetadata => {
         unique: attribute.unique,
         searchable: link.searchable,
         displayInList: link.displayInList,
-        blockedSearchOperators: (attribute.blockedSearchOperators ?? []).map(
-            (operator) => operator.toLowerCase()
-        ),
-        minCharactersToSearch: attribute.minCharactersToSearch ?? 0,
+        blockedSearchOperators: (
+            link.blockedSearchOperators ??
+            attribute.blockedSearchOperators ??
+            []
+        ).map((operator) => operator.toLowerCase()),
+        minCharactersToSearch:
+            link.minCharactersToSearch ?? attribute.minCharactersToSearch ?? 0,
     }
     if (attribute.optionSet) {
         meta.options = attribute.optionSet.options.map((option) => ({
@@ -86,9 +92,10 @@ const toAttributeMetadata = (link: AttributeLink): AttributeMetadata => {
             name: option.displayName,
         }))
     }
-    if (attribute.preferredSearchOperator) {
-        meta.preferredSearchOperator =
-            attribute.preferredSearchOperator.toLowerCase()
+    const preferredSearchOperator =
+        link.preferredSearchOperator ?? attribute.preferredSearchOperator
+    if (preferredSearchOperator) {
+        meta.preferredSearchOperator = preferredSearchOperator.toLowerCase()
     }
     return meta
 }

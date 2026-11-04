@@ -7,7 +7,12 @@ import {
 
 const link = (
     id: string,
-    extra: { sortOrder?: number } = {},
+    extra: {
+        sortOrder?: number
+        preferredSearchOperator?: string | null
+        blockedSearchOperators?: string[] | null
+        minCharactersToSearch?: number | null
+    } = {},
     attribute: {
         displayFormName?: string
         preferredSearchOperator?: string
@@ -101,6 +106,56 @@ describe('program metadata', () => {
             'Name a',
             'Name b',
         ])
+    })
+
+    it('prefers program binding rules, including explicit empty and zero values', () => {
+        const metadata = program({
+            programTrackedEntityAttributes: [
+                link(
+                    'a',
+                    {
+                        preferredSearchOperator: 'SW',
+                        blockedSearchOperators: [],
+                        minCharactersToSearch: 0,
+                    },
+                    {
+                        preferredSearchOperator: 'EQ',
+                        blockedSearchOperators: ['SW'],
+                        minCharactersToSearch: 4,
+                    }
+                ),
+            ],
+        })
+        expect(metadata.attributes[0]).toMatchObject({
+            preferredSearchOperator: 'sw',
+            blockedSearchOperators: [],
+            minCharactersToSearch: 0,
+        })
+    })
+
+    it('falls back to global rules for null program binding rules', () => {
+        const metadata = program({
+            programTrackedEntityAttributes: [
+                link(
+                    'a',
+                    {
+                        preferredSearchOperator: null,
+                        blockedSearchOperators: null,
+                        minCharactersToSearch: null,
+                    },
+                    {
+                        preferredSearchOperator: 'EQ',
+                        blockedSearchOperators: ['LIKE'],
+                        minCharactersToSearch: 4,
+                    }
+                ),
+            ],
+        })
+        expect(metadata.attributes[0]).toMatchObject({
+            preferredSearchOperator: 'eq',
+            blockedSearchOperators: ['like'],
+            minCharactersToSearch: 4,
+        })
     })
 })
 

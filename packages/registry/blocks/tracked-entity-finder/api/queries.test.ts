@@ -22,7 +22,7 @@ describe('program metadata query', () => {
         expect(fields).toContain('minAttributesRequiredToSearch')
         expect(fields).toContain('maxTeiCountToReturn')
         expect(fields).toContain(
-            'programTrackedEntityAttributes[searchable,displayInList,sortOrder,'
+            'programTrackedEntityAttributes[searchable,displayInList,sortOrder,preferredSearchOperator,blockedSearchOperators,minCharactersToSearch,'
         )
         expect(fields).toContain('blockedSearchOperators')
         expect(options.queryKey).toEqual(finderKeys.program('prog'))

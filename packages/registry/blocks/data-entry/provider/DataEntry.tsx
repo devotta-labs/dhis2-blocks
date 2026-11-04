@@ -8,6 +8,7 @@ import { createStore } from 'zustand/vanilla'
 import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { parseDateFormat } from '@/components/dhis2-value-types'
 import { preloadRuleEngine } from '@/components/program-rules'
+import type { CustomRuleFunctions } from '@/components/program-rules'
 import type { CellOverrides } from '../cells/cellProps'
 import { summarise } from '../logic/summary'
 import type { DataEntrySource, LoadedForm } from '../sources/types'
@@ -55,6 +56,7 @@ export const LiveRegion = () => {
 }
 
 interface DataEntryProps {
+    customFunctions?: CustomRuleFunctions
     /** Create it once (a module constant, or `useMemo`): a new key or cache key loads the form again. */
     source: DataEntrySource
     /** Controls that replace the default ones; keep the object stable, or every cell renders again. */
@@ -67,7 +69,12 @@ interface DataEntryProps {
  * server, one sync loop per browser, the leave-page prompt while anything is unsent, and one polite live region. Once
  * someone else signs in, the form locks until the page is reloaded.
  */
-export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
+export const DataEntry = ({
+    source,
+    cells,
+    children,
+    customFunctions,
+}: DataEntryProps) => {
     const engine = useDataEngine()
     const queryClient = useQueryClient()
     // Absolute, so the outbox is named for the server however the app reaches it.
@@ -288,6 +295,7 @@ export const DataEntry = ({ source, cells, children }: DataEntryProps) => {
     const tables = useStore(active.tables, (state) => state.tables)
     useEffect(() => view.setState({ tables }), [view, tables])
     useRuleEffects({
+        customFunctions,
         open: opened,
         form,
         tables,

@@ -1,0 +1,113 @@
+diff --git a/src/commonMain/kotlin/org/hisp/dhis/rules/api/RuleEngineContext.kt b/src/commonMain/kotlin/org/hisp/dhis/rules/api/RuleEngineContext.kt
+index 0cfcf72..601a18e 100644
+--- a/src/commonMain/kotlin/org/hisp/dhis/rules/api/RuleEngineContext.kt
++++ b/src/commonMain/kotlin/org/hisp/dhis/rules/api/RuleEngineContext.kt
+@@ -8,4 +8,5 @@ data class RuleEngineContext(
+     val ruleVariables: List<RuleVariable> = emptyList(),
+     val ruleSupplementaryData: RuleSupplementaryData = RuleSupplementaryData(),
+     val constantsValues: Map<String, String> = emptyMap(),
++    val customFunction: ((String, String, Map<String, Any?>) -> Any?)? = null,
+ )
+diff --git a/src/commonMain/kotlin/org/hisp/dhis/rules/engine/DefaultRuleEngine.kt b/src/commonMain/kotlin/org/hisp/dhis/rules/engine/DefaultRuleEngine.kt
+index aa9d800..ab1463e 100644
+--- a/src/commonMain/kotlin/org/hisp/dhis/rules/engine/DefaultRuleEngine.kt
++++ b/src/commonMain/kotlin/org/hisp/dhis/rules/engine/DefaultRuleEngine.kt
+@@ -28,7 +28,7 @@ internal class DefaultRuleEngine : RuleEngine {
+                 ruleEnrollment,
+                 target,
+             )
+-        return RuleConditionEvaluator(executionContext.ruleVariables).getRuleEffects(
++        return RuleConditionEvaluator(executionContext.ruleVariables, executionContext.customFunction).getRuleEffects(
+             TrackerObjectType.EVENT,
+             target.event,
+             valueMap,
+@@ -50,7 +50,7 @@ internal class DefaultRuleEngine : RuleEngine {
+                 ruleEvents.toSet(),
+                 target,
+             )
+-        return RuleConditionEvaluator(executionContext.ruleVariables).getRuleEffects(
++        return RuleConditionEvaluator(executionContext.ruleVariables, executionContext.customFunction).getRuleEffects(
+             TrackerObjectType.ENROLLMENT,
+             target.enrollment,
+             valueMap,
+@@ -73,6 +73,7 @@ internal class DefaultRuleEngine : RuleEngine {
+             executionContext.ruleVariables,
+             valueMap,
+             executionContext.ruleSupplementaryData,
++            executionContext.customFunction,
+         )
+     }
+ 
+diff --git a/src/commonMain/kotlin/org/hisp/dhis/rules/engine/RuleConditionEvaluator.kt b/src/commonMain/kotlin/org/hisp/dhis/rules/engine/RuleConditionEvaluator.kt
+index 9c838e3..dcc80a7 100644
+--- a/src/commonMain/kotlin/org/hisp/dhis/rules/engine/RuleConditionEvaluator.kt
++++ b/src/commonMain/kotlin/org/hisp/dhis/rules/engine/RuleConditionEvaluator.kt
+@@ -14,6 +14,7 @@ import org.hisp.dhis.rules.models.*
+ 
+ internal class RuleConditionEvaluator(
+     ruleVariables: List<RuleVariable> = emptyList(),
++    private val customFunction: ((String, String, Map<String, Any?>) -> Any?)? = null,
+ ) {
+     private val ruleVariablesByName: Map<String, RuleVariable> = ruleVariables.associateBy { it.name }
+ 
+@@ -177,10 +178,10 @@ internal class RuleConditionEvaluator(
+                 emptyMap(),
+             )
+         return convertInteger(
+-            expression.evaluate({ name: String ->
+-                throw UnsupportedOperationException(
+-                    "function not supported: $name",
+-                )
++            expression.evaluateCustom({ type, name, props ->
++                val callback = customFunction
++                    ?: throw UnsupportedOperationException("custom function not registered: $name")
++                callback(type, name, props)
+             }, build),
+         )?.toString()
+     }
+diff --git a/src/commonMain/kotlin/org/hisp/dhis/rules/engine/RuleEngineMultipleExecution.kt b/src/commonMain/kotlin/org/hisp/dhis/rules/engine/RuleEngineMultipleExecution.kt
+index 68a5311..2175c59 100644
+--- a/src/commonMain/kotlin/org/hisp/dhis/rules/engine/RuleEngineMultipleExecution.kt
++++ b/src/commonMain/kotlin/org/hisp/dhis/rules/engine/RuleEngineMultipleExecution.kt
+@@ -10,9 +10,10 @@ internal class RuleEngineMultipleExecution {
+         ruleVariables: List<RuleVariable>,
+         ruleVariableValueMap: RuleVariableValueMap,
+         ruleSupplementaryData: RuleSupplementaryData,
++        customFunction: ((String, String, Map<String, Any?>) -> Any?)? = null,
+     ): List<RuleEffects> {
+         val supplementaryMap = RuleConditionEvaluator.convertSupplementaryData(ruleSupplementaryData)
+-        val evaluator = RuleConditionEvaluator(ruleVariables)
++        val evaluator = RuleConditionEvaluator(ruleVariables, customFunction)
+         val hasEnrollmentPass = ruleVariableValueMap.enrollmentMap.isNotEmpty()
+         val ruleEffects: MutableList<RuleEffects> = ArrayList()
+         val enrollmentRules: List<Rule> = filterRules(rules).sorted()
+diff --git a/src/jsMain/kotlin/org/hisp/dhis/rules/RuleEngineContextJs.kt b/src/jsMain/kotlin/org/hisp/dhis/rules/RuleEngineContextJs.kt
+index cd1049c..bef8c05 100644
+--- a/src/jsMain/kotlin/org/hisp/dhis/rules/RuleEngineContextJs.kt
++++ b/src/jsMain/kotlin/org/hisp/dhis/rules/RuleEngineContextJs.kt
+@@ -7,5 +7,6 @@ data class RuleEngineContextJs(
+     val rules: Array<RuleJs>,
+     val ruleVariables: Array<RuleVariableJs>,
+     val supplementaryData: RuleSupplementaryDataJs,
+-    val constantsValues: JsMap<String, String> = JsMap()
++    val constantsValues: JsMap<String, String> = JsMap(),
++    val customFunction: ((String, String, JsMap<String, Any?>) -> Any?)? = null
+ )
+diff --git a/src/jsMain/kotlin/org/hisp/dhis/rules/RuleEngineJs.kt b/src/jsMain/kotlin/org/hisp/dhis/rules/RuleEngineJs.kt
+index 387f352..88b7412 100644
+--- a/src/jsMain/kotlin/org/hisp/dhis/rules/RuleEngineJs.kt
++++ b/src/jsMain/kotlin/org/hisp/dhis/rules/RuleEngineJs.kt
+@@ -129,7 +129,12 @@ class RuleEngineJs(verbose: Boolean = false) {
+             rules = executionContext.rules.map(::toRuleJava),
+             ruleSupplementaryData = toSupplementaryDataJava(executionContext.supplementaryData),
+             constantsValues = toMap(executionContext.constantsValues, {it}, {it}),
+-            ruleVariables = executionContext.ruleVariables.map(::toRuleVariableJava)
++            ruleVariables = executionContext.ruleVariables.map(::toRuleVariableJava),
++            customFunction = executionContext.customFunction?.let { callback ->
++                { type, name, props ->
++                    callback(type, name, JsMap(props.entries.map { tupleOf(it.key, it.value) }.toTypedArray()))
++                }
++            }
+         )
+     }
+ 

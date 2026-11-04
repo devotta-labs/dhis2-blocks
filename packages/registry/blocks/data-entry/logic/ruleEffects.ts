@@ -201,11 +201,17 @@ export const ruleRowsOf = (
                     {
                         event: {
                             id,
+                            enrollmentId,
                             programStageId,
                             orgUnitId,
                             status: status ?? 'ACTIVE',
                             occurredAt,
                             dataValues,
+                            liveDataElementIds: columns
+                                .filter(
+                                    (column) => column.id !== EVENT_DATE_COLUMN
+                                )
+                                .map((column) => column.id),
                         },
                         enrollmentId,
                     },

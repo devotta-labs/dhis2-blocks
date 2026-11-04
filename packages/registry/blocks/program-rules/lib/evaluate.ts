@@ -1,4 +1,5 @@
 import { buildEngineInput } from './buildInput'
+import { customRuleCallback } from './customFunctions'
 import type {
     Attribution,
     EventRuleInput,
@@ -67,12 +68,39 @@ export const evaluateEventRules = (
     input: EventRuleInput
 ): RuleEffects => {
     const built = buildEngineInput(engine, context, input)
+    const base = context.engineContext
+    const callback =
+        input.custom === undefined
+            ? undefined
+            : customRuleCallback(input.custom, input)
+    let customFailure: Error | undefined
+    const executionContext =
+        input.custom === undefined
+            ? base
+            : new engine.RuleEngineContextJs(
+                  base.rules,
+                  base.ruleVariables,
+                  base.supplementaryData,
+                  base.constantsValues,
+                  (type, name, props) => {
+                      try {
+                          return callback?.(type, name, props) ?? null
+                      } catch (cause) {
+                          customFailure =
+                              cause instanceof Error
+                                  ? cause
+                                  : new Error(String(cause))
+                          throw cause
+                      }
+                  }
+              )
     const raw = context.engine.evaluateEvent(
         built.event,
         built.enrollment,
         built.otherEvents,
-        context.engineContext
+        executionContext
     )
+    if (customFailure !== undefined) throw customFailure
     const effects = emptyEffects()
     for (const effect of raw) {
         const values = effect.ruleAction.values

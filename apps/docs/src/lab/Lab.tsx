@@ -407,6 +407,9 @@ export const Lab = () => {
         <div className="flex min-h-screen [font-family:Roboto,Helvetica,Arial,sans-serif] text-dhis2-grey-900">
             <aside className="sticky top-0 flex h-screen w-72 shrink-0 flex-col gap-4 overflow-y-auto border-e border-dhis2-grey-300 bg-dhis2-grey-050 p-4">
                 <h1 className="text-base font-medium">Data entry lab</h1>
+                <a href="/lab.html?mode=custom" className="text-sm underline">
+                    Custom functions playground
+                </a>
                 <div className="flex rounded border border-dhis2-grey-500 text-sm">
                     {Object.entries(MODES).map(([each, label]) => (
                         <button

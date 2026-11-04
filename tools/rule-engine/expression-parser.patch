@@ -1,0 +1,225 @@
+diff --git a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/Expression.kt b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/Expression.kt
+index fb20ba2..400dc51 100644
+--- a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/Expression.kt
++++ b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/Expression.kt
+@@ -69,6 +69,19 @@ class Expression(
+         return evaluate(root, { name: String -> unsupported(name) }, data)
+     }
+ 
++    fun evaluateCustom(
++        callback: (String, String, Map<String, Any?>) -> Any?,
++        data: ExpressionData
++    ): Any? {
++        return evaluate(root, object : ExpressionFunctions {
++            override fun unsupported(name: String): Any? =
++                throw UnsupportedOperationException("function not supported: $name")
++
++            override fun custom(type: String, name: String, props: Map<String, Any?>): Any? =
++                callback(type, name, props)
++        }, data)
++    }
++
+     fun collectProgramVariables(): Set<Variable> {
+         return collectVariables(root, VariableType.PROGRAM)
+     }
+diff --git a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/ast/NamedFunction.kt b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/ast/NamedFunction.kt
+index ea94282..403435a 100644
+--- a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/ast/NamedFunction.kt
++++ b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/ast/NamedFunction.kt
+@@ -84,7 +84,11 @@ enum class NamedFunction(
+     d2_zpvc("d2:zpvc", ValueType.NUMBER, true, ValueType.NUMBER),
+     d2_zScoreHFA("d2:zScoreHFA", ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.STRING),
+     d2_zScoreWFA("d2:zScoreWFA", ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.STRING),
+-    d2_zScoreWFH("d2:zScoreWFH", ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.STRING);
++    d2_zScoreWFH("d2:zScoreWFH", ValueType.NUMBER, ValueType.NUMBER, ValueType.NUMBER, ValueType.STRING),
++    custom_number("custom:number", ValueType.NUMBER, ValueType.STRING, ValueType.MIXED),
++    custom_string("custom:string", ValueType.STRING, ValueType.STRING, ValueType.MIXED),
++    custom_boolean("custom:boolean", ValueType.BOOLEAN, ValueType.STRING, ValueType.MIXED),
++    custom_props("custom:props", ValueType.MIXED, true, ValueType.MIXED);
+ 
+     val parameterTypes: List<ValueType>
+ 
+diff --git a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/eval/Calculator.kt b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/eval/Calculator.kt
+index 1585a4f..ad831ad 100644
+--- a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/eval/Calculator.kt
++++ b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/eval/Calculator.kt
+@@ -58,6 +58,25 @@ internal class Calculator(
+             null // return value of only data item in the expression from map
+         }
+         else when (fnInfo) {
++            NamedFunction.custom_props -> (0 until fn.size() step 2).associate { i ->
++                val value = evalToMixed(fn.child(i + 1))
++                require(value == null || value is String || value is Number || value is Boolean) {
++                    "Custom props must be scalar values"
++                }
++                evalToString(fn.child(i))!! to value
++            }
++            NamedFunction.custom_number, NamedFunction.custom_string, NamedFunction.custom_boolean -> {
++                @Suppress("UNCHECKED_CAST")
++                val props = evalToMixed(fn.child(1)) as Map<String, Any?>
++                val type = fnInfo.getName().substringAfter(':')
++                val result = functions.custom(type, evalToString(fn.child(0))!!, props)
++                require(result == null || when (type) {
++                    "number" -> result is Number && result.toDouble().isFinite()
++                    "string" -> result is String
++                    else -> result is Boolean
++                }) { "Custom function returned an invalid $type" }
++                result
++            }
+             NamedFunction.contains -> functions.contains(evalToString(fn.child(0)), evalToStrings(fn.children()).drop(1))
+             NamedFunction.containsItems -> functions.containsItems(evalToString(fn.child(0)), evalToStrings(fn.children()).drop(1))
+             NamedFunction.firstNonNull -> functions.firstNonNull(evalToMixed(fn.children()))
+diff --git a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/eval/Describer.kt b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/eval/Describer.kt
+index d87ba7e..1227957 100644
+--- a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/eval/Describer.kt
++++ b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/eval/Describer.kt
+@@ -62,6 +62,17 @@ internal class Describer(
+     }
+ 
+     override fun visitFunction(fn: Node<NamedFunction>) {
++        if (fn.getValue() == NamedFunction.custom_props) {
++            out.append('{')
++            for (i in 0 until fn.size() step 2) {
++                if (i > 0) out.append(',')
++                fn.child(i).walk(this::visitNode)
++                out.append(':')
++                fn.child(i + 1).walk(this::visitNode)
++            }
++            out.append('}')
++            return
++        }
+         out.append(fn.getWhitespace().before)
+         out.append(fn.getValue().getName()).append('(')
+         fn.walkChildren(this::visitNode) { _, _ -> out.append(',') }
+diff --git a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/spi/ExpressionFunctions.kt b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/spi/ExpressionFunctions.kt
+index 3f85ac0..6ca74db 100644
+--- a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/spi/ExpressionFunctions.kt
++++ b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/spi/ExpressionFunctions.kt
+@@ -23,6 +23,10 @@ fun interface ExpressionFunctions {
+ 
+     fun unsupported(name: String): Any?
+ 
++    fun custom(type: String, name: String, props: Map<String, Any?>): Any? {
++        return unsupported("custom:$type($name)")
++    }
++
+     /**
+      * @param pattern the string checked to contain the all the other substrings
+      * @param allOf the substrings that are checked to be contained
+diff --git a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/syntax/CustomProps.kt b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/syntax/CustomProps.kt
+new file mode 100644
+index 0000000..fabac1e
+--- /dev/null
++++ b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/syntax/CustomProps.kt
+@@ -0,0 +1,42 @@
++package org.hisp.dhis.lib.expression.syntax
++
++import org.hisp.dhis.lib.expression.ast.NodeType
++import org.hisp.dhis.lib.expression.ast.Nodes.Utf8StringNode
++
++/** Object literals are restricted to the props argument of custom dispatchers. */
++internal object CustomProps : Fragment {
++    override fun parse(expr: Expr, ctx: ParseContext) {
++        val start = expr.marker()
++        expr.expect('{')
++        ctx.beginNode(NodeType.FUNCTION, start, "custom:props")
++        expr.skipWS()
++        val keys = mutableSetOf<String>()
++        var index = 0
++        while (expr.peek() != '}') {
++            val keyStart = expr.marker()
++            val quoted = expr.peek() == '\'' || expr.peek() == '"'
++            if (!quoted && !(expr.peek().isLetter() || expr.peek() == '_')) {
++                expr.error("Expected a property name")
++            }
++            val rawKey = if (quoted) Literals.parseString(expr) else Literals.parseIdentifier(expr)
++            val key = Utf8StringNode.decode(rawKey)
++            if (!keys.add(key)) expr.error("Duplicate property: $key")
++            if (key in setOf("__proto__", "constructor", "prototype")) expr.error("Unsafe property: $key")
++            ctx.beginNode(NodeType.ARGUMENT, keyStart, (index++).toString())
++            ctx.addNode(NodeType.STRING, keyStart, rawKey)
++            ctx.endNode(NodeType.ARGUMENT, expr.marker())
++            expr.skipWS()
++            expr.expect(':')
++            expr.skipWS()
++            ctx.beginNode(NodeType.ARGUMENT, expr.marker(), (index++).toString())
++            Expr.expr(expr, ctx)
++            ctx.endNode(NodeType.ARGUMENT, expr.marker())
++            expr.skipWS()
++            if (expr.peek() == '}') break
++            expr.expect(',')
++            expr.skipWS()
++        }
++        expr.expect('}')
++        ctx.endNode(NodeType.FUNCTION, expr.marker())
++    }
++}
+diff --git a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/syntax/ExpressionGrammar.kt b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/syntax/ExpressionGrammar.kt
+index 97df64c..3402410 100644
+--- a/src/commonMain/kotlin/org/hisp/dhis/lib/expression/syntax/ExpressionGrammar.kt
++++ b/src/commonMain/kotlin/org/hisp/dhis/lib/expression/syntax/ExpressionGrammar.kt
+@@ -118,6 +118,9 @@ object ExpressionGrammar {
+         fn(NamedFunction.d2_zpvc, expr.plus())
+     )
+     private val RuleEngineD2Functions = listOf(
++        fn(NamedFunction.custom_number, STRING, CustomProps),
++        fn(NamedFunction.custom_string, STRING, CustomProps),
++        fn(NamedFunction.custom_boolean, STRING, CustomProps),
+         fn(NamedFunction.d2_addDays, expr, expr),
+         fn(NamedFunction.d2_ceil, expr),
+         fn(NamedFunction.d2_concatenate, expr.plus()),
+diff --git a/src/commonTest/kotlin/org/hisp/dhis/lib/expression/CustomFunctionTest.kt b/src/commonTest/kotlin/org/hisp/dhis/lib/expression/CustomFunctionTest.kt
+new file mode 100644
+index 0000000..f501e60
+--- /dev/null
++++ b/src/commonTest/kotlin/org/hisp/dhis/lib/expression/CustomFunctionTest.kt
+@@ -0,0 +1,49 @@
++package org.hisp.dhis.lib.expression
++
++import org.hisp.dhis.lib.expression.spi.ExpressionData
++import org.hisp.dhis.lib.expression.spi.ValueType
++import org.hisp.dhis.lib.expression.spi.VariableValue
++import kotlin.test.*
++
++class CustomFunctionTest {
++    private fun expression(source: String) = Expression(source, ExpressionMode.RULE_ENGINE_ACTION)
++
++    @Test fun evaluatesNamedPropsAndCollectsDependencies() {
++        val source = expression("custom:number('lookup', {code: #{test}, multiplier: 2 + 1})")
++        assertEquals(setOf("test"), source.collectProgramRuleVariableNames())
++        val data = ExpressionData(mapOf("test" to VariableValue(ValueType.STRING, "HB", emptyList(), null)), emptyMap(), emptyMap(), emptyMap(), emptyMap())
++        assertEquals(24, source.evaluateCustom({ type, name, props ->
++            assertEquals("number", type)
++            assertEquals("lookup", name)
++            assertEquals(mapOf("code" to "HB", "multiplier" to 3.0), props)
++            24
++        }, data))
++    }
++
++    @Test fun propertyOrderAndNormalisationDoNotChangeMeaning() {
++        val first = expression("custom:string('lookup', {a: 'A', b: true})")
++        val second = expression("custom:string('lookup', {'b': true, 'a': 'A',})")
++        val callback: (String, String, Map<String, Any?>) -> Any? = { _, _, props -> props["a"] }
++        assertEquals("A", first.evaluateCustom(callback, ExpressionData()))
++        assertEquals("A", second.evaluateCustom(callback, ExpressionData()))
++        assertEquals("A", expression(first.normalise()).evaluateCustom(callback, ExpressionData()))
++    }
++
++    @Test fun rejectsDuplicateUnsafeAndNonObjectProps() {
++        for (source in listOf(
++            "custom:number('x', {a: 1, a: 2})",
++            "custom:number('x', {a: 1, 'a': 2})",
++            "custom:number('x', {__proto__: 1})",
++            "custom:number('x', 'a', 1)",
++            "custom:number('x', {nested: {a: 1}})",
++            "custom:number('x', {items: [1, 2]})"
++        )) assertFails(source) { expression(source) }
++    }
++
++    @Test fun acceptsNullableScalarsButRejectsWrongReturnTypes() {
++        assertNull(expression("custom:number('x', {})").evaluateCustom({ _, _, _ -> null }, ExpressionData()))
++        assertEquals(false, expression("custom:boolean('x', {})").evaluateCustom({ _, _, _ -> false }, ExpressionData()))
++        assertFails { expression("custom:number('x', {})").evaluateCustom({ _, _, _ -> "12" }, ExpressionData()) }
++        assertFails { expression("custom:number('x', {})").evaluateCustom({ _, _, _ -> Double.NaN }, ExpressionData()) }
++    }
++}

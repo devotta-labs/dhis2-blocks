@@ -26,6 +26,8 @@ const EventSchema = z.object({
 })
 
 export const RuleEnrollmentResponseSchema = z.object({
+    program: z.string().optional(),
+    trackedEntity: z.string().optional(),
     enrollment: z.string(),
     status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']),
     enrolledAt: z.string(),
@@ -68,8 +70,10 @@ const toEvent = (event: z.infer<typeof EventSchema>): RuleEventInput => ({
 export const toRuleEnrollmentData = (
     response: RuleEnrollmentResponse
 ): RuleEnrollmentData => ({
+    trackedEntityId: response.trackedEntity,
     enrollment: {
         id: response.enrollment,
+        programId: response.program,
         status: response.status,
         enrolledAt: response.enrolledAt,
         occurredAt: response.occurredAt,
@@ -78,14 +82,18 @@ export const toRuleEnrollmentData = (
             response.attributes.map((value) => [value.attribute, value.value])
         ),
     },
-    events: response.events.map(toEvent),
+    events: response.events.map((event) => ({
+        ...toEvent(event),
+        enrollmentId: response.enrollment,
+        programId: response.program,
+    })),
 })
 
 const EVENT_FIELDS =
     'event,programStage,status,occurredAt,scheduledAt,createdAt,completedAt,orgUnit,dataValues[dataElement,value]'
 
 const enrollmentFields = (withEvents: boolean): string =>
-    `enrollment,status,enrolledAt,occurredAt,orgUnit,attributes[attribute,value]${withEvents ? `,events[${EVENT_FIELDS}]` : ''}`
+    `enrollment,trackedEntity,program,status,enrolledAt,occurredAt,orgUnit,attributes[attribute,value]${withEvents ? `,events[${EVENT_FIELDS}]` : ''}`
 
 export const fetchRuleEnrollment = async (
     client: ProgramRulesClient,

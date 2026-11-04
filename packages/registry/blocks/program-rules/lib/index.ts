@@ -1,4 +1,8 @@
 export { buildRuleContext } from './buildContext'
+export type {
+    CustomRuleFunctions,
+    TrackedEntityRuleContext,
+} from './customFunctions'
 export { assignedVariable } from './dependencyGraph'
 export { emptyEffects, evaluateEventRules, explainField } from './evaluate'
 export {

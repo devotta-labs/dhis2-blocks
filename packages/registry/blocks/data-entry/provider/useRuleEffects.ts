@@ -1,6 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import { useEffect, useRef } from 'react'
 import { useEventsRules } from '@/components/program-rules'
+import type { CustomRuleFunctions } from '@/components/program-rules'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import type { CellKey, GridTable } from '../model/types'
 import type { LoadedForm } from '../sources/types'
@@ -9,6 +10,7 @@ import { FORM_MESSAGES } from './context'
 import type { OpenForm } from './openForm'
 
 interface RuleEffectsOptions {
+    customFunctions?: CustomRuleFunctions
     open?: OpenForm
     form?: LoadedForm
     /** The open form's tables, as the provider renders them. */
@@ -30,9 +32,11 @@ export const useRuleEffects = ({
     settings,
     announce,
     idScope,
+    customFunctions,
 }: RuleEffectsOptions) => {
     const target = form?.rules
     const { rules, status } = useEventsRules({
+        customFunctions,
         programId: target?.programId ?? '',
         // A page may bring rows of another stage.
         programStageIds: [

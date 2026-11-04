@@ -7,6 +7,6 @@
     "git": { "deploymentEnabled": true },
     "rewrites": [
         { "source": "/dhis2/:path*", "destination": "/api/dhis2" },
-        { "source": "/((?!api/).*)", "destination": "/index.html" }
+        { "source": "/((?!api/|lab\\.html).*)", "destination": "/index.html" }
     ]
 }

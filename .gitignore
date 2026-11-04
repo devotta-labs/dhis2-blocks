@@ -18,5 +18,6 @@ e2e/artifacts
 
 .playwright-mcp
 .vercel
+.rule-engine-build/
 
 **/__screenshots__/**

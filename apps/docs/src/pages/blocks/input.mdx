@@ -1,0 +1,74 @@
+---
+title: Input
+description: Text fields with a label, a hint, and an error message.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="input/field" />
+
+An input lets users type a short value, such as a name, a phone number, or
+an age. Wrap it in a `Field` to give it a label, a hint, and an error, the
+way `@dhis2/ui` InputField does.
+
+## Installation
+
+<InstallCommand item="input" />
+
+<InstallCommand item="field" />
+
+## Usage
+
+```tsx
+import { Field, FieldLabel } from '@/components/dhis2/ui/field'
+import { Input } from '@/components/dhis2/ui/input'
+
+export const FirstName = () => (
+    <Field>
+        <FieldLabel htmlFor="first-name">First name</FieldLabel>
+        <Input id="first-name" />
+    </Field>
+)
+```
+
+Give every input a label. Matching `htmlFor` and `id` lets users click the
+label to start typing, and lets screen readers announce it.
+
+## Hints and errors
+
+Add a `FieldDescription` to explain what to enter. When the value is wrong,
+mark the field and say how to fix it:
+
+```tsx
+<Field data-invalid={invalid}>
+    <FieldLabel htmlFor="age">Age in years</FieldLabel>
+    <Input id="age" type="number" aria-invalid={invalid} />
+    <FieldDescription>Use the age at the last birthday.</FieldDescription>
+    {invalid && <FieldError>Enter an age of 110 or less.</FieldError>}
+</Field>
+```
+
+Write errors as the next step ("Enter an age of 110 or less") rather than
+the problem ("Invalid value").
+
+## Several fields
+
+Put a form's fields in a `FieldGroup` to space them evenly. Use
+`orientation="horizontal"` on a `Field` to put its label beside the input.
+
+## API reference
+
+- `Input` — accepts the props of an `<input>` element, such as `type`,
+  `value`, `onChange`, `placeholder` and `disabled`.
+- `Field` — one labelled field. `orientation?: 'vertical' | 'horizontal'`,
+  vertical by default.
+- `FieldLabel` — the field's label.
+- `FieldDescription` — a hint under the input.
+- `FieldError` — the error message. Pass the message as children, or a list
+  of `errors` with a `message` each, for example from a form library.
+- `FieldGroup` — spaces several fields.
+
+For longer text, a [Textarea](/blocks/textarea) has the same look. To put
+an icon, a unit or a button inside the field, use an
+[Input Group](/blocks/input-group).

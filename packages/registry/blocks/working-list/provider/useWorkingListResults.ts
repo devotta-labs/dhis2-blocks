@@ -12,18 +12,7 @@ import {
     workingListPageQueryOptions,
     type WorkingListPage,
 } from '../query/fetchers'
-import {
-    collectFileResourceIds,
-    createFileResourceNameResolver,
-    fileResourceNamesQueryOptions,
-} from '../query/fileResourceLabels'
 import { workingListQueryKeys } from '../query/keys'
-import {
-    collectOrganisationUnitIds,
-    createOrganisationUnitLabelResolver,
-    organisationUnitLabelsQueryOptions,
-} from '../query/referenceLabels'
-import { createWorkingListValueTransformers } from '../registry/transformers'
 import type { FilterSerializationContext } from '../registry/valueTypes'
 import type { WorkingListTranslate } from '../ui/WorkingListText'
 import type {
@@ -37,6 +26,7 @@ import type {
     WorkingListProviderStore,
     WorkingListProviderStoreState,
 } from './store'
+import { useReferenceFormatting } from './useReferenceFormatting'
 
 interface UseWorkingListResultsOptions {
     client: WorkingListClient
@@ -111,76 +101,24 @@ export const useWorkingListResults = ({
     })
     const pageData = pageQuery.data
     const rows = useMemo(() => toDisplayRows(pageData), [pageData])
-    const organisationUnitIds = useMemo(
-        () =>
-            pageData && fields
-                ? collectOrganisationUnitIds(pageData, fields)
-                : [],
-        [fields, pageData]
-    )
-    const organisationUnitLabelsQuery = useQuery({
-        ...organisationUnitLabelsQueryOptions(client, organisationUnitIds),
-        enabled: Boolean(pageData) && organisationUnitIds.length > 0,
+    const pages = useMemo(() => (pageData ? [pageData] : []), [pageData])
+    const references = useReferenceFormatting({
+        client,
+        pages,
+        fields,
+        systemInfo,
+        locale,
+        translate,
     })
-    const fileResourceIds = useMemo(
-        () =>
-            pageData && fields ? collectFileResourceIds(pageData, fields) : [],
-        [fields, pageData]
-    )
-    const fileResourceNamesQuery = useQuery({
-        ...fileResourceNamesQueryOptions(client, fileResourceIds),
-        enabled: Boolean(pageData) && fileResourceIds.length > 0,
-    })
-    const organisationUnitLabelsReady =
-        organisationUnitIds.length === 0 ||
-        organisationUnitLabelsQuery.data !== undefined ||
-        organisationUnitLabelsQuery.isSuccess
-    const fileResourceNamesReady =
-        fileResourceIds.length === 0 ||
-        fileResourceNamesQuery.isSuccess ||
-        fileResourceNamesQuery.isError
-    const displayTransformers = useMemo(
-        () =>
-            systemInfo
-                ? createWorkingListValueTransformers({
-                      systemInfo,
-                      locale,
-                      trueLabel: translate('Yes'),
-                      falseLabel: translate('No'),
-                      resolveDisplayName: createOrganisationUnitLabelResolver(
-                          organisationUnitLabelsQuery.data ?? new Map()
-                      ),
-                      resolveFileResourceName: createFileResourceNameResolver(
-                          fileResourceNamesQuery.data ?? new Map()
-                      ),
-                  })
-                : undefined,
-        [
-            fileResourceNamesQuery.data,
-            locale,
-            organisationUnitLabelsQuery.data,
-            systemInfo,
-            translate,
-        ]
-    )
-    const formattingContext = displayTransformers?.formattingContext
     const pageError = pageData && !online ? undefined : pageQuery.error
-    const organisationUnitLabelsError =
-        organisationUnitLabelsQuery.data === undefined
-            ? organisationUnitLabelsQuery.error
-            : undefined
-    const resultsError = pageError || organisationUnitLabelsError || undefined
+    const resultsError = pageError || references.error || undefined
     useEffect(() => {
         let results: WorkingListMeta['results']
         if (!resolvedConfiguration) {
             results = { status: 'pending' }
         } else if (resultsError) {
             results = { status: 'error', error: toResultsError(resultsError) }
-        } else if (
-            !pageData ||
-            !organisationUnitLabelsReady ||
-            !fileResourceNamesReady
-        ) {
+        } else if (!pageData || !references.ready) {
             results = { status: 'pending' }
         } else {
             results = {
@@ -189,19 +127,16 @@ export const useWorkingListResults = ({
                 pagination: toPaginationMeta(pageData, rows.length),
                 isUpdating:
                     (pageQuery.isFetching && !pageQuery.isPending) ||
-                    organisationUnitLabelsQuery.isFetching ||
-                    fileResourceNamesQuery.isFetching,
+                    references.isFetching,
             }
         }
         updateStore((current) => ({ meta: { ...current.meta, results } }))
     }, [
-        fileResourceNamesQuery.isFetching,
-        fileResourceNamesReady,
-        organisationUnitLabelsQuery.isFetching,
-        organisationUnitLabelsReady,
         pageData,
         pageQuery.isFetching,
         pageQuery.isPending,
+        references.isFetching,
+        references.ready,
         resolvedConfiguration,
         resultsError,
         rows,
@@ -231,8 +166,8 @@ export const useWorkingListResults = ({
 
     return {
         pageQuery,
-        organisationUnitLabelsQuery,
-        formattingContext,
+        organisationUnitLabelsQuery: references.organisationUnitLabelsQuery,
+        formattingContext: references.formattingContext,
         resultTargets,
         rows,
     }

@@ -1,0 +1,109 @@
+---
+title: Dialog
+description: A window over the page, for a short task or a confirmation.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="dialog/confirm" />
+
+A dialog asks for the user's attention without leaving the page: a short
+form, or a question before something that cannot be undone. It replaces the
+`@dhis2/ui` Modal.
+
+## Installation
+
+<InstallCommand item="dialog" />
+
+## Usage
+
+```tsx
+import { Button } from '@/components/dhis2/ui/button'
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/dhis2/ui/dialog'
+
+export const RenameView = () => (
+    <Dialog>
+        <DialogTrigger render={<Button variant="outline" />}>
+            Rename view
+        </DialogTrigger>
+        <DialogContent size="sm">
+            <DialogHeader>
+                <DialogTitle>Rename view</DialogTitle>
+                <DialogDescription>
+                    Everyone who can see this view sees the new name.
+                </DialogDescription>
+            </DialogHeader>
+            {/* the form */}
+            <DialogFooter>
+                <DialogClose render={<Button variant="outline" />}>
+                    Cancel
+                </DialogClose>
+                <Button onClick={save}>Save</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+)
+```
+
+Users can close a dialog with its close button, the Escape key, or a click
+outside it. To open or close it from your app, pass `open` and
+`onOpenChange` to `Dialog`.
+
+## Confirming an action
+
+Before deleting or anything else that cannot be undone, ask with an
+`AlertDialog`. It has no close button and does not close on an outside
+click, so users must choose:
+
+<InstallCommand item="alert-dialog" />
+
+```tsx
+<AlertDialog>
+    <AlertDialogTrigger render={<Button variant="destructive" />}>
+        Delete view
+    </AlertDialogTrigger>
+    <AlertDialogContent>
+        <AlertDialogHeader>
+            <AlertDialogTitle>Delete this view?</AlertDialogTitle>
+            <AlertDialogDescription>
+                The view is removed for everyone.
+            </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={remove}>
+                Delete
+            </AlertDialogAction>
+        </AlertDialogFooter>
+    </AlertDialogContent>
+</AlertDialog>
+```
+
+Name the button after what it does, "Delete" rather than "OK", so users know
+what they agree to.
+
+## API reference
+
+- `Dialog` — `open`, `defaultOpen` and `onOpenChange`.
+- `DialogTrigger` — the button that opens it. Pass a `Button` through
+  `render`.
+- `DialogContent` — the window. `size?: 'sm' | 'default' | 'lg' | 'fluid'`
+  (400, 600 or 800 pixels wide, or as wide as its content);
+  `position?: 'top' | 'middle'`; `showCloseButton` and `closeLabel` for the
+  corner button.
+- `DialogHeader`, `DialogTitle`, `DialogDescription` — the heading.
+- `DialogFooter` — the buttons, right-aligned.
+- `DialogClose` — closes the dialog when clicked.
+
+`AlertDialog` has the same parts with the `AlertDialog` prefix, plus
+`AlertDialogAction` and `AlertDialogCancel` for its two buttons.

@@ -1,0 +1,68 @@
+---
+title: Button
+description: Buttons for the actions on a page, in the DHIS2 style.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="button/variants" />
+
+A button starts an action: saving a form, opening a dialog, or exporting a
+list. It looks and behaves like the `@dhis2/ui` Button.
+
+## Installation
+
+<InstallCommand item="button" />
+
+## Usage
+
+```tsx
+import { Button } from '@/components/dhis2/ui/button'
+
+export const SaveButton = () => <Button onClick={save}>Save</Button>
+```
+
+## Choosing a style
+
+Give each screen one main action, so users always know what to do next.
+
+- `default` — the main action, such as Save or Register. In `@dhis2/ui` this
+  is a `primary` button.
+- `outline` — everyday actions, such as Cancel or Back. This is the
+  `@dhis2/ui` basic button.
+- `secondary` — actions that should not draw the eye.
+- `destructive` — actions that delete or cannot be undone.
+- `ghost` and `link` — quiet actions inside menus, toolbars, and text.
+
+```tsx
+<Button variant="destructive">Delete enrollment</Button>
+```
+
+## Sizes
+
+`size` is `default`, `sm`, or `lg`. Use `icon` or `icon-sm` for a square
+button that holds only an icon, and give it an `aria-label` so screen readers
+can name it.
+
+## While an action runs
+
+Set `disabled` while the action is saving, and change the label to say so.
+Disabled buttons cannot be clicked or focused.
+
+```tsx
+<Button disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
+```
+
+## API reference
+
+- `variant?: 'default' | 'outline' | 'secondary' | 'destructive' | 'ghost' | 'link'`
+  — the style. Defaults to `default`.
+- `size?: 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm'` — the size. Defaults
+  to `default`.
+- `render?: ReactElement` — renders another element, such as a link, with the
+  button's look. Add `nativeButton={false}` when it is not a `<button>`:
+  `<Button nativeButton={false} render={<a href="/reports" />}>Reports</Button>`.
+
+`Button` also accepts the props of a `<button>` element, such as `onClick`,
+`type` and `disabled`.

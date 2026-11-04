@@ -10,7 +10,12 @@ import {
     systemColumnFields,
 } from '../registry/systemFilters'
 import { createWorkingListValueTransformers } from '../registry/transformers'
-import { planTrackedEntityJoin, serializeWorkingListRequest } from './serialize'
+import {
+    intersectDateBounds,
+    planTrackedEntityJoin,
+    requestDateBounds,
+    serializeWorkingListRequest,
+} from './serialize'
 
 const attribute: WorkingListField = {
     id: 'Attribute01',
@@ -45,6 +50,8 @@ const fields: FieldCatalog = new Map([
     [dataElement.id, dataElement],
     ['enrollmentStatus', systemField('enrollmentStatus')],
     ['eventStatus', systemField('eventStatus')],
+    ['enrolledAt', systemField('enrolledAt')],
+    ['eventScheduledAt', systemField('eventScheduledAt')],
 ])
 
 const trackedEntityConfiguration: WorkingListConfiguration = {
@@ -292,5 +299,149 @@ describe('Tracker working-list request serialization', () => {
             pageSize: 15,
             program: 'Program0001',
         })
+    })
+})
+
+describe('Date windows on a working-list request', () => {
+    const scheduledEvents = (
+        filters: WorkingListConfiguration['filters']
+    ): WorkingListConfiguration => ({
+        mode: 'event',
+        programId: 'Program0001',
+        programStageId: 'ProgramStg1',
+        columns: [dataElement.id],
+        sort: { fieldId: 'createdAt', direction: 'desc' },
+        filters,
+    })
+    const request = (
+        configuration: WorkingListConfiguration,
+        range?: { fieldId: string; start: string; end: string }
+    ) =>
+        serializeWorkingListRequest({
+            context: { programId: 'Program0001', orgUnitId: 'OrgUnit0001' },
+            configuration,
+            pagination: { page: 1, pageSize: 200 },
+            capabilities: resolveWorkingListCapabilities({ apiVersion: 43 }),
+            fields,
+            range,
+        })
+    const scheduledFilter = {
+        field: systemField('eventScheduledAt'),
+        operator: 'range' as const,
+        value: {
+            kind: 'dateRange' as const,
+            mode: 'absolute' as const,
+            start: '2026-11-10',
+            end: '2026-12-20',
+        },
+    }
+
+    it('bounds the request to the window without a saved filter', () => {
+        expect(
+            request(scheduledEvents([]), {
+                fieldId: 'eventScheduledAt',
+                start: '2026-11-01',
+                end: '2026-11-30',
+            }).params
+        ).toMatchObject({
+            scheduledAfter: '2026-11-01',
+            scheduledBefore: '2026-11-30',
+        })
+    })
+
+    it('narrows to the overlap with a saved filter on the same field', () => {
+        expect(
+            request(scheduledEvents([scheduledFilter]), {
+                fieldId: 'eventScheduledAt',
+                start: '2026-11-01',
+                end: '2026-11-30',
+            }).params
+        ).toMatchObject({
+            scheduledAfter: '2026-11-10',
+            scheduledBefore: '2026-11-30',
+        })
+    })
+
+    it('keeps a scheduled list from today on inside the window', () => {
+        const scheduled = scheduledEvents([
+            {
+                field: systemField('eventStatus'),
+                operator: 'in',
+                value: { kind: 'options', values: ['SCHEDULE'] },
+            },
+        ])
+        const range = {
+            fieldId: 'eventScheduledAt',
+            start: '2026-10-26',
+            end: '2026-12-06',
+        }
+        const params = serializeWorkingListRequest({
+            context: { programId: 'Program0001', orgUnitId: 'OrgUnit0001' },
+            configuration: scheduled,
+            pagination: { page: 1, pageSize: 200 },
+            capabilities: resolveWorkingListCapabilities({ apiVersion: 43 }),
+            fields,
+            today: '2026-11-18',
+            range,
+        }).params
+        expect(params).toMatchObject({
+            scheduledAfter: '2026-11-18',
+            scheduledBefore: '2026-12-06',
+        })
+    })
+
+    it('reads the saved filter bounds from a request', () => {
+        expect(
+            requestDateBounds(
+                request(scheduledEvents([scheduledFilter])),
+                'eventScheduledAt'
+            )
+        ).toEqual({ start: '2026-11-10', end: '2026-12-20' })
+    })
+
+    it('rejects a window outside the saved filter', () => {
+        expect(() =>
+            request(scheduledEvents([scheduledFilter]), {
+                fieldId: 'eventScheduledAt',
+                start: '2027-01-01',
+                end: '2027-01-31',
+            })
+        ).toThrow('does not overlap')
+    })
+
+    it('rejects an event date window on tracked entities', () => {
+        expect(() =>
+            request(trackedEntityConfiguration, {
+                fieldId: 'eventScheduledAt',
+                start: '2026-11-01',
+                end: '2026-11-30',
+            })
+        ).toThrow('cannot bound tracked entities')
+    })
+
+    it('rejects fields that have no API date range', () => {
+        expect(() =>
+            request(trackedEntityConfiguration, {
+                fieldId: 'createdAt',
+                start: '2026-11-01',
+                end: '2026-11-30',
+            })
+        ).toThrow('cannot bound a date range')
+    })
+
+    it('intersects open and closed bounds', () => {
+        expect(intersectDateBounds({}, { start: '2026-11-01' })).toEqual({
+            start: '2026-11-01',
+            end: undefined,
+        })
+        expect(
+            intersectDateBounds(
+                { start: '2026-11-05', end: '2026-11-20' },
+                { start: '2026-11-01', end: '2026-11-10' }
+            )
+        ).toEqual({ start: '2026-11-05', end: '2026-11-10' })
+        expect(
+            intersectDateBounds({ end: '2026-10-31' }, { start: '2026-11-01' })
+        ).toBeUndefined()
     })
 })

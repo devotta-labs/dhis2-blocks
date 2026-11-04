@@ -1,0 +1,77 @@
+---
+title: Toggle Group
+description: A row of buttons for switching between views or options.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="toggle-group/view" />
+
+A toggle group is a row of buttons where the pressed one shows what is
+chosen, such as showing records as a table or a calendar. It does the job
+of the `@dhis2/ui` SegmentedControl.
+
+## Installation
+
+<InstallCommand item="toggle-group" />
+
+## Usage
+
+The group's value is a list, so the same component works for one choice or
+several:
+
+```tsx
+import {
+    ToggleGroup,
+    ToggleGroupItem,
+} from '@/components/dhis2/ui/toggle-group'
+
+export const ViewSwitcher = () => (
+    <ToggleGroup
+        aria-label="Show records as"
+        variant="outline"
+        value={[view]}
+        onValueChange={(next) => next[0] && setView(next[0])}
+    >
+        <ToggleGroupItem value="table">Table</ToggleGroupItem>
+        <ToggleGroupItem value="calendar">Calendar</ToggleGroupItem>
+    </ToggleGroup>
+)
+```
+
+Pressing the chosen button again would leave nothing chosen. Checking
+`next[0]`, as above, keeps one view always selected.
+
+## Choosing several
+
+Add `multiple` to let users press more than one, such as the days of the
+week to show. For a single button that turns one thing on or off, such as
+bold text, use `toggle` on its own:
+
+<InstallCommand item="toggle" />
+
+## Making it clear
+
+- Use two to four short labels. With more, a [Select](/blocks/select) fits
+  better.
+- Give the group an `aria-label` that says what it switches.
+- An icon helps users spot the option they want, but keep the text beside
+  it.
+
+## API reference
+
+`ToggleGroup`:
+
+- `value` and `onValueChange(value)` — the pressed items, as a list.
+- `defaultValue` — the starting items when the group keeps them.
+- `multiple` — lets more than one item be pressed.
+- `variant` — `default` (no border) or `outline`.
+- `size` — `sm`, `default` or `lg`.
+- `orientation` — `horizontal` or `vertical`.
+- `disabled` — blocks every item.
+
+`ToggleGroupItem`:
+
+- `value` — the item's value in the group's list.
+- `disabled` — blocks this one item.

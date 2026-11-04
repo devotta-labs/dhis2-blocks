@@ -23,7 +23,7 @@ import {
 } from '../registry/valueTypes'
 
 const TRACKED_ENTITY_LIST_FIELDS =
-    'trackedEntity,createdAt,updatedAt,inactive,attributes[attribute,value],programOwners[orgUnit,program]'
+    'trackedEntity,createdAt,updatedAt,inactive,attributes[attribute,value],programOwners[orgUnit,program],enrollments[enrollment,program,status,enrolledAt,occurredAt]'
 
 const EVENT_LIST_FIELDS =
     'event,status,program,programStage,enrollment,trackedEntity,occurredAt,scheduledAt,createdAt,updatedAt,orgUnit,assignedUser[uid,username,firstName,surname],dataValues[dataElement,value]'
@@ -49,6 +49,64 @@ const mergeParameters = (
     }
 }
 
+/** Inclusive API dates (YYYY-MM-DD); a missing bound is open. */
+export interface DateBounds {
+    start?: string
+    end?: string
+}
+
+/**
+ * A window on a system date field that narrows a request without becoming a
+ * filter, so it never changes or dirties the saved view.
+ */
+export interface WorkingListDateRange {
+    fieldId: string
+    start: string
+    end: string
+}
+
+const dateRangeParametersFor = (fieldId: string) => {
+    const parameters = getSystemFilterDefinition(fieldId)?.dateRange
+    if (!parameters) {
+        throw new Error(`${fieldId} cannot bound a date range`)
+    }
+    return parameters
+}
+
+const optionalDate = (value: DataEngineQueryParameters[string]) =>
+    value === undefined ? undefined : String(value)
+
+/** The API dates a request's filters allow on `fieldId`. */
+export const requestDateBounds = (
+    request: ResourceRequest,
+    fieldId: string
+): DateBounds => {
+    const { after, before } = dateRangeParametersFor(fieldId)
+    return {
+        start: optionalDate(request.params?.[after]),
+        end: optionalDate(request.params?.[before]),
+    }
+}
+
+const laterDate = (left?: string, right?: string) =>
+    left === undefined || (right !== undefined && right > left) ? right : left
+
+const earlierDate = (left?: string, right?: string) =>
+    left === undefined || (right !== undefined && right < left) ? right : left
+
+/** The overlap of two date bounds, or `undefined` when they do not overlap. */
+export const intersectDateBounds = (
+    left: DateBounds,
+    right: DateBounds
+): DateBounds | undefined => {
+    const start = laterDate(left.start, right.start)
+    const end = earlierDate(left.end, right.end)
+    if (start !== undefined && end !== undefined && start > end) {
+        return undefined
+    }
+    return { start, end }
+}
+
 export interface SerializeWorkingListRequestInput {
     context: WorkingListContext
     configuration: WorkingListConfiguration
@@ -57,6 +115,7 @@ export interface SerializeWorkingListRequestInput {
     fields: FieldCatalog
     serializationContext?: FilterSerializationContext
     today?: string
+    range?: WorkingListDateRange
 }
 
 export const serializeWorkingListRequest = ({
@@ -67,6 +126,7 @@ export const serializeWorkingListRequest = ({
     fields,
     serializationContext,
     today,
+    range,
 }: SerializeWorkingListRequestInput): ResourceRequest => {
     const configuration = WorkingListConfigurationSchema.parse(rawConfiguration)
     const pagination = WorkingListPaginationSchema.parse(rawPagination)
@@ -171,14 +231,11 @@ export const serializeWorkingListRequest = ({
         params.filterAttributes = filterAttributes
     }
 
-    if (configuration.mode === 'trackedEntity') {
-        params.fields = TRACKED_ENTITY_LIST_FIELDS
-        return { resource: 'tracker/trackedEntities', params }
-    }
-
-    params.programStage = configuration.programStageId
-    params.fields = EVENT_LIST_FIELDS
-    if (params.status === 'SCHEDULE' && params.scheduledAfter === undefined) {
+    if (
+        configuration.mode === 'event' &&
+        params.status === 'SCHEDULE' &&
+        params.scheduledAfter === undefined
+    ) {
         const serverToday = today ?? serializationContext?.today
         if (!serverToday) {
             throw new Error(
@@ -187,6 +244,42 @@ export const serializeWorkingListRequest = ({
         }
         params.scheduledAfter = serverToday
     }
+
+    if (range) {
+        if (
+            getSystemFilterDefinition(range.fieldId)?.field.scope === 'event' &&
+            configuration.mode !== 'event'
+        ) {
+            throw new Error(
+                `Event field ${range.fieldId} cannot bound tracked entities`
+            )
+        }
+        const { after, before } = dateRangeParametersFor(range.fieldId)
+        // The API takes one value per bound, so a saved filter on the same
+        // field and the window combine into their overlap.
+        const bounds = intersectDateBounds(
+            {
+                start: optionalDate(params[after]),
+                end: optionalDate(params[before]),
+            },
+            range
+        )
+        if (!bounds) {
+            throw new Error(
+                `Date range ${range.start}..${range.end} does not overlap the ${range.fieldId} filter`
+            )
+        }
+        params[after] = bounds.start
+        params[before] = bounds.end
+    }
+
+    if (configuration.mode === 'trackedEntity') {
+        params.fields = TRACKED_ENTITY_LIST_FIELDS
+        return { resource: 'tracker/trackedEntities', params }
+    }
+
+    params.programStage = configuration.programStageId
+    params.fields = EVENT_LIST_FIELDS
     return { resource: 'tracker/events', params }
 }
 

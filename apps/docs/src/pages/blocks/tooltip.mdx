@@ -1,0 +1,64 @@
+---
+title: Tooltip
+description: A short hint that appears on hover or focus.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="tooltip/hint" />
+
+A tooltip explains a button or a value in a few words, when users hover over
+it or reach it with the keyboard. It looks like the `@dhis2/ui` Tooltip.
+
+## Installation
+
+<InstallCommand item="tooltip" />
+
+## Usage
+
+```tsx
+import { Button } from '@/components/dhis2/ui/button'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/dhis2/ui/tooltip'
+
+export const SyncButton = () => (
+    <Tooltip>
+        <TooltipTrigger render={<Button variant="outline" />}>
+            Sync
+        </TooltipTrigger>
+        <TooltipContent>Last synced 5 minutes ago</TooltipContent>
+    </Tooltip>
+)
+```
+
+The tooltip shows above its trigger by default, and moves when there is no
+room. Use `side` to place it below, or to the start or end.
+
+## When to use one
+
+Tooltips are for extra detail. Users on a phone cannot hover, so never put
+something they need only in a tooltip. An icon-only button still needs its
+own `aria-label`; the tooltip can repeat it for sighted users.
+
+## Show them sooner
+
+Wrap a toolbar or the whole app in `TooltipProvider` to share one delay, so
+that after the first tooltip the next ones show at once:
+
+```tsx
+<TooltipProvider delay={300}>{/* the toolbar */}</TooltipProvider>
+```
+
+## API reference
+
+- `Tooltip` — `open`, `defaultOpen` and `onOpenChange`.
+- `TooltipTrigger` — what the tooltip explains. Pass an element through
+  `render`.
+- `TooltipContent` — the hint. `side?: 'top' | 'bottom' | 'left' | 'right'
+| 'inline-start' | 'inline-end'`, `top` by default; `sideOffset` for the
+  gap.
+- `TooltipProvider` — `delay`, in milliseconds, for every tooltip inside it.

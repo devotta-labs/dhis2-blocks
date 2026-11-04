@@ -16,7 +16,12 @@ type PackageManager = (typeof packageManagers)[number]
 
 type Commands = Record<PackageManager, string>
 
-type Block = 'context-selector' | 'tracked-entity-finder' | 'working-list'
+type Block =
+    | 'context-selector'
+    | 'observation-cards'
+    | 'timeline'
+    | 'tracked-entity-finder'
+    | 'working-list'
 
 const PackageManagerCommand = ({ commands }: { commands: Commands }) => {
     const [manager, setManager] = useState<PackageManager>('pnpm')

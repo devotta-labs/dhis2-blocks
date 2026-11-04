@@ -325,53 +325,58 @@ const IncompatibleSelection = () => {
     )
 }
 
+/**
+ * Why the selected saved list cannot load, with a way out: a repair for an
+ * incompatible list, otherwise the default list. Renders nothing while the
+ * selection works, so any layout can show it in place of its results.
+ */
+export const WorkingListSelectionError = () => {
+    const translate = useWorkingListText()
+    const selection = useWorkingListMeta((meta) => meta.selection)
+    const actions = useWorkingListActions()
+
+    if (selection.status !== 'error') return null
+    if (selection.error._tag === 'IncompatibleSavedListError') {
+        return <IncompatibleSelection />
+    }
+    return (
+        <div className="p-4" data-testid="unavailable-working-list-error">
+            <ErrorAlert title={translate('This working list is unavailable')}>
+                <p>
+                    {translate(
+                        'The selected working list may no longer exist, or you may no longer have access. No records will be queried while it is selected.'
+                    )}
+                </p>
+                <Button
+                    variant="outline"
+                    data-test="use-default-working-list"
+                    onClick={() => {
+                        const result = actions.clearViewSelection()
+                        if (Result.isError(result)) {
+                            throw result.error
+                        }
+                    }}
+                >
+                    {translate('Use the default working list')}
+                </Button>
+            </ErrorAlert>
+        </div>
+    )
+}
+
 const WorkingListResultsContent = ({
     onRowClick,
     dataQualityMode = 'hidden',
 }: Pick<WorkingListTableProps, 'onRowClick' | 'dataQualityMode'>) => {
-    const translate = useWorkingListText()
     const selection = useWorkingListMeta((meta) => meta.selection)
     const activeConfiguration = useWorkingListMeta(
         (meta) => meta.activeConfiguration
     )
-    const actions = useWorkingListActions()
 
     return (
         <div data-testid="working-list-results-slot">
             {selection.status === 'pending' && <SelectionLoading />}
-            {selection.status === 'error' &&
-                (selection.error._tag === 'IncompatibleSavedListError' ? (
-                    <IncompatibleSelection />
-                ) : (
-                    <div
-                        className="p-4"
-                        data-testid="unavailable-working-list-error"
-                    >
-                        <ErrorAlert
-                            title={translate(
-                                'This working list is unavailable'
-                            )}
-                        >
-                            <p>
-                                {translate(
-                                    'The selected working list may no longer exist, or you may no longer have access. No records will be queried while it is selected.'
-                                )}
-                            </p>
-                            <Button
-                                variant="outline"
-                                data-test="use-default-working-list"
-                                onClick={() => {
-                                    const result = actions.clearViewSelection()
-                                    if (Result.isError(result)) {
-                                        throw result.error
-                                    }
-                                }}
-                            >
-                                {translate('Use the default working list')}
-                            </Button>
-                        </ErrorAlert>
-                    </div>
-                ))}
+            <WorkingListSelectionError />
             {selection.status === 'ready' &&
                 (activeConfiguration.status === 'ready' ? (
                     <ReadyResults

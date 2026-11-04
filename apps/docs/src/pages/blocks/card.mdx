@@ -1,0 +1,67 @@
+---
+title: Card
+description: A white surface that groups related content.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="card/facilities" />
+
+A card groups content that belongs together, such as a summary of one
+facility, so it stands apart from the rest of the page. It looks like the
+`@dhis2/ui` Card.
+
+## Installation
+
+<InstallCommand item="card" />
+
+## Usage
+
+```tsx
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from '@/components/dhis2/ui/card'
+
+export const FacilityCard = () => (
+    <Card>
+        <CardHeader>
+            <CardTitle>Ngelehun CHC</CardTitle>
+            <CardDescription>Last report 2 Nov 2026</CardDescription>
+        </CardHeader>
+        <CardContent>14 people due for a visit this week</CardContent>
+        <CardFooter>
+            <Button variant="outline" size="sm">
+                Open list
+            </Button>
+        </CardFooter>
+    </Card>
+)
+```
+
+Every part is optional. A card can hold just `CardContent`.
+
+## Using cards well
+
+- Give each card one topic, and a title that names it.
+- Put the card's main action in the footer, so users find it in the same
+  place on every card.
+- Lay out several cards in a grid, such as `grid gap-4 sm:grid-cols-2`, so
+  they line up and stack on a phone.
+- Do not put cards inside cards. Use headings or a separator instead.
+
+## API reference
+
+- `Card` — the surface, with the DHIS2 card shadow.
+- `CardHeader` — holds the title and description.
+- `CardTitle` — the card's name.
+- `CardDescription` — a line of detail under the title.
+- `CardContent` — the body.
+- `CardFooter` — actions, in a row.
+
+Every part accepts `className` and the props of a `div`.

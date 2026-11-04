@@ -15,7 +15,9 @@ packages/
     blocks/
       context-selector/ Capture-style controlled context-selector primitives
       working-list/     Working List block
+      working-list-calendar/ Month calendar layout for a Working List
       sidebar/          Composable modeling-app navigation with a collapse rail
+      timeline/         Read-only timeline layout, with tracker history hooks in dhis2/
     test/               Shared Vitest browser setup
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
@@ -112,6 +114,39 @@ Collapsing preserves the open groups and selected page.
 
 See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
 examples.
+
+## Timeline block
+
+Show a person's history across programs: events, enrollment milestones and
+notes, and attribute changes, grouped by day around "now".
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/timeline
+```
+
+Import the layout from `@/components/timeline` and the tracker layer from
+`@/components/timeline/dhis2`. `Timeline` takes a plain array of entries and
+never fetches; `useTrackedEntityHistory` returns that array for one tracked
+entity in every program they are enrolled in, and `TimelineHistoryEntry`
+renders each entry. See [the block's README](packages/registry/blocks/timeline/README.md),
+`/blocks/timeline` in the docs and `/playground/timeline`.
+
+## Working List Calendar block
+
+Shows a Working List's records on a month calendar in the DHIS2 system
+calendar. It installs the Working List block with it.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list-calendar
+```
+
+Render `WorkingListCalendar` inside `WorkingList`, beside or instead of
+`WorkingListTable`, and compose `WorkingListCalendarNavigation`,
+`WorkingListCalendarGrid` and `WorkingListCalendarDayRecords` inside it.
+`dateField` picks the date that places records. The calendar reads the list's
+filters through `useWorkingListDateBounds` and `useWorkingListDateRange` and
+never changes the saved view.
+See the calendar view on `/blocks/working-list`.
 
 ## Working List block
 
@@ -264,8 +299,7 @@ derives every item from source:
   `@components/dhis2/ui/`, and `theme.css` becomes the `dhis2-theme` item;
 - each `packages/registry/blocks/<name>/` folder is a `registry:block` item installed to
   `@components/<name>/`, with its title, description and docs from
-  `block.json`; tests, `__tests__/` and
-  `type-tests/` are never shipped;
+  `block.json`; tests and `__tests__/` are never shipped;
 - npm `dependencies` come from each item's imports, versioned by
   `packages/registry/package.json`, and `registryDependencies` from its
   `@/components/dhis2/ui/*` and `@/components/<block>` imports.

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import React, { useState, type ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
+import { describe, expect, it, vi } from 'vitest'
 import { useWorkingListDateRange } from '@/components/working-list'
 import { resolveWorkingListCapabilities } from '@/components/working-list/api/capabilities'
 import type {
@@ -29,13 +30,13 @@ import { SavedListNotFoundError } from '@/components/working-list/provider/error
 import { createWorkingListProviderStore } from '@/components/working-list/provider/store'
 import { createWorkingListValueTransformers } from '@/components/working-list/registry/transformers'
 import {
-    WorkingListCalendar,
-    WorkingListCalendarGrid,
-    WorkingListCalendarNavigation,
-    WorkingListCalendarDayRecords,
-    useWorkingListCalendar,
-    useWorkingListCalendarDay,
-} from '..'
+    CalendarGrid,
+    CalendarNavigation,
+    CalendarDayRecords,
+    useCalendar,
+    useCalendarDay,
+} from '@/components/calendar'
+import { ListCalendar } from '../ListCalendar'
 
 const program: TrackerProgram = {
     id: 'Program0001',
@@ -236,23 +237,107 @@ const renderInList = (
 }
 
 describe('working list calendar in a list', () => {
-    it('keeps tracker targets, custom labels and statuses in the adapter', async () => {
+    it('waits for the active working list before reading its state', async () => {
+        const { screen, requests } = renderInList(
+            <ListCalendar>
+                <CalendarGrid />
+            </ListCalendar>,
+            {
+                selection: { status: 'pending' },
+            }
+        )
+        const view = await screen
+        await expect
+            .element(view.getByText('Loading the working list…'))
+            .toBeVisible()
+        expect(requests).toEqual([])
+    })
+
+    it('forwards a failed query and retries it from Calendar', async () => {
+        let fail = true
+        const view = await renderInList(
+            <ListCalendar defaultSelectedDay="2026-11-14">
+                <CalendarGrid />
+            </ListCalendar>,
+            {
+                respond: () => {
+                    if (fail) throw new Error('Request failed')
+                    return { trackedEntities: [] }
+                },
+            }
+        ).screen
+        await expect
+            .element(view.getByText('Records could not be loaded'))
+            .toBeVisible()
+        fail = false
+        await view.getByRole('button', { name: 'Try again' }).click()
+        await expect
+            .element(view.getByText('No records this month.'))
+            .toBeVisible()
+    })
+
+    it('preserves truncation instead of presenting a limited query as a complete month', async () => {
+        const view = await renderInList(
+            <ListCalendar defaultSelectedDay="2026-11-14" limit={1}>
+                <CalendarGrid />
+            </ListCalendar>,
+            {
+                respond: () => ({
+                    trackedEntities: [
+                        entity('EntityAaaa1', 'Amina', '2026-11-14T00:00:00'),
+                        entity('EntityBbbb1', 'Bo', '2026-11-14T00:00:00'),
+                    ],
+                }),
+            }
+        ).screen
+        await expect
+            .element(view.getByText(/Showing the first 1 records/))
+            .toBeVisible()
+    })
+
+    it('falls back from a blank custom label and deduplicates repeated records', async () => {
+        const record = entity('EntityAaaa1', 'Amina', '2026-11-14T00:00:00')
+        const open = vi.fn()
+        const view = await renderInList(
+            <ListCalendar
+                defaultSelectedDay="2026-11-14"
+                recordLabel={() => '  '}
+                onRecordClick={open}
+            >
+                <CalendarGrid />
+                <CalendarDayRecords />
+            </ListCalendar>,
+            { respond: () => ({ trackedEntities: [record, record] }) }
+        ).screen
+        await expect
+            .element(
+                view.getByRole('button', { name: '14 November 2026, 1 record' })
+            )
+            .toBeVisible()
+        await view.getByRole('button', { name: 'Unnamed record' }).click()
+        expect(open).toHaveBeenCalledWith(
+            expect.objectContaining({ trackedEntityId: 'EntityAaaa1' })
+        )
+    })
+
+    it('composes plain records and forwards tracker targets on click', async () => {
         const open = vi.fn()
         const Probe = () => {
-            const { dateField, selectedDay, results } = useWorkingListCalendar()
+            const {
+                state: { selectedDay, results },
+            } = useCalendar()
             return (
-                <output aria-label="Adapter state">
-                    {dateField} / {results.status} /{' '}
-                    {selectedDay?.records[0]?.target?.mode}
+                <output aria-label="Composition state">
+                    {results.status} / {selectedDay?.records[0]?.id}
                 </output>
             )
         }
         const Cell = () => {
-            const { day } = useWorkingListCalendarDay()
-            return <span>{day.records[0]?.target?.mode}</span>
+            const { day } = useCalendarDay()
+            return <span>{day.records[0]?.label}</span>
         }
         const view = await renderInList(
-            <WorkingListCalendar
+            <ListCalendar
                 defaultSelectedDay="2026-11-14"
                 onRecordClick={open}
                 recordLabel={(_row, text) => `Visit: ${text('Attribute01')}`}
@@ -262,12 +347,12 @@ describe('working list calendar in a list', () => {
                     tone: 'warning',
                 })}
             >
-                <WorkingListCalendarGrid>
+                <CalendarGrid>
                     <Cell />
-                </WorkingListCalendarGrid>
-                <WorkingListCalendarDayRecords />
+                </CalendarGrid>
+                <CalendarDayRecords />
                 <Probe />
-            </WorkingListCalendar>,
+            </ListCalendar>,
             {
                 respond: () => ({
                     trackedEntities: [
@@ -277,13 +362,13 @@ describe('working list calendar in a list', () => {
             }
         ).screen
         await expect
-            .element(view.getByLabelText('Adapter state'))
-            .toHaveTextContent('enrolledAt / ready / trackedEntity')
+            .element(view.getByLabelText('Composition state'))
+            .toHaveTextContent('ready / EntityAaaa1')
         await expect
             .element(
                 view.getByRole('button', { name: '14 November 2026, 1 record' })
             )
-            .toHaveTextContent('trackedEntity')
+            .toHaveTextContent('Visit: Amina')
         await expect
             .element(view.getByText('Needs review', { exact: true }))
             .toBeVisible()
@@ -297,12 +382,12 @@ describe('working list calendar in a list', () => {
 
     it('names records with the organisation units it loaded', async () => {
         const { screen, requests } = renderInList(
-            <WorkingListCalendar
+            <ListCalendar
                 defaultSelectedDay="2026-11-14"
                 defaultDisplay="records"
             >
-                <WorkingListCalendarGrid />
-            </WorkingListCalendar>,
+                <CalendarGrid />
+            </ListCalendar>,
             {
                 respond: () => ({
                     trackedEntities: [
@@ -334,9 +419,9 @@ describe('working list calendar in a list', () => {
         const enrolledAt = metadata.fields.get('enrolledAt')
         if (!enrolledAt) throw new Error('enrolledAt is missing')
         const { screen } = renderInList(
-            <WorkingListCalendar>
-                <WorkingListCalendarNavigation />
-            </WorkingListCalendar>,
+            <ListCalendar>
+                <CalendarNavigation />
+            </ListCalendar>,
             {
                 filters: [
                     {
@@ -376,12 +461,12 @@ describe('working list calendar in a list', () => {
                     <button type="button" onClick={() => setDay(null)}>
                         Clear
                     </button>
-                    <WorkingListCalendar
+                    <ListCalendar
                         selectedDay={day}
                         onSelectedDayChange={setDay}
                     >
-                        <WorkingListCalendarNavigation />
-                    </WorkingListCalendar>
+                        <CalendarNavigation />
+                    </ListCalendar>
                 </>
             )
         }
@@ -395,10 +480,10 @@ describe('working list calendar in a list', () => {
 
     it('says it is loading a new month instead of showing the last one', async () => {
         const { screen } = renderInList(
-            <WorkingListCalendar defaultSelectedDay="2026-11-14">
-                <WorkingListCalendarNavigation />
-                <WorkingListCalendarGrid />
-            </WorkingListCalendar>,
+            <ListCalendar defaultSelectedDay="2026-11-14">
+                <CalendarNavigation />
+                <CalendarGrid />
+            </ListCalendar>,
             {
                 respond: (request) =>
                     request.params?.enrollmentEnrolledAfter === '2026-10-26'
@@ -419,7 +504,7 @@ describe('working list calendar in a list', () => {
     })
 
     it('offers the default list when the saved list is unavailable', async () => {
-        const view = await renderInList(<WorkingListCalendar />, {
+        const view = await renderInList(<ListCalendar />, {
             selection: {
                 status: 'error',
                 requestedSavedListId: 'SavedList01',
@@ -438,9 +523,9 @@ describe('working list calendar in a list', () => {
 
     it('says the Coptic calendar is not supported yet', async () => {
         const view = await renderInList(
-            <WorkingListCalendar>
-                <WorkingListCalendarGrid />
-            </WorkingListCalendar>,
+            <ListCalendar>
+                <CalendarGrid />
+            </ListCalendar>,
             { calendar: 'coptic' }
         ).screen
 

@@ -28,7 +28,7 @@ export const PICKER_CALENDARS = {
 const pad = (value: number, length = 2) => String(value).padStart(length, '0')
 
 /** Today in `calendar`, written the way the date picker writes days. */
-export const todayIn = (calendar: string, timeZone: string) => {
+const todayIn = (calendar: string, timeZone: string) => {
     const now = getNowInCalendar(calendar, timeZone)
     const year = calendar === 'iso8601' ? now.year : (now.eraYear ?? now.year)
     return `${pad(year, 4)}-${pad(now.month)}-${pad(now.day)}`

@@ -187,7 +187,8 @@ const checkInstall = (workDirectory: string): void => {
             'exec',
             'shadcn',
             'add',
-            join(registryOutput, 'working-list-calendar.json'),
+            join(registryOutput, 'working-list.json'),
+            join(registryOutput, 'calendar.json'),
             join(registryOutput, 'context-selector.json'),
             join(registryOutput, 'sidebar.json'),
             join(registryOutput, 'dhis2-value-display.json'),
@@ -199,6 +200,16 @@ const checkInstall = (workDirectory: string): void => {
         ],
         REPO_ROOT
     )
+
+    cpSync(
+        join(REPO_ROOT, 'apps/docs/src/examples/working-list/ListCalendar.tsx'),
+        join(appDirectory, 'src/ListCalendar.tsx')
+    )
+    if (
+        existsSync(join(appDirectory, 'src/components/working-list-calendar'))
+    ) {
+        fail(3, 'Working List + Calendar must not install the removed adapter')
+    }
 
     step('4. No files land in components/ui')
     if (existsSync(join(appDirectory, 'src', 'components', 'ui'))) {

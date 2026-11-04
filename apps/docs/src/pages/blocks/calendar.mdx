@@ -115,13 +115,8 @@ a headless composition, as `Calendar` does.
 
 ## Working List integration
 
-Use [Working List Calendar](/blocks/working-list#calendar-view) for tracker
-data. It supplies list readiness, system calendar settings, filter bounds,
-visible-range queries, labels, tracker statuses and record targets.
-Navigation, selection, grid layout, keyboard handling, counts, weekend
-columns and day details all come from this block.
-
-Existing `WorkingListCalendar*` component names remain available as aliases,
-and the working-list hooks retain date fields, query results and tracker targets.
-Shared parts now use `data-slot="calendar-*"`; the working-list root retains
-`data-slot="working-list-calendar"`.
+Compose this block with [Working List](/blocks/working-list#calendar-view) for
+tracker data. That page contains the complete, tested recipe used by its
+playground: Working List supplies date-window queries, filter bounds and tracker
+targets; your app maps records and connects the callbacks. There is no separate
+Working List Calendar block or compatibility API.

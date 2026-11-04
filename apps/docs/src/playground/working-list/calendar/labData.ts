@@ -1,9 +1,6 @@
-import type {
-    WorkingListCalendarDateField,
-    WorkingListCalendarProps,
-    WorkingListCalendarTone,
-    WorkingListCalendarWeekday,
-} from '@/components/working-list-calendar'
+import type { CalendarTone, CalendarWeekday } from '@/components/calendar'
+import type { WorkingListDateFieldId } from '@/components/working-list'
+import type { ListCalendarProps } from '../../../examples/working-list/ListCalendar'
 import type { LabNetwork } from '../../network'
 
 export const LAB_PROGRAM = 'labProgram1'
@@ -59,7 +56,7 @@ export interface LabServer {
 }
 
 export interface LabView {
-    dateField: WorkingListCalendarDateField | 'default'
+    dateField: WorkingListDateFieldId | 'default'
     limit: number
     clickable: boolean
     controlledDay: boolean
@@ -280,7 +277,7 @@ export const generateWorld = (data: LabData, today = isoToday()): World => {
 /** The recordLabel the lab passes for its label setting. */
 export const recordLabelFor = (
     view: LabView
-): WorkingListCalendarProps['recordLabel'] => {
+): ListCalendarProps['recordLabel'] => {
     switch (view.recordLabel) {
         case 'fields':
             return (_row, cellText) =>
@@ -303,7 +300,7 @@ const WEEKENDS = {
     satSun: [6, 7],
     friSat: [5, 6],
     sun: [7],
-} satisfies Record<LabView['weekend'], WorkingListCalendarWeekday[]>
+} satisfies Record<LabView['weekend'], CalendarWeekday[]>
 
 export const weekendFor = (view: LabView) => WEEKENDS[view.weekend]
 
@@ -322,7 +319,7 @@ const LOCATIONS = [
     'Tonkolili',
 ]
 
-const TONES: readonly WorkingListCalendarTone[] = [
+const TONES: readonly CalendarTone[] = [
     'info',
     'positive',
     'warning',
@@ -333,7 +330,7 @@ const TONES: readonly WorkingListCalendarTone[] = [
 /** The recordStatus the lab passes for its status setting. */
 export const recordStatusFor = (
     view: LabView
-): WorkingListCalendarProps['recordStatus'] => {
+): ListCalendarProps['recordStatus'] => {
     switch (view.recordStatus) {
         case 'none':
             return () => undefined

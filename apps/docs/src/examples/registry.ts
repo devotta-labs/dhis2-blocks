@@ -10,7 +10,7 @@ import {
 } from './working-list/WorkingListPlaceholders'
 import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
-import workingListCalendarTabsSource from './working-list-calendar/WorkingListCalendarTabs.tsx?raw'
+import workingListCalendarTabsSource from './working-list/WorkingListCalendarTabs.tsx?raw'
 import alertVariantsSource from './ui/AlertVariants.tsx?raw'
 import badgeStatusSource from './ui/BadgeStatus.tsx?raw'
 import buttonVariantsSource from './ui/ButtonVariants.tsx?raw'
@@ -114,12 +114,10 @@ const examples = [
         Placeholder: WorkingListProgramPickerPlaceholder,
     },
     {
-        slug: 'working-list-calendar/tabs',
+        slug: 'working-list/calendar',
         title: 'Working List as a calendar',
         live: true,
-        Component: lazy(
-            () => import('./working-list-calendar/WorkingListCalendarTabs')
-        ),
+        Component: lazy(() => import('./working-list/WorkingListCalendarTabs')),
         source: workingListCalendarTabsSource,
         minHeight: 900,
         Placeholder: WorkingListDefaultPlaceholder,

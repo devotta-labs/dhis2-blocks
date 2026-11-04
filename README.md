@@ -16,7 +16,6 @@ packages/
       context-selector/ Capture-style controlled context-selector primitives
       working-list/     Working List block
       calendar/         Generic month calendar for any dated records
-      working-list-calendar/ Working List data adapter for Calendar
       sidebar/          Composable modeling-app navigation with a collapse rail
       timeline/         Read-only timeline layout, with tracker history hooks in dhis2/
     test/               Shared Vitest browser setup
@@ -149,22 +148,20 @@ For remote data, `useCalendarState` exposes the visible range and
 `CalendarProvider` connects it to your query results.
 See the standalone project-milestones example at `/blocks/calendar`.
 
-## Working List Calendar block
+## Working List + Calendar composition
 
-Shows a Working List's records on a month calendar in the DHIS2 system
-calendar. It installs the Calendar and Working List blocks with it.
+Show a Working List's records on a month calendar by composing the two blocks.
 
 ```sh
-pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list-calendar
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list devotta-labs/dhis2-blocks/calendar
 ```
 
-Render `WorkingListCalendar` inside `WorkingList`, beside or instead of
-`WorkingListTable`, and compose `WorkingListCalendarNavigation`,
-`WorkingListCalendarGrid` and `WorkingListCalendarDayRecords` inside it.
-`dateField` picks the date that places records. The calendar reads the list's
-filters through `useWorkingListDateBounds` and `useWorkingListDateRange` and
-never changes the saved view.
-See the calendar view on `/blocks/working-list`.
+Copy the tested recipe from `/blocks/working-list#calendar-view`. It connects
+`useWorkingListDateBounds` and `useWorkingListDateRange` to Calendar's visible
+range, maps records and forwards tracker targets without changing the saved
+view. The same recipe runs in `/playground/working-list?display=calendar`.
+The former `working-list-calendar` block and aliases are removed; the docs
+include migration instructions. Calendar stays independent of Working List.
 
 ## Working List block
 

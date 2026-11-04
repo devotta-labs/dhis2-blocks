@@ -1,5 +1,5 @@
 {
     "title": "DHIS2 Working List",
     "description": "A composable React 18 Working List block for DHIS2 tracker programs.",
-    "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs."
+    "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs. For a calendar view, install calendar alongside working-list and follow the tested composition at /blocks/working-list#calendar-view: useWorkingListDateBounds and useWorkingListDateRange supply the date window, and getWorkingListRecordStatus resolves tracker statuses without depending on Calendar. There is no separate working-list-calendar block."
 }

@@ -1380,6 +1380,11 @@
                     "target": "@components/working-list/provider/persistSavedList.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/working-list/provider/recordStatus.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/recordStatus.ts"
+                },
+                {
                     "path": "packages/registry/blocks/working-list/provider/repair.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/provider/repair.ts"
@@ -1725,49 +1730,7 @@
                     "target": "@components/working-list/ui/types.ts"
                 }
             ],
-            "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs."
-        },
-        {
-            "name": "working-list-calendar",
-            "type": "registry:block",
-            "title": "DHIS2 Working List Calendar",
-            "description": "Connects a DHIS2 working list to the generic Calendar block, using the system calendar, list filters and tracker record targets.",
-            "dependencies": ["@dhis2/d2-i18n@1.2.0", "zod@^4.4.3"],
-            "registryDependencies": [
-                "devotta-labs/dhis2-blocks/calendar",
-                "devotta-labs/dhis2-blocks/cn",
-                "devotta-labs/dhis2-blocks/dhis2-theme",
-                "devotta-labs/dhis2-blocks/spinner",
-                "devotta-labs/dhis2-blocks/working-list"
-            ],
-            "files": [
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendar.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/WorkingListCalendar.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/context.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/context.ts"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/index.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/index.ts"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/recordLabel.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/recordLabel.ts"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/recordStatus.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/recordStatus.ts"
-                }
-            ],
-            "docs": "Install alongside the working-list block and render WorkingListCalendar inside WorkingList, beside or instead of WorkingListTable. Compose WorkingListCalendarNavigation, WorkingListCalendarGrid and WorkingListCalendarDayRecords inside it, or build your own layout with useWorkingListCalendar. dateField picks the date that places records: enrolledAt or enrollmentOccurredAt for tracked entities, eventOccurredAt or eventScheduledAt for events. The calendar reads the list's saved view and filters but never changes them. The selected day works uncontrolled or as a controlled selectedDay/onSelectedDayChange pair."
+            "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs. For a calendar view, install calendar alongside working-list and follow the tested composition at /blocks/working-list#calendar-view: useWorkingListDateBounds and useWorkingListDateRange supply the date window, and getWorkingListRecordStatus resolves tracker statuses without depending on Calendar. There is no separate working-list-calendar block."
         }
     ]
 }

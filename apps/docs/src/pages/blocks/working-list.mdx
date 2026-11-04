@@ -5,6 +5,8 @@ description: A filtered, sortable list for finding and reviewing tracker records
 
 import { ExampleCard } from '../../components/ExampleCard'
 import { InstallCommand } from '../../components/InstallCommand'
+import { HighlightedCodeBlock } from '../../components/HighlightedCodeBlock'
+import listCalendarSource from '../../examples/working-list/ListCalendar.tsx?raw'
 
 <ExampleCard slug="working-list/default" />
 
@@ -120,7 +122,7 @@ or delete in your app also apply wherever else they use those views.
 
 ## Calendar view
 
-<ExampleCard slug="working-list-calendar/tabs" />
+<ExampleCard slug="working-list/calendar" />
 
 The calendar shows the same records as the table, placed on a month by one of
 their dates. It uses the same saved view, filters and organisation unit, so
@@ -128,36 +130,39 @@ users can switch between the two without losing their place. It answers
 questions like "who is due this week?" or "what happened on the 14th?" at a
 glance.
 
-<InstallCommand item="working-list-calendar" />
+Install [Calendar](/blocks/calendar) alongside Working List:
 
-This installs the generic [Calendar](/blocks/calendar) block too. Working List
-Calendar only supplies list data, filter bounds, labels, statuses and tracker
-targets; all calendar interactions and rendering live in Calendar. Use Calendar
-directly for non-working-list data.
+<InstallCommand item="calendar" />
 
-Render `WorkingListCalendar` inside `WorkingList`, beside or instead of
-`WorkingListTable`:
+This is a composition of **Working List + Calendar**, not another registry block.
+Working List owns queries, filters, date conversion and tracker targets; Calendar
+owns rendering, navigation and selection. The app chooses labels, colours and
+which calendar parts to render.
+
+Copy the `ListCalendar` recipe below into your app, then render it inside
+`WorkingList`, beside or instead of `WorkingListTable`:
 
 ```tsx
 import {
-    WorkingListCalendar,
-    WorkingListCalendarDayRecords,
-    WorkingListCalendarGrid,
-    WorkingListCalendarNavigation,
-} from '@/components/working-list-calendar'
+    CalendarDayRecords,
+    CalendarGrid,
+    CalendarNavigation,
+} from '@/components/calendar'
+import { WorkingList } from '@/components/working-list'
+import { ListCalendar } from './ListCalendar'
 
 ;<WorkingList programId={programId} orgUnitId={orgUnitId}>
-    <WorkingListCalendar onRecordClick={(record) => openRecord(record)}>
-        <WorkingListCalendarNavigation />
-        <WorkingListCalendarGrid />
-        <WorkingListCalendarDayRecords />
-    </WorkingListCalendar>
+    <ListCalendar onRecordClick={(target) => openRecord(target)}>
+        <CalendarNavigation />
+        <CalendarGrid />
+        <CalendarDayRecords />
+    </ListCalendar>
 </WorkingList>
 ```
 
 Each day counts its records by status, such as "6 Active, 2 Completed".
 Selecting a day lists its records, and clicking one opens it, just like a row
-in the table. Add `WorkingListCalendarDisplayToggle` to let users show names
+in the table. Add `CalendarDisplayToggle` to let users show names
 instead of counts. Dates follow the instance's calendar, such as Ethiopian or
 Nepali.
 
@@ -167,7 +172,7 @@ A few choices to fit your program:
   enrollment date (`enrolledAt`) or the incident date
   (`enrollmentOccurredAt`); events use the report date (`eventOccurredAt`)
   or the scheduled date (`eventScheduledAt`).
-- `weekend` on `WorkingListCalendarGrid` — the days that count as the
+- `weekend` on `CalendarGrid` — the days that count as the
   weekend, such as `[6, 7]` for Saturday and Sunday. Add
   `weekendColumns="narrow"` or `"hide"` to give them less room.
 - `recordLabel` and `recordStatus` — your own names and status colours for
@@ -176,6 +181,52 @@ A few choices to fit your program:
 The calendar shows one month at a time and loads up to 1000 records for the
 weeks on screen; it says so when there are more. Coptic calendars are not
 supported yet.
+
+Omit `CalendarDayRecords` for a full-width calendar. Custom side content can
+opt into the side column with `data-calendar-panel=""` on its outer DOM element.
+Try the same recipe in the [Working List playground](/playground/working-list?display=calendar):
+switch between table and calendar, change the date field or system calendar,
+and simulate slow, failed or hanging requests.
+
+### Copyable composition
+
+This is the exact source used by the example and playground, covered by browser
+tests. Save it as `ListCalendar.tsx` beside the example. It is app-owned code,
+not an import from a third block.
+
+<HighlightedCodeBlock
+    code={listCalendarSource}
+    language="tsx"
+    contentClassName="max-h-[640px]"
+/>
+
+The important connections are:
+
+- Wait for `useWorkingListMeta().activeConfiguration` before reading list state.
+- `useWorkingListDateBounds(fieldId)` supplies the instance calendar, server time
+  zone and saved-filter bounds. Handle unsupported Coptic before mounting
+  `useCalendarState`.
+- Pass `useCalendarState().visibleRange` to `useWorkingListDateRange`. Do not use
+  the table's current page as a month's workload; the hook loads the date window
+  without changing saved filters or table pagination.
+- Map dates, labels and statuses into plain calendar records. Keep record IDs
+  (event IDs for visits), not a shared person's ID. `getWorkingListRecordStatus`
+  supplies tracker status labels and marks past scheduled visits overdue in the
+  server time zone; the recipe chooses colours.
+- Forward pending, error/retry, `isUpdating` and `truncated` results unchanged.
+  A limited result set must not look like a complete workload.
+- Keep tracker targets outside Calendar, and look them up when a record is
+  clicked. Use `onSelectedDayChange` for your own date-selection flow.
+
+### Migrating from Working List Calendar
+
+The `working-list-calendar` registry item and its compatibility exports have
+been removed. Install `working-list` and `calendar`, copy this recipe, and
+replace `WorkingListCalendar*` children with their `Calendar*` counterparts.
+Use `useCalendar` (`state`, `actions`, `meta`) and `useCalendarDay` for custom UI;
+list queries and tracker targets remain in your composition. Shared DOM slots
+use `calendar-*`; the recipe has no legacy `working-list-calendar` slot.
+Previously copied source is not automatically removed from your application.
 
 ## API reference
 

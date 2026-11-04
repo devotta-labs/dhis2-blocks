@@ -102,6 +102,11 @@ test('evaluates the visible rows first and the rest when idle', async () => {
 
     // The first row is in view, so it is in the first slice.
     expect(assigned(rows[0].id)).toBe(true)
+    await expect
+        .poll(() =>
+            performance.getEntriesByName('data-entry:rules-visible', 'measure')
+        )
+        .toHaveLength(1)
     idle.run()
     expect(rows.filter(({ id }) => assigned(id))).toHaveLength(60)
     // Shown, not saved: no person changed these rows.

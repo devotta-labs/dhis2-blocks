@@ -12,11 +12,11 @@ import {
     WorkingListViewSwitcher,
 } from '@/components/working-list'
 import {
-    WorkingListCalendar,
-    WorkingListCalendarDayRecords,
-    WorkingListCalendarGrid,
-    WorkingListCalendarNavigation,
-} from '@/components/working-list-calendar'
+    CalendarDayRecords,
+    CalendarGrid,
+    CalendarNavigation,
+} from '@/components/calendar'
+import { ListCalendar } from './ListCalendar'
 
 type Layout = 'table' | 'calendar'
 
@@ -61,11 +61,11 @@ const WorkingListCalendarTabs = () => {
             {layout === 'table' ? (
                 <WorkingListTable />
             ) : (
-                <WorkingListCalendar className="p-2">
-                    <WorkingListCalendarNavigation />
-                    <WorkingListCalendarGrid />
-                    <WorkingListCalendarDayRecords />
-                </WorkingListCalendar>
+                <ListCalendar className="p-2">
+                    <CalendarNavigation />
+                    <CalendarGrid />
+                    <CalendarDayRecords />
+                </ListCalendar>
             )}
         </WorkingList>
     )

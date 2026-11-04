@@ -5,6 +5,11 @@ import i18n from '@dhis2/d2-i18n'
  * literal `i18n.t` calls. This function is intentionally never invoked.
  */
 export const workingListTranslationCatalog = () => [
+    i18n.t('Calendar'),
+    i18n.t('The calendar layout does not support the Coptic calendar yet.'),
+    i18n.t(
+        'Showing the first {{count}} records in these weeks. Narrow the date range to see the rest.'
+    ),
     i18n.t('A required value is missing'),
     i18n.t(
         'A required part of this list is no longer available. The program metadata may have changed, or you may no longer have access. Select another list, or use the list menu for more options.'

@@ -6,6 +6,12 @@ import {
 } from '@/components/observation-cards'
 import { WorkingList } from '@/components/working-list'
 import {
+    CalendarGrid,
+    CalendarNavigation,
+    CalendarDayRecords,
+} from '@/components/calendar'
+import { ListCalendar } from './ListCalendar'
+import {
     Sidebar,
     SidebarContent,
     SidebarGroup,
@@ -58,7 +64,11 @@ if (root !== null) {
                 <ObservationCard dataElement="dataElement" unit="kg" />
             </ObservationsProvider>
             <WorkingList programId="program" orgUnitId="orgUnit">
-                {null}
+                <ListCalendar>
+                    <CalendarNavigation />
+                    <CalendarGrid />
+                    <CalendarDayRecords />
+                </ListCalendar>
             </WorkingList>
         </>
     )

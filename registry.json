@@ -584,6 +584,80 @@
             ]
         },
         {
+            "name": "calendar",
+            "type": "registry:block",
+            "title": "Calendar",
+            "description": "A composable month calendar for any dated records, with navigation, selection, status counts and day details.",
+            "dependencies": [
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@3.2.1",
+                "@dhis2/ui-icons@^10.17.0",
+                "prop-types@^15.8.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/select",
+                "devotta-labs/dhis2-blocks/spinner",
+                "devotta-labs/dhis2-blocks/toggle-group"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/calendar/Calendar.tsx",
+                    "type": "registry:file",
+                    "target": "@components/calendar/Calendar.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/calendar/CalendarCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/calendar/CalendarCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/calendar/CalendarDayRecords.tsx",
+                    "type": "registry:file",
+                    "target": "@components/calendar/CalendarDayRecords.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/calendar/CalendarDisplayToggle.tsx",
+                    "type": "registry:file",
+                    "target": "@components/calendar/CalendarDisplayToggle.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/calendar/CalendarGrid.tsx",
+                    "type": "registry:file",
+                    "target": "@components/calendar/CalendarGrid.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/calendar/CalendarNavigation.tsx",
+                    "type": "registry:file",
+                    "target": "@components/calendar/CalendarNavigation.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/calendar/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/calendar/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/calendar/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/calendar/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/calendar/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/calendar/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/calendar/useCalendarState.ts",
+                    "type": "registry:file",
+                    "target": "@components/calendar/useCalendarState.ts"
+                }
+            ],
+            "docs": "Calendar accepts plain records and needs no Working List or data provider. Compose CalendarNavigation, CalendarGrid and CalendarDayRecords inside it. For remote data, useCalendarState exposes the visible date range and CalendarProvider connects the state to your results. Dates use the selected calendar, which defaults to Gregorian."
+        },
+        {
             "name": "context-selector",
             "type": "registry:block",
             "title": "DHIS2 Context Selector",
@@ -1578,6 +1652,11 @@
                     "target": "@components/working-list/provider/persistSavedList.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/working-list/provider/recordStatus.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/recordStatus.ts"
+                },
+                {
                     "path": "packages/registry/blocks/working-list/provider/repair.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/provider/repair.ts"
@@ -1923,78 +2002,7 @@
                     "target": "@components/working-list/ui/types.ts"
                 }
             ],
-            "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs."
-        },
-        {
-            "name": "working-list-calendar",
-            "type": "registry:block",
-            "title": "DHIS2 Working List Calendar",
-            "description": "Shows a DHIS2 working list's records on a month calendar, in the system calendar.",
-            "dependencies": [
-                "@dhis2/d2-i18n@1.2.0",
-                "@dhis2/multi-calendar-dates@3.2.1",
-                "@dhis2/ui-icons@^10.17.0",
-                "prop-types@^15.8.1",
-                "zod@^4.4.3"
-            ],
-            "registryDependencies": [
-                "devotta-labs/dhis2-blocks/alert",
-                "devotta-labs/dhis2-blocks/button",
-                "devotta-labs/dhis2-blocks/cn",
-                "devotta-labs/dhis2-blocks/dhis2-theme",
-                "devotta-labs/dhis2-blocks/select",
-                "devotta-labs/dhis2-blocks/spinner",
-                "devotta-labs/dhis2-blocks/toggle-group",
-                "devotta-labs/dhis2-blocks/working-list"
-            ],
-            "files": [
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendar.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/WorkingListCalendar.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarCell.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/WorkingListCalendarCell.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarDayRecords.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/WorkingListCalendarDayRecords.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarDisplayToggle.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/WorkingListCalendarDisplayToggle.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarGrid.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/WorkingListCalendarGrid.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarNavigation.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/WorkingListCalendarNavigation.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/index.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/index.ts"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/recordLabel.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/recordLabel.ts"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list-calendar/recordStatus.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list-calendar/recordStatus.ts"
-                }
-            ],
-            "docs": "Install alongside the working-list block and render WorkingListCalendar inside WorkingList, beside or instead of WorkingListTable. Compose WorkingListCalendarNavigation, WorkingListCalendarGrid and WorkingListCalendarDayRecords inside it, or build your own layout with useWorkingListCalendar. dateField picks the date that places records: enrolledAt or enrollmentOccurredAt for tracked entities, eventOccurredAt or eventScheduledAt for events. The calendar reads the list's saved view and filters but never changes them. The selected day works uncontrolled or as a controlled selectedDay/onSelectedDayChange pair."
+            "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs. For a calendar view, install calendar alongside working-list and follow the tested composition at /blocks/working-list#calendar-view: useWorkingListDateBounds and useWorkingListDateRange supply the date window, and getWorkingListRecordStatus resolves tracker statuses without depending on Calendar. There is no separate working-list-calendar block."
         }
     ]
 }

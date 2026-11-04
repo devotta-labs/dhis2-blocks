@@ -12,13 +12,13 @@ import {
     WorkingListViewSwitcher,
 } from '@/components/working-list'
 import {
-    WorkingListCalendar,
-    WorkingListCalendarCellRecords,
-    WorkingListCalendarDayRecords,
-    WorkingListCalendarDisplayToggle,
-    WorkingListCalendarGrid,
-    WorkingListCalendarNavigation,
-} from '@/components/working-list-calendar'
+    CalendarCellRecords,
+    CalendarDayRecords,
+    CalendarDisplayToggle,
+    CalendarGrid,
+    CalendarNavigation,
+} from '@/components/calendar'
+import { ListCalendar } from '../../../examples/working-list/ListCalendar'
 import {
     recordLabelFor,
     recordStatusFor,
@@ -53,7 +53,7 @@ export const CalendarCanvas = ({
         : { onSelectedDayChange }
 
     const calendar = (
-        <WorkingListCalendar
+        <ListCalendar
             // The display is a default, so a new choice remounts the calendar.
             key={view.display}
             className="p-2"
@@ -75,25 +75,25 @@ export const CalendarCanvas = ({
         >
             {view.navigation && (
                 <div className="flex flex-wrap items-center gap-2">
-                    <WorkingListCalendarNavigation />
+                    <CalendarNavigation />
                     {view.displayToggle && (
-                        <WorkingListCalendarDisplayToggle className="ms-auto" />
+                        <CalendarDisplayToggle className="ms-auto" />
                     )}
                 </div>
             )}
             {view.grid && (
-                <WorkingListCalendarGrid
+                <CalendarGrid
                     weekend={weekendFor(view)}
                     weekendColumns={view.weekendColumns}
                 >
                     {view.cell === 'records' && (
-                        <WorkingListCalendarCellRecords max={view.perDay} />
+                        <CalendarCellRecords max={view.perDay} />
                     )}
                     {view.cell === 'plainCount' && <PlainCount />}
-                </WorkingListCalendarGrid>
+                </CalendarGrid>
             )}
-            {view.dayRecords && <WorkingListCalendarDayRecords />}
-        </WorkingListCalendar>
+            {view.dayRecords && <CalendarDayRecords />}
+        </ListCalendar>
     )
     const table = (
         <WorkingListTable

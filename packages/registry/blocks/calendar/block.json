@@ -1,0 +1,5 @@
+{
+    "title": "Calendar",
+    "description": "A composable month calendar for any dated records, with navigation, selection, status counts and day details.",
+    "docs": "Calendar accepts plain records and needs no Working List or data provider. Compose CalendarNavigation, CalendarGrid and CalendarDayRecords inside it. For remote data, useCalendarState exposes the visible date range and CalendarProvider connects the state to your results. Dates use the selected calendar, which defaults to Gregorian."
+}

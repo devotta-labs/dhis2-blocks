@@ -1,4 +1,5 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
+import calendarVisitsSource from './calendar/CalendarVisits.tsx?raw'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
 import { PersonVitalsPlaceholder } from './observation-cards/ObservationCardsPlaceholders'
@@ -9,7 +10,8 @@ import {
 } from './working-list/WorkingListPlaceholders'
 import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
-import workingListCalendarTabsSource from './working-list-calendar/WorkingListCalendarTabs.tsx?raw'
+import workingListCalendarTabsSource from './working-list/WorkingListCalendarTabs.tsx?raw'
+import listCalendarSource from './working-list/ListCalendar.tsx?raw'
 import alertVariantsSource from './ui/AlertVariants.tsx?raw'
 import badgeStatusSource from './ui/BadgeStatus.tsx?raw'
 import buttonVariantsSource from './ui/ButtonVariants.tsx?raw'
@@ -45,10 +47,10 @@ import finderProgramPickerSource from './tracked-entity-finder/ProgramPicker.tsx
 /**
  * Example registry.
  *
- * Every entry is one self-contained React component that exercises the public
- * block API. The same module powers the rendered preview and the Code tab:
- * `source` is the raw example file itself, so the documentation can never
- * drift from what is executed. Readers copy that source into their own
+ * Every entry exercises the public block API. The same modules power the
+ * rendered preview and the Code tab: `source` contains the raw example file,
+ * and `sourceFiles` lists every file for multi-file examples, so docs never
+ * drift from what is executed. Readers copy those sources into their own
  * projects, so examples import blocks from `@/components/<block>` (aliased to
  * the workspace source) and leave layout chrome to the preview hosts.
  *
@@ -66,11 +68,20 @@ export interface ExampleDefinition {
     live: boolean
     Component: LazyExoticComponent<ComponentType>
     source: string
+    sourceFiles?: readonly { name: string; code: string }[]
     minHeight: number
     Placeholder?: ComponentType
 }
 
 const examples = [
+    {
+        slug: 'calendar/visits',
+        title: 'ANC visits',
+        live: false,
+        Component: lazy(() => import('./calendar/CalendarVisits')),
+        source: calendarVisitsSource,
+        minHeight: 640,
+    },
     {
         slug: 'sidebar/basic',
         title: 'Sidebar navigation',
@@ -108,13 +119,18 @@ const examples = [
         Placeholder: WorkingListProgramPickerPlaceholder,
     },
     {
-        slug: 'working-list-calendar/tabs',
+        slug: 'working-list/calendar',
         title: 'Working List as a calendar',
         live: true,
-        Component: lazy(
-            () => import('./working-list-calendar/WorkingListCalendarTabs')
-        ),
+        Component: lazy(() => import('./working-list/WorkingListCalendarTabs')),
         source: workingListCalendarTabsSource,
+        sourceFiles: [
+            {
+                name: 'WorkingListCalendarTabs.tsx',
+                code: workingListCalendarTabsSource,
+            },
+            { name: 'ListCalendar.tsx', code: listCalendarSource },
+        ],
         minHeight: 900,
         Placeholder: WorkingListDefaultPlaceholder,
     },

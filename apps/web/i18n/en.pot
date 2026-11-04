@@ -148,6 +148,19 @@ msgstr "Collapse sidebar"
 msgid "Expand sidebar"
 msgstr "Expand sidebar"
 
+msgid "Calendar"
+msgstr "Calendar"
+
+msgid "The calendar layout does not support the Coptic calendar yet."
+msgstr "The calendar layout does not support the Coptic calendar yet."
+
+msgid ""
+"Showing the first {{count}} records in these weeks. Narrow the date range "
+"to see the rest."
+msgstr ""
+"Showing the first {{count}} records in these weeks. Narrow the date range "
+"to see the rest."
+
 msgid "Searching…"
 msgstr "Searching…"
 

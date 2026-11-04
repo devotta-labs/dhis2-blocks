@@ -45,6 +45,10 @@ export {
     TRACKER_EVENT_STATUSES,
 } from './api/schemas'
 export { WORKING_LIST_PAGE_SIZES } from './provider/contracts'
+export {
+    getWorkingListRecordStatus,
+    type WorkingListRecordStatus,
+} from './provider/recordStatus'
 export type {
     AppliedFilter,
     WorkingListActions,

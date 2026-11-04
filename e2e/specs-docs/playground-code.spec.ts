@@ -14,7 +14,7 @@ test.describe('playground Canvas / Code', () => {
         [
             'working-list?display=calendar',
             'CalendarCanvas',
-            'WorkingListCalendarGrid',
+            'CalendarGrid',
             'programId',
             '"labProgram1"',
         ],
@@ -31,6 +31,13 @@ test.describe('playground Canvas / Code', () => {
             'TimelineFeed',
             'trackedEntity',
             '"labPerson01"',
+        ],
+        [
+            'tracked-entity-finder',
+            'LabFinder',
+            'FinderProvider',
+            'program',
+            '"labProgram1"',
         ],
     ]) {
         test(`shows the actual ${composition} source`, async ({ page }) => {

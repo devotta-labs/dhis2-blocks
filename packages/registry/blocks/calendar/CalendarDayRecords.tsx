@@ -2,23 +2,20 @@ import i18n from '@dhis2/d2-i18n'
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
-import {
-    useWorkingListCalendar,
-    type WorkingListCalendarDay,
-    type WorkingListCalendarRecord,
-} from './WorkingListCalendar'
-import { TONE_DOT } from './WorkingListCalendarCell'
+import { useCalendar, type CalendarDay, type CalendarRecord } from './context'
+import { TONE_DOT } from './CalendarCell'
 
-const RecordName = ({ record }: { record: WorkingListCalendarRecord }) => {
-    const { onRecordClick } = useWorkingListCalendar()
-    const { target } = record
-    if (onRecordClick && target) {
+const RecordName = ({ record }: { record: CalendarRecord }) => {
+    const {
+        actions: { onRecordClick },
+    } = useCalendar()
+    if (onRecordClick && !record.disabled) {
         return (
             <Button
                 variant="link"
                 size="sm"
                 className="h-auto min-w-0 justify-start px-0 text-start whitespace-normal text-dhis2-grey-900"
-                onClick={() => onRecordClick(target)}
+                onClick={() => onRecordClick(record)}
             >
                 {record.label}
             </Button>
@@ -27,7 +24,7 @@ const RecordName = ({ record }: { record: WorkingListCalendarRecord }) => {
     return <span className="text-sm text-dhis2-grey-900">{record.label}</span>
 }
 
-const RecordList = ({ day }: { day: WorkingListCalendarDay }) => {
+const RecordList = ({ day }: { day: CalendarDay }) => {
     if (day.records.length === 0) {
         return (
             <p className="m-0 text-sm text-dhis2-grey-700">
@@ -64,19 +61,23 @@ const RecordList = ({ day }: { day: WorkingListCalendarDay }) => {
  * Every record on the selected day, which is where a day's counts and
  * "+N more" lead. On a wide calendar it takes a column beside the grid.
  */
-export const WorkingListCalendarDayRecords = ({
+export const CalendarDayRecords = ({
     className,
     ...props
 }: ComponentPropsWithoutRef<'section'>) => {
-    const { selectedDay, dayName } = useWorkingListCalendar()
+    const {
+        state: { selectedDay },
+        meta: { dayName },
+    } = useCalendar()
 
     return (
         <section
             aria-live="polite"
             {...props}
-            data-slot="working-list-calendar-day-records"
+            data-slot="calendar-day-records"
+            data-calendar-panel=""
             className={cn(
-                'flex flex-col gap-2 rounded-dhis2-sm border border-dhis2-grey-300 bg-white p-3 @3xl:sticky @3xl:top-2 @3xl:col-start-2 @3xl:row-span-6 @3xl:row-start-1',
+                'flex flex-col gap-2 rounded-dhis2-sm border border-dhis2-grey-300 bg-white p-3 @3xl:sticky @3xl:top-2',
                 className
             )}
         >

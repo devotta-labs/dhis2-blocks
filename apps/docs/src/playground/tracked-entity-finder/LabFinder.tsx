@@ -472,16 +472,14 @@ const LiveComposed = () => {
     )
 }
 
-/** The finder, composed as the lab says; without a composition, from the program's metadata. */
-export const LabFinder = ({
-    program,
-    composition,
-    onSelect,
-}: {
+interface Props {
     program: string
     composition?: LabComposition
     onSelect: (person: FinderPerson) => void
-}) => (
+}
+
+/** The finder, composed as the lab says; without a composition, from the program's metadata. */
+export const LabFinder = ({ program, composition, onSelect }: Props) => (
     <FinderProvider program={program} onSelect={onSelect}>
         {composition ? (
             <Composed composition={composition} />

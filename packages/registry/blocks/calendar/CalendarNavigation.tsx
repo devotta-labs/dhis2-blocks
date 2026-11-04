@@ -10,40 +10,43 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/dhis2/ui/select'
-import { useWorkingListCalendar } from './WorkingListCalendar'
+import { useCalendar } from './context'
 
 /** Previous and next month around month and year selects. */
-export const WorkingListCalendarNavigation = ({
+export const CalendarNavigation = ({
     className,
     ...props
 }: ComponentPropsWithoutRef<'nav'>) => {
-    const { navigation, visibleMonth, atFilterStart, atFilterEnd } =
-        useWorkingListCalendar()
-    const year = Number(navigation.currYear.value)
+    const {
+        state: { visibleMonth, atStart, atEnd },
+        actions: { prevMonth, nextMonth, navigateToMonth, navigateToYear },
+        meta: { currYear, months, years },
+    } = useCalendar()
+    const year = Number(currYear.value)
 
     return (
         <nav
             aria-label={i18n.t('Month')}
             {...props}
-            data-slot="working-list-calendar-navigation"
+            data-slot="calendar-navigation"
             className={cn('flex items-center gap-2', className)}
         >
             <Button
                 variant="secondary"
                 size="field-dense"
                 aria-label={i18n.t('Previous month')}
-                disabled={atFilterStart}
-                onClick={navigation.prevMonth.navigateTo}
+                disabled={atStart}
+                onClick={prevMonth.navigateTo}
             >
                 <span className="flex rtl:rotate-180">
                     <IconChevronLeft16 />
                 </span>
             </Button>
             <Select
-                items={navigation.months}
+                items={months}
                 value={visibleMonth}
                 onValueChange={(month) => {
-                    if (month !== null) navigation.navigateToMonth(month)
+                    if (month !== null) navigateToMonth(month)
                 }}
             >
                 <SelectTrigger
@@ -54,7 +57,7 @@ export const WorkingListCalendarNavigation = ({
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                    {navigation.months.map((month) => (
+                    {months.map((month) => (
                         <SelectItem key={month.value} value={month.value}>
                             {month.label}
                         </SelectItem>
@@ -62,10 +65,10 @@ export const WorkingListCalendarNavigation = ({
                 </SelectContent>
             </Select>
             <Select
-                items={navigation.years}
+                items={years}
                 value={year}
                 onValueChange={(next) => {
-                    if (next !== null) navigation.navigateToYear(next)
+                    if (next !== null) navigateToYear(next)
                 }}
             >
                 <SelectTrigger
@@ -76,7 +79,7 @@ export const WorkingListCalendarNavigation = ({
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                    {navigation.years.map((option) => (
+                    {years.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                             {option.label}
                         </SelectItem>
@@ -87,8 +90,8 @@ export const WorkingListCalendarNavigation = ({
                 variant="secondary"
                 size="field-dense"
                 aria-label={i18n.t('Next month')}
-                disabled={atFilterEnd}
-                onClick={navigation.nextMonth.navigateTo}
+                disabled={atEnd}
+                onClick={nextMonth.navigateTo}
             >
                 <span className="flex rtl:rotate-180">
                     <IconChevronRight16 />

@@ -1,4 +1,10 @@
 import { createRoot } from 'react-dom/client'
+import {
+    Calendar,
+    CalendarNavigation,
+    CalendarGrid,
+    CalendarDayRecords,
+} from '@/components/calendar'
 import { Line, LineChart } from 'recharts'
 import { Badge } from '@/components/dhis2/ui/badge'
 import { Button } from '@/components/dhis2/ui/button'
@@ -36,6 +42,13 @@ if (root !== null) {
     createRoot(root).render(
         <>
             <Host />
+            <Calendar
+                records={[{ id: 'task', date: '2026-11-14', label: 'Launch' }]}
+            >
+                <CalendarNavigation />
+                <CalendarGrid />
+                <CalendarDayRecords />
+            </Calendar>
             <Card>
                 <CardHeader>
                     <CardTitle>Standalone shared controls</CardTitle>

@@ -15,7 +15,7 @@ packages/
     blocks/
       context-selector/ Capture-style controlled context-selector primitives
       working-list/     Working List block
-      working-list-calendar/ Month calendar layout for a Working List
+      calendar/         Generic month calendar for any dated records
       sidebar/          Composable modeling-app navigation with a collapse rail
       timeline/         Read-only timeline layout, with tracker history hooks in dhis2/
     test/               Shared Vitest browser setup
@@ -131,22 +131,36 @@ entity in every program they are enrolled in, and `TimelineHistoryEntry`
 renders each entry. See [the block's README](packages/registry/blocks/timeline/README.md),
 `/blocks/timeline` in the docs and `/playground/timeline`.
 
-## Working List Calendar block
+## Calendar block
 
-Shows a Working List's records on a month calendar in the DHIS2 system
-calendar. It installs the Working List block with it.
+A standalone month calendar for any dated records, with navigation, selection,
+status counts, weekend columns and a selected-day list. No Working List or
+data provider is required.
 
 ```sh
-pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list-calendar
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/calendar
 ```
 
-Render `WorkingListCalendar` inside `WorkingList`, beside or instead of
-`WorkingListTable`, and compose `WorkingListCalendarNavigation`,
-`WorkingListCalendarGrid` and `WorkingListCalendarDayRecords` inside it.
-`dateField` picks the date that places records. The calendar reads the list's
-filters through `useWorkingListDateBounds` and `useWorkingListDateRange` and
-never changes the saved view.
-See the calendar view on `/blocks/working-list`.
+Import `Calendar`, `CalendarNavigation`, `CalendarGrid` and
+`CalendarDayRecords` from `@/components/calendar`. Supply records with
+`id`, `date` and `label`; optionally add a status and `onRecordClick`.
+For remote data, `useCalendarState` exposes the visible range and
+`CalendarProvider` connects it to your query results.
+See the standalone project-milestones example at `/blocks/calendar`.
+
+## Working List + Calendar composition
+
+Show a Working List's records on a month calendar by composing the two blocks.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list devotta-labs/dhis2-blocks/calendar
+```
+
+Copy the tested recipe from `/blocks/working-list#calendar-view`. It connects
+`useWorkingListDateBounds` and `useWorkingListDateRange` to Calendar's visible
+range, maps records and forwards tracker targets without changing the saved
+view. The same recipe runs in `/playground/working-list?display=calendar`.
+Calendar stays independent of Working List.
 
 ## Working List block
 

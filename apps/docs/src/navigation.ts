@@ -58,6 +58,7 @@ export const docsNavigation: readonly NavigationSection[] = [
                 title: 'EMR',
                 links: [
                     { title: 'Working List', href: '/blocks/working-list' },
+                    { title: 'Calendar', href: '/blocks/calendar' },
                     {
                         title: 'Observation Cards',
                         href: '/blocks/observation-cards',

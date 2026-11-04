@@ -1,0 +1,125 @@
+---
+title: Calendar
+description: See scheduled visits and clinic activity, day by day.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+See who is expected at the clinic and select a day to review their visits.
+
+<ExampleCard slug="calendar/visits" />
+
+This example uses fictional antenatal care (ANC) visits. The Schedule button
+is illustrative only; it does not create a visit.
+
+## Installation
+
+<InstallCommand item="calendar" />
+
+Calendar has no Working List, app-runtime, or query-client dependency. Supply
+plain records with an `id`, `date`, and `label`. Optional statuses provide
+colours and grouped counts. `onRecordClick` receives the selected record;
+use its ID to look up your application's own data.
+
+## Composition and selection
+
+Compose `CalendarNavigation`, `CalendarDisplayToggle`, `CalendarGrid`, and
+`CalendarDayRecords` inside `Calendar`. Leave out any part you do not need.
+Use `useCalendar` for custom navigation or day details: `state` holds days,
+selection and results, `actions` holds selection/display/navigation callbacks,
+and `meta` holds labels and month/year choices. Use
+`useCalendarDay` inside a grid cell. The default cell content is
+`CalendarCellRecords`; pass `max` to change how many names or status groups show.
+
+Selection and display work uncontrolled with `defaultSelectedDay` and
+`defaultDisplay`, or controlled with `selectedDay/onSelectedDayChange` and
+`display/onDisplayChange`. Clearing selection keeps the visible month.
+
+`start` and `end` bound selectable days. `weekend` accepts ISO weekdays
+(Monday = 1), with `weekendColumns="show" | "narrow" | "hide"`.
+
+### Optional side content
+
+Without `CalendarDayRecords`, the calendar fills the available width. With it,
+the layout adds an 18rem side column at the `@3xl` container breakpoint. Below
+that breakpoint, children stack in source order.
+
+Custom components work too: put `data-calendar-panel=""` on the outer DOM
+element of your side content. `CalendarDayRecords` already includes this marker.
+Unmarked children stay in the main column; the layout does not inspect React
+component types or require a `showPanel` prop.
+
+```tsx
+<Calendar records={visits}>
+    <CalendarNavigation />
+    <CalendarGrid />
+    {selectedPatient && (
+        <aside data-calendar-panel="">
+            <VisitSummary patient={selectedPatient} />
+        </aside>
+    )}
+</Calendar>
+```
+
+The marked element must be a direct DOM child of the calendar layout. A custom
+component or React fragment can return it directly; if you add a DOM wrapper,
+put the marker on that wrapper. Group multiple side widgets inside one marked
+panel. Nested markers do not change the outer calendar's layout. These rules
+also apply to `CalendarProvider`.
+
+## Dates and calendars
+
+All dates, including bounds and selected days, are `YYYY-MM-DD` in the
+calendar you supply. Defaults are `calendar="gregorian"`, `timeZone="UTC"`,
+and `locale="en"`. Convert your API's dates before supplying them; Calendar
+does not interpret domain fields or fetch system settings.
+
+The calendar picker supports Gregorian, ISO, Ethiopian (including its thirteenth
+month), Nepali, Islamic, Persian, and Thai calendars. Coptic currently displays
+an unsupported-calendar notice due to a limitation in the date-picker library.
+
+## Remote data
+
+For data already loaded, pass `records` to `Calendar`. If your app owns a
+query, pass `results` instead: `{ status: 'pending' }`,
+`{ status: 'error', retry }`, or
+`{ status: 'ready', records, isUpdating?, truncated? }`.
+
+To query only the visible weeks, use `useCalendarState`. The inclusive range
+includes neighbouring days in the first and last
+week; there is no callback/effect round trip to learn it.
+
+```tsx
+import {
+    CalendarProvider,
+    CalendarNavigation,
+    CalendarGrid,
+    CalendarDayRecords,
+    useCalendarState,
+} from '@/components/calendar'
+
+function AppointmentCalendar() {
+    const state = useCalendarState({ calendar: 'gregorian', timeZone: 'UTC' })
+    const results = useAppointments(state.visibleRange)
+    // useAppointments is your app's query hook, returning CalendarResults.
+    return (
+        <section className="@container" aria-label="Appointments">
+            <CalendarProvider state={state} results={results}>
+                <CalendarNavigation />
+                <CalendarGrid />
+                <CalendarDayRecords />
+            </CalendarProvider>
+        </section>
+    )
+}
+```
+
+`useCalendarState` requires a supported calendar; handle Coptic before mounting
+a headless composition, as `Calendar` does.
+
+## Working List integration
+
+Combine Calendar with [Working List](/blocks/working-list#calendar-view) to
+see tracker records by date and switch between table and calendar with the
+same filters. The example's Code tab includes the complete source.

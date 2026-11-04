@@ -11,6 +11,7 @@ import type { Log } from '../network'
 import { usePresetParam } from '../usePresetParam'
 import { LAB_PROGRAM, type LabSettings } from './labData'
 import { LabFinder } from './LabFinder'
+import canvasSource from './LabFinder.tsx?canvas'
 import { answer, RECORDS, RESOURCES } from './labServer'
 import { initialLabState, labReducer } from './labState'
 import { PRESETS } from './presets'
@@ -45,9 +46,15 @@ export const FinderLab = () => {
         () => answer({ program, server }),
         [program, server]
     )
+    const canvasProps = {
+        program: mode === 'lab' ? LAB_PROGRAM : live.programId,
+        composition: mode === 'lab' ? settings.composition : undefined,
+        onSelect,
+    }
 
     return (
         <LabLayout
+            source={{ ...canvasSource, props: canvasProps }}
             panel={{
                 title: 'Logs',
                 children: (
@@ -136,21 +143,14 @@ export const FinderLab = () => {
                             respond={respond}
                             log={log}
                         >
-                            <LabFinder
-                                program={LAB_PROGRAM}
-                                composition={settings.composition}
-                                onSelect={onSelect}
-                            />
+                            <LabFinder {...canvasProps} />
                         </LabServerScope>
                     ) : (
                         <LivePreviewHost
                             key={run}
                             placeholder={<PreviewSpinner className="h-96" />}
                         >
-                            <LabFinder
-                                program={live.programId}
-                                onSelect={onSelect}
-                            />
+                            <LabFinder {...canvasProps} />
                         </LivePreviewHost>
                     )}
                 </CanvasBoundary>

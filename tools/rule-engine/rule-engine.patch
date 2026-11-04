@@ -9,7 +9,7 @@ index 0cfcf72..601a18e 100644
 +    val customFunction: ((String, String, Map<String, Any?>) -> Any?)? = null,
  )
 diff --git a/src/commonMain/kotlin/org/hisp/dhis/rules/engine/DefaultRuleEngine.kt b/src/commonMain/kotlin/org/hisp/dhis/rules/engine/DefaultRuleEngine.kt
-index 7888e30..6a867a3 100644
+index aa9d800..ab1463e 100644
 --- a/src/commonMain/kotlin/org/hisp/dhis/rules/engine/DefaultRuleEngine.kt
 +++ b/src/commonMain/kotlin/org/hisp/dhis/rules/engine/DefaultRuleEngine.kt
 @@ -28,7 +28,7 @@ internal class DefaultRuleEngine : RuleEngine {
@@ -39,7 +39,7 @@ index 7888e30..6a867a3 100644
      }
  
 diff --git a/src/commonMain/kotlin/org/hisp/dhis/rules/engine/RuleConditionEvaluator.kt b/src/commonMain/kotlin/org/hisp/dhis/rules/engine/RuleConditionEvaluator.kt
-index a782a13..28f6b9f 100644
+index 9c838e3..dcc80a7 100644
 --- a/src/commonMain/kotlin/org/hisp/dhis/rules/engine/RuleConditionEvaluator.kt
 +++ b/src/commonMain/kotlin/org/hisp/dhis/rules/engine/RuleConditionEvaluator.kt
 @@ -14,6 +14,7 @@ import org.hisp.dhis.rules.models.*
@@ -50,7 +50,7 @@ index a782a13..28f6b9f 100644
  ) {
      private val ruleVariablesByName: Map<String, RuleVariable> = ruleVariables.associateBy { it.name }
  
-@@ -178,10 +179,10 @@ internal class RuleConditionEvaluator(
+@@ -177,10 +178,10 @@ internal class RuleConditionEvaluator(
                  emptyMap(),
              )
          return convertInteger(

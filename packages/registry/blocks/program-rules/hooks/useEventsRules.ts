@@ -232,7 +232,8 @@ export const useEventsRules = ({
         retry: shouldRetryProgramRulesRequest,
     })
     const metadata = metadataQuery.data
-    const custom = customFunctions !== undefined
+    const hasRules = metadata !== undefined && metadata.rules.length > 0
+    const custom = customFunctions !== undefined && hasRules
     const customMetadataQuery = useQuery({
         queryKey: [
             ...programRulesQueryKeys.metadata(programId),
@@ -244,7 +245,6 @@ export const useEventsRules = ({
         staleTime: HOUR,
         retry: shouldRetryProgramRulesRequest,
     })
-    const hasRules = metadata !== undefined && metadata.rules.length > 0
     const ruleEngine = useRuleEngine(enabled && hasRules)
     // Another hook may have loaded the engine already; a program without rules still needs no context.
     const engine = hasRules ? ruleEngine.engine : undefined

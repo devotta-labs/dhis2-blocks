@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { expect, test } from './fixtures'
 
 test.describe('playground Canvas / Code', () => {
@@ -33,9 +34,7 @@ test.describe('playground Canvas / Code', () => {
         })
     }
 
-    test('keeps the block mounted and its requests when switching views', async ({
-        page,
-    }) => {
+    test('keeps the block mounted when switching views', async ({ page }) => {
         await page.goto('/playground/working-list')
         const table = page.getByTestId('working-list-table')
         await expect(table.locator('tbody')).toHaveAttribute(
@@ -68,6 +67,7 @@ test.describe('playground Canvas / Code', () => {
         await page.keyboard.press('ArrowRight')
         const codeTab = page.getByRole('tab', { name: 'Code', exact: true })
         await expect(codeTab).toBeFocused()
+        await page.keyboard.press('Enter')
         await expect(codeTab).toHaveAttribute('aria-selected', 'true')
         const panel = page.getByRole('tabpanel', { name: 'Code' })
         await panel.getByLabel('Code file').selectOption('props')
@@ -91,9 +91,9 @@ test.describe('playground Canvas / Code', () => {
             panel.getByRole('button', { name: 'Copied', exact: true })
         ).toBeVisible()
         const expected = await readFile(
-            new URL(
-                '../../apps/docs/src/playground/working-list/table/TableCanvas.tsx',
-                import.meta.url
+            resolve(
+                __dirname,
+                '../../apps/docs/src/playground/working-list/table/TableCanvas.tsx'
             ),
             'utf8'
         )

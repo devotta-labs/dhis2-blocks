@@ -131,8 +131,8 @@ describe('the timeline lab server', () => {
         expect(byDue).toEqual([...byDue].sort().reverse())
     })
 
-    it('sends one more than the cap for Many events, so the block shows its cap notice', () => {
-        const { respond } = serverFor(settingsOf('Many events'))
+    it('sends one more than the cap for Over 500 events, so the block shows its cap notice', () => {
+        const { respond } = serverFor(settingsOf('Over 500 events'))
         expect(eventsOf(respond, ANC)).toHaveLength(501)
         expect(eventsOf(respond, HYPERTENSION).length).toBeLessThan(501)
     })
@@ -177,7 +177,7 @@ describe('the timeline lab server', () => {
     })
 
     it('pages a long attribute changelog by 100 rows', () => {
-        const { respond } = serverFor(settingsOf('Many changes'))
+        const { respond } = serverFor(settingsOf('Over 500 changes'))
         const pages = [1, 2, 3, 4, 5, 6].map((page) =>
             attributeChangesOf(respond, HYPERTENSION, page)
         )
@@ -207,7 +207,7 @@ describe('the timeline lab server', () => {
     })
 
     it('answers 404 from every changelog when there is none', () => {
-        const { data, respond } = serverFor(settingsOf('No changelog (404)'))
+        const { data, respond } = serverFor(settingsOf('No changelog endpoint'))
         for (const resource of resourcesOf(data)
             .filter((each) => each.endsWith('/changeLogs'))
             .slice(0, 3)) {
@@ -245,7 +245,7 @@ describe('the timeline lab server', () => {
                 .filter(([, endpoint]) => endpoint?.behaviour === 'fails')
                 .map(([resource]) => resource)
         }
-        expect(failing('Case history')).toEqual([])
+        expect(failing('Two programs')).toEqual([])
         expect(failing('Program details fail')).toEqual(['programs'])
         expect(failing('Org unit names fail')).toEqual(['organisationUnits'])
         expect(
@@ -255,8 +255,8 @@ describe('the timeline lab server', () => {
         ).toBe(true)
     })
 
-    it('has no enrollments for Empty history', () => {
-        const { respond } = serverFor(settingsOf('Empty history'))
+    it('has no enrollments for No history', () => {
+        const { respond } = serverFor(settingsOf('No history'))
         expect(
             TrackedEntitySchema.parse(
                 respond({ resource: 'tracker/trackedEntities', id: LAB_PERSON })
@@ -264,16 +264,18 @@ describe('the timeline lab server', () => {
         ).toEqual([])
     })
 
-    it('sets the system calendar for Ethiopian calendar', () => {
+    it('sets the system calendar to the chosen one', () => {
         expect(
-            generateLabData(settingsOf('Ethiopian calendar'), TODAY).systemInfo
-                .calendar
+            generateLabData(
+                { ...DEFAULT_SETTINGS, calendar: 'ethiopian' },
+                TODAY
+            ).systemInfo.calendar
         ).toBe('ethiopian')
     })
 
     it('generates the same data for the same settings', () => {
-        expect(generateLabData(settingsOf('Three programs'), TODAY)).toEqual(
-            generateLabData(settingsOf('Three programs'), TODAY)
+        expect(generateLabData(settingsOf('Two programs'), TODAY)).toEqual(
+            generateLabData(settingsOf('Two programs'), TODAY)
         )
     })
 })

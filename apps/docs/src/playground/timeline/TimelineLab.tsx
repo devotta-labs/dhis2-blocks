@@ -29,7 +29,7 @@ import { usePresetParam } from '../usePresetParam'
 import { generateLabData, LAB_PERSON, type LabSettings } from './labData'
 import { answer, labNetwork, resourcesOf } from './labServer'
 import { DEFAULT_SETTINGS, PRESETS } from './presets'
-import { DisplayControls, OptionsControls } from './settings'
+import { OptionsControls } from './settings'
 
 interface Live {
     trackedEntity: string
@@ -51,7 +51,7 @@ const IN_PLACE = new Set(['locale'])
 
 const DEFAULT_SAVED: Saved = {
     mode: 'lab',
-    preset: 'Case history',
+    preset: 'A few visits',
     settings: PRESETS[0]?.settings ?? DEFAULT_SETTINGS,
     // A person in the WHO RMNCH Tracker in the Sierra Leone demo database, as in the docs' case history example.
     live: { trackedEntity: 'Y8aEiTpHSSQ', programs: '' },
@@ -123,7 +123,7 @@ const History = ({
         <div
             dir={locale === 'ar' ? 'rtl' : 'ltr'}
             lang={locale}
-            className="w-full max-w-2xl self-center rounded-lg bg-white p-4 md:p-6"
+            className="w-full max-w-2xl rounded-lg bg-white p-4 md:p-6"
         >
             <Timeline<HistoryEntryData>
                 entries={entries}
@@ -170,7 +170,7 @@ export const TimelineLab = () => {
         update({ preset: undefined, settings: { ...settings, ...changes } })
         if (Object.keys(changes).some((key) => !IN_PLACE.has(key))) restart()
     }
-    /** Display settings in live mode: kept apart from presets, and the history refetches by itself. */
+    /** Options in live mode: kept apart from presets, and the history refetches by itself. */
     const changeLive = (changes: Partial<LabSettings>) => {
         update({ settings: { ...settings, ...changes } })
         if (Object.keys(changes).some((key) => !IN_PLACE.has(key))) restart()
@@ -271,7 +271,7 @@ export const TimelineLab = () => {
                                     </label>
                                 ))}
                             </Section>
-                            <DisplayControls
+                            <OptionsControls
                                 live
                                 settings={settings}
                                 onChange={changeLive}

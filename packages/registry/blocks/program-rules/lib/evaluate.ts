@@ -69,7 +69,10 @@ export const evaluateEventRules = (
 ): RuleEffects => {
     const built = buildEngineInput(engine, context, input)
     const base = context.engineContext
-    const callback = input.custom === undefined ? undefined : customRuleCallback(input.custom, input)
+    const callback =
+        input.custom === undefined
+            ? undefined
+            : customRuleCallback(input.custom, input)
     let customFailure: Error | undefined
     const executionContext =
         input.custom === undefined
@@ -83,7 +86,10 @@ export const evaluateEventRules = (
                       try {
                           return callback?.(type, name, props) ?? null
                       } catch (cause) {
-                          customFailure = cause instanceof Error ? cause : new Error(String(cause))
+                          customFailure =
+                              cause instanceof Error
+                                  ? cause
+                                  : new Error(String(cause))
                           throw cause
                       }
                   }

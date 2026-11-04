@@ -18,8 +18,13 @@ if (!root) {
 
 createRoot(root).render(
     <React.StrictMode>
-        {new URLSearchParams(window.location.search).get('mode') === 'custom' ? <CustomFunctionsLab /> : <LivePreviewHost placeholder={<PreviewSpinner />}>
-            <Lab />
-        </LivePreviewHost>}
+        {new URLSearchParams(window.location.search).get('mode') ===
+        'custom' ? (
+            <CustomFunctionsLab />
+        ) : (
+            <LivePreviewHost placeholder={<PreviewSpinner />}>
+                <Lab />
+            </LivePreviewHost>
+        )}
     </React.StrictMode>
 )

@@ -1,5 +1,8 @@
 import type * as Engine from '@dhis2/rule-engine'
-import type { CustomRuleEvaluation, TrackedEntityRuleContext } from './customFunctions'
+import type {
+    CustomRuleEvaluation,
+    TrackedEntityRuleContext,
+} from './customFunctions'
 
 /** The `@dhis2/rule-engine` module. Callers load it (lazily) and pass it in. */
 export type RuleEngineModule = typeof Engine
@@ -121,7 +124,10 @@ export interface RuleEnrollmentInput {
 /** An enrollment with all of its events: the person data rules read. */
 export interface RuleEnrollmentData {
     trackedEntityId?: string
-    customData?: Omit<TrackedEntityRuleContext, 'program' | 'metadata' | 'currentEvent'>
+    customData?: Omit<
+        TrackedEntityRuleContext,
+        'program' | 'metadata' | 'currentEvent'
+    >
     enrollment: RuleEnrollmentInput
     events: RuleEventInput[]
 }

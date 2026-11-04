@@ -82,7 +82,11 @@ export const toRuleEnrollmentData = (
             response.attributes.map((value) => [value.attribute, value.value])
         ),
     },
-    events: response.events.map((event) => ({ ...toEvent(event), enrollmentId: response.enrollment, programId: response.program })),
+    events: response.events.map((event) => ({
+        ...toEvent(event),
+        enrollmentId: response.enrollment,
+        programId: response.program,
+    })),
 })
 
 const EVENT_FIELDS =

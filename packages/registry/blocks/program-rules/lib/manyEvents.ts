@@ -190,18 +190,37 @@ export const evaluateEventsRules = (
             : { event: row.event, otherEvents: [] }
         const evaluation = Result.try({
             try: () => {
-                if (input.customFunctions !== undefined && input.metadata !== undefined) {
+                if (
+                    input.customFunctions !== undefined &&
+                    input.metadata !== undefined
+                ) {
                     if (input.tracker && person?.customData === undefined) {
-                        throw new Error('Complete tracked entity context is not available')
+                        throw new Error(
+                            'Complete tracked entity context is not available'
+                        )
                     }
-                    const data = person?.customData ?? { enrollments: [], events: [] }
-                    const live = input.rows.filter((candidate) => {
-                        if (!input.tracker) return candidate.event.id === rowId
-                        return candidate.enrollmentId !== undefined &&
-                            input.persons.get(candidate.enrollmentId)?.trackedEntityId === person?.trackedEntityId
-                    }).map((candidate) => candidate.event)
-                    const liveById = new Map(live.map((event) => [event.id, event]))
-                    const knownIds = new Set(data.events.map((event) => event.id))
+                    const data = person?.customData ?? {
+                        enrollments: [],
+                        events: [],
+                    }
+                    const live = input.rows
+                        .filter((candidate) => {
+                            if (!input.tracker)
+                                return candidate.event.id === rowId
+                            return (
+                                candidate.enrollmentId !== undefined &&
+                                input.persons.get(candidate.enrollmentId)
+                                    ?.trackedEntityId ===
+                                    person?.trackedEntityId
+                            )
+                        })
+                        .map((candidate) => candidate.event)
+                    const liveById = new Map(
+                        live.map((event) => [event.id, event])
+                    )
+                    const knownIds = new Set(
+                        data.events.map((event) => event.id)
+                    )
                     ruleInput.custom = {
                         functions: input.customFunctions,
                         context: {
@@ -209,9 +228,13 @@ export const evaluateEventsRules = (
                             events: [
                                 ...data.events.map((event) => {
                                     const edited = liveById.get(event.id)
-                                    return edited === undefined ? event : overlayCustomRuleEvent(event, edited)
+                                    return edited === undefined
+                                        ? event
+                                        : overlayCustomRuleEvent(event, edited)
                                 }),
-                                ...live.filter((event) => !knownIds.has(event.id)),
+                                ...live.filter(
+                                    (event) => !knownIds.has(event.id)
+                                ),
                             ],
                             currentEvent: row.event,
                             program: input.metadata,

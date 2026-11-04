@@ -23,7 +23,9 @@ export default defineConfig(({ mode }) => {
         build: {
             rollupOptions: {
                 input: {
-                    index: fileURLToPath(new URL('./index.html', import.meta.url)),
+                    index: fileURLToPath(
+                        new URL('./index.html', import.meta.url)
+                    ),
                     lab: fileURLToPath(new URL('./lab.html', import.meta.url)),
                 },
             },

@@ -10,7 +10,12 @@ import type {
 export type CustomRuleScalar = string | number | boolean | null
 export const RuleContextDataSchema = z.record(z.string(), z.json())
 export type RuleContextData = z.infer<typeof RuleContextDataSchema>
-const ScalarSchema = z.union([z.string(), z.number().finite(), z.boolean(), z.null()])
+const ScalarSchema = z.union([
+    z.string(),
+    z.number().finite(),
+    z.boolean(),
+    z.null(),
+])
 const ReturnTypeSchema = z.enum(['number', 'string', 'boolean'])
 const ReturnSchemas = {
     number: z.number().finite().nullable(),
@@ -72,12 +77,20 @@ export interface CustomRuleEvaluation {
     context: TrackedEntityRuleContext
 }
 
-export const overlayCustomRuleEvent = (snapshot: RuleEventInput, live: RuleEventInput): RuleEventInput => {
+export const overlayCustomRuleEvent = (
+    snapshot: RuleEventInput,
+    live: RuleEventInput
+): RuleEventInput => {
     const dataValues = { ...snapshot.dataValues, ...live.dataValues }
     for (const id of live.liveDataElementIds ?? []) {
         if (live.dataValues[id] === undefined) delete dataValues[id]
     }
-    return { ...snapshot, ...live, occurredAt: live.occurredAt ?? snapshot.occurredAt, dataValues }
+    return {
+        ...snapshot,
+        ...live,
+        occurredAt: live.occurredAt ?? snapshot.occurredAt,
+        dataValues,
+    }
 }
 
 export const customRuleCallback = (
@@ -92,19 +105,23 @@ export const customRuleCallback = (
         ...custom.context,
         currentEvent: input.event,
         events: [
-            ...custom.context.events.map(
-                (event) => {
-                    const live = liveEvents.get(event.id)
-                    return live === undefined ? event : overlayCustomRuleEvent(event, live)
-                }
+            ...custom.context.events.map((event) => {
+                const live = liveEvents.get(event.id)
+                return live === undefined
+                    ? event
+                    : overlayCustomRuleEvent(event, live)
+            }),
+            ...[...liveEvents.values()].filter(
+                (event) => !knownIds.has(event.id)
             ),
-            ...[...liveEvents.values()].filter((event) => !knownIds.has(event.id)),
         ],
     }
     return (
         type: string,
         name: string,
-        entries: Parameters<NonNullable<Engine.RuleEngineContextJs['customFunction']>>[2]
+        entries: Parameters<
+            NonNullable<Engine.RuleEngineContextJs['customFunction']>
+        >[2]
     ): CustomRuleScalar => {
         if (!Object.hasOwn(custom.functions, name)) {
             throw new Error(`Custom function not registered: ${name}`)
@@ -114,7 +131,9 @@ export const customRuleCallback = (
         if (fn.returns !== type) {
             throw new Error(`${name} returns ${fn.returns}, not ${type}`)
         }
-        const props = z.record(z.string(), ScalarSchema).parse(Object.fromEntries(entries))
+        const props = z
+            .record(z.string(), ScalarSchema)
+            .parse(Object.fromEntries(entries))
         const result = fn.invoke(Object.freeze(props), context)
         return ReturnSchemas[returnType].parse(result)
     }

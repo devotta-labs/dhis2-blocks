@@ -69,7 +69,12 @@ interface DataEntryProps {
  * server, one sync loop per browser, the leave-page prompt while anything is unsent, and one polite live region. Once
  * someone else signs in, the form locks until the page is reloaded.
  */
-export const DataEntry = ({ source, cells, children, customFunctions }: DataEntryProps) => {
+export const DataEntry = ({
+    source,
+    cells,
+    children,
+    customFunctions,
+}: DataEntryProps) => {
     const engine = useDataEngine()
     const queryClient = useQueryClient()
     // Absolute, so the outbox is named for the server however the app reaches it.

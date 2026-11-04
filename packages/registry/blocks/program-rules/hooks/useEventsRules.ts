@@ -19,7 +19,10 @@ import {
 } from '../lib'
 import { indexRows } from '../lib/manyEvents'
 import type { CustomRuleFunctions } from '../lib'
-import { fetchCustomRuleMetadata, fetchCustomRulePersons } from './customContext'
+import {
+    fetchCustomRuleMetadata,
+    fetchCustomRulePersons,
+} from './customContext'
 import { shouldRetryProgramRulesRequest, useProgramRulesClient } from './client'
 import { ENROLLMENT_BATCH_SIZE, fetchRuleEnrollments } from './enrollment'
 import { useRuleEngine } from './loadRuleEngine'
@@ -231,8 +234,12 @@ export const useEventsRules = ({
     const metadata = metadataQuery.data
     const custom = customFunctions !== undefined
     const customMetadataQuery = useQuery({
-        queryKey: [...programRulesQueryKeys.metadata(programId), 'custom-context'],
-        queryFn: ({ signal }) => fetchCustomRuleMetadata(client, programId, signal),
+        queryKey: [
+            ...programRulesQueryKeys.metadata(programId),
+            'custom-context',
+        ],
+        queryFn: ({ signal }) =>
+            fetchCustomRuleMetadata(client, programId, signal),
         enabled: enabled && custom,
         staleTime: HOUR,
         retry: shouldRetryProgramRulesRequest,
@@ -280,7 +287,8 @@ export const useEventsRules = ({
     const withEvents = custom || requirements.some((needs) => needs.otherEvents)
     const needsPersons =
         tracker &&
-        (custom || requirements.some((needs) => needs.enrollment || needs.otherEvents))
+        (custom ||
+            requirements.some((needs) => needs.enrollment || needs.otherEvents))
     const personIds = [...new Set(enrollmentIds)]
     const fetchPersons = needsPersons && personIds.length > 0
     // Rewritten on every render to the same chunks for the same ids, so a render React throws away does no harm.
@@ -292,7 +300,10 @@ export const useEventsRules = ({
     const personChunks = useQueries({
         queries: chunks.map((ids, index) => ({
             queryKey: custom
-                ? [...programRulesQueryKeys.enrollments(ids, withEvents), 'custom-context']
+                ? [
+                      ...programRulesQueryKeys.enrollments(ids, withEvents),
+                      'custom-context',
+                  ]
                 : programRulesQueryKeys.enrollments(ids, withEvents),
             queryFn: async ({ signal }): Promise<ChunkPersons> => {
                 let found = await fetchRuleEnrollments(
@@ -302,7 +313,8 @@ export const useEventsRules = ({
                     withEvents,
                     signal
                 )
-                if (custom) found = await fetchCustomRulePersons(client, found, signal)
+                if (custom)
+                    found = await fetchCustomRulePersons(client, found, signal)
                 return ids.map((id) => [id, found.get(id) ?? null])
             },
             enabled: enabled && fetchPersons,
@@ -352,8 +364,8 @@ export const useEventsRules = ({
             engine === undefined ||
             metadata === undefined ||
             contexts === undefined ||
-            persons === undefined
-            || (custom && customMetadataQuery.data === undefined)
+            persons === undefined ||
+            (custom && customMetadataQuery.data === undefined)
         ) {
             return undefined
         }
@@ -386,7 +398,17 @@ export const useEventsRules = ({
             invalidRules: distinctInvalidRules(contexts.values()),
             optionGroupOptions: allOptionGroups(contexts.values()),
         }
-    }, [engine, metadata, contexts, persons, tracker, needsPersons, custom, customFunctions, customMetadataQuery.data])
+    }, [
+        engine,
+        metadata,
+        contexts,
+        persons,
+        tracker,
+        needsPersons,
+        custom,
+        customFunctions,
+        customMetadataQuery.data,
+    ])
 
     // A query only fails the hook while it is needed and has nothing to show:
     // a failed background refetch keeps the last good data, and so do we.

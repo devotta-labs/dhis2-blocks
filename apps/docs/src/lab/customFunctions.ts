@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { defineCustomRuleFunction } from '@/components/program-rules/lib/customFunctions'
+import { defineCustomRuleFunction } from '@/components/program-rules'
 import type {
     RuleEventInput,
     TrackedEntityRuleContext,
-} from '@/components/program-rules/lib'
+} from '@/components/program-rules'
 
 export const PROGRAM = 'customProg1'
 export const STAGE = 'visitStage1'

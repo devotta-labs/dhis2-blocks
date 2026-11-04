@@ -17,6 +17,10 @@ test.describe('offline native custom functions playground', () => {
         await expect(page.getByLabel('Evaluated custom result')).toHaveText(
             '13.4'
         )
+        await page.screenshot({
+            path: 'e2e/artifacts/docs/custom-functions.png',
+            fullPage: true,
+        })
         const selected = page.getByRole('textbox', {
             name: 'Selected test Current visit',
         })
@@ -29,7 +33,7 @@ test.describe('offline native custom functions playground', () => {
 
     test('accepts reordered props and nullable results', async ({ page }) => {
         await page
-            .getByLabel('Example', { exact: true })
+            .getByRole('combobox', { name: 'Example', exact: true })
             .selectOption('reordered')
         await page.getByRole('button', { name: 'Apply and run' }).click()
         await expect(page.getByLabel('Evaluated custom result')).toHaveText(
@@ -46,13 +50,15 @@ test.describe('offline native custom functions playground', () => {
     })
 
     test('runs string and boolean dispatchers', async ({ page }) => {
-        await page.getByLabel('Example', { exact: true }).selectOption('string')
+        await page
+            .getByRole('combobox', { name: 'Example', exact: true })
+            .selectOption('string')
         await page.getByRole('button', { name: 'Apply and run' }).click()
         await expect(page.getByLabel('Evaluated custom result')).toHaveText(
             '13.4'
         )
         await page
-            .getByLabel('Example', { exact: true })
+            .getByRole('combobox', { name: 'Example', exact: true })
             .selectOption('boolean')
         await page.getByRole('button', { name: 'Apply and run' }).click()
         await expect(page.getByLabel('Evaluated custom result')).toHaveText(
@@ -64,14 +70,14 @@ test.describe('offline native custom functions playground', () => {
         page,
     }) => {
         await page
-            .getByLabel('Example', { exact: true })
+            .getByRole('combobox', { name: 'Example', exact: true })
             .selectOption('duplicate')
         await page.getByRole('button', { name: 'Apply and run' }).click()
         await expect(
             page.getByRole('alert').filter({ hasText: 'Duplicate' })
         ).toBeVisible()
         await page
-            .getByLabel('Example', { exact: true })
+            .getByRole('combobox', { name: 'Example', exact: true })
             .selectOption('invalid')
         await page.getByRole('button', { name: 'Apply and run' }).click()
         await expect(
@@ -85,12 +91,16 @@ test.describe('offline native custom functions playground', () => {
     test('reports history failure, then recovers with a fresh run', async ({
         page,
     }) => {
-        await page.getByLabel('History request').selectOption('error')
+        await page
+            .getByRole('combobox', { name: 'History request' })
+            .selectOption('error')
         await page.getByRole('button', { name: 'Apply and run' }).click()
         await expect(
             page.getByRole('alert').filter({ hasText: 'history failure' })
         ).toBeVisible()
-        await page.getByLabel('History request').selectOption('normal')
+        await page
+            .getByRole('combobox', { name: 'History request' })
+            .selectOption('normal')
         await page.getByRole('button', { name: 'Apply and run' }).click()
         await expect(page.getByLabel('Evaluated custom result')).toHaveText(
             '13.4'
@@ -101,7 +111,10 @@ test.describe('offline native custom functions playground', () => {
         await page
             .getByText('Edit event history JSON', { exact: false })
             .click()
-        const history = page.getByLabel('Event history', { exact: true })
+        const history = page.getByRole('textbox', {
+            name: 'Event history',
+            exact: true,
+        })
         await history.fill((await history.inputValue()).replace('13.4', '20.2'))
         await page.getByRole('button', { name: 'Apply and run' }).click()
         await expect(page.getByLabel('Evaluated custom result')).toHaveText(
@@ -111,5 +124,32 @@ test.describe('offline native custom functions playground', () => {
         await expect(
             page.getByRole('button', { name: 'Light theme' })
         ).toBeVisible()
+    })
+
+    test('keeps unresolved history loading instead of inventing a result, and can recover', async ({
+        page,
+    }) => {
+        await page
+            .getByRole('combobox', { name: 'History request' })
+            .selectOption('hang')
+        await page.getByRole('button', { name: 'Apply and run' }).click()
+        await expect(
+            page
+                .getByRole('listitem')
+                .filter({ hasText: 'tracker/trackedEntities' })
+        ).toContainText('pending')
+        await expect(page.getByLabel('Evaluated custom result')).toHaveText(
+            'Loading'
+        )
+        await page
+            .getByRole('combobox', { name: 'History request' })
+            .selectOption('slow')
+        await page.getByRole('button', { name: 'Apply and run' }).click()
+        await expect(page.getByLabel('Evaluated custom result')).toHaveText(
+            'Loading'
+        )
+        await expect(page.getByLabel('Evaluated custom result')).toHaveText(
+            '13.4'
+        )
     })
 })

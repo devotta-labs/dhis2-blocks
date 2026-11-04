@@ -1,4 +1,13 @@
 export { loadRuleEngine, preloadRuleEngine } from './hooks/loadRuleEngine'
+export { defineCustomRuleFunction } from './lib/customFunctions'
+export type {
+    CustomRuleEvaluation,
+    CustomRuleFunction,
+    CustomRuleFunctions,
+    CustomRuleReturnType,
+    CustomRuleScalar,
+    TrackedEntityRuleContext,
+} from './lib/customFunctions'
 export { programRulesQueryKeys } from './hooks/queryKeys'
 export { useEventsRules } from './hooks/useEventsRules'
 export type {

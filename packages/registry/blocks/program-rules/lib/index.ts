@@ -1,11 +1,6 @@
 export { buildRuleContext } from './buildContext'
-export { defineCustomRuleFunction } from './customFunctions'
 export type {
-    CustomRuleEvaluation,
-    CustomRuleFunction,
     CustomRuleFunctions,
-    CustomRuleReturnType,
-    CustomRuleScalar,
     TrackedEntityRuleContext,
 } from './customFunctions'
 export { assignedVariable } from './dependencyGraph'

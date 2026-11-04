@@ -25,7 +25,7 @@ export interface CustomLabSettings {
     network: 'normal' | 'slow' | 'error' | 'hang'
 }
 
-export interface RequestEntry {
+interface RequestEntry {
     id: number
     resource: string
     start: number

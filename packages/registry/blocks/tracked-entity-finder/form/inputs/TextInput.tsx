@@ -11,6 +11,7 @@ export const TextInput = ({
     className,
     value,
     setValue,
+    onBlur,
     error,
 }: FieldInputProps) => {
     const id = useId()
@@ -28,6 +29,7 @@ export const TextInput = ({
                 autoComplete="off"
                 placeholder={placeholder}
                 aria-invalid={error ? true : undefined}
+                onBlur={onBlur}
                 value={value?.kind === 'text' ? value.text : ''}
                 onChange={(event) =>
                     setValue({ kind: 'text', text: event.target.value })

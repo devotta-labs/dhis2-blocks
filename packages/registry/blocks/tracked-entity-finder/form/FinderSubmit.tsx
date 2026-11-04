@@ -8,19 +8,22 @@ export type FinderSubmitProps = Omit<
     'type'
 >
 
-/** The form's submit button, disabled until the form can search. */
+/**
+ * The form's submit button, disabled until the form can search. With an
+ * error in a field it stays enabled, so a click shows every error.
+ */
 export function FinderSubmit({
     children,
     disabled,
     ...props
 }: FinderSubmitProps) {
-    const { canSearch } = useFinderSearch()
+    const { canSearch, reason } = useFinderSearch()
     return (
         <Button
             {...props}
             type="submit"
             data-slot="finder-submit"
-            disabled={disabled || !canSearch}
+            disabled={disabled || (!canSearch && reason !== 'has-errors')}
         >
             {children ?? i18n.t('Search')}
         </Button>

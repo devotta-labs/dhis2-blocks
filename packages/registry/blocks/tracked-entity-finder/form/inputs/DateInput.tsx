@@ -12,6 +12,7 @@ export const DateInput = ({
     className,
     value,
     setValue,
+    onBlur,
     error,
 }: FieldInputProps) => {
     const { meta } = useFinderContext()
@@ -27,6 +28,8 @@ export const DateInput = ({
         <div
             data-invalid={error ? true : undefined}
             className={cn('flex flex-col gap-1', className)}
+            // Blur bubbles in React, so leaving the calendar's input counts.
+            onBlur={onBlur}
         >
             <CalendarDateInput
                 label={label}

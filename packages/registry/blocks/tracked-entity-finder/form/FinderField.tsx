@@ -1,5 +1,5 @@
 import React from 'react'
-import { ConfigError } from './ConfigError'
+import { MetadataErrorNotice } from './MetadataErrorNotice'
 import { useFieldPart, type FinderFieldPartProps } from './fieldProps'
 import { BooleanSelect, OptionSelect } from './inputs/ChoiceSelect'
 import { DateInput } from './inputs/DateInput'
@@ -16,11 +16,11 @@ export type FinderFieldProps = FinderFieldPartProps
  */
 export function FinderField(props: FinderFieldProps) {
     const part = useFieldPart(props, 'exact')
-    if (part.state === 'problem') {
+    if (part.state === 'metadata-error') {
         return (
-            <ConfigError className={props.className}>
+            <MetadataErrorNotice className={props.className}>
                 {part.message}
-            </ConfigError>
+            </MetadataErrorNotice>
         )
     }
     if (part.state === 'pending') {
@@ -42,7 +42,7 @@ export function FinderField(props: FinderFieldProps) {
         case 'dateTime':
             return <DateInput {...input} />
         case 'unsupported':
-            // The rules report an unsupported type as a problem first.
+            // The rules report an unsupported type as a metadata error first.
             return null
     }
 }

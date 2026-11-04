@@ -9,6 +9,8 @@ export interface FieldInputProps {
     className?: string
     value?: FieldValue
     setValue: (value: FieldValue) => void
-    /** The issue to show; the input is marked invalid while set. */
+    /** Marks the field left, so its error shows. */
+    onBlur: () => void
+    /** The error to show; the input is marked invalid while set. */
     error?: string
 }

@@ -2,8 +2,8 @@ import { createContext, useContext } from 'react'
 import type { FinderResourceClient } from '../api/client'
 import type { FinderPerson } from '../api/search'
 import type { FinderSystemInfo } from '../api/systemInfo'
+import type { FinderFormApi } from '../form/finderFormApi'
 import type {
-    FieldValue,
     FormField,
     FormVerdict,
     ProgramModel,
@@ -38,12 +38,6 @@ export interface FinderSubmission {
 interface FinderState {
     status: FinderStatus
     model?: ProgramModel
-    /** Keyed by attribute id; the same id in two forms shares its value. */
-    values: Readonly<Record<string, FieldValue>>
-    /** Every registration under the provider, for exact/range conflicts. */
-    fields: readonly FormField[]
-    /** Each form's registrations, keyed by form id. */
-    forms: Readonly<Record<string, readonly FormField[]>>
     submission?: FinderSubmission
     page: number
     /** Run once here, so every results part reads the same answer. */
@@ -51,14 +45,11 @@ interface FinderState {
 }
 
 interface FinderActions {
-    setValue: (id: string, value: FieldValue) => void
-    /** Returns the unregister function. */
-    register: (formId: string, key: string, field: FormField) => () => void
     submit: (search: ValidatedSearch) => void
     setPage: (page: number) => void
     select: (person: FinderPerson) => void
-    /** Logs a config problem's full text, once per provider. */
-    logProblem: (message: string) => void
+    /** Logs a metadata error's full text, once per provider. */
+    logMetadataError: (message: string) => void
 }
 
 interface FinderMeta {
@@ -87,9 +78,12 @@ export const useFinderContext = (): FinderContextValue => {
 }
 
 export interface FinderFormContextValue {
-    formId: string
-    /** This form's registrations. */
-    fields: readonly FormField[]
+    /** Adds a field to this form; returns the function that removes it. */
+    register: (key: string, field: FormField) => () => void
+    /** This form's TanStack form: its values, field meta and submit. */
+    form: FinderFormApi
+    /** Set once the user tried to search, so every field error shows. */
+    submitted: boolean
     /** Undefined until program metadata is ready. */
     verdict?: FormVerdict
 }

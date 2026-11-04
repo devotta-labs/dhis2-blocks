@@ -1,5 +1,5 @@
 import React from 'react'
-import { ConfigError } from './ConfigError'
+import { MetadataErrorNotice } from './MetadataErrorNotice'
 import { useFieldPart, type FinderFieldPartProps } from './fieldProps'
 import { PendingInput } from './inputs/PendingInput'
 import { DateRangeInput, NumberRangeInput } from './inputs/RangeInputs'
@@ -12,11 +12,11 @@ export type FinderRangeFieldProps = FinderFieldPartProps
  */
 export function FinderRangeField(props: FinderRangeFieldProps) {
     const part = useFieldPart(props, 'range')
-    if (part.state === 'problem') {
+    if (part.state === 'metadata-error') {
         return (
-            <ConfigError className={props.className}>
+            <MetadataErrorNotice className={props.className}>
                 {part.message}
-            </ConfigError>
+            </MetadataErrorNotice>
         )
     }
     if (part.state === 'pending') {
@@ -30,7 +30,7 @@ export function FinderRangeField(props: FinderRangeFieldProps) {
         case 'dateTime':
             return <DateRangeInput {...input} />
         default:
-            // The rules report any other kind as a problem first.
+            // The rules report any other kind as a metadata error first.
             return null
     }
 }

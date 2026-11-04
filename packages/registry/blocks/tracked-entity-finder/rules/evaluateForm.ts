@@ -1,38 +1,36 @@
+import { errorCodeOf, fieldSchema } from './fieldSchema'
 import { attributeOf, canSendMatch, RANGE_KINDS } from './programModel'
 import { seal } from './seal'
 import type {
-    ConfigProblem,
-    FieldIssue,
+    FieldErrorCode,
     FieldValue,
     FinderAttribute,
     FormField,
     FormVerdict,
+    MetadataError,
     ProgramModel,
     SearchCondition,
 } from './types'
 
 type Match = FormField['match']
 
-/** What one field contributes: nothing, an issue, or the conditions to send. */
+/** What one field contributes: nothing, an error, or the conditions to send. */
 type Reading =
     | { readonly state: 'empty' }
-    | { readonly state: 'issue'; readonly issue: FieldIssue }
+    | { readonly state: 'error'; readonly code: FieldErrorCode }
     | { readonly state: 'filled'; readonly conditions: SearchCondition[] }
 
 const EMPTY: Reading = { state: 'empty' }
-const issue = (found: FieldIssue): Reading => ({ state: 'issue', issue: found })
+const failed = (code: FieldErrorCode): Reading => ({ state: 'error', code })
 const fill = (conditions: SearchCondition[]): Reading => ({
     state: 'filled',
     conditions,
 })
 
-const DAY_START = 'T00:00:00.000'
-const DAY_END = 'T23:59:59.999'
-
-const problemOf = (
+const metadataErrorOf = (
     model: ProgramModel,
     { attribute: id, match }: FormField
-): ConfigProblem['kind'] | undefined => {
+): MetadataError['kind'] | undefined => {
     const attribute = attributeOf(model, id)
     if (!attribute) {
         return 'unknown-attribute'
@@ -55,91 +53,17 @@ const problemOf = (
     return undefined
 }
 
-/** Attribute ids composed both as an exact field and as a range. */
-export const findRangeConflicts = (
-    fields: readonly FormField[]
-): readonly string[] => {
+/**
+ * Attribute ids composed both as an exact field and as a range in one form.
+ * They would share one value of two shapes, so neither is searched.
+ */
+const rangeConflicts = (fields: readonly FormField[]): Set<string> => {
     const exact = new Set<string>()
     const range = new Set<string>()
     for (const { attribute, match } of fields) {
         ;(match === 'range' ? range : exact).add(attribute)
     }
-    return Object.freeze([...exact].filter((id) => range.has(id)))
-}
-
-const NUMBER = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/
-const INTEGER = /^[+-]?\d+$/
-const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
-
-/** A valid value: the trimmed text as typed (sent unchanged) and its order. */
-type Parsed =
-    | {
-          readonly ok: true
-          readonly text: string
-          readonly order: number | string
-      }
-    | { readonly ok: false; readonly issue: FieldIssue }
-    | undefined
-
-const parseNumber = (raw: string, attribute: FinderAttribute): Parsed => {
-    const text = raw.trim()
-    if (text === '') {
-        return undefined
-    }
-    if (!NUMBER.test(text)) {
-        return { ok: false, issue: 'invalid-number' }
-    }
-    // Read from the text: `Number` rounds "1.0" and long decimals to integers.
-    if (attribute.valueType.startsWith('INTEGER') && !INTEGER.test(text)) {
-        return { ok: false, issue: 'not-integer' }
-    }
-    return { ok: true, text, order: Number(text) }
-}
-
-const parseDate = (raw: string | undefined): Parsed => {
-    const text = raw?.trim() ?? ''
-    if (text === '') {
-        return undefined
-    }
-    const match = ISO_DATE.exec(text)
-    if (!match) {
-        return { ok: false, issue: 'invalid-date' }
-    }
-    const [year, month, day] = match.slice(1).map(Number)
-    const date = new Date(Date.UTC(year, month - 1, day))
-    const real =
-        date.getUTCFullYear() === year &&
-        date.getUTCMonth() === month - 1 &&
-        date.getUTCDate() === day
-    return real
-        ? { ok: true, text, order: text }
-        : { ok: false, issue: 'invalid-date' }
-}
-
-/** Reads a From–To pair: either side alone fills; `from > to` is reversed. */
-const readRange = (
-    from: Parsed,
-    to: Parsed,
-    toValue: (text: string, side: 'from' | 'to') => string
-): Reading => {
-    for (const side of [from, to]) {
-        if (side && !side.ok) {
-            return issue(side.issue)
-        }
-    }
-    const low = from?.ok ? from : undefined
-    const high = to?.ok ? to : undefined
-    if (low && high && low.order > high.order) {
-        return issue('reversed')
-    }
-    const conditions: SearchCondition[] = []
-    if (low) {
-        conditions.push({ op: 'ge', value: toValue(low.text, 'from') })
-    }
-    if (high) {
-        conditions.push({ op: 'le', value: toValue(high.text, 'to') })
-    }
-    return conditions.length ? fill(conditions) : EMPTY
+    return new Set([...exact].filter((id) => range.has(id)))
 }
 
 const readField = (
@@ -147,121 +71,45 @@ const readField = (
     match: Match,
     value: FieldValue | undefined
 ): Reading => {
-    if (!value) {
-        return EMPTY
+    const result = fieldSchema(attribute, match).safeParse(value)
+    if (!result.success) {
+        // Anything but a field error is a value of the wrong shape: empty.
+        const code = errorCodeOf(result.error)
+        return code ? failed(code) : EMPTY
     }
-    const dayBound = (day: string, side: 'from' | 'to') =>
-        attribute.kind === 'dateTime'
-            ? day + (side === 'from' ? DAY_START : DAY_END)
-            : day
-    switch (value.kind) {
-        case 'text': {
-            if (attribute.kind !== 'text') {
-                return EMPTY
-            }
-            const text = value.text.trim()
-            if (text === '') {
-                return EMPTY
-            }
-            if (text.length < attribute.minCharacters) {
-                return issue('too-short')
-            }
-            const op = attribute.unique ? 'eq' : attribute.textOperator
-            return op ? fill([{ op, value: text }]) : EMPTY
-        }
-        case 'option':
-            return attribute.kind === 'option' &&
-                attribute.options?.some(({ code }) => code === value.code)
-                ? fill([{ op: 'eq', value: value.code ?? '' }])
-                : EMPTY
-        case 'boolean':
-            return attribute.kind === 'boolean' && value.value
-                ? fill([{ op: 'eq', value: value.value }])
-                : EMPTY
-        case 'trueOnly':
-            return attribute.kind === 'trueOnly' && value.checked
-                ? fill([{ op: 'eq', value: 'true' }])
-                : EMPTY
-        case 'number': {
-            if (attribute.kind !== 'number' || match !== 'exact') {
-                return EMPTY
-            }
-            const parsed = parseNumber(value.value, attribute)
-            if (!parsed) {
-                return EMPTY
-            }
-            return parsed.ok
-                ? fill([{ op: 'eq', value: parsed.text }])
-                : issue(parsed.issue)
-        }
-        case 'numberRange':
-            return attribute.kind === 'number' && match === 'range'
-                ? readRange(
-                      parseNumber(value.min, attribute),
-                      parseNumber(value.max, attribute),
-                      (text) => text
-                  )
-                : EMPTY
-        case 'date': {
-            const isDate =
-                attribute.kind === 'date' || attribute.kind === 'dateTime'
-            if (!isDate || match !== 'exact') {
-                return EMPTY
-            }
-            const parsed = parseDate(value.date)
-            if (!parsed) {
-                return EMPTY
-            }
-            if (!parsed.ok) {
-                return issue(parsed.issue)
-            }
-            return attribute.kind === 'dateTime' && !attribute.unique
-                ? fill([
-                      { op: 'ge', value: dayBound(parsed.text, 'from') },
-                      { op: 'le', value: dayBound(parsed.text, 'to') },
-                  ])
-                : fill([{ op: 'eq', value: parsed.text }])
-        }
-        case 'dateRange': {
-            const isDate =
-                attribute.kind === 'date' || attribute.kind === 'dateTime'
-            return isDate && match === 'range'
-                ? readRange(
-                      parseDate(value.from),
-                      parseDate(value.to),
-                      dayBound
-                  )
-                : EMPTY
-        }
-    }
+    return result.data ? fill([...result.data]) : EMPTY
 }
 
 const verdict = (
-    fields: Omit<FormVerdict, 'problems' | 'issues'> & {
-        problems: ConfigProblem[]
-        issues: Record<string, FieldIssue>
+    fields: Omit<FormVerdict, 'metadataErrors' | 'errors'> & {
+        metadataErrors: MetadataError[]
+        errors: Record<string, FieldErrorCode>
     }
 ): FormVerdict =>
     Object.freeze({
         ...fields,
-        problems: Object.freeze(fields.problems.map((p) => Object.freeze(p))),
-        issues: Object.freeze(fields.issues),
+        metadataErrors: Object.freeze(
+            fields.metadataErrors.map((error) => Object.freeze(error))
+        ),
+        errors: Object.freeze(fields.errors),
     })
 
+/** A composed field the program allows, with its attribute. */
+interface UsableField {
+    attribute: FinderAttribute
+    match: Match
+}
+
 /**
- * Judges one form's composed fields and values against the program's search
- * rules. Composed ids are re-checked against the metadata here, so a field the
- * program does not allow never reaches a search.
+ * Splits one form's composed fields into the ones the program allows and the
+ * metadata errors of the rest. Composed ids are re-checked against the
+ * metadata here, so a field the program does not allow never reaches a search.
  */
-export const evaluateForm = (
-    model: ProgramModel,
-    fields: readonly FormField[],
-    values: Readonly<Record<string, FieldValue>>
-): FormVerdict => {
-    const conflicts = new Set(findRangeConflicts(fields))
-    const problems: ConfigProblem[] = []
+const sortFields = (model: ProgramModel, fields: readonly FormField[]) => {
+    const conflicts = rangeConflicts(fields)
+    const metadataErrors: MetadataError[] = []
     const reported = new Set<string>()
-    const usable: { attribute: FinderAttribute; match: Match }[] = []
+    const usable: UsableField[] = []
     const seen = new Set<string>()
 
     for (const field of fields) {
@@ -270,11 +118,11 @@ export const evaluateForm = (
         }
         const kind = conflicts.has(field.attribute)
             ? 'shape-conflict'
-            : problemOf(model, field)
+            : metadataErrorOf(model, field)
         if (kind) {
             if (!reported.has(field.attribute)) {
                 reported.add(field.attribute)
-                problems.push({ kind, attribute: field.attribute })
+                metadataErrors.push({ kind, attribute: field.attribute })
             }
             continue
         }
@@ -284,14 +132,27 @@ export const evaluateForm = (
             usable.push({ attribute, match: field.match })
         }
     }
+    return { usable, metadataErrors }
+}
+
+/**
+ * Judges one form's composed fields and values against the program's search
+ * rules: each value through its field schema, then the form as a whole.
+ */
+export const evaluateForm = (
+    model: ProgramModel,
+    fields: readonly FormField[],
+    values: Readonly<Record<string, FieldValue | undefined>>
+): FormVerdict => {
+    const { usable, metadataErrors } = sortFields(model, fields)
 
     const needed = Math.max(model.minAttributes, 1)
     const uniques = usable.filter(({ attribute }) => attribute.unique)
     if (!uniques.length && usable.length < needed) {
-        problems.push({ kind: 'form-cannot-search' })
+        metadataErrors.push({ kind: 'form-cannot-search' })
     }
 
-    const issues: Record<string, FieldIssue> = {}
+    const errors: Record<string, FieldErrorCode> = {}
     const filledFields: {
         attribute: FinderAttribute
         conditions: SearchCondition[]
@@ -301,8 +162,8 @@ export const evaluateForm = (
             ? values[attribute.id]
             : undefined
         const reading = readField(attribute, match, value)
-        if (reading.state === 'issue') {
-            issues[attribute.id] = reading.issue
+        if (reading.state === 'error') {
+            errors[attribute.id] = reading.code
         } else if (reading.state === 'filled') {
             filledFields.push({ attribute, conditions: reading.conditions })
         }
@@ -315,13 +176,13 @@ export const evaluateForm = (
         ({ attribute }) => !attribute.unique
     )
     const missing = Math.max(0, needed - filledOthers.length)
-    const base = { problems, issues, missing }
+    const base = { metadataErrors, errors, missing }
 
-    if (problems.some(({ kind }) => kind === 'form-cannot-search')) {
-        return verdict({ ...base, reason: 'not-set-up' })
+    if (metadataErrors.some(({ kind }) => kind === 'form-cannot-search')) {
+        return verdict({ ...base, reason: 'metadata-error' })
     }
-    if (Object.keys(issues).length) {
-        return verdict({ ...base, reason: 'has-issues' })
+    if (Object.keys(errors).length) {
+        return verdict({ ...base, reason: 'has-errors' })
     }
     if (filledUnique.length > 1) {
         return verdict({ ...base, reason: 'two-ids' })

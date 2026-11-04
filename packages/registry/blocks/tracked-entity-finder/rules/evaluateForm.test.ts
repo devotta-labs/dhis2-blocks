@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AttributeMetadata } from '../api/schemas'
 import { hivProgram } from '../__tests__/fixtures/program'
-import { evaluateForm, findRangeConflicts } from './evaluateForm'
+import { evaluateForm } from './evaluateForm'
 import { buildProgramModel } from './programModel'
 import type { FieldValue, FormField } from './types'
 
@@ -29,7 +29,7 @@ describe('evaluateForm', () => {
         expect(verdict.reason).toBe('ready')
         expect(verdict.searchingBy).toBe('artNumber')
         expect(verdict.dropped).toBe(1)
-        expect(verdict.problems).toEqual([])
+        expect(verdict.metadataErrors).toEqual([])
         expect(verdict.search?.filters).toEqual([
             {
                 attribute: 'artNumber',
@@ -276,7 +276,7 @@ describe('evaluateForm', () => {
         })
     })
 
-    it('flags short text, decimals in integers, bad dates and reversed ranges as issues and blocks search', () => {
+    it('flags short text, decimals in integers, bad dates and reversed ranges as errors and blocks search', () => {
         const verdict = evaluateForm(
             model,
             [
@@ -295,8 +295,8 @@ describe('evaluateForm', () => {
                 },
             }
         )
-        expect(verdict.reason).toBe('has-issues')
-        expect(verdict.issues).toEqual({
+        expect(verdict.reason).toBe('has-errors')
+        expect(verdict.errors).toEqual({
             firstName: 'too-short',
             weight: 'not-integer',
             dob: 'invalid-date',
@@ -313,8 +313,8 @@ describe('evaluateForm', () => {
                 dob: { kind: 'dateRange', from: '02/01/2000' },
             }
         )
-        expect(more.reason).toBe('has-issues')
-        expect(more.issues).toEqual({
+        expect(more.reason).toBe('has-errors')
+        expect(more.errors).toEqual({
             weight: 'invalid-number',
             dob: 'invalid-date',
         })
@@ -327,7 +327,7 @@ describe('evaluateForm', () => {
                 weight: { kind: 'numberRange', min: '80', max: '9' },
             }
         )
-        expect(reversedNumbers.issues).toEqual({ weight: 'reversed' })
+        expect(reversedNumbers.errors).toEqual({ weight: 'reversed' })
     })
 
     it('flags a too-short unique text value', () => {
@@ -344,8 +344,8 @@ describe('evaluateForm', () => {
         const verdict = evaluateForm(shortId, exact('nationalId'), {
             nationalId: text('N1'),
         })
-        expect(verdict.reason).toBe('has-issues')
-        expect(verdict.issues).toEqual({ nationalId: 'too-short' })
+        expect(verdict.reason).toBe('has-errors')
+        expect(verdict.errors).toEqual({ nationalId: 'too-short' })
     })
 
     it('reports non-searchable, unknown, unsupported and fully blocked fields and leaves them out', () => {
@@ -361,7 +361,7 @@ describe('evaluateForm', () => {
                 dob: date('2000-01-02'),
             }
         )
-        expect(verdict.problems).toEqual([
+        expect(verdict.metadataErrors).toEqual([
             { kind: 'not-searchable', attribute: 'legacyId' },
             { kind: 'unknown-attribute', attribute: 'nope' },
             { kind: 'unsupported-type', attribute: 'photo' },
@@ -409,7 +409,7 @@ describe('evaluateForm', () => {
             [...exact('enrolled', 'firstName', 'dob'), range('height')],
             {}
         )
-        expect(verdict.problems).toEqual([
+        expect(verdict.metadataErrors).toEqual([
             { kind: 'operators-blocked', attribute: 'enrolled' },
             { kind: 'operators-blocked', attribute: 'height' },
         ])
@@ -419,20 +419,22 @@ describe('evaluateForm', () => {
             [range('enrolled'), ...exact('height')],
             {}
         )
-        expect(otherMatches.problems).toEqual([])
+        expect(otherMatches.metadataErrors).toEqual([])
     })
 
     it('reports a form that can never search', () => {
         const verdict = evaluateForm(model, exact('firstName'), {
             firstName: text('Amina'),
         })
-        expect(verdict.problems).toEqual([{ kind: 'form-cannot-search' }])
-        expect(verdict.reason).toBe('not-set-up')
+        expect(verdict.metadataErrors).toEqual([{ kind: 'form-cannot-search' }])
+        expect(verdict.reason).toBe('metadata-error')
         expect(verdict.search?.filters).toBeUndefined()
 
         const onlyBad = evaluateForm(model, exact('legacyId', 'nope'), {})
-        expect(onlyBad.problems).toContainEqual({ kind: 'form-cannot-search' })
-        expect(onlyBad.reason).toBe('not-set-up')
+        expect(onlyBad.metadataErrors).toContainEqual({
+            kind: 'form-cannot-search',
+        })
+        expect(onlyBad.reason).toBe('metadata-error')
 
         // A usable ID is always enough to search.
         expect(evaluateForm(model, exact('artNumber'), {}).reason).toBe('empty')
@@ -453,7 +455,7 @@ describe('evaluateForm', () => {
                 weight: { kind: 'number', value: '60' },
             }
         )
-        expect(verdict.problems).toEqual([
+        expect(verdict.metadataErrors).toEqual([
             { kind: 'range-not-supported', attribute: 'artNumber' },
             { kind: 'range-not-supported', attribute: 'firstName' },
             { kind: 'range-not-supported', attribute: 'sex' },
@@ -499,15 +501,12 @@ describe('evaluateForm', () => {
             range('visit'),
             range('dob'),
         ]
-        expect(findRangeConflicts(fields)).toEqual(['dob'])
-        expect(findRangeConflicts(exact('dob', 'dob'))).toEqual([])
-
         const verdict = evaluateForm(model, fields, {
             firstName: text('Am'),
             weight: { kind: 'number', value: '60' },
             dob: date('2000-01-02'),
         })
-        expect(verdict.problems).toEqual([
+        expect(verdict.metadataErrors).toEqual([
             { kind: 'shape-conflict', attribute: 'dob' },
         ])
         expect(verdict.search?.filters.map((f) => f.attribute)).toEqual([
@@ -528,9 +527,9 @@ describe('evaluateForm', () => {
         const search = verdict.search
         expect(search).toBeDefined()
         expect(Object.isFrozen(verdict)).toBe(true)
-        expect(Object.isFrozen(verdict.problems)).toBe(true)
-        expect(verdict.problems.every(Object.isFrozen)).toBe(true)
-        expect(Object.isFrozen(verdict.issues)).toBe(true)
+        expect(Object.isFrozen(verdict.metadataErrors)).toBe(true)
+        expect(verdict.metadataErrors.every(Object.isFrozen)).toBe(true)
+        expect(Object.isFrozen(verdict.errors)).toBe(true)
         expect(Object.isFrozen(search)).toBe(true)
         expect(Object.isFrozen(search?.filters)).toBe(true)
         for (const filter of search?.filters ?? []) {
@@ -549,7 +548,7 @@ describe('integer values', () => {
                 firstName: text('Ama'),
                 weight: { kind: 'number', value },
             })
-            expect(verdict.issues).toEqual({ weight: 'not-integer' })
+            expect(verdict.errors).toEqual({ weight: 'not-integer' })
         }
     )
 
@@ -560,7 +559,7 @@ describe('integer values', () => {
                 firstName: text('Ama'),
                 weight: { kind: 'number', value },
             })
-            expect(verdict.issues).toEqual({})
+            expect(verdict.errors).toEqual({})
             expect(verdict.search?.filters[1]).toEqual({
                 attribute: 'weight',
                 conditions: [{ op: 'eq', value }],

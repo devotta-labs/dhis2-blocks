@@ -107,11 +107,15 @@ fields; you cannot loosen these rules:
   component, except `type`, and its children replace the label.
 
 `FinderField` and `FinderRangeField` take `className` and the props listed
-here, not every HTML prop. Fields show their own problems, such as a date
-that doesn't exist. Several
-forms can share one provider, like the ID form and the **No ID?** form above.
-The same attribute in two forms shares its value, and the results show the
-last search until the next one.
+here, not every HTML prop. Each `FinderForm` is a [TanStack Form](https://tanstack.com/form),
+and each field checks its value with a Zod schema built from the attribute's
+metadata. A field shows its own error, such as a date that doesn't exist, once
+the user leaves it or tries to search. While a field has an error, the form
+won't search, and pressing Search shows every error in the form.
+
+Several forms can share one provider, like the ID form and the **No ID?** form
+above. Each form keeps its own values, and the results show the last search
+until the next one.
 
 ## Results
 
@@ -132,9 +136,13 @@ its type:
 For your own parts inside `FinderProvider`:
 
 - `useFinderField(uid)` and `useFinderRangeField(uid)` — inside a
-  `FinderForm`: the attribute (with its `kind`, which says which value shape
-  `setValue` takes; an option set is `option` even on a TEXT attribute), its
-  value, `setValue`, and any problem with it.
+  `FinderForm`: `field`, the attribute's TanStack field; the attribute (with
+  its `kind`, which says which value shape `field.handleChange` takes; an
+  option set is `option` even on a TEXT attribute); `error`, the text to show
+  once the user has left the field or tried to search; and `metadataError`,
+  set when the field doesn't fit the program.
+- `useFinderForm()` — inside a `FinderForm`: its TanStack form, for its
+  values, `Subscribe` and `reset`.
 - `useFinderSearch()` — inside a `FinderForm`: whether it can search, how
   many details are missing, and `submit`.
 - `useFinderResults()` — the results status, the people on the page, paging,
@@ -142,19 +150,53 @@ For your own parts inside `FinderProvider`:
 - `useFinderPerson()` — inside `FinderList`: the current person.
 - `useFinderProgram()` — the program's name and searchable attributes.
 
+### Custom fields
+
+A field of your own counts toward the search like the built-in ones, as long
+as it comes from `useFinderField` or `useFinderRangeField`. You get the
+attribute's TanStack field and use it as you would in any TanStack form. For
+example, a village stored as text but picked from a region and district tree:
+
+```tsx
+const VillageField = () => {
+    const { field, attribute, error, metadataError } =
+        useFinderField('villageUid')
+    if (metadataError) return <p>{metadataError}</p>
+    const value = field.state.value
+    return (
+        <VillagePicker
+            label={attribute?.label}
+            value={value?.kind === 'text' ? value.text : ''}
+            onChange={(village) =>
+                field.handleChange({ kind: 'text', text: village })
+            }
+            onBlur={field.handleBlur}
+            error={error}
+        />
+    )
+}
+```
+
+Its value is checked by the same Zod schema, counts toward the program's
+minimum, and is searched with the attribute's operator. `error` is already
+translated and waits until the user leaves the field; for something else,
+read `field.state.meta` yourself.
+
 ## Choose the program at runtime
 
-`program` is a plain prop. Changing it clears the values and the results, so
+`program` is a plain prop. Changing it clears the forms and the results, so
 nothing found in one program shows under the other. Give each program its own
 fields:
 
 <ExampleCard slug="tracked-entity-finder/program-picker" />
 
-## Setup errors
+## Metadata errors
 
-A field that doesn't fit the program, such as an attribute that isn't in it
-or isn't searchable, is left out of the search and shows a message in its
-place. The rest of the form keeps working. A form that can never search,
+A field that doesn't fit the program's metadata, such as an attribute that
+isn't in it or isn't searchable, is left out of the search and shows a message
+in its place. The rest of the form keeps working. The same attribute as both
+`FinderField` and `FinderRangeField` in one form is a metadata error too; in
+separate forms it's fine. A form that can never search,
 because it has no usable ID field and too few usable fields for the
 program's minimum, shows the message for the whole form.
 

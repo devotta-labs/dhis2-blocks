@@ -1,12 +1,13 @@
-import {
-    type LabAttribute,
-    type LabComposition,
-    type LabConfig,
-    type LabField,
-    type LabOption,
-    type LabProgram,
-    type LabServer,
-} from './labConfig'
+import type { LabNetwork } from '../network'
+import type {
+    LabAttribute,
+    LabComposition,
+    LabField,
+    LabOption,
+    LabProgram,
+    LabServer,
+    LabSettings,
+} from './labData'
 
 const attribute = (
     id: string,
@@ -52,13 +53,12 @@ const PERSON_ATTRIBUTES: LabAttribute[] = [
 const SERVER: LabServer = {
     matches: 3,
     reportsTotal: true,
-    latency: 300,
     search: 'ok',
-    program: 'ok',
-    systemInfo: 'ok',
     calendar: 'gregorian',
     dateFormat: 'YYYY-MM-DD',
 }
+
+const NETWORK: LabNetwork = { delay: 300, endpoints: {} }
 
 const field = (attributeId: string, range = false): LabField => ({
     attribute: attributeId,
@@ -75,7 +75,7 @@ const COMPOSITION: LabComposition = {
     customTexts: false,
 }
 
-export const DEFAULT_CONFIG: LabConfig = {
+export const DEFAULT_SETTINGS: LabSettings = {
     program: {
         name: 'Lab person register',
         minAttributes: 2,
@@ -84,27 +84,48 @@ export const DEFAULT_CONFIG: LabConfig = {
     },
     server: SERVER,
     composition: COMPOSITION,
+    network: NETWORK,
+    width: 'narrow',
+    rtl: false,
 }
 
-type Tweak = (config: LabConfig) => LabConfig
+type Tweak = (settings: LabSettings) => LabSettings
+
+/** One endpoint failing with a 500 or never answering. */
+const withEndpoint =
+    (resource: string, behaviour: 'fails' | 'hangs'): Tweak =>
+    (settings) => ({
+        ...settings,
+        network: {
+            ...settings.network,
+            endpoints: { [resource]: { behaviour } },
+        },
+    })
+
+const withDelay =
+    (delay: number): Tweak =>
+    (settings) => ({ ...settings, network: { ...settings.network, delay } })
 
 const withServer =
     (server: Partial<LabServer>): Tweak =>
-    (config) => ({ ...config, server: { ...config.server, ...server } })
+    (settings) => ({ ...settings, server: { ...settings.server, ...server } })
 
 const withProgram =
     (program: Partial<LabProgram>): Tweak =>
-    (config) => ({ ...config, program: { ...config.program, ...program } })
+    (settings) => ({
+        ...settings,
+        program: { ...settings.program, ...program },
+    })
 
 const withComposition =
     (composition: Partial<LabComposition>): Tweak =>
-    (config) => ({
-        ...config,
-        composition: { ...config.composition, ...composition },
+    (settings) => ({
+        ...settings,
+        composition: { ...settings.composition, ...composition },
     })
 
-const tweak = (...tweaks: Tweak[]): LabConfig =>
-    tweaks.reduce((config, each) => each(config), DEFAULT_CONFIG)
+const tweak = (...tweaks: Tweak[]): LabSettings =>
+    tweaks.reduce((settings, each) => each(settings), DEFAULT_SETTINGS)
 
 const EVERY_KIND: LabAttribute[] = [
     attribute('caseId', 'Case ID', 'TEXT', {
@@ -167,17 +188,23 @@ const LONG_LABELS: LabAttribute[] = [
     ),
 ]
 
+export interface Preset {
+    group: string
+    name: string
+    settings: LabSettings
+}
+
 /** Starting points, grouped: pick one, then tweak anything. */
-export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
+export const PRESETS: readonly Preset[] = [
     {
         group: 'Shapes',
         name: 'ID or details',
-        config: DEFAULT_CONFIG,
+        settings: DEFAULT_SETTINGS,
     },
     {
         group: 'Shapes',
         name: 'ID form, then a details form',
-        config: tweak(
+        settings: tweak(
             withComposition({
                 forms: [
                     [field('nationalId')],
@@ -190,7 +217,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Shapes',
         name: 'Two forms side by side',
-        config: tweak(
+        settings: tweak(
             withComposition({
                 forms: [
                     [field('nationalId')],
@@ -202,7 +229,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Shapes',
         name: 'Every field kind',
-        config: tweak(
+        settings: tweak(
             withProgram({ attributes: EVERY_KIND, minAttributes: 1 }),
             withComposition({
                 forms: [EVERY_KIND.map(({ id }) => field(id))],
@@ -213,7 +240,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Shapes',
         name: 'Number and date ranges',
-        config: tweak(
+        settings: tweak(
             withProgram({ attributes: EVERY_KIND, minAttributes: 1 }),
             withComposition({
                 forms: [
@@ -232,12 +259,12 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Shapes',
         name: 'Just one ID',
-        config: tweak(withComposition({ forms: [[field('nationalId')]] })),
+        settings: tweak(withComposition({ forms: [[field('nationalId')]] })),
     },
     {
         group: 'Program rules',
         name: 'Needs three details',
-        config: tweak(
+        settings: tweak(
             withProgram({ minAttributes: 3 }),
             withComposition({
                 forms: [
@@ -255,7 +282,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Program rules',
         name: 'Minimum characters and blocked operators',
-        config: tweak(
+        settings: tweak(
             withProgram({
                 minAttributes: 1,
                 attributes: PERSON_ATTRIBUTES.map((each) => {
@@ -281,7 +308,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Program rules',
         name: 'Setup mistakes',
-        config: tweak(
+        settings: tweak(
             withProgram({
                 attributes: [
                     ...PERSON_ATTRIBUTES,
@@ -310,7 +337,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Program rules',
         name: 'A form that can never search',
-        config: tweak(
+        settings: tweak(
             withProgram({ minAttributes: 3 }),
             withComposition({ forms: [[field('firstName'), field('dob')]] })
         ),
@@ -318,12 +345,12 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Server answers',
         name: 'No one found',
-        config: tweak(withServer({ matches: 0 })),
+        settings: tweak(withServer({ matches: 0 })),
     },
     {
         group: 'Server answers',
         name: 'Many pages',
-        config: tweak(
+        settings: tweak(
             withProgram({ maxResults: 0 }),
             withServer({ matches: 47 })
         ),
@@ -331,7 +358,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Server answers',
         name: 'Pages without a total',
-        config: tweak(
+        settings: tweak(
             withProgram({ maxResults: 0 }),
             withServer({ matches: 30, reportsTotal: false })
         ),
@@ -339,7 +366,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Server answers',
         name: 'Over the program cap',
-        config: tweak(
+        settings: tweak(
             withProgram({ maxResults: 5 }),
             withServer({ matches: 12 })
         ),
@@ -347,32 +374,40 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Server answers',
         name: 'Server says too many (409)',
-        config: tweak(withServer({ search: 'conflict' })),
+        settings: tweak(withServer({ search: 'conflict' })),
     },
     {
         group: 'Server answers',
         name: 'Search fails',
-        config: tweak(withServer({ search: 'server-error', latency: 600 })),
+        settings: tweak(
+            withEndpoint('tracker/trackedEntities', 'fails'),
+            withDelay(600)
+        ),
     },
     {
         group: 'Server answers',
         name: 'Slow search',
-        config: tweak(withServer({ latency: 4000, matches: 25 })),
+        settings: tweak(withDelay(4000), withServer({ matches: 25 })),
     },
     {
         group: 'Server answers',
         name: 'Program fails to load',
-        config: tweak(withServer({ program: 'fails' })),
+        settings: tweak(withEndpoint('programs', 'fails')),
     },
     {
         group: 'Server answers',
         name: 'Program never loads',
-        config: tweak(withServer({ program: 'never' })),
+        settings: tweak(withEndpoint('programs', 'hangs')),
+    },
+    {
+        group: 'Server answers',
+        name: 'System info never loads',
+        settings: tweak(withEndpoint('system/info', 'hangs')),
     },
     {
         group: 'Dates',
         name: 'Ethiopian calendar',
-        config: tweak(
+        settings: tweak(
             withServer({ calendar: 'ethiopian' }),
             withComposition({
                 forms: [[field('firstName'), field('lastName'), field('dob')]],
@@ -382,7 +417,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Dates',
         name: 'Nepali, DD-MM-YYYY, date range',
-        config: tweak(
+        settings: tweak(
             withServer({ calendar: 'nepali', dateFormat: 'DD-MM-YYYY' }),
             withComposition({
                 forms: [[field('firstName'), field('dob', true)]],
@@ -392,7 +427,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Composition',
         name: 'Composed rows and own texts',
-        config: tweak(
+        settings: tweak(
             withServer({ matches: 14 }),
             withProgram({ maxResults: 0 }),
             withComposition({ results: 'custom', customTexts: true })
@@ -401,7 +436,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Composition',
         name: 'Built from hooks only',
-        config: tweak(
+        settings: tweak(
             withServer({ matches: 14 }),
             withProgram({ maxResults: 0 }),
             withComposition({ results: 'hooks', hookFields: true })
@@ -410,7 +445,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Composition',
         name: 'Own labels and help text',
-        config: tweak(
+        settings: tweak(
             withComposition({
                 forms: [
                     [
@@ -435,12 +470,12 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Composition',
         name: 'No hint',
-        config: tweak(withComposition({ hint: false })),
+        settings: tweak(withComposition({ hint: false })),
     },
     {
         group: 'Stress',
         name: 'Long labels',
-        config: tweak(
+        settings: tweak(
             withProgram({ attributes: LONG_LABELS }),
             withComposition({
                 forms: [LONG_LABELS.map(({ id }) => field(id))],
@@ -451,7 +486,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Stress',
         name: 'Arabic labels (try right to left)',
-        config: tweak(
+        settings: tweak(
             withProgram({ attributes: ARABIC }),
             withComposition({
                 forms: [ARABIC.map(({ id }) => field(id))],
@@ -462,7 +497,7 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     {
         group: 'Stress',
         name: 'Many fields',
-        config: tweak(
+        settings: tweak(
             withProgram({ attributes: EVERY_KIND, minAttributes: 2 }),
             withComposition({
                 forms: [EVERY_KIND.slice(0, 13).map(({ id }) => field(id))],
@@ -471,12 +506,14 @@ export const PRESETS: { group: string; name: string; config: LabConfig }[] = [
     },
 ]
 
-/** Live programs on the Sierra Leone demo database, as the docs use. */
-export const LIVE_PRESETS: {
+export interface LivePreset {
     name: string
     program: string
     forms: LabField[][]
-}[] = [
+}
+
+/** Live programs on the Sierra Leone demo database, as the docs use. */
+export const LIVE_PRESETS: readonly LivePreset[] = [
     {
         name: 'WHO RMNCH Tracker: ID or name and birth date',
         program: 'WSGAb5XwJ3Y',

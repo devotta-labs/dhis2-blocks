@@ -61,8 +61,8 @@ export type FieldValue =
     | { kind: 'date'; date?: string }
     | { kind: 'dateRange'; from?: string; to?: string }
 
-/** A value the user entered that cannot be searched as is. */
-export type FieldIssue =
+/** Why a value the user entered cannot be searched as is. */
+export type FieldErrorCode =
     | 'too-short'
     | 'invalid-number'
     | 'not-integer'
@@ -75,8 +75,11 @@ export interface FormField {
     readonly match: 'exact' | 'range'
 }
 
-/** A developer error: the composed form does not fit the program's metadata. */
-export type ConfigProblem =
+/**
+ * A developer error: a composed field or form does not fit the program's
+ * metadata. The field is left out of the search; the user cannot fix it.
+ */
+export type MetadataError =
     | {
           readonly kind:
               | 'unknown-attribute'
@@ -109,16 +112,17 @@ export interface ValidatedSearch {
 
 /** Frozen. `search` is present iff `reason === 'ready'`. */
 export interface FormVerdict {
-    readonly problems: ReadonlyArray<ConfigProblem>
-    readonly issues: Readonly<Record<string, FieldIssue>>
+    readonly metadataErrors: ReadonlyArray<MetadataError>
+    /** Each attribute whose value cannot be searched as is. */
+    readonly errors: Readonly<Record<string, FieldErrorCode>>
     /** Non-unique details still needed to reach the program's minimum. */
     readonly missing: number
     readonly reason:
         | 'empty'
         | 'needs-more'
         | 'two-ids'
-        | 'has-issues'
-        | 'not-set-up'
+        | 'has-errors'
+        | 'metadata-error'
         | 'ready'
     /** The unique attribute id when a filled ID searches alone. */
     readonly searchingBy?: string

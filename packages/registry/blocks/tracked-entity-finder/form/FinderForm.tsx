@@ -1,6 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import React, {
-    useId,
+    useCallback,
     useLayoutEffect,
     useMemo,
     useState,
@@ -9,42 +9,44 @@ import React, {
 import { ErrorAlert } from '@/components/dhis2/ui/alert'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
-import { useProblemMessage } from '../hooks'
+import { useStore } from '@tanstack/react-form'
+import { useMetadataErrorMessage } from '../hooks'
 import { FinderFormContext, useFinderContext } from '../provider/context'
-import { evaluateForm, findRangeConflicts } from '../rules/evaluateForm'
+import { evaluateForm } from '../rules/evaluateForm'
 import type { FormField } from '../rules/types'
-import { ConfigError } from './ConfigError'
+import { useFinderFormApi } from './finderFormApi'
+import { MetadataErrorNotice } from './MetadataErrorNotice'
 
 export type FinderFormProps = ComponentPropsWithoutRef<'form'>
 
-const NO_FIELDS: readonly FormField[] = Object.freeze([])
+interface Registration {
+    key: string
+    field: FormField
+}
 
-/**
- * Adds the other match for attributes composed both ways anywhere under the
- * provider, so this form reports the conflict even if it holds only one.
- */
-const withConflicts = (
-    fields: readonly FormField[],
-    conflicts: readonly string[]
-): readonly FormField[] => {
-    const composed = new Set(
-        fields.map(({ attribute, match }) => `${match}:${attribute}`)
+/** This form's fields, in the order they registered. */
+const useRegistrations = () => {
+    const [registrations, setRegistrations] = useState<readonly Registration[]>(
+        []
     )
-    const added: FormField[] = []
-    for (const { attribute, match } of fields) {
-        const opposite = match === 'range' ? 'exact' : 'range'
-        const key = `${opposite}:${attribute}`
-        if (conflicts.includes(attribute) && !composed.has(key)) {
-            composed.add(key)
-            added.push({ attribute, match: opposite })
-        }
-    }
-    return added.length ? [...fields, ...added] : fields
+    const register = useCallback((key: string, field: FormField) => {
+        setRegistrations((current) => [...current, { key, field }])
+        return () =>
+            setRegistrations((current) =>
+                current.filter((entry) => entry.key !== key)
+            )
+    }, [])
+    const fields = useMemo(
+        () => Object.freeze(registrations.map(({ field }) => field)),
+        [registrations]
+    )
+    return { fields, register }
 }
 
 /**
- * One search: the fields inside it are judged together under the program's
- * search rules. Enter submits.
+ * One search, and one TanStack form: the fields inside it hold their values
+ * there, are validated by their Zod schemas, and are judged together under
+ * the program's search rules. Enter submits.
  */
 export function FinderForm({
     className,
@@ -53,26 +55,31 @@ export function FinderForm({
     ...props
 }: FinderFormProps) {
     const { state, actions } = useFinderContext()
-    const formId = useId()
-    const fields = state.forms[formId] ?? NO_FIELDS
-    const conflicts = useMemo(
-        () => findRangeConflicts(state.fields),
-        [state.fields]
+    const { fields, register } = useRegistrations()
+    const { model, status } = state
+    // TanStack calls this once the fields' Zod schemas pass; the search rules
+    // still decide whether the values make a search.
+    const form = useFinderFormApi((values) => {
+        const search =
+            model && status === 'ready'
+                ? evaluateForm(model, fields, values).search
+                : undefined
+        if (search) {
+            actions.submit(search)
+        }
+    })
+    const values = useStore(form.store, (formState) => formState.values)
+    const submitted = useStore(
+        form.store,
+        (formState) => formState.submissionAttempts > 0
     )
     const verdict = useMemo(
-        () =>
-            state.model
-                ? evaluateForm(
-                      state.model,
-                      withConflicts(fields, conflicts),
-                      state.values
-                  )
-                : undefined,
-        [state.model, fields, conflicts, state.values]
+        () => (model ? evaluateForm(model, fields, values) : undefined),
+        [model, fields, values]
     )
     const formContext = useMemo(
-        () => ({ formId, fields, verdict }),
-        [formId, fields, verdict]
+        () => ({ form, register, submitted, verdict }),
+        [form, register, submitted, verdict]
     )
     // Fields register in layout effects, which run before this form's own:
     // until then the form looks empty and must not be judged unusable.
@@ -80,15 +87,13 @@ export function FinderForm({
     // already-mounted empty form.
     const [registered, setRegistered] = useState(false)
     useLayoutEffect(() => setRegistered(true), [])
-    const problem = useProblemMessage(
+    const metadataError = useMetadataErrorMessage(
         registered
-            ? verdict?.problems.find(
+            ? verdict?.metadataErrors.find(
                   ({ kind }) => kind === 'form-cannot-search'
               )
             : undefined
     )
-    const search = state.status === 'ready' ? verdict?.search : undefined
-
     return (
         <FinderFormContext.Provider value={formContext}>
             <form
@@ -104,9 +109,7 @@ export function FinderForm({
                         return
                     }
                     event.preventDefault()
-                    if (search) {
-                        actions.submit(search)
-                    }
+                    void form.handleSubmit()
                 }}
             >
                 {state.status === 'loading' && <Spinner />}
@@ -115,7 +118,9 @@ export function FinderForm({
                         title={i18n.t("The search couldn't be loaded")}
                     />
                 )}
-                {problem && <ConfigError>{problem}</ConfigError>}
+                {metadataError && (
+                    <MetadataErrorNotice>{metadataError}</MetadataErrorNotice>
+                )}
                 {children}
             </form>
         </FinderFormContext.Provider>

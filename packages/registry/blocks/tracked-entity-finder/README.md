@@ -5,7 +5,7 @@ tracked entity within a program's search rules. The host places the parts it
 wants; the block enforces the program's rules invisibly and they cannot be
 loosened: the minimum number of attributes to search with, exact matching for
 IDs, the result cap, and which attributes are searchable. A field that does
-not fit the program is left out of the search and shows a setup message in
+not fit the program's metadata is left out of the search and shows a message in
 its place.
 
 ```tsx
@@ -39,7 +39,14 @@ Parts: `FinderProvider`, `FinderForm`, `FinderField`, `FinderRangeField`,
 `FinderValue`, `FinderPagination`.
 
 Hooks, for custom layouts: `useFinderField`, `useFinderRangeField`,
-`useFinderSearch`, `useFinderResults`, `useFinderPerson`, `useFinderProgram`.
+`useFinderForm`, `useFinderSearch`, `useFinderResults`, `useFinderPerson`,
+`useFinderProgram`.
+
+Each `FinderForm` is a TanStack Form, and each field checks its value with a
+Zod schema built from the attribute's metadata. `useFinderForm` returns the
+form; `useFinderField` returns the attribute's TanStack `field`, its `error`
+and any `metadataError`, so a custom input counts toward the search like
+the built-in ones.
 
 `createTrackedEntityFinderClient` wraps a custom data engine; by default the
 block uses the DHIS2 app-runtime.
@@ -51,7 +58,7 @@ GET /api/programs/<program>?fields=name,minAttributesRequiredToSearch,programTra
 ```
 
 The block reads the literal `process.env.NODE_ENV`, which your bundler
-replaces at build time, to choose between the full development setup-error
+replaces at build time, to choose between the full development metadata-error
 messages and the short production ones (the full message is logged instead).
 Where nothing replaces it, the full messages show.
 

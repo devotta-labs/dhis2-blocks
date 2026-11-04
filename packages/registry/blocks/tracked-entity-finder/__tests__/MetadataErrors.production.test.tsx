@@ -4,7 +4,7 @@ import { FinderField } from '../form/FinderField'
 import { FinderForm } from '../form/FinderForm'
 import { FinderSubmit } from '../form/FinderSubmit'
 import { useFinderField } from '../hooks'
-import { describeProblem } from '../rules/describeProblem'
+import { describeMetadataError } from '../rules/describeMetadataError'
 import { buildProgramModel } from '../rules/programModel'
 import { hivProgram } from './fixtures/program'
 import { renderInFinder } from './finderTestSupport'
@@ -13,26 +13,28 @@ import { renderInFinder } from './finderTestSupport'
 // `process.env.NODE_ENV` set to "production" as an app's production build is.
 
 const model = buildProgramModel(hivProgram)
-const notSearchable = describeProblem(model, {
+const notSearchable = describeMetadataError(model, {
     kind: 'not-searchable',
     attribute: 'legacyId',
 })
-const cannotSearch = describeProblem(model, { kind: 'form-cannot-search' })
+const cannotSearch = describeMetadataError(model, {
+    kind: 'form-cannot-search',
+})
 
 /** Sets a value for a field without rendering an input, as a custom part could. */
 const LegacyIdSetter = () => {
-    const { setValue } = useFinderField('legacyId')
+    const { field } = useFinderField('legacyId')
     return (
         <button
             type="button"
-            onClick={() => setValue({ kind: 'text', text: 'L-1' })}
+            onClick={() => field.handleChange({ kind: 'text', text: 'L-1' })}
         >
             Set legacy ID
         </button>
     )
 }
 
-describe('config errors in production', () => {
+describe('metadata errors in production', () => {
     afterEach(() => {
         vi.restoreAllMocks()
     })

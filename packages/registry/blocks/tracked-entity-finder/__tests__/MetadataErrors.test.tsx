@@ -1,4 +1,4 @@
-import React, { useState, type ErrorInfo, type ReactNode } from 'react'
+import React, { type ErrorInfo, type ReactNode } from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { FinderField } from '../form/FinderField'
 import { FinderForm } from '../form/FinderForm'
@@ -6,7 +6,7 @@ import { FinderHint } from '../form/FinderHint'
 import { FinderRangeField } from '../form/FinderRangeField'
 import { FinderSubmit } from '../form/FinderSubmit'
 import { FinderProvider } from '../provider/FinderProvider'
-import { describeProblem } from '../rules/describeProblem'
+import { describeMetadataError } from '../rules/describeMetadataError'
 import { buildProgramModel } from '../rules/programModel'
 import { hivProgram } from './fixtures/program'
 import {
@@ -16,11 +16,11 @@ import {
 } from './finderTestSupport'
 
 const model = buildProgramModel(hivProgram)
-const notSearchable = describeProblem(model, {
+const notSearchable = describeMetadataError(model, {
     kind: 'not-searchable',
     attribute: 'legacyId',
 })
-const conflict = describeProblem(model, {
+const conflict = describeMetadataError(model, {
     kind: 'shape-conflict',
     attribute: 'dob',
 })
@@ -47,7 +47,7 @@ class Catch extends React.Component<{ children: ReactNode }, Caught> {
     }
 }
 
-describe('config errors', () => {
+describe('metadata errors', () => {
     afterEach(() => {
         vi.restoreAllMocks()
     })
@@ -69,78 +69,54 @@ describe('config errors', () => {
             .not.toBeInTheDocument()
     })
 
-    it('flags the same attribute as both exact and range', async () => {
+    it('flags the same attribute as both exact and range in one form', async () => {
+        await renderInFinder(
+            <FinderForm aria-label="Both">
+                <FinderField attribute="firstName" />
+                <FinderField attribute="weight" />
+                <FinderField attribute="dob" />
+                <FinderRangeField attribute="dob" />
+                <FinderSubmit />
+            </FinderForm>
+        )
+        const form = page.getByRole('form', { name: 'Both' })
+
+        await expect.element(form.getByText(conflict).first()).toBeVisible()
+        await userEvent.fill(form.getByLabelText('First name'), 'Joe')
+        await userEvent.fill(form.getByLabelText('Weight'), '60')
+        await form.getByRole('button', { name: 'Search' }).click()
+        await expect
+            .element(page.getByTestId('submission'))
+            .toHaveTextContent('firstName:like:Joe weight:eq:60')
+        await expect
+            .element(page.getByTestId('submission'))
+            .not.toHaveTextContent('dob')
+    })
+
+    it('lets separate forms use one attribute both ways', async () => {
         await renderInFinder(
             <>
                 <FinderForm aria-label="Exact">
+                    <FinderField attribute="firstName" />
                     <FinderField attribute="dob" />
+                    <FinderSubmit />
                 </FinderForm>
                 <FinderForm aria-label="Range">
+                    <FinderField attribute="firstName" />
                     <FinderRangeField attribute="dob" />
                 </FinderForm>
             </>
         )
+        const exact = page.getByRole('form', { name: 'Exact' })
 
-        await expect
-            .element(
-                page.getByRole('form', { name: 'Exact' }).getByText(conflict)
-            )
-            .toBeVisible()
-        await expect
-            .element(
-                page.getByRole('form', { name: 'Range' }).getByText(conflict)
-            )
-            .toBeVisible()
-    })
-
-    it('recovers a form when the form composing the range unmounts', async () => {
-        const Forms = () => {
-            const [range, setRange] = useState(true)
-            return (
-                <>
-                    <FinderForm aria-label="Details">
-                        <FinderField attribute="firstName" />
-                        <FinderField attribute="dob" />
-                        <FinderSubmit />
-                    </FinderForm>
-                    {range && (
-                        <FinderForm aria-label="Range">
-                            <FinderRangeField attribute="dob" />
-                        </FinderForm>
-                    )}
-                    <button type="button" onClick={() => setRange(false)}>
-                        Hide range
-                    </button>
-                </>
-            )
-        }
-        await renderInFinder(<Forms />)
-        const details = page.getByRole('form', { name: 'Details' })
-
-        await expect.element(details.getByText(conflict)).toBeVisible()
-        await expect
-            .element(
-                page.getByRole('form', { name: 'Range' }).getByText(conflict)
-            )
-            .toBeVisible()
-        await userEvent.fill(details.getByLabelText('First name'), 'Joe')
-        await expect
-            .element(details.getByRole('button', { name: 'Search' }))
-            .toBeDisabled()
-
-        await page.getByRole('button', { name: 'Hide range' }).click()
-        await expect
-            .element(details.getByText(conflict))
-            .not.toBeInTheDocument()
+        await expect.element(page.getByText(conflict)).not.toBeInTheDocument()
+        await userEvent.fill(exact.getByLabelText('First name'), 'Joe')
         await userEvent.fill(
-            details.getByLabelText('Date of birth'),
+            exact.getByLabelText('Date of birth'),
             '2001-02-03'
         )
         await userEvent.tab()
-        await expect
-            .element(details.getByRole('button', { name: 'Search' }))
-            .toBeEnabled()
-        await details.getByRole('button', { name: 'Search' }).click()
+        await exact.getByRole('button', { name: 'Search' }).click()
         await expect
             .element(page.getByTestId('submission'))
             .toHaveTextContent('firstName:like:Joe dob:eq:2001-02-03')

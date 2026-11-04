@@ -9,6 +9,11 @@ import {
 } from 'react'
 import type { FinderPerson } from './api/search'
 import {
+    useFinderFieldApi,
+    type FinderFieldApi,
+    type FinderFormApi,
+} from './form/finderFormApi'
+import {
     FinderPersonContext,
     useFinderContext,
     useFinderFormContext,
@@ -16,16 +21,14 @@ import {
     type FinderStatus,
 } from './provider/context'
 import { isProduction } from './provider/env'
-import { describeProblem } from './rules/describeProblem'
+import { describeMetadataError } from './rules/describeMetadataError'
 import { attributeOf, searchableAttributes } from './rules/programModel'
 import type {
-    ConfigProblem,
-    FieldIssue,
     FieldKind,
-    FieldValue,
     FinderAttribute,
     FormField,
     FormVerdict,
+    MetadataError,
 } from './rules/types'
 
 interface FinderFieldAttribute {
@@ -46,32 +49,41 @@ interface FinderFieldAttribute {
 }
 
 export interface FinderFieldState {
+    /**
+     * The attribute's TanStack field. Read `field.state.value`, and call
+     * `field.handleChange` and `field.handleBlur` from your input.
+     */
+    field: FinderFieldApi
     /** The program attribute, once metadata is loaded and if it exists. */
     attribute?: FinderFieldAttribute
-    value?: FieldValue
-    setValue: (value: FieldValue) => void
-    /** Why the entered value cannot be searched as is. */
-    issue?: FieldIssue
-    /** Set when the field does not fit the program; it is left out of the search. */
-    problem?: string
+    /**
+     * Why the entered value cannot be searched, as text to show. Set once the
+     * field was left or a search was tried; the search is blocked either way.
+     */
+    error?: string
+    /**
+     * Why the field does not fit the program's metadata. The field is left
+     * out of the search; render this message in its place.
+     */
+    metadataError?: string
 }
 
 /**
- * The text to show for a config problem: the full message in development, a
+ * The text to show for a metadata error: the full message in development, a
  * short one in production, where the full message is logged instead.
  */
-export const useProblemMessage = (
-    problem: ConfigProblem | undefined
+export const useMetadataErrorMessage = (
+    error: MetadataError | undefined
 ): string | undefined => {
     const { state, actions } = useFinderContext()
     const full =
-        problem && state.model
-            ? describeProblem(state.model, problem)
+        error && state.model
+            ? describeMetadataError(state.model, error)
             : undefined
     const production = isProduction()
     useEffect(() => {
         if (full && production) {
-            actions.logProblem(full)
+            actions.logMetadataError(full)
         }
     }, [full, production, actions])
     if (!full) {
@@ -80,29 +92,23 @@ export const useProblemMessage = (
     return production ? i18n.t("This search isn't set up correctly") : full
 }
 
-const valueOf = (values: Readonly<Record<string, FieldValue>>, id: string) =>
-    Object.hasOwn(values, id) ? values[id] : undefined
-
 /** Internal: a field registered in the current form, with its attribute. */
 export const useComposedField = (
     id: string,
     match: FormField['match']
 ): FinderFieldState & { found?: FinderAttribute } => {
-    const { state, actions } = useFinderContext()
-    const { formId, verdict } = useFinderFormContext()
+    const { state } = useFinderContext()
+    const { form, register, submitted, verdict } = useFinderFormContext()
     const key = useId()
-    const { register, setValue: setFieldValue } = actions
 
     useLayoutEffect(
-        () => register(formId, key, { attribute: id, match }),
-        [register, formId, key, id, match]
+        () => register(key, { attribute: id, match }),
+        [register, key, id, match]
     )
 
-    const configProblem = verdict?.problems.find(
-        (problem) =>
-            problem.kind !== 'form-cannot-search' && problem.attribute === id
+    const metadataError = verdict?.metadataErrors.find(
+        (error) => error.kind !== 'form-cannot-search' && error.attribute === id
     )
-    const problem = useProblemMessage(configProblem)
     const found = state.model ? attributeOf(state.model, id) : undefined
     const attribute = useMemo(
         () =>
@@ -116,18 +122,20 @@ export const useComposedField = (
             }),
         [found]
     )
-    const setValue = useCallback(
-        (value: FieldValue) => setFieldValue(id, value),
-        [setFieldValue, id]
+    const field = useFinderFieldApi(
+        form,
+        id,
+        metadataError ? undefined : found,
+        match
     )
-    const issues = verdict?.issues ?? {}
+    const shown = submitted || field.state.meta.isBlurred
+    const [error] = field.state.meta.errors
     return {
         found,
+        field,
         attribute,
-        value: valueOf(state.values, id),
-        setValue,
-        issue: Object.hasOwn(issues, id) ? issues[id] : undefined,
-        problem,
+        error: shown ? error : undefined,
+        metadataError: useMetadataErrorMessage(metadataError),
     }
 }
 
@@ -145,26 +153,26 @@ export const useFinderRangeField = (attribute: string): FinderFieldState =>
     publicField(useComposedField(attribute, 'range'))
 
 export interface FinderSearchState {
+    /** Whether the values make a search now. */
     canSearch: boolean
     /** Details still needed to reach the program's minimum. */
     missing: number
     reason: FormVerdict['reason']
     /** The label of the ID that searches alone. */
     searchingBy?: string
+    /** Searches when it can; with field errors, shows them all instead. */
     submit: () => void
 }
 
 /** The current form's search: whether it can run, and running it. */
 export const useFinderSearch = (): FinderSearchState => {
-    const { state, actions } = useFinderContext()
-    const { verdict } = useFinderFormContext()
+    const { state } = useFinderContext()
+    const { form, verdict } = useFinderFormContext()
     const search = state.status === 'ready' ? verdict?.search : undefined
-    const { submit: submitSearch } = actions
+    // Through TanStack, so a search with field errors shows them instead.
     const submit = useCallback(() => {
-        if (search) {
-            submitSearch(search)
-        }
-    }, [search, submitSearch])
+        void form.handleSubmit()
+    }, [form])
     const searchingBy =
         verdict?.searchingBy && state.model
             ? attributeOf(state.model, verdict.searchingBy)?.label
@@ -174,7 +182,7 @@ export const useFinderSearch = (): FinderSearchState => {
         missing: verdict?.missing ?? 0,
         reason:
             verdict?.reason ??
-            (state.status === 'error' ? 'not-set-up' : 'empty'),
+            (state.status === 'error' ? 'metadata-error' : 'empty'),
         searchingBy,
         submit,
     }
@@ -258,6 +266,13 @@ export const useFinderResults = (): FinderResultsState => {
         select,
     }
 }
+
+/**
+ * The TanStack form of the `FinderForm` around it: its values, field meta,
+ * `Subscribe` and `reset`. A field counts toward the search only through
+ * `useFinderField`, `useFinderRangeField` or the field parts.
+ */
+export const useFinderForm = (): FinderFormApi => useFinderFormContext().form
 
 /** The person of the current `FinderList` item, for custom row content. */
 export const useFinderPerson = (): FinderPerson => {

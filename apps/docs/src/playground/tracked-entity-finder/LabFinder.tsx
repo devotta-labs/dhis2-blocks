@@ -16,57 +16,14 @@ import {
     FinderTooMany,
     FinderValue,
     useFinderField,
-    useFinderProgram,
     useFinderRangeField,
     useFinderResults,
     useFinderSearch,
     type FieldValue,
     type FinderFieldState,
     type FinderPerson,
-    type TrackedEntityFinderClient,
 } from '@/components/tracked-entity-finder'
-import type { LabComposition, LabField } from './labConfig'
-
-const Readout = ({ children }: { children: ReactNode }) => (
-    <output className="block rounded border border-dashed border-dhis2-purple-500 px-2 py-1 font-mono text-[11px] leading-4 text-dhis2-purple-800">
-        {children}
-    </output>
-)
-
-/** Lab chrome, not finder UI: what the form's verdict is right now. */
-const SearchReadout = () => {
-    const search = useFinderSearch()
-    return (
-        <Readout>
-            reason={search.reason} canSearch={String(search.canSearch)} missing=
-            {search.missing}
-            {search.searchingBy ? ` searchingBy="${search.searchingBy}"` : ''}
-        </Readout>
-    )
-}
-
-const ProgramReadout = () => {
-    const program = useFinderProgram()
-    return (
-        <Readout>
-            program status={program.status}
-            {program.name ? ` name="${program.name}"` : ''} searchable=
-            {program.searchableAttributes.length}
-        </Readout>
-    )
-}
-
-const ResultsReadout = () => {
-    const results = useFinderResults()
-    return (
-        <Readout>
-            results status={results.status} page={results.page} people=
-            {results.people.length} hasPrevious={String(results.hasPrevious)}{' '}
-            hasNext={String(results.hasNext)} refreshing=
-            {String(results.refreshing)}
-        </Readout>
-    )
-}
+import type { LabComposition, LabField } from './labData'
 
 const inputClass =
     'w-full rounded border border-dhis2-grey-500 px-2 py-1 text-sm aria-invalid:border-dhis2-red-700'
@@ -79,9 +36,11 @@ const HookInput = ({
     field: LabField
     state: FinderFieldState
 }) => {
-    const { attribute, value, setValue, issue, problem } = state
+    const { attribute, error, metadataError } = state
+    const value = state.field.state.value
+    const onBlur = state.field.handleBlur
     const label = field.label ?? attribute?.label ?? field.attribute
-    const set = (next: FieldValue) => setValue(next)
+    const set = (next: FieldValue) => state.field.handleChange(next)
     const input = (): ReactNode => {
         if (!attribute) return <span className="text-sm">Loading…</span>
         if (field.range) {
@@ -113,11 +72,12 @@ const HookInput = ({
                             aria-label={`${label} ${index === 0 ? 'from' : 'to'}`}
                             type={numbers ? 'text' : 'date'}
                             value={each}
-                            aria-invalid={issue ? true : undefined}
+                            aria-invalid={error ? true : undefined}
                             onChange={(event) =>
                                 update(index === 0, event.target.value)
                             }
                             className={inputClass}
+                            onBlur={onBlur}
                         />
                     ))}
                 </span>
@@ -138,6 +98,7 @@ const HookInput = ({
                             })
                         }
                         className={inputClass}
+                        onBlur={onBlur}
                     >
                         <option value="">Any</option>
                         {attribute.options?.map((option) => (
@@ -165,6 +126,7 @@ const HookInput = ({
                             })
                         }
                         className={inputClass}
+                        onBlur={onBlur}
                     >
                         <option value="">Any</option>
                         <option value="true">Yes</option>
@@ -176,6 +138,7 @@ const HookInput = ({
                     <input
                         aria-label={label}
                         type="checkbox"
+                        onBlur={onBlur}
                         checked={value?.kind === 'trueOnly' && value.checked}
                         onChange={(event) =>
                             set({
@@ -199,6 +162,7 @@ const HookInput = ({
                             })
                         }
                         className={inputClass}
+                        onBlur={onBlur}
                     />
                 )
             case 'number':
@@ -207,11 +171,12 @@ const HookInput = ({
                         aria-label={label}
                         inputMode="decimal"
                         value={value?.kind === 'number' ? value.value : ''}
-                        aria-invalid={issue ? true : undefined}
+                        aria-invalid={error ? true : undefined}
                         onChange={(event) =>
                             set({ kind: 'number', value: event.target.value })
                         }
                         className={inputClass}
+                        onBlur={onBlur}
                     />
                 )
             default:
@@ -219,19 +184,20 @@ const HookInput = ({
                     <input
                         aria-label={label}
                         value={value?.kind === 'text' ? value.text : ''}
-                        aria-invalid={issue ? true : undefined}
+                        aria-invalid={error ? true : undefined}
                         onChange={(event) =>
                             set({ kind: 'text', text: event.target.value })
                         }
                         className={inputClass}
+                        onBlur={onBlur}
                     />
                 )
         }
     }
-    if (problem) {
+    if (metadataError) {
         return (
             <p className="rounded bg-dhis2-red-050 px-2 py-1 text-sm text-dhis2-red-800">
-                {problem}
+                {metadataError}
             </p>
         )
     }
@@ -244,8 +210,8 @@ const HookInput = ({
                 ) : null}
             </span>
             {input()}
-            {issue ? (
-                <span className="text-xs text-dhis2-red-700">{issue}</span>
+            {error ? (
+                <span className="text-xs text-dhis2-red-700">{error}</span>
             ) : null}
         </label>
     )
@@ -305,12 +271,10 @@ const LabFormFields = ({
 const LabForm = ({
     fields,
     composition,
-    readouts,
     footer,
 }: {
     fields: LabField[]
     composition: LabComposition
-    readouts: boolean
     footer?: ReactNode
 }) => (
     <FinderForm className="flex flex-col gap-4">
@@ -318,17 +282,10 @@ const LabForm = ({
         {composition.hint ? <FinderHint /> : null}
         {composition.hookFields ? <HookSubmit /> : <FinderSubmit />}
         {footer}
-        {readouts ? <SearchReadout /> : null}
     </FinderForm>
 )
 
-const Forms = ({
-    composition,
-    readouts,
-}: {
-    composition: LabComposition
-    readouts: boolean
-}) => {
+const Forms = ({ composition }: { composition: LabComposition }) => {
     const [shown, setShown] = useState(0)
     const { forms } = composition
     if (composition.formLayout === 'swap' && forms.length > 1) {
@@ -338,7 +295,6 @@ const Forms = ({
                 key={current}
                 fields={forms[current]}
                 composition={composition}
-                readouts={readouts}
                 footer={
                     <div className="flex flex-wrap gap-3">
                         {forms.map((_, index) =>
@@ -364,11 +320,7 @@ const Forms = ({
         <div className="flex flex-wrap gap-8">
             {forms.map((fields, index) => (
                 <div key={index} className="min-w-64 flex-1">
-                    <LabForm
-                        fields={fields}
-                        composition={composition}
-                        readouts={readouts}
-                    />
+                    <LabForm fields={fields} composition={composition} />
                 </div>
             ))}
         </div>
@@ -500,30 +452,24 @@ const Results = ({ composition }: { composition: LabComposition }) => {
     }
 }
 
-/** The finder, composed as the lab says, with optional state readouts. */
+/** The finder, composed as the lab says. */
 export const LabFinder = ({
     program,
-    client,
     composition,
-    readouts,
     onSelect,
     children,
 }: {
     program: string
-    client: TrackedEntityFinderClient
     composition: LabComposition
-    readouts: boolean
     onSelect: (person: FinderPerson) => void
     /** Lab probes that need the provider. */
     children?: ReactNode
 }) => (
-    <FinderProvider program={program} client={client} onSelect={onSelect}>
+    <FinderProvider program={program} onSelect={onSelect}>
         {children}
         <div className="flex flex-col gap-6">
-            {readouts ? <ProgramReadout /> : null}
-            <Forms composition={composition} readouts={readouts} />
+            <Forms composition={composition} />
             <Results composition={composition} />
-            {readouts ? <ResultsReadout /> : null}
         </div>
     </FinderProvider>
 )

@@ -1,9 +1,4 @@
-import React, {
-    useContext,
-    useState,
-    type FormEvent,
-    type ReactNode,
-} from 'react'
+import React, { useState, type FormEvent, type ReactNode } from 'react'
 import { page, userEvent } from 'vitest/browser'
 import {
     CalendarInputProvider,
@@ -15,7 +10,6 @@ import { FinderHint } from '../form/FinderHint'
 import { FinderRangeField } from '../form/FinderRangeField'
 import { FinderSubmit } from '../form/FinderSubmit'
 import { useFinderField, useFinderRangeField } from '../hooks'
-import { FinderContext } from '../provider/context'
 import { FinderProvider } from '../provider/FinderProvider'
 import {
     createFakeServer,
@@ -34,16 +28,6 @@ const renderFinder = (children: ReactNode) => {
             {children}
             <SubmissionProbe />
         </FinderProvider>
-    )
-}
-
-/** Test-only: the attributes every form has registered, in order. */
-const FieldsProbe = () => {
-    const context = useContext(FinderContext)
-    return (
-        <output data-testid="fields">
-            {context?.state.fields.map(({ attribute }) => attribute).join(',')}
-        </output>
     )
 }
 
@@ -102,6 +86,11 @@ describe('FinderForm', () => {
 
         await userEvent.fill(weight.getByLabelText('From'), '80')
         await userEvent.fill(weight.getByLabelText('To'), '60')
+        // Moving from From to To is still inside the field.
+        await expect
+            .element(weight.getByText('From must not be after To'))
+            .not.toBeInTheDocument()
+        await userEvent.tab()
         await expect
             .element(weight.getByText('From must not be after To'))
             .toBeVisible()
@@ -227,12 +216,22 @@ describe('FinderForm', () => {
         )
 
         await userEvent.fill(page.getByLabelText('Weight'), '7.5')
+        // Not while typing: only once the field is left.
+        await expect
+            .element(page.getByText('Enter a whole number'))
+            .not.toBeInTheDocument()
+        await userEvent.tab()
         await expect
             .element(page.getByText('Enter a whole number'))
             .toBeVisible()
         await expect
             .element(page.getByLabelText('Weight'))
             .toHaveAttribute('aria-invalid', 'true')
+
+        await userEvent.fill(page.getByLabelText('Weight'), '7')
+        await expect
+            .element(page.getByText('Enter a whole number'))
+            .not.toBeInTheDocument()
     })
 
     it('searches by an ID alone and says so', async () => {
@@ -285,7 +284,7 @@ describe('FinderForm', () => {
         await expect.element(submission()).not.toHaveTextContent('artNumber')
     })
 
-    it("drops a form's fields when it unmounts", async () => {
+    it('keeps the last search when one form replaces another', async () => {
         const NoIdSwap = () => {
             const [noId, setNoId] = useState(false)
             return noId ? (
@@ -307,12 +306,7 @@ describe('FinderForm', () => {
                 </>
             )
         }
-        await renderFinder(
-            <>
-                <NoIdSwap />
-                <FieldsProbe />
-            </>
-        )
+        await renderFinder(<NoIdSwap />)
 
         await userEvent.fill(page.getByLabelText('ART number'), 'ART-1')
         await page.getByRole('button', { name: 'Search' }).click()
@@ -321,9 +315,6 @@ describe('FinderForm', () => {
             .toHaveTextContent('artNumber:eq:ART-1')
 
         await page.getByRole('button', { name: 'No ID?' }).click()
-        await expect
-            .element(page.getByTestId('fields'))
-            .toHaveTextContent(/^firstName,dob$/)
         // The last search stays until the next Search.
         await expect
             .element(submission())

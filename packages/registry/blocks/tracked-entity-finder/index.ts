@@ -6,6 +6,11 @@ export {
 export type { FinderPerson } from './api/search'
 export { FinderField, type FinderFieldProps } from './form/FinderField'
 export { FinderForm, type FinderFormProps } from './form/FinderForm'
+export type {
+    FinderFieldApi,
+    FinderFormApi,
+    FinderValues,
+} from './form/finderFormApi'
 export { FinderHint, type FinderHintProps } from './form/FinderHint'
 export {
     FinderRangeField,
@@ -18,6 +23,7 @@ export {
     type FinderResultsState,
     type FinderSearchState,
     useFinderField,
+    useFinderForm,
     useFinderPerson,
     useFinderProgram,
     useFinderRangeField,

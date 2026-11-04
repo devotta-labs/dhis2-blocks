@@ -1135,6 +1135,7 @@
                 "@dhis2/multi-calendar-dates@3.2.1",
                 "@dhis2/ui@^10.17.0",
                 "@dhis2/ui-icons@^10.17.0",
+                "@tanstack/react-form@^1.33.5",
                 "@tanstack/react-query@^5.101.4",
                 "prop-types@^15.8.1",
                 "zod@^4.4.3"
@@ -1192,11 +1193,6 @@
                     "target": "@components/tracked-entity-finder/calendar/calendarDates.ts"
                 },
                 {
-                    "path": "packages/registry/blocks/tracked-entity-finder/form/ConfigError.tsx",
-                    "type": "registry:file",
-                    "target": "@components/tracked-entity-finder/form/ConfigError.tsx"
-                },
-                {
                     "path": "packages/registry/blocks/tracked-entity-finder/form/FinderField.tsx",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/form/FinderField.tsx"
@@ -1222,9 +1218,24 @@
                     "target": "@components/tracked-entity-finder/form/FinderSubmit.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/MetadataErrorNotice.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/MetadataErrorNotice.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/errorText.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/errorText.ts"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-finder/form/fieldProps.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/form/fieldProps.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/finderFormApi.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/finderFormApi.ts"
                 },
                 {
                     "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/ChoiceSelect.tsx",
@@ -1265,11 +1276,6 @@
                     "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/TrueOnlyCheckbox.tsx",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/form/inputs/TrueOnlyCheckbox.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/issueText.ts",
-                    "type": "registry:file",
-                    "target": "@components/tracked-entity-finder/form/inputs/issueText.ts"
                 },
                 {
                     "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/types.ts",
@@ -1347,14 +1353,19 @@
                     "target": "@components/tracked-entity-finder/results/FinderValue.tsx"
                 },
                 {
-                    "path": "packages/registry/blocks/tracked-entity-finder/rules/describeProblem.ts",
+                    "path": "packages/registry/blocks/tracked-entity-finder/rules/describeMetadataError.ts",
                     "type": "registry:file",
-                    "target": "@components/tracked-entity-finder/rules/describeProblem.ts"
+                    "target": "@components/tracked-entity-finder/rules/describeMetadataError.ts"
                 },
                 {
                     "path": "packages/registry/blocks/tracked-entity-finder/rules/evaluateForm.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/rules/evaluateForm.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/rules/fieldSchema.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/rules/fieldSchema.ts"
                 },
                 {
                     "path": "packages/registry/blocks/tracked-entity-finder/rules/programModel.ts",
@@ -1375,11 +1386,6 @@
                     "path": "packages/registry/blocks/tracked-entity-finder/rules/types.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/rules/types.ts"
-                },
-                {
-                    "path": "packages/registry/blocks/tracked-entity-finder/type-tests/public-surface.ts",
-                    "type": "registry:file",
-                    "target": "@components/tracked-entity-finder/type-tests/public-surface.ts"
                 }
             ],
             "docs": "Wrap the finder in FinderProvider with a program and an onSelect callback. Inside it compose a FinderForm containing FinderField (exact value) and FinderRangeField (number or date range) inputs, one per program attribute uid, plus an optional FinderHint and a FinderSubmit button. Show matches with FinderResults, which holds the state parts FinderSearching, FinderEmpty, FinderTooMany and FinderError, a FinderList of FinderItem rows with FinderValue cells, and FinderPagination. The program's search rules are enforced inside and cannot be loosened by props. Use the useFinder* hooks for custom layouts. See the tracked entity finder docs page for examples."

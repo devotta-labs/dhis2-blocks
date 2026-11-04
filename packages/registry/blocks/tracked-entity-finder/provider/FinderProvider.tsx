@@ -6,7 +6,7 @@ import { isProduction } from './env'
 import { useFinderController } from './useFinderController'
 
 export interface FinderProviderProps {
-    /** The program to search in. Changing it resets values and results. */
+    /** The program to search in. Changing it resets forms and results. */
     program: string
     /** Called with the person the user picks. */
     onSelect: (person: FinderPerson) => void

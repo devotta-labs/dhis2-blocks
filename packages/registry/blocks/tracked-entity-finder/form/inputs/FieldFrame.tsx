@@ -7,7 +7,7 @@ import {
     FieldLabel,
 } from '@/components/dhis2/ui/field'
 
-/** Label, control, description and issue for a single-control field. */
+/** Label, control, description and error for a single-control field. */
 export const FieldFrame = ({
     controlId,
     label,

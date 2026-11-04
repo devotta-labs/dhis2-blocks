@@ -18,12 +18,25 @@ const RangeFrame = ({
     description,
     error,
     className,
+    onBlur,
     children,
-}: Pick<FieldInputProps, 'label' | 'description' | 'error' | 'className'> & {
+}: Pick<
+    FieldInputProps,
+    'label' | 'description' | 'error' | 'className' | 'onBlur'
+> & {
     children: ReactNode
 }) => (
     <fieldset
         data-invalid={error ? true : undefined}
+        // Left only when focus moves out of both ends, not from From to To.
+        onBlur={(event) => {
+            if (
+                !(event.relatedTarget instanceof Node) ||
+                !event.currentTarget.contains(event.relatedTarget)
+            ) {
+                onBlur()
+            }
+        }}
         className={cn(
             'm-0 flex min-w-0 flex-col gap-1 border-0 p-0',
             className

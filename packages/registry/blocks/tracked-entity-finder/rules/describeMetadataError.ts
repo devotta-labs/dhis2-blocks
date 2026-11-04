@@ -1,21 +1,21 @@
 import i18n from '@dhis2/d2-i18n'
 import { attributeOf, searchableAttributes } from './programModel'
-import type { ConfigProblem, ProgramModel } from './types'
+import type { MetadataError, ProgramModel } from './types'
 
 const raw = { interpolation: { escapeValue: false } } as const
 
-const whatWentWrong = (model: ProgramModel, problem: ConfigProblem): string => {
+const whatWentWrong = (model: ProgramModel, error: MetadataError): string => {
     const program = model.name
-    if (problem.kind === 'form-cannot-search') {
+    if (error.kind === 'form-cannot-search') {
         return i18n.t(
             "This form can never search in {{program}}. It has no usable ID field and too few usable fields to reach the program's minimum.",
             { program, ...raw }
         )
     }
-    const attribute = problem.attribute
+    const attribute = error.attribute
     const found = attributeOf(model, attribute)
     const label = found?.label ?? attribute
-    switch (problem.kind) {
+    switch (error.kind) {
         case 'unknown-attribute':
             return i18n.t(
                 '`{{attribute}}` is not an attribute of {{program}}.',
@@ -54,7 +54,7 @@ const whatWentWrong = (model: ProgramModel, problem: ConfigProblem): string => {
             )
         case 'shape-conflict':
             return i18n.t(
-                '`{{attribute}}` ({{label}}) is composed both as FinderField and as FinderRangeField under one FinderProvider for {{program}}; they cannot share a value, so use one.',
+                '`{{attribute}}` ({{label}}) is composed both as FinderField and as FinderRangeField in one FinderForm for {{program}}; they cannot share a value, so use one.',
                 { attribute, label, program, ...raw }
             )
     }
@@ -85,13 +85,13 @@ const minimum = (model: ProgramModel): string => {
 }
 
 /**
- * A full, agent-friendly message for a config problem: what is wrong, the
+ * A full, agent-friendly message for a metadata error: what is wrong, the
  * program's searchable attributes with uids, and its minimum.
  */
-export const describeProblem = (
+export const describeMetadataError = (
     model: ProgramModel,
-    problem: ConfigProblem
+    error: MetadataError
 ): string =>
-    [whatWentWrong(model, problem), searchableList(model), minimum(model)].join(
+    [whatWentWrong(model, error), searchableList(model), minimum(model)].join(
         ' '
     )

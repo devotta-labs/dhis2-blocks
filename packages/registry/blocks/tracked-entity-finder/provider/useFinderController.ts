@@ -6,20 +6,12 @@ import { useTrackedEntityFinderClient } from '../api/runtimeClient'
 import type { FinderPerson } from '../api/search'
 import { systemInfoQueryOptions } from '../api/systemInfo'
 import { buildProgramModel } from '../rules/programModel'
-import type { FieldValue, FormField } from '../rules/types'
 import type {
     FinderContextValue,
     FinderStatus,
     FinderSubmission,
 } from './context'
 import { useSearchResults } from './useSearchResults'
-
-interface Registration {
-    key: string
-    field: FormField
-}
-
-type Registrations = Readonly<Record<string, readonly Registration[]>>
 
 const getFinderStatus = (failed: boolean, ready: boolean): FinderStatus => {
     if (failed) return 'error'
@@ -33,8 +25,8 @@ export interface FinderControllerOptions {
 }
 
 /**
- * Holds everything the finder knows: program metadata, field values, form
- * registrations, the last submitted search and the page. Mount it under a
+ * Holds what the finder shares across its forms: program metadata, the last
+ * submitted search and the page. Mount it under a
  * `key` of the program, so a new program starts from nothing.
  */
 export const useFinderController = ({
@@ -61,10 +53,6 @@ export const useFinderController = ({
         Boolean(model && systemInfo.data)
     )
 
-    const [values, setValues] = useState<Readonly<Record<string, FieldValue>>>(
-        {}
-    )
-    const [registrations, setRegistrations] = useState<Registrations>({})
     const [submission, setSubmission] = useState<FinderSubmission>()
     const [page, setPage] = useState(1)
 
@@ -80,28 +68,6 @@ export const useFinderController = ({
     const onSelectRef = useRef(onSelect)
     onSelectRef.current = onSelect
     const logged = useRef(new Set<string>())
-
-    const setValue = useCallback((id: string, value: FieldValue) => {
-        setValues((current) => ({ ...current, [id]: value }))
-    }, [])
-
-    const register = useCallback(
-        (formId: string, key: string, field: FormField) => {
-            setRegistrations((current) => ({
-                ...current,
-                [formId]: [...(current[formId] ?? []), { key, field }],
-            }))
-            return () =>
-                setRegistrations((current) => {
-                    const { [formId]: form = [], ...others } = current
-                    const remaining = form.filter((entry) => entry.key !== key)
-                    return remaining.length
-                        ? { ...others, [formId]: remaining }
-                        : others
-                })
-        },
-        []
-    )
 
     const submit = useCallback<FinderContextValue['actions']['submit']>(
         (search) => {
@@ -119,33 +85,16 @@ export const useFinderController = ({
         []
     )
 
-    const logProblem = useCallback((message: string) => {
+    const logMetadataError = useCallback((message: string) => {
         if (!logged.current.has(message)) {
             logged.current.add(message)
             console.error(message)
         }
     }, [])
 
-    const forms = useMemo(
-        () =>
-            Object.freeze(
-                Object.fromEntries(
-                    Object.entries(registrations).map(([formId, entries]) => [
-                        formId,
-                        Object.freeze(entries.map(({ field }) => field)),
-                    ])
-                )
-            ),
-        [registrations]
-    )
-    const fields = useMemo(
-        () => Object.freeze(Object.values(forms).flat()),
-        [forms]
-    )
-
     const actions = useMemo(
-        () => ({ setValue, register, submit, setPage, select, logProblem }),
-        [setValue, register, submit, select, logProblem]
+        () => ({ submit, setPage, select, logMetadataError }),
+        [submit, select, logMetadataError]
     )
 
     return useMemo(
@@ -153,9 +102,6 @@ export const useFinderController = ({
             state: {
                 status,
                 model,
-                values,
-                fields,
-                forms,
                 submission,
                 page,
                 results,
@@ -166,9 +112,6 @@ export const useFinderController = ({
         [
             status,
             model,
-            values,
-            fields,
-            forms,
             submission,
             page,
             results,

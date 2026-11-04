@@ -37,4 +37,45 @@ describe('program metadata query', () => {
             2,
         ])
     })
+
+    it('reloads program rules after their freshness window expires', async () => {
+        const query = vi.fn(async () => ({
+            trackedEntityFinderResource: {
+                displayName: 'HIV',
+                trackedEntityType: { id: 'tet' },
+                minAttributesRequiredToSearch: 1,
+                programTrackedEntityAttributes: [],
+            },
+        }))
+        const client = createFinderResourceClient({ query })
+        const options = programMetadataQueryOptions(client, 'prog')
+        const queryClient = new QueryClient()
+        const now = Date.now()
+        const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
+        try {
+            await queryClient.fetchQuery(options)
+            query.mockResolvedValue({
+                trackedEntityFinderResource: {
+                    displayName: 'HIV',
+                    trackedEntityType: { id: 'tet' },
+                    minAttributesRequiredToSearch: 2,
+                    programTrackedEntityAttributes: [],
+                },
+            })
+            expect(
+                (await queryClient.fetchQuery(options))
+                    .minAttributesRequiredToSearch
+            ).toBe(1)
+            expect(query).toHaveBeenCalledTimes(1)
+            clock.mockReturnValue(now + 60 * 60_000 + 1)
+            expect(
+                (await queryClient.fetchQuery(options))
+                    .minAttributesRequiredToSearch
+            ).toBe(2)
+            expect(query).toHaveBeenCalledTimes(2)
+        } finally {
+            clock.mockRestore()
+            queryClient.clear()
+        }
+    })
 })

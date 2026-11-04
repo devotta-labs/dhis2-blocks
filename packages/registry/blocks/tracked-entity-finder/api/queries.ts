@@ -41,6 +41,6 @@ export const programMetadataQueryOptions = (
                     signal
                 )
                 .then((response) => normaliseProgram(program, response)),
-        staleTime: Number.POSITIVE_INFINITY,
+        staleTime: 60 * 60_000,
         retry: shouldRetryFinderRequest,
     })

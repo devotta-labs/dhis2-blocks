@@ -22,7 +22,7 @@ import { initialLabState, labReducer } from './labState'
 import { PRESETS } from './presets'
 import { OptionsControls } from './settings'
 import { ObservationsCanvas } from './ObservationsCanvas'
-import canvasCode from './ObservationsCanvas.tsx?raw'
+import canvasSource from './ObservationsCanvas.tsx?canvas'
 
 /** The observation cards lab: every card state, one click each, beside the requests it makes. */
 export const ObservationsLab = () => {
@@ -68,8 +68,7 @@ export const ObservationsLab = () => {
     return (
         <LabLayout
             source={{
-                name: 'ObservationsCanvas.tsx',
-                code: canvasCode,
+                ...canvasSource,
                 props: canvasProps,
             }}
             panel={

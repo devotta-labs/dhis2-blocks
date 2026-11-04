@@ -17,9 +17,8 @@ test.describe('playground Canvas / Code', () => {
             await page.goto(`/playground/${path}`)
             await page.getByRole('tab', { name: 'Code', exact: true }).click()
             const panel = page.getByRole('tabpanel', { name: 'Code' })
-            await expect(panel.getByLabel('Code file')).toHaveValue(
-                'composition'
-            )
+            await expect(panel.getByLabel('Code file')).toHaveCount(0)
+            await expect(panel.getByText('Current props.json')).toHaveCount(0)
             await expect(panel.locator('pre')).toContainText(
                 `export const ${composition}`
             )
@@ -58,9 +57,9 @@ test.describe('playground Canvas / Code', () => {
         )
     })
 
-    test('updates current props from settings and supports keyboard navigation', async ({
+    test('inspects current props inline and supports keyboard navigation', async ({
         page,
-    }) => {
+    }, testInfo) => {
         await page.goto('/playground/working-list')
         const canvasTab = page.getByRole('tab', { name: 'Canvas', exact: true })
         await canvasTab.focus()
@@ -70,12 +69,54 @@ test.describe('playground Canvas / Code', () => {
         await page.keyboard.press('Enter')
         await expect(codeTab).toHaveAttribute('aria-selected', 'true')
         const panel = page.getByRole('tabpanel', { name: 'Code' })
-        await panel.getByLabel('Code file').selectOption('props')
         await page.getByLabel('Rows per page').selectOption('25')
-        await expect(panel.locator('pre')).toContainText('"pageSize": 25')
-        await expect(panel.locator('pre')).toContainText(
-            '"programId": "labProgram1"'
+        const pageSize = panel
+            .getByRole('button', { name: 'Inspect view.pageSize', exact: true })
+            .first()
+        await pageSize.hover()
+        await expect(page.getByRole('tooltip').locator('pre')).toHaveText('25')
+        await codeTab.hover()
+        await page.getByLabel('Rows per page').selectOption('50')
+        await pageSize.focus()
+        await expect(page.getByRole('tooltip').locator('pre')).toHaveText('50')
+        const programId = panel.getByRole('button', {
+            name: 'Inspect programId',
+            exact: true,
+        })
+        await expect(programId).toHaveCount(1)
+        await programId.focus()
+        await expect(page.getByRole('tooltip').locator('pre')).toHaveText(
+            '"labProgram1"'
         )
+        await page.screenshot({
+            path: testInfo.outputPath('inline-props.png'),
+            fullPage: true,
+        })
+        await page.keyboard.press('Escape')
+        await expect(page.getByRole('tooltip')).toBeHidden()
+    })
+
+    test('keeps code and prop tooltips usable at phone width in dark mode', async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 375, height: 812 })
+        await page.emulateMedia({ colorScheme: 'dark' })
+        await page.goto('/playground/working-list')
+        await expect(page.locator('html')).toHaveClass(/dark/)
+        await page.getByRole('tab', { name: 'Code', exact: true }).click()
+        await page.keyboard.press('Tab')
+        await page
+            .getByRole('button', { name: 'Inspect programId', exact: true })
+            .focus()
+        const tooltip = page.getByRole('tooltip')
+        await expect(tooltip.locator('pre')).toHaveText('"labProgram1"')
+        const bounds = await tooltip.boundingBox()
+        expect(bounds).not.toBeNull()
+        expect(bounds!.x).toBeGreaterThanOrEqual(0)
+        expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(375)
+        expect(
+            await page.evaluate(() => document.documentElement.scrollWidth)
+        ).toBe(375)
     })
 
     test('copies the complete composition source', async ({

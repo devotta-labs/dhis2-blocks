@@ -27,7 +27,7 @@ import { initialLabState, labReducer, type Width } from './labState'
 import { PRESETS } from './presets'
 import { OptionsControls } from './settings'
 import { CalendarCanvas } from './CalendarCanvas'
-import canvasCode from './CalendarCanvas.tsx?raw'
+import canvasSource from './CalendarCanvas.tsx?canvas'
 
 const WIDTHS: ReadonlyArray<readonly [Width, string, string]> = [
     ['phone', 'Phone', 'max-w-[375px]'],
@@ -87,8 +87,7 @@ export const CalendarLab = () => {
     return (
         <LabLayout
             source={{
-                name: 'CalendarCanvas.tsx',
-                code: canvasCode,
+                ...canvasSource,
                 props: canvasProps,
             }}
             panel={{

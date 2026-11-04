@@ -16,7 +16,7 @@ import { initialLabState, labReducer, type Width } from './labState'
 import { PRESETS } from './presets'
 import { OptionsControls } from './settings'
 import { TableCanvas } from './TableCanvas'
-import canvasCode from './TableCanvas.tsx?raw'
+import canvasSource from './TableCanvas.tsx?canvas'
 
 const WIDTHS: ReadonlyArray<readonly [Width, string, string]> = [
     ['phone', 'Phone', 'max-w-[375px]'],
@@ -74,8 +74,7 @@ export const TableLab = () => {
     return (
         <LabLayout
             source={{
-                name: 'TableCanvas.tsx',
-                code: canvasCode,
+                ...canvasSource,
                 props: canvasProps,
             }}
             panel={{

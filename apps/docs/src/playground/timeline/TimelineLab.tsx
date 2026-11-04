@@ -14,7 +14,7 @@ import { initialLabState, labReducer } from './labState'
 import { PRESETS } from './presets'
 import { OptionsControls } from './settings'
 import { TimelineCanvas } from './TimelineCanvas'
-import canvasCode from './TimelineCanvas.tsx?raw'
+import canvasSource from './TimelineCanvas.tsx?canvas'
 
 /** The timeline lab: a person's history in every state, one click each, beside the requests it makes. */
 export const TimelineLab = () => {
@@ -59,8 +59,7 @@ export const TimelineLab = () => {
     return (
         <LabLayout
             source={{
-                name: 'TimelineCanvas.tsx',
-                code: canvasCode,
+                ...canvasSource,
                 props: canvasProps,
             }}
             panel={

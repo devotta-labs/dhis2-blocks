@@ -1,57 +1,114 @@
 import { describe, expect, it } from 'vitest'
-import { sourceFile, type CanvasSource } from '../canvasSource'
+import { inspectCanvas } from '../../../canvasSourcePlugin'
+import { propValue, type CanvasSource } from '../canvasSource'
+import table from '../working-list/table/TableCanvas.tsx?canvas'
+import calendar from '../working-list/calendar/CalendarCanvas.tsx?canvas'
+import observations from '../observation-cards/ObservationsCanvas.tsx?canvas'
+import timeline from '../timeline/TimelineCanvas.tsx?canvas'
 import tableCode from '../working-list/table/TableCanvas.tsx?raw'
-import calendarCode from '../working-list/calendar/CalendarCanvas.tsx?raw'
-import observationsCode from '../observation-cards/ObservationsCanvas.tsx?raw'
-import timelineCode from '../timeline/TimelineCanvas.tsx?raw'
 
 const source: CanvasSource = {
-    name: 'TableCanvas.tsx',
-    code: tableCode,
+    ...table,
     props: { programId: 'labProgram1', view: { pageSize: 10 } },
 }
+const pageSize = table.references.find(
+    ({ path }) => path.join('.') === 'view.pageSize'
+)!
 
-describe('canvas source files', () => {
-    it('returns the actual composition source unchanged, not generated JSX', () => {
-        expect(sourceFile(source, 'composition')).toEqual({
-            language: 'tsx',
-            code: tableCode,
-        })
+describe('canvas prop inspection', () => {
+    it('preserves the actual composition source unchanged', () => {
+        expect(table.code).toBe(tableCode)
     })
 
-    it('serializes the current inputs and reflects changes', () => {
-        expect(JSON.parse(sourceFile(source, 'props').code)).toEqual(
-            source.props
-        )
-        const next = { ...source, props: { view: { pageSize: 25 } } }
-        expect(sourceFile(next, 'props')).toEqual({
-            language: 'json',
-            code: JSON.stringify(next.props, null, 2),
-        })
-    })
-
-    it('omits callbacks and undefined props from the JSON snapshot', () => {
-        const next = {
-            ...source,
-            props: {
-                programId: 'liveProgram',
-                defaultViewId: undefined,
-                note: () => {},
-            },
-        }
-        expect(JSON.parse(sourceFile(next, 'props').code)).toEqual({
-            programId: 'liveProgram',
-        })
+    it('resolves nested current inputs and reflects changes', () => {
+        expect(propValue(source, pageSize)).toBe('10')
+        expect(
+            propValue(
+                { ...source, props: { view: { pageSize: 25 } } },
+                pageSize
+            )
+        ).toBe('25')
     })
 
     it.each([
-        ['TableCanvas', tableCode, 'WorkingListTable'],
-        ['CalendarCanvas', calendarCode, 'WorkingListCalendarGrid'],
-        ['ObservationsCanvas', observationsCode, 'ObservationCard'],
-        ['TimelineCanvas', timelineCode, 'TimelineFeed'],
-    ])('ships the %s source module', (name, code, part) => {
-        expect(code).toContain(`export const ${name}`)
-        expect(code).toContain(`<${part}`)
-        expect(code).not.toContain('LabLayout')
+        [false, 'false'],
+        [0, '0'],
+        ['', '""'],
+        [null, 'null'],
+        [undefined, 'undefined'],
+        [() => {}, '[Function]'],
+        [['one', 'two'], '[\n  "one",\n  "two"\n]'],
+    ])('describes a prop value (%s)', (value, text) => {
+        expect(
+            propValue(
+                { ...source, props: { value } },
+                { start: 0, end: 1, path: ['value'] }
+            )
+        ).toBe(text)
     })
+
+    it('ignores missing and inherited props and never invokes getters', () => {
+        const next = {
+            ...source,
+            props: {
+                get value() {
+                    throw new Error('must not be read')
+                },
+            },
+        }
+        for (const path of [['missing'], ['toString'], ['value']]) {
+            expect(propValue(next, { start: 0, end: 1, path })).toBeUndefined()
+        }
+    })
+
+    it('annotates prop reads, not declarations, JSX attribute names or shadowed locals', () => {
+        const code = `export const Demo = ({ programId, view, count: total }) => {
+            const local = 'not a prop'
+            return <Block programId={programId} pageSize={view.pageSize} count={total}
+                value={local} literal="programId" onClick={(programId) => programId} />
+        }`
+        const result = inspectCanvas(code)
+        expect(
+            result.references.map((reference) => ({
+                text: code.slice(reference.start, reference.end),
+                path: reference.path,
+            }))
+        ).toEqual([
+            { text: 'programId', path: ['programId'] },
+            { text: 'view.pageSize', path: ['view', 'pageSize'] },
+            { text: 'total', path: ['count'] },
+        ])
+    })
+
+    it('finds shorthand hook inputs and bracketed property reads', () => {
+        const result =
+            inspectCanvas(`export const Demo = ({ person, view }) => {
+            const history = useHistory({ person })
+            return <Block pageSize={view['pageSize']} entries={history.entries} />
+        }`)
+        expect(result.references.map(({ path }) => path)).toEqual([
+            ['person'],
+            ['view', 'pageSize'],
+        ])
+    })
+
+    it.each([
+        ['TableCanvas', table, 'WorkingListTable'],
+        ['CalendarCanvas', calendar, 'WorkingListCalendarGrid'],
+        ['ObservationsCanvas', observations, 'ObservationCard'],
+        ['TimelineCanvas', timeline, 'TimelineFeed'],
+    ] as const)(
+        'ships %s source with inspectable props',
+        (name, module, part) => {
+            expect(module.code).toContain(`export const ${name}`)
+            expect(module.code).toContain(`<${part}`)
+            expect(module.code).not.toContain('LabLayout')
+            expect(module.references.length).toBeGreaterThan(0)
+            for (const reference of module.references) {
+                expect(
+                    module.code.slice(reference.start, reference.end)
+                ).not.toBe('')
+            }
+        }
+    )
 })

@@ -72,19 +72,30 @@ export const RowHeader = memo(function RowHeader({
 }) {
     const { effects, records } = useDataEntryContext()
     const record = records.get(row.id)
-    // Every record the row's cells save to: a register's row shows what the rules say of each of its events.
+    // Every record the row's cells save to: a register's row shows what the rules say of each of its events, once,
+    // as a program's rule says the same of every event it runs on.
     const notes = useStore(
         effects,
-        useShallow((state) =>
-            recordsOf(row).flatMap((id) => state.rowNotes.get(id) ?? NO_NOTES)
-        )
+        useShallow((state) => [
+            ...new Set(
+                recordsOf(row).flatMap(
+                    (id) => state.rowNotes.get(id) ?? NO_NOTES
+                )
+            ),
+        ])
     )
     const messages = useStore(
         effects,
         useShallow((state) =>
-            recordsOf(row).flatMap(
-                (id) => state.rowMessages.get(id) ?? NO_MESSAGES
-            )
+            recordsOf(row)
+                .flatMap((id) => state.rowMessages.get(id) ?? NO_MESSAGES)
+                .filter(
+                    (message, at, all) =>
+                        all.findIndex(
+                            ({ kind, text }) =>
+                                kind === message.kind && text === message.text
+                        ) === at
+                )
         )
     )
     const label = useRowLabel(row, fields)

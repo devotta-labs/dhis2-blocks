@@ -162,6 +162,31 @@ test('a message on a slot’s record names the row and shows in its header', asy
         .toHaveTextContent('Check the date')
 })
 
+test('what the rules say alike of several slots shows once in the row’s header', async () => {
+    const { context } = await mount(memorySource(register()).source)
+    const message = {
+        kind: 'warning',
+        text: 'BP high',
+        source: 'rule',
+    } as const
+    context().effects.setState({
+        rowNotes: new Map([
+            ['e1', ['Feedback']],
+            ['e2', ['Feedback']],
+        ]),
+        rowMessages: new Map([
+            ['e1', [message]],
+            ['e2', [message]],
+        ]),
+    })
+    await expect
+        .element(page.getByRole('rowheader'))
+        .toHaveTextContent(/^Amina\s*Feedback\s*BP high$/)
+    await expect
+        .element(page.getByRole('listitem'))
+        .toHaveTextContent('BP high')
+})
+
 test('once someone else signs in, every slot’s cells are read-only with the reason', async () => {
     let user = 'userA'
     const { client } = await mount(memorySource(register()).source, {

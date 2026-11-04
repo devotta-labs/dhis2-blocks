@@ -88,7 +88,6 @@ export const overlayCustomRuleEvent = (
     return {
         ...snapshot,
         ...live,
-        occurredAt: live.occurredAt ?? snapshot.occurredAt,
         dataValues,
     }
 }

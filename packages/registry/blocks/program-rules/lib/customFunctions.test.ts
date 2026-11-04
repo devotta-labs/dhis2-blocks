@@ -201,4 +201,24 @@ describe('native custom functions', () => {
         })
         expect(saved.dataValues.result).toBe('13.4')
     })
+    it('preserves an omitted event date but honors an explicitly cleared date', () => {
+        const saved = { ...eventInput().event, occurredAt: '2026-01-05' }
+        const withoutDate = {
+            id: saved.id,
+            orgUnitId: saved.orgUnitId,
+            programStageId: saved.programStageId,
+            status: saved.status,
+            dataValues: {},
+        }
+        expect(overlayCustomRuleEvent(saved, withoutDate).occurredAt).toBe(
+            '2026-01-05'
+        )
+        expect(
+            overlayCustomRuleEvent(saved, {
+                ...withoutDate,
+                occurredAt: undefined,
+            }).occurredAt
+        ).toBeUndefined()
+        expect(saved.occurredAt).toBe('2026-01-05')
+    })
 })

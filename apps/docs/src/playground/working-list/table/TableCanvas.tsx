@@ -9,19 +9,21 @@ import {
 } from '@/components/working-list'
 import type { LabView } from './labData'
 
+interface Props {
+    view: LabView
+    programId: string
+    orgUnitId: string
+    defaultViewId?: string
+    note: (entry: string) => void
+}
+
 export const TableCanvas = ({
     view,
     programId,
     orgUnitId,
     defaultViewId,
     note,
-}: {
-    view: LabView
-    programId: string
-    orgUnitId: string
-    defaultViewId?: string
-    note: (entry: string) => void
-}) => (
+}: Props) => (
     <WorkingList
         // The page size is a default, so a new choice remounts the list.
         key={view.pageSize}

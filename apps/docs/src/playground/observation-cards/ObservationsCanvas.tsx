@@ -13,17 +13,18 @@ interface CardSpec {
     unit?: string
 }
 
-/** The cards on a grid of the chosen width. */
-const Cards = ({
-    cards,
-    settings,
-}: {
+interface Props {
+    trackedEntity: string
+    program: string
     cards: CardSpec[]
     settings: Pick<
         LabSettings,
         'cardsPerRow' | 'cardWidth' | 'staleAfterDays' | 'arrangement'
     >
-}) => (
+}
+
+/** The cards on a grid of the chosen width. */
+const Cards = ({ cards, settings }: Pick<Props, 'cards' | 'settings'>) => (
     <div
         className="grid gap-4"
         style={{
@@ -56,15 +57,7 @@ export const ObservationsCanvas = ({
     program,
     cards,
     settings,
-}: {
-    trackedEntity: string
-    program: string
-    cards: CardSpec[]
-    settings: Pick<
-        LabSettings,
-        'cardsPerRow' | 'cardWidth' | 'staleAfterDays' | 'arrangement'
-    >
-}) => (
+}: Props) => (
     <ObservationsProvider trackedEntity={trackedEntity} program={program}>
         <Cards cards={cards} settings={settings} />
     </ObservationsProvider>

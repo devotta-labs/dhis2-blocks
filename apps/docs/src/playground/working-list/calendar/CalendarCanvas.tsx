@@ -27,19 +27,21 @@ import {
 } from './labData'
 import { PlainCount } from './panels'
 
+interface Props {
+    view: LabView
+    programId: string
+    orgUnitId: string
+    defaultViewId?: string
+    note: (entry: string) => void
+}
+
 export const CalendarCanvas = ({
     view,
     programId,
     orgUnitId,
     defaultViewId,
     note,
-}: {
-    view: LabView
-    programId: string
-    orgUnitId: string
-    defaultViewId?: string
-    note: (entry: string) => void
-}) => {
+}: Props) => {
     const [selectedDay, setSelectedDay] = useState<string | null>(null)
     const [toggle, setToggle] = useState<'table' | 'calendar'>('calendar')
     const onSelectedDayChange = (day: string | null) => {

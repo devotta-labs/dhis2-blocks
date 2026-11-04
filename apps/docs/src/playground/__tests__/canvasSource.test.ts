@@ -61,8 +61,9 @@ describe('canvas prop inspection', () => {
         }
     })
 
-    it('annotates prop reads, not declarations, JSX attribute names or shadowed locals', () => {
-        const code = `export const Demo = ({ programId, view, count: total }) => {
+    it('annotates destructured props and reads, not interface fields, JSX attribute names or shadowed locals', () => {
+        const code = `interface Props { programId: string; view: View; count: number }
+        export const Demo = ({ programId, view, count: total }: Props) => {
             const local = 'not a prop'
             return <Block programId={programId} pageSize={view.pageSize} count={total}
                 value={local} literal="programId" onClick={(programId) => programId} />
@@ -74,6 +75,9 @@ describe('canvas prop inspection', () => {
                 path: reference.path,
             }))
         ).toEqual([
+            { text: 'programId', path: ['programId'] },
+            { text: 'view', path: ['view'] },
+            { text: 'total', path: ['count'] },
             { text: 'programId', path: ['programId'] },
             { text: 'view.pageSize', path: ['view', 'pageSize'] },
             { text: 'total', path: ['count'] },
@@ -88,6 +92,8 @@ describe('canvas prop inspection', () => {
         }`)
         expect(result.references.map(({ path }) => path)).toEqual([
             ['person'],
+            ['view'],
+            ['person'],
             ['view', 'pageSize'],
         ])
     })
@@ -101,6 +107,8 @@ describe('canvas prop inspection', () => {
         'ships %s source with inspectable props',
         (name, module, part) => {
             expect(module.code).toContain(`export const ${name}`)
+            expect(module.code).toContain('interface Props {')
+            expect(module.code).toContain('}: Props) =>')
             expect(module.code).toContain(`<${part}`)
             expect(module.code).not.toContain('LabLayout')
             expect(module.references.length).toBeGreaterThan(0)

@@ -3,15 +3,35 @@ import { resolve } from 'node:path'
 import { expect, test } from './fixtures'
 
 test.describe('playground Canvas / Code', () => {
-    for (const [path, composition, part] of [
-        ['working-list', 'TableCanvas', 'WorkingListTable'],
+    for (const [path, composition, part, prop, value] of [
+        [
+            'working-list',
+            'TableCanvas',
+            'WorkingListTable',
+            'programId',
+            '"labProgram1"',
+        ],
         [
             'working-list?display=calendar',
             'CalendarCanvas',
             'WorkingListCalendarGrid',
+            'programId',
+            '"labProgram1"',
         ],
-        ['observation-cards', 'ObservationsCanvas', 'ObservationCard'],
-        ['timeline', 'TimelineCanvas', 'TimelineFeed'],
+        [
+            'observation-cards',
+            'ObservationsCanvas',
+            'ObservationCard',
+            'trackedEntity',
+            '"labPerson01"',
+        ],
+        [
+            'timeline',
+            'TimelineCanvas',
+            'TimelineFeed',
+            'trackedEntity',
+            '"labPerson01"',
+        ],
     ]) {
         test(`shows the actual ${composition} source`, async ({ page }) => {
             await page.goto(`/playground/${path}`)
@@ -23,6 +43,16 @@ test.describe('playground Canvas / Code', () => {
                 `export const ${composition}`
             )
             await expect(panel.locator('pre')).toContainText(`<${part}`)
+            await expect(panel.locator('pre')).toContainText(
+                'interface Props {'
+            )
+            const declaration = panel
+                .getByRole('button', { name: `Inspect ${prop}`, exact: true })
+                .first()
+            await declaration.hover()
+            await expect(page.getByRole('tooltip').locator('pre')).toHaveText(
+                value
+            )
             await expect(
                 page.getByRole('tabpanel', { name: 'Canvas' })
             ).toBeHidden()
@@ -83,10 +113,18 @@ test.describe('playground Canvas / Code', () => {
             name: 'Inspect programId',
             exact: true,
         })
-        await expect(programId).toHaveCount(1)
-        await programId.focus()
+        await expect(programId).toHaveCount(2)
+        await programId.first().focus()
         await expect(page.getByRole('tooltip').locator('pre')).toHaveText(
             '"labProgram1"'
+        )
+        const view = panel.getByRole('button', {
+            name: 'Inspect view',
+            exact: true,
+        })
+        await view.focus()
+        await expect(page.getByRole('tooltip').locator('pre')).toContainText(
+            '"pageSize": 50'
         )
         await page.screenshot({
             path: testInfo.outputPath('inline-props.png'),
@@ -107,6 +145,7 @@ test.describe('playground Canvas / Code', () => {
         await page.keyboard.press('Tab')
         await page
             .getByRole('button', { name: 'Inspect programId', exact: true })
+            .first()
             .focus()
         const tooltip = page.getByRole('tooltip')
         await expect(tooltip.locator('pre')).toHaveText('"labProgram1"')

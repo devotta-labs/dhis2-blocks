@@ -25,7 +25,14 @@ export const inspectCanvas = (
     const bind = (name: ts.BindingName, path: string[]) => {
         if (ts.isIdentifier(name)) {
             const symbol = checker.getSymbolAtLocation(name)
-            if (symbol) bindings.set(symbol, path)
+            if (symbol) {
+                bindings.set(symbol, path)
+                references.push({
+                    start: name.getStart(file),
+                    end: name.end,
+                    path,
+                })
+            }
         } else if (ts.isObjectBindingPattern(name)) {
             for (const element of name.elements) {
                 const key = element.propertyName ?? element.name

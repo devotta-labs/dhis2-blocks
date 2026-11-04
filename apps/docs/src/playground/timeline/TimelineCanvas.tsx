@@ -17,6 +17,14 @@ import {
     type HistoryEntryData,
 } from '@/components/timeline/dhis2'
 
+interface Props {
+    trackedEntity: string
+    programs?: string[]
+    timeField: EventTimeField
+    step: number
+    locale: string
+}
+
 /** The README's composition: a person's history, a step of past entries at a time. */
 export const TimelineCanvas = ({
     trackedEntity,
@@ -24,13 +32,7 @@ export const TimelineCanvas = ({
     timeField,
     step,
     locale,
-}: {
-    trackedEntity: string
-    programs?: string[]
-    timeField: EventTimeField
-    step: number
-    locale: string
-}) => {
+}: Props) => {
     const calendar = useSystemCalendar()
     const history = useTrackedEntityHistory({
         trackedEntity,

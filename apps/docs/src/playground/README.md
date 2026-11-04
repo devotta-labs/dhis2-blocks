@@ -17,9 +17,9 @@ its own Display section (`?display=calendar`); each display is a lab of its own.
 
 The canvas header switches between **Canvas** and **Code** without unmounting
 the block. Code shows the actual canvas composition (read-only, with syntax
-highlighting and copy). Prop references have a dotted underline: hover or focus
-one to inspect its current value, updated as settings change. Local state and
-derived hook results are not presented as props.
+highlighting and copy). Destructured props and their references have a dotted
+underline: hover or focus one to inspect its current value, updated as settings
+change. Local state and derived hook results are not presented as props.
 The composition is imported with `?canvas` from the same module the lab renders;
 the Vite plugin preserves the source and locates references to its exported
 component's destructured props using TypeScript's parser and symbol resolution
@@ -45,8 +45,9 @@ evaluated to inspect a value. Playground server/provider setup is not included.
    count and logs, and which changes restart the block. The lab component only
    dispatches, so nothing about the state needs a browser to test. A reload
    opens on the URL's preset or the first; nothing else is kept.
-6. Put the canvas composition in its own module, destructure its props, and pass
-   its `?canvas` import to `LabLayout` as `source: { ...canvasSource, props }`.
+6. Put the canvas composition in its own module with a separate `Props`
+   interface, destructure its props, and pass its `?canvas` import to `LabLayout`
+   as `source: { ...canvasSource, props }`.
    Use the same props object for inspection and for the rendered composition so
    they stay in sync.
 

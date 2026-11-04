@@ -221,4 +221,37 @@ describe('native custom functions', () => {
         ).toBeUndefined()
         expect(saved.occurredAt).toBe('2026-01-05')
     })
+    it('exposes the same fully overlaid current event through both context views', () => {
+        const live = {
+            ...eventInput().event,
+            dataValues: { test: 'GLUCOSE' },
+            liveDataElementIds: ['test', 'result'],
+            occurredAt: undefined,
+        }
+        const saved = {
+            ...live,
+            occurredAt: '2026-01-05',
+            dataValues: { test: 'HB', result: '13.4', unseen: 'kept' },
+        }
+        const check = defineCustomRuleFunction({
+            props: z.object({}),
+            returns: 'boolean',
+            evaluate: (_, context) => {
+                expect(context.currentEvent).toBe(
+                    context.events.find((event) => event.id === live.id)
+                )
+                expect(context.currentEvent.dataValues).toEqual({
+                    test: 'GLUCOSE',
+                    unseen: 'kept',
+                })
+                expect(context.currentEvent.occurredAt).toBeUndefined()
+                return true
+            },
+        })
+        const callback = customRuleCallback(
+            { functions: { check }, context: { ...snapshot, events: [saved] } },
+            { ...eventInput(), event: live }
+        )
+        expect(callback('boolean', 'check', new Map())).toBe(true)
+    })
 })

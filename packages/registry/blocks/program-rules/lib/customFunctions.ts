@@ -100,20 +100,20 @@ export const customRuleCallback = (
         [...input.otherEvents, input.event].map((event) => [event.id, event])
     )
     const knownIds = new Set(custom.context.events.map((event) => event.id))
+    const events = [
+        ...custom.context.events.map((event) => {
+            const live = liveEvents.get(event.id)
+            return live === undefined
+                ? event
+                : overlayCustomRuleEvent(event, live)
+        }),
+        ...[...liveEvents.values()].filter((event) => !knownIds.has(event.id)),
+    ]
     const context: TrackedEntityRuleContext = {
         ...custom.context,
-        currentEvent: input.event,
-        events: [
-            ...custom.context.events.map((event) => {
-                const live = liveEvents.get(event.id)
-                return live === undefined
-                    ? event
-                    : overlayCustomRuleEvent(event, live)
-            }),
-            ...[...liveEvents.values()].filter(
-                (event) => !knownIds.has(event.id)
-            ),
-        ],
+        currentEvent:
+            events.find((event) => event.id === input.event.id) ?? input.event,
+        events,
     }
     return (
         type: string,

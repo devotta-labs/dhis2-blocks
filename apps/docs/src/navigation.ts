@@ -62,6 +62,7 @@ export const docsNavigation: readonly NavigationSection[] = [
                         title: 'Observation Cards',
                         href: '/blocks/observation-cards',
                     },
+                    { title: 'Timeline', href: '/blocks/timeline' },
                 ],
             },
             { title: 'Data entry', links: [] },

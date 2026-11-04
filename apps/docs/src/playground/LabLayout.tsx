@@ -72,7 +72,7 @@ export const LabLayout = ({
                     <h2 className={cardHeader}>Canvas</h2>
                     {/* Relative, so the block's absolutely placed parts scroll with the canvas rather than widen the page. */}
                     <div className="lab-graticule relative flex min-h-0 flex-1 flex-col overflow-auto">
-                        <div className="flex flex-col gap-3 p-3 [font-family:Roboto,Helvetica,Arial,sans-serif] text-dhis2-grey-900 [color-scheme:light] md:p-6">
+                        <div className="docs-preview-surface flex flex-col gap-3 p-3 [font-family:Roboto,Helvetica,Arial,sans-serif] text-dhis2-grey-900 [color-scheme:light] md:p-6">
                             {children}
                         </div>
                     </div>

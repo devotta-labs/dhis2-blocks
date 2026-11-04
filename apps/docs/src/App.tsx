@@ -119,6 +119,7 @@ const router = createBrowserRouter([
                         '/blocks/observation-cards',
                         './pages/blocks/observation-cards.mdx'
                     ),
+                    docRoute('/blocks/timeline', './pages/blocks/timeline.mdx'),
                 ],
             },
             { path: '/playground/:slug?', element: <PlaygroundPage /> },

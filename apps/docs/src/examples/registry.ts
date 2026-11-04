@@ -33,6 +33,10 @@ import textareaNotesSource from './ui/TextareaNotes.tsx?raw'
 import toggleGroupViewSource from './ui/ToggleGroupView.tsx?raw'
 import tooltipHintSource from './ui/TooltipHint.tsx?raw'
 import sidebarBasicSource from './sidebar/SidebarBasic.tsx?raw'
+import { TimelinePlaceholder } from './timeline/TimelinePlaceholder'
+import timelineCaseHistorySource from './timeline/TimelineCaseHistory.tsx?raw'
+import timelineEntryPartsSource from './timeline/TimelineEntryParts.tsx?raw'
+import timelineOwnDataSource from './timeline/TimelineOwnData.tsx?raw'
 import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
 
 /**
@@ -119,6 +123,31 @@ const examples = [
         source: personVitalsSource,
         minHeight: 220,
         Placeholder: PersonVitalsPlaceholder,
+    },
+    {
+        slug: 'timeline/case-history',
+        title: 'Case history',
+        live: true,
+        Component: lazy(() => import('./timeline/TimelineCaseHistory')),
+        source: timelineCaseHistorySource,
+        minHeight: 720,
+        Placeholder: TimelinePlaceholder,
+    },
+    {
+        slug: 'timeline/own-data',
+        title: 'Your own data',
+        live: false,
+        Component: lazy(() => import('./timeline/TimelineOwnData')),
+        source: timelineOwnDataSource,
+        minHeight: 420,
+    },
+    {
+        slug: 'timeline/entry-parts',
+        title: 'Entry parts outside a timeline',
+        live: false,
+        Component: lazy(() => import('./timeline/TimelineEntryParts')),
+        source: timelineEntryPartsSource,
+        minHeight: 260,
     },
     {
         slug: 'context-selector/basic',

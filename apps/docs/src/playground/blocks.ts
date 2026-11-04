@@ -2,6 +2,7 @@
 export const PLAYGROUND_BLOCKS = [
     { slug: 'working-list', title: 'Working List' },
     { slug: 'observation-cards', title: 'Observation Cards' },
+    { slug: 'timeline', title: 'Timeline' },
 ] as const
 
 export type PlaygroundSlug = (typeof PLAYGROUND_BLOCKS)[number]['slug']

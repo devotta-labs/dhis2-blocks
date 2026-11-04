@@ -17,6 +17,7 @@ packages/
       working-list/     Working List block
       working-list-calendar/ Month calendar layout for a Working List
       sidebar/          Composable modeling-app navigation with a collapse rail
+      timeline/         Read-only timeline layout, with tracker history hooks in dhis2/
     test/               Shared Vitest browser setup
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
@@ -113,6 +114,22 @@ Collapsing preserves the open groups and selected page.
 
 See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
 examples.
+
+## Timeline block
+
+Show a person's history across programs: events, enrollment milestones and
+notes, and attribute changes, grouped by day around "now".
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/timeline
+```
+
+Import the layout from `@/components/timeline` and the tracker layer from
+`@/components/timeline/dhis2`. `Timeline` takes a plain array of entries and
+never fetches; `useTrackedEntityHistory` returns that array for one tracked
+entity in every program they are enrolled in, and `TimelineHistoryEntry`
+renders each entry. See [the block's README](packages/registry/blocks/timeline/README.md),
+`/blocks/timeline` in the docs and `/playground/timeline`.
 
 ## Working List Calendar block
 

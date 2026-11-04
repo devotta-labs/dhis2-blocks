@@ -22,6 +22,11 @@ const LABS = {
             ({ ObservationsLab }) => ({ default: ObservationsLab })
         )
     ),
+    timeline: lazy(() =>
+        import('./timeline/TimelineLab').then(({ TimelineLab }) => ({
+            default: TimelineLab,
+        }))
+    ),
 } satisfies Record<PlaygroundSlug, ComponentType>
 
 const isPlaygroundSlug = (slug?: string): slug is PlaygroundSlug =>

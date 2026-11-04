@@ -119,6 +119,7 @@
             "entry": [
                 "components/*.{ts,tsx}",
                 "blocks/*/index.ts",
+                "blocks/timeline/dhis2/index.ts",
                 "**/*.{test,spec}.{ts,tsx}",
                 "**/__tests__/**/*.{ts,tsx}",
                 "blocks/*/type-tests/**/*.ts"
@@ -139,7 +140,7 @@
                     "enumMembers",
                     "namespaceMembers"
                 ],
-                "blocks/*/index.ts": [
+                "{blocks/*/index.ts,blocks/timeline/dhis2/index.ts}": [
                     "exports",
                     "types",
                     "nsExports",

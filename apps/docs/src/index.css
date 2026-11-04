@@ -7,6 +7,7 @@
 @source '../../../packages/registry/blocks/context-selector';
 @source '../../../packages/registry/blocks/sidebar';
 @source '../../../packages/registry/blocks/observation-cards';
+@source '../../../packages/registry/blocks/timeline';
 
 @import 'shadcn/tailwind.css';
 
@@ -130,7 +131,8 @@ body {
 }
 
 /* The adapter defaults to a full viewport even in plugin mode. Inline
-   examples follow their card's width and content height instead. Keep these
+   examples and the playground canvas's live mode follow their container's
+   width and content height instead. Keep these
    overrides unlayered so they take precedence over the adapter's styled-jsx. */
 div.docs-preview-surface div.app-shell-adapter,
 div.docs-preview-surface div.pluginBoundary {

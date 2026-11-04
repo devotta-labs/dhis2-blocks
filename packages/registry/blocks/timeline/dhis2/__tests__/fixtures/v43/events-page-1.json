@@ -1,0 +1,119 @@
+{
+    "events": [
+        {
+            "createdAt": "2026-10-22T19:11:40.202",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "dataValues": [],
+            "enrollment": "TlE2eEnr002",
+            "event": "TlE2eEvt006",
+            "notes": [],
+            "orgUnit": "DiszpKrYNg8",
+            "program": "WSGAb5XwJ3Y",
+            "programStage": "PFDfvmGpsR3",
+            "scheduledAt": "2027-01-15T00:00:00.000",
+            "status": "SCHEDULE",
+            "trackedEntity": "TlE2eTei001",
+            "updatedAt": "2026-10-22T19:11:40.202",
+            "updatedBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            }
+        },
+        {
+            "createdAt": "2026-10-22T19:11:40.202",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "dataValues": [],
+            "enrollment": "TlE2eEnr002",
+            "event": "TlE2eEvt005",
+            "notes": [],
+            "orgUnit": "DiszpKrYNg8",
+            "program": "WSGAb5XwJ3Y",
+            "programStage": "edqlbukwRfQ",
+            "scheduledAt": "2026-08-01T00:00:00.000",
+            "status": "SCHEDULE",
+            "trackedEntity": "TlE2eTei001",
+            "updatedAt": "2026-10-22T19:11:40.202",
+            "updatedBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            }
+        },
+        {
+            "createdAt": "2026-10-22T19:11:40.202",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "dataValues": [],
+            "enrollment": "TlE2eEnr002",
+            "event": "TlE2eEvt003",
+            "notes": [],
+            "orgUnit": "DiszpKrYNg8",
+            "program": "WSGAb5XwJ3Y",
+            "programStage": "edqlbukwRfQ",
+            "scheduledAt": "2026-04-20T00:00:00.000",
+            "status": "SKIPPED",
+            "trackedEntity": "TlE2eTei001",
+            "updatedAt": "2026-10-22T19:11:40.202",
+            "updatedBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            }
+        },
+        {
+            "createdAt": "2026-10-22T19:11:40.202",
+            "createdBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            },
+            "dataValues": [
+                {
+                    "dataElement": "roKuXYfw1BW",
+                    "value": "26"
+                }
+            ],
+            "enrollment": "TlE2eEnr002",
+            "event": "TlE2eEvt004",
+            "notes": [],
+            "occurredAt": "2026-06-12T00:00:00.000",
+            "orgUnit": "DiszpKrYNg8",
+            "program": "WSGAb5XwJ3Y",
+            "programStage": "edqlbukwRfQ",
+            "scheduledAt": "2026-06-10T00:00:00.000",
+            "status": "ACTIVE",
+            "trackedEntity": "TlE2eTei001",
+            "updatedAt": "2026-10-22T19:11:41.596",
+            "updatedBy": {
+                "firstName": "John",
+                "surname": "Traore",
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            }
+        }
+    ],
+    "pager": {
+        "nextPage": "http://127.0.0.1:58443/api/tracker/events?trackedEntity=TlE2eTei001&program=WSGAb5XwJ3Y&fields=event,status,program,programStage,enrollment,trackedEntity,orgUnit,occurredAt,scheduledAt,completedAt,completedBy,createdAt,updatedAt,createdBy,updatedBy,dataValues[dataElement,value],notes[note,value,storedAt,storedBy,createdBy]&order=occurredAt:desc,event:desc&pageSize=4&page=2",
+        "page": 1,
+        "pageSize": 4
+    }
+}

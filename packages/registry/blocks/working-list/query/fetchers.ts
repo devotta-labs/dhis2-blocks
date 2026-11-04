@@ -3,6 +3,7 @@ import type { WorkingListCapabilities } from '../api/capabilities'
 import {
     asWorkingListBoundaryError,
     shouldRetryWorkingListRequest,
+    type ResourceRequest,
     type WorkingListClient,
 } from '../api/client'
 import {
@@ -25,9 +26,16 @@ import {
     type NormalizedEvent,
     type NormalizedTrackedEntity,
     type RowIssueTranslate,
+    type TrackedEntityEnrollment,
     type WorkingListRowIssue,
 } from './normalizeRows'
-import { planTrackedEntityJoin, serializeWorkingListRequest } from './serialize'
+import {
+    planTrackedEntityJoin,
+    requestDateBounds,
+    serializeWorkingListRequest,
+    type DateBounds,
+    type WorkingListDateRange,
+} from './serialize'
 
 export interface TrackedEntityWorkingListPage {
     mode: 'trackedEntity'
@@ -65,6 +73,7 @@ export interface FetchWorkingListPageInput {
     /** Localizes data-quality issue messages. Defaults to DHIS2 i18n. */
     translate?: RowIssueTranslate
     today?: string
+    range?: WorkingListDateRange
     signal?: AbortSignal
 }
 
@@ -106,6 +115,29 @@ const reportDataQualityIssues = (
     }
 }
 
+const isWithin = (value: string | undefined, { start, end }: DateBounds) => {
+    if (start === undefined && end === undefined) return true
+    const day = value?.slice(0, 10)
+    return (
+        day !== undefined &&
+        (start === undefined || day >= start) &&
+        (end === undefined || day <= end)
+    )
+}
+
+const enrollmentMatcher = (
+    request: ResourceRequest,
+    statusParameter: string
+) => {
+    const status = request.params?.[statusParameter]
+    const enrolled = requestDateBounds(request, 'enrolledAt')
+    const occurred = requestDateBounds(request, 'enrollmentOccurredAt')
+    return (enrollment: TrackedEntityEnrollment) =>
+        (status === undefined || enrollment.status === status) &&
+        isWithin(enrollment.enrolledAt, enrolled) &&
+        isWithin(enrollment.occurredAt, occurred)
+}
+
 export const fetchWorkingListPage = async ({
     client,
     signal,
@@ -120,11 +152,16 @@ export const fetchWorkingListPage = async ({
             signal
         )
         const response = normalizeTrackedEntitiesResponse(rawResponse)
+        const matchesEnrollment = enrollmentMatcher(
+            request,
+            input.capabilities.enrollmentStatusParameter
+        )
         let records: NormalizedTrackedEntity[]
         try {
             records = response.trackedEntities.map((trackedEntity) =>
                 normalizeTrackedEntityValues(trackedEntity, input.fields, {
                     programId: input.context.programId,
+                    matchesEnrollment,
                     translate: input.translate,
                 })
             )

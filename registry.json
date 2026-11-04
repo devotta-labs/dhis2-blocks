@@ -137,6 +137,25 @@
             ]
         },
         {
+            "name": "badge",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "class-variance-authority@^0.7.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/badge.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/badge.tsx"
+                }
+            ]
+        },
+        {
             "name": "button",
             "type": "registry:ui",
             "dependencies": [
@@ -167,6 +186,22 @@
                     "path": "packages/registry/components/card.tsx",
                     "type": "registry:ui",
                     "target": "@components/dhis2/ui/card.tsx"
+                }
+            ]
+        },
+        {
+            "name": "chart",
+            "type": "registry:ui",
+            "dependencies": ["recharts@^3.8.0"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/chart.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/chart.tsx"
                 }
             ]
         },
@@ -418,6 +453,21 @@
             ]
         },
         {
+            "name": "skeleton",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/skeleton.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/skeleton.tsx"
+                }
+            ]
+        },
+        {
             "name": "spinner",
             "type": "registry:ui",
             "registryDependencies": [
@@ -632,6 +682,145 @@
             ]
         },
         {
+            "name": "observation-cards",
+            "type": "registry:block",
+            "title": "DHIS2 Observation Cards",
+            "description": "Composable cards for one person's measurements over time and last recorded values, coloured by DHIS2 legend sets.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "prop-types@^15.8.1",
+                "recharts@^3.8.0",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/badge",
+                "devotta-labs/dhis2-blocks/card",
+                "devotta-labs/dhis2-blocks/chart",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/skeleton",
+                "devotta-labs/dhis2-blocks/tooltip"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/buildSeries.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/buildSeries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/queries.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/queries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/queryKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/queryKeys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/runtimeClient.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/runtimeClient.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/schemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/api/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/api/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/card/ObservationCard.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/card/ObservationCard.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/card/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/card/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/card/frame.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/card/frame.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/format/display.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/format/display.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/hooks.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/parts/ObservationChange.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/parts/ObservationChange.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/parts/ObservationLabel.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/parts/ObservationLabel.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/parts/ObservationLegend.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/parts/ObservationLegend.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/parts/ObservationRecorded.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/parts/ObservationRecorded.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/parts/ObservationSparkline.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/parts/ObservationSparkline.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/parts/ObservationValue.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/parts/ObservationValue.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/provider/ObservationsProvider.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/provider/ObservationsProvider.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/provider/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/provider/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/provider/env.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/provider/env.ts"
+                }
+            ],
+            "docs": "Wrap the cards in ObservationsProvider with a trackedEntity and a program; it loads the program's metadata and the person's events once for every card inside. Render one ObservationCard per data element uid, with an optional unit, label and staleAfterDays. Without children a card picks its arrangement from the value type: numbers show the latest value, its legend, the change since the previous reading and a sparkline; other types show the last recorded value, and yes or no values and option sets say when it last changed. To compose a different card, place the parts ObservationLabel, ObservationLegend, ObservationValue, ObservationChange, ObservationSparkline and ObservationRecorded inside it. The card shows the loading, error and never recorded states itself, and the recorded date can be placed but never dropped. Use useObservation for custom layouts. See the observation cards docs page for examples."
+        },
+        {
             "name": "sidebar",
             "type": "registry:block",
             "title": "Sidebar",
@@ -669,6 +858,271 @@
                 }
             ],
             "docs": "Use SidebarLink with render={<NavLink to=\"/projects\" />} to highlight the current page. Add SidebarGroup for nested links and SidebarButton for footer actions. Use SidebarToggle in the sidebar or useSidebar() for a page-toolbar control. Give each sidebar its own SidebarProvider and SidebarNavigation. Collapsing preserves expanded groups and the selected page."
+        },
+        {
+            "name": "timeline",
+            "type": "registry:block",
+            "title": "Timeline",
+            "description": "A read-only timeline that groups entries by day in the system calendar, with a now marker, an overdue group, show more and notices, plus DHIS2 tracker hooks and entry parts for a person's history across programs.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/badge",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/skeleton"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/timeline/core/group.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/core/group.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/core/reveal.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/core/reveal.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/core/sort.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/core/sort.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/core/today.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/core/today.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/core/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/core/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/changelog.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/changelog.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/entries/TimelineChangeEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/entries/TimelineChangeEntry.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/entries/TimelineEventAction.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/entries/TimelineEventAction.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/entries/TimelineEventEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/entries/TimelineEventEntry.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/entries/TimelineHistoryEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/entries/TimelineHistoryEntry.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/entries/TimelineMilestoneEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/entries/TimelineMilestoneEntry.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/entries/TimelineNoteEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/entries/TimelineNoteEntry.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/entries/hooks/useTimelineEventEntry.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/entries/hooks/useTimelineEventEntry.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/entries/hooks/useTimelineSave.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/entries/hooks/useTimelineSave.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/eventStatus.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/eventStatus.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/history.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/history.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useAttributeChangeEntries.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useAttributeChangeEntries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useEnrollmentEntries.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useEnrollmentEntries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useEventChangelog.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useEventChangelog.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useEventEntries.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useEventEntries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useOrgUnitNames.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useOrgUnitNames.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useProgramIds.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useProgramIds.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useProgramInfo.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useProgramInfo.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useSettledOnce.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useSettledOnce.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useSpansPrograms.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useSpansPrograms.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useSystemCalendar.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useSystemCalendar.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useTimelineClient.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useTimelineClient.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useTrackedEntity.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useTrackedEntity.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/hooks/useTrackedEntityHistory.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/hooks/useTrackedEntityHistory.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/metadata.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/metadata.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/queries.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/queries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/queryState.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/queryState.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/schemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/timelineKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/timelineKeys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/toEntries.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/toEntries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/dhis2/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/dhis2/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/hooks/useShowMore.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/hooks/useShowMore.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/hooks/useTimeline.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/hooks/useTimeline.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/hooks/useTimelineMeta.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/hooks/useTimelineMeta.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/ui/Timeline.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/ui/Timeline.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/ui/TimelineContext.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/ui/TimelineContext.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/ui/TimelineFeed.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/ui/TimelineFeed.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/ui/TimelineParts.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/ui/TimelineParts.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/ui/TimelineShowMore.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/ui/TimelineShowMore.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/timeline/ui/TimelineStates.tsx",
+                    "type": "registry:file",
+                    "target": "@components/timeline/ui/TimelineStates.tsx"
+                }
+            ],
+            "docs": "Pass entries and a status to Timeline, then compose TimelineFeed, TimelineLoading, TimelineError, TimelineNotices, TimelineEmpty and TimelineShowMore inside it; useShowMore reveals past entries a step at a time. The timeline never fetches: filter, merge or replace the array before it reaches it. For tracker data, import from @/components/timeline/dhis2: useTrackedEntityHistory({ trackedEntity, timeField }) returns entries, status, notices and refetch for every program the person is enrolled in (or programs you pass). Render each entry with TimelineHistoryEntry, or compose TimelineEventEntry and its parts; add host actions with eventActions and useTimelineEventEntry(). Invalidate timelineKeys.root to refresh after edits elsewhere. Delete the dhis2 folder if you only need the generic layout."
         },
         {
             "name": "working-list",
@@ -865,6 +1319,16 @@
                     "path": "packages/registry/blocks/working-list/provider/store.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/provider/store.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/useReferenceFormatting.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/useReferenceFormatting.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/provider/useWorkingListDateRange.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/provider/useWorkingListDateRange.ts"
                 },
                 {
                     "path": "packages/registry/blocks/working-list/provider/useWorkingListLifecycle.ts",
@@ -1188,6 +1652,77 @@
                 }
             ],
             "docs": "Render WorkingList beneath the DHIS2 app-runtime and TanStack Query providers. Compose WorkingListViewSwitcher, WorkingListToolbar with its column/filter/action controls, and WorkingListTable. View selection and pagination work uncontrolled by default or as independent controlled value/callback pairs."
+        },
+        {
+            "name": "working-list-calendar",
+            "type": "registry:block",
+            "title": "DHIS2 Working List Calendar",
+            "description": "Shows a DHIS2 working list's records on a month calendar, in the system calendar.",
+            "dependencies": [
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@3.2.1",
+                "@dhis2/ui-icons@^10.17.0",
+                "prop-types@^15.8.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/select",
+                "devotta-labs/dhis2-blocks/spinner",
+                "devotta-labs/dhis2-blocks/toggle-group",
+                "devotta-labs/dhis2-blocks/working-list"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendar.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list-calendar/WorkingListCalendar.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list-calendar/WorkingListCalendarCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarDayRecords.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list-calendar/WorkingListCalendarDayRecords.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarDisplayToggle.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list-calendar/WorkingListCalendarDisplayToggle.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarGrid.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list-calendar/WorkingListCalendarGrid.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list-calendar/WorkingListCalendarNavigation.tsx",
+                    "type": "registry:file",
+                    "target": "@components/working-list-calendar/WorkingListCalendarNavigation.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list-calendar/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list-calendar/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list-calendar/recordLabel.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list-calendar/recordLabel.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list-calendar/recordStatus.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list-calendar/recordStatus.ts"
+                }
+            ],
+            "docs": "Install alongside the working-list block and render WorkingListCalendar inside WorkingList, beside or instead of WorkingListTable. Compose WorkingListCalendarNavigation, WorkingListCalendarGrid and WorkingListCalendarDayRecords inside it, or build your own layout with useWorkingListCalendar. dateField picks the date that places records: enrolledAt or enrollmentOccurredAt for tracked entities, eventOccurredAt or eventScheduledAt for events. The calendar reads the list's saved view and filters but never changes them. The selected day works uncontrolled or as a controlled selectedDay/onSelectedDayChange pair."
         }
     ]
 }

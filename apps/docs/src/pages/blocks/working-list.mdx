@@ -118,6 +118,60 @@ callback together. Views and pagination can be controlled independently:
 Saved views are stored on the DHIS2 server, so views users create, update,
 or delete in your app also apply wherever else they use those views.
 
+## Calendar view
+
+<ExampleCard slug="working-list-calendar/tabs" />
+
+The calendar shows the same records as the table, placed on a month by one of
+their dates. It uses the same saved view, filters and organisation unit, so
+users can switch between the two without losing their place. It answers
+questions like "who is due this week?" or "what happened on the 14th?" at a
+glance.
+
+<InstallCommand item="working-list-calendar" />
+
+Render `WorkingListCalendar` inside `WorkingList`, beside or instead of
+`WorkingListTable`:
+
+```tsx
+import {
+    WorkingListCalendar,
+    WorkingListCalendarDayRecords,
+    WorkingListCalendarGrid,
+    WorkingListCalendarNavigation,
+} from '@/components/working-list-calendar'
+
+;<WorkingList programId={programId} orgUnitId={orgUnitId}>
+    <WorkingListCalendar onRecordClick={(record) => openRecord(record)}>
+        <WorkingListCalendarNavigation />
+        <WorkingListCalendarGrid />
+        <WorkingListCalendarDayRecords />
+    </WorkingListCalendar>
+</WorkingList>
+```
+
+Each day counts its records by status, such as "6 Active, 2 Completed".
+Selecting a day lists its records, and clicking one opens it, just like a row
+in the table. Add `WorkingListCalendarDisplayToggle` to let users show names
+instead of counts. Dates follow the instance's calendar, such as Ethiopian or
+Nepali.
+
+A few choices to fit your program:
+
+- `dateField` — which date places a record. Tracked entities use the
+  enrollment date (`enrolledAt`) or the incident date
+  (`enrollmentOccurredAt`); events use the report date (`eventOccurredAt`)
+  or the scheduled date (`eventScheduledAt`).
+- `weekend` on `WorkingListCalendarGrid` — the days that count as the
+  weekend, such as `[6, 7]` for Saturday and Sunday. Add
+  `weekendColumns="narrow"` or `"hide"` to give them less room.
+- `recordLabel` and `recordStatus` — your own names and status colours for
+  records.
+
+The calendar shows one month at a time and loads up to 1000 records for the
+weeks on screen; it says so when there are more. Coptic calendars are not
+supported yet.
+
 ## API reference
 
 ### WorkingList

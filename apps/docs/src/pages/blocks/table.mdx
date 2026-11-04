@@ -1,0 +1,75 @@
+---
+title: Table
+description: Rows and columns of data, in the DHIS2 table style.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="table/records" />
+
+A table lays out records so users can scan and compare them. It looks like
+the `@dhis2/ui` DataTable. For tracker records with filters, sorting, and
+saved views, use the [Working List](/blocks/working-list), which is built on
+it.
+
+## Installation
+
+<InstallCommand item="table" />
+
+## Usage
+
+The parts match the HTML table elements:
+
+```tsx
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/dhis2/ui/table'
+
+export const DueVisits = () => (
+    <Table>
+        <TableHeader>
+            <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Last visit</TableHead>
+            </TableRow>
+        </TableHeader>
+        <TableBody>
+            {people.map((person) => (
+                <TableRow key={person.id}>
+                    <TableCell>{person.name}</TableCell>
+                    <TableCell>{person.lastVisit}</TableCell>
+                </TableRow>
+            ))}
+        </TableBody>
+    </Table>
+)
+```
+
+Wide tables scroll sideways instead of squeezing their columns. Long values
+wrap onto a second line; add `className="whitespace-nowrap"` to a cell that
+must stay on one line, such as a date.
+
+## Making it easy to read
+
+- Put the column users look up by, usually a name or an ID, first.
+- Align numbers to the end with `className="text-end"`, so their digits line
+  up.
+- Add a `TableCaption` to say what the table shows. Screen readers announce
+  it.
+
+## API reference
+
+- `Table` — the table, with a container that scrolls when it is too wide.
+- `TableHeader`, `TableBody`, `TableFooter` — the table's sections.
+- `TableRow` — one row. Rows highlight on hover.
+- `TableHead` — a column heading.
+- `TableCell` — one value.
+- `TableCaption` — a title for the table.
+
+Every part accepts `className` and the props of its HTML element.

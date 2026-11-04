@@ -1,0 +1,71 @@
+---
+title: Popover
+description: A small panel of details or controls, opened from a button.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="popover/details" />
+
+A popover opens a small panel next to a button, with more about a value or
+a few extra controls. Users click away or press Escape to close it. It
+looks like the `@dhis2/ui` Popover.
+
+## Installation
+
+<InstallCommand item="popover" />
+
+## Usage
+
+```tsx
+import { Button } from '@/components/dhis2/ui/button'
+import {
+    Popover,
+    PopoverContent,
+    PopoverDescription,
+    PopoverHeader,
+    PopoverTitle,
+    PopoverTrigger,
+} from '@/components/dhis2/ui/popover'
+
+export const AboutValue = () => (
+    <Popover>
+        <PopoverTrigger render={<Button variant="outline" />}>
+            About this value
+        </PopoverTrigger>
+        <PopoverContent>
+            <PopoverHeader>
+                <PopoverTitle>Hemoglobin</PopoverTitle>
+                <PopoverDescription>
+                    The latest reading, in g/dL.
+                </PopoverDescription>
+            </PopoverHeader>
+        </PopoverContent>
+    </Popover>
+)
+```
+
+The panel opens below the button. Set `side` and `align` on
+`PopoverContent` to place it elsewhere; it moves by itself when there is no
+room.
+
+## Popover, tooltip or dialog?
+
+- A [Tooltip](/blocks/tooltip) shows a few words on hover. Use it to name a
+  button.
+- A popover opens on click and can hold more: a short explanation, a small
+  form, or a list of options to filter by.
+- A [Dialog](/blocks/dialog) stops the page until users answer. Use it for
+  a task that needs their full attention.
+
+## API reference
+
+- `Popover` — holds the state. `open` and `onOpenChange(open)` keep it in
+  your app; `defaultOpen` sets the start.
+- `PopoverTrigger` — the button that opens it. Pass
+  `render={<Button />}` to use a DHIS2 button.
+- `PopoverContent` — the panel. Takes `side`, `align`, `sideOffset` and
+  `alignOffset`.
+- `PopoverHeader`, `PopoverTitle`, `PopoverDescription` — a heading and a
+  line of detail. Screen readers read them when it opens.

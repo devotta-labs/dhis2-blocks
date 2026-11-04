@@ -1,0 +1,103 @@
+---
+title: Combobox
+description: Search a long list and choose one option, or several.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="combobox/facilities" />
+
+A combobox is a select with a search box. Use it when the list is too long to
+scroll, such as facilities, villages, or option sets. It replaces the
+filterable `@dhis2/ui` SingleSelect and MultiSelect.
+
+## Installation
+
+<InstallCommand item="combobox" />
+
+## Usage
+
+Pass the options as `items`. The list filters as users type, and
+`ComboboxEmpty` shows when nothing matches:
+
+```tsx
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+    ComboboxTrigger,
+    ComboboxValue,
+} from '@/components/dhis2/ui/combobox'
+import { selectTriggerVariants } from '@/components/dhis2/ui/select'
+
+export const FacilityPicker = () => (
+    <Combobox items={facilities} value={facility} onValueChange={setFacility}>
+        <ComboboxTrigger className={selectTriggerVariants()}>
+            <ComboboxValue placeholder="Choose a facility" />
+        </ComboboxTrigger>
+        <ComboboxContent>
+            <ComboboxInput showTrigger={false} placeholder="Search" />
+            <ComboboxEmpty>No facility matches</ComboboxEmpty>
+            <ComboboxList>
+                {(item: string) => (
+                    <ComboboxItem key={item} value={item}>
+                        {item}
+                    </ComboboxItem>
+                )}
+            </ComboboxList>
+        </ComboboxContent>
+    </Combobox>
+)
+```
+
+## Choose several
+
+Add `multiple`, and show a checkbox beside each option with
+`indicator="checkbox"`. The value is then a list:
+
+```tsx
+<Combobox items={facilities} multiple value={chosen} onValueChange={setChosen}>
+    <ComboboxTrigger className={selectTriggerVariants()}>
+        <ComboboxValue>
+            {(values: string[]) =>
+                values.length > 0 ? values.join(', ') : 'Choose facilities'
+            }
+        </ComboboxValue>
+    </ComboboxTrigger>
+    {/* … */}
+    <ComboboxItem value={item} indicator="checkbox">
+        {item}
+    </ComboboxItem>
+</Combobox>
+```
+
+## Options with labels
+
+When options are objects, pass `itemToStringLabel` so the search and the
+closed combobox use the option's name:
+
+```tsx
+<Combobox
+    items={orgUnits}
+    itemToStringLabel={(unit) => unit.displayName}
+>
+```
+
+## API reference
+
+- `Combobox` — `items`, `value`, `defaultValue`, `onValueChange`,
+  `multiple`, and `itemToStringLabel`. `onInputValueChange` tells you what
+  users type, for searching on the server.
+- `ComboboxTrigger` — the closed combobox. Style it with
+  `selectTriggerVariants()` to match the [Select](/blocks/select).
+- `ComboboxValue` — the chosen option, or the `placeholder`.
+- `ComboboxContent` — the list and its search box.
+- `ComboboxInput` — the search box. Pass `showTrigger={false}` inside the
+  list.
+- `ComboboxList` — renders each option through its children.
+- `ComboboxItem` — one option. `indicator?: 'check' | 'checkbox'`.
+- `ComboboxEmpty` — shown when nothing matches.

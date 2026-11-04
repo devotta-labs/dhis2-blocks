@@ -1,7 +1,8 @@
 import { createElement, lazy, Suspense, type ComponentType } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { DocPage } from './components/DocPage'
-import { DocsShell } from './components/DocsShell'
+import { DocsLayout, SiteShell } from './components/DocsShell'
+import { PlaygroundPage } from './playground/PlaygroundPage'
 import { PreviewRoot } from './preview/PreviewRoot'
 
 type DocsPageModule = {
@@ -51,21 +52,77 @@ const docRoute = (path: string, modulePath: string) => ({
 
 const router = createBrowserRouter([
     {
-        element: <DocsShell />,
+        element: <SiteShell />,
         children: [
-            docRoute('/', './pages/index.mdx'),
-            docRoute('/installation', './pages/installation.mdx'),
-            // The former name of the installation page.
             {
-                path: '/getting-started',
-                element: <Navigate to="/installation" replace />,
+                element: <DocsLayout />,
+                children: [
+                    docRoute('/', './pages/index.mdx'),
+                    docRoute('/installation', './pages/installation.mdx'),
+                    // The former name of the installation page.
+                    {
+                        path: '/getting-started',
+                        element: <Navigate to="/installation" replace />,
+                    },
+                    docRoute(
+                        '/blocks/working-list',
+                        './pages/blocks/working-list.mdx'
+                    ),
+                    // The calendar is now part of the Working List page.
+                    {
+                        path: '/blocks/working-list-calendar',
+                        element: (
+                            <Navigate
+                                to="/blocks/working-list#calendar-view"
+                                replace
+                            />
+                        ),
+                    },
+                    docRoute('/blocks/alert', './pages/blocks/alert.mdx'),
+                    docRoute('/blocks/button', './pages/blocks/button.mdx'),
+                    docRoute('/blocks/badge', './pages/blocks/badge.mdx'),
+                    docRoute('/blocks/card', './pages/blocks/card.mdx'),
+                    docRoute(
+                        '/blocks/input-group',
+                        './pages/blocks/input-group.mdx'
+                    ),
+                    docRoute('/blocks/popover', './pages/blocks/popover.mdx'),
+                    docRoute(
+                        '/blocks/radio-group',
+                        './pages/blocks/radio-group.mdx'
+                    ),
+                    docRoute('/blocks/spinner', './pages/blocks/spinner.mdx'),
+                    docRoute('/blocks/switch', './pages/blocks/switch.mdx'),
+                    docRoute('/blocks/textarea', './pages/blocks/textarea.mdx'),
+                    docRoute(
+                        '/blocks/toggle-group',
+                        './pages/blocks/toggle-group.mdx'
+                    ),
+                    docRoute('/blocks/chart', './pages/blocks/chart.mdx'),
+                    docRoute('/blocks/checkbox', './pages/blocks/checkbox.mdx'),
+                    docRoute('/blocks/combobox', './pages/blocks/combobox.mdx'),
+                    docRoute('/blocks/dialog', './pages/blocks/dialog.mdx'),
+                    docRoute(
+                        '/blocks/dropdown-menu',
+                        './pages/blocks/dropdown-menu.mdx'
+                    ),
+                    docRoute('/blocks/input', './pages/blocks/input.mdx'),
+                    docRoute('/blocks/select', './pages/blocks/select.mdx'),
+                    docRoute('/blocks/table', './pages/blocks/table.mdx'),
+                    docRoute('/blocks/tooltip', './pages/blocks/tooltip.mdx'),
+                    docRoute('/blocks/sidebar', './pages/blocks/sidebar.mdx'),
+                    docRoute(
+                        '/blocks/context-selector',
+                        './pages/blocks/context-selector.mdx'
+                    ),
+                    docRoute(
+                        '/blocks/observation-cards',
+                        './pages/blocks/observation-cards.mdx'
+                    ),
+                    docRoute('/blocks/timeline', './pages/blocks/timeline.mdx'),
+                ],
             },
-            docRoute('/blocks/working-list', './pages/blocks/working-list.mdx'),
-            docRoute('/blocks/sidebar', './pages/blocks/sidebar.mdx'),
-            docRoute(
-                '/blocks/context-selector',
-                './pages/blocks/context-selector.mdx'
-            ),
+            { path: '/playground/:slug?', element: <PlaygroundPage /> },
         ],
     },
     {

@@ -1,0 +1,75 @@
+---
+title: Radio Group
+description: One answer from a short list, with every option in view.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="radio-group/outcome" />
+
+A radio group lets users pick exactly one option from a short list, such as
+how a visit went. Every option stays in view, so users can compare them
+before they choose. It looks like the `@dhis2/ui` Radio.
+
+## Installation
+
+<InstallCommand item="radio-group" />
+
+<InstallCommand item="label" />
+
+## Usage
+
+Wrap each radio in a `Label`, so users can click the text as well as the
+circle, and name the group with a heading:
+
+```tsx
+import { Label } from '@/components/dhis2/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/dhis2/ui/radio-group'
+
+export const VisitOutcome = () => (
+    <>
+        <p id="visit-outcome">Visit outcome</p>
+        <RadioGroup aria-labelledby="visit-outcome" defaultValue="attended">
+            <Label>
+                <RadioGroupItem value="attended" />
+                Attended
+            </Label>
+            <Label>
+                <RadioGroupItem value="missed" />
+                Missed
+            </Label>
+        </RadioGroup>
+    </>
+)
+```
+
+Users move between the options with the arrow keys.
+
+## When to use radios
+
+- Use radios for two to about five options. With more, a
+  [Select](/blocks/select) takes less space.
+- Use them when users should see every option at once, such as answers to
+  a question in a form.
+- For a single yes or no, use a [Checkbox](/blocks/checkbox) or a
+  [Switch](/blocks/switch) instead.
+- Start with an option chosen only when there is a safe, common answer.
+  Otherwise leave them all empty, so users make the choice themselves.
+
+Short options can sit side by side with `className="flex gap-6"` on the
+group.
+
+## API reference
+
+`RadioGroup`:
+
+- `value` and `onValueChange(value)` — keep the chosen option in your app.
+- `defaultValue` — the starting option when the group keeps it.
+- `disabled` — shows the options but blocks changes.
+- `name` and `required` — submit the choice with a form.
+
+`RadioGroupItem`:
+
+- `value` — what the group's value is when this option is chosen.
+- `disabled` — blocks this one option.

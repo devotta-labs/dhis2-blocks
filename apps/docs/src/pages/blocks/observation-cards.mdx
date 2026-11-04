@@ -1,0 +1,150 @@
+---
+title: Observation Cards
+description: Cards for one person's measurements over time and last recorded values in a tracker program.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="observation-cards/person-vitals" />
+
+This preview reads one person in the WHO RMNCH Tracker in the Sierra Leone
+demo database. Haemoglobin is a number, so its card shows the latest value,
+the change since the previous reading and a sparkline. Smoking and extreme
+pallor are yes or no, so their cards show the last recorded value and when
+it last changed. All three
+cards share one load of the person's events. Copy the example's code to start from it, and edit the uids at
+the top of the file.
+
+## Installation
+
+<InstallCommand item="observation-cards" />
+
+## Usage
+
+Wrap the cards in `ObservationsProvider` with the person and the program, then
+place one `ObservationCard` per data element. `trackedEntity`, `program` and
+each card's `dataElement` are the only required props.
+
+```tsx
+import {
+    ObservationCard,
+    ObservationsProvider,
+} from '@/components/observation-cards'
+
+export function PersonVitals({ personId }: { personId: string }) {
+    return (
+        <ObservationsProvider trackedEntity={personId} program="WSGAb5XwJ3Y">
+            <ObservationCard dataElement="vANAXwtLwcT" unit="g/dL" />
+            <ObservationCard dataElement="sWoqcoByYmD" staleAfterDays={180} />
+        </ObservationsProvider>
+    )
+}
+```
+
+The provider loads the program's metadata and the person's events once, for
+every card inside it. Cards are read-only. They read the readings from every
+stage the user can see that captures the data element, as DHIS2's own forms
+show them: a value left on a stage that no longer captures the element doesn't
+count. A data element the program doesn't capture shows a setup message. List a program's data elements with:
+
+```
+GET /api/programs/<program>?fields=programStages[programStageDataElements[dataElement[id,displayName,valueType]]]
+```
+
+A card without children picks its arrangement from the value type. A number
+gets its label, legend, latest value, change since the previous reading, a
+sparkline and the recorded date. Everything else gets its label, last recorded
+value and recorded date. Yes or no values and option sets also say when the
+value last changed and from what, such as "Changed from No on Mar 3, 2026",
+or how long it has held. DHIS2 stores nothing for an unticked yes-only
+(TRUE_ONLY) box, so a visit that left it empty reads "Not recorded", not No,
+with when it was last recorded as Yes. Option sets show the option's name in the option's
+colour. A card shows its own loading, error and never recorded states, and
+says "This value type can't be shown here" for a value type it doesn't support.
+Users who can't read some stages that capture the value see a "Restricted
+access" note.
+
+## Composing a card
+
+Place parts inside a card to build a different arrangement. Only the parts you
+place render, so this card is a label, the value, a short trend and when it was
+recorded:
+
+```tsx
+<ObservationCard dataElement="vANAXwtLwcT">
+    <ObservationLabel />
+    <ObservationValue unit="g/dL" />
+    <ObservationSparkline points={6} />
+    <ObservationRecorded />
+</ObservationCard>
+```
+
+The parts are `ObservationLabel`, `ObservationLegend`, `ObservationValue`,
+`ObservationChange`, `ObservationSparkline` and `ObservationRecorded`. Each
+takes a `className`, and parts only work inside a card. A card never drops the
+recorded date: if you leave `ObservationRecorded` out, the card adds it below
+your parts, so an old value can't pass as current.
+
+## Colours
+
+Cards never choose a colour. They take it from the data element's metadata, so
+the colours match the rest of DHIS2:
+
+- **Numbers** are coloured by the data element's legend set. The legend the
+  latest reading falls in shows as a named pill, and the card says when the
+  reading moved from one legend to another. A start is inclusive and an end is
+  exclusive, except the end of the highest legend. A reading outside every
+  legend shows no pill. Only the first legend set on the data element is used.
+- **Option sets** are coloured by each option's colour, on the value itself.
+  Option codes are categories, not amounts, so they never get a legend or a
+  trend, even when the codes are numbers.
+
+To set them up in DHIS2, create the legend set in **Maintenance, Other,
+Legend** and add it to the data element's **Legend sets**. Choose an option's
+colour in **Maintenance, Options, Option set** by editing the option. A data
+element with neither shows its values in plain text.
+
+## Dates and staleness
+
+The card shows when the latest reading was recorded as a short phrase, such as
+"3 days ago". Hover or focus it to read the full date, in the system's
+calendar, and the program stage. Screen readers hear the full date and stage
+instead of the short phrase.
+
+Set `staleAfterDays` on a card to flag old readings. Once the latest reading is
+older than that many days, its text turns grey, the footer turns yellow and a
+warning icon with "Out of date" joins the recorded date; hover or focus it to
+read the threshold. Without it, nothing is ever marked out of date.
+Pick the number for each data element, since a haemoglobin reading and a
+smoking status go stale at different speeds.
+
+## API reference
+
+### ObservationsProvider
+
+- `trackedEntity: string` — **required.** The person whose observations the
+  cards show.
+- `program: string` — **required.** The tracker program whose stages capture
+  the cards' data elements. Changing either prop starts from nothing, so a card
+  never shows the previous person's values.
+- `children?: ReactNode` — the cards and any of your own UI that uses
+  `useObservation`. The provider renders only its children.
+- `client?: ObservationsClient` — a custom data engine, from
+  `createObservationsClient`. Defaults to the DHIS2 app runtime. Create it
+  once, outside render: each client keeps its own cache, so two engines never
+  share results.
+
+### ObservationCard
+
+- `dataElement: string` — **required.** The uid of the data element to show.
+- `unit?: string` — shown after a number, such as `g/dL`.
+- `label?: string` — replaces the data element's form name as the heading.
+- `staleAfterDays?: number` — greys the card, turns its footer yellow and adds
+  "Out of date" once the latest reading is older than this. Off when unset.
+- `className?: string` — applied to the card.
+- `children?: ReactNode` — the parts to show. Without children, the card
+  picks them by value type.
+
+The parts take `className` and the props listed in their types. `useObservation(dataElement)`
+returns a card's status and series, for layouts of your own.

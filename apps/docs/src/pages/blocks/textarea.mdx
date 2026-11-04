@@ -1,0 +1,56 @@
+---
+title: Textarea
+description: A text box for notes and comments of several lines.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="textarea/notes" />
+
+A textarea is a text box for longer answers, such as a note for the next
+visit or a reason for a change. It looks like the `@dhis2/ui` TextArea and
+matches the [Input](/blocks/input) style.
+
+## Installation
+
+<InstallCommand item="textarea" />
+
+## Usage
+
+Give it a label with a `Field`, the same way as an input:
+
+```tsx
+import { Field, FieldLabel } from '@/components/dhis2/ui/field'
+import { Textarea } from '@/components/dhis2/ui/textarea'
+
+export const VisitNote = () => (
+    <Field>
+        <FieldLabel htmlFor="visit-note">Note for the next visit</FieldLabel>
+        <Textarea
+            id="visit-note"
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+        />
+    </Field>
+)
+```
+
+The box grows with the text as users type, in browsers that support it.
+
+## Hints and limits
+
+- Say what a good note contains with a `placeholder` or a
+  `FieldDescription`, such as "For example, check the blood pressure again".
+- If the text has a limit, set `maxLength` and show how many characters are
+  left, so users are not cut off by surprise.
+- Mark a wrong value with `aria-invalid` and a `FieldError`, as on the
+  [Input](/blocks/input) page.
+
+For a one-line answer, such as a name, use an [Input](/blocks/input).
+
+## API reference
+
+`Textarea` takes every prop of the HTML `textarea` element, such as
+`value`, `onChange`, `placeholder`, `maxLength`, `disabled` and
+`aria-invalid`.

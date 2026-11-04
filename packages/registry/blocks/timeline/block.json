@@ -1,0 +1,5 @@
+{
+    "title": "Timeline",
+    "description": "A read-only timeline that groups entries by day in the system calendar, with a now marker, an overdue group, show more and notices, plus DHIS2 tracker hooks and entry parts for a person's history across programs.",
+    "docs": "Pass entries and a status to Timeline, then compose TimelineFeed, TimelineLoading, TimelineError, TimelineNotices, TimelineEmpty and TimelineShowMore inside it; useShowMore reveals past entries a step at a time. The timeline never fetches: filter, merge or replace the array before it reaches it. For tracker data, import from @/components/timeline/dhis2: useTrackedEntityHistory({ trackedEntity, timeField }) returns entries, status, notices and refetch for every program the person is enrolled in (or programs you pass). Render each entry with TimelineHistoryEntry, or compose TimelineEventEntry and its parts; add host actions with eventActions and useTimelineEventEntry(). Invalidate timelineKeys.root to refresh after edits elsewhere. Delete the dhis2 folder if you only need the generic layout."
+}

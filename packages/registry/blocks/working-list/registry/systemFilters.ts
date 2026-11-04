@@ -29,9 +29,16 @@ export type SystemFilterId =
     | 'eventScheduledAt'
     | 'eventAssignedUser'
 
+/** The API's after/before parameter pair for a system date field. */
+interface DateRangeParameters {
+    after: string
+    before: string
+}
+
 export interface SystemFilterDefinition {
     id: SystemFilterId
     field: WorkingListField
+    dateRange?: DateRangeParameters
     defaultVisible: boolean
     changesResultMode?: boolean
     operators: readonly FilterOperator[]
@@ -205,6 +212,23 @@ const enrollmentStatuses = new Set(
 )
 const eventStatuses = new Set(eventStatusOptions.map((option) => option.code))
 
+const ENROLLED_AT_RANGE: DateRangeParameters = {
+    after: 'enrollmentEnrolledAfter',
+    before: 'enrollmentEnrolledBefore',
+}
+const ENROLLMENT_OCCURRED_AT_RANGE: DateRangeParameters = {
+    after: 'enrollmentOccurredAfter',
+    before: 'enrollmentOccurredBefore',
+}
+const EVENT_OCCURRED_AT_RANGE: DateRangeParameters = {
+    after: 'occurredAfter',
+    before: 'occurredBefore',
+}
+const EVENT_SCHEDULED_AT_RANGE: DateRangeParameters = {
+    after: 'scheduledAfter',
+    before: 'scheduledBefore',
+}
+
 const definitions: SystemFilterDefinition[] = [
     {
         id: 'enrollmentStatus',
@@ -237,13 +261,9 @@ const definitions: SystemFilterDefinition[] = [
         defaultVisible: true,
         operators: ['range'],
         validate: validateDateFilter,
+        dateRange: ENROLLED_AT_RANGE,
         toQueryParameters(filter, _capabilities, context) {
-            return dateParameters({
-                filter,
-                after: 'enrollmentEnrolledAfter',
-                before: 'enrollmentEnrolledBefore',
-                context,
-            })
+            return dateParameters({ filter, ...ENROLLED_AT_RANGE, context })
         },
     },
     {
@@ -257,11 +277,11 @@ const definitions: SystemFilterDefinition[] = [
         defaultVisible: true,
         operators: ['range'],
         validate: validateDateFilter,
+        dateRange: ENROLLMENT_OCCURRED_AT_RANGE,
         toQueryParameters(filter, _capabilities, context) {
             return dateParameters({
                 filter,
-                after: 'enrollmentOccurredAfter',
-                before: 'enrollmentOccurredBefore',
+                ...ENROLLMENT_OCCURRED_AT_RANGE,
                 context,
             })
         },
@@ -330,11 +350,11 @@ const definitions: SystemFilterDefinition[] = [
         defaultVisible: true,
         operators: ['range'],
         validate: validateDateFilter,
+        dateRange: EVENT_OCCURRED_AT_RANGE,
         toQueryParameters(filter, _capabilities, context) {
             return dateParameters({
                 filter,
-                after: 'occurredAfter',
-                before: 'occurredBefore',
+                ...EVENT_OCCURRED_AT_RANGE,
                 context,
             })
         },
@@ -368,11 +388,11 @@ const definitions: SystemFilterDefinition[] = [
         defaultVisible: true,
         operators: ['range'],
         validate: validateDateFilter,
+        dateRange: EVENT_SCHEDULED_AT_RANGE,
         toQueryParameters(filter, _capabilities, context) {
             return dateParameters({
                 filter,
-                after: 'scheduledAfter',
-                before: 'scheduledBefore',
+                ...EVENT_SCHEDULED_AT_RANGE,
                 context,
             })
         },

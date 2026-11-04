@@ -256,3 +256,47 @@ describe('working-list next-page capability semantics', () => {
         expect(oversized.hasNextPage).toBe(false)
     })
 })
+
+describe('working-list tracked-entity enrollments', () => {
+    it('describes each row by the enrollment inside the date window', async () => {
+        const page = await fetchWorkingListPage({
+            ...pageInput(
+                clientReturning({
+                    trackedEntities: [
+                        {
+                            trackedEntity: 'EntityAaaa1',
+                            attributes: [],
+                            programOwners: [],
+                            enrollments: [
+                                {
+                                    enrollment: 'Enrollment01',
+                                    program: 'Program0001',
+                                    status: 'ACTIVE',
+                                    enrolledAt: '2026-01-05T00:00:00.000',
+                                },
+                                {
+                                    enrollment: 'Enrollment02',
+                                    program: 'Program0001',
+                                    status: 'COMPLETED',
+                                    enrolledAt: '2026-11-02T00:00:00.000',
+                                },
+                            ],
+                        },
+                    ],
+                })
+            ),
+            range: {
+                fieldId: 'enrolledAt',
+                start: '2026-11-01',
+                end: '2026-11-30',
+            },
+        })
+
+        const record =
+            page.mode === 'trackedEntity' ? page.records[0] : undefined
+        expect(record?.values).toMatchObject({
+            enrolledAt: { value: '2026-11-02T00:00:00.000' },
+            enrollmentStatus: { value: 'COMPLETED' },
+        })
+    })
+})

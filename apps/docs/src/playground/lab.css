@@ -1,0 +1,171 @@
+/*
+ * The playground's look, on the docs' own tokens so it themes with them: a settings rail and cards like the rest of
+ * the site, around a dotted canvas. `.lab` names the playground's colours; `.lab-chrome` dresses its own controls
+ * and never the block under test. Everything sits in the base layer, so a lab's utilities still win.
+ */
+@layer base {
+    .lab {
+        --lab-desk: var(--muted);
+        --lab-paper: var(--card);
+        --lab-paper-inset: var(--muted);
+        --lab-ink: var(--foreground);
+        --lab-ink-2: var(--accent-foreground);
+        --lab-ink-3: var(--muted-foreground);
+        --lab-ink-4: color-mix(
+            in srgb,
+            var(--muted-foreground) 65%,
+            transparent
+        );
+        --lab-rule: var(--border);
+        --lab-rule-faint: color-mix(in srgb, var(--border) 55%, transparent);
+        --lab-fault: var(--destructive);
+        --lab-caution: #b7791f;
+        /* Small labels: a log column's name. */
+        --lab-bar: var(--muted);
+        --lab-bar-ink: var(--muted-foreground);
+        --lab-bar-hover: var(--accent);
+    }
+
+    .dark .lab {
+        color-scheme: dark;
+        --lab-caution: #e2ab4f;
+    }
+
+    .lab-chrome {
+        font-size: 13px;
+        line-height: 1.45;
+        font-variant-numeric: tabular-nums;
+        color: var(--lab-ink);
+    }
+
+    /* Thin scrollbars on every pane and the canvas, never inside the block. */
+    .lab-chrome,
+    .lab-chrome *,
+    .lab-graticule {
+        scrollbar-color: var(--lab-ink-4) transparent;
+        scrollbar-width: thin;
+    }
+
+    /* A section is a titled group, ruled off from the one above. */
+    .lab-chrome fieldset {
+        margin: 0;
+        min-width: 0;
+        border: 0;
+        border-top: 1px solid var(--lab-rule);
+        padding: 12px 0 0;
+    }
+
+    .lab-chrome legend {
+        float: left;
+        width: 100%;
+        margin-bottom: 6px;
+        padding: 0;
+        color: var(--lab-ink);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .lab-chrome legend + * {
+        clear: both;
+    }
+
+    .lab-chrome input:not([type='checkbox'], [type='radio']),
+    .lab-chrome select {
+        appearance: none;
+        min-height: 28px;
+        border: 1px solid var(--input);
+        border-radius: calc(var(--radius) - 2px);
+        padding: 0 8px;
+        background-color: var(--background);
+        color: inherit;
+        font: inherit;
+    }
+
+    .lab-chrome input::placeholder {
+        color: var(--lab-ink-4);
+    }
+
+    .lab-chrome input::-webkit-inner-spin-button,
+    .lab-chrome input::-webkit-outer-spin-button {
+        appearance: none;
+        margin: 0;
+    }
+
+    .lab-chrome select {
+        padding-inline-end: 22px;
+        background-image:
+            linear-gradient(45deg, transparent 50%, var(--lab-ink-3) 50%),
+            linear-gradient(135deg, var(--lab-ink-3) 50%, transparent 50%);
+        background-position:
+            right 12px center,
+            right 8px center;
+        background-size: 4px 4px;
+        background-repeat: no-repeat;
+    }
+
+    .lab-chrome input[type='checkbox'] {
+        width: 14px;
+        height: 14px;
+        margin: 0;
+        accent-color: var(--primary);
+        flex-shrink: 0;
+    }
+
+    .lab-chrome button {
+        border: 1px solid var(--lab-rule);
+        border-radius: calc(var(--radius) - 2px);
+        padding: 0 8px;
+        min-height: 26px;
+        background: var(--background);
+        color: inherit;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+            background-color 120ms,
+            border-color 120ms,
+            color 120ms;
+    }
+
+    .lab-chrome button:hover {
+        background: var(--lab-paper-inset);
+    }
+
+    .lab-chrome button[aria-pressed='true'] {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: var(--primary-foreground);
+    }
+
+    .lab-chrome :focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 1px;
+    }
+
+    /* The scope behind the block under test. */
+    .lab-graticule {
+        background-color: var(--lab-paper-inset);
+        background-image: radial-gradient(
+            var(--lab-rule) 1px,
+            transparent 1.5px
+        );
+        background-size: 16px 16px;
+    }
+
+    .lab-blink {
+        animation: lab-blink 1s steps(1) infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .lab-blink {
+            animation: none;
+        }
+    }
+}
+
+@keyframes lab-blink {
+    50% {
+        opacity: 0;
+    }
+}

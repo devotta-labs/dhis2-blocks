@@ -1,0 +1,73 @@
+---
+title: Select
+description: Choose one option from a short list.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="select/period" />
+
+A select lets users choose one option from a list they can take in at a
+glance, such as a period or a page size. It replaces the `@dhis2/ui`
+SingleSelect. For a long list users need to search, use the
+[Combobox](/blocks/combobox).
+
+## Installation
+
+<InstallCommand item="select" />
+
+## Usage
+
+Pass the options as `items`, so the closed select can show the chosen
+option's label, then list them inside `SelectContent`:
+
+```tsx
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/dhis2/ui/select'
+
+const periods = [
+    { value: 'THIS_MONTH', label: 'This month' },
+    { value: 'LAST_MONTH', label: 'Last month' },
+]
+
+export const PeriodSelect = () => (
+    <Select items={periods} value={period} onValueChange={setPeriod}>
+        <SelectTrigger>
+            <SelectValue placeholder="Choose a period" />
+        </SelectTrigger>
+        <SelectContent>
+            {periods.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                </SelectItem>
+            ))}
+        </SelectContent>
+    </Select>
+)
+```
+
+Use `defaultValue` instead of `value` and `onValueChange` when your app does
+not need to know the choice until later.
+
+## Groups
+
+Put related options under a heading with `SelectGroup` and `SelectLabel`, and
+separate groups with `SelectSeparator`.
+
+## API reference
+
+- `Select` — `items`, `value`, `defaultValue`, `onValueChange`, and
+  `disabled`.
+- `SelectTrigger` — the closed select. `size?: 'default' | 'sm'`; `sm` is the
+  dense `@dhis2/ui` size, for toolbars and filters.
+- `SelectValue` — the chosen option's label, or the `placeholder`.
+- `SelectContent` — the list. It opens below the select.
+- `SelectItem` — one option, with its `value`. `disabled` makes it
+  unavailable.
+- `SelectGroup`, `SelectLabel`, `SelectSeparator` — headings and dividers.

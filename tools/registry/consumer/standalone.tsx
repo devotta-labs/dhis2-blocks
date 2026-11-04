@@ -1,4 +1,6 @@
 import { createRoot } from 'react-dom/client'
+import { Line, LineChart } from 'recharts'
+import { Badge } from '@/components/dhis2/ui/badge'
 import { Button } from '@/components/dhis2/ui/button'
 import {
     Card,
@@ -7,6 +9,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/dhis2/ui/card'
+import { ChartContainer } from '@/components/dhis2/ui/chart'
 import { Checkbox } from '@/components/dhis2/ui/checkbox'
 import {
     Dialog,
@@ -22,6 +25,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/dhis2/ui/dropdown-menu'
 import { RadioGroup, RadioGroupItem } from '@/components/dhis2/ui/radio-group'
+import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import { Switch } from '@/components/dhis2/ui/switch'
 import { Toggle } from '@/components/dhis2/ui/toggle'
 import { Host } from './host'
@@ -41,6 +45,16 @@ if (root !== null) {
                 </CardHeader>
                 <CardContent className="flex flex-col items-start gap-4">
                     <Button>Action</Button>
+                    <Badge>Badge</Badge>
+                    <Skeleton className="h-4 w-24" />
+                    <ChartContainer
+                        config={{ value: { label: 'Value' } }}
+                        className="h-10 w-40"
+                    >
+                        <LineChart data={[{ value: 1 }, { value: 2 }]}>
+                            <Line dataKey="value" />
+                        </LineChart>
+                    </ChartContainer>
                     <Checkbox aria-label="Enabled" />
                     <Switch aria-label="Notifications" />
                     <Toggle>Toggle</Toggle>

@@ -28,7 +28,7 @@ const BLOCK_TARGET = '@components/'
 
 const SOURCE_FILE = /\.(?:tsx?|css)$/
 const TEST_FILE = /\.test\.tsx?$/
-const NOT_SHIPPED_DIRECTORIES = new Set(['__tests__', 'type-tests'])
+const NOT_SHIPPED_DIRECTORIES = new Set(['__tests__'])
 const RESOLVE_SUFFIXES = ['', '.ts', '.tsx', '/index.ts', '/index.tsx']
 
 const blockMetadataSchema = z.strictObject({

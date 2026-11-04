@@ -1,0 +1,79 @@
+---
+title: Dropdown Menu
+description: A list of actions behind one button.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="dropdown-menu/actions" />
+
+A dropdown menu keeps the less common actions out of the way until users
+need them, such as the actions for a record or a saved view. It replaces the
+`@dhis2/ui` DropdownButton and FlyoutMenu.
+
+## Installation
+
+<InstallCommand item="dropdown-menu" />
+
+## Usage
+
+```tsx
+import { Button } from '@/components/dhis2/ui/button'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+    DropdownMenuTriggerArrow,
+} from '@/components/dhis2/ui/dropdown-menu'
+
+export const RecordActions = () => (
+    <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="outline" />}>
+            Actions
+            <DropdownMenuTriggerArrow />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+            <DropdownMenuItem onClick={markForFollowUp}>
+                Mark for follow-up
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={download}>
+                Download as CSV
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={remove}>
+                Delete enrollment
+            </DropdownMenuItem>
+        </DropdownMenuContent>
+    </DropdownMenu>
+)
+```
+
+Users open the menu by click or with the keyboard, move through it with the
+arrow keys, and close it with Escape. The menu closes when an item is
+chosen.
+
+Put the actions users reach for most often first, and the ones that delete
+last, after a separator.
+
+## Headings, choices and submenus
+
+- Put a few items under a heading with `DropdownMenuGroup` and
+  `DropdownMenuLabel`. The label must be inside the group.
+- `DropdownMenuCheckboxItem` turns an option on or off, and
+  `DropdownMenuRadioGroup` with `DropdownMenuRadioItem` picks one of a few.
+- `DropdownMenuSub`, `DropdownMenuSubTrigger` and `DropdownMenuSubContent`
+  open a second menu beside the first.
+
+## API reference
+
+- `DropdownMenu` — `open`, `defaultOpen` and `onOpenChange`.
+- `DropdownMenuTrigger` — the button that opens it. Pass a `Button` through
+  `render`, and add `DropdownMenuTriggerArrow` for the DHIS2 arrow.
+- `DropdownMenuContent` — the menu.
+- `DropdownMenuItem` — one action. `onClick` runs it; `disabled` shows it
+  but blocks it.
+- `DropdownMenuSeparator` — a line between groups.
+- `DropdownMenuShortcut` — a keyboard shortcut shown at the end of an item.

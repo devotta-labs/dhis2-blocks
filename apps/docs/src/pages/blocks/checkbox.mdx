@@ -1,0 +1,55 @@
+---
+title: Checkbox
+description: An on-or-off choice, such as including completed records.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="checkbox/options" />
+
+A checkbox turns one option on or off, or picks several options from a short
+list. It looks like the `@dhis2/ui` Checkbox.
+
+## Installation
+
+<InstallCommand item="checkbox" />
+
+<InstallCommand item="label" />
+
+## Usage
+
+Put the checkbox inside a `Label`, so users can click the text as well as
+the box:
+
+```tsx
+import { Checkbox } from '@/components/dhis2/ui/checkbox'
+import { Label } from '@/components/dhis2/ui/label'
+
+export const FollowUpOnly = () => (
+    <Label>
+        <Checkbox checked={followUp} onCheckedChange={setFollowUp} />
+        Only people marked for follow-up
+    </Label>
+)
+```
+
+Use `defaultChecked` instead when your app reads the value later, for
+example when a form is submitted.
+
+## Writing labels
+
+Phrase the label so that "on" is the thing it says: "Include completed
+enrollments", not "Hide completed enrollments". Users should not have to
+think twice about what a ticked box means.
+
+For one choice that takes effect at once, such as a setting, a
+[Switch](/blocks/switch) reads more clearly.
+
+## API reference
+
+- `checked?: boolean` and `onCheckedChange?: (checked: boolean) => void` —
+  keep the value in your app.
+- `defaultChecked?: boolean` — the starting value when the checkbox keeps it.
+- `disabled?: boolean` — shows the option but blocks changes.
+- `name?: string` and `value?: string` — submit the checkbox with a form.

@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-11-04T18:59:12.921Z\n"
-"PO-Revision-Date: 2026-11-04T18:59:12.921Z\n"
+"POT-Creation-Date: 2026-11-04T22:16:59.295Z\n"
+"PO-Revision-Date: 2026-11-04T22:16:59.296Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -148,19 +148,6 @@ msgstr "Collapse sidebar"
 msgid "Expand sidebar"
 msgstr "Expand sidebar"
 
-msgid "Calendar"
-msgstr "Calendar"
-
-msgid "The calendar layout does not support the Coptic calendar yet."
-msgstr "The calendar layout does not support the Coptic calendar yet."
-
-msgid ""
-"Showing the first {{count}} records in these weeks. Narrow the date range "
-"to see the rest."
-msgstr ""
-"Showing the first {{count}} records in these weeks. Narrow the date range "
-"to see the rest."
-
 msgid "Searching…"
 msgstr "Searching…"
 
@@ -266,6 +253,15 @@ msgstr ""
 "searched in {{program}}."
 
 msgid ""
+"`{{attribute}}` ({{label}}) holds several options ({{valueType}}), which "
+"DHIS2 searches only from version 2.43, so it can't be searched in "
+"{{program}} on this server."
+msgstr ""
+"`{{attribute}}` ({{label}}) holds several options ({{valueType}}), which "
+"DHIS2 searches only from version 2.43, so it can't be searched in "
+"{{program}} on this server."
+
+msgid ""
 "`{{attribute}}` ({{label}}) can't be searched this way in {{program}} "
 "because the search operators it needs are blocked."
 msgstr ""
@@ -307,6 +303,19 @@ msgstr "This program needs 1 detail unless an ID is used."
 
 msgid "This program needs {{count}} details unless an ID is used."
 msgstr "This program needs {{count}} details unless an ID is used."
+
+msgid "Calendar"
+msgstr "Calendar"
+
+msgid "The calendar layout does not support the Coptic calendar yet."
+msgstr "The calendar layout does not support the Coptic calendar yet."
+
+msgid ""
+"Showing the first {{count}} records in these weeks. Narrow the date range "
+"to see the rest."
+msgstr ""
+"Showing the first {{count}} records in these weeks. Narrow the date range "
+"to see the rest."
 
 msgid "A required value is missing"
 msgstr "A required value is missing"
@@ -948,15 +957,6 @@ msgstr "{{valueType}} requires an integer"
 
 msgid "“{{name}}” will be permanently deleted."
 msgstr "“{{name}}” will be permanently deleted."
-
-msgctxt ""
-"TEXT), which DHIS2 searches only from version 2.43, so it can't be searched "
-"in {{program}} on this server."
-msgid "`{{attribute}}` ({{label}}) holds several options (MULTI"
-msgstr ""
-"`{{attribute}}` ({{label}}) holds several options (MULTI_TEXT), which DHIS2 "
-"searches only from version 2.43, so it can't be searched in {{program}} on "
-"this server."
 
 msgctxt "NEGATIVE requires a value less than zero"
 msgid "INTEGER"

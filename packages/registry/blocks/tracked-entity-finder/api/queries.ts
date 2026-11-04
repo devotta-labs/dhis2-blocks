@@ -41,6 +41,8 @@ export const programMetadataQueryOptions = (
                     signal
                 )
                 .then((response) => normaliseProgram(program, response)),
+        // Bounded like the working list's, so an edited program reloads.
         staleTime: 60 * 60_000,
+        gcTime: 4 * 60 * 60_000,
         retry: shouldRetryFinderRequest,
     })

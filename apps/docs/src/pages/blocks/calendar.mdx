@@ -34,6 +34,35 @@ Selection and display work uncontrolled with `defaultSelectedDay` and
 `start` and `end` bound selectable days. `weekend` accepts ISO weekdays
 (Monday = 1), with `weekendColumns="show" | "narrow" | "hide"`.
 
+### Optional side content
+
+Without `CalendarDayRecords`, the calendar fills the available width. With it,
+the layout adds an 18rem side column at the `@3xl` container breakpoint. Below
+that breakpoint, children stack in source order.
+
+Custom components work too: put `data-calendar-panel=""` on the outer DOM
+element of your side content. `CalendarDayRecords` already includes this marker.
+Unmarked children stay in the main column; the layout does not inspect React
+component types or require a `showPanel` prop.
+
+```tsx
+<Calendar records={visits}>
+    <CalendarNavigation />
+    <CalendarGrid />
+    {selectedPatient && (
+        <aside data-calendar-panel="">
+            <VisitSummary patient={selectedPatient} />
+        </aside>
+    )}
+</Calendar>
+```
+
+The marked element must be a direct DOM child of the calendar layout. A custom
+component or React fragment can return it directly; if you add a DOM wrapper,
+put the marker on that wrapper. Group multiple side widgets inside one marked
+panel. Nested markers do not change the outer calendar's layout. These rules
+also apply to `CalendarProvider` and the Working List Calendar aliases.
+
 ## Dates and calendars
 
 All dates, including bounds and selected days, are `YYYY-MM-DD` in the

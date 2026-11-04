@@ -85,7 +85,10 @@ export const CalendarProvider = ({
                 },
             }}
         >
-            <div className="grid items-start gap-3 @3xl:grid-cols-[minmax(0,1fr)_18rem]">
+            <div
+                data-slot="calendar-layout"
+                className="grid grid-cols-1 items-start gap-3 *:col-start-1 @3xl:has-[>[data-calendar-panel]]:grid-cols-[minmax(0,1fr)_18rem] @3xl:[&>[data-calendar-panel]]:col-start-2 @3xl:[&>[data-calendar-panel]]:row-span-6 @3xl:[&>[data-calendar-panel]]:row-start-1"
+            >
                 {children}
             </div>
         </CalendarContext.Provider>

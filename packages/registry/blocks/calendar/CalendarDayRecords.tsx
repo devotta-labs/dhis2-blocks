@@ -75,8 +75,9 @@ export const CalendarDayRecords = ({
             aria-live="polite"
             {...props}
             data-slot="calendar-day-records"
+            data-calendar-panel=""
             className={cn(
-                'flex flex-col gap-2 rounded-dhis2-sm border border-dhis2-grey-300 bg-white p-3 @3xl:sticky @3xl:top-2 @3xl:col-start-2 @3xl:row-span-6 @3xl:row-start-1',
+                'flex flex-col gap-2 rounded-dhis2-sm border border-dhis2-grey-300 bg-white p-3 @3xl:sticky @3xl:top-2',
                 className
             )}
         >

@@ -77,11 +77,14 @@ export const runSearch = async (
         throw error
     }
     const { rows, total } = normaliseTrackedEntities(response)
-    if (
-        total !== undefined &&
-        model.maxResults > 0 &&
-        total > model.maxResults
-    ) {
+    // Without a total, only a short first page proves the search is below
+    // the cap. Never expose rows when the total could exceed it.
+    const count =
+        total ??
+        (page === 1 && rows.length < PAGE_SIZE
+            ? rows.length
+            : Number.POSITIVE_INFINITY)
+    if (model.maxResults > 0 && count > model.maxResults) {
         return { kind: 'too-many' }
     }
     return {

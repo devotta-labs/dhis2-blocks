@@ -53,6 +53,38 @@ describe('runSearch', () => {
         expect(outcome.kind).toBe('results')
     })
 
+    it.each([6, 10])(
+        'hides %i rows without a total when the cap is 5',
+        async (count) => {
+            const client = clientOf(() => ({ trackedEntities: ids(count) }))
+            expect(await runSearch(client, model, search, 1)).toEqual({
+                kind: 'too-many',
+            })
+        }
+    )
+
+    it('hides an indeterminate count even when a full page fits under the cap', async () => {
+        const client = clientOf(() => ({ trackedEntities: ids(10) }))
+        const capped = buildProgramModel({
+            ...hivProgram,
+            maxTeiCountToReturn: 15,
+        })
+        expect(await runSearch(client, capped, search, 1)).toEqual({
+            kind: 'too-many',
+        })
+    })
+
+    it('accepts a short first page within the cap without a total', async () => {
+        const client = clientOf(() => ({ trackedEntities: ids(5) }))
+        expect(await runSearch(client, model, search, 1)).toMatchObject({
+            kind: 'results',
+            hasNext: false,
+        })
+        expect(await runSearch(client, model, search, 2)).toEqual({
+            kind: 'too-many',
+        })
+    })
+
     it('maps a 409 maxteicountreached to too-many, from either error shape', async () => {
         const nested = clientOf(() => {
             throw {

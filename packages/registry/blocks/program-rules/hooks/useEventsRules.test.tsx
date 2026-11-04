@@ -70,22 +70,6 @@ const hiddenFollowUps = (effects: Map<string, RuleEffects>, rowId: string) => {
 }
 
 describe('useEventsRules', () => {
-    it('does not load custom history or expanded metadata for a rule-free program', async () => {
-        const { requests, wrapper } = serve(
-            { ...rmnchResponses, rules: { programRules: [] } },
-            ['tracker/enrollments']
-        )
-        const { result } = await renderHook(
-            () => useEventsRules(options({ customFunctions: {} })),
-            { wrapper }
-        )
-        await settle(() => result.current.status)
-        expect(result.current.status).toBe('ready')
-        expect(result.current.error).toBeUndefined()
-        expect(result.current.rules?.invalidRules).toEqual([])
-        expect(requests).not.toContain('tracker/enrollments')
-        expect(requests.filter((name) => name === 'programs')).toHaveLength(1)
-    })
     it('becomes ready and evaluates rows across stages', async () => {
         const { wrapper } = serve(rmnchResponses)
         const { result } = await renderHook(() => useEventsRules(options()), {

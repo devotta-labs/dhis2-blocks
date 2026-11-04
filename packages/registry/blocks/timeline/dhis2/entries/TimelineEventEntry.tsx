@@ -286,16 +286,21 @@ export const TimelineEventValues = ({
         >
             <dl
                 id={listId}
-                className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm"
+                className="m-0 flex flex-col gap-0.5 text-sm wrap-break-word"
             >
+                {/* Inline rows: a long label wraps and its value follows it.
+                    The space keeps copied text apart; <bdi> stops the value's
+                    script reordering it against the label. */}
                 {(open ? values : values.slice(0, MAX_VALUES)).map(
                     ({ id, name, text }) => (
-                        <React.Fragment key={id}>
-                            <dt className="text-dhis2-grey-700">{name}</dt>
-                            <dd className="m-0 text-dhis2-grey-900 group-data-[status=skipped]/event:text-dhis2-grey-700">
-                                {text}
+                        <div key={id}>
+                            <dt className="me-1 inline text-dhis2-grey-700">
+                                {name}
+                            </dt>{' '}
+                            <dd className="m-0 inline font-medium text-dhis2-grey-900 group-data-[status=skipped]/event:text-dhis2-grey-700">
+                                <bdi>{text}</bdi>
                             </dd>
-                        </React.Fragment>
+                        </div>
                     )
                 )}
             </dl>

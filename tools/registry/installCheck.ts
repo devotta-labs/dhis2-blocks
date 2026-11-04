@@ -138,7 +138,7 @@ const checkInstall = (workDirectory: string): void => {
         fail(1, 'shadcn build produced no item JSON')
     }
 
-    step('3a. Install standalone UI items without block dependencies')
+    step('3a. Install standalone UI items and Calendar without Working List')
     const uiAppDirectory = join(workDirectory, 'ui-app')
     cpSync(CONSUMER_TEMPLATE, uiAppDirectory, { recursive: true })
     cpSync(
@@ -156,6 +156,7 @@ const checkInstall = (workDirectory: string): void => {
                 'badge',
                 'button',
                 'card',
+                'calendar',
                 'chart',
                 'checkbox',
                 'dialog',
@@ -171,6 +172,9 @@ const checkInstall = (workDirectory: string): void => {
         ],
         REPO_ROOT
     )
+    if (existsSync(join(uiAppDirectory, 'src', 'components', 'working-list'))) {
+        fail(3, 'Calendar must install without Working List')
+    }
     run('pnpm', ['exec', 'tsc', '--noEmit'], uiAppDirectory)
     run('pnpm', ['exec', 'vite', 'build'], uiAppDirectory)
 
@@ -183,7 +187,7 @@ const checkInstall = (workDirectory: string): void => {
             'exec',
             'shadcn',
             'add',
-            join(registryOutput, 'working-list.json'),
+            join(registryOutput, 'working-list-calendar.json'),
             join(registryOutput, 'context-selector.json'),
             join(registryOutput, 'sidebar.json'),
             join(registryOutput, 'dhis2-value-display.json'),

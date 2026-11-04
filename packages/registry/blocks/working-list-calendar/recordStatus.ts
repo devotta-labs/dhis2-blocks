@@ -6,19 +6,10 @@ import {
     type WorkingListDisplayRow,
 } from '@/components/working-list'
 
-export type WorkingListCalendarTone =
-    | 'neutral'
-    | 'info'
-    | 'positive'
-    | 'warning'
-    | 'critical'
+import type { CalendarStatus, CalendarTone } from '@/components/calendar'
 
-export interface WorkingListCalendarStatus {
-    /** Records with the same id are counted together. */
-    id: string
-    label: string
-    tone: WorkingListCalendarTone
-}
+export type WorkingListCalendarTone = CalendarTone
+export type WorkingListCalendarStatus = CalendarStatus
 
 const EnrollmentStatusSchema = z.enum(TRACKER_ENROLLMENT_STATUSES)
 const EventStatusSchema = z.enum(TRACKER_EVENT_STATUSES)

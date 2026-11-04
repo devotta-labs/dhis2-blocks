@@ -1,5 +1,5 @@
 {
     "title": "DHIS2 Working List Calendar",
-    "description": "Shows a DHIS2 working list's records on a month calendar, in the system calendar.",
+    "description": "Connects a DHIS2 working list to the generic Calendar block, using the system calendar, list filters and tracker record targets.",
     "docs": "Install alongside the working-list block and render WorkingListCalendar inside WorkingList, beside or instead of WorkingListTable. Compose WorkingListCalendarNavigation, WorkingListCalendarGrid and WorkingListCalendarDayRecords inside it, or build your own layout with useWorkingListCalendar. dateField picks the date that places records: enrolledAt or enrollmentOccurredAt for tracked entities, eventOccurredAt or eventScheduledAt for events. The calendar reads the list's saved view and filters but never changes them. The selected day works uncontrolled or as a controlled selectedDay/onSelectedDayChange pair."
 }

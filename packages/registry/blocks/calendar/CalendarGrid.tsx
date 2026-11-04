@@ -10,19 +10,13 @@ import { Button } from '@/components/dhis2/ui/button'
 import { ErrorAlert } from '@/components/dhis2/ui/alert'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
-import {
-    useWorkingListCalendar,
-    type WorkingListCalendarDay,
-} from './WorkingListCalendar'
-import {
-    WorkingListCalendarCellRecords,
-    WorkingListCalendarDayContext,
-} from './WorkingListCalendarCell'
+import { useCalendar, type CalendarDay } from './context'
+import { CalendarCellRecords, CalendarDayContext } from './CalendarCell'
 
 /** An ISO weekday: 1 is Monday, 7 is Sunday. */
-export type WorkingListCalendarWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7
+export type CalendarWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
-const WEEKDAYS: readonly WorkingListCalendarWeekday[] = [1, 2, 3, 4, 5, 6, 7]
+const WEEKDAYS: readonly CalendarWeekday[] = [1, 2, 3, 4, 5, 6, 7]
 
 // shortcut: arrows move in visual order only for left-to-right text; flip them
 // for right-to-left once an RTL locale uses the calendar.
@@ -41,7 +35,7 @@ const keyOffset = (key: string, rowLength: number) => {
     }
 }
 
-const recordCountName = (day: WorkingListCalendarDay, name: string) => {
+const recordCountName = (day: CalendarDay, name: string) => {
     if (day.records.length === 0) {
         return i18n.t('{{date}}, no records', { date: name })
     }
@@ -66,7 +60,7 @@ const HiddenDaysNote = ({ count }: { count: number }) =>
     ) : null
 
 const ResultsStatus = () => {
-    const { results } = useWorkingListCalendar()
+    const { results, weeks } = useCalendar()
     if (results.status === 'error') {
         return (
             <ErrorAlert title={i18n.t('Records could not be loaded')}>
@@ -88,13 +82,13 @@ const ResultsStatus = () => {
         return (
             <p className="m-0 text-sm text-dhis2-grey-700">
                 {i18n.t(
-                    'Showing the first {{count}} records in these weeks. Narrow the filters to see the rest.',
+                    'Showing the first {{count}} records in these weeks. Narrow the date range to see the rest.',
                     { count: results.records.length }
                 )}
             </p>
         )
     }
-    if (results.records.length === 0) {
+    if (weeks.every((week) => week.every((day) => day.records.length === 0))) {
         return (
             <p className="m-0 text-sm text-dhis2-grey-700">
                 {i18n.t('No records this month.')}
@@ -104,18 +98,18 @@ const ResultsStatus = () => {
     return null
 }
 
-export interface WorkingListCalendarGridProps extends ComponentPropsWithoutRef<'div'> {
+export interface CalendarGridProps extends ComponentPropsWithoutRef<'div'> {
     /** The weekdays that count as the weekend, e.g. `[6, 7]` or `[5, 6]`. */
-    weekend?: readonly WorkingListCalendarWeekday[]
+    weekend?: readonly CalendarWeekday[]
     /**
      * How weekend columns show: like other days (the default), narrowed to
      * counts, or hidden. Records on hidden days are counted above the grid.
      */
     weekendColumns?: 'show' | 'narrow' | 'hide'
     /**
-     * What each day shows under its number: `WorkingListCalendarCellRecords`
+     * What each day shows under its number: `CalendarCellRecords`
      * (the default) or cell parts of your own built on
-     * `useWorkingListCalendarDay`.
+     * `useCalendarDay`.
      */
     children?: ReactNode
 }
@@ -124,19 +118,18 @@ export interface WorkingListCalendarGridProps extends ComponentPropsWithoutRef<'
  * The visible month as a grid of days. Each day shows its cell parts and
  * selects itself; arrow keys move between days.
  */
-export const WorkingListCalendarGrid = ({
+export const CalendarGrid = ({
     weekend = [],
     weekendColumns = 'show',
     className,
-    children = <WorkingListCalendarCellRecords />,
+    children = <CalendarCellRecords />,
     ...props
-}: WorkingListCalendarGridProps) => {
+}: CalendarGridProps) => {
     const { weeks, weekDayLabels, selectedDay, selectDay, dayName, results } =
-        useWorkingListCalendar()
+        useCalendar()
     const tableRef = useRef<HTMLTableElement>(null)
     const [focusedDate, setFocusedDate] = useState<string | null>(null)
-    const isWeekend = (weekday: WorkingListCalendarWeekday) =>
-        weekend.includes(weekday)
+    const isWeekend = (weekday: CalendarWeekday) => weekend.includes(weekday)
     // Weeks start on Monday, so a day's column is its weekday.
     const columns = WEEKDAYS.filter(
         (weekday) => weekendColumns !== 'hide' || !isWeekend(weekday)
@@ -164,7 +157,7 @@ export const WorkingListCalendarGrid = ({
 
     const onKeyDown = (
         event: KeyboardEvent<HTMLButtonElement>,
-        day: WorkingListCalendarDay
+        day: CalendarDay
     ) => {
         const offset = keyOffset(event.key, columns.length)
         if (offset === undefined) return
@@ -179,7 +172,7 @@ export const WorkingListCalendarGrid = ({
     return (
         <div
             {...props}
-            data-slot="working-list-calendar-grid"
+            data-slot="calendar-grid"
             className={cn('flex min-w-0 flex-col gap-2', className)}
         >
             <ResultsStatus />
@@ -282,7 +275,7 @@ export const WorkingListCalendarGrid = ({
                                         >
                                             {day.label}
                                         </span>
-                                        <WorkingListCalendarDayContext.Provider
+                                        <CalendarDayContext.Provider
                                             value={{
                                                 day,
                                                 compact:
@@ -292,7 +285,7 @@ export const WorkingListCalendarGrid = ({
                                             }}
                                         >
                                             {children}
-                                        </WorkingListCalendarDayContext.Provider>
+                                        </CalendarDayContext.Provider>
                                     </button>
                                 </td>
                             ))}

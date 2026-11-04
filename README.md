@@ -15,7 +15,8 @@ packages/
     blocks/
       context-selector/ Capture-style controlled context-selector primitives
       working-list/     Working List block
-      working-list-calendar/ Month calendar layout for a Working List
+      calendar/         Generic month calendar for any dated records
+      working-list-calendar/ Working List data adapter for Calendar
       sidebar/          Composable modeling-app navigation with a collapse rail
       timeline/         Read-only timeline layout, with tracker history hooks in dhis2/
     test/               Shared Vitest browser setup
@@ -131,10 +132,27 @@ entity in every program they are enrolled in, and `TimelineHistoryEntry`
 renders each entry. See [the block's README](packages/registry/blocks/timeline/README.md),
 `/blocks/timeline` in the docs and `/playground/timeline`.
 
+## Calendar block
+
+A standalone month calendar for any dated records, with navigation, selection,
+status counts, weekend columns and a selected-day list. No Working List or
+data provider is required.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/calendar
+```
+
+Import `Calendar`, `CalendarNavigation`, `CalendarGrid` and
+`CalendarDayRecords` from `@/components/calendar`. Supply records with
+`id`, `date` and `label`; optionally add a status and `onRecordClick`.
+For remote data, `useCalendarState` exposes the visible range and
+`CalendarProvider` connects it to your query results.
+See the standalone project-milestones example at `/blocks/calendar`.
+
 ## Working List Calendar block
 
 Shows a Working List's records on a month calendar in the DHIS2 system
-calendar. It installs the Working List block with it.
+calendar. It installs the Calendar and Working List blocks with it.
 
 ```sh
 pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list-calendar

@@ -32,6 +32,9 @@ import {
     WorkingListCalendar,
     WorkingListCalendarGrid,
     WorkingListCalendarNavigation,
+    WorkingListCalendarDayRecords,
+    useWorkingListCalendar,
+    useWorkingListCalendarDay,
 } from '..'
 
 const program: TrackerProgram = {
@@ -233,6 +236,65 @@ const renderInList = (
 }
 
 describe('working list calendar in a list', () => {
+    it('keeps tracker targets, custom labels and statuses in the adapter', async () => {
+        const open = vi.fn()
+        const Probe = () => {
+            const { dateField, selectedDay, results } = useWorkingListCalendar()
+            return (
+                <output aria-label="Adapter state">
+                    {dateField} / {results.status} /{' '}
+                    {selectedDay?.records[0]?.target?.mode}
+                </output>
+            )
+        }
+        const Cell = () => {
+            const { day } = useWorkingListCalendarDay()
+            return <span>{day.records[0]?.target?.mode}</span>
+        }
+        const view = await renderInList(
+            <WorkingListCalendar
+                defaultSelectedDay="2026-11-14"
+                onRecordClick={open}
+                recordLabel={(_row, text) => `Visit: ${text('Attribute01')}`}
+                recordStatus={() => ({
+                    id: 'custom',
+                    label: 'Needs review',
+                    tone: 'warning',
+                })}
+            >
+                <WorkingListCalendarGrid>
+                    <Cell />
+                </WorkingListCalendarGrid>
+                <WorkingListCalendarDayRecords />
+                <Probe />
+            </WorkingListCalendar>,
+            {
+                respond: () => ({
+                    trackedEntities: [
+                        entity('EntityAaaa1', 'Amina', '2026-11-14T00:00:00'),
+                    ],
+                }),
+            }
+        ).screen
+        await expect
+            .element(view.getByLabelText('Adapter state'))
+            .toHaveTextContent('enrolledAt / ready / trackedEntity')
+        await expect
+            .element(
+                view.getByRole('button', { name: '14 November 2026, 1 record' })
+            )
+            .toHaveTextContent('trackedEntity')
+        await expect
+            .element(view.getByText('Needs review', { exact: true }))
+            .toBeVisible()
+        await view.getByRole('button', { name: 'Visit: Amina' }).click()
+        expect(open).toHaveBeenCalledWith({
+            mode: 'trackedEntity',
+            programId: 'Program0001',
+            trackedEntityId: 'EntityAaaa1',
+        })
+    })
+
     it('names records with the organisation units it loaded', async () => {
         const { screen, requests } = renderInList(
             <WorkingListCalendar

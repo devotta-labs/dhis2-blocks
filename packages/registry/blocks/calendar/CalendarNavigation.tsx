@@ -10,29 +10,28 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/dhis2/ui/select'
-import { useWorkingListCalendar } from './WorkingListCalendar'
+import { useCalendar } from './context'
 
 /** Previous and next month around month and year selects. */
-export const WorkingListCalendarNavigation = ({
+export const CalendarNavigation = ({
     className,
     ...props
 }: ComponentPropsWithoutRef<'nav'>) => {
-    const { navigation, visibleMonth, atFilterStart, atFilterEnd } =
-        useWorkingListCalendar()
+    const { navigation, visibleMonth, atStart, atEnd } = useCalendar()
     const year = Number(navigation.currYear.value)
 
     return (
         <nav
             aria-label={i18n.t('Month')}
             {...props}
-            data-slot="working-list-calendar-navigation"
+            data-slot="calendar-navigation"
             className={cn('flex items-center gap-2', className)}
         >
             <Button
                 variant="secondary"
                 size="field-dense"
                 aria-label={i18n.t('Previous month')}
-                disabled={atFilterStart}
+                disabled={atStart}
                 onClick={navigation.prevMonth.navigateTo}
             >
                 <span className="flex rtl:rotate-180">
@@ -87,7 +86,7 @@ export const WorkingListCalendarNavigation = ({
                 variant="secondary"
                 size="field-dense"
                 aria-label={i18n.t('Next month')}
-                disabled={atFilterEnd}
+                disabled={atEnd}
                 onClick={navigation.nextMonth.navigateTo}
             >
                 <span className="flex rtl:rotate-180">

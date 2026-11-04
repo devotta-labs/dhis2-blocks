@@ -4,6 +4,7 @@
 @source '../../../packages/registry/components';
 @source '../../../packages/registry/blocks/working-list';
 @source '../../../packages/registry/blocks/working-list-calendar';
+@source '../../../packages/registry/blocks/calendar';
 @source '../../../packages/registry/blocks/context-selector';
 @source '../../../packages/registry/blocks/sidebar';
 @source '../../../packages/registry/blocks/observation-cards';

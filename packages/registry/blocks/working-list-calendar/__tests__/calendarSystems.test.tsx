@@ -2,7 +2,7 @@ import { useDatePicker } from '@dhis2/multi-calendar-dates'
 import React from 'react'
 import { render } from 'vitest-browser-react'
 import { createWorkingListValueTransformers } from '@/components/working-list/registry/transformers'
-import { PICKER_CALENDARS } from '../WorkingListCalendar'
+import { PICKER_CALENDARS } from '@/components/calendar/useCalendarState'
 
 const MonthDays = ({
     calendar,

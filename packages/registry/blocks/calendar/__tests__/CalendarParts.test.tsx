@@ -1,42 +1,28 @@
 import React, { type ReactNode } from 'react'
 import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import { WorkingListResultsError } from '@/components/working-list'
-import {
-    WorkingListCalendarContext,
-    type WorkingListCalendarContextValue,
-    type WorkingListCalendarDay,
-} from '../WorkingListCalendar'
-import { WorkingListCalendarCellRecords } from '../WorkingListCalendarCell'
-import { WorkingListCalendarDayRecords } from '../WorkingListCalendarDayRecords'
-import { WorkingListCalendarDisplayToggle } from '../WorkingListCalendarDisplayToggle'
-import { WorkingListCalendarGrid } from '../WorkingListCalendarGrid'
-import { WorkingListCalendarNavigation } from '../WorkingListCalendarNavigation'
-import type { WorkingListCalendarStatus } from '../recordStatus'
+import { CalendarContext, type CalendarDay } from '../context'
+import { CalendarCellRecords } from '../CalendarCell'
+import { CalendarDayRecords } from '../CalendarDayRecords'
+import { CalendarDisplayToggle } from '../CalendarDisplayToggle'
+import { CalendarGrid } from '../CalendarGrid'
+import { CalendarNavigation } from '../CalendarNavigation'
+import type { CalendarContextValue, CalendarStatus } from '../types'
 
 const ACTIVE = { id: 'ACTIVE', label: 'Active', tone: 'info' as const }
 const OVERDUE = { id: 'OVERDUE', label: 'Overdue', tone: 'critical' as const }
 
-const record = (
-    id: string,
-    date: string,
-    status: WorkingListCalendarStatus = ACTIVE
-) => ({
+const record = (id: string, date: string, status: CalendarStatus = ACTIVE) => ({
     id,
     label: `Person ${id}`,
     date,
     status,
-    target: {
-        mode: 'trackedEntity' as const,
-        programId: 'Program0001',
-        trackedEntityId: id,
-    },
 })
 
 const day = (
     date: string,
-    overrides: Partial<WorkingListCalendarDay> = {}
-): WorkingListCalendarDay => ({
+    overrides: Partial<CalendarDay> = {}
+): CalendarDay => ({
     date,
     label: Number(date.slice(8)),
     isToday: false,
@@ -68,8 +54,8 @@ const weeks = [
 ]
 
 const renderCalendar = (
-    overrides: Partial<WorkingListCalendarContextValue> = {},
-    grid: ReactNode = <WorkingListCalendarGrid data-consumer="grid" />
+    overrides: Partial<CalendarContextValue> = {},
+    grid: ReactNode = <CalendarGrid data-consumer="grid" />
 ) => {
     const setDisplay = vi.fn()
     const selectDay = vi.fn()
@@ -77,8 +63,8 @@ const renderCalendar = (
     const navigateTo = vi.fn()
     const navigateToMonth = vi.fn()
     const navigateToYear = vi.fn()
-    const value: WorkingListCalendarContextValue = {
-        dateField: 'enrolledAt',
+    const value: CalendarContextValue = {
+        visibleRange: { start: '2026-10-31', end: '2026-11-13' },
         weeks,
         weekDayLabels: ['M', 'T', 'W', 'T ', 'F', 'S', 'S '],
         navigation: {
@@ -105,25 +91,24 @@ const renderCalendar = (
         setDisplay,
         dayName: (calendarDay) =>
             `${calendarDay.label} ${calendarDay.date.startsWith('2026-10') ? 'October' : 'November'} 2026`,
-        atFilterStart: false,
-        atFilterEnd: false,
+        atStart: false,
+        atEnd: false,
         results: {
             status: 'ready',
             records: [],
             truncated: false,
             isUpdating: false,
-            cellText: () => '',
         },
         onRecordClick,
         ...overrides,
     }
     const tree = (
-        <WorkingListCalendarContext.Provider value={value}>
-            <WorkingListCalendarNavigation />
-            <WorkingListCalendarDisplayToggle />
+        <CalendarContext.Provider value={value}>
+            <CalendarNavigation />
+            <CalendarDisplayToggle />
             {grid}
-            <WorkingListCalendarDayRecords />
-        </WorkingListCalendarContext.Provider>
+            <CalendarDayRecords />
+        </CalendarContext.Provider>
     )
     return {
         tree,
@@ -139,7 +124,7 @@ const renderCalendar = (
 const dayButton = (container: HTMLElement, date: string) =>
     container.querySelector<HTMLElement>(`[data-date="${date}"]`)
 
-describe('working list calendar parts', () => {
+describe('calendar parts', () => {
     it('shows the first records of a day and counts the rest', async () => {
         const { tree } = renderCalendar()
         const screen = await render(tree)
@@ -152,7 +137,7 @@ describe('working list calendar parts', () => {
         await expect.element(firstDay).not.toHaveTextContent('Person D')
         expect(
             screen.container
-                .querySelector('[data-slot="working-list-calendar-grid"]')
+                .querySelector('[data-slot="calendar-grid"]')
                 ?.getAttribute('data-consumer')
         ).toBe('grid')
     })
@@ -188,11 +173,13 @@ describe('working list calendar parts', () => {
             .element(screen.getByRole('heading', { name: '1 November 2026' }))
             .toBeVisible()
         await screen.getByRole('button', { name: 'Person E' }).click()
-        expect(onRecordClick).toHaveBeenCalledWith({
-            mode: 'trackedEntity',
-            programId: 'Program0001',
-            trackedEntityId: 'E',
-        })
+        expect(onRecordClick).toHaveBeenCalledWith(
+            expect.objectContaining({
+                id: 'E',
+                label: 'Person E',
+                date: '2026-11-01',
+            })
+        )
     })
 
     it('moves focus between days with the arrow keys', async () => {
@@ -219,7 +206,6 @@ describe('working list calendar parts', () => {
                 records: [],
                 truncated: true,
                 isUpdating: false,
-                cellText: () => '',
             },
         })
         const screen = await render(tree)
@@ -234,7 +220,6 @@ describe('working list calendar parts', () => {
         const { tree } = renderCalendar({
             results: {
                 status: 'error',
-                error: new WorkingListResultsError({ message: 'offline' }),
                 retry,
             },
         })
@@ -245,7 +230,7 @@ describe('working list calendar parts', () => {
     })
 
     it('stops navigation at the saved filter edges', async () => {
-        const { tree, navigateTo } = renderCalendar({ atFilterEnd: true })
+        const { tree, navigateTo } = renderCalendar({ atEnd: true })
         const screen = await render(tree)
 
         await expect
@@ -296,9 +281,9 @@ describe('working list calendar parts', () => {
     it('shows as many names as asked', async () => {
         const { tree } = renderCalendar(
             {},
-            <WorkingListCalendarGrid>
-                <WorkingListCalendarCellRecords max={1} />
-            </WorkingListCalendarGrid>
+            <CalendarGrid>
+                <CalendarCellRecords max={1} />
+            </CalendarGrid>
         )
         const screen = await render(tree)
 
@@ -311,7 +296,7 @@ describe('working list calendar parts', () => {
     it('narrows weekend columns to counts', async () => {
         const { tree } = renderCalendar(
             {},
-            <WorkingListCalendarGrid weekend={[6, 7]} weekendColumns="narrow" />
+            <CalendarGrid weekend={[6, 7]} weekendColumns="narrow" />
         )
         const screen = await render(tree)
 
@@ -327,7 +312,7 @@ describe('working list calendar parts', () => {
     it('hides weekend columns and says what they hold', async () => {
         const { tree } = renderCalendar(
             {},
-            <WorkingListCalendarGrid weekend={[6, 7]} weekendColumns="hide" />
+            <CalendarGrid weekend={[6, 7]} weekendColumns="hide" />
         )
         const screen = await render(tree)
 
@@ -370,7 +355,7 @@ describe('working list calendar parts', () => {
     })
 
     it('caps status counts and keeps tied groups in one order', async () => {
-        const status = (label: string): WorkingListCalendarStatus => ({
+        const status = (label: string): CalendarStatus => ({
             id: label,
             label,
             tone: 'neutral',
@@ -386,9 +371,9 @@ describe('working list calendar parts', () => {
         })
         const { tree } = renderCalendar(
             { display: 'counts', weeks: [[busy]] },
-            <WorkingListCalendarGrid>
-                <WorkingListCalendarCellRecords max={2} />
-            </WorkingListCalendarGrid>
+            <CalendarGrid>
+                <CalendarCellRecords max={2} />
+            </CalendarGrid>
         )
         const screen = await render(tree)
 

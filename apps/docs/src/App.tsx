@@ -79,6 +79,7 @@ const router = createBrowserRouter([
                         ),
                     },
                     docRoute('/blocks/alert', './pages/blocks/alert.mdx'),
+                    docRoute('/blocks/calendar', './pages/blocks/calendar.mdx'),
                     docRoute('/blocks/button', './pages/blocks/button.mdx'),
                     docRoute('/blocks/badge', './pages/blocks/badge.mdx'),
                     docRoute('/blocks/card', './pages/blocks/card.mdx'),

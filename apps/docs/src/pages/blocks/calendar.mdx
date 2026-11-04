@@ -1,0 +1,96 @@
+---
+title: Calendar
+description: A month calendar for projects, appointments, deadlines, or any dated records.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="calendar/projects" />
+
+## Installation
+
+<InstallCommand item="calendar" />
+
+Calendar has no Working List, app-runtime, or query-client dependency. Supply
+plain records with an `id`, `date`, and `label`. Optional statuses provide
+colours and grouped counts. `onRecordClick` receives the selected record;
+use its ID to look up your application's own data.
+
+## Composition and selection
+
+Compose `CalendarNavigation`, `CalendarDisplayToggle`, `CalendarGrid`, and
+`CalendarDayRecords` inside `Calendar`. Leave out any part you do not need.
+Use `useCalendar` for custom navigation or day details, and
+`useCalendarDay` inside a grid cell. The default cell content is
+`CalendarCellRecords`; pass `max` to change how many names or status groups show.
+
+Selection and display work uncontrolled with `defaultSelectedDay` and
+`defaultDisplay`, or controlled with `selectedDay/onSelectedDayChange` and
+`display/onDisplayChange`. Clearing selection keeps the visible month.
+
+`start` and `end` bound selectable days. `weekend` accepts ISO weekdays
+(Monday = 1), with `weekendColumns="show" | "narrow" | "hide"`.
+
+## Dates and calendars
+
+All dates, including bounds and selected days, are `YYYY-MM-DD` in the
+calendar you supply. Defaults are `calendar="gregorian"`, `timeZone="UTC"`,
+and `locale="en"`. Convert your API's dates before supplying them; Calendar
+does not interpret domain fields or fetch system settings.
+
+The calendar picker supports Gregorian, ISO, Ethiopian (including its thirteenth
+month), Nepali, Islamic, Persian, and Thai calendars. Coptic currently displays
+an unsupported-calendar notice due to a limitation in the date-picker library.
+
+## Remote data
+
+For data already loaded, pass `records` to `Calendar`. If your app owns a
+query, pass `results` instead: `{ status: 'pending' }`,
+`{ status: 'error', retry }`, or
+`{ status: 'ready', records, isUpdating?, truncated? }`.
+
+To query only the visible weeks, use the same headless state as the working-list
+adapter. The inclusive range includes neighbouring days in the first and last
+week; there is no callback/effect round trip to learn it.
+
+```tsx
+import {
+    CalendarProvider,
+    CalendarNavigation,
+    CalendarGrid,
+    CalendarDayRecords,
+    useCalendarState,
+} from '@/components/calendar'
+
+function AppointmentCalendar() {
+    const state = useCalendarState({ calendar: 'gregorian', timeZone: 'UTC' })
+    const results = useAppointments(state.visibleRange)
+    // useAppointments is your app's query hook, returning CalendarResults.
+    return (
+        <section className="@container" aria-label="Appointments">
+            <CalendarProvider state={state} results={results}>
+                <CalendarNavigation />
+                <CalendarGrid />
+                <CalendarDayRecords />
+            </CalendarProvider>
+        </section>
+    )
+}
+```
+
+`useCalendarState` requires a supported calendar; handle Coptic before mounting
+a headless composition, as `Calendar` does.
+
+## Working List integration
+
+Use [Working List Calendar](/blocks/working-list#calendar-view) for tracker
+data. It supplies list readiness, system calendar settings, filter bounds,
+visible-range queries, labels, tracker statuses and record targets.
+Navigation, selection, grid layout, keyboard handling, counts, weekend
+columns and day details all come from this block.
+
+Existing `WorkingListCalendar*` component names remain available as aliases,
+and the working-list hooks retain date fields, query results and tracker targets.
+Shared parts now use `data-slot="calendar-*"`; the working-list root retains
+`data-slot="working-list-calendar"`.

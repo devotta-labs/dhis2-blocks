@@ -4,26 +4,26 @@ import {
     ToggleGroup,
     ToggleGroupItem,
 } from '@/components/dhis2/ui/toggle-group'
-import { useWorkingListCalendar } from './WorkingListCalendar'
+import { useCalendar } from './context'
 
 /**
  * Lets users switch days between counts and names. Leave it out to keep the
  * calendar on the display the app chose.
  */
-export const WorkingListCalendarDisplayToggle = (
+export const CalendarDisplayToggle = (
     props: Omit<
         ComponentProps<typeof ToggleGroup>,
         'value' | 'defaultValue' | 'onValueChange' | 'children'
     >
 ) => {
-    const { display, setDisplay } = useWorkingListCalendar()
+    const { display, setDisplay } = useCalendar()
     return (
         <ToggleGroup
             aria-label={i18n.t('Show in each day')}
             variant="outline"
             size="sm"
             {...props}
-            data-slot="working-list-calendar-display-toggle"
+            data-slot="calendar-display-toggle"
             value={[display]}
         >
             <ToggleGroupItem

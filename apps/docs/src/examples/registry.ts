@@ -1,4 +1,5 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
+import calendarProjectsSource from './calendar/CalendarProjects.tsx?raw'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
 import { PersonVitalsPlaceholder } from './observation-cards/ObservationCardsPlaceholders'
@@ -68,6 +69,14 @@ export interface ExampleDefinition {
 }
 
 const examples = [
+    {
+        slug: 'calendar/projects',
+        title: 'Project milestones',
+        live: false,
+        Component: lazy(() => import('./calendar/CalendarProjects')),
+        source: calendarProjectsSource,
+        minHeight: 640,
+    },
     {
         slug: 'sidebar/basic',
         title: 'Sidebar navigation',

@@ -121,42 +121,16 @@
                 "blocks/*/index.ts",
                 "blocks/timeline/dhis2/index.ts",
                 "**/*.{test,spec}.{ts,tsx}",
-                "**/__tests__/**/*.{ts,tsx}",
-                "blocks/*/type-tests/**/*.ts"
+                "**/__tests__/**/*.{ts,tsx}"
             ],
             "project": [
                 "components/**/*.{ts,tsx,css}",
                 "blocks/**/*.{ts,tsx,css}",
                 "test/**/*.{ts,css}"
             ],
-            "includeEntryExports": true,
             "ignoreDependencies": ["prop-types"],
             "ignoreIssues": {
-                "components/*.{ts,tsx}": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ],
-                "{blocks/*/index.ts,blocks/timeline/dhis2/index.ts}": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ],
                 "test/**": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ],
-                "blocks/*/type-tests/**": [
                     "exports",
                     "types",
                     "nsExports",

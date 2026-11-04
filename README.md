@@ -299,8 +299,7 @@ derives every item from source:
   `@components/dhis2/ui/`, and `theme.css` becomes the `dhis2-theme` item;
 - each `packages/registry/blocks/<name>/` folder is a `registry:block` item installed to
   `@components/<name>/`, with its title, description and docs from
-  `block.json`; tests, `__tests__/` and
-  `type-tests/` are never shipped;
+  `block.json`; tests and `__tests__/` are never shipped;
 - npm `dependencies` come from each item's imports, versioned by
   `packages/registry/package.json`, and `registryDependencies` from its
   `@/components/dhis2/ui/*` and `@/components/<block>` imports.

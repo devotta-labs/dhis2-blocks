@@ -108,10 +108,6 @@ export type LabElement = keyof typeof ELEMENTS
 
 const elementSpec = (element: LabElement): ElementSpec => ELEMENTS[element]
 
-/** Whether a name, such as one from the lab's saved settings, is one of the lab's elements. */
-export const isLabElement = (value: string | undefined): value is LabElement =>
-    value !== undefined && Object.hasOwn(ELEMENTS, value)
-
 /** What the lab's DHIS2 holds for one card's data element. */
 export interface LabCard {
     element: LabElement

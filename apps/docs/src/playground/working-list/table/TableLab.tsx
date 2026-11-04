@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
 import {
     WorkingList,
     WorkingListColumnSelector,
@@ -15,22 +15,20 @@ import { LabLayout } from '../../LabLayout'
 import { LogPanel } from '../../LogPanel'
 import { CanvasBoundary, LabServerScope } from '../../LabServer'
 import { NetworkControls } from '../../NetworkControls'
-import type { LabNetwork, RequestLogEntry } from '../../network'
+import type { Log } from '../../network'
 import { usePresetParam } from '../../usePresetParam'
 import { DisplayChoice } from '../displayChoice'
 import {
     LAB_ORG_UNIT,
     LAB_PROGRAM,
     generateWorld,
-    type LabConfig,
     type LabView,
 } from './labData'
 import { createLabServer, RESOURCES } from './labServer'
 import { EVENT_VIEW } from './savedViews'
-import { DEFAULT_CONFIG, PRESETS } from './presets'
+import { initialLabState, labReducer, type Width } from './labState'
+import { PRESETS } from './presets'
 import { OptionsControls } from './settings'
-
-type Width = 'phone' | 'tablet' | 'desktop' | 'full'
 
 const WIDTHS: ReadonlyArray<readonly [Width, string, string]> = [
     ['phone', 'Phone', 'max-w-[375px]'],
@@ -38,64 +36,6 @@ const WIDTHS: ReadonlyArray<readonly [Width, string, string]> = [
     ['desktop', 'Desktop', 'max-w-[1100px]'],
     ['full', 'Full', 'max-w-none'],
 ]
-
-interface Saved {
-    mode: 'lab' | 'live'
-    preset?: string
-    config: LabConfig
-    live: { programId: string; orgUnitId: string }
-    width: Width
-}
-
-const STORAGE_KEY = 'working-list-lab'
-
-const DEFAULT_SAVED: Saved = {
-    mode: 'lab',
-    preset: 'Clinic enrollments',
-    config: DEFAULT_CONFIG,
-    live: { programId: 'IpHINAT79UW', orgUnitId: 'y77LiPqLMoq' },
-    width: 'full',
-}
-
-const stored = (): Saved => {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY)
-        if (!stored) return DEFAULT_SAVED
-        const parsed: Partial<Saved> = JSON.parse(stored)
-        return {
-            ...DEFAULT_SAVED,
-            ...parsed,
-            config: {
-                data: { ...DEFAULT_CONFIG.data, ...parsed.config?.data },
-                server: { ...DEFAULT_CONFIG.server, ...parsed.config?.server },
-                network: {
-                    ...DEFAULT_CONFIG.network,
-                    ...parsed.config?.network,
-                },
-                view: { ...DEFAULT_CONFIG.view, ...parsed.config?.view },
-            },
-        }
-    } catch {
-        return DEFAULT_SAVED
-    }
-}
-
-/** The saved settings, or the linked preset's over them. */
-const load = (preset?: string): Saved => {
-    const saved = stored()
-    const linked = PRESETS.find((each) => each.name === preset)
-    return linked
-        ? { ...saved, mode: 'lab', preset: linked.name, config: linked.config }
-        : saved
-}
-
-const save = (saved: Saved) => {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
-    } catch {
-        // Storage is a convenience; the lab works without it.
-    }
-}
 
 const LabComposition = ({
     view,
@@ -145,37 +85,26 @@ const LabComposition = ({
 export const TableLab = () => {
     const [linkedPreset, setLinkedPreset] = usePresetParam()
     const displayChoice = useContext(DisplayChoice)
-    const [saved, setSaved] = useState(() => load(linkedPreset))
-    const { mode, config, live, width } = saved
-    const [run, setRun] = useState(0)
-    const [requests, setRequests] = useState<RequestLogEntry[]>([])
-    const [callbacks, setCallbacks] = useState<string[]>([])
+    const [state, dispatch] = useReducer(
+        labReducer,
+        linkedPreset,
+        initialLabState
+    )
+    const { mode, config, live, width, run, requests, callbacks } = state
+    const linked = mode === 'lab' ? state.preset : undefined
+    useEffect(() => setLinkedPreset(linked), [linked, setLinkedPreset])
 
-    const update = (next: Partial<Saved>) => {
-        const merged = { ...saved, ...next }
-        setSaved(merged)
-        save(merged)
-        setLinkedPreset(merged.mode === 'lab' ? merged.preset : undefined)
-    }
-    const restart = () => {
-        setRequests([])
-        setRun((count) => count + 1)
-    }
-    // Network changes need a fresh list; props apply in place.
-    const setNetwork = (network: LabNetwork) => {
-        update({ preset: undefined, config: { ...config, network } })
-        restart()
-    }
-    const setView = (view: LabView) =>
-        update({ preset: undefined, config: { ...config, view } })
+    // Stable, so neither the lab server nor the list is rebuilt for each entry.
+    const log: Log = useCallback(
+        (update) => dispatch({ type: 'logRequests', update }),
+        []
+    )
     const note = useCallback(
         (entry: string) =>
-            setCallbacks((entries) =>
-                [
-                    `${new Date().toLocaleTimeString()} ${entry}`,
-                    ...entries,
-                ].slice(0, 80)
-            ),
+            dispatch({
+                type: 'noteCallback',
+                entry: `${new Date().toLocaleTimeString()} ${entry}`,
+            }),
         []
     )
 
@@ -197,8 +126,12 @@ export const TableLab = () => {
                     <LogPanel
                         callbacks={callbacks}
                         requests={mode === 'lab' ? requests : undefined}
-                        onClearCallbacks={() => setCallbacks([])}
-                        onClearRequests={() => setRequests([])}
+                        onClearCallbacks={() =>
+                            dispatch({ type: 'clearCallbacks' })
+                        }
+                        onClearRequests={() =>
+                            dispatch({ type: 'clearRequests' })
+                        }
                     />
                 ),
             }}
@@ -210,24 +143,18 @@ export const TableLab = () => {
                             ['lab', 'Lab data'],
                             ['live', 'Live DHIS2'],
                         ]}
-                        onChange={(next) => {
-                            update({ mode: next })
-                            restart()
-                        }}
+                        onChange={(next) =>
+                            dispatch({ type: 'switchMode', mode: next })
+                        }
                     />
                     {displayChoice}
                     {mode === 'lab' ? (
                         <PresetControls
                             presets={PRESETS}
-                            selected={saved.preset}
-                            onPick={(each) => {
-                                update({
-                                    preset: each.name,
-                                    config: each.config,
-                                })
-                                setCallbacks([])
-                                restart()
-                            }}
+                            selected={state.preset}
+                            onPick={(preset) =>
+                                dispatch({ type: 'pickPreset', preset })
+                            }
                         />
                     ) : (
                         <Section title="Live DHIS2">
@@ -245,9 +172,9 @@ export const TableLab = () => {
                                     <input
                                         value={live[field]}
                                         onChange={(event) =>
-                                            update({
-                                                live: {
-                                                    ...live,
+                                            dispatch({
+                                                type: 'changeLive',
+                                                changes: {
                                                     [field]:
                                                         event.target.value.trim(),
                                                 },
@@ -258,7 +185,12 @@ export const TableLab = () => {
                             ))}
                         </Section>
                     )}
-                    <OptionsControls view={config.view} onChange={setView} />
+                    <OptionsControls
+                        view={config.view}
+                        onChange={(view) =>
+                            dispatch({ type: 'changeView', view })
+                        }
+                    />
                     {mode === 'lab' && (
                         <NetworkControls
                             network={config.network}
@@ -266,7 +198,9 @@ export const TableLab = () => {
                                 'tracker/trackedEntities',
                                 'tracker/events',
                             ]}
-                            onChange={setNetwork}
+                            onChange={(network) =>
+                                dispatch({ type: 'changeNetwork', network })
+                            }
                         />
                     )}
                     <Section title="Canvas">
@@ -276,12 +210,14 @@ export const TableLab = () => {
                                 option,
                                 name,
                             ])}
-                            onChange={(next) => update({ width: next })}
+                            onChange={(next) =>
+                                dispatch({ type: 'changeWidth', width: next })
+                            }
                         />
                         <button
                             type="button"
                             className="self-start"
-                            onClick={restart}
+                            onClick={() => dispatch({ type: 'restart' })}
                         >
                             Restart
                         </button>
@@ -298,7 +234,7 @@ export const TableLab = () => {
                             apiVersion={server.apiVersion}
                             resources={RESOURCES}
                             respond={respond}
-                            log={setRequests}
+                            log={log}
                         >
                             <LabComposition
                                 view={config.view}

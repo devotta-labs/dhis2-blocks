@@ -11,10 +11,10 @@ import {
     DATA_ELEMENTS,
     generateWorld,
     type LabConfig,
-} from './labData'
-import { createLabServer } from './labServer'
-import { parseFilters } from './query'
-import { DEFAULT_CONFIG } from './presets'
+} from '../labData'
+import { createLabServer } from '../labServer'
+import { parseFilters } from '../query'
+import { DEFAULT_CONFIG } from '../presets'
 
 const TODAY = '2026-11-02'
 

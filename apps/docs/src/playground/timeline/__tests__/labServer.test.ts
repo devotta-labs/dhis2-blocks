@@ -7,9 +7,14 @@ import {
 } from '@/components/timeline/dhis2/schemas'
 import { EVENT_FIELDS } from '@/components/timeline/dhis2/queries'
 import { describe, expect, it } from 'vitest'
-import { generateLabData, LAB_PERSON, LAB_PROGRAMS, ORG_UNITS } from './labData'
-import { answer, labNetwork, resourcesOf } from './labServer'
-import { DEFAULT_SETTINGS, PRESETS } from './presets'
+import {
+    generateLabData,
+    LAB_PERSON,
+    LAB_PROGRAMS,
+    ORG_UNITS,
+} from '../labData'
+import { answer, labNetwork, resourcesOf } from '../labServer'
+import { DEFAULT_SETTINGS, PRESETS } from '../presets'
 
 const TODAY = '2026-11-04'
 

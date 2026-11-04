@@ -34,9 +34,6 @@ export const DEFAULT_SETTINGS: LabSettings = {
     network: { delay: 50, endpoints: {} },
 }
 
-/** A card's settings over the default for its position. */
-export const cardDefaults = (index: number): LabCard => CARDS[index] ?? CARD
-
 /** The three cards, each changed from its default. */
 const cards = (...changes: Array<Partial<LabCard>>): LabCard[] =>
     CARDS.map((card, index) => ({ ...card, ...changes[index] }))

@@ -3,7 +3,7 @@ import {
     throughNetwork,
     type LabNetwork,
     type RequestLogEntry,
-} from './network'
+} from '../network'
 
 const send = (network: LabNetwork, signal?: AbortSignal) => {
     let entries: RequestLogEntry[] = []

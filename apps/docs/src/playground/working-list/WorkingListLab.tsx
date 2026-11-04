@@ -22,7 +22,7 @@ const DISPLAYS = {
 /**
  * The working list lab: its records as a table or on a calendar, a block setting kept in the URL
  * (`?display=calendar`). Each display has its own presets, settings and fake server, so a new choice opens on that
- * display's saved settings, without the last one's preset.
+ * display's first preset.
  */
 export const WorkingListLab = () => {
     const [params, setParams] = useSearchParams()

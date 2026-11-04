@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { generateWorld, type LabConfig } from './labData'
-import { answer } from './labServer'
-import { DEFAULT_CONFIG } from './presets'
+import { generateWorld, type LabConfig } from '../labData'
+import { answer } from '../labServer'
+import { DEFAULT_CONFIG } from '../presets'
 
 const TODAY = '2026-11-02'
 

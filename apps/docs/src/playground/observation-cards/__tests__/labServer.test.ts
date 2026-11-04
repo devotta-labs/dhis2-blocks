@@ -9,9 +9,9 @@ import {
     generateLabData,
     LAB_PERSON,
     LAB_PROGRAM,
-} from './labData'
-import { answer } from './labServer'
-import { DEFAULT_SETTINGS, PRESETS } from './presets'
+} from '../labData'
+import { answer } from '../labServer'
+import { DEFAULT_SETTINGS, PRESETS } from '../presets'
 
 const TODAY = '2026-11-02'
 

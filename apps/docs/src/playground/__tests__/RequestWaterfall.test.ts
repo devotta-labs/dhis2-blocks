@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { RequestLogEntry } from './network'
-import { placeBars } from './RequestWaterfall'
+import type { RequestLogEntry } from '../network'
+import { placeBars } from '../RequestWaterfall'
 
 const request = (
     id: number,

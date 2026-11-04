@@ -16,7 +16,7 @@ import {
     type EventTimeField,
     type HistoryEntryData,
 } from '@/components/timeline/dhis2'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
 import { PresetControls, Section, Segmented } from '../controls'
@@ -24,76 +24,13 @@ import { LabLayout } from '../LabLayout'
 import { LogPanel } from '../LogPanel'
 import { CanvasBoundary, LabServerScope } from '../LabServer'
 import { NetworkControls } from '../NetworkControls'
-import type { RequestLogEntry } from '../network'
+import type { Log } from '../network'
 import { usePresetParam } from '../usePresetParam'
 import { generateLabData, LAB_PERSON, type LabSettings } from './labData'
 import { answer, labNetwork, resourcesOf } from './labServer'
-import { DEFAULT_SETTINGS, PRESETS } from './presets'
+import { initialLabState, labReducer } from './labState'
+import { PRESETS } from './presets'
 import { OptionsControls } from './settings'
-
-interface Live {
-    trackedEntity: string
-    /** Comma-separated program ids; empty covers every enrollment. */
-    programs: string
-}
-
-interface Saved {
-    mode: 'lab' | 'live'
-    preset?: string
-    settings: LabSettings
-    live: Live
-}
-
-const STORAGE_KEY = 'timeline-lab'
-
-/** Settings that only change props, so the history keeps its data. */
-const IN_PLACE = new Set(['locale'])
-
-const DEFAULT_SAVED: Saved = {
-    mode: 'lab',
-    preset: 'A few visits',
-    settings: PRESETS[0]?.settings ?? DEFAULT_SETTINGS,
-    // A person in the WHO RMNCH Tracker in the Sierra Leone demo database, as in the docs' case history example.
-    live: { trackedEntity: 'Y8aEiTpHSSQ', programs: '' },
-}
-
-const stored = (): Saved => {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY)
-        if (!stored) return DEFAULT_SAVED
-        const parsed: Partial<Saved> = JSON.parse(stored)
-        return {
-            ...DEFAULT_SAVED,
-            ...parsed,
-            settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
-            live: { ...DEFAULT_SAVED.live, ...parsed.live },
-        }
-    } catch {
-        return DEFAULT_SAVED
-    }
-}
-
-/** The saved settings, or the linked preset's over them. */
-const load = (preset?: string): Saved => {
-    const saved = stored()
-    const linked = PRESETS.find((each) => each.name === preset)
-    return linked
-        ? {
-              ...saved,
-              mode: 'lab',
-              preset: linked.name,
-              settings: linked.settings,
-          }
-        : saved
-}
-
-const save = (saved: Saved) => {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
-    } catch {
-        // Storage is a convenience; the lab works without it.
-    }
-}
 
 /** The README's composition: a person's history, a step of past entries at a time. */
 const History = ({
@@ -151,30 +88,22 @@ const History = ({
 /** The timeline lab: a person's history in every state, one click each, beside the requests it makes. */
 export const TimelineLab = () => {
     const [linkedPreset, setLinkedPreset] = usePresetParam()
-    const [saved, setSaved] = useState(() => load(linkedPreset))
-    const { mode, settings, live } = saved
-    const [run, setRun] = useState(0)
-    const [requests, setRequests] = useState<RequestLogEntry[]>([])
+    const [state, dispatch] = useReducer(
+        labReducer,
+        linkedPreset,
+        initialLabState
+    )
+    const { mode, settings, live, run, requests } = state
+    const linked = mode === 'lab' ? state.preset : undefined
+    useEffect(() => setLinkedPreset(linked), [linked, setLinkedPreset])
 
-    const update = (next: Partial<Saved>) => {
-        const merged = { ...saved, ...next }
-        setSaved(merged)
-        save(merged)
-        setLinkedPreset(merged.mode === 'lab' ? merged.preset : undefined)
-    }
-    const restart = () => {
-        setRequests([])
-        setRun((count) => count + 1)
-    }
-    const change = (changes: Partial<LabSettings>) => {
-        update({ preset: undefined, settings: { ...settings, ...changes } })
-        if (Object.keys(changes).some((key) => !IN_PLACE.has(key))) restart()
-    }
-    /** Options in live mode: kept apart from presets, and the history refetches by itself. */
-    const changeLive = (changes: Partial<LabSettings>) => {
-        update({ settings: { ...settings, ...changes } })
-        if (Object.keys(changes).some((key) => !IN_PLACE.has(key))) restart()
-    }
+    const change = (changes: Partial<LabSettings>) =>
+        dispatch({ type: 'changeSettings', changes })
+    // Stable, so the lab server is not rebuilt on every request it logs.
+    const log: Log = useCallback(
+        (update) => dispatch({ type: 'logRequests', update }),
+        []
+    )
 
     const data = useMemo(() => generateLabData(settings), [settings])
     const respond = useMemo(() => answer(settings, data), [settings, data])
@@ -194,7 +123,9 @@ export const TimelineLab = () => {
                           children: (
                               <LogPanel
                                   requests={requests}
-                                  onClearRequests={() => setRequests([])}
+                                  onClearRequests={() =>
+                                      dispatch({ type: 'clearRequests' })
+                                  }
                               />
                           ),
                       }
@@ -208,23 +139,18 @@ export const TimelineLab = () => {
                             ['lab', 'Lab data'],
                             ['live', 'Live DHIS2'],
                         ]}
-                        onChange={(next) => {
-                            update({ mode: next })
-                            restart()
-                        }}
+                        onChange={(next) =>
+                            dispatch({ type: 'switchMode', mode: next })
+                        }
                     />
                     {mode === 'lab' ? (
                         <>
                             <PresetControls
                                 presets={PRESETS}
-                                selected={saved.preset}
-                                onPick={(each) => {
-                                    update({
-                                        preset: each.name,
-                                        settings: each.settings,
-                                    })
-                                    restart()
-                                }}
+                                selected={state.preset}
+                                onPick={(preset) =>
+                                    dispatch({ type: 'pickPreset', preset })
+                                }
                             />
                             <OptionsControls
                                 settings={settings}
@@ -259,9 +185,9 @@ export const TimelineLab = () => {
                                         <input
                                             value={live[field]}
                                             onChange={(event) =>
-                                                update({
-                                                    live: {
-                                                        ...live,
+                                                dispatch({
+                                                    type: 'changeLive',
+                                                    changes: {
                                                         [field]:
                                                             event.target.value.trim(),
                                                     },
@@ -274,14 +200,14 @@ export const TimelineLab = () => {
                             <OptionsControls
                                 live
                                 settings={settings}
-                                onChange={changeLive}
+                                onChange={change}
                             />
                         </>
                     )}
                     <button
                         type="button"
                         className="self-start"
-                        onClick={restart}
+                        onClick={() => dispatch({ type: 'restart' })}
                     >
                         Restart
                     </button>
@@ -295,7 +221,7 @@ export const TimelineLab = () => {
                         network={network}
                         resources={resources}
                         respond={respond}
-                        log={setRequests}
+                        log={log}
                         systemInfo={data.systemInfo}
                     >
                         <History

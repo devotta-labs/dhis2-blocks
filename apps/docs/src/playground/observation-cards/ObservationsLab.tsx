@@ -6,7 +6,7 @@ import {
     ObservationsProvider,
     ObservationValue,
 } from '@/components/observation-cards'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
 import { PresetControls, Section, Segmented } from '../controls'
@@ -14,112 +14,25 @@ import { LabLayout } from '../LabLayout'
 import { LogPanel } from '../LogPanel'
 import { CanvasBoundary, LabServerScope } from '../LabServer'
 import { NetworkControls } from '../NetworkControls'
-import type { RequestLogEntry } from '../network'
+import type { Log } from '../network'
 import { usePresetParam } from '../usePresetParam'
 import {
     CARD_ELEMENTS,
     cardLabel,
     generateLabData,
-    isLabElement,
     LAB_PERSON,
     LAB_PROGRAM,
     NOT_IN_PROGRAM,
-    type LabCard,
     type LabSettings,
 } from './labData'
 import { answer, RESOURCES } from './labServer'
-import { cardDefaults, DEFAULT_SETTINGS, PRESETS } from './presets'
+import { initialLabState, labReducer } from './labState'
+import { PRESETS } from './presets'
 import { OptionsControls } from './settings'
-
-interface Live {
-    programId: string
-    personId: string
-    dataElementId: string
-}
-
-interface Saved {
-    mode: 'lab' | 'live'
-    preset?: string
-    settings: LabSettings
-    live: Live
-}
 
 interface CardSpec {
     dataElement: string
     unit?: string
-}
-
-const STORAGE_KEY = 'observation-cards-lab'
-
-/** Settings that only change props or the lab's layout, so the cards keep their data. */
-const IN_PLACE = new Set([
-    'arrangement',
-    'staleAfterDays',
-    'cardWidth',
-    'cardsPerRow',
-])
-
-const DEFAULT_SAVED: Saved = {
-    mode: 'lab',
-    preset: 'Vitals panel',
-    settings: PRESETS[0]?.settings ?? DEFAULT_SETTINGS,
-    // The docs example's person and program on the Sierra Leone demo.
-    live: {
-        programId: 'WSGAb5XwJ3Y',
-        personId: 'Y8aEiTpHSSQ',
-        dataElementId: 'vANAXwtLwcT',
-    },
-}
-
-/** Saved cards over each position's defaults; anything unrecognised falls back to them. */
-const savedCards = (cards: ReadonlyArray<Partial<LabCard>> = []): LabCard[] =>
-    CARD_ELEMENTS.map((_, index) => {
-        const card = cards[index]
-        return card && isLabElement(card.element)
-            ? { ...cardDefaults(index), ...card }
-            : cardDefaults(index)
-    })
-
-const stored = (): Saved => {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY)
-        if (!stored) return DEFAULT_SAVED
-        const parsed: Partial<Saved> = JSON.parse(stored)
-        return {
-            ...DEFAULT_SAVED,
-            ...parsed,
-            settings: {
-                ...DEFAULT_SETTINGS,
-                ...parsed.settings,
-                cards: savedCards(parsed.settings?.cards),
-            },
-            live: { ...DEFAULT_SAVED.live, ...parsed.live },
-        }
-    } catch {
-        return DEFAULT_SAVED
-    }
-}
-
-/** The saved settings, or the linked preset's over them. */
-const load = (preset?: string): Saved => {
-    const saved = stored()
-    const linked = PRESETS.find((each) => each.name === preset)
-    return linked
-        ? {
-              ...saved,
-              mode: 'lab',
-              preset: linked.name,
-              settings: linked.settings,
-          }
-        : saved
-}
-
-const save = (saved: Saved) => {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
-    } catch {
-        // Storage is a convenience; the lab works without it.
-    }
 }
 
 /** The cards on a grid of the chosen width. */
@@ -160,25 +73,22 @@ const Cards = ({
 /** The observation cards lab: every card state, one click each, beside the requests it makes. */
 export const ObservationsLab = () => {
     const [linkedPreset, setLinkedPreset] = usePresetParam()
-    const [saved, setSaved] = useState(() => load(linkedPreset))
-    const { mode, settings, live } = saved
-    const [run, setRun] = useState(0)
-    const [requests, setRequests] = useState<RequestLogEntry[]>([])
+    const [state, dispatch] = useReducer(
+        labReducer,
+        linkedPreset,
+        initialLabState
+    )
+    const { mode, settings, live, run, requests } = state
+    const linked = mode === 'lab' ? state.preset : undefined
+    useEffect(() => setLinkedPreset(linked), [linked, setLinkedPreset])
 
-    const update = (next: Partial<Saved>) => {
-        const merged = { ...saved, ...next }
-        setSaved(merged)
-        save(merged)
-        setLinkedPreset(merged.mode === 'lab' ? merged.preset : undefined)
-    }
-    const restart = () => {
-        setRequests([])
-        setRun((count) => count + 1)
-    }
-    const change = (changes: Partial<LabSettings>) => {
-        update({ preset: undefined, settings: { ...settings, ...changes } })
-        if (Object.keys(changes).some((key) => !IN_PLACE.has(key))) restart()
-    }
+    const change = (changes: Partial<LabSettings>) =>
+        dispatch({ type: 'changeSettings', changes })
+    // Stable, so the lab server is not rebuilt on every request it logs.
+    const log: Log = useCallback(
+        (update) => dispatch({ type: 'logRequests', update }),
+        []
+    )
 
     const data = useMemo(() => generateLabData(settings), [settings])
     const respond = useMemo(() => answer(settings, data), [settings, data])
@@ -197,7 +107,9 @@ export const ObservationsLab = () => {
                           children: (
                               <LogPanel
                                   requests={requests}
-                                  onClearRequests={() => setRequests([])}
+                                  onClearRequests={() =>
+                                      dispatch({ type: 'clearRequests' })
+                                  }
                               />
                           ),
                       }
@@ -211,23 +123,18 @@ export const ObservationsLab = () => {
                             ['lab', 'Lab data'],
                             ['live', 'Live DHIS2'],
                         ]}
-                        onChange={(next) => {
-                            update({ mode: next })
-                            restart()
-                        }}
+                        onChange={(next) =>
+                            dispatch({ type: 'switchMode', mode: next })
+                        }
                     />
                     {mode === 'lab' ? (
                         <>
                             <PresetControls
                                 presets={PRESETS}
-                                selected={saved.preset}
-                                onPick={(each) => {
-                                    update({
-                                        preset: each.name,
-                                        settings: each.settings,
-                                    })
-                                    restart()
-                                }}
+                                selected={state.preset}
+                                onPick={(preset) =>
+                                    dispatch({ type: 'pickPreset', preset })
+                                }
                             />
                             <OptionsControls
                                 settings={settings}
@@ -256,9 +163,9 @@ export const ObservationsLab = () => {
                                     <input
                                         value={live[field]}
                                         onChange={(event) =>
-                                            update({
-                                                live: {
-                                                    ...live,
+                                            dispatch({
+                                                type: 'changeLive',
+                                                changes: {
                                                     [field]:
                                                         event.target.value.trim(),
                                                 },
@@ -272,7 +179,7 @@ export const ObservationsLab = () => {
                     <button
                         type="button"
                         className="self-start"
-                        onClick={restart}
+                        onClick={() => dispatch({ type: 'restart' })}
                     >
                         Restart
                     </button>
@@ -286,7 +193,7 @@ export const ObservationsLab = () => {
                         network={settings.network}
                         resources={RESOURCES}
                         respond={respond}
-                        log={setRequests}
+                        log={log}
                         systemInfo={data.systemInfo}
                     >
                         <ObservationsProvider

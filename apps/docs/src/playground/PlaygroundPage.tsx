@@ -32,7 +32,7 @@ const LABS = {
 const isPlaygroundSlug = (slug?: string): slug is PlaygroundSlug =>
     PLAYGROUND_BLOCKS.some((block) => block.slug === slug)
 
-/** Picks the block on show; a new block opens on its own saved settings, without the last one's preset. */
+/** Picks the block on show; a new block opens on its first preset. */
 const BlockPicker = ({ slug }: { slug: PlaygroundSlug }) => {
     const navigate = useNavigate()
     return (

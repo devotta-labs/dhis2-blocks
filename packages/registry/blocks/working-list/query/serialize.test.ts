@@ -141,7 +141,6 @@ describe('Tracker working-list request serialization', () => {
             pagination: { page: 1, pageSize: 15 },
             capabilities: resolveWorkingListCapabilities({ apiVersion: 43 }),
             fields,
-            today: '2026-08-18',
         })
 
         expect(request).toMatchObject({
@@ -154,12 +153,11 @@ describe('Tracker working-list request serialization', () => {
                 filterAttributes: ['Attribute01:sw:A'],
                 filter: ['DataElement1:ge:2:le:5'],
                 status: 'SCHEDULE',
-                scheduledAfter: '2026-08-18',
             },
         })
     })
 
-    it('defaults scheduled events from the DHIS2 server time zone at midnight', () => {
+    it('does not use server today to exclude overdue scheduled events', () => {
         vi.useFakeTimers().setSystemTime(new Date('2026-08-18T10:30:00.000Z'))
         try {
             const transformers = createWorkingListValueTransformers({
@@ -199,44 +197,48 @@ describe('Tracker working-list request serialization', () => {
                 serializationContext: transformers.serializationContext,
             })
 
-            // UTC is still August 18, while the configured server is UTC+14.
-            expect(request.params?.scheduledAfter).toBe('2026-08-19')
+            expect(request.params?.status).toBe('SCHEDULE')
+            expect(request.params).not.toHaveProperty('scheduledAfter')
+            expect(request.params).not.toHaveProperty('scheduledBefore')
         } finally {
             vi.useRealTimers()
         }
     })
 
-    it('rejects scheduled-event defaults without server date context', () => {
-        expect(() =>
-            serializeWorkingListRequest({
-                context: {
-                    programId: 'Program0001',
-                    orgUnitId: 'OrgUnit0001',
-                },
-                configuration: {
-                    mode: 'event',
-                    programId: 'Program0001',
-                    programStageId: 'ProgramStg1',
-                    columns: [attribute.id],
-                    sort: { fieldId: 'createdAt', direction: 'desc' },
-                    filters: [
-                        {
-                            field: systemField('eventStatus'),
-                            operator: 'in',
-                            value: {
-                                kind: 'options',
-                                values: ['SCHEDULE'],
-                            },
+    it('allows scheduled-event requests without server date context', () => {
+        const request = serializeWorkingListRequest({
+            context: {
+                programId: 'Program0001',
+                orgUnitId: 'OrgUnit0001',
+            },
+            configuration: {
+                mode: 'event',
+                programId: 'Program0001',
+                programStageId: 'ProgramStg1',
+                columns: [attribute.id],
+                sort: { fieldId: 'createdAt', direction: 'desc' },
+                filters: [
+                    {
+                        field: systemField('eventStatus'),
+                        operator: 'in',
+                        value: {
+                            kind: 'options',
+                            values: ['SCHEDULE'],
                         },
-                    ],
-                },
-                pagination: { page: 1, pageSize: 15 },
-                capabilities: resolveWorkingListCapabilities({
-                    apiVersion: 43,
-                }),
-                fields,
-            })
-        ).toThrow('server time zone')
+                    },
+                ],
+            },
+            pagination: { page: 1, pageSize: 15 },
+            capabilities: resolveWorkingListCapabilities({
+                apiVersion: 43,
+            }),
+            fields,
+        })
+        expect(request.params?.status).toBe('SCHEDULE')
+        expect(requestDateBounds(request, 'eventScheduledAt')).toEqual({
+            start: undefined,
+            end: undefined,
+        })
     })
 
     it('rejects a data-element filter from another stage', () => {
@@ -362,31 +364,85 @@ describe('Date windows on a working-list request', () => {
         })
     })
 
-    it('keeps a scheduled list from today on inside the window', () => {
+    it.each([
+        ['2026-10-26', '2026-12-06'],
+        ['2026-10-01', '2026-10-31'],
+    ])(
+        'includes overdue scheduled events in the %s..%s window',
+        (start, end) => {
+            const scheduled = scheduledEvents([
+                {
+                    field: systemField('eventStatus'),
+                    operator: 'in',
+                    value: { kind: 'options', values: ['SCHEDULE'] },
+                },
+            ])
+            const range = {
+                fieldId: 'eventScheduledAt',
+                start,
+                end,
+            }
+            const params = serializeWorkingListRequest({
+                context: { programId: 'Program0001', orgUnitId: 'OrgUnit0001' },
+                configuration: scheduled,
+                pagination: { page: 1, pageSize: 200 },
+                capabilities: resolveWorkingListCapabilities({
+                    apiVersion: 43,
+                }),
+                fields,
+                serializationContext: { today: '2026-11-18' },
+                range,
+            }).params
+            expect(params).toMatchObject({
+                status: 'SCHEDULE',
+                scheduledAfter: start,
+                scheduledBefore: end,
+            })
+        }
+    )
+
+    it('preserves explicit date restrictions on scheduled events', () => {
         const scheduled = scheduledEvents([
             {
                 field: systemField('eventStatus'),
                 operator: 'in',
                 value: { kind: 'options', values: ['SCHEDULE'] },
             },
+            scheduledFilter,
         ])
-        const range = {
-            fieldId: 'eventScheduledAt',
-            start: '2026-10-26',
-            end: '2026-12-06',
-        }
-        const params = serializeWorkingListRequest({
-            context: { programId: 'Program0001', orgUnitId: 'OrgUnit0001' },
-            configuration: scheduled,
-            pagination: { page: 1, pageSize: 200 },
-            capabilities: resolveWorkingListCapabilities({ apiVersion: 43 }),
-            fields,
-            today: '2026-11-18',
-            range,
-        }).params
-        expect(params).toMatchObject({
-            scheduledAfter: '2026-11-18',
-            scheduledBefore: '2026-12-06',
+        expect(
+            request(scheduled, {
+                fieldId: 'eventScheduledAt',
+                start: '2026-11-01',
+                end: '2026-11-30',
+            }).params
+        ).toMatchObject({
+            status: 'SCHEDULE',
+            scheduledAfter: '2026-11-10',
+            scheduledBefore: '2026-11-30',
+        })
+    })
+
+    it('preserves the overdue-only API filter', () => {
+        expect(
+            request(
+                scheduledEvents([
+                    {
+                        field: systemField('eventStatus'),
+                        operator: 'in',
+                        value: { kind: 'options', values: ['OVERDUE'] },
+                    },
+                ]),
+                {
+                    fieldId: 'eventScheduledAt',
+                    start: '2026-11-01',
+                    end: '2026-11-30',
+                }
+            ).params
+        ).toMatchObject({
+            status: 'OVERDUE',
+            scheduledAfter: '2026-11-01',
+            scheduledBefore: '2026-11-30',
         })
     })
 

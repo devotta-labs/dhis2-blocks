@@ -63,6 +63,10 @@ export const docsNavigation: readonly NavigationSection[] = [
                         href: '/blocks/observation-cards',
                     },
                     { title: 'Timeline', href: '/blocks/timeline' },
+                    {
+                        title: 'Tracked Entity Finder',
+                        href: '/blocks/tracked-entity-finder',
+                    },
                 ],
             },
             { title: 'Data entry', links: [] },

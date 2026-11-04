@@ -72,7 +72,6 @@ export interface FetchWorkingListPageInput {
     serializationContext?: FilterSerializationContext
     /** Localizes data-quality issue messages. Defaults to DHIS2 i18n. */
     translate?: RowIssueTranslate
-    today?: string
     range?: WorkingListDateRange
     signal?: AbortSignal
 }

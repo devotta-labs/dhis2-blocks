@@ -1,7 +1,9 @@
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
+import { canvasSourcePlugin } from './canvasSourcePlugin'
 
 export default defineConfig({
+    plugins: [canvasSourcePlugin()],
     // A lab server test checks its answers against the block's own schemas.
     resolve: {
         alias: {

@@ -5,6 +5,7 @@ import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { defineConfig, loadEnv } from 'vite'
 import { fileURLToPath } from 'node:url'
+import { canvasSourcePlugin } from './canvasSourcePlugin'
 import {
     createDhis2ViteProxy,
     dhis2CsrfGuard,
@@ -21,6 +22,7 @@ export default defineConfig(({ mode }) => {
 
     return {
         plugins: [
+            canvasSourcePlugin(),
             {
                 enforce: 'pre',
                 ...mdx({

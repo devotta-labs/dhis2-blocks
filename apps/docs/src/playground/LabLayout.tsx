@@ -1,4 +1,6 @@
 import { useContext, useState, type ReactNode } from 'react'
+import { LabCanvas } from './LabCanvas'
+import type { CanvasSource } from './canvasSource'
 import { LabPicker } from './labPicker'
 import './lab.css'
 
@@ -29,10 +31,12 @@ const Chevron = ({ open }: { open: boolean }) => (
 export const LabLayout = ({
     sidebar,
     panel,
+    source,
     children,
 }: {
     sidebar: ReactNode
     panel?: { title: string; children: ReactNode }
+    source: CanvasSource
     children: ReactNode
 }) => {
     const picker = useContext(LabPicker)
@@ -65,18 +69,7 @@ export const LabLayout = ({
                 </div>
             </aside>
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 bg-muted/40 p-2 md:p-4">
-                <section
-                    aria-label="Canvas"
-                    className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card"
-                >
-                    <h2 className={cardHeader}>Canvas</h2>
-                    {/* Relative, so the block's absolutely placed parts scroll with the canvas rather than widen the page. */}
-                    <div className="lab-graticule relative flex min-h-0 flex-1 flex-col overflow-auto">
-                        <div className="docs-preview-surface flex flex-col gap-3 p-3 [font-family:Roboto,Helvetica,Arial,sans-serif] text-dhis2-grey-900 [color-scheme:light] md:p-6">
-                            {children}
-                        </div>
-                    </div>
-                </section>
+                <LabCanvas source={source}>{children}</LabCanvas>
                 {panel && (
                     <section
                         aria-label={panel.title}

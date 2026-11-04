@@ -1,21 +1,3 @@
-import {
-    Timeline,
-    TimelineEmpty,
-    TimelineEnd,
-    TimelineError,
-    TimelineFeed,
-    TimelineLoading,
-    TimelineNotices,
-    TimelineShowMore,
-    useShowMore,
-} from '@/components/timeline'
-import {
-    TimelineHistoryEntry,
-    useSystemCalendar,
-    useTrackedEntityHistory,
-    type EventTimeField,
-    type HistoryEntryData,
-} from '@/components/timeline/dhis2'
 import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
@@ -31,59 +13,8 @@ import { answer, labNetwork, resourcesOf } from './labServer'
 import { initialLabState, labReducer } from './labState'
 import { PRESETS } from './presets'
 import { OptionsControls } from './settings'
-
-/** The README's composition: a person's history, a step of past entries at a time. */
-const History = ({
-    trackedEntity,
-    programs,
-    timeField,
-    step,
-    locale,
-}: {
-    trackedEntity: string
-    programs?: string[]
-    timeField: EventTimeField
-    step: number
-    locale: string
-}) => {
-    const calendar = useSystemCalendar()
-    const history = useTrackedEntityHistory({
-        trackedEntity,
-        programs,
-        timeField,
-    })
-    const { entries, hasMore, showMore } = useShowMore(history.entries, {
-        step,
-    })
-    return (
-        // The block draws on a white page; the lab's canvas follows the docs' theme.
-        <div
-            dir={locale === 'ar' ? 'rtl' : 'ltr'}
-            lang={locale}
-            className="w-full max-w-2xl rounded-lg bg-white p-4 md:p-6"
-        >
-            <Timeline<HistoryEntryData>
-                entries={entries}
-                status={history.status}
-                calendar={calendar}
-                locale={locale}
-            >
-                <TimelineLoading />
-                <TimelineError onRetry={history.refetch} />
-                <TimelineNotices notices={history.notices} />
-                <TimelineEmpty />
-                <TimelineFeed<HistoryEntryData>>
-                    {(entry) => <TimelineHistoryEntry entry={entry} />}
-                </TimelineFeed>
-                <TimelineShowMore hasMore={hasMore} onShowMore={showMore} />
-                <TimelineEnd
-                    hasMore={hasMore}
-                    complete={history.notices.length === 0}
-                />
-            </Timeline>
-        </div>
-    )
-}
+import { TimelineCanvas } from './TimelineCanvas'
+import canvasCode from './TimelineCanvas.tsx?raw'
 
 /** The timeline lab: a person's history in every state, one click each, beside the requests it makes. */
 export const TimelineLab = () => {
@@ -114,8 +45,24 @@ export const TimelineLab = () => {
         .map((id) => id.trim())
         .filter(Boolean)
 
+    const canvasProps = {
+        trackedEntity: mode === 'lab' ? LAB_PERSON : live.trackedEntity,
+        programs:
+            mode === 'live' && livePrograms.length > 0
+                ? livePrograms
+                : undefined,
+        timeField: settings.timeField,
+        step: settings.step,
+        locale: settings.locale,
+    }
+
     return (
         <LabLayout
+            source={{
+                name: 'TimelineCanvas.tsx',
+                code: canvasCode,
+                props: canvasProps,
+            }}
             panel={
                 mode === 'lab'
                     ? {
@@ -224,29 +171,14 @@ export const TimelineLab = () => {
                         log={log}
                         systemInfo={data.systemInfo}
                     >
-                        <History
-                            trackedEntity={LAB_PERSON}
-                            timeField={settings.timeField}
-                            step={settings.step}
-                            locale={settings.locale}
-                        />
+                        <TimelineCanvas {...canvasProps} />
                     </LabServerScope>
                 ) : (
                     <LivePreviewHost
                         key={run}
                         placeholder={<PreviewSpinner className="h-96" />}
                     >
-                        <History
-                            trackedEntity={live.trackedEntity}
-                            programs={
-                                livePrograms.length > 0
-                                    ? livePrograms
-                                    : undefined
-                            }
-                            timeField={settings.timeField}
-                            step={settings.step}
-                            locale={settings.locale}
-                        />
+                        <TimelineCanvas {...canvasProps} />
                     </LivePreviewHost>
                 )}
             </CanvasBoundary>

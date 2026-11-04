@@ -15,6 +15,12 @@ the shared parts below. A lab is loaded only when its page opens. The working
 list's page shows its records as a table or on a calendar, a block setting in
 its own Display section (`?display=calendar`); each display is a lab of its own.
 
+The canvas header switches between **Canvas** and **Code** without unmounting
+the block. Code shows the actual canvas composition (read-only, with syntax
+highlighting and copy) or **Current props.json**, updated as settings change.
+The composition is imported with Vite's `?raw` from the same module the lab
+renders; playground server/provider setup is not included. JSON omits callbacks.
+
 ## Add a block
 
 1. Copy `observation-cards/` to `src/playground/<block>/` (the smallest lab)
@@ -34,6 +40,9 @@ its own Display section (`?display=calendar`); each display is a lab of its own.
    count and logs, and which changes restart the block. The lab component only
    dispatches, so nothing about the state needs a browser to test. A reload
    opens on the URL's preset or the first; nothing else is kept.
+6. Put the canvas composition in its own module and pass its `?raw` import to
+   `LabLayout` as `source: { name, code, props }`. Use the same props object for
+   that snapshot and for the rendered composition so they stay in sync.
 
 Tests live in a `__tests__/` folder beside the code they test. Vitest already
 runs `src/playground/**/*.test.ts`, so a new lab needs no other config.

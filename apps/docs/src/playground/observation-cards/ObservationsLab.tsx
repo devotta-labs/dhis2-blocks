@@ -1,11 +1,3 @@
-import {
-    ObservationCard,
-    ObservationLabel,
-    ObservationRecorded,
-    ObservationSparkline,
-    ObservationsProvider,
-    ObservationValue,
-} from '@/components/observation-cards'
 import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
@@ -29,46 +21,8 @@ import { answer, RESOURCES } from './labServer'
 import { initialLabState, labReducer } from './labState'
 import { PRESETS } from './presets'
 import { OptionsControls } from './settings'
-
-interface CardSpec {
-    dataElement: string
-    unit?: string
-}
-
-/** The cards on a grid of the chosen width. */
-const Cards = ({
-    cards,
-    settings,
-}: {
-    cards: CardSpec[]
-    settings: LabSettings
-}) => (
-    <div
-        className="grid gap-4"
-        style={{
-            gridTemplateColumns: `repeat(${settings.cardsPerRow}, ${settings.cardWidth}px)`,
-        }}
-    >
-        {cards.map(({ dataElement, unit }) => (
-            <div key={dataElement} className="grid">
-                <ObservationCard
-                    dataElement={dataElement}
-                    unit={unit}
-                    staleAfterDays={settings.staleAfterDays || undefined}
-                >
-                    {settings.arrangement === 'composed' ? (
-                        <>
-                            <ObservationLabel />
-                            <ObservationValue />
-                            <ObservationSparkline points={6} />
-                            <ObservationRecorded />
-                        </>
-                    ) : null}
-                </ObservationCard>
-            </div>
-        ))}
-    </div>
-)
+import { ObservationsCanvas } from './ObservationsCanvas'
+import canvasCode from './ObservationsCanvas.tsx?raw'
 
 /** The observation cards lab: every card state, one click each, beside the requests it makes. */
 export const ObservationsLab = () => {
@@ -92,14 +46,32 @@ export const ObservationsLab = () => {
 
     const data = useMemo(() => generateLabData(settings), [settings])
     const respond = useMemo(() => answer(settings, data), [settings, data])
-    const labCards: CardSpec[] = settings.cards.map((card, index) => ({
+    const labCards = settings.cards.map((card, index) => ({
         dataElement:
             (card.notInProgram ? NOT_IN_PROGRAM : CARD_ELEMENTS)[index] ?? '',
         unit: cardLabel(card).unit,
     }))
 
+    const canvasProps = {
+        trackedEntity: mode === 'lab' ? LAB_PERSON : live.personId,
+        program: mode === 'lab' ? LAB_PROGRAM : live.programId,
+        cards:
+            mode === 'lab' ? labCards : [{ dataElement: live.dataElementId }],
+        settings: {
+            cardsPerRow: settings.cardsPerRow,
+            cardWidth: settings.cardWidth,
+            staleAfterDays: settings.staleAfterDays,
+            arrangement: settings.arrangement,
+        },
+    }
+
     return (
         <LabLayout
+            source={{
+                name: 'ObservationsCanvas.tsx',
+                code: canvasCode,
+                props: canvasProps,
+            }}
             panel={
                 mode === 'lab'
                     ? {
@@ -196,27 +168,14 @@ export const ObservationsLab = () => {
                         log={log}
                         systemInfo={data.systemInfo}
                     >
-                        <ObservationsProvider
-                            trackedEntity={LAB_PERSON}
-                            program={LAB_PROGRAM}
-                        >
-                            <Cards cards={labCards} settings={settings} />
-                        </ObservationsProvider>
+                        <ObservationsCanvas {...canvasProps} />
                     </LabServerScope>
                 ) : (
                     <LivePreviewHost
                         key={run}
                         placeholder={<PreviewSpinner className="h-96" />}
                     >
-                        <ObservationsProvider
-                            trackedEntity={live.personId}
-                            program={live.programId}
-                        >
-                            <Cards
-                                cards={[{ dataElement: live.dataElementId }]}
-                                settings={settings}
-                            />
-                        </ObservationsProvider>
+                        <ObservationsCanvas {...canvasProps} />
                     </LivePreviewHost>
                 )}
             </CanvasBoundary>

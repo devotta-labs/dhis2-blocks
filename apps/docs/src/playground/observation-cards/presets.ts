@@ -31,7 +31,7 @@ export const DEFAULT_SETTINGS: LabSettings = {
     cardWidth: 280,
     cardsPerRow: 3,
     arrangement: 'default',
-    network: { delay: 250, endpoints: {} },
+    network: { delay: 50, endpoints: {} },
 }
 
 /** A card's settings over the default for its position. */

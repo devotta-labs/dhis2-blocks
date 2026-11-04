@@ -15,7 +15,7 @@ export const DEFAULT_CONFIG: LabConfig = {
         savedViews: 'some',
         viewAccess: 'owner',
     },
-    network: { delay: 250, endpoints: {} },
+    network: { delay: 50, endpoints: {} },
     view: {
         viewSwitcher: true,
         toolbar: true,

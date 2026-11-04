@@ -28,7 +28,7 @@ export const DEFAULT_CONFIG: LabConfig = {
         savedFilter: 'none',
         columns: 'program',
     },
-    network: { delay: 250, endpoints: {} },
+    network: { delay: 50, endpoints: {} },
     view: {
         dateField: 'default',
         limit: 1000,

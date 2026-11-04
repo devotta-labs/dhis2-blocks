@@ -10,7 +10,7 @@ const CHOICES: ReadonlyArray<readonly [NetworkChoice, string]> = [
     ['hangs', 'Hangs'],
 ]
 
-const NORMAL_DELAY = 250
+const NORMAL_DELAY = 50
 const SLOW_DELAY = 2000
 
 /** The network for a choice: every request slow, or the block's records failing or never coming. */

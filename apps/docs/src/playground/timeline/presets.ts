@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS: LabSettings = {
     calendar: 'gregorian',
     locale: 'en',
     step: 20,
-    network: { delay: 250, endpoints: {} },
+    network: { delay: 50, endpoints: {} },
 }
 
 export interface Preset {

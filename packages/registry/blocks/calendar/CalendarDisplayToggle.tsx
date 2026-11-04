@@ -16,7 +16,10 @@ export const CalendarDisplayToggle = (
         'value' | 'defaultValue' | 'onValueChange' | 'children'
     >
 ) => {
-    const { display, setDisplay } = useCalendar()
+    const {
+        state: { display },
+        actions: { setDisplay },
+    } = useCalendar()
     return (
         <ToggleGroup
             aria-label={i18n.t('Show in each day')}

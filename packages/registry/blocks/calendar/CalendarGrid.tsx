@@ -60,7 +60,9 @@ const HiddenDaysNote = ({ count }: { count: number }) =>
     ) : null
 
 const ResultsStatus = () => {
-    const { results, weeks } = useCalendar()
+    const {
+        state: { results, weeks },
+    } = useCalendar()
     if (results.status === 'error') {
         return (
             <ErrorAlert title={i18n.t('Records could not be loaded')}>
@@ -125,8 +127,11 @@ export const CalendarGrid = ({
     children = <CalendarCellRecords />,
     ...props
 }: CalendarGridProps) => {
-    const { weeks, weekDayLabels, selectedDay, selectDay, dayName, results } =
-        useCalendar()
+    const {
+        state: { weeks, selectedDay, results },
+        actions: { selectDay },
+        meta: { weekDayLabels, dayName },
+    } = useCalendar()
     const tableRef = useRef<HTMLTableElement>(null)
     const [focusedDate, setFocusedDate] = useState<string | null>(null)
     const isWeekend = (weekday: CalendarWeekday) => weekend.includes(weekday)

@@ -54,7 +54,7 @@ const weeks = [
 ]
 
 const renderCalendar = (
-    overrides: Partial<CalendarContextValue> = {},
+    overrides: Partial<CalendarContextValue['state']> = {},
     grid: ReactNode = <CalendarGrid data-consumer="grid" />
 ) => {
     const setDisplay = vi.fn()
@@ -64,12 +64,35 @@ const renderCalendar = (
     const navigateToMonth = vi.fn()
     const navigateToYear = vi.fn()
     const value: CalendarContextValue = {
-        visibleRange: { start: '2026-10-31', end: '2026-11-13' },
-        weeks,
-        weekDayLabels: ['M', 'T', 'W', 'T ', 'F', 'S', 'S '],
-        navigation: {
+        state: {
+            visibleRange: { start: '2026-10-31', end: '2026-11-13' },
+            weeks,
+            visibleMonth: 11,
+            selectedDay: null,
+            display: 'records',
+            atStart: false,
+            atEnd: false,
+            results: {
+                status: 'ready',
+                records: [],
+                truncated: false,
+                isUpdating: false,
+            },
+            ...overrides,
+        },
+        actions: {
+            selectDay,
+            setDisplay,
             prevMonth: { label: 'October', navigateTo },
             nextMonth: { label: 'December', navigateTo },
+            navigateToMonth,
+            navigateToYear,
+            onRecordClick,
+        },
+        meta: {
+            weekDayLabels: ['M', 'T', 'W', 'T ', 'F', 'S', 'S '],
+            dayName: (calendarDay) =>
+                `${calendarDay.label} ${calendarDay.date.startsWith('2026-10') ? 'October' : 'November'} 2026`,
             currMonth: { label: 'November' },
             currYear: { label: 2026, value: 2026 },
             months: [
@@ -81,26 +104,7 @@ const renderCalendar = (
                 { value: 2025, label: '2025' },
                 { value: 2026, label: '2026' },
             ],
-            navigateToMonth,
-            navigateToYear,
         },
-        visibleMonth: 11,
-        selectedDay: null,
-        selectDay,
-        display: 'records',
-        setDisplay,
-        dayName: (calendarDay) =>
-            `${calendarDay.label} ${calendarDay.date.startsWith('2026-10') ? 'October' : 'November'} 2026`,
-        atStart: false,
-        atEnd: false,
-        results: {
-            status: 'ready',
-            records: [],
-            truncated: false,
-            isUpdating: false,
-        },
-        onRecordClick,
-        ...overrides,
     }
     const tree = (
         <CalendarContext.Provider value={value}>

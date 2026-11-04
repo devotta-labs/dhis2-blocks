@@ -55,7 +55,35 @@ export const CalendarProvider = ({
         weeks.flat().find((day) => day.date === state.selectedDay?.date) ?? null
     return (
         <CalendarContext.Provider
-            value={{ ...state, weeks, selectedDay, results, onRecordClick }}
+            value={{
+                state: {
+                    weeks,
+                    selectedDay,
+                    results,
+                    visibleRange: state.visibleRange,
+                    visibleMonth: state.visibleMonth,
+                    display: state.display,
+                    atStart: state.atStart,
+                    atEnd: state.atEnd,
+                },
+                actions: {
+                    selectDay: state.selectDay,
+                    setDisplay: state.setDisplay,
+                    prevMonth: state.navigation.prevMonth,
+                    nextMonth: state.navigation.nextMonth,
+                    navigateToMonth: state.navigation.navigateToMonth,
+                    navigateToYear: state.navigation.navigateToYear,
+                    onRecordClick,
+                },
+                meta: {
+                    weekDayLabels: state.weekDayLabels,
+                    dayName: state.dayName,
+                    currMonth: state.navigation.currMonth,
+                    currYear: state.navigation.currYear,
+                    months: state.navigation.months,
+                    years: state.navigation.years,
+                },
+            }}
         >
             <div className="grid items-start gap-3 @3xl:grid-cols-[minmax(0,1fr)_18rem]">
                 {children}

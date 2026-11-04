@@ -17,8 +17,12 @@ export const CalendarNavigation = ({
     className,
     ...props
 }: ComponentPropsWithoutRef<'nav'>) => {
-    const { navigation, visibleMonth, atStart, atEnd } = useCalendar()
-    const year = Number(navigation.currYear.value)
+    const {
+        state: { visibleMonth, atStart, atEnd },
+        actions: { prevMonth, nextMonth, navigateToMonth, navigateToYear },
+        meta: { currYear, months, years },
+    } = useCalendar()
+    const year = Number(currYear.value)
 
     return (
         <nav
@@ -32,17 +36,17 @@ export const CalendarNavigation = ({
                 size="field-dense"
                 aria-label={i18n.t('Previous month')}
                 disabled={atStart}
-                onClick={navigation.prevMonth.navigateTo}
+                onClick={prevMonth.navigateTo}
             >
                 <span className="flex rtl:rotate-180">
                     <IconChevronLeft16 />
                 </span>
             </Button>
             <Select
-                items={navigation.months}
+                items={months}
                 value={visibleMonth}
                 onValueChange={(month) => {
-                    if (month !== null) navigation.navigateToMonth(month)
+                    if (month !== null) navigateToMonth(month)
                 }}
             >
                 <SelectTrigger
@@ -53,7 +57,7 @@ export const CalendarNavigation = ({
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                    {navigation.months.map((month) => (
+                    {months.map((month) => (
                         <SelectItem key={month.value} value={month.value}>
                             {month.label}
                         </SelectItem>
@@ -61,10 +65,10 @@ export const CalendarNavigation = ({
                 </SelectContent>
             </Select>
             <Select
-                items={navigation.years}
+                items={years}
                 value={year}
                 onValueChange={(next) => {
-                    if (next !== null) navigation.navigateToYear(next)
+                    if (next !== null) navigateToYear(next)
                 }}
             >
                 <SelectTrigger
@@ -75,7 +79,7 @@ export const CalendarNavigation = ({
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                    {navigation.years.map((option) => (
+                    {years.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                             {option.label}
                         </SelectItem>
@@ -87,7 +91,7 @@ export const CalendarNavigation = ({
                 size="field-dense"
                 aria-label={i18n.t('Next month')}
                 disabled={atEnd}
-                onClick={navigation.nextMonth.navigateTo}
+                onClick={nextMonth.navigateTo}
             >
                 <span className="flex rtl:rotate-180">
                     <IconChevronRight16 />

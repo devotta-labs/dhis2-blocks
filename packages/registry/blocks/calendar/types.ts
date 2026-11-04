@@ -74,9 +74,26 @@ export interface CalendarState {
     atEnd: boolean
 }
 
-export interface CalendarContextValue extends CalendarState {
-    results: CalendarResults
-    onRecordClick?: (record: CalendarRecord) => void
+export interface CalendarContextValue {
+    state: Pick<
+        CalendarState,
+        | 'weeks'
+        | 'visibleRange'
+        | 'visibleMonth'
+        | 'selectedDay'
+        | 'display'
+        | 'atStart'
+        | 'atEnd'
+    > & { results: CalendarResults }
+    actions: Pick<CalendarState, 'selectDay' | 'setDisplay'> &
+        Pick<
+            DatePicker,
+            'prevMonth' | 'nextMonth' | 'navigateToMonth' | 'navigateToYear'
+        > & {
+            onRecordClick?: (record: CalendarRecord) => void
+        }
+    meta: Pick<CalendarState, 'weekDayLabels' | 'dayName'> &
+        Pick<DatePicker, 'currMonth' | 'currYear' | 'months' | 'years'>
 }
 
 export type CalendarSelectionProps =

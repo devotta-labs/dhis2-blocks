@@ -21,7 +21,9 @@ use its ID to look up your application's own data.
 
 Compose `CalendarNavigation`, `CalendarDisplayToggle`, `CalendarGrid`, and
 `CalendarDayRecords` inside `Calendar`. Leave out any part you do not need.
-Use `useCalendar` for custom navigation or day details, and
+Use `useCalendar` for custom navigation or day details: `state` holds days,
+selection and results, `actions` holds selection/display/navigation callbacks,
+and `meta` holds labels and month/year choices. Use
 `useCalendarDay` inside a grid cell. The default cell content is
 `CalendarCellRecords`; pass `max` to change how many names or status groups show.
 

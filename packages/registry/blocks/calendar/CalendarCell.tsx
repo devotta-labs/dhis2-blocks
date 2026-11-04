@@ -133,7 +133,9 @@ const Counts = ({
  * on a row of their own.
  */
 export const CalendarCellRecords = ({ max = 3 }: { max?: number }) => {
-    const { display } = useCalendar()
+    const {
+        state: { display },
+    } = useCalendar()
     const { day, compact } = useCalendarDay()
     if (day.records.length === 0) return null
     if (display === 'counts' || compact) {

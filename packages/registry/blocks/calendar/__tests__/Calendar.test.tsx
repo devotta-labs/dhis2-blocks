@@ -39,7 +39,9 @@ const Parts = () => (
 )
 
 const Range = () => {
-    const { visibleRange } = useCalendar()
+    const {
+        state: { visibleRange },
+    } = useCalendar()
     return (
         <output aria-label="Visible range">
             {visibleRange.start} / {visibleRange.end}

@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react'
 import {
     useCalendar,
     useCalendarDay,
-    type CalendarContextValue,
+    type CalendarState,
     type CalendarDay,
     type CalendarRecord,
 } from '@/components/calendar'
@@ -48,8 +48,8 @@ const withTargets = (
 })
 
 export interface WorkingListCalendarContextValue extends Omit<
-    CalendarContextValue,
-    'weeks' | 'selectedDay' | 'results' | 'onRecordClick'
+    CalendarState,
+    'weeks' | 'selectedDay'
 > {
     dateField: WorkingListDateFieldId
     weeks: ReadonlyArray<ReadonlyArray<WorkingListCalendarDay>>
@@ -62,20 +62,33 @@ export interface WorkingListCalendarContextValue extends Omit<
 
 /** Calendar state plus the list's date field, query results and record targets. */
 export const useWorkingListCalendar = (): WorkingListCalendarContextValue => {
-    const calendar = useCalendar()
+    const { state, actions, meta } = useCalendar()
     const { recordsById, ...data } = useCalendarData()
     return {
-        ...calendar,
+        ...state,
+        ...meta,
+        selectDay: actions.selectDay,
+        setDisplay: actions.setDisplay,
+        navigation: {
+            prevMonth: actions.prevMonth,
+            nextMonth: actions.nextMonth,
+            navigateToMonth: actions.navigateToMonth,
+            navigateToYear: actions.navigateToYear,
+            currMonth: meta.currMonth,
+            currYear: meta.currYear,
+            months: meta.months,
+            years: meta.years,
+        },
         ...data,
         onRecordClick: data.onRecordClick,
-        weeks: calendar.weeks.map((week) =>
+        weeks: state.weeks.map((week) =>
             week.map((day) => withTargets(day, recordsById))
         ),
-        selectedDay: calendar.selectedDay
-            ? withTargets(calendar.selectedDay, recordsById)
+        selectedDay: state.selectedDay
+            ? withTargets(state.selectedDay, recordsById)
             : null,
-        atFilterStart: calendar.atStart,
-        atFilterEnd: calendar.atEnd,
+        atFilterStart: state.atStart,
+        atFilterEnd: state.atEnd,
     }
 }
 

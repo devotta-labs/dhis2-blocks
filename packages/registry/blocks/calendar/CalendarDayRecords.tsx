@@ -6,7 +6,9 @@ import { useCalendar, type CalendarDay, type CalendarRecord } from './context'
 import { TONE_DOT } from './CalendarCell'
 
 const RecordName = ({ record }: { record: CalendarRecord }) => {
-    const { onRecordClick } = useCalendar()
+    const {
+        actions: { onRecordClick },
+    } = useCalendar()
     if (onRecordClick && !record.disabled) {
         return (
             <Button
@@ -63,7 +65,10 @@ export const CalendarDayRecords = ({
     className,
     ...props
 }: ComponentPropsWithoutRef<'section'>) => {
-    const { selectedDay, dayName } = useCalendar()
+    const {
+        state: { selectedDay },
+        meta: { dayName },
+    } = useCalendar()
 
     return (
         <section

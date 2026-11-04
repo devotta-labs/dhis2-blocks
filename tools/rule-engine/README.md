@@ -6,7 +6,7 @@ No API/Core or Capture deployment changes are included.
 
 ## Rebuild
 
-Requires JDK 21, Node and npm. From the repository root:
+Requires JDK 21, Node and npm, and a fresh build directory. From the repository root:
 
 ```sh
 bash tools/rule-engine/build.sh
@@ -14,7 +14,9 @@ bash tools/rule-engine/build.sh
 
 The script clones pinned upstream commits, applies the checked-in patches, runs
 JVM regression tests and compiles the Kotlin/JS distribution. Normal installation
-uses the checked-in tarball and does not require Java or Gradle. If Maven Central
+uses an immutable GitHub URL for the checked-in tarball and does not require Java
+or Gradle. A shadcn consumer gets the same URL from `registry.json`. To rebuild again,
+set `RULE_ENGINE_BUILD_DIR` to a new directory. If Maven Central
 is rate-limited, `GRADLE_MIRROR_INIT` can point to a Gradle repository-mirror init
 script. This does not change the source or the runtime package.
 

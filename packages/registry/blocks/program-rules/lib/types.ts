@@ -1,4 +1,5 @@
 import type * as Engine from '@dhis2/rule-engine'
+import type { CustomRuleEvaluation, TrackedEntityRuleContext } from './customFunctions'
 
 /** The `@dhis2/rule-engine` module. Callers load it (lazily) and pass it in. */
 export type RuleEngineModule = typeof Engine
@@ -89,6 +90,8 @@ export type RuleEnrollmentStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
 /** An event, values in tracker API format, empty values omitted. */
 export interface RuleEventInput {
     id: string
+    enrollmentId?: string
+    programId?: string
     programStageId: string
     occurredAt?: string
     scheduledAt?: string
@@ -99,10 +102,13 @@ export interface RuleEventInput {
     status: RuleEventStatus
     /** dataElementId → value */
     dataValues: Record<string, string>
+    /** When a grid only loaded some fields, these are authoritative, including cleared values. */
+    liveDataElementIds?: ReadonlyArray<string>
 }
 
 export interface RuleEnrollmentInput {
     id: string
+    programId?: string
     enrolledAt: string
     occurredAt?: string
     orgUnitId: string
@@ -114,11 +120,14 @@ export interface RuleEnrollmentInput {
 
 /** An enrollment with all of its events: the person data rules read. */
 export interface RuleEnrollmentData {
+    trackedEntityId?: string
+    customData?: Omit<TrackedEntityRuleContext, 'program' | 'metadata' | 'currentEvent'>
     enrollment: RuleEnrollmentInput
     events: RuleEventInput[]
 }
 
 export interface EventRuleInput {
+    custom?: CustomRuleEvaluation
     event: RuleEventInput
     enrollment?: RuleEnrollmentInput
     /** The enrollment's other events. The current event is ignored if present. */

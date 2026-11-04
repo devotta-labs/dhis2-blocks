@@ -20,6 +20,14 @@ export default defineConfig(({ mode }) => {
     const port = Number(env.DOCS_PORT ?? 3002)
 
     return {
+        build: {
+            rollupOptions: {
+                input: {
+                    index: fileURLToPath(new URL('./index.html', import.meta.url)),
+                    lab: fileURLToPath(new URL('./lab.html', import.meta.url)),
+                },
+            },
+        },
         plugins: [
             {
                 enforce: 'pre',

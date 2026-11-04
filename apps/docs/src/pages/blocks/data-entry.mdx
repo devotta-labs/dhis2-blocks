@@ -493,3 +493,60 @@ lists what stops the row too.
 notes and markers. `cells` is
 the default control for each kind of field. Both are for layouts of your own
 that do not use `DataGrid`.
+
+### Experimental custom rule functions
+
+This branch includes a native Kotlin/JS engine patch, not precomputed rule variables.
+Open the [offline custom-functions lab](/lab.html?mode=custom), or run `pnpm lab:custom`
+from the repository root. The lab uses synthetic data only and needs no DHIS2 login.
+Edit the rule expression, history JSON, return-type example, or history request state,
+then choose **Apply and run**. Editing the grid's selected test recalculates immediately.
+
+```tsx
+import { z } from 'zod'
+import { defineCustomRuleFunction } from '@/components/program-rules'
+
+const customFunctions = {
+    findResult: defineCustomRuleFunction({
+        props: z.object({ testCode: z.string(), stageId: z.string() }),
+        returns: 'number',
+        evaluate: ({ testCode, stageId }, context) => {
+            const event = context.events.find(
+                event => event.programStageId === stageId &&
+                    event.dataValues['testCodeUid'] === testCode
+            )
+            const value = event?.dataValues['resultUid']
+            return value ? Number(value) : null
+        },
+    }),
+}
+
+// Supply this stable registry to the grid's provider.
+<DataEntry source={source} customFunctions={customFunctions}>
+    <DataGrid />
+</DataEntry>
+```
+
+An action can use `custom:number('findResult', { testCode: #{selectedTest}, stageId: 'labStage001' })`.
+The other dispatchers are `custom:string` and `custom:boolean`. Object props accept
+scalar expressions; property order does not matter. Unknown props, duplicate keys,
+nested objects, arrays, mismatched results and non-finite numbers are rejected.
+
+Blocks fetches all accessible enrollments and events of each tracked entity through
+its single-object endpoint, plus expanded metadata for the selected program.
+The context supplies normalized events/enrollments and the raw tracked-entity JSON,
+preserving additional fields. Grid edits overlay the fetched data, including cleared
+fields, without removing unrelated values. No history means no match; failed or
+inaccessible history is an error, never an empty history. Org-unit metadata is optional
+in the context contract and is not fetched by this POC.
+
+Callbacks must be synchronous and app-shipped. No function source is uploaded or
+evaluated from the expression. They share a start-of-pass context snapshot, while
+props can observe earlier `ASSIGN` actions. Keep callbacks fast: same-thread execution
+has no timeout. Custom-function changes or refreshed context rebuild the evaluator;
+tracker edits conservatively re-evaluate all visible rows.
+
+The dependency is pinned to an immutable experimental engine tarball. Its source
+patches and rebuild instructions are in `tools/rule-engine`. This is not an upstream
+release; Core/API and Capture do not execute these TypeScript callbacks. Ordinary
+API rules remain enabled, and custom validations have no server-side parity.

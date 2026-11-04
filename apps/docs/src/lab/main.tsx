@@ -4,6 +4,7 @@ import '../index.css'
 import { LivePreviewHost } from '../preview/LivePreviewHost'
 import { PreviewSpinner } from '../preview/PreviewShell'
 import { Lab } from './Lab'
+import { CustomFunctionsLab } from './CustomFunctionsLab'
 
 /**
  * The data entry lab, at `/lab.html` on the docs dev server: a page of its own, linked from nowhere and left out of
@@ -17,8 +18,8 @@ if (!root) {
 
 createRoot(root).render(
     <React.StrictMode>
-        <LivePreviewHost placeholder={<PreviewSpinner />}>
+        {new URLSearchParams(window.location.search).get('mode') === 'custom' ? <CustomFunctionsLab /> : <LivePreviewHost placeholder={<PreviewSpinner />}>
             <Lab />
-        </LivePreviewHost>
+        </LivePreviewHost>}
     </React.StrictMode>
 )

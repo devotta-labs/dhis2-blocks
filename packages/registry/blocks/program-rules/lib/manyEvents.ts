@@ -1,6 +1,8 @@
 import i18n from '@dhis2/d2-i18n'
 import { Result } from 'better-result'
 import { evaluateEventRules } from './evaluate'
+import { overlayCustomRuleEvent } from './customFunctions'
+import type { CustomRuleFunctions, RuleContextData } from './customFunctions'
 import type {
     EventRuleInput,
     ProgramRulesMetadata,
@@ -22,6 +24,9 @@ export interface EventsRuleRow {
 }
 
 export interface EventsRuleInput {
+    customFunctions?: CustomRuleFunctions
+    customMetadata?: Readonly<RuleContextData>
+    metadata?: ProgramRulesMetadata
     rows: ReadonlyArray<EventsRuleRow>
     /** enrollmentId → the enrollment and events as the server has them */
     persons: ReadonlyMap<string, RuleEnrollmentData>
@@ -184,7 +189,38 @@ export const evaluateEventsRules = (
               }
             : { event: row.event, otherEvents: [] }
         const evaluation = Result.try({
-            try: () => evaluateEventRules(engine, context, ruleInput),
+            try: () => {
+                if (input.customFunctions !== undefined && input.metadata !== undefined) {
+                    if (input.tracker && person?.customData === undefined) {
+                        throw new Error('Complete tracked entity context is not available')
+                    }
+                    const data = person?.customData ?? { enrollments: [], events: [] }
+                    const live = input.rows.filter((candidate) => {
+                        if (!input.tracker) return candidate.event.id === rowId
+                        return candidate.enrollmentId !== undefined &&
+                            input.persons.get(candidate.enrollmentId)?.trackedEntityId === person?.trackedEntityId
+                    }).map((candidate) => candidate.event)
+                    const liveById = new Map(live.map((event) => [event.id, event]))
+                    const knownIds = new Set(data.events.map((event) => event.id))
+                    ruleInput.custom = {
+                        functions: input.customFunctions,
+                        context: {
+                            ...data,
+                            events: [
+                                ...data.events.map((event) => {
+                                    const edited = liveById.get(event.id)
+                                    return edited === undefined ? event : overlayCustomRuleEvent(event, edited)
+                                }),
+                                ...live.filter((event) => !knownIds.has(event.id)),
+                            ],
+                            currentEvent: row.event,
+                            program: input.metadata,
+                            metadata: input.customMetadata ?? {},
+                        },
+                    }
+                }
+                return evaluateEventRules(engine, context, ruleInput)
+            },
             catch: (cause) =>
                 cause instanceof Error ? cause : new Error(String(cause)),
         })

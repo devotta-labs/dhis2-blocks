@@ -1020,7 +1020,7 @@
             "dependencies": [
                 "@dhis2/app-runtime@^3.15.1",
                 "@dhis2/d2-i18n@1.2.0",
-                "@dhis2/rule-engine@3.8.6",
+                "@dhis2/rule-engine@https://raw.githubusercontent.com/devotta-labs/dhis2-blocks/84111d17fe9aceb5222201b517a4c19c1f83de98/vendor/rule-engine/dhis2-rule-engine-3.8.6-custom.1.tgz",
                 "@tanstack/react-query@^5.101.4",
                 "better-result@^3.0.1",
                 "zod@^4.4.3"
@@ -1031,6 +1031,11 @@
                     "path": "packages/registry/blocks/program-rules/hooks/client.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/hooks/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/customContext.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/customContext.ts"
                 },
                 {
                     "path": "packages/registry/blocks/program-rules/hooks/enrollment.ts",
@@ -1091,6 +1096,11 @@
                     "path": "packages/registry/blocks/program-rules/lib/buildInput.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/lib/buildInput.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/customFunctions.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/customFunctions.ts"
                 },
                 {
                     "path": "packages/registry/blocks/program-rules/lib/dependencyGraph.ts",

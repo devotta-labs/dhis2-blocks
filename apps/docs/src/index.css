@@ -8,6 +8,7 @@
 @source '../../../packages/registry/blocks/sidebar';
 @source '../../../packages/registry/blocks/observation-cards';
 @source '../../../packages/registry/blocks/timeline';
+@source '../../../packages/registry/blocks/tracked-entity-finder';
 
 @import 'shadcn/tailwind.css';
 

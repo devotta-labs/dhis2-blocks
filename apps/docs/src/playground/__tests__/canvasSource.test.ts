@@ -5,6 +5,7 @@ import table from '../working-list/table/TableCanvas.tsx?canvas'
 import calendar from '../working-list/calendar/CalendarCanvas.tsx?canvas'
 import observations from '../observation-cards/ObservationsCanvas.tsx?canvas'
 import timeline from '../timeline/TimelineCanvas.tsx?canvas'
+import finder from '../tracked-entity-finder/LabFinder.tsx?canvas'
 import tableCode from '../working-list/table/TableCanvas.tsx?raw'
 
 const source: CanvasSource = {
@@ -103,6 +104,7 @@ describe('canvas prop inspection', () => {
         ['CalendarCanvas', calendar, 'CalendarGrid'],
         ['ObservationsCanvas', observations, 'ObservationCard'],
         ['TimelineCanvas', timeline, 'TimelineFeed'],
+        ['LabFinder', finder, 'FinderProvider'],
     ] as const)(
         'ships %s source with inspectable props',
         (name, module, part) => {

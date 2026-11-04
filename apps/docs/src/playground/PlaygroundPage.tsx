@@ -27,6 +27,11 @@ const LABS = {
             default: TimelineLab,
         }))
     ),
+    'tracked-entity-finder': lazy(() =>
+        import('./tracked-entity-finder/FinderLab').then(({ FinderLab }) => ({
+            default: FinderLab,
+        }))
+    ),
 } satisfies Record<PlaygroundSlug, ComponentType>
 
 const isPlaygroundSlug = (slug?: string): slug is PlaygroundSlug =>

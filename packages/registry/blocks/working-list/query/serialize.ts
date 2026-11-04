@@ -114,7 +114,6 @@ export interface SerializeWorkingListRequestInput {
     capabilities: WorkingListCapabilities
     fields: FieldCatalog
     serializationContext?: FilterSerializationContext
-    today?: string
     range?: WorkingListDateRange
 }
 
@@ -125,7 +124,6 @@ export const serializeWorkingListRequest = ({
     capabilities,
     fields,
     serializationContext,
-    today,
     range,
 }: SerializeWorkingListRequestInput): ResourceRequest => {
     const configuration = WorkingListConfigurationSchema.parse(rawConfiguration)
@@ -229,20 +227,6 @@ export const serializeWorkingListRequest = ({
     }
     if (configuration.mode === 'event' && filterAttributes.length) {
         params.filterAttributes = filterAttributes
-    }
-
-    if (
-        configuration.mode === 'event' &&
-        params.status === 'SCHEDULE' &&
-        params.scheduledAfter === undefined
-    ) {
-        const serverToday = today ?? serializationContext?.today
-        if (!serverToday) {
-            throw new Error(
-                'Scheduled event requests require today in the server time zone'
-            )
-        }
-        params.scheduledAfter = serverToday
     }
 
     if (range) {

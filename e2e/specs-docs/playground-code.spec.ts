@@ -32,6 +32,13 @@ test.describe('playground Canvas / Code', () => {
             'trackedEntity',
             '"labPerson01"',
         ],
+        [
+            'tracked-entity-finder',
+            'LabFinder',
+            'FinderProvider',
+            'program',
+            '"labProgram1"',
+        ],
     ]) {
         test(`shows the actual ${composition} source`, async ({ page }) => {
             await page.goto(`/playground/${path}`)

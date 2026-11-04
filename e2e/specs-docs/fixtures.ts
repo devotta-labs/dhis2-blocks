@@ -127,20 +127,29 @@ const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
     return false
 }
 
-/**
- * Opens a standalone preview route. The docs server injects demo
- * credentials into every proxied request (DOCS_DHIS2_USERNAME/
- * DOCS_DHIS2_PASSWORD), so previews are already signed in — no dialog
- * appears and the list renders straight to live data.
- */
-export const openLivePreview = async (page: Page, slug: string) => {
-    await page.goto(`/preview/${slug}`)
+const workingListReady = async (page: Page) => {
     await expect(page.getByTestId('working-list-main')).toBeVisible({
         timeout: 30_000,
     })
     await expect(
         page.locator('[data-testid="working-list-table"] tbody')
     ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
+}
+
+/**
+ * Opens a standalone preview route. The docs server injects demo
+ * credentials into every proxied request (DOCS_DHIS2_USERNAME/
+ * DOCS_DHIS2_PASSWORD), so previews are already signed in — no dialog
+ * appears and the example renders straight to live data. `ready` waits
+ * until the example has loaded; by default, until the Working List has.
+ */
+export const openLivePreview = async (
+    page: Page,
+    slug: string,
+    ready: (page: Page) => Promise<void> = workingListReady
+) => {
+    await page.goto(`/preview/${slug}`)
+    await ready(page)
 }
 
 export const resultRows = (page: Page) =>

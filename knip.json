@@ -58,6 +58,7 @@
                 "src/AppWrapper.tsx",
                 "src/workingListTranslationCatalog.ts",
                 "src/sidebarTranslationCatalog.ts",
+                "src/trackedEntityFinderTranslationCatalog.ts",
                 "src/**/*.{test,spec}.{ts,tsx}",
                 "src/**/__tests__/**/*.{ts,tsx}"
             ],
@@ -89,6 +90,14 @@
                     "namespaceMembers"
                 ],
                 "src/sidebarTranslationCatalog.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "src/trackedEntityFinderTranslationCatalog.ts": [
                     "exports",
                     "types",
                     "nsExports",

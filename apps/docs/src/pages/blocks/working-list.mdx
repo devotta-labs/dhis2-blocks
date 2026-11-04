@@ -1,281 +1,66 @@
 ---
 title: Working List
-description: A filtered, sortable list for finding and reviewing tracker records.
+description: Find records, save useful views, and see activity by date.
 ---
 
 import { ExampleCard } from '../../components/ExampleCard'
 import { InstallCommand } from '../../components/InstallCommand'
-import { HighlightedCodeBlock } from '../../components/HighlightedCodeBlock'
-import listCalendarSource from '../../examples/working-list/ListCalendar.tsx?raw'
+
+Working List brings your DHIS2 records into a table or calendar, so you can
+find people, review visits, and focus on the work that needs attention.
 
 <ExampleCard slug="working-list/default" />
 
-This preview uses the Sierra Leone demo program and organisation unit.
-For another backend, use the program picker below or replace the IDs.
+The examples use the Sierra Leone demo data.
 
-## Installation
+## Find the records you need
 
-<InstallCommand item="working-list" />
+Filter by the fields in your program, sort the results, and choose which
+columns to show. Save useful combinations as views to return to them later,
+or download the visible rows.
 
-## Usage
+Saved views belong to your DHIS2 instance. Changes to them also apply when
+you use those views in other apps.
 
-Pass the tracker program and organisation unit to show, then compose the
-parts your users need. `programId` and `orgUnitId` are the only required
-props.
+Your app can make a record open its details when selected; the examples
+here keep records read-only.
 
-```tsx
-import {
-    WorkingList,
-    WorkingListColumnSelector,
-    WorkingListFilterControls,
-    WorkingListTable,
-    WorkingListToolbar,
-    WorkingListToolbarActions,
-    WorkingListViewSwitcher,
-} from '@/components/working-list'
+## Choose a program and organisation unit
 
-export const ChildProgrammeList = () => (
-    <WorkingList programId="IpHINAT79UW" orgUnitId="y77LiPqLMoq">
-        <WorkingListViewSwitcher />
-        <WorkingListToolbar>
-            <WorkingListColumnSelector />
-            <WorkingListFilterControls />
-            <WorkingListToolbarActions />
-        </WorkingListToolbar>
-        <WorkingListTable onRowClick={(record) => openRecord(record)} />
-    </WorkingList>
-)
-```
-
-Everything else comes from your DHIS2 instance: the program's attributes and
-data elements, the records, and the saved views your users can see. Filters,
-sorting, column choices, and pagination work out of the box.
-
-## Choose the program at runtime
-
-Most apps let the user pick the program. This example loads the tracker
-programs and the user's organisation units from the API and passes the
-selection to the list:
+Let users switch between the programs and organisation units they have
+access to.
 
 <ExampleCard slug="working-list/program-picker" />
 
-Passing `key={programId}` makes React create a fresh list for each program,
-so a view or page from one program never carries over to the next.
-
-## Opening a record
-
-Without `onRowClick`, rows are read-only. With it, rows open on click and on
-Enter, and your callback receives the record to open:
-
-```ts
-type WorkingListResultTarget =
-    | { mode: 'trackedEntity'; programId: string; trackedEntityId: string }
-    | {
-          mode: 'event'
-          programId: string
-          programStageId: string
-          eventId: string
-          enrollmentId?: string
-          trackedEntityId?: string
-      }
-```
-
-Use it to navigate to your own record page or to open the record in the
-Capture app.
-
-## Saved views and pagination
-
-By default the list manages its own state. It starts on the program's default
-view, page 1, with 15 rows per page. Change the starting values with
-`defaultViewId` and `defaultPagination`, and use `onViewChange` or
-`onPaginationChange` to be notified of changes:
-
-```tsx
-<WorkingList
-    programId={programId}
-    orgUnitId={orgUnitId}
-    defaultPagination={{ page: 1, pageSize: 25 }}
-    onViewChange={rememberLastView}
->
-    {/* … */}
-</WorkingList>
-```
-
-To keep this state yourself — for example in the URL — pass the value and its
-callback together. Views and pagination can be controlled independently:
-
-```tsx
-<WorkingList
-    programId={programId}
-    orgUnitId={orgUnitId}
-    viewId={viewId}
-    onViewChange={setViewId}
-    pagination={pagination}
-    onPaginationChange={setPagination}
->
-    {/* … */}
-</WorkingList>
-```
-
-Saved views are stored on the DHIS2 server, so views users create, update,
-or delete in your app also apply wherever else they use those views.
-
 ## Calendar view
+
+See when activity happens and which days are busiest. Switch between table
+and calendar without changing your saved view or filters.
 
 <ExampleCard slug="working-list/calendar" />
 
-The calendar shows the same records as the table, placed on a month by one of
-their dates. It uses the same saved view, filters and organisation unit, so
-users can switch between the two without losing their place. It answers
-questions like "who is due this week?" or "what happened on the 14th?" at a
-glance.
+Select a day to see its records. Show names or status counts, and choose the
+date that matters to your work: enrollment or incident dates for people,
+report or scheduled dates for events. Weekend columns and status colours
+can be adjusted to fit your program.
 
-Install [Calendar](/blocks/calendar) alongside Working List:
+Dates follow your DHIS2 calendar, including Ethiopian and Nepali. Coptic is
+not supported. The calendar loads up to 1,000 records at a time and warns
+you when there are more.
+
+[Try the playground](/playground/working-list?display=calendar) to explore
+different dates, layouts and loading states.
+
+## Add to your app
+
+Install Working List:
+
+<InstallCommand item="working-list" />
+
+For the calendar view, also install [Calendar](/blocks/calendar):
 
 <InstallCommand item="calendar" />
 
-This is a composition of **Working List + Calendar**, not another registry block.
-Working List owns queries, filters, date conversion and tracker targets; Calendar
-owns rendering, navigation and selection. The app chooses labels, colours and
-which calendar parts to render.
-
-Copy the `ListCalendar` recipe below into your app, then render it inside
-`WorkingList`, beside or instead of `WorkingListTable`:
-
-```tsx
-import {
-    CalendarDayRecords,
-    CalendarGrid,
-    CalendarNavigation,
-} from '@/components/calendar'
-import { WorkingList } from '@/components/working-list'
-import { ListCalendar } from './ListCalendar'
-
-;<WorkingList programId={programId} orgUnitId={orgUnitId}>
-    <ListCalendar onRecordClick={(target) => openRecord(target)}>
-        <CalendarNavigation />
-        <CalendarGrid />
-        <CalendarDayRecords />
-    </ListCalendar>
-</WorkingList>
-```
-
-Each day counts its records by status, such as "6 Active, 2 Completed".
-Selecting a day lists its records, and clicking one opens it, just like a row
-in the table. Add `CalendarDisplayToggle` to let users show names
-instead of counts. Dates follow the instance's calendar, such as Ethiopian or
-Nepali.
-
-A few choices to fit your program:
-
-- `dateField` — which date places a record. Tracked entities use the
-  enrollment date (`enrolledAt`) or the incident date
-  (`enrollmentOccurredAt`); events use the report date (`eventOccurredAt`)
-  or the scheduled date (`eventScheduledAt`).
-- `weekend` on `CalendarGrid` — the days that count as the
-  weekend, such as `[6, 7]` for Saturday and Sunday. Add
-  `weekendColumns="narrow"` or `"hide"` to give them less room.
-- `recordLabel` and `recordStatus` — your own names and status colours for
-  records.
-
-The calendar shows one month at a time and loads up to 1000 records for the
-weeks on screen; it says so when there are more. Coptic calendars are not
-supported yet.
-
-Omit `CalendarDayRecords` for a full-width calendar. Custom side content can
-opt into the side column with `data-calendar-panel=""` on its outer DOM element.
-Try the same recipe in the [Working List playground](/playground/working-list?display=calendar):
-switch between table and calendar, change the date field or system calendar,
-and simulate slow, failed or hanging requests.
-
-### Copyable composition
-
-This is the exact source used by the example and playground, covered by browser
-tests. Save it as `ListCalendar.tsx` beside the example. It is app-owned code,
-not an import from a third block.
-
-<HighlightedCodeBlock
-    code={listCalendarSource}
-    language="tsx"
-    contentClassName="max-h-[640px]"
-/>
-
-The important connections are:
-
-- Wait for `useWorkingListMeta().activeConfiguration` before reading list state.
-- `useWorkingListDateBounds(fieldId)` supplies the instance calendar, server time
-  zone and saved-filter bounds. Handle unsupported Coptic before mounting
-  `useCalendarState`.
-- Pass `useCalendarState().visibleRange` to `useWorkingListDateRange`. Do not use
-  the table's current page as a month's workload; the hook loads the date window
-  without changing saved filters or table pagination.
-- Map dates, labels and statuses into plain calendar records. Keep record IDs
-  (event IDs for visits), not a shared person's ID. `getWorkingListRecordStatus`
-  supplies tracker status labels and marks past scheduled visits overdue in the
-  server time zone; the recipe chooses colours.
-- Forward pending, error/retry, `isUpdating` and `truncated` results unchanged.
-  A limited result set must not look like a complete workload.
-- Keep tracker targets outside Calendar, and look them up when a record is
-  clicked. Use `onSelectedDayChange` for your own date-selection flow.
-
-### Migrating from Working List Calendar
-
-The `working-list-calendar` registry item and its compatibility exports have
-been removed. Install `working-list` and `calendar`, copy this recipe, and
-replace `WorkingListCalendar*` children with their `Calendar*` counterparts.
-Use `useCalendar` (`state`, `actions`, `meta`) and `useCalendarDay` for custom UI;
-list queries and tracker targets remain in your composition. Shared DOM slots
-use `calendar-*`; the recipe has no legacy `working-list-calendar` slot.
-Previously copied source is not automatically removed from your application.
-
-## API reference
-
-### WorkingList
-
-- `programId: string` — **required.** The tracker or event program to list.
-- `orgUnitId: string` — **required.** The organisation unit to list records
-  for.
-- `defaultViewId?: string | null` — the saved view to start on. Defaults to
-  the program's default view.
-- `viewId?: string | null` — controlled saved view. Requires `onViewChange`.
-- `onViewChange?: (id: string) => void` — called when the user switches view.
-- `defaultPagination?: WorkingListPagination` — the starting page. Defaults
-  to `{ page: 1, pageSize: 15 }`.
-- `pagination?: WorkingListPagination` — controlled page. Requires
-  `onPaginationChange`.
-- `onPaginationChange?: (next: WorkingListPagination) => void` — called when
-  the page or page size changes.
-
-`WorkingListPagination` is `{ page: number; pageSize: 10 | 15 | 25 | 50 | 100 }`;
-the allowed sizes are exported as `WORKING_LIST_PAGE_SIZES`. `WorkingList`
-also accepts the props of an `<article>` element, such as `className`.
-
-### WorkingListTable
-
-- `onRowClick?: (target: WorkingListResultTarget) => void` — makes rows open
-  on click and Enter.
-- `dataQualityMode?: 'hidden' | 'highlighted'` — whether invalid values are
-  highlighted. Rows with invalid values are shown either way.
-
-### Other parts
-
-- `WorkingListViewSwitcher` — the saved views bar.
-- `WorkingListToolbar` — the container for the controls below.
-- `WorkingListColumnSelector` — show, hide, and reorder columns.
-- `WorkingListFilterControls` — filters for the program's fields.
-- `WorkingListToolbarActions` — save the current view, plus a menu with the
-  other view actions and download.
-
-All parts accept `className` and the props of their HTML element. Each part
-has a translated accessible name by default; pass `aria-label` to change it.
-
-### Hooks
-
-For your own parts rendered inside `WorkingList`:
-
-- `useWorkingListState()` — the selected view and its current filters,
-  columns, and sorting.
-- `useWorkingListMeta()` — loading status, program metadata, saved views,
-  rows, and pagination.
-- `useWorkingListActions()` — change filters, columns, sorting, pagination,
-  and views, or download the visible rows.
+Each example's **Code** tab contains its complete source. The calendar
+example includes two files; copy both and choose the program and organisation
+unit from your own DHIS2 instance.

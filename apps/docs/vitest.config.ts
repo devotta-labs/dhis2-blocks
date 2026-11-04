@@ -29,6 +29,28 @@ export default defineConfig({
             },
             {
                 plugins: [tailwindcss()],
+                optimizeDeps: {
+                    include: [
+                        'lucide-react',
+                        'shiki/core',
+                        'shiki/engine/javascript',
+                        'shiki/langs/shellscript.mjs',
+                        'shiki/langs/css.mjs',
+                        'shiki/langs/diff.mjs',
+                        'shiki/langs/html.mjs',
+                        'shiki/langs/javascript.mjs',
+                        'shiki/langs/json.mjs',
+                        'shiki/langs/jsx.mjs',
+                        'shiki/langs/markdown.mjs',
+                        'shiki/langs/python.mjs',
+                        'shiki/langs/sql.mjs',
+                        'shiki/langs/tsx.mjs',
+                        'shiki/langs/typescript.mjs',
+                        'shiki/langs/yaml.mjs',
+                        'shiki/themes/github-light.mjs',
+                        'shiki/themes/github-dark.mjs',
+                    ],
+                },
                 resolve: {
                     alias: [
                         {
@@ -54,7 +76,10 @@ export default defineConfig({
                 },
                 test: {
                     name: 'browser',
-                    include: ['src/examples/**/*.test.tsx'],
+                    include: [
+                        'src/examples/**/*.test.tsx',
+                        'src/components/**/*.test.tsx',
+                    ],
                     setupFiles: [
                         fileURLToPath(
                             new URL(

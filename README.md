@@ -160,8 +160,7 @@ Copy the tested recipe from `/blocks/working-list#calendar-view`. It connects
 `useWorkingListDateBounds` and `useWorkingListDateRange` to Calendar's visible
 range, maps records and forwards tracker targets without changing the saved
 view. The same recipe runs in `/playground/working-list?display=calendar`.
-The former `working-list-calendar` block and aliases are removed; the docs
-include migration instructions. Calendar stays independent of Working List.
+Calendar stays independent of Working List.
 
 ## Working List block
 

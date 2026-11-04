@@ -242,7 +242,8 @@ const MAX_VALUES = 5
 /**
  * Key data values, the first 5 with the rest behind "Show N more". The
  * host's `dataElementIds` win; otherwise the stage's `displayInReports`
- * elements; a stage that flags none shows none.
+ * elements; a stage that flags none shows none. Without the stage's
+ * metadata every value shows, as text under its data element id.
  */
 export const TimelineEventValues = ({
     dataElementIds,
@@ -255,22 +256,23 @@ export const TimelineEventValues = ({
     const { calendar, locale } = useTimelineMeta()
     const [open, setOpen] = useState(false)
     const listId = useId()
-    if (stage === undefined) {
-        return null
-    }
-    const ids = dataElementIds ?? stage.reportDataElementIds
+    const ids =
+        dataElementIds ??
+        stage?.reportDataElementIds ??
+        event.dataValues.map((v) => v.dataElement)
     const values = ids.flatMap((id) => {
-        const info = stage.dataElements.get(id)
         const value = event.dataValues.find((v) => v.dataElement === id)?.value
-        if (info === undefined || value === undefined) {
+        if (value === undefined) {
             return []
         }
-        const text = formatDhis2Value(value, info.meta, {
-            calendar,
-            locale,
-            orgUnitNames,
-        })
-        return text === '' ? [] : [{ id, name: info.name, text }]
+        // Unknown to the stage: named by its id, like a change to it.
+        const info = stage?.dataElements.get(id)
+        const text = formatDhis2Value(
+            value,
+            info?.meta ?? { valueType: 'TEXT' },
+            { calendar, locale, orgUnitNames }
+        )
+        return text === '' ? [] : [{ id, name: info?.name ?? id, text }]
     })
     if (values.length === 0) {
         return null

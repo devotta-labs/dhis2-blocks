@@ -1,6 +1,20 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('offline native custom functions playground', () => {
+    test('publishes only the offline lab on the default production route', async ({
+        page,
+    }) => {
+        await page.goto('/lab.html')
+        await expect(
+            page.getByRole('heading', {
+                name: 'Custom rule functions',
+                exact: true,
+            })
+        ).toBeVisible()
+        await expect(page.getByLabel('Evaluated custom result')).toHaveText(
+            '13.4'
+        )
+    })
     test.beforeEach(async ({ page }) => {
         await page.goto('/lab.html?mode=custom')
         await expect(

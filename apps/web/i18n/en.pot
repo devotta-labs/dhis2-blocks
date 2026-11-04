@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-16T12:06:08.651Z\n"
-"PO-Revision-Date: 2026-10-16T12:06:08.651Z\n"
+"POT-Creation-Date: 2026-11-04T18:59:12.921Z\n"
+"PO-Revision-Date: 2026-11-04T18:59:12.921Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -72,18 +72,6 @@ msgstr "Event ID"
 msgid "Tracked entity ID"
 msgstr "Tracked entity ID"
 
-msgid "Working list context"
-msgstr "Working list context"
-
-msgid "Program"
-msgstr "Program"
-
-msgid "Choose a program"
-msgstr "Choose a program"
-
-msgid "Search for a program"
-msgstr "Search for a program"
-
 msgid "No programs available."
 msgstr "No programs available."
 
@@ -95,6 +83,18 @@ msgstr "Some programs are being filtered by the chosen organisation unit"
 
 msgid "Show all programs"
 msgstr "Show all programs"
+
+msgid "Working list context"
+msgstr "Working list context"
+
+msgid "Program"
+msgstr "Program"
+
+msgid "Choose a program"
+msgstr "Choose a program"
+
+msgid "Search for a program"
+msgstr "Search for a program"
 
 msgid "Organisation unit"
 msgstr "Organisation unit"
@@ -127,17 +127,17 @@ msgstr "Technical details"
 msgid "Reload application"
 msgstr "Reload application"
 
-msgid "Search"
-msgstr "Search"
-
-msgid "Could not search organisation units"
-msgstr "Could not search organisation units"
-
 msgid "Could not load more organisation units"
 msgstr "Could not load more organisation units"
 
 msgid "Show more"
 msgstr "Show more"
+
+msgid "Could not search organisation units"
+msgstr "Could not search organisation units"
+
+msgid "Search"
+msgstr "Search"
 
 msgid "Main navigation"
 msgstr "Main navigation"
@@ -220,6 +220,18 @@ msgstr "Next"
 msgid "Page {{page}}"
 msgstr "Page {{page}}"
 
+msgid "Remove {{name}}"
+msgstr "Remove {{name}}"
+
+msgid "Filter options"
+msgstr "Filter options"
+
+msgid "Filter {{label}}"
+msgstr "Filter {{label}}"
+
+msgid "No options match"
+msgstr "No options match"
+
 msgid ""
 "This form can never search in {{program}}. It has no usable ID field and "
 "too few usable fields to reach the program's minimum."
@@ -258,12 +270,12 @@ msgstr ""
 
 msgid ""
 "`{{attribute}}` ({{label}}) is composed both as FinderField and as "
-"FinderRangeField under one FinderProvider for {{program}}; they cannot "
-"share a value, so use one."
+"FinderRangeField in one FinderForm for {{program}}; they cannot share a "
+"value, so use one."
 msgstr ""
 "`{{attribute}}` ({{label}}) is composed both as FinderField and as "
-"FinderRangeField under one FinderProvider for {{program}}; they cannot "
-"share a value, so use one."
+"FinderRangeField in one FinderForm for {{program}}; they cannot share a "
+"value, so use one."
 
 msgid "{{label}} (`{{id}}`, unique)"
 msgstr "{{label}} (`{{id}}`, unique)"
@@ -924,6 +936,15 @@ msgstr "{{valueType}} requires an integer"
 msgid "“{{name}}” will be permanently deleted."
 msgstr "“{{name}}” will be permanently deleted."
 
+msgctxt ""
+"TEXT), which DHIS2 searches only from version 2.43, so it can't be searched "
+"in {{program}} on this server."
+msgid "`{{attribute}}` ({{label}}) holds several options (MULTI"
+msgstr ""
+"`{{attribute}}` ({{label}}) holds several options (MULTI_TEXT), which DHIS2 "
+"searches only from version 2.43, so it can't be searched in {{program}} on "
+"this server."
+
 msgctxt "NEGATIVE requires a value less than zero"
 msgid "INTEGER"
 msgstr "INTEGER_NEGATIVE requires a value less than zero"
@@ -947,3 +968,11 @@ msgstr "TRUE_ONLY accepts only true"
 msgctxt "INTERVAL requires a value from zero to one"
 msgid "UNIT"
 msgstr "UNIT_INTERVAL requires a value from zero to one"
+
+msgctxt "Application title"
+msgid "__MANIFEST_APP_TITLE"
+msgstr "@dhis2-blocks/web"
+
+msgctxt "Application description"
+msgid "__MANIFEST_APP_DESCRIPTION"
+msgstr "DHIS2 wrapper application for developing Working List blocks"

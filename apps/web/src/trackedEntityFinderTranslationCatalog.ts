@@ -28,6 +28,10 @@ export const trackedEntityFinderTranslationCatalog = () => [
     i18n.t('Previous'),
     i18n.t('Next'),
     i18n.t('Page {{page}}'),
+    i18n.t('Remove {{name}}'),
+    i18n.t('Filter options'),
+    i18n.t('Filter {{label}}'),
+    i18n.t('No options match'),
     i18n.t(
         "This form can never search in {{program}}. It has no usable ID field and too few usable fields to reach the program's minimum."
     ),
@@ -37,13 +41,16 @@ export const trackedEntityFinderTranslationCatalog = () => [
         "`{{attribute}}` ({{label}}) has value type {{valueType}}, which can't be searched in {{program}}."
     ),
     i18n.t(
+        "`{{attribute}}` ({{label}}) holds several options (MULTI_TEXT), which DHIS2 searches only from version 2.43, so it can't be searched in {{program}} on this server."
+    ),
+    i18n.t(
         "`{{attribute}}` ({{label}}) can't be searched this way in {{program}} because the search operators it needs are blocked."
     ),
     i18n.t(
         "`{{attribute}}` ({{label}}) can't be a range in {{program}}. FinderRangeField works only for number, date and date-time attributes that aren't unique; use FinderField."
     ),
     i18n.t(
-        '`{{attribute}}` ({{label}}) is composed both as FinderField and as FinderRangeField under one FinderProvider for {{program}}; they cannot share a value, so use one.'
+        '`{{attribute}}` ({{label}}) is composed both as FinderField and as FinderRangeField in one FinderForm for {{program}}; they cannot share a value, so use one.'
     ),
     i18n.t('{{label}} (`{{id}}`, unique)'),
     i18n.t('{{label}} (`{{id}}`)'),

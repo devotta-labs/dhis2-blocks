@@ -1,12 +1,17 @@
 ---
 title: Calendar
-description: A month calendar for projects, appointments, deadlines, or any dated records.
+description: See scheduled visits and clinic activity, day by day.
 ---
 
 import { ExampleCard } from '../../components/ExampleCard'
 import { InstallCommand } from '../../components/InstallCommand'
 
-<ExampleCard slug="calendar/projects" />
+See who is expected at the clinic and select a day to review their visits.
+
+<ExampleCard slug="calendar/visits" />
+
+This example uses fictional antenatal care (ANC) visits. The Schedule button
+is illustrative only; it does not create a visit.
 
 ## Installation
 
@@ -61,7 +66,7 @@ The marked element must be a direct DOM child of the calendar layout. A custom
 component or React fragment can return it directly; if you add a DOM wrapper,
 put the marker on that wrapper. Group multiple side widgets inside one marked
 panel. Nested markers do not change the outer calendar's layout. These rules
-also apply to `CalendarProvider` and the Working List Calendar aliases.
+also apply to `CalendarProvider`.
 
 ## Dates and calendars
 
@@ -81,8 +86,8 @@ query, pass `results` instead: `{ status: 'pending' }`,
 `{ status: 'error', retry }`, or
 `{ status: 'ready', records, isUpdating?, truncated? }`.
 
-To query only the visible weeks, use the same headless state as the working-list
-adapter. The inclusive range includes neighbouring days in the first and last
+To query only the visible weeks, use `useCalendarState`. The inclusive range
+includes neighbouring days in the first and last
 week; there is no callback/effect round trip to learn it.
 
 ```tsx

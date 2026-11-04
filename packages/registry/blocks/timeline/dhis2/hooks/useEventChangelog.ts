@@ -32,8 +32,8 @@ export const useEventChangelog = (
     const query = useQuery({
         queryKey: timelineKeys.eventChangeLog(event),
         enabled,
-        retry: (failures: number, error: Error) =>
-            !isNotFound(error) && failures < 3,
+        // A failure shows its error at once; opening the changes again retries.
+        retry: false,
         queryFn: async ({ signal }) =>
             unwrap(
                 await fetchEventChangeLog(

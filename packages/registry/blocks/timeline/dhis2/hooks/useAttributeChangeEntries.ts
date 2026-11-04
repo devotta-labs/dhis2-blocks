@@ -23,10 +23,6 @@ export interface AttributeChangeEntriesOptions {
     maxRows?: number
 }
 
-/** A 404 is an answer: the server has no changelog endpoint. */
-const retryUnlessNotFound = (failures: number, error: Error) =>
-    !isNotFound(error) && failures < 3
-
 /**
  * Attribute value changes, one entry per save, newest first. Without
  * `program` the server only returns the type's attributes, so this asks once
@@ -49,7 +45,8 @@ export const useAttributeChangeEntries = ({
                 program,
                 maxRows
             ),
-            retry: retryUnlessNotFound,
+            // A failure shows its notice and Retry at once.
+            retry: false,
             queryFn: async ({ signal }: { signal: AbortSignal }) =>
                 unwrap(
                     await fetchAttributeChangeLog(

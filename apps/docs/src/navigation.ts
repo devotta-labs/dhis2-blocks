@@ -30,7 +30,6 @@ export const docsNavigation: readonly NavigationSection[] = [
                     { title: 'Alert', href: '/blocks/alert' },
                     { title: 'Badge', href: '/blocks/badge' },
                     { title: 'Button', href: '/blocks/button' },
-                    { title: 'Calendar', href: '/blocks/calendar' },
                     { title: 'Card', href: '/blocks/card' },
                     { title: 'Chart', href: '/blocks/chart' },
                     { title: 'Checkbox', href: '/blocks/checkbox' },
@@ -59,6 +58,7 @@ export const docsNavigation: readonly NavigationSection[] = [
                 title: 'EMR',
                 links: [
                     { title: 'Working List', href: '/blocks/working-list' },
+                    { title: 'Calendar', href: '/blocks/calendar' },
                     {
                         title: 'Observation Cards',
                         href: '/blocks/observation-cards',

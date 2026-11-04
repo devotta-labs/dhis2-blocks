@@ -128,7 +128,7 @@ describe('TimelineChangeEntry', () => {
 
         await expect
             .poll(() => container.textContent)
-            .toContain('Gestational age at visit24')
+            .toContain('Gestational age at visit 24')
         expect(container.textContent).not.toContain('(empty) → 24')
         expect(container.textContent).toContain('13 → (empty)')
     })
@@ -198,7 +198,7 @@ describe('TimelineChangeEntry', () => {
 
             await expect
                 .poll(() => container.textContent)
-                .toContain(`Event date${expected}`)
+                .toContain(`Event date ${expected}`)
             expect(container.textContent).not.toContain('00:00')
         }
     )
@@ -222,7 +222,7 @@ describe('TimelineChangeEntry', () => {
         await expect
             .poll(() => container.textContent)
             .toContain(
-                `Completed date${day('2026-06-12')} 09:30 → ${day('2026-06-13')}`
+                `Completed date ${day('2026-06-12')} 09:30 → ${day('2026-06-13')}`
             )
         expect(container.textContent).toContain('Coordinates')
         expect(container.textContent).toContain('2.5, 1.5')
@@ -300,7 +300,7 @@ describe('TimelineChangeEntry', () => {
         expect(
             container.querySelector('[data-slot=timeline-change-row]')
                 ?.textContent
-        ).toBe('Referred toouOld → Bo Hospital')
+        ).toBe('Referred to ouOld → Bo Hospital')
     })
 
     it.each(['ltr', 'rtl'] as const)(

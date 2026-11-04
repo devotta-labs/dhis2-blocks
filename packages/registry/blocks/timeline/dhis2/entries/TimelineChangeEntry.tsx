@@ -125,21 +125,21 @@ const ChangeRowItem = ({ change }: { change: ResolvedChange }) => {
         )
     }
     return (
-        <div data-slot="timeline-change-row" className="contents">
+        <div data-slot="timeline-change-row">
             <dt
                 data-slot="timeline-change-field"
-                className="text-dhis2-grey-700"
+                className="me-1 inline text-dhis2-grey-700"
             >
                 {change.name}
-            </dt>
+            </dt>{' '}
             {/* Each value is isolated so its script can't reorder the row, and
                 the arrow turns: before → after in the reading direction. */}
-            <dd className="m-0 text-dhis2-grey-900">
+            <dd className="m-0 inline font-medium text-dhis2-grey-900">
                 {change.type === 'CREATE' ? null : (
                     <>
                         <bdi
                             data-slot="timeline-change-before"
-                            className="text-dhis2-grey-700 line-through"
+                            className="font-normal text-dhis2-grey-700 line-through"
                         >
                             <Value text={show(change.previousValue)} />
                         </bdi>{' '}
@@ -170,7 +170,7 @@ export const TimelineChangeList = ({
             {...props}
             data-slot="timeline-change-list"
             className={cn(
-                'm-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm',
+                'm-0 flex flex-col gap-0.5 text-sm wrap-break-word',
                 className
             )}
         >

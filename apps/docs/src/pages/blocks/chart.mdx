@@ -1,0 +1,212 @@
+---
+title: Chart
+description: Bar, line and donut charts in the DHIS2 style, with tooltips and legends.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="chart/visits" />
+
+A chart turns a handful of numbers into a picture users can read at a
+glance: how this month compares to last, whether coverage is climbing, which
+age group carries most cases. It wraps [Recharts](https://recharts.org) and
+adds the DHIS2 look: muted grid lines and axis labels, a tooltip and a legend
+that name each series, and colours you set once per series.
+
+It is for the few charts that belong inside your app, such as a summary on
+a dashboard tile or a trend beside a form. For open-ended analysis, link to
+the Data Visualizer app instead.
+
+## Installation
+
+<InstallCommand item="chart" />
+
+This also installs `recharts`, which draws the chart.
+
+## Usage
+
+A chart has three parts: your **data**, a **config** that names and colours
+each series, and the **Recharts chart** inside `ChartContainer`.
+
+```tsx
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+    type ChartConfig,
+} from '@/components/dhis2/ui/chart'
+import { Bar, BarChart, XAxis } from 'recharts'
+
+// One row per bar group: the label, then a number per series.
+const visits = [
+    { month: 'Aug', first: 221, fourth: 141 },
+    { month: 'Sep', first: 238, fourth: 156 },
+    { month: 'Oct', first: 213, fourth: 162 },
+]
+
+// One entry per series: what users read, and its colour.
+const config = {
+    first: { label: 'ANC 1st visit', color: '#147cd7' },
+    fourth: { label: 'ANC 4th visit', color: '#009688' },
+} satisfies ChartConfig
+
+export const AncVisits = () => (
+    <ChartContainer config={config} className="h-72 w-full">
+        <BarChart data={visits}>
+            <XAxis dataKey="month" />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar dataKey="first" fill="var(--color-first)" />
+            <Bar dataKey="fourth" fill="var(--color-fourth)" />
+        </BarChart>
+    </ChartContainer>
+)
+```
+
+The keys tie it together. `first` is a field in each row, an entry in the
+config, and the `dataKey` of a bar. `ChartContainer` turns each config colour
+into a CSS variable, `--color-first`, so the bar, its tooltip dot and its
+legend swatch always match.
+
+Everything inside the container is plain Recharts. Any chart, axis or shape
+from its documentation works here.
+
+## Choosing a chart
+
+Pick the chart by the question users are asking:
+
+- **How do these compare?** Use bars. Side-by-side bars compare a few series
+  across a few groups, such as visits per facility.
+- **How is this changing?** Use a line. It shows a trend across many periods
+  better than bars, and a gap or dip stands out.
+- **What share is each part?** Use a donut, but only for two to five parts
+  that add up to a whole. Small differences between slices are hard to see.
+- **What is the exact number?** Use a [Table](/blocks/table). Users read
+  values from a chart only roughly.
+
+## Trends over time
+
+<ExampleCard slug="chart/trend" />
+
+A line chart suits monthly or weekly values. A few touches make it easier
+to read:
+
+- Start the value axis at 0 with `domain={[0, 100]}` on `YAxis`, so a small
+  change does not look like a big one.
+- Show the unit: `tickFormatter` on the axis adds it to each tick, and a
+  label such as "Penta 3 coverage (%)" carries it into the tooltip.
+- Draw a target or threshold with a dashed `ReferenceLine`, so users see at
+  once whether a value is above or below it.
+- Turn off the dots with `dot={false}` when there are many periods; the
+  tooltip still shows each value on hover.
+
+## Parts of a whole
+
+<ExampleCard slug="chart/share" />
+
+In a donut, each row is one slice, so the colour goes on the row instead of
+the series. Give each row a `fill` that points at its config entry, and tell
+the tooltip and legend which field names the slice with `nameKey`:
+
+```tsx
+const cases = [
+    { age: 'under5', cases: 412, fill: 'var(--color-under5)' },
+    { age: 'child', cases: 268, fill: 'var(--color-child)' },
+]
+
+const config = {
+    under5: { label: 'Under 5', color: '#147cd7' },
+    child: { label: '5 to 14', color: '#009688' },
+} satisfies ChartConfig
+
+<PieChart>
+    <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+    <Pie data={cases} dataKey="cases" nameKey="age" innerRadius="55%" />
+    <ChartLegend
+        content={<ChartLegendContent nameKey="age" />}
+        itemSorter={null}
+    />
+</PieChart>
+```
+
+## Colours
+
+- Use colours from the DHIS2 palette, such as blue `#147cd7`, teal
+  `#009688`, yellow `#ff9302` and grey `#a0adba`, so the chart sits well
+  next to the rest of the app.
+- Write them as values in the config, not as `var(--color-dhis2-…)`. Tailwind
+  only outputs the theme colours your app uses as classes, so a variable
+  can be missing.
+- If the data comes with a legend set in DHIS2, use its colours instead,
+  so the chart matches the maps and reports users already know.
+- Keep it to about five series. Beyond that, colours get hard to tell apart;
+  split the chart or use a table.
+- Do not rely on colour alone. The legend and tooltip name every series, so
+  users who cannot tell two colours apart can still read the chart.
+
+## Tooltips and legends
+
+`ChartTooltip` and `ChartLegend` read their labels from the config, so you
+write each name only once.
+
+- `ChartTooltipContent` shows the hovered group and every series in it.
+  `indicator` sets its marker to `dot`, `line` or `dashed`, and `hideLabel`
+  drops the heading, which suits a donut.
+- `ChartLegendContent` shows a swatch and label per series. Leave it out
+  when there is only one series and the heading already names it.
+- Recharts sorts the legend alphabetically. Pass `itemSorter={null}` to
+  `ChartLegend` to keep the order of your data, such as age groups from
+  youngest to oldest.
+
+## Size
+
+`ChartContainer` fills the width it is given and keeps a 16:9 shape. Set a
+height with `className`, such as `h-72 w-full`, when the chart needs to be
+taller or shorter. It resizes with its container, so it works on a phone.
+
+A chart can only measure a box that is on screen. If it sits in a tab or a
+section that starts closed, render it once that part opens.
+
+## Data from DHIS2
+
+Charts usually show numbers from the analytics API: for example one data
+element over the last twelve months for one org unit. Each row of the
+response is a list of text values in the order of its `headers`, and
+`metaData.items` holds the display name of every id. Turn the rows into the
+shape the chart wants:
+
+```ts
+const period = response.headers.findIndex(({ name }) => name === 'pe')
+const value = response.headers.findIndex(({ name }) => name === 'value')
+
+const data = response.rows.map((row) => ({
+    month: response.metaData.items[row[period]].name,
+    visits: Number(row[value]),
+}))
+```
+
+Analytics leaves out periods with no data. If a gap matters, such as a month
+where a facility did not report, add those periods back as rows with no
+value, so the line breaks instead of skipping the month.
+
+## Accessibility
+
+- Give every chart a heading or a sentence that says what it shows and
+  what users should notice.
+- Users can tab to the chart and move between points with the arrow keys;
+  the tooltip follows.
+- For numbers people need to act on, show the same data in a table too, or
+  link to it.
+
+## API reference
+
+- `ChartContainer` — wraps one Recharts chart. Takes `config`, sizes the
+  chart to its box, and applies the DHIS2 styles.
+- `ChartConfig` — the type of `config`: per key, a `label` and a `color`,
+  or a `theme` with a colour for `light` and `dark`. An optional `icon`
+  replaces the swatch in the tooltip and legend.
+- `ChartTooltip` — Recharts' `Tooltip`. Pass `content={<ChartTooltipContent />}`.
+- `ChartTooltipContent` — the DHIS2 tooltip. Takes `indicator`, `hideLabel`,
+  `hideIndicator`, `nameKey`, `labelKey`, `formatter` and `labelFormatter`.
+- `ChartLegend` — Recharts' `Legend`. Pass `content={<ChartLegendContent />}`.
+- `ChartLegendContent` — the DHIS2 legend. Takes `nameKey` and `hideIcon`.

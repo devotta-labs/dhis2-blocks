@@ -106,26 +106,11 @@ const ELEMENTS = {
 
 export type LabElement = keyof typeof ELEMENTS
 
-export const elementSpec = (element: LabElement): ElementSpec =>
-    ELEMENTS[element]
+const elementSpec = (element: LabElement): ElementSpec => ELEMENTS[element]
 
 /** Whether a name, such as one from the lab's saved settings, is one of the lab's elements. */
 export const isLabElement = (value: string | undefined): value is LabElement =>
     value !== undefined && Object.hasOwn(ELEMENTS, value)
-
-/** The element's value type first, then its name, such as "NUMBER · Haemoglobin". */
-export const elementTitle = (element: LabElement) => {
-    const spec = elementSpec(element)
-    const type = spec.options
-        ? `${spec.valueType} (option set)`
-        : spec.valueType
-    return `${type} · ${spec.name}`
-}
-
-/** The data element choices for a card, labelled by value type. */
-export const ELEMENT_CHOICES = Object.keys(ELEMENTS)
-    .filter(isLabElement)
-    .map((element) => [element, elementTitle(element)] as const)
 
 /** What the lab's DHIS2 holds for one card's data element. */
 export interface LabCard {

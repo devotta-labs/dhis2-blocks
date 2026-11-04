@@ -4,7 +4,7 @@ import type {
     WorkingListCalendarTone,
     WorkingListCalendarWeekday,
 } from '@/components/working-list-calendar'
-import type { LabNetwork } from '../network'
+import type { LabNetwork } from '../../network'
 
 export const LAB_PROGRAM = 'labProgram1'
 export const LAB_STAGE = 'labStage001'
@@ -63,12 +63,11 @@ export interface LabView {
     limit: number
     clickable: boolean
     controlledDay: boolean
-    layout: 'calendar' | 'table' | 'both' | 'toggle'
+    layout: 'calendar' | 'both' | 'toggle'
     navigation: boolean
     grid: boolean
     dayRecords: boolean
     toolbar: boolean
-    readout: boolean
     /** What the lab passes as recordLabel; `default` passes nothing. */
     recordLabel: 'default' | 'fields' | 'blank' | 'rowId'
     /** Fields `recordLabel: 'fields'` joins, in order; '' leaves a slot out. */

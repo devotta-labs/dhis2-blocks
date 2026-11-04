@@ -70,7 +70,7 @@ describe('the observations lab server', () => {
     })
 
     it('pages events by page and pageSize', () => {
-        const settings = settingsOf('500 readings')
+        const settings = { ...DEFAULT_SETTINGS, visits: 500 }
         const pages = [1, 2, 3].map((page) => eventsPage(settings, { page }))
         expect(pages.map((events) => events.length)).toEqual([200, 200, 100])
         const ids = pages.flat().map(({ event }) => event)
@@ -95,15 +95,17 @@ describe('the observations lab server', () => {
 
     it('sets the system calendar for Ethiopian calendar', () => {
         expect(
-            generateLabData(settingsOf('Ethiopian calendar'), TODAY).systemInfo
-                .calendar
+            generateLabData(
+                { ...DEFAULT_SETTINGS, calendar: 'ethiopian' },
+                TODAY
+            ).systemInfo.calendar
         ).toBe('ethiopian')
     })
 
     it('generates the same data for the same settings', () => {
-        expect(generateLabData(settingsOf('Jumpy RMNCH-like'), TODAY)).toEqual(
-            generateLabData(settingsOf('Jumpy RMNCH-like'), TODAY)
-        )
+        expect(
+            generateLabData(settingsOf('Jumpy blood pressure'), TODAY)
+        ).toEqual(generateLabData(settingsOf('Jumpy blood pressure'), TODAY))
     })
 
     it('mixes in scheduled and skipped events when asked', () => {
@@ -118,7 +120,7 @@ describe('the observations lab server', () => {
     })
 
     it('has a preset whose smoker card shows Yes', () => {
-        const smoker = eventsPage(settingsOf('Jumpy RMNCH-like'))
+        const smoker = eventsPage(settingsOf('Jumpy blood pressure'))
             .filter(
                 ({ status }) => status === 'ACTIVE' || status === 'COMPLETED'
             )

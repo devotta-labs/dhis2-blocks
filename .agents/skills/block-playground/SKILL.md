@@ -8,7 +8,7 @@ description: Add a block to the docs playground (/playground/<block>), or extend
 Read `apps/docs/src/playground/README.md` first. It lists the steps, the shared
 parts and how to write the fake server. Then follow it:
 
-- Start from `apps/docs/src/playground/observation-cards/`, the smaller lab.
+- Start from `apps/docs/src/playground/observation-cards/`, the smallest lab.
   Copy it, then grow the server and controls the block needs.
 - Register the block in `blocks.ts` and `PlaygroundPage.tsx`; nothing else
   routes to it.
@@ -23,9 +23,10 @@ parts and how to write the fake server. Then follow it:
 - Generate the data from settings in code; do not record fixtures.
 - Keep the fake server a plain function in its own file, with a Vitest test
   next to it.
-- Look at `apps/docs/src/playground/working-list-calendar/` for a full lab:
-  generated data, many presets, a live DHIS2 mode, callbacks and a readout of
-  the block's state.
+- Look at `apps/docs/src/playground/working-list/` for a full lab: one page
+  with two displays (`table/`, `calendar/`), each with generated data, many
+  presets, a live DHIS2 mode and a log of its callbacks. `table/` has a server
+  that honours filters and sort, and keeps what the block writes.
 
 Before finishing, run `pnpm dev:docs`, open `/playground/<block>` and check
 that the block renders, a failing endpoint shows its error, a hanging one shows

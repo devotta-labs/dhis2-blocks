@@ -1,52 +1,39 @@
 /*
- * The lab's look: pale instrument panes on a grey desk, inked like a terminal. `.lab` holds the tokens;
- * `.lab-chrome` dresses the panes' own elements and never the block under test. Everything sits in the base
- * layer, so a lab's utilities still win.
+ * The playground's look, on the docs' own tokens so it themes with them: a settings rail and cards like the rest of
+ * the site, around a dotted canvas. `.lab` names the playground's colours; `.lab-chrome` dresses its own controls
+ * and never the block under test. Everything sits in the base layer, so a lab's utilities still win.
  */
 @layer base {
     .lab {
-        --lab-desk: #c8cbca;
-        --lab-paper: #f2f2f0;
-        --lab-paper-inset: #e6e6e3;
-        --lab-ink: #1b1b19;
-        --lab-ink-2: #444441;
-        --lab-ink-3: #5d5c57;
-        --lab-ink-4: #8e8d87;
-        --lab-rule: rgb(27 27 23 / 0.3);
-        --lab-rule-faint: rgb(27 27 23 / 0.12);
-        --lab-fault: #9e2f1a;
+        --lab-desk: var(--muted);
+        --lab-paper: var(--card);
+        --lab-paper-inset: var(--muted);
+        --lab-ink: var(--foreground);
+        --lab-ink-2: var(--accent-foreground);
+        --lab-ink-3: var(--muted-foreground);
+        --lab-ink-4: color-mix(
+            in srgb,
+            var(--muted-foreground) 65%,
+            transparent
+        );
+        --lab-rule: var(--border);
+        --lab-rule-faint: color-mix(in srgb, var(--border) 55%, transparent);
+        --lab-fault: var(--destructive);
         --lab-caution: #b7791f;
-        /* Pane title bars and section labels. */
-        --lab-bar: var(--lab-ink);
-        --lab-bar-ink: var(--lab-paper);
-        --lab-bar-hover: var(--lab-ink-2);
+        /* Small labels: a log column's name. */
+        --lab-bar: var(--muted);
+        --lab-bar-ink: var(--muted-foreground);
+        --lab-bar-hover: var(--accent);
     }
 
-    /* The same instrument after dark, with the docs: lit ink on unlit panes. */
     .dark .lab {
         color-scheme: dark;
-        --lab-desk: #0e100f;
-        --lab-paper: #1a1c1b;
-        --lab-paper-inset: #232625;
-        --lab-ink: #e4e2da;
-        --lab-ink-2: #c4c2ba;
-        --lab-ink-3: #a3a19a;
-        --lab-ink-4: #6f6e69;
-        --lab-rule: rgb(228 226 218 / 0.28);
-        --lab-rule-faint: rgb(228 226 218 / 0.1);
-        --lab-fault: #e57a60;
         --lab-caution: #e2ab4f;
-        --lab-bar: #2a2d2b;
-        --lab-bar-ink: #a3a19a;
-        --lab-bar-hover: #343836;
     }
 
     .lab-chrome {
-        font-family:
-            ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas,
-            monospace;
-        font-size: 12px;
-        line-height: 1.4;
+        font-size: 13px;
+        line-height: 1.45;
         font-variant-numeric: tabular-nums;
         color: var(--lab-ink);
     }
@@ -59,61 +46,37 @@
         scrollbar-width: thin;
     }
 
-    .lab-chrome ::selection {
-        background: var(--lab-ink);
-        color: var(--lab-paper);
-    }
-
-    /* A section is a box with its name set into the border. */
+    /* A section is a titled group, ruled off from the one above. */
     .lab-chrome fieldset {
         margin: 0;
         min-width: 0;
-        border: 1px solid var(--lab-rule);
-        padding: 6px 8px 8px;
+        border: 0;
+        border-top: 1px solid var(--lab-rule);
+        padding: 12px 0 0;
     }
 
     .lab-chrome legend {
-        padding: 0 4px;
-        background: var(--lab-bar);
-        color: var(--lab-bar-ink);
-        font-size: 10.5px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
+        float: left;
+        width: 100%;
+        margin-bottom: 6px;
+        padding: 0;
+        color: var(--lab-ink);
+        font-size: 13px;
+        font-weight: 600;
     }
 
-    /* A disclosure is a box within a section; open, its summary rules off its rows. */
-    .lab-chrome details {
-        border: 1px solid var(--lab-rule-faint);
-    }
-
-    .lab-chrome summary {
-        padding: 2px 6px;
-        cursor: pointer;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .lab-chrome summary:hover {
-        background: var(--lab-paper-inset);
-    }
-
-    .lab-chrome details[open] > summary {
-        border-bottom: 1px solid var(--lab-rule-faint);
-    }
-
-    .lab-chrome details > div {
-        padding: 6px;
+    .lab-chrome legend + * {
+        clear: both;
     }
 
     .lab-chrome input:not([type='checkbox'], [type='radio']),
     .lab-chrome select {
         appearance: none;
-        min-height: 20px;
-        border: 1px solid var(--lab-rule);
-        border-radius: 0;
-        padding: 0 4px;
-        background-color: var(--lab-paper-inset);
+        min-height: 28px;
+        border: 1px solid var(--input);
+        border-radius: calc(var(--radius) - 2px);
+        padding: 0 8px;
+        background-color: var(--background);
         color: inherit;
         font: inherit;
     }
@@ -129,67 +92,62 @@
     }
 
     .lab-chrome select {
-        padding-inline-end: 16px;
+        padding-inline-end: 22px;
         background-image:
-            linear-gradient(45deg, transparent 50%, var(--lab-ink) 50%),
-            linear-gradient(135deg, var(--lab-ink) 50%, transparent 50%);
+            linear-gradient(45deg, transparent 50%, var(--lab-ink-3) 50%),
+            linear-gradient(135deg, var(--lab-ink-3) 50%, transparent 50%);
         background-position:
-            right 8px center,
-            right 4px center;
+            right 12px center,
+            right 8px center;
         background-size: 4px 4px;
         background-repeat: no-repeat;
     }
 
-    /* A checkbox is a square lamp: lit when on. */
     .lab-chrome input[type='checkbox'] {
-        appearance: none;
-        width: 12px;
-        height: 12px;
+        width: 14px;
+        height: 14px;
         margin: 0;
-        border: 1px solid var(--lab-ink);
-        background: var(--lab-paper-inset);
+        accent-color: var(--primary);
         flex-shrink: 0;
-    }
-
-    .lab-chrome input[type='checkbox']:checked {
-        background: var(--lab-ink);
-        box-shadow: inset 0 0 0 2px var(--lab-paper-inset);
     }
 
     .lab-chrome button {
         border: 1px solid var(--lab-rule);
-        border-radius: 0;
-        padding: 0 6px;
-        min-height: 20px;
-        background: transparent;
+        border-radius: calc(var(--radius) - 2px);
+        padding: 0 8px;
+        min-height: 26px;
+        background: var(--background);
         color: inherit;
         font: inherit;
-        font-size: 11px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
+        font-size: 12px;
+        font-weight: 500;
         cursor: pointer;
+        transition:
+            background-color 120ms,
+            border-color 120ms,
+            color 120ms;
     }
 
     .lab-chrome button:hover {
-        background: var(--lab-rule-faint);
+        background: var(--lab-paper-inset);
     }
 
     .lab-chrome button[aria-pressed='true'] {
-        border-color: var(--lab-ink);
-        background: var(--lab-ink);
-        color: var(--lab-paper);
+        border-color: var(--primary);
+        background: var(--primary);
+        color: var(--primary-foreground);
     }
 
     .lab-chrome :focus-visible {
-        outline: 2px solid var(--lab-ink);
-        outline-offset: -1px;
+        outline: 2px solid var(--ring);
+        outline-offset: 1px;
     }
 
     /* The scope behind the block under test. */
     .lab-graticule {
         background-color: var(--lab-paper-inset);
         background-image: radial-gradient(
-            var(--lab-rule-faint) 1px,
+            var(--lab-rule) 1px,
             transparent 1.5px
         );
         background-size: 16px 16px;

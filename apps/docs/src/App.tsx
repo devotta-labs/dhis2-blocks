@@ -68,10 +68,48 @@ const router = createBrowserRouter([
                         '/blocks/working-list',
                         './pages/blocks/working-list.mdx'
                     ),
+                    // The calendar is now part of the Working List page.
+                    {
+                        path: '/blocks/working-list-calendar',
+                        element: (
+                            <Navigate
+                                to="/blocks/working-list#calendar-view"
+                                replace
+                            />
+                        ),
+                    },
+                    docRoute('/blocks/alert', './pages/blocks/alert.mdx'),
+                    docRoute('/blocks/button', './pages/blocks/button.mdx'),
+                    docRoute('/blocks/badge', './pages/blocks/badge.mdx'),
+                    docRoute('/blocks/card', './pages/blocks/card.mdx'),
                     docRoute(
-                        '/blocks/working-list-calendar',
-                        './pages/blocks/working-list-calendar.mdx'
+                        '/blocks/input-group',
+                        './pages/blocks/input-group.mdx'
                     ),
+                    docRoute('/blocks/popover', './pages/blocks/popover.mdx'),
+                    docRoute(
+                        '/blocks/radio-group',
+                        './pages/blocks/radio-group.mdx'
+                    ),
+                    docRoute('/blocks/spinner', './pages/blocks/spinner.mdx'),
+                    docRoute('/blocks/switch', './pages/blocks/switch.mdx'),
+                    docRoute('/blocks/textarea', './pages/blocks/textarea.mdx'),
+                    docRoute(
+                        '/blocks/toggle-group',
+                        './pages/blocks/toggle-group.mdx'
+                    ),
+                    docRoute('/blocks/chart', './pages/blocks/chart.mdx'),
+                    docRoute('/blocks/checkbox', './pages/blocks/checkbox.mdx'),
+                    docRoute('/blocks/combobox', './pages/blocks/combobox.mdx'),
+                    docRoute('/blocks/dialog', './pages/blocks/dialog.mdx'),
+                    docRoute(
+                        '/blocks/dropdown-menu',
+                        './pages/blocks/dropdown-menu.mdx'
+                    ),
+                    docRoute('/blocks/input', './pages/blocks/input.mdx'),
+                    docRoute('/blocks/select', './pages/blocks/select.mdx'),
+                    docRoute('/blocks/table', './pages/blocks/table.mdx'),
+                    docRoute('/blocks/tooltip', './pages/blocks/tooltip.mdx'),
                     docRoute('/blocks/sidebar', './pages/blocks/sidebar.mdx'),
                     docRoute(
                         '/blocks/context-selector',

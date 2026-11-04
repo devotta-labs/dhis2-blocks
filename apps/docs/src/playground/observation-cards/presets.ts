@@ -67,25 +67,7 @@ export const PRESETS: readonly Preset[] = [
         visits: 12,
         cards: cards({ spread: 'climbing' }),
     }),
-    preset('Everyday', 'One reading', { visits: 1 }),
-    preset('States', 'Never recorded', {
-        cards: cards({ neverRecorded: true }),
-    }),
-    preset('States', 'Stale', { daysSinceLast: 400, staleAfterDays: 180 }),
-    preset('States', 'Partial access', { visits: 12, unreadableStage: true }),
-    preset('States', 'Unsupported value type', {
-        cards: cards({ element: 'location' }),
-    }),
-    preset('States', 'Not in program', {
-        cards: cards({ notInProgram: true }),
-    }),
-    preset('Values', 'Coloured option set', {
-        cards: cards({ element: 'severity' }),
-    }),
-    preset('Values', 'TRUE_ONLY untick', {
-        cards: cards({ element: 'dangerSigns', trueOnlyUntick: true }),
-    }),
-    preset('Values', 'Jumpy RMNCH-like', {
+    preset('Everyday', 'Jumpy blood pressure', {
         visits: 30,
         irregularVisits: true,
         cards: cards(
@@ -94,10 +76,8 @@ export const PRESETS: readonly Preset[] = [
             { spread: 'climbing' }
         ),
     }),
-    preset('Values', '500 readings', { visits: 500 }),
-    preset('Values', 'Long label and unit', {
-        cards: cards({ longLabel: true }, { longLabel: true }),
-        cardWidth: 200,
+    preset('Values', 'Coloured option set', {
+        cards: cards({ element: 'severity' }),
     }),
     preset('Values', 'Dates and text', {
         cards: cards(
@@ -106,18 +86,14 @@ export const PRESETS: readonly Preset[] = [
             { element: 'severity', optionColours: false }
         ),
     }),
-    preset('Calendars', 'Ethiopian calendar', { calendar: 'ethiopian' }),
-    preset('Calendars', 'Nepali calendar', { calendar: 'nepali' }),
-    preset('Server', 'Metadata fails', {
-        network: {
-            ...DEFAULT_SETTINGS.network,
-            endpoints: { programs: { behaviour: 'fails' } },
-        },
+    preset('Values', 'Long label and unit', {
+        cards: cards({ longLabel: true }, { longLabel: true }),
+        cardWidth: 200,
     }),
-    preset('Server', 'Events hang', {
-        network: {
-            ...DEFAULT_SETTINGS.network,
-            endpoints: { 'tracker/events': { behaviour: 'hangs' } },
-        },
+    preset('States', 'One reading', { visits: 1 }),
+    preset('States', 'Never recorded', {
+        cards: cards({ neverRecorded: true }),
     }),
+    preset('States', 'Stale', { daysSinceLast: 400, staleAfterDays: 180 }),
+    preset('States', 'Partial access', { visits: 12, unreadableStage: true }),
 ]

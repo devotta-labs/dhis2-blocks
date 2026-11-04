@@ -1,0 +1,66 @@
+---
+title: Alert
+description: A message on the page about something users should know.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="alert/variants" />
+
+An alert tells users something about the page they are on: that data is
+still coming in, that they are offline, or that something failed. It stays
+in place until the situation changes. It replaces the `@dhis2/ui` NoticeBox.
+
+## Installation
+
+<InstallCommand item="alert" />
+
+## Usage
+
+```tsx
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from '@/components/dhis2/ui/alert'
+
+export const OfflineNotice = () => (
+    <Alert variant="warning">
+        <AlertTitle>You are offline</AlertTitle>
+        <AlertDescription>
+            Changes are kept on this device until you are back online.
+        </AlertDescription>
+    </Alert>
+)
+```
+
+Keep the title short and say what it means in the description. Add a link or
+a button to the description when users can do something about it.
+
+## Kinds of message
+
+- `default` — information, in blue.
+- `success` — something worked, in green.
+- `warning` — something needs care, in yellow.
+- `destructive` — something failed, in red.
+
+For errors, `ErrorAlert` adds the DHIS2 error icon:
+
+```tsx
+import { ErrorAlert } from '@/components/dhis2/ui/alert'
+
+;<ErrorAlert title="The list could not be loaded">
+    Check your connection and try again.
+</ErrorAlert>
+```
+
+## API reference
+
+- `Alert` — `variant?: 'default' | 'success' | 'warning' | 'destructive'`.
+  Put an icon first to show it beside the text.
+- `AlertTitle` — the message, in bold.
+- `AlertDescription` — more detail, links, or buttons.
+- `AlertAction` — a button in the top corner, such as Dismiss.
+- `ErrorAlert` — a red alert with an icon. `title` is required; children
+  become the description.

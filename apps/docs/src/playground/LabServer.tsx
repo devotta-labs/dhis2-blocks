@@ -30,8 +30,11 @@ export const LabServerScope = <Request extends NetworkRequest>({
 }: {
     network: LabNetwork
     resources: readonly string[]
-    /** Answers one request with JSON shaped like DHIS2's response. */
-    respond: (request: Request) => object | Promise<object>
+    /** Answers one request, a read or a mutation by `type`, with JSON shaped like DHIS2's response. */
+    respond: (
+        request: Request,
+        type: 'read' | 'create' | 'update' | 'replace' | 'delete'
+    ) => object | Promise<object>
     log: Log
     apiVersion?: number
     /** What app-runtime's `useConfig().systemInfo` returns, for blocks that read it there. */
@@ -50,14 +53,14 @@ export const LabServerScope = <Request extends NetworkRequest>({
     )
     const data = useMemo(() => {
         const answer = (
-            _type: string,
+            type: 'read' | 'create' | 'update' | 'replace' | 'delete',
             request: Request,
             options?: { signal?: AbortSignal }
         ) =>
             throughNetwork(
                 network,
-                request,
-                () => respond(request),
+                type === 'read' ? request : { ...request, type },
+                () => respond(request, type),
                 log,
                 options?.signal
             )

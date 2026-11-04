@@ -1,110 +1,61 @@
-import type { Endpoint, LabNetwork } from './network'
+import { Section, Segmented } from './controls'
+import type { LabNetwork } from './network'
 
-const BEHAVIOURS = [
-    [undefined, 'OK', 'Answers'],
-    ['fails', '500', 'Fails with a 500'],
-    ['hangs', 'HANG', 'Never answers'],
-] as const
+type NetworkChoice = 'normal' | 'slow' | 'fails' | 'hangs'
 
-const toDelay = (value: string) =>
-    value === '' ? undefined : Math.max(0, Math.round(Number(value)) || 0)
+const CHOICES: ReadonlyArray<readonly [NetworkChoice, string]> = [
+    ['normal', 'Normal'],
+    ['slow', 'Slow'],
+    ['fails', 'Fails'],
+    ['hangs', 'Hangs'],
+]
 
-const row = 'grid grid-cols-[minmax(0,1fr)_3.5rem_auto] items-center gap-1'
+const NORMAL_DELAY = 250
+const SLOW_DELAY = 2000
 
-/** A default delay, then each endpoint's own delay (blank uses the default) and whether it answers. */
+/** The network for a choice: every request slow, or the block's records failing or never coming. */
+const networkFor = (
+    choice: NetworkChoice,
+    records: readonly string[]
+): LabNetwork => {
+    if (choice === 'normal' || choice === 'slow') {
+        return {
+            delay: choice === 'slow' ? SLOW_DELAY : NORMAL_DELAY,
+            endpoints: {},
+        }
+    }
+    return {
+        delay: NORMAL_DELAY,
+        endpoints: Object.fromEntries(
+            records.map((resource) => [resource, { behaviour: choice }])
+        ),
+    }
+}
+
+const choiceOf = (network: LabNetwork): NetworkChoice => {
+    const behaviours = Object.values(network.endpoints).map(
+        (endpoint) => endpoint?.behaviour
+    )
+    if (behaviours.includes('hangs')) return 'hangs'
+    if (behaviours.includes('fails')) return 'fails'
+    return network.delay >= SLOW_DELAY ? 'slow' : 'normal'
+}
+
+/** How the fake server's network behaves, as one choice; `records` are the resources that fail or hang. */
 export const NetworkControls = ({
     network,
-    endpoints,
+    records,
     onChange,
 }: {
     network: LabNetwork
-    endpoints: readonly string[]
+    records: readonly string[]
     onChange: (network: LabNetwork) => void
-}) => {
-    const setEndpoint = (name: string, changes: Endpoint) =>
-        onChange({
-            ...network,
-            endpoints: {
-                ...network.endpoints,
-                [name]: { ...network.endpoints[name], ...changes },
-            },
-        })
-
-    return (
-        <div className="flex flex-col gap-0.5 text-[11px]">
-            <label className={row}>
-                <span className="text-(--lab-ink-3)">DEFAULT MS</span>
-                <input
-                    type="number"
-                    min={0}
-                    step={100}
-                    className="text-end"
-                    value={network.delay}
-                    onChange={(event) =>
-                        onChange({
-                            ...network,
-                            delay: toDelay(event.target.value) ?? 0,
-                        })
-                    }
-                />
-            </label>
-            {endpoints.map((name) => {
-                const endpoint = network.endpoints[name]
-                return (
-                    <div
-                        key={name}
-                        role="group"
-                        aria-label={name}
-                        className={`${row} hover:bg-(--lab-rule-faint)`}
-                    >
-                        <span
-                            className={`truncate ${endpoint?.delay !== undefined || endpoint?.behaviour ? 'font-bold' : ''}`}
-                            title={name}
-                        >
-                            {name}
-                        </span>
-                        <input
-                            type="number"
-                            min={0}
-                            step={100}
-                            aria-label="Delay (ms)"
-                            placeholder={String(network.delay)}
-                            className="text-end"
-                            value={endpoint?.delay ?? ''}
-                            onChange={(event) =>
-                                setEndpoint(name, {
-                                    delay: toDelay(event.target.value),
-                                })
-                            }
-                        />
-                        <span className="flex">
-                            {BEHAVIOURS.map(([behaviour, short, long]) => (
-                                <label
-                                    key={short}
-                                    title={long}
-                                    className="relative"
-                                >
-                                    <input
-                                        type="radio"
-                                        name={`behaviour-${name}`}
-                                        aria-label={long}
-                                        className="peer sr-only"
-                                        checked={
-                                            endpoint?.behaviour === behaviour
-                                        }
-                                        onChange={() =>
-                                            setEndpoint(name, { behaviour })
-                                        }
-                                    />
-                                    <span className="-ms-px block cursor-pointer border border-(--lab-rule) px-1 text-[10px] leading-[18px] peer-checked:border-(--lab-ink) peer-checked:bg-(--lab-ink) peer-checked:text-(--lab-paper) peer-focus-visible:outline-2 peer-focus-visible:outline-(--lab-ink) hover:bg-(--lab-rule-faint) peer-checked:hover:bg-(--lab-ink)">
-                                        {short}
-                                    </span>
-                                </label>
-                            ))}
-                        </span>
-                    </div>
-                )
-            })}
-        </div>
-    )
-}
+}) => (
+    <Section title="Network">
+        <Segmented
+            value={choiceOf(network)}
+            options={CHOICES}
+            onChange={(choice) => onChange(networkFor(choice, records))}
+        />
+    </Section>
+)

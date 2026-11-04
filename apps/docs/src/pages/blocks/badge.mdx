@@ -1,0 +1,59 @@
+---
+title: Badge
+description: A small pill for a status or a short label.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="badge/status" />
+
+A badge is a small pill that labels something at a glance: a record's
+status, a risk level, or a count. It does the job of the `@dhis2/ui` Tag.
+
+## Installation
+
+<InstallCommand item="badge" />
+
+## Usage
+
+```tsx
+import { Badge } from '@/components/dhis2/ui/badge'
+
+export const EnrollmentStatus = () => (
+    <Badge variant="secondary">Completed</Badge>
+)
+```
+
+## Kinds of badge
+
+- `default` — blue, for the status that needs attention, such as "Active".
+- `secondary` — grey, for a calm status, such as "Completed".
+- `outline` — just a border, for the least important labels.
+
+## Colours from DHIS2
+
+Options and legends in DHIS2 often have a colour of their own. Pass it with
+`style`, so a badge matches the maps and reports users know:
+
+```tsx
+<Badge style={{ backgroundColor: option.style.color, color: '#212934' }}>
+    {option.name}
+</Badge>
+```
+
+Pick a text colour that is easy to read on that background: dark text on
+light colours, white on dark ones.
+
+## Writing badges
+
+- Keep them to one or two words. A badge is a label, not a sentence.
+- Do not rely on colour alone: the word should say the status by itself.
+- A badge is not a button. To make one open a page, pass
+  `render={<a href="…" />}`.
+
+## API reference
+
+- `variant` — `default`, `secondary` or `outline`.
+- `render` — draws the badge as another element, such as a link.
+- `style` and `className` — change its colours or size.

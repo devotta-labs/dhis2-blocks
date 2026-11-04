@@ -12,10 +12,10 @@ import { LabPicker } from './labPicker'
 
 /** Each block's lab, loaded when its page opens, so the docs never carry a lab they do not show. */
 const LABS = {
-    'working-list-calendar': lazy(() =>
-        import('./working-list-calendar/CalendarLab').then(
-            ({ CalendarLab }) => ({ default: CalendarLab })
-        )
+    'working-list': lazy(() =>
+        import('./working-list/WorkingListLab').then(({ WorkingListLab }) => ({
+            default: WorkingListLab,
+        }))
     ),
     'observation-cards': lazy(() =>
         import('./observation-cards/ObservationsLab').then(
@@ -44,17 +44,16 @@ const BlockPicker = ({ slug }: { slug: PlaygroundSlug }) => {
             <SelectTrigger
                 aria-label="Block"
                 size="sm"
-                className="rounded-none border-(--lab-rule) bg-(--lab-paper-inset) text-xs tracking-normal text-(--lab-ink) normal-case shadow-none hover:bg-(--lab-paper-inset) focus-visible:border-(--lab-ink) focus-visible:shadow-none data-popup-open:border-(--lab-ink) data-popup-open:shadow-none [&>span]:text-(--lab-ink)"
+                className="min-h-9 rounded-md border-input bg-background ps-3 pe-2 text-sm font-medium text-foreground shadow-none hover:bg-muted focus-visible:border-ring focus-visible:shadow-none data-popup-open:border-ring data-popup-open:shadow-none [&>span]:text-muted-foreground"
             >
                 <SelectValue />
             </SelectTrigger>
-            {/* The menu opens outside the lab, so it brings the lab's tokens and type along. */}
-            <SelectContent className="lab lab-chrome rounded-none border-(--lab-ink) bg-(--lab-paper) text-(--lab-ink) shadow-none">
+            <SelectContent className="mt-1 rounded-md border-border bg-card p-1 text-card-foreground shadow-md">
                 {PLAYGROUND_BLOCKS.map((block) => (
                     <SelectItem
                         key={block.slug}
                         value={block.slug}
-                        className="py-1 text-xs text-(--lab-ink) data-highlighted:bg-(--lab-paper-inset) data-selected:bg-transparent [&>span:first-child]:text-(--lab-ink)"
+                        className="rounded-sm py-1.5 text-sm text-foreground data-highlighted:bg-muted data-selected:bg-transparent [&>span:first-child]:text-primary"
                     >
                         {block.title}
                     </SelectItem>

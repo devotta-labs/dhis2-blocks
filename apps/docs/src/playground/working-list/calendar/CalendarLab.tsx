@@ -1,4 +1,10 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import {
+    useCallback,
+    useContext,
+    useMemo,
+    useState,
+    type ReactNode,
+} from 'react'
 import {
     ToggleGroup,
     ToggleGroupItem,
@@ -19,15 +25,16 @@ import {
     WorkingListCalendarGrid,
     WorkingListCalendarNavigation,
 } from '@/components/working-list-calendar'
-import { LivePreviewHost } from '../../preview/LivePreviewHost'
-import { PreviewSpinner } from '../../preview/PreviewShell'
-import { LabLayout } from '../LabLayout'
-import { LogPanel } from '../LogPanel'
-import { CanvasBoundary, LabServerScope } from '../LabServer'
-import { NetworkControls } from '../NetworkControls'
-import type { LabNetwork, RequestLogEntry } from '../network'
-import { usePresetParam } from '../usePresetParam'
-import { PresetControls, Section, Segmented } from '../controls'
+import { LivePreviewHost } from '../../../preview/LivePreviewHost'
+import { PreviewSpinner } from '../../../preview/PreviewShell'
+import { LabLayout } from '../../LabLayout'
+import { LogPanel } from '../../LogPanel'
+import { CanvasBoundary, LabServerScope } from '../../LabServer'
+import { NetworkControls } from '../../NetworkControls'
+import type { LabNetwork, RequestLogEntry } from '../../network'
+import { usePresetParam } from '../../usePresetParam'
+import { DisplayChoice } from '../displayChoice'
+import { PresetControls, Section, Segmented } from '../../controls'
 import {
     LAB_ORG_UNIT,
     LAB_PROGRAM,
@@ -36,7 +43,6 @@ import {
     recordStatusFor,
     weekendFor,
     type LabConfig,
-    type LabData,
     type LabServer,
     type LabView,
 } from './labData'
@@ -48,9 +54,9 @@ import {
     hasTrackedEntityView,
     type LabRequest,
 } from './labServer'
-import { CalendarReadout, PlainCount } from './panels'
+import { PlainCount } from './panels'
 import { DEFAULT_CONFIG, PRESETS } from './presets'
-import { DataControls, ServerControls, ViewControls } from './settings'
+import { OptionsControls } from './settings'
 
 type Width = 'phone' | 'tablet' | 'desktop' | 'full'
 
@@ -183,7 +189,6 @@ const LabComposition = ({
                 </WorkingListCalendarGrid>
             )}
             {view.dayRecords && <WorkingListCalendarDayRecords />}
-            {view.readout && <CalendarReadout />}
         </WorkingListCalendar>
     )
     const table = (
@@ -195,7 +200,6 @@ const LabComposition = ({
     )
 
     let body: ReactNode = calendar
-    if (view.layout === 'table') body = table
     if (view.layout === 'both') {
         body = (
             <div className="grid gap-2 xl:grid-cols-2">
@@ -205,6 +209,10 @@ const LabComposition = ({
         )
     }
     if (view.layout === 'toggle') body = toggle === 'table' ? table : calendar
+    // Columns are the table's; a calendar has none to choose.
+    const showsTable =
+        view.layout === 'both' ||
+        (view.layout === 'toggle' && toggle === 'table')
 
     return (
         <WorkingList
@@ -216,7 +224,7 @@ const LabComposition = ({
             {view.toolbar && <WorkingListViewSwitcher />}
             {view.toolbar && (
                 <WorkingListToolbar>
-                    <WorkingListColumnSelector />
+                    {showsTable && <WorkingListColumnSelector />}
                     <WorkingListFilterControls />
                     {view.layout === 'toggle' && (
                         <ToggleGroup
@@ -255,6 +263,7 @@ const defaultViewFor = (config: LabConfig) => {
 /** The working list calendar lab: every prop, part and kind of data, beside the requests it makes. */
 export const CalendarLab = () => {
     const [linkedPreset, setLinkedPreset] = usePresetParam()
+    const displayChoice = useContext(DisplayChoice)
     const [saved, setSaved] = useState(() => load(linkedPreset))
     const { mode, config, live, width } = saved
     const [run, setRun] = useState(0)
@@ -271,11 +280,7 @@ export const CalendarLab = () => {
         setRequests([])
         setRun((count) => count + 1)
     }
-    // Data and server changes need a fresh list; props apply in place.
-    const setData = (data: LabData) => {
-        update({ preset: undefined, config: { ...config, data } })
-        restart()
-    }
+    // Server and network changes need a fresh list; props apply in place.
     const setServer = (server: LabServer) => {
         update({ preset: undefined, config: { ...config, server } })
         restart()
@@ -331,36 +336,20 @@ export const CalendarLab = () => {
                             restart()
                         }}
                     />
+                    {displayChoice}
                     {mode === 'lab' ? (
-                        <>
-                            <PresetControls
-                                presets={PRESETS}
-                                selected={saved.preset}
-                                onPick={(each) => {
-                                    update({
-                                        preset: each.name,
-                                        config: each.config,
-                                    })
-                                    setCallbacks([])
-                                    restart()
-                                }}
-                            />
-                            <DataControls
-                                data={config.data}
-                                onChange={setData}
-                            />
-                            <ServerControls
-                                server={config.server}
-                                onChange={setServer}
-                            />
-                            <Section title="Network">
-                                <NetworkControls
-                                    network={config.network}
-                                    endpoints={RESOURCES}
-                                    onChange={setNetwork}
-                                />
-                            </Section>
-                        </>
+                        <PresetControls
+                            presets={PRESETS}
+                            selected={saved.preset}
+                            onPick={(each) => {
+                                update({
+                                    preset: each.name,
+                                    config: each.config,
+                                })
+                                setCallbacks([])
+                                restart()
+                            }}
+                        />
                     ) : (
                         <Section title="Live DHIS2">
                             <label className="flex flex-col gap-0.5">
@@ -395,7 +384,22 @@ export const CalendarLab = () => {
                             </label>
                         </Section>
                     )}
-                    <ViewControls view={config.view} onChange={setView} />
+                    <OptionsControls
+                        server={mode === 'lab' ? config.server : undefined}
+                        view={config.view}
+                        onServerChange={setServer}
+                        onViewChange={setView}
+                    />
+                    {mode === 'lab' && (
+                        <NetworkControls
+                            network={config.network}
+                            records={[
+                                'tracker/trackedEntities',
+                                'tracker/events',
+                            ]}
+                            onChange={setNetwork}
+                        />
+                    )}
                     <Section title="Canvas">
                         <Segmented
                             value={width}

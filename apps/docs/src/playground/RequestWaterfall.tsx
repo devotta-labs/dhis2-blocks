@@ -53,7 +53,7 @@ export const RequestWaterfall = ({
     }, [pending])
 
     if (requests.length === 0) {
-        return <p className="m-0 text-(--lab-ink-3)">NO REQUESTS</p>
+        return <p className="m-0 text-(--lab-ink-3)">No requests</p>
     }
 
     const { span, bars } = placeBars(
@@ -64,8 +64,8 @@ export const RequestWaterfall = ({
     return (
         <div className="flex flex-col gap-0.5 text-[11px]">
             <div className={`${grid} text-(--lab-ink-3)`}>
-                <span>{requests.length} REQ</span>
-                <span className="text-end">MS</span>
+                <span>{requests.length} requests</span>
+                <span className="text-end">ms</span>
                 <span className="relative flex h-4 justify-between border-b border-(--lab-rule) bg-[repeating-linear-gradient(to_right,var(--lab-rule)_0_1px,transparent_1px_10%)] bg-size-[100%_4px] bg-bottom bg-no-repeat">
                     <span>0</span>
                     <span>{Math.round(span / 2)}</span>

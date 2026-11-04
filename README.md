@@ -129,7 +129,7 @@ Render `WorkingListCalendar` inside `WorkingList`, beside or instead of
 `dateField` picks the date that places records. The calendar reads the list's
 filters through `useWorkingListDateBounds` and `useWorkingListDateRange` and
 never changes the saved view.
-See `/blocks/working-list-calendar`.
+See the calendar view on `/blocks/working-list`.
 
 ## Working List block
 

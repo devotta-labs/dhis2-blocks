@@ -8,9 +8,11 @@ export interface NetworkRequest {
     resource: string
     id?: string
     params?: object
+    /** A mutation's kind; reads leave it out. */
+    type?: 'create' | 'update' | 'replace' | 'delete'
 }
 
-export interface Endpoint {
+interface Endpoint {
     /** Overrides the network's delay for this endpoint (ms). */
     delay?: number
     behaviour?: 'fails' | 'hangs'

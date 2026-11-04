@@ -13,22 +13,6 @@ export const Section = ({
     </fieldset>
 )
 
-/** A collapsible group inside a section; its summary says what it holds. */
-export const Disclosure = ({
-    summary,
-    defaultOpen = false,
-    children,
-}: {
-    summary: ReactNode
-    defaultOpen?: boolean
-    children: ReactNode
-}) => (
-    <details open={defaultOpen}>
-        <summary>{summary}</summary>
-        <div className="flex flex-col gap-1">{children}</div>
-    </details>
-)
-
 export const Check = ({
     checked,
     onChange,
@@ -96,7 +80,7 @@ export const NumberRow = ({
                     }}
                     className="w-20 text-end"
                 />
-                <span className="w-5 text-(--lab-ink-3)">{suffix}</span>
+                {suffix && <span className="text-(--lab-ink-3)">{suffix}</span>}
             </span>
         </label>
     )
@@ -138,24 +122,56 @@ export const SelectRow = <T extends string>({
 export const Segmented = <T extends string>({
     value,
     options,
+    compact = false,
     onChange,
 }: {
     value: T
     options: ReadonlyArray<readonly [T, string]>
+    /** Sized to its options rather than the row, for beside a label. */
+    compact?: boolean
     onChange: (value: T) => void
 }) => (
-    <div className="flex border border-(--lab-ink)">
+    <div
+        className={`flex gap-0.5 rounded-md bg-muted p-0.5 ${compact ? 'shrink-0' : ''}`}
+    >
         {options.map(([option, name]) => (
             <button
                 key={option}
                 type="button"
                 aria-pressed={value === option}
-                className="flex-1 border-0"
+                className={`border-0 bg-transparent text-muted-foreground hover:bg-transparent hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm ${compact ? 'min-h-6 px-2.5 text-[11px]' : 'flex-1'}`}
                 onClick={() => onChange(option)}
             >
                 {name}
             </button>
         ))}
+    </div>
+)
+
+/** A label with a small segmented choice beside it, for a short either-or setting. */
+export const SegmentedRow = <T extends string>({
+    label,
+    value,
+    options,
+    onChange,
+}: {
+    label: string
+    value: T
+    options: ReadonlyArray<readonly [T, string]>
+    onChange: (value: T) => void
+}) => (
+    <div
+        role="group"
+        aria-label={label}
+        className="flex items-center justify-between gap-2"
+    >
+        {label}
+        <Segmented
+            compact
+            value={value}
+            options={options}
+            onChange={onChange}
+        />
     </div>
 )
 
@@ -169,11 +185,11 @@ export const PresetControls = <P extends { group: string; name: string }>({
     selected?: string
     onPick: (preset: P) => void
 }) => (
-    <Section title="Presets">
-        <div className="flex flex-col gap-3">
+    <Section title="Examples">
+        <div className="flex flex-col gap-2.5">
             {[...new Set(presets.map(({ group }) => group))].map((group) => (
                 <div key={group} className="flex flex-wrap gap-1">
-                    <span className="w-full text-[10px] tracking-[0.1em] text-(--lab-ink-3) uppercase">
+                    <span className="w-full text-xs text-muted-foreground">
                         {group}
                     </span>
                     {presets
@@ -183,7 +199,6 @@ export const PresetControls = <P extends { group: string; name: string }>({
                                 key={each.name}
                                 type="button"
                                 aria-pressed={selected === each.name}
-                                className="tracking-normal normal-case"
                                 onClick={() => onPick(each)}
                             >
                                 {each.name}

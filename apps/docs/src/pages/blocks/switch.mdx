@@ -1,0 +1,53 @@
+---
+title: Switch
+description: An on-or-off setting that takes effect at once.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="switch/settings" />
+
+A switch turns one setting on or off, and the change applies right away,
+like a light switch. It looks like the `@dhis2/ui` Switch.
+
+## Installation
+
+<InstallCommand item="switch" />
+
+<InstallCommand item="label" />
+
+## Usage
+
+Put the switch inside a `Label`, so users can click the text as well:
+
+```tsx
+import { Label } from '@/components/dhis2/ui/label'
+import { Switch } from '@/components/dhis2/ui/switch'
+
+export const Reminders = () => (
+    <Label>
+        <Switch checked={reminders} onCheckedChange={setReminders} />
+        Send visit reminders by SMS
+    </Label>
+)
+```
+
+## Switch or checkbox?
+
+- Use a switch when the change happens at once, with no Save button, such
+  as a setting in a panel.
+- Use a [Checkbox](/blocks/checkbox) when the choice is part of a form that
+  users submit later, or when they pick several options from a list.
+- Write the label as the "on" state: "Show closed facilities", not "Hide
+  closed facilities".
+
+`size="sm"` gives a smaller switch for dense panels and table rows.
+
+## API reference
+
+- `checked` and `onCheckedChange(checked)` — keep the value in your app.
+- `defaultChecked` — the starting value when the switch keeps it.
+- `disabled` — shows the setting but blocks changes.
+- `size` — `default` or `sm`.
+- `name` and `value` — submit the switch with a form.

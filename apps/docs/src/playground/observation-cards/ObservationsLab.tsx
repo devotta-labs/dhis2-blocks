@@ -6,7 +6,7 @@ import {
     ObservationsProvider,
     ObservationValue,
 } from '@/components/observation-cards'
-import { Fragment, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
 import { PresetControls, Section, Segmented } from '../controls'
@@ -14,7 +14,7 @@ import { LabLayout } from '../LabLayout'
 import { LogPanel } from '../LogPanel'
 import { CanvasBoundary, LabServerScope } from '../LabServer'
 import { NetworkControls } from '../NetworkControls'
-import type { LabNetwork, RequestLogEntry } from '../network'
+import type { RequestLogEntry } from '../network'
 import { usePresetParam } from '../usePresetParam'
 import {
     CARD_ELEMENTS,
@@ -28,14 +28,8 @@ import {
     type LabSettings,
 } from './labData'
 import { answer, RESOURCES } from './labServer'
-import { SeriesReadout } from './panels'
 import { cardDefaults, DEFAULT_SETTINGS, PRESETS } from './presets'
-import {
-    CardControls,
-    CardDataControls,
-    ServerControls,
-    VisitControls,
-} from './settings'
+import { OptionsControls } from './settings'
 
 interface Live {
     programId: string
@@ -128,7 +122,7 @@ const save = (saved: Saved) => {
     }
 }
 
-/** The cards on a grid of the chosen width, each with its `useObservation` readout under it. */
+/** The cards on a grid of the chosen width. */
 const Cards = ({
     cards,
     settings,
@@ -137,47 +131,29 @@ const Cards = ({
     settings: LabSettings
 }) => (
     <div
-        className="grid gap-x-4"
+        className="grid gap-4"
         style={{
             gridTemplateColumns: `repeat(${settings.cardsPerRow}, ${settings.cardWidth}px)`,
         }}
     >
-        {cards.map(({ dataElement, unit }, index) => {
-            // Each card's row of the grid has a readout row under it, so cards in a row still share a height.
-            const column = (index % settings.cardsPerRow) + 1
-            const row = Math.floor(index / settings.cardsPerRow) * 2 + 1
-            return (
-                <Fragment key={dataElement}>
-                    <div
-                        style={{ gridColumn: column, gridRow: row }}
-                        className="grid"
-                    >
-                        <ObservationCard
-                            dataElement={dataElement}
-                            unit={unit}
-                            staleAfterDays={
-                                settings.staleAfterDays || undefined
-                            }
-                        >
-                            {settings.arrangement === 'composed' ? (
-                                <>
-                                    <ObservationLabel />
-                                    <ObservationValue />
-                                    <ObservationSparkline points={6} />
-                                    <ObservationRecorded />
-                                </>
-                            ) : null}
-                        </ObservationCard>
-                    </div>
-                    <div
-                        style={{ gridColumn: column, gridRow: row + 1 }}
-                        className="mt-2 mb-4"
-                    >
-                        <SeriesReadout dataElement={dataElement} />
-                    </div>
-                </Fragment>
-            )
-        })}
+        {cards.map(({ dataElement, unit }) => (
+            <div key={dataElement} className="grid">
+                <ObservationCard
+                    dataElement={dataElement}
+                    unit={unit}
+                    staleAfterDays={settings.staleAfterDays || undefined}
+                >
+                    {settings.arrangement === 'composed' ? (
+                        <>
+                            <ObservationLabel />
+                            <ObservationValue />
+                            <ObservationSparkline points={6} />
+                            <ObservationRecorded />
+                        </>
+                    ) : null}
+                </ObservationCard>
+            </div>
+        ))}
     </div>
 )
 
@@ -253,27 +229,15 @@ export const ObservationsLab = () => {
                                     restart()
                                 }}
                             />
-                            <VisitControls
+                            <OptionsControls
                                 settings={settings}
                                 onChange={change}
                             />
-                            <CardDataControls
-                                settings={settings}
-                                onChange={change}
+                            <NetworkControls
+                                network={settings.network}
+                                records={['tracker/events']}
+                                onChange={(network) => change({ network })}
                             />
-                            <ServerControls
-                                settings={settings}
-                                onChange={change}
-                            />
-                            <Section title="Network">
-                                <NetworkControls
-                                    network={settings.network}
-                                    endpoints={RESOURCES}
-                                    onChange={(network: LabNetwork) =>
-                                        change({ network })
-                                    }
-                                />
-                            </Section>
                         </>
                     ) : (
                         <Section title="Live DHIS2">
@@ -305,7 +269,6 @@ export const ObservationsLab = () => {
                             ))}
                         </Section>
                     )}
-                    <CardControls settings={settings} onChange={change} />
                     <button
                         type="button"
                         className="self-start"

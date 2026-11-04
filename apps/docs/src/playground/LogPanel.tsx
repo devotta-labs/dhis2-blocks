@@ -22,21 +22,21 @@ const Column = ({
     children: ReactNode
 }) => (
     <div className="flex min-h-0 min-w-0 flex-col">
-        <div className="flex items-center gap-2 px-2 pt-1.5 pb-1">
-            <span className="bg-(--lab-bar) px-1 text-[10.5px] tracking-[0.1em] text-(--lab-bar-ink)">
+        <div className="flex items-center gap-2 px-3 pt-2 pb-1">
+            <span className="font-sans text-xs font-medium text-muted-foreground">
                 {title}
             </span>
             {onClear && (
                 <button
                     type="button"
-                    className="ms-auto border-0 text-(--lab-ink-3)"
+                    className="ms-auto min-h-5 border-0 bg-transparent px-1.5 font-sans text-xs text-muted-foreground hover:text-foreground"
                     onClick={onClear}
                 >
-                    clr
+                    Clear
                 </button>
             )}
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 text-[11px]">
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-2 text-[11px]">
             {children}
         </div>
     </div>
@@ -60,6 +60,11 @@ const RequestLog = ({ entries }: { entries: RequestLogEntry[] }) => (
                         {code[entry.outcome]}
                         {entry.ms === undefined ? '' : ` ${entry.ms}`}
                     </span>{' '}
+                    {entry.request.type && (
+                        <span className="font-semibold">
+                            {entry.request.type.toUpperCase()}{' '}
+                        </span>
+                    )}
                     {entry.request.resource}
                     {entry.request.id ? `/${entry.request.id}` : ''}
                     {params && (
@@ -100,7 +105,7 @@ export const LogPanel = ({
         >
             {callbacks && (
                 <Column
-                    title={`CALLBACKS ${callbacks.length}`}
+                    title={`Callbacks · ${callbacks.length}`}
                     onClear={onClearCallbacks}
                 >
                     <ol className="m-0 flex list-none flex-col p-0">
@@ -118,12 +123,12 @@ export const LogPanel = ({
             {requests && (
                 <>
                     <Column
-                        title={`REQUESTS ${requests.length}`}
+                        title={`Requests · ${requests.length}`}
                         onClear={onClearRequests}
                     >
                         <RequestLog entries={requests} />
                     </Column>
-                    <Column title="WATERFALL">
+                    <Column title="Waterfall">
                         <RequestWaterfall requests={requests} />
                     </Column>
                 </>

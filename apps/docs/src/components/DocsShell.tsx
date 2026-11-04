@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { ChevronDownIcon } from 'lucide-react'
+import { AnimatePresence, MotionConfig, motion } from 'motion/react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { docsNavigation } from '../navigation'
 
@@ -61,7 +63,7 @@ const SidebarLink = ({
         onClick={onNavigate}
         className={({ isActive }) =>
             [
-                '-ml-px block border-l-2 py-1.5 pr-2 pl-4 text-sm transition-colors',
+                '-ml-px block border-l-2 py-1 pr-2 pl-4 text-sm transition-colors',
                 isActive
                     ? 'border-primary font-medium text-foreground'
                     : 'border-transparent text-muted-foreground hover:text-foreground',
@@ -72,24 +74,113 @@ const SidebarLink = ({
     </NavLink>
 )
 
-const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
-    <nav aria-label="Documentation" className="flex flex-col gap-6 px-1">
-        {docsNavigation.map((group) => (
-            <div key={group.title}>
-                <p className="mb-2 px-2 text-sm font-semibold text-foreground">
-                    {group.title}
-                </p>
+type NavigationSection = (typeof docsNavigation)[number]
+type NavigationLinks = Extract<NavigationSection, { links: unknown }>['links']
+type NavigationCategory = Extract<
+    NavigationSection,
+    { categories: unknown }
+>['categories'][number]
 
-                <ul className="flex flex-col gap-0.5 border-l border-border">
-                    {group.items.map((item) => (
-                        <li key={item.href}>
-                            <SidebarLink {...item} onNavigate={onNavigate} />
-                        </li>
-                    ))}
-                </ul>
-            </div>
+const SidebarLinks = ({
+    links,
+    onNavigate,
+}: {
+    links: NavigationLinks
+    onNavigate?: () => void
+}) => (
+    <ul className="flex flex-col border-l border-border">
+        {links.map((link) => (
+            <li key={link.href}>
+                <SidebarLink {...link} onNavigate={onNavigate} />
+            </li>
         ))}
-    </nav>
+        {links.length === 0 && (
+            <li className="py-1 pr-2 pl-4 text-sm text-muted-foreground/60">
+                Coming soon
+            </li>
+        )}
+    </ul>
+)
+
+/** A category of blocks, folded away by its heading. */
+const SidebarCategory = ({
+    category,
+    onNavigate,
+}: {
+    category: NavigationCategory
+    onNavigate?: () => void
+}) => {
+    const [open, setOpen] = useState(true)
+    const listId = useId()
+
+    return (
+        <div>
+            <button
+                type="button"
+                aria-expanded={open}
+                aria-controls={listId}
+                onClick={() => setOpen((value) => !value)}
+                className="flex w-full items-center justify-between rounded-sm px-2 py-1 text-[13px] font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            >
+                {category.title}
+                <ChevronDownIcon
+                    aria-hidden="true"
+                    className={`size-3.5 transition-transform duration-200 ${open ? '' : '-rotate-90'}`}
+                />
+            </button>
+
+            <AnimatePresence initial={false}>
+                {open && (
+                    <motion.div
+                        key="links"
+                        id={listId}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                        className="overflow-hidden"
+                    >
+                        <div className="mt-0.5 mb-1 ml-2">
+                            <SidebarLinks
+                                links={category.links}
+                                onNavigate={onNavigate}
+                            />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    )
+}
+
+const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
+    <MotionConfig reducedMotion="user">
+        <nav aria-label="Documentation" className="flex flex-col gap-6 px-1">
+            {docsNavigation.map((section) => (
+                <div key={section.title}>
+                    <p className="mb-1.5 px-2 text-sm font-semibold text-foreground">
+                        {section.title}
+                    </p>
+                    {'categories' in section ? (
+                        <div className="flex flex-col gap-1">
+                            {section.categories.map((category) => (
+                                <SidebarCategory
+                                    key={category.title}
+                                    category={category}
+                                    onNavigate={onNavigate}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <SidebarLinks
+                            links={section.links}
+                            onNavigate={onNavigate}
+                        />
+                    )}
+                </div>
+            ))}
+        </nav>
+    </MotionConfig>
 )
 
 const primaryLink = ({ isActive }: { isActive: boolean }) =>
@@ -118,7 +209,7 @@ export const SiteShell = () => {
     return (
         <div className="min-h-screen bg-background text-foreground">
             <header className="fixed inset-x-0 top-0 z-50 h-14 border-b border-border bg-background/95 backdrop-blur">
-                <div className="mx-auto flex h-full max-w-[1536px] items-center gap-3 px-4 md:px-6">
+                <div className="flex h-full items-center gap-3 px-4 md:px-6">
                     <button
                         type="button"
                         aria-label="Toggle navigation"

@@ -1,0 +1,65 @@
+---
+title: Input Group
+description: A text field with an icon, a unit or a button inside it.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="input-group/search" />
+
+An input group puts extra pieces inside a text field: a search icon, a unit
+such as "kg", or a button to clear what users typed. It looks like the
+`@dhis2/ui` Input with a prefix icon.
+
+## Installation
+
+<InstallCommand item="input-group" />
+
+## Usage
+
+```tsx
+import { IconSearch16 } from '@dhis2/ui-icons'
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupInput,
+} from '@/components/dhis2/ui/input-group'
+
+export const SearchPeople = () => (
+    <InputGroup>
+        <InputGroupAddon>
+            <IconSearch16 />
+        </InputGroupAddon>
+        <InputGroupInput
+            aria-label="Search people"
+            placeholder="Search by name or ID"
+        />
+    </InputGroup>
+)
+```
+
+An addon sits at the start of the field. Set `align="inline-end"` to put it
+at the end. Clicking an addon moves the cursor into the field.
+
+## Units and buttons
+
+- Show a unit with `InputGroupText` at the end, such as "kg" or "%", so
+  users do not type it themselves.
+- Add a small button with `InputGroupButton`, such as one that clears the
+  search. An icon-only button needs an `aria-label` that says what it does.
+  After clearing, move the cursor back into the field so users can type again.
+- For a note with a counter or actions below it, use `InputGroupTextarea`
+  and an addon with `align="block-end"`.
+
+## API reference
+
+- `InputGroup` — the field's box.
+- `InputGroupInput` — the text input. Takes the props of
+  [Input](/blocks/input).
+- `InputGroupTextarea` — a [Textarea](/blocks/textarea) in the box instead.
+- `InputGroupAddon` — an icon, text or button. `align` is
+  `inline-start`, `inline-end`, `block-start` or `block-end`.
+- `InputGroupText` — grey text, such as a unit.
+- `InputGroupButton` — a ghost button sized for the field. `size` is
+  `xs`, `sm`, `icon-xs` or `icon-sm`.

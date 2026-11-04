@@ -36,7 +36,20 @@ const NUMBER_TYPES = new Set([
     'PERCENTAGE',
 ])
 
-const kindOf = (meta: AttributeMetadata): FieldKind => {
+/** What the server lets the finder search. */
+export interface SearchSupport {
+    /** Whether each code of a MULTI_TEXT value is matched (DHIS2 2.43+). */
+    readonly multiTextSearch: boolean
+}
+
+const kindOf = (meta: AttributeMetadata, support: SearchSupport): FieldKind => {
+    // Before 2.43 a filter compares the whole stored list, "A,B", so a search
+    // for one code would miss everyone who has more than it.
+    if (meta.valueType === 'MULTI_TEXT') {
+        return meta.options && support.multiTextSearch
+            ? 'multiText'
+            : 'unsupported'
+    }
     if (meta.options) {
         return 'option'
     }
@@ -142,46 +155,52 @@ const canSend = (
     )
 }
 
-const toAttribute = (meta: AttributeMetadata): FinderAttribute => {
-    const kind = kindOf(meta)
-    const blocked = blockedOperators(
-        meta.blockedSearchOperators.filter(
-            (operator): operator is SearchOperator =>
-                SEARCH_OPERATORS.includes(operator)
+const toAttribute =
+    (support: SearchSupport) =>
+    (meta: AttributeMetadata): FinderAttribute => {
+        const kind = kindOf(meta, support)
+        const blocked = blockedOperators(
+            meta.blockedSearchOperators.filter(
+                (operator): operator is SearchOperator =>
+                    SEARCH_OPERATORS.includes(operator)
+            )
         )
-    )
-    const textOperator =
-        kind === 'text' ? textOperatorOf(meta, blocked) : undefined
-    return Object.freeze({
-        id: meta.id,
-        label: meta.label,
-        valueType: meta.valueType,
-        kind,
-        unique: meta.unique,
-        searchable: meta.searchable,
-        displayInList: meta.displayInList,
-        blocked,
-        minCharacters: meta.minCharactersToSearch,
-        usable:
-            meta.searchable &&
-            canSend({ kind, unique: meta.unique, textOperator }, blocked),
-        ...(meta.options && {
-            options: Object.freeze(
-                meta.options.map(({ code, name }) =>
-                    Object.freeze({ code, name })
-                )
-            ),
-        }),
-        ...(textOperator && { textOperator }),
-    })
-}
+        const textOperator =
+            kind === 'text' ? textOperatorOf(meta, blocked) : undefined
+        return Object.freeze({
+            id: meta.id,
+            label: meta.label,
+            valueType: meta.valueType,
+            kind,
+            unique: meta.unique,
+            searchable: meta.searchable,
+            displayInList: meta.displayInList,
+            blocked,
+            minCharacters: meta.minCharactersToSearch,
+            usable:
+                meta.searchable &&
+                canSend({ kind, unique: meta.unique, textOperator }, blocked),
+            ...(meta.options && {
+                options: Object.freeze(
+                    meta.options.map(({ code, name }) =>
+                        Object.freeze({ code, name })
+                    )
+                ),
+            }),
+            ...(textOperator && { textOperator }),
+        })
+    }
 
-export const buildProgramModel = (meta: ProgramMetadata): ProgramModel =>
+/** Without `support`, MULTI_TEXT attributes cannot be searched. */
+export const buildProgramModel = (
+    meta: ProgramMetadata,
+    support: SearchSupport = { multiTextSearch: false }
+): ProgramModel =>
     Object.freeze({
         program: meta.program,
         name: meta.name,
         trackedEntityType: meta.trackedEntityType,
-        attributes: Object.freeze(meta.attributes.map(toAttribute)),
+        attributes: Object.freeze(meta.attributes.map(toAttribute(support))),
         minAttributes: meta.minAttributesRequiredToSearch,
         maxResults: meta.maxTeiCountToReturn,
     })

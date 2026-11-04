@@ -88,6 +88,7 @@ const kindFor = (
     switch (attribute.kind) {
         case 'text':
         case 'option':
+        case 'multiText':
         case 'boolean':
         case 'trueOnly':
             return match === 'exact' ? attribute.kind : undefined
@@ -140,6 +141,22 @@ const valueSchema = (
                         ? eq(code)
                         : undefined
                 )
+        case 'multiText':
+            return z
+                .object({
+                    kind: z.literal('multiText'),
+                    codes: z.array(z.string()).readonly(),
+                })
+                .transform(({ codes }): FieldConditions => {
+                    const known = attribute.options
+                        ?.map((option) => option.code)
+                        .filter((code) => codes.includes(code))
+                    // One `eq` per code: DHIS2 ANDs them, so the person must
+                    // have every code picked.
+                    return known?.length
+                        ? known.map((value) => ({ op: 'eq', value }))
+                        : undefined
+                })
         case 'boolean':
             return z
                 .object({

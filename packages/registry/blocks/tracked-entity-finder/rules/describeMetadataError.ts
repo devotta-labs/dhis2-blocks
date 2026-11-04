@@ -32,6 +32,12 @@ const whatWentWrong = (model: ProgramModel, error: MetadataError): string => {
                 ...raw,
             })
         case 'unsupported-type':
+            if (found?.valueType === 'MULTI_TEXT' && found.options) {
+                return i18n.t(
+                    "`{{attribute}}` ({{label}}) holds several options (MULTI_TEXT), which DHIS2 searches only from version 2.43, so it can't be searched in {{program}} on this server.",
+                    { attribute, label, program, ...raw }
+                )
+            }
             return i18n.t(
                 "`{{attribute}}` ({{label}}) has value type {{valueType}}, which can't be searched in {{program}}.",
                 {

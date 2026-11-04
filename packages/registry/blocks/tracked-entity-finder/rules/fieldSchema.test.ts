@@ -37,6 +37,32 @@ describe('fieldSchema', () => {
         ).toEqual([{ op: 'ge', value: '60' }])
     })
 
+    it('sends one eq per picked code, so the person must have them all', () => {
+        const allergies = attributeOf(
+            buildProgramModel(hivProgram, { multiTextSearch: true }),
+            'allergies'
+        )
+        if (!allergies) {
+            throw new Error('No allergies in the test program')
+        }
+        const schema = fieldSchema(allergies, 'exact')
+        // In option-set order; codes the option set lacks are dropped.
+        expect(
+            schema.parse({
+                kind: 'multiText',
+                codes: ['SULFA', 'GONE', 'PEN'],
+            })
+        ).toEqual([
+            { op: 'eq', value: 'PEN' },
+            { op: 'eq', value: 'SULFA' },
+        ])
+        expect(
+            schema.parse({ kind: 'multiText', codes: ['GONE'] })
+        ).toBeUndefined()
+        expect(schema.parse({ kind: 'multiText', codes: [] })).toBeUndefined()
+        expect(schema.parse({ kind: 'option', code: 'PEN' })).toBeUndefined()
+    })
+
     it('reads a blank value, no value or a value of another kind as empty', () => {
         expect(
             schemaFor('firstName').parse({ kind: 'text', text: '  ' })

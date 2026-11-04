@@ -48,6 +48,15 @@ export const hivProgram: ProgramMetadata = {
                 { code: 'M', name: 'Male' },
             ],
         }),
+        attribute('allergies', 'Allergies', 'MULTI_TEXT', {
+            searchable: true,
+            displayInList: true,
+            options: [
+                { code: 'PEN', name: 'Penicillin' },
+                { code: 'SULFA', name: 'Sulfa drugs' },
+                { code: 'NSAID', name: 'NSAIDs' },
+            ],
+        }),
         attribute('weight', 'Weight', 'INTEGER', { searchable: true }),
         attribute('visit', 'Last visit', 'DATETIME', { searchable: true }),
         attribute('photo', 'Photo', 'IMAGE', { searchable: true }),

@@ -1145,6 +1145,7 @@
                 "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/checkbox",
                 "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/combobox",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/field",
                 "devotta-labs/dhis2-blocks/input",
@@ -1251,6 +1252,11 @@
                     "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/FieldFrame.tsx",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/form/inputs/FieldFrame.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/MultiTextSelect.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/form/inputs/MultiTextSelect.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/tracked-entity-finder/form/inputs/NumberInput.tsx",

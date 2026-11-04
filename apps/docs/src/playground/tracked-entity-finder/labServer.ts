@@ -36,20 +36,13 @@ export const answer =
                 }
                 return programJson(program)
             case 'system/info':
+                // 2.43 matches each code of a multi-select; older ones can't.
                 return {
                     calendar: server.calendar,
-                    dateFormat: server.dateFormat,
+                    dateFormat: 'YYYY-MM-DD',
+                    version: '2.43.1',
                 }
             case 'tracker/trackedEntities':
-                if (server.search === 'conflict') {
-                    throw httpError(
-                        409,
-                        'maxTeiCountReached: the search matched more than the program allows'
-                    )
-                }
-                if (server.search === 'bad-request') {
-                    throw httpError(400, 'Invalid filter')
-                }
                 return searchJson(
                     { program, server },
                     Number(request.params?.page ?? 1),

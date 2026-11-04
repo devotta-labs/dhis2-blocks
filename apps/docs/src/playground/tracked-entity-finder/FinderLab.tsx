@@ -1,7 +1,4 @@
-import {
-    useFinderProgram,
-    type FinderPerson,
-} from '@/components/tracked-entity-finder'
+import type { FinderPerson } from '@/components/tracked-entity-finder'
 import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
@@ -15,36 +12,11 @@ import { usePresetParam } from '../usePresetParam'
 import { LAB_PROGRAM, type LabSettings } from './labData'
 import { LabFinder } from './LabFinder'
 import { answer, RECORDS, RESOURCES } from './labServer'
-import { initialLabState, labReducer, type KnownAttribute } from './labState'
-import { LIVE_PRESETS, PRESETS } from './presets'
-import {
-    CanvasControls,
-    CompositionControls,
-    ProgramControls,
-    ServerControls,
-} from './settings'
+import { initialLabState, labReducer } from './labState'
+import { PRESETS } from './presets'
+import { OptionsControls } from './settings'
 
-const WIDTH_CLASS = {
-    phone: 'max-w-[360px]',
-    narrow: 'max-w-[480px]',
-    wide: 'max-w-[800px]',
-    full: 'max-w-none',
-} satisfies Record<LabSettings['width'], string>
-
-/** Hands the live program's searchable attributes to the composer. */
-const LiveAttributes = ({
-    onChange,
-}: {
-    onChange: (attributes: KnownAttribute[]) => void
-}) => {
-    const { searchableAttributes } = useFinderProgram()
-    useEffect(() => {
-        onChange([...searchableAttributes])
-    }, [searchableAttributes, onChange])
-    return null
-}
-
-/** The tracked entity finder lab: every search rule, server answer and composition, beside the requests it makes. */
+/** The tracked entity finder lab: its search rules, results and composition, one click each, beside the requests it makes. */
 export const FinderLab = () => {
     const [linkedPreset, setLinkedPreset] = usePresetParam()
     const [state, dispatch] = useReducer(
@@ -67,20 +39,12 @@ export const FinderLab = () => {
         (person: FinderPerson) => dispatch({ type: 'selected', person }),
         []
     )
-    const onLiveAttributes = useCallback(
-        (attributes: KnownAttribute[]) =>
-            dispatch({ type: 'liveAttributes', attributes }),
-        []
-    )
 
     const { program, server } = settings
     const respond = useMemo(
         () => answer({ program, server }),
         [program, server]
     )
-    const known: KnownAttribute[] =
-        mode === 'lab' ? program.attributes : live.attributes
-    const composition = mode === 'lab' ? settings.composition : live.composition
 
     return (
         <LabLayout
@@ -112,81 +76,15 @@ export const FinderLab = () => {
                         }
                     />
                     {mode === 'lab' ? (
-                        <PresetControls
-                            presets={PRESETS}
-                            selected={state.preset}
-                            onPick={(preset) =>
-                                dispatch({ type: 'pickPreset', preset })
-                            }
-                        />
-                    ) : (
-                        <Section title="Live programs">
-                            {LIVE_PRESETS.map((preset) => (
-                                <button
-                                    key={preset.name}
-                                    type="button"
-                                    className="text-start"
-                                    aria-pressed={
-                                        live.program === preset.program
-                                    }
-                                    onClick={() =>
-                                        dispatch({
-                                            type: 'pickLiveProgram',
-                                            preset,
-                                        })
-                                    }
-                                >
-                                    {preset.name}
-                                </button>
-                            ))}
-                            <form
-                                className="flex gap-1"
-                                onSubmit={(event) => {
-                                    event.preventDefault()
-                                    const uid = String(
-                                        new FormData(event.currentTarget).get(
-                                            'program'
-                                        ) ?? ''
-                                    ).trim()
-                                    if (uid) {
-                                        dispatch({
-                                            type: 'pickLiveProgram',
-                                            preset: {
-                                                program: uid,
-                                                forms: [[]],
-                                            },
-                                        })
-                                    }
-                                }}
-                            >
-                                <input
-                                    name="program"
-                                    placeholder="Any program uid"
-                                    aria-label="Program uid"
-                                    className="min-w-0 flex-1 font-mono"
-                                />
-                                <button type="submit">Load</button>
-                            </form>
-                        </Section>
-                    )}
-                    <CanvasControls settings={settings} onChange={change} />
-                    <CompositionControls
-                        composition={composition}
-                        known={known}
-                        onChange={(next) =>
-                            dispatch({
-                                type: 'changeComposition',
-                                composition: next,
-                            })
-                        }
-                    />
-                    {mode === 'lab' && (
                         <>
-                            <ProgramControls
-                                program={program}
-                                onChange={(next) => change({ program: next })}
+                            <PresetControls
+                                presets={PRESETS}
+                                selected={state.preset}
+                                onPick={(preset) =>
+                                    dispatch({ type: 'pickPreset', preset })
+                                }
                             />
-                            <ServerControls
+                            <OptionsControls
                                 server={server}
                                 onChange={(next) => change({ server: next })}
                             />
@@ -196,6 +94,24 @@ export const FinderLab = () => {
                                 onChange={(network) => change({ network })}
                             />
                         </>
+                    ) : (
+                        <Section title="Live DHIS2">
+                            <label className="flex flex-col gap-0.5">
+                                Program
+                                <input
+                                    value={live.programId}
+                                    onChange={(event) =>
+                                        dispatch({
+                                            type: 'changeLive',
+                                            changes: {
+                                                programId:
+                                                    event.target.value.trim(),
+                                            },
+                                        })
+                                    }
+                                />
+                            </label>
+                        </Section>
                     )}
                     <button
                         type="button"
@@ -208,8 +124,8 @@ export const FinderLab = () => {
             }
         >
             <div
-                dir={settings.rtl ? 'rtl' : 'ltr'}
-                className={`w-full ${WIDTH_CLASS[settings.width]} rounded border border-dhis2-grey-300 bg-white p-6`}
+                dir={mode === 'lab' && settings.rtl ? 'rtl' : 'ltr'}
+                className="w-full max-w-2xl rounded-lg bg-white p-4 md:p-6"
             >
                 <CanvasBoundary key={run}>
                     {mode === 'lab' ? (
@@ -222,7 +138,7 @@ export const FinderLab = () => {
                         >
                             <LabFinder
                                 program={LAB_PROGRAM}
-                                composition={composition}
+                                composition={settings.composition}
                                 onSelect={onSelect}
                             />
                         </LabServerScope>
@@ -232,12 +148,9 @@ export const FinderLab = () => {
                             placeholder={<PreviewSpinner className="h-96" />}
                         >
                             <LabFinder
-                                program={live.program}
-                                composition={composition}
+                                program={live.programId}
                                 onSelect={onSelect}
-                            >
-                                <LiveAttributes onChange={onLiveAttributes} />
-                            </LabFinder>
+                            />
                         </LivePreviewHost>
                     )}
                 </CanvasBoundary>

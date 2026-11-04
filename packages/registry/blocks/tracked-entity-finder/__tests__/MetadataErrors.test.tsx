@@ -15,7 +15,8 @@ import {
     renderWithQueries,
 } from './finderTestSupport'
 
-const model = buildProgramModel(hivProgram)
+// The fake server is DHIS2 2.43, which searches MULTI_TEXT.
+const model = buildProgramModel(hivProgram, { multiTextSearch: true })
 const notSearchable = describeMetadataError(model, {
     kind: 'not-searchable',
     attribute: 'legacyId',

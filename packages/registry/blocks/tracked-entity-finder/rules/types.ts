@@ -1,6 +1,8 @@
 export type FieldKind =
     | 'text'
     | 'option'
+    /** A MULTI_TEXT option set: several codes can be stored and searched. */
+    | 'multiText'
     | 'boolean'
     | 'trueOnly'
     | 'number'
@@ -54,6 +56,8 @@ export interface ProgramModel {
 export type FieldValue =
     | { kind: 'text'; text: string }
     | { kind: 'option'; code?: string }
+    /** The codes the person must all have; none leaves the field out. */
+    | { kind: 'multiText'; codes: readonly string[] }
     | { kind: 'boolean'; value?: 'true' | 'false' }
     | { kind: 'trueOnly'; checked: boolean }
     | { kind: 'number'; value: string }

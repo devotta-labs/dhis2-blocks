@@ -12,7 +12,8 @@ import { renderInFinder } from './finderTestSupport'
 // Runs in the `browser-production` project, built with
 // `process.env.NODE_ENV` set to "production" as an app's production build is.
 
-const model = buildProgramModel(hivProgram)
+// The fake server is DHIS2 2.43, which searches MULTI_TEXT.
+const model = buildProgramModel(hivProgram, { multiTextSearch: true })
 const notSearchable = describeMetadataError(model, {
     kind: 'not-searchable',
     attribute: 'legacyId',

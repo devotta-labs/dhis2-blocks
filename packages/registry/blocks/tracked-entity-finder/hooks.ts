@@ -34,9 +34,11 @@ import type {
 interface FinderFieldAttribute {
     /**
      * The `FieldValue` shape to send: `text`, `option` (an option set, even on
-     * a TEXT attribute), `number`, `boolean`, `trueOnly`, `date` (also for
-     * `dateTime`); a range field sends `numberRange` or `dateRange`.
-     * `unsupported` attributes cannot be searched.
+     * a TEXT attribute), `multiText` (a MULTI_TEXT option set: `codes`, all
+     * of which the person must have), `number`, `boolean`, `trueOnly`, `date`
+     * (also for `dateTime`); a range field sends `numberRange` or `dateRange`.
+     * `unsupported` attributes cannot be searched; MULTI_TEXT is unsupported
+     * before DHIS2 2.43.
      */
     readonly kind: FieldKind
     readonly label: string

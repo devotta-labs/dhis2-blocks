@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { RequestLogEntry } from '../../network'
 import { initialLabState, labReducer } from '../labState'
-import { LIVE_PRESETS, PRESETS } from '../presets'
+import { PRESETS } from '../presets'
 
 const presetNamed = (name: string) => {
     const found = PRESETS.find((preset) => preset.name === name)
@@ -28,7 +28,7 @@ describe('the finder lab state', () => {
         expect(state.mode).toBe('lab')
         expect(state.preset).toBe(PRESETS[0]?.name)
         expect(state.settings).toEqual(PRESETS[0]?.settings)
-        expect(state.live.program).toBe(LIVE_PRESETS[0]?.program)
+        expect(state.live.programId).toBe('WSGAb5XwJ3Y')
     })
 
     it('opens on the linked preset, or the first for a name it does not know', () => {
@@ -48,59 +48,31 @@ describe('the finder lab state', () => {
         expect(state.requests).toEqual([])
     })
 
-    it('restarts for a new program or server, but keeps the finder for a new composition or frame', () => {
-        const server = labReducer(withRequest, {
+    it('restarts for a changed option, and leaves the example', () => {
+        const state = labReducer(withRequest, {
             type: 'changeSettings',
             changes: {
                 server: { ...withRequest.settings.server, matches: 9 },
             },
         })
-        expect(server.preset).toBeUndefined()
-        expect(server.run).toBe(1)
-
-        const framed = labReducer(withRequest, {
-            type: 'changeSettings',
-            changes: { rtl: true, width: 'phone' },
-        })
-        expect(framed.preset).toBeUndefined()
-        expect(framed.run).toBe(0)
-        expect(framed.requests).toEqual([REQUEST])
-
-        const composed = labReducer(withRequest, {
-            type: 'changeComposition',
-            composition: { ...withRequest.settings.composition, hint: false },
-        })
-        expect(composed.settings.composition.hint).toBe(false)
-        expect(composed.run).toBe(0)
+        expect(state.preset).toBeUndefined()
+        expect(state.settings.server.matches).toBe(9)
+        expect(state.run).toBe(1)
+        expect(state.requests).toEqual([])
     })
 
-    it('composes the live finder apart from the lab one', () => {
-        const live = labReducer(initialLabState(), {
-            type: 'switchMode',
-            mode: 'live',
-        })
-        const composed = labReducer(live, {
-            type: 'changeComposition',
-            composition: { ...live.live.composition, hint: false },
-        })
-        expect(composed.live.composition.hint).toBe(false)
-        expect(composed.settings.composition.hint).toBe(true)
-    })
-
-    it('starts a live program with its forms and no attributes until it loads', () => {
+    it('changes the live program without restarting', () => {
         const state = labReducer(initialLabState(), {
-            type: 'liveAttributes',
-            attributes: [{ id: 'a', label: 'A', valueType: 'TEXT' }],
+            type: 'changeLive',
+            changes: { programId: 'abcdefghijk' },
         })
-        const picked = labReducer(state, {
-            type: 'pickLiveProgram',
-            preset: { program: 'abcdefghijk', forms: [[]] },
-        })
-        expect(picked.live).toMatchObject({
-            program: 'abcdefghijk',
-            attributes: [],
-        })
-        expect(picked.live.composition.forms).toEqual([[]])
+        expect(state.live.programId).toBe('abcdefghijk')
+        expect(state.run).toBe(0)
+    })
+
+    it('has a unique name for every example', () => {
+        const names = PRESETS.map(({ name }) => name)
+        expect(new Set(names).size).toBe(names.length)
     })
 
     it('logs each selection, newest first', () => {

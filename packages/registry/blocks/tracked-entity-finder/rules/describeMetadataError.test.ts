@@ -54,6 +54,16 @@ describe('describeMetadataError', () => {
         expect(message).toContain(searchable)
     })
 
+    it('names the DHIS2 version a multi-select needs', () => {
+        const message = describeMetadataError(model, {
+            kind: 'unsupported-type',
+            attribute: 'allergies',
+        })
+        expect(message).toContain('`allergies` (Allergies)')
+        expect(message).toContain('2.43')
+        expect(message).toContain('HIV Program')
+    })
+
     // d2-app-scripts' extractor reads ': ' as a namespace separator and drops
     // such strings from en.pot, so no message may contain one.
     it.each([

@@ -1,25 +1,9 @@
 import type { RequestLogEntry } from '../network'
-import type { LabComposition, LabSettings } from './labData'
-import {
-    DEFAULT_SETTINGS,
-    LIVE_PRESETS,
-    PRESETS,
-    type LivePreset,
-    type Preset,
-} from './presets'
-
-/** An attribute the composer can offer, from the lab program or a live one. */
-export interface KnownAttribute {
-    id: string
-    label: string
-    valueType: string
-}
+import type { LabSettings } from './labData'
+import { DEFAULT_SETTINGS, PRESETS, type Preset } from './presets'
 
 interface Live {
-    program: string
-    composition: LabComposition
-    /** The live program's searchable attributes, once the finder has loaded it. */
-    attributes: KnownAttribute[]
+    programId: string
 }
 
 export interface LabState {
@@ -39,9 +23,7 @@ export type LabAction =
     | { type: 'switchMode'; mode: LabState['mode'] }
     | { type: 'pickPreset'; preset: Preset }
     | { type: 'changeSettings'; changes: Partial<LabSettings> }
-    | { type: 'changeComposition'; composition: LabComposition }
-    | { type: 'pickLiveProgram'; preset: Pick<LivePreset, 'program' | 'forms'> }
-    | { type: 'liveAttributes'; attributes: KnownAttribute[] }
+    | { type: 'changeLive'; changes: Partial<Live> }
     | { type: 'restart' }
     | {
           type: 'logRequests'
@@ -51,26 +33,8 @@ export type LabAction =
     | { type: 'selected'; person: unknown }
     | { type: 'clearCallbacks' }
 
-/** Live programs open with their forms one at a time, and rows of the finder's own choosing. */
-const liveComposition = (forms: LabComposition['forms']): LabComposition => ({
-    ...DEFAULT_SETTINGS.composition,
-    forms,
-    formLayout: 'swap',
-    rowAttributes: [],
-})
-
-const liveFor = (preset: Pick<LivePreset, 'program' | 'forms'>): Live => ({
-    program: preset.program,
-    composition: liveComposition(preset.forms),
-    attributes: [],
-})
-
-/** Settings that only change how the finder is composed or framed, so it keeps its state and cache. */
-const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>([
-    'composition',
-    'width',
-    'rtl',
-])
+// The docs example's program on the Sierra Leone demo.
+const LIVE: Live = { programId: 'WSGAb5XwJ3Y' }
 
 const restarted = (state: LabState): LabState => ({
     ...state,
@@ -86,7 +50,7 @@ export const initialLabState = (linkedPreset?: string): LabState => {
         mode: 'lab',
         preset: preset?.name,
         settings: preset?.settings ?? DEFAULT_SETTINGS,
-        live: liveFor(LIVE_PRESETS[0]),
+        live: LIVE,
         run: 0,
         requests: [],
         callbacks: [],
@@ -103,36 +67,16 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
                 preset: action.preset.name,
                 settings: action.preset.settings,
             })
-        case 'changeSettings': {
-            const next: LabState = {
+        // Every option changes what the server answers, so the finder starts afresh.
+        case 'changeSettings':
+            return restarted({
                 ...state,
                 preset: undefined,
                 settings: { ...state.settings, ...action.changes },
-            }
-            const inPlace = Object.keys(action.changes).every((key) =>
-                IN_PLACE.has(key)
-            )
-            return inPlace ? next : restarted(next)
-        }
-        // The composer edits whichever finder is on show.
-        case 'changeComposition':
-            return state.mode === 'lab'
-                ? labReducer(state, {
-                      type: 'changeSettings',
-                      changes: { composition: action.composition },
-                  })
-                : {
-                      ...state,
-                      live: { ...state.live, composition: action.composition },
-                  }
+            })
         // The finder starts afresh for a new program by itself.
-        case 'pickLiveProgram':
-            return { ...state, live: liveFor(action.preset) }
-        case 'liveAttributes':
-            return {
-                ...state,
-                live: { ...state.live, attributes: action.attributes },
-            }
+        case 'changeLive':
+            return { ...state, live: { ...state.live, ...action.changes } }
         case 'restart':
             return restarted(state)
         case 'logRequests':

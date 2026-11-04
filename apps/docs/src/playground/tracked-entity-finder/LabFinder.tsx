@@ -16,6 +16,7 @@ import {
     FinderTooMany,
     FinderValue,
     useFinderField,
+    useFinderProgram,
     useFinderRangeField,
     useFinderResults,
     useFinderSearch,
@@ -278,9 +279,9 @@ const LabForm = ({
     footer?: ReactNode
 }) => (
     <FinderForm className="flex flex-col gap-4">
-        <LabFormFields fields={fields} hooks={composition.hookFields} />
-        {composition.hint ? <FinderHint /> : null}
-        {composition.hookFields ? <HookSubmit /> : <FinderSubmit />}
+        <LabFormFields fields={fields} hooks={composition.build === 'hooks'} />
+        <FinderHint />
+        {composition.build === 'hooks' ? <HookSubmit /> : <FinderSubmit />}
         {footer}
     </FinderForm>
 )
@@ -307,7 +308,7 @@ const Forms = ({ composition }: { composition: LabComposition }) => {
                                 >
                                     {index === 0
                                         ? 'Search by ID instead'
-                                        : `No ID? Use form ${index + 1}`}
+                                        : 'No ID? Search by other details'}
                                 </button>
                             )
                         )}
@@ -331,29 +332,16 @@ const ComposedRows = ({ composition }: { composition: LabComposition }) => {
     const [first, ...rest] = composition.rowAttributes
     return (
         <FinderResults className="flex flex-col gap-3">
-            {composition.customTexts ? (
-                <>
-                    <FinderSearching>
-                        Looking through the register…
-                    </FinderSearching>
-                    <FinderEmpty>
-                        Nobody matches. Check the spelling, or try their ID.
-                    </FinderEmpty>
-                    <FinderTooMany>
-                        That matches too many people. Add a date of birth.
-                    </FinderTooMany>
-                    <FinderError>
-                        The register could not be searched. Try again.
-                    </FinderError>
-                </>
-            ) : (
-                <>
-                    <FinderSearching />
-                    <FinderEmpty />
-                    <FinderTooMany />
-                    <FinderError />
-                </>
-            )}
+            <FinderSearching>Looking through the register…</FinderSearching>
+            <FinderEmpty>
+                Nobody matches. Check the spelling, or try their ID.
+            </FinderEmpty>
+            <FinderTooMany>
+                That matches too many people. Add a date of birth.
+            </FinderTooMany>
+            <FinderError>
+                The register could not be searched. Try again.
+            </FinderError>
             <FinderList className="flex flex-col gap-2">
                 <FinderItem className="rounded border border-dhis2-grey-300 p-3">
                     {first ? (
@@ -440,36 +428,65 @@ const HookResults = ({ rowAttributes }: { rowAttributes: string[] }) => {
 }
 
 const Results = ({ composition }: { composition: LabComposition }) => {
-    switch (composition.results) {
-        case 'custom':
+    switch (composition.build) {
+        case 'own-rows':
             return <ComposedRows composition={composition} />
         case 'hooks':
             return <HookResults rowAttributes={composition.rowAttributes} />
-        case 'none':
-            return null
         default:
             return <FinderResults />
     }
 }
 
-/** The finder, composed as the lab says. */
+const Composed = ({ composition }: { composition: LabComposition }) => (
+    <div className="flex flex-col gap-6">
+        <Forms composition={composition} />
+        <Results composition={composition} />
+    </div>
+)
+
+/**
+ * A live program's finder, from its own metadata: its IDs in one form, its
+ * other searchable attributes in another. An empty form shows the loading
+ * and failure states until the program is in.
+ */
+const LiveComposed = () => {
+    const { status, searchableAttributes } = useFinderProgram()
+    if (status !== 'ready') {
+        return <FinderForm />
+    }
+    const ids = searchableAttributes.filter(({ unique }) => unique)
+    const others = searchableAttributes.filter(({ unique }) => !unique)
+    const forms = [ids, others]
+        .filter((each) => each.length > 0)
+        .map((each) => each.map(({ id }) => ({ attribute: id, range: false })))
+    return (
+        <Composed
+            composition={{
+                forms,
+                formLayout: 'swap',
+                build: 'parts',
+                rowAttributes: [],
+            }}
+        />
+    )
+}
+
+/** The finder, composed as the lab says; without a composition, from the program's metadata. */
 export const LabFinder = ({
     program,
     composition,
     onSelect,
-    children,
 }: {
     program: string
-    composition: LabComposition
+    composition?: LabComposition
     onSelect: (person: FinderPerson) => void
-    /** Lab probes that need the provider. */
-    children?: ReactNode
 }) => (
     <FinderProvider program={program} onSelect={onSelect}>
-        {children}
-        <div className="flex flex-col gap-6">
-            <Forms composition={composition} />
-            <Results composition={composition} />
-        </div>
+        {composition ? (
+            <Composed composition={composition} />
+        ) : (
+            <LiveComposed />
+        )}
     </FinderProvider>
 )

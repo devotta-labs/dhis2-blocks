@@ -156,6 +156,38 @@ describe('usable attributes match what a field can send', () => {
         ).toBe(false)
     })
 
+    it('searches a MULTI_TEXT option set by its codes from DHIS2 2.43', () => {
+        const allergies = (support?: { multiTextSearch: boolean }) =>
+            attributeOf(buildProgramModel(hivProgram, support), 'allergies')
+        expect(allergies({ multiTextSearch: true })).toMatchObject({
+            kind: 'multiText',
+            usable: true,
+        })
+        // Older servers compare the whole stored list, so it is not searched.
+        expect(allergies({ multiTextSearch: false })).toMatchObject({
+            kind: 'unsupported',
+            usable: false,
+        })
+        expect(allergies()?.kind).toBe('unsupported')
+        expect(
+            attributeOf(
+                buildProgramModel(
+                    {
+                        ...hivProgram,
+                        attributes: [
+                            {
+                                ...hivProgram.attributes[2]!,
+                                valueType: 'MULTI_TEXT',
+                            },
+                        ],
+                    },
+                    { multiTextSearch: true }
+                ),
+                'firstName'
+            )?.kind
+        ).toBe('unsupported')
+    })
+
     it('marks a unique attribute usable only with eq allowed', () => {
         expect(
             one({

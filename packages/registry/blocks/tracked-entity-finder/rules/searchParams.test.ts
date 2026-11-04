@@ -16,6 +16,18 @@ describe('serializeFilter', () => {
         ).toBe('artNumber:eq:ART/:1/,2//3')
     })
 
+    it('chains the codes of a multi-select, which DHIS2 ANDs', () => {
+        expect(
+            serializeFilter({
+                attribute: 'allergies',
+                conditions: [
+                    { op: 'eq', value: 'PEN' },
+                    { op: 'eq', value: 'SULFA' },
+                ],
+            })
+        ).toBe('allergies:eq:PEN:eq:SULFA')
+    })
+
     it('joins several conditions on one attribute', () => {
         expect(
             serializeFilter({

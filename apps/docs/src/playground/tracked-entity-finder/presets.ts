@@ -31,6 +31,15 @@ const SEX_OPTIONS: LabOption[] = [
     { code: 'M', name: 'Male' },
 ]
 
+const ALLERGIES = attribute('allergies', 'Allergies', 'MULTI_TEXT', {
+    options: [
+        { code: 'PEN', name: 'Penicillin' },
+        { code: 'SULFA', name: 'Sulfa drugs' },
+        { code: 'NSAID', name: 'NSAIDs' },
+        { code: 'LATEX', name: 'Latex' },
+    ],
+})
+
 const PERSON_ATTRIBUTES: LabAttribute[] = [
     attribute('nationalId', 'National ID', 'TEXT', {
         unique: true,
@@ -50,13 +59,7 @@ const PERSON_ATTRIBUTES: LabAttribute[] = [
     attribute('village', 'Village', 'TEXT', { searchable: false }),
 ]
 
-const SERVER: LabServer = {
-    matches: 3,
-    reportsTotal: true,
-    search: 'ok',
-    calendar: 'gregorian',
-    dateFormat: 'YYYY-MM-DD',
-}
+const SERVER: LabServer = { matches: 3, calendar: 'gregorian' }
 
 const NETWORK: LabNetwork = { delay: 300, endpoints: {} }
 
@@ -68,16 +71,13 @@ const field = (attributeId: string, range = false): LabField => ({
 const COMPOSITION: LabComposition = {
     forms: [[field('nationalId'), field('firstName'), field('dob')]],
     formLayout: 'stacked',
-    hookFields: false,
-    hint: true,
-    results: 'default',
+    build: 'parts',
     rowAttributes: ['firstName', 'lastName', 'dob'],
-    customTexts: false,
 }
 
 export const DEFAULT_SETTINGS: LabSettings = {
     program: {
-        name: 'Lab person register',
+        name: 'Person register',
         minAttributes: 2,
         maxResults: 50,
         attributes: PERSON_ATTRIBUTES,
@@ -85,7 +85,6 @@ export const DEFAULT_SETTINGS: LabSettings = {
     server: SERVER,
     composition: COMPOSITION,
     network: NETWORK,
-    width: 'narrow',
     rtl: false,
 }
 
@@ -101,10 +100,6 @@ const withEndpoint =
             endpoints: { [resource]: { behaviour } },
         },
     })
-
-const withDelay =
-    (delay: number): Tweak =>
-    (settings) => ({ ...settings, network: { ...settings.network, delay } })
 
 const withServer =
     (server: Partial<LabServer>): Tweak =>
@@ -143,6 +138,7 @@ const EVERY_KIND: LabAttribute[] = [
             { code: 'PL', name: 'Port Loko' },
         ],
     }),
+    { ...ALLERGIES, displayInList: true },
     attribute('pregnant', 'Pregnant', 'BOOLEAN', { displayInList: true }),
     attribute('consent', 'Consent given', 'TRUE_ONLY'),
     attribute('weight', 'Weight (kg)', 'NUMBER', { displayInList: true }),
@@ -194,345 +190,199 @@ export interface Preset {
     settings: LabSettings
 }
 
-/** Starting points, grouped: pick one, then tweak anything. */
-export const PRESETS: readonly Preset[] = [
-    {
-        group: 'Shapes',
-        name: 'ID or details',
-        settings: DEFAULT_SETTINGS,
-    },
-    {
-        group: 'Shapes',
-        name: 'ID form, then a details form',
-        settings: tweak(
-            withComposition({
-                forms: [
-                    [field('nationalId')],
-                    [field('firstName'), field('lastName'), field('dob')],
-                ],
-                formLayout: 'swap',
-            })
-        ),
-    },
-    {
-        group: 'Shapes',
-        name: 'Two forms side by side',
-        settings: tweak(
-            withComposition({
-                forms: [
-                    [field('nationalId')],
-                    [field('firstName'), field('sex'), field('dob')],
-                ],
-            })
-        ),
-    },
-    {
-        group: 'Shapes',
-        name: 'Every field kind',
-        settings: tweak(
-            withProgram({ attributes: EVERY_KIND, minAttributes: 1 }),
-            withComposition({
-                forms: [EVERY_KIND.map(({ id }) => field(id))],
-                rowAttributes: ['name', 'district', 'dob'],
-            })
-        ),
-    },
-    {
-        group: 'Shapes',
-        name: 'Number and date ranges',
-        settings: tweak(
-            withProgram({ attributes: EVERY_KIND, minAttributes: 1 }),
-            withComposition({
-                forms: [
-                    [
-                        field('name'),
-                        field('weight', true),
-                        field('visits', true),
-                        field('dob', true),
-                        field('age', true),
-                        field('registered', true),
-                    ],
-                ],
-            })
-        ),
-    },
-    {
-        group: 'Shapes',
-        name: 'Just one ID',
-        settings: tweak(withComposition({ forms: [[field('nationalId')]] })),
-    },
-    {
-        group: 'Program rules',
-        name: 'Needs three details',
-        settings: tweak(
-            withProgram({ minAttributes: 3 }),
-            withComposition({
-                forms: [
-                    [
-                        field('firstName'),
-                        field('lastName'),
-                        field('dob'),
-                        field('sex'),
-                        field('phone'),
-                    ],
-                ],
-            })
-        ),
-    },
-    {
-        group: 'Program rules',
-        name: 'Minimum characters and blocked operators',
-        settings: tweak(
-            withProgram({
-                minAttributes: 1,
-                attributes: PERSON_ATTRIBUTES.map((each) => {
-                    if (each.id === 'firstName') {
-                        return { ...each, minCharacters: 4 }
-                    }
-                    if (each.id === 'lastName') {
-                        return { ...each, blocked: ['like'], preferred: 'sw' }
-                    }
-                    if (each.id === 'phone') {
-                        return { ...each, blocked: ['like', 'sw'] }
-                    }
-                    return each
-                }),
-            }),
-            withComposition({
-                forms: [
-                    [field('firstName'), field('lastName'), field('phone')],
-                ],
-            })
-        ),
-    },
-    {
-        group: 'Program rules',
-        name: 'Setup mistakes',
-        settings: tweak(
-            withProgram({
-                attributes: [
-                    ...PERSON_ATTRIBUTES,
-                    attribute('photo', 'Photo', 'IMAGE'),
-                    attribute('nickname', 'Nickname', 'TEXT', {
-                        blocked: ['like', 'sw', 'eq'],
-                    }),
-                ],
-            }),
-            withComposition({
-                forms: [
-                    [
-                        field('firstName'),
-                        field('village'),
-                        field('photo'),
-                        field('nickname'),
-                        field('notAnAttribute'),
-                        field('firstName', true),
-                        field('dob'),
-                        field('dob', true),
-                    ],
-                ],
-            })
-        ),
-    },
-    {
-        group: 'Program rules',
-        name: 'A form that can never search',
-        settings: tweak(
-            withProgram({ minAttributes: 3 }),
-            withComposition({ forms: [[field('firstName'), field('dob')]] })
-        ),
-    },
-    {
-        group: 'Server answers',
-        name: 'No one found',
-        settings: tweak(withServer({ matches: 0 })),
-    },
-    {
-        group: 'Server answers',
-        name: 'Many pages',
-        settings: tweak(
-            withProgram({ maxResults: 0 }),
-            withServer({ matches: 47 })
-        ),
-    },
-    {
-        group: 'Server answers',
-        name: 'Pages without a total',
-        settings: tweak(
-            withProgram({ maxResults: 0 }),
-            withServer({ matches: 30, reportsTotal: false })
-        ),
-    },
-    {
-        group: 'Server answers',
-        name: 'Over the program cap',
-        settings: tweak(
-            withProgram({ maxResults: 5 }),
-            withServer({ matches: 12 })
-        ),
-    },
-    {
-        group: 'Server answers',
-        name: 'Server says too many (409)',
-        settings: tweak(withServer({ search: 'conflict' })),
-    },
-    {
-        group: 'Server answers',
-        name: 'Search fails',
-        settings: tweak(
-            withEndpoint('tracker/trackedEntities', 'fails'),
-            withDelay(600)
-        ),
-    },
-    {
-        group: 'Server answers',
-        name: 'Slow search',
-        settings: tweak(withDelay(4000), withServer({ matches: 25 })),
-    },
-    {
-        group: 'Server answers',
-        name: 'Program fails to load',
-        settings: tweak(withEndpoint('programs', 'fails')),
-    },
-    {
-        group: 'Server answers',
-        name: 'Program never loads',
-        settings: tweak(withEndpoint('programs', 'hangs')),
-    },
-    {
-        group: 'Server answers',
-        name: 'System info never loads',
-        settings: tweak(withEndpoint('system/info', 'hangs')),
-    },
-    {
-        group: 'Dates',
-        name: 'Ethiopian calendar',
-        settings: tweak(
-            withServer({ calendar: 'ethiopian' }),
-            withComposition({
-                forms: [[field('firstName'), field('lastName'), field('dob')]],
-            })
-        ),
-    },
-    {
-        group: 'Dates',
-        name: 'Nepali, DD-MM-YYYY, date range',
-        settings: tweak(
-            withServer({ calendar: 'nepali', dateFormat: 'DD-MM-YYYY' }),
-            withComposition({
-                forms: [[field('firstName'), field('dob', true)]],
-            })
-        ),
-    },
-    {
-        group: 'Composition',
-        name: 'Composed rows and own texts',
-        settings: tweak(
-            withServer({ matches: 14 }),
-            withProgram({ maxResults: 0 }),
-            withComposition({ results: 'custom', customTexts: true })
-        ),
-    },
-    {
-        group: 'Composition',
-        name: 'Built from hooks only',
-        settings: tweak(
-            withServer({ matches: 14 }),
-            withProgram({ maxResults: 0 }),
-            withComposition({ results: 'hooks', hookFields: true })
-        ),
-    },
-    {
-        group: 'Composition',
-        name: 'Own labels and help text',
-        settings: tweak(
-            withComposition({
-                forms: [
-                    [
-                        {
-                            attribute: 'nationalId',
-                            range: false,
-                            label: 'ID card number',
-                            placeholder: 'e.g. SL-0042-17',
-                            description: 'The number on the front of the card.',
-                        },
-                        {
-                            attribute: 'firstName',
-                            range: false,
-                            placeholder: 'At least 2 letters',
-                        },
-                        field('dob'),
-                    ],
-                ],
-            })
-        ),
-    },
-    {
-        group: 'Composition',
-        name: 'No hint',
-        settings: tweak(withComposition({ hint: false })),
-    },
-    {
-        group: 'Stress',
-        name: 'Long labels',
-        settings: tweak(
-            withProgram({ attributes: LONG_LABELS }),
-            withComposition({
-                forms: [LONG_LABELS.map(({ id }) => field(id))],
-                rowAttributes: ['firstName', 'dob'],
-            })
-        ),
-    },
-    {
-        group: 'Stress',
-        name: 'Arabic labels (try right to left)',
-        settings: tweak(
-            withProgram({ attributes: ARABIC }),
-            withComposition({
-                forms: [ARABIC.map(({ id }) => field(id))],
-                rowAttributes: ['firstName', 'lastName', 'dob'],
-            })
-        ),
-    },
-    {
-        group: 'Stress',
-        name: 'Many fields',
-        settings: tweak(
-            withProgram({ attributes: EVERY_KIND, minAttributes: 2 }),
-            withComposition({
-                forms: [EVERY_KIND.slice(0, 13).map(({ id }) => field(id))],
-            })
-        ),
-    },
+const preset = (group: string, name: string, ...tweaks: Tweak[]): Preset => ({
+    group,
+    name,
+    settings: tweak(...tweaks),
+})
+
+const RANGES: LabField[] = [
+    field('name'),
+    field('weight', true),
+    field('visits', true),
+    field('dob', true),
+    field('registered', true),
 ]
 
-export interface LivePreset {
-    name: string
-    program: string
-    forms: LabField[][]
-}
-
-/** Live programs on the Sierra Leone demo database, as the docs use. */
-export const LIVE_PRESETS: readonly LivePreset[] = [
-    {
-        name: 'WHO RMNCH Tracker: ID or name and birth date',
-        program: 'WSGAb5XwJ3Y',
-        forms: [
-            [field('lZGmxYbs97q')],
-            [field('w75KJ2mc4zz'), field('gHGyrwKPzej')],
-        ],
-    },
-    {
-        name: 'TB program: identifier or names',
-        program: 'ur1Edk5Oe2n',
-        forms: [
-            [field('xs8A6tQJY0s')],
-            [field('w75KJ2mc4zz'), field('zDhUuAYrxNC')],
-        ],
-    },
-    {
-        name: 'Child Programme',
-        program: 'IpHINAT79UW',
-        forms: [[field('w75KJ2mc4zz'), field('zDhUuAYrxNC')]],
-    },
+// Names say what the canvas shows. Calendar and the number of people found are
+// options, so no preset only changes one.
+export const PRESETS: readonly Preset[] = [
+    // First, so the lab opens on it: one form, an ID or a name and birth date.
+    preset('Searches', 'ID, or name and birth date'),
+    preset(
+        'Searches',
+        'ID first, then other details',
+        withComposition({
+            forms: [
+                [field('nationalId')],
+                [field('firstName'), field('lastName'), field('dob')],
+            ],
+            formLayout: 'swap',
+        })
+    ),
+    preset(
+        'Searches',
+        'Number and date ranges',
+        withProgram({ attributes: EVERY_KIND, minAttributes: 1 }),
+        withComposition({ forms: [RANGES], rowAttributes: ['name', 'dob'] })
+    ),
+    preset(
+        'Searches',
+        'Every kind of field',
+        withProgram({ attributes: EVERY_KIND, minAttributes: 1 }),
+        withComposition({
+            forms: [EVERY_KIND.map(({ id }) => field(id))],
+            rowAttributes: ['name', 'district', 'dob'],
+        })
+    ),
+    preset(
+        'Searches',
+        'Pick several options',
+        withProgram({
+            attributes: [
+                ...PERSON_ATTRIBUTES,
+                { ...ALLERGIES, displayInList: true },
+            ],
+        }),
+        withComposition({
+            forms: [
+                [field('firstName'), field('lastName'), field('allergies')],
+            ],
+        })
+    ),
+    preset(
+        'Program rules',
+        'Needs three details',
+        withProgram({ minAttributes: 3 }),
+        withComposition({
+            forms: [
+                [
+                    field('firstName'),
+                    field('lastName'),
+                    field('dob'),
+                    field('sex'),
+                    field('phone'),
+                ],
+            ],
+        })
+    ),
+    preset(
+        'Program rules',
+        'Name needs four characters',
+        withProgram({
+            minAttributes: 1,
+            attributes: PERSON_ATTRIBUTES.map((each) =>
+                each.id === 'firstName' ? { ...each, minCharacters: 4 } : each
+            ),
+        }),
+        withComposition({
+            forms: [[field('firstName'), field('lastName'), field('phone')]],
+        })
+    ),
+    preset(
+        'Program rules',
+        "Fields that don't fit the program",
+        withProgram({
+            attributes: [
+                ...PERSON_ATTRIBUTES,
+                attribute('photo', 'Photo', 'IMAGE'),
+                attribute('nickname', 'Nickname', 'TEXT', {
+                    blocked: ['like', 'sw', 'eq'],
+                }),
+            ],
+        }),
+        withComposition({
+            forms: [
+                [
+                    field('firstName'),
+                    field('lastName'),
+                    field('village'),
+                    field('photo'),
+                    field('nickname'),
+                    field('notAnAttribute'),
+                    field('dob'),
+                    field('dob', true),
+                ],
+            ],
+        })
+    ),
+    preset('Results', 'No one found', withServer({ matches: 0 })),
+    preset(
+        'Results',
+        'Many pages',
+        withProgram({ maxResults: 0 }),
+        withServer({ matches: 47 })
+    ),
+    preset(
+        'Results',
+        'Too many matches',
+        withProgram({ maxResults: 5 }),
+        withServer({ matches: 12 })
+    ),
+    preset(
+        'Results',
+        'Search fails',
+        withEndpoint('tracker/trackedEntities', 'fails')
+    ),
+    preset(
+        'Results',
+        'Program fails to load',
+        withEndpoint('programs', 'fails')
+    ),
+    preset(
+        'Your own code',
+        'Own labels and help text',
+        withComposition({
+            forms: [
+                [
+                    {
+                        attribute: 'nationalId',
+                        range: false,
+                        label: 'ID card number',
+                        placeholder: 'e.g. SL-0042-17',
+                        description: 'The number on the front of the card.',
+                    },
+                    {
+                        attribute: 'firstName',
+                        range: false,
+                        placeholder: 'At least 2 letters',
+                    },
+                    field('dob'),
+                ],
+            ],
+        })
+    ),
+    preset(
+        'Your own code',
+        'Own result rows and messages',
+        withServer({ matches: 14 }),
+        withProgram({ maxResults: 0 }),
+        withComposition({ build: 'own-rows' })
+    ),
+    preset(
+        'Your own code',
+        'Fields and results from hooks',
+        withServer({ matches: 14 }),
+        withProgram({ maxResults: 0 }),
+        withComposition({ build: 'hooks' })
+    ),
+    preset(
+        'Text',
+        'Long labels',
+        withProgram({ attributes: LONG_LABELS }),
+        withComposition({
+            forms: [LONG_LABELS.map(({ id }) => field(id))],
+            rowAttributes: ['firstName', 'dob'],
+        })
+    ),
+    preset(
+        'Text',
+        'Arabic, right to left',
+        withProgram({ attributes: ARABIC }),
+        withComposition({
+            forms: [ARABIC.map(({ id }) => field(id))],
+            rowAttributes: ['firstName', 'lastName', 'dob'],
+        }),
+        (settings) => ({ ...settings, rtl: true })
+    ),
 ]

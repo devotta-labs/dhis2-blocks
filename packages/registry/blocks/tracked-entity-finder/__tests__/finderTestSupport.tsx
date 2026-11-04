@@ -70,6 +70,8 @@ export interface FakeServerOptions {
     /** Never answers the system info request. */
     systemInfoPending?: boolean
     systemInfoFails?: boolean
+    /** The DHIS2 version system info reports; 2.43.1 by default. */
+    version?: string
     searchResponse?: EngineValue
     /** Answers each search from its request, e.g. by page. */
     answerSearch?: (request: ResourceRequest) => EngineValue
@@ -115,6 +117,7 @@ export const createFakeServer = (
                         [key]: {
                             calendar: 'gregorian',
                             dateFormat: 'YYYY-MM-DD',
+                            version: options.version ?? '2.43.1',
                         },
                     }
                 default: {

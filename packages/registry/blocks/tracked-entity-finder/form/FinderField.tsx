@@ -4,6 +4,7 @@ import { useFieldPart, type FinderFieldPartProps } from './fieldProps'
 import { BooleanSelect, OptionSelect } from './inputs/ChoiceSelect'
 import { DateInput } from './inputs/DateInput'
 import { NumberInput } from './inputs/NumberInput'
+import { MultiTextSelect } from './inputs/MultiTextSelect'
 import { PendingInput } from './inputs/PendingInput'
 import { TextInput } from './inputs/TextInput'
 import { TrueOnlyCheckbox } from './inputs/TrueOnlyCheckbox'
@@ -32,6 +33,8 @@ export function FinderField(props: FinderFieldProps) {
             return <TextInput {...input} />
         case 'option':
             return <OptionSelect {...input} />
+        case 'multiText':
+            return <MultiTextSelect {...input} />
         case 'boolean':
             return <BooleanSelect {...input} />
         case 'trueOnly':

@@ -88,6 +88,10 @@ fields; you cannot loosen these rules:
 - **Exact matches.** Option sets, numbers, yes/no and dates match exactly.
   Text matches the way the attribute is set up to be searched, and needs the
   attribute's minimum number of characters.
+- **Several options.** For an attribute that holds several options (value
+  type MULTI_TEXT), the user can pick more than one, and the search finds
+  people who have every option picked. This needs DHIS2 2.43 or later; on an
+  older server the field isn't searched, because DHIS2 compared the whole list.
 - **Too many matches.** When more people match than the program allows, the
   results ask the user to add another detail instead of listing them.
 
@@ -96,8 +100,8 @@ fields; you cannot loosen these rules:
 `FinderForm` groups the fields of one search. Enter submits it. Inside it:
 
 - `FinderField attribute="uid"` shows the attribute's label and an input that
-  fits its type: text, an option set, yes/no, a checkbox, a number, or a date
-  in the server's calendar. Set `label`, `description` or `placeholder` to
+  fits its type: text, an option set, a multi-select for several options,
+  yes/no, a checkbox, a number, or a date in the server's calendar. Set `label`, `description` or `placeholder` to
   change the defaults.
 - `FinderRangeField attribute="uid"` shows From and To inputs for number,
   date, date-time and age attributes.
@@ -138,7 +142,8 @@ For your own parts inside `FinderProvider`:
 - `useFinderField(uid)` and `useFinderRangeField(uid)` — inside a
   `FinderForm`: `field`, the attribute's TanStack field; the attribute (with
   its `kind`, which says which value shape `field.handleChange` takes; an
-  option set is `option` even on a TEXT attribute); `error`, the text to show
+  option set is `option` even on a TEXT attribute, and a MULTI_TEXT one is
+  `multiText`, holding `codes`); `error`, the text to show
   once the user has left the field or tried to search; and `metadataError`,
   set when the field doesn't fit the program.
 - `useFinderForm()` — inside a `FinderForm`: its TanStack form, for its

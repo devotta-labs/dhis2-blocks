@@ -43,9 +43,16 @@ export const useFinderController = ({
         programMetadataQueryOptions(resourceClient, program)
     )
     const systemInfo = useQuery(systemInfoQueryOptions(resourceClient))
+    // Built before system info arrives, so fields show their labels; until
+    // then MULTI_TEXT counts as searchable, so an older server's error shows
+    // only once it is known. Nothing searches before system info anyway.
+    const multiTextSearch = systemInfo.data?.multiTextSearch ?? true
     const model = useMemo(
-        () => (metadata.data ? buildProgramModel(metadata.data) : undefined),
-        [metadata.data]
+        () =>
+            metadata.data
+                ? buildProgramModel(metadata.data, { multiTextSearch })
+                : undefined,
+        [metadata.data, multiTextSearch]
     )
     // Dates need the server calendar, so the finder is ready only with both.
     const status = getFinderStatus(

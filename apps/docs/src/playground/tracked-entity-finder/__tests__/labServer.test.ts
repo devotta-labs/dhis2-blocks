@@ -45,20 +45,20 @@ describe('the finder lab server', () => {
         ).toBe(404)
     })
 
-    it('answers the calendar and date format it is set to', () => {
+    it('answers the calendar it is set to', () => {
         expect(
             answer({
                 ...DEFAULT_SETTINGS,
-                server: {
-                    ...DEFAULT_SETTINGS.server,
-                    calendar: 'nepali',
-                    dateFormat: 'DD-MM-YYYY',
-                },
+                server: { ...DEFAULT_SETTINGS.server, calendar: 'nepali' },
             })({ resource: 'system/info' })
-        ).toEqual({ calendar: 'nepali', dateFormat: 'DD-MM-YYYY' })
+        ).toEqual({
+            calendar: 'nepali',
+            dateFormat: 'YYYY-MM-DD',
+            version: '2.43.1',
+        })
     })
 
-    it('pages the matches, with a total when it reports one', () => {
+    it('pages the matches, with a total', () => {
         const settings = {
             ...DEFAULT_SETTINGS,
             server: { ...DEFAULT_SETTINGS.server, matches: 23 },
@@ -66,14 +66,6 @@ describe('the finder lab server', () => {
         const last = search(settings, { page: 3, pageSize: 10 })
         expect(last.trackedEntities).toHaveLength(3)
         expect(last.pager?.total).toBe(23)
-        const untotalled = search(
-            {
-                ...settings,
-                server: { ...settings.server, reportsTotal: false },
-            },
-            { page: 1, pageSize: 10 }
-        )
-        expect(untotalled.pager?.total).toBeUndefined()
     })
 
     it('gives each person a value for every attribute', () => {
@@ -81,15 +73,5 @@ describe('the finder lab server', () => {
         expect(person?.attributes.map(({ attribute }) => attribute)).toEqual(
             DEFAULT_SETTINGS.program.attributes.map(({ id }) => id)
         )
-    })
-
-    it('says too many or a bad filter when set to', () => {
-        const failing = (searchAnswer: 'conflict' | 'bad-request') => () =>
-            answer({
-                ...DEFAULT_SETTINGS,
-                server: { ...DEFAULT_SETTINGS.server, search: searchAnswer },
-            })({ resource: 'tracker/trackedEntities' })
-        expect(statusOf(failing('conflict'))).toBe(409)
-        expect(statusOf(failing('bad-request'))).toBe(400)
     })
 })

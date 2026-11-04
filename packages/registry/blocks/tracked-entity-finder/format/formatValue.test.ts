@@ -47,6 +47,16 @@ describe('formatValue', () => {
         expect(formatValue(attribute('sex'), 'F', gregorian)).toBe('Female')
     })
 
+    it('shows each picked option of a multi-select by name', () => {
+        const allergies = attributeOf(
+            buildProgramModel(hivProgram, { multiTextSearch: true }),
+            'allergies'
+        )
+        expect(formatValue(allergies, 'PEN,SULFA,X', gregorian)).toBe(
+            'Penicillin, Sulfa drugs, X'
+        )
+    })
+
     it('keeps a code that is not in the option set', () => {
         expect(formatValue(attribute('sex'), 'X', gregorian)).toBe('X')
     })

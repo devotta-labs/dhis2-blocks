@@ -43,7 +43,9 @@ const RangeFrame = ({
         )}
     >
         <legend className="mb-1 p-0 text-sm leading-snug">{label}</legend>
-        <div className="flex flex-wrap gap-3 *:min-w-32 *:flex-1">
+        {/* A grid, not flex: the date sides sit in display: contents
+            wrappers, which take no flex sizing. Side by side down to 8rem. */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-3">
             {children}
         </div>
         {description && <FieldDescription>{description}</FieldDescription>}

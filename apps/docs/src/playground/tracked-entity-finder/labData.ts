@@ -8,46 +8,14 @@ import type { LabNetwork } from '../network'
 
 export const LAB_PROGRAM = 'labProgram1'
 
-export const VALUE_TYPES = [
-    'TEXT',
-    'LONG_TEXT',
-    'LETTER',
-    'PHONE_NUMBER',
-    'EMAIL',
-    'URL',
-    'USERNAME',
-    'NUMBER',
-    'INTEGER',
-    'INTEGER_POSITIVE',
-    'INTEGER_NEGATIVE',
-    'INTEGER_ZERO_OR_POSITIVE',
-    'PERCENTAGE',
-    'BOOLEAN',
-    'TRUE_ONLY',
-    'DATE',
-    'AGE',
-    'DATETIME',
-    'IMAGE',
-    'FILE_RESOURCE',
-    'COORDINATE',
-    'ORGANISATION_UNIT',
-] as const
-
-export const OPERATORS = ['eq', 'like', 'sw', 'gt', 'ge', 'lt', 'le'] as const
-export const TEXT_OPERATORS = ['like', 'sw', 'eq'] as const
-
 export const CALENDARS = [
-    'gregorian',
-    'iso8601',
-    'ethiopian',
-    'coptic',
-    'nepali',
-    'persian',
-    'islamic',
-    'thai',
+    ['gregorian', 'Gregorian'],
+    ['ethiopian', 'Ethiopian'],
+    ['nepali', 'Nepali'],
+    ['islamic', 'Islamic'],
+    ['persian', 'Persian'],
+    ['thai', 'Thai'],
 ] as const
-
-export const DATE_FORMATS = ['YYYY-MM-DD', 'DD-MM-YYYY'] as const
 
 export interface LabOption {
     code: string
@@ -64,7 +32,6 @@ export interface LabAttribute {
     options?: LabOption[]
     minCharacters: number
     blocked: string[]
-    preferred?: string
 }
 
 export interface LabProgram {
@@ -75,21 +42,10 @@ export interface LabProgram {
     attributes: LabAttribute[]
 }
 
-/** What a search answers when the network lets it through; a 500 or no answer is the network's call. */
-export const SEARCH_ANSWERS = [
-    ['ok', 'The matches'],
-    ['conflict', '409 too many'],
-    ['bad-request', '400 bad filter'],
-] as const
-
 export interface LabServer {
     /** How many people every search matches, across all pages. */
     matches: number
-    /** Without a total, the finder pages by whether a page came back full. */
-    reportsTotal: boolean
-    search: (typeof SEARCH_ANSWERS)[number][0]
-    calendar: (typeof CALENDARS)[number]
-    dateFormat: (typeof DATE_FORMATS)[number]
+    calendar: (typeof CALENDARS)[number][0]
 }
 
 export interface LabField {
@@ -100,51 +56,26 @@ export interface LabField {
     description?: string
 }
 
-export const RESULTS_LAYOUTS = [
-    ['default', 'Default results'],
-    ['custom', 'Composed rows and states'],
-    ['hooks', 'Hooks only'],
-    ['none', 'No results'],
-] as const
-
-export const FORM_LAYOUTS = [
-    ['stacked', 'All forms at once'],
-    ['swap', 'One at a time, with links'],
-] as const
-
 export interface LabComposition {
     forms: LabField[][]
-    formLayout: (typeof FORM_LAYOUTS)[number][0]
-    /** Fields built from `useFinderField` instead of `FinderField`. */
-    hookFields: boolean
-    hint: boolean
-    results: (typeof RESULTS_LAYOUTS)[number][0]
-    /** Composed results only: the attributes each row shows. */
+    /** `swap` shows one form at a time, with links between them. */
+    formLayout: 'stacked' | 'swap'
+    /**
+     * `parts`: the finder's own parts. `own-rows`: result rows and state
+     * texts of your own. `hooks`: fields and results built from the hooks.
+     */
+    build: 'parts' | 'own-rows' | 'hooks'
+    /** Own rows and hooks only: the attributes each row shows. */
     rowAttributes: string[]
-    customTexts: boolean
 }
-
-export const CANVAS_WIDTHS = [
-    ['phone', 'Phone'],
-    ['narrow', 'Narrow'],
-    ['wide', 'Wide'],
-    ['full', 'Full'],
-] as const
 
 export interface LabSettings {
     program: LabProgram
     server: LabServer
     composition: LabComposition
     network: LabNetwork
-    width: (typeof CANVAS_WIDTHS)[number][0]
     rtl: boolean
 }
-
-export const SAMPLE_OPTIONS: LabOption[] = [
-    { code: 'A', name: 'Option A' },
-    { code: 'B', name: 'Option B' },
-    { code: 'C', name: 'Option C' },
-]
 
 const FIRST_NAMES = ['Amina', 'Fatmata', 'Mohamed', 'Isata', 'Abu', 'Mariama']
 const LAST_NAMES = ['Bangura', 'Kamara', 'Sesay', 'Conteh', 'Koroma', 'Turay']
@@ -154,6 +85,14 @@ const isoDate = (index: number) =>
 
 /** A value for person `index` that reads like what the attribute holds. */
 const sampleValue = (attribute: LabAttribute, index: number): string => {
+    const options = attribute.options ?? []
+    if (attribute.valueType === 'MULTI_TEXT') {
+        // One or two codes, stored comma-separated as DHIS2 does.
+        return options
+            .filter((_, at) => (index + at) % 3 === 0)
+            .map(({ code }) => code)
+            .join(',')
+    }
     if (attribute.options?.length) {
         return attribute.options[index % attribute.options.length].code
     }
@@ -220,7 +159,7 @@ export const programJson = (program: LabProgram) => ({
                           })),
                       }
                     : null,
-                preferredSearchOperator: attribute.preferred ?? null,
+                preferredSearchOperator: null,
                 blockedSearchOperators: attribute.blocked.map((operator) =>
                     operator.toUpperCase()
                 ),
@@ -251,7 +190,8 @@ export const searchJson = (
             })),
         }
     })
-    return server.reportsTotal
-        ? { trackedEntities, pager: { page, pageSize, total: server.matches } }
-        : { trackedEntities, pager: { page, pageSize } }
+    return {
+        trackedEntities,
+        pager: { page, pageSize, total: server.matches },
+    }
 }

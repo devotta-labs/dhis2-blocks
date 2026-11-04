@@ -33,6 +33,17 @@ export const formatValue = (
             return (
                 attribute.options?.find(({ code }) => code === raw)?.name ?? raw
             )
+        case 'multiText':
+            // Stored as comma-separated codes.
+            return raw
+                .split(',')
+                .map(
+                    (code) =>
+                        attribute.options?.find(
+                            (option) => option.code === code
+                        )?.name ?? code
+                )
+                .join(', ')
         case 'date':
             return formatDate(raw, info)
         case 'dateTime':

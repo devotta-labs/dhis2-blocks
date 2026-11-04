@@ -1,13 +1,4 @@
 import { useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
-import {
-    WorkingList,
-    WorkingListColumnSelector,
-    WorkingListFilterControls,
-    WorkingListTable,
-    WorkingListToolbar,
-    WorkingListToolbarActions,
-    WorkingListViewSwitcher,
-} from '@/components/working-list'
 import { LivePreviewHost } from '../../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../../preview/PreviewShell'
 import { PresetControls, Section, Segmented } from '../../controls'
@@ -18,17 +9,14 @@ import { NetworkControls } from '../../NetworkControls'
 import type { Log } from '../../network'
 import { usePresetParam } from '../../usePresetParam'
 import { DisplayChoice } from '../displayChoice'
-import {
-    LAB_ORG_UNIT,
-    LAB_PROGRAM,
-    generateWorld,
-    type LabView,
-} from './labData'
+import { LAB_ORG_UNIT, LAB_PROGRAM, generateWorld } from './labData'
 import { createLabServer, RESOURCES } from './labServer'
 import { EVENT_VIEW } from './savedViews'
 import { initialLabState, labReducer, type Width } from './labState'
 import { PRESETS } from './presets'
 import { OptionsControls } from './settings'
+import { TableCanvas } from './TableCanvas'
+import canvasSource from './TableCanvas.tsx?canvas'
 
 const WIDTHS: ReadonlyArray<readonly [Width, string, string]> = [
     ['phone', 'Phone', 'max-w-[375px]'],
@@ -36,50 +24,6 @@ const WIDTHS: ReadonlyArray<readonly [Width, string, string]> = [
     ['desktop', 'Desktop', 'max-w-[1100px]'],
     ['full', 'Full', 'max-w-none'],
 ]
-
-const LabComposition = ({
-    view,
-    programId,
-    orgUnitId,
-    defaultViewId,
-    note,
-}: {
-    view: LabView
-    programId: string
-    orgUnitId: string
-    defaultViewId?: string
-    note: (entry: string) => void
-}) => (
-    <WorkingList
-        // The page size is a default, so a new choice remounts the list.
-        key={view.pageSize}
-        programId={programId}
-        orgUnitId={orgUnitId}
-        defaultViewId={defaultViewId}
-        defaultPagination={{ page: 1, pageSize: view.pageSize }}
-        onViewChange={(id) => note(`onViewChange(${JSON.stringify(id)})`)}
-        onPaginationChange={(next) =>
-            note(`onPaginationChange(${JSON.stringify(next)})`)
-        }
-    >
-        {view.viewSwitcher && <WorkingListViewSwitcher />}
-        {view.toolbar && (
-            <WorkingListToolbar>
-                {view.columnSelector && <WorkingListColumnSelector />}
-                {view.filterControls && <WorkingListFilterControls />}
-                {view.actions && <WorkingListToolbarActions />}
-            </WorkingListToolbar>
-        )}
-        <WorkingListTable
-            dataQualityMode={view.dataQuality}
-            onRowClick={
-                view.clickable
-                    ? (target) => note(`onRowClick(${JSON.stringify(target)})`)
-                    : undefined
-            }
-        />
-    </WorkingList>
-)
 
 /** The working list as a table: the table and its toolbar on generated data, beside the requests it makes. */
 export const TableLab = () => {
@@ -118,8 +62,21 @@ export const TableLab = () => {
     const widthClass =
         WIDTHS.find(([option]) => option === width)?.[2] ?? 'max-w-none'
 
+    const canvasProps = {
+        view: config.view,
+        programId: mode === 'lab' ? LAB_PROGRAM : live.programId,
+        orgUnitId: mode === 'lab' ? LAB_ORG_UNIT : live.orgUnitId,
+        defaultViewId:
+            mode === 'lab' && data.mode === 'event' ? EVENT_VIEW : undefined,
+        note,
+    }
+
     return (
         <LabLayout
+            source={{
+                ...canvasSource,
+                props: canvasProps,
+            }}
             panel={{
                 title: 'Logs',
                 children: (
@@ -236,29 +193,16 @@ export const TableLab = () => {
                             respond={respond}
                             log={log}
                         >
-                            <LabComposition
-                                view={config.view}
-                                programId={LAB_PROGRAM}
-                                orgUnitId={LAB_ORG_UNIT}
-                                defaultViewId={
-                                    data.mode === 'event'
-                                        ? EVENT_VIEW
-                                        : undefined
-                                }
-                                note={note}
-                            />
+                            <TableCanvas {...canvasProps} />
                         </LabServerScope>
                     ) : (
                         <LivePreviewHost
                             key={run}
                             placeholder={<PreviewSpinner className="h-96" />}
                         >
-                            <LabComposition
+                            <TableCanvas
                                 key={`${live.programId}/${live.orgUnitId}`}
-                                view={config.view}
-                                programId={live.programId}
-                                orgUnitId={live.orgUnitId}
-                                note={note}
+                                {...canvasProps}
                             />
                         </LivePreviewHost>
                     )}

@@ -2,12 +2,15 @@ import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
+import { canvasSourcePlugin } from './canvasSourcePlugin'
 
 export default defineConfig({
+    plugins: [canvasSourcePlugin()],
     // A lab server test checks its answers against the block's own schemas.
     test: {
         projects: [
             {
+                extends: true,
                 resolve: {
                     alias: {
                         '@/components': fileURLToPath(
@@ -28,6 +31,7 @@ export default defineConfig({
                 },
             },
             {
+                extends: true,
                 plugins: [tailwindcss()],
                 optimizeDeps: {
                     include: [

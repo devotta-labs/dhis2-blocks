@@ -1,4 +1,5 @@
 import { useHighlightedCode } from '../hooks/use-highlighted-code'
+import type { ReactNode } from 'react'
 import {
     CodeBlock,
     CodeBlockActions,
@@ -12,6 +13,7 @@ interface HighlightedCodeBlockProps {
     language: string
     className?: string
     contentClassName?: string
+    renderLine?: (line: ReactNode, index: number) => ReactNode
 }
 
 /** A shadcn code block with Shiki highlighting and a floating copy button. */
@@ -20,6 +22,7 @@ export const HighlightedCodeBlock = ({
     language,
     className,
     contentClassName,
+    renderLine,
 }: HighlightedCodeBlockProps) => {
     const lines = useHighlightedCode(code, language)
 
@@ -30,7 +33,9 @@ export const HighlightedCodeBlock = ({
             </CodeBlockActions>
             <CodeBlockContent className={contentClassName}>
                 {lines.map((line, index) => (
-                    <CodeBlockLine key={index}>{line}</CodeBlockLine>
+                    <CodeBlockLine key={index}>
+                        {renderLine ? renderLine(line, index) : line}
+                    </CodeBlockLine>
                 ))}
             </CodeBlockContent>
         </CodeBlock>

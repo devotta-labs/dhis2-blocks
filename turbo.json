@@ -77,7 +77,8 @@
                 "apps/*/package.json",
                 "packages/*/package.json",
                 "apps/*/tsconfig.json",
-                "packages/registry/tsconfig.json"
+                "packages/registry/**",
+                "apps/web/src/*TranslationCatalog.ts"
             ],
             "outputs": []
         }

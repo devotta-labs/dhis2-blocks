@@ -126,6 +126,8 @@ interface MountOptions {
     fieldIdOf?: (key: CellKey) => string
     /** The provider's bulk columns; every column when absent. */
     bulkColumn?: (column: RigTable['columns'][number]) => boolean
+    /** Cells the store refuses to change, whatever the annotations say. */
+    locked?: (key: CellKey) => boolean
     /** What the provider asks before a bulk write; nothing when absent. */
     confirmBulk?: SpreadsheetContext['confirmBulk']
 }
@@ -148,6 +150,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
         GridFooter,
         bulkColumn,
         confirmBulk,
+        locked,
     } = options
     const store = createCellStore({
         fields: new Map(
@@ -159,6 +162,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
             )
         ),
         fieldIdOf,
+        locked,
         values: new Map(values),
         settings: GREGORIAN,
         enqueue: () => {},

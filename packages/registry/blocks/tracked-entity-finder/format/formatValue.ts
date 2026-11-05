@@ -21,19 +21,15 @@ const formatDateTime = (raw: string, info: FinderSystemInfo) => {
 
 /** What a result shows for a stored attribute value. */
 export const formatValue = (
-    attribute: FinderAttribute | undefined,
+    attribute: Pick<FinderAttribute, 'valueType' | 'options'> | undefined,
     raw: string,
     info: FinderSystemInfo
 ): string => {
     if (raw.trim() === '') {
         return EMPTY
     }
-    switch (attribute?.kind) {
-        case 'option':
-            return (
-                attribute.options?.find(({ code }) => code === raw)?.name ?? raw
-            )
-        case 'multiText':
+    if (attribute?.options) {
+        if (attribute.valueType === 'MULTI_TEXT') {
             // Stored as comma-separated codes.
             return raw
                 .split(',')
@@ -44,16 +40,21 @@ export const formatValue = (
                         )?.name ?? code
                 )
                 .join(', ')
-        case 'date':
+        }
+        return attribute.options.find(({ code }) => code === raw)?.name ?? raw
+    }
+    switch (attribute?.valueType) {
+        case 'DATE':
+        case 'AGE':
             return formatDate(raw, info)
-        case 'dateTime':
+        case 'DATETIME':
             return formatDateTime(raw, info)
-        case 'boolean':
+        case 'BOOLEAN':
             if (raw === 'false') {
                 return i18n.t('No')
             }
             return raw === 'true' ? i18n.t('Yes') : raw
-        case 'trueOnly':
+        case 'TRUE_ONLY':
             return raw === 'true' ? i18n.t('Yes') : raw
         default:
             return raw

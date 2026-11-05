@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { MenuItem } from '@dhis2/ui'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import {
@@ -21,6 +22,112 @@ const programs: Option[] = Array.from({ length: 11 }, (_, index) => ({
 }))
 
 describe('ContextSelector', () => {
+    it.each([10, 11])(
+        'keeps option actions and host content equivalent with %i menu options',
+        async (count) => {
+            const onChange = vi.fn()
+            const onOpenChange = vi.fn()
+            const onClear = vi.fn()
+            const options: Option[] = [
+                {
+                    value: 'committed',
+                    label: 'Committed elsewhere',
+                    excludeFromMenu: true,
+                },
+                {
+                    value: 'target',
+                    label: 'Target available',
+                    icon: { color: '#1565c0', alternativeText: 'Host icon' },
+                },
+                { value: 'disabled', label: 'Target disabled', disabled: true },
+                ...Array.from({ length: count - 2 }, (_, index) => ({
+                    value: `other-${index}`,
+                    label: `Other ${index}`,
+                })),
+            ]
+            const screen = await render(
+                <ContextSelector>
+                    <EventSelector
+                        label="Date of Consultation"
+                        options={options}
+                        value="committed"
+                        open
+                        onChange={onChange}
+                        onOpenChange={onOpenChange}
+                        onClear={onClear}
+                    >
+                        <MenuItem label="Host action" />
+                    </EventSelector>
+                </ContextSelector>
+            )
+            const menu = screen.getByRole('menu')
+            expect(menu.element().textContent).not.toContain(
+                'Committed elsewhere'
+            )
+            const filter = screen.getByPlaceholder(
+                'Search for a Date of Consultation'
+            )
+            if (count > 10) {
+                await filter.fill('target')
+                expect(menu.element().textContent).not.toContain('Other 0')
+                const content = menu.element().textContent ?? ''
+                expect(content.indexOf('Host action')).toBeGreaterThan(
+                    content.indexOf('Target disabled')
+                )
+                expect(content.indexOf('Clear selection')).toBeGreaterThan(
+                    content.indexOf('Host action')
+                )
+            } else {
+                expect(filter.query()).toBeNull()
+                expect(menu.element().textContent).not.toContain(
+                    'Clear selection'
+                )
+            }
+            await expect
+                .element(
+                    screen.getByRole('menuitem', { name: 'Target available' })
+                )
+                .toBeVisible()
+            expect(
+                menu
+                    .element()
+                    .querySelector('[title="Host icon"]')
+                    ?.getAttribute('aria-hidden')
+            ).toBe('true')
+            const disabled = screen.getByRole('menuitem', {
+                name: 'Target disabled',
+            })
+            expect(disabled.element().getAttribute('aria-disabled')).toBe(
+                'true'
+            )
+            // Native activation also respects disabled state, beyond Playwright's actionability guard.
+            disabled
+                .element()
+                .dispatchEvent(new MouseEvent('click', { bubbles: true }))
+            expect(onChange).not.toHaveBeenCalled()
+            await screen
+                .getByRole('menuitem', { name: 'Target available' })
+                .click()
+            expect(onChange).toHaveBeenCalledExactlyOnceWith('target')
+            expect(onOpenChange).toHaveBeenLastCalledWith(false)
+            if (count > 10) {
+                await filter.fill('nothing matches')
+                await expect
+                    .element(
+                        screen.getByText('No results found for nothing matches')
+                    )
+                    .toBeVisible()
+                await expect
+                    .element(screen.getByText('Host action'))
+                    .toBeVisible()
+                await screen
+                    .getByText('Clear selection', { exact: true })
+                    .click()
+                expect(onClear).toHaveBeenCalledOnce()
+            }
+        }
+    )
+
     it('exposes Capture toolbar semantics and composes clear-all', async () => {
         const onClear = vi.fn()
         const screen = await render(

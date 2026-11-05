@@ -57,6 +57,35 @@ describe('formatValue', () => {
         )
     })
 
+    it.each([
+        { multiTextSearch: true, searchable: true },
+        { multiTextSearch: false, searchable: true },
+        { multiTextSearch: true, searchable: false },
+        { multiTextSearch: false, searchable: false },
+    ])(
+        'formats displayed MULTI_TEXT independently of search support: %o',
+        ({ multiTextSearch, searchable }) => {
+            const displayModel = buildProgramModel(
+                {
+                    ...hivProgram,
+                    attributes: hivProgram.attributes.map((attribute) => ({
+                        ...attribute,
+                        searchable,
+                        displayInList: true,
+                    })),
+                },
+                { multiTextSearch }
+            )
+            const allergies = attributeOf(displayModel, 'allergies')
+            expect(formatValue(allergies, 'PEN,SULFA,X', gregorian)).toBe(
+                'Penicillin, Sulfa drugs, X'
+            )
+            expect(allergies?.kind).toBe(
+                multiTextSearch ? 'multiText' : 'unsupported'
+            )
+        }
+    )
+
     it('keeps a code that is not in the option set', () => {
         expect(formatValue(attribute('sex'), 'X', gregorian)).toBe('X')
     })
@@ -99,6 +128,10 @@ describe('formatValue', () => {
         ['hivPositive', 'true', 'Yes'],
         ['hivPositive', 'false', 'No'],
         ['consented', 'true', 'Yes'],
+        ['consented', 'false', 'false'],
+        ['hivPositive', 'TRUE', 'TRUE'],
+        ['hivPositive', '1', '1'],
+        ['consented', 'TRUE', 'TRUE'],
     ])('shows %s %s as %s', (id, raw, shown) => {
         expect(formatValue(attribute(id), raw, gregorian)).toBe(shown)
     })
@@ -118,5 +151,22 @@ describe('formatValue', () => {
         expect(formatValue(attribute('firstName'), 'Abebe', gregorian)).toBe(
             'Abebe'
         )
+    })
+
+    it.each(['9007199254740993', '0.1234567890123456789', '001.00'])(
+        'preserves the numeric string %s exactly',
+        (raw) => {
+            expect(formatValue(attribute('weight'), raw, gregorian)).toBe(raw)
+        }
+    )
+
+    it('keeps the written DATETIME clock time rather than shifting time zones', () => {
+        expect(
+            formatValue(
+                attribute('visit'),
+                '2024-05-23T23:05:09-11:00',
+                ethiopian
+            )
+        ).toBe('15-09-2016 23:05')
     })
 })

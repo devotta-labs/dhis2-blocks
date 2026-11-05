@@ -188,14 +188,6 @@ export const createObservationsClient = (
     return newClient(engine, lastCacheId)
 }
 
-/**
- * Internal: app-runtime's client. An app has one data engine, so its results
- * share cache id 0 however often the client is rebuilt.
- */
-export const createRuntimeObservationsClient = (
-    engine: DataEngineLike
-): ObservationsClient => newClient(engine, 0)
-
 /** Internal: the client's part of every query key. */
 export const cacheIdOf = (client: ObservationsClient): number =>
     cacheIds.get(client) ?? 0

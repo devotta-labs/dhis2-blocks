@@ -181,6 +181,7 @@ const checkInstall = (workDirectory: string): void => {
     run('pnpm', ['exec', 'vite', 'build'], uiAppDirectory)
 
     for (const name of [
+        'context-selector',
         'dhis2-value-display',
         'tracked-entity-finder',
         'working-list',
@@ -190,7 +191,22 @@ const checkInstall = (workDirectory: string): void => {
         cpSync(CONSUMER_TEMPLATE, isolated, { recursive: true })
         writeFileSync(
             join(isolated, 'src', 'main.tsx'),
-            `import * as block from '@/components/${name}';\nimport './index.css';\nconsole.log(block);\n`
+            name === 'context-selector'
+                ? `import { ContextSelector, OrganisationUnitSelector, OptionSelector } from '@/components/context-selector';
+import { MenuItem, SelectorBar, SelectorBarItem } from '@dhis2/ui';
+import './index.css';
+
+export const composition = <ContextSelector ariaLabel="Host context">
+    <OptionSelector label="Program" options={[{ value: 'p', label: 'Program', icon: { color: '#1565c0' } }]} value="p">
+        <MenuItem label={<strong>Host action</strong>} ariaLabel="Host action" />
+    </OptionSelector>
+    <OrganisationUnitSelector value="Host unit"><button type="button">Host tree</button></OrganisationUnitSelector>
+</ContextSelector>;
+export const native = <SelectorBar ariaLabel="Native host">
+    <SelectorBarItem label="Native item" value="Selected" disabled={false} onClearSelectionClick={() => undefined}><span>Native children</span></SelectorBarItem>
+</SelectorBar>;
+`
+                : `import * as block from '@/components/${name}';\nimport './index.css';\nconsole.log(block);\n`
         )
         run('pnpm', ['install', '--no-frozen-lockfile'], isolated)
         run(

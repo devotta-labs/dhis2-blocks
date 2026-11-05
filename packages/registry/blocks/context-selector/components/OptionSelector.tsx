@@ -102,6 +102,18 @@ export const MenuSelector = ({
     }
 
     const inactiveEmptyMessage = displayOnly ? readOnlyEmptyMessage : ''
+    const optionsToRender = manyOptions ? visibleOptions : menuOptions
+    const optionItems = optionsToRender.map((option) => (
+        <MenuItem
+            key={option.value}
+            ariaLabel={option.label}
+            label={<OptionLabel icon={option.icon} label={option.label} />}
+            value={option.value}
+            disabled={option.disabled}
+            onClick={({ value: nextValue }) => selectOption(nextValue)}
+            suffix=""
+        />
+    ))
 
     return (
         <SelectorBarItem
@@ -137,24 +149,7 @@ export const MenuSelector = ({
                                     initialFocus
                                 />
                                 {visibleOptions.length > 0 ? (
-                                    visibleOptions.map((option) => (
-                                        <MenuItem
-                                            key={option.value}
-                                            ariaLabel={option.label}
-                                            label={
-                                                <OptionLabel
-                                                    icon={option.icon}
-                                                    label={option.label}
-                                                />
-                                            }
-                                            value={option.value}
-                                            disabled={option.disabled}
-                                            onClick={({ value: nextValue }) =>
-                                                selectOption(nextValue)
-                                            }
-                                            suffix=""
-                                        />
-                                    ))
+                                    optionItems
                                 ) : (
                                     <div className="flex justify-center px-[8px] py-[16px] text-[14px] text-[#4a5768]">
                                         <span>
@@ -165,24 +160,7 @@ export const MenuSelector = ({
                                 )}
                             </>
                         ) : (
-                            menuOptions.map((option) => (
-                                <MenuItem
-                                    key={option.value}
-                                    ariaLabel={option.label}
-                                    label={
-                                        <OptionLabel
-                                            icon={option.icon}
-                                            label={option.label}
-                                        />
-                                    }
-                                    value={option.value}
-                                    disabled={option.disabled}
-                                    onClick={({ value: nextValue }) =>
-                                        selectOption(nextValue)
-                                    }
-                                    suffix=""
-                                />
-                            ))
+                            optionItems
                         )}
                         {children}
                         {selectedOption && manyOptions && onClear ? (

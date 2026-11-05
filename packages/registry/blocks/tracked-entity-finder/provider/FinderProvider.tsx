@@ -1,5 +1,9 @@
 import React, { Children, useEffect, type ReactNode } from 'react'
-import type { TrackedEntityFinderClient } from '../api/client'
+import {
+    cacheIdOf,
+    resourceClientOf,
+    type TrackedEntityFinderClient,
+} from '../api/client'
 import type { FinderPerson } from '../api/search'
 import { useTrackedEntityFinderClient } from '../api/runtimeClient'
 import { FinderContext } from './context'
@@ -42,7 +46,13 @@ const FinderScope = ({
 
 const RuntimeFinderScope = (props: FinderProviderProps) => {
     const client = useTrackedEntityFinderClient()
-    return <FinderScope {...props} client={client} />
+    return (
+        <FinderScope
+            key={`${cacheIdOf(resourceClientOf(client))}:${props.program}`}
+            {...props}
+            client={client}
+        />
+    )
 }
 
 /**
@@ -50,10 +60,13 @@ const RuntimeFinderScope = (props: FinderProviderProps) => {
  * renders only its children, so any UI inside it can use the finder hooks.
  */
 export function FinderProvider(props: FinderProviderProps) {
-    // A new program starts from nothing: values, forms and results.
     if (props.client) {
         return (
-            <FinderScope key={props.program} {...props} client={props.client} />
+            <FinderScope
+                key={`${cacheIdOf(resourceClientOf(props.client))}:${props.program}`}
+                {...props}
+                client={props.client}
+            />
         )
     }
     return <RuntimeFinderScope key={props.program} {...props} />

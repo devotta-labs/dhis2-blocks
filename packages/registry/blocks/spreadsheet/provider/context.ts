@@ -163,20 +163,12 @@ export const useViewOf = (
     cell: CellState,
     effects: CellAnnotations
 ): CellView => {
-    const { store, effects: effectsStore } = useSpreadsheetContext()
-    // The lock is read when committing, not when rendering: a rule may have locked the cell while its text was typed.
+    const { store } = useSpreadsheetContext()
+    // The store's gate reads the cell's lock and hiding when it commits, so a rule that closed the cell while its text
+    // was typed wins.
     const commit = useCallback(
-        (text: string): CommitResult => {
-            const { hiddenBy, readOnly } =
-                effectsStore.getState().cells[key] ?? EMPTY_EFFECTS
-            // A lock wins. Without one, text typed into a cell a rule has just hidden is saved, then cleared by the
-            // rule, as the default controls do.
-            return readOnly !== undefined ||
-                (hiddenBy !== undefined && text === '')
-                ? 'unchanged'
-                : store.getState().commit(key, text)
-        },
-        [store, effectsStore, key]
+        (text: string): CommitResult => store.getState().commit(key, text),
+        [store, key]
     )
     return useMemo(
         () => ({ ...cell, effects, commit }),

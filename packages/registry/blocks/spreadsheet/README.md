@@ -63,6 +63,7 @@ export const Targets = () => {
                 fieldIdOf: () => 'target',
                 values: new Map(),
                 settings,
+                annotations, // the store you pass to `<Spreadsheet annotations>` below
                 enqueue: (key, value, base) => save(key, value, base), // yours: where a committed value goes
             }),
         []
@@ -109,7 +110,7 @@ interface CellStoreOptions {
     values: ReadonlyMap<CellKey, string> // what the cells hold when the grid opens
     settings: ValueSettings // the system calendar and date format
     enqueue(key: CellKey, value: string | null, base: string | null): void // every change that must be saved; null clears the cell
-    check?(key: CellKey, code: string): string | undefined // the message refusing one option code, or nothing
+    annotations: ReadonlyStore<AnnotationsState> // what the rules say of each cell, read when a person writes
     locked?(key: CellKey): boolean // the cell's record cannot be changed: no commit, and no undo writes to it
 }
 
@@ -365,17 +366,19 @@ reason of their own ("Edit this field in its own form"); a replacement is not gi
 `useCell(cellKey).commit(text)` saves what a person typed or chose, through the store the default controls use. It
 returns `'queued'` when the value changed (it is on the device, then sent), `'unchanged'` when it did not, and
 `'invalid'` when its type, the annotations' hidden options, or (for an age) a date of birth in the future refuse it: the text stays as the cell's `draft` with its `error`,
-and nothing is saved. A cell whose annotations lock it (`annotations.cells[key].readOnly`, which `useCell(key).effects.readOnly` shows) is not written to
-(`'unchanged'`); text typed into a cell the annotations hide, and not lock, is saved, and whatever hides it then decides what
-becomes of it. To keep
+and nothing is saved. A person's commit to a cell the annotations make read-only (`annotations.cells[key].readOnly`, which
+`useCell(key).effects.readOnly` shows) or hide is `'unchanged'`: nothing is saved and no draft is kept. A rule's commit
+(`source: 'rule'`) passes the gate. To keep
 a default control's editing, render it from `cells` (`<cells.text {...props} />`) in your control: a default control
 reads its cell from the `Cell` around it, so it is drawn only inside one.
 
 ## Boundaries
 
 - The grid is DHIS2-typed: a cell's field has a DHIS2 value type, and its value is stored as DHIS2 stores it.
-- Values are checked against their value type as they are typed. An option the annotations hide is refused like any value
-  that is not an option, unless the cell already holds it (a multi-select is checked code by code).
+- Values are checked against their value type as they are typed. A person's write to a cell the annotations hide or make
+  read-only is `'unchanged'`: nothing is saved and no draft is kept. An option the annotations hide is refused like any
+  value that is not an option (`Choose one of the options`), unless the cell already holds it (a multi-select is checked
+  code by code). A rule's own commit is not gated. `undo` skips a cell the annotations now close.
 - `TRACKER_ASSOCIATE`, `REFERENCE`, `GEOJSON`, and a pop-up type without an editor, show their value and are edited in
   their own form, or in a replacement control.
 - File cells upload through `POST /api/fileResources` with the `engine` you pass, since a file cannot wait for your code

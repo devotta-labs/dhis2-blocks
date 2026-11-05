@@ -54,12 +54,6 @@ const setup = ({
     overrides?: CellOverrides
     settings?: ValueSettings
 } = {}) => {
-    const store = createCellStore({
-        fields,
-        values: new Map(values),
-        settings,
-        enqueue: () => {},
-    })
     const cells: AnnotationsState['cells'] = {}
     for (const [key, cell] of annotations) {
         cells[key] = { required: false, messages: [], ...cell }
@@ -69,6 +63,13 @@ const setup = ({
         rowMessages: new Map(),
         rowNotes: new Map(),
     }))
+    const store = createCellStore({
+        fields,
+        values: new Map(values),
+        settings,
+        annotations: effects,
+        enqueue: () => {},
+    })
     const table: GridTable = {
         id: 't',
         title: 't',
@@ -260,6 +261,7 @@ describe('planBulk', () => {
                 ['r1-pnc.n', '2'],
             ]),
             settings: GREGORIAN,
+            annotations: createStore<AnnotationsState>()(() => NO_ANNOTATIONS),
             enqueue: () => {},
         })
         expect(

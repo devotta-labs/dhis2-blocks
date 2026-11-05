@@ -58,6 +58,7 @@ const TargetsGrid = () => {
                 fieldIdOf: () => 'target',
                 values: new Map(),
                 settings: SETTINGS,
+                annotations,
                 // Where a committed value goes: save it to your backend here.
                 enqueue: (key, value) =>
                     setLog((lines) => [

@@ -4,6 +4,8 @@ import type { StoreApi } from 'zustand/vanilla'
 import { checkStored, parseTyped } from '@/components/dhis2-value-types'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import { todayIso } from '@/components/dhis2-value-types'
+import type { AnnotationsState } from '../model/annotations'
+import type { ReadonlyStore } from '../provider/context'
 import type {
     CellKey,
     CellState,
@@ -21,11 +23,10 @@ export interface CellStoreOptions {
     /** Called for every change that must be saved; the outbox writes it. */
     enqueue(key: CellKey, value: string | null, base: string | null): void
     /**
-     * The translated message refusing one option code a person's value adds to the cell, or nothing. A multi-select's
-     * value is checked code by code, and a code the cell already holds is not asked about; for any other field, a value
-     * the cell already holds is not. Blank is never checked.
+     * What the rules say about each cell, read when a person's change runs: a cell it hides or makes read-only is not
+     * written, and an option it hides is refused unless the cell already holds it.
      */
-    check?(key: CellKey, code: string): string | undefined
+    annotations: ReadonlyStore<AnnotationsState>
     /** Whether the cell cannot be changed: no commit, the rules' included, and no undo writes to it. */
     locked?(key: CellKey): boolean
 }
@@ -87,6 +88,34 @@ export const futureBirth = (birth: string, today: string) =>
         ? i18n.t('Enter a date of birth that is not in the future')
         : undefined
 
+/**
+ * Whether `value` adds an option code that `hidden` holds to a cell that holds `held`. A code the cell already holds is
+ * kept, and a multi-select is checked code by code.
+ */
+export const addsHiddenOption = (
+    field: Field,
+    held: string | undefined,
+    value: string,
+    hidden: ReadonlySet<string> | undefined
+) => {
+    if (hidden === undefined) {
+        return false
+    }
+    const codesOf = (text: string) =>
+        field.valueType === 'MULTI_TEXT' ? text.split(',') : [text]
+    const kept = new Set(held === undefined ? [] : codesOf(held))
+    return codesOf(value).some((code) => !kept.has(code) && hidden.has(code))
+}
+
+/** Whether the rules hide the cell or make it read-only: a person cannot write it. */
+const closedTo = (
+    annotations: ReadonlyStore<AnnotationsState>,
+    key: CellKey
+) => {
+    const note = annotations.getState().cells[key]
+    return note?.readOnly !== undefined || note?.hiddenBy !== undefined
+}
+
 /** What a cell with no entry reads as; one stable object. */
 export const EMPTY_CELL: Readonly<CellState> = Object.freeze({
     sync: 'idle',
@@ -103,7 +132,7 @@ export const createCellStore = ({
     values,
     settings,
     enqueue,
-    check,
+    annotations,
     locked,
 }: CellStoreOptions): StoreApi<CellStoreState> => {
     const fieldOf = (key: CellKey) => fields.get(fieldIdOf(key))
@@ -113,26 +142,6 @@ export const createCellStore = ({
         return field === undefined || value === undefined
             ? undefined
             : checkStored(field, value)?.message
-    }
-
-    /** What `check` says of the codes `value` adds to `held`; a code a person keeps is never refused. */
-    const refusal = (
-        key: CellKey,
-        field: Field,
-        held: string | undefined,
-        value: string
-    ) => {
-        if (field.valueType !== 'MULTI_TEXT') {
-            return value === held ? undefined : check?.(key, value)
-        }
-        const kept = new Set(held?.split(','))
-        for (const code of value.split(',')) {
-            const message = kept.has(code) ? undefined : check?.(key, code)
-            if (message !== undefined) {
-                return message
-            }
-        }
-        return undefined
     }
 
     const loaded: Cells = {}
@@ -223,7 +232,11 @@ export const createCellStore = ({
                     if (field === undefined) {
                         throw new Error(`No field for the cell ${key}`)
                     }
-                    if (locked?.(key)) {
+                    // A person's write to a cell the rules close, hidden included, keeps no draft: it could not be cleared.
+                    if (
+                        locked?.(key) ||
+                        (source === 'person' && closedTo(annotations, key))
+                    ) {
                         return 'unchanged'
                     }
                     const cell = read(key) ?? EMPTY_CELL
@@ -241,9 +254,15 @@ export const createCellStore = ({
                             (field.valueType === 'AGE'
                                 ? futureBirth(parsed.value, todayIso())
                                 : undefined) ??
-                            (source === 'rule'
+                            (source === 'rule' ||
+                            !addsHiddenOption(
+                                field,
+                                cell.value,
+                                parsed.value,
+                                annotations.getState().cells[key]?.hiddenOptions
+                            )
                                 ? undefined
-                                : refusal(key, field, cell.value, parsed.value))
+                                : i18n.t('Choose one of the options'))
                     }
                     if (!parsed.ok || error !== undefined) {
                         write(key, { ...cell, draft: text, error })
@@ -311,7 +330,11 @@ export const createCellStore = ({
                 return edit(({ read, queue }) => {
                     const undone: CellKey[] = []
                     for (const { key, previous } of last.slice().reverse()) {
-                        if (!locked?.(key) && read(key)?.value !== previous) {
+                        if (
+                            !locked?.(key) &&
+                            !closedTo(annotations, key) &&
+                            read(key)?.value !== previous
+                        ) {
                             queue(key, previous, 'person')
                             undone.unshift(key)
                         }

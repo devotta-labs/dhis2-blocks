@@ -3,6 +3,7 @@ import { useStore } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
 import { Button } from '@/components/dhis2/ui/button'
 import { Popover, PopoverContent } from '@/components/dhis2/ui/popover'
+import { formatCount } from '../cells/OptionCell'
 import type { GridRow } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 
@@ -65,9 +66,9 @@ export const NotesMarker = ({
             >
                 {notes.length === 1
                     ? i18n.t('Note')
-                    : i18n.t('Notes: {{count}}', {
+                    : i18n.t('Notes: {{notes}}', {
                           nsSeparator: '::',
-                          count: notes.length,
+                          notes: formatCount(notes.length),
                       })}
             </Button>
             <span id={notesDomId(rowHeader)} hidden>

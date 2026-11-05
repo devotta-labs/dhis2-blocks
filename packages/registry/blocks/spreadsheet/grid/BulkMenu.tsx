@@ -24,8 +24,16 @@ import { formatCount } from '../cells/OptionCell'
 import type { GridColumn, GridRow, GridTable } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 import type { SpreadsheetContext } from '../provider/context'
-import { clearCandidates, planBulk, rowCandidates } from './bulk'
+import {
+    clearCandidates,
+    columnCandidates,
+    planBulk,
+    rowCandidates,
+    skippedClause,
+} from './bulk'
 import type { BulkCandidate, BulkPlan } from './bulk'
+import { ColumnPopover } from './ColumnPopover'
+import type { ColumnTarget } from './ColumnPopover'
 import { reasonOf } from './navGrid'
 import { BORDER_CLASS } from './RowHeader'
 
@@ -103,29 +111,12 @@ export const RowActions = ({
     </td>
 )
 
-const AS_IS = { escapeValue: false }
-
 /** What a bulk write says: how many cells changed and, when any were skipped, how many and the most common reason. */
-const summary = (changed: number, skipped: ReadonlyMap<string, number>) => {
-    const said = i18n.t('Cells changed: {{cells}}', {
+const summary = (changed: number, skipped: ReadonlyMap<string, number>) =>
+    `${i18n.t('Cells changed: {{cells}}.', {
         nsSeparator: '::',
         cells: formatCount(changed),
-    })
-    const counts = Array.from(skipped)
-    if (counts.length === 0) {
-        return said
-    }
-    const [reason] = counts.reduce((most, each) =>
-        each[1] > most[1] ? each : most
-    )
-    const total = counts.reduce((sum, [, count]) => sum + count, 0)
-    return `${said} ${i18n.t('{{skipped}} skipped: {{reason}}.', {
-        nsSeparator: '::',
-        interpolation: AS_IS,
-        skipped: formatCount(total),
-        reason,
-    })}`
-}
+    })}${skippedClause(skipped)}`
 
 interface Pending {
     plan: BulkPlan
@@ -160,6 +151,8 @@ export const BulkMenu = ({
         confirmBulk,
     } = context
     const [pending, setPending] = useState<Pending>()
+    // The column value popover, kept after it closes so it closes in place.
+    const [valueFor, setValueFor] = useState<ColumnTarget & { open: boolean }>()
 
     const apply = ({ entries, skipped }: BulkPlan, anchor: HTMLElement) => {
         const counted = new Map(skipped)
@@ -201,17 +194,19 @@ export const BulkMenu = ({
         announce(summary(changed, counted))
     }
 
-    if (target === undefined) {
-        return null
-    }
-    const { anchor, table, row, column } = target
-    const run = (candidates: BulkCandidate[], overwrite: boolean) => {
-        const plan = planBulk(candidates, overwrite, {
+    const planIn = (
+        table: GridTable,
+        candidates: BulkCandidate[],
+        overwrite: boolean
+    ) =>
+        planBulk(candidates, overwrite, {
             isEditable: reasonOf(table.closed, store, effects, overrides),
             state: store.getState(),
             annotations: effects.getState(),
             settings,
         })
+    /** Writes the plan, or first asks the provider's dialog when `confirmBulk` answers. */
+    const confirm = (plan: BulkPlan, anchor: HTMLElement) => {
         const ask = confirmBulk?.(plan.entries.map(({ key }) => key))
         if (ask === undefined) {
             apply(plan, anchor)
@@ -219,8 +214,13 @@ export const BulkMenu = ({
             setPending({ plan, anchor, ask })
         }
     }
-    // shortcut: does nothing until the column's value popover exists; it opens the popover then.
-    const openColumnPopover = () => {}
+
+    if (target === undefined) {
+        return null
+    }
+    const { anchor, table, row, column } = target
+    const run = (candidates: BulkCandidate[], overwrite: boolean) =>
+        confirm(planIn(table, candidates, overwrite), anchor)
     const columns = table.columns.filter((each) => bulkColumn?.(each) !== false)
     const below =
         row === undefined ? [] : table.rows.slice(table.rows.indexOf(row) + 1)
@@ -305,7 +305,16 @@ export const BulkMenu = ({
                                     {i18n.t('Column')}
                                 </DropdownMenuLabel>
                             ) : null}
-                            <DropdownMenuItem onClick={openColumnPopover}>
+                            <DropdownMenuItem
+                                onClick={() =>
+                                    setValueFor({
+                                        anchor,
+                                        table,
+                                        column,
+                                        open: true,
+                                    })
+                                }
+                            >
                                 {i18n.t('Apply value to all column cells')}
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -326,6 +335,31 @@ export const BulkMenu = ({
                     )}
                 </DropdownMenuContent>
             </DropdownMenu>
+            {valueFor === undefined ? null : (
+                <ColumnPopover
+                    target={valueFor}
+                    open={valueFor.open}
+                    onClose={() =>
+                        setValueFor((open) => open && { ...open, open: false })
+                    }
+                    plan={(text, overwrite) =>
+                        planIn(
+                            valueFor.table,
+                            columnCandidates(
+                                valueFor.table,
+                                valueFor.column,
+                                text,
+                                keyOf
+                            ),
+                            overwrite
+                        )
+                    }
+                    onApply={(plan) => {
+                        setValueFor({ ...valueFor, open: false })
+                        confirm(plan, valueFor.anchor)
+                    }}
+                />
+            )}
             {pending === undefined ? null : (
                 <AlertDialog
                     open

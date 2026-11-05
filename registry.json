@@ -1247,6 +1247,11 @@
                     "target": "@components/spreadsheet/grid/BulkMenu.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/spreadsheet/grid/ColumnPopover.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/ColumnPopover.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/spreadsheet/grid/RowHeader.tsx",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/grid/RowHeader.tsx"

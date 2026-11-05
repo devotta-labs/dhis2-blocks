@@ -389,6 +389,22 @@ const BOOLEAN_WORDS = new Map([
     ['0', 'false'],
 ])
 
+// Read when shown, so the labels are in the language set then.
+const yesNo = () =>
+    new Map([
+        ['true', i18n.t('Yes')],
+        ['false', i18n.t('No')],
+    ])
+
+/** Typed Yes/No text as `true` or `false`: the labels a cell shows first, then the words read in any language. */
+const booleanOf = (text: string): string | undefined => {
+    const word = text.toLowerCase()
+    const labelled = [...yesNo()].find(
+        ([, label]) => label.toLowerCase() === word
+    )
+    return labelled?.[0] ?? BOOLEAN_WORDS.get(word)
+}
+
 const DATE_TIME_TEXT = /^(?<day>\S+?)(?:\s+|T)(?<time>\d{1,2}:\d{2})$/
 
 /** `9:30` as `09:30`; anything else as typed. */
@@ -454,7 +470,7 @@ const toStored = (
             return paddedTime(text)
         case 'boolean':
         case 'trueOnly':
-            return BOOLEAN_WORDS.get(text.toLowerCase()) ?? text
+            return booleanOf(text) ?? text
         case 'date':
             return calendarDateToIso(text, settings)
         case 'dateTime':
@@ -500,11 +516,6 @@ export const parseTyped = (
         : { ok: false, problem: bad }
 }
 
-const YES_NO = new Map([
-    ['true', 'Yes'],
-    ['false', 'No'],
-])
-
 /** A stored value → the text an editable cell shows (what the person would type). */
 export const typedText = (
     field: Field,
@@ -523,7 +534,7 @@ export const typedText = (
         }
         case 'boolean':
         case 'trueOnly':
-            return YES_NO.get(value) ?? value
+            return yesNo().get(value) ?? value
         case 'option':
             return (
                 (field.options && lookupOf(field.options).texts.get(value)) ??

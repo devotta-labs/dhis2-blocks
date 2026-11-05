@@ -16,6 +16,7 @@ export {
     checkStored,
     coordinateNumber,
     inputModeFor,
+    parseCoordinate,
     parseTyped,
     typedText,
 } from './valueTypes'

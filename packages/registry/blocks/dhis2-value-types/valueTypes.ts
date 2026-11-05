@@ -130,6 +130,18 @@ const matches =
 const notACoordinate = () =>
     problem('coordinate', i18n.t('Enter a valid coordinate'))
 
+/** A stored `[lng,lat]` as its numbers, or `undefined` when it is not one or is past a limit. */
+export const parseCoordinate = (
+    value: string
+): { longitude: string; latitude: string } | undefined => {
+    const match = COORDINATE.exec(value)
+    return match !== null &&
+        Math.abs(Number(match[1])) <= COORDINATE_LIMITS.longitude &&
+        Math.abs(Number(match[2])) <= COORDINATE_LIMITS.latitude
+        ? { longitude: match[1], latitude: match[2] }
+        : undefined
+}
+
 // What each value type accepts in its stored form.
 const CHECKS = new Map(
     Object.entries({
@@ -207,14 +219,8 @@ const CHECKS = new Map(
                 : problem('time', i18n.t('Enter a valid time'))
         },
         AGE: (value) => (isIsoDate(value) ? undefined : notADate()),
-        COORDINATE: (value) => {
-            const match = COORDINATE.exec(value)
-            return match !== null &&
-                Math.abs(Number(match[1])) <= COORDINATE_LIMITS.longitude &&
-                Math.abs(Number(match[2])) <= COORDINATE_LIMITS.latitude
-                ? undefined
-                : notACoordinate()
-        },
+        COORDINATE: (value) =>
+            parseCoordinate(value) ? undefined : notACoordinate(),
         ORGANISATION_UNIT: matches(UID, () =>
             problem('orgUnit', i18n.t('Select a valid organisation unit'))
         ),

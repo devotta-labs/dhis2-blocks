@@ -281,12 +281,13 @@ form.
 
 ### Bulk actions
 
-The grid's row and column actions, and Ctrl+D (Cmd+D), work as `spreadsheet` describes (its README's "Bulk actions").
-In a register they fill the visit columns only: the person's attributes and the enrolment date have no column button,
-and a row's actions leave them alone. In an event grid every column takes part. An action that would write to a visit
-no event holds yet, which creates that event, first asks "Create events?" ("This creates 3 events on this page.", with
-**Create events** and **Cancel**), because undo cannot delete an event once it is sent; an event DHIS2 has saved from
-this page counts as held.
+The grid's row and column actions work as `spreadsheet` describes (its README's "Bulk actions"). In a register they
+fill the visit columns only: the person's attributes and both enrolment dates (the enrolment and the incident date) have
+no column button, and a row's actions leave them alone. In an event grid every column takes part. An action that would
+write to an event DHIS2 does not hold yet (a visit with no event, or an event grid's newly added, unsaved row) creates
+that event, so it first asks "Create events?" ("This creates 3 events on this page.", with **Create events** and
+**Cancel**), because undo cannot delete an event once it is sent; an event DHIS2 has saved from this page counts as held.
+Ctrl+D (Cmd+D) is like typing: it fills any cell that can be edited and never asks.
 
 ## Saving
 

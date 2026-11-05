@@ -37,16 +37,17 @@ const applyToColumn = async (column: string, text: string) => {
 }
 
 /**
- * The immunisation register whose BCG slot only its first child's event fills, saving through the register's own
- * saver to a DHIS2 that imports everything; `sent` holds what each save was handed.
+ * The immunisation register whose BCG slot of the last `missing` of its three children holds no event, saving through
+ * the register's own saver to a DHIS2 that imports everything; `sent` holds what each save was handed.
  */
-const mountRegister = async () => {
+const mountRegister = async (missing = 2) => {
     const rig = engineFor({
         enrollments: enrolledAs((enrollment, at) => ({
             ...enrollment,
             events: enrollment.events.filter(
                 ({ dataValues }) =>
-                    at === 0 || !dataValues.some(({ value }) => value === 'BCG')
+                    at < 3 - missing ||
+                    !dataValues.some(({ value }) => value === 'BCG')
             ),
         })),
     })
@@ -159,6 +160,17 @@ test('a column apply that creates events asks first; Cancel writes nothing, and 
         '2026-10-21',
         '2026-10-21',
     ])
+})
+
+test('a column apply that creates one event says so in the singular', async () => {
+    const mounted = await mountRegister(1)
+    await applyToColumn('BCG 0', '2026-10-20')
+    const dialog = page.getByRole('alertdialog', { name: DIALOG })
+    await expect
+        .element(dialog)
+        .toHaveAccessibleDescription('This creates 1 event on this page.')
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    expect(mounted.sent).toEqual([])
 })
 
 test('a column apply in an event grid asks nothing', async () => {

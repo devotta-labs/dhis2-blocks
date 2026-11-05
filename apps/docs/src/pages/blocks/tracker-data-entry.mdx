@@ -237,16 +237,19 @@ from the event's own endpoints.
 
 ### Bulk actions
 
-The row and column actions and Ctrl+D (Cmd+D on a Mac) work as the
+The row and column actions work as the
 [Spreadsheet](/blocks/spreadsheet#bulk-actions) page describes. In a register
-they fill the visit columns only: the person's attributes and the enrolment
-date have no column button, and a row's actions leave them alone. In an event
-grid every column takes part.
+they fill the visit columns only: the person's attributes and both enrolment
+dates (the enrolment and the incident date) have no column button, and a row's
+actions leave them alone. In an event grid every column takes part.
 
-An action that would write to a visit no event holds yet creates that event,
-so it first asks **Create events?** ("This creates 3 events on this page.")
-with **Create events** and **Cancel**: undo cannot delete an event once it is
-sent.
+An action that would write to an event DHIS2 does not hold yet (a visit with no
+event, or an event grid's newly added, unsaved row) creates that event, so it
+first asks **Create events?** ("This creates 3 events on this page.") with
+**Create events** and **Cancel**: undo cannot delete an event once it is sent.
+
+Ctrl+D (Cmd+D on a Mac) is like typing: it fills any cell that can be edited and
+never asks.
 
 ## Every value type
 

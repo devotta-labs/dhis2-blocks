@@ -253,7 +253,8 @@ export const isEmptySlot = (
 /**
  * Every event record as the rules read it: each field of its form that has a value, shown in a column or not, and its
  * event date; the live values, empty ones left out. An event whose enrolment and person the form holds carries them
- * live. A slot's new event nobody typed in is left out: it never changes which event is newest or previous.
+ * live. A slot's new event carries its `createdWith` values unless its cells say otherwise: a cell that exists, cleared
+ * included, replaces the value. A slot's new event nobody typed in is left out: it never changes which event is newest or previous.
  */
 export const ruleRowsOf = (
     records: ReadonlyMap<string, DataRecord>,
@@ -288,12 +289,21 @@ export const ruleRowsOf = (
             cells[cellKey(record.id, field)]?.value
         const fields = fieldsByForm.get(formOf(record)) ?? NONE
         const occurredAt = valueOf(EVENT_DATE_COLUMN) || undefined
-        const dataValues = Object.fromEntries(
+        const typed = Object.fromEntries(
             [...fields].flatMap((field): Array<[string, string]> => {
                 const value = valueOf(field)
                 return value ? [[field, value]] : []
             })
         )
+        // A where-slot's new event carries its where values, as the payload sends them, unless a cell says otherwise.
+        const dataValues = {
+            ...Object.fromEntries(
+                Object.entries(record.createdWith ?? {}).filter(
+                    ([field]) => cells[cellKey(record.id, field)] === undefined
+                )
+            ),
+            ...typed,
+        }
         const enrollment =
             record.enrollmentId === undefined
                 ? undefined

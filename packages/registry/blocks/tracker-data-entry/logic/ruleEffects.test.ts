@@ -292,3 +292,39 @@ test('a rule row holds every field of its stage, shown or not', () => {
         occurredAt: '2026-10-01',
     })
 })
+
+test("a new where-slot event's rules see its where values", () => {
+    const slotEvent = {
+        kind: 'event' as const,
+        id: 'n1',
+        programStageId: 's1',
+        orgUnitId: 'ou',
+        status: 'ACTIVE' as const,
+        isNew: true,
+        slot: 'bcg',
+        createdWith: { vaccine: 'BCG', dose: '0' },
+    }
+    const rows = (cells: Record<string, string>) =>
+        ruleRowsOf(
+            new Map([['n1', slotEvent]]),
+            new Map([['s1', new Set(['vaccine', 'dose', 'weight'])]]),
+            Object.fromEntries(
+                Object.entries(cells).map(([k, value]) => [
+                    `n1.${k}`,
+                    { value, sync: 'idle' as const, source: 'person' as const },
+                ])
+            )
+        )[0]?.event.dataValues
+    expect(rows({ weight: '4' })).toEqual({
+        vaccine: 'BCG',
+        dose: '0',
+        weight: '4',
+    })
+    expect(rows({ weight: '4', dose: '2' })).toMatchObject({ dose: '2' })
+    // No cell entry: createdWith stays. A cleared cell (entry, no value): the field is absent.
+    expect(rows({ weight: '4' })).toMatchObject({ dose: '0' })
+    expect(rows({ weight: '4', dose: '' })).toEqual({
+        vaccine: 'BCG',
+        weight: '4',
+    })
+})

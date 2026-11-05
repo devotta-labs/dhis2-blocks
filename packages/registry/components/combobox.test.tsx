@@ -95,17 +95,21 @@ describe('select-style chips trigger', () => {
                 </DialogContent>
             </Dialog>
         )
+        const trigger = page.getByRole('combobox', {
+            name: 'Choices',
+            exact: true,
+        })
         await page.getByRole('button', { name: 'Open editor' }).click()
+        await expect.element(trigger).toHaveFocus()
         // Playwright must allow the overlay to receive the click at the chip's coordinates.
         await page.getByText('Alpha', { exact: true }).click({ force: true })
         await expect
             .element(page.getByRole('option', { name: 'Gamma' }))
             .toBeVisible()
+        await expect
+            .element(page.getByLabelText('Filter choices'))
+            .toHaveFocus()
         await userEvent.keyboard('{Escape}')
-        const trigger = page.getByRole('combobox', {
-            name: 'Choices',
-            exact: true,
-        })
         await expect.element(trigger).toHaveFocus()
         await page.getByRole('button', { name: 'Fjern Alpha' }).click()
         await expect
@@ -152,6 +156,9 @@ describe('select-style chips trigger', () => {
                 0
             )
             expect(getComputedStyle(frame()).boxShadow).toContain('2px')
+            await expect
+                .element(page.getByLabelText('Filter choices'))
+                .toHaveFocus()
             await userEvent.keyboard('{Escape}')
             await expect.element(trigger).toHaveFocus()
         }

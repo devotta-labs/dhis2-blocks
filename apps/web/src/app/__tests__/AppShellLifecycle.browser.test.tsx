@@ -207,84 +207,134 @@ describe('AppShell context and record-request lifecycle', () => {
         }
     })
 
-    it('closes the real OU picker before dirty confirmation and cancels or commits only the requested context', async () => {
-        const h = await setup()
-        try {
-            await expect
-                .element(h.screen.getByTestId('org-unit-empty-state'))
-                .toBeVisible()
-            await h.chooseUnit('Clinic A')
-            await expect
-                .element(h.screen.getByRole('cell', { name: /Ada$/ }))
-                .toBeVisible()
-            await h.makeDirty()
-            const committed = h.router.state.location.search
-            const requests = h.records.length
-            await h.chooseUnit('Clinic B')
-            await expect.element(page.getByRole('alertdialog')).toBeVisible()
-            await expect
-                .element(h.screen.getByPlaceholder('Search'))
-                .not.toBeInTheDocument()
-            expect(h.router.state.location.search).toBe(committed)
-            await page.getByRole('button', { name: 'No, cancel' }).click()
-            await h.settle()
-            expect(h.router.state.location.search).toBe(committed)
-            expect(h.records).toHaveLength(requests)
-            await expect
-                .element(
-                    h.screen.getByRole('button', {
-                        name: /Organisation unit.*Clinic A/,
-                    })
-                )
-                .toBeVisible()
+    it.each(['No, cancel', 'Yes, discard changes'])(
+        'handles %s for a dirty OU change after closing the real picker',
+        async (choice) => {
+            const h = await setup()
+            try {
+                await expect
+                    .element(h.screen.getByTestId('org-unit-empty-state'))
+                    .toBeVisible()
+                await h.chooseUnit('Clinic A')
+                await expect
+                    .element(h.screen.getByRole('cell', { name: /Ada$/ }))
+                    .toBeVisible()
+                await h.makeDirty()
+                const committed = h.router.state.location.search
+                const requests = h.records.length
+                await h.chooseUnit('Clinic B')
+                await expect
+                    .element(page.getByRole('alertdialog'))
+                    .toBeVisible()
+                await expect
+                    .element(h.screen.getByPlaceholder('Search'))
+                    .not.toBeInTheDocument()
+                expect(h.router.state.location.search).toBe(committed)
+                await page.getByRole('button', { name: choice }).click()
+                await h.settle()
+                await expect
+                    .element(page.getByRole('alertdialog'))
+                    .not.toBeInTheDocument()
+                if (choice === 'No, cancel') {
+                    expect(h.router.state.location.search).toBe(committed)
+                    expect(h.records).toHaveLength(requests)
+                    await expect
+                        .element(
+                            h.screen.getByRole('button', {
+                                name: /Organisation unit.*Clinic A/,
+                            })
+                        )
+                        .toBeVisible()
 
-            await h.chooseUnit('Clinic B')
-            await page
-                .getByRole('button', { name: 'Yes, discard changes' })
-                .click()
-            await expect
-                .element(
-                    h.screen.getByRole('button', {
-                        name: /Organisation unit.*Clinic B/,
-                    })
+                    await h.chooseUnit('Clinic B')
+                    await expect
+                        .element(page.getByRole('alertdialog'))
+                        .toBeVisible()
+                    expect(h.records).toHaveLength(requests)
+                } else {
+                    await expect
+                        .element(
+                            h.screen.getByRole('button', {
+                                name: /Organisation unit.*Clinic B/,
+                            })
+                        )
+                        .toBeVisible()
+                    expect(h.records.at(-1)?.orgUnit).toBe('OrgUnit0002')
+                    expect(h.router.state.location.search).toContain(
+                        'orgUnitId=OrgUnit0002'
+                    )
+                }
+                expect(h.router.state.location.search).toContain(
+                    'programId=Program0001'
                 )
-                .toBeVisible()
-            await h.settle()
-            expect(h.records.at(-1)?.orgUnit).toBe('OrgUnit0002')
-            await expect
-                .element(page.getByRole('alertdialog'))
-                .not.toBeInTheDocument()
-
-            await h.makeDirty('Grace')
-            await h.screen
-                .getByRole('button', { name: /Program.*Program A/ })
-                .click()
-            await h.screen.getByText('Program B', { exact: true }).click()
-            await page.getByRole('button', { name: 'No, cancel' }).click()
-            expect(h.router.state.location.search).toContain(
-                'programId=Program0001'
-            )
-            await h.screen
-                .getByRole('button', { name: /Program.*Program A/ })
-                .click()
-            await h.screen.getByText('Program B', { exact: true }).click()
-            await page
-                .getByRole('button', { name: 'Yes, discard changes' })
-                .click()
-            await expect
-                .element(
-                    h.screen.getByRole('button', { name: /Program.*Program B/ })
-                )
-                .toBeVisible()
-            await expect
-                .poll(() => h.records.at(-1))
-                .toEqual({
-                    orgUnit: 'OrgUnit0002',
-                    program: 'Program0002',
-                })
-            await h.settle()
-        } finally {
-            await h.dispose()
+            } finally {
+                await h.dispose()
+            }
         }
-    })
+    )
+
+    it.each(['No, cancel', 'Yes, discard changes'])(
+        'handles %s for a dirty program change without changing the OU',
+        async (choice) => {
+            const h = await setup()
+            try {
+                await expect
+                    .element(h.screen.getByTestId('org-unit-empty-state'))
+                    .toBeVisible()
+                await h.chooseUnit('Clinic B')
+                await expect
+                    .element(h.screen.getByRole('cell', { name: /Ada$/ }))
+                    .toBeVisible()
+                await h.makeDirty('Grace')
+                const committed = h.router.state.location.search
+                const requests = h.records.length
+                await h.screen
+                    .getByRole('button', { name: /Program.*Program A/ })
+                    .click()
+                await h.screen.getByText('Program B', { exact: true }).click()
+                await expect
+                    .element(page.getByRole('alertdialog'))
+                    .toBeVisible()
+                expect(h.router.state.location.search).toBe(committed)
+                await page.getByRole('button', { name: choice }).click()
+                await h.settle()
+                await expect
+                    .element(page.getByRole('alertdialog'))
+                    .not.toBeInTheDocument()
+                if (choice === 'No, cancel') {
+                    expect(h.router.state.location.search).toBe(committed)
+                    expect(h.records).toHaveLength(requests)
+                    await h.screen
+                        .getByRole('button', { name: /Program.*Program A/ })
+                        .click()
+                    await h.screen
+                        .getByText('Program B', { exact: true })
+                        .click()
+                    await expect
+                        .element(page.getByRole('alertdialog'))
+                        .toBeVisible()
+                    expect(h.records).toHaveLength(requests)
+                } else {
+                    await expect
+                        .element(
+                            h.screen.getByRole('button', {
+                                name: /Program.*Program B/,
+                            })
+                        )
+                        .toBeVisible()
+                    await expect
+                        .poll(() => h.records.at(-1))
+                        .toEqual({
+                            orgUnit: 'OrgUnit0002',
+                            program: 'Program0002',
+                        })
+                }
+                expect(h.router.state.location.search).toContain(
+                    'orgUnitId=OrgUnit0002'
+                )
+            } finally {
+                await h.dispose()
+            }
+        }
+    )
 })

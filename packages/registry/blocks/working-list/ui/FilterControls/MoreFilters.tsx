@@ -1,6 +1,7 @@
 import { Button } from '@/components/dhis2/ui/button'
 import { IconFilter16 } from '@dhis2/ui-icons'
 import React, { useEffect, useId, useMemo, useState } from 'react'
+import { fieldBelongsToStage } from '../../api/metadata'
 import type { TrackerProgram } from '../../api/schemas'
 import type { WorkingListField } from '../../domain/model'
 import {
@@ -20,12 +21,11 @@ import {
 } from '@/components/dhis2/ui/tooltip'
 import { useWorkingListText } from '../WorkingListText'
 import { focusFirstAvailableFilter } from './FilterControlPrimitives'
-import { fieldDisplayName } from './filterValueSupport'
+import { fieldDisplayName } from '../../domain/filterControlPolicy'
 
 interface MoreFiltersProps {
     fields: WorkingListField[]
     visibleFilterIds: string[]
-    scope: 'tracked-entity' | 'event'
     program?: TrackerProgram
     selectedStageId?: string
     eventFields?: WorkingListField[]
@@ -38,7 +38,6 @@ interface MoreFiltersProps {
 export const MoreFilters = ({
     fields,
     visibleFilterIds,
-    scope,
     program,
     selectedStageId,
     eventFields = [],
@@ -73,10 +72,7 @@ export const MoreFilters = ({
         (field) =>
             field.filterable &&
             !visibleFilterIds.includes(field.id) &&
-            (field.source !== 'eventDataElement' ||
-                menuStage?.programStageDataElements.some(
-                    (binding) => binding.dataElement.id === field.id
-                ))
+            fieldBelongsToStage(field, menuStage)
     )
 
     if (!available.length && !stages.length && !availableStageFields.length) {
@@ -93,8 +89,8 @@ export const MoreFilters = ({
                         <Button
                             variant="secondary"
                             size="field-dense"
-                            data-test={`more-filters-${scope}`}
-                            data-testid={`more-filters-${scope}`}
+                            data-test="more-filters-tracked-entity"
+                            data-testid="more-filters-tracked-entity"
                         />
                     }
                 >
@@ -102,7 +98,7 @@ export const MoreFilters = ({
                     {i18n.t('Filter')}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                    data-test={`more-filters-menu-${scope}`}
+                    data-test="more-filters-menu-tracked-entity"
                     className="max-w-[400px] overscroll-contain"
                 >
                     {stages.length > 0 && (

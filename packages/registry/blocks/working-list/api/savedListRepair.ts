@@ -29,6 +29,8 @@ import type {
 import type { NormalizedSavedWorkingList } from './savedListContracts'
 import { normalizeSavedWorkingListResource } from './savedListNormalization'
 import { buildSavedListPayload } from './savedListPayload'
+import { replaceSavedFilter, unsupportedFilterIssues } from './savedFilterCodec'
+import { parseRepairLocation } from '../domain/repairLocation'
 
 export type SavedWorkingListRepairResult =
     | {
@@ -37,29 +39,6 @@ export type SavedWorkingListRepairResult =
           payload: ReturnType<typeof buildSavedListPayload>
       }
     | { status: 'blocked'; issues: StaleReferenceIssue[] }
-
-const unsupportedFilterIssues = (
-    configuration: WorkingListConfiguration,
-    metadata: ProgramFieldCatalog
-) =>
-    configuration.filters.flatMap((filter, index) => {
-        try {
-            validateAppliedFilter(filter, metadata.capabilities)
-            return []
-        } catch (error) {
-            return [
-                {
-                    kind: 'unsupportedFilter' as const,
-                    referenceId: filter.field.id,
-                    path: `filters.${index}.field`,
-                    message:
-                        error instanceof Error
-                            ? error.message
-                            : `Filter ${filter.field.id} is unsupported`,
-                },
-            ]
-        }
-    })
 
 const cloneSavedResource = (
     list: Extract<NormalizedSavedWorkingList, { compatibility: 'incompatible' }>
@@ -147,29 +126,12 @@ const repairRawFilter = ({
     const serialized = getValueTypeDefinition(
         currentField.valueType
     ).serializeSaved(filter, serializationContext)
-    const knownKeys = new Set([
-        'attribute',
-        'dataItem',
-        'eq',
-        'sw',
-        'ew',
-        'like',
-        'ge',
-        'le',
-        'in',
-        'null',
-        'dateFilter',
-    ])
-    const additionalFields = Object.fromEntries(
-        Object.entries(savedFilter).filter(([key]) => !knownKeys.has(key))
-    )
-    return expectedSource === 'trackedEntityAttribute'
-        ? {
-              ...additionalFields,
-              ...serialized,
-              attribute: currentField.id,
-          }
-        : { ...additionalFields, ...serialized, dataItem: currentField.id }
+    return replaceSavedFilter(savedFilter, {
+        ...serialized,
+        ...(expectedSource === 'trackedEntityAttribute'
+            ? { attribute: currentField.id }
+            : { dataItem: currentField.id }),
+    })
 }
 
 const blockedRepair = (
@@ -215,7 +177,7 @@ export const repairSavedWorkingList = ({
         }
         const unsupported = unsupportedFilterIssues(
             result.configuration,
-            metadata
+            metadata.capabilities
         )
         if (unsupported.length) {
             return { status: 'blocked', issues: unsupported }
@@ -269,13 +231,12 @@ export const repairSavedWorkingList = ({
         if (!decision) {
             return blockedRepair(issue)
         }
-        const attributeMatch = issue.path.match(
-            /^attributeValueFilters\.(\d+)\.attribute$/
-        )
-        const dataMatch = issue.path.match(/^dataFilters\.(\d+)\.dataItem$/)
-        const columnMatch = issue.path.match(/^displayColumnOrder\.(\d+)$/)
-        if (attributeMatch) {
-            const index = Number(attributeMatch[1])
+        const location = parseRepairLocation(issue.path)
+        if (
+            location?.kind === 'filter' &&
+            location.collection === 'attributeValueFilters'
+        ) {
+            const index = location.index
             const filters = criteria.attributeValueFilters
             const savedFilter = filters?.[index]
             if (!savedFilter) {
@@ -305,9 +266,13 @@ export const repairSavedWorkingList = ({
             }
             continue
         }
-        if (dataMatch && cloned.type === 'programStageWorkingLists') {
+        if (
+            location?.kind === 'filter' &&
+            location.collection === 'dataFilters' &&
+            cloned.type === 'programStageWorkingLists'
+        ) {
             const stageCriteria = cloned.criteria
-            const index = Number(dataMatch[1])
+            const index = location.index
             const filters = stageCriteria.dataFilters
             const savedFilter = filters?.[index]
             if (!savedFilter) {
@@ -337,8 +302,12 @@ export const repairSavedWorkingList = ({
             }
             continue
         }
-        if (columnMatch && criteria.displayColumnOrder) {
-            const index = Number(columnMatch[1])
+        if (
+            location?.kind === 'column' &&
+            location.collection === 'displayColumnOrder' &&
+            criteria.displayColumnOrder
+        ) {
+            const index = location.index
             if (decision.action === 'remove') {
                 delete criteria.displayColumnOrder[index]
             } else if (decision.action === 'replaceColumn') {
@@ -352,7 +321,7 @@ export const repairSavedWorkingList = ({
             }
             continue
         }
-        if (issue.path === 'order') {
+        if (location?.kind === 'sort' && location.source === 'resource') {
             if (decision.action === 'remove') {
                 criteria.order = undefined
             } else if (decision.action === 'replaceSort') {

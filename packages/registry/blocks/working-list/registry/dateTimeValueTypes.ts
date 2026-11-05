@@ -12,6 +12,7 @@ import {
     parseEmptySaved,
     parseTimeValue,
     serializeEmptySaved,
+    savedDateBoundaries,
 } from './valueTypeShared'
 import { textDefinition } from './textAndNumericValueTypes'
 
@@ -257,16 +258,7 @@ export const dateDefinition = (
                 ? {
                       kind: 'dateRange',
                       mode: 'absolute',
-                      start: filter.dateFilter.startDate
-                          ? (context?.fromApiDate?.(
-                                filter.dateFilter.startDate
-                            ) ?? filter.dateFilter.startDate)
-                          : undefined,
-                      end: filter.dateFilter.endDate
-                          ? (context?.fromApiDate?.(
-                                filter.dateFilter.endDate
-                            ) ?? filter.dateFilter.endDate)
-                          : undefined,
+                      ...savedDateBoundaries(filter.dateFilter, context),
                   }
                 : {
                       kind: 'dateRange',

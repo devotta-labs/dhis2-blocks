@@ -198,17 +198,13 @@ const renderInList = (
         })
     }
     const privateUi: WorkingListPrivateUiContextValue = {
-        store,
-        actions,
         privateActions: {
             retrySavedViews: async () => undefined,
             retryResults: async () => undefined,
             sharingSaved: async () => undefined,
             repairSelectedSavedList: async () => Result.ok(),
         },
-        online: true,
         displayedLists: [],
-        selectedIsGenerated: false,
         mutationBusy: false,
         resultTargets: new Map(),
         client,

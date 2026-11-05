@@ -1,25 +1,19 @@
-import i18n from '@dhis2/d2-i18n'
 import React, { createContext, useContext } from 'react'
 
-type WorkingListTranslationValues = Record<
-    string,
-    string | number | boolean | undefined
->
+import {
+    defaultWorkingListTranslate,
+    type WorkingListTranslate,
+} from '../../domain/translation'
 
-export type WorkingListTranslate = (
-    message: string,
-    values?: WorkingListTranslationValues
-) => string
+export type { WorkingListTranslate } from '../../domain/translation'
 
-const defaultTranslate: WorkingListTranslate = (message, values) =>
-    i18n.t(message, values)
-
-const WorkingListTextContext =
-    createContext<WorkingListTranslate>(defaultTranslate)
+const WorkingListTextContext = createContext<WorkingListTranslate>(
+    defaultWorkingListTranslate
+)
 
 export const WorkingListTextProvider = ({
     children,
-    translate = defaultTranslate,
+    translate = defaultWorkingListTranslate,
 }: {
     children: React.ReactNode
     translate?: WorkingListTranslate
@@ -30,5 +24,3 @@ export const WorkingListTextProvider = ({
 )
 
 export const useWorkingListText = () => useContext(WorkingListTextContext)
-
-export const defaultWorkingListTranslate = defaultTranslate

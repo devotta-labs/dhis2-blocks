@@ -39,8 +39,6 @@ export interface SystemFilterDefinition {
     id: SystemFilterId
     field: WorkingListField
     dateRange?: DateRangeParameters
-    defaultVisible: boolean
-    changesResultMode?: boolean
     operators: readonly FilterOperator[]
     validate(filter: AppliedFilter): void
     toQueryParameters(
@@ -239,7 +237,6 @@ const definitions: SystemFilterDefinition[] = [
             valueType: 'TEXT',
             options: enrollmentStatusOptions,
         }),
-        defaultVisible: true,
         operators: ['in'],
         validate: optionValidator(enrollmentStatuses),
         toQueryParameters(filter, capabilities) {
@@ -258,7 +255,6 @@ const definitions: SystemFilterDefinition[] = [
             scope: 'trackedEntity',
             valueType: 'DATE',
         }),
-        defaultVisible: true,
         operators: ['range'],
         validate: validateDateFilter,
         dateRange: ENROLLED_AT_RANGE,
@@ -274,7 +270,6 @@ const definitions: SystemFilterDefinition[] = [
             scope: 'trackedEntity',
             valueType: 'DATE',
         }),
-        defaultVisible: true,
         operators: ['range'],
         validate: validateDateFilter,
         dateRange: ENROLLMENT_OCCURRED_AT_RANGE,
@@ -294,7 +289,6 @@ const definitions: SystemFilterDefinition[] = [
             scope: 'trackedEntity',
             valueType: 'BOOLEAN',
         }),
-        defaultVisible: false,
         operators: ['equals'],
         validate: validateBooleanFilter,
         toQueryParameters(filter) {
@@ -315,7 +309,6 @@ const definitions: SystemFilterDefinition[] = [
             scope: 'trackedEntity',
             valueType: 'USERNAME',
         }),
-        defaultVisible: false,
         operators: ['equals'],
         validate: validateAssigneeFilter,
         toQueryParameters: assigneeParameters,
@@ -328,8 +321,6 @@ const definitions: SystemFilterDefinition[] = [
             scope: 'event',
             valueType: 'TEXT',
         }),
-        defaultVisible: true,
-        changesResultMode: true,
         operators: [],
         validate(filter) {
             throw new Error(`${filter.field.id} changes result mode`)
@@ -347,7 +338,6 @@ const definitions: SystemFilterDefinition[] = [
             valueType: 'DATE',
             apiName: 'occurredAt',
         }),
-        defaultVisible: true,
         operators: ['range'],
         validate: validateDateFilter,
         dateRange: EVENT_OCCURRED_AT_RANGE,
@@ -369,7 +359,6 @@ const definitions: SystemFilterDefinition[] = [
             options: eventStatusOptions,
             apiName: 'status',
         }),
-        defaultVisible: true,
         operators: ['in'],
         validate: optionValidator(eventStatuses),
         toQueryParameters(filter) {
@@ -385,7 +374,6 @@ const definitions: SystemFilterDefinition[] = [
             valueType: 'DATE',
             apiName: 'scheduledAt',
         }),
-        defaultVisible: true,
         operators: ['range'],
         validate: validateDateFilter,
         dateRange: EVENT_SCHEDULED_AT_RANGE,
@@ -406,7 +394,6 @@ const definitions: SystemFilterDefinition[] = [
             valueType: 'USERNAME',
             apiName: 'assignedUser',
         }),
-        defaultVisible: false,
         operators: ['equals'],
         validate: validateAssigneeFilter,
         toQueryParameters: assigneeParameters,

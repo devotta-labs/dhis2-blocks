@@ -1,5 +1,5 @@
 import { Result } from 'better-result'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type { WorkingListClient } from '../api/client'
 import type { ProgramFieldCatalog } from '../api/metadata'
@@ -23,7 +23,6 @@ import {
 } from './errors'
 import { persistSavedList } from './persistSavedList'
 import { createSavedListRepairPlan } from './repair'
-import type { WorkingListPrivateActions } from './WorkingListPrivateContext'
 
 interface UseWorkingListRepairOptions {
     selectedId?: string
@@ -38,10 +37,8 @@ interface UseWorkingListRepairOptions {
     refreshSavedLists: () => Promise<NormalizedSavedWorkingList[]>
     latestRequestedIdRef: { current?: string }
     commitSelection: (id: string, configuration: InternalConfiguration) => void
-    retrySavedViews: () => Promise<object>
-    retryPage: () => Promise<object>
-    organisationUnitLabelsError: unknown
-    retryOrganisationUnitLabels: () => Promise<object>
+    selectionToken: { current: number }
+    getActiveConfiguration: () => InternalConfiguration | undefined
 }
 
 export const useWorkingListRepair = ({
@@ -57,10 +54,8 @@ export const useWorkingListRepair = ({
     refreshSavedLists,
     latestRequestedIdRef,
     commitSelection,
-    retrySavedViews,
-    retryPage,
-    organisationUnitLabelsError,
-    retryOrganisationUnitLabels,
+    selectionToken,
+    getActiveConfiguration,
 }: UseWorkingListRepairOptions) => {
     const [repairPending, setRepairPending] = useState(false)
     const repairComputation = useMemo(() => {
@@ -107,132 +102,106 @@ export const useWorkingListRepair = ({
         serializationContext,
     ])
 
-    const privateActions = useMemo<WorkingListPrivateActions>(
-        () => ({
-            async retrySavedViews() {
-                await retrySavedViews()
-            },
-            async retryResults() {
-                await Promise.all([
-                    retryPage(),
-                    organisationUnitLabelsError
-                        ? retryOrganisationUnitLabels()
-                        : Promise.resolve(),
-                ])
-            },
-            async sharingSaved() {
-                await refreshSavedLists()
-            },
-            async repairSelectedSavedList(): Promise<
-                Result<void, UpdateSelectedViewError>
-            > {
-                if (!online) {
-                    return Result.err(
-                        new OfflineMutationError({
-                            message:
-                                'Working lists cannot be repaired while offline',
-                        })
-                    )
-                }
-                if (!selectedId || !selectedList || !metadata) {
-                    return Result.err(
-                        new NoSelectedSavedListError({
-                            message:
-                                'No saved working list is selected for repair',
-                        })
-                    )
-                }
-                if (selectedList.compatibility === 'compatible') {
-                    return Result.ok()
-                }
-                if (
-                    selectedList.sharing.access?.write !== true ||
-                    selectedList.sharing.access.update !== true
-                ) {
-                    return Result.err(
-                        new SavedListPermissionError({
-                            savedListId: selectedId,
-                            operation: 'update',
-                            message: `Update access to ${selectedId} is required to repair it`,
-                        })
-                    )
-                }
-                if (
-                    !repairComputation ||
-                    repairComputation.result.status !== 'repaired'
-                ) {
-                    return Result.err(
-                        new IncompatibleSavedListError({
-                            savedListId: selectedId,
-                            message:
-                                'The saved working list cannot be repaired automatically',
-                        })
-                    )
-                }
-                const repaired = repairComputation.result.configuration
-                const expectedResource =
-                    repaired.mode === 'event'
-                        ? 'programStageWorkingLists'
-                        : 'trackedEntityInstanceFilters'
-                if (expectedResource !== selectedList.resource) {
-                    return Result.err(
-                        new IncompatibleSavedListError({
-                            savedListId: selectedId,
-                            message:
-                                'Repair would change the saved-list resource type',
-                        })
-                    )
-                }
-                setRepairPending(true)
-                try {
-                    const confirmed = await persistSavedList({
-                        client,
-                        list: selectedList,
-                        configuration: repaired,
-                        metadata,
-                        capabilities,
-                        serializationContext,
-                        refreshSavedLists,
-                        operation: 'repairSelectedSavedList',
-                    })
-                    if (
-                        isCurrentSelection(
-                            latestRequestedIdRef.current,
-                            selectedId
-                        )
-                    ) {
-                        commitSelection(selectedId, confirmed.configuration)
-                    }
-                    return Result.ok()
-                } catch (cause) {
-                    return Result.err(
-                        toTransportError(
-                            cause,
-                            'Repairing the saved working list'
-                        )
-                    )
-                } finally {
-                    setRepairPending(false)
-                }
-            },
-        }),
-        [
-            capabilities,
-            client,
-            commitSelection,
-            metadata,
-            online,
-            organisationUnitLabelsError,
-            retryOrganisationUnitLabels,
-            retryPage,
-            refreshSavedLists,
-            repairComputation,
-            retrySavedViews,
-            selectedId,
-            selectedList,
-            serializationContext,
-        ]
-    )
+    const repairSelectedSavedList = useCallback(async (): Promise<
+        Result<void, UpdateSelectedViewError>
+    > => {
+        if (!online) {
+            return Result.err(
+                new OfflineMutationError({
+                    message: 'Working lists cannot be repaired while offline',
+                })
+            )
+        }
+        if (!selectedId || !selectedList || !metadata) {
+            return Result.err(
+                new NoSelectedSavedListError({
+                    message: 'No saved working list is selected for repair',
+                })
+            )
+        }
+        if (selectedList.compatibility === 'compatible') {
+            return Result.ok()
+        }
+        if (
+            selectedList.sharing.access?.write !== true ||
+            selectedList.sharing.access.update !== true
+        ) {
+            return Result.err(
+                new SavedListPermissionError({
+                    savedListId: selectedId,
+                    operation: 'update',
+                    message: `Update access to ${selectedId} is required to repair it`,
+                })
+            )
+        }
+        if (
+            !repairComputation ||
+            repairComputation.result.status !== 'repaired'
+        ) {
+            return Result.err(
+                new IncompatibleSavedListError({
+                    savedListId: selectedId,
+                    message:
+                        'The saved working list cannot be repaired automatically',
+                })
+            )
+        }
+        const repaired = repairComputation.result.configuration
+        const expectedResource =
+            repaired.mode === 'event'
+                ? 'programStageWorkingLists'
+                : 'trackedEntityInstanceFilters'
+        if (expectedResource !== selectedList.resource) {
+            return Result.err(
+                new IncompatibleSavedListError({
+                    savedListId: selectedId,
+                    message: 'Repair would change the saved-list resource type',
+                })
+            )
+        }
+        const selectionVersion = selectionToken.current
+        const configuration = getActiveConfiguration()
+        setRepairPending(true)
+        try {
+            const confirmed = await persistSavedList({
+                client,
+                list: selectedList,
+                configuration: repaired,
+                metadata,
+                capabilities,
+                serializationContext,
+                refreshSavedLists,
+                operation: 'repairSelectedSavedList',
+            })
+            if (
+                selectionToken.current === selectionVersion &&
+                getActiveConfiguration() === configuration &&
+                isCurrentSelection(latestRequestedIdRef.current, selectedId)
+            ) {
+                commitSelection(selectedId, confirmed.configuration)
+            }
+            return Result.ok()
+        } catch (cause) {
+            return Result.err(
+                toTransportError(cause, 'Repairing the saved working list')
+            )
+        } finally {
+            setRepairPending(false)
+        }
+    }, [
+        capabilities,
+        client,
+        commitSelection,
+        metadata,
+        online,
+        selectionToken,
+        getActiveConfiguration,
+        refreshSavedLists,
+        repairComputation,
+        selectedId,
+        selectedList,
+        serializationContext,
+    ])
 
-    return { privateActions, repairComputation, repairPending }
+    return { repairSelectedSavedList, repairComputation, repairPending }
 }

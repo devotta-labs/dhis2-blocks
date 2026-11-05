@@ -6,6 +6,8 @@ import {
     fetchTrackerProgram,
     fetchTrackerPrograms,
     getProgramMetadataFields,
+    fieldsForConfiguration,
+    tableFieldsFor,
 } from './metadata'
 import type { TrackerProgram } from './schemas'
 import { normalizeSavedWorkingListResource } from './savedListNormalization'
@@ -75,6 +77,85 @@ const program: TrackerProgram = {
 }
 
 describe('version-aware Tracker metadata catalog', () => {
+    it('selects columns for each mode without narrowing the shared field catalog', () => {
+        const withExclusiveField: TrackerProgram = {
+            ...program,
+            programStages: [
+                program.programStages[0],
+                {
+                    ...program.programStages[1],
+                    programStageDataElements: [
+                        ...program.programStages[1].programStageDataElements,
+                        {
+                            dataElement: {
+                                id: 'OtherField1',
+                                displayName: 'Other stage only',
+                                valueType: 'TEXT',
+                            },
+                        },
+                    ],
+                },
+                {
+                    id: 'Unreadable1',
+                    displayName: 'Hidden',
+                    access: { read: false },
+                    programStageDataElements: [
+                        {
+                            dataElement: {
+                                id: 'SecretFld01',
+                                displayName: 'Hidden field',
+                                valueType: 'TEXT',
+                            },
+                        },
+                    ],
+                },
+            ],
+        }
+        const catalog = buildProgramFieldCatalog({
+            program: withExclusiveField,
+            capabilities: resolveWorkingListCapabilities({ apiVersion: 43 }),
+            hasSelectedOrgUnit: true,
+        })
+        const tracker = { mode: 'trackedEntity' as const }
+        const event = { mode: 'event' as const, programStageId: 'ProgramStg1' }
+        const columns = (configuration: typeof tracker | typeof event) =>
+            tableFieldsFor(
+                [...fieldsForConfiguration(catalog, configuration).values()],
+                withExclusiveField,
+                configuration
+            )
+        expect(columns(tracker).map(({ id }) => id)).toEqual([
+            'createdAt',
+            'programOwnerId',
+            'Attribute01',
+            'FileField01',
+        ])
+        expect(columns(event).map(({ id }) => id)).toEqual(
+            expect.arrayContaining([
+                'DataElement1',
+                'eventScheduledAt',
+                'eventAssignedUser',
+            ])
+        )
+        expect(columns(event).map(({ id }) => id)).not.toContain('OtherField1')
+        expect(
+            columns(event).find(({ id }) => id === 'eventOccurredAt')
+                ?.displayName
+        ).toBe('TB visit date')
+        const secondStageIds = columns({
+            ...event,
+            programStageId: 'ProgramStg2',
+        }).map(({ id }) => id)
+        expect(secondStageIds).toEqual(
+            expect.arrayContaining(['DataElement1', 'OtherField1'])
+        )
+        expect(secondStageIds).not.toContain('eventScheduledAt')
+        expect(secondStageIds).not.toContain('eventAssignedUser')
+        expect(catalog.fields.has('OtherField1')).toBe(true)
+        expect(catalog.fields.has('SecretFld01')).toBe(false)
+        expect(catalog.readableProgramStageIds.has('Unreadable1')).toBe(false)
+    })
+
     it('loads lightweight program summaries before one selected program', async () => {
         const query = vi
             .fn()

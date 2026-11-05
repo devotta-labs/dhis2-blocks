@@ -299,30 +299,25 @@ const WorkingListProviderInstance = ({
         () => store.getState().meta.mutations
     )
 
-    const {
-        pageQuery,
-        organisationUnitLabelsQuery,
-        formattingContext,
-        resultTargets,
-        rows,
-    } = useWorkingListResults({
-        client,
-        programId,
-        orgUnitId,
-        resolvedConfiguration,
-        configuration: activeState?.configuration,
-        metadata,
-        effectivePagination,
-        capabilities,
-        serializationContext,
-        systemInfo,
-        locale,
-        translate,
-        online,
-        stagePagination,
-        store,
-        updateStore,
-    })
+    const { retryResults, formattingContext, resultTargets, rows } =
+        useWorkingListResults({
+            client,
+            programId,
+            orgUnitId,
+            resolvedConfiguration,
+            configuration: activeState?.configuration,
+            metadata,
+            effectivePagination,
+            capabilities,
+            serializationContext,
+            systemInfo,
+            locale,
+            translate,
+            online,
+            stagePagination,
+            store,
+            updateStore,
+        })
 
     const refreshSavedLists = useCallback(async () => {
         if (!metadata) throw new Error('Program metadata is not ready')
@@ -478,7 +473,11 @@ const WorkingListProviderInstance = ({
             ? selectionMeta.requestedSavedListId
             : requestedId)
     const selectedList = displayedLists.find((list) => list.id === selectedId)
-    const { privateActions, repairComputation, repairPending } =
+    const getActiveConfiguration = useCallback(
+        () => store.getState().resolvedConfiguration,
+        [store]
+    )
+    const { repairSelectedSavedList, repairComputation, repairPending } =
         useWorkingListRepair({
             selectedId,
             selectedList,
@@ -492,11 +491,28 @@ const WorkingListProviderInstance = ({
             refreshSavedLists,
             latestRequestedIdRef,
             commitSelection,
-            retrySavedViews: savedListsQuery.refetch,
-            retryPage: pageQuery.refetch,
-            organisationUnitLabelsError: organisationUnitLabelsQuery.error,
-            retryOrganisationUnitLabels: organisationUnitLabelsQuery.refetch,
+            selectionToken,
+            getActiveConfiguration,
         })
+
+    const privateActions = useMemo(
+        () => ({
+            repairSelectedSavedList,
+            async retrySavedViews() {
+                await savedListsQuery.refetch()
+            },
+            async sharingSaved() {
+                await refreshSavedLists()
+            },
+            retryResults,
+        }),
+        [
+            repairSelectedSavedList,
+            savedListsQuery.refetch,
+            refreshSavedLists,
+            retryResults,
+        ]
+    )
 
     const mutationBusy =
         Object.values(mutationMeta).some(
@@ -505,13 +521,10 @@ const WorkingListProviderInstance = ({
     const publicContext = useMemo(() => ({ store, actions }), [actions, store])
     const privateContext = useMemo<WorkingListPrivateUiContextValue>(
         () => ({
-            store,
-            actions,
             privateActions,
             client,
             programId,
             orgUnitId,
-            online,
             locale,
             translate,
             program,
@@ -523,12 +536,8 @@ const WorkingListProviderInstance = ({
             serializationContext,
             formattingContext,
             resolvedConfiguration,
-            confirmedLists,
             displayedLists,
             selectedList,
-            defaultList,
-            selectedIsGenerated:
-                selectedId === defaultListId || Boolean(usingGeneratedLists),
             mutationBusy,
             repair: repairComputation
                 ? {
@@ -542,22 +551,16 @@ const WorkingListProviderInstance = ({
                   }
                 : undefined,
             resultTargets,
-            savedViewsQueryError: savedViewsError,
         }),
         [
-            actions,
             calendarContext,
             capabilities,
             client,
-            confirmedLists,
-            defaultList,
-            defaultListId,
             displayedLists,
             formattingContext,
             locale,
             metadata,
             mutationBusy,
-            online,
             orgUnitId,
             parsingContext,
             privateActions,
@@ -567,14 +570,10 @@ const WorkingListProviderInstance = ({
             repairPending,
             resolvedConfiguration,
             resultTargets,
-            savedViewsError,
-            selectedId,
             selectedList,
             serializationContext,
-            store,
             systemInfo,
             translate,
-            usingGeneratedLists,
         ]
     )
 

@@ -13,20 +13,18 @@ import {
     type SortingState,
 } from '@tanstack/react-table'
 import React, { useMemo } from 'react'
-import { z } from 'zod'
 import type { WorkingListField, WorkingListSort } from '../../domain/model'
 import type {
     WorkingListDisplayRow,
     WorkingListPageSize,
 } from '../../provider/contracts'
-import type { WorkingListCellValue } from '../../query/normalizeRows'
 import { DEFAULT_WORKING_LIST_SORT } from '../../query/serialize'
 import {
-    getCellDisplayValue,
     type CellDisplayValue,
     type CellFormattingContext,
 } from '../../registry/valueTypes'
-import { fieldDisplayName, localizedField } from '../FilterControls'
+import { fieldDisplayName } from '../../domain/filterControlPolicy'
+import { visibleCellDisplay } from '../../registry/cellDisplay'
 import type { WorkingListDataQualityMode } from '../types'
 import {
     Tooltip,
@@ -55,27 +53,9 @@ const EMPTY_ROWS: WorkingListDisplayRow[] = []
 
 /**
  * Trailing display column holding the per-row data-quality marker. The `__`
- * prefix keeps it clear of DHIS2 field ids, and it is filtered out before
- * column configuration changes are reported.
+ * prefix keeps it clear of DHIS2 field ids; it is never part of saved columns.
  */
 const DATA_QUALITY_COLUMN_ID = '__dataQuality'
-
-/**
- * Best-effort rendering for a value that failed validation: the raw scalar
- * verbatim, an empty cell for a missing value, a dash when unrenderable.
- */
-const InvalidCellScalarSchema = z.union([z.string(), z.number(), z.boolean()])
-
-const invalidCellText = (
-    cellValue: Extract<WorkingListCellValue, { valid: false }>
-) => {
-    const raw = cellValue.raw
-    if (raw === undefined || raw === null || raw === '') {
-        return ''
-    }
-    const scalar = InvalidCellScalarSchema.safeParse(raw)
-    return scalar.success ? String(scalar.data) : '-'
-}
 
 const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
     const t = useWorkingListText()
@@ -144,7 +124,7 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
                     target="_blank"
                 >
                     <img
-                        alt={display.alt || t('Image attachment')}
+                        alt={display.alt}
                         className="block h-10 w-14 rounded-[3px] border border-[#d5dde5] bg-[#f3f5f7] object-cover"
                         loading="lazy"
                         src={display.previewHref}
@@ -181,7 +161,6 @@ interface WorkingListDataTableProps {
     isUpdating: boolean
     configurationDisabled?: boolean
     formattingContext: CellFormattingContext
-    onColumnConfigurationChange: (columnIds: string[]) => void
     onPageChange: (page: number) => void
     onPageSizeChange: (pageSize: WorkingListPageSize) => void
     onRowOpen?: (row: WorkingListDisplayRow) => void
@@ -201,7 +180,6 @@ export const WorkingListDataTable = ({
     isUpdating,
     configurationDisabled = false,
     formattingContext,
-    onColumnConfigurationChange,
     onPageChange,
     onPageSizeChange,
     onRowOpen,
@@ -217,15 +195,13 @@ export const WorkingListDataTable = ({
                 enableSorting: true,
                 cell: (context) => {
                     const cellValue = context.row.original.values[field.id]
-                    if (cellValue && !cellValue.valid) {
-                        return <>{invalidCellText(cellValue)}</>
-                    }
                     return (
                         <CellValue
-                            display={getCellDisplayValue(
-                                cellValue?.value,
-                                localizedField(field, translate),
-                                formattingContext
+                            display={visibleCellDisplay(
+                                cellValue,
+                                field,
+                                formattingContext,
+                                translate
                             )}
                         />
                     )
@@ -294,24 +270,6 @@ export const WorkingListDataTable = ({
                 columnVisibility,
                 pagination,
                 sorting,
-            },
-            onColumnOrderChange: (updater) => {
-                const next = functionalUpdate(updater, columnOrder)
-                onColumnConfigurationChange(
-                    next.filter(
-                        (id) =>
-                            id !== DATA_QUALITY_COLUMN_ID &&
-                            columnVisibility[id] !== false
-                    )
-                )
-            },
-            onColumnVisibilityChange: (updater) => {
-                const next = functionalUpdate(updater, columnVisibility)
-                onColumnConfigurationChange(
-                    allFields
-                        .map((field) => field.id)
-                        .filter((id) => next[id] !== false)
-                )
             },
             onSortingChange: (updater) => {
                 const next = functionalUpdate(updater, sorting)

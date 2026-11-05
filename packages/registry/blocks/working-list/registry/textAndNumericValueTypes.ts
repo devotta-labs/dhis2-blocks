@@ -7,7 +7,6 @@ import type {
 } from './valueTypeContracts'
 import { ValueParseError } from './valueTypeContracts'
 import {
-    apiToOperator,
     emptyOperators,
     ensureEmptyValue,
     escapeFilterValue,
@@ -100,7 +99,6 @@ export const textDefinition = (
         if (!entry) {
             throw new Error(`Saved ${valueType} filter has no value`)
         }
-        apiToOperator(entry[0])
         return FilterValueSchema.parse({
             kind: 'text',
             value: z.string().parse(entry[1]),

@@ -12,15 +12,10 @@ import type {
     FilterParsingContext,
     FilterSerializationContext,
 } from '../registry/valueTypes'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
+import type { WorkingListTranslate } from '../domain/translation'
 import type { SavedListRepairPlan } from './repair'
-import type {
-    UpdateSelectedViewError,
-    WorkingListInvalidResponseError,
-    WorkingListNetworkError,
-} from './errors'
-import type { WorkingListActions, WorkingListResultTarget } from './contracts'
-import type { WorkingListProviderStore } from './store'
+import type { UpdateSelectedViewError } from './errors'
+import type { WorkingListResultTarget } from './contracts'
 
 interface WorkingListPrivateCalendarContext {
     calendar: WorkingListSystemInfo['calendar']
@@ -29,7 +24,7 @@ interface WorkingListPrivateCalendarContext {
     timeZone: string
 }
 
-export interface WorkingListPrivateActions {
+interface WorkingListPrivateActions {
     retrySavedViews(): Promise<void>
     retryResults(): Promise<void>
     sharingSaved(): Promise<void>
@@ -37,13 +32,10 @@ export interface WorkingListPrivateActions {
 }
 
 export interface WorkingListPrivateUiContextValue {
-    store: WorkingListProviderStore
-    actions: WorkingListActions
     privateActions: WorkingListPrivateActions
     client: WorkingListClient
     programId: string
     orgUnitId: string
-    online: boolean
     locale: string
     translate: WorkingListTranslate
     program?: TrackerProgram
@@ -55,14 +47,8 @@ export interface WorkingListPrivateUiContextValue {
     serializationContext?: FilterSerializationContext
     formattingContext?: CellFormattingContext
     resolvedConfiguration?: InternalConfiguration
-    confirmedLists?: readonly NormalizedSavedWorkingList[]
     displayedLists: readonly NormalizedSavedWorkingList[]
     selectedList?: NormalizedSavedWorkingList
-    defaultList?: Extract<
-        NormalizedSavedWorkingList,
-        { compatibility: 'compatible' }
-    >
-    selectedIsGenerated: boolean
     mutationBusy: boolean
     repair?: {
         plan: SavedListRepairPlan
@@ -71,9 +57,6 @@ export interface WorkingListPrivateUiContextValue {
         isPending: boolean
     }
     resultTargets: ReadonlyMap<string, WorkingListResultTarget>
-    savedViewsQueryError?:
-        | WorkingListNetworkError
-        | WorkingListInvalidResponseError
 }
 
 export const WorkingListPrivateUiContext =

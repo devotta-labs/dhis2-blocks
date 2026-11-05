@@ -17,7 +17,7 @@ import type {
     CellFormattingContext,
     FilterSerializationContext,
 } from '../registry/valueTypes'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
+import type { WorkingListTranslate } from '../domain/translation'
 import {
     canCommitMutationBaseline,
     isCurrentSelection,

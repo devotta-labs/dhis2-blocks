@@ -9,7 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/dhis2/ui/dialog'
-import { fieldDisplayName } from '../FilterControls'
+import { fieldDisplayName } from '../../domain/filterControlPolicy'
 import { useWorkingListText } from '../WorkingListText'
 
 interface ColumnSettingsDialogProps {

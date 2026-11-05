@@ -15,7 +15,7 @@ import {
     organisationUnitLabelsQueryOptions,
 } from '../query/referenceLabels'
 import { createWorkingListValueTransformers } from '../registry/transformers'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
+import type { WorkingListTranslate } from '../domain/translation'
 
 interface UseReferenceFormattingOptions {
     client: WorkingListClient

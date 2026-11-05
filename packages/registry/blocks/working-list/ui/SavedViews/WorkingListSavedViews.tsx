@@ -31,6 +31,8 @@ import {
     type WorkingListTranslate,
 } from '../WorkingListText'
 
+import { savedActionErrorCopy } from '../savedActionCopy'
+
 type SavedViewActionError =
     | SelectViewError
     | UpdateSelectedViewError
@@ -39,32 +41,10 @@ type SavedViewActionError =
 const actionErrorCopy = (
     error: SavedViewActionError,
     translate: WorkingListTranslate
-) => {
-    switch (error._tag) {
-        case 'OfflineMutationError':
-            return translate('This action is unavailable while offline.')
-        case 'WorkingListNetworkError':
-            return translate(
-                'A network error stopped the request. Check the connection and try again.'
-            )
-        case 'WorkingListInvalidResponseError':
-            return translate('The server returned an unexpected response.')
-        case 'SavedListPermissionError':
-            return translate('You do not have permission to make this change.')
-        case 'SavedListNotFoundError':
-            return translate(
-                'The working list could not be found. It may have been deleted.'
-            )
-        case 'IncompatibleSavedListError':
-            return translate(
-                'Repair this working list before saving changes to it.'
-            )
-        case 'NoSelectedSavedListError':
-            return translate('Select a saved working list before updating it.')
-        case 'InvalidConfigurationError':
-            return translate('The selected working list could not be applied.')
-    }
-}
+) =>
+    savedActionErrorCopy(error, translate, (translate) =>
+        translate('The selected working list could not be applied.')
+    )
 
 export const WorkingListSavedViews = () => {
     const translate = useWorkingListText()
@@ -129,7 +109,9 @@ export const WorkingListSavedViews = () => {
     return (
         <div data-testid="working-list-saved-views">
             {savedViews.status === 'pending' && <SavedViewsSkeleton />}
-            {savedViews.status === 'error' && savedViews.views.length > 0 && (
+            {(savedViews.status === 'ready' ||
+                (savedViews.status === 'error' &&
+                    savedViews.views.length > 0)) && (
                 <SavedListBar
                     lists={savedViews.views}
                     selectedId={selectedId}
@@ -163,19 +145,6 @@ export const WorkingListSavedViews = () => {
                         </Button>
                     </ErrorAlert>
                 </div>
-            )}
-            {savedViews.status === 'ready' && (
-                <SavedListBar
-                    lists={savedViews.views}
-                    selectedId={selectedId}
-                    dirty={dirty}
-                    online={online}
-                    busy={mutationBusy}
-                    onSelect={requestSelection}
-                    onUpdate={() => void updateSelected()}
-                    onShare={shareView}
-                    onDelete={(view) => void deleteView(view)}
-                />
             )}
 
             {actionError && (

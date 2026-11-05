@@ -3,9 +3,8 @@ import { Button } from '@/components/dhis2/ui/button'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import { Result } from 'better-result'
 import React, { useMemo, useState, type ComponentPropsWithoutRef } from 'react'
-import { fieldsForConfiguration } from '../../api/metadata'
-import type { TrackerProgram } from '../../api/schemas'
-import type { WorkingListField, WorkingListSort } from '../../domain/model'
+import { fieldsForConfiguration, tableFieldsFor } from '../../api/metadata'
+import type { WorkingListSort } from '../../domain/model'
 import {
     useWorkingListActions,
     useWorkingListMeta,
@@ -13,7 +12,6 @@ import {
 } from '../../provider/WorkingListContext'
 import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
 import type {
-    WorkingListConfiguration,
     WorkingListDisplayRow,
     WorkingListMeta,
     WorkingListResultTarget,
@@ -51,51 +49,6 @@ export interface WorkingListTableProps extends Omit<
 > {
     onRowClick?: (target: WorkingListResultTarget) => void
     dataQualityMode?: WorkingListDataQualityMode
-}
-
-const tableFieldsFor = (
-    fields: readonly WorkingListField[],
-    program: TrackerProgram,
-    configuration: WorkingListConfiguration
-) => {
-    const currentStage =
-        configuration.mode === 'event'
-            ? program.programStages.find(
-                  (stage) => stage.id === configuration.programStageId
-              )
-            : undefined
-    const stageDataElementIds = new Set(
-        currentStage?.programStageDataElements.map(
-            (binding) => binding.dataElement.id
-        ) ?? []
-    )
-    return fields.filter((field) => {
-        if (field.columnable === false) {
-            return false
-        }
-        if (field.source === 'trackedEntityAttribute') {
-            return true
-        }
-        if (field.source === 'eventDataElement') {
-            return (
-                configuration.mode === 'event' &&
-                stageDataElementIds.has(field.id)
-            )
-        }
-        if (['createdAt', 'programOwnerId'].includes(field.id)) {
-            return true
-        }
-        return (
-            configuration.mode === 'event' &&
-            [
-                'eventStatus',
-                'eventOccurredAt',
-                'eventScheduledAt',
-                'eventOrgUnit',
-                'eventAssignedUser',
-            ].includes(field.id)
-        )
-    })
 }
 
 const SelectionLoading = () => {
@@ -218,9 +171,6 @@ const ReadyResults = ({
                 isUpdating={results.status === 'ready' && results.isUpdating}
                 configurationDisabled={mutationBusy}
                 formattingContext={formattingContext}
-                onColumnConfigurationChange={(columns) =>
-                    commit(actions.setColumns(columns))
-                }
                 onPageChange={(page) => commit(actions.setPage(page))}
                 onPageSizeChange={(pageSize) =>
                     commit(actions.setPageSize(pageSize))

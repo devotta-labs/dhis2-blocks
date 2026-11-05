@@ -161,28 +161,12 @@ export const createGeneratedDefaultLists = ({
         return []
     }
     return [
-        [
-            'active',
-            'Active enrollments',
-            'workingList.defaults.active',
-            'ACTIVE',
-        ],
-        [
-            'completed',
-            'Completed enrollments',
-            'workingList.defaults.completed',
-            'COMPLETED',
-        ],
-        [
-            'cancelled',
-            'Cancelled enrollments',
-            'workingList.defaults.cancelled',
-            'CANCELLED',
-        ],
-    ].map(([id, name, labelKey, status], sortOrder) => ({
+        ['active', 'Active enrollments', 'ACTIVE'],
+        ['completed', 'Completed enrollments', 'COMPLETED'],
+        ['cancelled', 'Cancelled enrollments', 'CANCELLED'],
+    ].map(([id, name, status], sortOrder) => ({
         id,
         name,
-        labelKey,
         resource: 'trackedEntityInstanceFilters' as const,
         sortOrder,
         sharing: {},

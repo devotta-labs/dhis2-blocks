@@ -17,6 +17,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/dhis2/ui/dialog'
+import { parseRepairLocation } from '../../../../domain/repairLocation'
+import type { SavedListRepairPlan } from '../../../../provider/repair'
 import type { WorkingListConfiguration } from '../../../../domain/model'
 import type {
     StaleReferenceIssue,
@@ -27,17 +29,6 @@ import {
     type WorkingListTranslate,
 } from '../../../WorkingListText'
 
-interface WorkingListRepairPreview {
-    decisions: StaleReferenceRepairDecision[]
-    removedFilters: number
-    removedColumns: number
-    replacedColumns: number
-    replacedSort: boolean
-}
-
-const filterPath = /^(filters|attributeValueFilters|dataFilters)\./
-const columnPath = /^(columns|displayColumnOrder)\./
-
 const referenceDetails = (
     list: Extract<
         NormalizedSavedWorkingList,
@@ -46,13 +37,14 @@ const referenceDetails = (
     issue: StaleReferenceIssue,
     translate: WorkingListTranslate
 ) => {
-    const filterIndex = issue.path.match(/^filters\.(\d+)\./)?.[1]
+    const location = parseRepairLocation(issue.path)
     const savedField =
-        filterIndex == null
-            ? undefined
-            : list.candidateConfiguration?.filters[Number(filterIndex)]?.field
+        location?.kind === 'filter' && location.collection === 'filters'
+            ? list.candidateConfiguration?.filters[location.index]?.field
+            : undefined
     if (
-        issue.path.startsWith('attributeValueFilters.') ||
+        (location?.kind === 'filter' &&
+            location.collection === 'attributeValueFilters') ||
         savedField?.source === 'trackedEntityAttribute'
     ) {
         return {
@@ -61,7 +53,8 @@ const referenceDetails = (
         }
     }
     if (
-        issue.path.startsWith('dataFilters.') ||
+        (location?.kind === 'filter' &&
+            location.collection === 'dataFilters') ||
         savedField?.source === 'eventDataElement'
     ) {
         return {
@@ -75,13 +68,6 @@ const referenceDetails = (
             kind: translate('System field'),
         }
     }
-    if (
-        columnPath.test(issue.path) ||
-        issue.path === 'sort.fieldId' ||
-        issue.path === 'order'
-    ) {
-        return { id: issue.referenceId, kind: translate('Unknown') }
-    }
     return { id: issue.referenceId, kind: translate('Unknown') }
 }
 
@@ -89,16 +75,10 @@ const repairAction = (
     decision: StaleReferenceRepairDecision,
     translate: WorkingListTranslate
 ) => {
-    if (decision.action === 'remove' && filterPath.test(decision.path)) {
-        return translate('Remove')
-    }
-    if (decision.action === 'remove' && columnPath.test(decision.path)) {
-        return translate('Remove')
-    }
-    if (decision.action === 'replaceColumn') {
-        return translate('Replace with default')
-    }
-    if (decision.action === 'replaceSort') {
+    if (
+        decision.action === 'replaceColumn' ||
+        decision.action === 'replaceSort'
+    ) {
         return translate('Replace with default')
     }
     if (decision.action === 'replaceFilter') {
@@ -112,14 +92,11 @@ const repairAction = (
 interface WorkingListRepairDialogProps {
     open: boolean
     list?: NormalizedSavedWorkingList
-    preview?: WorkingListRepairPreview
+    preview?: SavedListRepairPlan
     repairedConfiguration?: WorkingListConfiguration
     canRepair: boolean
     onClose: () => void
-    onRepair: (
-        list: NormalizedSavedWorkingList,
-        configuration: WorkingListConfiguration
-    ) => void
+    onRepair: () => void
 }
 
 export const WorkingListRepairDialog = ({
@@ -222,7 +199,7 @@ export const WorkingListRepairDialog = ({
                     <Button
                         data-test="repair-working-list-confirm"
                         disabled={!canRepair}
-                        onClick={() => onRepair(list, repairedConfiguration)}
+                        onClick={onRepair}
                     >
                         {i18n.t('Repair')}
                     </Button>

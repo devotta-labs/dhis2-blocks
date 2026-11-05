@@ -4,6 +4,7 @@ import type {
     WorkingListConfiguration,
     WorkingListSort,
 } from './model'
+import { formatRepairLocation, parseRepairLocation } from './repairLocation'
 import { WorkingListConfigurationSchema } from './schemas'
 
 export interface StaleReferenceIssue {
@@ -75,7 +76,11 @@ export const validateConfigurationReferences = (
             issues.push({
                 kind: 'missingFilterField',
                 referenceId: filter.field.id,
-                path: `filters.${index}.field`,
+                path: formatRepairLocation({
+                    kind: 'filter',
+                    collection: 'filters',
+                    index,
+                }),
                 message: `Filter field ${filter.field.id} no longer exists`,
             })
             return
@@ -87,7 +92,11 @@ export const validateConfigurationReferences = (
             issues.push({
                 kind: 'fieldChanged',
                 referenceId: filter.field.id,
-                path: `filters.${index}.field`,
+                path: formatRepairLocation({
+                    kind: 'filter',
+                    collection: 'filters',
+                    index,
+                }),
                 message: `Filter field ${filter.field.id} changed type or source`,
             })
         }
@@ -95,7 +104,12 @@ export const validateConfigurationReferences = (
             issues.push({
                 kind: 'scopeMismatch',
                 referenceId: filter.field.id,
-                path: `filters.${index}.field.scope`,
+                path: formatRepairLocation({
+                    kind: 'filter',
+                    collection: 'filters',
+                    index,
+                    scope: true,
+                }),
                 message: `Event field ${filter.field.id} cannot be used in tracked-entity mode`,
             })
         }
@@ -107,7 +121,11 @@ export const validateConfigurationReferences = (
             issues.push({
                 kind: 'programStageFieldMismatch',
                 referenceId: filter.field.id,
-                path: `filters.${index}.field`,
+                path: formatRepairLocation({
+                    kind: 'filter',
+                    collection: 'filters',
+                    index,
+                }),
                 message: `Event field ${filter.field.id} does not belong to stage ${configuration.programStageId}`,
             })
         }
@@ -118,14 +136,22 @@ export const validateConfigurationReferences = (
             issues.push({
                 kind: 'missingColumn',
                 referenceId: columnId,
-                path: `columns.${index}`,
+                path: formatRepairLocation({
+                    kind: 'column',
+                    collection: 'columns',
+                    index,
+                }),
                 message: `Column ${columnId} no longer exists`,
             })
         } else if (field.columnable === false) {
             issues.push({
                 kind: 'missingColumn',
                 referenceId: columnId,
-                path: `columns.${index}`,
+                path: formatRepairLocation({
+                    kind: 'column',
+                    collection: 'columns',
+                    index,
+                }),
                 message: `Column ${columnId} is unavailable in this program stage`,
             })
         } else if (
@@ -136,7 +162,11 @@ export const validateConfigurationReferences = (
             issues.push({
                 kind: 'programStageFieldMismatch',
                 referenceId: columnId,
-                path: `columns.${index}`,
+                path: formatRepairLocation({
+                    kind: 'column',
+                    collection: 'columns',
+                    index,
+                }),
                 message: `Column ${columnId} does not belong to stage ${configuration.programStageId}`,
             })
         }
@@ -227,16 +257,19 @@ export const repairConfigurationReferences = ({
         if (!decision) {
             continue
         }
+        const location = parseRepairLocation(issue.path)
         if (
             issue.kind === 'missingFilterField' ||
             issue.kind === 'fieldChanged' ||
             issue.kind === 'scopeMismatch' ||
             issue.kind === 'unsupportedFilter' ||
             (issue.kind === 'programStageFieldMismatch' &&
-                issue.path.startsWith('filters.'))
+                location?.kind === 'filter')
         ) {
-            const match = issue.path.match(/^filters\.(\d+)\./)
-            const index = match ? Number(match[1]) : -1
+            const index =
+                location?.kind === 'filter' && location.collection === 'filters'
+                    ? location.index
+                    : -1
             if (index < 0 || index >= candidate.filters.length) {
                 invalidDecisions.push(issue)
                 continue
@@ -253,10 +286,12 @@ export const repairConfigurationReferences = ({
         if (
             issue.kind === 'missingColumn' ||
             (issue.kind === 'programStageFieldMismatch' &&
-                issue.path.startsWith('columns.'))
+                location?.kind === 'column')
         ) {
-            const match = issue.path.match(/^columns\.(\d+)$/)
-            const index = match ? Number(match[1]) : -1
+            const index =
+                location?.kind === 'column' && location.collection === 'columns'
+                    ? location.index
+                    : -1
             if (index < 0 || index >= candidate.columns.length) {
                 invalidDecisions.push(issue)
                 continue
@@ -273,7 +308,8 @@ export const repairConfigurationReferences = ({
         if (
             (issue.kind === 'missingSortField' ||
                 issue.kind === 'programStageFieldMismatch') &&
-            issue.path === 'sort.fieldId' &&
+            location?.kind === 'sort' &&
+            location.source === 'configuration' &&
             decision.action === 'replaceSort'
         ) {
             candidate.sort = decision.sort

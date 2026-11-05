@@ -52,8 +52,6 @@ export interface SavedListPayloadBase extends SavedListSharing {
 export interface SavedListBase {
     id: string
     name: string
-    /** Stable key for generated labels; metadata names remain server-provided. */
-    labelKey?: string
     resource: SavedListResource
     sortOrder?: number
     sharing: SavedListSharing

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type { WorkingListClient } from '../api/client'
 import {
@@ -14,7 +14,7 @@ import {
 } from '../query/fetchers'
 import { workingListQueryKeys } from '../query/keys'
 import type { FilterSerializationContext } from '../registry/valueTypes'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
+import type { WorkingListTranslate } from '../domain/translation'
 import type {
     WorkingListConfiguration,
     WorkingListMeta,
@@ -164,9 +164,22 @@ export const useWorkingListResults = ({
         })
     }, [orgUnitId, stagePagination, store])
 
+    const { organisationUnitLabelsQuery } = references
+    const retryResults = useCallback(async () => {
+        await Promise.all([
+            pageQuery.refetch(),
+            organisationUnitLabelsQuery.error
+                ? organisationUnitLabelsQuery.refetch()
+                : Promise.resolve(),
+        ])
+    }, [
+        pageQuery.refetch,
+        organisationUnitLabelsQuery.error,
+        organisationUnitLabelsQuery.refetch,
+    ])
+
     return {
-        pageQuery,
-        organisationUnitLabelsQuery: references.organisationUnitLabelsQuery,
+        retryResults,
         formattingContext: references.formattingContext,
         resultTargets,
         rows,

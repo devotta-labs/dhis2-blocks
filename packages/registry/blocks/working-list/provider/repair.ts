@@ -6,14 +6,14 @@ import {
 import type { NormalizedSavedWorkingList } from '../api/savedLists'
 import { ProgramStageWorkingListSchema } from '../api/schemas'
 import type { StaleReferenceRepairDecision } from '../domain/staleReferences'
+import {
+    formatRepairLocation,
+    parseRepairLocation,
+} from '../domain/repairLocation'
 import { DEFAULT_WORKING_LIST_SORT } from '../query/serialize'
 
 export interface SavedListRepairPlan {
     decisions: StaleReferenceRepairDecision[]
-    removedFilters: number
-    removedColumns: number
-    replacedColumns: number
-    replacedSort: boolean
 }
 
 export const createSavedListRepairPlan = (
@@ -30,13 +30,20 @@ export const createSavedListRepairPlan = (
                 (issue) =>
                     issue.kind === 'missingColumn' ||
                     (issue.kind === 'programStageFieldMismatch' &&
-                        issue.path.startsWith('columns.'))
+                        parseRepairLocation(issue.path)?.kind === 'column')
             )
             .map((issue) => issue.path)
     )
     const validColumnCount = candidate
         ? candidate.columns.filter(
-              (_column, index) => !invalidColumnPaths.has(`columns.${index}`)
+              (_column, index) =>
+                  !invalidColumnPaths.has(
+                      formatRepairLocation({
+                          kind: 'column',
+                          collection: 'columns',
+                          index,
+                      })
+                  )
           ).length
         : 0
     const rawProgramStageId =
@@ -59,15 +66,15 @@ export const createSavedListRepairPlan = (
 
     for (const issue of list.issues) {
         const path = issue.path
+        const location = parseRepairLocation(path)
         if (
             issue.kind === 'missingFilterField' ||
             issue.kind === 'fieldChanged' ||
             issue.kind === 'scopeMismatch' ||
             issue.kind === 'unsupportedFilter' ||
             (issue.kind === 'programStageFieldMismatch' &&
-                path.startsWith('filters.')) ||
-            path.startsWith('attributeValueFilters.') ||
-            path.startsWith('dataFilters.')
+                location?.kind === 'filter') ||
+            (location?.kind === 'filter' && location.collection !== 'filters')
         ) {
             decisions.push({ path, action: 'remove' })
             continue
@@ -75,8 +82,9 @@ export const createSavedListRepairPlan = (
         if (
             issue.kind === 'missingColumn' ||
             (issue.kind === 'programStageFieldMismatch' &&
-                path.startsWith('columns.')) ||
-            path.startsWith('displayColumnOrder.')
+                location?.kind === 'column') ||
+            (location?.kind === 'column' &&
+                location.collection === 'displayColumnOrder')
         ) {
             if (
                 validColumnCount === 0 &&
@@ -97,7 +105,7 @@ export const createSavedListRepairPlan = (
         if (
             (issue.kind === 'missingSortField' ||
                 issue.kind === 'programStageFieldMismatch') &&
-            (path === 'sort.fieldId' || path === 'order')
+            location?.kind === 'sort'
         ) {
             const fieldId = fields.has(DEFAULT_WORKING_LIST_SORT.fieldId)
                 ? DEFAULT_WORKING_LIST_SORT.fieldId
@@ -115,26 +123,5 @@ export const createSavedListRepairPlan = (
         }
     }
 
-    return {
-        decisions,
-        removedFilters: decisions.filter(
-            (decision) =>
-                decision.action === 'remove' &&
-                (decision.path.startsWith('filters.') ||
-                    decision.path.startsWith('attributeValueFilters.') ||
-                    decision.path.startsWith('dataFilters.'))
-        ).length,
-        removedColumns: decisions.filter(
-            (decision) =>
-                decision.action === 'remove' &&
-                (decision.path.startsWith('columns.') ||
-                    decision.path.startsWith('displayColumnOrder.'))
-        ).length,
-        replacedColumns: decisions.filter(
-            (decision) => decision.action === 'replaceColumn'
-        ).length,
-        replacedSort: decisions.some(
-            (decision) => decision.action === 'replaceSort'
-        ),
-    }
+    return { decisions }
 }

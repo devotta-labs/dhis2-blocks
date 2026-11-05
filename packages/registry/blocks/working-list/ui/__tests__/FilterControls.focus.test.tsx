@@ -75,7 +75,6 @@ describe('MoreFilters keyboard focus', () => {
                         visibleFilterIds={
                             selectedEventField ? [selectedEventField.id] : []
                         }
-                        scope="tracked-entity"
                         program={program}
                         selectedStageId={selectedStageId}
                         eventFields={[eventField]}
@@ -256,7 +255,6 @@ describe('MoreFilters keyboard focus', () => {
                 <MoreFilters
                     fields={[field, second]}
                     visibleFilterIds={[]}
-                    scope="tracked-entity"
                     program={program}
                     onAdd={vi.fn()}
                 />

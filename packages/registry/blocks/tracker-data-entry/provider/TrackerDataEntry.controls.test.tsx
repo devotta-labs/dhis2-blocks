@@ -165,7 +165,7 @@ test('commit writes nothing to a cell that is locked', async () => {
     // A rule locked the cell, and the row is read-only.
     expect(commitTo(CHILDREN, '3')).toBe('unchanged')
     expect(commitTo('r2.c1', '3')).toBe('unchanged')
-    // A rule hid it: only text a person typed into it is kept, then cleared by the rule.
+    // A rule hid it: a person's write is refused too.
     expect(commitTo('r1.c2', '')).toBe('unchanged')
     expect(commitTo('r2.c2', 'A')).toBe('unchanged')
     expect(context().store.getState().cells[CHILDREN]).toBeUndefined()
@@ -174,10 +174,9 @@ test('commit writes nothing to a cell that is locked', async () => {
     expect(context().store.getState().cells['r1.c2']).toBeUndefined()
     expect(await records(server, KEY)).toEqual([])
 
-    expect(commitTo('r1.c2', 'A')).toBe('queued')
-    await expect
-        .poll(async () => (await records(server, KEY)).map(({ key }) => key))
-        .toEqual(['r1.c2'])
+    expect(commitTo('r1.c2', 'A')).toBe('unchanged')
+    expect(context().store.getState().cells['r1.c2']).toBeUndefined()
+    expect(await records(server, KEY)).toEqual([])
 })
 
 test('a summary link moves focus into a replacement control through its id', async () => {

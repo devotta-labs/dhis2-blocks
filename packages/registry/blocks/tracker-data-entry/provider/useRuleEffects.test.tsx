@@ -450,11 +450,11 @@ test('rules that cannot be loaded block completion, and the summary says so', as
         .toHaveTextContent(new RegExp(`^${failure}$`))
 })
 
-test('text typed into a cell a rule hides is saved, then cleared by the rule', async () => {
+test('text typed into a cell a rule hides is not saved', async () => {
     // "Other chronic condition": yes, so "specified" shows, empty.
     const OTHER = 'xPTngRLQTnu'
     const SPECIFIED = 'Mh7nK8UKoZP'
-    const { context, view } = await mountRmnch(
+    const { context } = await mountRmnch(
         eventsOf(0).map((event) =>
             event.event === FIRST_VISIT
                 ? withValue(
@@ -479,17 +479,6 @@ test('text typed into a cell a rule hides is saved, then cleared by the rule', a
     context().store.getState().commit(cellKey(FIRST_VISIT, OTHER), 'false')
     await expect.poll(hiddenBy).toBeDefined()
     await userEvent.keyboard('{Tab}')
-    await expect
-        .poll(() =>
-            view()
-                .summary.items.filter(({ key }) => key === specified)
-                .map(({ text }) => text)
-        )
-        .toContain(
-            'Cleared by rule: Hide field for -other chronic conditions specified'
-        )
-    expect(context().store.getState().cells[specified]).toMatchObject({
-        value: undefined,
-        source: 'rule',
-    })
+    // The store refuses a person's write to a hidden cell: nothing is saved, so no rule has anything to clear.
+    expect(context().store.getState().cells[specified]).toBeUndefined()
 })

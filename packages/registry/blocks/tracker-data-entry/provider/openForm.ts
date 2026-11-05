@@ -203,11 +203,7 @@ const connect = (
                 cancelFlush = afterPaint(flush)
             }
         },
-        // Typed and pasted alike: an option a rule hid is not an option.
-        check: (key, value) =>
-            effects.getState().cells[key]?.hiddenOptions?.has(value)
-                ? i18n.t('Choose one of the options')
-                : undefined,
+        annotations: effects,
         // Read-only records stay as DHIS2 has them, whatever path a change comes by.
         locked: (key) => readOnlyRecords.has(recordIdOf(key)),
     })

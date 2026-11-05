@@ -11,6 +11,11 @@ import type { FormTables } from './openForm'
 /** `visitForm`'s open stores, as `openForm` makes them. */
 const opened = () => {
     const form = visitForm()
+    const effects = createStore<TrackerEffectsState>()(() => ({
+        cells: {},
+        rowMessages: new Map(),
+        rowNotes: new Map(),
+    }))
     return {
         form,
         store: createCellStore({
@@ -18,12 +23,9 @@ const opened = () => {
             values: form.values,
             settings: { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' },
             enqueue: () => {},
+            annotations: effects,
         }),
-        effects: createStore<TrackerEffectsState>()(() => ({
-            cells: {},
-            rowMessages: new Map(),
-            rowNotes: new Map(),
-        })),
+        effects,
         tables: createStore<FormTables>()(() => ({
             tables: form.tables,
             records: form.records,

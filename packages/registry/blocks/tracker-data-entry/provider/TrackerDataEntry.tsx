@@ -397,7 +397,6 @@ export const TrackerDataEntry = ({
                     addRow={addRow}
                     orgUnitNames={orgUnitNames}
                     fileNames={fileNames}
-                    engine={engine}
                     offline={offline}
                     fileUrl={fileUrl}
                     announcer={announcer}

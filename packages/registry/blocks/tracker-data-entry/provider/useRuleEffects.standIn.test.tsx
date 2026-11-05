@@ -87,23 +87,25 @@ const connect = (
     const form = visitForm(options)
     const settings = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
     const queued: CellKey[] = []
+    const effects = createStore<TrackerEffectsState>()(() => ({
+        cells: formEffects(
+            form,
+            form.readOnlyRecords,
+            form.tables,
+            form.records
+        ),
+        rowMessages: new Map(),
+        rowNotes: new Map(),
+    }))
     const open = {
         store: createCellStore({
             fields: form.fields,
             values: form.values,
             settings,
             enqueue: (key) => queued.push(key),
+            annotations: effects,
         }),
-        effects: createStore<TrackerEffectsState>()(() => ({
-            cells: formEffects(
-                form,
-                form.readOnlyRecords,
-                form.tables,
-                form.records
-            ),
-            rowMessages: new Map(),
-            rowNotes: new Map(),
-        })),
+        effects,
         tables: createStore<FormTables>()(() => ({
             tables: form.tables,
             records: form.records,
@@ -255,14 +257,20 @@ test('no rule value is committed in a read-only record, shown or not', async () 
     const { store, queued, stop } = connect(standIn(assigning), {
         readOnlyRecords: [['r2', 'Locked']],
     })
-    store.getState().commit(cellKey('r2', 'c2'), 'A')
+    // An unsent change touches r2 as it is on its way to DHIS2; a person's commit there is refused.
+    store.getState().restore([
+        {
+            key: cellKey('r2', 'c2'),
+            value: 'A',
+            base: null,
+            sync: 'queued',
+        },
+    ])
     store.getState().commit(cellKey('r1', 'c2'), 'A')
     // The open record's rules ran; the locked one's did not save anything.
     await expect.poll(() => queued).toContain(cellKey('r1', HIDDEN_FIELD))
     await later(50)
-    expect(queued.filter((key) => key.startsWith('r2.'))).toEqual([
-        cellKey('r2', 'c2'),
-    ])
+    expect(queued.filter((key) => key.startsWith('r2.'))).toEqual([])
     expect(store.getState().cells[cellKey('r2', HIDDEN_FIELD)]).toBeUndefined()
     expect(store.getState().cells[cellKey('r2', 'c1')]).toBeUndefined()
     stop()

@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 /**
@@ -9,6 +9,7 @@ import { useSearchParams } from 'react-router-dom'
 export const usePresetParam = () => {
     const [params, setParams] = useSearchParams()
     const current = params.get('preset') ?? undefined
+    const [initial] = useState(current)
     const setPreset = useCallback(
         (name: string | undefined) => {
             if (current === name) return
@@ -24,5 +25,5 @@ export const usePresetParam = () => {
         },
         [current, setParams]
     )
-    return [current, setPreset] as const
+    return [initial, setPreset] as const
 }

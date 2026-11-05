@@ -1,13 +1,9 @@
-import { useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
-import { LivePreviewHost } from '../../../preview/LivePreviewHost'
-import { PreviewSpinner } from '../../../preview/PreviewShell'
+import { useCallback, useContext, useMemo } from 'react'
 import { PresetControls, Section, Segmented } from '../../controls'
 import { LabLayout } from '../../LabLayout'
 import { LogPanel } from '../../LogPanel'
-import { CanvasBoundary, LabServerScope } from '../../LabServer'
+import { LabRun, useLabRun } from '../../LabRun'
 import { NetworkControls } from '../../NetworkControls'
-import type { Log } from '../../network'
-import { usePresetParam } from '../../usePresetParam'
 import { DisplayChoice } from '../displayChoice'
 import { LAB_ORG_UNIT, LAB_PROGRAM, generateWorld } from './labData'
 import { createLabServer, RESOURCES } from './labServer'
@@ -27,22 +23,10 @@ const WIDTHS: ReadonlyArray<readonly [Width, string, string]> = [
 
 /** The working list as a table: the table and its toolbar on generated data, beside the requests it makes. */
 export const TableLab = () => {
-    const [linkedPreset, setLinkedPreset] = usePresetParam()
     const displayChoice = useContext(DisplayChoice)
-    const [state, dispatch] = useReducer(
-        labReducer,
-        linkedPreset,
-        initialLabState
-    )
+    const [state, dispatch, log] = useLabRun(labReducer, initialLabState)
     const { mode, config, live, width, run, requests, callbacks } = state
-    const linked = mode === 'lab' ? state.preset : undefined
-    useEffect(() => setLinkedPreset(linked), [linked, setLinkedPreset])
 
-    // Stable, so neither the lab server nor the list is rebuilt for each entry.
-    const log: Log = useCallback(
-        (update) => dispatch({ type: 'logRequests', update }),
-        []
-    )
     const note = useCallback(
         (entry: string) =>
             dispatch({
@@ -183,30 +167,23 @@ export const TableLab = () => {
             }
         >
             <div className={`w-full ${widthClass} bg-white`}>
-                <CanvasBoundary key={run}>
-                    {mode === 'lab' ? (
-                        <LabServerScope
-                            key={run}
-                            network={config.network}
-                            apiVersion={server.apiVersion}
-                            resources={RESOURCES}
-                            respond={respond}
-                            log={log}
-                        >
-                            <TableCanvas {...canvasProps} />
-                        </LabServerScope>
-                    ) : (
-                        <LivePreviewHost
-                            key={run}
-                            placeholder={<PreviewSpinner className="h-96" />}
-                        >
-                            <TableCanvas
-                                key={`${live.programId}/${live.orgUnitId}`}
-                                {...canvasProps}
-                            />
-                        </LivePreviewHost>
-                    )}
-                </CanvasBoundary>
+                <LabRun
+                    run={run}
+                    mode={mode}
+                    network={config.network}
+                    apiVersion={server.apiVersion}
+                    resources={RESOURCES}
+                    respond={respond}
+                    log={log}
+                    live={
+                        <TableCanvas
+                            key={`${live.programId}/${live.orgUnitId}`}
+                            {...canvasProps}
+                        />
+                    }
+                >
+                    <TableCanvas {...canvasProps} />
+                </LabRun>
             </div>
         </LabLayout>
     )

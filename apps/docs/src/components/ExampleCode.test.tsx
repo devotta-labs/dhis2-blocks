@@ -3,6 +3,8 @@ import { render } from 'vitest-browser-react'
 import calendarSource from '../examples/working-list/WorkingListCalendarTabs.tsx?raw'
 import compositionSource from '../examples/working-list/ListCalendar.tsx?raw'
 import listSource from '../examples/working-list/WorkingListDefault.tsx?raw'
+import pickerSource from '../examples/working-list/WorkingListProgramPicker.tsx?raw'
+import placeholdersSource from '../examples/working-list/WorkingListPlaceholders.tsx?raw'
 import { getExample } from '../examples/registry'
 import { ExampleCode } from './ExampleCode'
 
@@ -19,6 +21,30 @@ const renderCode = async (slug: string) => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('example source code', () => {
+    it('copies the program picker and its required placeholder, then switches back', async () => {
+        const copy = vi
+            .spyOn(navigator.clipboard, 'writeText')
+            .mockResolvedValue()
+        const view = await renderCode('working-list/program-picker')
+        await view.getByRole('button', { name: 'Copy', exact: true }).click()
+        expect(copy).toHaveBeenLastCalledWith(pickerSource.trimEnd())
+        await view
+            .getByRole('button', {
+                name: 'WorkingListPlaceholders.tsx',
+                exact: true,
+            })
+            .click()
+        await view.getByRole('button', { name: 'Copy', exact: true }).click()
+        expect(copy).toHaveBeenLastCalledWith(placeholdersSource.trimEnd())
+        await view
+            .getByRole('button', {
+                name: 'WorkingListProgramPicker.tsx',
+                exact: true,
+            })
+            .click()
+        await view.getByRole('button', { name: 'Copy', exact: true }).click()
+        expect(copy).toHaveBeenLastCalledWith(pickerSource.trimEnd())
+    })
     it('shows and copies both calendar files inside the Code tab', async () => {
         const copy = vi
             .spyOn(navigator.clipboard, 'writeText')

@@ -5,12 +5,10 @@ import { HighlightedCodeBlock } from './HighlightedCodeBlock'
 export const ExampleCode = ({
     example,
 }: {
-    example: Pick<ExampleDefinition, 'source' | 'sourceFiles'>
+    example: Pick<ExampleDefinition, 'sourceFiles'>
 }) => {
     const [sourceName, setSourceName] = useState<string>()
-    const sources = example.sourceFiles ?? [
-        { name: 'Example.tsx', code: example.source },
-    ]
+    const sources = example.sourceFiles
     const selectedSource =
         sources.find(({ name }) => name === sourceName) ?? sources[0]
 

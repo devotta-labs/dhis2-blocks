@@ -38,12 +38,12 @@ evaluated to inspect a value. Playground server/provider setup is not included.
 4. Give it presets, shown as Examples: named settings for the handful of
    cases worth showing, grouped. Keep the sidebar small: the examples, a few
    plain options, the network and the canvas.
-   `usePresetParam` keeps the chosen one in the URL (`?preset=`), so a link
+   `useLabRun` keeps the chosen one in the URL (`?preset=`), so a link
    opens the same case.
 5. Keep the lab's state in its own reducer, `labState.ts`, tested in
    `__tests__/labState.test.ts`: the mode, preset, settings, live ids, run
    count and logs, and which changes restart the block. The lab component only
-   dispatches, so nothing about the state needs a browser to test. A reload
+   dispatches through `useLabRun(labReducer, initialLabState)`, so domain policy needs no browser to test. A reload
    opens on the URL's preset or the first; nothing else is kept.
 6. Put the canvas composition in its own module with a separate `Props`
    interface, destructure its props, and pass its `?canvas` import to `LabLayout`
@@ -56,17 +56,19 @@ runs `src/playground/**/*.test.ts`, so a new lab needs no other config.
 
 ## Shared parts
 
-| Part                         | What it does                                                                                                                                                                                        |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LabLayout`                  | The page: a Settings sidebar of the block picker over the lab's controls, the block on its canvas, an optional panel below, folded until opened. On a phone the controls fold away above the block. |
-| `LabServerScope`             | app-runtime and TanStack Query with every listed resource answered by `respond`, through the lab network. `systemInfo` sets `useConfig().systemInfo`; change its `key` for a fresh cache.           |
-| `CanvasBoundary`             | Catches a crash in the block and shows it, so the lab's controls keep working. Give it the same `key` as the scope.                                                                                 |
-| `NetworkControls`            | One choice for the network: normal, slow, or the block's record requests failing with a 500 or never answering.                                                                                     |
-| `LogPanel`                   | The bottom panel: the block's callbacks when it has any, then each request and their `RequestWaterfall`. Feed it the log that `LabServerScope` writes.                                              |
-| `usePresetParam`             | The lab's preset in the URL: read once to open on it, written whenever the preset changes.                                                                                                          |
-| `throughNetwork` (`network`) | What `LabServerScope` uses: waits, fails or hangs as the endpoint says, then answers and logs. Use it directly only for requests outside app-runtime.                                               |
-| `controls`                   | The sidebar's rows: `Section`, `Check`, `NumberRow`, `SelectRow`, `Segmented`, and `PresetControls` for a lab's examples.                                                                           |
-| `lab.css`                    | The lab's own look (`--lab-*` tokens), dark with the docs' theme. `LabLayout` loads it; it never styles the block under test.                                                                       |
+| Part                         | What it does                                                                                                                                                                                               |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LabLayout`                  | The page: a Settings sidebar of the block picker over the lab's controls, the block on its canvas, an optional panel below, folded until opened. On a phone the controls fold away above the block.        |
+| `LabRun`                     | Owns the keyed crash boundary and lab/live providers. Pass the reducer's `run` and `mode`; a new run resets the crash and both query caches together. Resources, fake servers and canvas props stay local. |
+| `useLabRun`                  | Initializes the local reducer from the URL once, synchronizes its preset, and returns a stable per-run request logger. Late requests from an old run cannot enter the new run's log.                       |
+| `LabServerScope`             | Inside `LabRun`: app-runtime and TanStack Query with listed resources answered by `respond` through the lab network. `systemInfo` sets `useConfig().systemInfo`.                                           |
+| `CanvasBoundary`             | Inside `LabRun`: catches a block crash so controls keep working.                                                                                                                                           |
+| `NetworkControls`            | One choice for the network: normal, slow, or the block's record requests failing with a 500 or never answering.                                                                                            |
+| `LogPanel`                   | The bottom panel: the block's callbacks when it has any, then each request and their `RequestWaterfall`. Feed it the log that `LabServerScope` writes.                                                     |
+| `usePresetParam`             | Used by `useLabRun` to read the opening preset once and write changes without replacing other URL parameters.                                                                                              |
+| `throughNetwork` (`network`) | What `LabServerScope` uses: waits, fails or hangs as the endpoint says, then answers and logs. Use it directly only for requests outside app-runtime.                                                      |
+| `controls`                   | The sidebar's rows: `Section`, `Check`, `NumberRow`, `SelectRow`, `Segmented`, and `PresetControls` for a lab's examples.                                                                                  |
+| `lab.css`                    | The lab's own look (`--lab-*` tokens), dark with the docs' theme. `LabLayout` loads it; it never styles the block under test.                                                                              |
 
 ## Writing the server
 

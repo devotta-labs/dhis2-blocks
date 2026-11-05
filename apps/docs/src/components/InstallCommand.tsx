@@ -16,13 +16,6 @@ type PackageManager = (typeof packageManagers)[number]
 
 type Commands = Record<PackageManager, string>
 
-type Block =
-    | 'context-selector'
-    | 'observation-cards'
-    | 'timeline'
-    | 'tracked-entity-finder'
-    | 'working-list'
-
 const PackageManagerCommand = ({ commands }: { commands: Commands }) => {
     const [manager, setManager] = useState<PackageManager>('pnpm')
     const lines = useHighlightedCode(commands[manager], 'bash')
@@ -92,6 +85,6 @@ export const ShadcnCommand = ({ args }: { args: string }) => (
 )
 
 /** `shadcn add` for a block: copies its source and installs its dependencies. */
-export const InstallCommand = ({ item }: { item: Block }) => (
+export const InstallCommand = ({ item }: { item: string }) => (
     <ShadcnCommand args={`add devotta-labs/dhis2-blocks/${item}`} />
 )

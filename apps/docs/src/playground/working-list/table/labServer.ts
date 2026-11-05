@@ -1,4 +1,4 @@
-import type { DataEngineQueryParameters } from '@/components/working-list/api/client'
+import type { WireParams } from '../wire'
 import {
     ATTRIBUTES,
     DATA_ELEMENTS,
@@ -14,7 +14,7 @@ import {
 import { inWindow, matches, parseFilters, sorted, valueOf } from './query'
 import { createSavedViews, type RequestType } from './savedViews'
 
-type Params = DataEngineQueryParameters
+type Params = WireParams
 
 /** What the server's answers depend on. */
 type ServerConfig = Pick<LabConfig, 'data' | 'server'>

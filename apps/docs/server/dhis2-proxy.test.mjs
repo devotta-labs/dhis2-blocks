@@ -1,8 +1,11 @@
 import http from 'node:http'
+import { once } from 'node:events'
 import { createServer as createViteServer } from 'vite'
 import { describe, expect, it } from 'vitest'
 import {
     createDhis2ViteProxy,
+    dhis2CsrfGuard,
+    isDhis2Path,
     isCrossSiteWrite,
     proxyDhis2Request,
     resolveDocsAuth,
@@ -20,6 +23,240 @@ const listen = (server) =>
             resolve(`http://127.0.0.1:${server.address().port}`)
         )
     )
+
+const startProxy = async (transport, target, env = {}) => {
+    if (transport === 'node') {
+        const server = http.createServer((req, res) => {
+            if (isDhis2Path(req.url)) proxyDhis2Request(req, res, target, env)
+            else {
+                res.writeHead(404)
+                res.end()
+            }
+        })
+        return {
+            origin: await listen(server),
+            close: () => server[Symbol.asyncDispose](),
+        }
+    }
+    const server = await createViteServer({
+        configFile: false,
+        logLevel: 'silent',
+        plugins: [
+            {
+                name: 'csrf-test',
+                configureServer: (vite) => {
+                    vite.middlewares.use(dhis2CsrfGuard)
+                },
+            },
+        ],
+        server: {
+            host: '127.0.0.1',
+            port: 0,
+            proxy: createDhis2ViteProxy(target, env),
+        },
+    })
+    await server.listen()
+    return {
+        origin: `http://127.0.0.1:${server.httpServer.address().port}`,
+        close: () => server.close(),
+    }
+}
+
+describe.each(['node', 'vite'])('%s proxy protocol boundaries', (transport) => {
+    it('routes the bare prefix, query and slash under a backend context, but not near-prefix assets', async () => {
+        const urls = []
+        const backend = http.createServer((req, res) => {
+            urls.push(req.url)
+            res.end(req.url)
+        })
+        const target = await listen(backend)
+        const proxy = await startProxy(transport, `${target}/dev`)
+        try {
+            for (const [path, expected] of [
+                ['/dhis2', '/dev/'],
+                ['/dhis2?x=1', '/dev/?x=1'],
+                ['/dhis2/', '/dev/'],
+                ['/dhis2/api/me?fields=id', '/dev/api/me?fields=id'],
+            ]) {
+                const response = await fetch(`${proxy.origin}${path}`)
+                expect(await response.text()).toBe(expected)
+            }
+            const forwarded = urls.length
+            for (const path of ['/dhis2-symbol.svg', '/dhis20/api/me']) {
+                await fetch(`${proxy.origin}${path}`, {
+                    method: 'POST',
+                    headers: { 'sec-fetch-site': 'cross-site' },
+                })
+            }
+            expect(urls).toHaveLength(forwarded)
+        } finally {
+            await proxy.close()
+            await backend[Symbol.asyncDispose]()
+        }
+    })
+
+    it.each([
+        [
+            {},
+            `Basic ${Buffer.from('admin:district').toString('base64')}`,
+            undefined,
+        ],
+        [
+            {
+                DOCS_DHIS2_USERNAME: 'preview',
+                DOCS_DHIS2_PASSWORD: 'local-test',
+            },
+            `Basic ${Buffer.from('preview:local-test').toString('base64')}`,
+            undefined,
+        ],
+        [
+            { DOCS_DHIS2_ANONYMOUS: '1' },
+            'Bearer caller',
+            'JSESSIONID=session; XSRF-TOKEN=csrf',
+        ],
+    ])(
+        'applies auth and origin policy after rejecting cross-site writes (%j)',
+        async (env, authorization, cookie) => {
+            const requests = []
+            const backend = http.createServer((req, res) => {
+                requests.push(req.headers)
+                res.end(JSON.stringify(req.headers))
+            })
+            const target = await listen(backend)
+            const proxy = await startProxy(transport, target, env)
+            const headers = {
+                authorization: 'Bearer caller',
+                cookie: 'docs=private; JSESSIONID=session; XSRF-TOKEN=csrf',
+                origin: proxy.origin,
+                referer: `${proxy.origin}/page`,
+            }
+            try {
+                const blocked = await fetch(`${proxy.origin}/dhis2?write=1`, {
+                    method: 'POST',
+                    headers: { ...headers, 'sec-fetch-site': 'cross-site' },
+                })
+                expect(blocked.status).toBe(403)
+                expect(requests).toHaveLength(0)
+                const allowed = await fetch(`${proxy.origin}/dhis2/api/me`, {
+                    method: 'POST',
+                    headers: { ...headers, 'sec-fetch-site': 'same-origin' },
+                })
+                expect(await allowed.json()).toMatchObject({
+                    authorization,
+                    origin: target,
+                    referer: `${target}/`,
+                    host: new URL(target).host,
+                })
+                expect(requests[0].cookie).toBe(cookie)
+                const noCredentials = await fetch(
+                    `${proxy.origin}/dhis2/api/me`,
+                    { headers: { cookie: 'docs=private' } }
+                )
+                const clean = await noCredentials.json()
+                expect(clean.cookie).toBeUndefined()
+                if (env.DOCS_DHIS2_ANONYMOUS)
+                    expect(clean.authorization).toBeUndefined()
+            } finally {
+                await proxy.close()
+                await backend[Symbol.asyncDispose]()
+            }
+        }
+    )
+
+    it('rewrites redirects and multiple cookie paths without claiming external or relative locations', async () => {
+        const backend = http.createServer((req, res) => {
+            res.writeHead(302, {
+                location: new URL(req.url, 'http://local').searchParams.get(
+                    'location'
+                ),
+                'set-cookie': [
+                    'JSESSIONID=one; Path=/dev; HttpOnly',
+                    'XSRF-TOKEN=two; Secure',
+                ],
+            })
+            res.end()
+        })
+        const target = await listen(backend)
+        const proxy = await startProxy(transport, `${target}/dev`)
+        try {
+            for (const [location, expected] of [
+                ['/dev/login?next=me', '/dhis2/login?next=me'],
+                ['/dev?next=me#form', '/dhis2/?next=me#form'],
+                [
+                    `${target}/dev/login?next=me#form`,
+                    '/dhis2/login?next=me#form',
+                ],
+                ['/dhis2/api/me', '/dhis2/api/me'],
+                ['/dhis2#form', '/dhis2#form'],
+                [`//${new URL(target).host}/dev/login`, '/dhis2/login'],
+                ['/dhis2-logo.svg', '/dhis2/dhis2-logo.svg'],
+                ['https://outside.test/login', 'https://outside.test/login'],
+                ['//outside.test/login', '//outside.test/login'],
+                ['login.action?next=me', 'login.action?next=me'],
+            ]) {
+                const response = await fetch(
+                    `${proxy.origin}/dhis2/login?location=${encodeURIComponent(location)}`,
+                    { redirect: 'manual' }
+                )
+                expect(response.headers.get('location')).toBe(expected)
+                expect(response.headers.getSetCookie()).toEqual([
+                    'JSESSIONID=one; Path=/; HttpOnly',
+                    'XSRF-TOKEN=two; Secure; Path=/',
+                ])
+            }
+        } finally {
+            await proxy.close()
+            await backend[Symbol.asyncDispose]()
+        }
+    })
+
+    it('streams request and response chunks before either body finishes', async () => {
+        const backend = http.createServer(async (req, res) => {
+            const chunks = []
+            for await (const chunk of req) {
+                chunks.push(chunk)
+                res.write(chunk)
+            }
+            res.end(Buffer.concat(chunks))
+        })
+        const target = await listen(backend)
+        const proxy = await startProxy(transport, target)
+        try {
+            const request = http.request(`${proxy.origin}/dhis2/api/raw`, {
+                method: 'POST',
+            })
+            const responsePromise = once(request, 'response')
+            request.write('first')
+            const [response] = await responsePromise
+            const chunks = []
+            response.on('data', (chunk) => chunks.push(chunk))
+            await once(response, 'data')
+            expect(Buffer.concat(chunks).toString()).toBe('first')
+            request.end('second')
+            await once(response, 'end')
+            expect(Buffer.concat(chunks).toString()).toBe(
+                'firstsecondfirstsecond'
+            )
+        } finally {
+            await proxy.close()
+            await backend[Symbol.asyncDispose]()
+        }
+    })
+
+    it('ends the response on an upstream connection failure', async () => {
+        const backend = http.createServer((req) => req.socket.destroy())
+        const target = await listen(backend)
+        const proxy = await startProxy(transport, target)
+        try {
+            const response = await fetch(`${proxy.origin}/dhis2/api/me`)
+            expect(response.status).toBe(transport === 'node' ? 502 : 500)
+            await response.text()
+        } finally {
+            await proxy.close()
+            await backend[Symbol.asyncDispose]()
+        }
+    })
+})
 
 describe.each(['node', 'vite'])('%s proxy header isolation', (transport) => {
     it.each([false, true])(

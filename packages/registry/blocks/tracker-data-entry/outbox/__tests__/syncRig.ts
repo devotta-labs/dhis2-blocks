@@ -34,7 +34,8 @@ export const open = async (server: string) => {
 
 /** Run after each test: stops the loops, restores spies, closes and deletes the databases. */
 export const cleanUp = async () => {
-    handles.splice(0).forEach((handle) => handle.stop())
+    // Awaited, so a round in flight settles before its database is deleted.
+    await Promise.all(handles.splice(0).map((handle) => handle.stop()))
     vi.restoreAllMocks()
     opened.splice(0).forEach((outbox) => outbox.close())
     await Promise.all(names.splice(0).map(deleteDatabase))

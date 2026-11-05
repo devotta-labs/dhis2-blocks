@@ -178,7 +178,12 @@ export const appendPage = async (
                 base: value,
                 sync: 'idle' as const,
             })),
-        ...restored.map((record) => ({ ...record, sync: record.state })),
+        // DHIS2 holds what the page just loaded, whatever it held when the change was made.
+        ...restored.map((record) => ({
+            ...record,
+            base: page.values.get(record.key) ?? null,
+            sync: record.state,
+        })),
     ])
     effects.setState(({ cells: now, rowNotes }) => ({
         cells: formEffects(

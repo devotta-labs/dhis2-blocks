@@ -96,7 +96,8 @@ test('a newer change typed in the cell before the outbox is read again keeps it 
     await appendPage(open, PAGE, async () => reads.shift()?.() ?? [])
     expect(open.store.getState().cells[key]).toMatchObject({
         value: '10',
-        base: undefined,
+        // What the page loaded for the cell.
+        base: '1',
         sync: 'queued',
     })
 })

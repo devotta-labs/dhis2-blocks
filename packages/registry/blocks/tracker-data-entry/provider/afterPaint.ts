@@ -55,3 +55,19 @@ export const afterPaint = (work: () => void) => {
         }
     }
 }
+
+/** Runs `work` when the browser is idle; returns how to cancel it. */
+export const whenIdle = (work: () => void) => {
+    if ('requestIdleCallback' in window) {
+        const id = requestIdleCallback(work)
+        return () => cancelIdleCallback(id)
+    }
+    const id = setTimeout(work)
+    return () => clearTimeout(id)
+}
+
+// The rows in view do not wait for the browser to be idle, which it rarely is while it renders the grid.
+export const soon = (work: () => void) => {
+    const id = setTimeout(work)
+    return () => clearTimeout(id)
+}

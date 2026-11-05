@@ -97,12 +97,14 @@ export const useRuleEffects = ({
         }
     }, [open, target, status])
 
-    // One per open form, so what rules cleared and noted and the rows people touched outlive the people refetching.
+    // One per open form, so what rules cleared and noted, the rows people touched and the rows evaluated outlive the
+    // people refetching.
     const session = useRef<{
         open: OpenForm
         cleared: Map<CellKey, string>
         touched: Set<string>
         ruleNotes: Map<string, ReadonlyArray<string>>
+        seen: Set<string>
     }>(undefined)
     useEffect(() => {
         if (open === undefined || form === undefined || rules === undefined) {
@@ -114,9 +116,10 @@ export const useRuleEffects = ({
                 cleared: new Map(),
                 touched: new Set(),
                 ruleNotes: new Map(),
+                seen: new Set(),
             }
         }
-        const { cleared, touched, ruleNotes } = session.current
+        const { cleared, touched, ruleNotes, seen } = session.current
         return connectRules({
             open,
             form,
@@ -126,6 +129,7 @@ export const useRuleEffects = ({
             cleared,
             touched,
             ruleNotes,
+            seen,
             idScope,
         })
     }, [open, form, rules, settings, announce, idScope])

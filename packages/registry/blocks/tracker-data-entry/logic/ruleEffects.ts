@@ -323,6 +323,33 @@ export const ruleRowsOf = (
     })
 }
 
+/**
+ * `ruleRowsOf` for one form, built again only when the records or the cells are other objects than last time: every
+ * slice and edit in between reads the same array, which the rules index once.
+ */
+export const ruleRowsCache = (fieldsByForm: LoadedForm['fieldsByForm']) => {
+    let built:
+        | {
+              records: ReadonlyMap<string, DataRecord>
+              cells: CellStoreState['cells']
+              rows: EventsRuleRow[]
+          }
+        | undefined
+    return (
+        records: ReadonlyMap<string, DataRecord>,
+        cells: CellStoreState['cells']
+    ) => {
+        if (built?.records !== records || built.cells !== cells) {
+            built = {
+                records,
+                cells,
+                rows: ruleRowsOf(records, fieldsByForm, cells),
+            }
+        }
+        return built.rows
+    }
+}
+
 /** Every event of the enrolment. */
 const eventsOf = (
     records: ReadonlyMap<string, DataRecord>,

@@ -39,7 +39,9 @@ export const refusalOf = (
 export const completionChecks = (
     sourceKey: string,
     store: StoreApi<CellStoreState>,
-    view: StoreApi<TrackerDataEntryView>
+    view: StoreApi<TrackerDataEntryView>,
+    /** Brings the view's summary up to date with the stores. */
+    summed: () => void
 ) => {
     const refusal = (key: CellKey, reason: string) =>
         refusalOf(sourceKey, key, reason)
@@ -55,45 +57,49 @@ export const completionChecks = (
          * What stops the record completing: its errors and empty required fields (its own: `r1.…` and `r1`, never
          * `r10.…`), changes refused or waiting, and once its changes were given time to go, any DHIS2 still lacks.
          */
-        refusals: (recordId: string, afterSending: boolean) => [
-            ...view
-                .getState()
-                .summary.items.filter(
-                    (item) =>
-                        (item.key === recordId ||
-                            item.key.startsWith(`${recordId}.`)) &&
-                        blocksCompletion(item)
-                )
-                .map(({ key, text }) =>
-                    refusal(
-                        cellKey(
-                            recordId,
-                            key === recordId ? 'status' : fieldIdOfKey(key)
-                        ),
-                        text
+        refusals: (recordId: string, afterSending: boolean) => {
+            // The summary is up to date: an error committed in this same task stops the record too.
+            summed()
+            return [
+                ...view
+                    .getState()
+                    .summary.items.filter(
+                        (item) =>
+                            (item.key === recordId ||
+                                item.key.startsWith(`${recordId}.`)) &&
+                            blocksCompletion(item)
                     )
-                ),
-            ...recordCells(recordId).flatMap(([key, { sync, reason }]) => {
-                if (sync === 'failed') {
-                    return [
+                    .map(({ key, text }) =>
                         refusal(
-                            key,
-                            i18n.t('Not saved: {{reason}}', {
-                                nsSeparator: '::',
-                                reason: reason ?? '',
-                                interpolation: AS_IS,
-                            })
-                        ),
-                    ]
-                }
-                if (sync === 'waiting') {
-                    return [refusal(key, reason ?? '')]
-                }
-                return afterSending && UNSENT.has(sync)
-                    ? [refusal(key, i18n.t('Not yet sent to DHIS2'))]
-                    : []
-            }),
-        ],
+                            cellKey(
+                                recordId,
+                                key === recordId ? 'status' : fieldIdOfKey(key)
+                            ),
+                            text
+                        )
+                    ),
+                ...recordCells(recordId).flatMap(([key, { sync, reason }]) => {
+                    if (sync === 'failed') {
+                        return [
+                            refusal(
+                                key,
+                                i18n.t('Not saved: {{reason}}', {
+                                    nsSeparator: '::',
+                                    reason: reason ?? '',
+                                    interpolation: AS_IS,
+                                })
+                            ),
+                        ]
+                    }
+                    if (sync === 'waiting') {
+                        return [refusal(key, reason ?? '')]
+                    }
+                    return afterSending && UNSENT.has(sync)
+                        ? [refusal(key, i18n.t('Not yet sent to DHIS2'))]
+                        : []
+                }),
+            ]
+        },
         /**
          * Settles once none of the record's changes waits to be sent, or after as long as a save may take; early, with
          * the reason, when sending pauses (offline, or signed out) after the record's changes were nudged.

@@ -173,7 +173,7 @@ const rulesRan = () =>
 const mountRegister = async (
     answers: Parameters<typeof engineFor>[0] = {},
     layout = LAYOUT,
-    data: typeof RULES_DATA = RULES_DATA
+    data: ComponentProps<typeof CustomDataProvider>['data'] = RULES_DATA
 ) => {
     const register = immunisationRegister({ layout })
     const form = await register.load(engineFor(answers).engine)
@@ -448,4 +448,75 @@ test('a new person’s rules run at once, without asking DHIS2 for them: offline
         ])
     expect(asked.every((id) => known.has(id))).toBe(true)
     expect(effects().rowMessages.get('') ?? []).toEqual([])
+})
+
+test('a rule that reads a stage the register leaves out sees its server value', async () => {
+    const GROWTH = 'ImmGrowth01'
+    const WEIGHT = 'ImmWeight01'
+    const withGrowth = {
+        enrollments: enrollments.enrollments.map((enrollment) =>
+            enrollment.enrollment === AMARA.enrollment
+                ? {
+                      ...enrollment,
+                      events: [
+                          ...enrollment.events,
+                          {
+                              event: 'ImmEvt00077',
+                              enrollment: enrollment.enrollment,
+                              programStage: GROWTH,
+                              orgUnit: enrollment.events[0]?.orgUnit,
+                              occurredAt: '2026-10-01T00:00:00.000',
+                              status: 'ACTIVE',
+                              dataValues: [{ dataElement: WEIGHT, value: '7' }],
+                          },
+                      ],
+                  }
+                : enrollment
+        ),
+    }
+    const data = {
+        ...RULES_DATA,
+        programRuleVariables: async () => ({
+            programRuleVariables: [
+                {
+                    id: 'varWeight01',
+                    name: 'weight',
+                    programRuleVariableSourceType:
+                        'DATAELEMENT_NEWEST_EVENT_PROGRAM',
+                    useCodeForOptionSet: false,
+                    dataElement: { id: WEIGHT, valueType: 'TEXT' },
+                },
+            ],
+        }),
+        programRules: async () => ({
+            programRules: [
+                programRule(
+                    'ruleWeight1',
+                    'Note the weight',
+                    "#{weight} == '7'",
+                    {
+                        programRuleActionType: 'DISPLAYTEXT',
+                        content: 'Weighed 7',
+                    }
+                ),
+            ],
+        }),
+        'tracker/enrollments': async (_type, query) => {
+            const ids = String(query.params?.enrollments).split(',')
+            return {
+                pager: { page: 1, pageSize: 100 },
+                enrollments: withGrowth.enrollments.filter(({ enrollment }) =>
+                    ids.includes(enrollment)
+                ),
+            }
+        },
+    } satisfies ComponentProps<typeof CustomDataProvider>['data']
+    const { effects } = await mountRegister(
+        { enrollments: withGrowth },
+        LAYOUT,
+        data
+    )
+    await expect
+        .poll(() => effects().rowNotes.get(AMARA.enrollment))
+        .toContain('Weighed 7')
 })

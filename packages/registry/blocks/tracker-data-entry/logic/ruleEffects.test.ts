@@ -355,6 +355,13 @@ test("a new where-slot event's rules see its where values", () => {
         vaccine: 'BCG',
         weight: '4',
     })
+    // A saved clear stays `saved` until the records load again, from DHIS2, without `createdWith`.
+    expect(rows({ weight: '4' }, { dose: { sync: 'saved' } })).toEqual({
+        vaccine: 'BCG',
+        weight: '4',
+    })
+    // A draft dropped unsaved leaves the cell idle, and the payload still sends `createdWith`.
+    expect(rows({ weight: '4' }, { dose: {} })).toMatchObject({ dose: '0' })
 })
 
 test('the rule rows stay one array while the records and cells are the same objects', () => {

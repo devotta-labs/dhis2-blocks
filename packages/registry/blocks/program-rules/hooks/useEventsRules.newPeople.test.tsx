@@ -90,6 +90,24 @@ describe('useEventsRules for people not on the server yet', () => {
         expect(result.current.status).toBe('ready')
     })
 
+    it("evaluates a new person's rows while the existing people cannot load", async () => {
+        const { wrapper } = serve(rmnchResponses, ['tracker/enrollments'])
+        const { result } = await renderHook(() => useEventsRules(options()), {
+            wrapper,
+        })
+        await expect.poll(() => result.current.status).toBe('error')
+        const existing: EventsRuleRow = {
+            event: person.events[0],
+            enrollmentId: RMNCH.enrollmentId,
+        }
+        const { effects, failures } = result.current.rules?.evaluate(
+            [newRow(), existing],
+            [NEW_VISIT, existing.event.id]
+        ) ?? { effects: new Map(), failures: new Map() }
+        expect([...effects.keys()]).toEqual([NEW_VISIT])
+        expect(failures).toEqual(new Map())
+    })
+
     it('needs no request when every person is new', async () => {
         const { requests, wrapper } = serve(rmnchResponses, [
             'tracker/enrollments',

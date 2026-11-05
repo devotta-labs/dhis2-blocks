@@ -97,9 +97,9 @@ export interface EventsRules {
 export interface UseEventsRulesResult {
     status: ProgramRulesStatus
     /**
-     * Present once the engine, the metadata and the people the rules read have loaded (a first chunk of them), and from
-     * then on while more people load; for a program without rules, once the metadata has. Stable while its inputs are:
-     * adding people changes it only as each chunk's data arrives.
+     * Present once the engine, the metadata and the people the rules read have loaded (a first chunk of them, or at once
+     * for `newEnrollmentIds`), and from then on while more people load; for a program without rules, once the metadata
+     * has. Stable while its inputs are: adding people changes it only as each chunk's data arrives.
      */
     rules?: EventsRules
     error?: Error
@@ -397,9 +397,9 @@ export const useEventsRules = ({
     }, [personChunks.data])
     const loadedChunks = personChunks.loaded
     const persons = useMemo((): LoadedPersons | undefined => {
-        // New people are answered already: the server has none of them.
+        // New people are answered already: the server has none of them, so their rows never wait for a chunk.
         const fresh = newPeople === '' ? [] : newPeople.split(',')
-        if (!fetchPersons) {
+        if (!fetchPersons || (loadedChunks.length === 0 && fresh.length > 0)) {
             return fresh.length === 0
                 ? NO_PERSONS
                 : { persons: new Map(), answered: new Set(fresh) }

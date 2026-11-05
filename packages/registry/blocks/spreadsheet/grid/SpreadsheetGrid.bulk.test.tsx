@@ -1,6 +1,9 @@
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
+import type { Field } from '@/components/dhis2-value-types'
 import { cellDomId } from '../cells/cellProps'
+import type { CellComponent } from '../cells/cellProps'
+import { useCellContext } from '../cells/CellStatus'
 import { cellKey } from '../model/types'
 import type { CellKey } from '../model/types'
 import {
@@ -12,6 +15,7 @@ import {
     nextFrame,
     range,
 } from './__tests__/gridRig'
+import { headerDomId } from './headers'
 
 const items = () =>
     page
@@ -113,7 +117,7 @@ test('a row copy fills the empty cells of the next row and says how many changed
     ])
     // The row after it is not the next row.
     expect(value(at(2, 0))).toBeUndefined()
-    expect(announced).toEqual(['Cells changed: 3'])
+    expect(announced).toEqual(['Cells changed: 3.'])
 })
 
 test('a locked row is skipped and counted in the summary', async () => {
@@ -138,7 +142,7 @@ test('a locked row is skipped and counted in the summary', async () => {
         .click()
     expect([value(at(1, 0)), value(at(1, 1))]).toEqual([undefined, undefined])
     expect([value(at(2, 0)), value(at(2, 1))]).toEqual(['1', '2'])
-    expect(announced).toEqual(['Cells changed: 2 2 skipped: Completed.'])
+    expect(announced).toEqual(['Cells changed: 2. 2 skipped: Completed.'])
 })
 
 test('a bulk write the provider asks about waits for the answer', async () => {
@@ -180,7 +184,7 @@ test('a bulk write the provider asks about waits for the answer', async () => {
     await dialog.getByRole('button', { name: 'Create events' }).click()
     await expect.element(dialog).not.toBeInTheDocument()
     expect(keys.map(value)).toEqual([undefined, undefined])
-    expect(announced).toEqual(['Cells changed: 2'])
+    expect(announced).toEqual(['Cells changed: 2.'])
     await expect.element(cell).toHaveFocus()
     await userEvent.keyboard('{Control>}z{/Control}')
     expect(keys.map(value)).toEqual(['1', '2'])
@@ -193,7 +197,7 @@ test('a clear drops a cell’s refused text and counts it as changed', async () 
     await page.getByRole('button', { name: 'Row actions a' }).click()
     await page.getByRole('menuitem', { name: 'Clear row' }).click()
     expect(store.getState().cells[key]?.draft).toBeUndefined()
-    expect(announced).toEqual(['Cells changed: 1'])
+    expect(announced).toEqual(['Cells changed: 1.'])
 })
 
 test('a cell the store keeps locked, unmarked in the annotations, is counted as skipped', async () => {
@@ -213,7 +217,7 @@ test('a cell the store keeps locked, unmarked in the annotations, is counted as 
     await page.getByRole('menuitem', { name: 'Apply to next row' }).click()
     expect([value(at(1, 0)), value(at(1, 1))]).toEqual([undefined, '2'])
     expect(announced).toEqual([
-        'Cells changed: 1 1 skipped: This cell cannot be changed.',
+        'Cells changed: 1. 1 skipped: This cell cannot be changed.',
     ])
 })
 
@@ -272,7 +276,7 @@ test('one undo after a column action restores every cell and focuses the first',
     contextMenu(last)
     await page.getByRole('menuitem', { name: 'Clear all column cells' }).click()
     expect(keys.map(value)).toEqual([undefined, undefined, undefined])
-    expect(announced).toEqual(['Cells changed: 3'])
+    expect(announced).toEqual(['Cells changed: 3.'])
     await expect.poll(focused).toBe(last.id)
     await userEvent.keyboard('{Control>}z{/Control}')
     expect(keys.map(value)).toEqual(['1', '2', '3'])
@@ -308,4 +312,151 @@ test('the last column, focused while scrolled, is not hidden under the sticky ac
     expect(target.getBoundingClientRect().right).toBeLessThanOrEqual(
         actions.getBoundingClientRect().left + 1
     )
+})
+
+const BOOLEAN: Field = { valueType: 'BOOLEAN' }
+const columnKeys = ROWS.map((_, i) => cellKey(`t1r${i}`, 'c0'))
+
+/** The column's value popover, named by its header. */
+const popover = (column: string) => page.getByRole('dialog', { name: column })
+
+const openPopover = async (column: string) => {
+    await page.getByRole('button', { name: `Column actions ${column}` }).click()
+    await page
+        .getByRole('menuitem', { name: 'Apply value to all column cells' })
+        .click()
+}
+
+test('Yes from the column’s popover fills its empty cells; with Overwrite it replaces values', async () => {
+    const { value, announced } = await mount(
+        [makeTable({ columns: ['Done'], fields: [BOOLEAN], rows: ROWS })],
+        { values: [[columnKeys[1], 'false']] }
+    )
+    await openPopover('Done')
+    await expect
+        .element(popover('Done').getByRole('combobox', { name: 'Done' }))
+        .toHaveFocus()
+    const apply = popover('Done').getByRole('button', { name: 'Apply' })
+    await expect.element(apply).toBeDisabled()
+    await userEvent.keyboard('y')
+    await expect
+        .element(
+            popover('Done').getByText(
+                'Changes 2 cells. 1 already have a value.'
+            )
+        )
+        .toBeVisible()
+    await apply.click()
+    await expect.element(popover('Done')).not.toBeInTheDocument()
+    expect(columnKeys.map(value)).toEqual(['true', 'false', 'true'])
+    expect(announced).toEqual(['Cells changed: 2.'])
+    await expect
+        .element(page.getByRole('button', { name: 'Column actions Done' }))
+        .toHaveFocus()
+
+    await openPopover('Done')
+    await userEvent.keyboard('y')
+    await popover('Done')
+        .getByRole('checkbox', { name: 'Overwrite existing values' })
+        .click()
+    await expect
+        .element(popover('Done').getByText('Changes 3 cells.', { exact: true }))
+        .toBeVisible()
+    await popover('Done').getByRole('button', { name: 'Apply' }).click()
+    expect(columnKeys.map(value)).toEqual(['true', 'true', 'true'])
+    expect(announced.at(-1)).toBe('Cells changed: 3.')
+})
+
+test('the popover’s preview says what the summary then announces, after the provider is asked', async () => {
+    const confirmBulk = vi.fn((_keys: ReadonlyArray<CellKey>) => ({
+        title: 'Create events?',
+        body: 'This creates 1 events on this page.',
+        confirm: 'Create events',
+    }))
+    const { value, announced } = await mount(
+        [makeTable({ columns: ['A'], rows: ROWS })],
+        {
+            values: [[columnKeys[0], '1']],
+            effects: { [columnKeys[1]]: { readOnly: 'Completed' } },
+            confirmBulk,
+        }
+    )
+    await openPopover('A')
+    const apply = popover('A').getByRole('button', { name: 'Apply' })
+    // Text that is not a value keeps Apply disabled.
+    await userEvent.keyboard('abc{Enter}')
+    await expect.element(apply).toBeDisabled()
+    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}5{Enter}')
+    await expect
+        .element(
+            popover('A').getByText(
+                'Changes 1 cells. 1 already have a value. 1 skipped: Completed.'
+            )
+        )
+        .toBeVisible()
+    await apply.click()
+    expect(confirmBulk).toHaveBeenLastCalledWith([columnKeys[2]])
+    await page
+        .getByRole('alertdialog')
+        .getByRole('button', { name: 'Create events' })
+        .click()
+    expect(columnKeys.map(value)).toEqual(['1', undefined, '5'])
+    expect(announced).toEqual(['Cells changed: 1. 1 skipped: Completed.'])
+})
+
+const Seven: CellComponent = ({ id, labelledBy }) => {
+    const { view } = useCellContext()
+    return (
+        <button
+            type="button"
+            id={id}
+            aria-labelledby={labelledBy}
+            onClick={() => view.commit('7')}
+        >
+            Seven
+        </button>
+    )
+}
+
+test('a column whose field a host replaces takes its value from the replacement in the popover', async () => {
+    const { value } = await mount([makeTable({ columns: ['A'], rows: ROWS })], {
+        overrides: { fields: { c0: Seven } },
+    })
+    await openPopover('A')
+    await popover('A').getByText('Seven').click()
+    await popover('A').getByRole('button', { name: 'Apply' }).click()
+    expect(columnKeys.map(value)).toEqual(['7', '7', '7'])
+})
+
+test('from a cell’s context menu the popover sits under the column’s header, adds no live region, and neither Escape while typing nor Cancel writes anything', async () => {
+    const { value, announced } = await mount([
+        makeTable({ columns: ['A'], rows: ROWS }),
+    ])
+    const cell = control(columnKeys[1])
+    cell.focus()
+    contextMenu(cell)
+    await page
+        .getByRole('menuitem', { name: 'Apply value to all column cells' })
+        .click()
+    await expect.element(popover('A')).toBeVisible()
+    const header = document
+        .getElementById(headerDomId(ID_SCOPE, 't1', 'c0'))
+        ?.closest('th')
+    expect(
+        popover('A').element().getBoundingClientRect().top -
+            (header?.getBoundingClientRect().bottom ?? Number.NaN)
+    ).toBeCloseTo(0, 0)
+    expect(page.getByRole('status').elements()).toHaveLength(1)
+    // Escape while typing puts the cell back and keeps the popover.
+    await userEvent.keyboard('5{Escape}')
+    await expect
+        .element(popover('A').getByRole('textbox', { name: 'A' }))
+        .toHaveValue('')
+    await expect.element(popover('A')).toBeVisible()
+    await userEvent.keyboard('5{Enter}')
+    await popover('A').getByRole('button', { name: 'Cancel' }).click()
+    await expect.element(popover('A')).not.toBeInTheDocument()
+    expect(columnKeys.map(value)).toEqual([undefined, undefined, undefined])
+    expect(announced).toEqual([])
+    await expect.element(cell).toHaveFocus()
 })

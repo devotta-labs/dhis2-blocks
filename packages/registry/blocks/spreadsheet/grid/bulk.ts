@@ -1,6 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import { parseTyped, typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
+import { formatCount } from '../cells/OptionCell'
 import type { AnnotationsState } from '../model/annotations'
 import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
 import type { CellStoreState } from '../store/store'
@@ -80,6 +81,24 @@ export interface BulkPlan {
     skipped: ReadonlyMap<string, number>
     /** Targets left alone because they hold a value. */
     filled: number
+}
+
+/** How many cells were skipped and the most common reason, after a space; empty when none were. */
+export const skippedClause = (skipped: ReadonlyMap<string, number>) => {
+    const counts = Array.from(skipped)
+    if (counts.length === 0) {
+        return ''
+    }
+    const [reason] = counts.reduce((most, each) =>
+        each[1] > most[1] ? each : most
+    )
+    const total = counts.reduce((sum, [, count]) => sum + count, 0)
+    return ` ${i18n.t('{{skipped}} skipped: {{reason}}.', {
+        nsSeparator: '::',
+        interpolation: { escapeValue: false },
+        skipped: formatCount(total),
+        reason,
+    })}`
 }
 
 /**

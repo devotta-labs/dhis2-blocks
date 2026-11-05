@@ -1,0 +1,6 @@
+{
+    "httpStatus": "Bad Request",
+    "httpStatusCode": 400,
+    "status": "ERROR",
+    "message": "Value 'NOT_A_DOMAIN' is not valid for parameter domain. Valid values are: [DATA_VALUE, PUSH_ANALYSIS, DOCUMENT, MESSAGE_ATTACHMENT, USER_AVATAR, ORG_UNIT, ICON, JOB_DATA]"
+}

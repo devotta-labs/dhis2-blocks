@@ -185,9 +185,8 @@ const applyDocsResponseHeaders = (headers, target) => {
 export const createDhis2ViteProxy = (target, env = process.env) => {
     const docsAuth = resolveDocsAuth(env)
 
-    // The context key is prefix-matched by Vite, so `/dhis2` alone would also
-    // capture `/dhis2-symbol.svg` and friends. The `^` regex form scopes the
-    // proxy to the prefix itself and paths below it — matching server.mjs.
+    // Vite prefix-matches plain keys; use the shared route regex so assets
+    // such as `/dhis2-symbol.svg` stay local in every serving mode.
     return {
         [DHIS2_ROUTE_PATTERN]: {
             target,

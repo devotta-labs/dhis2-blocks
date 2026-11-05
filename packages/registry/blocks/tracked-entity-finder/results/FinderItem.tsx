@@ -6,7 +6,6 @@ import { FinderValue } from './FinderValue'
 
 export type FinderItemProps = Omit<ComponentPropsWithoutRef<'button'>, 'type'>
 
-/** The program's displayInList attributes, in metadata order. */
 const ListedValues = () => {
     const { state } = useFinderContext()
     const listed = state.model?.attributes.filter(

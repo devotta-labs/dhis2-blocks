@@ -3,7 +3,6 @@ import ts from 'typescript'
 // Provided by the consumer app, never installed by an item.
 export const HOST_PACKAGES = new Set(['react', 'react-dom'])
 
-/** Every module specifier a source file imports, in order of appearance. */
 export const importedSpecifiers = (source: string): string[] =>
     ts
         .preProcessFile(source, true, true)

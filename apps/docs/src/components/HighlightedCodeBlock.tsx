@@ -16,7 +16,6 @@ interface HighlightedCodeBlockProps {
     renderLine?: (line: ReactNode, index: number) => ReactNode
 }
 
-/** A shadcn code block with Shiki highlighting and a floating copy button. */
 export const HighlightedCodeBlock = ({
     code,
     language,

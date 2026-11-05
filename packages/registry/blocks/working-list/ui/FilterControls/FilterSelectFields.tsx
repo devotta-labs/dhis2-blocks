@@ -30,7 +30,6 @@ export interface SelectFieldOption<Value extends string = string> {
     label: string
 }
 
-/** A labelled dense select: the shadcn stand-in for SingleSelectField. */
 export const SelectField = <Value extends string>({
     label,
     dataTest,
@@ -73,11 +72,6 @@ export const SelectField = <Value extends string>({
 }
 
 /**
- * A labelled, filterable dense select: the shadcn stand-in for a filterable
- * SingleSelectField or MultiSelectField. With `multiple`, selections show as
- * chips in the box (collapsing to a count after `collapseAfter`) and options
- * show checkboxes, as in @dhis2/ui MultiSelect.
- *
  * Options are filtered locally unless `onSearchChange` is given, in which case
  * the caller filters (e.g. on the server) and `loading` shows a spinner.
  */
@@ -118,8 +112,6 @@ export const ComboboxField = ({
         [options]
     )
     const labelFor = (value: string) => labels.get(value) ?? value
-    // A caller that searches remotely gets the input text and does its own
-    // filtering; otherwise Base UI filters the options by label.
     const filter = onSearchChange ? null : undefined
     const content = (
         <ComboboxContent anchor={multiple ? anchor : undefined}>

@@ -1,7 +1,6 @@
 import { Button } from '@/components/dhis2/ui/button'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 
-/** The three spinner sizes, and one inside a button. */
 const SpinnerSizes = () => (
     <div className="flex flex-wrap items-center gap-6">
         <Spinner />

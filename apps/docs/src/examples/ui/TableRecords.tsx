@@ -29,7 +29,6 @@ const people = [
     },
 ]
 
-/** A few records in rows and columns, in the DHIS2 table style. */
 const TableRecords = () => (
     <Table>
         <TableCaption>People due for a visit</TableCaption>

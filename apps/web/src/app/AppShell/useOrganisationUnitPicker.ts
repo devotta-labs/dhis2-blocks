@@ -76,6 +76,8 @@ export const useOrganisationUnitPicker = ({
             searchValue: current.search,
             onSearchChange: (search: string) =>
                 setState((value) => ({ ...value, search })),
+            // Keep expansion when another page of search roots arrives; only
+            // a new context, picker session or search remounts the tree.
             treeKey: JSON.stringify([
                 context,
                 current.revision,

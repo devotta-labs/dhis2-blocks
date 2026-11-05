@@ -19,7 +19,6 @@ const formatDateTime = (raw: string, info: FinderSystemInfo) => {
     return time ? `${date} ${time}` : date
 }
 
-/** What a result shows for a stored attribute value. */
 export const formatValue = (
     attribute: Pick<FinderAttribute, 'valueType' | 'options'> | undefined,
     raw: string,

@@ -15,7 +15,6 @@ const periods = [
     { value: 'THIS_YEAR', label: 'This year' },
 ]
 
-/** Choose one period from a short list. */
 const SelectPeriod = () => (
     <Field className="max-w-xs">
         <FieldLabel htmlFor="period">Period</FieldLabel>

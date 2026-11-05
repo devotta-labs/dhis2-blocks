@@ -215,9 +215,7 @@ export function ObservationCard({
         setRecordedNotes((count) => count + 1)
         return () => setRecordedNotes((count) => count - 1)
     }, [])
-    // An empty label is no label.
     const hostLabel = label || undefined
-    // Before there is a series, the element's name from the metadata, once known.
     const earlyName = hostLabel ?? name
     const heading = earlyName ? <CardHeading>{earlyName}</CardHeading> : null
 

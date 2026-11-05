@@ -128,6 +128,10 @@ interface MountOptions {
     bulkColumn?: (column: RigTable['columns'][number]) => boolean
     /** Cells the store refuses to change, whatever the annotations say. */
     locked?: (key: CellKey) => boolean
+    /** The system's calendar and date format; ISO dates when absent. */
+    settings?:
+        | typeof GREGORIAN
+        | { calendar: 'iso8601'; dateFormat: 'DD-MM-YYYY' }
     /** What the provider asks before a bulk write; nothing when absent. */
     confirmBulk?: SpreadsheetContext['confirmBulk']
 }
@@ -151,6 +155,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
         bulkColumn,
         confirmBulk,
         locked,
+        settings = GREGORIAN,
     } = options
     const store = createCellStore({
         fields: new Map(
@@ -164,7 +169,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
         fieldIdOf,
         locked,
         values: new Map(values),
-        settings: GREGORIAN,
+        settings,
         enqueue: () => {},
     })
     const cells: AnnotationsState['cells'] = {}
@@ -254,7 +259,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
                 tables={current}
                 keyOf={keyOf}
                 rowKeysOf={rowKeysOf}
-                settings={GREGORIAN}
+                settings={settings}
                 idScope={ID_SCOPE}
                 overrides={overrides}
                 addRow={addRow}

@@ -11,6 +11,7 @@ import {
 } from 'react'
 import type { ClipboardEvent, KeyboardEvent, SyntheticEvent } from 'react'
 import { flushSync } from 'react-dom'
+import { useStore } from 'zustand'
 import { cn } from '@/components/dhis2/ui/cn'
 import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
@@ -36,7 +37,8 @@ import { isBlock, pastedBlock, pasteTargets } from './paste'
 import { BORDER_CLASS, ROW_HEADER_CLASS } from './RowHeader'
 import { NotesPopover } from './RowNotes'
 import type { NotesTarget } from './RowNotes'
-import { LAST_CLASS, TableRow } from './TableRow'
+import { TableBody } from './TableBody'
+import { LAST_CLASS } from './TableRow'
 import { useAddRow } from './useAddRow'
 
 const HEADER_CLASS = cn(
@@ -54,6 +56,8 @@ interface TableViewProps {
     addRow(tableId: string): void
     openMenu(target: BulkTarget): void
     openNotes(target: NotesTarget): void
+    /** A row to draw wherever the region has scrolled, for a cell about to get focus. */
+    reveal?: number
 }
 
 /** One table in its own scrolling region, its header row and first column sticky. */
@@ -65,6 +69,7 @@ const TableView = memo(function TableView({
     addRow,
     openMenu,
     openNotes,
+    reveal,
 }: TableViewProps) {
     const context = useSpreadsheetContext()
     const region = useRef<HTMLDivElement>(null)
@@ -87,6 +92,7 @@ const TableView = memo(function TableView({
         [context, table, labels]
     )
     const titleId = `${idScope}-${table.id}-title`
+    const [headerHeight, setHeaderHeight] = useState(0)
     // Scroll padding as tall as the sticky header, however its labels wrap, so a focused cell never sits under it.
     useLayoutEffect(() => {
         const scroller = region.current
@@ -95,7 +101,9 @@ const TableView = memo(function TableView({
             return
         }
         const observer = new ResizeObserver(() => {
-            scroller.style.scrollPaddingTop = `${header.getBoundingClientRect().height}px`
+            const { height } = header.getBoundingClientRect()
+            scroller.style.scrollPaddingTop = `${height}px`
+            setHeaderHeight(height)
         })
         observer.observe(header)
         return () => observer.disconnect()
@@ -109,15 +117,17 @@ const TableView = memo(function TableView({
                 ref={region}
                 role="region"
                 aria-labelledby={titleId}
-                className="isolate w-fit max-w-full max-h-[70vh] scroll-ps-[min(12rem,30vw)] scroll-pe-9 overflow-auto rounded-dhis2-sm border border-dhis2-grey-300 bg-white"
+                className="isolate w-fit max-w-full max-h-[70vh] scroll-ps-[min(12rem,30vw)] scroll-pe-9 overflow-auto [overflow-anchor:none] rounded-dhis2-sm border border-dhis2-grey-300 bg-white"
             >
+                {/* Only the rows near the view are drawn: the row count and each row's index say where they sit. */}
                 <table
                     aria-labelledby={titleId}
+                    aria-rowcount={table.headerRows.length + table.rows.length}
                     className="border-separate border-spacing-0 text-sm"
                 >
                     <thead ref={head} className="sticky top-0 z-20">
                         {table.headerRows.map((cells, level) => (
-                            <tr key={level}>
+                            <tr key={level} aria-rowindex={level + 1}>
                                 {level === 0 ? (
                                     <td
                                         rowSpan={table.headerRows.length}
@@ -202,20 +212,17 @@ const TableView = memo(function TableView({
                             </tr>
                         ))}
                     </thead>
-                    <tbody>
-                        {table.rows.map((row) => (
-                            <TableRow
-                                key={row.id}
-                                idScope={idScope}
-                                table={table}
-                                row={row}
-                                labels={labels}
-                                move={move}
-                                openMenu={openMenu}
-                                openNotes={openNotes}
-                            />
-                        ))}
-                    </tbody>
+                    <TableBody
+                        idScope={idScope}
+                        table={table}
+                        labels={labels}
+                        move={move}
+                        openMenu={openMenu}
+                        openNotes={openNotes}
+                        region={region}
+                        headerHeight={headerHeight}
+                        reveal={reveal}
+                    />
                 </table>
             </div>
             {addLabel === undefined ? null : (
@@ -252,6 +259,8 @@ export const SpreadsheetGrid = ({
         keyOf,
         settings,
         GridFooter,
+        focusCell,
+        focusing,
     } = useSpreadsheetContext()
     const tables = useMemo(
         () =>
@@ -304,13 +313,30 @@ export const SpreadsheetGrid = ({
         )
         tabStart.current = undefined
         if (to !== undefined) {
-            document.getElementById(cellDomId(idScope, keyAt(to)))?.focus()
+            focusCell(keyAt(to))
         }
     }
     // One function for the grid's life, so no cell re-renders for it.
     const move = useCallback((key: NavKey) => moveTo.current?.(key), [])
 
-    const add = useAddRow(idScope, tables, addRow, keyOf)
+    const add = useAddRow(focusCell, tables, addRow, keyOf)
+
+    // A cell `focusCell` waits on: its row is drawn, then it gets focus.
+    const waiting = useStore(focusing, (state) => state.key)
+    const reveal =
+        waiting === undefined
+            ? undefined
+            : positions.get(cellDomId(idScope, waiting))
+    useLayoutEffect(() => {
+        const cell =
+            waiting === undefined
+                ? null
+                : document.getElementById(cellDomId(idScope, waiting))
+        if (cell !== null) {
+            cell.focus()
+            focusing.setState({ key: undefined })
+        }
+    }, [waiting, idScope, focusing])
     const { ask, dialog } = useBulkConfirm()
 
     // The one menu of row and column actions, kept after it closes so it closes in place.
@@ -439,7 +465,7 @@ export const SpreadsheetGrid = ({
             })
             // Undo can change a cell elsewhere in the grid: focus goes there, so the change is seen and heard.
             if (undone.length > 0) {
-                document.getElementById(cellDomId(idScope, undone[0]))?.focus()
+                focusCell(undone[0])
             }
         }
         if (
@@ -518,7 +544,7 @@ export const SpreadsheetGrid = ({
             >
                 {i18n.t('Skip past the grid')}
             </a>
-            {tables.map((table) => (
+            {tables.map((table, t) => (
                 <TableView
                     key={table.id}
                     idScope={idScope}
@@ -528,6 +554,7 @@ export const SpreadsheetGrid = ({
                     addRow={add}
                     openMenu={openMenu}
                     openNotes={openNotes}
+                    reveal={reveal?.table === t ? reveal.row : undefined}
                 />
             ))}
             <BulkMenu

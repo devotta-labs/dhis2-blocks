@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { cellDomId } from '../cells/cellProps'
 import type { GridTable } from '../model/types'
 import type { SpreadsheetContext } from '../provider/context'
 
 /** Adds a row to a table, then focuses the row's first open cell once it appears; one function for the grid's life. */
 export const useAddRow = (
-    idScope: string,
+    focusCell: SpreadsheetContext['focusCell'],
     tables: ReadonlyArray<GridTable>,
     addRow: SpreadsheetContext['addRow'],
     keyOf: SpreadsheetContext['keyOf']
@@ -33,8 +32,8 @@ export const useAddRow = (
             .map((column) => keyOf(added, column))
             .find((each) => !table.closed.has(each))
         if (key !== undefined) {
-            document.getElementById(cellDomId(idScope, key))?.focus()
+            focusCell(key)
         }
-    }, [idScope, tables, keyOf])
+    }, [focusCell, tables, keyOf])
     return useCallback((tableId: string) => addTo.current?.(tableId), [])
 }

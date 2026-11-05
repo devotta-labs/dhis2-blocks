@@ -20,6 +20,12 @@ interface TableRowProps {
     idScope: string
     table: GridTable
     row: GridRow
+    /** The row's place among the table's rows, from 0. */
+    index: number
+    /** The row's place in the whole table, header rows included, from 1, for screen readers. */
+    rowIndex: number
+    /** Measures the drawn row, for the rows not drawn around it. */
+    measure(element: Element | null): void
     /** The ids of the column headers that name each column's cells. */
     labels: ReadonlyArray<string>
     move(key: NavKey): void
@@ -32,6 +38,9 @@ export const TableRow = memo(function TableRow({
     idScope,
     table,
     row,
+    index,
+    rowIndex,
+    measure,
     labels,
     move,
     openMenu,
@@ -42,7 +51,7 @@ export const TableRow = memo(function TableRow({
     const { states, effects } = useRowCells(keys)
     const rowHeader = rowHeaderDomId(idScope, table.id, row.id)
     return (
-        <tr>
+        <tr ref={measure} data-index={index} aria-rowindex={rowIndex}>
             <RowHeader
                 idScope={idScope}
                 tableId={table.id}

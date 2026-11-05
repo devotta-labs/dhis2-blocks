@@ -32,6 +32,7 @@ export {
     createAnnouncer,
     useAnnounce,
     useCellView as useCell,
+    useFocusCell,
     useRowCells,
 } from './provider/context'
 export type { CellView, DataEngine } from './provider/context'

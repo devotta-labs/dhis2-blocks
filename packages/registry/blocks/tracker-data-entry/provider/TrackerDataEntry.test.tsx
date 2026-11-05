@@ -25,6 +25,18 @@ afterEach(cleanUp)
 
 const CHILDREN = cellKey('r1', 'c1')
 
+test('the app re-rendering above the data provider neither reloads the form nor loses an edit', async () => {
+    const memory = memorySource(visitForm())
+    const { rerender } = await mount(memory.source)
+    control(CHILDREN).focus()
+    await userEvent.keyboard('5{Enter}')
+    await expect.element(control(CHILDREN)).toHaveValue('5')
+    await rerender()
+    await later(100)
+    expect(memory.loads()).toBe(1)
+    expect(control(CHILDREN)).toHaveValue('5')
+})
+
 test('a typed value is saved on this device, then saved', async () => {
     const memory = memorySource(visitForm())
     memory.hold()

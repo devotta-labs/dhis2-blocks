@@ -66,11 +66,17 @@ export const TrackerDataEntry = ({
     cells,
     children,
 }: TrackerDataEntryProps) => {
-    const engine = useDataEngine()
+    const latestEngine = useDataEngine()
     const queryClient = useQueryClient()
     const { baseUrl } = useConfig()
     // Absolute, so the outbox is named for the server however the app reaches it.
     const serverUrl = new URL(baseUrl, window.location.href).href
+    // The data provider makes a new engine every render; a new engine for the same server is no reason to reload.
+    const [pinned, setPinned] = useState({ serverUrl, engine: latestEngine })
+    if (pinned.serverUrl !== serverUrl) {
+        setPinned({ serverUrl, engine: latestEngine })
+    }
+    const engine = pinned.serverUrl === serverUrl ? pinned.engine : latestEngine
     const account = useQuery({
         queryKey: ['data-entry', 'account', serverUrl],
         queryFn: async ({ signal }) =>

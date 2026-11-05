@@ -19,6 +19,7 @@ type Commands = Record<PackageManager, string>
 type Block =
     | 'context-selector'
     | 'observation-cards'
+    | 'spreadsheet'
     | 'timeline'
     | 'tracked-entity-finder'
     | 'working-list'

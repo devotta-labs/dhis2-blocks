@@ -69,6 +69,7 @@ const browserProject = {
             'class-variance-authority',
             'vitest-browser-react',
             'zod',
+            'zustand/react/shallow',
         ],
     },
 }
@@ -95,6 +96,7 @@ export default defineConfig({
                     name: 'node',
                     environment: 'node',
                     include: ['{components,blocks}/**/*.test.ts'],
+                    setupFiles: ['./test/node.ts'],
                 },
             },
             {

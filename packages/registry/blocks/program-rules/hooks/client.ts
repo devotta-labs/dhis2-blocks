@@ -1,5 +1,5 @@
-import { FetchError, useDataEngine } from '@dhis2/app-runtime'
-import { useMemo } from 'react'
+import { FetchError, useConfig, useDataEngine } from '@dhis2/app-runtime'
+import { useMemo, useState } from 'react'
 import { ZodError, type ZodType } from 'zod'
 
 type QueryParameter = string | number | boolean | string[]
@@ -20,7 +20,14 @@ export interface ProgramRulesClient {
 }
 
 export const useProgramRulesClient = (): ProgramRulesClient => {
-    const engine = useDataEngine()
+    const { baseUrl } = useConfig()
+    const current = useDataEngine()
+    // The provider makes a new engine every render; a new engine for the same server is no reason to change the client.
+    const [pinned, setPinned] = useState({ engine: current, baseUrl })
+    if (pinned.baseUrl !== baseUrl) {
+        setPinned({ engine: current, baseUrl })
+    }
+    const engine = pinned.baseUrl === baseUrl ? pinned.engine : current
     return useMemo(
         () => ({
             query: async (query, schema, signal) =>

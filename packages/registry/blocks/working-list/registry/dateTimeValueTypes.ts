@@ -198,16 +198,19 @@ export const dateDefinition = (
         const toApiDate = context?.toApiDate ?? defaultToApiDate
         const range =
             filter.value.mode === 'absolute'
-                ? { start: filter.value.start, end: filter.value.end }
+                ? {
+                      start: filter.value.start
+                          ? toApiDate(filter.value.start)
+                          : undefined,
+                      end: filter.value.end
+                          ? toApiDate(filter.value.end)
+                          : undefined,
+                  }
                 : (context?.resolveRelativeDate?.(filter.value) ??
                   defaultResolveRelativeDate(filter.value, context?.today))
         return [
-            range.start
-                ? `ge:${escapeFilterValue(toApiDate(range.start))}`
-                : undefined,
-            range.end
-                ? `le:${escapeFilterValue(toApiDate(range.end))}`
-                : undefined,
+            range.start ? `ge:${escapeFilterValue(range.start)}` : undefined,
+            range.end ? `le:${escapeFilterValue(range.end)}` : undefined,
         ]
             .filter(Boolean)
             .join(':')

@@ -18,6 +18,16 @@ import {
 import { ChartContainer } from '@/components/dhis2/ui/chart'
 import { Checkbox } from '@/components/dhis2/ui/checkbox'
 import {
+    Combobox,
+    ComboboxChipsTrigger,
+    ComboboxChips,
+    ComboboxChip,
+    ComboboxContent,
+    ComboboxInput,
+    ComboboxList,
+    ComboboxItem,
+} from '@/components/dhis2/ui/combobox'
+import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -42,6 +52,25 @@ if (root !== null) {
     createRoot(root).render(
         <>
             <Host />
+            <Combobox items={['Choice']} multiple defaultValue={['Choice']}>
+                <ComboboxChipsTrigger aria-label="Standalone choices">
+                    <ComboboxChips>
+                        <ComboboxChip removeLabel="Remove Choice">
+                            Choice
+                        </ComboboxChip>
+                    </ComboboxChips>
+                </ComboboxChipsTrigger>
+                <ComboboxContent>
+                    <ComboboxInput aria-label="Filter choices" />
+                    <ComboboxList>
+                        {(value: string) => (
+                            <ComboboxItem key={value} value={value}>
+                                {value}
+                            </ComboboxItem>
+                        )}
+                    </ComboboxList>
+                </ComboboxContent>
+            </Combobox>
             <Calendar
                 records={[{ id: 'task', date: '2026-11-14', label: 'Launch' }]}
             >

@@ -37,7 +37,7 @@ import {
     retryOperationalError,
 } from './contextSchemas'
 import { ContextStatus } from './ContextStatus'
-import { createAppWorkingListClient } from './createAppWorkingListClient'
+import { createRuntimeWorkingListClient } from '@/components/working-list/api/runtimeAdapter'
 import {
     buildProgramOptions,
     hasCaptureProgramDataReadAccess,
@@ -70,7 +70,10 @@ export const AppShell = () => {
         () => AppRuntimeConfigSchema.parse(config),
         [config]
     )
-    const client = useMemo(() => createAppWorkingListClient(engine), [engine])
+    const client = useMemo(
+        () => createRuntimeWorkingListClient(engine),
+        [engine]
+    )
     const [programSelectorOpen, setProgramSelectorOpen] = useState(false)
     const [orgUnitSelectorOpen, setOrgUnitSelectorOpen] = useState(false)
     const [organisationUnitSearch, setOrganisationUnitSearch] = useState('')

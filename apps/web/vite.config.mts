@@ -1,5 +1,5 @@
+import { registryAliases } from '../../tools/registry/layout'
 import tailwindcss from '@tailwindcss/vite'
-import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 
 const viteConfig = defineConfig(({ mode }) => {
@@ -8,17 +8,7 @@ const viteConfig = defineConfig(({ mode }) => {
         clearScreen: mode !== 'development',
         plugins: [tailwindcss()],
         resolve: {
-            alias: {
-                '@/components/dhis2/ui': fileURLToPath(
-                    new URL(
-                        '../../packages/registry/components',
-                        import.meta.url
-                    )
-                ),
-                '@/components': fileURLToPath(
-                    new URL('../../packages/registry/blocks', import.meta.url)
-                ),
-            },
+            alias: registryAliases(),
         },
         // ...other config options here
     }

@@ -6,15 +6,16 @@ import {
     readdirSync,
     readFileSync,
     rmSync,
+    writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, relative } from 'node:path'
 import { prepareLocalRegistry } from './localRegistry.ts'
+import { REPO_ROOT, COMPONENT_TARGET } from './layout.ts'
 
-const REPO_ROOT = join(import.meta.dirname, '..', '..')
 const CONSUMER_TEMPLATE = join(import.meta.dirname, 'consumer')
-const UI_TARGET_PREFIX = '@components/dhis2/ui/'
-const UI_INSTALL_DIR = join('src', 'components', 'dhis2', 'ui')
+const UI_TARGET_PREFIX = COMPONENT_TARGET
+const UI_INSTALL_DIR = join('src', COMPONENT_TARGET.slice(1, -1))
 
 class AssertionError extends Error {}
 
@@ -159,6 +160,7 @@ const checkInstall = (workDirectory: string): void => {
                 'calendar',
                 'chart',
                 'checkbox',
+                'combobox',
                 'dialog',
                 'dropdown-menu',
                 'radio-group',
@@ -177,6 +179,42 @@ const checkInstall = (workDirectory: string): void => {
     }
     run('pnpm', ['exec', 'tsc', '--noEmit'], uiAppDirectory)
     run('pnpm', ['exec', 'vite', 'build'], uiAppDirectory)
+
+    for (const name of [
+        'dhis2-value-display',
+        'tracked-entity-finder',
+        'working-list',
+    ]) {
+        step(`Install and compile ${name} with only its declared dependencies`)
+        const isolated = join(workDirectory, name)
+        cpSync(CONSUMER_TEMPLATE, isolated, { recursive: true })
+        writeFileSync(
+            join(isolated, 'src', 'main.tsx'),
+            `import * as block from '@/components/${name}';\nimport './index.css';\nconsole.log(block);\n`
+        )
+        run('pnpm', ['install', '--no-frozen-lockfile'], isolated)
+        run(
+            'pnpm',
+            [
+                'exec',
+                'shadcn',
+                'add',
+                join(registryOutput, `${name}.json`),
+                '-y',
+                '--cwd',
+                isolated,
+            ],
+            REPO_ROOT
+        )
+        if (
+            name !== 'working-list' &&
+            existsSync(join(isolated, 'src', 'components', 'working-list'))
+        ) {
+            fail(3, `${name} must install without Working List`)
+        }
+        run('pnpm', ['exec', 'tsc', '--noEmit'], isolated)
+        run('pnpm', ['exec', 'vite', 'build'], isolated)
+    }
 
     step('3b. Install the blocks into a throwaway consumer app')
     cpSync(CONSUMER_TEMPLATE, appDirectory, { recursive: true })

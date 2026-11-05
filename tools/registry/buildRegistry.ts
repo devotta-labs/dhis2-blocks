@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, dirname, extname, join, relative, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import postcss from 'postcss'
 import type { Registry, RegistryItem } from 'shadcn/schema'
 import { z } from 'zod'
@@ -11,20 +12,19 @@ import {
     packageName,
 } from './manifest.ts'
 
-const REPO_ROOT = join(import.meta.dirname, '..', '..')
-const SOURCE_ROOT = join(REPO_ROOT, 'packages', 'registry')
-const COMPONENTS_DIR = join(SOURCE_ROOT, 'components')
-const BLOCKS_DIR = join(SOURCE_ROOT, 'blocks')
+import {
+    REPO_ROOT,
+    registryLayout,
+    ADDRESS_PREFIX,
+    COMPONENT_IMPORT,
+    COMPONENT_TARGET,
+    BLOCK_IMPORT,
+    BLOCK_TARGET,
+} from './layout.ts'
+
 const REGISTRY_PATH = join(REPO_ROOT, 'registry.json')
 
-const ADDRESS_PREFIX = 'devotta-labs/dhis2-blocks/'
 const THEME_ITEM = 'dhis2-theme'
-// Source imports what an installed project imports, so the CLI's alias
-// rewrite resolves every specifier directly.
-const COMPONENT_IMPORT = '@/components/dhis2/ui/'
-const COMPONENT_TARGET = '@components/dhis2/ui/'
-const BLOCK_IMPORT = '@/components/'
-const BLOCK_TARGET = '@components/'
 
 const SOURCE_FILE = /\.(?:tsx?|css)$/
 const TEST_FILE = /\.test\.tsx?$/
@@ -75,8 +75,8 @@ const listSourceFiles = (directory: string): string[] =>
         })
         .sort()
 
-const componentItems = (): SourceItem[] =>
-    listSourceFiles(COMPONENTS_DIR)
+const componentItems = (directory: string): SourceItem[] =>
+    listSourceFiles(directory)
         .filter((source) => extname(source) !== '.css')
         .map((source) => ({
             name: basename(source, extname(source)),
@@ -84,18 +84,18 @@ const componentItems = (): SourceItem[] =>
             files: [
                 {
                     source,
-                    target: COMPONENT_TARGET + relative(COMPONENTS_DIR, source),
+                    target: COMPONENT_TARGET + relative(directory, source),
                 },
             ],
         }))
 
-const blockItems = (): SourceItem[] =>
-    readdirSync(BLOCKS_DIR, { withFileTypes: true })
+const blockItems = (blocksDirectory: string): SourceItem[] =>
+    readdirSync(blocksDirectory, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
         .map((entry) => entry.name)
         .sort()
         .map((name) => {
-            const directory = join(BLOCKS_DIR, name)
+            const directory = join(blocksDirectory, name)
             const metadata = blockMetadataSchema.parse(
                 JSON.parse(readFileSync(join(directory, 'block.json'), 'utf8'))
             )
@@ -193,8 +193,16 @@ const itemDependencies = (
     }
 }
 
-const buildRegistry = (): Registry => {
-    const sources = [...componentItems(), ...blockItems()]
+export const buildRegistry = (repoRoot = REPO_ROOT): Registry => {
+    const {
+        source: sourceRoot,
+        components: componentsDirectory,
+        blocks: blocksDirectory,
+    } = registryLayout(repoRoot)
+    const sources = [
+        ...componentItems(componentsDirectory),
+        ...blockItems(blocksDirectory),
+    ]
     const names = new Set([THEME_ITEM, ...sources.map((item) => item.name)])
     if (names.size !== sources.length + 1) {
         throw new Error('registry item names must be unique')
@@ -205,10 +213,10 @@ const buildRegistry = (): Registry => {
         )
     )
     const { dependencies: versions } = JSON.parse(
-        readFileSync(join(SOURCE_ROOT, 'package.json'), 'utf8')
+        readFileSync(join(sourceRoot, 'package.json'), 'utf8')
     )
     const tokens = parseThemeTokens(
-        readFileSync(join(COMPONENTS_DIR, 'theme.css'), 'utf8')
+        readFileSync(join(componentsDirectory, 'theme.css'), 'utf8')
     )
     return {
         $schema: 'https://ui.shadcn.com/schema/registry.json',
@@ -235,7 +243,7 @@ const buildRegistry = (): Registry => {
                     }),
                     ...itemDependencies(item, owners, names, versions),
                     files: item.files.map(({ source, target }) => ({
-                        path: toPosix(relative(REPO_ROOT, source)),
+                        path: toPosix(relative(repoRoot, source)),
                         type: fileType,
                         target,
                     })),
@@ -269,4 +277,4 @@ const main = (): void => {
     }
 }
 
-main()
+if (process.argv[1] === fileURLToPath(import.meta.url)) main()

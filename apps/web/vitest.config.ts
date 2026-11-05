@@ -1,17 +1,10 @@
+import { registryAliases } from '../../tools/registry/layout'
 import { playwright } from '@vitest/browser-playwright'
 import tailwindcss from '@tailwindcss/vite'
-import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 
 const resolve = {
-    alias: {
-        '@/components/dhis2/ui': fileURLToPath(
-            new URL('../../packages/registry/components', import.meta.url)
-        ),
-        '@/components': fileURLToPath(
-            new URL('../../packages/registry/blocks', import.meta.url)
-        ),
-    },
+    alias: registryAliases(),
 }
 
 const sharedProjectOptions = {

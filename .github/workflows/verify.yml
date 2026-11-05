@@ -20,6 +20,8 @@ jobs:
             web: ${{ steps.filter.outputs.web }}
             docs: ${{ steps.filter.outputs.docs }}
             quality: ${{ steps.filter.outputs.quality }}
+            tooling: ${{ steps.filter.outputs.tooling }}
+            docs-e2e: ${{ steps.filter.outputs.docs-e2e }}
             e2e: ${{ steps.filter.outputs.e2e }}
         steps:
             - uses: actions/checkout@v4
@@ -31,7 +33,7 @@ jobs:
 
     typecheck:
         needs: changes
-        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true' || needs.changes.outputs.docs == 'true'
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.tooling == 'true'
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         steps:
@@ -44,7 +46,7 @@ jobs:
 
     test:
         needs: changes
-        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true' || needs.changes.outputs.docs == 'true'
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.tooling == 'true'
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         steps:
@@ -120,19 +122,7 @@ jobs:
             - name: checkout
               uses: actions/checkout@v4
 
-            - name: pnpm
-              uses: pnpm/action-setup@v4
-              with:
-                  version: 10.13.1
-
-            - name: node
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 22
-                  cache: pnpm
-
-            - name: install
-              run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup
 
             - name: registry install check
               run: pnpm registry:check

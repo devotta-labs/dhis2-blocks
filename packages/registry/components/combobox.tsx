@@ -11,7 +11,11 @@ import {
     InputGroupButton,
     InputGroupInput,
 } from './input-group'
-import { SelectCheckmark, SelectClearIcon } from './select'
+import {
+    SelectCheckmark,
+    SelectClearIcon,
+    selectTriggerVariants,
+} from './select'
 
 /*
  * shadcn Combobox (Base UI) restyled to match @dhis2/ui's filterable
@@ -46,6 +50,53 @@ const ComboboxTrigger = React.forwardRef<
     </ComboboxPrimitive.Trigger>
 ))
 ComboboxTrigger.displayName = 'ComboboxTrigger'
+
+const ComboboxChipsTrigger = React.forwardRef<
+    HTMLButtonElement,
+    Omit<ComboboxPrimitive.Trigger.Props, 'className' | 'children'> & {
+        anchorRef?: React.Ref<HTMLDivElement>
+        size?: 'default' | 'sm'
+        className?: string
+        triggerClassName?: string
+        children?: React.ReactNode
+    }
+>(
+    (
+        {
+            anchorRef,
+            size = 'default',
+            className,
+            triggerClassName,
+            children,
+            ...props
+        },
+        ref
+    ) => (
+        <div
+            ref={anchorRef}
+            data-slot="combobox-chips-trigger"
+            className={cn(
+                selectTriggerVariants({ size }),
+                'relative cursor-default pe-6 has-[>[data-slot=combobox-trigger]:focus-visible]:border-dhis2-ring has-[>[data-slot=combobox-trigger]:focus-visible]:shadow-[inset_0_0_0_2px_var(--color-dhis2-ring)] has-[>[data-slot=combobox-trigger][data-popup-open]]:border-dhis2-ring has-[>[data-slot=combobox-trigger][data-popup-open]]:shadow-[inset_0_0_0_2px_var(--color-dhis2-ring)] has-[>[aria-invalid=true]]:border-dhis2-red-500 has-[>button:disabled]:cursor-not-allowed has-[>button:disabled]:bg-dhis2-grey-100 has-[>button:disabled]:text-dhis2-grey-600',
+                className
+            )}
+        >
+            <ComboboxTrigger
+                ref={ref}
+                className={cn(
+                    'absolute inset-0 flex cursor-pointer items-center rounded-dhis2-sm border-0 bg-transparent outline-none disabled:cursor-not-allowed',
+                    size === 'sm' ? 'pe-1' : 'pe-2',
+                    triggerClassName
+                )}
+                {...props}
+            />
+            <div className="pointer-events-none relative min-w-0 flex-1 [&_[data-slot=combobox-chip-remove]]:pointer-events-auto">
+                {children}
+            </div>
+        </div>
+    )
+)
+ComboboxChipsTrigger.displayName = 'ComboboxChipsTrigger'
 
 const ComboboxClear = React.forwardRef<
     HTMLButtonElement,
@@ -349,6 +400,7 @@ export {
     ComboboxChipsInput,
     ComboboxClear,
     ComboboxTrigger,
+    ComboboxChipsTrigger,
     ComboboxValue,
     useComboboxAnchor,
 }

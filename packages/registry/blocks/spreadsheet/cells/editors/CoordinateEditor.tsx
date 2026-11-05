@@ -1,6 +1,9 @@
 import i18n from '@dhis2/d2-i18n'
 import { useId, useState } from 'react'
-import { coordinateNumber } from '@/components/dhis2-value-types'
+import {
+    coordinateNumber,
+    parseCoordinate,
+} from '@/components/dhis2-value-types'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
 import type { PopupEditorProps } from '../popupEditors'
@@ -51,10 +54,12 @@ export const CoordinateEditor = ({
         longitude: i18n.t('Longitude'),
     }
     // The stored value is [lng,lat]; one that is not shows empty fields.
-    const [longitude, latitude] = value?.match(/-?\d+(?:\.\d+)?/g) ?? []
-    const [texts, setTexts] = useState<Texts>({
-        latitude: latitude ?? '',
-        longitude: longitude ?? '',
+    const [texts, setTexts] = useState<Texts>(() => {
+        const read = value === undefined ? undefined : parseCoordinate(value)
+        return {
+            latitude: read?.latitude ?? '',
+            longitude: read?.longitude ?? '',
+        }
     })
     // The fields a refused save found wrong, until the next change.
     const [shown, setShown] = useState<ReadonlyArray<Axis>>([])

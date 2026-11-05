@@ -107,6 +107,9 @@ export const addsHiddenOption = (
     return codesOf(value).some((code) => !kept.has(code) && hidden.has(code))
 }
 
+/** How many of a person's commits undo can step back through. */
+const UNDO_LIMIT = 100
+
 /** Whether the rules hide the cell or make it read-only: a person cannot write it. */
 const closedTo = (
     annotations: ReadonlyStore<AnnotationsState>,
@@ -294,6 +297,9 @@ export const createCellStore = ({
                 // Undo is for a person's own changes, not a rule's.
                 if (source === 'person' && changed.length > 0) {
                     undoStack.push(changed)
+                    if (undoStack.length > UNDO_LIMIT) {
+                        undoStack.shift()
+                    }
                 }
                 return results
             })
@@ -329,14 +335,15 @@ export const createCellStore = ({
                 }
                 return edit(({ read, queue }) => {
                     const undone: CellKey[] = []
-                    for (const { key, previous } of last.slice().reverse()) {
+                    // Each key is in a commit once, so the walk is forward.
+                    for (const { key, previous } of last) {
                         if (
                             !locked?.(key) &&
                             !closedTo(annotations, key) &&
                             read(key)?.value !== previous
                         ) {
                             queue(key, previous, 'person')
-                            undone.unshift(key)
+                            undone.push(key)
                         }
                     }
                     return undone

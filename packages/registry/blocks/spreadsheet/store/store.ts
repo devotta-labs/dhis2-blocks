@@ -337,10 +337,22 @@ export const createCellStore = ({
                     const undone: CellKey[] = []
                     // Each key is in a commit once, so the walk is forward.
                     for (const { key, previous } of last) {
+                        const held = read(key)?.value
+                        const field = fieldOf(key)
+                        // Undo passes the gate a person's write does: it writes back no option the rules hide.
                         if (
                             !locked?.(key) &&
                             !closedTo(annotations, key) &&
-                            read(key)?.value !== previous
+                            held !== previous &&
+                            (previous === undefined ||
+                                field === undefined ||
+                                !addsHiddenOption(
+                                    field,
+                                    held,
+                                    previous,
+                                    annotations.getState().cells[key]
+                                        ?.hiddenOptions
+                                ))
                         ) {
                             queue(key, previous, 'person')
                             undone.push(key)

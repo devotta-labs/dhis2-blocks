@@ -42,8 +42,8 @@ export const TextCell = memo(function TextCell({
             return undefined
         }
         setDraft(null)
-        // A rule can lock the cell while its text is being typed: the lock wins. Text in a cell a rule only hid is the
-        // person's, saved, then cleared by the rule, which says so; `commit` reads the cell's lock as it saves.
+        // A rule can lock the cell while its text is being typed: the lock wins. Text in a cell a rule only hid goes to
+        // `commit`, whose gate writes nothing to a hidden cell.
         return locked && !hidden ? undefined : view.commit(draft)
     }
     const revert = () => {

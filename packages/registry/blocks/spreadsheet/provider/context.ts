@@ -137,8 +137,8 @@ export interface CellView extends CellState {
     /**
      * Saves what a person typed or chose through the store the built-in controls use: the text is checked against the
      * field, `'invalid'` keeps it as the cell's draft with its error, and an unchanged value writes nothing. A cell a
-     * rule or its row locks (`effects.readOnly`) is not written to (`'unchanged'`); text typed into a cell a rule has
-     * hidden, and not locked, is saved, and the rule then clears it.
+     * rule or its row locks (`effects.readOnly`), or that a rule hides, is not written to (`'unchanged'`) and keeps no
+     * draft.
      */
     commit(text: string): CommitResult
 }

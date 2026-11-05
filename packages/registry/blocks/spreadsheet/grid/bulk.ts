@@ -39,19 +39,26 @@ export const openKeyOf = (
     return key
 }
 
-/** A row copy: the source row's values, as a Ready cell shows them, onto the target rows' cells of the same columns. */
+/**
+ * A row copy: the source row's values, as a Ready cell shows them, onto the target rows' cells of the same columns. A
+ * value hidden by a rule is not copied: the person cannot see it.
+ */
 export const rowCandidates = (
     columns: ReadonlyArray<GridColumn>,
     from: GridRow,
     to: ReadonlyArray<GridRow>,
     keyOf: KeyOf,
     state: CellStoreState,
+    annotations: AnnotationsState,
     settings: ValueSettings
 ): BulkCandidate[] =>
     columns.flatMap((column) => {
         const source = keyOf(from, column)
         const value = state.cells[source]?.value
-        if (value === undefined) {
+        if (
+            value === undefined ||
+            annotations.cells[source]?.hiddenBy !== undefined
+        ) {
             return []
         }
         const text = typedText(fieldAt(state, source), value, settings)

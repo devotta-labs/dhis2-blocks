@@ -31,6 +31,12 @@ const fields = new Map<string, Field>([
     ['u', { valueType: 'USERNAME' }],
 ])
 
+const NO_ANNOTATIONS: AnnotationsState = {
+    cells: {},
+    rowMessages: new Map(),
+    rowNotes: new Map(),
+}
+
 const rows: GridRow[] = ['r1', 'r2', 'r3'].map((id) => ({ id, label: id }))
 const column = (id: string): GridColumn => ({ id, label: id })
 const keyOf = (row: GridRow, col: GridColumn) => cellKey(row.id, col.id)
@@ -224,6 +230,7 @@ describe('planBulk', () => {
             rows.slice(1),
             keyOf,
             store.getState(),
+            NO_ANNOTATIONS,
             GREGORIAN
         )
         expect(candidates).toEqual([
@@ -262,6 +269,7 @@ describe('planBulk', () => {
                 rows.slice(1),
                 slotKey,
                 store.getState(),
+                NO_ANNOTATIONS,
                 GREGORIAN
             )
         ).toEqual([
@@ -285,6 +293,7 @@ describe('planBulk', () => {
             [rows[1]],
             keyOf,
             store.getState(),
+            NO_ANNOTATIONS,
             NEPALI
         )
         expect(candidates[0].text).not.toContain('2024')
@@ -309,6 +318,7 @@ describe('planBulk', () => {
                 [rows[1]],
                 keyOf,
                 store.getState(),
+                NO_ANNOTATIONS,
                 GREGORIAN
             )
         )

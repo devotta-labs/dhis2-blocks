@@ -84,7 +84,7 @@ export const Targets = () => {
 ## API
 
 ```ts
-Spreadsheet({ cells, annotations, tables, settings, engine, keyOf?, rowKeysOf?, idScope?, overrides?, addRow?, orgUnitNames?, fileNames?, offline?, fileUrl?, announcer?, RowLabel?, RowBadge?, GridFooter?, children }) // the provider; renders the one polite live region after its children
+Spreadsheet({ cells, annotations, tables, settings, engine, keyOf?, rowKeysOf?, idScope?, overrides?, addRow?, orgUnitNames?, fileNames?, offline?, fileUrl?, announcer?, RowLabel?, RowBadge?, GridFooter?, bulkColumn?, confirmBulk?, children }) // the provider; renders the one polite live region after its children
 SpreadsheetGrid({ tableId?, className? }) // every table, or one of them
 Cell({ cellKey, field, labelledBy, move }) // one bound control with its notes and markers, for your own layouts
 cells: Record<CellKind, CellComponent> // the default control per kind of field
@@ -186,6 +186,10 @@ required from `CellAnnotations.required`, so both show with an annotations store
   the DOM id of the place that link leads to, where focus goes when what the footer holds goes away.
 - `orgUnitNames`, `fileNames`: stores of names by id (`{ names: ReadonlyMap<string, string> }`) for org unit and file
   cells; each has a store of its own by default.
+- `bulkColumn(column)`: whether the column's cells take row and column actions; every column by default. A column whose
+  cells do not all share one field offers no column action either way.
+- `confirmBulk(keys)`: asked before a bulk action writes to these cells; returns `{ title, body, confirm }` for a dialog
+  that asks the person first, or `undefined` to write at once.
 - `offline`: the server cannot be reached now, so files cannot be uploaded.
 - `fileUrl(key, image)`: where the server serves the file a cell's saved value names (`image` for an image cell), or
   `undefined`. Without it, file and image cells show the file's name only: no preview and no "Download".
@@ -206,6 +210,40 @@ what the cell held when it was loaded or last confirmed. Your code sends it and 
 - `commit(key, text, source?)` and `commitMany(entries, source?)` check text and queue a change; `source` is `'person'`
   or `'rule'`, how a value written by logic is told from a person's. `discardDraft` and `keepDraft` drop or keep text a
   pop-up editor could not save.
+
+## Bulk actions
+
+One value or one row can fill many cells at once. Every action is one write through the same path as typing and paste, so
+it is one undo step (Ctrl+Z, Cmd+Z), and the rules re-run on the rows it touched.
+
+- **Row menu**: the "Row actions" button (⋯) in the last column, which stays in view as the table scrolls, opens
+  "Apply to next row", "Apply to all rows below" and "Clear row". The last row offers only "Clear row". A row copy
+  carries the row's values to the same columns of the target rows.
+- **Column menu**: the "Column actions" button in a column's header opens "Apply value to all column cells" and "Clear all
+  column cells". Apply opens a popover with the column's own control, an "Overwrite existing values" checkbox, a preview
+  and **Apply** and **Cancel**; Apply waits for a valid value. A column whose cells do not all share one field, or that
+  `bulkColumn` leaves out, has no column button.
+- **Context menu**: right-click a cell, or press Shift+F10 or the Menu key on it, for one menu with a "Row" and a
+  "Column" group. The buttons are out of the Tab order and are not part of the grid, so the arrow keys never reach them.
+- **Ctrl+D (Cmd+D)**: on a cell, types the value of the cell above it in the same table, replacing what is there. A value
+  its type refuses stays in the cell with its error, as typing does. With no row above, or nothing in the cell above, or a
+  cell that cannot be edited, it says "Nothing above to copy." or the cell's own reason. The browser's shortcut is left
+  alone unless the grid handled the key.
+
+An action never overwrites by default: a cell is empty with no value and no draft, and one that is not is left alone
+unless "Overwrite existing values" is ticked (a clear always overwrites). Cells that cannot be edited are skipped and counted
+under their reason: closed, read-only, hidden by a rule, a kind that cannot be filled ("Edit this field in its own form"),
+or an option the cell does not offer. The preview ("Changes 12 cells. 3 already have a value. 2 skipped: Completed.") and
+the summary said afterwards ("Cells changed: 12. 2 skipped: Completed.", the most common reason) come from the same plan
+as the write.
+
+```ts
+bulkColumn?(column: C): boolean // default: every column
+confirmBulk?(keys: ReadonlyArray<CellKey>): { title: string; body: string; confirm: string } | undefined
+```
+
+`confirmBulk` is asked with the cells a bulk action would write; a result opens a dialog with that title and body and a
+confirm button (and **Cancel**) before anything is written.
 
 ## Typing
 

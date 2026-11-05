@@ -333,10 +333,12 @@ export const TrackerDataEntry = ({
             )
         )
     }, [active, people])
-    // Undo after sending cannot delete an event, so a bulk write that creates events asks first.
+    // Undo after sending cannot delete an event, so a bulk write that creates events asks first. It reads the records
+    // when asked: a completion changes them, and a new function would render every cell again.
     const confirmBulk = useMemo(() => {
         const store = active.store
         return (keys: ReadonlyArray<CellKey>) => {
+            const { records } = active.tables.getState()
             const created = new Set(
                 keys.map(recordIdOf).filter((id) => {
                     const record = records.get(id)
@@ -368,7 +370,7 @@ export const TrackerDataEntry = ({
                       confirm: i18n.t('Create events'),
                   }
         }
-    }, [active, records])
+    }, [active])
     const tracker = useMemo(
         (): TrackerContext => ({
             tables,

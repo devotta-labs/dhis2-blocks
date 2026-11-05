@@ -38,9 +38,10 @@ const applyToColumn = async (column: string, text: string) => {
 
 /**
  * The immunisation register whose BCG slot of the last `missing` of its three children holds no event, saving through
- * the register's own saver to a DHIS2 that imports everything; `sent` holds what each save was handed.
+ * the register's own saver to a DHIS2 that imports everything; `sent` holds what each save was handed. `ruleless`
+ * leaves its program rules out, so completing waits for none.
  */
-const mountRegister = async (missing = 2) => {
+const mountRegister = async (missing = 2, ruleless = false) => {
     const rig = engineFor({
         enrollments: enrolledAs((enrollment, at) => ({
             ...enrollment,
@@ -52,7 +53,8 @@ const mountRegister = async (missing = 2) => {
         })),
     })
     const immunisation = immunisationRegister()
-    const form = await immunisation.load(rig.engine)
+    const loaded = await immunisation.load(rig.engine)
+    const form = ruleless ? { ...loaded, rules: undefined } : loaded
     const sent: OutboxRecord[][] = []
     const mounted = await mount({
         ...memorySource(form, immunisation.key).source,
@@ -178,4 +180,22 @@ test('a column apply in an event grid asks nothing', async () => {
     await applyToColumn('Children', '4')
     expect(page.getByRole('alertdialog').query()).toBeNull()
     expect(valuesOf(mounted, ['r1.c1', 'r2.c1'])).toEqual(['4', '4'])
+})
+
+test('completing an event leaves the grid’s context alone, and a column apply after it still counts the events it creates', async () => {
+    const mounted = await mountRegister(2, true)
+    const { bcg, context, view } = mounted
+    const before = context()
+    const event = bcg[0]?.slice(0, bcg[0].indexOf('.')) ?? ''
+    expect(await view().complete(event)).toMatchObject([{ result: 'saved' }])
+    await expect
+        .poll(() => view().records.get(event))
+        .toMatchObject({ status: 'COMPLETED' })
+    // A new context would render every cell again.
+    expect(context().confirmBulk).toBe(before.confirmBulk)
+
+    await applyToColumn('BCG 0', '2026-10-20')
+    await expect
+        .element(page.getByRole('alertdialog', { name: DIALOG }))
+        .toHaveAccessibleDescription('This creates 2 events on this page.')
 })

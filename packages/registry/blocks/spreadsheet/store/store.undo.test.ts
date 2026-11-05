@@ -4,16 +4,27 @@ import type { AnnotationsState } from '../model/annotations'
 import { cellKey } from '../model/types'
 import { createCellStore } from './store'
 
-const setup = () => {
+const CHOICE: Field = {
+    valueType: 'TEXT',
+    options: ['A', 'B'].map((code) => ({ code, name: code })),
+}
+
+const annotations = () =>
+    createStore<AnnotationsState>()(() => ({
+        cells: {},
+        rowMessages: new Map(),
+        rowNotes: new Map(),
+    }))
+
+const setup = (notes = annotations()) => {
     const store = createCellStore({
-        fields: new Map<string, Field>([['c1', { valueType: 'INTEGER' }]]),
-        values: new Map(),
+        fields: new Map<string, Field>([
+            ['c1', { valueType: 'INTEGER' }],
+            ['c2', CHOICE],
+        ]),
+        values: new Map([[cellKey('r1', 'c2'), 'A']]),
         settings: { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' },
-        annotations: createStore<AnnotationsState>()(() => ({
-            cells: {},
-            rowMessages: new Map(),
-            rowNotes: new Map(),
-        })),
+        annotations: notes,
         enqueue: () => undefined,
     })
     return store
@@ -36,4 +47,22 @@ test('undo of a 15,000-cell commit returns the keys in commit order', () => {
     const keys = Array.from({ length: 15000 }, (_, i) => cellKey(`r${i}`, 'c1'))
     store.getState().commitMany(keys.map((key) => ({ key, text: '1' })))
     expect(store.getState().undo()).toEqual(keys)
+})
+
+test('undo does not write back an option the rules hide', () => {
+    const notes = annotations()
+    const store = setup(notes)
+    const key = cellKey('r1', 'c2')
+    store.getState().commit(key, 'B')
+    notes.setState({
+        cells: {
+            [key]: {
+                required: false,
+                messages: [],
+                hiddenOptions: new Set(['A']),
+            },
+        },
+    })
+    expect(store.getState().undo()).toEqual([])
+    expect(store.getState().cells[key]?.value).toBe('B')
 })

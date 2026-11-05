@@ -14,12 +14,7 @@ import {
     SpreadsheetReactContext,
     useSpreadsheetContext,
 } from './context'
-import type {
-    Announcer,
-    DataEngine,
-    ReadonlyStore,
-    SpreadsheetContext,
-} from './context'
+import type { Announcer, ReadonlyStore, SpreadsheetContext } from './context'
 
 type Names = SpreadsheetContext['orgUnitNames']
 
@@ -43,7 +38,6 @@ interface SpreadsheetProps<R extends GridRow, C extends GridColumn> {
     orgUnitNames?: Names
     /** Names of files by id, for file cells; a store of its own by default. */
     fileNames?: Names
-    engine: DataEngine
     /** Whether the server cannot be reached now: files cannot be uploaded. */
     offline?: boolean
     fileUrl?: SpreadsheetContext['fileUrl']
@@ -92,7 +86,6 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
     addRow,
     orgUnitNames,
     fileNames,
-    engine,
     offline = false,
     fileUrl,
     announcer,
@@ -129,7 +122,6 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
             // SAFETY: the grid hands it only columns of `tables`, which are `C`s.
             bulkColumn: bulkColumn as SpreadsheetContext['bulkColumn'],
             confirmBulk,
-            engine,
             offline,
             fileUrl,
             overrides,
@@ -153,7 +145,6 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
             GridFooter,
             bulkColumn,
             confirmBulk,
-            engine,
             offline,
             fileUrl,
             overrides,

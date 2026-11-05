@@ -1,4 +1,4 @@
-import { CustomDataProvider, useDataEngine } from '@dhis2/app-runtime'
+import { CustomDataProvider } from '@dhis2/app-runtime'
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
@@ -232,7 +232,6 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
     }
     const Harness = () => {
         const [current, setTables] = useState(tables)
-        const engine = useDataEngine()
         const addRow = useMemo(
             (): SpreadsheetContext['addRow'] =>
                 options.addRow ??
@@ -267,7 +266,6 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
                 idScope={ID_SCOPE}
                 overrides={overrides}
                 addRow={addRow}
-                engine={engine}
                 announcer={{ announce, announcements: announcer.announcements }}
                 RowBadge={RowBadge}
                 GridFooter={GridFooter}

@@ -1,5 +1,5 @@
 /// <reference types="@vitest/browser-playwright" />
-import { CustomDataProvider, useDataEngine } from '@dhis2/app-runtime'
+import { CustomDataProvider } from '@dhis2/app-runtime'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { createStore } from 'zustand/vanilla'
@@ -63,7 +63,6 @@ const mountAggregate = async (annotations: Partial<AnnotationsState> = {}) => {
             tables={[table]}
             settings={SETTINGS}
             idScope="aggregate"
-            engine={useDataEngine()}
         >
             <SpreadsheetGrid />
         </Spreadsheet>

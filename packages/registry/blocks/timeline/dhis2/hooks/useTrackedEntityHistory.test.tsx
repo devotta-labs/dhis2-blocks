@@ -88,6 +88,7 @@ interface Server {
     extraEnrollments?: Json[]
     /** Events per program, or an error to throw. */
     events?: Record<string, Json[] | Error>
+    eventsGate?: Promise<void>
     changelogs?: Record<string, Json[] | Error>
     /** Holds every changelog request until it settles. */
     changesGate?: Promise<void>
@@ -123,8 +124,7 @@ const setup = (server: Server = {}) => {
         'tracker/events': async (_type, query) => {
             const program = String(query.params?.program)
             requests.push(`events:${program}`)
-            // A moment on the wire, so a test can see the state in between.
-            await new Promise((resolve) => setTimeout(resolve, 30))
+            await server.eventsGate
             server.onEvents?.(program)
             const pageSize = Number(query.params?.pageSize)
             const events =
@@ -206,10 +206,16 @@ const kinds = (entries: ReadonlyArray<{ data: { kind: string } }>) =>
 
 describe('useTrackedEntityHistory', () => {
     it('covers every enrolled program, with names resolved, once every request has answered', async () => {
-        const { result, requests } = await renderHistory()
+        const { promise: eventsGate, resolve: release } =
+            Promise.withResolvers<void>()
+        const { result, requests } = await renderHistory({ eventsGate })
 
+        await expect
+            .poll(() => requests.filter((r) => r.startsWith('events:')).length)
+            .toBe(2)
         expect(result.current.status).toBe('pending')
         expect(result.current.entries).toEqual([])
+        release()
         await expect.poll(() => result.current.status).toBe('success')
 
         const { entries } = result.current
@@ -312,13 +318,14 @@ describe('useTrackedEntityHistory', () => {
 
     it('keeps the history on show while a failed program is retried', async () => {
         let tbFails = true
-        const { result, renders } = await renderHistory({
+        const server: Server = {
             onEvents: (program) => {
                 if (program === TB && tbFails) {
                     throw new Error('boom')
                 }
             },
-        })
+        }
+        const { result, renders, requests } = await renderHistory(server)
         await expect.poll(() => result.current.status).toBe('success')
         const shown = result.current.entries.length
         const notice = result.current.notices.find(
@@ -327,7 +334,23 @@ describe('useTrackedEntityHistory', () => {
         const from = renders.length
 
         tbFails = false
+        const { promise, resolve: release } = Promise.withResolvers<void>()
+        server.eventsGate = promise
+        const before = requests.filter(
+            (request) => request === `events:${TB}`
+        ).length
         notice?.retry?.()
+        await expect
+            .poll(
+                () =>
+                    requests.filter((request) => request === `events:${TB}`)
+                        .length
+            )
+            .toBe(before + 1)
+        await expect.poll(() => result.current.isFetching).toBe(true)
+        expect(result.current.status).toBe('success')
+        expect(result.current.entries.length).toBeGreaterThanOrEqual(shown)
+        release()
         await expect
             .poll(() =>
                 result.current.entries.some(

@@ -146,28 +146,38 @@ describe('MoreFilters keyboard focus', () => {
         await expect
             .element(screen.getByTestId('filter-programStage'))
             .toHaveTextContent('Visit')
-        // The chip uses the dense (32px) select size, as Capture's does.
-        expect(
-            screen.container
-                .querySelector(
-                    '[data-test="filter-programStage-select"] [role="combobox"]'
-                )
-                ?.getAttribute('data-size')
-        ).toBe('sm')
+        await expect
+            .element(screen.getByRole('combobox', { name: /Visit$/ }))
+            .toBeVisible()
 
         await trigger.click()
         const topLevelMenu = page.getByRole('menu')
         await expect.element(topLevelMenu).toBeVisible()
+        const stageMenu = topLevelMenu.getByRole('menuitem', {
+            name: 'Program stage',
+            exact: true,
+        })
+        const stageFields = topLevelMenu.getByRole('menuitem', {
+            name: 'Visit',
+            exact: true,
+        })
+        const followUp = topLevelMenu.getByRole('menuitem', {
+            name: 'Follow up',
+            exact: true,
+        })
+        await expect.element(followUp).toHaveFocus()
         expect(
-            [...topLevelMenu.element().children]
-                .map((item) => item.getAttribute('data-test'))
-                .filter(Boolean)
-        ).toEqual([
-            'program-stage-filter-menu',
-            'stage-filter-fields-Stage000001',
-            'filter-scope-divider',
-            'add-filter-followUp',
-        ])
+            stageMenu.element().getBoundingClientRect().bottom
+        ).toBeLessThanOrEqual(stageFields.element().getBoundingClientRect().top)
+        expect(
+            stageFields.element().getBoundingClientRect().bottom
+        ).toBeLessThanOrEqual(followUp.element().getBoundingClientRect().top)
+        await userEvent.keyboard('{Home}')
+        await expect.element(stageMenu).toHaveFocus()
+        await userEvent.keyboard('{ArrowDown}')
+        await expect.element(stageFields).toHaveFocus()
+        await userEvent.keyboard('{ArrowDown}')
+        await expect.element(followUp).toHaveFocus()
 
         await openSubmenu('program-stage-filter-menu')
         await expect

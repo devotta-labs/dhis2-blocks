@@ -47,20 +47,34 @@ const milestone = (id: string) => {
 
 describe('TimelineMilestoneEntry', () => {
     it.each([
-        ['milestone:TlE2eEnr001:enrolled', 'Enrolled'],
-        ['milestone:TlE2eEnr001:incident', 'Incident date'],
-        ['milestone:TlE2eEnr001:completed', 'Enrollment completed10:15'],
-        ['milestone:TlE2eEnr002:cancelled', 'Enrollment cancelled16:40'],
+        ['milestone:TlE2eEnr001:enrolled', 'Enrolled', undefined],
+        ['milestone:TlE2eEnr001:incident', 'Incident date', undefined],
+        ['milestone:TlE2eEnr001:completed', 'Enrollment completed', '10:15'],
+        ['milestone:TlE2eEnr002:cancelled', 'Enrollment cancelled', '16:40'],
     ] as const)(
         'labels %s, with a time only where one was recorded',
-        async (id, text) => {
-            const { container } = await renderEntries(
+        async (id, label, time) => {
+            const screen = await renderEntries(
                 <TimelineMilestoneEntry entry={milestone(id)} />
             )
 
-            const [label, time = ''] = text.split(/(?=\d\d:)/)
-            expect(container.textContent).toBe(`${label}${PROGRAM.name}${time}`)
-            expect(container.textContent).not.toContain('00:00')
+            await expect
+                .element(screen.getByText(label, { exact: true }))
+                .toBeVisible()
+            await expect
+                .element(screen.getByText(PROGRAM.name, { exact: true }))
+                .toBeVisible()
+            if (time) {
+                expect(
+                    screen.container.querySelector('time')
+                ).toHaveTextContent(time)
+                expect(screen.container.querySelector('time')).toHaveAttribute(
+                    'datetime',
+                    milestone(id).at
+                )
+            } else {
+                expect(screen.container.querySelector('time')).toBeNull()
+            }
         }
     )
 
@@ -88,12 +102,18 @@ describe('TimelineMilestoneEntry', () => {
 
     it('names the program by id when its metadata could not be read', async () => {
         const [entry] = milestoneEntries(ENTITY.enrollments[0])
-        const { container } = await renderEntries(
+        const screen = await renderEntries(
             <TimelineMilestoneEntry entry={entry} className="custom" />
         )
 
-        expect(container.textContent).toBe('EnrolledWSGAb5XwJ3Y')
-        expect(container.firstElementChild?.className).toContain('custom')
+        await expect
+            .element(screen.getByText('Enrolled', { exact: true }))
+            .toBeVisible()
+        await expect
+            .element(screen.getByText('WSGAb5XwJ3Y', { exact: true }))
+            .toBeVisible()
+        expect(screen.container.querySelector('time')).toBeNull()
+        expect(screen.container.firstElementChild).toHaveClass('custom')
     })
 
     it('has no axe violations', async () => {

@@ -537,6 +537,8 @@ describe('show more', () => {
     })
 
     it('focuses the first entry of a page the host fetched', async () => {
+        const { promise: nextPage, resolve: release } =
+            Promise.withResolvers<void>()
         const Host = () => {
             const [pages, setPages] = useState(1)
             const [loading, setLoading] = useState(false)
@@ -552,10 +554,10 @@ describe('show more', () => {
                         loading={loading}
                         onShowMore={() => {
                             setLoading(true)
-                            setTimeout(() => {
+                            void nextPage.then(() => {
                                 setPages(2)
                                 setLoading(false)
-                            }, 200)
+                            })
                         }}
                     />
                 </Timeline>
@@ -572,6 +574,8 @@ describe('show more', () => {
             expect(button?.getAttribute('aria-busy')).toBe('true')
         )
         expect(document.activeElement).toBe(button)
+        expect(shown(container)).toEqual(['visit-4', 'visit-3'])
+        release()
         await vi.waitFor(() =>
             expect(
                 document.activeElement?.getAttribute('data-timeline-entry')

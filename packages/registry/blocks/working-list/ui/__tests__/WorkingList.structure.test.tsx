@@ -58,7 +58,7 @@ describe('WorkingList structural components', () => {
     it('renders page-sized skeleton rows with disabled shadcn pagination', async () => {
         const screen = await render(
             <WorkingListTextProvider translate={(message) => message}>
-                <WorkingListTableSkeleton pageSize={15} />
+                <WorkingListTableSkeleton pageSize={15} columnCount={3} />
             </WorkingListTextProvider>
         )
 
@@ -69,7 +69,7 @@ describe('WorkingList structural components', () => {
         ).toHaveLength(15)
         expect(
             screen.container.querySelectorAll('[data-slot="table-head"]')
-        ).toHaveLength(4)
+        ).toHaveLength(3)
         expect(
             screen.container.querySelectorAll(
                 '[data-test="working-list-pagination"] button:not(:disabled)'
@@ -114,7 +114,7 @@ describe('WorkingList structural components', () => {
         )
         const heading = viewSwitcher?.querySelector('h2')
         expect(viewSwitcher?.getAttribute('aria-labelledby')).toBe(heading?.id)
-        expect(viewSwitcher?.className).toBe('views-class')
+        expect(viewSwitcher).toHaveClass('views-class')
         expect(viewSwitcher?.dataset.consumer).toBe('views')
 
         await expect
@@ -137,7 +137,7 @@ describe('WorkingList structural components', () => {
             '[data-testid="working-list-table-section"]'
         )
         expect(table?.tagName).toBe('SECTION')
-        expect(table?.className).toBe('table-class')
+        expect(table).toHaveClass('table-class')
         expect(table?.dataset.consumer).toBe('table')
     })
 

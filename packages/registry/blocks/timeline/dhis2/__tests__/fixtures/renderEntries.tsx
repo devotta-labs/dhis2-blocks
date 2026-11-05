@@ -136,6 +136,7 @@ export interface RenderOptions {
     changelogs?: Record<string, ChangeLogs>
     /** Events whose changelog request fails with this error instead. */
     changelogErrors?: Record<string, Error>
+    changesGate?: Promise<void>
     calendar?: Dhis2Calendar
     locale?: string
 }
@@ -153,6 +154,7 @@ export const renderEntries = async (
     for (const [event, body] of Object.entries(options.changelogs ?? {})) {
         data[`tracker/events/${event}/changeLogs`] = async () => {
             changelogRequests.push(event)
+            await options.changesGate
             return body
         }
     }
@@ -180,5 +182,5 @@ export const renderEntries = async (
             </QueryClientProvider>
         </CustomDataProvider>
     )
-    return { ...result, changelogRequests }
+    return { ...result, changelogRequests, queryClient }
 }

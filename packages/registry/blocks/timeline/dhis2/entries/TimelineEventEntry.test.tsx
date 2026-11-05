@@ -268,10 +268,13 @@ describe('TimelineEventEntry', () => {
     })
 
     it('fetches changes only when "Show changes" is pressed, and works by keyboard', async () => {
-        const { container, changelogRequests } = await renderEvent(
+        const { promise: changesGate, resolve: release } =
+            Promise.withResolvers<void>()
+        const { container, changelogRequests, queryClient } = await renderEvent(
             recordedEvent('TlE2eEvt004'),
             <TimelineEventChanges />,
             {
+                changesGate,
                 changelogs: {
                     TlE2eEvt004: ChangeLogsSchema.parse(eventChangelog),
                 },
@@ -279,7 +282,7 @@ describe('TimelineEventEntry', () => {
         )
         const button = buttonIn(container)
 
-        await new Promise((resolve) => setTimeout(resolve, 30))
+        await queryClient.invalidateQueries()
         expect(changelogRequests).toHaveLength(0)
         expect(button.textContent).toBe('Show changes')
         expect(button.getAttribute('aria-expanded')).toBe('false')
@@ -287,6 +290,11 @@ describe('TimelineEventEntry', () => {
         button.focus()
         await userEvent.keyboard('{Enter}')
 
+        await expect.poll(() => changelogRequests).toEqual(['TlE2eEvt004'])
+        await expect
+            .poll(() => container.textContent)
+            .toContain('Loading changes')
+        release()
         await expect
             .poll(() => container.textContent)
             .toContain('John Traore changed')

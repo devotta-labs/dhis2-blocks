@@ -1,4 +1,5 @@
-import React, { type ReactNode } from 'react'
+import React, { act, type ReactNode } from 'react'
+import { notifyManager, type QueryClient } from '@tanstack/react-query'
 import { page, userEvent } from 'vitest/browser'
 import type { FinderPerson } from '../api/search'
 import { FinderField } from '../form/FinderField'
@@ -84,7 +85,7 @@ export const renderFinder = async ({
     const screen = await renderWithQueries(
         ui(server, 'hivProgram', onSelect, results)
     )
-    return { server, screen, onSelect }
+    return { server, screen, onSelect, queryClient: screen.queryClient }
 }
 
 export const searchFor = async (artNumber: string) => {
@@ -95,8 +96,20 @@ export const searchFor = async (artNumber: string) => {
     await page.getByRole('button', { name: 'Search' }).click()
 }
 
-/** Lets any follow-up request (a refetch on mount or focus) go out. */
-export const settle = () => new Promise((resolve) => setTimeout(resolve, 100))
+/** Drain query notifications and the requests they started, then commit React updates. */
+export const settle = async (queryClient: QueryClient) => {
+    await act(async () => {
+        await new Promise<void>((done) => notifyManager.schedule(done))
+        await Promise.all(
+            queryClient
+                .getQueryCache()
+                .getAll()
+                .filter((query) => query.state.fetchStatus === 'fetching')
+                .map((query) => query.promise)
+        )
+        await new Promise<void>((done) => notifyManager.schedule(done))
+    })
+}
 
 export const searchRequests = (server: FakeServer) =>
     server.requests.filter(

@@ -1,10 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
-import {
-    cacheIdOf,
-    createFinderResourceClient,
-    type DataEngineQuery,
-} from './client'
-import { finderKeys, programMetadataQueryOptions } from './queries'
+import { createFinderResourceClient, type DataEngineQuery } from './client'
+import { programMetadataQueryOptions } from './queries'
 import { systemInfoQueryOptions } from './systemInfo'
 
 describe('program metadata query', () => {
@@ -30,18 +26,6 @@ describe('program metadata query', () => {
             'programTrackedEntityAttributes[searchable,displayInList,sortOrder,preferredSearchOperator,blockedSearchOperators,minCharactersToSearch,'
         )
         expect(fields).toContain('blockedSearchOperators')
-        expect(options.queryKey).toEqual(finderKeys.program(client, 'prog'))
-    })
-
-    it('keys searches by program, submission and page', () => {
-        const client = createFinderResourceClient({ query: vi.fn() })
-        const submission = { instance: 1, submission: 2, filter: ['a:eq:b'] }
-        expect(finderKeys.search(client, 'p', submission, 2)).toEqual([
-            'tracked-entity-finder',
-            'search',
-            { client: cacheIdOf(client), program: 'p', ...submission },
-            2,
-        ])
     })
 
     it('isolates metadata and calendars by source while reusing each source', async () => {

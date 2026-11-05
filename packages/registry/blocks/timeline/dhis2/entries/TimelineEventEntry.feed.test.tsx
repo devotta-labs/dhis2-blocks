@@ -91,9 +91,14 @@ describe('TimelineEventEntry in a feed', () => {
         const meta = (id: string) =>
             elementIn(frameOf(container, id), '[data-slot=timeline-event-meta]')
 
-        expect(meta('TlE2eEvt002').textContent).toBe(
-            '10:30Ngelehun CHCCompleted by admin'
-        )
+        const completed = meta('TlE2eEvt002')
+        expect(completed.querySelector('time')).toHaveTextContent('10:30')
+        expect(
+            completed.querySelector('[data-slot=timeline-event-org-unit]')
+        ).toHaveTextContent('Ngelehun CHC')
+        expect(
+            completed.querySelector('[data-slot=timeline-event-completed-by]')
+        ).toHaveTextContent('Completed by admin')
         expect(meta('TlE2eEvt004').querySelector('time')).toBeNull()
     })
 

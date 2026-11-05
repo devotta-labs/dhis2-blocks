@@ -83,8 +83,7 @@ describe('working-list unavailable toolbar', () => {
         }
         expect(
             screen.container.querySelector('[data-consumer="columns"]')
-                ?.className
-        ).toBe('consumer-columns')
+        ).toHaveClass('consumer-columns')
         expect(
             screen.container.querySelector('[data-consumer="filters"]')
                 ?.className

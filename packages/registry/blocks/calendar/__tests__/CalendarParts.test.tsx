@@ -381,9 +381,26 @@ describe('calendar parts', () => {
         )
         const screen = await render(tree)
 
-        // Kenema leads with two; Bo beats Kono and Makeni on the tie.
-        expect(dayButton(screen.container, '2026-11-01')?.textContent).toBe(
-            '12Kenema1Bo+2 more'
-        )
+        const cell = screen.getByRole('button', {
+            name: '1 November 2026, 5 records',
+        })
+        const kenema = cell.getByText('Kenema', { exact: true })
+        const bo = cell.getByText('Bo', { exact: true })
+        await expect.element(kenema).toBeVisible()
+        await expect.element(bo).toBeVisible()
+        expect(
+            kenema.element().parentElement?.querySelector('span')
+        ).toHaveTextContent(/^2$/)
+        expect(
+            bo.element().parentElement?.querySelector('span')
+        ).toHaveTextContent(/^1$/)
+        expect(
+            kenema.element().getBoundingClientRect().bottom
+        ).toBeLessThanOrEqual(bo.element().getBoundingClientRect().top)
+        await expect
+            .element(cell.getByText('+2 more', { exact: true }))
+            .toBeVisible()
+        expect(cell.getByText('Kono', { exact: true }).query()).toBeNull()
+        expect(cell.getByText('Makeni', { exact: true }).query()).toBeNull()
     })
 })

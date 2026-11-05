@@ -9,8 +9,8 @@ const sealModule = join(blockDir, 'rules', 'seal')
 /** Static, dynamic and side-effect imports, re-exports and requires. */
 const SPECIFIER = /(?:\bfrom|\bimport|\brequire)\s*\(?\s*['"`]([^'"`]+)['"`]/g
 
-const importsSeal = (path: string): boolean =>
-    [...readFileSync(path, 'utf8').matchAll(SPECIFIER)].some(([, spec]) => {
+const importsSeal = (path: string, source: string): boolean =>
+    [...source.matchAll(SPECIFIER)].some(([, spec]) => {
         const target = spec.startsWith('.')
             ? resolve(dirname(path), spec)
             : spec
@@ -32,13 +32,33 @@ const shippedSources = (dir: string): string[] =>
     })
 
 describe('seal', () => {
+    it.each([
+        "import { seal } from '../rules/seal'",
+        "export { seal } from '@/components/tracked-entity-finder/rules/seal'",
+        "import('../rules/seal.ts')",
+        "require('../rules/seal')",
+        "import '../rules/seal'",
+    ])('detects a seal-constructor dependency: %s', (source) => {
+        expect(
+            importsSeal(join(blockDir, 'provider', 'example.ts'), source)
+        ).toBe(true)
+    })
+
+    it.each([
+        "import type { ValidatedSearch } from '../rules/types'",
+        "import { runSearch } from '../api/search'",
+        "import { sealLabel } from '../rules/sealLabel'",
+    ])('allows non-constructor dependencies: %s', (source) => {
+        expect(
+            importsSeal(join(blockDir, 'provider', 'example.ts'), source)
+        ).toBe(false)
+    })
+
     it('only rules modules import seal', () => {
         const importers = shippedSources(blockDir)
-            .filter(importsSeal)
+            .filter((path) => importsSeal(path, readFileSync(path, 'utf8')))
             .map((path) => relative(blockDir, path).split(sep).join('/'))
 
-        // The scan works: the rule module that seals searches is found.
-        expect(importers).toContain('rules/evaluateForm.ts')
         expect(importers.filter((path) => !path.startsWith('rules/'))).toEqual(
             []
         )

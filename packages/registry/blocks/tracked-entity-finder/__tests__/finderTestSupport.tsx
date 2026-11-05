@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+    notifyManager,
+    QueryClient,
+    QueryClientProvider,
+} from '@tanstack/react-query'
 import React, { useContext, type ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
 import {
@@ -52,7 +56,7 @@ const toProgramResponse = (program: ProgramMetadata): EngineValue => ({
 /** A search the fake engine holds open until the test answers it. */
 interface PendingSearch {
     request: ResourceRequest
-    respond: (response: EngineValue) => void
+    respond: (response: EngineValue) => Promise<void>
 }
 
 export interface FakeServer {
@@ -134,8 +138,12 @@ export const createFakeServer = (
                         return new Promise<EngineResult>((resolve) => {
                             pendingSearches.push({
                                 request,
-                                respond: (response) =>
-                                    resolve({ [key]: response }),
+                                respond: async (response) => {
+                                    resolve({ [key]: response })
+                                    await new Promise<void>((done) =>
+                                        notifyManager.schedule(done)
+                                    )
+                                },
                             })
                         })
                     }
@@ -158,18 +166,19 @@ export const createFakeServer = (
 }
 
 /** Renders inside a fresh QueryClient with retries off by default. */
-export const renderWithQueries = (ui: ReactNode) => {
+export const renderWithQueries = async (ui: ReactNode) => {
     const queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false } },
     })
     // A wrapper, so `rerender` keeps the same QueryClient.
-    return render(ui, {
+    const screen = await render(ui, {
         wrapper: ({ children }) => (
             <QueryClientProvider client={queryClient}>
                 {children}
             </QueryClientProvider>
         ),
     })
+    return Object.assign(screen, { queryClient })
 }
 
 /** Renders `children` under a `hivProgram` provider, with a SubmissionProbe. */

@@ -97,7 +97,13 @@ describe('fetchEvents', () => {
 
         const result = await fetchEvents(client, options)
 
-        expect(Result.isOk(result) && result.value.capped).toBe(false)
+        expect(Result.isOk(result)).toBe(true)
+        if (Result.isOk(result)) {
+            expect(result.value.capped).toBe(false)
+            expect(result.value.events.map((entry) => entry.event)).toEqual([
+                'a',
+            ])
+        }
     })
 
     it('passes the abort signal to the engine', async () => {

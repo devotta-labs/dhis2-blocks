@@ -1,7 +1,11 @@
 import {
-    buildProgramOptions,
+    projectProgramOptions,
     hasCaptureProgramDataReadAccess,
 } from './programOptions'
+
+const buildProgramOptions = (
+    options: Omit<Parameters<typeof projectProgramOptions>[0], 'captureRoots'>
+) => projectProgramOptions({ ...options, captureRoots: [] }).options
 
 describe('buildProgramOptions', () => {
     const programs = [
@@ -24,7 +28,7 @@ describe('buildProgramOptions', () => {
         expect(
             buildProgramOptions({
                 programs,
-                selectedOrganisationUnitPath: '/root/a',
+                selectedOrganisationUnit: { path: '/root/a' },
                 baseUrl: 'https://play.dhis2.org/dev/',
                 apiVersion: 43,
             })
@@ -45,8 +49,8 @@ describe('buildProgramOptions', () => {
         expect(
             buildProgramOptions({
                 programs,
-                selectedOrganisationUnitPath: '/root/outside',
-                preservedProgramId: 'program-a',
+                selectedOrganisationUnit: { path: '/root/outside' },
+                selectedProgramId: 'program-a',
                 baseUrl: 'https://play.dhis2.org/dev',
                 apiVersion: 43,
             })
@@ -61,7 +65,7 @@ describe('buildProgramOptions', () => {
         expect(
             buildProgramOptions({
                 programs,
-                selectedOrganisationUnitPath: '/root/outside',
+                selectedOrganisationUnit: { path: '/root/outside' },
                 baseUrl: 'https://play.dhis2.org/dev',
                 apiVersion: 43,
             })
@@ -73,7 +77,9 @@ describe('buildProgramOptions', () => {
             expect(
                 buildProgramOptions({
                     programs,
-                    selectedOrganisationUnitPath,
+                    selectedOrganisationUnit: {
+                        path: selectedOrganisationUnitPath,
+                    },
                     baseUrl: 'https://play.dhis2.org/dev',
                     apiVersion: 43,
                 })
@@ -83,8 +89,10 @@ describe('buildProgramOptions', () => {
         expect(
             buildProgramOptions({
                 programs,
-                selectedOrganisationUnitId: 'different-ou',
-                selectedOrganisationUnitPath: '/root/a',
+                selectedOrganisationUnit: {
+                    id: 'different-ou',
+                    path: '/root/a',
+                },
                 baseUrl: 'https://play.dhis2.org/dev',
                 apiVersion: 43,
             })

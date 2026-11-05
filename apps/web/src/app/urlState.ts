@@ -3,15 +3,7 @@ import { z } from 'zod'
 
 const WorkingListPageSizeSchema = z.coerce
     .number()
-    .pipe(
-        z.union([
-            z.literal(WORKING_LIST_PAGE_SIZES[0]),
-            z.literal(WORKING_LIST_PAGE_SIZES[1]),
-            z.literal(WORKING_LIST_PAGE_SIZES[2]),
-            z.literal(WORKING_LIST_PAGE_SIZES[3]),
-            z.literal(WORKING_LIST_PAGE_SIZES[4]),
-        ])
-    )
+    .pipe(z.literal(WORKING_LIST_PAGE_SIZES))
 
 const WorkingListUrlStateSchema = z
     .object({

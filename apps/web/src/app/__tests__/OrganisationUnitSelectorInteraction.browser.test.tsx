@@ -85,7 +85,6 @@ const Harness = () => {
                         path: ROOT_PATH,
                     },
                 ]}
-                allowedPaths={[ROOT_PATH]}
                 searchValue=""
                 treeKey="initial"
                 treeComponent={TestOrganisationUnitTree}
@@ -103,7 +102,6 @@ describe('organisation-unit selector interaction reliability', () => {
     it('renders loading, error, and ready states exclusively as search props change', async () => {
         const props = {
             roots: [],
-            allowedPaths: [],
             searchValue: '',
             treeKey: 'search',
             treeComponent: TestOrganisationUnitTree,
@@ -141,7 +139,6 @@ describe('organisation-unit selector interaction reliability', () => {
     it('prioritizes load-more errors and updates pagination availability without replacing the tree', async () => {
         const props = {
             roots: [],
-            allowedPaths: [],
             searchValue: '',
             treeKey: 'search',
             treeComponent: TestOrganisationUnitTree,

@@ -1,3 +1,4 @@
+import { WORKING_LIST_PAGE_SIZES } from '@/components/working-list/provider/contracts'
 import {
     isGuardedAppUrlTransition,
     parseAppUrlState,
@@ -6,6 +7,38 @@ import {
 } from './urlState'
 
 describe('URL state privacy boundary', () => {
+    it.each(WORKING_LIST_PAGE_SIZES)(
+        'round-trips supported page size %s',
+        (pageSize) => {
+            expect(
+                parseAppUrlState(
+                    new URLSearchParams(serializeAppUrlState({ pageSize }))
+                )
+            ).toEqual({ pageSize })
+        }
+    )
+
+    it.each([
+        'page=0',
+        'page=1.5',
+        'page=NaN',
+        'pageSize=20',
+        'pageSize=',
+        'pageSize=15&pageSize=25',
+        'selectedTemplateId=',
+        'orgUnitId=a&orgUnitId=b',
+    ])('rejects malformed preferences: %s', (search) => {
+        expect(() => parseAppUrlState(new URLSearchParams(search))).toThrow()
+    })
+
+    it('rejects private or unknown keys during serialization', () => {
+        const privateState = {
+            programId: 'program',
+            filters: ['name:Patient'],
+            token: 'secret',
+        }
+        expect(() => serializeAppUrlState(privateState)).toThrow()
+    })
     it('serializes only context, selected view, and pagination preferences', () => {
         expect(
             serializeAppUrlState({

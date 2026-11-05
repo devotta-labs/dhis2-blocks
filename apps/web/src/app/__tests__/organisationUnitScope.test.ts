@@ -2,6 +2,8 @@ import {
     areOrganisationUnitPathsRelated,
     getCaptureOrganisationUnitPickerScope,
     intersectOrganisationUnitScopes,
+} from './legacyScopeFixtures'
+import {
     isOrganisationUnitInScope,
     resolveCaptureOrganisationUnitRoots,
     type OrganisationUnitReference,
@@ -26,23 +28,25 @@ describe('Capture organisation-unit scope', () => {
     const captureRoot = unit('capture', '/root/capture')
     const searchRoot = unit('search', '/root/capture/search')
     const programRoot = unit('program', '/root/capture/search/program')
+    const currentUser = {
+        organisationUnits: [captureRoot],
+        teiSearchOrganisationUnits: [searchRoot],
+    }
 
     it('uses Capture data-entry roots even when Tracker search roots differ', () => {
-        expect(
-            resolveCaptureOrganisationUnitRoots({
-                organisationUnits: [captureRoot],
-                teiSearchOrganisationUnits: [searchRoot],
-            })
-        ).toEqual([captureRoot])
+        expect(resolveCaptureOrganisationUnitRoots(currentUser)).toEqual([
+            captureRoot,
+        ])
     })
 
     it('uses capture organisation units when no search roots exist', () => {
-        expect(
-            resolveCaptureOrganisationUnitRoots({
-                organisationUnits: [captureRoot],
-                teiSearchOrganisationUnits: [],
-            })
-        ).toEqual([captureRoot])
+        const withoutSearchRoots = {
+            ...currentUser,
+            teiSearchOrganisationUnits: [],
+        }
+        expect(resolveCaptureOrganisationUnitRoots(withoutSearchRoots)).toEqual(
+            [captureRoot]
+        )
         expect(
             resolveCaptureOrganisationUnitRoots({
                 organisationUnits: [captureRoot],

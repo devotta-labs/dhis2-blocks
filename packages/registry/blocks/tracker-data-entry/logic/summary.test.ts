@@ -271,3 +271,29 @@ test('a cell’s own error and warning are listed as their value type made them,
         await i18n.changeLanguage('en')
     }
 })
+
+test('an empty slot’s required fields are not summary items', () => {
+    const effects: Partial<Record<CellKey, TrackerEffects>> = {}
+    for (let person = 0; person < 25; person += 1) {
+        for (let slot = 0; slot < 4; slot += 1) {
+            for (const field of ['a', 'b']) {
+                effects[`s${person}-${slot}.${field}`] = {
+                    required: true,
+                    messages: [],
+                }
+            }
+        }
+    }
+    const summarised = (typed?: string) =>
+        summarise(
+            {},
+            effects,
+            NO_ROW_MESSAGES,
+            TABLES,
+            undefined,
+            (record) => record !== typed
+        )
+    expect(summarised()).toMatchObject({ items: [], canComplete: true })
+    expect(summarised('s3-2').items).toHaveLength(2)
+    expect(summarised('s3-2').canComplete).toBe(false)
+})

@@ -16,12 +16,6 @@ export interface LayoutColumn {
     field: FieldRef
     /** The paper's heading; defaults to the field's form name. */
     label?: string
-    width?: 'narrow' | 'normal' | 'wide'
-    /** A rotated heading. */
-    vertical?: boolean
-    total?: 'count' | 'sum'
-    /** Option cells show the code, as the paper's legend has it. */
-    show?: 'name' | 'code'
 }
 
 export interface LayoutGroup {
@@ -33,10 +27,7 @@ export type LayoutNode = LayoutGroup | LayoutColumn
 
 /** The paper register as data: its columns and grouped headings, in the paper's order. */
 export interface RegisterLayout {
-    programId: string
     title?: string
-    /** A heading row of column numbers 1, 2, 3… as the paper prints them. */
-    numbered?: boolean
     /** What names each row on screen; defaults to the first two text attributes. */
     rowLabel?: FieldRef[]
     columns: LayoutNode[]
@@ -78,33 +69,27 @@ const eventRef = <Fields extends Record<string, z.ZodType>>(fields: Fields) =>
         .refine(onePick, onePickMessage)
 
 const fieldRefSchema: z.ZodType<FieldRef> = z.union([
-    z.object({ attribute: z.string() }),
-    z.object({ enrollment: z.enum(['enrolledAt', 'occurredAt']) }),
+    z.strictObject({ attribute: z.string() }),
+    z.strictObject({ enrollment: z.enum(['enrolledAt', 'occurredAt']) }),
     eventRef({ ...eventPick, dataElement: z.string() }),
     eventRef({ ...eventPick, eventDate: z.literal(true) }),
 ])
 
-const columnSchema: z.ZodType<LayoutColumn> = z.object({
+const columnSchema: z.ZodType<LayoutColumn> = z.strictObject({
     field: fieldRefSchema,
     label: z.string().optional(),
-    width: z.enum(['narrow', 'normal', 'wide']).optional(),
-    vertical: z.boolean().optional(),
-    total: z.enum(['count', 'sum']).optional(),
-    show: z.enum(['name', 'code']).optional(),
 })
 
 const nodeSchema: z.ZodType<LayoutNode> = z.lazy(() =>
     z.union([
-        z.object({ group: z.string(), children: z.array(nodeSchema) }),
+        z.strictObject({ group: z.string(), children: z.array(nodeSchema) }),
         columnSchema,
     ])
 )
 
 /** Checks a stored or hand-written layout. */
-export const registerLayoutSchema: z.ZodType<RegisterLayout> = z.object({
-    programId: z.string(),
+export const registerLayoutSchema: z.ZodType<RegisterLayout> = z.strictObject({
     title: z.string().optional(),
-    numbered: z.boolean().optional(),
     rowLabel: z.array(fieldRefSchema).optional(),
     columns: z.array(nodeSchema),
 })

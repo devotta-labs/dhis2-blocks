@@ -59,7 +59,7 @@ describe('fillSlots', () => {
         expect(bySlot.get('ANC#1')).toBe('y')
     })
 
-    test('a where slot takes the event holding its values; a second one is noted', () => {
+    test('a stage used only by where slots notes its unmatched events', () => {
         const { bySlot, notes } = fillSlots(
             [
                 event('x', 'VAX', {
@@ -80,6 +80,7 @@ describe('fillSlots', () => {
         expect([...bySlot]).toEqual([['VAX?dose=2&vaccine=DPT', 'x']])
         expect(notes).toEqual([
             '2 events of Vaccination hold DPT 2; the first is shown',
+            '1 more visits of Vaccination not in this register',
         ])
     })
 

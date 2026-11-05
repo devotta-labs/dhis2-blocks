@@ -185,9 +185,7 @@ interface RegisterSourceOptions {
 }
 
 interface RegisterLayout {
-    programId: string
     title?: string
-    numbered?: boolean // a heading row of column numbers 1, 2, 3…
     rowLabel?: FieldRef[] // what names a row; the first two text attributes by default
     columns: LayoutNode[] // in the paper's order
 }
@@ -195,10 +193,6 @@ type LayoutNode = LayoutColumn | { group: string; children: LayoutNode[] } // a 
 interface LayoutColumn {
     field: FieldRef
     label?: string // the paper's heading; the field's form name by default
-    width?: 'narrow' | 'normal' | 'wide'
-    vertical?: boolean // a rotated heading
-    total?: 'count' | 'sum'
-    show?: 'name' | 'code' // option cells show the code, as the paper's legend has it
 }
 type FieldRef =
     | { attribute: string }
@@ -212,7 +206,7 @@ type FieldRef =
 
 `compileLayout(layout, metadata)` turns a layout into the grid's columns and heading rows, or says what the program
 cannot do for it; `registerSource` does this on load and fails the form with those messages. `registerLayoutSchema`
-(zod) checks a layout that is stored or written by hand, and refuses a misspelt key of an event ref at its path. `NewRow`,
+(zod) checks a layout that is stored or written by hand, and refuses a key it does not know. `NewRow`,
 `PersonRecord` and `EnrollmentRecord` are the types of what a row is made of.
 
 **Slots.** A column of a stage is in one slot of the person's row: the stage's only event (a non-repeatable stage), the

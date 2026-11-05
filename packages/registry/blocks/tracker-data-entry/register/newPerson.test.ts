@@ -20,7 +20,6 @@ const BCG = `${VACCINATION}?${DOSE}=0&${VACCINE}=BCG`
 const UNIQUE_ID = 'lZGmxYbs97q'
 
 const LAYOUT: RegisterLayout = {
-    programId: PROGRAM,
     columns: [
         { field: { attribute: FIRST_NAME } },
         { field: { attribute: LAST_NAME } },

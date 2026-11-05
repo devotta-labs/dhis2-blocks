@@ -92,7 +92,9 @@ export const summarise = (
     rowMessages: ReadonlyMap<string, ReadonlyArray<TrackerMessage>>,
     tables: ReadonlyArray<GridTable<TrackerRow, TrackerColumn>>,
     /** Every field's name, for a required field no column shows. */
-    fieldNames?: ReadonlyMap<string, string>
+    fieldNames?: ReadonlyMap<string, string>,
+    /** Whether a record is a slot's new event nobody typed in: its required fields are not asked for yet. */
+    emptySlot?: (recordId: string) => boolean
 ) => {
     const items: SummaryItem[] = []
     let unsent = 0
@@ -141,7 +143,7 @@ export const summarise = (
             continue
         }
         const { required, messages } = cellEffects
-        if (required && !values.get(key)) {
+        if (required && !values.get(key) && !emptySlot?.(recordIdOf(key))) {
             nameOf ??= fieldNamer(tables, fieldNames)
             add({
                 key,

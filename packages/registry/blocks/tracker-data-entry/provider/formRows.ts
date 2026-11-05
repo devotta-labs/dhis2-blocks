@@ -2,6 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import { cellKey } from '@/components/spreadsheet'
 import type { CellKey, GridTable } from '@/components/spreadsheet'
 import type { TrackerEffects, TrackerEffectsState } from '../logic/effects'
+import { isEmptySlot } from '../logic/ruleEffects'
 import { summarise } from '../logic/summary'
 import {
     formOf,
@@ -21,18 +22,30 @@ import type { LoadedForm } from '../sources/types'
 import { generateUid } from '../sources/uid'
 import type { OpenForm } from './openForm'
 
-/** The form's summary, from its cells, their effects, its tables and its fields' names. */
+/** The form's summary, from its cells, their effects, its tables and its fields' names; empty slots ask for nothing. */
 export const summaryOf = (
     { store, effects, tables }: Pick<OpenForm, 'store' | 'effects' | 'tables'>,
-    fieldNames: ReadonlyMap<string, string>
-) =>
-    summarise(
-        store.getState().cells,
+    {
+        fieldNames,
+        fieldsByForm,
+    }: Pick<LoadedForm, 'fieldNames' | 'fieldsByForm'>
+) => {
+    const { cells } = store.getState()
+    const { records } = tables.getState()
+    return summarise(
+        cells,
         effects.getState().cells,
         effects.getState().rowMessages,
         tables.getState().tables,
-        fieldNames
+        fieldNames,
+        (id) => {
+            const record = records.get(id)
+            return (
+                record !== undefined && isEmptySlot(record, cells, fieldsByForm)
+            )
+        }
     )
+}
 
 const FILES: ReadonlySet<string> = new Set(['FILE_RESOURCE', 'IMAGE'])
 

@@ -108,11 +108,7 @@ export const fillSlots = (
     const reported = new Set<string>()
     for (const slot of slots) {
         const { stageId } = slot
-        if (
-            stageId === undefined ||
-            reported.has(stageId) ||
-            (slot.kind !== 'single' && slot.kind !== 'occurrence')
-        ) {
+        if (stageId === undefined || reported.has(stageId)) {
             continue
         }
         reported.add(stageId)

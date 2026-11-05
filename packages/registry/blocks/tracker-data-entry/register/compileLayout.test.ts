@@ -24,10 +24,7 @@ const PERSON: LayoutNode[] = [
     { field: ENROLLED },
 ]
 
-const layoutOf = (
-    columns: LayoutNode[],
-    programId = 'WSGAb5XwJ3Y'
-): RegisterLayout => ({ programId, columns })
+const layoutOf = (columns: LayoutNode[]): RegisterLayout => ({ columns })
 
 const errorsOf = (...args: Parameters<typeof compileLayout>) => {
     const result = compileLayout(...args)
@@ -138,29 +135,26 @@ describe('compileLayout', () => {
 
     test('a where slot is named by its sorted values', () => {
         const compiled = compiledOf(
-            layoutOf(
-                [
-                    { field: FIRST_NAME },
-                    { field: LAST_NAME },
-                    { field: BIRTH_DATE },
-                    { field: ENROLLED },
-                    {
-                        field: {
-                            stage: 'ImmVaccin01',
-                            where: { ImmDose0001: '2', ImmVaccine1: 'DPT' },
-                            eventDate: true,
-                        },
+            layoutOf([
+                { field: FIRST_NAME },
+                { field: LAST_NAME },
+                { field: BIRTH_DATE },
+                { field: ENROLLED },
+                {
+                    field: {
+                        stage: 'ImmVaccin01',
+                        where: { ImmDose0001: '2', ImmVaccine1: 'DPT' },
+                        eventDate: true,
                     },
-                    {
-                        field: {
-                            stage: 'ImmVaccin01',
-                            where: { ImmVaccine1: 'DPT', ImmDose0001: '2' },
-                            dataElement: 'ImmDose0001',
-                        },
+                },
+                {
+                    field: {
+                        stage: 'ImmVaccin01',
+                        where: { ImmVaccine1: 'DPT', ImmDose0001: '2' },
+                        dataElement: 'ImmDose0001',
                     },
-                ],
-                'ImmReg00001'
-            ),
+                },
+            ]),
             IMMUNISATION
         )
 
@@ -430,24 +424,21 @@ describe('compileLayout', () => {
         const where = { stage: 'ImmVaccin01', eventDate: true as const }
         expect(
             errorsOf(
-                layoutOf(
-                    [
-                        ...PERSON,
-                        {
-                            field: {
-                                ...where,
-                                where: { ImmDose0001: '2', ImmVaccine1: 'DPT' },
-                            },
+                layoutOf([
+                    ...PERSON,
+                    {
+                        field: {
+                            ...where,
+                            where: { ImmDose0001: '2', ImmVaccine1: 'DPT' },
                         },
-                        {
-                            field: {
-                                ...where,
-                                where: { ImmVaccine1: 'DPT', ImmDose0001: '2' },
-                            },
+                    },
+                    {
+                        field: {
+                            ...where,
+                            where: { ImmVaccine1: 'DPT', ImmDose0001: '2' },
                         },
-                    ],
-                    'ImmReg00001'
-                ),
+                    },
+                ]),
                 IMMUNISATION
             )
         ).toEqual([
@@ -478,10 +469,11 @@ describe('compileLayout', () => {
             where: { ImmVaccine1: 'DPT' },
         }
         const layout = (extra: LayoutNode[]) =>
-            layoutOf(
-                [...PERSON, { field: { ...slot, eventDate: true } }, ...extra],
-                'ImmReg00001'
-            )
+            layoutOf([
+                ...PERSON,
+                { field: { ...slot, eventDate: true } },
+                ...extra,
+            ])
 
         expect(errorsOf(layout([]), strict)).toEqual([
             'The layout leaves out Dose, which a new row cannot be saved without',
@@ -492,6 +484,30 @@ describe('compileLayout', () => {
                 strict
             ).ok
         ).toBe(true)
+    })
+
+    test('a where code that is not an option is a layout error', () => {
+        const slot = { stage: 'ImmVaccin01', where: { ImmVaccine1: 'bcg' } }
+        expect(
+            errorsOf(
+                layoutOf([...PERSON, { field: { ...slot, eventDate: true } }]),
+                IMMUNISATION
+            )
+        ).toEqual(['bcg is not an option of Vaccine'])
+    })
+
+    test('a bad where code is said once however many columns the slot has', () => {
+        const slot = { stage: 'ImmVaccin01', where: { ImmVaccine1: 'bcg' } }
+        expect(
+            errorsOf(
+                layoutOf([
+                    ...PERSON,
+                    { field: { ...slot, eventDate: true } },
+                    { field: { ...slot, dataElement: 'ImmDose0001' } },
+                ]),
+                IMMUNISATION
+            )
+        ).toEqual(['bcg is not an option of Vaccine'])
     })
 
     test('a rowLabel field with no column is refused and registers no slot', () => {

@@ -161,9 +161,7 @@ interface RegisterSourceOptions {
 }
 
 interface RegisterLayout {
-    programId: string
     title?: string
-    numbered?: boolean // a heading row of column numbers 1, 2, 3…
     rowLabel?: FieldRef[] // what names a row; the first two text attributes by default
     columns: LayoutNode[] // columns and groups, in the paper's order
 }
@@ -173,10 +171,6 @@ type LayoutNode = LayoutColumn | { group: string; children: LayoutNode[] }
 interface LayoutColumn {
     field: FieldRef
     label?: string // the paper's heading; the field's form name by default
-    width?: 'narrow' | 'normal' | 'wide'
-    vertical?: boolean
-    total?: 'count' | 'sum'
-    show?: 'name' | 'code' // option cells show the code the paper's legend has
 }
 
 type FieldRef =
@@ -198,7 +192,7 @@ that fit no slot, or several, are said on the row ("2 more visits of … not in
 this register"). `compileLayout(layout, metadata)` says what a program cannot
 do for a layout, such as a field it does not have, before anything loads, and
 `registerLayoutSchema` checks a layout you store or write by hand, refusing a
-misspelt key at its path.
+key it does not know.
 
 New people are added with **Add person** (Ctrl+Enter): a person, an enrolment
 and an event per slot, at the organisation unit. The layout must have a column

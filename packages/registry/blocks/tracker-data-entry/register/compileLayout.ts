@@ -256,6 +256,25 @@ export const compileLayout = (
         if (unknown !== undefined) {
             return missing(unknown)
         }
+        for (const [id, code] of Object.entries(where ?? {})) {
+            const { name, field } = stage.dataElements.get(id) ?? {}
+            // A field with no options takes any value.
+            if (
+                field?.options?.length &&
+                !field.options.some((o) => o.code === code)
+            ) {
+                const error = i18n.t('{{code}} is not an option of {{field}}', {
+                    code,
+                    field: name,
+                    interpolation: AS_IS,
+                })
+                // Every column of the slot says it: once is enough.
+                if (!errors.includes(error)) {
+                    errors.push(error)
+                }
+                return undefined
+            }
+        }
         const slot = slotOf(eventSlotOf(ref.stage, stage, ref))
         if ('eventDate' in ref) {
             return {

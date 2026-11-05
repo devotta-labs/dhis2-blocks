@@ -14,7 +14,7 @@ import type { ScheduledEvents } from '../sources/trackerPayload'
 import { trackerSaver, withinLimit } from '../sources/trackerSave'
 import type { TrackerDataEntrySource, LoadedForm } from '../sources/types'
 import { generateUid } from '../sources/uid'
-import { compileLayout } from './compileLayout'
+import { PERSON, compileLayout } from './compileLayout'
 import type { CompiledLayout } from './compileLayout'
 import type { RegisterLayout } from './layout'
 import { registerMetadataOf, registerProgramSchema } from './metadata'
@@ -38,6 +38,9 @@ import {
 } from './restore'
 import type { HeldEnrollment, UnsentPerson } from './restore'
 import { scheduledEventsFor } from './scheduled'
+
+// Names are said as they are, not HTML-escaped.
+const AS_IS = { escapeValue: false }
 
 export interface RegisterSourceOptions {
     programId: string
@@ -392,8 +395,41 @@ export const registerSource = (
                 []) {
                 values.set(cellKey(person.id, attribute), value)
             }
+            const { columns } = loaded.compiled
+            // A mandatory generated attribute with no column cannot be typed in: the person's row says it has no value.
+            const text = [...loaded.metadata.attributes]
+                .filter(
+                    ([id, { generated, mandatory }]) =>
+                        generated &&
+                        mandatory &&
+                        !columns.some(
+                            (c) => c.slot === PERSON && c.fieldId === id
+                        ) &&
+                        !values.has(cellKey(person.id, id))
+                )
+                .map(([, { name }]) =>
+                    i18n.t('No value could be reserved for {{attribute}}', {
+                        attribute: name,
+                        interpolation: AS_IS,
+                    })
+                )
             return {
                 ...made,
+                messages: new Map(
+                    text.length === 0
+                        ? []
+                        : [
+                              [
+                                  person.id,
+                                  text.map((message) => ({
+                                      tone: 'error' as const,
+                                      text: message,
+                                      source: 'server' as const,
+                                      onComplete: true as const,
+                                  })),
+                              ],
+                          ]
+                ),
                 values,
                 readOnlyRecords: newRowReasons(made.records),
             }

@@ -1,5 +1,5 @@
-import { useDataEngine } from '@dhis2/app-runtime'
 import { useMemo } from 'react'
+import { useStableDataEngine } from '@/components/stable-data-engine'
 import { z } from 'zod'
 import {
     createWorkingListClient,
@@ -64,7 +64,7 @@ const toRuntimeMutation = (mutation: DataEngineMutation) => {
 }
 
 export const useRuntimeWorkingListClient = (): WorkingListClient => {
-    const engine = useDataEngine()
+    const engine = useStableDataEngine()
     return useMemo(
         () =>
             createWorkingListClient({

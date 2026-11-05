@@ -1,0 +1,5 @@
+{
+    "title": "Stable Data Engine",
+    "description": "The app-runtime data engine as one object for the component's lifetime, so clients and effects built on it are not rebuilt when the data provider renders again.",
+    "docs": "Call useStableDataEngine() wherever you would call useDataEngine() and build a client on the engine. Before app-runtime 3.17.4 the data provider makes a new engine every time it renders, and from 3.17.4 whenever its config object changes; this one keeps its identity and always calls the provider's latest engine, so requests go to the current configuration. It does not tell you when the server changes: key anything that must reset on useConfig().baseUrl."
+}

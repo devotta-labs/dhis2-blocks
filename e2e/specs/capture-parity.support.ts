@@ -3,13 +3,43 @@
 import AxeBuilder from '@axe-core/playwright'
 import type {
     APIRequestContext,
-    Locator,
     Page,
-    Playwright,
+    PlaywrightWorkerArgs,
     Request,
-    Response,
 } from '@playwright/test'
 import { z } from 'zod'
+import {
+    workingListReady,
+    addStageFilter,
+    addTrackedEntityFilter,
+    selectStage,
+    savedViewButton,
+    waitForTrackerResponse,
+} from '../fixtures/working-list'
+export {
+    requestUrl,
+    isTrackerResource,
+    waitForTrackerResponse,
+    savedViewButton,
+    uiButton,
+    resultRows,
+    menuItem,
+    selectTrigger,
+    chooseSelectOption,
+    openMoreActions,
+    chooseSaveViewOption,
+    openSavedViewActions,
+    chooseSavedViewAction,
+    openFilterEditor,
+    applyTextFilter,
+} from '../fixtures/working-list'
+import {
+    invalidDate,
+    seedMetadata,
+    seedFieldId,
+    seedList,
+    seedUser,
+} from '../fixtures/seed'
 import {
     e2eEnvironment,
     expect,
@@ -19,50 +49,45 @@ import {
 } from '../fixtures/test'
 
 export { AxeBuilder, expect, test }
-export type {
-    APIRequestContext,
-    Page,
-    Playwright,
-    Request,
-    Response,
-    E2ECredentials,
-}
-export const PROGRAM = 'WlE2ePrg001'
-export const PROGRAM_NAME = 'Working list E2E tracker program'
-export const ORG_UNIT = 'DiszpKrYNg8'
+export type { APIRequestContext, Page, Request, E2ECredentials }
+export const PROGRAM = seedMetadata.programs[0].id
+export const PROGRAM_NAME = seedMetadata.programs[0].name
+export const ORG_UNIT = seedMetadata.programs[0].organisationUnits[0].id
 export const ORG_UNIT_NAME = 'Ngelehun CHC'
-export const STAGE = 'WlE2eStg001'
-export const STAGE_NAME = 'Working list E2E programme stage'
-export const PRIVATE_LIST = 'WlE2eLst001'
-export const SHARED_LIST = 'WlE2eLst002'
-export const STALE_LIST = 'WlE2eLst003'
-export const TEXT_ATTRIBUTE = 'WlAtText001'
-export const INTEGER_ATTRIBUTE = 'WlAtIntg001'
-export const NUMBER_ATTRIBUTE = 'WlAtNumb001'
-export const BOOLEAN_ATTRIBUTE = 'WlAtBool001'
-export const MULTI_TEXT_ATTRIBUTE = 'WlAtMult001'
-export const EMAIL_ATTRIBUTE = 'WlAtMail001'
-export const PHONE_ATTRIBUTE = 'WlAtPhon001'
-export const GEOJSON_ATTRIBUTE = 'WlAtGeoj001'
-export const TEXT_DATA_ELEMENT = 'WlDeText001'
-export const INTEGER_DATA_ELEMENT = 'WlDeIntg001'
-// scripts/e2e/seed-metadata.sh writes this invalid date through SQL because
-// the tracker importer would reject it.
-export const CORRUPTED_DATE_VALUE = '2025-13-45'
-const TEST_PASSWORD = 'WorkingList123!'
-
-export const OWNER: E2ECredentials = {
-    username: 'wl_e2e_owner',
-    password: TEST_PASSWORD,
-}
-export const READER: E2ECredentials = {
-    username: 'wl_e2e_reader',
-    password: TEST_PASSWORD,
-}
-export const OUTSIDER: E2ECredentials = {
-    username: 'wl_e2e_outsider',
-    password: TEST_PASSWORD,
-}
+export const STAGE = seedMetadata.programStages[0].id
+export const STAGE_NAME = seedMetadata.programStages[0].name
+export const PRIVATE_LIST = seedList('E2E private owner list').id
+export const SHARED_LIST = seedList('E2E shared reader list').id
+export const STALE_LIST = seedList('E2E stale metadata list').id
+export const TEXT_ATTRIBUTE = seedFieldId('trackedEntityAttributes', 'TEXT')
+export const INTEGER_ATTRIBUTE = seedFieldId(
+    'trackedEntityAttributes',
+    'INTEGER'
+)
+export const NUMBER_ATTRIBUTE = seedFieldId('trackedEntityAttributes', 'NUMBER')
+export const BOOLEAN_ATTRIBUTE = seedFieldId(
+    'trackedEntityAttributes',
+    'BOOLEAN'
+)
+export const MULTI_TEXT_ATTRIBUTE = seedFieldId(
+    'trackedEntityAttributes',
+    'MULTI_TEXT'
+)
+export const EMAIL_ATTRIBUTE = seedFieldId('trackedEntityAttributes', 'EMAIL')
+export const PHONE_ATTRIBUTE = seedFieldId(
+    'trackedEntityAttributes',
+    'PHONE_NUMBER'
+)
+export const GEOJSON_ATTRIBUTE = seedFieldId(
+    'trackedEntityAttributes',
+    'GEOJSON'
+)
+export const TEXT_DATA_ELEMENT = seedFieldId('dataElements', 'TEXT')
+export const INTEGER_DATA_ELEMENT = seedFieldId('dataElements', 'INTEGER')
+export const CORRUPTED_DATE_VALUE = invalidDate.value
+export const OWNER = seedUser('Owner')
+export const READER = seedUser('Reader')
+export const OUTSIDER = seedUser('Outsider')
 
 const environment = process.env
 export const targetMajor = Number(environment?.E2E_EXPECTED_MAJOR)
@@ -113,9 +138,7 @@ export const SharingResponseSchema = z
     .passthrough()
 export const SavedListCollectionSchema = z
     .object({
-        trackedEntityInstanceFilters: z
-            .array(z.object({ id: z.string().optional() }))
-            .optional(),
+        trackedEntityInstanceFilters: z.array(z.object({ id: z.string() })),
     })
     .passthrough()
 export const SavedStageListSchema = z
@@ -132,40 +155,6 @@ export const RepairedListSchema = z
             .optional(),
     })
     .passthrough()
-
-export const requestUrl = (request: Request | Response) =>
-    new URL(request.url())
-export const isTrackerResource = (
-    request: Request | Response,
-    resource: 'trackedEntities' | 'events'
-) => requestUrl(request).pathname.endsWith(`/tracker/${resource}`)
-
-// Keeping the action and URL predicate separate makes network assertions readable.
-/* eslint-disable max-params -- test DSL helpers trade a compact call site for explicit network assertions */
-export const waitForTrackerResponse = async (
-    page: Page,
-    resource: 'trackedEntities' | 'events',
-    action: () => Promise<void | Response | null>,
-    matches: (url: URL) => boolean = () => true
-) => {
-    const pending = page.waitForResponse(
-        (response) =>
-            response.request().method() === 'GET' &&
-            isTrackerResource(response, resource) &&
-            matches(requestUrl(response))
-    )
-    await action()
-    const response = await pending
-    if (!response.ok()) {
-        const details = await response
-            .text()
-            .catch(() => `${response.status()} ${response.statusText()}`)
-        throw new Error(
-            `Tracker request failed (${response.status()}): ${details}`
-        )
-    }
-    return requestUrl(response)
-}
 
 export const programHash = ({
     orgUnit = true,
@@ -190,98 +179,15 @@ export const programHash = ({
     return `/#/?${parameters.toString()}`
 }
 
-export const savedViewButton = (page: Page, listId: string) =>
-    page
-        .getByTestId(`working-list-view-${listId}`)
-        .locator('button:not([data-saved-view-menu])')
-
-export const uiButton = (page: Page, dataTest: string) =>
-    page.locator(
-        `button[data-test="${dataTest}"], [data-test="${dataTest}"] button`
-    )
-
 export const openWorkingList = async (
     page: Page,
     options: Parameters<typeof programHash>[0] = {}
 ) => {
     await page.goto(programHash(options))
-    await expect(page.getByTestId('working-list-main')).toBeVisible({
-        timeout: 30_000,
-    })
+    await workingListReady(page)
     await expect(
         savedViewButton(page, options.template ?? 'active')
     ).toHaveAttribute('aria-pressed', 'true', { timeout: 30_000 })
-    await expect(
-        page.getByTestId('working-list-selection-loading')
-    ).toHaveCount(0)
-    await expect(page.getByTestId('working-list-table')).toBeVisible({
-        timeout: 30_000,
-    })
-    await expect(
-        page.locator('[data-testid="working-list-table"] tbody')
-    ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
-}
-
-export const resultRows = (page: Page) =>
-    page.locator('[data-testid^="working-list-row-"]')
-
-// Menu items carry their own data-test; there is no wrapper around them.
-export const menuItem = (scope: Page | Locator, dataTest: string) =>
-    scope.locator(`[role="menuitem"][data-test="${dataTest}"]`)
-
-const selectTriggers =
-    '[data-slot="select-trigger"], [data-slot="combobox-trigger"]'
-
-// The root is either the trigger itself or a field that contains it.
-export const selectTrigger = (page: Page, rootSelector: string) =>
-    page
-        .locator(
-            `:is(${selectTriggers}):is(${rootSelector}), ${rootSelector} :is(${selectTriggers})`
-        )
-        .first()
-
-export const chooseSelectOption = async (
-    page: Page,
-    rootSelector: string,
-    label: string
-) => {
-    await selectTrigger(page, rootSelector).click()
-    await page.getByRole('option', { name: label, exact: true }).click()
-}
-
-export const openMoreActions = async (page: Page) => {
-    const trigger = uiButton(page, 'working-list-options')
-    await trigger.click()
-    const download = menuItem(page, 'download-working-list')
-    await expect(download).toBeVisible()
-    return download
-}
-
-export const chooseSaveViewOption = async (page: Page, dataTest: string) => {
-    await uiButton(page, 'save-working-list').click()
-    const item = menuItem(page, dataTest)
-    await expect(item).toBeVisible()
-    await expect(item).toBeEnabled()
-    await item.click()
-}
-
-export const openSavedViewActions = async (page: Page, listId: string) => {
-    await page.getByTestId(`working-list-view-${listId}-menu`).click()
-    const menu = page.locator('[data-test="saved-view-actions-menu"]')
-    await expect(menu).toBeVisible()
-    return menu
-}
-
-export const chooseSavedViewAction = async (
-    page: Page,
-    listId: string,
-    dataTest: string
-) => {
-    const menu = await openSavedViewActions(page, listId)
-    const item = menuItem(menu, dataTest)
-    await expect(item).toBeVisible()
-    await expect(item).toBeEnabled()
-    await item.click()
 }
 
 export type OrganisationUnitAncestor = {
@@ -332,61 +238,14 @@ export const addFilter = async (
     fieldId: string
 ) => {
     if (scope === 'event') {
-        const stageControl = page.getByTestId('filter-programStage')
-        if ((await stageControl.count()) === 0) {
-            await page.getByTestId('more-filters-tracked-entity').click()
-            await menuItem(page, 'program-stage-filter-menu').hover()
-            await menuItem(page, `select-filter-stage-${STAGE}`).click()
-            await expect(stageControl).toBeVisible()
+        if ((await page.getByTestId('filter-programStage').count()) === 0) {
+            await selectStage(page, STAGE)
         }
-        await page.getByTestId('more-filters-tracked-entity').click()
-        await menuItem(page, `stage-filter-fields-${STAGE}`).hover()
-        await menuItem(page, `add-stage-filter-${STAGE}-${fieldId}`).click()
+        await addStageFilter(page, STAGE, fieldId)
     } else {
-        await page.getByTestId('more-filters-tracked-entity').click()
-        await menuItem(page, `add-filter-${fieldId}`).click()
+        await addTrackedEntityFilter(page, fieldId)
     }
-    await expect(page.getByTestId(`filter-${fieldId}`)).toBeVisible()
-    // Newly added filters open their editor right away.
-    await expect(page.getByTestId(`filter-editor-${fieldId}`)).toBeVisible()
 }
-
-export const openFilterEditor = async (page: Page, fieldId: string) => {
-    const editor = page.getByTestId(`filter-editor-${fieldId}`)
-    if (!(await editor.isVisible())) {
-        await page
-            .getByTestId(`filter-${fieldId}`)
-            .getByRole('combobox')
-            .click()
-    }
-    await expect(editor).toBeVisible()
-}
-
-// This is a small UI DSL used across both tracked-entity and event endpoints.
-export const applyTextFilter = async (
-    page: Page,
-    fieldId: string,
-    value: string,
-    resource: 'trackedEntities' | 'events',
-    parameter: 'filter' | 'filterAttributes'
-) => {
-    await openFilterEditor(page, fieldId)
-    const editor = page.getByTestId(`filter-editor-${fieldId}`)
-    await editor.getByLabel('Value').fill(value)
-    return waitForTrackerResponse(
-        page,
-        resource,
-        () => page.locator(`[data-test="filter-update-${fieldId}"]`).click(),
-        (url) =>
-            url.searchParams
-                .getAll(parameter)
-                .some(
-                    (entry) =>
-                        entry.includes(`${fieldId}:`) && entry.includes(value)
-                )
-    )
-}
-/* eslint-enable max-params */
 
 export const enterStageMode = async (page: Page) => {
     const response = await waitForTrackerResponse(
@@ -406,7 +265,7 @@ const basicAuthorization = ({ username, password }: E2ECredentials) =>
     `Basic ${globalThis.btoa(`${username}:${password}`)}`
 
 export const createApi = async (
-    playwright: Playwright,
+    playwright: PlaywrightWorkerArgs['playwright'],
     credentials: E2ECredentials
 ) => {
     if (!e2eEnvironment.dhis2Url) {

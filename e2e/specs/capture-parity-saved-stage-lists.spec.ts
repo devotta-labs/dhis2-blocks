@@ -1,9 +1,9 @@
+import { seedList } from '../fixtures/seed'
 import {
     MutationResponseSchema,
     ORG_UNIT,
     OWNER,
     PRIVATE_LIST,
-    PROGRAM,
     RepairedListSchema,
     type Request,
     STAGE,
@@ -125,19 +125,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
         playwright,
     }) => {
         const ownerApi = await createApi(playwright, OWNER)
-        const staleDefinition = {
-            id: STALE_LIST,
-            name: 'E2E stale metadata list',
-            program: { id: PROGRAM },
-            publicAccess: '--------',
-            externalAccess: false,
-            sortOrder: 3,
-            entityQueryCriteria: {
-                displayColumnOrder: [TEXT_ATTRIBUTE, 'WlMissing01'],
-                order: `${TEXT_ATTRIBUTE}:asc`,
-                attributeValueFilters: [],
-            },
-        }
+        const staleDefinition = seedList('E2E stale metadata list').data
         const trackerRequests: URL[] = []
         const captureTrackerRequest = (request: Request) => {
             if (isTrackerResource(request, 'trackedEntities')) {
@@ -156,7 +144,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 'aria-pressed',
                 'true'
             )
-            await page.waitForTimeout(300)
             expect(trackerRequests).toHaveLength(0)
 
             await page.locator('[data-test="repair-working-list"]').click()

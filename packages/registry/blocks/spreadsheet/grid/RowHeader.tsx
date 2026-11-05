@@ -6,6 +6,8 @@ import type { CellMessage, Tone } from '../model/annotations'
 import type { CellKey, GridRow } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 import { nameFrom, rowHeaderDomId } from './headers'
+import { NotesMarker, notesDomId, useRowNotes } from './RowNotes'
+import type { NotesTarget } from './RowNotes'
 
 // The row header column's width, at most 30% of the screen so the page reflows when zoomed; sticky group labels and
 // scroll padding keep clear of it.
@@ -14,7 +16,6 @@ export const ROW_HEADER_CLASS =
 export const BORDER_CLASS = 'border-b border-e border-dhis2-grey-300'
 
 const NO_KEYS: ReadonlyArray<CellKey> = []
-const NO_NOTES: ReadonlyArray<string> = []
 const NO_MESSAGES: ReadonlyArray<CellMessage> = []
 
 // Marked as a cell's notes are, on the header's light background.
@@ -39,15 +40,20 @@ const CellsLabel = ({ row }: { row: GridRow }) => {
     )
 }
 
-/** A row's name, with its badge, the source's and the rules' notes on it, and the rules' messages without a field. */
+/**
+ * A row's name, with its badge, a marker opening the source's and the rules' notes on it, and the rules' messages
+ * without a field.
+ */
 export const RowHeader = memo(function RowHeader({
     idScope,
     tableId,
     row,
+    openNotes,
 }: {
     idScope: string
     tableId: string
     row: GridRow
+    openNotes(target: NotesTarget): void
 }) {
     const {
         effects,
@@ -55,18 +61,9 @@ export const RowHeader = memo(function RowHeader({
         RowLabel = CellsLabel,
         RowBadge,
     } = useSpreadsheetContext()
-    // Every key the row's notes and messages are under: a register's row shows what the rules say of each of its
-    // events, once, as a program's rule says the same of every event it runs on.
-    const notes = useStore(
-        effects,
-        useShallow((state) => [
-            ...new Set(
-                rowKeysOf(row).flatMap(
-                    (id) => state.rowNotes.get(id) ?? NO_NOTES
-                )
-            ),
-        ])
-    )
+    const rowHeader = rowHeaderDomId(idScope, tableId, row.id)
+    const notes = useRowNotes(row)
+    // Every key the row's messages are under, as for its notes.
     const messages = useStore(
         effects,
         useShallow((state) =>
@@ -84,6 +81,9 @@ export const RowHeader = memo(function RowHeader({
     return (
         <th
             scope="row"
+            aria-describedby={
+                notes.length === 0 ? undefined : notesDomId(rowHeader)
+            }
             className={cn(
                 BORDER_CLASS,
                 ROW_HEADER_CLASS,
@@ -92,19 +92,16 @@ export const RowHeader = memo(function RowHeader({
         >
             {/* Cells are named by the label alone; the badge is said once, with the row. The label sets its own
                 direction, so the header keeps the table's and stays at its start. */}
-            <span id={rowHeaderDomId(idScope, tableId, row.id)} dir="auto">
+            <span id={rowHeader} dir="auto">
                 <RowLabel row={row} />
             </span>
             {RowBadge === undefined ? null : <RowBadge rowId={row.id} />}
-            {notes.map((note, i) => (
-                <span
-                    key={i}
-                    dir="auto"
-                    className="block text-xs text-dhis2-grey-700"
-                >
-                    {note}
-                </span>
-            ))}
+            <NotesMarker
+                row={row}
+                rowHeader={rowHeader}
+                notes={notes}
+                onOpen={openNotes}
+            />
             {/* What the row's rules, or their failure, say without a field. */}
             {messages.length > 0 ? (
                 <ul className="mt-0.5 flex flex-col gap-0.5">

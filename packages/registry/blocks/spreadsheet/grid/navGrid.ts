@@ -2,10 +2,12 @@ import i18n from '@dhis2/d2-i18n'
 import type { StoreApi } from 'zustand/vanilla'
 import type { Field } from '@/components/dhis2-value-types'
 import { replacementFor } from '../cells/Cell'
+import { cellDomId } from '../cells/cellProps'
 import type { CellOverrides } from '../cells/cellProps'
 import { takesPastedText } from '../cells/popupEditors'
 import type { AnnotationsState } from '../model/annotations'
-import type { CellKey, GridTable } from '../model/types'
+import { indexCells } from '../model/types'
+import type { CellKey, CellPlace, GridTable } from '../model/types'
 import type { ReadonlyStore, SpreadsheetContext } from '../provider/context'
 import type { CellStoreState } from '../store/store'
 import type { NavGrid } from './navigation'
@@ -81,3 +83,16 @@ export const navGrid = (
         }
     }),
 })
+
+/** Where each cell control is, by its DOM id; closed cells have no control. */
+export const positionsOf = (
+    idScope: string,
+    tables: ReadonlyArray<GridTable>,
+    keyOf: SpreadsheetContext['keyOf']
+): ReadonlyMap<string, CellPlace> =>
+    new Map(
+        Array.from(indexCells(tables, keyOf), ([key, place]) => [
+            cellDomId(idScope, key),
+            place,
+        ])
+    )

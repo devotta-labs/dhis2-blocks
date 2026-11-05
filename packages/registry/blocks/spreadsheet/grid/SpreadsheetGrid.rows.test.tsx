@@ -42,6 +42,41 @@ test('a row’s own errors and warnings show in its header, marked as a cell’s
         .toHaveTextContent(/^2026-10-21$/)
 })
 
+test('a row’s notes are a marker with their count that opens them, and the row stays one line', async () => {
+    const feedback = `## Feedback\n\n- Weight is low\n- ${'Check again next visit. '.repeat(20)}`
+    await mount([makeTable({ rows: ['a', 'b', 'c'] })], {
+        rowNotes: [
+            ['t1r0', [feedback, 'Second note']],
+            ['t1r1', ['Only note']],
+        ],
+    })
+    const [noted, , plain] = page.getByRole('rowheader').elements()
+    expect(noted.getBoundingClientRect().height).toBe(
+        plain.getBoundingClientRect().height
+    )
+    // The header is named without the notes; screen readers hear them as its description.
+    await expect.element(noted).not.toHaveAccessibleName(/Weight/)
+    await expect
+        .element(noted)
+        .toHaveAccessibleDescription(/Weight is low.*Second note/)
+    await expect
+        .element(page.getByRole('button', { name: 'Note', exact: true }))
+        .toHaveAttribute('tabindex', '-1')
+    const marker = page.getByRole('button', { name: 'Notes: 2' })
+    await expect.element(marker).toHaveAttribute('tabindex', '-1')
+    await marker.click()
+    const notes = page.getByRole('dialog', { name: 'Notes: 2 a' })
+    const first = notes.getByRole('listitem').first()
+    await expect.element(first).toHaveTextContent('Weight is low')
+    expect(getComputedStyle(first.element()).whiteSpace).toBe('pre-wrap')
+    await expect
+        .element(notes.getByRole('listitem').nth(1))
+        .toHaveTextContent('Second note')
+    await userEvent.keyboard('{Escape}')
+    await expect.element(notes).not.toBeInTheDocument()
+    expect(document.activeElement).toBe(marker.element())
+})
+
 test('row headers take at most 30% of a narrow screen, so the page reflows at 400% zoom', async () => {
     const { innerWidth, innerHeight } = window
     await page.viewport(320, 640)

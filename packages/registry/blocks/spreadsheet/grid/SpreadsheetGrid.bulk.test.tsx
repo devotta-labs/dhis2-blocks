@@ -279,6 +279,36 @@ test('a context menu on a cell, from the keyboard or a right click, holds its ro
     await expect.element(cell).toHaveAttribute('data-mode', 'ready')
 })
 
+test('Ctrl+Shift+\\ (Cmd+Shift+\\ on Apple keyboards) on a cell opens its menu, as a context menu does', async () => {
+    await mount([makeTable({ columns: ['A', 'B'], rows: ROWS })])
+    const apple = /Mac|iPhone|iPad/.test(navigator.platform)
+    // Matched on the key's place, whatever the layout prints on it.
+    const press = (target: Element) => {
+        const event = new KeyboardEvent('keydown', {
+            code: 'Backslash',
+            key: '#',
+            shiftKey: true,
+            ctrlKey: !apple,
+            metaKey: apple,
+            bubbles: true,
+            cancelable: true,
+        })
+        target.dispatchEvent(event)
+        return event.defaultPrevented
+    }
+    const cell = control(cellKey('t1r1', 'c0'))
+    cell.focus()
+    expect(press(cell)).toBe(true)
+    await expect.element(page.getByRole('group', { name: 'Row' })).toBeVisible()
+    await expect
+        .element(page.getByRole('group', { name: 'Column' }))
+        .toBeVisible()
+    await userEvent.keyboard('{Escape}')
+    expect(focused()).toBe(cell.id)
+    await userEvent.keyboard('4')
+    expect(press(cell)).toBe(false)
+})
+
 test('a context menu in a cell being typed in is the browser’s', async () => {
     await mount([makeTable({ rows: ROWS })])
     const cell = control(cellKey('t1r0', 'c0'))

@@ -9,16 +9,13 @@ import {
     useRef,
     useState,
 } from 'react'
-import type { ClipboardEvent, KeyboardEvent } from 'react'
+import type { ClipboardEvent, KeyboardEvent, SyntheticEvent } from 'react'
 import { flushSync } from 'react-dom'
-import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
-import { Kbd } from '@/components/dhis2/ui/kbd'
 import { RowCell } from '../cells/Cell'
 import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
 import { addsRow } from '../cells/useCellMode'
-import { indexCells } from '../model/types'
 import type {
     CellKey,
     CellPlace,
@@ -27,11 +24,12 @@ import type {
     GridTable,
 } from '../model/types'
 import { useSpreadsheetContext, useRowCells } from '../provider/context'
-import type { SpreadsheetContext } from '../provider/context'
+import { AddRowButton } from './AddRowButton'
 import {
     ACTIONS_CLASS,
     ActionsButton,
     BulkMenu,
+    opensMenu,
     RowActions,
     takesColumnActions,
 } from './BulkMenu'
@@ -40,23 +38,12 @@ import { columnHeaderIds, headerDomId, rowHeaderDomId } from './headers'
 import { nextCell } from './navigation'
 import type { NavKey } from './navigation'
 import { fillDown } from './fillDown'
-import { fieldAt, navGrid, reasonOf } from './navGrid'
+import { fieldAt, navGrid, positionsOf, reasonOf } from './navGrid'
 import { isBlock, pastedBlock, pasteTargets } from './paste'
 import { BORDER_CLASS, ROW_HEADER_CLASS, RowHeader } from './RowHeader'
+import { NotesPopover } from './RowNotes'
+import type { NotesTarget } from './RowNotes'
 import { useAddRow } from './useAddRow'
-
-/** Where each cell control is, by its DOM id; closed cells have no control. */
-const positionsOf = (
-    idScope: string,
-    tables: ReadonlyArray<GridTable>,
-    keyOf: SpreadsheetContext['keyOf']
-): ReadonlyMap<string, CellPlace> =>
-    new Map(
-        Array.from(indexCells(tables, keyOf), ([key, place]) => [
-            cellDomId(idScope, key),
-            place,
-        ])
-    )
 
 // A fixed height, a minimum in a table, lets the cell's control fill the row however tall the row header makes it.
 const CELL_CLASS = cn(BORDER_CLASS, 'h-9 min-w-28 p-0')
@@ -73,6 +60,7 @@ interface TableRowProps {
     labels: ReadonlyArray<string>
     move(key: NavKey): void
     openMenu(target: BulkTarget): void
+    openNotes(target: NotesTarget): void
 }
 
 /** One row of a table: it reads its cells' states and effects, once for the row, and hands each cell its own. */
@@ -83,6 +71,7 @@ const TableRow = memo(function TableRow({
     labels,
     move,
     openMenu,
+    openNotes,
 }: TableRowProps) {
     const { keyOf, store } = useSpreadsheetContext()
     const keys = table.columns.map((column) => keyOf(row, column))
@@ -90,7 +79,12 @@ const TableRow = memo(function TableRow({
     const rowHeader = rowHeaderDomId(idScope, table.id, row.id)
     return (
         <tr>
-            <RowHeader idScope={idScope} tableId={table.id} row={row} />
+            <RowHeader
+                idScope={idScope}
+                tableId={table.id}
+                row={row}
+                openNotes={openNotes}
+            />
             {table.columns.map((column, c) => (
                 <td key={column.id} className={CELL_CLASS}>
                     <RowCell
@@ -121,6 +115,7 @@ interface TableViewProps {
     /** Adds a row to the table and focuses its first open cell. */
     addRow(tableId: string): void
     openMenu(target: BulkTarget): void
+    openNotes(target: NotesTarget): void
 }
 
 /** One table in its own scrolling region, its header row and first column sticky. */
@@ -131,6 +126,7 @@ const TableView = memo(function TableView({
     addLabel,
     addRow,
     openMenu,
+    openNotes,
 }: TableViewProps) {
     const context = useSpreadsheetContext()
     const region = useRef<HTMLDivElement>(null)
@@ -175,7 +171,7 @@ const TableView = memo(function TableView({
                 ref={region}
                 role="region"
                 aria-labelledby={titleId}
-                className="isolate max-h-[70vh] scroll-ps-[min(12rem,30vw)] scroll-pe-9 overflow-auto rounded-dhis2-sm border border-dhis2-grey-300 bg-white"
+                className="isolate w-fit max-w-full max-h-[70vh] scroll-ps-[min(12rem,30vw)] scroll-pe-9 overflow-auto rounded-dhis2-sm border border-dhis2-grey-300 bg-white"
             >
                 <table
                     aria-labelledby={titleId}
@@ -273,29 +269,18 @@ const TableView = memo(function TableView({
                                 labels={labels}
                                 move={move}
                                 openMenu={openMenu}
+                                openNotes={openNotes}
                             />
                         ))}
                     </tbody>
                 </table>
             </div>
             {addLabel === undefined ? null : (
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    className="gap-1.5 self-start pe-1"
-                    aria-describedby={titleId}
-                    aria-keyshortcuts="Control+Enter Meta+Enter"
+                <AddRowButton
+                    label={addLabel}
+                    describedBy={titleId}
                     onClick={() => addRow(table.id)}
-                >
-                    {addLabel}
-                    {/* Screen readers hear the shortcut from aria-keyshortcuts; the button keeps its name. */}
-                    <Kbd aria-hidden>
-                        {/* Apple keyboards say ⌘ where others say Ctrl. */}
-                        {/Mac|iPhone|iPad/.test(navigator.platform)
-                            ? '⌘↵'
-                            : i18n.t('Ctrl ↵')}
-                    </Kbd>
-                </Button>
+                />
             )}
         </div>
     )
@@ -390,6 +375,12 @@ export const SpreadsheetGrid = ({
         (target: BulkTarget) => setMenu({ ...target, open: true }),
         []
     )
+    // The one popover of a row's notes, kept the same way.
+    const [notes, setNotes] = useState<NotesTarget & { open: boolean }>()
+    const openNotes = useCallback(
+        (target: NotesTarget) => setNotes({ ...target, open: true }),
+        []
+    )
 
     // A value refused where the person is (Enter, an arrow, leaving the cell, a paste) is said aloud, once per text.
     useEffect(
@@ -425,6 +416,22 @@ export const SpreadsheetGrid = ({
         if (target instanceof HTMLInputElement) {
             target.select()
         }
+    }
+
+    /** Opens the grid's menu on a ready cell, its row's and its column's actions; an editor keeps the browser's. */
+    const cellMenu = (event: SyntheticEvent) => {
+        const at = readyCell(event.target)
+        if (at === undefined || !(event.target instanceof HTMLElement)) {
+            return
+        }
+        event.preventDefault()
+        const table = tables[at.table]
+        openMenu({
+            anchor: event.target,
+            table,
+            row: table.rows[at.row],
+            column: table.columns[at.column],
+        })
     }
 
     const onPaste = (event: ClipboardEvent<HTMLDivElement>) => {
@@ -512,6 +519,9 @@ export const SpreadsheetGrid = ({
                 }
             }
         }
+        if (opensMenu(event)) {
+            cellMenu(event)
+        }
         // A cell that saved the typing lets the key through; one that kept the text, or an editor, stops it.
         const at =
             event.target instanceof HTMLElement
@@ -539,24 +549,7 @@ export const SpreadsheetGrid = ({
             }}
             onPaste={onPaste}
             onKeyDown={onKeyDown}
-            onContextMenu={(event) => {
-                // A ready cell's menu holds its row's and column's actions; an editor keeps the browser's.
-                const at = readyCell(event.target)
-                if (
-                    at === undefined ||
-                    !(event.target instanceof HTMLElement)
-                ) {
-                    return
-                }
-                event.preventDefault()
-                const table = tables[at.table]
-                openMenu({
-                    anchor: event.target,
-                    table,
-                    row: table.rows[at.row],
-                    column: table.columns[at.column],
-                })
-            }}
+            onContextMenu={cellMenu}
         >
             <a
                 href={`#${end}`}
@@ -578,6 +571,7 @@ export const SpreadsheetGrid = ({
                     addLabel={addRow?.get(table.id)?.label}
                     addRow={add}
                     openMenu={openMenu}
+                    openNotes={openNotes}
                 />
             ))}
             <BulkMenu
@@ -587,6 +581,12 @@ export const SpreadsheetGrid = ({
                     setMenu((open) => open && { ...open, open: false })
                 }
                 changeHere={changeHere}
+            />
+            <NotesPopover
+                target={notes}
+                onClose={() =>
+                    setNotes((open) => open && { ...open, open: false })
+                }
             />
             <div id={end} tabIndex={-1} className="outline-none" />
             {GridFooter === undefined ? null : (

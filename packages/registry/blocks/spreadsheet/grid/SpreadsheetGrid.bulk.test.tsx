@@ -386,6 +386,7 @@ test('the popover’s preview says what the summary then announces, after the pr
     // Text that is not a value keeps Apply disabled.
     await userEvent.keyboard('abc{Enter}')
     await expect.element(apply).toBeDisabled()
+    expect(announced).toEqual(['Enter a whole number'])
     await userEvent.keyboard('{Backspace}{Backspace}{Backspace}5{Enter}')
     await expect
         .element(
@@ -401,7 +402,10 @@ test('the popover’s preview says what the summary then announces, after the pr
         .getByRole('button', { name: 'Create events' })
         .click()
     expect(columnKeys.map(value)).toEqual(['1', undefined, '5'])
-    expect(announced).toEqual(['Cells changed: 1. 1 skipped: Completed.'])
+    expect(announced).toEqual([
+        'Enter a whole number',
+        'Cells changed: 1. 1 skipped: Completed.',
+    ])
 })
 
 const Seven: CellComponent = ({ id, labelledBy }) => {
@@ -459,4 +463,66 @@ test('from a cell’s context menu the popover sits under the column’s header,
     expect(columnKeys.map(value)).toEqual([undefined, undefined, undefined])
     expect(announced).toEqual([])
     await expect.element(cell).toHaveFocus()
+})
+
+test('a press elsewhere closes the popover and leaves focus where the press put it', async () => {
+    await mount([
+        makeTable({ columns: ['A', 'B', 'C', 'D', 'E', 'F'], rows: ROWS }),
+    ])
+    const button = page.getByRole('button', { name: 'Column actions A' })
+    await openPopover('A')
+    await expect.element(popover('A')).toBeVisible()
+    // On text that takes no focus: focus does not go back to the button.
+    await userEvent.click(page.getByText('Table t1'))
+    await expect.element(popover('A')).not.toBeInTheDocument()
+    // Past the frames in which a closing popover moves focus.
+    await nextFrame()
+    await nextFrame()
+    await expect.element(button).not.toHaveFocus()
+
+    // On another cell, past the popover's width: that cell keeps focus.
+    await openPopover('A')
+    await expect.element(popover('A')).toBeVisible()
+    const other = control(cellKey('t1r0', 'c5'))
+    await userEvent.click(other)
+    await expect.element(popover('A')).not.toBeInTheDocument()
+    await nextFrame()
+    await nextFrame()
+    expect(focused()).toBe(other.id)
+})
+
+test('a file column can be cleared but takes no value to apply', async () => {
+    await mount([
+        makeTable({
+            columns: ['A'],
+            fields: [{ valueType: 'FILE_RESOURCE' }],
+            rows: ROWS,
+        }),
+    ])
+    await page.getByRole('button', { name: 'Column actions A' }).click()
+    await expect.poll(items).toEqual(['Clear all column cells'])
+})
+
+test('an option picked from the list in the popover is applied to the column', async () => {
+    const { value } = await mount([
+        makeTable({
+            columns: ['A'],
+            fields: [
+                {
+                    valueType: 'TEXT',
+                    options: [
+                        { code: 'A', name: 'Alpha' },
+                        { code: 'B', name: 'Beta' },
+                    ],
+                },
+            ],
+            rows: ROWS,
+        }),
+    ])
+    await openPopover('A')
+    await popover('A').getByRole('combobox', { name: 'A' }).click()
+    await popover('A').getByRole('option', { name: 'Beta' }).click()
+    await expect.element(popover('A')).toBeVisible()
+    await popover('A').getByRole('button', { name: 'Apply' }).click()
+    expect(columnKeys.map(value)).toEqual(['B', 'B', 'B'])
 })

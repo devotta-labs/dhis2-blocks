@@ -151,6 +151,8 @@ The entry parts are presentational: they render from the entry and the meta cont
 
 `TimelineHistoryEntry` picks the part for each `kind`. It is short, so copy it when you want a kind to look different. `isEntryOf(entry, 'event')` narrows an entry for you.
 
+Only a rendered heading can replace an entry's details. The default day feed passes its represented stored day and phase to its entries, avoiding repeated due/change dates and scheduled badges. The Overdue heading replaces the badge, not the due date. `groupBy="none"` and custom month/program groups retain dates and scheduled status; a `Timeline` root alone does not suppress them. Standalone cards keep their details, and `hideDueDate` and an explicit `TimelineChangeSummary withDay` still apply.
+
 `TimelineEventEntry` is compound. Leave its children out to get the standard composition, or compose your own from `TimelineEventStage`, `TimelineEventProgram`, `TimelineEventStatus`, `TimelineEventOrgUnit`, `TimelineEventCompletedBy`, `TimelineEventValues`, `TimelineEventNotes` and `TimelineEventChanges`. Your own components can read the event with `useTimelineEventEntry()`. `TimelineChangeEntry` is compound in the same way (`TimelineChangeSummary`, `TimelineChangeList`, `useTimelineSave()`). Every part takes `className` and native props.
 
 **Parts don't fetch.** The one exception is `TimelineEventChanges` ("Show changes"), which fetches that event's changelog only when the user opens it. If you fetch changes some other way, render `TimelineSaves` with the saves.
@@ -228,6 +230,10 @@ const GroupedList = () => {
 }
 ```
 
+Custom layouts can wrap their entries in `<TimelineHeadingProvider heading={group.heading}>` when they actually render the group's heading and phase placement. The optional `TimelineHeadingFacts` contains a represented ISO stored `day` and/or `phase`; `useTimelineHeading()` lets custom entry parts read it. Omitting the provider (or passing no facts) keeps full details. Do not infer a represented day from a translated label or arbitrary group key.
+
+An unreadable `at` always belongs to Undated, even with an explicit phase. `useShowMore`/`revealPast` count these entries as the oldest past entries. Dated future and overdue entries remain pinned; explicit `phase: 'past'` keeps an already-recorded entry in the past even if the server's stored day is ahead of the viewer's.
+
 ## Server paging
 
 One source that pages on the server needs nothing special. Use `useInfiniteQuery`, flatten the pages into entries, and point `TimelineShowMore` at the next page. For tracker events, use `useProgramInfo`, `useOrgUnitNames` and `eventEntry` to name the events:
@@ -241,6 +247,8 @@ One source that pages on the server needs nothing special. Use `useInfiniteQuery
 ```
 
 Merging several sources that each page on the server is not built in. The history hooks fetch each person's data in full, up to a cap, instead.
+
+`onShowMore` remains a void callback. A server request must set `loading` in the same update as the press; a press that adds no entries and starts no load settles as a no-op after the commit. While loading, focus stays on the busy button. New entries move focus to the first fresh item in reading order and announce their count. An empty or failed request returns focus to the button, or the last rendered item if the button has disappeared. Later unrelated updates cannot complete an already-settled request. Keep `TimelineShowMore` mounted with `hasMore={false}` so its live region survives the final page.
 
 ## Notes
 

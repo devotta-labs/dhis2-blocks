@@ -24,10 +24,19 @@ export type GroupBy<TData> =
     | 'none'
     | ((entry: TimelineEntry<TData>) => { key: string; label: string })
 
+/** Facts actually represented by a rendered group heading and its placement. */
+export interface TimelineHeadingFacts {
+    /** The represented stored day, not the translated label or group key. */
+    day?: string
+    phase?: TimelinePhase | 'undated'
+}
+
 export interface TimelineGroup<TData = unknown> {
     key: string
     label: string
     phase: TimelinePhase | 'undated'
+    /** Optional facts for layouts that render this group's heading. */
+    heading?: TimelineHeadingFacts
     entries: TimelineEntry<TData>[]
 }
 

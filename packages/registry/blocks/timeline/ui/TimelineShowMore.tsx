@@ -12,7 +12,6 @@ import { useTimeline } from '../hooks/useTimeline'
 interface Request {
     /** The entries on show when the button was pressed. */
     shown: ReadonlySet<string>
-    sawLoading: boolean
 }
 
 /**
@@ -38,24 +37,23 @@ export const TimelineShowMore = ({
     const { state, meta } = useTimeline()
     const { entries, groups } = state
     const { id } = meta
-    const request = useRef<Request>()
+    const [request, setRequest] = useState<Request>()
     const button = useRef<HTMLButtonElement>(null)
     const [announced, setAnnounced] = useState('')
 
     useEffect(() => {
-        const pending = request.current
-        if (pending === undefined) {
+        if (request === undefined) {
             return
         }
         const ordered = groups.flatMap((group) => group.entries)
-        const added = ordered.filter((entry) => !pending.shown.has(entry.id))
+        const added = ordered.filter((entry) => !request.shown.has(entry.id))
         const [fresh] = added
         const itemOf = (entryId: string) =>
             document.querySelector<HTMLElement>(
                 `[data-timeline-id="${CSS.escape(id)}"][data-timeline-entry="${CSS.escape(entryId)}"]`
             )
         if (fresh !== undefined) {
-            request.current = undefined
+            setRequest(undefined)
             itemOf(fresh.id)?.focus()
             setAnnounced(
                 added.length === 1
@@ -64,10 +62,8 @@ export const TimelineShowMore = ({
                           count: added.length,
                       })
             )
-        } else if (loading) {
-            pending.sawLoading = true
-        } else if (pending.sawLoading) {
-            request.current = undefined
+        } else if (!loading) {
+            setRequest(undefined)
             const last = ordered.at(-1)
             if (button.current !== null) {
                 button.current.focus()
@@ -75,7 +71,7 @@ export const TimelineShowMore = ({
                 itemOf(last.id)?.focus()
             }
         }
-    }, [entries, groups, loading, hasMore, id])
+    }, [request, groups, loading, id])
 
     // Stays mounted after the last press, so its announcement is still heard.
     const status = (
@@ -103,22 +99,11 @@ export const TimelineShowMore = ({
                 focusableWhenDisabled
                 aria-busy={loading}
                 onClick={() => {
-                    const pending: Request = {
+                    setRequest({
                         shown: new Set(entries.map((entry) => entry.id)),
-                        sawLoading: false,
-                    }
-                    request.current = pending
+                    })
+                    setAnnounced('')
                     onShowMore()
-                    // A press that starts no load and adds nothing leaves nothing
-                    // to wait for; the render that shows either has run by now.
-                    setTimeout(() => {
-                        if (
-                            request.current === pending &&
-                            !pending.sawLoading
-                        ) {
-                            request.current = undefined
-                        }
-                    }, 0)
                 }}
             >
                 {children ??

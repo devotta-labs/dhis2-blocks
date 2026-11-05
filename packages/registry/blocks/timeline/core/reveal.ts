@@ -1,4 +1,4 @@
-import { storedDay } from '@/components/dhis2-value-display/calendar'
+import { classifyEntry } from './classify'
 import { compareEntries } from './sort'
 import type { TimelineEntry } from './types'
 
@@ -16,12 +16,8 @@ export interface RevealOptions {
 }
 
 const isPast = (entry: TimelineEntry<unknown>, today: string) => {
-    if (entry.phase !== undefined) {
-        return entry.phase === 'past'
-    }
-    const day = storedDay(entry.at)
-    // Undated entries count as past: they are listed last.
-    return day === undefined || day <= today
+    const { phase } = classifyEntry(entry, today)
+    return phase === 'past' || phase === 'undated'
 }
 
 /**

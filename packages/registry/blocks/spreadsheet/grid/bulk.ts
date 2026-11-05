@@ -3,7 +3,14 @@ import { parseTyped, typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { formatCount } from '../cells/OptionCell'
 import type { AnnotationsState } from '../model/annotations'
-import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
+import type {
+    CellKey,
+    CellState,
+    CommitResult,
+    GridColumn,
+    GridRow,
+    GridTable,
+} from '../model/types'
 import { addsHiddenOption } from '../store/store'
 import type { CellStoreState } from '../store/store'
 import { fieldAt } from './navGrid'
@@ -96,6 +103,29 @@ const offersAll = (
     )
 }
 
+/** Whether the cell holds the text's value already, with no draft to drop and no failed save to send again. */
+const holds = (
+    state: CellStoreState,
+    settings: ValueSettings,
+    { key, text }: BulkCandidate
+) => {
+    const cell = state.cells[key]
+    if (cell?.draft !== undefined || cell?.sync === 'failed') {
+        return false
+    }
+    const parsed = parseTyped(fieldAt(state, key), text, settings)
+    return parsed.ok && parsed.value === cell?.value
+}
+
+/** Whether a commit changed its cell: it queued a value, or dropped the draft over the value the cell holds. */
+export const changedBy = (
+    result: CommitResult,
+    was: CellState | undefined,
+    now: CellState | undefined
+) =>
+    result === 'queued' ||
+    (was?.draft !== undefined && now?.draft === undefined)
+
 /** What a bulk action writes and what it leaves alone. */
 export interface BulkPlan {
     entries: BulkCandidate[]
@@ -125,8 +155,8 @@ export const skippedClause = (skipped: ReadonlyMap<string, number>) => {
 
 /**
  * What a bulk action writes, for the preview, the confirmation and the write alike. A cell is empty with no value and
- * no draft; one that is not is left alone unless `overwrite`, and an empty one is not cleared. A cell the person cannot
- * edit, or that does not offer the value's options, is skipped and counted under its reason.
+ * no draft; one that is not is left alone unless `overwrite`, and one that holds the value already is left out. A cell
+ * the person cannot edit, or that does not offer the value's options, is skipped and counted under its reason.
  */
 export const planBulk = (
     candidates: ReadonlyArray<BulkCandidate>,
@@ -164,7 +194,9 @@ export const planBulk = (
                 ? undefined
                 : i18n.t('This option is not offered here'))
         if (skip === undefined) {
-            entries.push(candidate)
+            if (!holds(state, settings, candidate)) {
+                entries.push(candidate)
+            }
         } else {
             skipped.set(skip, (skipped.get(skip) ?? 0) + 1)
         }

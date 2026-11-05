@@ -59,3 +59,17 @@ test('a two-row block pasted on the last row lands one cell and writes without a
     expect(value(key)).toBe('7')
     expect(announced).toEqual(['Cells pasted: 1'])
 })
+
+test('a block paste counts only the cells it changed', async () => {
+    const first = cellKey('t1r0', 'c0')
+    const second = cellKey('t1r0', 'c1')
+    const { value, announced } = await mount(
+        [makeTable({ columns: ['A', 'B'], rows: ['a'] })],
+        { values: [[first, '7']] }
+    )
+    const cell = control(first)
+    cell.focus()
+    paste(cell, '7\t8')
+    expect(value(second)).toBe('8')
+    expect(announced).toEqual(['Cells pasted: 1'])
+})

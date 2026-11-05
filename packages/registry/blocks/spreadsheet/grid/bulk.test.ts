@@ -155,6 +155,28 @@ describe('planBulk', () => {
         expect(filled).toBe(0)
     })
 
+    test('leaves out a cell that holds the value already, unless its save failed or it has a draft', () => {
+        const { table, plan, store } = setup({
+            values: [
+                ['r1.n', '5'],
+                ['r2.n', '5'],
+                ['r3.n', '5'],
+            ],
+        })
+        store.getState().markSync([{ key: 'r2.n', value: '5' }], 'failed')
+        store.getState().commit('r3.n', 'abc')
+        expect(
+            plan(columnCandidates(table, column('n'), '5', keyOf), true)
+        ).toEqual({
+            entries: [
+                { key: 'r2.n', text: '5' },
+                { key: 'r3.n', text: '5' },
+            ],
+            skipped: new Map(),
+            filled: 0,
+        })
+    })
+
     test('clears only cells that hold a value or a draft', () => {
         const { plan, store } = setup({ values: [['r1.n', '7']] })
         store.getState().commit('r2.n', 'abc')

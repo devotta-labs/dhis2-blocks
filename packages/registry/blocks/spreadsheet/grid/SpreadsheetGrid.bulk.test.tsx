@@ -412,12 +412,13 @@ test('Yes from the column’s popover fills its empty cells; with Overwrite it r
     await popover('Done')
         .getByRole('checkbox', { name: 'Overwrite existing values' })
         .click()
+    // The cells that hold Yes already are not changed.
     await expect
-        .element(popover('Done').getByText('Changes 3 cells.', { exact: true }))
+        .element(popover('Done').getByText('Changes 1 cell.', { exact: true }))
         .toBeVisible()
     await popover('Done').getByRole('button', { name: 'Apply' }).click()
     expect(columnKeys.map(value)).toEqual(['true', 'true', 'true'])
-    expect(announced.at(-1)).toBe('Cells changed: 3.')
+    expect(announced.at(-1)).toBe('Cells changed: 1.')
 })
 
 test('the popover’s preview says what the summary then announces, after the provider is asked', async () => {

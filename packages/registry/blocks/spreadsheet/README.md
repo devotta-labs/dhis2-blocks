@@ -236,7 +236,8 @@ it is one undo step (Ctrl+Z, Cmd+Z), and the rules re-run on the rows it touched
   alone unless the grid handled the key.
 
 An action never overwrites by default: a cell is empty with no value and no draft, and one that is not is left alone
-unless "Overwrite existing values" is ticked (a clear always overwrites). Cells that cannot be edited are skipped and counted
+unless "Overwrite existing values" is ticked (a clear always overwrites). A cell that holds the value already is not
+written, and not counted as changed. Cells that cannot be edited are skipped and counted
 under their reason: closed, read-only, hidden by a rule, a kind that cannot be filled ("Edit this field in its own form"),
 or an option the cell does not offer. The preview ("Changes 12 cells. 3 already have a value. 2 skipped: Completed.") and
 the summary said afterwards ("Cells changed: 12. 2 skipped: Completed.", the most common reason) come from the same plan

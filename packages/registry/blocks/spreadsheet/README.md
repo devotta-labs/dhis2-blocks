@@ -192,7 +192,7 @@ changes.
   cells; each has a store of its own by default.
 - `bulkColumn(column)`: whether the column's cells take row and column actions; every column by default. A column whose
   cells do not all share one field offers no column action either way.
-- `confirmBulk(keys)`: asked before a bulk action writes to these cells; returns `{ title, body, confirm }` for a dialog
+- `confirmBulk(keys)`: asked before a bulk action or a block paste writes to these cells; returns `{ title, body, confirm }` for a dialog
   that asks the person first, or `undefined` to write at once.
 - `offline`: the server cannot be reached now, so files cannot be uploaded.
 - `fileUrl(key, image)`: where the server serves the file a cell's saved value names (`image` for an image cell), or
@@ -249,7 +249,7 @@ bulkColumn?(column: C): boolean // default: every column
 confirmBulk?(keys: ReadonlyArray<CellKey>): { title: string; body: string; confirm: string } | undefined
 ```
 
-`confirmBulk` is asked with the cells a bulk action would write; a result opens a dialog with that title and body and a
+`confirmBulk` is asked with the cells a bulk action or a block paste would write; a result opens a dialog with that title and body and a
 confirm button (and **Cancel**) before anything is written.
 
 ## Typing

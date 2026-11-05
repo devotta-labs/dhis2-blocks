@@ -75,7 +75,7 @@ const ColumnValue = ({
 }: Pick<ColumnTarget, 'table' | 'column'> & {
     scope: string
     plan(text: string, overwrite: boolean): BulkPlan
-    onApply(plan: BulkPlan): void
+    onApply(text: string, overwrite: boolean): void
     onCancel(): void
 }) => {
     const context = useSpreadsheetContext()
@@ -195,7 +195,7 @@ const ColumnValue = ({
                         if (saved === undefined) {
                             control?.focus()
                         } else {
-                            onApply(plan(saved, overwrite))
+                            onApply(saved, overwrite)
                         }
                     }}
                 >
@@ -208,7 +208,7 @@ const ColumnValue = ({
 
 /**
  * The grid's one popover for a value to apply to a whole column, under the column's header. Focus goes into the
- * control when it opens and back to what opened the menu when it closes; Apply hands over the plan for the cells.
+ * control when it opens and back to what opened the menu when it closes; Apply hands over the value and whether it overwrites, and the menu plans.
  */
 export const ColumnPopover = ({
     target,
@@ -221,7 +221,7 @@ export const ColumnPopover = ({
     open: boolean
     onClose(): void
     plan(text: string, overwrite: boolean): BulkPlan
-    onApply(plan: BulkPlan): void
+    onApply(text: string, overwrite: boolean): void
 }) => {
     const { idScope } = useSpreadsheetContext()
     const { anchor, table, column } = target
@@ -270,9 +270,9 @@ export const ColumnPopover = ({
                     column={column}
                     scope={scope}
                     plan={plan}
-                    onApply={(planned) => {
+                    onApply={(text, overwrite) => {
                         restore.current = true
-                        onApply(planned)
+                        onApply(text, overwrite)
                     }}
                     onCancel={closeHere}
                 />

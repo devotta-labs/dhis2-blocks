@@ -1,7 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import { IconMore16 } from '@dhis2/ui-icons'
 import { useState } from 'react'
-import type { KeyboardEvent } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import { parseTyped } from '@/components/dhis2-value-types'
 import {
     AlertDialog,
@@ -22,7 +22,7 @@ import {
     DropdownMenuLabel,
 } from '@/components/dhis2/ui/dropdown-menu'
 import { formatCount } from '../cells/OptionCell'
-import type { GridColumn, GridRow, GridTable } from '../model/types'
+import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 import type { SpreadsheetContext } from '../provider/context'
 import {
@@ -134,38 +134,96 @@ const summary = (changed: number, skipped: ReadonlyMap<string, number>) =>
     })}${skippedClause(skipped)}`
 
 interface Pending {
-    plan: BulkPlan
+    run(): void
     anchor: HTMLElement
     ask: NonNullable<ReturnType<NonNullable<SpreadsheetContext['confirmBulk']>>>
 }
 
+/** What `useBulkConfirm` hands the grid: `ask` to call, `dialog` to render. */
+export interface BulkConfirm {
+    ask(
+        keys: ReadonlyArray<CellKey>,
+        anchor: HTMLElement,
+        run: () => void
+    ): void
+    dialog: ReactNode
+}
+
 /**
- * The grid's one menu of row and column actions, at `target`'s anchor, and the dialog asking first when the provider's
- * `confirmBulk` answers. A write is one `commitMany`, so one undo step, run as `changeHere` runs a paste.
+ * Asks the provider's `confirmBulk` before a bulk write: `ask` runs `run` at once when it has no answer, else opens
+ * the `dialog` and runs it on Confirm. Focus goes back to `anchor` when the dialog closes.
+ */
+export const useBulkConfirm = (): BulkConfirm => {
+    const { confirmBulk } = useSpreadsheetContext()
+    const [pending, setPending] = useState<Pending>()
+    return {
+        ask: (keys, anchor, run) => {
+            const ask = confirmBulk?.(keys)
+            if (ask === undefined) {
+                run()
+            } else {
+                setPending({ run, anchor, ask })
+            }
+        },
+        dialog:
+            pending === undefined ? null : (
+                <AlertDialog
+                    open
+                    onOpenChange={(next) => {
+                        if (!next) {
+                            setPending(undefined)
+                        }
+                    }}
+                >
+                    {/* Focus goes back to what opened the menu: the menu that opened the dialog is gone. */}
+                    <AlertDialogContent finalFocus={() => pending.anchor}>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                {pending.ask.title}
+                            </AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <AlertDialogDescription>
+                            {pending.ask.body}
+                        </AlertDialogDescription>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>
+                                {i18n.t('Cancel')}
+                            </AlertDialogCancel>
+                            <Button
+                                onClick={() => {
+                                    setPending(undefined)
+                                    pending.run()
+                                }}
+                            >
+                                {pending.ask.confirm}
+                            </Button>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            ),
+    }
+}
+
+/**
+ * The grid's one menu of row and column actions, at `target`'s anchor. A write is one `commitMany`, so one undo step,
+ * run as `changeHere` runs a paste; it plans again when `ask` confirms, since the cells may have changed meanwhile.
  */
 export const BulkMenu = ({
     target,
     open,
     onClose,
     changeHere,
+    ask,
 }: {
     target: BulkTarget | undefined
     open: boolean
     onClose(): void
     changeHere(target: EventTarget, change: () => void): void
+    ask: BulkConfirm['ask']
 }) => {
     const context = useSpreadsheetContext()
-    const {
-        store,
-        effects,
-        overrides,
-        keyOf,
-        settings,
-        announce,
-        bulkColumn,
-        confirmBulk,
-    } = context
-    const [pending, setPending] = useState<Pending>()
+    const { store, effects, overrides, keyOf, settings, announce, bulkColumn } =
+        context
     // The column value popover, kept after it closes so it closes in place.
     const [valueFor, setValueFor] = useState<ColumnTarget & { open: boolean }>()
 
@@ -223,17 +281,21 @@ export const BulkMenu = ({
             annotations: effects.getState(),
             settings,
         })
-    /** Writes the plan, or first asks the provider's dialog when `confirmBulk` answers. */
-    const confirm = (plan: BulkPlan, anchor: HTMLElement) => {
-        const ask = confirmBulk?.(plan.entries.map(({ key }) => key))
-        if (ask === undefined) {
-            apply(plan, anchor)
-        } else {
-            setPending({ plan, anchor, ask })
-        }
-    }
+    /** Asks about the plan's cells, then plans again and writes it. */
+    const confirm = (replan: () => BulkPlan, anchor: HTMLElement) =>
+        ask(
+            replan().entries.map(({ key }) => key),
+            anchor,
+            () => apply(replan(), anchor)
+        )
 
-    // The popover and the dialog outlive the menu that opened them.
+    const columnPlan = (
+        { table, column }: ColumnTarget,
+        text: string,
+        overwrite: boolean
+    ) => planIn(table, columnCandidates(table, column, text, keyOf), overwrite)
+
+    // The popover outlives the menu that opened it.
     const after = (
         <>
             {valueFor === undefined ? null : (
@@ -244,57 +306,16 @@ export const BulkMenu = ({
                         setValueFor((open) => open && { ...open, open: false })
                     }
                     plan={(text, overwrite) =>
-                        planIn(
-                            valueFor.table,
-                            columnCandidates(
-                                valueFor.table,
-                                valueFor.column,
-                                text,
-                                keyOf
-                            ),
-                            overwrite
-                        )
+                        columnPlan(valueFor, text, overwrite)
                     }
-                    onApply={(plan) => {
+                    onApply={(text, overwrite) => {
                         setValueFor({ ...valueFor, open: false })
-                        confirm(plan, valueFor.anchor)
+                        confirm(
+                            () => columnPlan(valueFor, text, overwrite),
+                            valueFor.anchor
+                        )
                     }}
                 />
-            )}
-            {pending === undefined ? null : (
-                <AlertDialog
-                    open
-                    onOpenChange={(next) => {
-                        if (!next) {
-                            setPending(undefined)
-                        }
-                    }}
-                >
-                    {/* Focus goes back to what opened the menu: the menu that opened the dialog is gone. */}
-                    <AlertDialogContent finalFocus={() => pending.anchor}>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>
-                                {pending.ask.title}
-                            </AlertDialogTitle>
-                        </AlertDialogHeader>
-                        <AlertDialogDescription>
-                            {pending.ask.body}
-                        </AlertDialogDescription>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>
-                                {i18n.t('Cancel')}
-                            </AlertDialogCancel>
-                            <Button
-                                onClick={() => {
-                                    setPending(undefined)
-                                    apply(pending.plan, pending.anchor)
-                                }}
-                            >
-                                {pending.ask.confirm}
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
             )}
         </>
     )
@@ -303,8 +324,8 @@ export const BulkMenu = ({
         return after
     }
     const { anchor, table, row, column } = target
-    const run = (candidates: BulkCandidate[], overwrite: boolean) =>
-        confirm(planIn(table, candidates, overwrite), anchor)
+    const run = (candidates: () => BulkCandidate[], overwrite: boolean) =>
+        confirm(() => planIn(table, candidates(), overwrite), anchor)
     const columns = table.columns.filter((each) => bulkColumn?.(each) !== false)
     const below =
         row === undefined ? [] : table.rows.slice(table.rows.indexOf(row) + 1)
@@ -332,15 +353,16 @@ export const BulkMenu = ({
                                     <DropdownMenuItem
                                         onClick={() =>
                                             run(
-                                                rowCandidates(
-                                                    columns,
-                                                    row,
-                                                    below.slice(0, 1),
-                                                    keyOf,
-                                                    store.getState(),
-                                                    effects.getState(),
-                                                    settings
-                                                ),
+                                                () =>
+                                                    rowCandidates(
+                                                        columns,
+                                                        row,
+                                                        below.slice(0, 1),
+                                                        keyOf,
+                                                        store.getState(),
+                                                        effects.getState(),
+                                                        settings
+                                                    ),
                                                 false
                                             )
                                         }
@@ -350,15 +372,16 @@ export const BulkMenu = ({
                                     <DropdownMenuItem
                                         onClick={() =>
                                             run(
-                                                rowCandidates(
-                                                    columns,
-                                                    row,
-                                                    below,
-                                                    keyOf,
-                                                    store.getState(),
-                                                    effects.getState(),
-                                                    settings
-                                                ),
+                                                () =>
+                                                    rowCandidates(
+                                                        columns,
+                                                        row,
+                                                        below,
+                                                        keyOf,
+                                                        store.getState(),
+                                                        effects.getState(),
+                                                        settings
+                                                    ),
                                                 false
                                             )
                                         }
@@ -370,11 +393,12 @@ export const BulkMenu = ({
                             <DropdownMenuItem
                                 onClick={() =>
                                     run(
-                                        clearCandidates(
-                                            columns.map((each) =>
-                                                keyOf(row, each)
-                                            )
-                                        ),
+                                        () =>
+                                            clearCandidates(
+                                                columns.map((each) =>
+                                                    keyOf(row, each)
+                                                )
+                                            ),
                                         true
                                     )
                                 }
@@ -412,11 +436,12 @@ export const BulkMenu = ({
                             <DropdownMenuItem
                                 onClick={() =>
                                     run(
-                                        clearCandidates(
-                                            table.rows.map((each) =>
-                                                keyOf(each, column)
-                                            )
-                                        ),
+                                        () =>
+                                            clearCandidates(
+                                                table.rows.map((each) =>
+                                                    keyOf(each, column)
+                                                )
+                                            ),
                                         true
                                     )
                                 }

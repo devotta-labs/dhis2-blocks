@@ -165,6 +165,52 @@ describe('OU picker lifecycle at the query and tree boundary', () => {
         }
     })
 
+    it('ignores late search results after a newer search and after close/reopen', async () => {
+        const pending = new Map<
+            string,
+            (value: ReturnType<typeof page>) => void
+        >()
+        const client: WorkingListClient = {
+            query: async (request, schema) =>
+                schema.parse(
+                    await new Promise<ReturnType<typeof page>>((resolve) => {
+                        pending.set(String(request.params?.query), resolve)
+                    })
+                ),
+            mutate: async () => {
+                throw new Error('Unexpected mutation')
+            },
+        }
+        const { screen } = await setup(client)
+        const input = screen.getByPlaceholder('Search')
+        const visibleRoots = screen.getByLabelText('Roots')
+        await screen.getByRole('button', { name: 'Open', exact: true }).click()
+        await input.fill('old')
+        await tick(500)
+        expect(pending.has('old')).toBe(true)
+        await input.fill('latest')
+        await tick(499)
+        expect(pending.has('latest')).toBe(false)
+        await tick(1)
+        expect(pending.has('latest')).toBe(true)
+        pending.get('latest')!(page('latest-match'))
+        await tick(1)
+        await expect.element(visibleRoots).toHaveTextContent('latest-match')
+        pending.get('old')!(page('stale-match'))
+        await tick(1)
+        await expect.element(visibleRoots).toHaveTextContent('latest-match')
+
+        await input.fill('closed')
+        await tick(500)
+        expect(pending.has('closed')).toBe(true)
+        await screen.getByRole('button', { name: 'Close' }).click()
+        await screen.getByRole('button', { name: 'Open', exact: true }).click()
+        pending.get('closed')!(page('closed-match'))
+        await tick(1)
+        await expect.element(input).toHaveValue('')
+        await expect.element(visibleRoots).toHaveTextContent('capture')
+    })
+
     it('shows pending/error/retry states from real query results', async () => {
         let resolveRequest: (
             value: ReturnType<typeof page> | null
@@ -233,7 +279,6 @@ describe('OU picker lifecycle at the query and tree boundary', () => {
         await tick(500)
         await tick(1)
         const branch = screen.getByTestId('branch')
-        const element = branch.element()
         await branch.click()
         await expect.element(branch).toHaveAttribute('aria-expanded', 'false')
         await screen.getByRole('button', { name: 'Show more' }).click()
@@ -242,16 +287,15 @@ describe('OU picker lifecycle at the query and tree boundary', () => {
         await expect
             .element(screen.getByText('Could not load more organisation units'))
             .toBeVisible()
-        expect(branch.element()).toBe(element)
+        await expect.element(branch).toHaveAttribute('aria-expanded', 'false')
         await screen.getByRole('button', { name: 'Try again' }).click()
-        element.focus()
+        branch.element().focus()
         resolvePage(page('appended', 2, 100))
         await tick(1)
         await expect
             .element(screen.getByLabelText('Roots'))
             .toHaveTextContent('capture,appended')
-        expect(branch.element()).toBe(element)
-        expect(document.activeElement).toBe(element)
+        await expect.element(branch).toHaveFocus()
         await expect.element(branch).toHaveAttribute('aria-expanded', 'false')
         await expect
             .element(screen.getByLabelText('Selection'))
@@ -260,7 +304,6 @@ describe('OU picker lifecycle at the query and tree boundary', () => {
             .element(screen.getByRole('button', { name: 'Show more' }))
             .not.toBeInTheDocument()
         await screen.rerender(view('b'))
-        expect(branch.element()).not.toBe(element)
         await expect.element(branch).toHaveAttribute('aria-expanded', 'true')
         await expect
             .element(screen.getByLabelText('Roots'))

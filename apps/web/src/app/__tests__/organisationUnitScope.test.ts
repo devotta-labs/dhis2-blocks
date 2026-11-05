@@ -1,22 +1,8 @@
 import {
-    areOrganisationUnitPathsRelated,
-    getCaptureOrganisationUnitPickerScope,
-    intersectOrganisationUnitScopes,
-} from './legacyScopeFixtures'
-import {
     isOrganisationUnitInScope,
     resolveCaptureOrganisationUnitRoots,
     type OrganisationUnitReference,
 } from '../organisationUnitScope'
-
-describe('areOrganisationUnitPathsRelated', () => {
-    it('matches the same unit and either ancestor direction without prefix collisions', () => {
-        expect(areOrganisationUnitPathsRelated('/a/b', '/a/b')).toBe(true)
-        expect(areOrganisationUnitPathsRelated('/a/b/c', '/a/b')).toBe(true)
-        expect(areOrganisationUnitPathsRelated('/a/b', '/a/b/c')).toBe(true)
-        expect(areOrganisationUnitPathsRelated('/a/bb', '/a/b')).toBe(false)
-    })
-})
 
 const unit = (id: string, path: string): OrganisationUnitReference => ({
     id,
@@ -54,28 +40,8 @@ describe('Capture organisation-unit scope', () => {
         ).toEqual([captureRoot])
     })
 
-    it('keeps the full user scope in the quick selector regardless of program assignments', () => {
+    it('requires an exact program assignment within the Capture roots', () => {
         const outsideProgram = unit('outside', '/root/outside')
-
-        expect(
-            getCaptureOrganisationUnitPickerScope([searchRoot, outsideProgram])
-        ).toEqual({
-            allowedPaths: [],
-            pickerRoots: [searchRoot, outsideProgram],
-        })
-    })
-
-    it('intersects Capture roots with the selected program scope', () => {
-        const outsideProgram = unit('outside', '/root/outside')
-        const intersection = intersectOrganisationUnitScopes(
-            [searchRoot, outsideProgram],
-            [programRoot]
-        )
-
-        expect(intersection).toEqual({
-            allowedPaths: [programRoot.path],
-            pickerRoots: [searchRoot],
-        })
         expect(
             isOrganisationUnitInScope(programRoot, [searchRoot], [programRoot])
         ).toBe(true)
@@ -94,6 +60,13 @@ describe('Capture organisation-unit scope', () => {
                 outsideProgram,
                 [searchRoot],
                 [programRoot]
+            )
+        ).toBe(false)
+        expect(
+            isOrganisationUnitInScope(
+                unit('collision', '/root/capture/searching'),
+                [searchRoot],
+                [unit('collision', '/root/capture/searching')]
             )
         ).toBe(false)
         expect(

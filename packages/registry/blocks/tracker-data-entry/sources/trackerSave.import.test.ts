@@ -58,7 +58,7 @@ test('reads what DHIS2 holds for the batch in one request, then sends one import
                 params: {
                     program: INPATIENT,
                     events: `${A},${B}`,
-                    fields: 'event,program,programStage,orgUnit,enrollment,occurredAt,scheduledAt,status,attributeOptionCombo,geometry,assignedUser',
+                    fields: 'event,program,programStage,orgUnit,enrollment,occurredAt,scheduledAt,status,attributeOptionCombo,geometry,assignedUser[uid,username]',
                     pageSize: 2,
                 },
             },

@@ -65,4 +65,4 @@ export const completionExpired = (
     days !== undefined &&
     days > 0 &&
     completedAt !== undefined &&
-    today >= addDaysIso(completedAt.slice(0, 10), days)
+    today > addDaysIso(completedAt.slice(0, 10), days)

@@ -287,6 +287,38 @@ test('a held person’s valid change waits while the clashing value fails', asyn
     ])
 })
 
+test('a person update sends back its possible-duplicate flag', async () => {
+    const woman: PersonRecord = {
+        kind: 'trackedEntity',
+        id: 'Y8aEiTpHSSQ',
+        trackedEntityTypeId: PERSON_TYPE,
+        orgUnitId: NGELEHUN,
+    }
+    const fake = trackerEngine({
+        trackedEntities: [
+            {
+                trackedEntity: woman.id,
+                trackedEntityType: PERSON_TYPE,
+                orgUnit: NGELEHUN,
+                potentialDuplicate: true,
+            },
+        ],
+    })
+    await trackerSaver(SOURCE, PROGRAM).save(
+        fake.engine,
+        [edit(woman, FIRST_NAME, 'Fatmata')],
+        registerForm([woman])
+    )
+    expect(fake.sent()[0].trackedEntities[0]).toMatchObject({
+        potentialDuplicate: true,
+    })
+    expect(
+        fake.reads.some((read) =>
+            JSON.stringify(read).includes('potentialDuplicate')
+        )
+    ).toBe(true)
+})
+
 test('sending a refused person again creates all three with the same ids', async () => {
     const fake = trackerEngine({}, [importPersonRefused, IMPORTED])
     const saver = trackerSaver(SOURCE, PROGRAM)

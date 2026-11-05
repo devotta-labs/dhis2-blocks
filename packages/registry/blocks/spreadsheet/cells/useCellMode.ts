@@ -108,8 +108,8 @@ export const useCellMode = ({
                 } else if (readOnly) {
                     // A locked cell stays selected, so copying it still copies the whole value.
                     event.preventDefault()
-                } else if (mode !== 'edit') {
-                    // A click inside the text edits it, as in Excel.
+                } else if (mode !== 'edit' && event.button === 0) {
+                    // A click inside the text edits it, as in Excel; a right click opens the grid's menu instead.
                     setMode('edit')
                 }
             },

@@ -124,6 +124,10 @@ interface MountOptions {
     rowKeysOf?: SpreadsheetContext['rowKeysOf']
     /** Which column id a cell key's field is; the part after the dot when absent. */
     fieldIdOf?: (key: CellKey) => string
+    /** The provider's bulk columns; every column when absent. */
+    bulkColumn?: (column: RigTable['columns'][number]) => boolean
+    /** What the provider asks before a bulk write; nothing when absent. */
+    confirmBulk?: SpreadsheetContext['confirmBulk']
 }
 
 /** A grid over `tables` in a context of its own; `addRow` appends a row to its table. */
@@ -142,6 +146,8 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
         fieldIdOf,
         RowBadge,
         GridFooter,
+        bulkColumn,
+        confirmBulk,
     } = options
     const store = createCellStore({
         fields: new Map(
@@ -252,6 +258,8 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
                 announcer={{ announce, announcements: announcer.announcements }}
                 RowBadge={RowBadge}
                 GridFooter={GridFooter}
+                bulkColumn={bulkColumn}
+                confirmBulk={confirmBulk}
             >
                 <CountedTables>
                     {above === undefined ? null : (

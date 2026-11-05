@@ -8,6 +8,8 @@ import {
     ID_SCOPE,
     makeTable,
     mount,
+    nextFrame,
+    range,
 } from './__tests__/gridRig'
 
 test('a row’s own errors and warnings show in its header, marked as a cell’s are', async () => {
@@ -91,6 +93,80 @@ test('row headers take at most 30% of a narrow screen, so the page reflows at 40
         await page.viewport(innerWidth, innerHeight)
     }
 })
+
+test.each(['ltr', 'rtl'])(
+    '%s: one line divides the last column from the sticky actions column, scrolled or not',
+    async (dir) => {
+        document.documentElement.dir = dir
+        try {
+            await mount([
+                makeTable({
+                    columns: range(12, (i) => `Column ${i}`),
+                    groups: [{ id: 'all', label: 'All', span: 12 }],
+                }),
+            ])
+            const region = page.getByRole('region').element()
+            const [head, body] = region.querySelectorAll('tr:first-child')
+            const [corner, group, headActions] = head.children
+            const leaves = [
+                ...region.querySelectorAll('thead tr:last-child th'),
+            ]
+            const cells = [...body.children]
+            const bodyActions = cells.at(-1)
+            // The actions column's line is on its start side, the one facing the data, whichever way the page reads.
+            const [start, end] =
+                dir === 'rtl' ? ['Right', 'Left'] : ['Left', 'Right']
+            const width = (element: Element | undefined, side: string) =>
+                element === undefined
+                    ? undefined
+                    : getComputedStyle(element).getPropertyValue(
+                          `border-${side.toLowerCase()}-width`
+                      )
+            const edges = () => ({
+                actions: [headActions, bodyActions].map((each) =>
+                    width(each, start)
+                ),
+                last: [group, leaves.at(-1), cells.at(-2)].map((each) =>
+                    width(each, end)
+                ),
+                between: [leaves.at(-2), cells.at(-3)].map((each) =>
+                    width(each, end)
+                ),
+                rowHeader: width(corner, end),
+            })
+            const expected = {
+                actions: ['1px', '1px'],
+                last: ['0px', '0px', '0px'],
+                between: ['1px', '1px'],
+                rowHeader: '1px',
+            }
+            expect(edges()).toEqual(expected)
+            region.scrollLeft =
+                ((dir === 'rtl' ? -1 : 1) *
+                    (region.scrollWidth - region.clientWidth)) /
+                2
+            await nextFrame()
+            expect(Math.abs(region.scrollLeft)).toBeGreaterThan(0)
+            // Mid-scroll the actions column stays at the region's end, its line over the cells sliding under it.
+            const box = region.getBoundingClientRect()
+            const actions = bodyActions?.getBoundingClientRect()
+            if (dir === 'rtl') {
+                expect(actions?.left).toBeCloseTo(
+                    box.left + region.clientLeft,
+                    0
+                )
+            } else {
+                expect(actions?.right).toBeCloseTo(
+                    box.left + region.clientLeft + region.clientWidth,
+                    0
+                )
+            }
+            expect(edges()).toEqual(expected)
+        } finally {
+            document.documentElement.dir = ''
+        }
+    }
+)
 
 test('"Add event" adds a row and focuses its first open cell; each button names its table', async () => {
     const { added } = await mount(

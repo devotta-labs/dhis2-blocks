@@ -12,99 +12,36 @@ import {
 import type { ClipboardEvent, KeyboardEvent, SyntheticEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { cn } from '@/components/dhis2/ui/cn'
-import { RowCell } from '../cells/Cell'
 import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
 import { addsRow } from '../cells/useCellMode'
-import type {
-    CellKey,
-    CellPlace,
-    GridColumn,
-    GridRow,
-    GridTable,
-} from '../model/types'
-import { useSpreadsheetContext, useRowCells } from '../provider/context'
+import type { CellKey, CellPlace, GridColumn, GridTable } from '../model/types'
+import { useSpreadsheetContext } from '../provider/context'
 import { AddRowButton } from './AddRowButton'
 import {
     ACTIONS_CLASS,
     ActionsButton,
     BulkMenu,
     opensMenu,
-    RowActions,
     takesColumnActions,
 } from './BulkMenu'
 import type { BulkTarget } from './BulkMenu'
-import { columnHeaderIds, headerDomId, rowHeaderDomId } from './headers'
+import { columnHeaderIds, headerDomId } from './headers'
 import { nextCell } from './navigation'
 import type { NavKey } from './navigation'
 import { fillDown } from './fillDown'
 import { fieldAt, navGrid, positionsOf, reasonOf } from './navGrid'
 import { isBlock, pastedBlock, pasteTargets } from './paste'
-import { BORDER_CLASS, ROW_HEADER_CLASS, RowHeader } from './RowHeader'
+import { BORDER_CLASS, ROW_HEADER_CLASS } from './RowHeader'
 import { NotesPopover } from './RowNotes'
 import type { NotesTarget } from './RowNotes'
+import { LAST_CLASS, TableRow } from './TableRow'
 import { useAddRow } from './useAddRow'
 
-// A fixed height, a minimum in a table, lets the cell's control fill the row however tall the row header makes it.
-const CELL_CLASS = cn(BORDER_CLASS, 'h-9 min-w-28 p-0')
 const HEADER_CLASS = cn(
     BORDER_CLASS,
     'bg-dhis2-grey-100 px-2 py-1.5 text-start align-bottom text-[13px] font-medium text-dhis2-grey-800'
 )
-
-interface TableRowProps {
-    idScope: string
-    table: GridTable
-    row: GridRow
-    /** The ids of the column headers that name each column's cells. */
-    labels: ReadonlyArray<string>
-    move(key: NavKey): void
-    openMenu(target: BulkTarget): void
-    openNotes(target: NotesTarget): void
-}
-
-/** One row of a table: it reads its cells' states and effects, once for the row, and hands each cell its own. */
-const TableRow = memo(function TableRow({
-    idScope,
-    table,
-    row,
-    labels,
-    move,
-    openMenu,
-    openNotes,
-}: TableRowProps) {
-    const { keyOf, store } = useSpreadsheetContext()
-    const keys = table.columns.map((column) => keyOf(row, column))
-    const { states, effects } = useRowCells(keys)
-    const rowHeader = rowHeaderDomId(idScope, table.id, row.id)
-    return (
-        <tr>
-            <RowHeader
-                idScope={idScope}
-                tableId={table.id}
-                row={row}
-                openNotes={openNotes}
-            />
-            {table.columns.map((column, c) => (
-                <td key={column.id} className={CELL_CLASS}>
-                    <RowCell
-                        cellKey={keys[c]}
-                        field={fieldAt(store.getState(), keys[c])}
-                        labelledBy={`${labels[c]} ${rowHeader}`}
-                        move={move}
-                        closedReason={table.closed.get(keys[c])}
-                        cell={states[c]}
-                        effects={effects[c]}
-                    />
-                </td>
-            ))}
-            <RowActions
-                rowHeader={rowHeader}
-                onOpen={(anchor) => openMenu({ anchor, table, row })}
-            />
-        </tr>
-    )
-})
 
 interface TableViewProps {
     idScope: string
@@ -209,7 +146,12 @@ const TableView = memo(function TableView({
                                             scope="col"
                                             className={cn(
                                                 HEADER_CLASS,
-                                                'min-w-28'
+                                                'min-w-28',
+                                                labels
+                                                    .at(-1)
+                                                    ?.split(' ')
+                                                    .includes(labelId) &&
+                                                    LAST_CLASS
                                             )}
                                         >
                                             {/* A group wider than the screen keeps its label beside the row headers. */}

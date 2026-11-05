@@ -11,6 +11,7 @@ import {
 import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
 import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
 import workingListCalendarTabsSource from './working-list/WorkingListCalendarTabs.tsx?raw'
+import workingListPlaceholdersSource from './working-list/WorkingListPlaceholders.tsx?raw'
 import listCalendarSource from './working-list/ListCalendar.tsx?raw'
 import alertVariantsSource from './ui/AlertVariants.tsx?raw'
 import badgeStatusSource from './ui/BadgeStatus.tsx?raw'
@@ -48,8 +49,8 @@ import finderProgramPickerSource from './tracked-entity-finder/ProgramPicker.tsx
  * Example registry.
  *
  * Every entry exercises the public block API. The same modules power the
- * rendered preview and the Code tab: `source` contains the raw example file,
- * and `sourceFiles` lists every file for multi-file examples, so docs never
+ * rendered preview and the Code tab: `sourceFiles` lists the entry file first,
+ * then every local dependency needed to copy the example, so docs never
  * drift from what is executed. Readers copy those sources into their own
  * projects, so examples import blocks from `@/components/<block>` (aliased to
  * the workspace source) and leave layout chrome to the preview hosts.
@@ -67,8 +68,10 @@ export interface ExampleDefinition {
     title: string
     live: boolean
     Component: LazyExoticComponent<ComponentType>
-    source: string
-    sourceFiles?: readonly { name: string; code: string }[]
+    sourceFiles: readonly [
+        { name: string; code: string },
+        ...{ name: string; code: string }[],
+    ]
     minHeight: number
     Placeholder?: ComponentType
 }
@@ -79,7 +82,9 @@ const examples = [
         title: 'ANC visits',
         live: false,
         Component: lazy(() => import('./calendar/CalendarVisits')),
-        source: calendarVisitsSource,
+        sourceFiles: [
+            { name: 'CalendarVisits.tsx', code: calendarVisitsSource },
+        ],
         minHeight: 640,
     },
     {
@@ -87,7 +92,7 @@ const examples = [
         title: 'Sidebar navigation',
         live: false,
         Component: lazy(() => import('./sidebar/SidebarBasic')),
-        source: sidebarBasicSource,
+        sourceFiles: [{ name: 'SidebarBasic.tsx', code: sidebarBasicSource }],
         minHeight: 680,
     },
     {
@@ -95,7 +100,9 @@ const examples = [
         title: 'Controlled sidebar',
         live: false,
         Component: lazy(() => import('./sidebar/SidebarControlled')),
-        source: sidebarControlledSource,
+        sourceFiles: [
+            { name: 'SidebarControlled.tsx', code: sidebarControlledSource },
+        ],
         minHeight: 360,
     },
     {
@@ -103,7 +110,9 @@ const examples = [
         title: 'Default Working List',
         live: true,
         Component: lazy(() => import('./working-list/WorkingListDefault')),
-        source: workingListDefaultSource,
+        sourceFiles: [
+            { name: 'WorkingListDefault.tsx', code: workingListDefaultSource },
+        ],
         minHeight: 730,
         Placeholder: WorkingListDefaultPlaceholder,
     },
@@ -114,7 +123,16 @@ const examples = [
         Component: lazy(
             () => import('./working-list/WorkingListProgramPicker')
         ),
-        source: workingListProgramPickerSource,
+        sourceFiles: [
+            {
+                name: 'WorkingListProgramPicker.tsx',
+                code: workingListProgramPickerSource,
+            },
+            {
+                name: 'WorkingListPlaceholders.tsx',
+                code: workingListPlaceholdersSource,
+            },
+        ],
         minHeight: 730,
         Placeholder: WorkingListProgramPickerPlaceholder,
     },
@@ -123,7 +141,6 @@ const examples = [
         title: 'Working List as a calendar',
         live: true,
         Component: lazy(() => import('./working-list/WorkingListCalendarTabs')),
-        source: workingListCalendarTabsSource,
         sourceFiles: [
             {
                 name: 'WorkingListCalendarTabs.tsx',
@@ -139,7 +156,7 @@ const examples = [
         title: 'Observation cards',
         live: true,
         Component: lazy(() => import('./observation-cards/PersonVitals')),
-        source: personVitalsSource,
+        sourceFiles: [{ name: 'PersonVitals.tsx', code: personVitalsSource }],
         minHeight: 220,
         Placeholder: PersonVitalsPlaceholder,
     },
@@ -148,7 +165,12 @@ const examples = [
         title: 'Case history',
         live: true,
         Component: lazy(() => import('./timeline/TimelineCaseHistory')),
-        source: timelineCaseHistorySource,
+        sourceFiles: [
+            {
+                name: 'TimelineCaseHistory.tsx',
+                code: timelineCaseHistorySource,
+            },
+        ],
         minHeight: 720,
         Placeholder: TimelinePlaceholder,
     },
@@ -157,7 +179,9 @@ const examples = [
         title: 'Your own data',
         live: false,
         Component: lazy(() => import('./timeline/TimelineOwnData')),
-        source: timelineOwnDataSource,
+        sourceFiles: [
+            { name: 'TimelineOwnData.tsx', code: timelineOwnDataSource },
+        ],
         minHeight: 420,
     },
     {
@@ -165,7 +189,9 @@ const examples = [
         title: 'Entry parts outside a timeline',
         live: false,
         Component: lazy(() => import('./timeline/TimelineEntryParts')),
-        source: timelineEntryPartsSource,
+        sourceFiles: [
+            { name: 'TimelineEntryParts.tsx', code: timelineEntryPartsSource },
+        ],
         minHeight: 260,
     },
     {
@@ -175,7 +201,12 @@ const examples = [
         Component: lazy(
             () => import('./context-selector/ContextSelectorBasic')
         ),
-        source: contextSelectorBasicSource,
+        sourceFiles: [
+            {
+                name: 'ContextSelectorBasic.tsx',
+                code: contextSelectorBasicSource,
+            },
+        ],
         minHeight: 220,
     },
     {
@@ -185,7 +216,12 @@ const examples = [
         Component: lazy(
             () => import('./context-selector/ContextSelectorStates')
         ),
-        source: contextSelectorStatesSource,
+        sourceFiles: [
+            {
+                name: 'ContextSelectorStates.tsx',
+                code: contextSelectorStatesSource,
+            },
+        ],
         minHeight: 340,
     },
     {
@@ -193,7 +229,7 @@ const examples = [
         title: 'Find a person by ID',
         live: true,
         Component: lazy(() => import('./tracked-entity-finder/FindPerson')),
-        source: finderFindPersonSource,
+        sourceFiles: [{ name: 'FindPerson.tsx', code: finderFindPersonSource }],
         minHeight: 360,
     },
     {
@@ -201,7 +237,7 @@ const examples = [
         title: 'Composed results',
         live: true,
         Component: lazy(() => import('./tracked-entity-finder/CustomRows')),
-        source: finderCustomRowsSource,
+        sourceFiles: [{ name: 'CustomRows.tsx', code: finderCustomRowsSource }],
         minHeight: 360,
     },
     {
@@ -209,7 +245,9 @@ const examples = [
         title: 'Program from a select',
         live: true,
         Component: lazy(() => import('./tracked-entity-finder/ProgramPicker')),
-        source: finderProgramPickerSource,
+        sourceFiles: [
+            { name: 'ProgramPicker.tsx', code: finderProgramPickerSource },
+        ],
         minHeight: 520,
     },
     {
@@ -217,7 +255,7 @@ const examples = [
         title: 'Alert messages',
         live: false,
         Component: lazy(() => import('./ui/AlertVariants')),
-        source: alertVariantsSource,
+        sourceFiles: [{ name: 'AlertVariants.tsx', code: alertVariantsSource }],
         minHeight: 260,
     },
     {
@@ -225,7 +263,9 @@ const examples = [
         title: 'Button styles',
         live: false,
         Component: lazy(() => import('./ui/ButtonVariants')),
-        source: buttonVariantsSource,
+        sourceFiles: [
+            { name: 'ButtonVariants.tsx', code: buttonVariantsSource },
+        ],
         minHeight: 120,
     },
     {
@@ -233,7 +273,7 @@ const examples = [
         title: 'Visits per month',
         live: false,
         Component: lazy(() => import('./ui/ChartVisits')),
-        source: chartVisitsSource,
+        sourceFiles: [{ name: 'ChartVisits.tsx', code: chartVisitsSource }],
         minHeight: 340,
     },
     {
@@ -241,7 +281,7 @@ const examples = [
         title: 'Coverage trend',
         live: false,
         Component: lazy(() => import('./ui/ChartTrend')),
-        source: chartTrendSource,
+        sourceFiles: [{ name: 'ChartTrend.tsx', code: chartTrendSource }],
         minHeight: 340,
     },
     {
@@ -249,7 +289,7 @@ const examples = [
         title: 'Cases by age group',
         live: false,
         Component: lazy(() => import('./ui/ChartShare')),
-        source: chartShareSource,
+        sourceFiles: [{ name: 'ChartShare.tsx', code: chartShareSource }],
         minHeight: 340,
     },
     {
@@ -257,7 +297,9 @@ const examples = [
         title: 'Checkboxes',
         live: false,
         Component: lazy(() => import('./ui/CheckboxOptions')),
-        source: checkboxOptionsSource,
+        sourceFiles: [
+            { name: 'CheckboxOptions.tsx', code: checkboxOptionsSource },
+        ],
         minHeight: 160,
     },
     {
@@ -265,7 +307,9 @@ const examples = [
         title: 'Searchable facility picker',
         live: false,
         Component: lazy(() => import('./ui/ComboboxOrgUnits')),
-        source: comboboxOrgUnitsSource,
+        sourceFiles: [
+            { name: 'ComboboxOrgUnits.tsx', code: comboboxOrgUnitsSource },
+        ],
         minHeight: 420,
     },
     {
@@ -273,7 +317,7 @@ const examples = [
         title: 'Dialogs',
         live: false,
         Component: lazy(() => import('./ui/DialogConfirm')),
-        source: dialogConfirmSource,
+        sourceFiles: [{ name: 'DialogConfirm.tsx', code: dialogConfirmSource }],
         minHeight: 120,
     },
     {
@@ -281,7 +325,12 @@ const examples = [
         title: 'Record actions menu',
         live: false,
         Component: lazy(() => import('./ui/DropdownMenuActions')),
-        source: dropdownMenuActionsSource,
+        sourceFiles: [
+            {
+                name: 'DropdownMenuActions.tsx',
+                code: dropdownMenuActionsSource,
+            },
+        ],
         minHeight: 300,
     },
     {
@@ -289,7 +338,7 @@ const examples = [
         title: 'Text fields',
         live: false,
         Component: lazy(() => import('./ui/InputField')),
-        source: inputFieldSource,
+        sourceFiles: [{ name: 'InputField.tsx', code: inputFieldSource }],
         minHeight: 260,
     },
     {
@@ -297,7 +346,7 @@ const examples = [
         title: 'Period select',
         live: false,
         Component: lazy(() => import('./ui/SelectPeriod')),
-        source: selectPeriodSource,
+        sourceFiles: [{ name: 'SelectPeriod.tsx', code: selectPeriodSource }],
         minHeight: 320,
     },
     {
@@ -305,7 +354,7 @@ const examples = [
         title: 'Records table',
         live: false,
         Component: lazy(() => import('./ui/TableRecords')),
-        source: tableRecordsSource,
+        sourceFiles: [{ name: 'TableRecords.tsx', code: tableRecordsSource }],
         minHeight: 240,
     },
     {
@@ -313,7 +362,7 @@ const examples = [
         title: 'Tooltips',
         live: false,
         Component: lazy(() => import('./ui/TooltipHint')),
-        source: tooltipHintSource,
+        sourceFiles: [{ name: 'TooltipHint.tsx', code: tooltipHintSource }],
         minHeight: 140,
     },
     {
@@ -321,7 +370,7 @@ const examples = [
         title: 'Status badges',
         live: false,
         Component: lazy(() => import('./ui/BadgeStatus')),
-        source: badgeStatusSource,
+        sourceFiles: [{ name: 'BadgeStatus.tsx', code: badgeStatusSource }],
         minHeight: 100,
     },
     {
@@ -329,7 +378,9 @@ const examples = [
         title: 'Facility cards',
         live: false,
         Component: lazy(() => import('./ui/CardFacilities')),
-        source: cardFacilitiesSource,
+        sourceFiles: [
+            { name: 'CardFacilities.tsx', code: cardFacilitiesSource },
+        ],
         minHeight: 220,
     },
     {
@@ -337,7 +388,9 @@ const examples = [
         title: 'Search and unit fields',
         live: false,
         Component: lazy(() => import('./ui/InputGroupSearch')),
-        source: inputGroupSearchSource,
+        sourceFiles: [
+            { name: 'InputGroupSearch.tsx', code: inputGroupSearchSource },
+        ],
         minHeight: 200,
     },
     {
@@ -345,7 +398,9 @@ const examples = [
         title: 'Value details',
         live: false,
         Component: lazy(() => import('./ui/PopoverDetails')),
-        source: popoverDetailsSource,
+        sourceFiles: [
+            { name: 'PopoverDetails.tsx', code: popoverDetailsSource },
+        ],
         minHeight: 260,
     },
     {
@@ -353,7 +408,9 @@ const examples = [
         title: 'Visit outcome',
         live: false,
         Component: lazy(() => import('./ui/RadioGroupOutcome')),
-        source: radioGroupOutcomeSource,
+        sourceFiles: [
+            { name: 'RadioGroupOutcome.tsx', code: radioGroupOutcomeSource },
+        ],
         minHeight: 160,
     },
     {
@@ -361,7 +418,7 @@ const examples = [
         title: 'Spinners',
         live: false,
         Component: lazy(() => import('./ui/SpinnerSizes')),
-        source: spinnerSizesSource,
+        sourceFiles: [{ name: 'SpinnerSizes.tsx', code: spinnerSizesSource }],
         minHeight: 120,
     },
     {
@@ -369,7 +426,9 @@ const examples = [
         title: 'Settings switches',
         live: false,
         Component: lazy(() => import('./ui/SwitchSettings')),
-        source: switchSettingsSource,
+        sourceFiles: [
+            { name: 'SwitchSettings.tsx', code: switchSettingsSource },
+        ],
         minHeight: 160,
     },
     {
@@ -377,7 +436,7 @@ const examples = [
         title: 'Visit note',
         live: false,
         Component: lazy(() => import('./ui/TextareaNotes')),
-        source: textareaNotesSource,
+        sourceFiles: [{ name: 'TextareaNotes.tsx', code: textareaNotesSource }],
         minHeight: 200,
     },
     {
@@ -385,7 +444,9 @@ const examples = [
         title: 'View switcher',
         live: false,
         Component: lazy(() => import('./ui/ToggleGroupView')),
-        source: toggleGroupViewSource,
+        sourceFiles: [
+            { name: 'ToggleGroupView.tsx', code: toggleGroupViewSource },
+        ],
         minHeight: 140,
     },
 ] as const satisfies readonly ExampleDefinition[]

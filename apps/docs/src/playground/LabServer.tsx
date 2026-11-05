@@ -19,15 +19,7 @@ import {
  * request for `resources` sent through the lab network to `respond`. Remount it
  * (change its `key`) for a fresh cache.
  */
-export const LabServerScope = <Request extends NetworkRequest>({
-    network,
-    resources,
-    respond,
-    log,
-    apiVersion = 43,
-    systemInfo,
-    children,
-}: {
+export interface LabServerProps<Request extends NetworkRequest> {
     network: LabNetwork
     resources: readonly string[]
     /** Answers one request, a read or a mutation by `type`, with JSON shaped like DHIS2's response. */
@@ -42,7 +34,17 @@ export const LabServerScope = <Request extends NetworkRequest>({
         calendar?: string
     }
     children: ReactNode
-}) => {
+}
+
+export const LabServerScope = <Request extends NetworkRequest>({
+    network,
+    resources,
+    respond,
+    log,
+    apiVersion = 43,
+    systemInfo,
+    children,
+}: LabServerProps<Request>) => {
     const [queryClient] = useState(
         () =>
             new QueryClient({

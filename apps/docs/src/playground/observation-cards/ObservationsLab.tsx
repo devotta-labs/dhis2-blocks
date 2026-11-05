@@ -1,13 +1,9 @@
-import { useCallback, useEffect, useMemo, useReducer } from 'react'
-import { LivePreviewHost } from '../../preview/LivePreviewHost'
-import { PreviewSpinner } from '../../preview/PreviewShell'
+import { useMemo } from 'react'
 import { PresetControls, Section, Segmented } from '../controls'
 import { LabLayout } from '../LabLayout'
 import { LogPanel } from '../LogPanel'
-import { CanvasBoundary, LabServerScope } from '../LabServer'
+import { LabRun, useLabRun } from '../LabRun'
 import { NetworkControls } from '../NetworkControls'
-import type { Log } from '../network'
-import { usePresetParam } from '../usePresetParam'
 import {
     CARD_ELEMENTS,
     cardLabel,
@@ -26,23 +22,11 @@ import canvasSource from './ObservationsCanvas.tsx?canvas'
 
 /** The observation cards lab: every card state, one click each, beside the requests it makes. */
 export const ObservationsLab = () => {
-    const [linkedPreset, setLinkedPreset] = usePresetParam()
-    const [state, dispatch] = useReducer(
-        labReducer,
-        linkedPreset,
-        initialLabState
-    )
+    const [state, dispatch, log] = useLabRun(labReducer, initialLabState)
     const { mode, settings, live, run, requests } = state
-    const linked = mode === 'lab' ? state.preset : undefined
-    useEffect(() => setLinkedPreset(linked), [linked, setLinkedPreset])
 
     const change = (changes: Partial<LabSettings>) =>
         dispatch({ type: 'changeSettings', changes })
-    // Stable, so the lab server is not rebuilt on every request it logs.
-    const log: Log = useCallback(
-        (update) => dispatch({ type: 'logRequests', update }),
-        []
-    )
 
     const data = useMemo(() => generateLabData(settings), [settings])
     const respond = useMemo(() => answer(settings, data), [settings, data])
@@ -157,27 +141,17 @@ export const ObservationsLab = () => {
                 </>
             }
         >
-            <CanvasBoundary key={run}>
-                {mode === 'lab' ? (
-                    <LabServerScope
-                        key={run}
-                        network={settings.network}
-                        resources={RESOURCES}
-                        respond={respond}
-                        log={log}
-                        systemInfo={data.systemInfo}
-                    >
-                        <ObservationsCanvas {...canvasProps} />
-                    </LabServerScope>
-                ) : (
-                    <LivePreviewHost
-                        key={run}
-                        placeholder={<PreviewSpinner className="h-96" />}
-                    >
-                        <ObservationsCanvas {...canvasProps} />
-                    </LivePreviewHost>
-                )}
-            </CanvasBoundary>
+            <LabRun
+                run={run}
+                mode={mode}
+                network={settings.network}
+                resources={RESOURCES}
+                respond={respond}
+                log={log}
+                systemInfo={data.systemInfo}
+            >
+                <ObservationsCanvas {...canvasProps} />
+            </LabRun>
         </LabLayout>
     )
 }

@@ -40,7 +40,6 @@ const dose = (vaccine: string, dose: string, label = dose) => ({
 
 // The paper's headings, in the paper's order.
 export const layout: RegisterLayout = {
-    programId: 'ImmReg00001',
     columns: [
         {
             group: 'Child',

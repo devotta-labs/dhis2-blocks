@@ -56,6 +56,12 @@ export const addRow = (
             { ...cells }
         ),
     }))
+    if (made.messages !== undefined) {
+        const { messages } = made
+        effects.setState(({ rowMessages }) => ({
+            rowMessages: new Map([...rowMessages, ...messages]),
+        }))
+    }
     tables.setState(({ tables: all }) => ({
         tables: all.map((each) =>
             each.id === tableId ? withRows(form, each, [made.row], known) : each

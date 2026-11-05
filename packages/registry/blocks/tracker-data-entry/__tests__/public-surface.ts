@@ -83,7 +83,6 @@ export const sourceKeys: [string, string | undefined] = [
 
 // A paper register: one person a row, the layout its columns, the period its enrolments.
 const layout: RegisterLayout = {
-    programId: 'ImmReg00001',
     columns: [
         { field: { attribute: 'w75KJ2mc4zz' } },
         { field: { enrollment: 'enrolledAt' } },
@@ -116,8 +115,6 @@ export const refs: FieldRef[] = layout.columns.flatMap(
 )
 export const column: LayoutColumn = {
     field: { attribute: 'w75KJ2mc4zz' },
-    total: 'count',
-    show: 'code',
 }
 export const compile: typeof compileLayout = compileLayout
 // @ts-expect-error A register needs its period: the first and last enrolment day.

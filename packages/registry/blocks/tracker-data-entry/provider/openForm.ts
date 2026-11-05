@@ -340,7 +340,7 @@ const connect = (
     }
 
     const summarize = () => {
-        const summary = summaryOf({ store, effects, tables }, form.fieldNames)
+        const summary = summaryOf({ store, effects, tables }, form)
         view.setState({
             summary: {
                 ...summary,

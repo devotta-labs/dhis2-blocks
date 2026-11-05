@@ -44,7 +44,6 @@ const doseDate = (vaccine: string, dose: string) => ({
 })
 
 export const LAYOUT: RegisterLayout = {
-    programId: PROGRAM,
     columns: [
         {
             group: 'Child',

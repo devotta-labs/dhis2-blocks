@@ -4,7 +4,6 @@ import { registerLayoutSchema } from './layout'
 import type { LayoutNode } from './layout'
 
 const layoutOf = (columns: LayoutNode[]) => ({
-    programId: 'WSGAb5XwJ3Y',
     columns,
 })
 
@@ -64,4 +63,20 @@ test('a misspelt key of an event ref is refused at its path, not dropped', () =>
             `✖ Unrecognized key: "${key}"\n  → at columns[0].children[0].field`
         )
     }
+})
+
+test('a layout with a key it does not know is refused', () => {
+    const column = { field: { attribute: 'a' } }
+    for (const layout of [
+        { columns: [{ ...column, width: 'wide' }] },
+        { columns: [{ ...column, occurence: 2 }] },
+        { columns: [{ group: 'G', children: [column], vertical: true }] },
+        { columns: [column], numbered: true },
+        { columns: [{ field: { attribute: 'a', lable: 'x' } }] },
+    ]) {
+        expect(registerLayoutSchema.safeParse(layout).success).toBe(false)
+    }
+    expect(registerLayoutSchema.safeParse({ columns: [column] }).success).toBe(
+        true
+    )
 })

@@ -192,7 +192,6 @@ describe('loading', () => {
 
     test('a layout that does not compile rejects the load with its errors', async () => {
         const broken: RegisterLayout = {
-            programId: PROGRAM,
             columns: [{ field: { attribute: 'NoSuchAttr1' } }],
         }
         await expect(
@@ -267,7 +266,6 @@ const UNIQUE_ID = 'lZGmxYbs97q'
 const FIRST_VISIT = 'WZbXY0S00lP'
 const SECOND_VISIT = 'edqlbukwRfQ'
 const ANC_LAYOUT: RegisterLayout = {
-    programId: RMNCH,
     columns: [
         { field: { attribute: UNIQUE_ID } },
         { field: { attribute: FIRST_NAME } },
@@ -343,6 +341,46 @@ describe('new rows', () => {
         // Each new person takes the next reserved value.
         const second = source.newRow?.(RMNCH)
         expect([...(second?.values.values() ?? [])]).toEqual(['8350217747'])
+    })
+
+    describe('without a reserved value', () => {
+        const without = async (layout: RegisterLayout) => {
+            const fake = engineFor({
+                program: rmnch,
+                enrollments: { enrollments: [] },
+                reserved: [],
+            })
+            const source = immunisationRegister({ programId: RMNCH, layout })
+            await source.load(fake.engine)
+            return source.newRow?.(RMNCH)
+        }
+
+        test('a new person says so', async () => {
+            const made = await without({
+                columns: ANC_LAYOUT.columns.slice(1),
+            })
+            expect(made?.values).toEqual(new Map())
+            expect(made?.messages).toEqual(
+                new Map([
+                    [
+                        made?.row.slots?.person,
+                        [
+                            {
+                                tone: 'error',
+                                text: 'No value could be reserved for Unique ID',
+                                source: 'server',
+                                onComplete: true,
+                            },
+                        ],
+                    ],
+                ])
+            )
+        })
+
+        test('an attribute the layout has a column for is left to the clerk', async () => {
+            const made = await without(ANC_LAYOUT)
+            expect(made?.messages).toEqual(new Map())
+        })
     })
 
     /** A new row of `source`, typed in full and saved by `saving` (the same tab, or another); what was imported. */

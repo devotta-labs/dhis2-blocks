@@ -70,7 +70,6 @@ const secondVisit = (occurrence: number) => ({
 })
 
 export const layout: RegisterLayout = {
-    programId: 'WSGAb5XwJ3Y',
     columns: [
         { field: { attribute: 'w75KJ2mc4zz' } },
         { field: { attribute: 'zDhUuAYrxNC' } },

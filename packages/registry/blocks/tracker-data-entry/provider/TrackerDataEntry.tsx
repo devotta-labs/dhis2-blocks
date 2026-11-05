@@ -287,7 +287,7 @@ export const TrackerDataEntry = ({
         if (lockedView !== undefined && paged !== undefined) {
             view.setState({
                 sync: 'idle',
-                summary: summaryOf(lockedView, paged.fieldNames),
+                summary: summaryOf(lockedView, paged),
             })
         }
     }, [view, lockedView, paged])

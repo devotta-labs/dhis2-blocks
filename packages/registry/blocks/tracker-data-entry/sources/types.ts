@@ -1,5 +1,6 @@
 import type { Field } from '@/components/dhis2-value-types'
 import type { CellKey, DataEngine, GridTable } from '@/components/spreadsheet'
+import type { TrackerMessage } from '../logic/effects'
 import type { DataRecord, TrackerColumn, TrackerRow } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import type { SlotDef } from '../register/compileLayout'
@@ -96,6 +97,8 @@ export interface NewRow {
     values: ReadonlyMap<CellKey, string>
     /** Why some of its records cannot be edited, by record id: a register's events in a stage the user may not enter data in. */
     readOnlyRecords?: ReadonlyMap<string, string>
+    /** Messages on its records, by record id: a person's attribute that could not be reserved. */
+    messages?: ReadonlyMap<string, ReadonlyArray<TrackerMessage>>
 }
 
 export interface TrackerDataEntrySource {

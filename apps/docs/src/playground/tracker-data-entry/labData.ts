@@ -42,7 +42,6 @@ const dose = (vaccine: string, dose: string, label = dose) => ({
 
 /** The docs' immunisation register example's paper, the lab's own copy: that module needs a browser to import. */
 const immunisationLayout: RegisterLayout = {
-    programId: IMMUNISATION,
     columns: [
         {
             group: 'Child',

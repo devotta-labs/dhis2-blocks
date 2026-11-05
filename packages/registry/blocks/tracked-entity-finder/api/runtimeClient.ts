@@ -1,5 +1,5 @@
-import { useDataEngine } from '@dhis2/app-runtime'
 import { useMemo } from 'react'
+import { useStableDataEngine } from '@/components/stable-data-engine'
 import {
     createTrackedEntityFinderClient,
     type DataEngineLike,
@@ -7,7 +7,7 @@ import {
 } from './client'
 
 export const useTrackedEntityFinderClient = (): TrackedEntityFinderClient => {
-    const engine = useDataEngine()
+    const engine = useStableDataEngine()
     return useMemo(
         () =>
             createTrackedEntityFinderClient({

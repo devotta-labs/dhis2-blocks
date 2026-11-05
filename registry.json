@@ -778,6 +778,7 @@
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/dhis2-value-display",
                 "devotta-labs/dhis2-blocks/skeleton",
+                "devotta-labs/dhis2-blocks/stable-data-engine",
                 "devotta-labs/dhis2-blocks/tooltip"
             ],
             "files": [
@@ -934,6 +935,27 @@
             "docs": "Use SidebarLink with render={<NavLink to=\"/projects\" />} to highlight the current page. Add SidebarGroup for nested links and SidebarButton for footer actions. Use SidebarToggle in the sidebar or useSidebar() for a page-toolbar control. Give each sidebar its own SidebarProvider and SidebarNavigation. Collapsing preserves expanded groups and the selected page."
         },
         {
+            "name": "stable-data-engine",
+            "type": "registry:block",
+            "title": "Stable Data Engine",
+            "description": "The app-runtime data engine as one object for the component's lifetime, so clients and effects built on it are not rebuilt when the data provider renders again.",
+            "dependencies": ["@dhis2/app-runtime@^3.15.1"],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/stable-data-engine/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/stable-data-engine/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/stable-data-engine/useStableDataEngine.ts",
+                    "type": "registry:file",
+                    "target": "@components/stable-data-engine/useStableDataEngine.ts"
+                }
+            ],
+            "docs": "Call useStableDataEngine() wherever you would call useDataEngine() and build a client on the engine. Before app-runtime 3.17.4 the data provider makes a new engine every time it renders, and from 3.17.4 whenever its config object changes; this one keeps its identity and always calls the provider's latest engine, so requests go to the current configuration. It does not tell you when the server changes: key anything that must reset on useConfig().baseUrl."
+        },
+        {
             "name": "timeline",
             "type": "registry:block",
             "title": "Timeline",
@@ -952,7 +974,8 @@
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/dhis2-value-display",
-                "devotta-labs/dhis2-blocks/skeleton"
+                "devotta-labs/dhis2-blocks/skeleton",
+                "devotta-labs/dhis2-blocks/stable-data-engine"
             ],
             "files": [
                 {
@@ -1204,7 +1227,6 @@
             "title": "DHIS2 Tracked Entity Finder",
             "description": "Composable parts and hooks to find one tracked entity within a program's search rules.",
             "dependencies": [
-                "@dhis2/app-runtime@^3.15.1",
                 "@dhis2/d2-i18n@1.2.0",
                 "@dhis2/multi-calendar-dates@3.2.1",
                 "@dhis2/ui@^10.17.0",
@@ -1224,7 +1246,8 @@
                 "devotta-labs/dhis2-blocks/field",
                 "devotta-labs/dhis2-blocks/input",
                 "devotta-labs/dhis2-blocks/select",
-                "devotta-labs/dhis2-blocks/spinner"
+                "devotta-labs/dhis2-blocks/spinner",
+                "devotta-labs/dhis2-blocks/stable-data-engine"
             ],
             "files": [
                 {
@@ -1505,6 +1528,7 @@
                 "devotta-labs/dhis2-blocks/select",
                 "devotta-labs/dhis2-blocks/separator",
                 "devotta-labs/dhis2-blocks/spinner",
+                "devotta-labs/dhis2-blocks/stable-data-engine",
                 "devotta-labs/dhis2-blocks/table",
                 "devotta-labs/dhis2-blocks/toggle",
                 "devotta-labs/dhis2-blocks/toggle-group",

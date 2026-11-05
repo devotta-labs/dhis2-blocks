@@ -86,6 +86,7 @@ export const Targets = () => {
                 fieldIdOf: () => 'target',
                 values: new Map(),
                 settings,
+                annotations, // the store you pass to `<Spreadsheet annotations>` below
                 enqueue: (key, value, base) => save(key, value, base),
             }),
         []
@@ -133,6 +134,7 @@ createCellStore({
     fieldIdOf: (key) => key.slice(0, key.indexOf('.')),
     values,
     settings,
+    annotations,
     enqueue: (key, value) => postDataValue(key, value),
 })
 ```
@@ -424,9 +426,9 @@ read-only reason of their own ("Edit this field in its own form"); a
 replacement is not given it, and is how you edit them in the grid.
 
 `commit` returns `'queued'` when the value changed, `'unchanged'` when it did
-not, and `'invalid'` when the field's type or your `check` refuses it. An invalid
-text stays as the cell's `draft` with its `error`, and nothing is saved. A cell
-whose annotations lock it is not written to. To keep a
+not, and `'invalid'` when the field's type refuses it, or the value adds an option the annotations hide. An invalid
+text stays as the cell's `draft` with its `error`, and nothing is saved. A person's
+change to a cell whose annotations lock or hide it is `'unchanged'`: nothing is saved and no draft is kept. To keep a
 default control's editing, render it from `cells` inside your control, with
 the props your control was given, such as `<cells.text {...props} />`. A
 default control reads its cell from the `Cell` around it, so it works only
@@ -447,8 +449,7 @@ Your code sends it, then reports back through the store:
 - `undo()` reverts the last change a person made, as new changes, which go
   to `enqueue` as well.
 
-`createCellStore` also takes `check(key, code)`, which refuses one option code
-with a message, and `locked(key)`, which says a cell's record cannot be
+`createCellStore` also takes `locked(key)`, which says a cell's record cannot be
 changed.
 
 ## Boundaries

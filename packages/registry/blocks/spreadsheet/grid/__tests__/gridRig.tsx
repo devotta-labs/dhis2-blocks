@@ -160,6 +160,16 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
         locked,
         settings = GREGORIAN,
     } = options
+    const cells: AnnotationsState['cells'] = {}
+    for (const [key, effects] of Object.entries(options.effects ?? {})) {
+        // SAFETY: the keys were typed as cell keys above; Object.entries widens them to string.
+        cells[key as CellKey] = { required: false, messages: [], ...effects }
+    }
+    const effects = createStore<AnnotationsState>()(() => ({
+        cells,
+        rowMessages: new Map(rowMessages),
+        rowNotes: new Map(rowNotes),
+    }))
     const store = createCellStore({
         fields: new Map(
             tables.flatMap((each) =>
@@ -173,18 +183,9 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
         locked,
         values: new Map(values),
         settings,
+        annotations: effects,
         enqueue: () => {},
     })
-    const cells: AnnotationsState['cells'] = {}
-    for (const [key, effects] of Object.entries(options.effects ?? {})) {
-        // SAFETY: the keys were typed as cell keys above; Object.entries widens them to string.
-        cells[key as CellKey] = { required: false, messages: [], ...effects }
-    }
-    const effects = createStore<AnnotationsState>()(() => ({
-        cells,
-        rowMessages: new Map(rowMessages),
-        rowNotes: new Map(rowNotes),
-    }))
     const counted: typeof effects = {
         ...effects,
         getState: () => {

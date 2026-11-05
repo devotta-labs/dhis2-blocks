@@ -75,12 +75,6 @@ export const rig = (
         headerRows: [[{ id: 'c1', label: 'Column', span: 1 }]],
         closed: new Map(),
     }
-    const store = createCellStore({
-        fields: new Map([['c1', field]]),
-        values: new Map(value === undefined ? [] : [[CELL, value]]),
-        settings,
-        enqueue: (key, saved, base) => enqueued.push([key, saved, base]),
-    })
     const effectsStore = createStore<AnnotationsState>()(() => ({
         cells:
             effects === undefined
@@ -89,6 +83,13 @@ export const rig = (
         rowMessages: new Map(),
         rowNotes: new Map(),
     }))
+    const store = createCellStore({
+        fields: new Map([['c1', field]]),
+        values: new Map(value === undefined ? [] : [[CELL, value]]),
+        settings,
+        annotations: effectsStore,
+        enqueue: (key, saved, base) => enqueued.push([key, saved, base]),
+    })
     const announced: string[] = []
     const names = {
         orgUnitNames: createStore(() => ({ names: orgUnitNames })),

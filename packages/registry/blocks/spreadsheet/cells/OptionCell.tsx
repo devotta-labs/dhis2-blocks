@@ -171,10 +171,8 @@ export const OptionCell = memo(function OptionCell({
         setListing(false)
         setDraft(null)
     }
-    // A rule can lock the cell while its text is being typed: the lock wins. Text in a cell a rule only hid is the
-    // person's, saved, then cleared by the rule, which says so; `commit` reads the cell's lock as it saves.
-    const commit = (text: string) =>
-        locked && !hidden ? undefined : view.commit(text)
+    // A rule can lock or hide the cell while its text is being typed: it wins, and the store's gate saves nothing.
+    const commit = (text: string) => (locked ? undefined : view.commit(text))
     const save = (text: string | null) => {
         close()
         // A search saves only what was picked, or no value once emptied.

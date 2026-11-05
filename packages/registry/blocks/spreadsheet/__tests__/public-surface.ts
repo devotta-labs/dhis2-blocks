@@ -57,17 +57,18 @@ export type SupportedSpreadsheetTypes = [
 
 // A store of the cells, what logic says about them, and the tables that show them.
 const SETTINGS = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
-const store = createCellStore({
-    fields: new Map([['age', { valueType: 'INTEGER_POSITIVE' }]]),
-    values: new Map([[cellKey('r1', 'age'), '7']]),
-    settings: SETTINGS,
-    enqueue: () => {},
-})
 const annotations = createStore<AnnotationsState>()(() => ({
     cells: {},
     rowMessages: new Map(),
     rowNotes: new Map(),
 }))
+const store = createCellStore({
+    fields: new Map([['age', { valueType: 'INTEGER_POSITIVE' }]]),
+    values: new Map([[cellKey('r1', 'age'), '7']]),
+    settings: SETTINGS,
+    annotations,
+    enqueue: () => {},
+})
 interface Visit extends GridRow {
     visit: number
 }

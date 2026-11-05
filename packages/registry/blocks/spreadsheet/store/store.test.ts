@@ -1,9 +1,17 @@
+import { createStore } from 'zustand/vanilla'
 import type { Field } from '@/components/dhis2-value-types'
+import type { AnnotationsState } from '../model/annotations'
 import { cellKey } from '../model/types'
 import type { CellKey } from '../model/types'
 import { EMPTY_CELL, createCellStore } from './store'
 
 const GREGORIAN = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
+
+const NO_ANNOTATIONS: AnnotationsState = {
+    cells: {},
+    rowMessages: new Map(),
+    rowNotes: new Map(),
+}
 
 const INTEGER: Field = { valueType: 'INTEGER' }
 const fields = new Map<string, Field>([
@@ -21,17 +29,14 @@ const fields = new Map<string, Field>([
     ],
 ])
 
-const setup = (
-    initial: Array<[CellKey, string]> = [],
-    check?: (key: CellKey, value: string) => string | undefined
-) => {
+const setup = (initial: Array<[CellKey, string]> = []) => {
     const enqueued: Array<[CellKey, string | null, string | null]> = []
     const store = createCellStore({
         fields,
         values: new Map(initial),
         settings: GREGORIAN,
+        annotations: createStore<AnnotationsState>()(() => NO_ANNOTATIONS),
         enqueue: (key, value, base) => enqueued.push([key, value, base]),
-        check,
     })
     const cell = (key: CellKey) => store.getState().cells[key] ?? EMPTY_CELL
     const commit = (key: CellKey, text: string, source?: 'person' | 'rule') =>
@@ -111,70 +116,6 @@ test('a person’s commit takes the cell back from a rule', () => {
     commit('r1.c1', '10', 'rule')
     commit('r1.c1', '11')
     expect(cell('r1.c1').source).toBe('person')
-})
-
-test('a value the check refuses is kept as a draft with its error, for a person but not a rule', () => {
-    const checked: Array<[CellKey, string]> = []
-    const { enqueued, cell, commit, store } = setup([], (key, value) => {
-        checked.push([key, value])
-        return value === '7' ? 'Choose one of the options' : undefined
-    })
-    expect(commit('r1.c1', ' 7 ')).toBe('invalid')
-    expect(cell('r1.c1')).toMatchObject({
-        draft: ' 7 ',
-        error: 'Choose one of the options',
-    })
-    expect(cell('r1.c1').value).toBeUndefined()
-    expect(
-        store.getState().commitMany([
-            { key: 'r1.c1', text: '7' },
-            { key: 'r2.c1', text: '8' },
-        ])
-    ).toEqual(['invalid', 'queued'])
-    // Blank deletes, whatever the check says; a rule's own value is not checked.
-    expect(commit('r1.c1', '')).toBe('unchanged')
-    expect(commit('r1.c1', '7', 'rule')).toBe('queued')
-    expect(checked).toEqual([
-        ['r1.c1', '7'],
-        ['r1.c1', '7'],
-        ['r2.c1', '8'],
-    ])
-    expect(enqueued).toEqual([
-        ['r2.c1', '8', null],
-        ['r1.c1', '7', null],
-    ])
-})
-
-test('the check is asked about codes a person adds, not about ones the cell holds', () => {
-    const checked: string[] = []
-    const { enqueued, cell, commit } = setup(
-        [
-            ['r1.c1', '7'],
-            ['r1.c3', 'A,C'],
-        ],
-        (_key, code) => {
-            checked.push(code)
-            return ['7', 'C', 'D'].includes(code)
-                ? 'Choose one of the options'
-                : undefined
-        }
-    )
-    // A value the cell holds is not refused again.
-    expect(commit('r1.c1', '7')).toBe('unchanged')
-    // A multi-select keeps the hidden C it holds when it drops A.
-    expect(commit('r1.c3', 'C')).toBe('queued')
-    expect(cell('r1.c3').value).toBe('C')
-    expect(enqueued).toEqual([['r1.c3', 'C', 'A,C']])
-    // A hidden D it does not hold is refused, one code at a time.
-    expect(commit('r1.c3', 'C,D')).toBe('invalid')
-    expect(cell('r1.c3')).toMatchObject({
-        value: 'C',
-        draft: 'C,D',
-        error: 'Choose one of the options',
-    })
-    expect(commit('r1.c3', 'B,C')).toBe('queued')
-    expect(cell('r1.c3').value).toBe('B,C')
-    expect(checked).toEqual(['D', 'B'])
 })
 
 test('discarding a draft clears it with its error and queues nothing', () => {
@@ -536,6 +477,7 @@ test('commits to a field the form holds but no table shows', () => {
         fields: new Map([['f1', { valueType: 'INTEGER' }]]),
         values: new Map(),
         settings: GREGORIAN,
+        annotations: createStore<AnnotationsState>()(() => NO_ANNOTATIONS),
         enqueue,
     })
     expect(store.getState().commit('r1.f1', '7')).toBe('queued')
@@ -565,6 +507,7 @@ test('a cell’s field comes from fieldIdOf', () => {
         fieldIdOf: (key) => key.slice(0, key.indexOf('.')),
         values: new Map(),
         settings: GREGORIAN,
+        annotations: createStore<AnnotationsState>()(() => NO_ANNOTATIONS),
         enqueue: () => {},
     })
     const { fieldOf, commit } = store.getState()

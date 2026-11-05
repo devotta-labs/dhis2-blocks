@@ -42,19 +42,20 @@ const table: GridTable = {
 
 const mountAggregate = async (annotations: Partial<AnnotationsState> = {}) => {
     const enqueue = vi.fn()
-    const cells = createCellStore({
-        fields: FIELDS,
-        fieldIdOf: (key) => key.slice(0, key.indexOf('.')),
-        values: new Map(),
-        settings: SETTINGS,
-        enqueue,
-    })
     const store = createStore<AnnotationsState>()(() => ({
         cells: {},
         rowMessages: new Map(),
         rowNotes: new Map(),
         ...annotations,
     }))
+    const cells = createCellStore({
+        fields: FIELDS,
+        fieldIdOf: (key) => key.slice(0, key.indexOf('.')),
+        values: new Map(),
+        settings: SETTINGS,
+        annotations: store,
+        enqueue,
+    })
     const Harness = () => (
         <Spreadsheet
             cells={cells}

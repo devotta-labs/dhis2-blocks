@@ -4,6 +4,7 @@ import type { ValueSettings } from '@/components/dhis2-value-types'
 import { formatCount } from '../cells/OptionCell'
 import type { AnnotationsState } from '../model/annotations'
 import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
+import { addsHiddenOption } from '../store/store'
 import type { CellStoreState } from '../store/store'
 import { fieldAt } from './navGrid'
 
@@ -70,7 +71,7 @@ export const clearCandidates = (
     keys: ReadonlyArray<CellKey>
 ): BulkCandidate[] => keys.map((key) => ({ key, text: '' }))
 
-/** Whether the text adds an option code the cell does not offer; codes it already holds are kept, as the store keeps them. */
+/** Whether the text adds no option code the cell hides, by the store's own rule. */
 const offersAll = (
     state: CellStoreState,
     annotations: AnnotationsState,
@@ -87,12 +88,11 @@ const offersAll = (
     if (!parsed.ok || parsed.value === undefined) {
         return true
     }
-    const codesOf = (value: string) =>
-        field.valueType === 'MULTI_TEXT' ? value.split(',') : [value]
-    const held = state.cells[key]?.value
-    const kept = new Set(held === undefined ? [] : codesOf(held))
-    return codesOf(parsed.value).every(
-        (code) => kept.has(code) || !hidden.has(code)
+    return !addsHiddenOption(
+        field,
+        state.cells[key]?.value,
+        parsed.value,
+        hidden
     )
 }
 

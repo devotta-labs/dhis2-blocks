@@ -94,6 +94,7 @@ const ColumnValue = ({
                 fieldIdOf: () => fieldId,
                 values: new Map(),
                 settings,
+                annotations: NO_ANNOTATIONS,
                 enqueue: () => {},
             }),
         }

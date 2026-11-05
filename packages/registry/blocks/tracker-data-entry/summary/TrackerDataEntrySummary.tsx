@@ -11,7 +11,12 @@ import {
 } from '@/components/dhis2/ui/alert-dialog'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
-import { cellDomId, formatCount, cellKey } from '@/components/spreadsheet'
+import {
+    cellDomId,
+    formatCount,
+    cellKey,
+    useFocusCell,
+} from '@/components/spreadsheet'
 import { fieldNamer } from '../logic/summary'
 import type { SummaryItem } from '../logic/summary'
 import { rowsByRecord } from '../model/types'
@@ -58,6 +63,7 @@ const Item = memo(function Item({
     rows,
     nameOf,
 }: ItemProps) {
+    const focusCell = useFocusCell()
     const dot = key.indexOf('.')
     const rowId = dot < 0 ? key : key.slice(0, dot)
     // The row that shows the record, named as the grid names it.
@@ -79,7 +85,8 @@ const Item = memo(function Item({
         )
     }
     const column = key.slice(dot + 1)
-    const target = cellDomId(idScope, cellKey(rowId, column))
+    const cell = cellKey(rowId, column)
+    const target = cellDomId(idScope, cell)
     return (
         <li className={className}>
             <a
@@ -87,7 +94,7 @@ const Item = memo(function Item({
                 onClick={(event) => {
                     // Focus moves without touching the address, which some apps route by.
                     event.preventDefault()
-                    document.getElementById(target)?.focus()
+                    focusCell(cell)
                 }}
                 // At least 24 px tall, as WCAG 2.2 asks of a target with others close by.
                 className="inline-block py-1 text-dhis2-blue-800 underline"

@@ -1,9 +1,10 @@
 import { Buffer } from 'node:buffer'
-import type { Page, Response } from '@playwright/test'
+import type { Locator, Page, Response } from '@playwright/test'
 import { z } from 'zod'
 import {
     addDays,
     addRow,
+    bodyRows,
     cell,
     enter,
     expect,
@@ -339,22 +340,43 @@ test('register: "Show more events" appends 50 rows, and a value typed on page 2 
     shared,
 }) => {
     await openGrid(page, REGISTER)
-    const rows = page.getByRole('rowheader')
-    await expect(rows).toHaveCount(50)
+    expect(await bodyRows(page)).toBe(50)
     const more = page.getByRole('button', { name: 'Show more events' })
     await more.click()
-    await expect(rows).toHaveCount(100)
+    await expect.poll(() => bodyRows(page)).toBe(100)
     await expect(more).toBeFocused()
     await announced(page, 'Events shown: 100')
 
-    // The first row of page 2 that takes a value.
+    // The first row of page 2 that takes a value, among those drawn once the table scrolls to its end.
+    await page
+        .locator('tbody')
+        .first()
+        .evaluate((body) => {
+            const region = body.closest('[role="region"]')
+            region?.scrollTo({ top: region.scrollHeight })
+        })
+    const pageTwo = (row: string | undefined) => Number(row) >= 50
     const column = page.locator(`tbody [id$=".${DIASTOLIC}"]`)
-    let row = 50
-    while (!(await column.nth(row).isEditable())) {
-        row += 1
-        expect(row, 'an editable row on page 2').toBeLessThan(100)
+    const rowOf = (control: Locator) =>
+        control.evaluate((element) => element.closest('tr')?.dataset.index)
+    await expect
+        .poll(
+            async () =>
+                (await Promise.all((await column.all()).map(rowOf))).filter(
+                    pageTwo
+                ).length
+        )
+        .toBeGreaterThan(1)
+    let target: Locator | undefined
+    for (const control of await column.all()) {
+        if (pageTwo(await rowOf(control)) && (await control.isEditable())) {
+            target = control
+            break
+        }
     }
-    const target = column.nth(row)
+    if (target === undefined) {
+        throw new Error('No editable row on page 2')
+    }
     await target.focus()
     const rowId = await focusedRow(page)
     const before = found(await readEvent(request, rowId), `event ${rowId}`)

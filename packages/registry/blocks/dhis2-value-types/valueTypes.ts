@@ -45,7 +45,7 @@ const STORED_NUMBER = /^(?:-?0|-?[1-9]\d*)(?:\.\d+)?$/
 const TYPED_NUMBER = /^(?<sign>-?)(?<whole>\d*)(?:\.(?<fraction>\d*))?$/
 // The server may add a UTC or offset suffix to the time.
 const DATE_TIME =
-    /^(?<day>\d{4}-\d{2}-\d{2})T(?<hours>\d{2}):(?<minutes>\d{2})(?::(?<seconds>\d{2})(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:?\d{2})?$/
+    /^(?<day>\d{4}-\d{2}-\d{2})T(?<hours>\d{2}):(?<minutes>\d{2})(?::(?<seconds>\d{2})(?:\.\d{1,3})?)?(?:Z|[+-](?<offsetHours>\d{2}):?(?<offsetMinutes>\d{2}))?$/
 const TIME = /^(?<hours>\d{2}):(?<minutes>\d{2})$/
 const COORDINATE = /^\[\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\]$/
 const EMAIL = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/
@@ -207,7 +207,11 @@ const CHECKS = new Map(
             const groups = DATE_TIME.exec(value)?.groups
             return groups !== undefined &&
                 isIsoDate(groups.day) &&
-                isClockTime(groups.hours, groups.minutes, groups.seconds)
+                isClockTime(groups.hours, groups.minutes, groups.seconds) &&
+                isClockTime(
+                    groups.offsetHours ?? '0',
+                    groups.offsetMinutes ?? '0'
+                )
                 ? undefined
                 : notADateTime()
         },

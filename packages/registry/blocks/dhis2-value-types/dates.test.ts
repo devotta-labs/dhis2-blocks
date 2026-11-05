@@ -1,5 +1,5 @@
 import { addDaysIso, addMonthsIso, parseDateFormat, todayIso } from './dates'
-import { parseTyped, typedText } from './valueTypes'
+import { checkStored, parseTyped, typedText } from './valueTypes'
 
 test('DD-MM-YYYY is typed and shown day first', () => {
     const s = { calendar: 'iso8601', dateFormat: 'DD-MM-YYYY' } as const
@@ -111,3 +111,19 @@ test('days and months add on the calendar, clamping to the month end', () => {
 test('today is an ISO day', () => {
     expect(todayIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/)
 })
+
+test.each([['Z'], ['+05:30'], ['-1200'], ['+23:59']])(
+    'a stored date time with the offset %s is read',
+    (offset) =>
+        expect(
+            checkStored({ valueType: 'DATETIME' }, `2026-10-20T09:30${offset}`)
+        ).toBeUndefined()
+)
+
+test.each([['+99:99'], ['+24:00'], ['-0560']])(
+    'a stored date time with the offset %s is refused',
+    (offset) =>
+        expect(
+            checkStored({ valueType: 'DATETIME' }, `2026-10-20T09:30${offset}`)
+        ).toMatchObject({ code: 'dateTime' })
+)

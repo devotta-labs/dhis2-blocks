@@ -25,7 +25,6 @@ if (($# > 0)); then
     docs_down "$1"
 else
     for version in 41 42 43 dev; do
-        # Subshell per lane: the loader only fills unset variables.
-        ( docs_down "$version" )
+        docs_down "$version"
     done
 fi

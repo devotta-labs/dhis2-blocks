@@ -1,9 +1,10 @@
 import { createServer } from 'node:http'
 import { once } from 'node:events'
 import { expect, it, vi } from 'vitest'
-import handler from '../../../api/dhis2.mjs'
+import handler, { config } from '../../../api/dhis2.mjs'
 
 it('forwards paths and raw bodies without leaking the Vercel origin upstream', async () => {
+    expect(config.api.bodyParser).toBe(false)
     const upstream = createServer(async (req, res) => {
         const chunks = []
 
@@ -63,6 +64,9 @@ it('forwards paths and raw bodies without leaking the Vercel origin upstream', a
 
         expect(blocked.status).toBe(403)
         expect((await fetch(`${origin}/api/dhis2`)).status).toBe(404)
+        expect((await fetch(`${origin}/dhis2-logo.svg`)).status).toBe(404)
+        const root = await fetch(`${origin}/dhis2?fields=id`)
+        expect((await root.json()).url).toBe('/dev/?fields=id')
     } finally {
         vi.unstubAllEnvs()
         proxy.closeAllConnections()
@@ -70,6 +74,54 @@ it('forwards paths and raw bodies without leaking the Vercel origin upstream', a
         await Promise.all([
             new Promise((resolve) => proxy.close(resolve)),
             new Promise((resolve) => upstream.close(resolve)),
+        ])
+    }
+})
+
+it('keeps the function pending until the streamed response finishes', async () => {
+    let finishUpstream
+    let settled = false
+    let lifetime
+    const upstream = createServer((_req, res) => {
+        finishUpstream = () => res.end('last')
+        res.write('first')
+    })
+    const proxy = createServer((req, res) => {
+        lifetime = handler(req, res).then(() => {
+            settled = true
+        })
+    })
+    try {
+        upstream.listen(0, '127.0.0.1')
+        await once(upstream, 'listening')
+        vi.stubEnv(
+            'DOCS_DHIS2_URL',
+            `http://127.0.0.1:${upstream.address().port}`
+        )
+        proxy.listen(0, '127.0.0.1')
+        await once(proxy, 'listening')
+        const response = await fetch(
+            `http://127.0.0.1:${proxy.address().port}/dhis2/api/raw`
+        )
+        const reader = response.body.getReader()
+        expect(new TextDecoder().decode((await reader.read()).value)).toBe(
+            'first'
+        )
+        expect(settled).toBe(false)
+        finishUpstream()
+        expect(new TextDecoder().decode((await reader.read()).value)).toBe(
+            'last'
+        )
+        expect((await reader.read()).done).toBe(true)
+        await lifetime
+        expect(settled).toBe(true)
+    } finally {
+        vi.unstubAllEnvs()
+        proxy.closeAllConnections()
+        upstream.closeAllConnections()
+        await Promise.all([
+            proxy[Symbol.asyncDispose](),
+            upstream[Symbol.asyncDispose](),
         ])
     }
 })

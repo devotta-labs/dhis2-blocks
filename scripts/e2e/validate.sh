@@ -9,16 +9,6 @@ source "$SCRIPT_DIR/lib.sh"
 validate_version() {
     local version="$1"
     e2e_load_version "$version"
-    e2e_validate_port "$DHIS2_HTTP_PORT"
-    e2e_validate_port "$E2E_APP_PORT"
-    e2e_validate_port "$E2E_PROXY_PORT"
-
-    if [[ "$DHIS2_HTTP_PORT" == "$E2E_APP_PORT" ||
-        "$DHIS2_HTTP_PORT" == "$E2E_PROXY_PORT" ||
-        "$E2E_APP_PORT" == "$E2E_PROXY_PORT" ]]; then
-        echo "Version $version has colliding configured ports." >&2
-        return 73
-    fi
 
     e2e_validate_database_url
     echo "$version: $DHIS2_IMAGE, $DHIS2_DB_DUMP_URL, ports $DHIS2_HTTP_PORT/$E2E_APP_PORT/$E2E_PROXY_PORT"
@@ -32,8 +22,6 @@ if (($# > 0)); then
     validate_version "$1"
 else
     for version in 41 42 43 dev; do
-        # Subshell per lane: e2e_load_version only fills unset values, so its
-        # exports must not leak into the next iteration.
-        ( validate_version "$version" )
+        validate_version "$version"
     done
 fi

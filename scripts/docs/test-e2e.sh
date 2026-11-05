@@ -11,17 +11,17 @@ if (($# > 0)); then shift; fi
 e2e_require_command curl
 e2e_require_command pnpm
 
-DOCS_APP_PORT="${DOCS_PORT:-3002}"
+DOCS_APP_PORT="$E2E_APP_PORT"
 export E2E_DHIS2_USERNAME="${E2E_DHIS2_USERNAME:-admin}"
 export E2E_DHIS2_PASSWORD="${E2E_DHIS2_PASSWORD:-district}"
-DOCS_APP_URL="${E2E_APP_URL:-http://localhost:${DOCS_APP_PORT}}"
+DOCS_APP_URL="$E2E_APP_URL"
 
 cleanup() {
     local exit_code=$?
     trap - EXIT INT TERM
 
     if [[ "${KEEP_DOCS_STACK:-0}" != "1" ]]; then
-        "$SCRIPT_DIR/down.sh" "$E2E_VERSION_SLUG" >/dev/null 2>&1 || true
+        e2e_cleanup_stack "$SCRIPT_DIR/down.sh"
     else
         echo "KEEP_DOCS_STACK=1; leaving $E2E_COMPOSE_PROJECT running."
     fi

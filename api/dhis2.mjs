@@ -1,4 +1,5 @@
 import {
+    isDhis2Path,
     proxyDhis2Request,
     resolveDocsBackend,
 } from '../apps/docs/server/dhis2-proxy.mjs'
@@ -6,7 +7,7 @@ import {
 export const config = { api: { bodyParser: false } }
 
 export default function handler(req, res) {
-    if (!/^\/dhis2(?:\/|\?|$)/.test(req.url ?? '')) {
+    if (!isDhis2Path(req.url)) {
         res.writeHead(404)
         res.end()
 

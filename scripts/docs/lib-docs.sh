@@ -13,14 +13,5 @@ readonly DOCS_REPO_ROOT
 source "$DOCS_REPO_ROOT/scripts/e2e/lib.sh"
 
 docs_load_version() {
-    local requested_version="${1:-42}"
-
-    # Distinct lifecycle: a separate Compose project per version, and ports that
-    # cannot collide with any e2e lane. Export before loading so versions.sh
-    # keeps them (it only fills unset values).
-    export E2E_COMPOSE_PROJECT="${DOCS_COMPOSE_PROJECT:-dhis2-blocks-docs}-${requested_version}"
-    export DHIS2_HTTP_PORT="${DOCS_DHIS2_PORT:-58080}"
-    export E2E_APP_URL="http://localhost:${DOCS_PORT:-3002}"
-
-    e2e_load_version "$requested_version"
+    e2e_load_version "${1:-42}" docs
 }

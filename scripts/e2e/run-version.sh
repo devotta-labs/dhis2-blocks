@@ -42,13 +42,14 @@ cleanup() {
         if [[ "${KEEP_E2E_STACK:-0}" == "1" ]]; then
             echo "KEEP_E2E_STACK=1; leaving $E2E_COMPOSE_PROJECT running."
         else
-            "$SCRIPT_DIR/down.sh" "$E2E_VERSION_SLUG" || true
+            e2e_cleanup_stack "$SCRIPT_DIR/down.sh"
         fi
     fi
 
     if [[ "$app_shell_lock_acquired" == "1" ]]; then
-        rm -f "$app_shell_lock_dir/owner"
-        rmdir "$app_shell_lock_dir" 2>/dev/null || true
+        if ! { rm -f "$app_shell_lock_dir/owner" && rmdir "$app_shell_lock_dir"; }; then
+            echo "Could not release the app shell lock for $E2E_COMPOSE_PROJECT at $app_shell_lock_dir." >&2
+        fi
     fi
 
     exit "$exit_code"

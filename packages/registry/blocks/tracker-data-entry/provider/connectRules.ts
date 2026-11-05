@@ -8,12 +8,7 @@ import {
 } from '@/components/program-rules'
 import { typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
-import {
-    cellDomId,
-    typingIn,
-    rowHeaderDomId,
-    cellKey,
-} from '@/components/spreadsheet'
+import { cellDomId, typingIn, cellKey } from '@/components/spreadsheet'
 import type { CellKey, CellState } from '@/components/spreadsheet'
 import {
     sameEffects,
@@ -38,7 +33,7 @@ import { fieldIdOfKey } from '../model/types'
 import type { DataRecord } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
-import { afterPaint, soon, whenIdle } from './afterPaint'
+import { afterPaint, measured, onScreen, soon, whenIdle } from './afterPaint'
 import { lockedElsewhere } from './formRows'
 import type { OpenForm } from './openForm'
 
@@ -58,19 +53,6 @@ interface RowResult {
     recordId: string
     outcome: ReturnType<typeof rowRuleOutcome> | Error
     raw?: RuleEffects
-}
-
-const measured = (name: string, work: () => void) => {
-    const start = performance.now()
-    work()
-    performance.measure(name, { start })
-}
-
-const onScreen = (idScope: string, tableId: string, rowId: string) => {
-    const box = document
-        .getElementById(rowHeaderDomId(idScope, tableId, rowId))
-        ?.getBoundingClientRect()
-    return box !== undefined && box.bottom > 0 && box.top < window.innerHeight
 }
 
 /** Whether the cell holds a change on its way to DHIS2: a failed one waits for the person to enter it again. */
@@ -286,6 +268,13 @@ export const connectRules = ({
                                   messages: rule?.messages ?? [],
                               }
                     next = lockedElsewhere(form, part, id, next)
+                    // A draft in a cell the rules hide can no longer be reached to clear it, and would block completion.
+                    if (
+                        next.hiddenBy !== undefined &&
+                        after[key]?.draft !== undefined
+                    ) {
+                        store.getState().discardDraft(key)
+                    }
                     const note = cleared.get(key)
                     if (note !== undefined && !after[key]?.value) {
                         next = {
@@ -536,9 +525,16 @@ export const connectRules = ({
             const { records } = tables.getState()
             const ruleRows = ruleRowsNow(records, cells)
             rerun(
-                edits.flatMap(({ rowId, field }) =>
-                    affectedBy(records, ruleRows, rowId, field)
-                )
+                edits.flatMap(({ rowId, field }) => {
+                    const record = records.get(rowId)
+                    // A slot that starts or stops being an event, its `createdWith` values with it, changes the person's
+                    // other rows, as an event date does.
+                    return record !== undefined &&
+                        isEmptySlot(record, before.cells, form.fieldsByForm) !==
+                            isEmptySlot(record, cells, form.fieldsByForm)
+                        ? personRows(records, record)
+                        : affectedBy(records, ruleRows, rowId, field)
+                })
             )
         }),
         // A new or removed record re-runs its person's rows; a saved status, which rewrote the row's effects, the row.

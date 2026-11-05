@@ -88,8 +88,9 @@ export const eventFieldsSchema = z.object({
     status: statusSchema,
     attributeOptionCombo: z.string().optional(),
     geometry: z.object({ type: z.string(), coordinates: z.json() }).optional(),
+    // Sent back as held: an assignment without a username must not fail the batch's read.
     assignedUser: z
-        .object({ uid: z.string(), username: z.string() })
+        .object({ uid: z.string(), username: z.string().optional() })
         .optional(),
 })
 

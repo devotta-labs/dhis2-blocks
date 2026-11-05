@@ -1267,6 +1267,11 @@
                     "target": "@components/spreadsheet/grid/bulk.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/spreadsheet/grid/fillDown.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/fillDown.ts"
+                },
+                {
                     "path": "packages/registry/blocks/spreadsheet/grid/headers.ts",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/grid/headers.ts"

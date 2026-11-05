@@ -39,7 +39,8 @@ import type { BulkTarget } from './BulkMenu'
 import { columnHeaderIds, headerDomId, rowHeaderDomId } from './headers'
 import { nextCell } from './navigation'
 import type { NavKey } from './navigation'
-import { fieldAt, navGrid } from './navGrid'
+import { fillDown } from './fillDown'
+import { fieldAt, navGrid, reasonOf } from './navGrid'
 import { isBlock, pastedBlock, pasteTargets } from './paste'
 import { BORDER_CLASS, ROW_HEADER_CLASS, RowHeader } from './RowHeader'
 import { useAddRow } from './useAddRow'
@@ -321,6 +322,7 @@ export const SpreadsheetGrid = ({
         announce,
         addRow,
         keyOf,
+        settings,
         GridFooter,
     } = useSpreadsheetContext()
     const tables = useMemo(
@@ -475,6 +477,37 @@ export const SpreadsheetGrid = ({
             // Undo can change a cell elsewhere in the grid: focus goes there, so the change is seen and heard.
             if (undone.length > 0) {
                 document.getElementById(cellDomId(idScope, undone[0]))?.focus()
+            }
+        }
+        if (
+            (event.ctrlKey || event.metaKey) &&
+            !event.altKey &&
+            !event.shiftKey &&
+            event.key.toLowerCase() === 'd'
+        ) {
+            const here = readyCell(event.target)
+            if (here !== undefined) {
+                event.preventDefault()
+                const key = keyAt(here)
+                const above =
+                    here.row === 0
+                        ? undefined
+                        : keyAt({ ...here, row: here.row - 1 })
+                const { closed } = tables[here.table]
+                const result = fillDown(
+                    store.getState(),
+                    settings,
+                    key,
+                    above,
+                    reasonOf(closed, store, effects, overrides)(key)
+                )
+                if ('say' in result) {
+                    announce(result.say)
+                } else {
+                    changeHere(event.target, () =>
+                        store.getState().commit(key, result.commit)
+                    )
+                }
             }
         }
         // A cell that saved the typing lets the key through; one that kept the text, or an editor, stops it.

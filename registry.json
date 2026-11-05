@@ -1272,6 +1272,11 @@
                     "target": "@components/spreadsheet/grid/SpreadsheetGrid.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/spreadsheet/grid/TableRow.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/TableRow.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/spreadsheet/grid/bulk.ts",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/grid/bulk.ts"

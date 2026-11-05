@@ -47,8 +47,12 @@ export interface BulkTarget {
     column?: GridColumn
 }
 
-/** The sticky last column holding each row's button; the scroll region's end padding is as wide. */
-export const ACTIONS_CLASS = 'sticky end-0 z-10 w-9 min-w-9 p-0 text-center'
+/**
+ * The sticky last column holding each row's button; the scroll region's end padding is as wide. Its line is on the side
+ * facing the data, as the row header's is, so the cells scrolling under it keep a divider.
+ */
+export const ACTIONS_CLASS =
+    'sticky end-0 z-10 w-9 min-w-9 border-s p-0 text-center'
 
 /** Whether the column takes column actions: the provider's `bulkColumn` allows it and its open cells share one field. */
 export const takesColumnActions = (

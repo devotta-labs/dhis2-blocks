@@ -47,32 +47,27 @@ export const TrackerDataEntryLab = () => {
         () => ({ options: SOURCES[example] }),
         [example]
     )
-    // Kept as one element: app-runtime's data provider makes a new engine each time it renders, and the block loads
-    // its form again for a new engine, so the canvas must not render again for every request the log adds.
-    const canvas = useMemo(
-        () => (
-            <CanvasBoundary key={run}>
-                {mode === 'lab' ? (
-                    <LabServerScope
-                        key={run}
-                        network={network}
-                        resources={RESOURCES}
-                        respond={respond}
-                        log={log}
-                    >
-                        <TrackerDataEntryCanvas {...canvasProps} />
-                    </LabServerScope>
-                ) : (
-                    <LivePreviewHost
-                        key={run}
-                        placeholder={<PreviewSpinner className="h-96" />}
-                    >
-                        <TrackerDataEntryCanvas {...canvasProps} />
-                    </LivePreviewHost>
-                )}
-            </CanvasBoundary>
-        ),
-        [run, mode, network, respond, log, canvasProps]
+    const canvas = (
+        <CanvasBoundary key={run}>
+            {mode === 'lab' ? (
+                <LabServerScope
+                    key={run}
+                    network={network}
+                    resources={RESOURCES}
+                    respond={respond}
+                    log={log}
+                >
+                    <TrackerDataEntryCanvas {...canvasProps} />
+                </LabServerScope>
+            ) : (
+                <LivePreviewHost
+                    key={run}
+                    placeholder={<PreviewSpinner className="h-96" />}
+                >
+                    <TrackerDataEntryCanvas {...canvasProps} />
+                </LivePreviewHost>
+            )}
+        </CanvasBoundary>
     )
 
     return (

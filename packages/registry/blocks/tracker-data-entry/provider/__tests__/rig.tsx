@@ -342,7 +342,7 @@ export const mount = async (
         tracker = useContext(TrackerReactContext)
         return null
     }
-    const screen = await render(
+    const tree = () => (
         <Provider
             config={{ baseUrl: server, apiVersion: 42 }}
             userInfo={undefined}
@@ -375,6 +375,7 @@ export const mount = async (
             </CustomDataProvider>
         </Provider>
     )
+    const screen = await render(tree())
     await expect.poll(() => view?.getState().status).toBe(until)
     const got = <T,>(value: T | undefined) => {
         if (value === undefined) {
@@ -385,6 +386,8 @@ export const mount = async (
     return {
         server,
         screen,
+        /** Renders the page again from its root, as an app's own state change does; the data provider makes a new engine. */
+        rerender: () => screen.rerender(tree()),
         client,
         meSignals,
         context: () => got(context),

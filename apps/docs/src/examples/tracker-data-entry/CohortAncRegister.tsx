@@ -247,10 +247,13 @@ const orgUnits: readonly Option[] = [
 // Replace with your app's loading and error states.
 const Status = () => {
     const status = useTrackerDataEntry((view) => view.status)
+    const error = useTrackerDataEntry((view) => view.error)
 
     return status === 'ready' ? null : (
         <p role="status" className="text-sm text-dhis2-grey-700">
-            {status === 'loading' ? 'Loading…' : 'The form could not be loaded'}
+            {status === 'loading'
+                ? 'Loading…'
+                : `The form could not be loaded: ${error}`}
         </p>
     )
 }

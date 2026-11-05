@@ -17,7 +17,7 @@ export class PartlySaved extends Error {
 }
 
 // DHIS2's error body carries the status and the reason; a field that is not there as a number or text counts as absent.
-const bodySchema = z
+export const bodySchema = z
     .object({
         httpStatusCode: z.number().optional().catch(undefined),
         message: z.string().optional().catch(undefined),

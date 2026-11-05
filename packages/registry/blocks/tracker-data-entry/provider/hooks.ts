@@ -1,3 +1,4 @@
+import { FetchError } from '@dhis2/app-runtime'
 import { createContext, useContext } from 'react'
 import { useStore } from 'zustand'
 import type { StoreApi } from 'zustand/vanilla'
@@ -5,6 +6,7 @@ import type { ValueSettings } from '@/components/dhis2-value-types'
 import type { CellStoreState, GridTable } from '@/components/spreadsheet'
 import type { summarise } from '../logic/summary'
 import type { DataRecord, TrackerColumn, TrackerRow } from '../model/types'
+import { bodySchema } from '../outbox/failure'
 import type { SaveOutcome, SyncStatus } from '../outbox/sync'
 
 /** What `useTrackerDataEntry` selects from: the form's state and its actions. */
@@ -76,8 +78,20 @@ export const useTrackerContext = (): TrackerContext => {
     return context
 }
 
-/** A failure's message, for `TrackerDataEntryView.error` and what the live region says. */
-export const reasonOf = (error: Error | null) => error?.message ?? String(error)
+/**
+ * A failure's message, for `TrackerDataEntryView.error` and what the live region says: DHIS2's own reason when its
+ * error body gives one, the platform's message otherwise.
+ */
+export const reasonOf = (error: Error | null) => {
+    const body =
+        error instanceof FetchError ? bodySchema.parse(error.details) : {}
+    // A DHIS2 body has a status code; a network error's details are the browser's own error.
+    return (
+        (body.httpStatusCode === undefined ? undefined : body.message) ??
+        error?.message ??
+        String(error)
+    )
+}
 
 export const TrackerDataEntryViewContext = createContext<
     StoreApi<TrackerDataEntryView> | undefined

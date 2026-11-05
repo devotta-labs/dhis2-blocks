@@ -1126,6 +1126,7 @@
                 "@dhis2/d2-i18n@1.2.0",
                 "@dhis2/multi-calendar-dates@3.2.1",
                 "@dhis2/ui-icons@^10.17.0",
+                "@tanstack/react-virtual@^3.14.21",
                 "prop-types@^15.8.1",
                 "zod@^4.4.3",
                 "zustand@^5.0.15"
@@ -1270,6 +1271,11 @@
                     "path": "packages/registry/blocks/spreadsheet/grid/SpreadsheetGrid.tsx",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/grid/SpreadsheetGrid.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/TableBody.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/TableBody.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/spreadsheet/grid/TableRow.tsx",

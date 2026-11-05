@@ -64,6 +64,7 @@ const browserProject = {
             '@dhis2/app-runtime',
             '@dhis2/rule-engine',
             '@dhis2/ui-icons',
+            '@tanstack/react-virtual',
             '@tanstack/react-query',
             'better-result',
             'class-variance-authority',

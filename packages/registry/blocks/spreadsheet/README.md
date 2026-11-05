@@ -89,6 +89,7 @@ cells: Record<CellKind, CellComponent> // the default control per kind of field
 useCell(cellKey): CellView // one cell's value, draft, error, sync state and annotations, and commit(text) to save it
 useRowCells(keys) // the states and annotations of a row's cells, in the order of keys
 useAnnounce(): (text: string) => void // says an outcome in the live region
+useFocusCell(): (key: CellKey) => void // focuses a cell, drawing its row first when the grid has scrolled past it
 createCellStore(options): StoreApi<CellStoreState> // the cells' values and states
 createAnnouncer(): Announcer // an announcer to pass to Spreadsheet, for code outside the grid that says outcomes too
 cellKey(rowId, fieldId): CellKey // `<row id>.<column id>`; a row id contains no dot

@@ -1,9 +1,10 @@
-import { useId, useMemo, useState } from 'react'
+import { useCallback, useId, useMemo, useState } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 import { useStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import type { ValueSettings } from '@/components/dhis2-value-types'
+import { cellDomId } from '../cells/cellProps'
 import type { CellOverrides } from '../cells/cellProps'
 import type { AnnotationsState } from '../model/annotations'
 import { cellKey } from '../model/types'
@@ -101,16 +102,31 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
         announcer: createAnnouncer(),
         orgUnitNames: names(),
         fileNames: names(),
+        focusing: createStore<{ key?: CellKey }>()(() => ({})),
     }))
     const { announce, announcements } = announcer ?? own.announcer
+    const scope = idScope ?? ownScope
+    const focusCell = useCallback(
+        (key: CellKey) => {
+            const cell = document.getElementById(cellDomId(scope, key))
+            if (cell === null) {
+                own.focusing.setState({ key })
+            } else {
+                cell.focus()
+            }
+        },
+        [scope, own]
+    )
     const context = useMemo(
         (): SpreadsheetContext => ({
             store: cells,
             effects: annotations,
-            idScope: idScope ?? ownScope,
+            idScope: scope,
             settings,
             announce,
             announcements,
+            focusCell,
+            focusing: own.focusing,
             tables,
             keyOf,
             rowKeysOf,
@@ -131,11 +147,11 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
         [
             cells,
             annotations,
-            idScope,
-            ownScope,
+            scope,
             settings,
             announce,
             announcements,
+            focusCell,
             tables,
             keyOf,
             rowKeysOf,

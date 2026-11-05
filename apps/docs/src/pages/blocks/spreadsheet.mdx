@@ -209,6 +209,13 @@ row header's description holds the notes for screen readers.
   Pass one when code outside the grid says outcomes through it too; below
   `Spreadsheet`, `useAnnounce()` gives `announce`.
 
+A table draws only the rows near its view, so a register of hundreds of rows
+stays quick to type in. The table's `aria-rowcount` and each row's
+`aria-rowindex` tell screen readers where the drawn rows sit. To move focus to a
+cell from your own code, use `useFocusCell()`: it draws the cell's row first
+when the table has scrolled past it. `document.getElementById(cellDomId(…))`
+finds only cells that are drawn.
+
 ## Bulk actions
 
 One value or one row can fill many cells at once. Every action is one write
@@ -487,6 +494,8 @@ changed.
 - `useRowCells(keys)` — the states and annotations of a row's cells, in the order
   of `keys`.
 - `useAnnounce()` — says an outcome in the grid's polite live region.
+- `useFocusCell()` — focuses a cell by its key, drawing its row first when the
+  table has scrolled past it.
 - `Cell({ cellKey, field, labelledBy, move })` and `cells` — one bound control
   with its notes and markers, and the default control for each kind of field, for
   layouts of your own that do not use `SpreadsheetGrid`.

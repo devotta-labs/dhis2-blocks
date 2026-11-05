@@ -43,6 +43,10 @@ export interface SpreadsheetContext {
     announce(text: string): void
     /** What `announce` last said, for the grid's live region to show. */
     announcements: StoreApi<Announcement>
+    /** Focuses the cell, which scrolls it into view; a cell whose row the grid has not drawn is drawn first. */
+    focusCell(key: CellKey): void
+    /** The cell `focusCell` waits on while the grid draws its row. */
+    focusing: StoreApi<{ key?: CellKey }>
     tables: ReadonlyArray<GridTable>
     /** The key of the row's cell in the column: what the cell's state, effects and DOM id are found by. */
     keyOf(row: GridRow, column: GridColumn): CellKey
@@ -205,6 +209,9 @@ export const useRowCells = (keys: ReadonlyArray<CellKey>) => {
         ),
     }
 }
+
+/** Focuses a cell by its key, wherever the grid has scrolled: its row is drawn first when it is not. */
+export const useFocusCell = () => useSpreadsheetContext().focusCell
 
 /** Says an outcome in the spreadsheet's one polite live region. */
 export const useAnnounce = () => useSpreadsheetContext().announce

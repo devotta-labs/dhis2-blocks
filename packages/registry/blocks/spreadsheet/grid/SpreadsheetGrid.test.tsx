@@ -455,7 +455,17 @@ test('the option list opens above its cell when there is no room below, over the
     expect(list.contains(shown)).toBe(true)
 })
 
-test('typing renders one cell, not the others or the table; 2,500 cells drawn', async () => {
+/** Of the 50-row, 50-column grid, only the rows near the view are drawn, each whole; the table counts them all. */
+const expectRowsNearTheView = () => {
+    const drawn = page.getByRole('row').elements().length - 1
+    expect(drawn).toBeLessThan(50)
+    expect(page.getByRole('textbox').elements()).toHaveLength(drawn * 50)
+    expect(
+        page.getByRole('table').element().getAttribute('aria-rowcount')
+    ).toBe('51')
+}
+
+test('typing renders one cell, not the others or the table, in a 2,500-cell grid', async () => {
     const reads = { effects: 0, tables: 0 }
     const started = performance.now()
     // A clinic desktop, as the performance budgets measure.
@@ -477,13 +487,16 @@ test('typing renders one cell, not the others or the table; 2,500 cells drawn', 
         await nextFrame()
         const painted = (await nextFrame()) - started
         console.info(
-            `2,500 cells painted in ${Math.round(painted)} ms (CPU 4×, dev build)`
+            `${page.getByRole('textbox').elements().length} of 2,500 cells painted in ${Math.round(painted)} ms (CPU 4×, dev build)`
         )
     } finally {
         await devtools().send('Emulation.setCPUThrottlingRate', { rate: 1 })
     }
-    expect(page.getByRole('textbox').elements()).toHaveLength(2_500)
-    control(cellKey('t1r20', 'c20')).focus()
+    expectRowsNearTheView()
+    control(cellKey('t1r5', 'c20')).focus()
+    // The focused cell is scrolled into view before the typing is counted.
+    await nextFrame()
+    await nextFrame()
     reads.effects = 0
     reads.tables = 0
     await userEvent.keyboard('12{Enter}')
@@ -494,7 +507,7 @@ test('typing renders one cell, not the others or the table; 2,500 cells drawn', 
 
 test('a 2,500-cell grid mounts notes only for cells that have them, subscribes by row, and typing renders one cell', async () => {
     const noted = cellKey('t1r0', 'c0')
-    const typed = cellKey('t1r20', 'c20')
+    const typed = cellKey('t1r5', 'c20')
     const check: CellMessage = {
         tone: 'warning',
         text: 'Low',
@@ -520,7 +533,7 @@ test('a 2,500-cell grid mounts notes only for cells that have them, subscribes b
         }
     )
     const controls = page.getByRole('textbox').elements()
-    expect(controls).toHaveLength(2_500)
+    expectRowsNearTheView()
     // The rows subscribe to the stores and hand each cell its state.
     expect(subscriptions).toBeLessThan(2_500)
     // A cell without notes holds its control alone, described by nothing.
@@ -550,8 +563,10 @@ test('a 2,500-cell grid mounts notes only for cells that have them, subscribes b
     }))
     await expect.poll(() => notesOf(later)).toEqual(['Too high'])
     control(typed).focus()
+    await nextFrame()
+    await nextFrame()
     rendered.length = 0
     await userEvent.keyboard('12{Enter}')
-    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r21', 'c20')))
+    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r6', 'c20')))
     expect(new Set(rendered)).toEqual(new Set([typed]))
 })

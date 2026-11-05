@@ -59,6 +59,15 @@ export interface SpreadsheetContext {
     RowBadge?: ComponentType<{ rowId: string }>
     /** Shown once after every table; `skipTargetId` is the DOM id of the place "Skip past the grid" leads to. */
     GridFooter?: ComponentType<{ skipTargetId: string }>
+    /** Whether the column's cells take row and column actions; every column by default. */
+    bulkColumn?(column: GridColumn): boolean
+    /**
+     * Asked before a bulk action writes to these cells: the text of a dialog that asks the person first, or nothing to
+     * write at once.
+     */
+    confirmBulk?(
+        keys: ReadonlyArray<CellKey>
+    ): { title: string; body: string; confirm: string } | undefined
     /** What the searching and uploading cells ask the server with. */
     engine: DataEngine
     /** Whether the server cannot be reached now: files cannot be uploaded. */

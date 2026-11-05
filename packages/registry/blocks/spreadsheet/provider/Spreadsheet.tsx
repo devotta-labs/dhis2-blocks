@@ -52,6 +52,9 @@ interface SpreadsheetProps<R extends GridRow, C extends GridColumn> {
     RowLabel?: ComponentType<{ row: R }>
     RowBadge?: SpreadsheetContext['RowBadge']
     GridFooter?: SpreadsheetContext['GridFooter']
+    /** Whether the column's cells take row and column actions; every column by default. */
+    bulkColumn?(column: C): boolean
+    confirmBulk?: SpreadsheetContext['confirmBulk']
     children: ReactNode
 }
 
@@ -96,6 +99,8 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
     RowLabel,
     RowBadge,
     GridFooter,
+    bulkColumn,
+    confirmBulk,
     children,
 }: SpreadsheetProps<R, C>) => {
     const ownScope = `spreadsheet-${useId().replaceAll(':', '')}`
@@ -121,6 +126,9 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
             RowLabel: RowLabel as SpreadsheetContext['RowLabel'],
             RowBadge,
             GridFooter,
+            // SAFETY: the grid hands it only columns of `tables`, which are `C`s.
+            bulkColumn: bulkColumn as SpreadsheetContext['bulkColumn'],
+            confirmBulk,
             engine,
             offline,
             fileUrl,
@@ -143,6 +151,8 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
             RowLabel,
             RowBadge,
             GridFooter,
+            bulkColumn,
+            confirmBulk,
             engine,
             offline,
             fileUrl,

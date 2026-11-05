@@ -7,6 +7,7 @@ import {
     useLayoutEffect,
     useMemo,
     useRef,
+    useState,
 } from 'react'
 import type { ClipboardEvent, KeyboardEvent } from 'react'
 import { flushSync } from 'react-dom'
@@ -18,9 +19,23 @@ import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
 import { addsRow } from '../cells/useCellMode'
 import { indexCells } from '../model/types'
-import type { CellKey, CellPlace, GridRow, GridTable } from '../model/types'
+import type {
+    CellKey,
+    CellPlace,
+    GridColumn,
+    GridRow,
+    GridTable,
+} from '../model/types'
 import { useSpreadsheetContext, useRowCells } from '../provider/context'
 import type { SpreadsheetContext } from '../provider/context'
+import {
+    ACTIONS_CLASS,
+    ActionsButton,
+    BulkMenu,
+    RowActions,
+    takesColumnActions,
+} from './BulkMenu'
+import type { BulkTarget } from './BulkMenu'
 import { columnHeaderIds, headerDomId, rowHeaderDomId } from './headers'
 import { nextCell } from './navigation'
 import type { NavKey } from './navigation'
@@ -56,6 +71,7 @@ interface TableRowProps {
     /** The ids of the column headers that name each column's cells. */
     labels: ReadonlyArray<string>
     move(key: NavKey): void
+    openMenu(target: BulkTarget): void
 }
 
 /** One row of a table: it reads its cells' states and effects, once for the row, and hands each cell its own. */
@@ -65,6 +81,7 @@ const TableRow = memo(function TableRow({
     row,
     labels,
     move,
+    openMenu,
 }: TableRowProps) {
     const { keyOf, store } = useSpreadsheetContext()
     const keys = table.columns.map((column) => keyOf(row, column))
@@ -86,6 +103,10 @@ const TableRow = memo(function TableRow({
                     />
                 </td>
             ))}
+            <RowActions
+                rowHeader={rowHeader}
+                onOpen={(anchor) => openMenu({ anchor, table, row })}
+            />
         </tr>
     )
 })
@@ -98,6 +119,7 @@ interface TableViewProps {
     addLabel?: string
     /** Adds a row to the table and focuses its first open cell. */
     addRow(tableId: string): void
+    openMenu(target: BulkTarget): void
 }
 
 /** One table in its own scrolling region, its header row and first column sticky. */
@@ -107,12 +129,27 @@ const TableView = memo(function TableView({
     move,
     addLabel,
     addRow,
+    openMenu,
 }: TableViewProps) {
+    const context = useSpreadsheetContext()
     const region = useRef<HTMLDivElement>(null)
     const head = useRef<HTMLTableSectionElement>(null)
     const labels = useMemo(
         () => columnHeaderIds(idScope, table),
         [idScope, table]
+    )
+    // The column each leaf heading names, for the columns that take column actions.
+    const bulkLeaves = useMemo(
+        () =>
+            new Map(
+                table.columns.flatMap(
+                    (column, c): Array<[string, GridColumn]> =>
+                        takesColumnActions(context, table, column)
+                            ? [[labels[c].split(' ').at(-1) ?? '', column]]
+                            : []
+                )
+            ),
+        [context, table, labels]
     )
     const titleId = `${idScope}-${table.id}-title`
     // Scroll padding as tall as the sticky header, however its labels wrap, so a focused cell never sits under it.
@@ -137,7 +174,7 @@ const TableView = memo(function TableView({
                 ref={region}
                 role="region"
                 aria-labelledby={titleId}
-                className="isolate max-h-[70vh] scroll-ps-[min(12rem,30vw)] overflow-auto rounded-dhis2-sm border border-dhis2-grey-300 bg-white"
+                className="isolate max-h-[70vh] scroll-ps-[min(12rem,30vw)] scroll-pe-9 overflow-auto rounded-dhis2-sm border border-dhis2-grey-300 bg-white"
             >
                 <table
                     aria-labelledby={titleId}
@@ -156,25 +193,72 @@ const TableView = memo(function TableView({
                                         )}
                                     />
                                 ) : null}
-                                {cells.map(({ id, label, span, rowSpan }) => (
-                                    <th
-                                        key={id}
-                                        id={headerDomId(idScope, table.id, id)}
-                                        colSpan={span}
-                                        rowSpan={rowSpan}
-                                        scope="col"
-                                        className={cn(HEADER_CLASS, 'min-w-28')}
-                                    >
-                                        {/* A group wider than the screen keeps its label beside the row headers. */}
-                                        {span > 1 ? (
-                                            <span className="sticky start-[min(12rem,30vw)] inline-block">
-                                                {label}
-                                            </span>
-                                        ) : (
-                                            label
+                                {cells.map(({ id, label, span, rowSpan }) => {
+                                    // The label alone names the cells; a button in the heading is not part of it.
+                                    const labelId = headerDomId(
+                                        idScope,
+                                        table.id,
+                                        id
+                                    )
+                                    const column =
+                                        span === 1
+                                            ? bulkLeaves.get(labelId)
+                                            : undefined
+                                    return (
+                                        <th
+                                            key={id}
+                                            colSpan={span}
+                                            rowSpan={rowSpan}
+                                            scope="col"
+                                            className={cn(
+                                                HEADER_CLASS,
+                                                'min-w-28'
+                                            )}
+                                        >
+                                            {/* A group wider than the screen keeps its label beside the row headers. */}
+                                            {span > 1 ? (
+                                                <span
+                                                    id={labelId}
+                                                    className="sticky start-[min(12rem,30vw)] inline-block"
+                                                >
+                                                    {label}
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-end justify-between gap-1">
+                                                    <span id={labelId}>
+                                                        {label}
+                                                    </span>
+                                                    {column ===
+                                                    undefined ? null : (
+                                                        <ActionsButton
+                                                            id={`${labelId}-actions`}
+                                                            label={i18n.t(
+                                                                'Column actions'
+                                                            )}
+                                                            labelledBy={labelId}
+                                                            onOpen={(anchor) =>
+                                                                openMenu({
+                                                                    anchor,
+                                                                    table,
+                                                                    column,
+                                                                })
+                                                            }
+                                                        />
+                                                    )}
+                                                </span>
+                                            )}
+                                        </th>
+                                    )
+                                })}
+                                {level === 0 ? (
+                                    <td
+                                        rowSpan={table.headerRows.length}
+                                        className={cn(
+                                            HEADER_CLASS,
+                                            ACTIONS_CLASS
                                         )}
-                                    </th>
-                                ))}
+                                    />
+                                ) : null}
                             </tr>
                         ))}
                     </thead>
@@ -187,6 +271,7 @@ const TableView = memo(function TableView({
                                 row={row}
                                 labels={labels}
                                 move={move}
+                                openMenu={openMenu}
                             />
                         ))}
                     </tbody>
@@ -296,6 +381,13 @@ export const SpreadsheetGrid = ({
     const move = useCallback((key: NavKey) => moveTo.current?.(key), [])
 
     const add = useAddRow(idScope, tables, addRow, keyOf)
+
+    // The one menu of row and column actions, kept after it closes so it closes in place.
+    const [menu, setMenu] = useState<BulkTarget & { open: boolean }>()
+    const openMenu = useCallback(
+        (target: BulkTarget) => setMenu({ ...target, open: true }),
+        []
+    )
 
     // A value refused where the person is (Enter, an arrow, leaving the cell, a paste) is said aloud, once per text.
     useEffect(
@@ -412,6 +504,24 @@ export const SpreadsheetGrid = ({
             }}
             onPaste={onPaste}
             onKeyDown={onKeyDown}
+            onContextMenu={(event) => {
+                // A ready cell's menu holds its row's and column's actions; an editor keeps the browser's.
+                const at = readyCell(event.target)
+                if (
+                    at === undefined ||
+                    !(event.target instanceof HTMLElement)
+                ) {
+                    return
+                }
+                event.preventDefault()
+                const table = tables[at.table]
+                openMenu({
+                    anchor: event.target,
+                    table,
+                    row: table.rows[at.row],
+                    column: table.columns[at.column],
+                })
+            }}
         >
             <a
                 href={`#${end}`}
@@ -432,8 +542,17 @@ export const SpreadsheetGrid = ({
                     move={move}
                     addLabel={addRow?.get(table.id)?.label}
                     addRow={add}
+                    openMenu={openMenu}
                 />
             ))}
+            <BulkMenu
+                target={menu}
+                open={menu?.open ?? false}
+                onClose={() =>
+                    setMenu((open) => open && { ...open, open: false })
+                }
+                changeHere={changeHere}
+            />
             <div id={end} tabIndex={-1} className="outline-none" />
             {GridFooter === undefined ? null : (
                 <GridFooter skipTargetId={end} />

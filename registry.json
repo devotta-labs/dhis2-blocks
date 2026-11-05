@@ -1125,16 +1125,20 @@
                 "@dhis2/app-runtime@^3.15.1",
                 "@dhis2/d2-i18n@1.2.0",
                 "@dhis2/multi-calendar-dates@3.2.1",
+                "@dhis2/ui-icons@^10.17.0",
+                "prop-types@^15.8.1",
                 "zod@^4.4.3",
                 "zustand@^5.0.15"
             ],
             "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert-dialog",
                 "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/checkbox",
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/dhis2-value-display",
                 "devotta-labs/dhis2-blocks/dhis2-value-types",
+                "devotta-labs/dhis2-blocks/dropdown-menu",
                 "devotta-labs/dhis2-blocks/input",
                 "devotta-labs/dhis2-blocks/kbd",
                 "devotta-labs/dhis2-blocks/label",
@@ -1238,6 +1242,11 @@
                     "target": "@components/spreadsheet/cells/useCellMode.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/spreadsheet/grid/BulkMenu.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/BulkMenu.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/spreadsheet/grid/RowHeader.tsx",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/grid/RowHeader.tsx"
@@ -1248,9 +1257,19 @@
                     "target": "@components/spreadsheet/grid/SpreadsheetGrid.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/spreadsheet/grid/bulk.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/bulk.ts"
+                },
+                {
                     "path": "packages/registry/blocks/spreadsheet/grid/headers.ts",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/grid/headers.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/navGrid.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/navGrid.ts"
                 },
                 {
                     "path": "packages/registry/blocks/spreadsheet/grid/navigation.ts",

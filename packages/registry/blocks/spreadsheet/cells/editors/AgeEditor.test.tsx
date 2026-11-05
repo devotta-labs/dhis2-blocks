@@ -29,8 +29,11 @@ const WHOLE = 'Enter whole numbers of zero or more'
 // Today is fixed, so the ages are too.
 const Today: PopupEditor = (props) => <AgeEditor {...props} today={TODAY} />
 
-const mount = async (options?: Parameters<typeof rig>[1]) => {
-    withEditor('AGE', Today)
+const mount = async (
+    options?: Parameters<typeof rig>[1],
+    editor: PopupEditor = Today
+) => {
+    withEditor('AGE', editor)
     const setup = rig(AGE, options)
     await render(
         setup.ui(
@@ -205,6 +208,29 @@ test('negative or fractional parts are refused with "Enter whole numbers of zero
     // Beside the cell's other notes, such as whether its value is saved.
     await expect.element(cell).toHaveAccessibleDescription(new RegExp(WHOLE))
     expect(enqueued).toHaveLength(1)
+})
+
+test('an age no date of birth is on today is refused with its message', async () => {
+    const NONE = 'No date of birth is this age today'
+    const { cell, stored, enqueued } = await mount(undefined, (props) => (
+        <AgeEditor {...props} today="2026-03-31" />
+    ))
+    await open(cell)
+    // Born 28 February, one is one month and three days old on 31 March.
+    await userEvent.fill(months, '1')
+    await userEvent.click(save())
+    await expect.element(dialog.getByText(NONE)).toBeVisible()
+    await expect.element(days).toHaveAttribute('aria-invalid', 'true')
+    await expect.element(days).toHaveFocus()
+    expect(enqueued).toEqual([])
+
+    await userEvent.fill(days, '3')
+    await expect.element(birth).toHaveValue('2026-02-28')
+    await userEvent.click(save())
+    expect(stored()?.value).toBe('2026-02-28')
+    await open(cell)
+    await expect.element(months).toHaveValue('1')
+    await expect.element(days).toHaveValue('3')
 })
 
 test('the editor opens on the stored date of birth and its age; a clear saves no value', async () => {

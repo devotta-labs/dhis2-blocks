@@ -39,8 +39,18 @@ export const ageFromBirth = (birth: string, today: string): Age => {
     }
 }
 
-/** The date of birth of someone `age` old on `today`: the days back first, then the months, so `ageFromBirth` counts it again. */
+/**
+ * The date of birth of someone `age` old on `today`: the days back first, then the months, as `ageFromBirth` counts
+ * them forward. Undefined when no one is that age today, as one month on 31 March: born 28 February, one is a month
+ * and three days old.
+ */
 export const birthFromAge = (
     { years, months, days }: Age,
     today: string
-): string => addMonthsIso(addDaysIso(today, -days), -(years * 12 + months))
+): string | undefined => {
+    const spanned = years * 12 + months
+    const birth = addMonthsIso(addDaysIso(today, -days), -spanned)
+    return addDaysIso(addMonthsIso(birth, spanned), days) === today
+        ? birth
+        : undefined
+}

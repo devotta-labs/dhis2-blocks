@@ -110,6 +110,15 @@ const readAge = (texts: Texts, field: Field, today: string): Reading => {
         },
         today
     )
+    if (birth === undefined) {
+        return {
+            value: null,
+            problem: {
+                message: i18n.t('No date of birth is this age today'),
+                part: 'days',
+            },
+        }
+    }
     const bad = checkStored(field, birth)
     return bad === undefined
         ? { value: birth }

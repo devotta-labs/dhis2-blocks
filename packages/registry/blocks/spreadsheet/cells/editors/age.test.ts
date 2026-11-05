@@ -48,12 +48,31 @@ test('birthFromAge goes back from today', () => {
     expect(birthFromAge({ years: 0, months: 0, days: 400 }, TODAY)).toBe(
         '2025-09-22'
     )
-    // A month that does not reach back as far as the day ends on its last day.
-    expect(birthFromAge({ years: 0, months: 1, days: 0 }, '2026-03-31')).toBe(
+})
+
+test('an age no date of birth is on today has none', () => {
+    // Born 28 February, one is one month and three days old on 31 March; born 1 March, 30 days.
+    for (const days of [0, 1, 2]) {
+        expect(
+            birthFromAge({ years: 0, months: 1, days }, '2026-03-31')
+        ).toBeUndefined()
+    }
+    expect(birthFromAge({ years: 0, months: 1, days: 3 }, '2026-03-31')).toBe(
         '2026-02-28'
     )
-    expect(birthFromAge({ years: 1, months: 0, days: 0 }, '2024-02-29')).toBe(
-        '2023-02-28'
+    // No one is born on 29 February 2023.
+    expect(
+        birthFromAge({ years: 1, months: 0, days: 0 }, '2024-02-29')
+    ).toBeUndefined()
+    expect(birthFromAge({ years: 4, months: 0, days: 0 }, '2024-02-29')).toBe(
+        '2020-02-29'
+    )
+    expect(birthFromAge({ years: 1, months: 0, days: 0 }, '2025-02-28')).toBe(
+        '2024-02-28'
+    )
+    // Born 28, 29, 30 or 31 January, one is one month old on 28 February.
+    expect(birthFromAge({ years: 0, months: 1, days: 0 }, '2026-02-28')).toBe(
+        '2026-01-28'
     )
 })
 

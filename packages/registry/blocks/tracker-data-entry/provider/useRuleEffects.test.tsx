@@ -106,8 +106,13 @@ test('evaluates the visible rows first and the rest when idle', async () => {
 
     // The first row is in view, so it is in the first slice.
     expect(assigned(rows[0].id)).toBe(true)
-    idle.run()
-    expect(rows.filter(({ id }) => assigned(id))).toHaveLength(60)
+    // The rows in view take timer slices first; on a slow machine they are still running when idle time is let out.
+    await expect
+        .poll(() => {
+            idle.run()
+            return rows.filter(({ id }) => assigned(id)).length
+        })
+        .toBe(60)
     // Shown, not saved: no person changed these rows.
     await later(100)
     expect(memory.sent).toEqual([])

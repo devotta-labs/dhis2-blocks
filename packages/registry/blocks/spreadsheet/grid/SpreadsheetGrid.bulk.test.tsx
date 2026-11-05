@@ -158,26 +158,63 @@ test('a bulk write the provider asks about waits for the answer', async () => {
             confirmBulk,
         }
     )
-    const clear = async () => {
-        await page.getByRole('button', { name: 'Row actions a' }).click()
-        await page.getByRole('menuitem', { name: 'Clear row' }).click()
-    }
-    await clear()
+    await page.getByRole('button', { name: 'Row actions a' }).click()
+    await page.getByRole('menuitem', { name: 'Clear row' }).click()
     expect(confirmBulk).toHaveBeenLastCalledWith(keys)
     const dialog = page.getByRole('alertdialog', { name: 'Create events?' })
     await expect
         .element(dialog)
         .toHaveAccessibleDescription('This creates 1 events on this page.')
+    const button = page.getByRole('button', { name: 'Row actions a' })
     await dialog.getByRole('button', { name: 'Cancel' }).click()
     await expect.element(dialog).not.toBeInTheDocument()
     expect(keys.map(value)).toEqual(['1', '2'])
     expect(announced).toEqual([])
+    await expect.element(button).toHaveFocus()
 
-    await clear()
+    // From a cell's context menu, focus goes back to the cell, where Ctrl+Z undoes.
+    const cell = control(keys[0])
+    cell.focus()
+    contextMenu(cell)
+    await page.getByRole('menuitem', { name: 'Clear row' }).click()
     await dialog.getByRole('button', { name: 'Create events' }).click()
     await expect.element(dialog).not.toBeInTheDocument()
     expect(keys.map(value)).toEqual([undefined, undefined])
     expect(announced).toEqual(['Cells changed: 2'])
+    await expect.element(cell).toHaveFocus()
+    await userEvent.keyboard('{Control>}z{/Control}')
+    expect(keys.map(value)).toEqual(['1', '2'])
+})
+
+test('a clear drops a cell’s refused text and counts it as changed', async () => {
+    const key = cellKey('t1r0', 'c0')
+    const { store, announced } = await mount([makeTable({ rows: ROWS })])
+    expect(store.getState().commit(key, 'abc')).toBe('invalid')
+    await page.getByRole('button', { name: 'Row actions a' }).click()
+    await page.getByRole('menuitem', { name: 'Clear row' }).click()
+    expect(store.getState().cells[key]?.draft).toBeUndefined()
+    expect(announced).toEqual(['Cells changed: 1'])
+})
+
+test('a cell the store keeps locked, unmarked in the annotations, is counted as skipped', async () => {
+    const at = (row: number, column: number) =>
+        cellKey(`t1r${row}`, `c${column}`)
+    const { value, announced } = await mount(
+        [makeTable({ columns: ['A', 'B'], rows: ROWS })],
+        {
+            values: [
+                [at(0, 0), '1'],
+                [at(0, 1), '2'],
+            ],
+            locked: (key) => key === at(1, 0),
+        }
+    )
+    await page.getByRole('button', { name: 'Row actions a' }).click()
+    await page.getByRole('menuitem', { name: 'Apply to next row' }).click()
+    expect([value(at(1, 0)), value(at(1, 1))]).toEqual([undefined, '2'])
+    expect(announced).toEqual([
+        'Cells changed: 1 1 skipped: This cell cannot be changed.',
+    ])
 })
 
 test('a context menu on a cell, from the keyboard or a right click, holds its row’s and its column’s actions', async () => {
@@ -206,6 +243,10 @@ test('a context menu on a cell, from the keyboard or a right click, holds its ro
     await userEvent.keyboard('{Escape}')
     await expect.element(row).not.toBeInTheDocument()
     expect(focused()).toBe(cell.id)
+    await expect.element(cell).toHaveAttribute('data-mode', 'ready')
+
+    // Ctrl+click is a Mac's right click: it does not start editing either.
+    await userEvent.click(cell, { modifiers: ['Control'] })
     await expect.element(cell).toHaveAttribute('data-mode', 'ready')
 })
 

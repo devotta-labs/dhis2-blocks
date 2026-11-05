@@ -1,6 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import { IconMore16 } from '@dhis2/ui-icons'
 import { useState } from 'react'
+import { parseTyped } from '@/components/dhis2-value-types'
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -163,17 +164,37 @@ export const BulkMenu = ({
     const apply = ({ entries, skipped }: BulkPlan, anchor: HTMLElement) => {
         const counted = new Map(skipped)
         let changed = 0
+        const skip = (reason: string) =>
+            counted.set(reason, (counted.get(reason) ?? 0) + 1)
         changeHere(anchor, () => {
-            const results = store.getState().commitMany(entries)
+            const before = store.getState()
+            const results = before.commitMany(entries)
+            const after = store.getState()
             results.forEach((result, i) => {
-                if (result === 'queued') {
-                    changed += 1
-                } else if (result === 'invalid') {
+                const { key, text } = entries[i]
+                if (result === 'invalid') {
                     // The planner skips what the store refuses; a refusal it missed leaves no draft behind.
-                    const { key } = entries[i]
-                    const error = store.getState().cells[key]?.error ?? ''
-                    store.getState().discardDraft(key)
-                    counted.set(error, (counted.get(error) ?? 0) + 1)
+                    skip(after.cells[key]?.error ?? '')
+                    after.discardDraft(key)
+                    return
+                }
+                const was = before.cells[key]
+                const now = after.cells[key]
+                const field = after.fieldOf(key)
+                const parsed =
+                    field === undefined
+                        ? undefined
+                        : parseTyped(field, text, settings)
+                // An unchanged cell already held the value, or had only its draft dropped; otherwise the store
+                // refused it, as a lock the annotations do not show does.
+                if (
+                    result === 'queued' ||
+                    (was?.draft !== undefined && now?.draft === undefined) ||
+                    (parsed?.ok === true && parsed.value === now?.value)
+                ) {
+                    changed += 1
+                } else {
+                    skip(i18n.t('This cell cannot be changed'))
                 }
             })
         })
@@ -314,7 +335,8 @@ export const BulkMenu = ({
                         }
                     }}
                 >
-                    <AlertDialogContent>
+                    {/* Focus goes back to what opened the menu: the menu that opened the dialog is gone. */}
+                    <AlertDialogContent finalFocus={() => pending.anchor}>
                         <AlertDialogHeader>
                             <AlertDialogTitle>
                                 {pending.ask.title}

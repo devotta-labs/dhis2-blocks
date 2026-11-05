@@ -10,80 +10,24 @@ import {
 } from 'react'
 import type { ClipboardEvent, KeyboardEvent } from 'react'
 import { flushSync } from 'react-dom'
-import type { StoreApi } from 'zustand/vanilla'
-import type { Field } from '@/components/dhis2-value-types'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Kbd } from '@/components/dhis2/ui/kbd'
-import { replacementFor, RowCell } from '../cells/Cell'
+import { RowCell } from '../cells/Cell'
 import { cellDomId } from '../cells/cellProps'
-import type { CellOverrides } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
-import { takesPastedText } from '../cells/popupEditors'
 import { addsRow } from '../cells/useCellMode'
 import { indexCells } from '../model/types'
 import type { CellKey, CellPlace, GridRow, GridTable } from '../model/types'
 import { useSpreadsheetContext, useRowCells } from '../provider/context'
-import type { ReadonlyStore, SpreadsheetContext } from '../provider/context'
-import type { AnnotationsState } from '../model/annotations'
-import type { CellStoreState } from '../store/store'
+import type { SpreadsheetContext } from '../provider/context'
 import { columnHeaderIds, headerDomId, rowHeaderDomId } from './headers'
 import { nextCell } from './navigation'
-import type { NavGrid, NavKey } from './navigation'
+import type { NavKey } from './navigation'
+import { fieldAt, navGrid } from './navGrid'
 import { isBlock, pastedBlock, pasteTargets } from './paste'
 import { BORDER_CLASS, ROW_HEADER_CLASS, RowHeader } from './RowHeader'
 import { useAddRow } from './useAddRow'
-
-/** The cell's field; a cell the form holds no field for is the source's error, as a commit to it is. */
-const fieldAt = (state: CellStoreState, key: CellKey): Field => {
-    const field = state.fieldOf(key)
-    if (field === undefined) {
-        throw new Error(`No field for the cell ${key}`)
-    }
-    return field
-}
-
-/** What `nextCell` and `pasteTargets` walk; each lookup is a map read, as they ask once per cell stepped over. */
-const navGrid = (
-    tables: ReadonlyArray<GridTable>,
-    store: StoreApi<CellStoreState>,
-    effects: ReadonlyStore<AnnotationsState>,
-    overrides: CellOverrides | undefined,
-    keyOf: SpreadsheetContext['keyOf']
-): NavGrid => ({
-    tables: tables.map(({ rows, columns, closed }) => {
-        const keyAt = (row: number, column: number) =>
-            keyOf(rows[row], columns[column])
-        const isOpen = (row: number, column: number) =>
-            !closed.has(keyAt(row, column))
-        return {
-            rows: rows.length,
-            columns: columns.length,
-            isOpen,
-            isEditable(row, column) {
-                const key = keyAt(row, column)
-                if (closed.has(key)) {
-                    return false
-                }
-                // Read-only kinds, pop-up kinds without an editor, pop-up kinds whose text does not parse (files) and
-                // usernames are never pasted into, unless a replacement edits them.
-                const state = store.getState()
-                const field = fieldAt(state, key)
-                if (
-                    !takesPastedText(field) &&
-                    replacementFor(overrides, state.fieldIdOf(key), field) ===
-                        undefined
-                ) {
-                    return false
-                }
-                const cell = effects.getState().cells[key]
-                return (
-                    cell?.readOnly === undefined && cell?.hiddenBy === undefined
-                )
-            },
-        }
-    }),
-})
 
 /** Where each cell control is, by its DOM id; closed cells have no control. */
 const positionsOf = (

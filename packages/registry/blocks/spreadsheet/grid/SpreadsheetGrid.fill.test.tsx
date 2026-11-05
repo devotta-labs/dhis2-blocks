@@ -78,3 +78,28 @@ test('Ctrl+D copies a date as the same day under the system’s date format', as
     await userEvent.keyboard('{Control>}d{/Control}')
     expect(value(at('t1', 1))).toBe('2026-03-04')
 })
+
+test('Ctrl+D under a hidden or closed cell says there is nothing above to copy', async () => {
+    const { announced, value } = await mount(
+        [
+            makeTable({ rows: ROWS, id: 't1', closed: [at('t1', 0)] }),
+            makeTable({ rows: ROWS, id: 't2' }),
+        ],
+        {
+            values: [
+                [at('t1', 0), '5'],
+                [at('t2', 0), '6'],
+            ],
+            effects: { [at('t2', 0)]: { hiddenBy: 'Hidden by a rule' } },
+        }
+    )
+    for (const table of ['t1', 't2']) {
+        control(at(table, 1)).focus()
+        await userEvent.keyboard('{Control>}d{/Control}')
+        expect(value(at(table, 1))).toBeUndefined()
+    }
+    expect(announced).toEqual([
+        'Nothing above to copy.',
+        'Nothing above to copy.',
+    ])
+})

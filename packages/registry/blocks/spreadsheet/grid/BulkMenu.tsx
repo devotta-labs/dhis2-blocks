@@ -168,7 +168,10 @@ export const BulkMenu = ({
                 const { key, text } = entries[i]
                 if (result === 'invalid') {
                     // The planner skips what the store refuses; a refusal it missed leaves no draft behind.
-                    skip(after.cells[key]?.error ?? '')
+                    skip(
+                        after.cells[key]?.error ??
+                            i18n.t('This cell cannot be changed')
+                    )
                     after.discardDraft(key)
                     return
                 }
@@ -321,6 +324,7 @@ export const BulkMenu = ({
                                                     below.slice(0, 1),
                                                     keyOf,
                                                     store.getState(),
+                                                    effects.getState(),
                                                     settings
                                                 ),
                                                 false
@@ -338,6 +342,7 @@ export const BulkMenu = ({
                                                     below,
                                                     keyOf,
                                                     store.getState(),
+                                                    effects.getState(),
                                                     settings
                                                 ),
                                                 false

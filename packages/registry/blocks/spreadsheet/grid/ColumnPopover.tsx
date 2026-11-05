@@ -39,15 +39,21 @@ const NO_ANNOTATIONS = createStore<AnnotationsState>()(() => ({
 }))
 const stay = () => {}
 
+const changesOf = (cells: number) =>
+    cells === 1
+        ? i18n.t('Changes 1 cell.')
+        : i18n.t('Changes {{cells}} cells.', { cells: formatCount(cells) })
+
+const filledOf = (filled: number) =>
+    filled === 1
+        ? i18n.t('1 already has a value.')
+        : i18n.t('{{filled}} already have a value.', {
+              filled: formatCount(filled),
+          })
+
 const previewOf = ({ entries, filled, skipped }: BulkPlan) =>
-    `${i18n.t('Changes {{cells}} cells.', {
-        cells: formatCount(entries.length),
-    })}${
-        filled === 0
-            ? ''
-            : ` ${i18n.t('{{filled}} already have a value.', {
-                  filled: formatCount(filled),
-              })}`
+    `${changesOf(entries.length)}${
+        filled === 0 ? '' : ` ${filledOf(filled)}`
     }${skippedClause(skipped)}`
 
 /** The column's header ids for its cells' names, and the leaf header's own. */
@@ -102,12 +108,18 @@ const ColumnValue = ({
         }),
         [context, scratch, scope]
     )
+    // Text typed but not yet saved, which Apply saves first.
+    const [typing, setTyping] = useState(false)
+    const box = useRef<HTMLDivElement>(null)
     // A refused value is said aloud, once per text, as the grid says one in its cells.
     useEffect(
         () =>
             scratch.subscribe((state, before) => {
                 const now = state.cells[key]
                 const was = before.cells[key]
+                if (now !== was) {
+                    setTyping(false)
+                }
                 if (
                     now?.error !== undefined &&
                     now !== was &&
@@ -120,15 +132,21 @@ const ColumnValue = ({
     )
     const cell = useStore(scratch, (state) => state.cells[key])
     const [overwrite, setOverwrite] = useState(false)
-    const text =
-        cell?.value === undefined || cell.error !== undefined
+    const textOf = (now: typeof cell) =>
+        now?.value === undefined || now.error !== undefined
             ? undefined
-            : typedText(field, cell.value, settings)
+            : typedText(field, now.value, settings)
+    const text = textOf(cell)
     const planned = text === undefined ? undefined : plan(text, overwrite)
     const previewId = useId()
     return (
         <>
-            <div className="h-9 rounded-dhis2-sm border border-dhis2-grey-300">
+            <div
+                ref={box}
+                className="h-9 rounded-dhis2-sm border border-dhis2-grey-300"
+                onInput={() => setTyping(true)}
+                onBlur={() => setTyping(false)}
+            >
                 <SpreadsheetReactContext.Provider value={scoped}>
                     <Cell
                         cellKey={key}
@@ -157,13 +175,26 @@ const ColumnValue = ({
                     {i18n.t('Cancel')}
                 </Button>
                 <Button
-                    disabled={text === undefined}
+                    disabled={text === undefined && !typing}
                     aria-describedby={
                         planned === undefined ? undefined : previewId
                     }
+                    // Focus stays in the control on the press: saving there would show the preview and move Apply away.
+                    onMouseDown={(event) => event.preventDefault()}
                     onClick={() => {
-                        if (text !== undefined) {
-                            onApply(plan(text, overwrite))
+                        // Leaving the control saves its typed text.
+                        const active = document.activeElement
+                        const control =
+                            active instanceof HTMLElement &&
+                            box.current?.contains(active)
+                                ? active
+                                : undefined
+                        control?.blur()
+                        const saved = textOf(scratch.getState().cells[key])
+                        if (saved === undefined) {
+                            control?.focus()
+                        } else {
+                            onApply(plan(saved, overwrite))
                         }
                     }}
                 >

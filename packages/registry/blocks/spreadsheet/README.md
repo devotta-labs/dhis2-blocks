@@ -218,18 +218,18 @@ it is one undo step (Ctrl+Z, Cmd+Z), and the rules re-run on the rows it touched
 
 - **Row menu**: the "Row actions" button (⋯) in the last column, which stays in view as the table scrolls, opens
   "Apply to next row", "Apply to all rows below" and "Clear row". The last row offers only "Clear row". A row copy
-  carries the row's values to the same columns of the target rows.
+  carries the row's values to the same columns of the target rows, leaving out values hidden by a rule.
 - **Column menu**: the "Column actions" button in a column's header opens "Apply value to all column cells" and "Clear all
   column cells". Apply opens a popover with the column's own control, an "Overwrite existing values" checkbox, a preview
-  and **Apply** and **Cancel**; Apply waits for a valid value. A column whose cells do not all share one field, or that
+  and **Apply** and **Cancel**; Apply saves text still being typed and waits for a valid value. A column whose cells do not all share one field, or that
   `bulkColumn` leaves out, has no column button. "Apply value to all column cells" is not offered for kinds the grid cannot
   type into (file and image columns, and others a paste refuses, unless a replacement control edits them); "Clear all column
   cells" still is.
 - **Context menu**: right-click a cell, or press Shift+F10 or the Menu key on it, for one menu with a "Row" and a
   "Column" group. The buttons are out of the Tab order and are not part of the grid, so the arrow keys never reach them.
 - **Ctrl+D (Cmd+D)**: on a cell, types the value of the cell above it in the same table, replacing what is there. A value
-  its type refuses stays in the cell with its error, as typing does. With no row above, or nothing in the cell above, or a
-  cell that cannot be edited, it says "Nothing above to copy." or the cell's own reason. The browser's shortcut is left
+  its type refuses stays in the cell with its error, as typing does. With no row above, nothing in the cell above (or a
+  hidden or closed cell above), or a cell that cannot be edited, it says "Nothing above to copy." or the cell's own reason. The browser's shortcut is left
   alone unless the grid handled the key.
 
 An action never overwrites by default: a cell is empty with no value and no draft, and one that is not is left alone

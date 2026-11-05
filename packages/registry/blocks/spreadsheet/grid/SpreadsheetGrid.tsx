@@ -496,6 +496,8 @@ export const SpreadsheetGrid = ({
                 const { closed } = tables[here.table]
                 const result = fillDown(
                     store.getState(),
+                    effects.getState(),
+                    closed,
                     settings,
                     key,
                     above,

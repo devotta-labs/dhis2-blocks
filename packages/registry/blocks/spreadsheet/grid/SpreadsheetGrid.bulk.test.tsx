@@ -145,6 +145,31 @@ test('a locked row is skipped and counted in the summary', async () => {
     expect(announced).toEqual(['Cells changed: 2. 2 skipped: Completed.'])
 })
 
+test('a row copy leaves out a value the person cannot see', async () => {
+    const at = (row: number, column: number) =>
+        cellKey(`t1r${row}`, `c${column}`)
+    const { value, announced } = await mount(
+        [makeTable({ columns: ['A', 'B'], rows: ROWS })],
+        {
+            values: [
+                [at(0, 0), '1'],
+                [at(0, 1), '2'],
+            ],
+            effects: { [at(0, 0)]: { hiddenBy: 'Hidden by a rule' } },
+        }
+    )
+    await page.getByRole('button', { name: 'Row actions a' }).click()
+    await page
+        .getByRole('menuitem', { name: 'Apply to all rows below' })
+        .click()
+    expect([1, 2].map((row) => value(at(row, 0)))).toEqual([
+        undefined,
+        undefined,
+    ])
+    expect([1, 2].map((row) => value(at(row, 1)))).toEqual(['2', '2'])
+    expect(announced).toEqual(['Cells changed: 2.'])
+})
+
 test('a bulk write the provider asks about waits for the answer', async () => {
     const keys = [cellKey('t1r0', 'c0'), cellKey('t1r0', 'c1')]
     const confirmBulk = vi.fn((_keys: ReadonlyArray<CellKey>) => ({
@@ -341,9 +366,7 @@ test('Yes from the column’s popover fills its empty cells; with Overwrite it r
     await userEvent.keyboard('y')
     await expect
         .element(
-            popover('Done').getByText(
-                'Changes 2 cells. 1 already have a value.'
-            )
+            popover('Done').getByText('Changes 2 cells. 1 already has a value.')
         )
         .toBeVisible()
     await apply.click()
@@ -391,7 +414,7 @@ test('the popover’s preview says what the summary then announces, after the pr
     await expect
         .element(
             popover('A').getByText(
-                'Changes 1 cells. 1 already have a value. 1 skipped: Completed.'
+                'Changes 1 cell. 1 already has a value. 1 skipped: Completed.'
             )
         )
         .toBeVisible()
@@ -525,4 +548,16 @@ test('an option picked from the list in the popover is applied to the column', a
     await expect.element(popover('A')).toBeVisible()
     await popover('A').getByRole('button', { name: 'Apply' }).click()
     expect(columnKeys.map(value)).toEqual(['B', 'B', 'B'])
+})
+
+test('a value typed into the popover is applied with one click on Apply', async () => {
+    const { value, announced } = await mount([
+        makeTable({ columns: ['A'], rows: ROWS }),
+    ])
+    await openPopover('A')
+    await userEvent.keyboard('5')
+    await popover('A').getByRole('button', { name: 'Apply' }).click()
+    await expect.element(popover('A')).not.toBeInTheDocument()
+    expect(columnKeys.map(value)).toEqual(['5', '5', '5'])
+    expect(announced).toEqual(['Cells changed: 3.'])
 })

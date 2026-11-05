@@ -89,9 +89,18 @@ test('no period type, or one it does not know, never expires', () => {
 
 test('a completed event expires the given number of days after completion', () => {
     const completedAt = '2026-10-19T15:30:00.000'
-    expect(completionExpired(completedAt, 7, '2026-10-25')).toBe(false)
-    expect(completionExpired(completedAt, 7, '2026-10-26')).toBe(true)
+    expect(completionExpired(completedAt, 7, '2026-10-26')).toBe(false)
+    expect(completionExpired(completedAt, 7, '2026-10-27')).toBe(true)
     expect(completionExpired(completedAt, 0, '2027-10-26')).toBe(false)
     expect(completionExpired(completedAt, undefined, '2027-10-26')).toBe(false)
     expect(completionExpired(undefined, 7, '2027-10-26')).toBe(false)
+})
+
+test('a completed event is open until the day the server closes it', () => {
+    expect(completionExpired('2026-01-01T10:00:00.000', 3, '2026-01-04')).toBe(
+        false
+    )
+    expect(completionExpired('2026-01-01T10:00:00.000', 3, '2026-01-05')).toBe(
+        true
+    )
 })

@@ -130,7 +130,7 @@ const heldEnrollmentSchema = z.object({
 })
 const HELD_ENROLLMENT_FIELDS =
     'enrollment,program,status,events[event,programStage,occurredAt,scheduledAt,dataValues[dataElement,value]]'
-const heldPeopleSchema = z.object({
+export const heldPeopleSchema = z.object({
     held: z.object({
         trackedEntities: z.array(
             z.object({
@@ -140,7 +140,7 @@ const heldPeopleSchema = z.object({
         ),
     }),
 })
-const heldEnrollmentsSchema = z.object({
+export const heldEnrollmentsSchema = z.object({
     held: z.object({ enrollments: z.array(heldEnrollmentSchema) }),
 })
 

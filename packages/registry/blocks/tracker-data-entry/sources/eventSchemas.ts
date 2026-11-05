@@ -75,7 +75,7 @@ export type TrackerEvent = z.infer<typeof eventSchema>
 
 /** An event's own fields: an update replaces them with what it is sent, so a save reads them first. */
 export const EVENT_LEVEL_FIELDS =
-    'event,program,programStage,orgUnit,enrollment,occurredAt,scheduledAt,status,attributeOptionCombo,geometry,assignedUser'
+    'event,program,programStage,orgUnit,enrollment,occurredAt,scheduledAt,status,attributeOptionCombo,geometry,assignedUser[uid,username]'
 
 export const eventFieldsSchema = z.object({
     event: z.string(),
@@ -88,7 +88,9 @@ export const eventFieldsSchema = z.object({
     status: statusSchema,
     attributeOptionCombo: z.string().optional(),
     geometry: z.object({ type: z.string(), coordinates: z.json() }).optional(),
-    assignedUser: z.object({ uid: z.string() }).optional(),
+    assignedUser: z
+        .object({ uid: z.string(), username: z.string() })
+        .optional(),
 })
 
 export type EventFields = z.infer<typeof eventFieldsSchema>
@@ -115,13 +117,14 @@ export type EnrollmentFields = z.infer<typeof enrollmentFieldsSchema>
 
 /** A person's own fields: an update replaces them with what it is sent (an omitted `inactive` turns false). */
 export const PERSON_LEVEL_FIELDS =
-    'trackedEntity,trackedEntityType,orgUnit,inactive,geometry'
+    'trackedEntity,trackedEntityType,orgUnit,inactive,potentialDuplicate,geometry'
 
 export const personFieldsSchema = z.object({
     trackedEntity: z.string(),
     trackedEntityType: z.string(),
     orgUnit: z.string(),
     inactive: z.boolean().optional(),
+    potentialDuplicate: z.boolean().optional(),
     geometry: geometrySchema.optional(),
 })
 

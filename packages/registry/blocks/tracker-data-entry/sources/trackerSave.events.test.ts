@@ -112,7 +112,7 @@ test('every update sends back the event fields DHIS2 would otherwise erase', asy
     const kept = expect.objectContaining({
         geometry: placed.geometry,
         scheduledAt: placed.scheduledAt,
-        assignedUser: { uid: 'ObaborECU7w' },
+        assignedUser: { uid: 'ObaborECU7w', username: 'milla' },
         attributeOptionCombo: 'HllvX50cXC0',
     })
     expect(grid.sent()).toEqual([kept, kept])

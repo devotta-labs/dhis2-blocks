@@ -81,13 +81,13 @@ const readHeld = async <T>(
     return held
 }
 
-const heldEventsSchema = z.object({
+export const heldEventsSchema = z.object({
     current: z.object({ events: z.array(eventFieldsSchema) }),
 })
-const heldEnrollmentsSchema = z.object({
+export const heldEnrollmentsSchema = z.object({
     current: z.object({ enrollments: z.array(enrollmentFieldsSchema) }),
 })
-const heldPeopleSchema = z.object({
+export const heldPeopleSchema = z.object({
     current: z.object({ trackedEntities: z.array(personFieldsSchema) }),
 })
 

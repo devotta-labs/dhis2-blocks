@@ -253,10 +253,11 @@ const header = (n: number) => page.getByRole('rowheader').nth(n)
 test('the row header names the person from the cells and follows typing', async () => {
     await mountHeld()
     await expect.element(header(0)).toHaveTextContent('Amina Bangura')
-    // The source's note on a row shows under its name.
+    // The source's note on a row is behind its marker, and the header's description.
+    await expect.element(header(1)).toHaveTextContent(/^Joseph KamaraNote/)
     await expect
         .element(header(1))
-        .toHaveTextContent('Joseph Kamara1 more visit not in this register')
+        .toHaveAccessibleDescription('1 more visit not in this register')
     control(cellKey('ap', LAST)).focus()
     await userEvent.keyboard('Conteh{Enter}')
     await expect.element(header(0)).toHaveTextContent('Amina Conteh')
@@ -360,9 +361,10 @@ test('the buttons speak of people', async () => {
         .element(page.getByRole('status'))
         .toHaveTextContent('People shown: 3')
     // A page's notes show on its rows.
+    await expect.element(header(2)).toHaveTextContent(/^KadiatuNote/)
     await expect
         .element(header(2))
-        .toHaveTextContent('Kadiatu2 events hold the 1st visit')
+        .toHaveAccessibleDescription('2 events hold the 1st visit')
 })
 
 test('a summary line names a slotted column by its own heading', async () => {

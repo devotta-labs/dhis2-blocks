@@ -245,8 +245,8 @@ Program rules run for each person row, including attribute and enrolment cells, 
 
 Rules hide fields and options, make fields required, lock the values they assign and put their messages on cells.
 Messages without a field show in the row's header, marked as a cell's are, and in the summary; what rules display
-(texts and key-value pairs) shows under the row's label. A row whose rules fail shows the error in its header and keeps
-none of their effects.
+(texts and key-value pairs) is the row's notes, behind a marker in its header ("Note", "Notes: 2") that opens them. A row
+whose rules fail shows the error in its header and keeps none of their effects.
 
 Opening the grid never changes data. In a row no one has changed, an assigned cell shows the value DHIS2 holds, locked
 with "Assigned by rule: …", and a hidden cell shows "Hidden"; the rule's value appears once the row is changed. The

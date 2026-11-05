@@ -253,7 +253,7 @@ test('completing a row first runs the rules of an edit still waiting for a paint
     )
 })
 
-test('shows the rules’ notes under the row’s label', async () => {
+test('shows the rules’ notes on the row’s header', async () => {
     // Ten weeks and two days ago.
     const lmp = addDaysIso(todayIso(), -72)
     const { context, form } = await mountRmnch(
@@ -273,10 +273,10 @@ test('shows the rules’ notes under the row’s label', async () => {
             rowHeaderDomId(context().idScope, form.tables[0].id, FIRST_VISIT)
         )
         ?.closest('th')
-    const note = [...(header?.querySelectorAll('[dir="auto"]') ?? [])].at(-1)
+    // The note is behind the header's marker and is the header's description.
     await expect
-        .element(page.elementLocator(note ?? document.body))
-        .toHaveTextContent(ageNow)
+        .element(page.elementLocator(header ?? document.body))
+        .toHaveAccessibleDescription(ageNow)
 })
 
 test('an edit to a cross-event field re-runs the person’s rows', async () => {

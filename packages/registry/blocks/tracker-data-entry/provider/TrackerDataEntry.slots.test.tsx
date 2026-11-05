@@ -191,9 +191,12 @@ test('what the rules say alike of several slots shows once in the row’s header
             ['e2', [message]],
         ]),
     })
+    // One note, so one "Note" marker, and the header's description says it once.
+    const header = page.getByRole('rowheader')
     await expect
-        .element(page.getByRole('rowheader'))
-        .toHaveTextContent(/^Amina\s*Feedback\s*BP high$/)
+        .element(header.getByRole('button', { name: 'Note', exact: true }))
+        .toBeInTheDocument()
+    await expect.element(header).toHaveAccessibleDescription('Feedback')
     await expect
         .element(page.getByRole('listitem'))
         .toHaveTextContent('BP high')

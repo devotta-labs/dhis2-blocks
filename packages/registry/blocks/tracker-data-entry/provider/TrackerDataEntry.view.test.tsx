@@ -1,4 +1,5 @@
 /// <reference types="@vitest/browser-playwright" />
+import { FetchError } from '@dhis2/app-runtime'
 import { page, userEvent } from 'vitest/browser'
 import type { Field } from '@/components/dhis2-value-types'
 import { SpreadsheetGrid, cellKey } from '@/components/spreadsheet'
@@ -121,6 +122,31 @@ test('a form that cannot be loaded says why', async () => {
         { until: 'error' }
     )
     expect(view().error).toBe('You have no access to this program')
+})
+
+test('a form the server refuses to load says the server’s own reason', async () => {
+    const { source } = memorySource(visitForm())
+    const { view } = await mount(
+        {
+            ...source,
+            // What the platform throws for a 400 with DHIS2's error body.
+            load: async () => {
+                throw new FetchError({
+                    type: 'unknown',
+                    message: 'An unknown error occurred - Bad Request (400)',
+                    details: {
+                        httpStatusCode: 400,
+                        message:
+                            'Program is specified but does not exist: ImmReg00001',
+                    },
+                })
+            },
+        },
+        { until: 'error' }
+    )
+    expect(view().error).toBe(
+        'Program is specified but does not exist: ImmReg00001'
+    )
 })
 
 test('a completed row’s record says so in the view', async () => {

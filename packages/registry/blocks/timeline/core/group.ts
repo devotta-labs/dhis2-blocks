@@ -1,9 +1,9 @@
 import {
     formatCalendarDate,
-    storedDay,
     type Dhis2Calendar,
 } from '@/components/dhis2-value-display/calendar'
 import { compareEntries } from './sort'
+import { classifyEntry } from './classify'
 import type {
     GroupBy,
     TimelineEntry,
@@ -25,6 +25,7 @@ export interface GroupOptions<TData> {
 interface GroupLabel {
     key: string
     label: string
+    day?: string
 }
 
 export interface TimelineLayout<TData> {
@@ -49,12 +50,6 @@ const warnOnceAboutUndated = (count: number) => {
     )
 }
 
-const phaseOf = (
-    entry: TimelineEntry<unknown>,
-    day: string,
-    today: string
-): TimelinePhase => entry.phase ?? (day > today ? 'future' : 'past')
-
 /** Groups the entries of one phase, in the order the entries arrive. */
 const groupEntries = <TData>(
     entries: TimelineEntry<TData>[],
@@ -63,8 +58,14 @@ const groupEntries = <TData>(
 ): TimelineGroup<TData>[] => {
     const groups = new Map<string, TimelineGroup<TData>>()
     for (const entry of entries) {
-        const { key, label } = groupLabel(entry, options)
-        const group = groups.get(key) ?? { key, label, phase, entries: [] }
+        const { key, label, day } = groupLabel(entry, options)
+        const group = groups.get(key) ?? {
+            key,
+            label,
+            phase,
+            heading: day === undefined ? undefined : { day, phase },
+            entries: [],
+        }
         group.entries.push(entry)
         groups.set(key, group)
     }
@@ -73,16 +74,21 @@ const groupEntries = <TData>(
 
 const groupLabel = <TData>(
     entry: TimelineEntry<TData>,
-    { groupBy, calendar, locale, labels }: GroupOptions<TData>
+    { groupBy, calendar, locale, labels, today }: GroupOptions<TData>
 ): GroupLabel => {
     if (groupBy === 'none') {
         return { key: 'all', label: labels.allEntries }
     }
     if (groupBy === 'day') {
-        const day = storedDay(entry.at) ?? entry.at
-        return { key: day, label: formatCalendarDate(day, calendar, locale) }
+        const day = classifyEntry(entry, today).day ?? entry.at
+        return {
+            key: day,
+            label: formatCalendarDate(day, calendar, locale),
+            day,
+        }
     }
-    return groupBy(entry)
+    const { key, label } = groupBy(entry)
+    return { key, label }
 }
 
 /**
@@ -101,11 +107,11 @@ export const groupTimeline = <TData>(
         past: new Array<TimelineEntry<TData>>(),
     } satisfies Record<TimelinePhase, TimelineEntry<TData>[]>
     for (const entry of entries) {
-        const day = storedDay(entry.at)
-        if (day === undefined) {
+        const { phase } = classifyEntry(entry, options.today)
+        if (phase === 'undated') {
             undated.push(entry)
         } else {
-            byPhase[phaseOf(entry, day, options.today)].push(entry)
+            byPhase[phase].push(entry)
         }
     }
     if (undated.length > 0) {
@@ -128,6 +134,7 @@ export const groupTimeline = <TData>(
                       key: 'overdue',
                       label: options.labels.overdue,
                       phase: 'overdue',
+                      heading: { phase: 'overdue' },
                       entries: [...byPhase.overdue].sort(compareEntries('asc')),
                   },
               ]

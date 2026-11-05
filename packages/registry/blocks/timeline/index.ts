@@ -10,6 +10,7 @@ export type {
     GroupBy,
     TimelineEntry,
     TimelineGroup,
+    TimelineHeadingFacts,
     TimelineNotice,
     TimelineOrder,
     TimelinePhase,
@@ -18,6 +19,8 @@ export type {
 export { Timeline, type TimelineProps } from './ui/Timeline'
 export {
     TimelineMetaProvider,
+    TimelineHeadingProvider,
+    useTimelineHeading,
     type TimelineContextValue,
     type TimelineMeta,
     type TimelineState,

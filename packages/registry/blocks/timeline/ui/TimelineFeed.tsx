@@ -1,7 +1,7 @@
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import type { TimelineEntry } from '../core/types'
-import { groupHeadingId } from './TimelineContext'
+import { groupHeadingId, TimelineHeadingProvider } from './TimelineContext'
 import { useTimeline } from '../hooks/useTimeline'
 import {
     TimelineGroupHeading,
@@ -50,11 +50,13 @@ export const TimelineFeed = <TData,>({
                             data-slot="timeline-group-entries"
                             className="m-0 list-none p-0"
                         >
-                            {group.entries.map((entry) => (
-                                <TimelineItem key={entry.id} entry={entry}>
-                                    {children(entry)}
-                                </TimelineItem>
-                            ))}
+                            <TimelineHeadingProvider heading={group.heading}>
+                                {group.entries.map((entry) => (
+                                    <TimelineItem key={entry.id} entry={entry}>
+                                        {children(entry)}
+                                    </TimelineItem>
+                                ))}
+                            </TimelineHeadingProvider>
                         </ol>
                     </section>
                 </li>,

@@ -1,4 +1,5 @@
 import { revealPast } from './reveal'
+import { groupTimeline } from './group'
 import type { TimelineEntry } from './types'
 
 const entry = (
@@ -21,6 +22,62 @@ const ENTRIES = [
 const ids = (entries: TimelineEntry[]) => entries.map((e) => e.id)
 
 describe('revealPast', () => {
+    it.each([
+        ['2026-10-21T23:30-10:00', undefined, 'past', true],
+        ['2026-10-23T00:30+14:00', undefined, 'future', false],
+        ['2026-10-21', 'past', 'past', true],
+        ['2026-10-23', 'past', 'past', true],
+        ['2026-10-21', 'future', 'future', false],
+        ['2026-10-23', 'future', 'future', false],
+        ['2026-10-21', 'overdue', 'overdue', false],
+        ['2026-10-23', 'overdue', 'overdue', false],
+        ['', undefined, 'undated', true],
+        ['', 'past', 'undated', true],
+        ['', 'future', 'undated', true],
+        ['', 'overdue', 'undated', true],
+        ['unreadable', undefined, 'undated', true],
+        ['unreadable', 'past', 'undated', true],
+        ['unreadable', 'future', 'undated', true],
+        ['unreadable', 'overdue', 'undated', true],
+    ] as const)(
+        'groups and reveals %s / %s consistently',
+        (at, phase, expectedPhase, limited) => {
+            const candidate = entry('candidate', at, { phase })
+            const { groups } = groupTimeline([candidate], {
+                today: TODAY,
+                order: 'desc',
+                groupBy: 'day',
+                calendar: 'iso8601',
+                labels: {
+                    overdue: 'Overdue',
+                    undated: 'Undated',
+                    allEntries: 'All',
+                },
+            })
+            expect(groups[0].phase).toBe(expectedPhase)
+            const revealed = revealPast([candidate], { count: 0, today: TODAY })
+            expect(ids(revealed.entries)).toEqual(limited ? [] : ['candidate'])
+            expect(revealed.hidden).toBe(limited ? 1 : 0)
+        }
+    )
+
+    it('reveals undated entries last even when they explicitly claim future or overdue', () => {
+        const candidates = [
+            entry('undated-future', '', { phase: 'future' }),
+            entry('dated', '2026-10-20'),
+            entry('undated-overdue', 'unknown', { phase: 'overdue' }),
+        ]
+        expect(
+            ids(revealPast(candidates, { count: 1, today: TODAY }).entries)
+        ).toEqual(['dated'])
+        expect(
+            ids(revealPast(candidates, { count: 2, today: TODAY }).entries)
+        ).toEqual(['undated-future', 'dated'])
+        expect(revealPast(candidates, { count: 3, today: TODAY }).hidden).toBe(
+            0
+        )
+    })
+
     it('keeps future and overdue entries and the newest past ones, in input order', () => {
         const { entries, hidden } = revealPast(ENTRIES, {
             count: 2,

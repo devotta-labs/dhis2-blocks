@@ -1,7 +1,6 @@
 import React from 'react'
-import { AppView } from './AppView'
 import { AppShell } from './app/AppShell'
 
-const App = () => <AppView AppShellComponent={AppShell} />
+const App = () => <AppShell />
 
 export default App

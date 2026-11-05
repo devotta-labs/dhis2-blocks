@@ -2,18 +2,14 @@ import { Button } from '@/components/dhis2/ui/button'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import { OrganisationUnitTree } from '@dhis2/ui'
 import type { ComponentType, MouseEvent } from 'react'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import i18n from '../../i18n'
 import type { OrganisationUnitReference } from '../organisationUnitScope'
-import {
-    buildOrganisationUnitTreeFilter,
-    getInitialOrganisationUnitExpandedPaths,
-} from './treeFilter'
+import { getInitialOrganisationUnitExpandedPaths } from './treeFilter'
 import styles from './OrganisationUnitSelectorContent.module.css'
 
 interface OrganisationUnitSelectorContentProps {
     roots: OrganisationUnitReference[]
-    allowedPaths: string[]
     selected?: OrganisationUnitReference
     searchValue: string
     onSearchChange: (value: string) => void
@@ -52,7 +48,6 @@ const Dhis2OrganisationUnitTree = (props: OrganisationUnitTreeRuntimeProps) => {
 
 interface ControlledOrganisationUnitTreeProps {
     visibleRoots: OrganisationUnitReference[]
-    allowedPaths: string[]
     selected?: OrganisationUnitReference
     onSelect: (organisationUnit: OrganisationUnitReference) => void
     TreeComponent: ComponentType<OrganisationUnitTreeRuntimeProps>
@@ -60,15 +55,10 @@ interface ControlledOrganisationUnitTreeProps {
 
 const ControlledOrganisationUnitTree = ({
     visibleRoots,
-    allowedPaths,
     selected,
     onSelect,
     TreeComponent,
 }: ControlledOrganisationUnitTreeProps) => {
-    const treeFilter = useMemo(
-        () => buildOrganisationUnitTreeFilter(allowedPaths, visibleRoots),
-        [allowedPaths, visibleRoots]
-    )
     const [expanded, setExpanded] = useState(() =>
         getInitialOrganisationUnitExpandedPaths(visibleRoots, selected?.path)
     )
@@ -84,7 +74,7 @@ const ControlledOrganisationUnitTree = ({
     return (
         <TreeComponent
             roots={visibleRoots.map((root) => root.id)}
-            filter={treeFilter}
+            filter={[]}
             selected={selected ? [selected.path] : []}
             singleSelection
             expanded={expanded}
@@ -159,7 +149,6 @@ const OrganisationUnitSearchPagination = ({
 
 const OrganisationUnitSearchResults = ({
     roots,
-    allowedPaths,
     selected,
     searchRoots,
     searchLoading,
@@ -207,18 +196,12 @@ const OrganisationUnitSearchResults = ({
 
     const TreeComponent = treeComponent ?? Dhis2OrganisationUnitTree
     const visibleRoots = searchRoots ?? roots
-    // Keep the key stable while search pages append so expanded branches
-    // survive; remount only when the term or the browse-mode root set changes.
-    const stableTreeKey = searchRoots
-        ? treeKey
-        : `${treeKey}-${visibleRoots.map((root) => root.id).join('-')}`
 
     return (
         <>
             <ControlledOrganisationUnitTree
-                key={stableTreeKey}
+                key={treeKey}
                 visibleRoots={visibleRoots}
-                allowedPaths={allowedPaths}
                 selected={selected}
                 onSelect={onSelect}
                 TreeComponent={TreeComponent}

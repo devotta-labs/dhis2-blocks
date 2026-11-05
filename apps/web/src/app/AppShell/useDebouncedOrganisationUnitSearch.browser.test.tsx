@@ -1,27 +1,49 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { render } from 'vitest-browser-react'
-import { useDebouncedOrganisationUnitSearch } from './useDebouncedOrganisationUnitSearch'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { WorkingListClient } from '@/components/working-list/api/client'
+import { useOrganisationUnitPicker } from './useOrganisationUnitPicker'
+
+const client: WorkingListClient = {
+    query: async (request, schema) =>
+        schema.parse({
+            organisationUnits: [
+                {
+                    id: 'result',
+                    path: '/result',
+                    displayName: request.params?.query,
+                },
+            ],
+        }),
+    mutate: async () => {
+        throw new Error('Unexpected mutation')
+    },
+}
 
 const Harness = () => {
-    const [search, setSearch] = useState('')
-    const [debouncedSearch, setDebouncedSearch] =
-        useDebouncedOrganisationUnitSearch(search)
+    const picker = useOrganisationUnitPicker({
+        client,
+        programId: 'program',
+        roots: [],
+        onSelect: () => undefined,
+    })
 
     return (
         <>
             <input
                 aria-label="OU search"
-                value={search}
-                onChange={(event) => setSearch(event.currentTarget.value)}
+                value={picker.contentProps.searchValue}
+                onFocus={picker.open}
+                onChange={(event) =>
+                    picker.contentProps.onSearchChange(
+                        event.currentTarget.value
+                    )
+                }
             />
-            <output aria-label="Debounced OU search">{debouncedSearch}</output>
-            <button
-                type="button"
-                onClick={() => {
-                    setSearch('')
-                    setDebouncedSearch('')
-                }}
-            >
+            <output aria-label="Debounced OU search">
+                {picker.contentProps.searchRoots?.[0]?.displayName}
+            </output>
+            <button type="button" onClick={picker.close}>
                 Close selector
             </button>
         </>
@@ -30,7 +52,11 @@ const Harness = () => {
 
 describe('useDebouncedOrganisationUnitSearch', () => {
     it('forwards the exact value after 500ms and lets the host reset immediately on close', async () => {
-        const screen = await render(<Harness />)
+        const screen = await render(
+            <QueryClientProvider client={new QueryClient()}>
+                <Harness />
+            </QueryClientProvider>
+        )
         const input = screen.getByRole('textbox', { name: 'OU search' })
         const output = screen.getByLabelText('Debounced OU search')
 

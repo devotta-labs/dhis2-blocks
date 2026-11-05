@@ -1,4 +1,9 @@
 import type { Option } from '@/components/context-selector'
+import {
+    isOrganisationUnitAssigned,
+    isOrganisationUnitInScope,
+    type OrganisationUnitReference,
+} from '../organisationUnitScope'
 
 interface ProgramSummary {
     id: string
@@ -11,34 +16,44 @@ interface ProgramSummary {
 export const hasCaptureProgramDataReadAccess = (program: ProgramSummary) =>
     program.access?.data?.read === true
 
-export const buildProgramOptions = ({
+export const projectProgramOptions = ({
     programs,
-    selectedOrganisationUnitId,
-    selectedOrganisationUnitPath,
-    preservedProgramId,
+    selectedOrganisationUnit,
+    selectedProgramId,
+    selectedProgramOrganisationUnits,
+    captureRoots,
     baseUrl,
     apiVersion,
 }: {
     programs: ProgramSummary[]
-    selectedOrganisationUnitId?: string
-    selectedOrganisationUnitPath?: string
-    preservedProgramId?: string
+    selectedOrganisationUnit?: { id?: string; path: string }
+    selectedProgramId?: string
+    selectedProgramOrganisationUnits?: Array<{ id: string; path: string }>
+    captureRoots: OrganisationUnitReference[]
     baseUrl: string
     apiVersion: number
-}): Option[] => {
-    const compatiblePrograms = selectedOrganisationUnitPath
+}) => {
+    const assignmentsFor = (program: ProgramSummary) =>
+        program.id === selectedProgramId
+            ? (program.organisationUnits ??
+              selectedProgramOrganisationUnits ??
+              [])
+            : (program.organisationUnits ?? [])
+    const compatiblePrograms = selectedOrganisationUnit
         ? programs.filter((program) =>
-              (program.organisationUnits ?? []).some((unit) =>
-                  selectedOrganisationUnitId
-                      ? unit.id === selectedOrganisationUnitId
-                      : unit.path === selectedOrganisationUnitPath
+              isOrganisationUnitAssigned(
+                  selectedOrganisationUnit,
+                  assignmentsFor(program)
               )
           )
         : programs
-    const preservedProgram = preservedProgramId
+    const selectedProgram = programs.find(
+        (program) => program.id === selectedProgramId
+    )
+    const preservedProgram = selectedProgramId
         ? programs.find(
               (program) =>
-                  program.id === preservedProgramId &&
+                  program.id === selectedProgramId &&
                   !compatiblePrograms.includes(program)
           )
         : undefined
@@ -46,7 +61,7 @@ export const buildProgramOptions = ({
         ? [preservedProgram, ...compatiblePrograms]
         : compatiblePrograms
 
-    return availablePrograms.map((program) => {
+    const options = availablePrograms.map((program) => {
         const option: Option = {
             value: program.id,
             label: program.displayName,
@@ -63,4 +78,20 @@ export const buildProgramOptions = ({
         }
         return option
     })
+    let availability: 'all' | 'filtered' | 'empty' = 'all'
+    if (compatiblePrograms.length === 0) availability = 'empty'
+    else if (compatiblePrograms.length < programs.length)
+        availability = 'filtered'
+    return {
+        options,
+        availability,
+        selectedOrgUnitIsAllowed: Boolean(
+            selectedProgram &&
+            isOrganisationUnitInScope(
+                selectedOrganisationUnit,
+                captureRoots,
+                assignmentsFor(selectedProgram)
+            )
+        ),
+    }
 }

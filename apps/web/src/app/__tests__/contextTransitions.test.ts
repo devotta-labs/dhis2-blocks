@@ -1,5 +1,15 @@
-import { getGuardedOrganisationUnitState } from '../contextTransitions'
+import {
+    getOrganisationUnitState,
+    getProgramState,
+} from '../contextTransitions'
 import type { AppUrlState } from '../urlState'
+
+// Retained legacy guard fixture until the separate test-cleanup phase.
+const getGuardedOrganisationUnitState = (
+    current: AppUrlState,
+    orgUnitId: string | undefined,
+    confirmDiscard: () => boolean
+) => (confirmDiscard() ? getOrganisationUnitState(current, orgUnitId) : current)
 
 describe('organisation unit context transitions', () => {
     const current: AppUrlState = {
@@ -34,6 +44,18 @@ describe('organisation unit context transitions', () => {
             selectedTemplateId: 'SavedList01',
             page: 1,
             pageSize: 25,
+        })
+    })
+
+    it('resets view and paging on program changes but preserves the OU', () => {
+        expect(getProgramState(current, 'Program0002')).toEqual({
+            programId: 'Program0002',
+            orgUnitId: current.orgUnitId,
+            page: 1,
+            pageSize: 15,
+        })
+        expect(getProgramState(current, '')).toEqual({
+            orgUnitId: current.orgUnitId,
         })
     })
 })

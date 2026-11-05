@@ -1,8 +1,8 @@
 import {
-    buildOrganisationUnitTreeFilter,
     getInitialOrganisationUnitExpandedPaths,
     getOrganisationUnitAncestorPaths,
 } from './treeFilter'
+import { buildOrganisationUnitTreeFilter } from '../__tests__/legacyScopeFixtures'
 
 const organisationUnit = (id: string, path: string) => ({
     id,

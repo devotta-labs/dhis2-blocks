@@ -135,7 +135,7 @@ const IncompatibleContextHarness = () => {
                 onProgramClear={() => setProgram(undefined)}
                 programLoading={false}
                 programLoadingLabel="Loading programs"
-                programsAreFiltered={Boolean(organisationUnit)}
+                programAvailability={organisationUnit ? 'empty' : 'all'}
                 onShowAllPrograms={() => setOrganisationUnit(undefined)}
                 showOrganisationUnit={Boolean(program)}
                 organisationUnitValue="Incompatible OU"
@@ -224,7 +224,7 @@ describe('working-list context-selector integration', () => {
             onProgramClear: vi.fn(),
             programLoading: false,
             programLoadingLabel: 'Loading programs',
-            programsAreFiltered: true,
+            programAvailability: 'filtered',
             onShowAllPrograms: vi.fn(),
             showOrganisationUnit: false,
             organisationUnitOpen: false,
@@ -246,10 +246,7 @@ describe('working-list context-selector integration', () => {
         expect(props.onShowAllPrograms).toHaveBeenCalledOnce()
 
         await screen.rerender(
-            <WorkingListContextControls
-                {...props}
-                programsAreFiltered={false}
-            />
+            <WorkingListContextControls {...props} programAvailability="all" />
         )
         await expect.element(filteredNotice).not.toBeInTheDocument()
         await expect.element(emptyNotice).not.toBeInTheDocument()
@@ -264,6 +261,7 @@ describe('working-list context-selector integration', () => {
                         excludeFromMenu: true,
                     },
                 ]}
+                programAvailability="empty"
             />
         )
         await expect.element(emptyNotice).toBeVisible()

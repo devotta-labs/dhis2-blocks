@@ -11,6 +11,8 @@ import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'
 import {
     cleanUp,
     HIDDEN_FIELD,
+    holdPaint,
+    KEY,
     later,
     memorySource,
     mount,
@@ -306,4 +308,23 @@ test('offline, the file editor says files cannot be uploaded; an event’s file 
             'href',
             `${server}/api/tracker/events/r1/dataValues/c4/file`
         )
+})
+
+test('complete refuses a record whose error was committed in the same task, before the summary was painted', async () => {
+    const memory = memorySource(visitForm({ values: [['r1.c1', '1']] }))
+    const { context, view } = await mount(memory.source)
+    const paint = holdPaint()
+    expect(context().store.getState().commit(cellKey('r1', 'c1'), 'abc')).toBe(
+        'invalid'
+    )
+    expect(await view().complete('r1')).toEqual([
+        {
+            sourceKey: KEY,
+            key: 'r1.c1',
+            result: 'failed',
+            reason: 'Enter a whole number',
+        },
+    ])
+    expect(memory.statuses).toEqual([])
+    paint.run()
 })

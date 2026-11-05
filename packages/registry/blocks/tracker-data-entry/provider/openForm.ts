@@ -314,6 +314,7 @@ const connect = (
                     return
                 }
                 applied = false
+                summed()
                 const { failed, unsent: left } = view.getState().summary
                 if (failed > 0) {
                     announce(
@@ -339,7 +340,14 @@ const connect = (
         previous = status
     }
 
+    let cancelSummary: (() => void) | undefined
     const summarize = () => {
+        cancelSummary?.()
+        cancelSummary = undefined
+        // Closed, the view is another's: the locked form's, or the next form's.
+        if (closed) {
+            return
+        }
         const summary = summaryOf({ store, effects, tables }, form)
         view.setState({
             summary: {
@@ -348,6 +356,16 @@ const connect = (
                 failed: summary.failed + there.failed,
             },
         })
+    }
+    // The stores' changes until the next paint are summed up once, after it; what reads the summary first sums up what
+    // waits.
+    const summarizeLater = () => {
+        cancelSummary ??= afterPaint(summarize)
+    }
+    const summed = () => {
+        if (!closed && cancelSummary !== undefined) {
+            summarize()
+        }
     }
 
     const setStatus = async (
@@ -386,13 +404,18 @@ const connect = (
 
     const refusal = (key: CellKey, reason: string) =>
         refusalOf(source.key, key, reason)
-    const { refusals, sentFrom } = completionChecks(source.key, store, view)
+    const { refusals, sentFrom } = completionChecks(
+        source.key,
+        store,
+        view,
+        summed
+    )
 
     summarize()
     const unsubscribes = [
-        store.subscribe(summarize),
-        effects.subscribe(summarize),
-        tables.subscribe(summarize),
+        store.subscribe(summarizeLater),
+        effects.subscribe(summarizeLater),
+        tables.subscribe(summarizeLater),
         watchSlotOrder({ store, effects, tables }, form.slots ?? []),
     ]
 
@@ -560,6 +583,8 @@ const connect = (
             flush()
             closed = true
             clearTimeout(settling)
+            cancelSummary?.()
+            cancelSummary = undefined
             window.removeEventListener('pagehide', onPageHide)
             window.removeEventListener('focus', onFocus)
             document.removeEventListener('visibilitychange', onVisibility)

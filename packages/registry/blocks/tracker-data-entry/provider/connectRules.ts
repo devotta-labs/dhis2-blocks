@@ -1,6 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import {
     emptyEffects,
+    type EventsRuleRow,
     type EventsRules,
     type RuleEffects,
     type RuleEventInput,
@@ -29,7 +30,7 @@ import {
     partsOf,
     personRows,
     rowRuleOutcome,
-    ruleRowsOf,
+    ruleRowsCache,
     stageFields,
 } from '../logic/ruleEffects'
 import { formOf, recordsOf, recordIdOf, rowsByRecord } from '../model/types'
@@ -37,7 +38,7 @@ import { fieldIdOfKey } from '../model/types'
 import type { DataRecord } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
-import { afterPaint } from './afterPaint'
+import { afterPaint, soon, whenIdle } from './afterPaint'
 import { lockedElsewhere } from './formRows'
 import type { OpenForm } from './openForm'
 
@@ -65,22 +66,6 @@ const measured = (name: string, work: () => void) => {
     performance.measure(name, { start })
 }
 
-/** Runs `work` when the browser is idle; returns how to cancel it. */
-const whenIdle = (work: () => void) => {
-    if ('requestIdleCallback' in window) {
-        const id = requestIdleCallback(work)
-        return () => cancelIdleCallback(id)
-    }
-    const id = setTimeout(work)
-    return () => clearTimeout(id)
-}
-
-// The rows in view do not wait for the browser to be idle, which it rarely is while it renders the grid.
-const soon = (work: () => void) => {
-    const id = setTimeout(work)
-    return () => clearTimeout(id)
-}
-
 const onScreen = (idScope: string, tableId: string, rowId: string) => {
     const box = document
         .getElementById(rowHeaderDomId(idScope, tableId, rowId))
@@ -106,6 +91,11 @@ interface ConnectOptions {
     touched: Set<string>
     /** Record → the notes the rules last wrote on it, after the source's own, across reconnections. */
     ruleNotes: Map<string, ReadonlyArray<string>>
+    /**
+     * Rows evaluated at least once, across reconnections: a rule's change re-runs only these; a reconnection runs them
+     * after the rows not evaluated yet, in view and off screen alike.
+     */
+    seen: Set<string>
     /** Starts the form's DOM ids. */
     idScope: string
 }
@@ -124,6 +114,7 @@ export const connectRules = ({
     cleared,
     touched,
     ruleNotes,
+    seen,
     idScope,
 }: ConnectOptions) => {
     let stopped = false
@@ -134,11 +125,10 @@ export const connectRules = ({
             touched.add(recordIdOf(key))
         }
     }
-    // Rows evaluated at least once; a row still waiting for its idle turn is not run early.
-    const seen = new Set<string>()
     // Control id → row id: a value the rules held back while the cell was typed in.
     const held = new Map<string, string>()
 
+    const ruleRowsNow = ruleRowsCache(form.fieldsByForm)
     const fieldsCache = new Map<string, ReturnType<typeof stageFields>>()
     const fieldsOf = (
         records: ReadonlyMap<string, DataRecord>,
@@ -159,7 +149,7 @@ export const connectRules = ({
      */
     const affectedBy = (
         records: ReadonlyMap<string, DataRecord>,
-        ruleRows: ReturnType<typeof ruleRowsOf>,
+        ruleRows: ReadonlyArray<EventsRuleRow>,
         rowId: string,
         field: string
     ) => {
@@ -367,7 +357,7 @@ export const connectRules = ({
     ) => {
         const { tables: all, records } = tables.getState()
         const cells = store.getState().cells
-        const ruleRows = ruleRowsOf(records, form.fieldsByForm, cells)
+        const ruleRows = ruleRowsNow(records, cells)
         let byEnrollment: ReadonlyMap<string, RuleEventInput[]> | undefined
         // An enrolment runs its enrolment rules; any other record, its event rules.
         const evaluateRecord = (rowId: string, record?: DataRecord) => {
@@ -477,26 +467,32 @@ export const connectRules = ({
         }
     }
 
-    // The records of the visible rows first, then the rest in their rows' order.
+    // The records of the visible rows first, then the rest, in their rows' order. Rows evaluated before a reconnection
+    // show their effects meanwhile: they run again after the rows not evaluated yet, in view and off screen alike, as
+    // the people the rules have now can change them.
     const order = tables.getState().tables.flatMap(({ id: tableId, rows }) =>
         rows.flatMap((row) => {
             const visible = onScreen(idScope, tableId, row.id)
             return recordsOf(row).map((id) => ({ id, visible }))
         })
     )
-    const offScreen = order
-        .filter(({ visible }) => !visible)
-        .map(({ id }) => id)
+    const ids = (keep: (entry: (typeof order)[number]) => boolean) =>
+        order.filter(keep).map(({ id }) => id)
+    const later = [
+        ...ids(({ id, visible }) => !visible && !seen.has(id)),
+        ...ids(({ id, visible }) => !visible && seen.has(id)),
+    ]
     let rest = [
-        ...order.filter(({ visible }) => visible).map(({ id }) => id),
-        ...offScreen,
+        ...ids(({ id, visible }) => visible && !seen.has(id)),
+        ...ids(({ id, visible }) => visible && seen.has(id)),
+        ...later,
     ]
     const start = performance.now()
     let inView = true
     const slice = (ms: number) => {
         rest = run(rest, performance.now() + ms)
         // The rows in view are done, however many slices they took.
-        if (inView && rest.length <= offScreen.length) {
+        if (inView && rest.length <= later.length) {
             inView = false
             performance.measure('data-entry:rules-visible', { start })
         }
@@ -538,7 +534,7 @@ export const connectRules = ({
                 }
             }
             const { records } = tables.getState()
-            const ruleRows = ruleRowsOf(records, form.fieldsByForm, cells)
+            const ruleRows = ruleRowsNow(records, cells)
             rerun(
                 edits.flatMap(({ rowId, field }) =>
                     affectedBy(records, ruleRows, rowId, field)
@@ -578,7 +574,12 @@ export const connectRules = ({
     const prepare = (recordId: string) => {
         // An edit whose rules wait for a paint runs now: completion checks what they say.
         flush()
-        if (!stopped && !(touched.has(recordId) && seen.has(recordId))) {
+        // A changed row its rules reached, and that is not waiting to run again, holds what they say.
+        const due =
+            !touched.has(recordId) ||
+            !seen.has(recordId) ||
+            rest.includes(recordId)
+        if (!stopped && due) {
             touched.add(recordId)
             measured('data-entry:rules-edit', () => run([recordId]))
         }

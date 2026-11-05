@@ -5,6 +5,7 @@ import {
     change,
     cleanUp,
     freshServer,
+    holdPaint,
     memorySource,
     mount,
     records,
@@ -69,4 +70,25 @@ test('close during a save still removes the saved record and tells other tabs', 
     } finally {
         tab.close()
     }
+})
+
+test('a summary still waiting for a paint when the form closes never reaches the view', async () => {
+    const memory = memorySource(visitForm({ values: [[CHILDREN, '1']] }))
+    memory.hold()
+    const { context, view, screen } = await mount(memory.source)
+    const { store } = context()
+    holdPaint()
+    store.getState().commit(CHILDREN, '2')
+    // Completing waits for the record's change, whose save is held.
+    const completing = view()
+        .complete('r1')
+        .catch(() => [])
+    await expect.poll(() => memory.sent).toHaveLength(1)
+    store.getState().commit(cellKey('r2', 'c1'), '3')
+    screen.unmount()
+    const closedWith = view().summary
+    // The change is sent: completion checks the record again, and asks for the summary first.
+    store.getState().markSync([{ key: CHILDREN, value: '2' }], 'saved')
+    await completing
+    expect(view().summary).toBe(closedWith)
 })

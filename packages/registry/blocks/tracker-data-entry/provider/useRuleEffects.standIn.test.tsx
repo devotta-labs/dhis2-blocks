@@ -115,18 +115,25 @@ const connect = (
     }
     before?.(open.store)
     const said: string[] = []
-    const stop = connectRules({
-        open,
-        form,
-        rules,
-        settings,
-        announce: (text) => said.push(text),
-        cleared: new Map(),
-        touched: new Set(),
-        ruleNotes: new Map(),
-        idScope: 'data-entry',
-    })
-    return { ...open, queued, said, stop }
+    const session = {
+        cleared: new Map<CellKey, string>(),
+        touched: new Set<string>(),
+        ruleNotes: new Map<string, ReadonlyArray<string>>(),
+        seen: new Set<string>(),
+    }
+    // As the provider does when the rules change: the same stores and session.
+    const reconnect = (next: EventsRules) =>
+        connectRules({
+            open,
+            form,
+            rules: next,
+            settings,
+            announce: (text) => said.push(text),
+            ...session,
+            idScope: 'data-entry',
+        })
+    const stop = reconnect(rules)
+    return { ...open, queued, said, stop, reconnect }
 }
 
 test('a row the rules fail on says why and keeps no stale effects; a row not evaluated keeps its own', async () => {
@@ -514,4 +521,70 @@ test('rows in view take their slices one after another, without waiting for idle
     idle.run()
     stop()
     headers.forEach((header) => header.remove())
+})
+
+test('a reconnection runs the rows in view, then the rest; in each, the rows not evaluated yet before the rows seen', () => {
+    const idle = holdIdle()
+    const tableId = visitForm({ rows: FIVE_ROWS }).tables[0].id
+    // r1 and r4 are in view.
+    const headers = ['r1', 'r4'].map((id) => {
+        const header = document.createElement('div')
+        header.id = rowHeaderDomId('data-entry', tableId, id)
+        header.textContent = id
+        document.body.append(header)
+        return header
+    })
+    // r4 and r5 wait for their person, as rows of a chunk not loaded yet do: not evaluated.
+    const { stop, reconnect } = connect(
+        standIn((rowId) =>
+            rowId === 'r4' || rowId === 'r5' ? undefined : hiding('c2')
+        ),
+        { rows: FIVE_ROWS }
+    )
+    idle.run()
+    stop()
+
+    const ran: string[] = []
+    const again = reconnect(
+        standIn((rowId) => {
+            ran.push(rowId)
+            busy(60)
+            return hiding('c2')
+        })
+    )
+    expect(ran).toEqual(['r4', 'r1'])
+    idle.run()
+    expect(ran).toEqual(['r4', 'r1', 'r5', 'r2', 'r3'])
+    again()
+    headers.forEach((header) => header.remove())
+})
+
+test('completing a changed row still waiting to run again after a reconnection runs the new rules first', () => {
+    const idle = holdIdle()
+    const { effects, beforeComplete, stop, reconnect } = connect(
+        standIn(() => hiding('c2')),
+        {
+            rows: FIVE_ROWS,
+            before: (opened) =>
+                opened.getState().commit(cellKey('r4', 'c3'), 'changed'),
+        }
+    )
+    idle.run()
+    stop()
+    const again = reconnect(
+        standIn((rowId) => {
+            busy(60)
+            return rowId === 'r4'
+                ? new Error('A new rule failed')
+                : hiding('c2')
+        })
+    )
+    const failure = () => effects.getState().rowMessages.get('r4')?.[0]?.text
+    // r4 was touched and seen, and waits for its idle turn with the new rules.
+    expect(failure()).toBeUndefined()
+    expect([...beforeComplete].map((prepare) => prepare('r4'))).toEqual([
+        undefined,
+    ])
+    expect(failure()).toBe('A new rule failed')
+    again()
 })

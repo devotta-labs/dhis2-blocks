@@ -1,5 +1,5 @@
 import type { Attribution, RuleEffects } from '@/components/program-rules'
-import { rowRuleOutcome, ruleRowsOf } from './ruleEffects'
+import { rowRuleOutcome, ruleRowsCache, ruleRowsOf } from './ruleEffects'
 
 const by = (ruleName: string): Attribution => ({
     ruleId: ruleName,
@@ -327,4 +327,34 @@ test("a new where-slot event's rules see its where values", () => {
         vaccine: 'BCG',
         weight: '4',
     })
+})
+
+test('the rule rows stay one array while the records and cells are the same objects', () => {
+    const records = new Map([
+        [
+            'r1',
+            {
+                kind: 'event' as const,
+                id: 'r1',
+                programStageId: 's1',
+                orgUnitId: 'ou',
+                status: 'ACTIVE' as const,
+            },
+        ],
+    ])
+    const rowsOf = ruleRowsCache(new Map([['s1', new Set(['a'])]]))
+    const cells = {
+        'r1.a': {
+            value: '1',
+            sync: 'idle' as const,
+            source: 'person' as const,
+        },
+    }
+    const rows = rowsOf(records, cells)
+    expect(rowsOf(records, cells)).toBe(rows)
+    const changed = { 'r1.a': { ...cells['r1.a'], value: '2' } }
+    const again = rowsOf(records, changed)
+    expect(again).not.toBe(rows)
+    expect(again[0]?.event.dataValues).toEqual({ a: '2' })
+    expect(rowsOf(new Map(records), changed)).not.toBe(again)
 })

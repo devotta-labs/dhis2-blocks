@@ -24,6 +24,7 @@ import {
     BulkMenu,
     opensMenu,
     takesColumnActions,
+    useBulkConfirm,
 } from './BulkMenu'
 import type { BulkTarget } from './BulkMenu'
 import { columnHeaderIds, headerDomId } from './headers'
@@ -310,6 +311,7 @@ export const SpreadsheetGrid = ({
     const move = useCallback((key: NavKey) => moveTo.current?.(key), [])
 
     const add = useAddRow(idScope, tables, addRow, keyOf)
+    const { ask, dialog } = useBulkConfirm()
 
     // The one menu of row and column actions, kept after it closes so it closes in place.
     const [menu, setMenu] = useState<BulkTarget & { open: boolean }>()
@@ -378,7 +380,8 @@ export const SpreadsheetGrid = ({
 
     const onPaste = (event: ClipboardEvent<HTMLDivElement>) => {
         const from = readyCell(event.target)
-        if (from === undefined) {
+        const { target } = event
+        if (from === undefined || !(target instanceof HTMLElement)) {
             return
         }
         event.preventDefault()
@@ -393,20 +396,31 @@ export const SpreadsheetGrid = ({
             key: keyAt(at),
             text: cellText,
         }))
-        let filled = 0
-        changeHere(event.target, () => {
-            filled = store
-                .getState()
-                .commitMany(entries)
-                .filter((result) => result !== 'invalid').length
-        })
-        if (isBlock(text)) {
-            announce(
-                i18n.t('Cells pasted: {{cells}}', {
-                    nsSeparator: '::',
-                    cells: formatCount(filled),
-                })
+        const write = () => {
+            let filled = 0
+            changeHere(target, () => {
+                filled = store
+                    .getState()
+                    .commitMany(entries)
+                    .filter((result) => result !== 'invalid').length
+            })
+            if (isBlock(text)) {
+                announce(
+                    i18n.t('Cells pasted: {{cells}}', {
+                        nsSeparator: '::',
+                        cells: formatCount(filled),
+                    })
+                )
+            }
+        }
+        if (entries.length > 1) {
+            ask(
+                entries.map(({ key }) => key),
+                target,
+                write
             )
+        } else {
+            write()
         }
     }
 
@@ -523,7 +537,9 @@ export const SpreadsheetGrid = ({
                     setMenu((open) => open && { ...open, open: false })
                 }
                 changeHere={changeHere}
+                ask={ask}
             />
+            {dialog}
             <NotesPopover
                 target={notes}
                 onClose={() =>

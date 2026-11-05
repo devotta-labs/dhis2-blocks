@@ -10,33 +10,37 @@ import type { FormTables, OpenForm } from './openForm'
 import { signedInAsOther } from './signedIn'
 
 /** What the provider shows until a form is open: no tables, no cells, nothing to do. */
-export const emptyForm = (): OpenForm => ({
-    store: createCellStore({
-        fields: new Map(),
-        values: new Map(),
-        settings: { calendar: 'gregorian', dateFormat: 'YYYY-MM-DD' },
-        enqueue: () => {},
-    }),
-    effects: createStore<TrackerEffectsState>()(() => ({
+export const emptyForm = (): OpenForm => {
+    const effects = createStore<TrackerEffectsState>()(() => ({
         cells: {},
         rowMessages: new Map(),
         rowNotes: new Map(),
-    })),
-    tables: createStore<FormTables>()(() => ({
-        tables: [],
-        records: new Map(),
-    })),
-    readOnlyRecords: new Map(),
-    beforeComplete: new Set(),
-    newRowTables: new Set(),
-    addRow: () => {},
-    complete: async () => [],
-    reopen: async () => [],
-    downloadUnsent: () => {},
-    discardFailed: async () => {},
-    append: async () => {},
-    close: () => {},
-})
+    }))
+    return {
+        store: createCellStore({
+            fields: new Map(),
+            values: new Map(),
+            settings: { calendar: 'gregorian', dateFormat: 'YYYY-MM-DD' },
+            enqueue: () => {},
+            annotations: effects,
+        }),
+        effects,
+        tables: createStore<FormTables>()(() => ({
+            tables: [],
+            records: new Map(),
+        })),
+        readOnlyRecords: new Map(),
+        beforeComplete: new Set(),
+        newRowTables: new Set(),
+        addRow: () => {},
+        complete: async () => [],
+        reopen: async () => [],
+        downloadUnsent: () => {},
+        discardFailed: async () => {},
+        append: async () => {},
+        close: () => {},
+    }
+}
 
 /**
  * What the provider shows once someone else has signed in: the form as DHIS2 had it when loaded, without this user's
@@ -55,6 +59,16 @@ export const lockedForm = (
     const refuse = async (recordId: string) => [
         refusalOf(sourceKey, cellKey(recordId, 'status'), reason),
     ]
+    const effects = createStore<TrackerEffectsState>()(() => ({
+        cells: formEffects(form, readOnlyRecords, form.tables, form.records),
+        rowMessages: new Map([
+            [
+                FORM_MESSAGES,
+                [{ tone: 'error', text: reason, source: 'server' }],
+            ],
+        ]),
+        rowNotes: new Map(form.rowNotes),
+    }))
     return {
         ...emptyForm(),
         store: createCellStore({
@@ -62,22 +76,9 @@ export const lockedForm = (
             values: form.values,
             settings,
             enqueue: () => {},
+            annotations: effects,
         }),
-        effects: createStore<TrackerEffectsState>()(() => ({
-            cells: formEffects(
-                form,
-                readOnlyRecords,
-                form.tables,
-                form.records
-            ),
-            rowMessages: new Map([
-                [
-                    FORM_MESSAGES,
-                    [{ tone: 'error', text: reason, source: 'server' }],
-                ],
-            ]),
-            rowNotes: new Map(form.rowNotes),
-        })),
+        effects,
         tables: createStore<FormTables>()(() => ({
             tables: form.tables,
             records: form.records,

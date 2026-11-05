@@ -21,7 +21,7 @@ const Harness = () => {
                 onClick={() =>
                     navigation.setOpenedRecord({
                         mode: 'trackedEntity',
-                        programId: 'a',
+                        programId: state.programId ?? '',
                         trackedEntityId: 'record',
                     })
                 }
@@ -124,6 +124,9 @@ describe('app navigation with the data router', () => {
                     .toHaveTextContent('record')
                 await screen.getByRole('button', { name: 'No, cancel' }).click()
                 expect(router.state.location.search).toBe(current)
+                await expect
+                    .element(screen.getByLabelText('Record'))
+                    .toHaveTextContent('record')
                 expect(unloadIsBlocked()).toBe(true)
                 await act(() => router.navigate(direction))
                 await screen
@@ -219,14 +222,64 @@ describe('app navigation with the data router', () => {
         router.dispose()
     })
 
-    it('does not guard clean navigation or dirty POP changes limited to OU/page/size', async () => {
+    it.each([-1, 1])(
+        'closes the open record after a clean POP (%s) commits a new context',
+        async (direction) => {
+            const { screen, router } = await setup(
+                undefined,
+                direction === -1 ? 1 : 0
+            )
+            const current = router.state.location.search
+            await screen.getByRole('button', { name: 'Open record' }).click()
+            await expect
+                .element(screen.getByLabelText('Record'))
+                .toHaveTextContent('record')
+            await act(() => router.navigate(direction))
+            expect(router.state.location.search).not.toBe(current)
+            await expect
+                .element(screen.getByLabelText('Record'))
+                .toHaveTextContent('')
+            await expect
+                .element(
+                    screen.getByRole('heading', {
+                        name: 'Discard unsaved changes?',
+                    })
+                )
+                .not.toBeInTheDocument()
+            router.dispose()
+        }
+    )
+
+    it('keeps the open record across paging but clears it when the committed template changes', async () => {
+        const { screen, router } = await setup([
+            '/?programId=a&selectedTemplateId=one',
+            '/?programId=a&selectedTemplateId=two',
+            '/?programId=a&selectedTemplateId=two&page=2&pageSize=50',
+        ])
+        await screen.getByRole('button', { name: 'Open record' }).click()
+        await act(() => router.navigate(-1))
+        await expect
+            .element(screen.getByLabelText('Record'))
+            .toHaveTextContent('record')
+        await act(() => router.navigate(-1))
+        await expect
+            .element(screen.getByLabelText('Record'))
+            .toHaveTextContent('')
+        router.dispose()
+    })
+
+    it('does not guard dirty POP changes limited to OU/page/size', async () => {
         const { screen, router } = await setup([
             '/?programId=a&orgUnitId=ou1',
             '/?programId=a&orgUnitId=ou2&page=2&pageSize=50',
         ])
         await screen.getByRole('button', { name: 'Edit', exact: true }).click()
+        await screen.getByRole('button', { name: 'Open record' }).click()
         await act(() => router.navigate(-1))
         expect(router.state.location.search).toBe('?programId=a&orgUnitId=ou1')
+        await expect
+            .element(screen.getByLabelText('Record'))
+            .toHaveTextContent('')
         await expect
             .element(
                 screen.getByRole('heading', {

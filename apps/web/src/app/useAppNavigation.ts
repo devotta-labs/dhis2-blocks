@@ -1,6 +1,7 @@
 import type { WorkingListResultTarget } from '@/components/working-list'
 import { useCallback, useEffect, useState } from 'react'
 import { useBlocker } from 'react-router-dom'
+import { useAppUrlState } from './useAppUrlState'
 import { isGuardedAppUrlTransition, parseAppUrlState } from './urlState'
 
 interface PendingTransition {
@@ -9,10 +10,15 @@ interface PendingTransition {
 }
 
 export const useAppNavigation = () => {
+    const [{ programId, orgUnitId, selectedTemplateId }] = useAppUrlState()
     const [dirty, setDirty] = useState(false)
     const [openedRecord, setOpenedRecord] = useState<WorkingListResultTarget>()
     const [pendingTransition, setPendingTransition] =
         useState<PendingTransition>()
+
+    useEffect(() => {
+        setOpenedRecord(undefined)
+    }, [programId, orgUnitId, selectedTemplateId])
 
     // Browser back/forward and manual hash edits arrive as POP. In-app
     // PUSH/REPLACE navigations are confirmed before writing the URL.
@@ -56,7 +62,6 @@ export const useAppNavigation = () => {
     const commit = useCallback((proceed: () => void) => {
         proceed()
         setDirty(false)
-        setOpenedRecord(undefined)
     }, [])
 
     const requestTransition = (proceed: () => void) => {

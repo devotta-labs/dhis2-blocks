@@ -1,4 +1,4 @@
-import type { Page, Response } from '@playwright/test'
+import type { Page, Request } from '@playwright/test'
 import { z } from 'zod'
 
 const createdList = z.object({ response: z.object({ uid: z.string().min(1) }) })
@@ -9,17 +9,18 @@ export const withOwnedTrackerLists = async (
 ) => {
     const owned = new Set<string>()
     const captures: Promise<PromiseSettledResult<void>[]>[] = []
-    const capture = (response: Response) => {
-        const url = new URL(response.url())
+    const capture = (request: Request) => {
+        const url = new URL(request.url())
         if (
-            response.request().method() !== 'POST' ||
-            !response.ok() ||
+            request.method() !== 'POST' ||
             !url.pathname.endsWith('/api/trackedEntityInstanceFilters')
         )
             return
         captures.push(
             Promise.allSettled([
-                response.json().then((body) => {
+                request.response().then(async (response) => {
+                    if (!response?.ok()) return
+                    const body = await response.json()
                     const id = createdList.parse(body).response.uid
                     url.pathname += `/${id}`
                     url.search = ''
@@ -29,7 +30,14 @@ export const withOwnedTrackerLists = async (
         )
     }
     const cleanup = async () => {
-        const results = (await Promise.all(captures)).flat()
+        const results: PromiseSettledResult<void>[] = []
+        let settled = 0
+        while (settled < captures.length) {
+            const pending = captures.slice(settled)
+            settled += pending.length
+            results.push(...(await Promise.all(pending)).flat())
+        }
+        page.off('request', capture)
         const cleanup = await Promise.allSettled(
             [...owned].map(async (url) => {
                 const response = await page.request.delete(url)
@@ -49,11 +57,10 @@ export const withOwnedTrackerLists = async (
                 'Owned tracker list cleanup failed'
             )
     }
-    page.on('response', capture)
+    page.on('request', capture)
     try {
         await run()
     } finally {
-        page.off('response', capture)
         await cleanup()
     }
 }

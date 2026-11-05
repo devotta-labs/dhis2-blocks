@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { PresetControls, Section, Segmented } from '../controls'
 import { LabLayout } from '../LabLayout'
 import { LogPanel } from '../LogPanel'
@@ -7,13 +6,12 @@ import { NetworkControls } from '../NetworkControls'
 import {
     CARD_ELEMENTS,
     cardLabel,
-    generateLabData,
     LAB_PERSON,
     LAB_PROGRAM,
     NOT_IN_PROGRAM,
     type LabSettings,
 } from './labData'
-import { answer, RESOURCES } from './labServer'
+import { RESOURCES } from './labServer'
 import { initialLabState, labReducer } from './labState'
 import { PRESETS } from './presets'
 import { OptionsControls } from './settings'
@@ -23,13 +21,11 @@ import canvasSource from './ObservationsCanvas.tsx?canvas'
 /** The observation cards lab: every card state, one click each, beside the requests it makes. */
 export const ObservationsLab = () => {
     const [state, dispatch, log] = useLabRun(labReducer, initialLabState)
-    const { mode, settings, live, run, requests } = state
+    const { mode, settings, backend, live, run, requests } = state
 
     const change = (changes: Partial<LabSettings>) =>
         dispatch({ type: 'changeSettings', changes })
 
-    const data = useMemo(() => generateLabData(settings), [settings])
-    const respond = useMemo(() => answer(settings, data), [settings, data])
     const labCards = settings.cards.map((card, index) => ({
         dataElement:
             (card.notInProgram ? NOT_IN_PROGRAM : CARD_ELEMENTS)[index] ?? '',
@@ -146,9 +142,9 @@ export const ObservationsLab = () => {
                 mode={mode}
                 network={settings.network}
                 resources={RESOURCES}
-                respond={respond}
+                respond={backend.respond}
                 log={log}
-                systemInfo={data.systemInfo}
+                systemInfo={backend.data.systemInfo}
             >
                 <ObservationsCanvas {...canvasProps} />
             </LabRun>

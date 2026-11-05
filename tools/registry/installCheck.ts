@@ -256,10 +256,17 @@ export const native = <SelectorBar ariaLabel="Native host">
         REPO_ROOT
     )
 
-    cpSync(
-        join(REPO_ROOT, 'apps/docs/src/examples/working-list/ListCalendar.tsx'),
-        join(appDirectory, 'src/ListCalendar.tsx')
-    )
+    for (const file of [
+        'ListCalendar.tsx',
+        'WorkingListCalendarTabs.tsx',
+        'WorkingListProgramPicker.tsx',
+        'WorkingListPlaceholders.tsx',
+    ]) {
+        cpSync(
+            join(REPO_ROOT, 'apps/docs/src/examples/working-list', file),
+            join(appDirectory, 'src', file)
+        )
+    }
     if (
         existsSync(join(appDirectory, 'src/components/working-list-calendar'))
     ) {

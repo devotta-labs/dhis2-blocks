@@ -961,6 +961,11 @@
             ],
             "files": [
                 {
+                    "path": "packages/registry/blocks/timeline/core/classify.ts",
+                    "type": "registry:file",
+                    "target": "@components/timeline/core/classify.ts"
+                },
+                {
                     "path": "packages/registry/blocks/timeline/core/group.ts",
                     "type": "registry:file",
                     "target": "@components/timeline/core/group.ts"
@@ -1543,6 +1548,11 @@
                     "target": "@components/working-list/api/runtimeAdapter.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/working-list/api/savedFilterCodec.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/api/savedFilterCodec.ts"
+                },
+                {
                     "path": "packages/registry/blocks/working-list/api/savedListContracts.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/api/savedListContracts.ts"
@@ -1598,6 +1608,11 @@
                     "target": "@components/working-list/domain/model.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/working-list/domain/repairLocation.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/repairLocation.ts"
+                },
+                {
                     "path": "packages/registry/blocks/working-list/domain/schemas.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/domain/schemas.ts"
@@ -1606,6 +1621,11 @@
                     "path": "packages/registry/blocks/working-list/domain/staleReferences.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/domain/staleReferences.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/domain/translation.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/domain/translation.ts"
                 },
                 {
                     "path": "packages/registry/blocks/working-list/domain/visibleEventFilters.ts",
@@ -1746,6 +1766,11 @@
                     "path": "packages/registry/blocks/working-list/query/serialize.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/query/serialize.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/registry/cellDisplay.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/registry/cellDisplay.ts"
                 },
                 {
                     "path": "packages/registry/blocks/working-list/registry/dateTimeValueTypes.ts",
@@ -2011,6 +2036,11 @@
                     "path": "packages/registry/blocks/working-list/ui/index.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/working-list/ui/savedActionCopy.ts",
+                    "type": "registry:file",
+                    "target": "@components/working-list/ui/savedActionCopy.ts"
                 },
                 {
                     "path": "packages/registry/blocks/working-list/ui/types.ts",

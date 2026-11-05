@@ -25,6 +25,10 @@ tooling:
     - *shared
     - 'tools/**'
     - 'scripts/**'
+    - 'e2e/fixtures/**'
+    - 'e2e/metadata/**'
+    - 'e2e/specs-docs/diagnostic-policy.ts'
+    - 'playwright.docs.config.ts'
 
 quality:
     - *shared
@@ -45,7 +49,6 @@ e2e:
     - 'docker/e2e/**'
     - 'playwright.config.ts'
 
-# T07 activates the lane after repairing the authored docs suite.
 docs-e2e:
     - *docs
     - 'e2e/specs-docs/**'

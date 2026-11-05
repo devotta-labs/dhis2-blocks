@@ -14,6 +14,7 @@ import { test } from 'node:test'
 import picomatch from 'picomatch'
 import { parse } from 'yaml'
 import { z } from 'zod'
+import docsConfig from '../../playwright.docs.config.ts'
 import { REPO_ROOT } from '../registry/layout.ts'
 
 type Pattern = string | Pattern[]
@@ -55,6 +56,13 @@ test('CI selects tooling, API and docs boundaries without routing docs specs to 
     assert.deepEqual(selected('README.md'), [])
     assert.ok(selected('tools/registry/layout.ts').includes('web'))
     assert.ok(selected('e2e/fixtures/ids.ts').includes('e2e'))
+    for (const path of [
+        'e2e/fixtures/browser-diagnostics.ts',
+        'e2e/specs-docs/diagnostic-policy.ts',
+        'e2e/metadata/working-list-setup.json',
+        'playwright.docs.config.ts',
+    ])
+        assert.ok(selected(path).includes('tooling'), path)
     const workflow = parse(
         readFileSync(join(REPO_ROOT, '.github/workflows/verify.yml'), 'utf8')
     )
@@ -67,6 +75,39 @@ test('CI selects tooling, API and docs boundaries without routing docs specs to 
     )
 })
 
+test('docs E2E owns an isolated serialized CI lane with failure artifacts', () => {
+    const workflow = parse(
+        readFileSync(join(REPO_ROOT, '.github/workflows/verify.yml'), 'utf8')
+    )
+    const job = workflow.jobs['docs-e2e']
+    assert.equal(job.needs, 'changes')
+    assert.match(job.if, /needs.changes.outputs.docs-e2e == 'true'/)
+    assert.match(job.if, /github.event_name == 'workflow_dispatch'/)
+    assert.ok(
+        job.steps.some(
+            (step: { uses?: string; with?: { browser?: string } }) =>
+                step.uses === './.github/actions/setup' &&
+                step.with?.browser === 'true'
+        )
+    )
+    assert.ok(
+        job.steps.some((step: { run?: string }) => step.run === 'pnpm docs:e2e')
+    )
+    assert.ok(
+        !job.steps.some(
+            (step: { uses?: string }) => step.uses === './.github/actions/e2e'
+        )
+    )
+    const artifacts = job.steps.find(
+        (step: { uses?: string }) => step.uses === 'actions/upload-artifact@v4'
+    )
+    assert.equal(artifacts.if, 'always()')
+    assert.equal(artifacts.with.path, 'e2e/artifacts/docs/')
+    assert.equal(docsConfig.testDir, './e2e/specs-docs')
+    assert.equal(docsConfig.workers, 1)
+    assert.equal(docsConfig.fullyParallel, false)
+})
+
 const DryRunSchema = z.object({
     tasks: z.array(
         z.object({
@@ -77,16 +118,64 @@ const DryRunSchema = z.object({
         })
     ),
 })
-const dryRun = (cwd: string) =>
+const dryRun = (cwd: string, tasks = ['test']) =>
     DryRunSchema.parse(
         JSON.parse(
             execFileSync(
                 join(REPO_ROOT, 'node_modules/.bin/turbo'),
-                ['run', 'test', '--dry=json'],
+                ['run', ...tasks, '--dry=json'],
                 { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
             )
         )
     )
+
+test('shared E2E inputs invalidate tooling tests and types without invalidating app tests', (t) => {
+    const root = mkdtempSync(join(tmpdir(), 'turbo-e2e-inputs-'))
+    t.after(() => rmSync(root, { recursive: true, force: true }))
+    const inputs = [
+        'e2e/fixtures/browser-diagnostics.ts',
+        'e2e/specs-docs/diagnostic-policy.ts',
+        'e2e/metadata/working-list-setup.json',
+        'playwright.docs.config.ts',
+    ]
+    for (const file of [
+        'package.json',
+        'pnpm-lock.yaml',
+        'pnpm-workspace.yaml',
+        'turbo.json',
+        'apps/docs/package.json',
+        'apps/web/package.json',
+        'packages/registry/package.json',
+        ...inputs,
+    ]) {
+        mkdirSync(dirname(join(root, file)), { recursive: true })
+        cpSync(join(REPO_ROOT, file), join(root, file))
+    }
+    const tasks = ['test', 'test:tools', 'typecheck:registry']
+    const before = dryRun(root, tasks)
+    for (const input of inputs) {
+        const path = join(root, input)
+        const original = readFileSync(path, 'utf8')
+        writeFileSync(path, `${original}\n`)
+        const after = dryRun(root, tasks)
+        for (const task of before.tasks) {
+            const next = after.tasks.find(
+                ({ taskId }) => taskId === task.taskId
+            )!
+            if (task.taskId.startsWith('//#')) {
+                assert.notEqual(
+                    next.hash,
+                    task.hash,
+                    `${input}: ${task.taskId}`
+                )
+                assert.ok(Object.hasOwn(task.inputs, input), input)
+            } else {
+                assert.equal(next.hash, task.hash, `${input}: ${task.taskId}`)
+            }
+        }
+        writeFileSync(path, original)
+    }
+})
 
 test('API-only edits change docs test hash, not registry or web; alias imports and transit dependencies are tracked', (t) => {
     const root = mkdtempSync(join(tmpdir(), 'turbo-inputs-'))

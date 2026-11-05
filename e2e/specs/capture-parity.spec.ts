@@ -284,7 +284,7 @@ test.describe('Capture context and generated tracker views', () => {
         }
     })
 
-    test('deselects the active list and falls back to the unfiltered default view', async ({
+    test('deselects the active list and preserves the unfiltered default across reloads', async ({
         page,
     }) => {
         await openWorkingList(page)
@@ -301,8 +301,6 @@ test.describe('Capture context and generated tracker views', () => {
         )
         expect(deselectedQuery.searchParams.get('page')).toBe('1')
         await expect(activeView).not.toHaveAttribute('aria-pressed', 'true')
-        // Deselection selects the synthetic default template so the
-        // preference survives a reload.
         await expect(page).toHaveURL(
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
         )

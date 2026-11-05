@@ -47,7 +47,14 @@
             "outputs": []
         },
         "//#typecheck:registry": {
-            "inputs": ["tools/**", "package.json"],
+            "inputs": [
+                "tools/**",
+                "e2e/fixtures/**",
+                "e2e/metadata/**",
+                "e2e/specs-docs/diagnostic-policy.ts",
+                "playwright.docs.config.ts",
+                "package.json"
+            ],
             "outputs": []
         },
         "start": {
@@ -72,6 +79,10 @@
                 "tools/**",
                 "scripts/**",
                 ".github/**",
+                "e2e/fixtures/**",
+                "e2e/metadata/**",
+                "e2e/specs-docs/diagnostic-policy.ts",
+                "playwright.docs.config.ts",
                 "turbo.json",
                 "package.json",
                 "apps/*/package.json",

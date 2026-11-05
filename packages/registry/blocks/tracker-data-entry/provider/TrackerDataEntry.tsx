@@ -353,14 +353,18 @@ export const TrackerDataEntry = ({
                 ? undefined
                 : {
                       title: i18n.t('Create events?'),
-                      // `count` picks the plural; `replace` says it in the person's digits.
-                      body: i18n.t(
-                          'This creates {{count}} events on this page.',
-                          {
-                              count: created.size,
-                              replace: { count: formatCount(created.size) },
-                          }
-                      ),
+                      body:
+                          created.size === 1
+                              ? i18n.t('This creates 1 event on this page.')
+                              : // `replace`, as `count` must be a number: the count in the person's digits.
+                                i18n.t(
+                                    'This creates {{count}} events on this page.',
+                                    {
+                                        replace: {
+                                            count: formatCount(created.size),
+                                        },
+                                    }
+                                ),
                       confirm: i18n.t('Create events'),
                   }
         }

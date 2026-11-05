@@ -81,7 +81,7 @@ const visits: GridTable<Visit> = {
     closed: new Map(),
 }
 // A row's own fields reach its label and its keys: the slots take the tables' rows.
-export const sheet = (engine: DataEngine): ReactNode =>
+export const sheet = (): ReactNode =>
     Spreadsheet({
         cells: store,
         annotations,
@@ -90,7 +90,6 @@ export const sheet = (engine: DataEngine): ReactNode =>
         rowKeysOf: (row) => [row.id, `visit${row.visit}`],
         RowLabel: ({ row }) => `Visit ${row.visit}`,
         settings: SETTINGS,
-        engine,
         children: SpreadsheetGrid({}),
     })
 

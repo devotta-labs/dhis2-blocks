@@ -18,7 +18,6 @@ your app's `src`.
 You build a cell store, an annotations store and the tables, and `Spreadsheet` hands them to the grid and its cells.
 
 ```tsx
-import { useDataEngine } from '@dhis2/app-runtime'
 import { useMemo } from 'react'
 import {
     Spreadsheet,
@@ -52,7 +51,6 @@ const annotations = {
 const settings = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 
 export const Targets = () => {
-    const engine = useDataEngine()
     // Made once: a new store starts the grid again.
     const cells = useMemo(
         () =>
@@ -74,7 +72,6 @@ export const Targets = () => {
             annotations={annotations}
             tables={[targets]}
             settings={settings}
-            engine={engine}
         >
             <SpreadsheetGrid />
         </Spreadsheet>
@@ -85,7 +82,7 @@ export const Targets = () => {
 ## API
 
 ```ts
-Spreadsheet({ cells, annotations, tables, settings, engine, keyOf?, rowKeysOf?, idScope?, overrides?, addRow?, orgUnitNames?, fileNames?, offline?, fileUrl?, announcer?, RowLabel?, RowBadge?, GridFooter?, bulkColumn?, confirmBulk?, children }) // the provider; renders the one polite live region after its children
+Spreadsheet({ cells, annotations, tables, settings, keyOf?, rowKeysOf?, idScope?, overrides?, addRow?, orgUnitNames?, fileNames?, offline?, fileUrl?, announcer?, RowLabel?, RowBadge?, GridFooter?, bulkColumn?, confirmBulk?, children }) // the provider; renders the one polite live region after its children
 SpreadsheetGrid({ tableId?, className? }) // every table, or one of them
 Cell({ cellKey, field, labelledBy, move }) // one bound control with its notes and markers, for your own layouts
 cells: Record<CellKind, CellComponent> // the default control per kind of field
@@ -346,7 +343,7 @@ const Notes: CellComponent = ({ id, cellKey, labelledBy, aria, readOnly, hidden 
 // A module constant: a new object renders every cell again.
 const overrides = { valueTypes: { LONG_TEXT: Notes }, fields: { qrur9Dvnyt5: Notes } }
 
-<Spreadsheet cells={cells} annotations={annotations} tables={tables} settings={settings} engine={engine} overrides={overrides}>
+<Spreadsheet cells={cells} annotations={annotations} tables={tables} settings={settings} overrides={overrides}>
 ```
 
 `overrides` replaces the control for a value type or for one field by id; a field's control wins over its value type's. The control gets `readOnly` (why it cannot be edited: the lock your annotations
@@ -381,8 +378,8 @@ reads its cell from the `Cell` around it, so it is drawn only inside one.
   code by code). A rule's own commit is not gated. `undo` skips a cell the annotations now close.
 - `TRACKER_ASSOCIATE`, `REFERENCE`, `GEOJSON`, and a pop-up type without an editor, show their value and are edited in
   their own form, or in a replacement control.
-- File cells upload through `POST /api/fileResources` with the `engine` you pass, since a file cannot wait for your code
-  to send it. Where a saved file is served from is yours to say, with `fileUrl`.
+- File cells upload through `POST /api/fileResources` with the app-runtime's data engine, since a file cannot wait for your
+  code to send it. Where a saved file is served from is yours to say, with `fileUrl`.
 - Option cells keep a hand-built list: the `combobox` primitive cannot pick on Tab, keeps Escape and Home/End for itself, renders its own input chrome and a portalled popup that cannot hang under the cell inside the table, so the cell's key table, modes and popover placement would need the primitive's behaviour disabled.
 - The grid shows the tables it is given. Loading, sending, offline handling and completion belong to the block that
   composes it, such as `tracker-data-entry`.

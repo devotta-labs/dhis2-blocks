@@ -43,7 +43,6 @@ above it, for the data engine.
   that are closed.
 
 ```tsx
-import { useDataEngine } from '@dhis2/app-runtime'
 import { useMemo } from 'react'
 import {
     Spreadsheet,
@@ -76,7 +75,6 @@ const annotations = {
 const settings = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 
 export const Targets = () => {
-    const engine = useDataEngine()
     const cells = useMemo(
         () =>
             createCellStore({
@@ -98,7 +96,6 @@ export const Targets = () => {
             annotations={annotations}
             tables={[targets]}
             settings={settings}
-            engine={engine}
         >
             <SpreadsheetGrid />
         </Spreadsheet>
@@ -392,14 +389,13 @@ const Notes: CellComponent = ({
 // A module constant: a new object renders every cell again.
 const overrides = { valueTypes: { LONG_TEXT: Notes } }
 
-// `cells`, `annotations`, `tables`, `settings` and `engine` as in "Usage".
+// `cells`, `annotations`, `tables` and `settings` as in "Usage".
 export const NotesGrid = () => (
     <Spreadsheet
         cells={cells}
         annotations={annotations}
         tables={tables}
         settings={settings}
-        engine={engine}
         overrides={overrides}
     >
         <SpreadsheetGrid />
@@ -456,8 +452,8 @@ changed.
 
 - The grid is DHIS2-typed: a cell's field has a DHIS2 value type, and its value
   is stored as DHIS2 stores it.
-- File cells upload through `POST /api/fileResources` with the `engine` you
-  pass. Where a saved file is served from is yours to say, with `fileUrl`.
+- File cells upload through `POST /api/fileResources` with the app-runtime's data
+  engine. Where a saved file is served from is yours to say, with `fileUrl`.
 - A form is not loaded for you: the grid shows the tables it is given. Loading,
   sending, offline handling and completion are the job of the block that
   composes it, such as `tracker-data-entry`.
@@ -472,7 +468,6 @@ changed.
 - `annotations` — **required.** A read-only store of `AnnotationsState`.
 - `tables: GridTable[]` — **required.**
 - `settings: ValueSettings` — **required.** The system calendar and date format.
-- `engine: DataEngine` — **required.** From `useDataEngine()`.
 - `keyOf?(row, column): CellKey`, `rowKeysOf?(row): string[]`
 - `idScope?: string`, `overrides?: CellOverrides`, `offline?: boolean`
 - `fileUrl?(key, image): string | undefined`

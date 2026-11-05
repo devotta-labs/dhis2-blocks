@@ -68,8 +68,6 @@ export interface SpreadsheetContext {
     confirmBulk?(
         keys: ReadonlyArray<CellKey>
     ): { title: string; body: string; confirm: string } | undefined
-    /** What the searching and uploading cells ask the server with. */
-    engine: DataEngine
     /** Whether the server cannot be reached now: files cannot be uploaded. */
     offline: boolean
     /**

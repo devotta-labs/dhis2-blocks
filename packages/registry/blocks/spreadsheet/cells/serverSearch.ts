@@ -1,8 +1,7 @@
-import { FetchError } from '@dhis2/app-runtime'
+import { FetchError, useDataEngine } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import { useSpreadsheetContext } from '../provider/context'
 import type { DataEngine } from '../provider/context'
 
 // Fewer characters match too much to be worth asking the server.
@@ -134,7 +133,10 @@ export const useServerSearch = (
     search: Search | undefined,
     query: string
 ): Found | undefined => {
-    const { engine } = useSpreadsheetContext()
+    // The runtime hands out a new engine each render; a search in flight must not restart for it.
+    const dataEngine = useDataEngine()
+    const engine = useRef(dataEngine)
+    engine.current = dataEngine
     const [found, setFound] = useState<Found>()
     useEffect(() => {
         if (search === undefined || query.length < MIN_LENGTH) {
@@ -142,7 +144,7 @@ export const useServerSearch = (
         }
         const controller = new AbortController()
         const timer = setTimeout(() => {
-            search(engine, query, controller.signal).then(
+            search(engine.current, query, controller.signal).then(
                 (answer) => {
                     if (!controller.signal.aborted) {
                         setFound({ query, ...answer })

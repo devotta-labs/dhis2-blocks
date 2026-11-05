@@ -1,4 +1,4 @@
-import { FetchError } from '@dhis2/app-runtime'
+import { FetchError, useDataEngine } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
@@ -80,8 +80,9 @@ export const FileEditor = ({
     save,
     cancel,
 }: PopupEditorProps) => {
-    const { announce, effects, fileNames, engine, offline, fileUrl } =
+    const { announce, effects, fileNames, offline, fileUrl } =
         useSpreadsheetContext()
+    const engine = useDataEngine()
     const image = field.valueType === 'IMAGE'
     const url = storedFileUrl(fileUrl, cellKey, useCellView(cellKey), image)
     const name = useStore(fileNames, ({ names }) =>

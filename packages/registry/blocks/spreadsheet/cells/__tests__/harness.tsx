@@ -1,4 +1,4 @@
-import { CustomDataProvider, useDataEngine } from '@dhis2/app-runtime'
+import { CustomDataProvider } from '@dhis2/app-runtime'
 import type { ComponentProps, ReactNode } from 'react'
 import { onTestFinished } from 'vitest'
 import type { Locator } from 'vitest/browser'
@@ -44,11 +44,6 @@ interface RigOptions {
     /** Where the server serves a cell's stored file; none by default. */
     fileUrl?: ComponentProps<typeof Spreadsheet>['fileUrl']
 }
-
-/** The rig's spreadsheet, asking the fake server around it. */
-const WithEngine = (
-    props: Omit<ComponentProps<typeof Spreadsheet>, 'engine'>
-) => <Spreadsheet {...props} engine={useDataEngine()} />
 
 /** One cell in a store of its own, with the effects store and what the cell asked of the grid. */
 export const rig = (
@@ -116,7 +111,7 @@ export const rig = (
         /** What the grid would put around a cell: the header that names it. */
         ui: (cell: ReactNode) => (
             <CustomDataProvider data={data}>
-                <WithEngine
+                <Spreadsheet
                     cells={store}
                     annotations={effectsStore}
                     tables={[table]}
@@ -130,7 +125,7 @@ export const rig = (
                 >
                     <span id={HEADER}>Age (years)</span>
                     {cell}
-                </WithEngine>
+                </Spreadsheet>
             </CustomDataProvider>
         ),
         stored: () => store.getState().cells[CELL],

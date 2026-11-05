@@ -1,4 +1,3 @@
-import { useDataEngine } from '@dhis2/app-runtime'
 import { useMemo, useState } from 'react'
 import {
     Spreadsheet,
@@ -49,7 +48,6 @@ const annotations = {
 }
 
 const TargetsGrid = () => {
-    const engine = useDataEngine()
     const [log, setLog] = useState<string[]>([])
     const cells = useMemo(
         () =>
@@ -75,7 +73,6 @@ const TargetsGrid = () => {
             annotations={annotations}
             tables={[TARGETS]}
             settings={SETTINGS}
-            engine={engine}
         >
             <SpreadsheetGrid />
             <ul aria-label="Changes to save" className="mt-4 text-sm">

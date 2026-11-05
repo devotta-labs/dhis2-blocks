@@ -279,6 +279,15 @@ endpoints (`/api/tracker/events/{event}/dataValues/{dataElement}/file` and `/ima
 `fileUrl`. A person's file and image cells show their value, with no preview or download, and are edited in their own
 form.
 
+### Bulk actions
+
+The grid's row and column actions, and Ctrl+D (Cmd+D), work as `spreadsheet` describes (its README's "Bulk actions").
+In a register they fill the visit columns only: the person's attributes and the enrolment date have no column button,
+and a row's actions leave them alone. In an event grid every column takes part. An action that would write to a visit
+no event holds yet, which creates that event, first asks "Create events?" ("This creates 3 events on this page.", with
+**Create events** and **Cancel**), because undo cannot delete an event once it is sent; an event DHIS2 has saved from
+this page counts as held.
+
 ## Saving
 
 - Every change goes to an IndexedDB outbox on this device, `dhis2-data-entry:<server>:<user id>`, before it is sent,

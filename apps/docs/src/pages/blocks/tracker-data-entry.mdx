@@ -235,6 +235,19 @@ File cells read each row as an event and each column as a data element. A file
 DHIS2 holds shows its name and **Download**, and an image a small preview, both
 from the event's own endpoints.
 
+### Bulk actions
+
+The row and column actions and Ctrl+D (Cmd+D on a Mac) work as the
+[Spreadsheet](/blocks/spreadsheet#bulk-actions) page describes. In a register
+they fill the visit columns only: the person's attributes and the enrolment
+date have no column button, and a row's actions leave them alone. In an event
+grid every column takes part.
+
+An action that would write to a visit no event holds yet creates that event,
+so it first asks **Create events?** ("This creates 3 events on this page.")
+with **Create events** and **Cancel**: undo cannot delete an event once it is
+sent.
+
 ## Every value type
 
 A source can load any data, not only DHIS2 events. This preview's source keeps

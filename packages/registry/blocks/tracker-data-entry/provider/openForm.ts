@@ -207,13 +207,16 @@ const connect = (
         // Read-only records stay as DHIS2 has them, whatever path a change comes by.
         locked: (key) => readOnlyRecords.has(recordIdOf(key)),
     })
-    store
-        .getState()
-        .restore(
-            unsent
-                .filter(({ key }) => inForm(key))
-                .map((record) => ({ ...record, sync: record.state }))
-        )
+    store.getState().restore(
+        unsent
+            .filter(({ key }) => inForm(key))
+            // DHIS2 holds what was just loaded, whatever it held when the change was made.
+            .map((record) => ({
+                ...record,
+                base: form.values.get(record.key) ?? null,
+                sync: record.state,
+            }))
+    )
 
     // Changes of the source no cell of the form holds (made in the program's other grids, or for people on pages not
     // loaded yet) that could not be saved, or wait: counted here, so none is stuck where no grid shows it. The failed
@@ -399,7 +402,8 @@ const connect = (
     const channel = new BroadcastChannel(name)
     channel.onmessage = ({ data }) => {
         const parsed = outcomesMessageSchema.safeParse(data)
-        if (parsed.success) {
+        // Closed, the form only posts: what other tabs say is not put on its store.
+        if (parsed.success && !closed) {
             apply(parsed.data.outcomes)
         }
     }
@@ -422,10 +426,11 @@ const connect = (
             return who === 'here' ? source.save(engine, records, form) : []
         },
         onOutcomes(outcomes) {
-            apply(outcomes)
+            // Closed during the round: the other tabs still hear what it saved.
             if (!closed) {
-                channel.postMessage({ outcomes })
+                apply(outcomes)
             }
+            channel.postMessage({ outcomes })
         },
         onStatus,
         lockName: `dhis2-data-entry-sync:${name}`,
@@ -559,9 +564,11 @@ const connect = (
             window.removeEventListener('focus', onFocus)
             document.removeEventListener('visibilitychange', onVisibility)
             unsubscribes.forEach((unsubscribe) => unsubscribe())
-            sync.stop()
-            channel.close()
-            outbox.close()
+            // A round in flight still settles its outcomes in the outbox and posts them first.
+            void sync.stop().finally(() => {
+                channel.close()
+                outbox.close()
+            })
         },
     }
 }

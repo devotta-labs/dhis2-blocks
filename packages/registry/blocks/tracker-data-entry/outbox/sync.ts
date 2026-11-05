@@ -52,8 +52,8 @@ export interface SyncOptions {
 export interface SyncHandle {
     /** Sends what the outbox holds now; a nudge during a round schedules one more round after it. */
     nudge(): void
-    /** Ends the loop. A round already in flight records what the server took, then stops. */
-    stop(): void
+    /** Ends the loop; settles once a round already in flight has recorded what the server took. */
+    stop(): Promise<void>
     /** Runs `task` under the lock the loop sends under, so no tab's loop sends while it runs. */
     exclusive<T>(task: () => Promise<T>): Promise<T>
 }
@@ -81,6 +81,8 @@ export const startSync = ({
     let again = false
     let status: SyncStatus | undefined
     let resume: (() => void) | undefined
+    let wake: (() => void) | undefined
+    let looping = Promise.resolve()
 
     const report = (next: SyncStatus) => {
         if (!stopped && next !== status) {
@@ -236,7 +238,12 @@ export const startSync = ({
                 }
                 if (outcome === 'retry') {
                     report('retrying')
-                    await sleep(delay)
+                    // `stop` wakes it, so stopping never waits out the delay. A failed sleep is a finished wait.
+                    await new Promise<void>((resolve) => {
+                        wake = resolve
+                        void sleep(delay).then(resolve, resolve)
+                    })
+                    wake = undefined
                     delay = Math.min(delay * 2, LONGEST_DELAY)
                     continue
                 }
@@ -261,7 +268,7 @@ export const startSync = ({
             return
         }
         running = true
-        void loop()
+        looping = loop()
     }
 
     const goOnline = () => {
@@ -285,6 +292,8 @@ export const startSync = ({
             window.removeEventListener('online', goOnline)
             window.removeEventListener('offline', goOffline)
             resume?.()
+            wake?.()
+            return looping
         },
     }
 }

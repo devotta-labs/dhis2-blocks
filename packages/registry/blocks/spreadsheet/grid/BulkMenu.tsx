@@ -1,6 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import { IconMore16 } from '@dhis2/ui-icons'
 import { useState } from 'react'
+import type { KeyboardEvent } from 'react'
 import { parseTyped } from '@/components/dhis2-value-types'
 import {
     AlertDialog,
@@ -92,6 +93,15 @@ export const ActionsButton = ({
         <span className="sr-only">{label}</span>
     </Button>
 )
+
+/** Ctrl+Shift+\\ (Cmd+Shift+\\ on Apple keyboards), Google Sheets' key for a cell's menu, by its place on any layout. */
+export const opensMenu = (event: KeyboardEvent) =>
+    event.code === 'Backslash' &&
+    event.shiftKey &&
+    !event.altKey &&
+    (/Mac|iPhone|iPad/.test(navigator.platform)
+        ? event.metaKey && !event.ctrlKey
+        : event.ctrlKey && !event.metaKey)
 
 /** A row's last cell, sticky at the row's end, holding its actions button. */
 export const RowActions = ({

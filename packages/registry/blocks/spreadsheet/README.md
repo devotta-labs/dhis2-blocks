@@ -168,13 +168,16 @@ interface CellAnnotations {
 interface AnnotationsState {
     cells: Partial<Record<CellKey, CellAnnotations>> // only cells there is something to say about
     rowMessages: ReadonlyMap<string, ReadonlyArray<CellMessage>> // row id → messages without a cell, shown in the row's header
-    rowNotes: ReadonlyMap<string, ReadonlyArray<string>> // row id → notes shown under the row's label
+    rowNotes: ReadonlyMap<string, ReadonlyArray<string>> // row id → notes, behind a marker in the row's header
 }
 ```
 
 A row's messages and notes are stored under its row keys: `rowKeysOf(row)` on `Spreadsheet`, `[row.id]` by default. The
-header gathers them across all of them and shows each tone and text once. Value-type errors come from the cell store and
-required from `CellAnnotations.required`, so both show with an annotations store that never changes.
+header gathers them across all of them and shows each tone and text once. A row's notes show as a marker with their
+count ("Note", "Notes: 2") that opens them as plain text, line breaks kept, in a popover, so the row stays one line; the
+marker is out of the Tab order, and the row header's description holds the notes for screen readers. Value-type errors
+come from the cell store and required from `CellAnnotations.required`, so both show with an annotations store that never
+changes.
 
 ### Around the grid
 
@@ -225,8 +228,9 @@ it is one undo step (Ctrl+Z, Cmd+Z), and the rules re-run on the rows it touched
   `bulkColumn` leaves out, has no column button. "Apply value to all column cells" is not offered for kinds the grid cannot
   type into (file and image columns, and others a paste refuses, unless a replacement control edits them); "Clear all column
   cells" still is.
-- **Context menu**: right-click a cell, or press Shift+F10 or the Menu key on it, for one menu with a "Row" and a
-  "Column" group. The buttons are out of the Tab order and are not part of the grid, so the arrow keys never reach them.
+- **Context menu**: right-click a cell, or press Shift+F10, the Menu key or Ctrl+Shift+\ (Cmd+Shift+\ on a Mac) on it,
+  for one menu with a "Row" and a "Column" group. The buttons are out of the Tab order and are not part of the grid, so
+  the arrow keys never reach them.
 - **Ctrl+D (Cmd+D)**: on a cell, types the value of the cell above it in the same table, replacing what is there. A value
   its type refuses stays in the cell with its error, as typing does. With no row above, nothing in the cell above (or a
   hidden or closed cell above), or a cell that cannot be edited, it says "Nothing above to copy." or the cell's own reason. The browser's shortcut is left

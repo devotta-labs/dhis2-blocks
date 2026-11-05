@@ -1242,6 +1242,11 @@
                     "target": "@components/spreadsheet/cells/useCellMode.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/spreadsheet/grid/AddRowButton.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/AddRowButton.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/spreadsheet/grid/BulkMenu.tsx",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/grid/BulkMenu.tsx"
@@ -1255,6 +1260,11 @@
                     "path": "packages/registry/blocks/spreadsheet/grid/RowHeader.tsx",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/grid/RowHeader.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/RowNotes.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/RowNotes.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/spreadsheet/grid/SpreadsheetGrid.tsx",

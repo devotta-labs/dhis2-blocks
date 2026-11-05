@@ -164,7 +164,7 @@ interface AnnotationsState {
     cells: Partial<Record<CellKey, CellAnnotations>>
     // row id → messages without a cell, shown in the row's header
     rowMessages: ReadonlyMap<string, ReadonlyArray<CellMessage>>
-    // row id → notes shown under the row's label
+    // row id → notes, behind a marker in the row's header
     rowNotes: ReadonlyMap<string, ReadonlyArray<string>>
 }
 ```
@@ -175,7 +175,10 @@ required from `CellAnnotations.required`, so both show with an annotations
 store that never changes. A row's
 messages and notes are stored under the row's keys: `[row.id]` unless
 `rowKeysOf(row)` on `Spreadsheet` names more. The header shows the messages of
-all of them, once each.
+all of them, once each. A row's notes show as a marker with their count
+("Note", "Notes: 2") that opens them as plain text, line breaks kept, in a
+popover, so the row stays one line. The marker is out of the Tab order, and the
+row header's description holds the notes for screen readers.
 
 ## Rows and the grid around them
 
@@ -227,10 +230,10 @@ Cmd+Z on a Mac), and the rules re-run on the rows it touched.
   cells** is not offered for kinds the grid cannot type into (file and image
   columns, and others a paste refuses, unless a replacement control edits
   them); **Clear all column cells** still is.
-- **Context menu.** Right-click a cell, or press Shift+F10 or the Menu key on
-  it, for one menu with a **Row** and a **Column** group. The buttons are out
-  of the Tab order and are not part of the grid, so the arrow keys never reach
-  them.
+- **Context menu.** Right-click a cell, or press Shift+F10, the Menu key or
+  Ctrl+Shift+\\ (Cmd+Shift+\\ on a Mac) on it, for one menu with a **Row**
+  and a **Column** group. The buttons are out of the Tab order and are not part
+  of the grid, so the arrow keys never reach them.
 - **Ctrl+D (Cmd+D).** On a cell, types the value of the cell above it in the
   same table, replacing what is there. A value its type refuses stays in the
   cell with its error, as typing does. With no row above, nothing in the cell

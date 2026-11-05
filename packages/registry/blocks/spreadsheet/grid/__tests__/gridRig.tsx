@@ -114,6 +114,8 @@ interface MountOptions {
     overrides?: CellOverrides
     /** Row id → the row's messages without a field. */
     rowMessages?: Array<[string, CellMessage[]]>
+    /** Row id → the row's notes. */
+    rowNotes?: Array<[string, string[]]>
     /** What each row header shows beside its label. */
     RowBadge?: SpreadsheetContext['RowBadge']
     /** What follows the tables. */
@@ -147,6 +149,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
         onSubscribe,
         overrides,
         rowMessages = [],
+        rowNotes = [],
         keyOf,
         rowKeysOf,
         fieldIdOf,
@@ -180,7 +183,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
     const effects = createStore<AnnotationsState>()(() => ({
         cells,
         rowMessages: new Map(rowMessages),
-        rowNotes: new Map(),
+        rowNotes: new Map(rowNotes),
     }))
     const counted: typeof effects = {
         ...effects,

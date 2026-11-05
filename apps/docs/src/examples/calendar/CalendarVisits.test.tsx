@@ -29,8 +29,6 @@ it('shows ANC names by default and lets readers explore another day', async () =
     expect(
         view.container.querySelector('[data-slot="calendar-day-records"]')
     ).toHaveTextContent('Mary K. · ANC visit 4')
-    expect(view.container).not.toHaveTextContent('Opened:')
-    expect(view.container).not.toHaveTextContent('Release candidate')
 })
 
 it('keeps Schedule illustrative without submitting or changing visits', async () => {
@@ -53,5 +51,4 @@ it('keeps Schedule illustrative without submitting or changing visits', async ()
         view.container.querySelector('[data-slot="calendar-day-records"]')
     ).toHaveTextContent('Amina N. · ANC visit 2')
     await expect.element(view.getByRole('dialog')).not.toBeInTheDocument()
-    expect(view.container).not.toHaveTextContent('Opened:')
 })

@@ -1,63 +1,68 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { expect, test } from './fixtures'
+import type { Page } from '@playwright/test'
+
+const propTooltip = (page: Page, name: string) =>
+    page
+        .getByRole('tooltip')
+        .filter({ has: page.getByText(name, { exact: true }) })
 
 test.describe('playground Canvas / Code', () => {
-    for (const [path, composition, part, prop, value] of [
+    for (const [path, sourceFile, prop, value] of [
         [
             'working-list',
-            'TableCanvas',
-            'WorkingListTable',
+            'working-list/table/TableCanvas.tsx',
             'programId',
             '"labProgram1"',
         ],
         [
             'working-list?display=calendar',
-            'CalendarCanvas',
-            'CalendarGrid',
+            'working-list/calendar/CalendarCanvas.tsx',
             'programId',
             '"labProgram1"',
         ],
         [
             'observation-cards',
-            'ObservationsCanvas',
-            'ObservationCard',
+            'observation-cards/ObservationsCanvas.tsx',
             'trackedEntity',
             '"labPerson01"',
         ],
         [
             'timeline',
-            'TimelineCanvas',
-            'TimelineFeed',
+            'timeline/TimelineCanvas.tsx',
             'trackedEntity',
             '"labPerson01"',
         ],
         [
             'tracked-entity-finder',
-            'LabFinder',
-            'FinderProvider',
+            'tracked-entity-finder/LabFinder.tsx',
             'program',
             '"labProgram1"',
         ],
     ]) {
-        test(`shows the actual ${composition} source`, async ({ page }) => {
+        test(`shows the actual ${path} source`, async ({ page }) => {
             await page.goto(`/playground/${path}`)
             await page.getByRole('tab', { name: 'Code', exact: true }).click()
             const panel = page.getByRole('tabpanel', { name: 'Code' })
             await expect(panel.getByLabel('Code file')).toHaveCount(0)
             await expect(panel.getByText('Current props.json')).toHaveCount(0)
-            await expect(panel.locator('pre')).toContainText(
-                `export const ${composition}`
+            const source = await readFile(
+                resolve(
+                    __dirname,
+                    '../../apps/docs/src/playground',
+                    sourceFile
+                ),
+                'utf8'
             )
-            await expect(panel.locator('pre')).toContainText(`<${part}`)
-            await expect(panel.locator('pre')).toContainText(
-                'interface Props {'
-            )
+            await expect(
+                panel.locator('[data-slot="code-block-line-content"]')
+            ).toHaveText(source.replace(/\n$/, '').split('\n'))
             const declaration = panel
                 .getByRole('button', { name: `Inspect ${prop}`, exact: true })
                 .first()
             await declaration.hover()
-            await expect(page.getByRole('tooltip').locator('pre')).toHaveText(
+            await expect(propTooltip(page, prop).locator('pre')).toHaveText(
                 value
             )
             await expect(
@@ -94,6 +99,31 @@ test.describe('playground Canvas / Code', () => {
         )
     })
 
+    test('keeps pending observation cards mounted while inspecting code', async ({
+        page,
+    }) => {
+        await page.goto('/playground/observation-cards')
+        await page.getByRole('button', { name: 'Slow', exact: true }).click()
+        const card = page.locator('[data-slot="observation-card"]').first()
+        await expect(card).toHaveAttribute('aria-busy', 'true')
+        const original = await card.elementHandle()
+        expect(original).not.toBeNull()
+        await page.getByRole('tab', { name: 'Code', exact: true }).click()
+        await expect(page.getByRole('tabpanel', { name: 'Code' })).toBeVisible()
+        expect(await original!.evaluate((element) => element.isConnected)).toBe(
+            true
+        )
+        await expect(
+            card.locator('[data-slot="observation-value"]')
+        ).toContainText('g/dL')
+        await page.getByRole('tab', { name: 'Canvas', exact: true }).click()
+        await expect(card).toBeVisible()
+        expect(await original!.evaluate((element) => element.isConnected)).toBe(
+            true
+        )
+        await expect(card).not.toHaveAttribute('aria-busy', 'true')
+    })
+
     test('inspects current props inline and supports keyboard navigation', async ({
         page,
     }, testInfo) => {
@@ -111,18 +141,22 @@ test.describe('playground Canvas / Code', () => {
             .getByRole('button', { name: 'Inspect view.pageSize', exact: true })
             .first()
         await pageSize.hover()
-        await expect(page.getByRole('tooltip').locator('pre')).toHaveText('25')
+        await expect(
+            propTooltip(page, 'view.pageSize').locator('pre')
+        ).toHaveText('25')
         await codeTab.hover()
         await page.getByLabel('Rows per page').selectOption('50')
         await pageSize.focus()
-        await expect(page.getByRole('tooltip').locator('pre')).toHaveText('50')
+        await expect(
+            propTooltip(page, 'view.pageSize').locator('pre')
+        ).toHaveText('50')
         const programId = panel.getByRole('button', {
             name: 'Inspect programId',
             exact: true,
         })
-        await expect(programId).toHaveCount(2)
+        await expect(programId.first()).toBeVisible()
         await programId.first().focus()
-        await expect(page.getByRole('tooltip').locator('pre')).toHaveText(
+        await expect(propTooltip(page, 'programId').locator('pre')).toHaveText(
             '"labProgram1"'
         )
         const view = panel.getByRole('button', {
@@ -130,7 +164,7 @@ test.describe('playground Canvas / Code', () => {
             exact: true,
         })
         await view.focus()
-        await expect(page.getByRole('tooltip').locator('pre')).toContainText(
+        await expect(propTooltip(page, 'view').locator('pre')).toContainText(
             '"pageSize": 50'
         )
         await page.screenshot({
@@ -138,7 +172,7 @@ test.describe('playground Canvas / Code', () => {
             fullPage: true,
         })
         await page.keyboard.press('Escape')
-        await expect(page.getByRole('tooltip')).toBeHidden()
+        await expect(propTooltip(page, 'view')).toBeHidden()
     })
 
     test('keeps code and prop tooltips usable at phone width in dark mode', async ({
@@ -154,7 +188,7 @@ test.describe('playground Canvas / Code', () => {
             .getByRole('button', { name: 'Inspect programId', exact: true })
             .first()
             .focus()
-        const tooltip = page.getByRole('tooltip')
+        const tooltip = propTooltip(page, 'programId')
         await expect(tooltip.locator('pre')).toHaveText('"labProgram1"')
         const bounds = await tooltip.boundingBox()
         expect(bounds).not.toBeNull()

@@ -1,9 +1,5 @@
 import { expect, test } from './fixtures'
 
-/**
- * Catalog browsing works without a backend: prose, navigation, and code tabs
- * are static, and controlled (non-live) examples render without DHIS2.
- */
 test.describe('documentation catalog', () => {
     test('renders the introduction and sidebar navigation', async ({
         page,
@@ -38,7 +34,6 @@ test.describe('documentation catalog', () => {
             page.getByText('pnpm dlx shadcn@latest add').first()
         ).toBeVisible()
 
-        // The Code tab renders the same example source the preview executes.
         await page.getByRole('tab', { name: 'code' }).first().click()
 
         const codePanel = page
@@ -59,14 +54,17 @@ test.describe('documentation catalog', () => {
     })
 
     test('renders controlled examples without a backend', async ({ page }) => {
+        const backendRequests: string[] = []
+        await page.route('**/dhis2/**', (route) => {
+            backendRequests.push(route.request().url())
+            return route.abort('blockedbyclient')
+        })
         await page.goto('/blocks/context-selector')
 
         await expect(
             page.getByRole('heading', { name: 'Context Selector' })
         ).toBeVisible()
 
-        // The registration-context example is controlled sample data, so it
-        // renders inline in the page even while signed out or offline.
         await expect(
             page.getByRole('toolbar', { name: 'Registration context' })
         ).toBeVisible({
@@ -75,6 +73,7 @@ test.describe('documentation catalog', () => {
         await expect(
             page.getByText('Malaria case registration').first()
         ).toBeVisible()
+        expect(backendRequests).toEqual([])
     })
 
     test('documents installation', async ({ page }) => {

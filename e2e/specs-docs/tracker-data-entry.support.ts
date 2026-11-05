@@ -337,6 +337,20 @@ export const gridReady = (page: Page) =>
         { timeout: 60_000 }
     )
 
+/** The grid's body rows, drawn or not: each table counts all of its rows, header rows included, for screen readers. */
+export const bodyRows = (page: Page) =>
+    page
+        .locator('table[aria-rowcount]')
+        .evaluateAll((tables: HTMLTableElement[]) =>
+            tables.reduce(
+                (sum, table) =>
+                    sum +
+                    Number(table.getAttribute('aria-rowcount')) -
+                    (table.tHead?.rows.length ?? 0),
+                0
+            )
+        )
+
 /** Ready once the form is shown; for a form without rules, which never measures them. */
 export const formReady = (page: Page) =>
     page.waitForFunction(
@@ -353,6 +367,25 @@ export const openGrid = async (page: Page, slug: string) => {
 /** A cell's control: its id ends in the cell's key, after the form's own prefix. */
 export const cell = (page: Page, eventId: string, field: string) =>
     page.locator(`[id$="-cell-${eventId}.${field}"]`)
+
+/** Scrolls the grid down from its top until `target` is drawn: a table draws only the rows near its view. */
+export const scrollUntilDrawn = async (page: Page, target: Locator) => {
+    const region = page.locator('[role="region"]:has(tbody)').first()
+    await region.evaluate((element) => element.scrollTo({ top: 0 }))
+    let moved = true
+    while (moved && (await target.count()) === 0) {
+        moved = await region.evaluate(async (element) => {
+            const before = element.scrollTop
+            element.scrollBy({ top: element.clientHeight / 2 })
+            // The grid draws the rows it scrolled to in the frames that follow.
+            await new Promise((resolve) =>
+                requestAnimationFrame(() => requestAnimationFrame(resolve))
+            )
+            return element.scrollTop !== before
+        })
+    }
+    await expect(target).toHaveCount(1)
+}
 
 export const enter = async (page: Page, target: Locator, text: string) => {
     await target.click()

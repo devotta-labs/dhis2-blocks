@@ -1,6 +1,10 @@
 import type { Browser, BrowserContext, Page, TestInfo } from '@playwright/test'
 import { z } from 'zod'
-import { gridReady, TRACKER_IMPORT } from './tracker-data-entry.support'
+import {
+    bodyRows,
+    gridReady,
+    TRACKER_IMPORT,
+} from './tracker-data-entry.support'
 import { expect, test } from './fixtures'
 
 /**
@@ -218,7 +222,7 @@ const diastolic = (page: Page) => page.locator(`tbody [id$=".${DIASTOLIC}"]`)
 
 test.describe.configure({ timeout: 120_000 })
 
-test('register shows its 2,500 cells within 1 s', async ({
+test('register of 50 rows by 50 columns shows within 1 s', async ({
     page,
     browser,
 }, testInfo) => {
@@ -228,7 +232,7 @@ test('register shows its 2,500 cells within 1 s', async ({
         testInfo,
         'data-entry:ready'
     )
-    await expect(page.locator('tbody td')).toHaveCount(2500)
+    expect(await bodyRows(page)).toBe(50)
     medianWithinBudget(testInfo, 'data-entry:ready', loads, 1000)
 })
 
@@ -244,8 +248,7 @@ test('cohort register shows 25 women by 41 columns within 1 s', async ({
         COHORT,
         womenOnPages
     )
-    await expect(page.locator('tbody tr')).toHaveCount(WOMEN)
-    await expect(page.locator('tbody td')).toHaveCount(WOMEN * 41)
+    expect(await bodyRows(page)).toBe(WOMEN)
     medianWithinBudget(
         testInfo,
         'data-entry:ready (cohort register)',
@@ -317,7 +320,7 @@ const editAfterTenPages = async (page: Page, context: BrowserContext) => {
     const more = page.getByRole('button', { name: /show more/i })
     for (let loaded = 1; loaded < 10; loaded += 1) {
         await more.click()
-        await expect(page.locator('tbody tr')).toHaveCount((loaded + 1) * WOMEN)
+        await expect.poll(() => bodyRows(page)).toBe((loaded + 1) * WOMEN)
     }
     // Let the rules of the last page settle before the edit is timed.
     await page.waitForTimeout(2000)
@@ -345,23 +348,16 @@ test('after 10 pages, rules for an edit within 100 ms', async ({
     withinBudget(testInfo, 'data-entry:rules-edit (after 10 pages)', edit, 100)
 })
 
-test.fixme(
-    'after 10 pages, no keypress over 150 ms',
-    {
-        annotation: {
-            type: 'fixme',
-            description:
-                'Drawing all rows of a long register is over the keypress budget; the grid needs row windowing',
-        },
-    },
-    async ({ page, context }, testInfo) => {
-        const { timing } = await editAfterTenPages(page, context)
-        const slowest = await slowestKey(timing)
-        withinBudget(
-            testInfo,
-            `slowest keypress after 10 pages (${slowest.name}; ${slowest.count} key events of 16 ms or more)`,
-            slowest.duration,
-            150
-        )
-    }
-)
+test('after 10 pages, no keypress over 150 ms', async ({
+    page,
+    context,
+}, testInfo) => {
+    const { timing } = await editAfterTenPages(page, context)
+    const slowest = await slowestKey(timing)
+    withinBudget(
+        testInfo,
+        `slowest keypress after 10 pages (${slowest.name}; ${slowest.count} key events of 16 ms or more)`,
+        slowest.duration,
+        150
+    )
+})

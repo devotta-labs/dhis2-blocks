@@ -17,6 +17,7 @@ import {
     openGrid,
     readEvent,
     readEvents,
+    scrollUntilDrawn,
     settled,
     test,
     valuesOf,
@@ -205,6 +206,7 @@ test('inpatient: Male hides Pregnant in that row only', async ({
         /Hidden by rule: Hide pregnant if gender is male/
     )
     await expect(cell(page, rowId, AGE)).not.toHaveAccessibleDescription(HIDDEN)
+    await scrollUntilDrawn(page, cell(page, female.event, PREGNANT))
     await expect(
         cell(page, female.event, PREGNANT)
     ).not.toHaveAccessibleDescription(HIDDEN)

@@ -1887,6 +1887,302 @@
             "docs": "Wrap the finder in FinderProvider with a program and an onSelect callback. Inside it compose a FinderForm containing FinderField (exact value) and FinderRangeField (number or date range) inputs, one per program attribute uid, plus an optional FinderHint and a FinderSubmit button. Show matches with FinderResults, which holds the state parts FinderSearching, FinderEmpty, FinderTooMany and FinderError, a FinderList of FinderItem rows with FinderValue cells, and FinderPagination. The program's search rules are enforced inside and cannot be loosened by props. Use the useFinder* hooks for custom layouts. See the tracked entity finder docs page for examples."
         },
         {
+            "name": "tracker-data-entry",
+            "type": "registry:block",
+            "title": "Tracker Data Entry",
+            "description": "Grid data entry for DHIS2 event and tracker programs: event lists and paper registers, program rules, and unsent changes kept on the device until DHIS2 has them.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@3.2.1",
+                "@tanstack/react-query@^5.101.4",
+                "zod@^4.4.3",
+                "zustand@^5.0.15"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert-dialog",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/dhis2-value-types",
+                "devotta-labs/dhis2-blocks/program-rules",
+                "devotta-labs/dhis2-blocks/spreadsheet"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/logic/effects.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/logic/effects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/logic/ruleEffects.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/logic/ruleEffects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/logic/slotOrder.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/logic/slotOrder.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/logic/summary.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/logic/summary.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/model/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/model/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/outbox/download.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/outbox/download.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/outbox/failure.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/outbox/failure.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/outbox/outbox.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/outbox/outbox.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/outbox/sync.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/outbox/sync.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/EventStatusBadge.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/EventStatusBadge.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/ShowMore.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/ShowMore.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/TrackerDataEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/TrackerDataEntry.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/TrackerRowLabel.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/TrackerRowLabel.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/addRow.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/addRow.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/afterPaint.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/afterPaint.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/appendPage.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/appendPage.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/completion.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/completion.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/connectRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/connectRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/discardFailed.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/discardFailed.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/fileUrl.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/fileUrl.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/formKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/formKeys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/formRows.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/formRows.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/hooks.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/openForm.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/openForm.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/signedIn.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/signedIn.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/slotOrderEffects.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/slotOrderEffects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/standInForms.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/standInForms.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/unsentFile.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/unsentFile.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/useLeaveWarning.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/useLeaveWarning.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/useRuleEffects.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/useRuleEffects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/compileLayout.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/compileLayout.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/layout.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/layout.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/metadata.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/metadata.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/newPerson.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/newPerson.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/registerLoad.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/registerLoad.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/registerSource.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/registerSource.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/restore.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/restore.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/scheduled.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/scheduled.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/slots.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/slots.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/eventEdit.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/eventEdit.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/eventRestore.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/eventRestore.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/eventSchemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/eventSchemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/eventSource.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/eventSource.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/expiry.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/expiry.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/fieldOf.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/fieldOf.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/hasRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/hasRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/trackerPayload.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/trackerPayload.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/trackerReasons.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/trackerReasons.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/trackerReport.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/trackerReport.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/trackerSave.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/trackerSave.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/uid.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/uid.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/summary/TrackerDataEntrySummary.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/summary/TrackerDataEntrySummary.tsx"
+                }
+            ]
+        },
+        {
             "name": "working-list",
             "type": "registry:block",
             "title": "DHIS2 Working List",

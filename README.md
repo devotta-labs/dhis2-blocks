@@ -17,6 +17,7 @@ packages/
       working-list/     Working List block
       calendar/         Generic month calendar for any dated records
       sidebar/          Composable modeling-app navigation with a collapse rail
+      data-entry/       Grid data entry for DHIS2 events
       timeline/         Read-only timeline layout, with tracker history hooks in dhis2/
     test/               Shared Vitest browser setup
 e2e/                    Real-DHIS2 Playwright coverage
@@ -115,22 +116,61 @@ Collapsing preserves the open groups and selected page.
 See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
 examples.
 
-## Spreadsheet block
+## Spreadsheet and Tracker Data Entry blocks
 
-`spreadsheet` enters DHIS2 data in a grid, typed in like a spreadsheet:
-DHIS2-typed cells, Excel-style keys, paste and undo, and the state of each cell,
-for any data your app saves. It knows nothing about events, people or rules.
-You give it a cell store, the tables to show and a store of what your logic
-says about each cell.
+Two blocks enter DHIS2 data in a grid, typed in like a spreadsheet.
+
+`spreadsheet` is the grid: DHIS2-typed cells, Excel-style keys, paste and undo,
+and the state of each cell, for any data your app saves. It knows nothing about
+events, people or rules. You give it a cell store, the tables to show and a
+store of what your logic says about each cell.
 
 ```sh
 pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/spreadsheet
 ```
 
-The install also pulls in `dhis2-value-types` (what each value type accepts)
-and `dhis2-value-display` (the calendar). Import from `@/components/spreadsheet`.
-See `/blocks/spreadsheet` for the keyboard, the cell store and replacing a
-control.
+`tracker-data-entry` fills the grid with the events of an event or tracker
+program, or a paper register of people. Every change is kept on the device
+before it is sent, so nothing typed is lost to a dropped connection, a reload
+or a crash, and program rules run for the rows whose stage the grid shows, as
+Capture runs them.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/tracker-data-entry
+```
+
+The install also pulls in `spreadsheet`, `dhis2-value-types` (what each value
+type accepts), `dhis2-value-display` (the calendar) and `program-rules`. Import
+from `@/components/tracker-data-entry` and `@/components/spreadsheet`, and
+render `TrackerDataEntry` beneath the DHIS2 app-runtime provider and a TanStack
+`QueryClientProvider`:
+
+```tsx
+import { SpreadsheetGrid } from '@/components/spreadsheet'
+import {
+    TrackerDataEntry,
+    TrackerDataEntrySummary,
+    eventSource,
+} from '@/components/tracker-data-entry'
+
+// Made once: a source with new keys loads the form again.
+const inpatient = eventSource({
+    programId: 'eBAyeGv0exc',
+    orgUnitId: 'DiszpKrYNg8',
+})
+
+export const InpatientGrid = () => (
+    <TrackerDataEntry source={inpatient}>
+        <SpreadsheetGrid />
+        <TrackerDataEntrySummary />
+    </TrackerDataEntry>
+)
+```
+
+`eventSource` takes the events of a program, of one stage, or of one person
+(`enrollmentId`). See `/blocks/tracker-data-entry` for live examples of each,
+registers, program rules and how changes are saved, and `/blocks/spreadsheet`
+for the keyboard, the cell store and replacing a control.
 
 ## Timeline block
 

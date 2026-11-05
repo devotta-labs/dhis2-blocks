@@ -1,0 +1,26 @@
+{
+    "status": "OK",
+    "validationReport": {
+        "errorReports": [
+            {
+                "message": "DataElement `INTEGER` is not valid: `Value type is INTEGER but the value `abc` is not.`.",
+                "errorCode": "E1302",
+                "trackerType": "EVENT",
+                "uid": "wAiGPfJGMxt",
+                "args": [
+                    "INTEGER",
+                    "Value type is INTEGER but the value `abc` is not."
+                ]
+            }
+        ],
+        "warningReports": []
+    },
+    "stats": {
+        "created": 0,
+        "updated": 0,
+        "deleted": 0,
+        "ignored": 1,
+        "total": 1
+    },
+    "bundleReport": { "typeReportMap": {} }
+}

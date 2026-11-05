@@ -27,6 +27,7 @@ import type { SpreadsheetContext } from '../provider/context'
 import {
     clearCandidates,
     columnCandidates,
+    openKeyOf,
     planBulk,
     rowCandidates,
     skippedClause,
@@ -34,7 +35,7 @@ import {
 import type { BulkCandidate, BulkPlan } from './bulk'
 import { ColumnPopover } from './ColumnPopover'
 import type { ColumnTarget } from './ColumnPopover'
-import { reasonOf } from './navGrid'
+import { reasonOf, typedHere } from './navGrid'
 import { BORDER_CLASS } from './RowHeader'
 
 /** What the grid's one menu is open for: a row's button, a column's button, or a cell's context menu (both). */
@@ -215,8 +216,74 @@ export const BulkMenu = ({
         }
     }
 
+    // The popover and the dialog outlive the menu that opened them.
+    const after = (
+        <>
+            {valueFor === undefined ? null : (
+                <ColumnPopover
+                    target={valueFor}
+                    open={valueFor.open}
+                    onClose={() =>
+                        setValueFor((open) => open && { ...open, open: false })
+                    }
+                    plan={(text, overwrite) =>
+                        planIn(
+                            valueFor.table,
+                            columnCandidates(
+                                valueFor.table,
+                                valueFor.column,
+                                text,
+                                keyOf
+                            ),
+                            overwrite
+                        )
+                    }
+                    onApply={(plan) => {
+                        setValueFor({ ...valueFor, open: false })
+                        confirm(plan, valueFor.anchor)
+                    }}
+                />
+            )}
+            {pending === undefined ? null : (
+                <AlertDialog
+                    open
+                    onOpenChange={(next) => {
+                        if (!next) {
+                            setPending(undefined)
+                        }
+                    }}
+                >
+                    {/* Focus goes back to what opened the menu: the menu that opened the dialog is gone. */}
+                    <AlertDialogContent finalFocus={() => pending.anchor}>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                {pending.ask.title}
+                            </AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <AlertDialogDescription>
+                            {pending.ask.body}
+                        </AlertDialogDescription>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>
+                                {i18n.t('Cancel')}
+                            </AlertDialogCancel>
+                            <Button
+                                onClick={() => {
+                                    setPending(undefined)
+                                    apply(pending.plan, pending.anchor)
+                                }}
+                            >
+                                {pending.ask.confirm}
+                            </Button>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+        </>
+    )
+
     if (target === undefined) {
-        return null
+        return after
     }
     const { anchor, table, row, column } = target
     const run = (candidates: BulkCandidate[], overwrite: boolean) =>
@@ -305,18 +372,24 @@ export const BulkMenu = ({
                                     {i18n.t('Column')}
                                 </DropdownMenuLabel>
                             ) : null}
-                            <DropdownMenuItem
-                                onClick={() =>
-                                    setValueFor({
-                                        anchor,
-                                        table,
-                                        column,
-                                        open: true,
-                                    })
-                                }
-                            >
-                                {i18n.t('Apply value to all column cells')}
-                            </DropdownMenuItem>
+                            {!typedHere(
+                                store.getState(),
+                                openKeyOf(table, column, keyOf),
+                                overrides
+                            ) ? null : (
+                                <DropdownMenuItem
+                                    onClick={() =>
+                                        setValueFor({
+                                            anchor,
+                                            table,
+                                            column,
+                                            open: true,
+                                        })
+                                    }
+                                >
+                                    {i18n.t('Apply value to all column cells')}
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                                 onClick={() =>
                                     run(
@@ -335,66 +408,7 @@ export const BulkMenu = ({
                     )}
                 </DropdownMenuContent>
             </DropdownMenu>
-            {valueFor === undefined ? null : (
-                <ColumnPopover
-                    target={valueFor}
-                    open={valueFor.open}
-                    onClose={() =>
-                        setValueFor((open) => open && { ...open, open: false })
-                    }
-                    plan={(text, overwrite) =>
-                        planIn(
-                            valueFor.table,
-                            columnCandidates(
-                                valueFor.table,
-                                valueFor.column,
-                                text,
-                                keyOf
-                            ),
-                            overwrite
-                        )
-                    }
-                    onApply={(plan) => {
-                        setValueFor({ ...valueFor, open: false })
-                        confirm(plan, valueFor.anchor)
-                    }}
-                />
-            )}
-            {pending === undefined ? null : (
-                <AlertDialog
-                    open
-                    onOpenChange={(next) => {
-                        if (!next) {
-                            setPending(undefined)
-                        }
-                    }}
-                >
-                    {/* Focus goes back to what opened the menu: the menu that opened the dialog is gone. */}
-                    <AlertDialogContent finalFocus={() => pending.anchor}>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>
-                                {pending.ask.title}
-                            </AlertDialogTitle>
-                        </AlertDialogHeader>
-                        <AlertDialogDescription>
-                            {pending.ask.body}
-                        </AlertDialogDescription>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>
-                                {i18n.t('Cancel')}
-                            </AlertDialogCancel>
-                            <Button
-                                onClick={() => {
-                                    setPending(undefined)
-                                    apply(pending.plan, pending.anchor)
-                                }}
-                            >
-                                {pending.ask.confirm}
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            )}
+            {after}
         </>
     )
 }

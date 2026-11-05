@@ -24,6 +24,21 @@ export const columnCandidates = (
 ): BulkCandidate[] =>
     table.rows.map((row) => ({ key: keyOf(row, column), text }))
 
+/** The key of the column's first open cell, whose field a column action takes as the column's own. */
+export const openKeyOf = (
+    table: GridTable,
+    column: GridColumn,
+    keyOf: KeyOf
+): CellKey => {
+    const key = table.rows
+        .map((row) => keyOf(row, column))
+        .find((each) => !table.closed.has(each))
+    if (key === undefined) {
+        throw new Error(`No open cell in the column ${column.id}`)
+    }
+    return key
+}
+
 /** A row copy: the source row's values, as a Ready cell shows them, onto the target rows' cells of the same columns. */
 export const rowCandidates = (
     columns: ReadonlyArray<GridColumn>,

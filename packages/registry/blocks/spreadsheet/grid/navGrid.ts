@@ -20,6 +20,22 @@ export const fieldAt = (state: CellStoreState, key: CellKey): Field => {
 }
 
 /**
+ * Whether typed or pasted text can go into the cell's field. Read-only kinds, pop-up kinds without an editor, pop-up
+ * kinds whose text does not parse (files) and usernames cannot, unless a replacement edits them.
+ */
+export const typedHere = (
+    state: CellStoreState,
+    key: CellKey,
+    overrides: CellOverrides | undefined
+) => {
+    const field = fieldAt(state, key)
+    return (
+        takesPastedText(field) ||
+        replacementFor(overrides, state.fieldIdOf(key), field) !== undefined
+    )
+}
+
+/**
  * Why a typed or pasted value cannot go into a table's cell, named as the cell names it, or undefined when it can:
  * closed, hidden by a rule, read-only, or a kind paste cannot fill.
  */
@@ -39,14 +55,9 @@ export const reasonOf =
         if (cell?.hiddenBy !== undefined || cell?.readOnly !== undefined) {
             return cell.hiddenBy ?? cell.readOnly
         }
-        // Read-only kinds, pop-up kinds without an editor, pop-up kinds whose text does not parse (files) and
-        // usernames are never pasted into, unless a replacement edits them.
-        const state = store.getState()
-        const field = fieldAt(state, key)
-        return !takesPastedText(field) &&
-            replacementFor(overrides, state.fieldIdOf(key), field) === undefined
-            ? i18n.t('Edit this field in its own form')
-            : undefined
+        return typedHere(store.getState(), key, overrides)
+            ? undefined
+            : i18n.t('Edit this field in its own form')
     }
 
 /** What `nextCell` and `pasteTargets` walk; each lookup is a map read, as they ask once per cell stepped over. */

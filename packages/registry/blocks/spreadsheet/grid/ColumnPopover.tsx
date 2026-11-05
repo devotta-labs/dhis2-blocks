@@ -1,5 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
 import { typedText } from '@/components/dhis2-value-types'
@@ -19,7 +19,7 @@ import {
     useSpreadsheetContext,
 } from '../provider/context'
 import { createCellStore } from '../store/store'
-import { skippedClause } from './bulk'
+import { openKeyOf, skippedClause } from './bulk'
 import type { BulkPlan } from './bulk'
 import { columnHeaderIds } from './headers'
 import { fieldAt } from './navGrid'
@@ -73,16 +73,14 @@ const ColumnValue = ({
     onCancel(): void
 }) => {
     const context = useSpreadsheetContext()
-    const { store, keyOf, idScope, settings } = context
+    const { store, keyOf, idScope, settings, announce } = context
     const key = cellKey('bulk', column.id)
     // The column's one field, from an open cell; `takesColumnActions` makes sure it has one.
     const [{ field, scratch }] = useState(() => {
         const state = store.getState()
-        const open = table.rows
-            .map((row) => keyOf(row, column))
-            .filter((each) => !table.closed.has(each))
-        const fieldId = state.fieldIdOf(open[0])
-        const shared = fieldAt(state, open[0])
+        const source = openKeyOf(table, column, keyOf)
+        const fieldId = state.fieldIdOf(source)
+        const shared = fieldAt(state, source)
         return {
             field: shared,
             scratch: createCellStore({
@@ -103,6 +101,22 @@ const ColumnValue = ({
             idScope: scope,
         }),
         [context, scratch, scope]
+    )
+    // A refused value is said aloud, once per text, as the grid says one in its cells.
+    useEffect(
+        () =>
+            scratch.subscribe((state, before) => {
+                const now = state.cells[key]
+                const was = before.cells[key]
+                if (
+                    now?.error !== undefined &&
+                    now !== was &&
+                    now.draft !== was?.draft
+                ) {
+                    announce(now.error)
+                }
+            }),
+        [scratch, key, announce]
     )
     const cell = useStore(scratch, (state) => state.cells[key])
     const [overwrite, setOverwrite] = useState(false)
@@ -181,6 +195,12 @@ export const ColumnPopover = ({
     const { anchor, table, column } = target
     const scope = `${idScope}-bulk`
     const { leaf } = headersOf(idScope, table, column)
+    // Whether focus goes back to what opened the menu: after Escape, Cancel or Apply, not after a press or focus elsewhere.
+    const restore = useRef(false)
+    const closeHere = () => {
+        restore.current = true
+        onClose()
+    }
     return (
         <Popover
             open={open}
@@ -194,6 +214,7 @@ export const ColumnPopover = ({
                         typingIn(event.target)
                     )
                 ) {
+                    restore.current = reason === 'escape-key'
                     onClose()
                 }
             }}
@@ -209,7 +230,7 @@ export const ColumnPopover = ({
                         cellDomId(scope, cellKey('bulk', column.id))
                     )
                 }
-                finalFocus={() => anchor}
+                finalFocus={() => restore.current && anchor}
             >
                 <ColumnValue
                     key={`${table.id} ${column.id}`}
@@ -217,8 +238,11 @@ export const ColumnPopover = ({
                     column={column}
                     scope={scope}
                     plan={plan}
-                    onApply={onApply}
-                    onCancel={onClose}
+                    onApply={(planned) => {
+                        restore.current = true
+                        onApply(planned)
+                    }}
+                    onCancel={closeHere}
                 />
             </PopoverContent>
         </Popover>

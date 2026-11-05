@@ -13,7 +13,7 @@ export const withOwnedTrackerLists = async (
         const url = new URL(request.url())
         if (
             request.method() !== 'POST' ||
-            !url.pathname.endsWith('/api/trackedEntityInstanceFilters')
+            !/\/api\/(?:\d+\/)?trackedEntityInstanceFilters$/.test(url.pathname)
         )
             return
         captures.push(

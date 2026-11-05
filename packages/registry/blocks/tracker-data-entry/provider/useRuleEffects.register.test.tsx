@@ -270,6 +270,30 @@ test('a slot nobody typed in is not another event to the rules', async () => {
     }
 })
 
+test('a slot’s first value makes it an event to the rules of the person’s other rows', async () => {
+    const { effects, form, context } = await mountRegister()
+    const slot =
+        form.tables[0].rows.find(({ id }) => id === AMARA.enrollment)?.slots?.[
+            DPT_1
+        ] ?? ''
+    for (const event of AMARA.events) {
+        expect(effects().rowMessages.get(event) ?? []).toEqual([])
+    }
+    // A value no rule reads across events: the slot is a third dose all the same.
+    context().store.getState().commit(cellKey(slot, DOSE), '1')
+    for (const event of AMARA.events) {
+        await expect
+            .poll(() => effects().rowMessages.get(event))
+            .toEqual([
+                {
+                    tone: 'warning',
+                    text: 'More than two doses',
+                    source: 'rule',
+                },
+            ])
+    }
+})
+
 test('a new person’s reserved value feeds their enrolment’s rules', async () => {
     const numbered = {
         ...immunisation,

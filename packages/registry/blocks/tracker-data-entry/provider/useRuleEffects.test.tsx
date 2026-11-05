@@ -482,3 +482,35 @@ test('text typed into a cell a rule hides is not saved', async () => {
     // The store refuses a person's write to a hidden cell: nothing is saved, so no rule has anything to clear.
     expect(context().store.getState().cells[specified]).toBeUndefined()
 })
+
+test('a draft in a cell a rule then hides is dropped with its error', async () => {
+    const [empty] = RMNCH.chronicFollowUps
+    // Chronic conditions: yes, so the follow-ups show; one of them is empty.
+    const { view, context } = await mountRmnch(
+        eventsOf(0).map((event) =>
+            event.event === FIRST_VISIT
+                ? withValue(withValue(event, RMNCH.chronic, 'true'), empty)
+                : event
+        )
+    )
+    const key = cellKey(FIRST_VISIT, empty)
+    const errors = () =>
+        view().summary.items.filter(
+            (item) => item.key === key && item.kind === 'error'
+        )
+    expect(context().store.getState().commit(key, 'maybe')).toBe('invalid')
+    await expect.poll(errors).toHaveLength(1)
+    expect(view().summary.canComplete).toBe(false)
+
+    // A rule hides the cell: the person can no longer reach the draft, so it goes.
+    context()
+        .store.getState()
+        .commit(cellKey(FIRST_VISIT, RMNCH.chronic), 'false')
+    await expect
+        .poll(() => context().effects.getState().cells[key]?.hiddenBy)
+        .toBeDefined()
+    await expect.poll(errors).toEqual([])
+    expect(context().store.getState().cells[key]?.draft).toBeUndefined()
+    expect(context().store.getState().cells[key]?.error).toBeUndefined()
+    expect(view().summary.canComplete).toBe(true)
+})

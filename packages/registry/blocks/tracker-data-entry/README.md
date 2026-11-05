@@ -247,8 +247,8 @@ with "Assigned by rule: …", and a hidden cell shows "Hidden"; the rule's value
 values rules assign, and the clearing of fields they hide, are saved only with a row a person changes or completes, or
 that has unsent changes; they are saved with the person's change. A value a page loads, or one put back when a failed
 change is discarded, is no change: it does not make the rules save. A cleared cell says "Cleared by rule: …" until it
-holds a value again, and text typed into a cell a rule hides is saved, then cleared the same way. A rule never changes
-the cell being typed in; it does once the person leaves the cell. A form whose rules are still loading cannot complete
+holds a value again. Nothing is written to a cell a rule hides: text typed into it is not saved, and text it held that
+its type refused is dropped. A rule never changes the cell being typed in; it does once the person leaves the cell. A form whose rules are still loading cannot complete
 a row; if they cannot be loaded, the summary says so and nothing completes.
 
 On load the rows in view are evaluated first, for about 100 ms, and the rest about 16 ms at a time when the browser is

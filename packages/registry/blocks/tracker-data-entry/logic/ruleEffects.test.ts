@@ -1,4 +1,5 @@
 import type { Attribution, RuleEffects } from '@/components/program-rules'
+import type { CellState } from '@/components/spreadsheet'
 import { rowRuleOutcome, ruleRowsCache, ruleRowsOf } from './ruleEffects'
 
 const by = (ruleName: string): Attribution => ({
@@ -304,14 +305,30 @@ test("a new where-slot event's rules see its where values", () => {
         slot: 'bcg',
         createdWith: { vaccine: 'BCG', dose: '0' },
     }
-    const rows = (cells: Record<string, string>) =>
+    /** The slot's dataValues with `values` held and `others` as given. */
+    const rows = (
+        values: Record<string, string>,
+        others: Record<string, Partial<CellState>> = {}
+    ) =>
         ruleRowsOf(
             new Map([['n1', slotEvent]]),
             new Map([['s1', new Set(['vaccine', 'dose', 'weight'])]]),
             Object.fromEntries(
-                Object.entries(cells).map(([k, value]) => [
+                [
+                    ...Object.entries(values).map(
+                        ([k, value]): [string, Partial<CellState>] => [
+                            k,
+                            { value },
+                        ]
+                    ),
+                    ...Object.entries(others),
+                ].map(([k, cell]) => [
                     `n1.${k}`,
-                    { value, sync: 'idle' as const, source: 'person' as const },
+                    {
+                        sync: 'idle' as const,
+                        source: 'person' as const,
+                        ...cell,
+                    },
                 ])
             )
         )[0]?.event.dataValues
@@ -321,9 +338,20 @@ test("a new where-slot event's rules see its where values", () => {
         weight: '4',
     })
     expect(rows({ weight: '4', dose: '2' })).toMatchObject({ dose: '2' })
-    // No cell entry: createdWith stays. A cleared cell (entry, no value): the field is absent.
+    // No change in the cell, a draft alone included: createdWith stays, as the payload sends it. A cleared cell (a
+    // change, no value): the field is absent.
     expect(rows({ weight: '4' })).toMatchObject({ dose: '0' })
+    expect(
+        rows(
+            { weight: '4' },
+            { dose: { draft: '2x', error: 'Enter a number' } }
+        )
+    ).toEqual({ vaccine: 'BCG', dose: '0', weight: '4' })
     expect(rows({ weight: '4', dose: '' })).toEqual({
+        vaccine: 'BCG',
+        weight: '4',
+    })
+    expect(rows({ weight: '4' }, { dose: { sync: 'queued' } })).toEqual({
         vaccine: 'BCG',
         weight: '4',
     })

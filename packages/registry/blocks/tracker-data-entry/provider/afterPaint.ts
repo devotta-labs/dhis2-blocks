@@ -1,3 +1,5 @@
+import { rowHeaderDomId } from '@/components/spreadsheet'
+
 // A hidden page paints no frames; its work waits this long instead.
 const NO_FRAME_MS = 100
 
@@ -70,4 +72,19 @@ export const whenIdle = (work: () => void) => {
 export const soon = (work: () => void) => {
     const id = setTimeout(work)
     return () => clearTimeout(id)
+}
+
+/** Runs `work` and records how long it took as the performance measure `name`. */
+export const measured = (name: string, work: () => void) => {
+    const start = performance.now()
+    work()
+    performance.measure(name, { start })
+}
+
+/** Whether the row's header is in the window: its rows' rules run first. */
+export const onScreen = (idScope: string, tableId: string, rowId: string) => {
+    const box = document
+        .getElementById(rowHeaderDomId(idScope, tableId, rowId))
+        ?.getBoundingClientRect()
+    return box !== undefined && box.bottom > 0 && box.top < window.innerHeight
 }

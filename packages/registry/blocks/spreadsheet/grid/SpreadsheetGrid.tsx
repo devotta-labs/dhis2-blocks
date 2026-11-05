@@ -28,6 +28,7 @@ import {
     useBulkConfirm,
 } from './BulkMenu'
 import type { BulkTarget } from './BulkMenu'
+import { changedBy } from './bulk'
 import { columnHeaderIds, headerDomId } from './headers'
 import { nextCell } from './navigation'
 import type { NavKey } from './navigation'
@@ -425,10 +426,16 @@ export const SpreadsheetGrid = ({
         const write = () => {
             let filled = 0
             changeHere(target, () => {
-                filled = store
-                    .getState()
-                    .commitMany(entries)
-                    .filter((result) => result !== 'invalid').length
+                const before = store.getState()
+                const results = before.commitMany(entries)
+                const { cells } = store.getState()
+                filled = results.filter((result, i) =>
+                    changedBy(
+                        result,
+                        before.cells[entries[i].key],
+                        cells[entries[i].key]
+                    )
+                ).length
             })
             if (isBlock(text)) {
                 announce(

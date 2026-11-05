@@ -2,7 +2,6 @@ import i18n from '@dhis2/d2-i18n'
 import { IconMore16 } from '@dhis2/ui-icons'
 import { useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
-import { parseTyped } from '@/components/dhis2-value-types'
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -26,6 +25,7 @@ import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 import type { SpreadsheetContext } from '../provider/context'
 import {
+    changedBy,
     clearCandidates,
     columnCandidates,
     openKeyOf,
@@ -237,7 +237,7 @@ export const BulkMenu = ({
             const results = before.commitMany(entries)
             const after = store.getState()
             results.forEach((result, i) => {
-                const { key, text } = entries[i]
+                const { key } = entries[i]
                 if (result === 'invalid') {
                     // The planner skips what the store refuses; a refusal it missed leaves no draft behind.
                     skip(
@@ -247,20 +247,8 @@ export const BulkMenu = ({
                     after.discardDraft(key)
                     return
                 }
-                const was = before.cells[key]
-                const now = after.cells[key]
-                const field = after.fieldOf(key)
-                const parsed =
-                    field === undefined
-                        ? undefined
-                        : parseTyped(field, text, settings)
-                // An unchanged cell already held the value, or had only its draft dropped; otherwise the store
-                // refused it, as a lock the annotations do not show does.
-                if (
-                    result === 'queued' ||
-                    (was?.draft !== undefined && now?.draft === undefined) ||
-                    (parsed?.ok === true && parsed.value === now?.value)
-                ) {
+                // An unchanged cell the plan left in was refused by the store, as a lock the annotations do not show.
+                if (changedBy(result, before.cells[key], after.cells[key])) {
                     changed += 1
                 } else {
                     skip(i18n.t('This cell cannot be changed'))

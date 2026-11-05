@@ -185,3 +185,10 @@ test('numbers are read as number cells read them', async () => {
     await expect.element(dialog.getByText(LONGITUDE)).toBeVisible()
     expect(stored()?.value).toBe('[-5,0.5]')
 })
+
+test('a value it cannot read opens empty', async () => {
+    const { cell } = await mount({ value: '[1.5E-4,8.2]' })
+    await open(cell)
+    await expect.element(latitude).toHaveValue('')
+    await expect.element(longitude).toHaveValue('')
+})

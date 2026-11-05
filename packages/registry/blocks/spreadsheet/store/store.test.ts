@@ -391,9 +391,9 @@ test('one undo reverts a whole commitMany', () => {
     expect(cell('r2.c1').value).toBe('9')
     expect(cell('r1.c2').value).toBeUndefined()
     expect(enqueued).toEqual([
-        ['r1.c2', null, null],
-        ['r2.c1', '9', '9'],
         ['r1.c1', '0', null],
+        ['r2.c1', '9', '9'],
+        ['r1.c2', null, null],
     ])
     // The earlier single commit is the next undo.
     store.getState().undo()

@@ -51,8 +51,9 @@ type Resolved = {
 const DATE: Field = { valueType: 'DATE' }
 // Names and ids are said as they are, not HTML-escaped.
 const AS_IS = { escapeValue: false }
-const PERSON = 'person'
-const ENROLLMENT = 'enrollment'
+/** The slots of a register row's person and enrolment; every other slot is an event's. */
+export const PERSON = 'person'
+export const ENROLLMENT = 'enrollment'
 
 /** The slot a stage's column names: its name, kind and label. */
 const eventSlotOf = (

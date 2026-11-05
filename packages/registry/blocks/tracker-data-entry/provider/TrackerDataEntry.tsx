@@ -9,10 +9,16 @@ import { createStore } from 'zustand/vanilla'
 import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { parseDateFormat } from '@/components/dhis2-value-types'
 import { preloadRuleEngine } from '@/components/program-rules'
-import { createAnnouncer, Spreadsheet } from '@/components/spreadsheet'
-import type { CellOverrides } from '@/components/spreadsheet'
+import {
+    createAnnouncer,
+    formatCount,
+    Spreadsheet,
+} from '@/components/spreadsheet'
+import type { CellKey, CellOverrides } from '@/components/spreadsheet'
 import { summarise } from '../logic/summary'
-import { recordsOf, trackerKeyOf } from '../model/types'
+import { recordIdOf, recordsOf, trackerKeyOf } from '../model/types'
+import type { TrackerColumn } from '../model/types'
+import { ENROLLMENT, PERSON } from '../register/compileLayout'
 import type { TrackerDataEntrySource, LoadedForm } from '../sources/types'
 import { usePages } from './appendPage'
 import { EventStatusBadge } from './EventStatusBadge'
@@ -47,6 +53,10 @@ const accountSchema = z.object({
         dateFormat: z.string().optional(),
     }),
 })
+
+// A bulk action leaves a register's person and enrolment alone: it fills events.
+const bulkColumn = ({ slot }: TrackerColumn) =>
+    slot !== PERSON && slot !== ENROLLMENT
 
 interface TrackerDataEntryProps {
     /** Create it once (a module constant, or `useMemo`): a new key or cache key loads the form again. */
@@ -323,6 +333,38 @@ export const TrackerDataEntry = ({
             )
         )
     }, [active, people])
+    // Undo after sending cannot delete an event, so a bulk write that creates events asks first.
+    const confirmBulk = useMemo(() => {
+        const store = active.store
+        return (keys: ReadonlyArray<CellKey>) => {
+            const created = new Set(
+                keys.map(recordIdOf).filter((id) => {
+                    const record = records.get(id)
+                    return record?.kind === 'event' && record.isNew === true
+                })
+            )
+            // `isNew` stays once DHIS2 creates the event; a cell it saved (a base, or `saved`) says it holds it.
+            for (const [key, cell] of Object.entries(store.getState().cells)) {
+                if (cell?.base !== undefined || cell?.sync === 'saved') {
+                    created.delete(recordIdOf(key))
+                }
+            }
+            return created.size === 0
+                ? undefined
+                : {
+                      title: i18n.t('Create events?'),
+                      // `count` picks the plural; `replace` says it in the person's digits.
+                      body: i18n.t(
+                          'This creates {{count}} events on this page.',
+                          {
+                              count: created.size,
+                              replace: { count: formatCount(created.size) },
+                          }
+                      ),
+                      confirm: i18n.t('Create events'),
+                  }
+        }
+    }, [active, records])
     const tracker = useMemo(
         (): TrackerContext => ({
             tables,
@@ -356,6 +398,8 @@ export const TrackerDataEntry = ({
                     RowLabel={TrackerRowLabel}
                     RowBadge={EventStatusBadge}
                     GridFooter={people ? ShowMorePeople : ShowMoreEvents}
+                    bulkColumn={bulkColumn}
+                    confirmBulk={confirmBulk}
                 >
                     {children}
                 </Spreadsheet>

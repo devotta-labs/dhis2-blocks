@@ -1,4 +1,9 @@
 import {
+    holdWorkingListResponse,
+    tableBody,
+    workingListReady,
+} from '../fixtures/working-list'
+import {
     ORG_UNIT,
     ORG_UNIT_NAME,
     OrganisationUnitSchema,
@@ -26,6 +31,38 @@ import {
 } from './capture-parity.support'
 
 test.describe('Capture context and generated tracker views', () => {
+    test('waits for delayed metadata and exposes an updating-to-ready transition', async ({
+        page,
+    }) => {
+        const metadata = await holdWorkingListResponse(
+            page,
+            `programs/${PROGRAM}`
+        )
+        try {
+            await page.goto(programHash())
+            await metadata.received
+            await expect(
+                page.getByTestId('working-list-selection-loading')
+            ).toBeVisible()
+        } finally {
+            metadata.release()
+        }
+        await workingListReady(page)
+        const results = await holdWorkingListResponse(
+            page,
+            'tracker/trackedEntities'
+        )
+        try {
+            await page.getByTestId(`sort-${TEXT_ATTRIBUTE}`).click()
+            await results.received
+            await expect(tableBody(page)).toHaveAttribute('aria-busy', 'true')
+        } finally {
+            results.release()
+        }
+        await workingListReady(page)
+        await expect(resultRows(page).first()).toBeVisible()
+    })
+
     test('requires a valid organisation unit and only queries SELECTED scope', async ({
         dhis2,
         page,
@@ -67,7 +104,6 @@ test.describe('Capture context and generated tracker views', () => {
         await expect(
             page.locator('[data-test="org-unit-selector-container"]')
         ).toContainText('Choose an organisation unit')
-        await page.waitForTimeout(300)
         expect(trackerRequests).toHaveLength(0)
 
         const selectedRequest = waitForTrackerResponse(
@@ -166,9 +202,6 @@ test.describe('Capture context and generated tracker views', () => {
             (url) => !url.searchParams.has(statusParameter)
         )
         expect(initialQuery.searchParams.has('filter')).toBe(false)
-        // An absent URL selection is controlled null. The provider resolves
-        // it to the generated default without echoing an external selection
-        // through the persistence callback.
         await expect(page).not.toHaveURL(/selectedTemplateId=/)
         await expect(
             page.locator(
@@ -179,8 +212,6 @@ test.describe('Capture context and generated tracker views', () => {
             page.locator('[data-testid="working-list-table"] tbody')
         ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
 
-        // Reloading the controlled null state must keep the unfiltered default
-        // instead of falling back to the first visible saved list.
         const reloadedQuery = await waitForTrackerResponse(
             page,
             'trackedEntities',
@@ -318,7 +349,13 @@ test.describe('Capture context and generated tracker views', () => {
         }
         page.on('request', countTrackerRequest)
         await editor.getByLabel('Value').fill('Alpha person 01')
-        await page.waitForTimeout(400)
+        await expect(editor.getByLabel('Value')).toHaveValue('Alpha person 01')
+        await expect(
+            page.getByTestId(`filter-${TEXT_ATTRIBUTE}`).getByRole('combobox')
+        ).toContainText('All')
+        await expect(
+            page.getByTestId('working-list-dirty-indicator')
+        ).toHaveCount(0)
         expect(trackerRequests).toBe(0)
         expect(page.url()).not.toContain('Alpha')
 

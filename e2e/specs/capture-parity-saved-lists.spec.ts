@@ -32,35 +32,8 @@ const openTrackerSharingDialog = async (
     listId: string,
     dialog: Locator
 ) => {
-    const originalConsoleError = await page.evaluateHandle(
-        () => globalThis.console.error
-    )
-    await page.evaluate(() => {
-        const originalError = globalThis.console.error
-        globalThis.console.error = (...args) => {
-            const message = args.map(String).join(' ')
-            const isKnownUiTypeWarning =
-                message.includes(
-                    'Invalid prop `type` of value `trackedEntityInstanceFilter`'
-                ) &&
-                (message.includes('supplied to `SharingDialog`') ||
-                    message.includes('supplied to `TabbedContent`'))
-
-            if (!isKnownUiTypeWarning) {
-                originalError.apply(globalThis.console, args)
-            }
-        }
-    })
-
-    try {
-        await chooseSavedViewAction(page, listId, 'share-saved-view')
-        await expect(dialog).toBeVisible()
-    } finally {
-        await page.evaluate((originalError) => {
-            globalThis.console.error = originalError
-        }, originalConsoleError)
-        await originalConsoleError.dispose()
-    }
+    await chooseSavedViewAction(page, listId, 'share-saved-view')
+    await expect(dialog).toBeVisible()
 }
 
 test.describe('owner pagination and saved-list lifecycle', () => {
@@ -116,7 +89,10 @@ test.describe('owner pagination and saved-list lifecycle', () => {
         expect(resized.searchParams.has('totalPages')).toBe(false)
         await expect(resultRows(page)).toHaveCount(15)
     })
+})
 
+test.describe('tracker-list sharing lifecycle', () => {
+    test.use({ e2eCredentials: OWNER, allowSharingTypeWarning: true })
     test('saves, reloads, updates, shares, and deletes a private tracker list', async ({
         page,
         playwright,
@@ -178,7 +154,10 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                 await savedResponse.json()
             )
             expect(saved.sharing?.public ?? saved.publicAccess).toBe('--------')
-            expect(saved.access).toMatchObject({ write: true, update: true })
+            expect(saved.access).toMatchObject({
+                write: true,
+                update: true,
+            })
             expect(saved.entityQueryCriteria).not.toHaveProperty('page')
             expect(saved.entityQueryCriteria).not.toHaveProperty('pageSize')
             await expect(savedViewButton(page, createdId!)).toHaveAttribute(
@@ -293,7 +272,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             )
             expect(grantedObject.object?.userAccesses).toContainEqual(
                 expect.objectContaining({
-                    id: 'WlE2eUsr002',
+                    id: READER.id,
                     access: 'r-------',
                 })
             )
@@ -310,28 +289,30 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                         }
                     )
                     if (!response.ok()) {
-                        return false
+                        return { status: response.status() }
                     }
                     const body = SavedListCollectionSchema.parse(
                         await response.json()
                     )
-                    return body.trackedEntityInstanceFilters?.some(
-                        (list) => list.id === createdId
-                    )
+                    return {
+                        status: response.status(),
+                        visible: body.trackedEntityInstanceFilters.some(
+                            (list) => list.id === createdId
+                        ),
+                    }
                 })
-                .toBe(true)
+                .toEqual({ status: 200, visible: true })
 
             await openTrackerSharingDialog(page, createdId!, sharingDialog)
-            const readerAccessRow = sharingDialog.locator('.wrapper').filter({
-                has: page.getByText('Working list Reader', {
+            await expect(
+                sharingDialog.getByText('Working list Reader', {
                     exact: true,
-                }),
-            })
-            await expect(readerAccessRow).toBeVisible()
-            const readerAccessSelect = readerAccessRow.locator(
-                '[data-test="dhis2-uicore-select-input"]'
-            )
-            await expect(readerAccessSelect).not.toHaveClass(/disabled/)
+                })
+            ).toBeVisible()
+            const readerAccessSelect = sharingDialog
+                .locator('[data-test="dhis2-uicore-select-input"]')
+                .filter({ hasText: 'View only' })
+            await expect(readerAccessSelect).toHaveCount(1)
             await readerAccessSelect.click()
             const revokeResponse = page.waitForResponse(
                 (response) =>
@@ -357,7 +338,7 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             )
             expect(
                 revokedObject.object?.userAccesses?.some(
-                    (entry) => entry.id === 'WlE2eUsr002'
+                    (entry) => entry.id === READER.id
                 )
             ).toBe(false)
             await expect
@@ -373,16 +354,19 @@ test.describe('owner pagination and saved-list lifecycle', () => {
                         }
                     )
                     if (!response.ok()) {
-                        return false
+                        return { status: response.status() }
                     }
                     const body = SavedListCollectionSchema.parse(
                         await response.json()
                     )
-                    return body.trackedEntityInstanceFilters?.some(
-                        (list) => list.id === createdId
-                    )
+                    return {
+                        status: response.status(),
+                        visible: body.trackedEntityInstanceFilters.some(
+                            (list) => list.id === createdId
+                        ),
+                    }
                 })
-                .toBe(false)
+                .toEqual({ status: 200, visible: false })
 
             await chooseSavedViewAction(page, createdId!, 'delete-saved-view')
             const deleteResponse = page.waitForResponse(

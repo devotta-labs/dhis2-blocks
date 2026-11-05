@@ -1,11 +1,24 @@
 import { request as playwrightRequest, type Page } from '@playwright/test'
 import { z } from 'zod'
-import { expect, openLivePreview, resultRows, test } from './fixtures'
+import { expect, openLivePreview, test } from './fixtures'
+import { withOwnedTrackerLists } from '../fixtures/owned-tracker-lists'
+import {
+    addTrackedEntityFilter as addFilter,
+    addStageFilter,
+    applyTextFilter as applyFilter,
+    holdWorkingListResponse,
+    menuItem,
+    resultRows,
+    selectStage,
+    tableBody,
+    waitForTrackerResponse,
+    workingListReady,
+} from '../fixtures/working-list'
 
 /**
  * Live Working List preview coverage. Everything below runs against real
  * DHIS2 metadata and records through the docs app's same-origin `/dhis2`
- * proxy — no fixture handlers.
+ * proxy. Network gates delay real responses without replacing their contents.
  */
 const PROGRAM = 'IpHINAT79UW'
 
@@ -58,46 +71,56 @@ const textAttributeIds = (metadata: z.infer<typeof ProgramMetadataSchema>) =>
         )
         .slice(0, 2)
 
-const trackerRequest = (
-    page: Page,
-    resource: 'trackedEntities' | 'events',
-    action: () => Promise<void>
-) => {
-    const requestPromise = page.waitForRequest(
-        (request) =>
-            request.url().includes(`/tracker/${resource}`) &&
-            request.method() === 'GET',
-        { timeout: 30_000 }
-    )
-
-    return action().then(() => requestPromise)
-}
-
-const addFilter = async (page: Page, fieldId: string) => {
-    await page.getByTestId('more-filters-tracked-entity').click()
-    await page.locator(`[data-test="add-filter-${fieldId}"]`).click()
-    await expect(page.getByTestId(`filter-editor-${fieldId}`)).toBeVisible()
-}
-
 const applyTextFilter = async (page: Page, fieldId: string, value: string) => {
-    const editor = page.getByTestId(`filter-editor-${fieldId}`)
-    await editor.getByLabel('Value').fill(value)
-
-    const request = await trackerRequest(page, 'trackedEntities', () =>
-        page.locator(`[data-test="filter-update-${fieldId}"]`).click()
+    const url = await applyFilter(
+        page,
+        fieldId,
+        value,
+        'trackedEntities',
+        'filter'
     )
-
-    await expect(
-        page.locator('[data-testid="working-list-table"] tbody')
-    ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
-
-    return request
+    await workingListReady(page)
+    return url
 }
 
-const tableBody = (page: Page) =>
-    page.locator('[data-testid="working-list-table"] tbody')
+const openWorkingListPreview = async (page: Page) => {
+    await openLivePreview(page, 'working-list/default')
+    await workingListReady(page)
+}
 
 test.describe('live Working List preview', () => {
+    test('waits for delayed metadata and exposes an updating-to-ready transition', async ({
+        page,
+    }) => {
+        const metadata = await holdWorkingListResponse(
+            page,
+            `programs/${PROGRAM}`
+        )
+        try {
+            await openLivePreview(page, 'working-list/default')
+            await metadata.received
+            await expect(
+                page.getByTestId('working-list-selection-loading')
+            ).toBeVisible()
+        } finally {
+            metadata.release()
+        }
+        await workingListReady(page)
+        const results = await holdWorkingListResponse(
+            page,
+            'tracker/trackedEntities'
+        )
+        try {
+            await page.locator('[data-testid^="sort-"]').first().click()
+            await results.received
+            await expect(tableBody(page)).toHaveAttribute('aria-busy', 'true')
+        } finally {
+            results.release()
+        }
+        await workingListReady(page)
+        await expect(resultRows(page).first()).toBeVisible()
+    })
+
     test('loads live metadata and records with no sign-in flow', async ({
         page,
     }) => {
@@ -125,13 +148,12 @@ test.describe('live Working List preview', () => {
         expect(first).toBeTruthy()
         expect(second).toBeTruthy()
 
-        await openLivePreview(page, 'working-list/default')
+        await openWorkingListPreview(page)
         await addFilter(page, first)
         await applyTextFilter(page, first, 'a')
         await addFilter(page, second)
 
-        const request = await applyTextFilter(page, second, 'e')
-        const url = new URL(request.url())
+        const url = await applyTextFilter(page, second, 'e')
 
         // Tracked-entity mode serializes attribute filters as `filter` params;
         // `filterAttributes` is only used in event mode.
@@ -146,18 +168,18 @@ test.describe('live Working List preview', () => {
     })
 
     test('sorts a column and walks pages on live records', async ({ page }) => {
-        await openLivePreview(page, 'working-list/default')
+        await openWorkingListPreview(page)
 
         const sortable = page.locator('[data-testid^="sort-"]').first()
         await expect(sortable).toBeVisible()
 
-        const sortRequest = await trackerRequest(page, 'trackedEntities', () =>
-            sortable.click()
+        const sortRequest = await waitForTrackerResponse(
+            page,
+            'trackedEntities',
+            () => sortable.click()
         )
 
-        expect(
-            new URL(sortRequest.url()).searchParams.get('order')
-        ).toBeTruthy()
+        expect(sortRequest.searchParams.get('order')).toBeTruthy()
 
         await expect(tableBody(page)).toHaveAttribute('aria-busy', 'false', {
             timeout: 30_000,
@@ -167,13 +189,16 @@ test.describe('live Working List preview', () => {
             .first()
             .getAttribute('data-testid')
 
-        const nextRequest = await trackerRequest(page, 'trackedEntities', () =>
-            page
-                .locator('[data-test="working-list-pagination-page-next"]')
-                .click()
+        const nextRequest = await waitForTrackerResponse(
+            page,
+            'trackedEntities',
+            () =>
+                page
+                    .locator('[data-test="working-list-pagination-page-next"]')
+                    .click()
         )
 
-        expect(new URL(nextRequest.url()).searchParams.get('page')).toBe('2')
+        expect(nextRequest.searchParams.get('page')).toBe('2')
 
         await expect(tableBody(page)).toHaveAttribute('aria-busy', 'false', {
             timeout: 30_000,
@@ -192,87 +217,63 @@ test.describe('live Working List preview', () => {
 
         expect(stageId).toBeTruthy()
 
-        await openLivePreview(page, 'working-list/default')
+        await openWorkingListPreview(page)
 
-        // Selecting a program stage and applying it morphs the list to
-        // event mode, which queries /tracker/events.
-        const eventRequest = trackerRequest(page, 'events', async () => {
-            await page.getByTestId('more-filters-tracked-entity').click()
-            await page
-                .locator('[data-test="program-stage-filter-menu"]')
-                .getByRole('menuitem')
-                .hover()
-            await page
-                .locator(`[data-test="select-filter-stage-${stageId}"]`)
-                .getByRole('menuitem')
-                .click()
-            await expect(page.getByTestId('filter-programStage')).toBeVisible()
-
-            const update = page.getByTestId('filter-update-programStage')
-
-            if (await update.isVisible().catch(() => false)) {
-                await update.click()
-            }
-        })
-
-        expect(
-            new URL((await eventRequest).url()).searchParams.get('programStage')
-        ).toBe(stageId)
-
-        await expect(tableBody(page)).toHaveAttribute('aria-busy', 'false', {
-            timeout: 30_000,
-        })
-
-        // A program-stage column can be added on top of event mode.
-        await page.getByTestId('more-filters-tracked-entity').click()
-        await page
-            .locator(`[data-test="stage-filter-fields-${stageId}"]`)
-            .getByRole('menuitem')
-            .hover()
-        await page
-            .locator(
-                `[data-test="add-stage-filter-${stageId}-eventOccurredAt"]`
-            )
-            .getByRole('menuitem')
-            .click()
-        await expect(tableBody(page)).toHaveAttribute('aria-busy', 'false', {
-            timeout: 30_000,
-        })
+        const eventUrl = await waitForTrackerResponse(page, 'events', () =>
+            selectStage(page, stageId)
+        )
+        expect(eventUrl.searchParams.get('programStage')).toBe(stageId)
+        await workingListReady(page)
+        const headers = await page.getByRole('columnheader').allTextContents()
+        await addStageFilter(page, stageId, 'eventOccurredAt')
+        await expect(
+            page.getByTestId('filter-editor-eventOccurredAt')
+        ).toBeVisible()
+        expect(await page.getByRole('columnheader').allTextContents()).toEqual(
+            headers
+        )
+        await page.keyboard.press('Escape')
+        await expect(
+            page.getByTestId('filter-editor-eventOccurredAt')
+        ).toHaveCount(0)
     })
 
     test('saves a view and reloads it on live records', async ({ page }) => {
-        const viewName = `Docs e2e ${Date.now()}`
+        await withOwnedTrackerLists(page, async () => {
+            const viewName = `Docs e2e ${Date.now()}`
 
-        await openLivePreview(page, 'working-list/default')
+            await openWorkingListPreview(page)
 
-        // On the default (unsaved) view the Save button opens the name
-        // dialog directly; the save-as menu item only exists in the dropdown
-        // shown while a persisted view is selected.
-        await page.locator('[data-test="save-working-list"]').click()
+            await page.locator('[data-test="save-working-list"]').click()
 
-        const nameInput = page
-            .locator('[data-test="working-list-name-input"]')
-            .getByRole('textbox')
+            const nameInput = page
+                .locator('[data-test="working-list-name-input"]')
+                .getByRole('textbox')
 
-        await expect(nameInput).toBeVisible()
-        await nameInput.fill(viewName)
-        await page.locator('[data-test="working-list-name-submit"]').click()
+            await expect(nameInput).toBeVisible()
+            await nameInput.fill(viewName)
+            await page.locator('[data-test="working-list-name-submit"]').click()
 
-        const viewButton = page.getByRole('button', { name: viewName }).first()
-        await expect(viewButton).toBeVisible({ timeout: 30_000 })
+            const viewButton = page
+                .getByRole('button', { name: viewName })
+                .first()
+            await expect(viewButton).toBeVisible({ timeout: 30_000 })
 
-        // The view is persisted on the server — it survives a full reload.
-        await page.reload()
-        await expect(viewButton).toBeVisible({ timeout: 30_000 })
+            await page.reload()
+            await expect(viewButton).toBeVisible({ timeout: 30_000 })
 
-        // The menu trigger sits in the same pill as the view button; it is
-        // marked data-saved-view-menu (its testid embeds the server list id).
-        await viewButton.locator('..').locator('[data-saved-view-menu]').click()
+            await viewButton
+                .locator('..')
+                .locator('[data-saved-view-menu]')
+                .click()
 
-        const deleteItem = page.locator('[data-test="delete-saved-view"]')
-        await expect(deleteItem).toBeVisible()
-        await deleteItem.getByRole('menuitem').click()
-        await page.locator('[data-test="delete-saved-view-confirm"]').click()
-        await expect(viewButton).toHaveCount(0)
+            const deleteItem = menuItem(page, 'delete-saved-view')
+            await expect(deleteItem).toBeVisible()
+            await deleteItem.click()
+            await page
+                .locator('[data-test="delete-saved-view-confirm"]')
+                .click()
+            await expect(viewButton).toHaveCount(0)
+        })
     })
 })

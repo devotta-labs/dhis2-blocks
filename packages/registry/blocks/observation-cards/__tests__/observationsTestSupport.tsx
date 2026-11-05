@@ -137,6 +137,7 @@ export const createFakeServer = (options: FakeServerOptions = {}) => {
         requests.filter((request) => request.resource === resource).length
     return {
         client: createObservationsClient(engine),
+        engine,
         requests,
         countOf,
         release,

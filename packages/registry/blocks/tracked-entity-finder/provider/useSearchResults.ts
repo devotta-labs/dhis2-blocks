@@ -4,7 +4,7 @@ import {
     shouldRetryFinderRequest,
     type FinderResourceClient,
 } from '../api/client'
-import { finderKeys } from '../api/queries'
+import { finderKeys, isSameFinderSearch } from '../api/queries'
 import { runSearch, type FinderPerson } from '../api/search'
 import { serializeFilter } from '../rules/searchParams'
 import type { ProgramModel } from '../rules/types'
@@ -45,16 +45,18 @@ export const useSearchResults = ({
     // again: the same search may find someone registered in the meantime.
     const [instance] = useState(() => ++mounts)
     const submissionId = submission?.id ?? 0
+    const queryKey = finderKeys.search(
+        client,
+        program,
+        {
+            instance,
+            submission: submissionId,
+            filter: submission?.search.filters.map(serializeFilter) ?? [],
+        },
+        page
+    )
     const query = useQuery({
-        queryKey: finderKeys.search(
-            program,
-            {
-                instance,
-                submission: submissionId,
-                filter: submission?.search.filters.map(serializeFilter) ?? [],
-            },
-            page
-        ),
+        queryKey,
         queryFn: ({ signal }) => {
             if (!model || !submission) {
                 throw new Error('A finder search ran without a submission')
@@ -70,8 +72,7 @@ export const useSearchResults = ({
         retry: shouldRetryFinderRequest,
         // Only a page change of the same search keeps the old page on screen.
         placeholderData: (previous, previousQuery) =>
-            previousQuery?.queryKey[3]?.instance === instance &&
-            previousQuery.queryKey[3].submission === submissionId
+            isSameFinderSearch(previousQuery?.queryKey, queryKey)
                 ? previous
                 : undefined,
     })

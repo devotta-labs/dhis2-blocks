@@ -1,6 +1,11 @@
 import { QueryClient } from '@tanstack/react-query'
-import { createFinderResourceClient, type DataEngineQuery } from './client'
+import {
+    cacheIdOf,
+    createFinderResourceClient,
+    type DataEngineQuery,
+} from './client'
 import { finderKeys, programMetadataQueryOptions } from './queries'
+import { systemInfoQueryOptions } from './systemInfo'
 
 describe('program metadata query', () => {
     it('requests the program fields the rules need', async () => {
@@ -25,17 +30,70 @@ describe('program metadata query', () => {
             'programTrackedEntityAttributes[searchable,displayInList,sortOrder,preferredSearchOperator,blockedSearchOperators,minCharactersToSearch,'
         )
         expect(fields).toContain('blockedSearchOperators')
-        expect(options.queryKey).toEqual(finderKeys.program('prog'))
+        expect(options.queryKey).toEqual(finderKeys.program(client, 'prog'))
     })
 
     it('keys searches by program, submission and page', () => {
-        expect(finderKeys.search('p', { a: 'b' }, 2)).toEqual([
+        const client = createFinderResourceClient({ query: vi.fn() })
+        const submission = { instance: 1, submission: 2, filter: ['a:eq:b'] }
+        expect(finderKeys.search(client, 'p', submission, 2)).toEqual([
             'tracked-entity-finder',
             'search',
-            'p',
-            { a: 'b' },
+            { client: cacheIdOf(client), program: 'p', ...submission },
             2,
         ])
+    })
+
+    it('isolates metadata and calendars by source while reusing each source', async () => {
+        const source = (name: string, calendar: string) => {
+            const query = vi.fn(async (request: DataEngineQuery) => ({
+                trackedEntityFinderResource:
+                    request.trackedEntityFinderResource.resource ===
+                    'system/info'
+                        ? {
+                              calendar,
+                              dateFormat: 'YYYY-MM-DD',
+                              version: '2.43.1',
+                          }
+                        : {
+                              displayName: name,
+                              trackedEntityType: { id: 'tet' },
+                              programTrackedEntityAttributes: [],
+                          },
+            }))
+            return { client: createFinderResourceClient({ query }), query }
+        }
+        const first = source('First source', 'gregorian')
+        const second = source('Second source', 'ethiopian')
+        const queries = new QueryClient()
+        try {
+            for (const [server, name, calendar] of [
+                [first, 'First source', 'gregorian'],
+                [second, 'Second source', 'ethiopian'],
+                [first, 'First source', 'gregorian'],
+            ] as const) {
+                expect(
+                    (
+                        await queries.fetchQuery(
+                            programMetadataQueryOptions(
+                                server.client,
+                                'same-program'
+                            )
+                        )
+                    ).name
+                ).toBe(name)
+                expect(
+                    (
+                        await queries.fetchQuery(
+                            systemInfoQueryOptions(server.client)
+                        )
+                    ).calendar
+                ).toBe(calendar)
+                expect(server.query).toHaveBeenCalledTimes(2)
+            }
+        } finally {
+            queries.clear()
+        }
     })
 
     it('reloads program rules after their freshness window expires', async () => {

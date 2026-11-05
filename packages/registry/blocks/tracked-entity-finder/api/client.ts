@@ -63,6 +63,19 @@ const resourceClients = new WeakMap<
     FinderResourceClient
 >()
 
+const cacheIds = new WeakMap<FinderResourceClient, number>()
+let lastCacheId = 0
+
+/** Internal: opaque identity, independent of the engine's serializable fields. */
+export const cacheIdOf = (client: FinderResourceClient): number => {
+    let id = cacheIds.get(client)
+    if (id === undefined) {
+        id = ++lastCacheId
+        cacheIds.set(client, id)
+    }
+    return id
+}
+
 /** A failed DHIS2 request, with the HTTP status and server message kept. */
 export class FinderRequestError extends Error {
     readonly status?: number

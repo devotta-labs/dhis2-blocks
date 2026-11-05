@@ -67,7 +67,11 @@ const deferred = () => {
     return { promise, resolve }
 }
 
-export const setup = async (initialId = 'SavedList01', stale = false) => {
+export const setup = async (
+    initialId = 'SavedList01',
+    stale = false,
+    children?: React.ReactNode
+) => {
     const client = new QueryClient({
         defaultOptions: { queries: { retry: false, retryDelay: 0 } },
     })
@@ -209,7 +213,10 @@ export const setup = async (initialId = 'SavedList01', stale = false) => {
         actions = useWorkingListActions()
         observedActions.push(actions)
         return meta.activeConfiguration.status === 'ready' ? (
-            <StateProbe />
+            <>
+                <StateProbe />
+                {children}
+            </>
         ) : null
     }
     const Harness = () => {

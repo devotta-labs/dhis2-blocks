@@ -23,8 +23,17 @@ const resources = ['probe']
 const network = { delay: 0, endpoints: {} }
 const readQuery = { result: { resource: 'probe' } }
 
-const Probe = ({ crash }: { crash: boolean }) => {
+const Probe = ({
+    crash,
+    label,
+    controls,
+}: {
+    crash: boolean
+    label: string
+    controls: HarnessControls
+}) => {
     const engine = useDataEngine()
+    controls.engine = engine
     const cache = useQueryClient()
     const query = useQuery({
         queryKey: ['probe'],
@@ -35,6 +44,7 @@ const Probe = ({ crash }: { crash: boolean }) => {
     if (crash) throw new Error('test canvas crash')
     return (
         <>
+            <output aria-label="child label">{label}</output>
             <output aria-label="answer">{JSON.stringify(query.data)}</output>
             <button onClick={() => setLocal('changed')}>Local {local}</button>
             <button
@@ -54,6 +64,7 @@ const Probe = ({ crash }: { crash: boolean }) => {
 }
 
 interface HarnessControls {
+    engine?: ReturnType<typeof useDataEngine>
     log?: Log
     restart?: () => void
     switchMode?: () => void
@@ -68,6 +79,7 @@ const Harness = ({
 }) => {
     const [state, dispatch, log] = useLabRun(labReducer, initialLabState)
     const [crash, setCrash] = useState(false)
+    const [label, setLabel] = useState('initial')
     const [params, setParams] = useSearchParams()
     const location = useLocation()
     controls.log = log
@@ -138,6 +150,7 @@ const Harness = ({
                 External URL
             </button>
             <button onClick={() => setCrash(!crash)}>Toggle crash</button>
+            <button onClick={() => setLabel('updated')}>Update child</button>
             <LabRun
                 run={state.run}
                 mode={state.mode}
@@ -146,7 +159,7 @@ const Harness = ({
                 respond={respond}
                 log={log}
             >
-                <Probe crash={crash} />
+                <Probe crash={crash} label={label} controls={controls} />
             </LabRun>
         </>
     )
@@ -167,6 +180,26 @@ const setup = async (search = '') => {
 }
 
 describe('lab run boundary', () => {
+    it('keeps the runtime engine across log and child updates, replacing it only on a new run', async () => {
+        const { view, controls, reads } = await setup()
+        const engine = controls.engine
+        expect(engine).toBeDefined()
+        await act(() => controls.log!((entries) => [...entries]))
+        expect(controls.engine).toBe(engine)
+        await view.getByRole('button', { name: 'Update child' }).click()
+        await expect
+            .element(view.getByRole('status', { name: 'child label' }))
+            .toHaveTextContent('updated')
+        expect(controls.engine).toBe(engine)
+        expect(reads).toHaveBeenCalledTimes(1)
+        await view.getByRole('button', { name: 'Restart', exact: true }).click()
+        await expect
+            .element(view.getByRole('status', { name: 'requests' }))
+            .toHaveTextContent('[["probe","ok"]]')
+        expect(controls.engine).not.toBe(engine)
+        expect(reads).toHaveBeenCalledTimes(2)
+    })
+
     it('clears the preset in live mode and starts a fresh lab cache on return', async () => {
         const { view, reads, controls } = await setup()
         await view.getByRole('button', { name: 'Switch mode' }).click()

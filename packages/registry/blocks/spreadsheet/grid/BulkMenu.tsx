@@ -52,7 +52,7 @@ export interface BulkTarget {
  * facing the data, as the row header's is, so the cells scrolling under it keep a divider.
  */
 export const ACTIONS_CLASS =
-    'sticky end-0 z-10 w-9 min-w-9 border-s p-0 text-center'
+    'sticky end-0 z-10 w-9 min-w-9 border-s border-e-0 p-0 text-center'
 
 /** Whether the column takes column actions: the provider's `bulkColumn` allows it and its open cells share one field. */
 export const takesColumnActions = (

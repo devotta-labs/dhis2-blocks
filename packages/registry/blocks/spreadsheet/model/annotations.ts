@@ -24,6 +24,6 @@ export interface AnnotationsState {
     cells: Partial<Record<CellKey, CellAnnotations>>
     /** Row id → messages without a cell, shown in the row header. */
     rowMessages: ReadonlyMap<string, ReadonlyArray<CellMessage>>
-    /** Row id → notes shown under the row's label. */
+    /** Row id → notes, behind a marker in the row's header. */
     rowNotes: ReadonlyMap<string, ReadonlyArray<string>>
 }

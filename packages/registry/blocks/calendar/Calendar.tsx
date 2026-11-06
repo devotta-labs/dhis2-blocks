@@ -150,7 +150,7 @@ export const Calendar = ({
     // multi-calendar-dates 3.2.1 throws for Coptic dates.
     if (calendar === 'coptic') {
         return (
-            <p className="m-0 p-4 text-sm text-dhis2-grey-700">
+            <p className="m-0 p-4 text-sm text-dhis2-muted-foreground">
                 {i18n.t(
                     'The calendar layout does not support the Coptic calendar yet.'
                 )}

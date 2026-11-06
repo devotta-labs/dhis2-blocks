@@ -10,7 +10,7 @@ export const TimelinePlaceholder = () => (
             <span
                 key={row}
                 aria-hidden="true"
-                className="h-10 animate-pulse rounded-md bg-[#e8edf2] motion-reduce:animate-none"
+                className="h-10 animate-pulse rounded-md bg-dhis2-accent-strong motion-reduce:animate-none"
             />
         ))}
     </div>

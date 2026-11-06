@@ -59,13 +59,13 @@ export const TimelineNoteEntry = ({
                 data-slot="timeline-note-text"
                 className={
                     expanded
-                        ? 'm-0 text-sm whitespace-pre-wrap text-dhis2-grey-900'
-                        : 'm-0 line-clamp-3 text-sm whitespace-pre-wrap text-dhis2-grey-900'
+                        ? 'm-0 text-sm whitespace-pre-wrap text-dhis2-foreground'
+                        : 'm-0 line-clamp-3 text-sm whitespace-pre-wrap text-dhis2-foreground'
                 }
             >
                 {note.value}
             </p>
-            <div className="flex flex-wrap items-baseline gap-x-1.5 text-sm text-dhis2-grey-700 [&>*:not(:last-child)]:after:inline-block [&>*:not(:last-child)]:after:ps-1.5 [&>*:not(:last-child)]:after:text-dhis2-grey-700 [&>*:not(:last-child)]:after:content-['·']">
+            <div className="flex flex-wrap items-baseline gap-x-1.5 text-sm text-dhis2-muted-foreground [&>*:not(:last-child)]:after:inline-block [&>*:not(:last-child)]:after:ps-1.5 [&>*:not(:last-child)]:after:text-dhis2-muted-foreground [&>*:not(:last-child)]:after:content-['·']">
                 {author === undefined ? null : <span>{author}</span>}
                 {spansPrograms ? (
                     <span>

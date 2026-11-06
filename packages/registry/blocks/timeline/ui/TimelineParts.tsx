@@ -25,13 +25,13 @@ export const TimelineMarker = ({
         {...props}
         data-slot="timeline-marker"
         className={cn(
-            'absolute top-1.5 start-0 size-2.5 rounded-full border-2 border-dhis2-blue-700 bg-white',
+            'absolute top-1.5 start-0 size-2.5 rounded-full border-2 border-dhis2-primary bg-dhis2-background',
             // The phase: grey for what is coming, red for what is overdue.
-            'group-data-[phase=future]/phase:border-dhis2-grey-500 group-data-[phase=overdue]/phase:border-dhis2-red-700',
+            'group-data-[phase=future]/phase:border-dhis2-neutral-indicator group-data-[phase=overdue]/phase:border-dhis2-destructive-indicator',
             // An entry can set data-marker on its content to say more.
-            'group-has-[[data-marker=filled]]/item:bg-dhis2-blue-700',
-            'group-has-[[data-marker=muted]]/item:border-dhis2-grey-400',
-            'group-has-[[data-marker=dot]]/item:top-[7px] group-has-[[data-marker=dot]]/item:start-[2px] group-has-[[data-marker=dot]]/item:size-1.5 group-has-[[data-marker=dot]]/item:border-0 group-has-[[data-marker=dot]]/item:bg-dhis2-grey-500',
+            'group-has-[[data-marker=filled]]/item:bg-dhis2-primary',
+            'group-has-[[data-marker=muted]]/item:border-dhis2-border-strong',
+            'group-has-[[data-marker=dot]]/item:top-[7px] group-has-[[data-marker=dot]]/item:start-[2px] group-has-[[data-marker=dot]]/item:size-1.5 group-has-[[data-marker=dot]]/item:border-0 group-has-[[data-marker=dot]]/item:bg-dhis2-neutral-indicator',
             className
         )}
     />
@@ -107,8 +107,8 @@ export const TimelineGroupHeading = ({
             id={groupHeadingId(meta.id, group)}
             data-slot="timeline-group-heading"
             className={cn(
-                'mb-2 text-xs font-medium tracking-wide text-dhis2-grey-700 uppercase',
-                group.phase === 'overdue' && 'text-dhis2-red-700',
+                'mb-2 text-xs font-medium tracking-wide text-dhis2-muted-foreground uppercase',
+                group.phase === 'overdue' && 'text-dhis2-destructive',
                 className
             )}
         >
@@ -132,13 +132,13 @@ export const TimelineNow = ({
             {...props}
             data-slot="timeline-now"
             className={cn(
-                'my-2 flex items-center gap-2 text-xs font-medium tracking-wide text-dhis2-blue-800 uppercase',
+                'my-2 flex items-center gap-2 text-xs font-medium tracking-wide text-dhis2-primary uppercase',
                 className
             )}
         >
             <span
                 aria-hidden="true"
-                className="h-px flex-1 bg-dhis2-blue-300"
+                className="h-px flex-1 bg-dhis2-info-border"
             />
             <span>
                 {children ??
@@ -148,7 +148,7 @@ export const TimelineNow = ({
             </span>
             <span
                 aria-hidden="true"
-                className="h-px flex-1 bg-dhis2-blue-300"
+                className="h-px flex-1 bg-dhis2-info-border"
             />
         </div>
     )
@@ -174,7 +174,7 @@ export const TimelineTime = ({
             {...props}
             dateTime={entry.at}
             data-slot="timeline-time"
-            className={cn('text-sm text-dhis2-grey-700', className)}
+            className={cn('text-sm text-dhis2-muted-foreground', className)}
         >
             {time}
         </time>

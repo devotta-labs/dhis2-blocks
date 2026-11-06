@@ -50,7 +50,7 @@ const recordCountName = (day: CalendarDay, name: string) => {
 
 const HiddenDaysNote = ({ count }: { count: number }) =>
     count > 0 ? (
-        <p className="m-0 text-sm text-dhis2-grey-700">
+        <p className="m-0 text-sm text-dhis2-muted-foreground">
             {count === 1
                 ? i18n.t('1 record falls on a hidden weekend day.')
                 : i18n.t('{{count}} records fall on hidden weekend days.', {
@@ -74,7 +74,7 @@ const ResultsStatus = () => {
     }
     if (results.status === 'pending') {
         return (
-            <p className="m-0 flex items-center gap-2 text-sm text-dhis2-grey-700">
+            <p className="m-0 flex items-center gap-2 text-sm text-dhis2-muted-foreground">
                 <Spinner />
                 {i18n.t('Loading records…')}
             </p>
@@ -82,7 +82,7 @@ const ResultsStatus = () => {
     }
     if (results.truncated) {
         return (
-            <p className="m-0 text-sm text-dhis2-grey-700">
+            <p className="m-0 text-sm text-dhis2-muted-foreground">
                 {i18n.t(
                     'Showing the first {{count}} records in these weeks. Narrow the date range to see the rest.',
                     { count: results.records.length }
@@ -92,7 +92,7 @@ const ResultsStatus = () => {
     }
     if (weeks.every((week) => week.every((day) => day.records.length === 0))) {
         return (
-            <p className="m-0 text-sm text-dhis2-grey-700">
+            <p className="m-0 text-sm text-dhis2-muted-foreground">
                 {i18n.t('No records this month.')}
             </p>
         )
@@ -210,8 +210,9 @@ export const CalendarGrid = ({
                                 key={weekday}
                                 scope="col"
                                 className={cn(
-                                    'truncate pb-1 text-xs font-normal text-dhis2-grey-700',
-                                    isWeekend(weekday) && 'text-dhis2-grey-600'
+                                    'truncate pb-1 text-xs font-normal text-dhis2-muted-foreground',
+                                    isWeekend(weekday) &&
+                                        'text-dhis2-subtle-foreground'
                                 )}
                             >
                                 {weekDayLabels[weekday - 1]}
@@ -226,7 +227,7 @@ export const CalendarGrid = ({
                                 <td
                                     key={day.date}
                                     // h-px lets the button fill the row's full height.
-                                    className="h-px border border-dhis2-grey-300 p-0 align-top"
+                                    className="h-px border border-dhis2-border p-0 align-top"
                                     aria-selected={
                                         day.date === selectedDay?.date
                                     }
@@ -258,24 +259,24 @@ export const CalendarGrid = ({
                                             }
                                         }}
                                         className={cn(
-                                            'flex h-full min-h-24 w-full cursor-pointer flex-col items-stretch gap-1 overflow-hidden bg-white p-1.5 text-start hover:bg-dhis2-grey-050 focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring',
+                                            'flex h-full min-h-24 w-full cursor-pointer flex-col items-stretch gap-1 overflow-hidden bg-dhis2-background p-1.5 text-start hover:bg-dhis2-background-subtle focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring',
                                             isWeekend(weekday) &&
-                                                'bg-dhis2-grey-050',
+                                                'bg-dhis2-background-subtle',
                                             !day.isInCurrentMonth &&
-                                                'bg-dhis2-grey-050',
+                                                'bg-dhis2-background-subtle',
                                             day.isDisabled &&
-                                                'cursor-default bg-dhis2-grey-100 hover:bg-dhis2-grey-100',
+                                                'cursor-default bg-dhis2-muted hover:bg-dhis2-muted',
                                             day.date === selectedDay?.date &&
-                                                'bg-dhis2-blue-050 shadow-[inset_0_0_0_2px_var(--color-dhis2-blue-600)] hover:bg-dhis2-blue-050'
+                                                'bg-dhis2-primary-subtle shadow-[inset_0_0_0_2px_var(--dhis2-primary)] hover:bg-dhis2-primary-subtle'
                                         )}
                                     >
                                         <span
                                             className={cn(
-                                                'text-[13px] leading-5 text-dhis2-grey-700',
+                                                'text-[13px] leading-5 text-dhis2-muted-foreground',
                                                 !day.isInCurrentMonth &&
-                                                    'text-dhis2-grey-600',
+                                                    'text-dhis2-subtle-foreground',
                                                 day.isToday &&
-                                                    'inline-flex size-5 items-center justify-center self-start rounded-full bg-dhis2-blue-600 text-white'
+                                                    'inline-flex size-5 items-center justify-center self-start rounded-full bg-dhis2-primary text-dhis2-primary-foreground'
                                             )}
                                         >
                                             {day.label}

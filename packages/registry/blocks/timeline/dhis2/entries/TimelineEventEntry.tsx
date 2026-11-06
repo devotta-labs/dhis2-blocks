@@ -42,7 +42,7 @@ export const TimelineEventProgram = ({
         <span
             {...props}
             data-slot="timeline-event-program"
-            className={cn('text-sm text-dhis2-grey-700', className)}
+            className={cn('text-sm text-dhis2-muted-foreground', className)}
         >
             {data.program?.name ?? data.event.program}
         </span>
@@ -61,7 +61,7 @@ export const TimelineEventStage = ({
             {...props}
             data-slot="timeline-event-stage"
             className={cn(
-                'text-sm font-medium text-dhis2-grey-900 group-data-[status=skipped]/event:font-normal group-data-[status=skipped]/event:text-dhis2-grey-700',
+                'text-sm font-medium text-dhis2-foreground group-data-[status=skipped]/event:font-normal group-data-[status=skipped]/event:text-dhis2-muted-foreground',
                 className
             )}
         >
@@ -95,11 +95,11 @@ const MARKER = {
 } satisfies Record<DerivedEventStatus, string | undefined>
 
 const STATUS_STYLE = {
-    completed: 'bg-dhis2-green-100 text-dhis2-green-900',
-    active: 'bg-dhis2-blue-100 text-dhis2-blue-900',
-    scheduled: 'bg-dhis2-grey-200 text-dhis2-grey-900',
-    overdue: 'bg-dhis2-red-100 text-dhis2-red-900',
-    skipped: 'bg-dhis2-grey-200 text-dhis2-grey-800',
+    completed: 'bg-dhis2-success-muted text-dhis2-success-strong',
+    active: 'bg-dhis2-info-muted text-dhis2-info-strong',
+    scheduled: 'bg-dhis2-neutral-muted text-dhis2-neutral-strong',
+    overdue: 'bg-dhis2-destructive-muted text-dhis2-destructive-strong',
+    skipped: 'bg-dhis2-neutral-muted text-dhis2-neutral-strong',
 } satisfies Record<DerivedEventStatus, string>
 
 /**
@@ -170,7 +170,7 @@ export const TimelineEventStatus = ({
                 </Badge>
             )}
             {day === undefined ? null : (
-                <span className="text-sm text-dhis2-grey-700">
+                <span className="text-sm text-dhis2-muted-foreground">
                     {i18n.t('Due {{date}}', {
                         date: formatCalendarDate(day, calendar, locale),
                     })}
@@ -194,7 +194,7 @@ export const TimelineEventOrgUnit = ({
         <span
             {...props}
             data-slot="timeline-event-org-unit"
-            className={cn('text-sm text-dhis2-grey-700', className)}
+            className={cn('text-sm text-dhis2-muted-foreground', className)}
         >
             {data.orgUnitName ?? orgUnit}
         </span>
@@ -213,7 +213,7 @@ export const TimelineEventMeta = ({
         {...props}
         data-slot="timeline-event-meta"
         className={cn(
-            "flex flex-wrap items-baseline gap-x-1.5 text-sm text-dhis2-grey-700 empty:hidden [&>*:not(:last-child)]:after:inline-block [&>*:not(:last-child)]:after:ps-1.5 [&>*:not(:last-child)]:after:text-dhis2-grey-700 [&>*:not(:last-child)]:after:content-['·']",
+            "flex flex-wrap items-baseline gap-x-1.5 text-sm text-dhis2-muted-foreground empty:hidden [&>*:not(:last-child)]:after:inline-block [&>*:not(:last-child)]:after:ps-1.5 [&>*:not(:last-child)]:after:text-dhis2-muted-foreground [&>*:not(:last-child)]:after:content-['·']",
             className
         )}
     />
@@ -236,7 +236,7 @@ export const TimelineEventCompletedBy = ({
         <span
             {...props}
             data-slot="timeline-event-completed-by"
-            className={cn('text-sm text-dhis2-grey-700', className)}
+            className={cn('text-sm text-dhis2-muted-foreground', className)}
         >
             {i18n.t('Completed by {{name}}', { name: completedBy })}
         </span>
@@ -302,10 +302,10 @@ export const TimelineEventValues = ({
                 {(open ? values : values.slice(0, MAX_VALUES)).map(
                     ({ id, name, text }) => (
                         <div key={id}>
-                            <dt className="me-1 inline text-dhis2-grey-700">
+                            <dt className="me-1 inline text-dhis2-muted-foreground">
                                 {name}
                             </dt>{' '}
-                            <dd className="m-0 inline font-medium text-dhis2-grey-900 group-data-[status=skipped]/event:text-dhis2-grey-700">
+                            <dd className="m-0 inline font-medium text-dhis2-foreground group-data-[status=skipped]/event:text-dhis2-muted-foreground">
                                 <bdi>{text}</bdi>
                             </dd>
                         </div>
@@ -345,13 +345,16 @@ const EventNote = ({ note }: { note: Note }) => {
         when = `${formatCalendarDate(day, calendar, locale)} ${time}`
     }
     return (
-        <li className="text-dhis2-grey-900">
+        <li className="text-dhis2-foreground">
             <span className="whitespace-pre-wrap">{note.value}</span>
             {author === undefined ? null : (
-                <span className="text-dhis2-grey-700"> {author}</span>
+                <span className="text-dhis2-muted-foreground"> {author}</span>
             )}
             {when === undefined || note.storedAt === undefined ? null : (
-                <time dateTime={note.storedAt} className="text-dhis2-grey-700">
+                <time
+                    dateTime={note.storedAt}
+                    className="text-dhis2-muted-foreground"
+                >
                     {' '}
                     {when}
                 </time>
@@ -382,7 +385,7 @@ export const TimelineEventNotes = ({
                 data-slot="timeline-event-notes"
                 className={cn('flex flex-col items-start gap-1', className)}
             >
-                <ul className="order-first m-0 flex basis-full list-none flex-col gap-1 border-s-2 border-dhis2-grey-300 p-0 ps-3 text-sm">
+                <ul className="order-first m-0 flex basis-full list-none flex-col gap-1 border-s-2 border-dhis2-border p-0 ps-3 text-sm">
                     <EventNote note={notes[0]} />
                 </ul>
             </div>
@@ -406,7 +409,7 @@ export const TimelineEventNotes = ({
             <div
                 id={listId}
                 hidden={!open}
-                className="order-last mt-1 basis-full border-s-2 border-dhis2-grey-300 ps-3"
+                className="order-last mt-1 basis-full border-s-2 border-dhis2-border ps-3"
             >
                 {open ? (
                     <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
@@ -429,25 +432,31 @@ const ChangesBody = ({ entry }: { entry: TimelineEntry<EventEntryData> }) => {
         case 'idle':
         case 'loading':
             return (
-                <p role="status" className="m-0 text-sm text-dhis2-grey-700">
+                <p
+                    role="status"
+                    className="m-0 text-sm text-dhis2-muted-foreground"
+                >
                     {i18n.t('Loading changes')}
                 </p>
             )
         case 'unsupported':
             return (
-                <p role="status" className="m-0 text-sm text-dhis2-grey-700">
+                <p
+                    role="status"
+                    className="m-0 text-sm text-dhis2-muted-foreground"
+                >
                     {i18n.t("Changes aren't available on this DHIS2 version.")}
                 </p>
             )
         case 'error':
             return (
-                <p role="alert" className="m-0 text-sm text-dhis2-red-700">
+                <p role="alert" className="m-0 text-sm text-dhis2-destructive">
                     {i18n.t("Couldn't load changes.")}
                 </p>
             )
         case 'success':
             return saves.length === 0 ? (
-                <p className="m-0 text-sm text-dhis2-grey-700">
+                <p className="m-0 text-sm text-dhis2-muted-foreground">
                     {i18n.t('No changes')}
                 </p>
             ) : (
@@ -457,7 +466,7 @@ const ChangesBody = ({ entry }: { entry: TimelineEntry<EventEntryData> }) => {
                         orgUnitNames={entry.data.orgUnitNames}
                     />
                     {truncated ? (
-                        <p className="m-0 mt-2 text-sm text-dhis2-grey-700">
+                        <p className="m-0 mt-2 text-sm text-dhis2-muted-foreground">
                             {i18n.t("Older changes aren't shown.")}
                         </p>
                     ) : null}
@@ -503,7 +512,7 @@ export const TimelineEventChanges = ({
             <div
                 id={bodyId}
                 hidden={!open}
-                className="order-last mt-1 basis-full border-s-2 border-dhis2-grey-300 ps-3"
+                className="order-last mt-1 basis-full border-s-2 border-dhis2-border ps-3"
             >
                 {open ? <ChangesBody entry={entry} /> : null}
             </div>
@@ -554,7 +563,7 @@ export const TimelineEventEntry = ({
                     data-status={entry.data.status}
                     data-marker={MARKER[entry.data.status]}
                     className={cn(
-                        'group/event flex flex-col items-start gap-1 data-[status=skipped]:text-dhis2-grey-700',
+                        'group/event flex flex-col items-start gap-1 data-[status=skipped]:text-dhis2-muted-foreground',
                         className
                     )}
                 >

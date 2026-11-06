@@ -88,8 +88,8 @@ export function ObservationSparkline({
             color:
                 series.latest &&
                 isStale(series.latest, staleAfterDays, new Date())
-                    ? 'var(--color-dhis2-grey-500)'
-                    : 'var(--color-dhis2-primary)',
+                    ? 'var(--dhis2-neutral-indicator)'
+                    : 'var(--dhis2-primary)',
         },
     }
     const data = plotted.map((point) => ({
@@ -207,7 +207,7 @@ export function ObservationSparkline({
                                             <span className="font-medium text-dhis2-foreground tabular-nums">
                                                 {entry.display}
                                             </span>
-                                            <span className="text-dhis2-grey-700">
+                                            <span className="text-dhis2-muted-foreground">
                                                 {' · '}
                                                 {entry.date}
                                             </span>

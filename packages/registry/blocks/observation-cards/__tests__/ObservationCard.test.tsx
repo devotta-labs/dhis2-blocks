@@ -469,9 +469,9 @@ describe('the default arrangement', () => {
             <ObservationCard dataElement={DE} staleAfterDays={30} />,
             bloodGroup
         )
-        expect(cardOf(container)?.classList).toContain('text-dhis2-grey-600')
+        expect(cardOf(container)?.className).toMatch(/subtle-foreground/)
         const note = slot(container, 'stale-note')
-        expect(note?.classList).toContain('text-dhis2-yellow-800')
+        expect(note?.classList).toContain('text-dhis2-warning')
         expect(note?.querySelector('[aria-hidden="true"] svg')).not.toBeNull()
         // Sighted users read "Out of date"; a screen reader hears the threshold.
         expect(
@@ -483,7 +483,7 @@ describe('the default arrangement', () => {
             'Out of date: last recorded over 30 days ago'
         )
         expect(slot(container, 'observation-recorded')?.classList).toContain(
-            'bg-dhis2-yellow-050'
+            'bg-dhis2-warning-subtle'
         )
     })
 
@@ -498,9 +498,9 @@ describe('the default arrangement', () => {
             .poll(() => container.querySelector('.recharts-line-curve'))
             .not.toBeNull()
         const curve = container.querySelector('.recharts-line-curve')
-        // --color-dhis2-grey-500
+        // --dhis2-neutral-indicator
         expect(curve && getComputedStyle(curve).stroke).toBe(
-            'rgb(160, 173, 186)'
+            'rgb(108, 119, 135)'
         )
     })
 
@@ -551,7 +551,7 @@ describe('the default arrangement', () => {
         expect(container.textContent).not.toContain('Out of date')
         expect(slot(container, 'stale-note')).toBeNull()
         expect(cardOf(container)?.classList).not.toContain(
-            'text-dhis2-grey-600'
+            'text-dhis2-subtle-foreground'
         )
     })
 

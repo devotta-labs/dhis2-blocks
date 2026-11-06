@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -35,22 +35,6 @@ const EXEMPTION = 'colour-literal:'
 const TOKEN_USE =
     /\b(?:bg|text|border(?:-[trblxyse])?|outline|fill|stroke|ring-offset|inset-ring|ring|caret|from|to|via|divide|placeholder|decoration|accent|drop-shadow|text-shadow|shadow)-dhis2-([a-z][a-z0-9-]*?)(?![a-z0-9-])/g
 const VARIABLE_USE = /\(--dhis2-([a-z][a-z0-9-]*)\)/g
-
-/** Files that still hold raw colours. Each migration task removes its own. */
-const PENDING = new Set<string>([
-    'apps/docs/src/examples/observation-cards/ObservationCardsPlaceholders.tsx',
-    'apps/docs/src/examples/ui/BadgeStatus.tsx',
-    'apps/docs/src/examples/ui/ChartShare.tsx',
-    'apps/docs/src/examples/ui/ChartTrend.tsx',
-    'apps/docs/src/examples/ui/ChartVisits.tsx',
-    'packages/registry/blocks/observation-cards/card/ObservationCard.tsx',
-    'packages/registry/blocks/observation-cards/card/frame.tsx',
-    'packages/registry/blocks/observation-cards/format/display.ts',
-    'packages/registry/blocks/observation-cards/parts/ObservationChange.tsx',
-    'packages/registry/blocks/observation-cards/parts/ObservationRecorded.tsx',
-    'packages/registry/blocks/observation-cards/parts/ObservationSparkline.tsx',
-    'packages/registry/blocks/observation-cards/parts/ObservationValue.tsx',
-])
 
 const theme = readFileSync(
     join(REPO_ROOT, 'packages/registry/components/theme.css'),
@@ -103,18 +87,10 @@ describe('colour usage', () => {
     })
 
     it.each(files)('%s uses only semantic colour tokens', (path) => {
-        if (PENDING.has(path)) return
         expect(rawColours(path)).toEqual([])
     })
 
     it.each(files)('%s names only defined tokens', (path) => {
         expect(unknownTokens(path)).toEqual([])
-    })
-
-    it('PENDING lists only files that still hold raw colours', () => {
-        for (const path of PENDING) {
-            expect(existsSync(join(REPO_ROOT, path))).toBe(true)
-            expect(rawColours(path)).not.toEqual([])
-        }
     })
 })

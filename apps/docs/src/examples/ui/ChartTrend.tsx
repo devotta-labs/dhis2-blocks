@@ -29,8 +29,10 @@ const coverage = [
 ]
 
 const config = {
-    // DHIS2 blue-600.
-    percent: { label: 'Penta 3 coverage (%)', color: '#147cd7' },
+    percent: {
+        label: 'Penta 3 coverage (%)',
+        color: 'var(--dhis2-info-indicator)',
+    },
 } satisfies ChartConfig
 
 /** Coverage over twelve months, as a line, against a target of 80%. */
@@ -49,12 +51,12 @@ const ChartTrend = () => (
             <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
             <ReferenceLine
                 y={80}
-                stroke="#a0adba"
+                stroke="var(--dhis2-border-strong)"
                 strokeDasharray="4 4"
                 label={{
                     value: 'Target 80%',
                     position: 'insideTopLeft',
-                    fill: '#6c7787',
+                    fill: 'var(--dhis2-subtle-foreground)',
                 }}
             />
             <Line

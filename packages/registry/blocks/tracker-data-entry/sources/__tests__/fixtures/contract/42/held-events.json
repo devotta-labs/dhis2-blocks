@@ -1,0 +1,50 @@
+{
+    "pager": {
+        "page": 1,
+        "pageSize": 5
+    },
+    "events": [
+        {
+            "event": "Ae2Throw002",
+            "status": "ACTIVE",
+            "program": "VBqh0ynB2wv",
+            "programStage": "pTo4uMt3xur",
+            "enrollment": "xw4GwQ4hIsc",
+            "orgUnit": "y77LiPqLMoq",
+            "occurredAt": "2026-11-08T00:00:00.000",
+            "attributeOptionCombo": "HllvX50cXC0",
+            "assignedUser": {
+                "uid": "xE7jOejl9FI",
+                "username": "admin"
+            }
+        },
+        {
+            "event": "a5ff0044d75",
+            "status": "ACTIVE",
+            "program": "VBqh0ynB2wv",
+            "programStage": "pTo4uMt3xur",
+            "enrollment": "xw4GwQ4hIsc",
+            "orgUnit": "y77LiPqLMoq",
+            "occurredAt": "2026-12-29T00:00:00.000",
+            "attributeOptionCombo": "HllvX50cXC0",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [-11.479340835976195, 9.68189072274766]
+            }
+        },
+        {
+            "event": "ab51763df7b",
+            "status": "ACTIVE",
+            "program": "VBqh0ynB2wv",
+            "programStage": "pTo4uMt3xur",
+            "enrollment": "xw4GwQ4hIsc",
+            "orgUnit": "y77LiPqLMoq",
+            "occurredAt": "2025-06-18T00:00:00.000",
+            "attributeOptionCombo": "HllvX50cXC0",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [-11.488390201090176, 9.68334163183627]
+            }
+        }
+    ]
+}

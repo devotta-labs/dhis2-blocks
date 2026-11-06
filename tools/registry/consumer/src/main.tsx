@@ -1,5 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import { ContextSelector } from '@/components/context-selector'
+import { SpreadsheetGrid } from '@/components/spreadsheet'
+import { TrackerDataEntry, eventSource } from '@/components/tracker-data-entry'
 import {
     ObservationCard,
     ObservationsProvider,
@@ -26,6 +28,8 @@ import {
 } from '@/components/sidebar'
 import { Host } from './host'
 import './index.css'
+
+const events = eventSource({ programId: 'program', orgUnitId: 'orgUnit' })
 
 // Type-level use only: the check compiles and bundles this file, never runs it.
 const root = document.getElementById('root')
@@ -70,6 +74,9 @@ if (root !== null) {
                     <CalendarDayRecords />
                 </ListCalendar>
             </WorkingList>
+            <TrackerDataEntry source={events}>
+                <SpreadsheetGrid />
+            </TrackerDataEntry>
         </>
     )
 }

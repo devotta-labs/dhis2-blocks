@@ -1,0 +1,10 @@
+{
+    "id": "xE7jOejl9FI",
+    "authorities": [
+        "F_OPTIONGROUP_PUBLIC_ADD",
+        "F_TRACKED_ENTITY_INSTANCE_SEARCH_IN_ALL_ORGUNITS",
+        "F_CATEGORY_OPTION_GROUP_SET_PRIVATE_ADD",
+        "F_USER_DELETE_WITHIN_MANAGED_GROUP",
+        "F_INDICATOR_PUBLIC_ADD"
+    ]
+}

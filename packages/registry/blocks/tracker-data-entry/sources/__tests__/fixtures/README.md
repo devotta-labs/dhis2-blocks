@@ -35,14 +35,15 @@ asks for 200 ids a request: the request line and headers must stay under about 8
 headers) got HTTP 200 for 650 ids and HTTP 400 for 700, while a browser, with its cookies and headers, is refused
 sooner.
 
-The file names request was captured on 2026-10-29 from the same server:
+The file names were captured on 2026-11-06 from the same server, one request per file:
 
 ```bash
-curl -s -u admin:district -G "$B/fileResources" --data-urlencode "filter=id:in:[Yqp5K9rz3I2,KV56VHt4vhw]" -d fields=id,name -d paging=false > $D/file-names.json
+for id in Yqp5K9rz3I2 KV56VHt4vhw; do curl -s -u admin:district "$B/fileResources/$id?fields=id,name"; done | jq -s . > $D/file-names.json
 ```
 
-`file-names.json` is the request a load makes for the names of the files its values hold: with `paging=false` the answer
-has no pager. The seeded non-admin `wl_e2e_reader`, a role with no authorities, gets the same answer (HTTP 200).
+`file-names.json` holds the answers to the requests a load makes for the names of the files its values hold, one per
+file. Listing them (`/fileResources?filter=id:in:[…]`) needs the `ALL` authority on 2.42.7.1, while reading one by id
+does not.
 
 The tracker import reports were captured on 2026-11-03 from the same server (2.42.6), validate-only, as the tracker
 saver sends them: one flat `{ trackedEntities, enrollments, events }` payload of new people, each with an enrolment in

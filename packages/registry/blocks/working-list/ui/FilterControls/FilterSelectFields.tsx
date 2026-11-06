@@ -216,7 +216,7 @@ export const ComboboxField = ({
                 >
                     <ComboboxTrigger
                         id={triggerId}
-                        className="absolute inset-0 flex cursor-pointer items-center rounded-dhis2-sm border-0 bg-transparent pe-1 outline-none"
+                        className="absolute inset-0 flex cursor-pointer items-center rounded-dhis2-sm border-0 bg-transparent pe-1 outline-none forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-solid forced-colors:focus-visible:-outline-offset-2"
                     />
                     {collapsed ? (
                         <span className="pointer-events-none relative flex-1">

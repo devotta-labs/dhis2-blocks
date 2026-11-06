@@ -1,4 +1,5 @@
 import React from 'react'
+import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { Button } from './button'
 import { Checkbox } from './checkbox'
@@ -48,6 +49,17 @@ describe('form controls with more contrast', () => {
             const button = style(screen.getByRole('button').element())
             expect(button.backgroundColor).toBe('rgb(213, 221, 229)')
             expect(button.color).toBe('rgb(74, 87, 104)')
+        }
+    )
+
+    it.each(['default', 'destructive'] as const)(
+        'outline a focused %s button in white over its fill',
+        async (variant) => {
+            const screen = await render(<Button variant={variant}>Go</Button>)
+            await userEvent.tab()
+            const button = screen.getByRole('button').element()
+            expect(document.activeElement).toBe(button)
+            expect(style(button).outlineColor).toBe('rgb(255, 255, 255)')
         }
     )
 })

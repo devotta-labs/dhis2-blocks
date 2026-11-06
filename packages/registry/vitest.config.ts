@@ -64,6 +64,7 @@ const browserProject = {
     resolve,
     optimizeDeps: {
         include: [
+            '@base-ui/react',
             '@base-ui/react/alert-dialog',
             '@base-ui/react/button',
             '@base-ui/react/checkbox',

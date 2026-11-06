@@ -297,6 +297,14 @@ const checkInstall = (workDirectory: string): void => {
         '--color-dhis2-primary',
         'var(--dhis2-primary)'
     )
+    // The role's value must reach :root too, or every colour is unset.
+    if (
+        !declarationValues(emitted, '--dhis2-primary').some(
+            (value) => normalizeCssValue(value) === '#1565c0'
+        )
+    ) {
+        fail(9, ':root does not set --dhis2-primary to #1565c0')
+    }
 
     step('10. Emitted CSS carries the high-contrast block')
     if (

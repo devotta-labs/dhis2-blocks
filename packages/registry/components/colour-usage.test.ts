@@ -54,7 +54,15 @@ const listSources = (directory: string): string[] =>
         .map((entry) => join(directory, String(entry)))
         .filter((path) => SOURCE.test(path) && !SKIPPED.test(path))
 
-const files = ROOTS.flatMap(listSources).sort()
+// Playground canvases are shown to readers as code (`?canvas`), like the examples.
+const CANVAS = /(?<!Lab)Canvas\.tsx$|LabFinder\.tsx$/
+
+const files = [
+    ...ROOTS.flatMap(listSources),
+    ...listSources('apps/docs/src/playground').filter((path) =>
+        CANVAS.test(path)
+    ),
+].sort()
 
 const linesOf = (path: string): string[] =>
     readFileSync(join(REPO_ROOT, path), 'utf8').split('\n')

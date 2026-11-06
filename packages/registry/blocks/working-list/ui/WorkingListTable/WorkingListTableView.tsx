@@ -16,6 +16,10 @@ import { SkeletonBlock } from '../Skeleton'
 import { useWorkingListText } from '../WorkingListText'
 import { WorkingListPagination } from './WorkingListPagination'
 
+/** The column header's sort button. */
+export const SORT_BUTTON_CLASS =
+    'group/sort flex min-h-6 w-full cursor-pointer items-center border-0 bg-transparent p-0 text-left text-[inherit] [font-weight:inherit] outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-dhis2-ring/35 contrast-more:focus-visible:outline-dhis2-ring disabled:cursor-default'
+
 // Reserve the native scrollbar gutter before the columns are known.
 const tableScrollClassName =
     'w-full min-w-0 max-w-full overflow-x-scroll [contain:layout] [overscroll-behavior-inline:contain]'
@@ -261,7 +265,9 @@ export const WorkingListTableView = ({
                                             >
                                                 <button
                                                     type="button"
-                                                    className="group/sort flex min-h-6 w-full cursor-pointer items-center border-0 bg-transparent p-0 text-left text-[inherit] [font-weight:inherit] outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-dhis2-ring/35 disabled:cursor-default"
+                                                    className={
+                                                        SORT_BUTTON_CLASS
+                                                    }
                                                     data-testid={`sort-${header.fieldId}`}
                                                     disabled={
                                                         !header.canSort ||

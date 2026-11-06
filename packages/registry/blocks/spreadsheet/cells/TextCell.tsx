@@ -14,7 +14,7 @@ import { READY_CLASS, useCellMode } from './useCellMode'
 // Borderless until it has focus, then a box. Invalid looks red only while it does not have focus, so the focus ring
 // always shows.
 export const CONTROL_CLASS =
-    'block h-full min-h-9 w-full min-w-0 truncate bg-transparent px-2 text-sm text-dhis2-foreground outline-none focus:bg-dhis2-background focus:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] aria-invalid:not-focus:bg-dhis2-destructive-subtle aria-invalid:not-focus:shadow-[inset_0_0_0_2px_var(--dhis2-destructive-indicator)]'
+    'block h-full min-h-9 w-full min-w-0 truncate bg-transparent px-2 text-sm text-dhis2-foreground outline-none focus:bg-dhis2-background focus:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] aria-invalid:not-focus:bg-dhis2-destructive-subtle aria-invalid:not-focus:shadow-[inset_0_0_0_2px_var(--dhis2-destructive-indicator)] forced-colors:focus:outline-2 forced-colors:focus:outline-solid forced-colors:focus:-outline-offset-2 forced-colors:aria-invalid:not-focus:outline-1 forced-colors:aria-invalid:not-focus:outline-dashed forced-colors:aria-invalid:not-focus:-outline-offset-2'
 export const LOCKED_CLASS = 'bg-dhis2-muted text-dhis2-muted-foreground'
 export const HIDDEN_CLASS = 'bg-dhis2-accent italic'
 

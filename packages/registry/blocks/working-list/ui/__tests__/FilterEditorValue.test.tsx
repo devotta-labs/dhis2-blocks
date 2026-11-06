@@ -76,7 +76,7 @@ describe('filter editor value fields', () => {
         }
     })
 
-    it('greys the label and the description as before', async () => {
+    it('greys the label and the description', async () => {
         const editor = await openEditor(field({ minCharactersToSearch: 3 }))
         const label = editor.getByText('Value', { exact: true }).element()
         const hint = editor.getByText(/Enter at least/).element()

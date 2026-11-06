@@ -75,7 +75,7 @@ export const MultiTextSelect = ({
                         className="absolute inset-0 flex cursor-pointer items-center rounded-dhis2-sm border-0 bg-transparent pe-2 outline-none"
                     />
                     {selected.length === 0 ? (
-                        <span className="pointer-events-none relative flex-1 text-dhis2-grey-600">
+                        <span className="pointer-events-none relative flex-1 text-dhis2-subtle-foreground">
                             {placeholder ?? i18n.t('Any')}
                         </span>
                     ) : (

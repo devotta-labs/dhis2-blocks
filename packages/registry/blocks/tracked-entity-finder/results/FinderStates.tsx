@@ -12,7 +12,7 @@ export type FinderEmptyProps = ComponentPropsWithoutRef<'div'>
 export type FinderTooManyProps = ComponentPropsWithoutRef<'div'>
 export type FinderErrorProps = ComponentPropsWithoutRef<'div'>
 
-const STATE_TEXT = 'flex items-center gap-2 text-sm text-dhis2-grey-700'
+const STATE_TEXT = 'flex items-center gap-2 text-sm text-dhis2-muted-foreground'
 
 /** Shown while a search runs. Children replace "Searching…". */
 export function FinderSearching({

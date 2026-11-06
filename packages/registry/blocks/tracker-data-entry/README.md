@@ -292,10 +292,11 @@ Ctrl+D (Cmd+D) is like typing: it fills any cell that can be edited and never as
   change wins), and any open grid of the program sends them all, its other grids' changes included. One loop per
   browser sends them, oldest first, 100 events at a time: each chunk's events are read, then imported, each request
   within its own minute. Two changes to one cell send only the latest. A chunk that fails keeps the chunks before it
-  saved: refused as a whole, it refuses its events and those after it; otherwise only those are sent again. A change to
-  an event DHIS2 no longer returns is refused ("This event was deleted or you no longer have access to it"). Another
-  tab's loop may send this tab's changes: the cells here still learn what became of them. A cell changed later in
-  another tab shows that tab's value here once it is saved or refused. A status is saved while no tab is sending.
+  saved: refused as a whole, it refuses its own events and the chunks after it are sent next; otherwise it and the
+  chunks after it are sent again. A change to an event DHIS2 no longer returns is refused ("This event was deleted or
+  you no longer have access to it"). Another tab's loop may send this tab's changes: the cells here still learn what
+  became of them. A cell changed later in another tab shows that tab's value here once it is saved or refused. A status
+  is saved while no tab is sending.
 - After a reload, a grid puts back its own unsent changes, and the new rows it adds (same stage, org unit and person)
   that DHIS2 does not hold yet; the program's other changes stay on the device and are sent with the rest.
 - Before every send, and before completing or reopening, the server is asked who is signed in. When it is someone else

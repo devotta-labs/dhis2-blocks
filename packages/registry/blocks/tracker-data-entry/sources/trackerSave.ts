@@ -393,7 +393,8 @@ export const trackerSaver = (
 
         /**
          * Sends the records 100 at a time, one group after another: each read, then imported, each request within
-         * its own limit. A failure keeps the outcomes of the groups before it (`PartlySaved`).
+         * its own limit. A failure keeps the outcomes of the groups before it and names the records of the groups
+         * after it (`PartlySaved`).
          */
         save: ((engine, records, form) =>
             inTurn(async () => {
@@ -408,19 +409,25 @@ export const trackerSaver = (
                 const recordOf = (id: string) =>
                     changed.get(id) ?? form.records.get(id)
                 const outcomes: SaveOutcome[] = []
-                for (const group of groupsOf(records, recordOf)) {
+                const groups = groupsOf(records, recordOf)
+                for (const [at, group] of groups.entries()) {
                     try {
                         outcomes.push(
                             ...(await saveGroup(engine, group, form, recordOf))
                         )
                     } catch (error) {
-                        throw outcomes.length === 0
+                        const unsent = groups
+                            .slice(at + 1)
+                            .flat()
+                            .map(({ key }) => key)
+                        throw outcomes.length === 0 && unsent.length === 0
                             ? error
                             : new PartlySaved(
                                   outcomes,
                                   error instanceof Error
                                       ? error
-                                      : new Error(String(error))
+                                      : new Error(String(error)),
+                                  unsent
                               )
                     }
                 }

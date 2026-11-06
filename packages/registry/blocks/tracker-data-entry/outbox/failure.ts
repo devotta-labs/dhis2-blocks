@@ -1,15 +1,18 @@
 import type { FetchError } from '@dhis2/app-runtime'
 import { z } from 'zod'
+import type { CellKey } from '@/components/spreadsheet'
 import type { SaveOutcome } from './sync'
 
 /**
- * A save that stopped partway: the outcomes of what it finished before `failure` stopped it. The sync loop keeps
- * those, and deals with the rest of the records as it deals with `failure`.
+ * A save that stopped partway: the outcomes of what it finished before `failure` stopped it, and the keys of the
+ * records it never sent. The sync loop keeps those outcomes, leaves the unsent records queued, and deals with the
+ * rest as it deals with `failure`.
  */
 export class PartlySaved extends Error {
     constructor(
         readonly outcomes: ReadonlyArray<SaveOutcome>,
-        readonly failure: Error
+        readonly failure: Error,
+        readonly unsent: ReadonlyArray<CellKey> = []
     ) {
         super(failure.message)
         this.name = 'PartlySaved'

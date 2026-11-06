@@ -296,8 +296,8 @@ row runs them first.
   oldest first, 100 events at a time: each chunk's events are read, then
   imported, each request within its own minute. Two changes to one cell send
   only the latest. A chunk that fails keeps the chunks before it saved: refused
-  as a whole, it refuses its events and those after it; otherwise only those
-  are sent again. A change to an event DHIS2 no longer returns is refused.
+  as a whole, it refuses its own events and the chunks after it are sent next;
+  otherwise it and the chunks after it are sent again. A change to an event DHIS2 no longer returns is refused.
 - Before sending, the server is asked who is signed in. When it is someone
   else, as when another tab signed in (tabs share the session), the form locks
   until the page is reloaded: every cell is read-only and back to what DHIS2

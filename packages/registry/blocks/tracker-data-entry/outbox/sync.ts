@@ -36,7 +36,8 @@ export interface SyncOptions {
      * One call per source key with all its queued and waiting records, oldest first. Throws for network or
      * session failures; a refusal is an outcome. A record it gives no outcome for stays as it was. A
      * `FetchError` for a 403, a 409 or another client error (400 to 499) refuses all the records of the call. A
-     * `PartlySaved` keeps the outcomes it carries, and its failure is about the other records alone.
+     * `PartlySaved` keeps the outcomes it carries, leaves the records it names as unsent queued for the next round,
+     * and its failure is about the other records alone.
      */
     save(
         sourceKey: string,
@@ -174,7 +175,14 @@ export const startSync = ({
                             : new Error(String(error))
                     continue
                 }
-                const answered = new Set(done.map(({ key }) => key))
+                // Only what DHIS2 refused fails; what was never sent goes in the next round.
+                const unsent =
+                    thrown instanceof PartlySaved ? thrown.unsent : []
+                again ||= unsent.length > 0
+                const answered = new Set([
+                    ...done.map(({ key }) => key),
+                    ...unsent,
+                ])
                 outcomes = sent
                     .filter(({ key }) => !answered.has(key))
                     .map((record) => ({

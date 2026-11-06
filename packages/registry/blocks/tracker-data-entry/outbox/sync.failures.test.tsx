@@ -302,6 +302,41 @@ test('a save refused partway keeps what it saved and refuses only the rest', asy
     ])
 })
 
+test('a refusal of the first of three chunks leaves the two never sent queued, and sends them next', async () => {
+    const { outbox, lockName } = await setup()
+    await outbox.putMany([
+        change({ key: 'r1.c1', at: 1 }),
+        change({ key: 'r2.c1', at: 2 }),
+        change({ key: 'r3.c1', at: 3 }),
+    ])
+    const sent: string[][] = []
+    const run = begin(outbox, lockName, async (_, records) => {
+        sent.push(records.map(({ key }) => key))
+        if (sent.length === 1) {
+            throw new PartlySaved(
+                [],
+                fetchError('unknown', 'Payload Too Large (413)', {}),
+                ['r2.c1', 'r3.c1']
+            )
+        }
+        return records.map((record) => answer(record, 'saved'))
+    })
+    await vi.waitFor(() => expect(sent).toHaveLength(2))
+    await vi.waitFor(() => expect(run.statuses.at(-1)).toBe('idle'))
+    expect(sent).toEqual([
+        ['r1.c1', 'r2.c1', 'r3.c1'],
+        ['r2.c1', 'r3.c1'],
+    ])
+    expect(run.outcomes).toMatchObject([
+        { key: 'r1.c1', result: 'failed' },
+        { key: 'r2.c1', result: 'saved' },
+        { key: 'r3.c1', result: 'saved' },
+    ])
+    expect(await outbox.list()).toMatchObject([
+        { key: 'r1.c1', state: 'failed' },
+    ])
+})
+
 test('a refusal leaves a newer change to the same cell queued', async () => {
     const { outbox, lockName } = await setup()
     await outbox.put(change({ value: '5', at: 1 }))

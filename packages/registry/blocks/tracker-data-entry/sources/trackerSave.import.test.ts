@@ -152,12 +152,29 @@ test('a later import refused as a whole keeps what the earlier ones saved; the r
     })
     const grid = await person(rmnchEvents.events, secondImportThrows(refusal))
     const records = newVisits()
-    // The third import is not sent, as the sync loop sends nothing more of a call it refuses.
+    // The third import is not sent; its records are named, so the sync loop leaves them queued.
     await expect(grid.save(...records)).rejects.toMatchObject({
         outcomes: records.slice(0, 100).map(saved),
         failure: refusal,
+        unsent: records.slice(200).map(({ key }) => key),
     })
     expect(grid.mutations).toHaveLength(2)
+})
+
+test('a first import refused as a whole names the records of the imports never sent', async () => {
+    const refusal = fetchError('access', 'Forbidden', { httpStatusCode: 403 })
+    const grid = await person(rmnchEvents.events, async () => {
+        throw refusal
+    })
+    const records = newVisits()
+    const thrown = await grid.save(...records).catch((error: Error) => error)
+    expect(thrown).toBeInstanceOf(PartlySaved)
+    expect(thrown).toMatchObject({
+        outcomes: [],
+        failure: refusal,
+        unsent: records.slice(100).map(({ key }) => key),
+    })
+    expect(grid.mutations).toHaveLength(1)
 })
 
 test('a later import that may pass on a retry keeps what the earlier ones saved', async () => {

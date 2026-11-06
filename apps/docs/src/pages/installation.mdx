@@ -116,3 +116,32 @@ demo database; use IDs from your own instance otherwise. Each
 
 Run the same `add` command again. The CLI asks before it overwrites your
 files, so commit your own changes first and review the diff afterwards.
+
+## Contrast
+
+Blocks follow the contrast the user asks their system for. With "Increase
+contrast" on macOS or a contrast theme on Windows, text, borders, focus rings
+and status colours switch to higher-contrast values. Your app needs no code for this:
+the theme sets each colour as a `--dhis2-<role>` variable and changes it under
+`@media (prefers-contrast: more)`.
+
+Blocks also keep their edges, focus and states in Windows forced colours, where
+the system replaces every colour: menus, popovers and dialogs gain a border,
+and fields and options keep a visible outline.
+
+For your own code next to the blocks, use the same roles, so it changes with
+them:
+
+- Text: `text-dhis2-foreground`, `text-dhis2-muted-foreground`,
+  `text-dhis2-subtle-foreground`.
+- Lines and surfaces: `border-dhis2-border`, `bg-dhis2-background`,
+  `bg-dhis2-muted`.
+- Statuses: `bg-dhis2-<tone>-subtle`, `bg-dhis2-<tone>-muted`,
+  `text-dhis2-<tone>-strong` and `bg-dhis2-<tone>-indicator`, where the tone
+  is `neutral`, `info`, `success`, `warning` or `destructive`.
+- In a style or a chart config, the variable itself, such as
+  `var(--dhis2-info-indicator)`.
+
+Parts that blocks take from `@dhis2/ui`, such as the context selector's bar and
+menus, the calendar date inputs, the org unit tree and the column transfer,
+keep their own colours and do not change with the contrast setting.

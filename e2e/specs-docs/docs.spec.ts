@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 
 /**
@@ -90,5 +91,36 @@ test.describe('documentation catalog', () => {
         await expect(
             page.getByText('add devotta-labs/dhis2-blocks/working-list').first()
         ).toBeVisible()
+    })
+})
+
+/**
+ * The OS contrast setting reaches a built docs example: more contrast swaps the
+ * theme roles, and forced colours keeps the sidebar's current-page bar.
+ */
+test.describe('contrast', () => {
+    const workspace = (page: Page) =>
+        page.getByRole('navigation', { name: 'Workspace navigation' }).first()
+
+    test('the sidebar example uses the high-contrast values', async ({
+        page,
+    }) => {
+        await page.emulateMedia({ contrast: 'more' })
+        await page.goto('/blocks/sidebar')
+        const link = workspace(page).getByRole('link', { name: 'Dashboard' })
+        await expect(link).toHaveCSS('color', 'rgb(251, 252, 253)')
+    })
+
+    test('the sidebar example keeps its current-page bar in forced colours', async ({
+        page,
+    }) => {
+        await page.emulateMedia({ forcedColors: 'active' })
+        await page.goto('/blocks/sidebar')
+        const current = workspace(page).locator('[aria-current="page"]')
+        const [bar, text] = await current.evaluate((element) => [
+            getComputedStyle(element, '::before').backgroundColor,
+            getComputedStyle(element).color,
+        ])
+        expect(bar).toBe(text)
     })
 })

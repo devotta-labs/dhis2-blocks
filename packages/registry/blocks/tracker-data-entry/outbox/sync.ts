@@ -51,7 +51,10 @@ export interface SyncOptions {
 }
 
 export interface SyncHandle {
-    /** Sends what the outbox holds now; a nudge during a round schedules one more round after it. */
+    /**
+     * Sends what the outbox holds now; a nudge during a round schedules one more round after it, and a nudge while it
+     * waits to retry ends the wait.
+     */
     nudge(): void
     /** Ends the loop; settles once a round already in flight has recorded what the server took. */
     stop(): Promise<void>
@@ -246,7 +249,8 @@ export const startSync = ({
                 }
                 if (outcome === 'retry') {
                     report('retrying')
-                    // `stop` wakes it, so stopping never waits out the delay. A failed sleep is a finished wait.
+                    // `stop` and a nudge wake it, so neither stopping nor a new change waits out the delay. A failed sleep is
+                    // a finished wait.
                     await new Promise<void>((resolve) => {
                         wake = resolve
                         void sleep(delay).then(resolve, resolve)
@@ -273,6 +277,7 @@ export const startSync = ({
         }
         if (running) {
             again = true
+            wake?.()
             return
         }
         running = true

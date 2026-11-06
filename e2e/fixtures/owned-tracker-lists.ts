@@ -1,4 +1,4 @@
-import type { Page, Request } from '@playwright/test'
+import type { Page, Route } from '@playwright/test'
 import { z } from 'zod'
 
 const createdList = z.object({ response: z.object({ uid: z.string().min(1) }) })
@@ -9,25 +9,40 @@ export const withOwnedTrackerLists = async (
 ) => {
     const owned = new Set<string>()
     const captures: Promise<PromiseSettledResult<void>[]>[] = []
-    const capture = (request: Request) => {
-        const url = new URL(request.url())
-        if (
-            request.method() !== 'POST' ||
-            !/\/api\/(?:\d+\/)?trackedEntityInstanceFilters$/.test(url.pathname)
-        )
+    const matches = (url: URL) =>
+        /\/api\/(?:\d+\/)?trackedEntityInstanceFilters$/.test(url.pathname)
+    const capture = async (route: Route) => {
+        if (route.request().method() !== 'POST') {
+            await route.fallback()
             return
-        captures.push(
-            Promise.allSettled([
-                request.response().then(async (response) => {
-                    if (!response?.ok()) return
+        }
+        const pending = Promise.allSettled([
+            (async () => {
+                const response = await route.fetch().catch(async () => {
+                    await route.abort()
+                    return null
+                })
+                if (!response) return
+                try {
+                    if (!response.ok()) return
+                    // Chromium may discard response bodies on navigation, so own the UID before delivery.
                     const body = await response.json()
                     const id = createdList.parse(body).response.uid
+                    const url = new URL(route.request().url())
                     url.pathname += `/${id}`
                     url.search = ''
                     owned.add(url.href)
-                }),
-            ])
-        )
+                } finally {
+                    try {
+                        await route.fulfill({ response })
+                    } finally {
+                        await response.dispose()
+                    }
+                }
+            })(),
+        ])
+        captures.push(pending)
+        await pending
     }
     const cleanup = async () => {
         const results: PromiseSettledResult<void>[] = []
@@ -37,7 +52,7 @@ export const withOwnedTrackerLists = async (
             settled += pending.length
             results.push(...(await Promise.all(pending)).flat())
         }
-        page.off('request', capture)
+        await page.unroute(matches, capture)
         const cleanup = await Promise.allSettled(
             [...owned].map(async (url) => {
                 const response = await page.request.delete(url)
@@ -57,7 +72,7 @@ export const withOwnedTrackerLists = async (
                 'Owned tracker list cleanup failed'
             )
     }
-    page.on('request', capture)
+    await page.route(matches, capture)
     try {
         await run()
     } finally {

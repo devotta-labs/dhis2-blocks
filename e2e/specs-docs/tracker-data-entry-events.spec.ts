@@ -62,7 +62,7 @@ const CHRONIC_FOLLOW_UPS = [
 const HIDDEN = /Hidden by rule/
 
 const PersonEventSchema = z.object({
-    occurredAt: z.string(),
+    occurredAt: z.string().optional(),
     dataValues: z.array(DataValueSchema),
 })
 const PersonSchema = z.object({
@@ -108,20 +108,24 @@ const newestValue = (
     field: string
 ) =>
     [...events]
-        .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
+        .sort((a, b) => (b.occurredAt ?? '').localeCompare(a.occurredAt ?? ''))
         .map((event) => valuesOf(event).get(field))
         .find((value) => value !== undefined)
 
 /** An active first visit whose person has no LMP anywhere, so the LMP typed is the one rules read. */
 const visitWithoutLmp = async (request: APIRequestContext) => {
-    return found(
+    const { visit } = found(
         (await registerVisits(request)).find(
-            ({ visit, events }) =>
-                visit.status === 'ACTIVE' &&
+            ({ visit: own, events }) =>
+                own.status === 'ACTIVE' &&
                 newestValue(events, LMP) === undefined
         ),
         'active first visit whose person has no LMP'
-    ).visit
+    )
+    return {
+        ...visit,
+        occurredAt: found(visit.occurredAt, `date of the visit ${visit.event}`),
+    }
 }
 
 /** The grid's request for many people at once: `tracker/enrollments?enrollments=<id>,<id>,…`. */
@@ -316,9 +320,11 @@ test('register: a person whose enrollment DHIS2 leaves out has no rules run, and
     // With no chronic conditions, the follow-ups are hidden while her rules run.
     const { visit } = found(
         (await registerVisits(request)).find(
-            ({ visit: own }) => valuesOf(own).get(CHRONIC_CONDITIONS) !== 'true'
+            ({ visit: own }) =>
+                own.status === 'ACTIVE' &&
+                valuesOf(own).get(CHRONIC_CONDITIONS) !== 'true'
         ),
-        'woman without chronic conditions'
+        'active first visit of a woman without chronic conditions'
     )
     const followUp = cell(page, visit.event, CHRONIC_FOLLOW_UPS[0])
 

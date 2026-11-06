@@ -28,7 +28,8 @@ const EventSchema = z.object({
     orgUnit: z.string(),
     enrollment: z.string().optional(),
     status: z.string(),
-    occurredAt: z.string(),
+    // A scheduled event has no date it took place on.
+    occurredAt: z.string().optional(),
     scheduledAt: z.string().optional(),
     completedAt: z.string().optional(),
     geometry: z.json().optional(),

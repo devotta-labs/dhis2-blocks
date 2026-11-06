@@ -1,0 +1,505 @@
+---
+title: Spreadsheet
+description: A grid of DHIS2-typed cells entered like a spreadsheet, for any data your app saves.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="spreadsheet/targets" />
+
+This example is a grid of yearly targets: one row per organisation unit and one
+column per year, each cell a positive whole number. The organisation units and
+years are placeholders, and a change is not saved anywhere: the example lists
+what the grid hands to `enqueue` under the grid.
+
+Each cell works as a spreadsheet's does. Type to replace a value, press F2 to
+edit it, and use Enter and the arrow keys to save and move. The grid knows
+DHIS2's value types and how each is typed, pasted and shown, and it shows the
+state of each cell: saved, waiting or failed. It knows nothing about what the
+data is or where it is saved.
+
+## Installation
+
+<InstallCommand item="spreadsheet" />
+
+It installs `dhis2-value-types` (what each value type accepts) and
+`dhis2-value-display` (the calendar) with it. The text goes through
+`@dhis2/d2-i18n` as literal `i18n.t` calls, so `d2-app-scripts i18n extract`
+finds every string once the block is in your app's `src`.
+
+## Usage
+
+`Spreadsheet` places the pieces you build where the grid and its cells read
+them; put `SpreadsheetGrid` inside it. It needs the DHIS2 app-runtime provider
+above it, for the data engine.
+
+- `createCellStore(options)` makes the cell store: each cell's value, draft,
+  error and sync state. It checks what is typed against the field, keeps undo,
+  and hands every committed change to `enqueue`.
+- `annotations` is a store the grid only reads: what your logic says about each
+  cell and row. A grid with no logic passes a store that never changes.
+- `tables` are the tables to show: rows, columns, heading rows and the cells
+  that are closed.
+
+```tsx
+import { useMemo } from 'react'
+import {
+    Spreadsheet,
+    SpreadsheetGrid,
+    createCellStore,
+    type AnnotationsState,
+    type GridTable,
+} from '@/components/spreadsheet'
+
+const targets: GridTable = {
+    id: 'targets',
+    title: 'Yearly targets',
+    rows: [{ id: 'OrgUnitA01', label: 'Hospital A' }],
+    columns: [{ id: '2026', label: '2026' }],
+    headerRows: [[{ id: '2026', label: '2026', span: 1 }]],
+    closed: new Map(),
+}
+
+const none: AnnotationsState = {
+    cells: {},
+    rowMessages: new Map(),
+    rowNotes: new Map(),
+}
+const annotations = {
+    getState: () => none,
+    getInitialState: () => none,
+    subscribe: () => () => {},
+}
+
+const settings = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
+
+export const Targets = () => {
+    const cells = useMemo(
+        () =>
+            createCellStore({
+                fields: new Map([
+                    ['target', { valueType: 'INTEGER_POSITIVE' }],
+                ]),
+                fieldIdOf: () => 'target',
+                values: new Map(),
+                settings,
+                annotations, // the store you pass to `<Spreadsheet annotations>` below
+                enqueue: (key, value, base) => save(key, value, base),
+            }),
+        []
+    )
+
+    return (
+        <Spreadsheet
+            cells={cells}
+            annotations={annotations}
+            tables={[targets]}
+            settings={settings}
+        >
+            <SpreadsheetGrid />
+        </Spreadsheet>
+    )
+}
+```
+
+Make the store once, with `useMemo` or as a module constant: a new store starts
+the grid again. `save` is yours. When it has sent values, tell the store what
+became of them with `markSync(sent, sync, reason?)`; put back values your code
+holds or loads with `restore(changes)`. Both are on the store's state, with
+`undo`, `commit` and `commitMany`.
+
+## Cell keys and fields
+
+A cell is named by its key, `<row id>.<column id>`, which `cellKey(row.id,
+column.id)` makes; a row id contains no dot. Two things about a key are yours
+to change.
+
+- **Which key a cell has.** `keyOf(row, column)` on `Spreadsheet` says it. The
+  default is `cellKey(row.id, column.id)`; pass your own where one row's cells
+  save to different records.
+- **Which field a key has.** A cell's field, and so its value type, comes from
+  its key, not its column: `fields` holds the fields by id, and
+  `fieldIdOf(key)` on `createCellStore` picks the id. It defaults to the part
+  after the dot. A grid whose rows are data elements and whose columns are
+  category option combinations picks the data element, so the value type can
+  change down a column:
+
+```ts
+createCellStore({
+    fields, // data element id → { valueType, options? }
+    fieldIdOf: (key) => key.slice(0, key.indexOf('.')),
+    values,
+    settings,
+    annotations,
+    enqueue: (key, value) => postDataValue(key, value),
+})
+```
+
+## Annotations
+
+`annotations` is where program rules, validation rules or your own logic say
+something about a cell or a row. The grid only reads it, so pass any store with
+`getState`, `getInitialState` and `subscribe` whose state has at least this
+shape; your own richer store works as it is.
+
+```ts
+type Tone = 'error' | 'warning'
+
+interface CellMessage {
+    tone: Tone
+    text: string
+}
+
+interface CellAnnotations {
+    readOnly?: string // why the cell cannot be edited
+    hiddenBy?: string // why the cell is hidden
+    required: boolean
+    messages: ReadonlyArray<CellMessage>
+    hiddenOptions?: ReadonlySet<string> // option codes the cell does not offer
+}
+
+interface AnnotationsState {
+    cells: Partial<Record<CellKey, CellAnnotations>>
+    // row id → messages without a cell, shown in the row's header
+    rowMessages: ReadonlyMap<string, ReadonlyArray<CellMessage>>
+    // row id → notes, behind a marker in the row's header
+    rowNotes: ReadonlyMap<string, ReadonlyArray<string>>
+}
+```
+
+An error shows in red and a warning in yellow, on the cell, or in the row's
+header for a row's messages. Value-type errors come from the cell store and
+required from `CellAnnotations.required`, so both show with an annotations
+store that never changes. A row's
+messages and notes are stored under the row's keys: `[row.id]` unless
+`rowKeysOf(row)` on `Spreadsheet` names more. The header shows the messages of
+all of them, once each. A row's notes show as a marker with their count
+("Note", "Notes: 2") that opens them as plain text, line breaks kept, in a
+popover, so the row stays one line. The marker is out of the Tab order, and the
+row header's description holds the notes for screen readers.
+
+## Rows and the grid around them
+
+- `addRow` is a map by table id of `{ label, add() }`. A table in it is followed
+  by a button with that label ("Add event", "Add person") that runs `add`, as
+  does Ctrl+Enter in its cells. The grid then focuses the new row's first open
+  cell. Without it no table takes rows.
+- `RowLabel` is a component, `({ row }) => …`, that names a row in its header.
+  By default a row is named by the values of its `labelFrom` cells, else its
+  `label`.
+- `RowBadge` is a component, `({ rowId }) => …`, shown beside the row's label.
+- `GridFooter` is a component, `({ skipTargetId }) => …`, rendered once after
+  every table and the "Skip past the grid" target. Hand focus to
+  `skipTargetId` when what it holds goes away.
+- `bulkColumn(column)` says whether the column's cells take row and column
+  actions; every column by default. See [Bulk actions](#bulk-actions).
+- `confirmBulk(keys)` is asked before a bulk action writes to these cells. It
+  returns `{ title, body, confirm }` for a dialog that asks the person first,
+  or `undefined` to write at once.
+- `orgUnitNames` and `fileNames` are stores of names by id, for org unit and
+  file cells. Each has a store of its own by default.
+- `offline` says the server cannot be reached now, so files cannot be uploaded.
+- `fileUrl(key, image)` says where the server serves the file a cell's saved
+  value names, `image` for an image cell. Without it, or without an address,
+  file and image cells show the file's name only: no preview, no **Download**.
+- `idScope` starts every DOM id of the grid; give two grids on one page each
+  their own, or take the one `Spreadsheet` makes.
+- `announcer`, made with `createAnnouncer()`, is the live region's announcer.
+  Pass one when code outside the grid says outcomes through it too; below
+  `Spreadsheet`, `useAnnounce()` gives `announce`.
+
+A table draws only the rows near its view, so a register of hundreds of rows
+stays quick to type in. The table's `aria-rowcount` and each row's
+`aria-rowindex` tell screen readers where the drawn rows sit. To move focus to a
+cell from your own code, use `useFocusCell()`: it draws the cell's row first
+when the table has scrolled past it. `document.getElementById(cellDomId(…))`
+finds only cells that are drawn.
+
+## Bulk actions
+
+One value or one row can fill many cells at once. Every action is one write
+through the same path as typing and paste, so it is one undo step (Ctrl+Z,
+Cmd+Z on a Mac), and the rules re-run on the rows it touched.
+
+- **Row menu.** The **Row actions** button in the last column, which stays in
+  view as the table scrolls, opens **Apply to next row**, **Apply to all rows
+  below** and **Clear row**. The last row offers only **Clear row**. A row copy
+  carries the row's values to the same columns of the target rows, leaving
+  out values hidden by a rule.
+- **Column menu.** The **Column actions** button in a column's header opens
+  **Apply value to all column cells** and **Clear all column cells**. Apply
+  opens a popover with the column's own control, an **Overwrite existing
+  values** checkbox, a preview, and **Apply** and **Cancel**. Apply saves text
+  still being typed and waits for a valid value. A column whose cells do not all share one field, or that
+  `bulkColumn` leaves out, has no column button. **Apply value to all column
+  cells** is not offered for kinds the grid cannot type into (file and image
+  columns, and others a paste refuses, unless a replacement control edits
+  them); **Clear all column cells** still is.
+- **Context menu.** Right-click a cell, or press Shift+F10, the Menu key or
+  Ctrl+Shift+\\ (Cmd+Shift+\\ on a Mac) on it, for one menu with a **Row**
+  and a **Column** group. The buttons are out of the Tab order and are not part
+  of the grid, so the arrow keys never reach them.
+- **Ctrl+D (Cmd+D).** On a cell, types the value of the cell above it in the
+  same table, replacing what is there. A value its type refuses stays in the
+  cell with its error, as typing does. With no row above, nothing in the cell
+  above (or a hidden or closed cell above), or a cell that cannot be edited, it says "Nothing above to copy." or
+  the cell's own reason. The browser's shortcut is left alone unless the grid
+  handled the key.
+
+An action never overwrites by default. A cell is empty with no value and no
+draft; one that is not is left alone unless **Overwrite existing values** is
+ticked, and a clear always overwrites. Cells that cannot be edited are skipped
+and counted under their reason: closed, read-only, hidden by a rule, a kind
+that cannot be filled ("Edit this field in its own form"), or an option the
+cell does not offer. The preview ("Changes 12 cells. 3 already have a value. 2
+skipped: Completed.") and the summary said afterwards ("Cells changed: 12. 2
+skipped: Completed.", with the most common reason) come from the same plan as
+the write.
+
+```ts
+bulkColumn?(column: C): boolean // default: every column
+confirmBulk?(keys: ReadonlyArray<CellKey>): { title: string; body: string; confirm: string } | undefined
+```
+
+`confirmBulk` is asked with the cells a bulk action would write. A result opens
+a dialog with that title and body, a confirm button and **Cancel** before
+anything is written.
+
+## Typing
+
+Typing replaces the value, F2 edits it, Enter and the arrow keys save and
+move, Tab moves with the page, and Escape puts the value back. Left and Right
+move the way they point, in a right-to-left page too. A block copied from a
+spreadsheet pastes from the focused cell, skipping cells that cannot take it,
+and Ctrl+Z (Cmd+Z on a Mac) undoes the last change. In a table with an add-row
+button, Ctrl+Enter (Cmd+Enter on a Mac) saves what was typed, adds a row and
+moves to its first cell; text that is not a value stays to be fixed, and no
+row is added. In an option cell, typing
+lists the matches and Enter or Tab picks the highlighted one; text that is
+emptied highlights none, so Enter or Tab clears the cell. Space, F4 or Alt+↓
+lists every option. A Yes/No field is an option cell with Yes and No, except
+that `y`, `n` and Delete set it at once. Delete clears a checkbox.
+
+Values are checked against their value type as they are typed. A value its
+type refuses stays in the cell with its error and is not saved; nothing typed
+is lost. Dates are typed and shown in the system calendar and date format, and
+an empty date cell says the format.
+
+## Org unit and username cells
+
+Org unit and username cells search DHIS2 as they are typed in, and list what
+it finds under the cell: org units in the user's search scope, by name, code
+or id, each with its path; users through DHIS2's user lookup, each with the
+user's name and username. A search starts at two characters, once typing
+stops, and highlights the first result; ↑ and ↓ move the highlight, and Enter,
+Tab or a click picks it. Only a picked result is saved: other typing is
+dropped when the cell is left, and emptied text clears the cell. An org unit
+cell shows the org unit's name, from the `orgUnitNames` store you pass, and a
+pick shows its name at once. A pasted block fills org unit cells and skips username cells, which
+DHIS2 checks as they are typed.
+
+## Pop-up editors
+
+`LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `FILE_RESOURCE` and `IMAGE`
+show their value as DHIS2 displays it
+and are edited in a small editor, a dialog named "Edit …" that opens under the
+cell. Enter, F2, F4, Alt+↓, a click on the selected cell or a double-click
+opens it, and so does typing in a long text cell, starting from what was
+typed. Tab and Shift+Tab stay inside the editor, and the
+cell's notes hide while it is open.
+
+Escape or **Cancel** closes the editor without saving. **Save** saves through
+the cell's `commit` and returns to the cell, where the next Enter moves on; in
+long text, age and coordinate, Ctrl+Enter (⌘+Enter on a Mac)
+saves too. A press outside the editor, or focus moved out of it, saves what
+the editor holds. What it cannot save stays in the cell as refused typing
+does, as its draft with the problem: a long text as typed, a coordinate as
+`lat, lng`, and an age as its date of birth or its years, months and days.
+Escape on the cell drops it, and the editor opens again on the stored value.
+Annotations that lock or hide the cell while its editor is open closes it unsaved
+and says why. A block pasted from a spreadsheet fills pop-up cells like any
+cell, except files and images.
+
+- **Long text** opens a text area: Enter adds a line, and a field mask is
+  checked on save.
+- **Multi-select** opens a search over checkboxes. The choice is saved as the
+  option codes in option-set order, joined by commas, and **Clear all** saves no
+  value. Options hidden by annotations are not offered, unless the value holds one, which
+  can still be unchecked.
+- **Age** opens the date of birth, in the system calendar and date format, with
+  years, months and days beside it: typing in one fills the others. It is
+  stored as the date of birth, and one in the future is refused, typed or
+  pasted.
+- **Coordinate** opens latitude and longitude fields, with no map and no
+  location from the device, and is stored as `[lng,lat]`. It is pasted as
+  `lat, lng`, or as `[lng,lat]` with brackets.
+- **File and image** offer **Choose a file** (**Choose an image**) and, when
+  the cell has a value, **Remove**. A chosen file is uploaded to DHIS2 at once,
+  since a file cannot wait on the device, and its id is then saved to the cell
+  like any value. While it uploads the editor says "Uploading …", and Cancel or
+  Escape stops the upload. A failed upload keeps the value and says why;
+  offline, the editor says "Connect to the internet to upload files". A saved
+  file shows its name and **Download**, and an image a small preview, both
+  from the address `fileUrl` gives.
+
+A search starts at two characters, once typing stops, and highlights the first
+result: ↑ and ↓ move the highlight, and Enter or a click saves a result. Each
+answer is announced ("Results: 2", or that none was found), and a failed search
+says "You are offline" or "Could not search. Try again.".
+
+## Replace a control
+
+`overrides` replaces the control a cell uses, for a value type or for one field. A
+field's control wins over its value type's. A replacement reads its cell with
+`useCell` and saves what was typed with `commit`, which goes through the same
+store as the default controls: the text is checked against the field, a
+value that has not changed writes nothing, and a change goes to `enqueue`.
+
+```tsx
+import {
+    Spreadsheet,
+    SpreadsheetGrid,
+    useCell,
+    type CellComponent,
+} from '@/components/spreadsheet'
+
+const Notes: CellComponent = ({
+    id,
+    cellKey,
+    labelledBy,
+    aria,
+    readOnly,
+    hidden,
+}) => {
+    const { value, draft, commit } = useCell(cellKey)
+
+    return (
+        <textarea
+            // Starts again when the value changes elsewhere, such as an undo,
+            // or when annotations hide the cell.
+            key={`${hidden}:${value ?? ''}`}
+            id={id}
+            aria-labelledby={labelledBy}
+            {...aria}
+            defaultValue={hidden ? 'Hidden' : (draft ?? value)}
+            readOnly={readOnly !== undefined}
+            onBlur={(event) => {
+                if (readOnly === undefined) {
+                    commit(event.target.value)
+                }
+            }}
+        />
+    )
+}
+
+// A module constant: a new object renders every cell again.
+const overrides = { valueTypes: { LONG_TEXT: Notes } }
+
+// `cells`, `annotations`, `tables` and `settings` as in "Usage".
+export const NotesGrid = () => (
+    <Spreadsheet
+        cells={cells}
+        annotations={annotations}
+        tables={tables}
+        settings={settings}
+        overrides={overrides}
+    >
+        <SpreadsheetGrid />
+    </Spreadsheet>
+)
+```
+
+The control gets `readOnly` (why it cannot be edited, such as a lock from your
+annotations), `hidden` (annotations hide it, so show that
+instead of the value), `id` and `aria`. Put `id` on the one element that takes
+focus: the grid's focus and arrow keys find a cell by it. A block that composes the grid finds a cell the same way, with `cellDomId(idScope, cellKey)`. Spread
+`aria` on the same element.
+
+`Cell` draws the cell's notes around every control, replacements included: why
+it cannot be edited, its errors and warnings, and whether it is saved, with the
+required marker and the sync marker. The notes show while focus is in the cell,
+and Escape hides them unless the control calls `preventDefault` on it.
+`aria-describedby` names the notes, and `aria-invalid` and `aria-required` say
+whether the cell has an error and needs a value. Paste and Ctrl+Z belong to the
+grid only in the default controls: a replacement keeps its own, and a block
+pasted from the cells around it still lands in it. The default controls give
+value types this block does not know, and pop-up types without an editor, a
+read-only reason of their own ("Edit this field in its own form"); a
+replacement is not given it, and is how you edit them in the grid.
+
+`commit` returns `'queued'` when the value changed, `'unchanged'` when it did
+not, and `'invalid'` when the field's type refuses it, or the value adds an option the annotations hide. An invalid
+text stays as the cell's `draft` with its `error`, and nothing is saved. A person's
+change to a cell whose annotations lock or hide it is `'unchanged'`: nothing is saved and no draft is kept. To keep a
+default control's editing, render it from `cells` inside your control, with
+the props your control was given, such as `<cells.text {...props} />`. A
+default control reads its cell from the `Cell` around it, so it works only
+inside a `Cell`.
+
+## Saving
+
+The grid saves nothing itself. A change that passes the field's checks goes to
+`enqueue(key, value, base)`: `value` is what was typed (`null` for a cleared
+cell) and `base` is what the cell held when it was loaded or last confirmed.
+Your code sends it, then reports back through the store:
+
+- `markSync(sent, sync, reason?)` records what became of values it sent: `saved`,
+  `waiting` or `failed` (with `reason` shown on the cell). A cell changed since
+  keeps its newer change's state.
+- `restore(changes)` puts changes your code still holds, or values a page loads,
+  on their cells. Nothing is enqueued.
+- `undo()` reverts the last change a person made, as new changes, which go
+  to `enqueue` as well.
+
+`createCellStore` also takes `locked(key)`, which says a cell's record cannot be
+changed.
+
+## Boundaries
+
+- The grid is DHIS2-typed: a cell's field has a DHIS2 value type, and its value
+  is stored as DHIS2 stores it.
+- File cells upload through `POST /api/fileResources` with the app-runtime's data
+  engine. Where a saved file is served from is yours to say, with `fileUrl`.
+- A form is not loaded for you: the grid shows the tables it is given. Loading,
+  sending, offline handling and completion are the job of the block that
+  composes it, such as `tracker-data-entry`.
+- A grid with a table of one key twice, from `keyOf`, throws: two cells would
+  save to one place.
+
+## API reference
+
+### Spreadsheet
+
+- `cells: StoreApi<CellStoreState>` — **required.** From `createCellStore`.
+- `annotations` — **required.** A read-only store of `AnnotationsState`.
+- `tables: GridTable[]` — **required.**
+- `settings: ValueSettings` — **required.** The system calendar and date format.
+- `keyOf?(row, column): CellKey`, `rowKeysOf?(row): string[]`
+- `idScope?: string`, `overrides?: CellOverrides`, `offline?: boolean`
+- `fileUrl?(key, image): string | undefined`
+- `addRow?`, `orgUnitNames?`, `fileNames?`, `announcer?`
+- `bulkColumn?(column): boolean`, `confirmBulk?(keys)`
+- `RowLabel?`, `RowBadge?`, `GridFooter?`
+
+### SpreadsheetGrid
+
+- `tableId?: string` — show one of the tables. Without it, every table.
+- `className?: string`
+
+### Hooks and helpers
+
+- `useCell(cellKey)` — one cell's value, draft, error, sync state and
+  annotations, and `commit(text)` to save it.
+- `useRowCells(keys)` — the states and annotations of a row's cells, in the order
+  of `keys`.
+- `useAnnounce()` — says an outcome in the grid's polite live region.
+- `useFocusCell()` — focuses a cell by its key, drawing its row first when the
+  table has scrolled past it.
+- `Cell({ cellKey, field, labelledBy, move })` and `cells` — one bound control
+  with its notes and markers, and the default control for each kind of field, for
+  layouts of your own that do not use `SpreadsheetGrid`.
+- `cellKey`, `indexCells`, `cellDomId`, `rowHeaderDomId`, `typingIn`, `nameFrom`
+  and `formatCount` — what a block that composes the grid needs to find cells
+  and name them.
+- `createAnnouncer()` — an announcer to pass as `announcer`.

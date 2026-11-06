@@ -64,11 +64,13 @@ const browserProject = {
             '@dhis2/app-runtime',
             '@dhis2/rule-engine',
             '@dhis2/ui-icons',
+            '@tanstack/react-virtual',
             '@tanstack/react-query',
             'better-result',
             'class-variance-authority',
             'vitest-browser-react',
             'zod',
+            'zustand/react/shallow',
         ],
     },
 }
@@ -95,6 +97,7 @@ export default defineConfig({
                     name: 'node',
                     environment: 'node',
                     include: ['{components,blocks}/**/*.test.ts'],
+                    setupFiles: ['./test/node.ts'],
                 },
             },
             {

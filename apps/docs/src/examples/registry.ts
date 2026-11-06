@@ -40,6 +40,7 @@ import timelineCaseHistorySource from './timeline/TimelineCaseHistory.tsx?raw'
 import timelineEntryPartsSource from './timeline/TimelineEntryParts.tsx?raw'
 import timelineOwnDataSource from './timeline/TimelineOwnData.tsx?raw'
 import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
+import spreadsheetTargetsSource from './spreadsheet/TargetsGrid.tsx?raw'
 import finderCustomRowsSource from './tracked-entity-finder/CustomRows.tsx?raw'
 import finderFindPersonSource from './tracked-entity-finder/FindPerson.tsx?raw'
 import finderProgramPickerSource from './tracked-entity-finder/ProgramPicker.tsx?raw'
@@ -187,6 +188,14 @@ const examples = [
         ),
         source: contextSelectorStatesSource,
         minHeight: 340,
+    },
+    {
+        slug: 'spreadsheet/targets',
+        title: 'Yearly targets for a few organisation units',
+        live: true,
+        Component: lazy(() => import('./spreadsheet/TargetsGrid')),
+        source: spreadsheetTargetsSource,
+        minHeight: 300,
     },
     {
         slug: 'tracked-entity-finder/find-person',

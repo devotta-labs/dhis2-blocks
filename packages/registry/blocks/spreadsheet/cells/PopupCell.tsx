@@ -360,7 +360,7 @@ export const PopupCell = memo(function PopupCell({
                         onFocusCapture={(event) => {
                             inside.current = event.nativeEvent
                         }}
-                        className="w-max max-w-[min(30rem,90vw)] min-w-(--anchor-width) gap-3 rounded-dhis2-sm border border-dhis2-grey-200 p-3"
+                        className="w-max max-w-[min(30rem,90vw)] min-w-(--anchor-width) gap-3 rounded-dhis2-sm border border-dhis2-border p-3"
                     >
                         <Editor
                             field={field}

@@ -109,7 +109,9 @@ export const MultiSelectEditor = ({
                 className="h-(--dhis2-field-height-dense)"
             />
             {found.codes.length === 0 ? (
-                <p className="text-dhis2-grey-700">{i18n.t('No matches')}</p>
+                <p className="text-dhis2-muted-foreground">
+                    {i18n.t('No matches')}
+                </p>
             ) : (
                 <div
                     role="group"
@@ -130,7 +132,7 @@ export const MultiSelectEditor = ({
                 </div>
             )}
             {count === '' ? null : (
-                <p className="text-xs text-dhis2-grey-700">{count}</p>
+                <p className="text-xs text-dhis2-muted-foreground">{count}</p>
             )}
             <EditorButtons
                 save={() => save(choice(selected).value)}

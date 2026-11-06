@@ -77,12 +77,12 @@ export const LongTextEditor = ({
                 <p
                     id={problemId}
                     role="alert"
-                    className="text-xs text-dhis2-red-700"
+                    className="text-xs text-dhis2-destructive"
                 >
                     {problem}
                 </p>
             )}
-            <p id={hintId} className="text-xs text-dhis2-grey-700">
+            <p id={hintId} className="text-xs text-dhis2-muted-foreground">
                 {i18n.t('Ctrl+Enter or ⌘+Enter saves')}
             </p>
             <EditorButtons save={commit} cancel={cancel} />

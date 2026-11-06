@@ -93,10 +93,10 @@ export const describeCell = (
 // A quiet ring while sending, a solid dot once saved on this device, a red square when refused: told apart by shape,
 // not only colour.
 const MARKERS = new Map<SyncState, string>([
-    ['sending', 'rounded-full border-2 border-dhis2-grey-600'],
-    ['queued', 'rounded-full bg-dhis2-blue-700'],
-    ['waiting', 'rounded-full bg-dhis2-blue-700'],
-    ['failed', 'bg-dhis2-red-600'],
+    ['sending', 'rounded-full border-2 border-dhis2-neutral-indicator'],
+    ['queued', 'rounded-full bg-dhis2-primary'],
+    ['waiting', 'rounded-full bg-dhis2-primary'],
+    ['failed', 'bg-dhis2-destructive-indicator'],
 ])
 
 interface BoundCell {
@@ -129,16 +129,20 @@ export const useCellContext = (): BoundCell => {
 export const POPOVER_CLASS =
     'absolute start-0 top-full supports-[anchor-name:--a]:fixed supports-[anchor-name:--a]:[position-anchor:--data-entry-cell] supports-[anchor-name:--a]:[top:anchor(bottom)] supports-[anchor-name:--a]:[inset-inline-start:anchor(start)] supports-[anchor-name:--a]:[position-try-fallbacks:flip-block,flip-inline,flip-block_flip-inline]'
 
-const NOTE_TONES = {
-    error: 'border-dhis2-red-300',
-    warning: 'border-dhis2-yellow-300',
-    info: 'border-dhis2-grey-500',
+export const NOTE_TONES = {
+    error: 'border-dhis2-destructive-indicator',
+    warning: 'border-dhis2-warning-indicator',
+    info: 'border-dhis2-neutral-indicator',
 } satisfies Record<Tone, string>
 
 /**
  * What a cell shows besides its value: the required marker, whether it is saved, an amber outline for a warning, and
  * the notes while focus is in the cell (until Escape hides them). It sits after the control, in `Cell`'s `group/cell`.
  */
+/** The notes shown under a focused cell. */
+export const NOTES_POPUP_CLASS =
+    'pointer-events-none z-40 hidden w-max max-w-72 flex-col gap-0.5 rounded-dhis2-sm border border-dhis2-border bg-dhis2-popover px-2 py-1 text-xs text-dhis2-popover-foreground shadow-dhis2-popover'
+
 export const CellStatus = ({
     view,
     notes,
@@ -158,7 +162,7 @@ export const CellStatus = ({
             {view.effects.required ? (
                 <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute start-0.5 top-0 text-xs text-dhis2-red-700"
+                    className="pointer-events-none absolute start-0.5 top-0 text-xs text-dhis2-destructive"
                 >
                     *
                 </span>
@@ -175,14 +179,14 @@ export const CellStatus = ({
             {warned ? (
                 <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_2px_var(--color-dhis2-yellow-700)] group-focus-within/cell:hidden"
+                    className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_2px_var(--dhis2-warning-indicator)] group-focus-within/cell:hidden"
                 />
             ) : null}
             {notes.length > 0 ? (
                 <span
                     className={cn(
                         POPOVER_CLASS,
-                        'pointer-events-none z-40 hidden w-max max-w-72 flex-col gap-0.5 rounded-dhis2-sm bg-dhis2-grey-900 px-2 py-1 text-xs text-white',
+                        NOTES_POPUP_CLASS,
                         !dismissed && 'group-focus-within/cell:flex',
                         // An open editor covers the cell's place below it.
                         'group-has-[[role=dialog]]/cell:hidden'

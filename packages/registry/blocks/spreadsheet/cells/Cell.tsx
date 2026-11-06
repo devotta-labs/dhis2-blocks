@@ -22,7 +22,7 @@ import { TextCell } from './TextCell'
 // A cell with no control: greyed, skipped by the arrows, its reason read out. Positioned, so the hidden reason stays
 // inside the grid's scroll box instead of widening the page.
 const ClosedCell = ({ reason }: { reason: string }) => (
-    <div className="relative h-full min-h-9 bg-dhis2-grey-200">
+    <div className="relative h-full min-h-9 bg-dhis2-accent">
         <span className="sr-only">{reason}</span>
     </div>
 )

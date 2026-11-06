@@ -2066,6 +2066,11 @@
                     "target": "@components/tracker-data-entry/provider/useRuleEffects.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/useServerEngine.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/useServerEngine.ts"
+                },
+                {
                     "path": "packages/registry/blocks/tracker-data-entry/register/compileLayout.ts",
                     "type": "registry:file",
                     "target": "@components/tracker-data-entry/register/compileLayout.ts"

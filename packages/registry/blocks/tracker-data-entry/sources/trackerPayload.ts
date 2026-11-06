@@ -32,7 +32,7 @@ export interface HeldRecords {
  */
 export type ScheduledEvents = (
     enrollment: EnrollmentRecord,
-    enrolledAt: string,
+    dates: { enrolledAt: string; occurredAt?: string },
     slotEvents: ReadonlyMap<string, string>
 ) => unknown[]
 
@@ -403,6 +403,7 @@ export const buildImport = (
             wait(id, reason)
             continue
         }
+        const occurredAt = typedIn(id, INCIDENT_DATE)
         enrollments.push({
             enrollment: id,
             program: enrollment.programId,
@@ -410,7 +411,7 @@ export const buildImport = (
             orgUnit: enrollment.orgUnitId,
             status: enrollment.status,
             enrolledAt,
-            occurredAt: typedIn(id, INCIDENT_DATE) ?? enrolledAt,
+            occurredAt: occurredAt ?? enrolledAt,
         })
         objects.set(id, {
             kind: 'enrollment',
@@ -428,8 +429,11 @@ export const buildImport = (
             })
         )
         scheduled.push(
-            ...(extra.scheduledEvents?.(enrollment, enrolledAt, slotEvents) ??
-                [])
+            ...(extra.scheduledEvents?.(
+                enrollment,
+                { enrolledAt, occurredAt },
+                slotEvents
+            ) ?? [])
         )
     }
 

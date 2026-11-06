@@ -339,8 +339,8 @@ test('a new enrolment’s scheduled events go in its import, once each', () => {
     const asked: unknown[] = []
     const { payload } = buildImport(typed(ROW), ROW_FORM, NOTHING_HELD, {
         ...CONTEXT,
-        scheduledEvents: (enrollment, enrolledAt, slotEvents) => {
-            asked.push([enrollment, enrolledAt, slotEvents])
+        scheduledEvents: (enrollment, dates, slotEvents) => {
+            asked.push([enrollment, dates, slotEvents])
             return [
                 scheduled(enrollment, SECOND_VISIT, ROW.anc2.id),
                 scheduled(enrollment, 'bbKtnxRZKEP', 'EvtPostpar1'),
@@ -351,7 +351,7 @@ test('a new enrolment’s scheduled events go in its import, once each', () => {
     expect(asked).toEqual([
         [
             ROW.enrollment,
-            '2026-10-05',
+            { enrolledAt: '2026-10-05', occurredAt: undefined },
             new Map([
                 ['anc1', ROW.anc1.id],
                 ['anc2#1', ROW.anc2.id],

@@ -286,12 +286,12 @@ const ANC_LAYOUT: RegisterLayout = {
 }
 const ancRegister = () =>
     immunisationRegister({ programId: RMNCH, layout: ANC_LAYOUT })
-const ancEngine = () =>
-    engineFor({
-        program: rmnch,
-        enrollments: { enrollments: [] },
-        reserved: [{ value: '8350217746' }, { value: '8350217747' }],
-    })
+const ancAnswers = {
+    program: rmnch,
+    enrollments: { enrollments: [] },
+    reserved: [{ value: '8350217746' }, { value: '8350217747' }],
+}
+const ancEngine = () => engineFor(ancAnswers)
 
 describe('new rows', () => {
     test('a new row holds a person, an enrolment and one event per slot, with reserved values', async () => {
@@ -387,9 +387,10 @@ describe('new rows', () => {
     const savedRow = async (
         source = ancRegister(),
         saving = source,
-        extra: (made: NewRow) => OutboxRecord[] = () => []
+        extra: (made: NewRow) => OutboxRecord[] = () => [],
+        program: typeof rmnch = rmnch
     ) => {
-        const fake = ancEngine()
+        const fake = engineFor({ ...ancAnswers, program })
         await source.load(fake.engine)
         const form = await saving.load(fake.engine)
         const made = source.newRow?.(RMNCH)
@@ -454,6 +455,46 @@ describe('new rows', () => {
                 status: 'SCHEDULE',
                 scheduledAt: '2026-10-20',
                 occurredAt: '2026-10-20',
+            }),
+        ])
+    })
+
+    test('a stage dated from the incident date is scheduled and reported from the typed incident date', async () => {
+        const program = {
+            ...rmnch,
+            displayIncidentDate: true,
+            programStages: rmnch.programStages.map((stage) =>
+                stage.id === FIRST_VISIT
+                    ? {
+                          ...stage,
+                          openAfterEnrollment: false,
+                          minDaysFromStart: 7,
+                          reportDateToUse: 'incidentDate',
+                      }
+                    : stage
+            ),
+        }
+        const layout = {
+            columns: [
+                ...ANC_LAYOUT.columns.filter(
+                    (column) => !('field' in column && 'stage' in column.field)
+                ),
+                { field: { enrollment: 'occurredAt' as const } },
+            ],
+        }
+        const register = immunisationRegister({ programId: RMNCH, layout })
+        const { events } = await savedRow(
+            register,
+            register,
+            (row) => [edit(row.records[1], 'occurredAt', '2026-10-10')],
+            program
+        )
+        expect(events).toEqual([
+            expect.objectContaining({
+                programStage: FIRST_VISIT,
+                status: 'SCHEDULE',
+                scheduledAt: '2026-10-17',
+                occurredAt: '2026-10-10',
             }),
         ])
     })

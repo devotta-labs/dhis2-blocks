@@ -176,7 +176,7 @@ export const registerSource = (
 
     const scheduledEvents: ScheduledEvents = (
         enrollment,
-        enrolledAt,
+        { enrolledAt, occurredAt },
         slotEvents
     ) => {
         if (loaded === undefined) {
@@ -185,10 +185,12 @@ export const registerSource = (
         const { metadata, compiled, calendar } = loaded
         let due: ReturnType<typeof scheduledEventsFor>
         try {
-            // shortcut: dated from the enrolment date; Capture uses a typed incident date, which this callback is not given.
             due = scheduledEventsFor(
                 metadata,
-                { enrolledAt: enrolledAt.slice(0, 10) },
+                {
+                    enrolledAt: enrolledAt.slice(0, 10),
+                    occurredAt: occurredAt?.slice(0, 10),
+                },
                 parseDhis2Calendar(calendar)
             )
         } catch {

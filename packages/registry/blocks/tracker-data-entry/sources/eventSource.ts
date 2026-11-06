@@ -12,7 +12,7 @@ import {
     EVENT_FIELDS,
     PROGRAM_FIELDS,
     eventFormSchema,
-    fileNamesSchema,
+    fileNameSchema,
     orgUnitNamesSchema,
 } from './eventSchemas'
 import type { ProgramStage, TrackerEvent } from './eventSchemas'
@@ -393,29 +393,40 @@ export const loadNamesOf = (
                     ),
             signal
         ),
+        // Listing file resources needs the ALL authority (2.42.7.1), so each is read by id: one that fails loses only
+        // its own name.
         loadNames(
             form,
             FILE_TYPES,
             async (some) =>
-                fileNamesSchema
-                    .parse(
-                        await engine.query(
-                            {
-                                files: {
-                                    resource: 'fileResources',
-                                    params: {
-                                        filter: `id:in:[${some.join(',')}]`,
-                                        fields: 'id,name',
-                                        paging: false,
+                (
+                    await Promise.all(
+                        some.map((id) =>
+                            engine
+                                .query(
+                                    {
+                                        file: {
+                                            resource: 'fileResources',
+                                            id,
+                                            params: { fields: 'id,name' },
+                                        },
                                     },
-                                },
-                            },
-                            { signal }
+                                    { signal }
+                                )
+                                .then((answer): Array<[string, string]> => {
+                                    const { file } =
+                                        fileNameSchema.parse(answer)
+                                    return [[file.id, file.name]]
+                                })
+                                .catch((error: Error) => {
+                                    if (signal?.aborted) {
+                                        throw error
+                                    }
+                                    return []
+                                })
                         )
                     )
-                    .files.fileResources.map(
-                        ({ id, name }): [string, string] => [id, name]
-                    ),
+                ).flat(),
             signal
         ),
     ])

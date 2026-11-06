@@ -14,7 +14,7 @@ type Options = Parameters<DataEngine['query']>[1]
 const DOCUMENTATION = 'ulD2zW0TIy2'
 const PLACE_OF_INFECTION = 'S33cRBsnXPo'
 const CHC = 'DiszpKrYNg8'
-const [DOC, SUMMARY] = fileNames.fileResources.map(({ id }) => id)
+const [DOC, SUMMARY] = fileNames.map(({ id }) => id)
 
 const inpatient = eventSource({
     programId: 'eBAyeGv0exc',
@@ -41,8 +41,11 @@ const events = {
     })),
 }
 
-/** DHIS2 for the load: names are answered once `answer` lets them, or refused for files when `refuseFiles`. */
-const engineFor = (answer: Promise<void>, refuseFiles = false) => {
+/** DHIS2 for the load: names are answered once `answer` lets them; the files in `refused` are refused. */
+const engineFor = (
+    answer: Promise<void>,
+    refused: ReadonlySet<string> = new Set()
+) => {
     const requests: Array<[Request, Options]> = []
     // SAFETY: loading only calls `query`, which answers every request from the fixtures.
     const engine = {
@@ -61,18 +64,20 @@ const engineFor = (answer: Promise<void>, refuseFiles = false) => {
                 }
             }
             await answer
-            if (request.files !== undefined && refuseFiles) {
+            if (request.file === undefined) {
+                return { orgUnits: orgUnitNames }
+            }
+            const file = fileNames.find(({ id }) => id === request.file?.id)
+            if (file === undefined || refused.has(file.id)) {
                 throw new Error('Forbidden')
             }
-            return request.files === undefined
-                ? { orgUnits: orgUnitNames }
-                : { files: fileNames }
+            return { file }
         },
     } as DataEngine
     return { engine, requests }
 }
 
-test('the form loads the names of stored files in one request, sent with the org unit names request', async () => {
+test('the form loads the name of each stored file by its id, sent with the org unit names request', async () => {
     let answer = () => {}
     const { engine, requests } = engineFor(
         new Promise((resolve) => {
@@ -81,23 +86,22 @@ test('the form loads the names of stored files in one request, sent with the org
     )
     const signal = new AbortController().signal
     const loading = inpatient.load(engine, signal)
-    // Both names requests are made before either answers.
-    await expect.poll(() => requests.length).toBe(3)
+    // Every names request is made before any answers.
+    await expect.poll(() => requests.length).toBe(4)
     answer()
     const form = await loading
-    expect(requests.find(([request]) => request.files !== undefined)).toEqual([
-        {
-            files: {
-                resource: 'fileResources',
-                params: {
-                    filter: `id:in:[${DOC},${SUMMARY}]`,
-                    fields: 'id,name',
-                    paging: false,
+    expect(requests.filter(([request]) => request.file !== undefined)).toEqual(
+        [DOC, SUMMARY].map((id) => [
+            {
+                file: {
+                    resource: 'fileResources',
+                    id,
+                    params: { fields: 'id,name' },
                 },
             },
-        },
-        { signal },
-    ])
+            { signal },
+        ])
+    )
     expect(form.fileNames).toEqual(
         new Map([
             [DOC, 'doc.pdf'],
@@ -107,8 +111,17 @@ test('the form loads the names of stored files in one request, sent with the org
     expect(form.orgUnitNames.get(CHC)).toBe('Ngelehun CHC')
 })
 
-test('a file names request that fails leaves those files without names, and the form opens', async () => {
-    const { engine } = engineFor(Promise.resolve(), true)
+test('a file whose name is refused is left without one, and the others keep theirs', async () => {
+    const { engine } = engineFor(Promise.resolve(), new Set([DOC]))
+    const form = await inpatient.load(engine)
+    expect(form.fileNames).toEqual(
+        new Map([[SUMMARY, 'Good health activity summary.doc']])
+    )
+    expect(form.tables[0].rows).toHaveLength(inpatientEvents.events.length)
+})
+
+test('file names that are all refused leave the files without names, and the form opens', async () => {
+    const { engine } = engineFor(Promise.resolve(), new Set([DOC, SUMMARY]))
     const form = await inpatient.load(engine)
     expect(form.fileNames).toEqual(new Map())
     expect(form.orgUnitNames.get(CHC)).toBe('Ngelehun CHC')

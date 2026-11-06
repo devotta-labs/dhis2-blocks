@@ -227,7 +227,8 @@ waits for the mandatory attributes of its type and program, an enrolment for its
 date (a single stage's slot with no date column takes the enrolment date), its enrolment, and the required fields of a
 stage that checks them on every save; each waiting cell says what it waits for ("Waiting for: Last name"). A refused
 person makes its enrolment and events wait for it. DHIS2's refusals (a unique attribute, say) land on the cell. Unsent
-changes belong to the program (`register:<programId>`), and a reload puts back a person's unsent events on their row.
+changes belong to the program's registers (`register:<programId>`), apart from its event grids' (see Saving), and a
+reload puts back a person's unsent events on their row.
 
 **Read-only**, with the reason on each cell: a program or person type the user cannot write, a cancelled enrolment,
 and events by the event grid's rules (completed in a stage that blocks entry, expired, skipped). Attribute file and
@@ -288,17 +289,20 @@ Ctrl+D (Cmd+D) is like typing: it fills any cell that can be edited and never as
 - Every change goes to an IndexedDB outbox on this device, `dhis2-data-entry:<server>:<user id>`, before it is sent,
   once the browser has shown it and together with the values its rules assign, so both are sent in one save; when the
   page is hidden or closed, at once. It opens only for the same user on the same server. Nothing is encrypted.
-- Unsent changes belong to the program, not the grid: every grid of a program keeps one record per cell (the newer
-  change wins), and any open grid of the program sends them all, its other grids' changes included. One loop per
-  browser sends them, oldest first, 100 events at a time: each chunk's events are read, then imported, each request
-  within its own minute. Two changes to one cell send only the latest. A chunk that fails keeps the chunks before it
-  saved: refused as a whole, it refuses its own events and the chunks after it are sent next; otherwise it and the
-  chunks after it are sent again. A change to an event DHIS2 no longer returns is refused ("This event was deleted or
-  you no longer have access to it"). Another tab's loop may send this tab's changes: the cells here still learn what
-  became of them. A cell changed later in another tab shows that tab's value here once it is saved or refused. A status
-  is saved while no tab is sending.
+- Unsent changes belong to the program and the kind of grid, not the grid: the event grids of a program keep one record
+  per cell (the newer change wins), and so do its registers, and any open grid of that kind sends them all, its other
+  grids' changes included. Event grids and registers keep their changes apart, as a register's save brings what an
+  event grid's cannot (the events Capture schedules, its rows' refusals). A cell changed in both kinds before either is
+  sent keeps both changes: the one sent last is what DHIS2 holds, and each kind waits for one of its own grids to be
+  open to send. A grid shows what the other kind saved when it loads again. One loop per browser sends them, oldest
+  first, 100 events at a time: each chunk's events are read, then imported, each request within its own minute. Two
+  changes to one cell send only the latest. A chunk that fails keeps the chunks before it saved: refused as a whole, it
+  refuses its own events and the chunks after it are sent next; otherwise it and the chunks after it are sent again. A
+  change to an event DHIS2 no longer returns is refused ("This event was deleted or you no longer have access to it").
+  Another tab's loop may send this tab's changes: the cells here still learn what became of them. A cell changed later
+  in another tab shows that tab's value here once it is saved or refused. A status is saved while no tab is sending.
 - After a reload, a grid puts back its own unsent changes, and the new rows it adds (same stage, org unit and person)
-  that DHIS2 does not hold yet; the program's other changes stay on the device and are sent with the rest.
+  that DHIS2 does not hold yet; the program's other changes stay on the device and are sent with the rest of their kind.
 - Before every send, and before completing or reopening, the server is asked who is signed in. When it is someone else
   (another tab may have signed in, and tabs share the session), the form locks until the page is reloaded: every cell
   read-only and back to what DHIS2 had, nothing more sent, and the summary says "Signed in as someone else. Reload to

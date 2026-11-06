@@ -64,7 +64,7 @@ export const registerSource = (
     options: RegisterSourceOptions
 ): TrackerDataEntrySource => {
     const { programId, orgUnitId, enrolledFrom, enrolledTo, layout } = options
-    // Unsent changes belong to the program, so any of its registers sends them.
+    // Unsent changes belong to the program's registers, so any of them sends them; its event grids keep their own.
     const key = `register:${programId}`
     const pageSize = options.pageSize ?? 25
     // What the last load found, for new rows, restored rows and scheduled events.

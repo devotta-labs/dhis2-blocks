@@ -1,6 +1,6 @@
 import { eventSource } from './eventSource'
 
-test('the key names the program: its grids share one record per cell', () => {
+test('the key names the program: its event grids share one record per cell', () => {
     expect(eventSource({ programId: 'p', orgUnitId: 'o' }).key).toBe('events:p')
     expect(
         eventSource({

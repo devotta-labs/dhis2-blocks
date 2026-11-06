@@ -428,7 +428,7 @@ export const eventSource = (
     const orgUnitMode = options.orgUnitMode ?? 'SELECTED'
     // One person's events are read wherever they happened, not only at one org unit.
     const atOrgUnit = enrollmentId === undefined
-    // Unsent changes belong to the program, so any of its grids sends them, wherever they were made.
+    // Unsent changes belong to the program's event grids, so any of them sends them; a register keeps its own.
     const key = `events:${programId}`
     const pageSize = options.pageSize ?? 50
     const order = options.order ?? 'occurredAt:desc'

@@ -290,9 +290,14 @@ row runs them first.
   once the browser has shown it and together with the values its rules
   assign, so both are sent in one save. The outbox opens only for the same
   user on the same server. Nothing in it is encrypted.
-- Unsent changes belong to the program, not the grid. Every grid of a program
-  keeps one change per cell, the newer one, and any open grid of the program
-  sends them all, the changes made in its other grids included. They are sent
+- Unsent changes belong to the program and the kind of grid, not the grid. The
+  event grids of a program keep one change per cell, the newer one, and so do
+  its registers; any open grid of that kind sends them all, the changes made in
+  its other grids included. Event grids and registers keep their changes
+  apart, as a register's save brings what an event grid's cannot, such as the
+  events Capture schedules. A cell changed in both kinds before either is sent
+  keeps both changes: the one sent last is what DHIS2 holds, and a grid shows
+  what the other kind saved when it loads again. They are sent
   oldest first, 100 events at a time: each chunk's events are read, then
   imported, each request within its own minute. Two changes to one cell send
   only the latest. A chunk that fails keeps the chunks before it saved: refused

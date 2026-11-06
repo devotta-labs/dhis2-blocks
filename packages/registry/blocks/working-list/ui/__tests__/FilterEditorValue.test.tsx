@@ -6,6 +6,7 @@ import type { WorkingListClient } from '../../api/client'
 import type { WorkingListField } from '../../domain/model'
 import { FilterButton } from '../FilterControls'
 import { WorkingListTextProvider } from '../WorkingListText'
+import { roleColour } from '../../../../test/roleColour'
 
 const unusedClient: WorkingListClient = {
     query: () => Promise.reject(new Error('Unexpected query')),
@@ -80,7 +81,11 @@ describe('filter editor value fields', () => {
         const editor = await openEditor(field({ minCharactersToSearch: 3 }))
         const label = editor.getByText('Value', { exact: true }).element()
         const hint = editor.getByText(/Enter at least/).element()
-        expect(getComputedStyle(label).color).toBe('rgb(74, 87, 104)')
-        expect(getComputedStyle(hint).color).toBe('rgb(108, 119, 135)')
+        expect(getComputedStyle(label).color).toBe(
+            roleColour('muted-foreground')
+        )
+        expect(getComputedStyle(hint).color).toBe(
+            roleColour('subtle-foreground')
+        )
     })
 })

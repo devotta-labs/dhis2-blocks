@@ -3,6 +3,7 @@ import React from 'react'
 import { page } from 'vitest/browser'
 import { ObservationCard } from '..'
 import { DE, march, NORMAL, PROGRAM, renderWith } from './support'
+import { roleColour } from '../../../test/roleColour'
 
 const NOW = new Date('2026-06-01T12:00:00.000Z')
 
@@ -498,9 +499,8 @@ describe('the default arrangement', () => {
             .poll(() => container.querySelector('.recharts-line-curve'))
             .not.toBeNull()
         const curve = container.querySelector('.recharts-line-curve')
-        // --dhis2-neutral-indicator
         expect(curve && getComputedStyle(curve).stroke).toBe(
-            'rgb(108, 119, 135)'
+            roleColour('neutral-indicator')
         )
     })
 

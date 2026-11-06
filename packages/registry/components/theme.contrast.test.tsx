@@ -13,6 +13,6 @@ describe('theme roles with more contrast', () => {
             </p>
         )
         const muted = screen.getByTestId('muted').element()
-        expect(getComputedStyle(muted).color).toBe('rgb(64, 75, 90)')
+        expect(getComputedStyle(muted).color).toBe('rgb(64, 75, 90)') // grey-800
     })
 })

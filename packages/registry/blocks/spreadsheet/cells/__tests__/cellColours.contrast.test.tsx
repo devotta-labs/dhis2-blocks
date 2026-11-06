@@ -2,6 +2,7 @@ import React from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { CONTROL_CLASS, HIDDEN_CLASS } from '../TextCell'
+import { roleColour } from '../../../../test/roleColour'
 
 const style = (testId: string) =>
     getComputedStyle(page.getByTestId(testId).element())
@@ -16,7 +17,7 @@ describe('cells with more contrast', () => {
             />
         )
         await userEvent.click(page.getByTestId('cell'))
-        expect(style('cell').boxShadow).toContain('rgb(13, 71, 161)')
+        expect(style('cell').boxShadow).toContain(roleColour('ring'))
     })
 
     it('rings an invalid cell in the dark destructive indicator', async () => {
@@ -28,7 +29,9 @@ describe('cells with more contrast', () => {
                 className={CONTROL_CLASS}
             />
         )
-        expect(style('cell').boxShadow).toContain('rgb(137, 21, 21)')
+        expect(style('cell').boxShadow).toContain(
+            roleColour('destructive-indicator')
+        )
     })
 
     it('fills a hidden cell a step darker', async () => {
@@ -37,6 +40,6 @@ describe('cells with more contrast', () => {
                 Hidden
             </div>
         )
-        expect(style('cell').backgroundColor).toBe('rgb(232, 237, 242)')
+        expect(style('cell').backgroundColor).toBe(roleColour('accent'))
     })
 })

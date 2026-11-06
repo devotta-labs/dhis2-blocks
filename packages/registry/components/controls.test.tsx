@@ -4,6 +4,7 @@ import { Button } from './button'
 import { Checkbox } from './checkbox'
 import { Input } from './input'
 import { RadioGroup, RadioGroupItem } from './radio-group'
+import { roleColour } from '../test/roleColour'
 
 const style = (element: Element) => getComputedStyle(element)
 
@@ -13,9 +14,9 @@ describe('form controls in the default theme', () => {
             <Input aria-label="Name" placeholder="Name" />
         )
         const input = screen.getByRole('textbox').element()
-        expect(style(input).borderTopColor).toBe('rgb(160, 173, 186)')
+        expect(style(input).borderTopColor).toBe(roleColour('input'))
         expect(getComputedStyle(input, '::placeholder').color).toBe(
-            'rgb(108, 119, 135)'
+            roleColour('subtle-foreground')
         )
     })
 
@@ -28,10 +29,10 @@ describe('form controls in the default theme', () => {
         )
         expect(
             style(screen.getByLabelText('Off').element()).borderTopColor
-        ).toBe('rgb(64, 75, 90)')
+        ).toBe(roleColour('control'))
         expect(
             style(screen.getByLabelText('On').element()).backgroundColor
-        ).toBe('rgb(0, 137, 123)')
+        ).toBe(roleColour('selected-strong'))
     })
 
     it('ring a radio like a checkbox', async () => {
@@ -41,7 +42,7 @@ describe('form controls in the default theme', () => {
             </RadioGroup>
         )
         expect(style(screen.getByLabelText('A').element()).borderTopColor).toBe(
-            'rgb(64, 75, 90)'
+            roleColour('control')
         )
     })
 
@@ -52,7 +53,7 @@ describe('form controls in the default theme', () => {
             </Button>
         )
         expect(style(screen.getByRole('button').element()).color).toBe(
-            'rgb(108, 119, 135)'
+            roleColour('disabled-foreground')
         )
     })
 })

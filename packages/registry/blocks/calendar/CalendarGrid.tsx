@@ -16,6 +16,9 @@ import { CalendarCellRecords, CalendarDayContext } from './CalendarCell'
 /** An ISO weekday: 1 is Monday, 7 is Sunday. */
 export type CalendarWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
+export const TODAY_CLASS =
+    'inline-flex size-5 items-center justify-center self-start rounded-full bg-dhis2-primary text-dhis2-primary-foreground'
+
 const WEEKDAYS: readonly CalendarWeekday[] = [1, 2, 3, 4, 5, 6, 7]
 
 // shortcut: arrows move in visual order only for left-to-right text; flip them
@@ -275,8 +278,7 @@ export const CalendarGrid = ({
                                                 'text-[13px] leading-5 text-dhis2-muted-foreground',
                                                 !day.isInCurrentMonth &&
                                                     'text-dhis2-subtle-foreground',
-                                                day.isToday &&
-                                                    'inline-flex size-5 items-center justify-center self-start rounded-full bg-dhis2-primary text-dhis2-primary-foreground'
+                                                day.isToday && TODAY_CLASS
                                             )}
                                         >
                                             {day.label}

@@ -10,13 +10,14 @@ import {
     slot,
     style,
 } from './surfaces.fixtures'
+import { roleColour } from '../test/roleColour'
 
 describe('surfaces in the default theme', () => {
     it('highlight a menu item in the accent colour', async () => {
         await render(<OpenMenu />)
         await userEvent.hover(page.getByRole('menuitem', { name: 'Rename' }))
         expect(style(await slot('dropdown-menu-item')).backgroundColor).toBe(
-            'rgb(243, 245, 247)'
+            roleColour('accent')
         )
     })
 
@@ -26,20 +27,20 @@ describe('surfaces in the default theme', () => {
             .element(page.getByRole('option', { name: 'Alpha' }))
             .toBeVisible()
         const selected = await find('[data-slot="select-item"][data-selected]')
-        expect(style(selected).backgroundColor).toBe('rgb(224, 242, 241)')
+        expect(style(selected).backgroundColor).toBe(roleColour('selected'))
     })
 
     it('colour a warning alert icon', async () => {
         const screen = await render(<WarningAlert />)
         expect(style(screen.getByTestId('alert-icon').element()).color).toBe(
-            'rgb(187, 70, 13)'
+            roleColour('warning')
         )
     })
 
     it('invert the tooltip', async () => {
         await render(<OpenTooltip />)
         const tooltip = style(await slot('tooltip-content'))
-        expect(tooltip.color).toBe('rgb(255, 255, 255)')
-        expect(tooltip.backgroundColor).toBe('rgb(33, 41, 52)')
+        expect(tooltip.color).toBe(roleColour('background'))
+        expect(tooltip.backgroundColor).toBe(roleColour('foreground'))
     })
 })

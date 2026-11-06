@@ -2,6 +2,7 @@ import React from 'react'
 import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { SORT_BUTTON_CLASS } from '../WorkingListTable/WorkingListTableView'
+import { roleColour } from '../../../../test/roleColour'
 
 describe('sort button with more contrast', () => {
     it('outlines keyboard focus in the full focus colour', async () => {
@@ -14,6 +15,6 @@ describe('sort button with more contrast', () => {
         const button = screen.getByRole('button').element()
         expect(document.activeElement).toBe(button)
         expect(getComputedStyle(button).outlineStyle).toBe('solid')
-        expect(getComputedStyle(button).outlineColor).toBe('rgb(13, 71, 161)')
+        expect(getComputedStyle(button).outlineColor).toBe(roleColour('ring'))
     })
 })

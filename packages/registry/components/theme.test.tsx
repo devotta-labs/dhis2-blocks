@@ -1,5 +1,6 @@
 import React from 'react'
 import { render } from 'vitest-browser-react'
+import { roleColour } from '../test/roleColour'
 
 describe('theme roles', () => {
     it('resolve to their default values', async () => {
@@ -9,7 +10,9 @@ describe('theme roles', () => {
             </p>
         )
         const muted = screen.getByTestId('muted').element()
-        expect(getComputedStyle(muted).color).toBe('rgb(74, 87, 104)')
+        expect(getComputedStyle(muted).color).toBe(
+            roleColour('muted-foreground')
+        )
     })
 
     it('keep opacity modifiers translucent', async () => {
@@ -24,7 +27,7 @@ describe('theme roles', () => {
         const outline = getComputedStyle(
             screen.getByTestId('ring').element()
         ).outlineColor
-        expect(outline).not.toBe('rgb(20, 124, 215)')
+        expect(outline).not.toBe(roleColour('ring'))
         expect(outline).toContain('0.35')
     })
 })

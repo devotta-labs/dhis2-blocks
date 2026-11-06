@@ -12,7 +12,7 @@ export const TONE_DOT = {
     critical: 'bg-dhis2-destructive-indicator',
 } satisfies Record<CalendarTone, string>
 
-const TONE_CHIP = {
+export const TONE_CHIP = {
     neutral: 'bg-dhis2-neutral-muted text-dhis2-neutral-strong',
     info: 'bg-dhis2-info-muted text-dhis2-info-strong',
     positive: 'bg-dhis2-success-muted text-dhis2-success-strong',

@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-react'
 import { Button } from './button'
 import { Checkbox } from './checkbox'
 import { Input } from './input'
+import { roleColour } from '../test/roleColour'
 
 const style = (element: Element) => getComputedStyle(element)
 
@@ -12,21 +13,21 @@ describe('form controls with more contrast', () => {
         const screen = await render(<Input aria-label="Name" />)
         expect(
             style(screen.getByRole('textbox').element()).borderTopColor
-        ).toBe('rgb(64, 75, 90)')
+        ).toBe(roleColour('input'))
     })
 
     it('ring a checkbox in the darkest grey', async () => {
         const screen = await render(<Checkbox aria-label="Off" />)
         expect(
             style(screen.getByLabelText('Off').element()).borderTopColor
-        ).toBe('rgb(33, 41, 52)')
+        ).toBe(roleColour('control'))
     })
 
     it('fill a primary button solid, without the gradient', async () => {
         const screen = await render(<Button>Save</Button>)
         const button = style(screen.getByRole('button').element())
         expect(button.backgroundImage).toBe('none')
-        expect(button.backgroundColor).toBe('rgb(13, 71, 161)')
+        expect(button.backgroundColor).toBe(roleColour('primary'))
     })
 
     it('fill a destructive button solid, without the gradient', async () => {
@@ -35,7 +36,7 @@ describe('form controls with more contrast', () => {
         )
         const button = style(screen.getByRole('button').element())
         expect(button.backgroundImage).toBe('none')
-        expect(button.backgroundColor).toBe('rgb(137, 21, 21)')
+        expect(button.backgroundColor).toBe(roleColour('destructive'))
     })
 
     it.each(['default', 'destructive'] as const)(
@@ -47,8 +48,8 @@ describe('form controls with more contrast', () => {
                 </Button>
             )
             const button = style(screen.getByRole('button').element())
-            expect(button.backgroundColor).toBe('rgb(213, 221, 229)')
-            expect(button.color).toBe('rgb(74, 87, 104)')
+            expect(button.backgroundColor).toBe(roleColour('accent-strong'))
+            expect(button.color).toBe(roleColour('disabled-foreground'))
         }
     )
 
@@ -59,7 +60,9 @@ describe('form controls with more contrast', () => {
             await userEvent.tab()
             const button = screen.getByRole('button').element()
             expect(document.activeElement).toBe(button)
-            expect(style(button).outlineColor).toBe('rgb(255, 255, 255)')
+            expect(style(button).outlineColor).toBe(
+                roleColour('primary-foreground')
+            )
         }
     )
 })

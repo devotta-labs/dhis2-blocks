@@ -400,13 +400,26 @@ const yesNo = () =>
         ['false', i18n.t('No')],
     ])
 
-/** Typed Yes/No text as `true` or `false`: the labels a cell shows first, then the words read in any language. */
+/** The language set as tags `Intl` reads (DHIS2 writes `pt_BR`); none when it reads none, for the default casing. */
+const languageTags = () => {
+    try {
+        return Intl.getCanonicalLocales(i18n.language?.replace(/_/g, '-'))
+    } catch {
+        return []
+    }
+}
+
+/**
+ * Typed Yes/No text as `true` or `false`: the labels a cell shows first, in the casing of their language (Turkish
+ * `HAYIR` is `hayır`), then the words read in any language.
+ */
 const booleanOf = (text: string): string | undefined => {
-    const word = text.toLowerCase()
+    const tags = languageTags()
+    const word = text.toLocaleLowerCase(tags)
     const labelled = [...yesNo()].find(
-        ([, label]) => label.toLowerCase() === word
+        ([, label]) => label.toLocaleLowerCase(tags) === word
     )
-    return labelled?.[0] ?? BOOLEAN_WORDS.get(word)
+    return labelled?.[0] ?? BOOLEAN_WORDS.get(text.toLowerCase())
 }
 
 const DATE_TIME_TEXT = /^(?<day>\S+?)(?:\s+|T)(?<time>\d{1,2}:\d{2})$/

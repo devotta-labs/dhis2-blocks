@@ -26,3 +26,15 @@ test('Yes and No are shown in the language set, and read back', async () => {
         await i18n.changeLanguage('en')
     }
 })
+
+test('a label typed in capitals is read with the casing of the language set', async () => {
+    i18n.addResources('tr', 'translation', { Yes: 'Evet', No: 'Hayır' })
+    await i18n.changeLanguage('tr')
+    try {
+        expect(
+            parseTyped({ valueType: 'BOOLEAN' }, 'HAYIR', GREGORIAN)
+        ).toEqual({ ok: true, value: 'false' })
+    } finally {
+        await i18n.changeLanguage('en')
+    }
+})

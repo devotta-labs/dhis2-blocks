@@ -27,6 +27,10 @@ export default defineConfig({
             {
                 plugins: [tailwindcss()],
                 resolve,
+                optimizeDeps: {
+                    // Compiler-injected imports must not reload an active test run.
+                    include: ['react/jsx-dev-runtime'],
+                },
                 test: {
                     ...sharedProjectOptions,
                     name: 'browser',

@@ -22,6 +22,7 @@ describe('complete-source highlighting', () => {
         const view = await render(
             <HighlightedCodeBlock code={code} language="tsx" />
         )
+        await loadHighlighter('tsx')
         await expect
             .poll(() =>
                 view.container.querySelector('[style*="--shiki-light"]')
@@ -100,6 +101,7 @@ describe('complete-source highlighting', () => {
             props: { title: 'Hello' },
         }
         const view = await render(<CanvasCode source={source} />)
+        await loadHighlighter('tsx')
         await expect
             .poll(() =>
                 view.container.querySelector('[style*="--shiki-light"]')

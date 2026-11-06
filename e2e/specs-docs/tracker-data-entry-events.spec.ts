@@ -394,12 +394,13 @@ test('one woman: chronic conditions Yes and No show and hide the follow-ups in a
     await allFollowUps(valuesOf(firstVisit).get(CHRONIC_CONDITIONS) !== 'true')
 
     await chronic.focus()
+    // The cell shows the Yes/No label; DHIS2 stores true or false.
     await page.keyboard.press('y')
-    await expect(chronic).toHaveValue('true')
+    await expect(chronic).toHaveValue('Yes')
     await allFollowUps(false)
 
     await page.keyboard.press('n')
-    await expect(chronic).toHaveValue('false')
+    await expect(chronic).toHaveValue('No')
     await allFollowUps(true)
 
     await settled(page)

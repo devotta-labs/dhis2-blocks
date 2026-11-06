@@ -56,4 +56,15 @@ describe('form controls in the default theme', () => {
             roleColour('disabled-foreground')
         )
     })
+
+    it('write a destructive button in the destructive foreground', async () => {
+        const screen = await render(
+            <div className="[--dhis2-destructive-foreground:rgb(1,2,3)]">
+                <Button variant="destructive">Delete</Button>
+            </div>
+        )
+        expect(style(screen.getByRole('button').element()).color).toBe(
+            'rgb(1, 2, 3)'
+        )
+    })
 })

@@ -4,6 +4,8 @@ import { render } from 'vitest-browser-react'
 import { Button } from './button'
 import { Checkbox } from './checkbox'
 import { Input } from './input'
+import { RadioGroup, RadioGroupItem } from './radio-group'
+import { Switch } from './switch'
 import { roleColour } from '../test/roleColour'
 
 const style = (element: Element) => getComputedStyle(element)
@@ -53,16 +55,39 @@ describe('form controls with more contrast', () => {
         }
     )
 
-    it.each(['default', 'destructive'] as const)(
-        'outline a focused %s button in white over its fill',
-        async (variant) => {
+    it.each([
+        ['default', 'primary-foreground'],
+        ['destructive', 'destructive-foreground'],
+    ] as const)(
+        'outline a focused %s button in its text colour over its fill',
+        async (variant, role) => {
             const screen = await render(<Button variant={variant}>Go</Button>)
             await userEvent.tab()
             const button = screen.getByRole('button').element()
             expect(document.activeElement).toBe(button)
-            expect(style(button).outlineColor).toBe(
-                roleColour('primary-foreground')
-            )
+            expect(style(button).outlineColor).toBe(roleColour(role))
         }
     )
+
+    it('fill a switch off track in the darkest grey', async () => {
+        const screen = await render(<Switch aria-label="Off" />)
+        const track = style(screen.getByRole('switch').element())
+        expect(track.backgroundColor).toBe(roleColour('control'))
+        expect(track.borderTopColor).toBe(roleColour('control'))
+    })
+
+    it('ring a radio in the darkest grey and fill it when checked', async () => {
+        const screen = await render(
+            <RadioGroup defaultValue="b">
+                <RadioGroupItem value="a" aria-label="A" />
+                <RadioGroupItem value="b" aria-label="B" />
+            </RadioGroup>
+        )
+        expect(style(screen.getByLabelText('A').element()).borderTopColor).toBe(
+            roleColour('control')
+        )
+        expect(
+            style(screen.getByLabelText('B').element()).backgroundColor
+        ).toBe(roleColour('primary'))
+    })
 })

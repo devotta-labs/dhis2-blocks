@@ -81,7 +81,7 @@ const WorkingListPlaceholder = ({
             className="w-full min-w-0 max-w-full rounded-[4px] border border-dhis2-border-strong bg-dhis2-background shadow-dhis2-card"
             aria-hidden="true"
         >
-            <p className="m-0 p-2 text-xs leading-4 text-[var(--colors-grey700)]">
+            <p className="m-0 p-2 text-xs leading-4 text-dhis2-muted-foreground">
                 Saved views in this program
             </p>
             <div className="flex min-w-0 flex-wrap items-center gap-1 border-b border-dhis2-border px-2 pt-0 pb-2">

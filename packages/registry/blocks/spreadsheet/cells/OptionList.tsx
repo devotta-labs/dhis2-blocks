@@ -62,7 +62,7 @@ export const OptionList = ({
                             role="option"
                             aria-selected={index === active}
                             onClick={() => onPick(code)}
-                            className="cursor-pointer px-3 py-2 text-sm text-dhis2-foreground aria-selected:bg-dhis2-accent"
+                            className="cursor-pointer px-3 py-2 text-sm text-dhis2-foreground hover:bg-dhis2-muted aria-selected:bg-dhis2-accent forced-colors:aria-selected:outline-2 forced-colors:aria-selected:-outline-offset-2 forced-colors:aria-selected:outline-solid"
                         >
                             {names.get(code)}
                         </div>

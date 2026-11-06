@@ -1,6 +1,20 @@
 import React from 'react'
 import { Alert } from './alert'
 import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogTitle,
+} from './alert-dialog'
+import { Card } from './card'
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from './combobox'
+import { Dialog, DialogContent, DialogTitle } from './dialog'
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -43,6 +57,39 @@ export const OpenSelect = () => (
         </SelectContent>
     </Select>
 )
+
+export const OpenCombobox = () => (
+    <Combobox items={['Alpha', 'Beta']} defaultOpen>
+        <ComboboxInput aria-label="Letter" />
+        <ComboboxContent>
+            <ComboboxList>
+                {(item: string) => (
+                    <ComboboxItem key={item} value={item}>
+                        {item}
+                    </ComboboxItem>
+                )}
+            </ComboboxList>
+        </ComboboxContent>
+    </Combobox>
+)
+
+export const OpenDialog = () => (
+    <Dialog defaultOpen>
+        <DialogContent>
+            <DialogTitle>Edit</DialogTitle>
+        </DialogContent>
+    </Dialog>
+)
+
+export const OpenAlertDialog = () => (
+    <AlertDialog defaultOpen>
+        <AlertDialogContent>
+            <AlertDialogTitle>Delete?</AlertDialogTitle>
+        </AlertDialogContent>
+    </AlertDialog>
+)
+
+export const PlainCard = () => <Card>Body</Card>
 
 export const OpenPopover = () => (
     <Popover defaultOpen>

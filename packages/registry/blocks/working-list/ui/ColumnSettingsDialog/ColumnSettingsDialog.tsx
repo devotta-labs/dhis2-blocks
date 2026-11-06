@@ -112,7 +112,7 @@ export const ColumnSettingsDialog = ({
                         />
                         {showValidationError && (
                             <p
-                                className="text-sm leading-5 text-[var(--colors-red600)] [margin:12px_0_0]"
+                                className="text-sm leading-5 text-dhis2-destructive [margin:12px_0_0]"
                                 role="alert"
                             >
                                 {translate(

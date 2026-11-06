@@ -37,6 +37,7 @@ const RAW_COLOURS: [string, RegExp][] = [
         /\b(?:bg|text|border|outline|fill|stroke|ring|from|to|via|divide|placeholder|decoration|accent)-(?:white|black)\b/,
     ],
     ['palette variable', /var\(--color-dhis2-/],
+    ['@dhis2/ui colour variable', /var\(--colors-/],
     [
         'colour function',
         /\b(?:hsla?|hwb|lab|lch|oklab|oklch)\(|\bcolor\((?:srgb|display-p3|a98-rgb|prophoto-rgb|rec2020|xyz|from)\b/,
@@ -135,6 +136,7 @@ describe('colour usage', () => {
         "fill: 'oklch(0.5 0.1 200)'",
         'background: color(display-p3 1 0 0);',
         'className="text-red-500"',
+        'className="text-[var(--colors-grey700)]"',
     ])('flags %s', (line) => {
         expect(rawColoursIn([line])).not.toEqual([])
     })

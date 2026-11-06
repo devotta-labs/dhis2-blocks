@@ -67,6 +67,12 @@ describe('filter editor value fields', () => {
             .toHaveAccessibleDescription(/Enter at least/)
     })
 
+    it('puts no unnamed group around a value input', async () => {
+        const editor = await openEditor(field({ minCharactersToSearch: 3 }))
+        const input = editor.getByRole('textbox', { name: 'Value' }).element()
+        expect(input.closest('[role="group"]')).toBeNull()
+    })
+
     it('renders a number range as two labelled Inputs', async () => {
         const editor = await openEditor(
             field({ id: 'weight', displayName: 'Weight', valueType: 'NUMBER' })

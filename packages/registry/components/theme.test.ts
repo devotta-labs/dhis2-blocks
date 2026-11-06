@@ -127,13 +127,14 @@ describe('theme.css', () => {
     )
 
     const TONES = ['neutral', 'info', 'success', 'warning', 'destructive']
+    type Floor = [foreground: string, background: string, floor: number]
 
     it.each([
-        ...TONES.map((tone) => [`${tone}-indicator`, 'background', 3]),
-        ...TONES.map((tone) => [`${tone}-strong`, `${tone}-muted`, 7]),
+        ...TONES.map((tone): Floor => [`${tone}-indicator`, 'background', 3]),
+        ...TONES.map((tone): Floor => [`${tone}-strong`, `${tone}-muted`, 7]),
         ['warning', 'warning-subtle', 4.5],
         ['muted-foreground', 'background-subtle', 7],
-    ] as const)(
+    ] satisfies Floor[])(
         'default theme: %s on %s is at least %s:1',
         (foreground, background, floor) => {
             expect(
@@ -143,9 +144,9 @@ describe('theme.css', () => {
     )
 
     it.each([
-        ...TONES.map((tone) => [`${tone}-indicator`, 'background', 4.5]),
-        ...TONES.map((tone) => [`${tone}-strong`, `${tone}-muted`, 7]),
-    ] as const)(
+        ...TONES.map((tone): Floor => [`${tone}-indicator`, 'background', 4.5]),
+        ...TONES.map((tone): Floor => [`${tone}-strong`, `${tone}-muted`, 7]),
+    ] satisfies Floor[])(
         'high-contrast theme: %s on %s is at least %s:1',
         (foreground, background, floor) => {
             expect(

@@ -36,7 +36,7 @@ function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
 
 /** The @dhis2/ui select input box, shared with the Combobox trigger. */
 const selectTriggerVariants = cva(
-    "flex w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 rounded-dhis2-sm border border-dhis2-input bg-white text-left text-sm leading-4 whitespace-nowrap text-dhis2-grey-900 shadow-[inset_0_0_1px_0_rgb(48_54_60/0.1)] outline-none focus-visible:border-dhis2-ring focus-visible:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] data-popup-open:border-dhis2-ring data-popup-open:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] disabled:cursor-not-allowed disabled:bg-dhis2-grey-100 disabled:text-dhis2-grey-600 aria-invalid:border-dhis2-red-500 data-placeholder:text-dhis2-grey-600 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
+    "flex w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 rounded-dhis2-sm border border-dhis2-input bg-dhis2-background text-left text-sm leading-4 whitespace-nowrap text-dhis2-foreground shadow-[inset_0_0_1px_0_color-mix(in_srgb,var(--dhis2-foreground)_10%,transparent)] outline-none focus-visible:border-dhis2-ring focus-visible:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-solid forced-colors:focus-visible:-outline-offset-2 data-popup-open:border-dhis2-ring data-popup-open:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] disabled:cursor-not-allowed disabled:bg-dhis2-muted disabled:text-dhis2-disabled-foreground aria-invalid:border-dhis2-destructive-border data-placeholder:text-dhis2-subtle-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
     {
         variants: {
             size: {
@@ -68,7 +68,7 @@ const SelectTrigger = React.forwardRef<
     >
         {children}
         <SelectPrimitive.Icon
-            render={<span className="ms-0.5 flex text-dhis2-grey-900" />}
+            render={<span className="ms-0.5 flex text-dhis2-foreground" />}
         >
             <IconChevronDown16 />
         </SelectPrimitive.Icon>
@@ -104,7 +104,7 @@ function SelectContent({
                     data-slot="select-content"
                     data-align-trigger={alignItemWithTrigger}
                     className={cn(
-                        'relative isolate z-[2000] max-h-[min(280px,var(--available-height))] w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-dhis2-sm border border-dhis2-grey-200 bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover',
+                        'relative isolate z-[2000] max-h-[min(280px,var(--available-height))] w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-dhis2-sm border border-dhis2-border bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover',
                         className
                     )}
                     {...props}
@@ -126,7 +126,7 @@ function SelectLabel({
         <SelectPrimitive.GroupLabel
             data-slot="select-label"
             className={cn(
-                'px-3 pt-2 pb-1 text-[13px] leading-4 font-medium text-dhis2-grey-700',
+                'px-3 pt-2 pb-1 text-[13px] leading-4 font-medium text-dhis2-muted-foreground',
                 className
             )}
             {...props}
@@ -158,12 +158,12 @@ const SelectItem = React.forwardRef<HTMLDivElement, SelectPrimitive.Item.Props>(
             ref={ref}
             data-slot="select-item"
             className={cn(
-                'relative flex w-full cursor-pointer items-center py-2 ps-1.5 pe-3 text-sm leading-normal text-dhis2-grey-900 outline-none select-none data-highlighted:bg-dhis2-grey-200 data-selected:bg-dhis2-teal-050 data-disabled:cursor-not-allowed data-disabled:text-dhis2-grey-500 data-disabled:data-highlighted:bg-transparent [&_svg]:pointer-events-none [&_svg]:shrink-0',
+                'relative flex w-full cursor-pointer items-center py-2 ps-1.5 pe-3 text-sm leading-normal text-dhis2-foreground outline-none select-none data-highlighted:bg-dhis2-accent data-selected:bg-dhis2-selected data-disabled:cursor-not-allowed data-disabled:text-dhis2-disabled-foreground forced-colors:data-highlighted:outline-2 forced-colors:data-highlighted:outline-solid forced-colors:data-highlighted:-outline-offset-2 data-disabled:data-highlighted:bg-transparent [&_svg]:pointer-events-none [&_svg]:shrink-0',
                 className
             )}
             {...props}
         >
-            <span className="me-1.5 flex size-4 shrink-0 text-dhis2-teal-700 [&_svg]:fill-current">
+            <span className="me-1.5 flex size-4 shrink-0 text-dhis2-selected-foreground [&_svg]:fill-current">
                 <SelectPrimitive.ItemIndicator>
                     <SelectCheckmark />
                 </SelectPrimitive.ItemIndicator>

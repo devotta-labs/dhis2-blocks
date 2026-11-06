@@ -652,6 +652,26 @@
             ]
         },
         {
+            "name": "surfaces.fixtures",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dropdown-menu",
+                "devotta-labs/dhis2-blocks/popover",
+                "devotta-labs/dhis2-blocks/select",
+                "devotta-labs/dhis2-blocks/separator",
+                "devotta-labs/dhis2-blocks/tooltip"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/surfaces.fixtures.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/surfaces.fixtures.tsx"
+                }
+            ]
+        },
+        {
             "name": "switch",
             "type": "registry:ui",
             "dependencies": ["@base-ui/react@^1.9.0"],

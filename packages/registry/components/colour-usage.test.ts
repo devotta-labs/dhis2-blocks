@@ -117,19 +117,6 @@ const PENDING = new Set<string>([
     'packages/registry/blocks/working-list/ui/WorkingListTable/WorkingListPagination.tsx',
     'packages/registry/blocks/working-list/ui/WorkingListTable/WorkingListTable.tsx',
     'packages/registry/blocks/working-list/ui/WorkingListTable/WorkingListTableView.tsx',
-    'packages/registry/components/alert-dialog.tsx',
-    'packages/registry/components/alert.tsx',
-    'packages/registry/components/card.tsx',
-    'packages/registry/components/chart.tsx',
-    'packages/registry/components/combobox.tsx',
-    'packages/registry/components/dialog.tsx',
-    'packages/registry/components/dropdown-menu.tsx',
-    'packages/registry/components/kbd.tsx',
-    'packages/registry/components/popover.tsx',
-    'packages/registry/components/select.tsx',
-    'packages/registry/components/skeleton.tsx',
-    'packages/registry/components/table.tsx',
-    'packages/registry/components/tooltip.tsx',
 ])
 
 const theme = readFileSync(

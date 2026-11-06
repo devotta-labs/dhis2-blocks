@@ -1,4 +1,4 @@
-import { useConfig, useDataEngine } from '@dhis2/app-runtime'
+import { useConfig } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -36,6 +36,7 @@ import { emptyForm, lockedForm } from './standInForms'
 import { ShowMoreEvents, ShowMorePeople } from './ShowMore'
 import { TrackerRowLabel } from './TrackerRowLabel'
 import { useLeaveWarning } from './useLeaveWarning'
+import { useServerEngine } from './useServerEngine'
 import { useRuleEffects } from './useRuleEffects'
 
 const ACCOUNT_QUERY = {
@@ -76,17 +77,11 @@ export const TrackerDataEntry = ({
     cells,
     children,
 }: TrackerDataEntryProps) => {
-    const latestEngine = useDataEngine()
     const queryClient = useQueryClient()
     const { baseUrl } = useConfig()
     // Absolute, so the outbox is named for the server however the app reaches it.
     const serverUrl = new URL(baseUrl, window.location.href).href
-    // The data provider makes a new engine every render; a new engine for the same server is no reason to reload.
-    const [pinned, setPinned] = useState({ serverUrl, engine: latestEngine })
-    if (pinned.serverUrl !== serverUrl) {
-        setPinned({ serverUrl, engine: latestEngine })
-    }
-    const engine = pinned.serverUrl === serverUrl ? pinned.engine : latestEngine
+    const engine = useServerEngine(serverUrl)
     const account = useQuery({
         queryKey: ['data-entry', 'account', serverUrl],
         queryFn: async ({ signal }) =>

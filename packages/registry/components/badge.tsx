@@ -13,7 +13,7 @@ const badgeVariants = cva(
         variants: {
             variant: {
                 default: 'bg-dhis2-primary text-dhis2-primary-foreground',
-                secondary: 'bg-dhis2-secondary text-dhis2-secondary-foreground',
+                secondary: 'bg-dhis2-accent text-dhis2-accent-foreground',
                 outline: 'border-dhis2-border text-dhis2-foreground',
             },
         },

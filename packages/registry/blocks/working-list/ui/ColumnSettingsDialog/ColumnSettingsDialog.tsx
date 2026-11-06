@@ -98,12 +98,12 @@ export const ColumnSettingsDialog = ({
                             optionsWidth="440px"
                             selectedWidth="440px"
                             leftHeader={
-                                <h4 className="m-0 px-0 py-2.5 text-sm font-medium leading-5 text-[#405261]">
+                                <h4 className="m-0 px-0 py-2.5 text-sm font-medium leading-5 text-dhis2-muted-foreground">
                                     {translate('Available columns')}
                                 </h4>
                             }
                             rightHeader={
-                                <h4 className="m-0 px-0 py-2.5 text-sm font-medium leading-5 text-[#405261]">
+                                <h4 className="m-0 px-0 py-2.5 text-sm font-medium leading-5 text-dhis2-muted-foreground">
                                     {translate('Selected columns')}
                                 </h4>
                             }

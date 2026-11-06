@@ -88,7 +88,7 @@ const SortIndicator = ({ sorted }: { sorted: false | 'asc' | 'desc' }) => (
         aria-hidden="true"
         data-slot="sort-indicator"
         data-direction={sorted || 'none'}
-        className="ms-0.5 flex size-6 shrink-0 items-center justify-center rounded-dhis2-md group-hover/sort:bg-dhis2-grey-400 group-focus-visible/sort:bg-dhis2-grey-400 group-disabled/sort:bg-transparent"
+        className="ms-0.5 flex size-6 shrink-0 items-center justify-center rounded-dhis2-md group-hover/sort:bg-dhis2-accent-strong group-focus-visible/sort:bg-dhis2-accent-strong group-disabled/sort:bg-transparent"
     >
         <svg viewBox="0 0 16 16" className="size-4">
             {/* DHIS2 names these "top" and "bottom" by stacking order, not
@@ -97,16 +97,16 @@ const SortIndicator = ({ sorted }: { sorted: false | 'asc' | 'desc' }) => (
                 points="4 9 12 9 8 14"
                 className={
                     sorted === 'asc'
-                        ? 'fill-dhis2-blue-700'
-                        : 'fill-dhis2-grey-500'
+                        ? 'fill-dhis2-primary'
+                        : 'fill-dhis2-subtle-foreground'
                 }
             />
             <polygon
                 points="4 7 12 7 8 2"
                 className={
                     sorted === 'desc'
-                        ? 'fill-dhis2-blue-700'
-                        : 'fill-dhis2-grey-500'
+                        ? 'fill-dhis2-primary'
+                        : 'fill-dhis2-subtle-foreground'
                 }
             />
         </svg>
@@ -352,7 +352,7 @@ export const WorkingListTableView = ({
                                                     // press states, as in
                                                     // DataTable.
                                                     highlightIssues &&
-                                                        'bg-dhis2-red-050 group-hover/table-row:bg-dhis2-red-050 group-active/table-row:bg-dhis2-red-050'
+                                                        'bg-dhis2-destructive-subtle group-hover/table-row:bg-dhis2-destructive-subtle group-active/table-row:bg-dhis2-destructive-subtle'
                                                 )}
                                                 data-test={
                                                     cell.isDataQuality

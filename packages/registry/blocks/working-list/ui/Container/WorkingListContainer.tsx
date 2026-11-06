@@ -57,7 +57,7 @@ export const WorkingListContainer = ({
             )}
             <article
                 {...props}
-                className={`w-full min-w-0 max-w-full overflow-visible rounded-[4px] border border-[#d5dde5] bg-white shadow-[0_1px_2px_rgb(33_41_52_/_8%)]${failed ? ' hidden' : ''}${className ? ` ${className}` : ''}`}
+                className={`w-full min-w-0 max-w-full overflow-visible rounded-[4px] border border-dhis2-border-strong bg-dhis2-background shadow-dhis2-card${failed ? ' hidden' : ''}${className ? ` ${className}` : ''}`}
                 data-testid="working-list"
                 aria-busy={pending || undefined}
                 hidden={failed}

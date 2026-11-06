@@ -38,8 +38,6 @@ const VARIABLE_USE = /\(--dhis2-([a-z][a-z0-9-]*)\)/g
 
 /** Files that still hold raw colours. Each migration task removes its own. */
 const PENDING = new Set<string>([
-    'apps/docs/src/examples/context-selector/ContextSelectorBasic.tsx',
-    'apps/docs/src/examples/context-selector/ContextSelectorStates.tsx',
     'apps/docs/src/examples/observation-cards/ObservationCardsPlaceholders.tsx',
     'apps/docs/src/examples/timeline/TimelinePlaceholder.tsx',
     'apps/docs/src/examples/tracker-data-entry/CohortAncRegister.tsx',
@@ -52,13 +50,10 @@ const PENDING = new Set<string>([
     'apps/docs/src/examples/ui/ChartShare.tsx',
     'apps/docs/src/examples/ui/ChartTrend.tsx',
     'apps/docs/src/examples/ui/ChartVisits.tsx',
-    'apps/docs/src/examples/working-list/WorkingListPlaceholders.tsx',
-    'apps/docs/src/examples/working-list/WorkingListProgramPicker.tsx',
     'packages/registry/blocks/calendar/Calendar.tsx',
     'packages/registry/blocks/calendar/CalendarCell.tsx',
     'packages/registry/blocks/calendar/CalendarDayRecords.tsx',
     'packages/registry/blocks/calendar/CalendarGrid.tsx',
-    'packages/registry/blocks/context-selector/components/OptionSelector.tsx',
     'packages/registry/blocks/observation-cards/card/ObservationCard.tsx',
     'packages/registry/blocks/observation-cards/card/frame.tsx',
     'packages/registry/blocks/observation-cards/format/display.ts',
@@ -93,20 +88,6 @@ const PENDING = new Set<string>([
     'packages/registry/blocks/tracker-data-entry/provider/EventStatusBadge.tsx',
     'packages/registry/blocks/tracker-data-entry/provider/ShowMore.tsx',
     'packages/registry/blocks/tracker-data-entry/summary/TrackerDataEntrySummary.tsx',
-    'packages/registry/blocks/working-list/ui/ColumnSettingsDialog/ColumnSettingsDialog.tsx',
-    'packages/registry/blocks/working-list/ui/Container/WorkingListContainer.tsx',
-    'packages/registry/blocks/working-list/ui/FilterControls/CalendarRangeFields.tsx',
-    'packages/registry/blocks/working-list/ui/FilterControls/FilterButton.tsx',
-    'packages/registry/blocks/working-list/ui/FilterControls/FilterControlPrimitives.tsx',
-    'packages/registry/blocks/working-list/ui/FilterControls/FilterEditorValue.tsx',
-    'packages/registry/blocks/working-list/ui/FilterControls/MoreFilters.tsx',
-    'packages/registry/blocks/working-list/ui/FilterControls/ProgramStageControl.tsx',
-    'packages/registry/blocks/working-list/ui/FilterControls/ReferenceFilterSelects.tsx',
-    'packages/registry/blocks/working-list/ui/Skeleton/Skeleton.tsx',
-    'packages/registry/blocks/working-list/ui/Toolbar/WorkingListToolbar.tsx',
-    'packages/registry/blocks/working-list/ui/WorkingListTable/WorkingListPagination.tsx',
-    'packages/registry/blocks/working-list/ui/WorkingListTable/WorkingListTable.tsx',
-    'packages/registry/blocks/working-list/ui/WorkingListTable/WorkingListTableView.tsx',
 ])
 
 const theme = readFileSync(

@@ -191,6 +191,7 @@ const checkInstall = (workDirectory: string): void => {
             join(registryOutput, 'calendar.json'),
             join(registryOutput, 'context-selector.json'),
             join(registryOutput, 'sidebar.json'),
+            join(registryOutput, 'program-rules.json'),
             join(registryOutput, 'dhis2-value-display.json'),
             join(registryOutput, 'dhis2-value-types.json'),
             join(registryOutput, 'observation-cards.json'),

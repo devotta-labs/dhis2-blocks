@@ -10,14 +10,14 @@ import { cn } from './cn'
  * outline Button at rest; pressed swaps to a blue-tinted fill and border.
  */
 const toggleVariants = cva(
-    "inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-dhis2-md border text-sm leading-4 font-normal tracking-[0.5px] whitespace-nowrap outline-none select-none focus-visible:outline-3 focus-visible:outline-solid focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring disabled:cursor-not-allowed disabled:text-dhis2-grey-600 data-pressed:border-dhis2-blue-600 data-pressed:bg-dhis2-blue-050 data-pressed:font-medium data-pressed:text-dhis2-blue-800 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
+    "inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-dhis2-md border text-sm leading-4 font-normal tracking-[0.5px] whitespace-nowrap outline-none select-none focus-visible:outline-3 focus-visible:outline-solid focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring disabled:cursor-not-allowed disabled:text-dhis2-disabled-foreground data-pressed:border-dhis2-primary data-pressed:bg-dhis2-primary-subtle data-pressed:font-medium data-pressed:text-dhis2-primary-strong [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
     {
         variants: {
             variant: {
                 default:
-                    'border-transparent bg-transparent text-dhis2-grey-900 hover:bg-dhis2-grey-200',
+                    'border-transparent bg-transparent text-dhis2-foreground hover:bg-dhis2-accent',
                 outline:
-                    'border-dhis2-grey-400 bg-white text-dhis2-grey-900 hover:bg-dhis2-grey-100 data-pressed:hover:bg-dhis2-blue-100',
+                    'border-dhis2-border-strong bg-dhis2-background text-dhis2-foreground hover:bg-dhis2-muted',
             },
             size: {
                 default: 'h-9 px-3',

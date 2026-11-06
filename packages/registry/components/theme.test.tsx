@@ -10,9 +10,7 @@ describe('theme roles', () => {
             </p>
         )
         const muted = screen.getByTestId('muted').element()
-        expect(getComputedStyle(muted).color).toBe(
-            roleColour('muted-foreground')
-        )
+        expect(getComputedStyle(muted).color).toBe('rgb(74, 87, 104)') // grey-700
     })
 
     it('keep opacity modifiers translucent', async () => {

@@ -78,7 +78,7 @@ const WorkingListPlaceholder = ({
             Loading the working list…
         </span>
         <div
-            className="w-full min-w-0 max-w-full rounded-[4px] border border-dhis2-border-strong bg-dhis2-background shadow-dhis2-card"
+            className="w-full min-w-0 max-w-full rounded-[4px] border border-dhis2-border-strong bg-dhis2-background shadow-dhis2-card contrast-more:shadow-none"
             aria-hidden="true"
         >
             <p className="m-0 p-2 text-xs leading-4 text-dhis2-muted-foreground">

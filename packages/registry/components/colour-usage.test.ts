@@ -20,7 +20,7 @@ const SKIPPED =
 // prettier-ignore
 const NAMED = 'aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow grey honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen lightgrey lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen'.replaceAll(' ', '|');
 const TAILWIND_HUES =
-    'slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose'
+    'slate|gray|zinc|neutral|stone|mauve|olive|mist|taupe|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose'
 
 const RAW_COLOURS: [string, RegExp][] = [
     [
@@ -45,7 +45,7 @@ const RAW_COLOURS: [string, RegExp][] = [
     [
         'Tailwind palette utility',
         new RegExp(
-            `\\b(?:bg|text|border(?:-[trblxyse])?|outline|fill|stroke|ring|from|to|via|divide|placeholder|decoration|accent|caret|shadow)-(?:${TAILWIND_HUES})-\\d{2,3}\\b`
+            `\\b(?:bg|text|border(?:-[trblxyse])?|outline|fill|stroke|ring-offset|ring|from|to|via|divide|placeholder|decoration|accent|caret|shadow)-(?:${TAILWIND_HUES})-\\d{2,3}\\b`
         ),
     ],
     [
@@ -137,6 +137,7 @@ describe('colour usage', () => {
         'background: color(display-p3 1 0 0);',
         'className="text-red-500"',
         'className="text-[var(--colors-grey700)]"',
+        'className="ring-offset-sky-200"',
     ])('flags %s', (line) => {
         expect(rawColoursIn([line])).not.toEqual([])
     })

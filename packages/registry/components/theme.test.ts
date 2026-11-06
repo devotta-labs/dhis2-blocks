@@ -134,6 +134,13 @@ describe('theme.css', () => {
         expect(roles.toSorted()).toEqual(Object.keys(SPEC).toSorted())
     })
 
+    it("overlays in @dhis2/ui's translucent grey, darker with more contrast", () => {
+        expect([defaultValue('overlay'), contrastValue('overlay')]).toEqual([
+            'rgb(33 43 54 / 0.4)',
+            'rgb(33 43 54 / 0.6)',
+        ])
+    })
+
     it.each(Object.entries(SPEC))(
         '%s is %j by default and with more contrast',
         (role, [defaultStep, contrastStep]) => {

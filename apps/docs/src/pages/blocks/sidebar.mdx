@@ -61,7 +61,9 @@ export function AppNavigation() {
 }
 ```
 
-For other routers, set `aria-current="page"` on the active link.
+For other routers, set `aria-current="page"` on the active link. Keep it on a
+link, an `<a>`: the marker takes the link colour in Windows forced colours, so
+on a button it could show a colour that doesn't match the text.
 
 ## Nested navigation and actions
 

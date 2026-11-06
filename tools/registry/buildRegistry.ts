@@ -27,7 +27,7 @@ const BLOCK_IMPORT = '@/components/'
 const BLOCK_TARGET = '@components/'
 
 const SOURCE_FILE = /\.(?:tsx?|css)$/
-const TEST_FILE = /\.test\.tsx?$/
+const TEST_FILE = /\.(?:test|fixtures)\.tsx?$/
 const NOT_SHIPPED_DIRECTORIES = new Set(['__tests__'])
 const RESOLVE_SUFFIXES = ['', '.ts', '.tsx', '/index.ts', '/index.tsx']
 
@@ -93,12 +93,20 @@ const parseTheme = (source: string): ThemeLayers => {
         if (node.type === 'atrule' && node.name === 'media') {
             const rules: Record<string, Record<string, string>> = {}
             node.walkRules((rule) => {
+                if (rules[rule.selector]) {
+                    unsupported(
+                        `a second ${rule.selector} in @media ${node.params}`
+                    )
+                }
                 const declarations: Record<string, string> = {}
                 rule.walkDecls(({ prop, value }) => {
                     declarations[prop] = oneLine(value)
                 })
                 rules[rule.selector] = declarations
             })
+            if (layers.css[`@media ${node.params}`]) {
+                unsupported(`a second @media ${node.params}`)
+            }
             layers.css[`@media ${node.params}`] = rules
             return
         }

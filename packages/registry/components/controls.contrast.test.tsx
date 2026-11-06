@@ -90,4 +90,16 @@ describe('form controls with more contrast', () => {
             style(screen.getByLabelText('B').element()).backgroundColor
         ).toBe(roleColour('primary'))
     })
+
+    it('outline a focused destructive button in the destructive foreground', async () => {
+        const screen = await render(
+            <div className="[--dhis2-destructive-foreground:rgb(1,2,3)]">
+                <Button variant="destructive">Delete</Button>
+            </div>
+        )
+        await userEvent.tab()
+        expect(style(screen.getByRole('button').element()).outlineColor).toBe(
+            'rgb(1, 2, 3)'
+        )
+    })
 })

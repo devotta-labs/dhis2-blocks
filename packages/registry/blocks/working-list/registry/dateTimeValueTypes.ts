@@ -12,6 +12,7 @@ import {
     parseEmptySaved,
     parseTimeValue,
     serializeEmptySaved,
+    savedDateBoundaries,
 } from './valueTypeShared'
 import { textDefinition } from './textAndNumericValueTypes'
 
@@ -198,16 +199,19 @@ export const dateDefinition = (
         const toApiDate = context?.toApiDate ?? defaultToApiDate
         const range =
             filter.value.mode === 'absolute'
-                ? { start: filter.value.start, end: filter.value.end }
+                ? {
+                      start: filter.value.start
+                          ? toApiDate(filter.value.start)
+                          : undefined,
+                      end: filter.value.end
+                          ? toApiDate(filter.value.end)
+                          : undefined,
+                  }
                 : (context?.resolveRelativeDate?.(filter.value) ??
                   defaultResolveRelativeDate(filter.value, context?.today))
         return [
-            range.start
-                ? `ge:${escapeFilterValue(toApiDate(range.start))}`
-                : undefined,
-            range.end
-                ? `le:${escapeFilterValue(toApiDate(range.end))}`
-                : undefined,
+            range.start ? `ge:${escapeFilterValue(range.start)}` : undefined,
+            range.end ? `le:${escapeFilterValue(range.end)}` : undefined,
         ]
             .filter(Boolean)
             .join(':')
@@ -254,16 +258,7 @@ export const dateDefinition = (
                 ? {
                       kind: 'dateRange',
                       mode: 'absolute',
-                      start: filter.dateFilter.startDate
-                          ? (context?.fromApiDate?.(
-                                filter.dateFilter.startDate
-                            ) ?? filter.dateFilter.startDate)
-                          : undefined,
-                      end: filter.dateFilter.endDate
-                          ? (context?.fromApiDate?.(
-                                filter.dateFilter.endDate
-                            ) ?? filter.dateFilter.endDate)
-                          : undefined,
+                      ...savedDateBoundaries(filter.dateFilter, context),
                   }
                 : {
                       kind: 'dateRange',

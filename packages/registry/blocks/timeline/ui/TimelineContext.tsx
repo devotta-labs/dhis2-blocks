@@ -1,9 +1,10 @@
-import React, { createContext, useMemo } from 'react'
+import React, { createContext, useContext, useMemo } from 'react'
 import type { Dhis2Calendar } from '@/components/dhis2-value-display/calendar'
 import { localDay } from '../core/today'
 import type {
     TimelineEntry,
     TimelineGroup,
+    TimelineHeadingFacts,
     TimelineOrder,
     TimelineStatus,
 } from '../core/types'
@@ -42,6 +43,25 @@ export interface TimelineContextValue<TData = unknown> {
 
 export const TimelineMetaContext = createContext<TimelineMeta | null>(null)
 export const TimelineContext = createContext<TimelineContextValue | null>(null)
+
+const TimelineHeadingContext = createContext<TimelineHeadingFacts | undefined>(
+    undefined
+)
+
+/** Opt a custom layout into omitting details already represented by its heading. */
+export const TimelineHeadingProvider = ({
+    heading,
+    children,
+}: {
+    heading?: TimelineHeadingFacts
+    children: React.ReactNode
+}) => (
+    <TimelineHeadingContext.Provider value={heading}>
+        {children}
+    </TimelineHeadingContext.Provider>
+)
+
+export const useTimelineHeading = () => useContext(TimelineHeadingContext)
 
 /**
  * Calendar, locale and today for the parts inside it. `Timeline` provides it;

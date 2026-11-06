@@ -83,10 +83,9 @@ describe('calendar composition layout', () => {
             expect(
                 panel.left - rect(container, 'calendar-grid').right
             ).toBeCloseTo(12)
-            expect(
-                getComputedStyle(element(container, '[data-calendar-panel]'))
-                    .gridRowStart
-            ).toBe('1')
+            expect(panel.top).toBeGreaterThanOrEqual(
+                rect(container, 'calendar').top
+            )
             expect(panel.top).toBeLessThan(rect(container, 'calendar-grid').top)
             expect(
                 element(
@@ -183,15 +182,17 @@ describe('calendar composition layout', () => {
             .poll(() => rect(container, 'calendar-grid').width)
             .toBeCloseTo(960)
         expect(rect(container, 'calendar-day-records').width).toBeCloseTo(960)
-        expect(
-            getComputedStyle(element(container, '[data-testid="wrapper"]'))
-                .gridColumnStart
-        ).toBe('1')
-        expect(
-            getComputedStyle(
-                element(container, '[data-slot="calendar-day-records"]')
-            ).gridColumnStart
-        ).toBe('auto')
+        const panel = rect(container, 'calendar-day-records')
+        const grid = rect(container, 'calendar-grid')
+        expect(panel.left).toBe(grid.left)
+        expect(panel.right).toBe(grid.right)
+        expect(panel.top).toBeGreaterThan(grid.bottom)
+        const footer = element(
+            container,
+            '[data-testid="custom-main"]'
+        ).getBoundingClientRect()
+        expect(footer.top).toBeGreaterThan(panel.bottom)
+        expect(footer.width).toBeCloseTo(960)
     })
 
     it('switches at the container breakpoint, not the viewport width', async () => {
@@ -203,6 +204,14 @@ describe('calendar composition layout', () => {
         await expect
             .poll(() => rect(screen.container, 'calendar-grid').width)
             .toBeCloseTo(767)
+        const panelAt767 = element(
+            screen.container,
+            '[data-calendar-panel]'
+        ).getBoundingClientRect()
+        expect(panelAt767.width).toBeCloseTo(767)
+        expect(panelAt767.top).toBeGreaterThan(
+            rect(screen.container, 'calendar-grid').bottom
+        )
 
         await screen.rerender(
             <Composition width={768}>
@@ -212,5 +221,14 @@ describe('calendar composition layout', () => {
         await expect
             .poll(() => rect(screen.container, 'calendar-grid').width)
             .toBeCloseTo(468)
+        const panelAt768 = element(
+            screen.container,
+            '[data-calendar-panel]'
+        ).getBoundingClientRect()
+        expect(panelAt768.width).toBeCloseTo(288)
+        expect(
+            panelAt768.left - rect(screen.container, 'calendar-grid').right
+        ).toBeCloseTo(12)
+        expect(panelAt768.top).toBe(rect(screen.container, 'calendar').top)
     })
 })

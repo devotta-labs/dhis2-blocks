@@ -4,7 +4,7 @@ import {
     type DataEngineLike,
     type DataEngineMutation,
     type DataEngineQuery,
-} from '@/components/working-list/api/client'
+} from './client'
 import { z } from 'zod'
 
 type WorkingListEngineValue = Awaited<
@@ -86,8 +86,8 @@ const toRuntimeMutation = (mutation: DataEngineMutation) => {
     } as const
 }
 
-export const createAppWorkingListClient = (
-    engine: ReturnType<typeof useDataEngine>
+export const createRuntimeWorkingListClient = (
+    engine: Pick<ReturnType<typeof useDataEngine>, 'query' | 'mutate'>
 ) => {
     const dataEngine: DataEngineLike = {
         query: async (query, options) =>

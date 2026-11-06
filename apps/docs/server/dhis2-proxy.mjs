@@ -11,6 +11,12 @@ import https from 'node:https'
  */
 export const DHIS2_PREFIX = '/dhis2'
 
+// Vite matches the raw request URL, including a query on the bare prefix.
+const DHIS2_ROUTE_PATTERN = `^${DHIS2_PREFIX}(?:/|\\?|$)`
+const DHIS2_ROUTE = new RegExp(DHIS2_ROUTE_PATTERN)
+
+export const isDhis2Path = (url) => DHIS2_ROUTE.test(url ?? '')
+
 const DOCS_DEFAULT_BACKEND = 'http://127.0.0.1:58080'
 
 const DOCS_DEMO_USERNAME = 'admin'
@@ -43,21 +49,18 @@ export const resolveDocsCookies = (cookie) =>
         .filter((part) => /^(JSESSIONID|XSRF-TOKEN)=/.test(part))
         .join('; ') || undefined
 
-const applyDocsAuth = (headers, auth) => {
+const docsRequestHeaders = (headers, target, auth) => {
     const cookie = resolveDocsCookies(headers.cookie)
+    const backend = new URL(target)
 
-    delete headers.cookie
-
-    if (!auth) {
-        if (cookie) {
-            headers.cookie = cookie
-        }
-
-        return
+    // DHIS2's CORS layer can return an empty 200 for a foreign Origin.
+    // This prefix is backend-native, never an arbitrary third-party origin.
+    return {
+        origin: backend.origin,
+        referer: `${backend.origin}/`,
+        authorization: auth ?? headers.authorization,
+        cookie: auth ? undefined : cookie,
     }
-
-    delete headers.authorization
-    headers.authorization = auth
 }
 
 /**
@@ -81,12 +84,7 @@ export const isCrossSiteWrite = (method, headers = {}) => {
  * origin. Mirrors the check inside `proxyDhis2Request` for `server.mjs`.
  */
 export const dhis2CsrfGuard = (req, res, next) => {
-    const path = (req.url ?? '').split('?')[0]
-
-    if (
-        (path === DHIS2_PREFIX || path.startsWith(`${DHIS2_PREFIX}/`)) &&
-        isCrossSiteWrite(req.method, req.headers)
-    ) {
+    if (isDhis2Path(req.url) && isCrossSiteWrite(req.method, req.headers)) {
         res.statusCode = 403
         res.end('Cross-site writes are not allowed')
 
@@ -107,15 +105,10 @@ export const resolveDocsBackend = (value) => {
 }
 
 export const stripDhis2Prefix = (url) => {
-    if (url === DHIS2_PREFIX) {
-        return '/'
-    }
+    if (!isDhis2Path(url)) return url
 
-    if (url.startsWith(`${DHIS2_PREFIX}/`)) {
-        return url.slice(DHIS2_PREFIX.length)
-    }
-
-    return url
+    const suffix = url.slice(DHIS2_PREFIX.length)
+    return suffix.startsWith('/') ? suffix : `/${suffix}`
 }
 
 /**
@@ -137,17 +130,25 @@ export const rewriteLocationHeader = (location, target) => {
         if (basePath && path.startsWith(`${basePath}/`)) {
             return path.slice(basePath.length)
         }
+        if (
+            basePath &&
+            (path.startsWith(`${basePath}?`) || path.startsWith(`${basePath}#`))
+        ) {
+            return `/${path.slice(basePath.length)}`
+        }
         return path === basePath ? '/' : path
     }
 
-    if (location.startsWith('/')) {
+    if (location.startsWith('/') && !location.startsWith('//')) {
         const path = stripBasePath(location)
 
-        return path.startsWith(DHIS2_PREFIX) ? path : `${DHIS2_PREFIX}${path}`
+        return isDhis2Path(path.split('#')[0]) ? path : `${DHIS2_PREFIX}${path}`
     }
 
     try {
-        const resolved = new URL(location)
+        const resolved = location.startsWith('//')
+            ? new URL(location, backend)
+            : new URL(location)
 
         if (resolved.origin === backend.origin) {
             return `${DHIS2_PREFIX}${stripBasePath(resolved.pathname)}${resolved.search}${resolved.hash}`
@@ -171,60 +172,42 @@ export const rewriteSetCookieHeaders = (cookies) =>
             : `${cookie}; Path=/`
     )
 
+const applyDocsResponseHeaders = (headers, target) => {
+    if (headers.location) {
+        headers.location = rewriteLocationHeader(headers.location, target)
+    }
+
+    const cookies = rewriteSetCookieHeaders(headers['set-cookie'])
+    if (cookies) headers['set-cookie'] = cookies
+}
+
 /** Vite `server.proxy`/`preview.proxy` entry for the same-origin prefix. */
 export const createDhis2ViteProxy = (target, env = process.env) => {
     const docsAuth = resolveDocsAuth(env)
 
-    // The context key is prefix-matched by Vite, so `/dhis2` alone would also
-    // capture `/dhis2-symbol.svg` and friends. The `^` regex form scopes the
-    // proxy to the prefix itself and paths below it — matching server.mjs.
+    // Vite prefix-matches plain keys; use the shared route regex so assets
+    // such as `/dhis2-symbol.svg` stay local in every serving mode.
     return {
-        [`^${DHIS2_PREFIX}(/|$)`]: {
+        [DHIS2_ROUTE_PATTERN]: {
             target,
             changeOrigin: true,
             secure: false,
             rewrite: (path) => stripDhis2Prefix(path),
             configure: (proxy) => {
-                // DHIS2's CORS layer answers requests carrying a foreign Origin
-                // with an empty 200 (and no session cookie). Requests through this
-                // prefix are backend-native, so Origin/Referer are rewritten to
-                // the backend's own origin — never arbitrary third-party origins.
                 proxy.on('proxyReq', (proxyReq, req) => {
-                    const backend = new URL(target)
-
-                    proxyReq.setHeader('origin', backend.origin)
-                    proxyReq.setHeader('referer', `${backend.origin}/`)
-                    proxyReq.removeHeader('cookie')
-
-                    if (docsAuth) {
-                        proxyReq.removeHeader('authorization')
-                        proxyReq.setHeader('authorization', docsAuth)
-                    } else {
-                        const cookie = resolveDocsCookies(req.headers.cookie)
-
-                        if (cookie) {
-                            proxyReq.setHeader('cookie', cookie)
-                        }
+                    const headers = docsRequestHeaders(
+                        req.headers,
+                        target,
+                        docsAuth
+                    )
+                    for (const [name, value] of Object.entries(headers)) {
+                        if (value === undefined) proxyReq.removeHeader(name)
+                        else proxyReq.setHeader(name, value)
                     }
                 })
 
                 proxy.on('proxyRes', (proxyRes) => {
-                    const location = proxyRes.headers.location
-
-                    if (location) {
-                        proxyRes.headers.location = rewriteLocationHeader(
-                            location,
-                            target
-                        )
-                    }
-
-                    const cookies = rewriteSetCookieHeaders(
-                        proxyRes.headers['set-cookie']
-                    )
-
-                    if (cookies) {
-                        proxyRes.headers['set-cookie'] = cookies
-                    }
+                    applyDocsResponseHeaders(proxyRes.headers, target)
                 })
             },
         },
@@ -275,15 +258,15 @@ export const proxyDhis2Request = (req, res, target, env = process.env) => {
     const headers = {
         ...req.headers,
         host: backend.host,
-        origin: backend.origin,
-        referer: `${backend.origin}/`,
+        ...docsRequestHeaders(req.headers, target, resolveDocsAuth(env)),
     }
 
+    for (const header of Object.keys(headers)) {
+        if (headers[header] === undefined) delete headers[header]
+    }
     for (const header of HOP_BY_HOP_HEADERS) {
         delete headers[header]
     }
-
-    applyDocsAuth(headers, resolveDocsAuth(env))
 
     const upstream = transport.request(
         {
@@ -300,20 +283,7 @@ export const proxyDhis2Request = (req, res, target, env = process.env) => {
                 delete responseHeaders[header]
             }
 
-            if (responseHeaders.location) {
-                responseHeaders.location = rewriteLocationHeader(
-                    responseHeaders.location,
-                    target
-                )
-            }
-
-            const cookies = rewriteSetCookieHeaders(
-                responseHeaders['set-cookie']
-            )
-
-            if (cookies) {
-                responseHeaders['set-cookie'] = cookies
-            }
+            applyDocsResponseHeaders(responseHeaders, target)
 
             res.writeHead(
                 upstreamRes.statusCode ?? 502,

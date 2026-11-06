@@ -7,7 +7,6 @@ const outcomes = [
     { value: 'rescheduled', label: 'Rescheduled' },
 ]
 
-/** One answer from a short list: how the visit went. */
 const RadioGroupOutcome = () => (
     <div className="flex flex-col gap-3">
         <p id="visit-outcome" className="m-0 text-sm font-medium">

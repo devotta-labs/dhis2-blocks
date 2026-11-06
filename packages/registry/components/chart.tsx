@@ -10,7 +10,6 @@ import type { TooltipValueType } from 'recharts'
  * exposes each config colour as a `--color-<key>` variable for the series.
  */
 
-// Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: '', dark: '.dark' } as const
 
 const INITIAL_DIMENSION = { width: 320, height: 200 } as const

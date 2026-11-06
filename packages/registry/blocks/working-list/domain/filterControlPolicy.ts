@@ -1,9 +1,9 @@
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type { WorkingListField } from './model'
 
-type FilterPolicyTranslate = (message: string) => string
+import type { WorkingListTranslate } from './translation'
 
-const identityTranslate: FilterPolicyTranslate = (message) => message
+const identityTranslate: WorkingListTranslate = (message) => message
 
 export const usesMultipleOptionSelection = (
     field: WorkingListField,
@@ -12,7 +12,7 @@ export const usesMultipleOptionSelection = (
 
 export const fieldDisplayName = (
     field: WorkingListField,
-    translate: FilterPolicyTranslate = identityTranslate
+    translate: WorkingListTranslate = identityTranslate
 ) => {
     if (field.displayNameIsMetadata) {
         return field.displayName
@@ -38,7 +38,7 @@ export const fieldDisplayName = (
 export const optionDisplayName = (
     field: WorkingListField,
     option: { code: string; displayName: string },
-    translate: FilterPolicyTranslate = identityTranslate
+    translate: WorkingListTranslate = identityTranslate
 ) => {
     if (field.source !== 'system') {
         return option.displayName
@@ -65,7 +65,7 @@ export const optionDisplayName = (
 
 export const localizedField = (
     field: WorkingListField,
-    translate: FilterPolicyTranslate = identityTranslate
+    translate: WorkingListTranslate = identityTranslate
 ): WorkingListField => ({
     ...field,
     displayName: fieldDisplayName(field, translate),

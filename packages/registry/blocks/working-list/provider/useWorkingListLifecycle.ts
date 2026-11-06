@@ -19,7 +19,7 @@ import {
 } from '../api/savedLists'
 import { workingListSystemInfoQueryOptions } from '../api/systemInfo'
 import { createWorkingListValueTransformers } from '../registry/transformers'
-import { defaultWorkingListTranslate } from '../ui/WorkingListText'
+import { defaultWorkingListTranslate } from '../domain/translation'
 import { WorkingListInitializationError } from './errors'
 import type { WorkingListMeta } from './contracts'
 import type { WorkingListProviderStoreState } from './store'

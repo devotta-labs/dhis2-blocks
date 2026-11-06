@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
-import type { createAppWorkingListClient } from './createAppWorkingListClient'
+import type { WorkingListClient } from '@/components/working-list/api/client'
 import {
     OrganisationUnitsResponseSchema,
     retryOperationalError,
@@ -12,7 +12,7 @@ export const useOrganisationUnitSearch = ({
     search,
     enabled,
 }: {
-    client: ReturnType<typeof createAppWorkingListClient>
+    client: WorkingListClient
     search: string
     enabled: boolean
 }) =>

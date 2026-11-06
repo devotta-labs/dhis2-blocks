@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+    notifyManager,
+    QueryClient,
+    QueryClientProvider,
+} from '@tanstack/react-query'
 import React, { useContext, type ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
 import {
@@ -9,6 +13,7 @@ import {
     type TrackedEntityFinderClient,
 } from '../api/client'
 import type { ProgramMetadata } from '../api/schemas'
+import type { FinderSystemInfo } from '../api/systemInfo'
 import { FinderContext } from '../provider/context'
 import { FinderProvider } from '../provider/FinderProvider'
 import { serializeFilter } from '../rules/searchParams'
@@ -51,11 +56,12 @@ const toProgramResponse = (program: ProgramMetadata): EngineValue => ({
 /** A search the fake engine holds open until the test answers it. */
 interface PendingSearch {
     request: ResourceRequest
-    respond: (response: EngineValue) => void
+    respond: (response: EngineValue) => Promise<void>
 }
 
 export interface FakeServer {
     client: TrackedEntityFinderClient
+    engine: DataEngineLike
     /** Every request the finder made, in order. */
     requests: ResourceRequest[]
     /** With `deferSearches`, every search request, in order, still open or not. */
@@ -64,6 +70,7 @@ export interface FakeServer {
 
 export interface FakeServerOptions {
     program?: ProgramMetadata
+    info?: FinderSystemInfo
     /** Never answers the program request, so the finder stays loading. */
     programPending?: boolean
     programFails?: boolean
@@ -117,6 +124,7 @@ export const createFakeServer = (
                         [key]: {
                             calendar: 'gregorian',
                             dateFormat: 'YYYY-MM-DD',
+                            ...options.info,
                             version: options.version ?? '2.43.1',
                         },
                     }
@@ -130,8 +138,12 @@ export const createFakeServer = (
                         return new Promise<EngineResult>((resolve) => {
                             pendingSearches.push({
                                 request,
-                                respond: (response) =>
-                                    resolve({ [key]: response }),
+                                respond: async (response) => {
+                                    resolve({ [key]: response })
+                                    await new Promise<void>((done) =>
+                                        notifyManager.schedule(done)
+                                    )
+                                },
                             })
                         })
                     }
@@ -147,24 +159,26 @@ export const createFakeServer = (
     }
     return {
         client: createTrackedEntityFinderClient(engine),
+        engine,
         requests,
         pendingSearches,
     }
 }
 
 /** Renders inside a fresh QueryClient with retries off by default. */
-export const renderWithQueries = (ui: ReactNode) => {
+export const renderWithQueries = async (ui: ReactNode) => {
     const queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false } },
     })
     // A wrapper, so `rerender` keeps the same QueryClient.
-    return render(ui, {
+    const screen = await render(ui, {
         wrapper: ({ children }) => (
             <QueryClientProvider client={queryClient}>
                 {children}
             </QueryClientProvider>
         ),
     })
+    return Object.assign(screen, { queryClient })
 }
 
 /** Renders `children` under a `hivProgram` provider, with a SubmissionProbe. */

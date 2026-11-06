@@ -24,11 +24,11 @@ import { EditorValue } from './FilterEditorValue'
 import { SelectField } from './FilterSelectFields'
 import {
     defaultValue,
-    fieldDisplayName,
     summaryForFilter,
     translatedOperator,
     type FilterCalendarContext,
 } from './filterValueSupport'
+import { fieldDisplayName } from '../../domain/filterControlPolicy'
 
 interface FilterButtonProps {
     client: WorkingListClient

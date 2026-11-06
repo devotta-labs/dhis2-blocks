@@ -10,11 +10,13 @@ const CHILD_PATH = `${ROOT_PATH}/${CHILD_ID}`
 
 const TestOrganisationUnitTree = ({
     expanded,
+    selected,
     handleExpand,
     handleCollapse,
     onChange,
 }: {
     expanded: string[]
+    selected: string[]
     handleExpand: (payload: { path: string }) => void
     handleCollapse: (payload: { path: string }) => void
     onChange: (
@@ -31,6 +33,7 @@ const TestOrganisationUnitTree = ({
 
     return (
         <div data-testid="test-org-unit-tree">
+            <output aria-label="Selection">{selected.join(',')}</output>
             <button
                 aria-expanded={rootIsOpen}
                 data-testid="root-toggle"
@@ -85,7 +88,6 @@ const Harness = () => {
                         path: ROOT_PATH,
                     },
                 ]}
-                allowedPaths={[ROOT_PATH]}
                 searchValue=""
                 treeKey="initial"
                 treeComponent={TestOrganisationUnitTree}
@@ -103,7 +105,6 @@ describe('organisation-unit selector interaction reliability', () => {
     it('renders loading, error, and ready states exclusively as search props change', async () => {
         const props = {
             roots: [],
-            allowedPaths: [],
             searchValue: '',
             treeKey: 'search',
             treeComponent: TestOrganisationUnitTree,
@@ -138,16 +139,20 @@ describe('organisation-unit selector interaction reliability', () => {
         await expect.element(loading).not.toBeInTheDocument()
     })
 
-    it('prioritizes load-more errors and updates pagination availability without replacing the tree', async () => {
+    it('preserves expansion, selection and focus while appending roots after a load-more error', async () => {
         const props = {
             roots: [],
-            allowedPaths: [],
             searchValue: '',
             treeKey: 'search',
             treeComponent: TestOrganisationUnitTree,
             onSearchChange: vi.fn(),
             onSelect: vi.fn(),
             onSearchLoadMore: vi.fn(),
+            selected: {
+                id: CHILD_ID,
+                displayName: 'Child organisation unit',
+                path: CHILD_PATH,
+            },
         }
         const screen = await render(
             <OrganisationUnitSelectorContent
@@ -156,7 +161,9 @@ describe('organisation-unit selector interaction reliability', () => {
                 searchLoadMoreError
             />
         )
-        const tree = screen.getByTestId('test-org-unit-tree').element()
+        const toggle = screen.getByTestId('root-toggle')
+        await toggle.click()
+        await expect.element(toggle).toHaveAttribute('aria-expanded', 'false')
         const error = screen.getByText('Could not load more organisation units')
         const showMore = screen.getByRole('button', { name: 'Show more' })
 
@@ -180,12 +187,33 @@ describe('organisation-unit selector interaction reliability', () => {
         )
         await expect.element(showMore).toBeEnabled()
 
-        await screen.rerender(<OrganisationUnitSelectorContent {...props} />)
+        toggle.element().focus()
+        await screen.rerender(
+            <OrganisationUnitSelectorContent
+                {...props}
+                searchRoots={[
+                    {
+                        id: ROOT_ID,
+                        displayName: 'Root organisation unit',
+                        path: ROOT_PATH,
+                    },
+                    {
+                        id: 'Appended001',
+                        displayName: 'Appended root',
+                        path: '/Appended001',
+                    },
+                ]}
+            />
+        )
         await expect.element(showMore).not.toBeInTheDocument()
-        expect(screen.getByTestId('test-org-unit-tree').element()).toBe(tree)
+        await expect.element(toggle).toHaveAttribute('aria-expanded', 'false')
+        await expect.element(toggle).toHaveFocus()
+        await expect
+            .element(screen.getByLabelText('Selection'))
+            .toHaveTextContent(CHILD_PATH)
     })
 
-    it('honours the first collapse, expand, and selection clicks without remounting or reopening', async () => {
+    it('honours the first collapse, expand, and selection clicks without reopening', async () => {
         const screen = await render(<Harness />)
         await screen.getByRole('button', { name: /Organisation unit/ }).click()
 
@@ -194,7 +222,6 @@ describe('organisation-unit selector interaction reliability', () => {
             .element(firstToggle)
             .toHaveAttribute('aria-expanded', 'true')
 
-        const firstToggleElement = firstToggle.element()
         await firstToggle.click()
         await expect
             .element(screen.getByTestId('child-unit'))
@@ -202,18 +229,14 @@ describe('organisation-unit selector interaction reliability', () => {
         await expect
             .element(firstToggle)
             .toHaveAttribute('aria-expanded', 'false')
-        expect(screen.getByTestId('root-toggle').element()).toBe(
-            firstToggleElement
-        )
+        await expect.element(firstToggle).toHaveFocus()
 
         await firstToggle.click()
         await expect.element(screen.getByTestId('child-unit')).toBeVisible()
         await expect
             .element(firstToggle)
             .toHaveAttribute('aria-expanded', 'true')
-        expect(screen.getByTestId('root-toggle').element()).toBe(
-            firstToggleElement
-        )
+        await expect.element(firstToggle).toHaveFocus()
 
         await screen.getByTestId('child-unit').click()
         await expect

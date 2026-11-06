@@ -26,7 +26,7 @@ export interface FinderControllerOptions {
 /**
  * Holds what the finder shares across its forms: program metadata, the last
  * submitted search and the page. Mount it under a
- * `key` of the program, so a new program starts from nothing.
+ * `key` of the data source and program, so either change starts from nothing.
  */
 export const useFinderController = ({
     program,

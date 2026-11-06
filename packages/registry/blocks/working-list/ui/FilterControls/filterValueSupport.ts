@@ -9,15 +9,11 @@ import {
     type FilterValue,
     type WorkingListField,
 } from '../../domain/model'
-import {
-    fieldDisplayName,
-    localizedField,
-    optionDisplayName,
-} from '../../domain/filterControlPolicy'
+import { optionDisplayName } from '../../domain/filterControlPolicy'
 import type { FilterEditorKind } from '../../registry/valueTypes'
-import type { WorkingListTranslate } from '../WorkingListText'
+import type { WorkingListTranslate } from '../../domain/translation'
 
-export { fieldDisplayName, localizedField, optionDisplayName }
+export { optionDisplayName }
 
 export const translatedOperator = (
     operator: FilterOperator,

@@ -1,9 +1,9 @@
 import React, { useId, useMemo } from 'react'
-import { cn } from '@/components/dhis2/ui/cn'
 import {
     Combobox,
     ComboboxChip,
     ComboboxChips,
+    ComboboxChipsTrigger,
     ComboboxContent,
     ComboboxEmpty,
     ComboboxInput,
@@ -30,7 +30,6 @@ export interface SelectFieldOption<Value extends string = string> {
     label: string
 }
 
-/** A labelled dense select: the shadcn stand-in for SingleSelectField. */
 export const SelectField = <Value extends string>({
     label,
     dataTest,
@@ -73,11 +72,6 @@ export const SelectField = <Value extends string>({
 }
 
 /**
- * A labelled, filterable dense select: the shadcn stand-in for a filterable
- * SingleSelectField or MultiSelectField. With `multiple`, selections show as
- * chips in the box (collapsing to a count after `collapseAfter`) and options
- * show checkboxes, as in @dhis2/ui MultiSelect.
- *
  * Options are filtered locally unless `onSearchChange` is given, in which case
  * the caller filters (e.g. on the server) and `loading` shows a spinner.
  */
@@ -118,8 +112,6 @@ export const ComboboxField = ({
         [options]
     )
     const labelFor = (value: string) => labels.get(value) ?? value
-    // A caller that searches remotely gets the input text and does its own
-    // filtering; otherwise Base UI filters the options by label.
     const filter = onSearchChange ? null : undefined
     const content = (
         <ComboboxContent anchor={multiple ? anchor : undefined}>
@@ -204,28 +196,19 @@ export const ComboboxField = ({
                 value={[...values]}
                 onValueChange={(next: string[]) => onChange(next)}
             >
-                {/* The trigger covers the whole box so a press anywhere opens
-                    it; the chips sit above it and only their remove buttons
-                    take the pointer. */}
-                <div
-                    ref={anchor}
-                    className={cn(
-                        selectTriggerVariants({ size: 'sm' }),
-                        'relative cursor-default pe-6 has-[>[data-slot=combobox-trigger]:focus-visible]:border-dhis2-ring has-[>[data-slot=combobox-trigger]:focus-visible]:shadow-[inset_0_0_0_2px_var(--color-dhis2-ring)] has-[>[data-slot=combobox-trigger][data-popup-open]]:border-dhis2-ring has-[>[data-slot=combobox-trigger][data-popup-open]]:shadow-[inset_0_0_0_2px_var(--color-dhis2-ring)]'
-                    )}
+                <ComboboxChipsTrigger
+                    anchorRef={anchor}
+                    id={triggerId}
+                    size="sm"
                 >
-                    <ComboboxTrigger
-                        id={triggerId}
-                        className="absolute inset-0 flex cursor-pointer items-center rounded-dhis2-sm border-0 bg-transparent pe-1 outline-none"
-                    />
                     {collapsed ? (
-                        <span className="pointer-events-none relative flex-1">
+                        <span>
                             {translate('{{count}} selected', {
                                 count: values.length,
                             })}
                         </span>
                     ) : (
-                        <ComboboxChips className="pointer-events-none relative min-h-6 flex-1 [&_[data-slot=combobox-chip-remove]]:pointer-events-auto">
+                        <ComboboxChips className="min-h-6">
                             {values.map((value) => (
                                 <ComboboxChip
                                     key={value}
@@ -238,7 +221,7 @@ export const ComboboxField = ({
                             ))}
                         </ComboboxChips>
                     )}
-                </div>
+                </ComboboxChipsTrigger>
                 {content}
             </Combobox>
         </Field>

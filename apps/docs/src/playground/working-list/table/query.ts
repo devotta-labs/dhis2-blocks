@@ -1,7 +1,7 @@
-import type { DataEngineQueryParameters } from '@/components/working-list/api/client'
+import type { WireParams } from '../wire'
 import { LAB_ORG_UNIT, type LabPerson } from './labData'
 
-type Params = DataEngineQueryParameters
+type Params = WireParams
 
 const text = (value: Params[string]) =>
     value === undefined || value === null ? undefined : String(value)

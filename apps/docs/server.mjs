@@ -4,6 +4,7 @@ import { extname, join, normalize } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
     DHIS2_PREFIX,
+    isDhis2Path,
     proxyDhis2Request,
     resolveDocsBackend,
 } from './server/dhis2-proxy.mjs'
@@ -48,7 +49,7 @@ const isPathInside = (root, candidate) =>
 const resolveStaticFile = (pathname) => {
     const candidate = normalize(join(distDir, pathname))
 
-    if (!isPathInside(distDir, candidate)) {
+    if (!isPathInside(distDir, candidate) || !existsSync(candidate)) {
         return undefined
     }
 
@@ -86,10 +87,7 @@ const serveFile = (res, filePath) => {
 const server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', `http://${req.headers.host}`)
 
-    if (
-        url.pathname === DHIS2_PREFIX ||
-        url.pathname.startsWith(`${DHIS2_PREFIX}/`)
-    ) {
+    if (isDhis2Path(req.url)) {
         proxyDhis2Request(req, res, backend)
 
         return

@@ -20,6 +20,8 @@ import {
     type WorkingListTranslate,
 } from '../WorkingListText'
 
+import { savedActionErrorCopy } from '../savedActionCopy'
+
 type SaveError = CreateViewError | UpdateSelectedViewError
 
 type ActionCopy = (translate: WorkingListTranslate) => string
@@ -33,30 +35,6 @@ const actionCopy = {
         save: (translate) => translate('Could not save the working list'),
         download: (translate) => translate('Could not download data'),
     },
-    saveErrors: {
-        OfflineMutationError: (translate) =>
-            translate('This action is unavailable while offline.'),
-        WorkingListNetworkError: (translate) =>
-            translate(
-                'A network error stopped the request. Check the connection and try again.'
-            ),
-        WorkingListInvalidResponseError: (translate) =>
-            translate('The server returned an unexpected response.'),
-        SavedListPermissionError: (translate) =>
-            translate('You do not have permission to make this change.'),
-        SavedListNotFoundError: (translate) =>
-            translate(
-                'The working list could not be found. It may have been deleted.'
-            ),
-        IncompatibleSavedListError: (translate) =>
-            translate('Repair this working list before saving changes to it.'),
-        NoSelectedSavedListError: (translate) =>
-            translate('Select a saved working list before updating it.'),
-        InvalidConfigurationError: (translate) =>
-            translate(
-                'The current working list configuration cannot be saved.'
-            ),
-    },
     downloadErrors: {
         DownloadVisibleRowsError: (translate) =>
             translate(
@@ -66,12 +44,13 @@ const actionCopy = {
 } satisfies {
     controls: Record<'saveView' | 'more', ActionCopy>
     noticeTitles: Record<'save' | 'download', ActionCopy>
-    saveErrors: Record<SaveError['_tag'], ActionCopy>
     downloadErrors: Record<DownloadVisibleRowsError['_tag'], ActionCopy>
 }
 
 const saveErrorCopy = (error: SaveError, translate: WorkingListTranslate) =>
-    actionCopy.saveErrors[error._tag](translate)
+    savedActionErrorCopy(error, translate, (translate) =>
+        translate('The current working list configuration cannot be saved.')
+    )
 
 const downloadErrorCopy = (
     error: DownloadVisibleRowsError,

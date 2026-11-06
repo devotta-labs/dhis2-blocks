@@ -2,7 +2,7 @@ import { Button } from '@/components/dhis2/ui/button'
 import { IconFilter16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
-import { fieldsForConfiguration } from '../../api/metadata'
+import { fieldsForConfiguration, fieldBelongsToStage } from '../../api/metadata'
 import { visibleEventFiltersAfterStageChange } from '../../domain/visibleEventFilters'
 import type { AppliedFilter as ResolvedAppliedFilter } from '../../domain/model'
 import type { WorkingListField } from '../../domain/model'
@@ -17,11 +17,11 @@ import type {
     WorkingListConfiguration,
 } from '../../provider/contracts'
 import {
-    fieldDisplayName,
     FilterButton,
     MoreFilters,
     ProgramStageControl,
 } from '../FilterControls'
+import { fieldDisplayName } from '../../domain/filterControlPolicy'
 import { useWorkingListText } from '../WorkingListText'
 
 const visibleFiltersForConfiguration = (
@@ -111,14 +111,8 @@ const FiltersControl = () => {
                   (stage) => stage.id === configuration.programStageId
               )
             : undefined
-    const stageFieldIds = new Set(
-        currentStage?.programStageDataElements.map(
-            (binding) => binding.dataElement.id
-        ) ?? []
-    )
-    const eventFilterFields = allEventFilterFields.filter(
-        (field) =>
-            field.source !== 'eventDataElement' || stageFieldIds.has(field.id)
+    const eventFilterFields = allEventFilterFields.filter((field) =>
+        fieldBelongsToStage(field, currentStage)
     )
     const trackerChipIds = withAppliedFilterIds(
         visibleTrackerFilterIds,
@@ -178,7 +172,6 @@ const FiltersControl = () => {
     return (
         <>
             <MoreFilters
-                scope="tracked-entity"
                 fields={trackerFilterFields}
                 visibleFilterIds={[...trackerChipIds, ...eventChipIds]}
                 program={program}

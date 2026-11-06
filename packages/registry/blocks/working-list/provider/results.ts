@@ -1,11 +1,10 @@
 import type { FieldCatalog, WorkingListField } from '../domain/model'
 import { fieldDisplayName } from '../domain/filterControlPolicy'
 import type { WorkingListPage } from '../query/fetchers'
-import {
-    getCellDisplayValue,
-    type CellFormattingContext,
-} from '../registry/valueTypes'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
+import type { CellFormattingContext } from '../registry/valueTypes'
+import { visibleCellDisplay, visibleCellText } from '../registry/cellDisplay'
+import { defaultWorkingListTranslate } from '../domain/translation'
+import type { WorkingListTranslate } from '../domain/translation'
 import type {
     WorkingListConfiguration,
     WorkingListDisplayRow,
@@ -101,17 +100,21 @@ export const toResultTargets = ({
     return targets
 }
 
-/** A cell as the table shows it, as plain text; an invalid value shows as sent. */
+/** Visible table text, including the fallback for invalid non-scalar values. */
 export const cellText = (
     row: WorkingListDisplayRow,
     field: WorkingListField,
-    formattingContext?: CellFormattingContext
-) => {
-    const cell = row.values[field.id]
-    if (cell && !cell.valid) return cell.raw == null ? '' : String(cell.raw)
-    const display = getCellDisplayValue(cell?.value, field, formattingContext)
-    return display.kind === 'image' ? display.alt : display.text
-}
+    formattingContext?: CellFormattingContext,
+    translate: WorkingListTranslate = defaultWorkingListTranslate
+) =>
+    visibleCellText(
+        visibleCellDisplay(
+            row.values[field.id],
+            field,
+            formattingContext,
+            translate
+        )
+    )
 
 interface VisibleRowsCsvOptions {
     rows: readonly WorkingListDisplayRow[]
@@ -138,7 +141,9 @@ export const visibleRowsAsCsv = ({
             .join(','),
         ...rows.map((row) =>
             visibleFields
-                .map((field) => escape(cellText(row, field, formattingContext)))
+                .map((field) =>
+                    escape(cellText(row, field, formattingContext, translate))
+                )
                 .join(',')
         ),
     ].join('\n')

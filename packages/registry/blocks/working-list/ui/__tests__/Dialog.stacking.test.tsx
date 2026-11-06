@@ -92,7 +92,7 @@ describe('dialog stacking', () => {
         expect(onOpenChange).not.toHaveBeenCalled()
     })
 
-    it('closes a dialog on Escape, a backdrop press and its close button', async () => {
+    it('requests controlled dialog closure on Escape, a backdrop press and its close button', async () => {
         const onOpenChange = vi.fn()
         await render(
             <Dialog open onOpenChange={onOpenChange}>

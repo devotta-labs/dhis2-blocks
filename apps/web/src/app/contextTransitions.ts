@@ -1,15 +1,18 @@
 import type { AppUrlState } from './urlState'
 
-export const getGuardedOrganisationUnitState = (
+export const getOrganisationUnitState = (
     current: AppUrlState,
-    orgUnitId: string | undefined,
-    confirmDiscard: () => boolean
+    orgUnitId: string | undefined
 ): AppUrlState => {
-    if (!confirmDiscard()) {
-        return current
-    }
-
     const next = { ...current }
     delete next.orgUnitId
     return orgUnitId ? { ...next, orgUnitId, page: 1 } : { ...next, page: 1 }
 }
+
+export const getProgramState = (
+    current: AppUrlState,
+    programId: string
+): AppUrlState =>
+    programId
+        ? { programId, orgUnitId: current.orgUnitId, page: 1, pageSize: 15 }
+        : { orgUnitId: current.orgUnitId }

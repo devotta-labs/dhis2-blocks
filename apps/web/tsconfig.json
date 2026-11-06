@@ -16,5 +16,9 @@
         },
         "types": ["vitest/globals"]
     },
-    "include": ["src", "types"]
+    "include": [
+        "src",
+        "types",
+        "../../packages/registry/blocks/context-selector/dhis2-ui-selector-bar.d.ts"
+    ]
 }

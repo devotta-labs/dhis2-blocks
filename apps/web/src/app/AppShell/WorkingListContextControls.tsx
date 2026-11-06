@@ -22,7 +22,7 @@ interface WorkingListContextControlsProps {
     onProgramClear: () => void
     programLoading: boolean
     programLoadingLabel: string
-    programsAreFiltered: boolean
+    programAvailability: 'all' | 'filtered' | 'empty'
     onShowAllPrograms: () => void
     showOrganisationUnit: boolean
     organisationUnitValue?: string
@@ -35,14 +35,13 @@ interface WorkingListContextControlsProps {
 }
 
 const ProgramAvailabilityNotice = ({
-    programOptions,
-    programsAreFiltered,
+    programAvailability,
     onShowAllPrograms,
 }: Pick<
     WorkingListContextControlsProps,
-    'programOptions' | 'programsAreFiltered' | 'onShowAllPrograms'
+    'programAvailability' | 'onShowAllPrograms'
 >) => {
-    if (!programOptions.some((option) => !option.excludeFromMenu)) {
+    if (programAvailability === 'empty') {
         return (
             <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
                 <span>{i18n.t('No programs available.')}</span>
@@ -58,7 +57,7 @@ const ProgramAvailabilityNotice = ({
         )
     }
 
-    if (!programsAreFiltered) return null
+    if (programAvailability !== 'filtered') return null
 
     return (
         <>
@@ -92,7 +91,7 @@ export const WorkingListContextControls = ({
     onProgramClear,
     programLoading,
     programLoadingLabel,
-    programsAreFiltered,
+    programAvailability,
     onShowAllPrograms,
     showOrganisationUnit,
     organisationUnitValue,
@@ -119,8 +118,7 @@ export const WorkingListContextControls = ({
                 loadingLabel={programLoadingLabel}
             >
                 <ProgramAvailabilityNotice
-                    programOptions={programOptions}
-                    programsAreFiltered={programsAreFiltered}
+                    programAvailability={programAvailability}
                     onShowAllPrograms={onShowAllPrograms}
                 />
             </ProgramSelector>

@@ -1,4 +1,5 @@
 import { z, ZodError, type ZodType } from 'zod'
+import { getRequestErrorStatus } from './httpStatus'
 
 export type DataEngineQueryParameters = Record<
     string,
@@ -83,20 +84,6 @@ export const asWorkingListBoundaryError = (cause: unknown, context: string) => {
     return new WorkingListBoundaryError(`${context}: ${detail}`, cause)
 }
 
-const RequestFailureSchema = z
-    .object({
-        status: z.number().optional(),
-        response: z.object({ status: z.number().optional() }).optional(),
-    })
-    .passthrough()
-
-const getErrorStatus = (cause: unknown) => {
-    const candidate = RequestFailureSchema.safeParse(cause)
-    return candidate.success
-        ? (candidate.data.status ?? candidate.data.response?.status)
-        : undefined
-}
-
 /**
  * Boundary validation errors and client errors are deterministic. Operational
  * failures are retried twice so consumers retain React Query's resilience
@@ -113,7 +100,7 @@ export const shouldRetryWorkingListRequest = (
     ) {
         return false
     }
-    const status = getErrorStatus(cause)
+    const status = getRequestErrorStatus(cause)
     if (status !== undefined && status < 500) {
         return false
     }

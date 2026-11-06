@@ -11,9 +11,6 @@ export const OrganisationUnitReferenceSchema = z
 export const CurrentUserSchema = z
     .object({
         organisationUnits: z.array(OrganisationUnitReferenceSchema),
-        teiSearchOrganisationUnits: z
-            .array(OrganisationUnitReferenceSchema)
-            .optional(),
     })
     .passthrough()
 

@@ -22,7 +22,6 @@ describe('MoreFilters real-browser keyboard focus', () => {
                 <MoreFilters
                     fields={[field]}
                     visibleFilterIds={[]}
-                    scope="tracked-entity"
                     onAdd={onAdd}
                 />
             </WorkingListTextProvider>

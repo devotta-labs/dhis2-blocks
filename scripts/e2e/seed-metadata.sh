@@ -19,7 +19,12 @@ tracker_response="$artifact_dir/tracker-import.json"
 cors_response="$artifact_dir/cors-allowlist.json"
 users_payload="$E2E_REPO_ROOT/e2e/metadata/working-list-users.json"
 saved_lists_payload="$E2E_REPO_ROOT/e2e/metadata/working-list-saved-lists.json"
-test_user_password='WorkingList123!'
+metadata_payload="$E2E_REPO_ROOT/e2e/metadata/working-list-metadata.json"
+tracker_payload="$E2E_REPO_ROOT/e2e/metadata/working-list-tracker-data.json"
+setup_payload="$E2E_REPO_ROOT/e2e/metadata/working-list-setup.json"
+program_id="$(jq -er '.programs[0].id' "$metadata_payload")"
+owner_username="$(jq -er '.users[] | select(.surname == "Owner") | .username' "$users_payload")"
+owner_password="$(jq -er '.users[] | select(.surname == "Owner") | .password' "$users_payload")"
 
 configure_cors_allowlist() {
     local current_allowlist
@@ -127,12 +132,13 @@ ensure_test_users() {
     local user_payload
     local user_status
     local user_response
-    local test_username
+    local test_username test_user_password group_id
 
     while IFS= read -r user_id; do
         user_payload="$(jq --compact-output --arg id "$user_id" \
             '.users[] | select(.id == $id)' "$users_payload")"
         test_username="$(jq --raw-output '.username' <<<"$user_payload")"
+        test_user_password="$(jq --raw-output '.password' <<<"$user_payload")"
         user_response="$artifact_dir/user-$user_id.json"
         user_status="$(resource_status "/api/users/$user_id")"
 
@@ -158,23 +164,21 @@ ensure_test_users() {
             "$E2E_DHIS2_URL/api/me?fields=id,username" \
             | jq -e --arg id "$user_id" --arg username "$test_username" \
                 '.id == $id and .username == $username' >/dev/null
+        while IFS= read -r group_id; do
+            if ! curl --fail --silent --show-error --globoff \
+                --user "$username:$password" \
+                "$E2E_DHIS2_URL/api/userGroups/$group_id?fields=users[id]" \
+                | jq -e --arg id "$user_id" '.users | any(.id == $id)' >/dev/null; then
+                request_json_require_2xx POST \
+                    "/api/userGroups/$group_id/users/$user_id" '{}' \
+                    "$artifact_dir/user-group-membership-$user_id.json"
+            fi
+            curl --fail --silent --show-error --globoff \
+                --user "$username:$password" \
+                "$E2E_DHIS2_URL/api/users/$user_id?fields=userGroups[id]" \
+                | jq -e --arg id "$group_id" '.userGroups | any(.id == $id)' >/dev/null
+        done < <(jq --raw-output '.userGroups[].id' <<<"$user_payload")
     done < <(jq --raw-output '.users[].id' "$users_payload")
-
-    if ! curl --fail --silent --show-error --globoff \
-        --user "$username:$password" \
-        "$E2E_DHIS2_URL/api/userGroups/WlE2eGrp001?fields=users[id]" \
-        | jq -e '.users | any(.id == "WlE2eUsr002")' >/dev/null; then
-        request_json_require_2xx \
-            POST \
-            '/api/userGroups/WlE2eGrp001/users/WlE2eUsr002' \
-            '{}' \
-            "$artifact_dir/user-group-membership.json"
-    fi
-
-    curl --fail --silent --show-error --globoff \
-        --user "$username:$password" \
-        "$E2E_DHIS2_URL/api/users/WlE2eUsr002?fields=userGroups[id]" \
-        | jq -e '.userGroups | any(.id == "WlE2eGrp001")' >/dev/null
 }
 
 ensure_saved_lists() {
@@ -184,23 +188,36 @@ ensure_saved_lists() {
     local list_status
     local list_response
     local sharing_payload
-    local encoded_filter='program.id%3Aeq%3AWlE2ePrg001'
+    local encoded_filter sharing_resource sharing_id reader_username reader_password outsider_username outsider_password
+    encoded_filter="$(jq -rn --arg id "$program_id" '"program.id:eq:\($id)" | @uri')"
+    sharing_resource="$(jq -er '.sharing.resource' "$saved_lists_payload")"
+    sharing_id="$(jq -er '.sharing.id' "$saved_lists_payload")"
+    reader_username="$(jq -er '.users[] | select(.surname == "Reader") | .username' "$users_payload")"
+    reader_password="$(jq -er '.users[] | select(.surname == "Reader") | .password' "$users_payload")"
+    outsider_username="$(jq -er '.users[] | select(.surname == "Outsider") | .username' "$users_payload")"
+    outsider_password="$(jq -er '.users[] | select(.surname == "Outsider") | .password' "$users_payload")"
 
     while IFS= read -r list_id; do
         list_payload="$(jq --compact-output --arg id "$list_id" \
             '.lists[] | select(.id == $id)' "$saved_lists_payload")"
         list_resource="$(jq --raw-output '.resource' <<<"$list_payload")"
         list_response="$artifact_dir/saved-list-$list_id.json"
-        list_status="$(resource_status "/api/$list_resource/$list_id" wl_e2e_owner "$test_user_password")"
+        list_status="$(resource_status "/api/$list_resource/$list_id" "$owner_username" "$owner_password")"
 
         case "$list_status" in
-            200) ;;
+            200)
+                request_json_require_2xx \
+                    PUT "/api/$list_resource/$list_id" \
+                    "$(jq --compact-output '.data' <<<"$list_payload")" \
+                    "$list_response" \
+                    "$owner_username" "$owner_password"
+                ;;
             404)
                 request_json_require_2xx \
                     POST "/api/$list_resource" \
                     "$(jq --compact-output '.data' <<<"$list_payload")" \
                     "$list_response" \
-                    wl_e2e_owner "$test_user_password"
+                    "$owner_username" "$owner_password"
                 ;;
             *)
                 echo "Could not determine whether saved list $list_id exists (HTTP $list_status)." >&2
@@ -218,21 +235,21 @@ ensure_saved_lists() {
         }}' "$saved_lists_payload")"
     request_json_require_2xx \
         POST \
-        '/api/sharing?type=trackedEntityInstanceFilter&id=WlE2eLst002' \
+        "/api/sharing?type=$sharing_resource&id=$sharing_id" \
         "$sharing_payload" \
         "$artifact_dir/saved-list-sharing.json" \
-        wl_e2e_owner "$test_user_password"
+        "$owner_username" "$owner_password"
 
     curl --fail --silent --show-error --globoff \
-        --user "wl_e2e_owner:$test_user_password" \
+        --user "$owner_username:$owner_password" \
         "$E2E_DHIS2_URL/api/trackedEntityInstanceFilters?filter=$encoded_filter&fields=id&paging=false" \
-        | jq -e '[.trackedEntityInstanceFilters[].id] | sort == ["WlE2eLst001", "WlE2eLst002", "WlE2eLst003"]' >/dev/null
+        | jq -e --slurpfile seed "$saved_lists_payload" '[.trackedEntityInstanceFilters[].id] | sort == ($seed[0].lists | map(.id) | sort)' >/dev/null
     curl --fail --silent --show-error --globoff \
-        --user "wl_e2e_reader:$test_user_password" \
+        --user "$reader_username:$reader_password" \
         "$E2E_DHIS2_URL/api/trackedEntityInstanceFilters?filter=$encoded_filter&fields=id&paging=false" \
-        | jq -e '[.trackedEntityInstanceFilters[].id] == ["WlE2eLst002"]' >/dev/null
+        | jq -e --arg id "$sharing_id" '[.trackedEntityInstanceFilters[].id] == [$id]' >/dev/null
     curl --fail --silent --show-error --globoff \
-        --user "wl_e2e_outsider:$test_user_password" \
+        --user "$outsider_username:$outsider_password" \
         "$E2E_DHIS2_URL/api/trackedEntityInstanceFilters?filter=$encoded_filter&fields=id&paging=false" \
         | jq -e '.trackedEntityInstanceFilters | length == 0' >/dev/null
 }
@@ -244,8 +261,17 @@ ensure_saved_lists() {
 # attribute plus the entity's unique seeded value avoids the tracked-entity
 # tables that were renamed across DHIS2 majors.
 corrupt_data_quality_fixture() {
-    local corrupted_value='2025-13-45'
-    local seeded_value='2025-01-02'
+    local corrupted_value seeded_value attribute_id entity_id
+    corrupted_value="$(jq -er '.invalidDate.value' "$setup_payload")"
+    attribute_id="$(jq -er '.invalidDate.attribute' "$setup_payload")"
+    entity_id="$(jq -er '.invalidDate.trackedEntity' "$setup_payload")"
+    seeded_value="$(jq -er --arg entity "$entity_id" --arg attribute "$attribute_id" \
+        '.trackedEntities[] | select(.trackedEntity == $entity) | .attributes[] | select(.attribute == $attribute) | .value' "$tracker_payload")"
+    if [[ ! "$attribute_id" =~ ^[A-Za-z][A-Za-z0-9]{10}$ ||
+        ! "$corrupted_value" =~ ^[0-9-]+$ || ! "$seeded_value" =~ ^[0-9-]+$ ]]; then
+        echo "Invalid SQL date fixture setup." >&2
+        return 65
+    fi
 
     e2e_compose exec -T database psql \
         --no-password --quiet --username dhis --dbname dhis \
@@ -255,15 +281,15 @@ corrupt_data_quality_fixture() {
             WHERE trackedentityattributeid = (
                 SELECT trackedentityattributeid
                 FROM trackedentityattribute
-                WHERE uid = 'WlAtDate001'
+                WHERE uid = '$attribute_id'
             )
             AND value IN ('$seeded_value', '$corrupted_value');"
 
     curl --fail --silent --show-error --globoff \
         --user "$username:$password" \
-        "$E2E_DHIS2_URL/api/tracker/trackedEntities/WlE2eTei002?program=WlE2ePrg001&fields=attributes[attribute,value]" \
-        | jq -e --arg value "$corrupted_value" \
-            '.attributes | any(.attribute == "WlAtDate001" and .value == $value)' >/dev/null
+        "$E2E_DHIS2_URL/api/tracker/trackedEntities/$entity_id?program=$program_id&fields=attributes[attribute,value]" \
+        | jq -e --arg value "$corrupted_value" --arg attribute "$attribute_id" \
+            '.attributes | any(.attribute == $attribute and .value == $value)' >/dev/null
 }
 
 echo "Importing idempotent working-list metadata into DHIS2 $E2E_VERSION_SLUG ..."
@@ -272,7 +298,7 @@ configure_cors_allowlist
 
 post_and_require_ok \
     '/api/metadata?importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&importReportMode=ERRORS' \
-    "$E2E_REPO_ROOT/e2e/metadata/working-list-metadata.json" \
+    "$metadata_payload" \
     "$metadata_response"
 
 echo "Creating idempotent non-admin permission fixtures ..."
@@ -282,13 +308,13 @@ ensure_saved_lists
 echo "Importing idempotent tracker records ..."
 post_and_require_ok \
     '/api/tracker?async=false&importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&reportMode=FULL' \
-    "$E2E_REPO_ROOT/e2e/metadata/working-list-tracker-data.json" \
+    "$tracker_payload" \
     "$tracker_response"
 
 curl --fail --silent --show-error \
     --user "$username:$password" \
-    "$E2E_DHIS2_URL/api/programs/WlE2ePrg001?fields=id,programType" \
-    | jq -e '.id == "WlE2ePrg001" and .programType == "WITH_REGISTRATION"' >/dev/null
+    "$E2E_DHIS2_URL/api/programs/$program_id?fields=id,programType" \
+    | jq -e --arg id "$program_id" '.id == $id and .programType == "WITH_REGISTRATION"' >/dev/null
 
 echo "Corrupting one attribute value behind the importer's back ..."
 corrupt_data_quality_fixture

@@ -1,20 +1,8 @@
 import {
-    areOrganisationUnitPathsRelated,
-    getCaptureOrganisationUnitPickerScope,
-    intersectOrganisationUnitScopes,
     isOrganisationUnitInScope,
     resolveCaptureOrganisationUnitRoots,
     type OrganisationUnitReference,
 } from '../organisationUnitScope'
-
-describe('areOrganisationUnitPathsRelated', () => {
-    it('matches the same unit and either ancestor direction without prefix collisions', () => {
-        expect(areOrganisationUnitPathsRelated('/a/b', '/a/b')).toBe(true)
-        expect(areOrganisationUnitPathsRelated('/a/b/c', '/a/b')).toBe(true)
-        expect(areOrganisationUnitPathsRelated('/a/b', '/a/b/c')).toBe(true)
-        expect(areOrganisationUnitPathsRelated('/a/bb', '/a/b')).toBe(false)
-    })
-})
 
 const unit = (id: string, path: string): OrganisationUnitReference => ({
     id,
@@ -26,52 +14,34 @@ describe('Capture organisation-unit scope', () => {
     const captureRoot = unit('capture', '/root/capture')
     const searchRoot = unit('search', '/root/capture/search')
     const programRoot = unit('program', '/root/capture/search/program')
+    const currentUser = {
+        organisationUnits: [captureRoot],
+        teiSearchOrganisationUnits: [searchRoot],
+    }
 
     it('uses Capture data-entry roots even when Tracker search roots differ', () => {
-        expect(
-            resolveCaptureOrganisationUnitRoots({
-                organisationUnits: [captureRoot],
-                teiSearchOrganisationUnits: [searchRoot],
-            })
-        ).toEqual([captureRoot])
+        expect(resolveCaptureOrganisationUnitRoots(currentUser)).toEqual([
+            captureRoot,
+        ])
     })
 
     it('uses capture organisation units when no search roots exist', () => {
-        expect(
-            resolveCaptureOrganisationUnitRoots({
-                organisationUnits: [captureRoot],
-                teiSearchOrganisationUnits: [],
-            })
-        ).toEqual([captureRoot])
-        expect(
-            resolveCaptureOrganisationUnitRoots({
-                organisationUnits: [captureRoot],
-            })
-        ).toEqual([captureRoot])
-    })
-
-    it('keeps the full user scope in the quick selector regardless of program assignments', () => {
-        const outsideProgram = unit('outside', '/root/outside')
-
-        expect(
-            getCaptureOrganisationUnitPickerScope([searchRoot, outsideProgram])
-        ).toEqual({
-            allowedPaths: [],
-            pickerRoots: [searchRoot, outsideProgram],
-        })
-    })
-
-    it('intersects Capture roots with the selected program scope', () => {
-        const outsideProgram = unit('outside', '/root/outside')
-        const intersection = intersectOrganisationUnitScopes(
-            [searchRoot, outsideProgram],
-            [programRoot]
+        const withoutSearchRoots = {
+            ...currentUser,
+            teiSearchOrganisationUnits: [],
+        }
+        expect(resolveCaptureOrganisationUnitRoots(withoutSearchRoots)).toEqual(
+            [captureRoot]
         )
+        expect(
+            resolveCaptureOrganisationUnitRoots({
+                organisationUnits: [captureRoot],
+            })
+        ).toEqual([captureRoot])
+    })
 
-        expect(intersection).toEqual({
-            allowedPaths: [programRoot.path],
-            pickerRoots: [searchRoot],
-        })
+    it('requires an exact program assignment within the Capture roots', () => {
+        const outsideProgram = unit('outside', '/root/outside')
         expect(
             isOrganisationUnitInScope(programRoot, [searchRoot], [programRoot])
         ).toBe(true)
@@ -90,6 +60,13 @@ describe('Capture organisation-unit scope', () => {
                 outsideProgram,
                 [searchRoot],
                 [programRoot]
+            )
+        ).toBe(false)
+        expect(
+            isOrganisationUnitInScope(
+                unit('collision', '/root/capture/searching'),
+                [searchRoot],
+                [unit('collision', '/root/capture/searching')]
             )
         ).toBe(false)
         expect(

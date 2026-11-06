@@ -25,6 +25,9 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.20.1
+      '@types/picomatch':
+        specifier: 4.0.2
+        version: 4.0.2
       knip:
         specifier: 6.32.2
         version: 6.32.2
@@ -34,6 +37,9 @@ importers:
       oxlint:
         specifier: 1.79.0
         version: 1.79.0
+      picomatch:
+        specifier: 4.0.3
+        version: 4.0.3
       postcss:
         specifier: 8.5.23
         version: 8.5.23
@@ -46,6 +52,9 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+      yaml:
+        specifier: 2.8.1
+        version: 2.8.1
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -155,9 +164,6 @@ importers:
       '@vitest/browser-playwright':
         specifier: 4.1.11
         version: 4.1.11(playwright@1.62.1)(vite@7.3.0(@types/node@24.19.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.44.1)(yaml@2.9.0))(vitest@4.1.11)
-      better-result:
-        specifier: ^3.0.1
-        version: 3.0.1
       playwright:
         specifier: 1.62.1
         version: 1.62.1
@@ -3099,6 +3105,9 @@ packages:
 
   '@types/node@24.19.1':
     resolution: {integrity: sha512-aS3/DG0oM05K0RIXXP+hKjinGG5IgSSVGzswZxW3O0sS3pH4/fycXundUC9XsszgKCk4gHXylTEK6hyFxVxnoQ==}
+
+  '@types/picomatch@4.0.2':
+    resolution: {integrity: sha512-qHHxQ+P9PysNEGbALT8f8YOSHW0KJu6l2xU8DYY0fu/EmGxXdVnuTLvFUvBgPJMSqXq29SYHveejeAha+4AYgA==}
 
   '@types/prettier@2.7.3':
     resolution: {integrity: sha512-+68kP9yzs4LMp7VNh8gdzMSPZFL44MLGqiHWvttYJe+6qnuVr4Ek9wSBQoveqY/r+LwjCcU29kNVkidwim+kYA==}
@@ -8063,6 +8072,11 @@ packages:
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
 
+  yaml@2.8.1:
+    resolution: {integrity: sha512-lcYcMxX2PO9XMGvAJkJ3OsNMw+/7FKes7/hgerGUYWIoWu5j/+YQqcZr5JnPZWzOsEBgMbSbiSTn/dv/69Mkpw==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
+
   yaml@2.9.0:
     resolution: {integrity: sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==}
     engines: {node: '>= 14.6'}
@@ -12674,6 +12688,8 @@ snapshots:
   '@types/node@24.19.1':
     dependencies:
       undici-types: 7.24.6
+
+  '@types/picomatch@4.0.2': {}
 
   '@types/prettier@2.7.3': {}
 
@@ -18770,6 +18786,8 @@ snapshots:
   yallist@2.1.2: {}
 
   yallist@3.1.1: {}
+
+  yaml@2.8.1: {}
 
   yaml@2.9.0: {}
 

@@ -1,22 +1,11 @@
+import { registryAliases } from '../../tools/registry/layout'
 import tailwindcss from '@tailwindcss/vite'
 import { playwright } from '@vitest/browser-playwright'
-import { fileURLToPath } from 'node:url'
 import { configDefaults, defineConfig, type Plugin } from 'vitest/config'
 
 // Ordered: the more specific `@/components/dhis2/ui` must win over `@/components`.
 const resolve = {
-    alias: [
-        {
-            find: '@/components/dhis2/ui',
-            replacement: fileURLToPath(
-                new URL('./components', import.meta.url)
-            ),
-        },
-        {
-            find: '@/components',
-            replacement: fileURLToPath(new URL('./blocks', import.meta.url)),
-        },
-    ],
+    alias: registryAliases(),
 }
 
 const sharedProjectOptions = {

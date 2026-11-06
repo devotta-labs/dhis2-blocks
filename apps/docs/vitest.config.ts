@@ -1,3 +1,4 @@
+import { registryAliases } from '../../tools/registry/layout'
 import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import { playwright } from '@vitest/browser-playwright'
@@ -12,14 +13,7 @@ export default defineConfig({
             {
                 extends: true,
                 resolve: {
-                    alias: {
-                        '@/components': fileURLToPath(
-                            new URL(
-                                '../../packages/registry/blocks',
-                                import.meta.url
-                            )
-                        ),
-                    },
+                    alias: registryAliases(),
                 },
                 test: {
                     name: 'node',
@@ -56,26 +50,7 @@ export default defineConfig({
                     ],
                 },
                 resolve: {
-                    alias: [
-                        {
-                            find: '@/components/dhis2/ui',
-                            replacement: fileURLToPath(
-                                new URL(
-                                    '../../packages/registry/components',
-                                    import.meta.url
-                                )
-                            ),
-                        },
-                        {
-                            find: '@/components',
-                            replacement: fileURLToPath(
-                                new URL(
-                                    '../../packages/registry/blocks',
-                                    import.meta.url
-                                )
-                            ),
-                        },
-                    ],
+                    alias: registryAliases(),
                     dedupe: ['react', 'react-dom'],
                 },
                 test: {

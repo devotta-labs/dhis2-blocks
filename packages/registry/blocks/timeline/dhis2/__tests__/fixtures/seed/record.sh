@@ -3,10 +3,11 @@
 # fixtures in ../v<version>/. Local Docker stacks only (scripts/e2e).
 #
 #   pnpm e2e:up 42
-#   bash packages/registry/blocks/timeline-dhis2/__tests__/fixtures/seed/record.sh 42
+#   bash packages/registry/blocks/timeline/dhis2/__tests__/fixtures/seed/record.sh 42
 #   pnpm e2e:down 42
 #
-# The requests mirror src/dhis2/queries.ts; keep the two in step.
+# These are recording-era contract probes, not the current fetch policy in
+# packages/registry/blocks/timeline/dhis2/queries.ts (see ../README.md).
 
 set -euo pipefail
 

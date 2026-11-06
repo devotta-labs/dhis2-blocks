@@ -46,43 +46,54 @@ const renderMenu = async ({
 }
 
 describe('working-list actions', () => {
-    it('offers create and download for an unfiltered default view', async () => {
-        const { screen, onDownload } = await renderMenu({})
-        const save = screen.getByRole('button', { name: 'Save view' })
-        await expect.element(save).toBeVisible()
+    it.each([
+        ['unselected', undefined],
+        [
+            'generated',
+            { ...ownedList, id: 'Program0001-default', generated: true },
+        ],
+    ] as const)(
+        'offers create and download, not update, for a %s view',
+        async (_label, selectedView) => {
+            const { screen, onDownload, onUpdate } = await renderMenu({
+                selectedView,
+                dirty: true,
+            })
+            const save = screen.getByRole('button', { name: 'Save view' })
+            await expect.element(save).toBeVisible()
 
-        await save.click()
-        await expect
-            .element(
-                page.getByRole('heading', {
-                    name: 'Save as new working list',
-                })
-            )
-            .toBeVisible()
-        await expect
-            .element(page.getByRole('button', { name: 'Save', exact: true }))
-            .toBeDisabled()
-        await page.getByRole('button', { name: 'Cancel' }).click()
+            await save.click()
+            expect(
+                page
+                    .getByRole('menuitem', {
+                        name: 'Save changes to this view',
+                    })
+                    .query()
+            ).toBeNull()
+            await expect
+                .element(
+                    page.getByRole('heading', {
+                        name: 'Save as new working list',
+                    })
+                )
+                .toBeVisible()
+            await expect
+                .element(
+                    page.getByRole('button', { name: 'Save', exact: true })
+                )
+                .toBeDisabled()
+            await page.getByRole('button', { name: 'Cancel' }).click()
 
-        await screen.getByRole('button', { name: 'More' }).click()
-        const download = page.getByRole('menuitem', {
-            name: 'Download data…',
-        })
-        await expect.element(download).toBeVisible()
-        await download.click()
-        expect(onDownload).toHaveBeenCalledTimes(1)
-    })
-
-    it('keeps create and download together for a generated view', async () => {
-        const { screen } = await renderMenu({})
-
-        await expect
-            .element(screen.getByRole('button', { name: 'Save view' }))
-            .toBeVisible()
-        await expect
-            .element(screen.getByRole('button', { name: 'More' }))
-            .toBeVisible()
-    })
+            await screen.getByRole('button', { name: 'More' }).click()
+            const download = page.getByRole('menuitem', {
+                name: 'Download data…',
+            })
+            await expect.element(download).toBeVisible()
+            await download.click()
+            expect(onDownload).toHaveBeenCalledTimes(1)
+            expect(onUpdate).not.toHaveBeenCalled()
+        }
+    )
 
     it('shows update and create-new actions for a persisted selection', async () => {
         const { screen, onUpdate } = await renderMenu({

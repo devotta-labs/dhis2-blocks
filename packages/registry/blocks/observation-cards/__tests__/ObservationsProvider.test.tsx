@@ -368,6 +368,10 @@ describe('ObservationsProvider', () => {
         { trackedEntity: 'te1', program: '' },
     ])('makes no request and stays pending for %o', async (ids) => {
         const server = createFakeServer()
+        const control = createFakeServer({
+            deferEventsFor: 'te1',
+            weight: '72.5',
+        })
         const Wrapper = createWrapper()
 
         await render(
@@ -375,11 +379,24 @@ describe('ObservationsProvider', () => {
                 <ObservationsProvider {...ids} client={server.client}>
                     <Probe id="weight" dataElement={WEIGHT} />
                 </ObservationsProvider>
+                <ObservationsProvider
+                    trackedEntity="te1"
+                    program="prog1"
+                    client={control.client}
+                >
+                    <Probe id="control" dataElement={WEIGHT} />
+                </ObservationsProvider>
             </Wrapper>
         )
 
-        // Long enough for an enabled query to have started.
-        await new Promise((resolve) => setTimeout(resolve, 50))
+        await expect.poll(() => control.countOf('tracker/events')).toBe(1)
+        await expect
+            .element(page.getByTestId('control'))
+            .toHaveTextContent('pending')
+        control.release()
+        await expect
+            .element(page.getByTestId('control'))
+            .toHaveTextContent('ready 72.5')
 
         expect(server.requests).toEqual([])
         await expect

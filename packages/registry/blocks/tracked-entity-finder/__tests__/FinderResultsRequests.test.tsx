@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { act } from 'react'
+import { focusManager } from '@tanstack/react-query'
 import { page } from 'vitest/browser'
 import { useFinderResults } from '../hooks'
 import { FinderResults } from '../results/FinderResults'
@@ -17,7 +18,7 @@ import {
 
 describe('FinderResults paging and requests', () => {
     it('pages with previous and next', async () => {
-        const { server } = await renderFinder({
+        const { server, queryClient } = await renderFinder({
             options: {
                 program: { ...hivProgram, maxTeiCountToReturn: 0 },
                 answerSearch: (request) => {
@@ -45,7 +46,7 @@ describe('FinderResults paging and requests', () => {
 
         await searchFor('A1')
         await expect.element(page.getByText('First0')).toBeVisible()
-        await settle()
+        await settle(queryClient)
         expect(searchRequests(server)).toHaveLength(1)
         const previous = page.getByRole('button', { name: 'Previous' })
         const next = page.getByRole('button', { name: 'Next' })
@@ -55,7 +56,7 @@ describe('FinderResults paging and requests', () => {
         await expect.element(page.getByText('Zainab')).toBeVisible()
         expect(page.getByText('First0').query()).toBeNull()
         await expect.element(next).toBeDisabled()
-        await settle()
+        await settle(queryClient)
         expect(searchRequests(server)).toHaveLength(2)
         expect(searchRequests(server).at(-1)?.params?.page).toBe(2)
 
@@ -63,7 +64,7 @@ describe('FinderResults paging and requests', () => {
         await expect.element(page.getByText('First0')).toBeVisible()
         expect(page.getByText('Zainab').query()).toBeNull()
         // Page 1 is cached: going back sends nothing.
-        await settle()
+        await settle(queryClient)
         expect(searchRequests(server)).toHaveLength(2)
         await expect.element(next).toBeEnabled()
     })
@@ -107,7 +108,7 @@ describe('FinderResults paging and requests', () => {
     })
 
     it('sends exactly one request to show results', async () => {
-        const { server } = await renderFinder({
+        const { server, queryClient } = await renderFinder({
             options: { searchResponse: answer([amina]) },
         })
 
@@ -115,14 +116,18 @@ describe('FinderResults paging and requests', () => {
         await expect
             .element(page.getByRole('button', { name: /Amina/ }))
             .toBeVisible()
-        await settle()
+        await settle(queryClient)
         expect(searchRequests(server)).toHaveLength(1)
 
         // Focusing the window again does not run the search again.
-        window.dispatchEvent(new Event('visibilitychange'))
-        window.dispatchEvent(new Event('focus'))
-        await settle()
-        expect(searchRequests(server)).toHaveLength(1)
+        try {
+            focusManager.setFocused(false)
+            focusManager.setFocused(true)
+            await settle(queryClient)
+            expect(searchRequests(server)).toHaveLength(1)
+        } finally {
+            focusManager.setFocused(undefined)
+        }
     })
 
     it('hides pagination when there is one page', async () => {
@@ -148,7 +153,7 @@ describe('FinderResults paging and requests', () => {
         await screen.rerender(
             ui(server, 'otherProgram', onSelect, <FinderResults />)
         )
-        server.pendingSearches[0].respond(answer([amina]))
+        await act(() => server.pendingSearches[0].respond(answer([amina])))
 
         await expect
             .element(page.getByRole('textbox', { name: 'ART number' }))
@@ -157,8 +162,7 @@ describe('FinderResults paging and requests', () => {
             .element(page.getByRole('textbox', { name: 'ART number' }))
             .toHaveValue('')
         expect(page.getByText('Searching…').query()).toBeNull()
-        // Give the old answer a chance to land; it must not.
-        await new Promise((resolve) => setTimeout(resolve, 50))
+        await settle(screen.queryClient)
         expect(page.getByText('Amina').query()).toBeNull()
         expect(page.getByText('No one found').query()).toBeNull()
         expect(searchRequests(server)).toHaveLength(1)
@@ -173,15 +177,18 @@ describe('FinderResults paging and requests', () => {
         await page.getByRole('button', { name: 'Search' }).click()
         await expect.poll(() => server.pendingSearches.length).toBe(2)
 
-        server.pendingSearches[0].respond(
-            answer([entity('old', { firstName: 'Older' })])
+        await act(() =>
+            server.pendingSearches[0].respond(
+                answer([entity('old', { firstName: 'Older' })])
+            )
         )
-        await new Promise((resolve) => setTimeout(resolve, 50))
         expect(page.getByText('Older').query()).toBeNull()
         await expect.element(page.getByText('Searching…')).toBeVisible()
 
-        server.pendingSearches[1].respond(
-            answer([entity('new', { firstName: 'Newest' })])
+        await act(() =>
+            server.pendingSearches[1].respond(
+                answer([entity('new', { firstName: 'Newest' })])
+            )
         )
         await expect.element(page.getByText('Newest')).toBeVisible()
         expect(page.getByText('Older').query()).toBeNull()
@@ -231,7 +238,7 @@ describe('FinderResults paging and requests', () => {
                 </>
             )
         }
-        const { server } = await renderFinder({
+        const { server, queryClient } = await renderFinder({
             options: { searchResponse: answer([amina]) },
             results: <Probe />,
         })
@@ -245,7 +252,7 @@ describe('FinderResults paging and requests', () => {
         await expect.element(probe).toHaveTextContent('results 1')
         await page.getByRole('button', { name: 'Force next' }).click()
         await page.getByRole('button', { name: 'Force previous' }).click()
-        await settle()
+        await settle(queryClient)
         await expect.element(probe).toHaveTextContent('results 1')
         expect(searchRequests(server)).toHaveLength(1)
     })

@@ -3,15 +3,7 @@ import { getExample, type ExampleSlug } from '../examples/registry'
 import { ExampleSurface } from '../preview/ExampleSurface'
 import { ExampleCode } from './ExampleCode'
 
-/**
- * Preview/Code card for a registered example.
- *
- * The preview mounts inline inside the page (same DOM and providers as the
- * standalone `/preview/:slug` route), so the card reads as part of the
- * documentation rather than an embedded frame; its reserved height means
- * loading never reshapes it. The Code tab renders the raw example module —
- * the exact source the preview executes.
- */
+/** The Code tab shows the source bundle used by the inline preview. */
 export const ExampleCard = ({ slug }: { slug: ExampleSlug }) => {
     const example = getExample(slug)
 

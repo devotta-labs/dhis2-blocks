@@ -7,6 +7,10 @@ import observations from '../observation-cards/ObservationsCanvas.tsx?canvas'
 import timeline from '../timeline/TimelineCanvas.tsx?canvas'
 import finder from '../tracked-entity-finder/LabFinder.tsx?canvas'
 import tableCode from '../working-list/table/TableCanvas.tsx?raw'
+import calendarCode from '../working-list/calendar/CalendarCanvas.tsx?raw'
+import observationsCode from '../observation-cards/ObservationsCanvas.tsx?raw'
+import timelineCode from '../timeline/TimelineCanvas.tsx?raw'
+import finderCode from '../tracked-entity-finder/LabFinder.tsx?raw'
 
 const source: CanvasSource = {
     ...table,
@@ -17,10 +21,6 @@ const pageSize = table.references.find(
 )!
 
 describe('canvas prop inspection', () => {
-    it('preserves the actual composition source unchanged', () => {
-        expect(table.code).toBe(tableCode)
-    })
-
     it('resolves nested current inputs and reflects changes', () => {
         expect(propValue(source, pageSize)).toBe('10')
         expect(
@@ -100,25 +100,48 @@ describe('canvas prop inspection', () => {
     })
 
     it.each([
-        ['TableCanvas', table, 'WorkingListTable'],
-        ['CalendarCanvas', calendar, 'CalendarGrid'],
-        ['ObservationsCanvas', observations, 'ObservationCard'],
-        ['TimelineCanvas', timeline, 'TimelineFeed'],
-        ['LabFinder', finder, 'FinderProvider'],
+        ['table', table, tableCode, 'programId'],
+        ['calendar', calendar, calendarCode, 'programId'],
+        ['observations', observations, observationsCode, 'trackedEntity'],
+        ['timeline', timeline, timelineCode, 'trackedEntity'],
+        ['finder', finder, finderCode, 'program'],
     ] as const)(
         'ships %s source with inspectable props',
-        (name, module, part) => {
-            expect(module.code).toContain(`export const ${name}`)
-            expect(module.code).toContain('interface Props {')
-            expect(module.code).toContain('}: Props) =>')
-            expect(module.code).toContain(`<${part}`)
+        (_name, module, raw, input) => {
+            expect(module.code).toBe(raw)
             expect(module.code).not.toContain('LabLayout')
-            expect(module.references.length).toBeGreaterThan(0)
+            expect(module.references.map(({ path }) => path)).toContainEqual([
+                input,
+            ])
             for (const reference of module.references) {
                 expect(
                     module.code.slice(reference.start, reference.end)
                 ).not.toBe('')
             }
+        }
+    )
+
+    it.each([
+        ['untyped', ''],
+        ['interface', 'interface Inputs { id: string }'],
+        ['type alias', 'type Inputs = { id: string }'],
+    ])(
+        'inspects %s destructured inputs without depending on type spelling',
+        (_name, declaration) => {
+            const annotation = declaration ? ': Inputs' : ''
+            const code = `${declaration}
+        export const Example = ({ id: record }${annotation}) => <Block id={record} />`
+            const result = inspectCanvas(code)
+            expect(result.code).toBe(code)
+            expect(
+                result.references.map(({ start, end, path }) => ({
+                    text: code.slice(start, end),
+                    path,
+                }))
+            ).toEqual([
+                { text: 'record', path: ['id'] },
+                { text: 'record', path: ['id'] },
+            ])
         }
     )
 })

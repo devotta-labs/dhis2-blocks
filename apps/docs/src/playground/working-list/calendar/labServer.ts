@@ -1,4 +1,4 @@
-import type { DataEngineQueryParameters } from '@/components/working-list/api/client'
+import type { WireParams } from '../wire'
 import {
     addDays,
     ATTRIBUTES,
@@ -11,7 +11,7 @@ import {
     type World,
 } from './labData'
 
-type Params = DataEngineQueryParameters
+type Params = WireParams
 
 /** One request as the block sends it through app-runtime. */
 export interface LabRequest {

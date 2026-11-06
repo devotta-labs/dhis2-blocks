@@ -1,4 +1,5 @@
-import React, { Component, type ReactNode } from 'react'
+import React, { Component, type ComponentProps, type ReactNode } from 'react'
+import { expectTypeOf } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import type { FinderPerson } from '../api/search'
 import { useFinderPerson, useFinderResults } from '../hooks'
@@ -256,13 +257,10 @@ describe('FinderResults', () => {
     })
 
     it('takes children, not a render function', () => {
-        const element = (
-            <FinderList>
-                {/* @ts-expect-error React 18's ReactNode excludes functions. */}
-                {(person: FinderPerson) => person.trackedEntity}
-            </FinderList>
-        )
-        expect(element.type).toBe(FinderList)
+        type Children = ComponentProps<typeof FinderList>['children']
+        expectTypeOf<Children>().toEqualTypeOf<ReactNode>()
+        // @ts-expect-error React 18's ReactNode excludes functions.
+        expectTypeOf<(person: FinderPerson) => string>().toExtend<Children>()
     })
 
     it('throws when useFinderPerson is used outside FinderList', async () => {

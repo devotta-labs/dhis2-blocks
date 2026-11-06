@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { registryItemSchema, registrySchema } from 'shadcn/schema'
 
-const ADDRESS_PREFIX = 'devotta-labs/dhis2-blocks/'
+import { ADDRESS_PREFIX } from './layout.ts'
 
 export const prepareLocalRegistry = (directory: string) => {
     const catalog = registrySchema.parse(

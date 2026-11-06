@@ -11,13 +11,24 @@ web: &web
     - *shared
     - 'apps/web/**'
     - 'packages/**'
+    - 'tools/registry/layout.ts'
 
-docs:
+docs: &docs
     - *shared
     - 'apps/docs/**'
     - 'packages/**'
     - 'api/**'
     - 'vercel.json'
+    - 'tools/registry/layout.ts'
+
+tooling:
+    - *shared
+    - 'tools/**'
+    - 'scripts/**'
+    - 'e2e/fixtures/**'
+    - 'e2e/metadata/**'
+    - 'e2e/specs-docs/diagnostic-policy.ts'
+    - 'playwright.docs.config.ts'
 
 quality:
     - *shared
@@ -29,7 +40,23 @@ quality:
 
 e2e:
     - *web
-    - 'e2e/**'
+    - 'e2e/specs/**'
+    - 'e2e/support/**'
+    - 'e2e/fixtures/**'
+    - 'e2e/metadata/**'
+    - 'e2e/*'
     - 'scripts/e2e/**'
     - 'docker/e2e/**'
     - 'playwright.config.ts'
+
+docs-e2e:
+    - *docs
+    - 'e2e/specs-docs/**'
+    - 'e2e/support/**'
+    - 'e2e/fixtures/**'
+    - 'e2e/metadata/**'
+    - 'e2e/*'
+    - 'scripts/docs/**'
+    - 'scripts/e2e/**'
+    - 'docker/e2e/**'
+    - 'playwright.docs.config.ts'

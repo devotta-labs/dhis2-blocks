@@ -12,12 +12,12 @@ import {
     validateConfigurationReferences,
 } from '../domain/staleReferences'
 import type { StaleReferenceIssue } from '../domain/staleReferences'
+import { formatRepairLocation } from '../domain/repairLocation'
+import { unsupportedFilterIssues } from './savedFilterCodec'
 import { DEFAULT_WORKING_LIST_SORT } from '../query/serialize'
+import { savedDateBoundaries } from '../registry/valueTypeShared'
 import { validateSystemFilter } from '../registry/systemFilters'
-import {
-    getValueTypeDefinition,
-    validateAppliedFilter,
-} from '../registry/valueTypes'
+import { getValueTypeDefinition } from '../registry/valueTypes'
 import type { FilterParsingContext } from '../registry/valueTypes'
 import {
     fieldsForConfiguration,
@@ -126,14 +126,7 @@ const normalizeDateValue = (
         ? {
               kind: 'dateRange',
               mode: 'absolute',
-              start: value.startDate
-                  ? (parsingContext?.fromApiDate?.(value.startDate) ??
-                    value.startDate)
-                  : undefined,
-              end: value.endDate
-                  ? (parsingContext?.fromApiDate?.(value.endDate) ??
-                    value.endDate)
-                  : undefined,
+              ...savedDateBoundaries(value, parsingContext),
           }
         : {
               kind: 'dateRange',
@@ -222,7 +215,11 @@ const normalizeCommonCriteria = (
             throw new StaleWorkingListError([
                 getMissingIssue(
                     savedFilter.attribute,
-                    `attributeValueFilters.${index}.attribute`
+                    formatRepairLocation({
+                        kind: 'filter',
+                        collection: 'attributeValueFilters',
+                        index,
+                    })
                 ),
             ])
         }
@@ -230,7 +227,11 @@ const normalizeCommonCriteria = (
             throw new StaleWorkingListError([
                 getMissingIssue(
                     savedFilter.attribute,
-                    `attributeValueFilters.${index}.attribute`,
+                    formatRepairLocation({
+                        kind: 'filter',
+                        collection: 'attributeValueFilters',
+                        index,
+                    }),
                     'unsupportedFilter'
                 ),
             ])
@@ -251,7 +252,11 @@ const normalizeColumns = (
             throw new StaleWorkingListError([
                 getMissingIssue(
                     id,
-                    `displayColumnOrder.${index}`,
+                    formatRepairLocation({
+                        kind: 'column',
+                        collection: 'displayColumnOrder',
+                        index,
+                    }),
                     'missingColumn'
                 ),
             ])
@@ -444,7 +449,11 @@ const normalizeEventResource = ({
             throw new StaleWorkingListError([
                 getMissingIssue(
                     savedFilter.dataItem,
-                    `dataFilters.${index}.dataItem`
+                    formatRepairLocation({
+                        kind: 'filter',
+                        collection: 'dataFilters',
+                        index,
+                    })
                 ),
             ])
         }
@@ -452,7 +461,11 @@ const normalizeEventResource = ({
             throw new StaleWorkingListError([
                 getMissingIssue(
                     savedFilter.dataItem,
-                    `dataFilters.${index}.dataItem`,
+                    formatRepairLocation({
+                        kind: 'filter',
+                        collection: 'dataFilters',
+                        index,
+                    }),
                     'unsupportedFilter'
                 ),
             ])
@@ -537,25 +550,9 @@ export const normalizeSavedWorkingListResource = ({
                 candidateConfiguration: configuration,
             }
         }
-        const unsupportedFilters = configuration.filters.flatMap(
-            (filter, index) => {
-                try {
-                    validateAppliedFilter(filter, metadata.capabilities)
-                    return []
-                } catch (error) {
-                    return [
-                        {
-                            kind: 'unsupportedFilter' as const,
-                            referenceId: filter.field.id,
-                            path: `filters.${index}.field`,
-                            message:
-                                error instanceof Error
-                                    ? error.message
-                                    : `Filter ${filter.field.id} is unsupported`,
-                        },
-                    ]
-                }
-            }
+        const unsupportedFilters = unsupportedFilterIssues(
+            configuration,
+            metadata.capabilities
         )
         if (unsupportedFilters.length) {
             return {

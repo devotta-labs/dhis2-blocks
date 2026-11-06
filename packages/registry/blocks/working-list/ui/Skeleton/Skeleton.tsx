@@ -1,7 +1,5 @@
 import React from 'react'
 
-// Same literal divider colour as the block's own borders. Callers size and
-// round each block to the element it stands in for.
 export const SkeletonBlock = ({ className }: { className: string }) => (
     <span
         aria-hidden="true"

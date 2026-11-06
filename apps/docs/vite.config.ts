@@ -1,10 +1,10 @@
+import { registryAliases } from '../../tools/registry/layout'
 import mdx from '@mdx-js/rollup'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { defineConfig, loadEnv } from 'vite'
-import { fileURLToPath } from 'node:url'
 import { canvasSourcePlugin } from './canvasSourcePlugin'
 import {
     createDhis2ViteProxy,
@@ -52,26 +52,7 @@ export default defineConfig(({ mode }) => {
         resolve: {
             // Examples import blocks the way an installed project does
             // (`@/components/<block>`); here that path is the workspace source.
-            alias: [
-                {
-                    find: '@/components/dhis2/ui',
-                    replacement: fileURLToPath(
-                        new URL(
-                            '../../packages/registry/components',
-                            import.meta.url
-                        )
-                    ),
-                },
-                {
-                    find: '@/components',
-                    replacement: fileURLToPath(
-                        new URL(
-                            '../../packages/registry/blocks',
-                            import.meta.url
-                        )
-                    ),
-                },
-            ],
+            alias: registryAliases(),
             // Workspace blocks resolve to their source entry points; dedupe keeps
             // a single React runtime inside the preview host. @tanstack/react-query
             // must NOT be deduped: the DHIS2 data engine needs v4 (its useQuery

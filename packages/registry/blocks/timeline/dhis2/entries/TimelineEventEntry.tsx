@@ -15,7 +15,7 @@ import {
 import { formatDhis2Value } from '@/components/dhis2-value-display/formatDhis2Value'
 import type { TimelineEntry } from '../../core/types'
 import { TimelineTime } from '../../ui/TimelineParts'
-import { useOptionalTimeline } from '../../hooks/useTimeline'
+import { useTimelineHeading } from '../../ui/TimelineContext'
 import { useTimelineMeta } from '../../hooks/useTimelineMeta'
 import type { DerivedEventStatus } from '../eventStatus'
 import type { Note } from '../schemas'
@@ -103,28 +103,6 @@ const STATUS_STYLE = {
 } satisfies Record<DerivedEventStatus, string>
 
 /**
- * Whether the entry's place in the feed already says its status: a scheduled
- * event above "now", an overdue one in the Overdue group.
- */
-const usePlaceTellsStatus = (entry: TimelineEntry<EventEntryData>): boolean => {
-    const inFeed = useOptionalTimeline() !== null
-    const { today } = useTimelineMeta()
-    if (!inFeed) {
-        return false
-    }
-    switch (entry.data.status) {
-        case 'overdue':
-            return entry.phase === 'overdue'
-        case 'scheduled': {
-            const day = storedDay(entry.at)
-            return day !== undefined && day > today
-        }
-        default:
-            return false
-    }
-}
-
-/**
  * The status badge, left out in a feed where the entry's place already says
  * it. A scheduled or overdue event also shows its due date, unless its stage
  * hides due dates or the day heading above it is that date.
@@ -136,19 +114,17 @@ export const TimelineEventStatus = ({
     const entry = useTimelineEventEntry()
     const { data } = entry
     const { calendar, locale } = useTimelineMeta()
-    const placeTellsStatus = usePlaceTellsStatus(entry)
-    const inFeed = useOptionalTimeline() !== null
+    const heading = useTimelineHeading()
     const { event, status, stage } = data
+    const placeTellsStatus =
+        (status === 'scheduled' && heading?.phase === 'future') ||
+        (status === 'overdue' && heading?.phase === 'overdue')
     const showsDue = status === 'scheduled' || status === 'overdue'
     const due =
         showsDue && !stage?.hideDueDate && event.scheduledAt !== undefined
             ? storedDay(event.scheduledAt)
             : undefined
-    // Under a day heading that is the due date, the date would say it twice.
-    const day =
-        inFeed && entry.phase !== 'overdue' && due === storedDay(entry.at)
-            ? undefined
-            : due
+    const day = due === heading?.day ? undefined : due
     if (placeTellsStatus && day === undefined) {
         return null
     }

@@ -1,9 +1,13 @@
+import { getNowInCalendar } from '@dhis2/multi-calendar-dates'
 import {
-    convertFromIso8601,
-    convertToIso8601,
-    getNowInCalendar,
-    validateDateString,
-} from '@dhis2/multi-calendar-dates'
+    isEpagomenalCalendar,
+    isValidCalendarDate,
+    localDateToIso as convertClientDateToIso,
+    isoDateToLocal as convertIsoDateToClient,
+    calendarDateString as clientDateString,
+    type CalendarDateParts,
+} from '@/components/dhis2-value-display/calendarConversion'
+export { toMultiCalendarIdentifier } from '@/components/dhis2-value-display/calendarConversion'
 import type {
     WorkingListCalendar,
     WorkingListSystemInfo,
@@ -20,8 +24,6 @@ import type {
     FilterSerializationContext,
     WorkingListRawValue,
 } from './valueTypes'
-
-type MultiCalendarIdentifier = Parameters<typeof convertFromIso8601>[1]
 
 const DATE_VALUE_TYPES = new Set<Dhis2ValueType>(['AGE', 'DATE', 'DATETIME'])
 
@@ -55,12 +57,6 @@ const localDateString = (
         : isoOrder
 }
 
-interface CalendarDateParts {
-    year: number
-    month: number
-    day: number
-}
-
 const parseClientDate = (value: string): CalendarDateParts => {
     const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
     if (!match) {
@@ -68,49 +64,6 @@ const parseClientDate = (value: string): CalendarDateParts => {
     }
     const [, year, month, day] = match.map(Number)
     return { year, month, day }
-}
-
-/**
- * Normalises DHIS2's server calendar names to the identifiers understood by
- * `@dhis2/multi-calendar-dates` and Temporal.
- */
-export const toMultiCalendarIdentifier = (
-    calendar: WorkingListSystemInfo['calendar']
-): MultiCalendarIdentifier =>
-    (
-        ({
-            coptic: 'coptic',
-            ethiopian: 'ethiopic',
-            gregorian: 'gregory',
-            islamic: 'islamic',
-            iso8601: 'iso8601',
-            nepali: 'nepali',
-            persian: 'persian',
-            thai: 'buddhist',
-        }) satisfies Record<WorkingListCalendar, MultiCalendarIdentifier>
-    )[calendar]
-
-const clientDateString = ({ year, month, day }: CalendarDateParts) =>
-    `${pad(year, 4)}-${pad(month)}-${pad(day)}`
-
-const isEpagomenalCalendar = (
-    calendar: WorkingListSystemInfo['calendar']
-): calendar is 'coptic' | 'ethiopian' =>
-    calendar === 'coptic' || calendar === 'ethiopian'
-
-const isEpagomenalLeapYear = (year: number) => year % 4 === 3
-
-const isValidEpagomenalDate = ({
-    year,
-    month,
-    day,
-}: CalendarDateParts): boolean => {
-    const epagomenalDays = isEpagomenalLeapYear(year) ? 6 : 5
-    const daysInMonth = month <= 12 ? 30 : epagomenalDays
-
-    return (
-        year > 0 && month >= 1 && month <= 13 && day >= 1 && day <= daysInMonth
-    )
 }
 
 /**
@@ -128,13 +81,7 @@ export const isValidWorkingListClientDate = (
     } catch {
         return false
     }
-    if (isEpagomenalCalendar(systemInfo.calendar)) {
-        return isValidEpagomenalDate(parts)
-    }
-    return validateDateString(value, {
-        calendar: toMultiCalendarIdentifier(systemInfo.calendar),
-        strictValidation: true,
-    }).valid
+    return isValidCalendarDate(parts, systemInfo.calendar)
 }
 
 const assertValidClientDate = (
@@ -145,107 +92,6 @@ const assertValidClientDate = (
         throw new Error(
             `Invalid ${systemInfo.calendar} calendar date: ${value}`
         )
-    }
-}
-
-const gregorianToJulianDay = ({ year, month, day }: CalendarDateParts) => {
-    const offset = Math.floor((14 - month) / 12)
-    const adjustedYear = year + 4800 - offset
-    const adjustedMonth = month + 12 * offset - 3
-    return (
-        day +
-        Math.floor((153 * adjustedMonth + 2) / 5) +
-        365 * adjustedYear +
-        Math.floor(adjustedYear / 4) -
-        Math.floor(adjustedYear / 100) +
-        Math.floor(adjustedYear / 400) -
-        32045
-    )
-}
-
-const julianDayToGregorian = (julianDay: number): CalendarDateParts => {
-    const offset = julianDay + 32044
-    const century = Math.floor((4 * offset + 3) / 146097)
-    const dayOfCentury = offset - Math.floor((146097 * century) / 4)
-    const yearOfCentury = Math.floor((4 * dayOfCentury + 3) / 1461)
-    const dayOfYear = dayOfCentury - Math.floor((1461 * yearOfCentury) / 4)
-    const monthIndex = Math.floor((5 * dayOfYear + 2) / 153)
-    return {
-        day: dayOfYear - Math.floor((153 * monthIndex + 2) / 5) + 1,
-        month: monthIndex + 3 - 12 * Math.floor(monthIndex / 10),
-        year:
-            100 * century + yearOfCentury - 4800 + Math.floor(monthIndex / 10),
-    }
-}
-
-const EPAGOMENAL_EPOCHS = {
-    coptic: 1825030,
-    ethiopian: 1724221,
-} as const
-
-const epagomenalToJulianDay = (
-    date: CalendarDateParts,
-    calendar: keyof typeof EPAGOMENAL_EPOCHS
-) =>
-    EPAGOMENAL_EPOCHS[calendar] -
-    1 +
-    365 * (date.year - 1) +
-    Math.floor(date.year / 4) +
-    30 * (date.month - 1) +
-    date.day
-
-const julianDayToEpagomenal = (
-    julianDay: number,
-    calendar: keyof typeof EPAGOMENAL_EPOCHS
-): CalendarDateParts => {
-    const epoch = EPAGOMENAL_EPOCHS[calendar]
-    let year = Math.floor((4 * (julianDay - epoch) + 1463) / 1461)
-    while (
-        julianDay < epagomenalToJulianDay({ year, month: 1, day: 1 }, calendar)
-    ) {
-        year -= 1
-    }
-    while (
-        julianDay >=
-        epagomenalToJulianDay({ year: year + 1, month: 1, day: 1 }, calendar)
-    ) {
-        year += 1
-    }
-    const dayOfYear =
-        julianDay - epagomenalToJulianDay({ year, month: 1, day: 1 }, calendar)
-    const month = Math.floor(dayOfYear / 30) + 1
-    return { year, month, day: (dayOfYear % 30) + 1 }
-}
-
-const convertClientDateToIso = (
-    parts: CalendarDateParts,
-    calendar: WorkingListSystemInfo['calendar']
-) => {
-    if (isEpagomenalCalendar(calendar)) {
-        return julianDayToGregorian(epagomenalToJulianDay(parts, calendar))
-    }
-    const converted = convertToIso8601(
-        clientDateString(parts),
-        toMultiCalendarIdentifier(calendar)
-    )
-    return { year: converted.year, month: converted.month, day: converted.day }
-}
-
-const convertIsoDateToClient = (
-    parts: CalendarDateParts,
-    calendar: WorkingListSystemInfo['calendar']
-) => {
-    if (isEpagomenalCalendar(calendar)) {
-        return julianDayToEpagomenal(gregorianToJulianDay(parts), calendar)
-    }
-    const converted = convertFromIso8601(
-        clientDateString(parts),
-        toMultiCalendarIdentifier(calendar)
-    )
-    return {
-        year: converted.eraYear ?? converted.year,
-        month: converted.month,
-        day: converted.day,
     }
 }
 

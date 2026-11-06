@@ -16,14 +16,6 @@ e2e_require_command() {
     fi
 }
 
-e2e_validate_port() {
-    local port="$1"
-    if [[ ! "$port" =~ ^[0-9]+$ ]] || ((port < 1024 || port > 65535)); then
-        echo "Invalid E2E port: $port" >&2
-        return 64
-    fi
-}
-
 e2e_assert_port_free() {
     local port="$1"
     e2e_validate_port "$port"
@@ -69,4 +61,16 @@ e2e_artifact_dir() {
     local artifact_dir="$E2E_REPO_ROOT/e2e/artifacts/$E2E_VERSION_SLUG"
     mkdir -p "$artifact_dir"
     printf '%s\n' "$artifact_dir"
+}
+
+e2e_cleanup_stack() {
+    local down_script="$1"
+    if "$down_script" "$E2E_VERSION_SLUG"; then
+        return
+    else
+        local cleanup_status=$?
+        echo "Cleanup failed for $E2E_COMPOSE_PROJECT (exit $cleanup_status); the stack may still be running." >&2
+    fi
+    # EXIT traps must retain the test/startup status, even if teardown fails.
+    return 0
 }

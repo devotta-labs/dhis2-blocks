@@ -6,15 +6,16 @@ import {
     readdirSync,
     readFileSync,
     rmSync,
+    writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, relative } from 'node:path'
 import { prepareLocalRegistry } from './localRegistry.ts'
+import { REPO_ROOT, COMPONENT_TARGET } from './layout.ts'
 
-const REPO_ROOT = join(import.meta.dirname, '..', '..')
 const CONSUMER_TEMPLATE = join(import.meta.dirname, 'consumer')
-const UI_TARGET_PREFIX = '@components/dhis2/ui/'
-const UI_INSTALL_DIR = join('src', 'components', 'dhis2', 'ui')
+const UI_TARGET_PREFIX = COMPONENT_TARGET
+const UI_INSTALL_DIR = join('src', COMPONENT_TARGET.slice(1, -1))
 
 class AssertionError extends Error {}
 
@@ -159,6 +160,7 @@ const checkInstall = (workDirectory: string): void => {
                 'calendar',
                 'chart',
                 'checkbox',
+                'combobox',
                 'dialog',
                 'dropdown-menu',
                 'radio-group',
@@ -177,6 +179,58 @@ const checkInstall = (workDirectory: string): void => {
     }
     run('pnpm', ['exec', 'tsc', '--noEmit'], uiAppDirectory)
     run('pnpm', ['exec', 'vite', 'build'], uiAppDirectory)
+
+    for (const name of [
+        'context-selector',
+        'dhis2-value-display',
+        'tracked-entity-finder',
+        'working-list',
+    ]) {
+        step(`Install and compile ${name} with only its declared dependencies`)
+        const isolated = join(workDirectory, name)
+        cpSync(CONSUMER_TEMPLATE, isolated, { recursive: true })
+        writeFileSync(
+            join(isolated, 'src', 'main.tsx'),
+            name === 'context-selector'
+                ? `import { ContextSelector, OrganisationUnitSelector, OptionSelector } from '@/components/context-selector';
+import { MenuItem, SelectorBar, SelectorBarItem } from '@dhis2/ui';
+import './index.css';
+
+export const composition = <ContextSelector ariaLabel="Host context">
+    <OptionSelector label="Program" options={[{ value: 'p', label: 'Program', icon: { color: '#1565c0' } }]} value="p">
+        <MenuItem label={<strong>Host action</strong>} ariaLabel="Host action" />
+    </OptionSelector>
+    <OrganisationUnitSelector value="Host unit"><button type="button">Host tree</button></OrganisationUnitSelector>
+</ContextSelector>;
+export const native = <SelectorBar ariaLabel="Native host">
+    <SelectorBarItem label="Native item" value="Selected" disabled={false} onClearSelectionClick={() => undefined}><span>Native children</span></SelectorBarItem>
+</SelectorBar>;
+`
+                : `import * as block from '@/components/${name}';\nimport './index.css';\nconsole.log(block);\n`
+        )
+        run('pnpm', ['install', '--no-frozen-lockfile'], isolated)
+        run(
+            'pnpm',
+            [
+                'exec',
+                'shadcn',
+                'add',
+                join(registryOutput, `${name}.json`),
+                '-y',
+                '--cwd',
+                isolated,
+            ],
+            REPO_ROOT
+        )
+        if (
+            name !== 'working-list' &&
+            existsSync(join(isolated, 'src', 'components', 'working-list'))
+        ) {
+            fail(3, `${name} must install without Working List`)
+        }
+        run('pnpm', ['exec', 'tsc', '--noEmit'], isolated)
+        run('pnpm', ['exec', 'vite', 'build'], isolated)
+    }
 
     step('3b. Install the blocks into a throwaway consumer app')
     cpSync(CONSUMER_TEMPLATE, appDirectory, { recursive: true })
@@ -202,10 +256,17 @@ const checkInstall = (workDirectory: string): void => {
         REPO_ROOT
     )
 
-    cpSync(
-        join(REPO_ROOT, 'apps/docs/src/examples/working-list/ListCalendar.tsx'),
-        join(appDirectory, 'src/ListCalendar.tsx')
-    )
+    for (const file of [
+        'ListCalendar.tsx',
+        'WorkingListCalendarTabs.tsx',
+        'WorkingListProgramPicker.tsx',
+        'WorkingListPlaceholders.tsx',
+    ]) {
+        cpSync(
+            join(REPO_ROOT, 'apps/docs/src/examples/working-list', file),
+            join(appDirectory, 'src', file)
+        )
+    }
     if (
         existsSync(join(appDirectory, 'src/components/working-list-calendar'))
     ) {

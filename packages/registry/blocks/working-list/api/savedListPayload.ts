@@ -25,13 +25,17 @@ import type {
     TrackedEntityInstanceFilter,
 } from './schemas'
 import type {
-    SavedDateFilter,
     SavedListPayloadBase,
     SavedListResource,
     SavedListSharing,
     WritableSavedCriteria,
 } from './savedListContracts'
 import { getMissingIssue, getSharing } from './savedListNormalization'
+import {
+    replaceSavedDateFilter,
+    replaceSavedFilter,
+    unknownFields,
+} from './savedFilterCodec'
 
 const dateContents = (
     filter: AppliedFilter,
@@ -180,29 +184,6 @@ const writableSharing = (sharing?: SavedListSharing): SavedListSharing => {
     return writable
 }
 
-const SAVED_VALUE_FILTER_KEYS = new Set([
-    'attribute',
-    'dataItem',
-    'eq',
-    'sw',
-    'ew',
-    'like',
-    'ge',
-    'le',
-    'in',
-    'null',
-    'dateFilter',
-])
-
-const DATE_FILTER_KEYS = new Set([
-    'type',
-    'startDate',
-    'endDate',
-    'period',
-    'startBuffer',
-    'endBuffer',
-])
-
 const COMMON_CRITERIA_KEYS = [
     'enrollmentStatus',
     'order',
@@ -229,29 +210,6 @@ const STAGE_CRITERIA_KEYS = new Set([
     'dataFilters',
 ])
 
-const unknownFields = <Source extends object>(
-    source: Source | undefined,
-    knownKeys: ReadonlySet<string>
-) =>
-    source
-        ? Object.fromEntries(
-              Object.entries(source).filter(([key]) => !knownKeys.has(key))
-          )
-        : {}
-
-const mergeDateFilterExtensions = (
-    existing: SavedDateFilter | null | undefined,
-    next: SavedDateFilter | null | undefined
-) => {
-    if (!existing || !next) {
-        return next
-    }
-    return {
-        ...unknownFields(existing, DATE_FILTER_KEYS),
-        ...next,
-    }
-}
-
 const mergeSavedFilterExtensions = (
     existingFilters: SavedValueFilter[] | null | undefined,
     nextFilters: SavedValueFilter[] | null | undefined
@@ -269,12 +227,9 @@ const mergeSavedFilterExtensions = (
         if (!existing) {
             return next
         }
-        const merged: SavedValueFilter = {
-            ...unknownFields(existing, SAVED_VALUE_FILTER_KEYS),
-            ...next,
-        }
+        const merged = replaceSavedFilter(existing, next)
         if (next.dateFilter) {
-            merged.dateFilter = mergeDateFilterExtensions(
+            merged.dateFilter = replaceSavedDateFilter(
                 existing.dateFilter,
                 next.dateFilter
             )
@@ -309,7 +264,7 @@ const mergeCriteriaExtensions = (
     ] as const
     for (const key of dateKeys) {
         if (next[key] !== undefined) {
-            merged[key] = mergeDateFilterExtensions(existing[key], next[key])
+            merged[key] = replaceSavedDateFilter(existing[key], next[key])
         }
     }
     const filterKeys = ['attributeValueFilters', 'dataFilters'] as const

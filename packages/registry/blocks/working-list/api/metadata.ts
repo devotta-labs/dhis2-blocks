@@ -407,3 +407,54 @@ export const buildProgramFieldCatalog = ({
         readableProgramStageIds,
     }
 }
+
+export const fieldBelongsToStage = (
+    field: WorkingListField,
+    stage: TrackerProgram['programStages'][number] | undefined
+) =>
+    field.source !== 'eventDataElement' ||
+    Boolean(
+        stage?.programStageDataElements.some(
+            (binding) => binding.dataElement.id === field.id
+        )
+    )
+
+export const tableFieldsFor = (
+    fields: readonly WorkingListField[],
+    program: TrackerProgram,
+    configuration: ConfigurationWithMode
+) => {
+    const currentStage =
+        configuration.mode === 'event'
+            ? program.programStages.find(
+                  (stage) => stage.id === configuration.programStageId
+              )
+            : undefined
+    return fields.filter((field) => {
+        if (field.columnable === false) {
+            return false
+        }
+        if (field.source === 'trackedEntityAttribute') {
+            return true
+        }
+        if (field.source === 'eventDataElement') {
+            return (
+                configuration.mode === 'event' &&
+                fieldBelongsToStage(field, currentStage)
+            )
+        }
+        if (['createdAt', 'programOwnerId'].includes(field.id)) {
+            return true
+        }
+        return (
+            configuration.mode === 'event' &&
+            [
+                'eventStatus',
+                'eventOccurredAt',
+                'eventScheduledAt',
+                'eventOrgUnit',
+                'eventAssignedUser',
+            ].includes(field.id)
+        )
+    })
+}

@@ -12,7 +12,7 @@ import {
 } from '@/components/dhis2-value-display/calendar'
 import { formatDhis2Value } from '@/components/dhis2-value-display/formatDhis2Value'
 import type { TimelineEntry } from '../../core/types'
-import { useOptionalTimeline } from '../../hooks/useTimeline'
+import { useTimelineHeading } from '../../ui/TimelineContext'
 import { useTimelineMeta } from '../../hooks/useTimelineMeta'
 import type { ChangeSave, ChangeEntryData, ResolvedChange } from '../types'
 import { TimelineSaveContext, useTimelineSave } from './hooks/useTimelineSave'
@@ -217,10 +217,13 @@ export const TimelineChangeEntry = ({
 }: ComponentPropsWithoutRef<'div'> & {
     entry: TimelineEntry<ChangeEntryData>
 }) => {
-    const inFeed = useOptionalTimeline() !== null
+    const heading = useTimelineHeading()
+    const day = storedDay(entry.data.save.createdAt)
     return (
         <TimelineSave data-marker="dot" {...props} save={entry.data.save}>
-            <TimelineChangeSummary withDay={!inFeed} />
+            <TimelineChangeSummary
+                withDay={day === undefined || day !== heading?.day}
+            />
             <TimelineChangeList />
         </TimelineSave>
     )

@@ -1,7 +1,3 @@
-import {
-    ProgramStageWorkingListSchema,
-    TrackedEntityInstanceFilterSchema,
-} from '@/components/working-list/api/schemas'
 import { z } from 'zod'
 import {
     ATTRIBUTES,
@@ -12,8 +8,48 @@ import {
     type LabConfig,
 } from './labData'
 
-type TrackedEntityView = z.input<typeof TrackedEntityInstanceFilterSchema>
-type StageView = z.input<typeof ProgramStageWorkingListSchema>
+const Reference = z.union([
+    z
+        .object({ id: z.string().min(1), displayName: z.string().optional() })
+        .passthrough(),
+    z
+        .string()
+        .min(1)
+        .transform((id) => ({ id })),
+])
+
+// This fake stores criteria and extension JSON without interpreting the client's read schemas.
+const ViewBody = z
+    .object({
+        displayName: z.string(),
+        name: z.string().optional(),
+        sortOrder: z.number().int().nonnegative().optional(),
+        program: Reference,
+    })
+    .passthrough()
+const TrackedEntityBody = ViewBody.extend({
+    entityQueryCriteria: z.object({}).passthrough().optional(),
+})
+const StageBody = ViewBody.extend({
+    programStage: Reference,
+    programStageQueryCriteria: z.object({}).passthrough().optional(),
+})
+
+interface ViewAccess {
+    read: boolean
+    update: boolean
+    delete: boolean
+    write: boolean
+}
+
+type TrackedEntityView = z.output<typeof TrackedEntityBody> & {
+    id: string
+    access?: ViewAccess
+}
+type StageView = z.output<typeof StageBody> & {
+    id: string
+    access?: ViewAccess
+}
 
 export type SavedViewResource =
     | 'trackedEntityInstanceFilters'
@@ -156,13 +192,6 @@ const ok = (uid?: string) => ({
 const notFound = () =>
     Object.assign(new Error('Not found'), { details: { httpStatusCode: 404 } })
 
-/** A mutation's body read through the block's own schema, so the store keeps only what DHIS2 would. */
-const TrackedEntityBody = TrackedEntityInstanceFilterSchema.omit({
-    id: true,
-    access: true,
-})
-const StageBody = ProgramStageWorkingListSchema.omit({ id: true, access: true })
-
 /** A write names the view `name`; DHIS2 answers reads with it as `displayName`. */
 const bodyOf = ({ data }: SavedViewRequest) => {
     const named = z
@@ -221,9 +250,7 @@ export const createSavedViews = (
     const nextId = () => `labNewVw${String(++created).padStart(3, '0')}`
     return {
         trackedEntityInstanceFilters: store(
-            seeded.trackedEntity.map((view) =>
-                TrackedEntityInstanceFilterSchema.parse(view)
-            ),
+            seeded.trackedEntity,
             (request, id, existing) => ({
                 ...TrackedEntityBody.parse(bodyOf(request)),
                 id,
@@ -233,9 +260,7 @@ export const createSavedViews = (
             nextId
         ),
         programStageWorkingLists: store(
-            seeded.stage.map((view) =>
-                ProgramStageWorkingListSchema.parse(view)
-            ),
+            seeded.stage,
             (request, id, existing) => ({
                 ...StageBody.parse(bodyOf(request)),
                 id,

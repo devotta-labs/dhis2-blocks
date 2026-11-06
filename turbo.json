@@ -21,20 +21,40 @@
                 "VITE_*",
                 "DOCS_*"
             ],
-            "outputs": ["build/**", "dist/**", ".d2/**", "src/locales/**"]
+            "outputs": ["build/**", "dist/**", ".d2/**", "src/locales/**"],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "$TURBO_ROOT$/tools/registry/layout.ts"
+            ]
         },
         "test": {
             "dependsOn": ["^transit"],
-            "outputs": []
+            "outputs": [],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "$TURBO_ROOT$/tools/registry/layout.ts"
+            ]
         },
         "typecheck": {
             "dependsOn": ["^transit"],
-            "outputs": []
+            "outputs": [],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "$TURBO_ROOT$/tools/registry/layout.ts"
+            ]
         },
         "lint": {
             "outputs": []
         },
         "//#typecheck:registry": {
+            "inputs": [
+                "tools/**",
+                "e2e/fixtures/**",
+                "e2e/metadata/**",
+                "e2e/specs-docs/diagnostic-policy.ts",
+                "playwright.docs.config.ts",
+                "package.json"
+            ],
             "outputs": []
         },
         "start": {
@@ -44,6 +64,34 @@
         "deploy": {
             "dependsOn": ["build"],
             "cache": false
+        },
+        "@dhis2-blocks/docs#test": {
+            "dependsOn": ["^transit"],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "$TURBO_ROOT$/tools/registry/layout.ts",
+                "$TURBO_ROOT$/api/**"
+            ],
+            "outputs": []
+        },
+        "//#test:tools": {
+            "inputs": [
+                "tools/**",
+                "scripts/**",
+                ".github/**",
+                "e2e/fixtures/**",
+                "e2e/metadata/**",
+                "e2e/specs-docs/diagnostic-policy.ts",
+                "playwright.docs.config.ts",
+                "turbo.json",
+                "package.json",
+                "apps/*/package.json",
+                "packages/*/package.json",
+                "apps/*/tsconfig.json",
+                "packages/registry/**",
+                "apps/web/src/*TranslationCatalog.ts"
+            ],
+            "outputs": []
         }
     }
 }

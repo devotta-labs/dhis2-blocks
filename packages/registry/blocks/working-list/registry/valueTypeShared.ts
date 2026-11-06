@@ -11,6 +11,7 @@ import type {
 import type {
     CellDisplayValue,
     CellFormattingContext,
+    FilterParsingContext,
     WorkingListFileValue,
     WorkingListRawValue,
 } from './valueTypeContracts'
@@ -19,6 +20,18 @@ import {
     isWorkingListFileValue,
     isWorkingListUserValue,
 } from './valueTypeContracts'
+
+export const savedDateBoundaries = (
+    value: { startDate?: string | null; endDate?: string | null },
+    context?: FilterParsingContext
+) => ({
+    start: value.startDate
+        ? (context?.fromApiDate?.(value.startDate) ?? value.startDate)
+        : undefined,
+    end: value.endDate
+        ? (context?.fromApiDate?.(value.endDate) ?? value.endDate)
+        : undefined,
+})
 
 export const escapeFilterValue = (value: string) =>
     value.replaceAll('/', '//').replaceAll(':', '/:').replaceAll(',', '/,')
@@ -41,34 +54,6 @@ export const operatorToApi = (operator: FilterOperator) => {
     const result = operators[operator]
     if (!result) {
         throw new Error(`Filter operator ${operator} has no scalar API mapping`)
-    }
-    return result
-}
-
-export type SavedScalarApiOperator =
-    | 'like'
-    | 'sw'
-    | 'ew'
-    | 'eq'
-    | 'ge'
-    | 'le'
-    | 'in'
-
-export const apiToOperator = (
-    operator: SavedScalarApiOperator
-): FilterOperator => {
-    const operators = {
-        like: 'like',
-        sw: 'startsWith',
-        ew: 'endsWith',
-        eq: 'equals',
-        ge: 'greaterThanOrEqual',
-        le: 'lessThanOrEqual',
-        in: 'in',
-    } satisfies Record<SavedScalarApiOperator, FilterOperator>
-    const result = operators[operator]
-    if (!result) {
-        throw new Error(`Unknown saved-list filter operator: ${operator}`)
     }
     return result
 }

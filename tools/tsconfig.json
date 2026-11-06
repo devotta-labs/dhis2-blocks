@@ -1,0 +1,5 @@
+{
+    "extends": "./registry/tsconfig.json",
+    "include": ["**/*.ts"],
+    "exclude": ["registry/consumer", "oxlint"]
+}

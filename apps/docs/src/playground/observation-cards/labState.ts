@@ -1,5 +1,6 @@
 import type { RequestLogEntry } from '../network'
-import type { LabSettings } from './labData'
+import { generateLabData, type LabSettings } from './labData'
+import { answer } from './labServer'
 import { DEFAULT_SETTINGS, PRESETS, type Preset } from './presets'
 
 interface Live {
@@ -13,6 +14,7 @@ export interface LabState {
     /** The example on show; cleared once a setting is changed by hand. */
     preset?: string
     settings: LabSettings
+    backend: ReturnType<typeof createBackend>
     live: Live
     /** Counts restarts: the canvas remounts on each, with a fresh cache. */
     run: number
@@ -46,8 +48,14 @@ const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>([
     'cardsPerRow',
 ])
 
+const createBackend = (settings: LabSettings) => {
+    const data = generateLabData(settings)
+    return { data, respond: answer(settings, data) }
+}
+
 const restarted = (state: LabState): LabState => ({
     ...state,
+    backend: createBackend(state.settings),
     run: state.run + 1,
     requests: [],
 })
@@ -56,10 +64,12 @@ const restarted = (state: LabState): LabState => ({
 export const initialLabState = (linkedPreset?: string): LabState => {
     const preset =
         PRESETS.find((each) => each.name === linkedPreset) ?? PRESETS[0]
+    const settings = preset?.settings ?? DEFAULT_SETTINGS
     return {
         mode: 'lab',
         preset: preset?.name,
-        settings: preset?.settings ?? DEFAULT_SETTINGS,
+        settings,
+        backend: createBackend(settings),
         live: LIVE,
         run: 0,
         requests: [],

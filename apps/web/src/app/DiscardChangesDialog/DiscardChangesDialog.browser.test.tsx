@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { vi } from 'vitest'
+import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { DiscardChangesDialog } from './DiscardChangesDialog'
 
@@ -40,7 +41,7 @@ describe('DiscardChangesDialog', () => {
     })
 
     it('does not render when closed', async () => {
-        const screen = await render(
+        await render(
             <DiscardChangesDialog
                 open={false}
                 onCancel={() => undefined}
@@ -48,6 +49,54 @@ describe('DiscardChangesDialog', () => {
             />
         )
 
-        expect(screen.container.textContent).toBe('')
+        await expect
+            .element(page.getByRole('alertdialog'))
+            .not.toBeInTheDocument()
+        await expect
+            .element(
+                page.getByRole('heading', { name: 'Discard unsaved changes?' })
+            )
+            .not.toBeInTheDocument()
     })
+
+    it.each(['No, cancel', 'Yes, discard changes'])(
+        'dismisses the portal and restores focus after %s',
+        async (action) => {
+            const Harness = () => {
+                const [open, setOpen] = useState(false)
+                return (
+                    <>
+                        <button onClick={() => setOpen(true)}>
+                            Change context
+                        </button>
+                        <DiscardChangesDialog
+                            open={open}
+                            onCancel={() => setOpen(false)}
+                            onDiscard={() => setOpen(false)}
+                        />
+                    </>
+                )
+            }
+            const screen = await render(<Harness />)
+            const trigger = screen.getByRole('button', {
+                name: 'Change context',
+            })
+            await trigger.click()
+            const dialog = page.getByRole('alertdialog')
+            await expect.element(dialog).toBeVisible()
+            await expect
+                .element(page.getByRole('button', { name: 'No, cancel' }))
+                .toHaveFocus()
+            await page.getByRole('button', { name: action }).click()
+            await expect.element(dialog).not.toBeInTheDocument()
+            await expect
+                .element(
+                    page.getByRole('heading', {
+                        name: 'Discard unsaved changes?',
+                    })
+                )
+                .not.toBeInTheDocument()
+            await expect.element(trigger).toHaveFocus()
+        }
+    )
 })

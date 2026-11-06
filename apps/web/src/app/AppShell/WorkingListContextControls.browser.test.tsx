@@ -5,13 +5,13 @@ import { WorkingListContextControls } from './WorkingListContextControls'
 
 const renderControls = async ({
     programOptions,
-    programsAreFiltered,
+    programAvailability,
     onShowAllPrograms,
     clearDisabled = true,
     onClear = () => undefined,
 }: {
     programOptions: Array<{ value: string; label: string }>
-    programsAreFiltered: boolean
+    programAvailability: 'empty' | 'filtered' | 'all'
     onShowAllPrograms: () => void
     clearDisabled?: boolean
     onClear?: () => void
@@ -27,7 +27,7 @@ const renderControls = async ({
             onProgramClear={() => undefined}
             programLoading={false}
             programLoadingLabel="Loading tracker programs…"
-            programsAreFiltered={programsAreFiltered}
+            programAvailability={programAvailability}
             onShowAllPrograms={onShowAllPrograms}
             showOrganisationUnit={false}
             organisationUnitOpen={false}
@@ -44,7 +44,7 @@ describe('WorkingListContextControls program scope actions', () => {
         const onShowAllPrograms = vi.fn()
         const screen = await renderControls({
             programOptions: [],
-            programsAreFiltered: true,
+            programAvailability: 'empty',
             onShowAllPrograms,
         })
 
@@ -59,7 +59,7 @@ describe('WorkingListContextControls program scope actions', () => {
         const onShowAllPrograms = vi.fn()
         const screen = await renderControls({
             programOptions: [{ value: 'program-a', label: 'Program A' }],
-            programsAreFiltered: true,
+            programAvailability: 'filtered',
             onShowAllPrograms,
         })
 
@@ -78,7 +78,7 @@ describe('WorkingListContextControls program scope actions', () => {
         const onClear = vi.fn()
         const screen = await renderControls({
             programOptions: [],
-            programsAreFiltered: true,
+            programAvailability: 'empty',
             onShowAllPrograms: () => undefined,
             clearDisabled: false,
             onClear,

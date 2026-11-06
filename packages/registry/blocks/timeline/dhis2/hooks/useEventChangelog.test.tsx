@@ -18,14 +18,14 @@ type Body = z.infer<typeof ChangeLogsSchema> | Error
 
 type Respond = (params: { page: number; pageSize: number }) => Body
 
-const setup = (respond: Respond) => {
+const setup = (respond: Respond, gate?: Promise<void>) => {
     const requests: Array<{ page: number; order: string }> = []
     const data: CustomData = {
         [RESOURCE]: async (_type, query) => {
             const params = query.params ?? {}
             const page = Number(params.page)
             requests.push({ page, order: String(params.order) })
-            await new Promise((resolve) => setTimeout(resolve, 5))
+            await gate
             const body = respond({ page, pageSize: Number(params.pageSize) })
             if (body instanceof Error) throw body
             return body
@@ -42,7 +42,7 @@ const setup = (respond: Respond) => {
             </QueryClientProvider>
         </CustomDataProvider>
     )
-    return { requests, wrapper }
+    return { requests, wrapper, queryClient }
 }
 
 /** A distinct data value change per row, one millisecond apart, newest first. */
@@ -62,8 +62,11 @@ const generatedRow = (index: number) => ({
 
 describe('useEventChangelog', () => {
     it('makes no request until enabled', async () => {
-        const { wrapper, requests } = setup(({ page }) =>
-            page === 1 ? ChangeLogsSchema.parse(v43) : { changeLogs: [] }
+        const { promise, resolve: release } = Promise.withResolvers<void>()
+        const { wrapper, requests, queryClient } = setup(
+            ({ page }) =>
+                page === 1 ? ChangeLogsSchema.parse(v43) : { changeLogs: [] },
+            promise
         )
         const { result, rerender } = await renderHook(
             (props?: { enabled: boolean }) =>
@@ -71,7 +74,7 @@ describe('useEventChangelog', () => {
             { wrapper, initialProps: { enabled: false } }
         )
 
-        await new Promise((resolve) => setTimeout(resolve, 30))
+        await queryClient.invalidateQueries()
         expect(requests).toHaveLength(0)
         expect(result.current).toEqual({
             status: 'idle',
@@ -81,6 +84,9 @@ describe('useEventChangelog', () => {
 
         await rerender({ enabled: true })
 
+        await expect.poll(() => requests.length).toBe(1)
+        await expect.poll(() => result.current.status).toBe('loading')
+        release()
         await expect.poll(() => result.current.status).toBe('success')
         expect(requests[0]).toMatchObject({ order: 'createdAt:desc', page: 1 })
         expect(

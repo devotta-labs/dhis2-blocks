@@ -2,6 +2,8 @@ import { CustomDataProvider, Provider } from '@dhis2/app-runtime'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
     Component,
+    createContext,
+    useContext,
     useMemo,
     useState,
     type ComponentProps,
@@ -14,20 +16,15 @@ import {
     type NetworkRequest,
 } from './network'
 
+const LabContentContext = createContext<ReactNode>(null)
+const LabContent = () => useContext(LabContentContext)
+
 /**
  * A fake DHIS2 under the block: app-runtime and TanStack Query, with every
  * request for `resources` sent through the lab network to `respond`. Remount it
  * (change its `key`) for a fresh cache.
  */
-export const LabServerScope = <Request extends NetworkRequest>({
-    network,
-    resources,
-    respond,
-    log,
-    apiVersion = 43,
-    systemInfo,
-    children,
-}: {
+export interface LabServerProps<Request extends NetworkRequest> {
     network: LabNetwork
     resources: readonly string[]
     /** Answers one request, a read or a mutation by `type`, with JSON shaped like DHIS2's response. */
@@ -42,7 +39,17 @@ export const LabServerScope = <Request extends NetworkRequest>({
         calendar?: string
     }
     children: ReactNode
-}) => {
+}
+
+export const LabServerScope = <Request extends NetworkRequest>({
+    network,
+    resources,
+    respond,
+    log,
+    apiVersion = 43,
+    systemInfo,
+    children,
+}: LabServerProps<Request>) => {
     const [queryClient] = useState(
         () =>
             new QueryClient({
@@ -69,20 +76,30 @@ export const LabServerScope = <Request extends NetworkRequest>({
             resources.map((resource) => [resource, answer])
         ) as ComponentProps<typeof CustomDataProvider>['data']
     }, [log, network, resources, respond])
+    // CustomDataProvider creates an engine on each render. Log and child updates
+    // must not replace that engine and restart the block's source-aware queries.
+    const runtime = useMemo(
+        () => (
+            <Provider
+                config={{ baseUrl: '..', apiVersion, systemInfo }}
+                userInfo={undefined}
+                plugin={false}
+                parentAlertsAdd={undefined}
+                showAlertsInPlugin={false}
+            >
+                <CustomDataProvider data={data}>
+                    <QueryClientProvider client={queryClient}>
+                        <LabContent />
+                    </QueryClientProvider>
+                </CustomDataProvider>
+            </Provider>
+        ),
+        [apiVersion, data, queryClient, systemInfo]
+    )
     return (
-        <Provider
-            config={{ baseUrl: '..', apiVersion, systemInfo }}
-            userInfo={undefined}
-            plugin={false}
-            parentAlertsAdd={undefined}
-            showAlertsInPlugin={false}
-        >
-            <CustomDataProvider data={data}>
-                <QueryClientProvider client={queryClient}>
-                    {children}
-                </QueryClientProvider>
-            </CustomDataProvider>
-        </Provider>
+        <LabContentContext.Provider value={children}>
+            {runtime}
+        </LabContentContext.Provider>
     )
 }
 

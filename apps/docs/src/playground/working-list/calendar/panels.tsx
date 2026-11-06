@@ -1,6 +1,5 @@
 import { useCalendarDay } from '@/components/calendar'
 
-/** A cell part of the lab's own: the day's record count, big, in the middle of the cell. */
 export const PlainCount = () => {
     const { day } = useCalendarDay()
     if (day.records.length === 0) return null

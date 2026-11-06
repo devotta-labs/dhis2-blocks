@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Checkbox } from '@/components/dhis2/ui/checkbox'
 import { Label } from '@/components/dhis2/ui/label'
 
-/** A few on-or-off choices, each with its label to click. */
 const CheckboxOptions = () => {
     const [followUp, setFollowUp] = useState(true)
 

@@ -22,11 +22,13 @@ export type FilterEditorKind =
     | 'displayOnly'
 
 export interface FilterSerializationContext {
+    /** Converts explicit local editor dates to API/ISO days, exactly once. */
     toApiDate?: (value: string) => string
     /** Throws when an editor date is not valid in the configured calendar. */
     validateDate?: (value: string) => void
     /** ISO date used by the Gregorian relative-date fallback. */
     today?: string
+    /** Returns API/ISO bounds, never local editor dates. Saved periods stay symbolic. */
     resolveRelativeDate?: (value: {
         period?: RelativeDatePeriod
         startBuffer?: number

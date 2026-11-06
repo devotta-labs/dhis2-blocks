@@ -42,7 +42,6 @@ export type LabAction =
 
 const LIVE: Live = { programId: 'IpHINAT79UW', orgUnitId: 'y77LiPqLMoq' }
 
-/** Callbacks kept in the log. */
 const MAX_CALLBACKS = 80
 
 const restarted = (state: LabState): LabState => ({

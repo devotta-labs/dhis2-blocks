@@ -4,10 +4,8 @@ import type { WorkingListConfiguration as InternalConfiguration } from '../domai
 import type { WorkingListPage } from '../query/fetchers'
 import {
     canCommitMutationBaseline,
-    isCurrentSelection,
     resolvePublicConfiguration,
     resolveSelectedSavedListId,
-    shouldBeginControlledSelection,
     toPublicConfiguration,
 } from './configuration'
 import { toDisplayRows, toResultTargets, visibleRowsAsCsv } from './results'
@@ -171,15 +169,6 @@ describe('provider selection and mutation completion guards', () => {
         sort: { fieldId: textField.id, direction: 'asc' as const },
     }
 
-    it('starts a hard transition for the initial controlled selection', () => {
-        expect(shouldBeginControlledSelection(undefined, 'SavedList01')).toBe(
-            true
-        )
-        expect(
-            shouldBeginControlledSelection('SavedList01', 'SavedList01')
-        ).toBe(false)
-    })
-
     it('resolves null and blank selections to the generated default ID', () => {
         expect(resolveSelectedSavedListId(null, 'Program0001-default')).toBe(
             'Program0001-default'
@@ -223,10 +212,5 @@ describe('provider selection and mutation completion guards', () => {
                 submittedConfiguration: configuration,
             })
         ).toBe(false)
-    })
-
-    it('rejects delete or repair completion after selection changed', () => {
-        expect(isCurrentSelection('SavedList01', 'SavedList01')).toBe(true)
-        expect(isCurrentSelection('SavedList02', 'SavedList01')).toBe(false)
     })
 })

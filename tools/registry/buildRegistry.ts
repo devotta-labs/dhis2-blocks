@@ -71,23 +71,38 @@ const parseTheme = (source: string): ThemeLayers => {
             layers.theme.push([prop.slice(2), oneLine(value)])
         })
     })
+    // Anything the registry item cannot carry fails the build instead of vanishing.
+    const unsupported = (what: string): never => {
+        throw new Error(`theme.css: ${what} has no place in the theme item`)
+    }
     root.each((node) => {
+        if (node.type === 'comment') return
+        if (node.type === 'atrule' && node.name === 'theme') {
+            node.walkDecls(({ prop }) => {
+                if (!prop.startsWith('--')) unsupported(`@theme { ${prop} }`)
+            })
+            return
+        }
         if (node.type === 'rule' && node.selector === ':root') {
-            node.walkDecls(/^--/, ({ prop, value }) => {
+            node.walkDecls(({ prop, value }) => {
+                if (!prop.startsWith('--')) unsupported(`:root { ${prop} }`)
                 layers.light.push([prop.slice(2), oneLine(value)])
             })
+            return
         }
         if (node.type === 'atrule' && node.name === 'media') {
             const rules: Record<string, Record<string, string>> = {}
             node.walkRules((rule) => {
                 const declarations: Record<string, string> = {}
-                rule.walkDecls(/^--/, ({ prop, value }) => {
+                rule.walkDecls(({ prop, value }) => {
                     declarations[prop] = oneLine(value)
                 })
                 rules[rule.selector] = declarations
             })
             layers.css[`@media ${node.params}`] = rules
+            return
         }
+        unsupported(node.toString().split('{')[0].trim())
     })
     return layers
 }

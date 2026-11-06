@@ -103,8 +103,9 @@ export interface NewRow {
 
 export interface TrackerDataEntrySource {
     /**
-     * Names the program (or data set) in the outbox: every grid of it shares one record per cell, and the open one
-     * sends them all, including changes made in its other grids.
+     * Names the program (or data set) and the kind of grid in the outbox: every grid of that kind shares one record
+     * per cell, and the open one sends them all, including changes made in its other grids. Event grids and registers
+     * of one program have different keys, as a register's save brings its scheduled events and refusals.
      */
     key: string
     /** Identifies what is loaded, for the load's cache; `key` when absent. */

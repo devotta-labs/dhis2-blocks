@@ -46,18 +46,50 @@ type SourceItem = {
 
 const toPosix = (path: string): string => path.split(sep).join('/')
 
-/**
- * The tokens declared in theme.css's `@theme` block, as `[name, value]` pairs:
- * the name without its leading `--`, the value on one line.
- */
-const parseThemeTokens = (css: string): [string, string][] => {
-    const tokens: [string, string][] = []
-    postcss.parse(css).walkAtRules('theme', (rule) => {
+type ThemeLayers = {
+    /** `@theme` and `@theme inline` declarations, for the app's `@theme inline`. */
+    theme: [string, string][]
+    /** Top-level `:root` declarations: the semantic roles' default values. */
+    light: [string, string][]
+    /** At-rules that override the roles, such as the high-contrast block. */
+    css: Record<string, Record<string, Record<string, string>>>
+}
+
+const oneLine = (value: string): string =>
+    value
+        .replace(/\s+/g, ' ')
+        .replace(/\(\s+/g, '(')
+        .replace(/\s+\)/g, ')')
+        .trim()
+
+/** theme.css's three layers, each name without its leading `--`. */
+const parseTheme = (source: string): ThemeLayers => {
+    const layers: ThemeLayers = { theme: [], light: [], css: {} }
+    const root = postcss.parse(source)
+    root.walkAtRules('theme', (rule) => {
         rule.walkDecls(/^--/, ({ prop, value }) => {
-            tokens.push([prop.slice(2), value.replace(/\s+/g, ' ').trim()])
+            layers.theme.push([prop.slice(2), oneLine(value)])
         })
     })
-    return tokens
+    root.each((node) => {
+        if (node.type === 'rule' && node.selector === ':root') {
+            node.walkDecls(/^--/, ({ prop, value }) => {
+                layers.light.push([prop.slice(2), oneLine(value)])
+            })
+        }
+        if (node.type === 'atrule' && node.name === 'media') {
+            const rules: Record<string, Record<string, string>> = {}
+            node.walkRules((rule) => {
+                const declarations: Record<string, string> = {}
+                rule.walkDecls(/^--/, ({ prop, value }) => {
+                    declarations[prop] = oneLine(value)
+                })
+                rules[rule.selector] = declarations
+            })
+            layers.css[`@media ${node.params}`] = rules
+        }
+    })
+    return layers
 }
 
 const listSourceFiles = (directory: string): string[] =>
@@ -207,7 +239,7 @@ const buildRegistry = (): Registry => {
     const { dependencies: versions } = JSON.parse(
         readFileSync(join(SOURCE_ROOT, 'package.json'), 'utf8')
     )
-    const tokens = parseThemeTokens(
+    const themeLayers = parseTheme(
         readFileSync(join(COMPONENTS_DIR, 'theme.css'), 'utf8')
     )
     return {
@@ -218,7 +250,11 @@ const buildRegistry = (): Registry => {
             {
                 name: THEME_ITEM,
                 type: 'registry:theme',
-                cssVars: { theme: Object.fromEntries(tokens) },
+                cssVars: {
+                    theme: Object.fromEntries(themeLayers.theme),
+                    light: Object.fromEntries(themeLayers.light),
+                },
+                css: themeLayers.css,
             },
             ...sources.map((item): RegistryItem => {
                 const fileType =

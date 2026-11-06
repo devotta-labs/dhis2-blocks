@@ -36,7 +36,7 @@ function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
 
 /** The @dhis2/ui select input box, shared with the Combobox trigger. */
 const selectTriggerVariants = cva(
-    "flex w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 rounded-dhis2-sm border border-dhis2-input bg-white text-left text-sm leading-4 whitespace-nowrap text-dhis2-grey-900 shadow-[inset_0_0_1px_0_rgb(48_54_60/0.1)] outline-none focus-visible:border-dhis2-ring focus-visible:shadow-[inset_0_0_0_2px_var(--color-dhis2-ring)] data-popup-open:border-dhis2-ring data-popup-open:shadow-[inset_0_0_0_2px_var(--color-dhis2-ring)] disabled:cursor-not-allowed disabled:bg-dhis2-grey-100 disabled:text-dhis2-grey-600 aria-invalid:border-dhis2-red-500 data-placeholder:text-dhis2-grey-600 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
+    "flex w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 rounded-dhis2-sm border border-dhis2-input bg-white text-left text-sm leading-4 whitespace-nowrap text-dhis2-grey-900 shadow-[inset_0_0_1px_0_rgb(48_54_60/0.1)] outline-none focus-visible:border-dhis2-ring focus-visible:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] data-popup-open:border-dhis2-ring data-popup-open:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] disabled:cursor-not-allowed disabled:bg-dhis2-grey-100 disabled:text-dhis2-grey-600 aria-invalid:border-dhis2-red-500 data-placeholder:text-dhis2-grey-600 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
     {
         variants: {
             size: {

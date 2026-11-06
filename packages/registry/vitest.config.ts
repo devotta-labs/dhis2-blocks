@@ -32,6 +32,17 @@ const sharedProjectOptions = {
  */
 const PRODUCTION_TESTS = '{components,blocks}/**/*.production.test.tsx'
 
+/**
+ * `*.contrast.test.tsx` files run with the OS asking for more contrast, and
+ * `*.forced.test.tsx` files with forced colours (Windows contrast themes).
+ */
+const CONTRAST_TESTS = '{components,blocks}/**/*.contrast.test.tsx'
+const FORCED_TESTS = '{components,blocks}/**/*.forced.test.tsx'
+
+type BrowserContextOptions = NonNullable<
+    NonNullable<Parameters<typeof playwright>[0]>['contextOptions']
+>
+
 const productionNodeEnv = (): Plugin => ({
     name: 'registry-production-node-env',
     transform(code, id) {
@@ -76,13 +87,13 @@ const browserProject = {
 }
 
 // A function, so each browser project gets its own provider.
-const browserTestOptions = () => ({
+const browserTestOptions = (contextOptions: BrowserContextOptions = {}) => ({
     ...sharedProjectOptions,
     setupFiles: ['./test/setup.ts'],
     browser: {
         enabled: true,
         headless: true,
-        provider: playwright(),
+        provider: playwright({ contextOptions }),
         instances: [{ browser: 'chromium' as const }],
     },
 })
@@ -106,7 +117,28 @@ export default defineConfig({
                     ...browserTestOptions(),
                     name: 'browser',
                     include: ['{components,blocks}/**/*.test.tsx'],
-                    exclude: [...configDefaults.exclude, PRODUCTION_TESTS],
+                    exclude: [
+                        ...configDefaults.exclude,
+                        PRODUCTION_TESTS,
+                        CONTRAST_TESTS,
+                        FORCED_TESTS,
+                    ],
+                },
+            },
+            {
+                ...browserProject,
+                test: {
+                    ...browserTestOptions({ contrast: 'more' }),
+                    name: 'browser-contrast',
+                    include: [CONTRAST_TESTS],
+                },
+            },
+            {
+                ...browserProject,
+                test: {
+                    ...browserTestOptions({ forcedColors: 'active' }),
+                    name: 'browser-forced',
+                    include: [FORCED_TESTS],
                 },
             },
             {

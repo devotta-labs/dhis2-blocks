@@ -289,14 +289,26 @@ const checkInstall = (workDirectory: string): void => {
         themeDefault(appDirectory, '--radius-sm')
     )
     // Tailwind emits only the utilities the installed source uses, and the
-    // installed `@theme inline` block resolves the token to its value, so check
-    // a DHIS2 utility that the installed primitives really use.
+    // installed `@theme inline` block points each role at its runtime
+    // variable, so check a DHIS2 utility that the installed primitives use.
     assertUtilityValue(
         emitted,
         'text-dhis2-primary',
         '--color-dhis2-primary',
-        '#1565c0'
+        'var(--dhis2-primary)'
     )
+
+    step('10. Emitted CSS carries the high-contrast block')
+    if (
+        !/@media\s*\(prefers-contrast:\s*more\)\s*\{\s*:root\s*\{[^}]*--dhis2-muted-foreground:\s*#404b5a/i.test(
+            emitted
+        )
+    ) {
+        fail(
+            10,
+            'no @media (prefers-contrast: more) rule sets --dhis2-muted-foreground'
+        )
+    }
 }
 
 const main = (): void => {
@@ -305,7 +317,7 @@ const main = (): void => {
     let failed = false
     try {
         checkInstall(workDirectory)
-        console.log('\nregistry:check passed: all 9 assertions hold')
+        console.log('\nregistry:check passed: all 10 assertions hold')
     } catch (error) {
         failed = true
         // An assertion's message says it all; anything else is a bug in the

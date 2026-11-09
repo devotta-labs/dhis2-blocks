@@ -134,7 +134,7 @@ export const CalendarGrid = ({
     const {
         state: { weeks, selectedDay, results },
         actions: { selectDay },
-        meta: { weekDayLabels, dayName },
+        meta: { weekDayLabels, dayName, monthName },
     } = useCalendar()
     const tableRef = useRef<HTMLTableElement>(null)
     const [focusedDate, setFocusedDate] = useState<string | null>(null)
@@ -150,6 +150,15 @@ export const CalendarGrid = ({
         })
     )
     const days = rows.flat().map(({ day }) => day)
+    // The first day shown and each day where the month changes carry the month name, so neighbouring months don't rely on colour.
+    const monthStarts = new Set(
+        days
+            .filter(
+                (day, index) =>
+                    day.isInCurrentMonth !== days[index - 1]?.isInCurrentMonth
+            )
+            .map((day) => day.date)
+    )
     const hiddenCount =
         weekendColumns === 'hide'
             ? weeks
@@ -277,12 +286,13 @@ export const CalendarGrid = ({
                                     >
                                         <span
                                             className={cn(
-                                                // Out-of-month days keep the readable colour: their background marks them.
-                                                'text-[13px] leading-5 text-dhis2-muted-foreground',
+                                                'truncate text-[13px] leading-5 text-dhis2-muted-foreground',
                                                 day.isToday && TODAY_CLASS
                                             )}
                                         >
-                                            {day.label}
+                                            {monthStarts.has(day.date)
+                                                ? `${day.label} ${monthName(day)}`
+                                                : day.label}
                                         </span>
                                         <CalendarDayContext.Provider
                                             value={{

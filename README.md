@@ -59,6 +59,15 @@ pnpm build
 
 The DHIS2 application output is written below `apps/web/build`.
 
+## Interactive coding sandbox
+
+Run `pnpm sandbox start` for an empty Docker workspace with internet access,
+pnpm and the native fx coding-agent terminal. Create an app and install Blocks
+from the public registry as a normal consumer; port 5173 is exposed for its preview.
+The Effect CLI also supports `list`, `attach`, `stop` and `remove`.
+See [the sandbox package](packages/sandbox/README.md) for requirements,
+model credentials, preview commands and session storage.
+
 ## Context Selector block
 
 The Context Selector is a source-installed, Capture-style composition layer for

@@ -145,11 +145,7 @@ const OrganisationUnitSearchPagination = ({
                 disabled={searchLoadingMore}
             >
                 {searchLoadingMore && (
-                    <Spinner
-                        label={i18n.t('Loading')}
-                        data-icon="inline-start"
-                        className="size-4"
-                    />
+                    <Spinner data-icon="inline-start" className="size-4" />
                 )}
                 {i18n.t('Show more')}
             </Button>

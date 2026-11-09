@@ -120,6 +120,34 @@ describe('FinderForm validation', () => {
         await expect.element(input).toHaveAttribute('aria-invalid', 'true')
     })
 
+    it("links the date field's hint to its input", async () => {
+        await renderInFinder(
+            <FinderForm>
+                <FinderField attribute="dob" description="As on the card" />
+            </FinderForm>
+        )
+        await expect
+            .element(page.getByRole('textbox', { name: 'Date of birth' }))
+            .toHaveAccessibleDescription(/As on the card/)
+    })
+
+    it('links a date range error to both ends', async () => {
+        await renderInFinder(
+            <FinderForm>
+                <FinderRangeField attribute="dob" />
+            </FinderForm>
+        )
+        const dob = page.getByRole('group', { name: 'Date of birth' })
+        await userEvent.fill(dob.getByLabelText('From'), '2001-02-03')
+        await userEvent.fill(dob.getByLabelText('To'), '2000-01-01')
+        await userEvent.tab()
+        for (const side of ['From', 'To']) {
+            await expect
+                .element(dob.getByLabelText(side))
+                .toHaveAccessibleDescription(/From must not be after To/)
+        }
+    })
+
     it('links a range error to both of its inputs', async () => {
         await renderInFinder(
             <FinderForm>

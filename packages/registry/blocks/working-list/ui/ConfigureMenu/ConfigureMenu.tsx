@@ -209,7 +209,6 @@ export const ConfigureMenu = ({
                             >
                                 {createPending && (
                                     <Spinner
-                                        label={i18n.t('Loading')}
                                         data-icon="inline-start"
                                         className="size-4"
                                     />

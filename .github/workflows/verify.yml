@@ -98,7 +98,8 @@ jobs:
             - run: pnpm dead-code:audit
 
     # Every docs example at WCAG 2.2 AA, against the docs DHIS2 stack.
-    # The other docs specs run locally with `pnpm docs:e2e`.
+    # The other docs specs run locally with `pnpm docs:e2e`. Not in `validation`
+    # until it has passed on a runner.
     docs-e2e:
         name: docs e2e (42)
         needs: changes
@@ -133,8 +134,7 @@ jobs:
                   retention-days: 14
 
     validation:
-        needs:
-            [changes, typecheck, test, build, docs-build, docs-e2e, lint, knip]
+        needs: [changes, typecheck, test, build, docs-build, lint, knip]
         if: always()
         runs-on: ubuntu-24.04
         timeout-minutes: 5

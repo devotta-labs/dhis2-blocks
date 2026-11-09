@@ -551,16 +551,19 @@ interactive export report.
 
 ## Accessibility
 
-Blocks and primitives meet WCAG 2.2 AA, the level Section 508, ADA Title II,
-EN 301 549 and most donor and UN procurement rules ask for. Three checks keep
-them there:
+Blocks and primitives target WCAG 2.2 AA, the level Section 508, ADA Title II,
+EN 301 549 and most donor and UN procurement rules ask for. They don't meet it
+yet: some blocks still show states by colour alone, have mouse-only details, or
+don't announce changes such as result counts and rule effects. Three checks
+hold what is in place:
 
 - `pnpm lint` runs the `jsx-a11y` rules. A rule turned off for one line says
   why beside it.
 - `pnpm docs:e2e e2e/specs-docs/accessibility.spec.ts` scans every docs
   example with axe, in the default and the more-contrast theme, and presses Tab
   through each one to check every stop shows where focus is. CI runs it in the
-  `docs-e2e` job of `verify` when the docs or the registry change.
+  `docs-e2e` job of `verify` when the docs or the registry change. The job
+  reports but doesn't yet block `validation`.
 - Contrast, forced-colours and reduced-motion browser tests
   (`*.contrast.test.tsx`, `*.forced.test.tsx`, `*.motion.test.tsx`) check what
   axe can't see.

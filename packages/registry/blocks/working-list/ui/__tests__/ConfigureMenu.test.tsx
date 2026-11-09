@@ -19,10 +19,12 @@ const renderMenu = async ({
     selectedView,
     dirty = false,
     online = true,
+    createPending = false,
 }: {
     selectedView?: WorkingListSavedView
     dirty?: boolean
     online?: boolean
+    createPending?: boolean
 }) => {
     const onDownload = vi.fn()
     const onSaveAs = vi.fn(async () => undefined)
@@ -34,7 +36,7 @@ const renderMenu = async ({
                 dirty={dirty}
                 online={online}
                 busy={false}
-                createPending={false}
+                createPending={createPending}
                 onDownload={onDownload}
                 onSaveAs={onSaveAs}
                 onUpdate={onUpdate}
@@ -46,6 +48,15 @@ const renderMenu = async ({
 }
 
 describe('working-list actions', () => {
+    it('keeps the save button named Save while it saves', async () => {
+        const { screen } = await renderMenu({ createPending: true })
+        await screen.getByRole('button', { name: 'Save view' }).click()
+        // The spinner beside the label is decoration: the button says what it does.
+        await expect
+            .element(page.getByRole('button', { name: 'Save', exact: true }))
+            .toBeVisible()
+    })
+
     it('offers create and download for an unfiltered default view', async () => {
         const { screen, onDownload } = await renderMenu({})
         const save = screen.getByRole('button', { name: 'Save view' })

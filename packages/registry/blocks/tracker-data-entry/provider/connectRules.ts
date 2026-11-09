@@ -9,7 +9,7 @@ import {
 import { typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { cellDomId, typingIn, cellKey } from '@/components/spreadsheet'
-import type { CellKey, CellState } from '@/components/spreadsheet'
+import type { Announcer, CellKey, CellState } from '@/components/spreadsheet'
 import {
     sameEffects,
     sameMessages,
@@ -66,7 +66,7 @@ interface ConnectOptions {
     form: LoadedForm
     rules: EventsRules
     settings: ValueSettings
-    announce(text: string): void
+    announce: Announcer['announce']
     /** Cell → what a rule cleared there; said on the cell while it stays empty, across reconnections. */
     cleared: Map<CellKey, string>
     /** Rows a person changed or completed, or with unsent changes: only there are the rules' values saved. */

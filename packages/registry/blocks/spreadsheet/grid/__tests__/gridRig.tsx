@@ -1,3 +1,5 @@
+import { announce as sharedAnnounce } from '@/components/dhis2/ui/announcer'
+import type { Politeness } from '@/components/dhis2/ui/announcer'
 import { CustomDataProvider } from '@dhis2/app-runtime'
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
@@ -19,7 +21,6 @@ import type {
     HeaderCell,
 } from '../../model/types'
 import {
-    createAnnouncer,
     SpreadsheetReactContext,
     useSpreadsheetContext,
 } from '../../provider/context'
@@ -204,11 +205,10 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
             return store.subscribe(listener)
         },
     }
-    const announcer = createAnnouncer()
     const announced: string[] = []
-    const announce = (text: string) => {
+    const announce = (text: string, politeness?: Politeness) => {
         announced.push(text)
-        announcer.announce(text)
+        sharedAnnounce(text, politeness)
     }
     const added: string[] = []
     /** The spreadsheet's context, counting each read of its tables, as the grid makes one when it renders. */
@@ -266,7 +266,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
                 idScope={ID_SCOPE}
                 overrides={overrides}
                 addRow={addRow}
-                announcer={{ announce, announcements: announcer.announcements }}
+                announcer={{ announce }}
                 RowBadge={RowBadge}
                 GridFooter={GridFooter}
                 bulkColumn={bulkColumn}

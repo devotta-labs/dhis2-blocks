@@ -236,6 +236,18 @@
             ]
         },
         {
+            "name": "announcer",
+            "type": "registry:ui",
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/components/announcer.ts",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/announcer.ts"
+                }
+            ]
+        },
+        {
             "name": "badge",
             "type": "registry:ui",
             "dependencies": [
@@ -1232,6 +1244,7 @@
             ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/alert-dialog",
+                "devotta-labs/dhis2-blocks/announcer",
                 "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/checkbox",
                 "devotta-labs/dhis2-blocks/cn",
@@ -2000,6 +2013,7 @@
             ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/alert-dialog",
+                "devotta-labs/dhis2-blocks/announcer",
                 "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",

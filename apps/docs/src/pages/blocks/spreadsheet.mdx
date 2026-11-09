@@ -205,9 +205,9 @@ row header's description holds the notes for screen readers.
   file and image cells show the file's name only: no preview, no **Download**.
 - `idScope` starts every DOM id of the grid; give two grids on one page each
   their own, or take the one `Spreadsheet` makes.
-- `announcer`, made with `createAnnouncer()`, is the live region's announcer.
-  Pass one when code outside the grid says outcomes through it too; below
-  `Spreadsheet`, `useAnnounce()` gives `announce`.
+- `announcer` is how the grid says outcomes: the shared `announce` from
+  `@/components/dhis2/ui/announcer` by default, which code outside the grid
+  uses too. Below `Spreadsheet`, `useAnnounce()` gives `announce`.
 
 A table draws only the rows near its view, so a register of hundreds of rows
 stays quick to type in. The table's `aria-rowcount` and each row's
@@ -493,7 +493,8 @@ changed.
   annotations, and `commit(text)` to save it.
 - `useRowCells(keys)` — the states and annotations of a row's cells, in the order
   of `keys`.
-- `useAnnounce()` — says an outcome in the grid's polite live region.
+- `useAnnounce()` — says an outcome through the shared announcer; failures
+  are `'assertive'`.
 - `useFocusCell()` — focuses a cell by its key, drawing its row first when the
   table has scrolled past it.
 - `Cell({ cellKey, field, labelledBy, move })` and `cells` — one bound control
@@ -502,4 +503,3 @@ changed.
 - `cellKey`, `indexCells`, `cellDomId`, `rowHeaderDomId`, `typingIn`, `nameFrom`
   and `formatCount` — what a block that composes the grid needs to find cells
   and name them.
-- `createAnnouncer()` — an announcer to pass as `announcer`.

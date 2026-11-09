@@ -126,7 +126,7 @@ const ColumnValue = ({
                     now !== was &&
                     now.draft !== was?.draft
                 ) {
-                    announce(now.error)
+                    announce(now.error, 'assertive')
                 }
             }),
         [scratch, key, announce]

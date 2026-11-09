@@ -72,8 +72,8 @@ test('the picker shows 50 ranked matches and announces the count', async () => {
     await expect
         .element(page.getByText('Showing 50 of 14,240 matches'))
         .toBeVisible()
-    // Said once in the grid's live region; the list has none of its own.
-    expect(page.getByRole('status').elements()).toHaveLength(1)
+    // Said through the grid's announcer; the list has no live region of its own.
+    expect(document.querySelectorAll('[aria-live]')).toHaveLength(0)
     // Typing that leaves the count as it is says nothing more.
     await userEvent.keyboard(' ')
     expect(announced).toEqual(['Showing 50 of 14,240 matches'])

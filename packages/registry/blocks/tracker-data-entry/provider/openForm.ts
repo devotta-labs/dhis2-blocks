@@ -6,9 +6,9 @@ import type { ValueSettings } from '@/components/dhis2-value-types'
 import { formatCount, cellKey, createCellStore } from '@/components/spreadsheet'
 import type {
     CellKey,
-    GridTable,
-    DataEngine,
     CellStoreState,
+    DataEngine,
+    GridTable,
 } from '@/components/spreadsheet'
 import { recordIdOf } from '../model/types'
 import type {
@@ -80,7 +80,7 @@ interface OpenFormOptions {
     userId: string
     /** Where the summary and the sync status go. */
     view: StoreApi<TrackerDataEntryView>
-    announce(text: string): void
+    announce(text: string, politeness?: 'polite' | 'assertive'): void
     /** Called when the server says someone else is signed in; the form has stopped sending by then. */
     onSignedInAsOther(): void
 }
@@ -302,7 +302,7 @@ const connect = (
         view.setState({ sync: status })
         clearTimeout(settling)
         if (status === 'signIn' && ended !== 'signIn') {
-            announce(i18n.t('Sign in to keep saving'))
+            announce(i18n.t('Sign in to keep saving'), 'assertive')
         }
         if (status !== 'sending') {
             ended = status

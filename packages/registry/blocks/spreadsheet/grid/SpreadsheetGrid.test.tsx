@@ -243,59 +243,6 @@ test('Ctrl+Z undoes the last change', async () => {
     expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r1', 'c0')))
 })
 
-test('one polite live region says the same text twice', async () => {
-    const { announce } = await mount([makeTable(), makeTable({ id: 't2' })])
-    expect(page.getByRole('status').elements()).toHaveLength(1)
-    const region = page.getByRole('status').element()
-    const said: string[] = []
-    new MutationObserver(() => said.push(region.textContent ?? '')).observe(
-        region,
-        { childList: true, characterData: true, subtree: true }
-    )
-    announce('All changes saved')
-    await expect.poll(() => said).toEqual(['All changes saved'])
-    announce('All changes saved')
-    await expect
-        .poll(() => said)
-        .toEqual(['All changes saved', '', 'All changes saved'])
-})
-
-test('two things said at once are both said, in order, 150 ms apart', async () => {
-    const { announce } = await mount([makeTable()])
-    const region = page.getByRole('status').element()
-    const said: Array<[string, number]> = []
-    new MutationObserver(() => {
-        if (region.textContent) {
-            said.push([region.textContent, performance.now()])
-        }
-    }).observe(region, { childList: true, characterData: true, subtree: true })
-    announce('Cells pasted: 4')
-    announce('Enter a whole number')
-    await expect
-        .poll(() => said.map(([text]) => text))
-        .toEqual(['Cells pasted: 4', 'Enter a whole number'])
-    expect(said[1][1] - said[0][1]).toBeGreaterThanOrEqual(140)
-})
-
-test('a newer text replaces one still waiting to be said', async () => {
-    const { announce } = await mount([makeTable()])
-    const region = page.getByRole('status').element()
-    const said: string[] = []
-    new MutationObserver(() => {
-        if (region.textContent) {
-            said.push(region.textContent)
-        }
-    }).observe(region, { childList: true, characterData: true, subtree: true })
-    announce('Cells pasted: 4')
-    announce('Values not saved: 1')
-    announce('All changes saved')
-    await expect
-        .poll(() => said)
-        .toEqual(['Cells pasted: 4', 'All changes saved'])
-    await new Promise((resolve) => setTimeout(resolve, 400))
-    expect(said).toEqual(['Cells pasted: 4', 'All changes saved'])
-})
-
 test('a value refused on Enter or on leaving the cell is announced', async () => {
     const { announced } = await mount([makeTable({ rows: ['a', 'b'] })])
     control(cellKey('t1r0', 'c0')).focus()

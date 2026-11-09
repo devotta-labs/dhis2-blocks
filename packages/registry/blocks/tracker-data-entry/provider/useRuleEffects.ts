@@ -2,7 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import { useEffect, useRef } from 'react'
 import { useEventsRules } from '@/components/program-rules'
 import type { ValueSettings } from '@/components/dhis2-value-types'
-import type { CellKey } from '@/components/spreadsheet'
+import type { Announcer, CellKey } from '@/components/spreadsheet'
 import type { DataRecord } from '../model/types'
 import type { LoadedForm } from '../sources/types'
 import { connectRules } from './connectRules'
@@ -15,7 +15,7 @@ interface RuleEffectsOptions {
     /** The open form's records, as the provider renders them. */
     records: ReadonlyMap<string, DataRecord>
     settings: ValueSettings
-    announce(text: string): void
+    announce: Announcer['announce']
     /** Starts the form's DOM ids. */
     idScope: string
 }

@@ -6,14 +6,11 @@ import type { ReactNode } from 'react'
 import { z } from 'zod'
 import { useStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
+import { announce } from '@/components/dhis2/ui/announcer'
 import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { parseDateFormat } from '@/components/dhis2-value-types'
 import { preloadRuleEngine } from '@/components/program-rules'
-import {
-    createAnnouncer,
-    formatCount,
-    Spreadsheet,
-} from '@/components/spreadsheet'
+import { formatCount, Spreadsheet } from '@/components/spreadsheet'
 import type { CellKey, CellOverrides } from '@/components/spreadsheet'
 import { summarise } from '../logic/summary'
 import { recordIdOf, recordsOf, trackerKeyOf } from '../model/types'
@@ -163,7 +160,6 @@ export const TrackerDataEntry = ({
     const idScope = `data-entry-${id.replaceAll(':', '')}`
     const [start] = useState(() => performance.now())
     const measured = useRef(false)
-    const [announcer] = useState(createAnnouncer)
     const [placeholder] = useState(emptyForm)
     const [view] = useState(() =>
         createStore<TrackerDataEntryView>()(() => ({
@@ -200,7 +196,7 @@ export const TrackerDataEntry = ({
             serverUrl,
             userId: openedFor,
             view,
-            announce: announcer.announce,
+            announce,
             onSignedInAsOther() {
                 setLocked(true)
                 // So every grid of this server, and the next mount, learn who is signed in now.
@@ -238,7 +234,6 @@ export const TrackerDataEntry = ({
         settings,
         engine,
         view,
-        announcer,
         queryClient,
     ])
 
@@ -249,7 +244,7 @@ export const TrackerDataEntry = ({
         source,
         engine,
         view,
-        announce: announcer.announce,
+        announce,
         orgUnitNames,
         fileNames,
     })
@@ -315,7 +310,7 @@ export const TrackerDataEntry = ({
         form,
         records,
         settings,
-        announce: announcer.announce,
+        announce,
         idScope,
     })
     const people = form?.rowKind === 'person'
@@ -397,7 +392,6 @@ export const TrackerDataEntry = ({
                     fileNames={fileNames}
                     offline={offline}
                     fileUrl={fileUrl}
-                    announcer={announcer}
                     RowLabel={TrackerRowLabel}
                     RowBadge={EventStatusBadge}
                     GridFooter={people ? ShowMorePeople : ShowMoreEvents}

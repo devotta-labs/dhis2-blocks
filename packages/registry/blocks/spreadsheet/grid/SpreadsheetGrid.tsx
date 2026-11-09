@@ -372,7 +372,7 @@ export const SpreadsheetGrid = ({
                     cell !== was &&
                     cell.draft !== was?.draft
                 ) {
-                    announce(cell.error)
+                    announce(cell.error, 'assertive')
                 }
             }),
         // `keyAt` reads `tables` and `keyOf`, which `positions` follows.

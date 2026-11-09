@@ -277,9 +277,8 @@ export const CalendarGrid = ({
                                     >
                                         <span
                                             className={cn(
+                                                // Out-of-month days keep the readable colour: their background marks them.
                                                 'text-[13px] leading-5 text-dhis2-muted-foreground',
-                                                !day.isInCurrentMonth &&
-                                                    'text-dhis2-subtle-foreground',
                                                 day.isToday && TODAY_CLASS
                                             )}
                                         >

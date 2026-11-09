@@ -17,7 +17,7 @@ const toggleVariants = cva(
                 default:
                     'border-transparent bg-transparent text-dhis2-foreground hover:bg-dhis2-accent',
                 outline:
-                    'border-dhis2-border-strong bg-dhis2-background text-dhis2-foreground hover:bg-dhis2-muted',
+                    'border-dhis2-border-strong bg-dhis2-background text-dhis2-foreground hover:bg-dhis2-muted data-pressed:hover:bg-dhis2-info-fill',
             },
             size: {
                 default: 'h-9 px-3',

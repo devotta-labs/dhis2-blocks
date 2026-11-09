@@ -5,6 +5,7 @@ import { Button } from './button'
 import { Checkbox } from './checkbox'
 import { Input } from './input'
 import { RadioGroup, RadioGroupItem } from './radio-group'
+import { Toggle } from './toggle'
 import { roleColour } from '../test/roleColour'
 
 const style = (element: Element) => getComputedStyle(element)
@@ -110,4 +111,20 @@ describe('form controls in the default theme', () => {
             expect(style(button).outlineColor).toBe(roleColour(role))
         }
     )
+
+    it('tint a pressed outline toggle a step darker on hover', async () => {
+        const screen = await render(
+            <Toggle variant="outline" defaultPressed>
+                Bold
+            </Toggle>
+        )
+        const toggle = screen.getByRole('button')
+        expect(style(toggle.element()).backgroundColor).toBe(
+            roleColour('primary-subtle')
+        )
+        await userEvent.hover(toggle)
+        await expect
+            .poll(() => style(toggle.element()).backgroundColor)
+            .toBe(roleColour('info-fill'))
+    })
 })

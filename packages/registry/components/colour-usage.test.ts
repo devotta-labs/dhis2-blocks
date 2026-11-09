@@ -138,6 +138,7 @@ describe('colour usage', () => {
         'className="text-red-500"',
         'className="text-[var(--colors-grey700)]"',
         'className="ring-offset-sky-200"',
+        "stroke: 'var(--dhis2-grey-600)'",
     ])('flags %s', (line) => {
         expect(rawColoursIn([line])).not.toEqual([])
     })

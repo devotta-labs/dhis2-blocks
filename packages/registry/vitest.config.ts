@@ -38,6 +38,7 @@ const PRODUCTION_TESTS = '{components,blocks}/**/*.production.test.tsx'
  */
 const CONTRAST_TESTS = '{components,blocks}/**/*.contrast.test.tsx'
 const FORCED_TESTS = '{components,blocks}/**/*.forced.test.tsx'
+const MOTION_TESTS = '{components,blocks}/**/*.motion.test.tsx'
 
 type BrowserContextOptions = NonNullable<
     NonNullable<Parameters<typeof playwright>[0]>['contextOptions']
@@ -134,6 +135,7 @@ export default defineConfig({
                         PRODUCTION_TESTS,
                         CONTRAST_TESTS,
                         FORCED_TESTS,
+                        MOTION_TESTS,
                     ],
                 },
             },
@@ -151,6 +153,14 @@ export default defineConfig({
                     ...browserTestOptions({ forcedColors: 'active' }),
                     name: 'browser-forced',
                     include: [FORCED_TESTS],
+                },
+            },
+            {
+                ...browserProject,
+                test: {
+                    ...browserTestOptions({ reducedMotion: 'reduce' }),
+                    name: 'browser-motion',
+                    include: [MOTION_TESTS],
                 },
             },
             {

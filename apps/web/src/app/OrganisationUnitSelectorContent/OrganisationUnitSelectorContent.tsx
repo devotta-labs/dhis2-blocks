@@ -146,7 +146,7 @@ const OrganisationUnitSearchPagination = ({
             >
                 {searchLoadingMore && (
                     <Spinner
-                        aria-label={i18n.t('Loading')}
+                        label={i18n.t('Loading')}
                         data-icon="inline-start"
                         className="size-4"
                     />
@@ -178,10 +178,7 @@ const OrganisationUnitSearchResults = ({
 >) => {
     if (searchLoading) {
         return (
-            <Spinner
-                aria-label={i18n.t('Loading')}
-                className="size-12 border-6"
-            />
+            <Spinner label={i18n.t('Loading')} className="size-12 border-6" />
         )
     }
 

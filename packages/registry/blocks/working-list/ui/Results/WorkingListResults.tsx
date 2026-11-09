@@ -275,7 +275,7 @@ const IncompatibleSelection = () => {
                             >
                                 {repairPending && (
                                     <Spinner
-                                        aria-label={translate('Loading')}
+                                        label={translate('Loading')}
                                         data-icon="inline-start"
                                         className="size-4"
                                     />

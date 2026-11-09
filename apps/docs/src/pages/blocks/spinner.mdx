@@ -21,11 +21,12 @@ CircularLoader.
 ```tsx
 import { Spinner } from '@/components/dhis2/ui/spinner'
 
-export const LoadingRecords = () => <Spinner aria-label="Loading records" />
+export const LoadingRecords = () => <Spinner label="Loading records" />
 ```
 
-Screen readers announce it as "Loading". Give it an `aria-label` that says
-what is loading when that helps.
+Give it a translated `label` that says what is loading: screen readers
+announce it as a status. Without a `label`, the spinner is hidden from screen
+readers, for when text beside it already says what is happening.
 
 ## Sizes
 
@@ -40,12 +41,12 @@ The sizes follow the CircularLoader:
 - Show it where the content will appear, so users know what they are
   waiting for.
 - In a button, put it before the label and change the label to say what is
-  happening, such as "Saving…". Add `aria-hidden` to the spinner, since the
-  label already says it.
+  happening, such as "Saving…". Leave out the spinner's `label`, since the
+  button's label already says it.
 - Keep what is already on screen while new data loads, and show a small
   spinner beside it, instead of blanking the page.
 
 ## API reference
 
 `Spinner` takes every prop of the HTML `span` element. Use `className` for
-the size and `aria-label` for what it announces.
+the size and `label` for what it announces.

@@ -112,7 +112,9 @@ export function FinderForm({
                     void form.handleSubmit()
                 }}
             >
-                {state.status === 'loading' && <Spinner />}
+                {state.status === 'loading' && (
+                    <Spinner label={i18n.t('Loading')} />
+                )}
                 {state.status === 'error' && (
                     <ErrorAlert
                         title={i18n.t("The search couldn't be loaded")}

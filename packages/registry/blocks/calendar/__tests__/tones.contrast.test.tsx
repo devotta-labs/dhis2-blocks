@@ -33,10 +33,10 @@ describe('calendar tones with more contrast', () => {
     })
 
     it.each(ROLES)(
-        'writes a %s chip in its strong colour on its muted fill',
+        'writes a %s chip in its strong colour on its fill',
         async (tone, role) => {
             expect(await colours(TONE_CHIP[tone])).toEqual({
-                backgroundColor: roleColour(`${role}-muted`),
+                backgroundColor: roleColour(`${role}-fill`),
                 color: roleColour(`${role}-strong`),
             })
         }

@@ -132,7 +132,7 @@ const DropdownMenuItem = React.forwardRef<
         className={cn(
             'group/dropdown-menu-item',
             menuItemClasses,
-            'data-[variant=destructive]:text-dhis2-destructive data-[variant=destructive]:data-highlighted:bg-dhis2-destructive-subtle data-[variant=destructive]:active:bg-dhis2-destructive-muted data-[variant=destructive]:*:[svg]:text-dhis2-destructive',
+            'data-[variant=destructive]:text-dhis2-destructive data-[variant=destructive]:data-highlighted:bg-dhis2-destructive-subtle data-[variant=destructive]:active:bg-dhis2-destructive-fill data-[variant=destructive]:*:[svg]:text-dhis2-destructive',
             className
         )}
         {...props}

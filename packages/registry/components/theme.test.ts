@@ -73,20 +73,22 @@ const SPEC = {
     'success-subtle': ['green-050', 'green-050'],
     'success-border': ['green-200', 'green-800'],
     'background-subtle': ['grey-050', 'grey-100'],
+    neutral: ['grey-700', 'grey-800'],
     'neutral-subtle': ['grey-100', 'grey-100'],
-    'neutral-muted': ['grey-200', 'grey-200'],
+    'neutral-fill': ['grey-200', 'grey-200'],
+    'neutral-border': ['grey-300', 'grey-600'],
     'neutral-indicator': ['grey-600', 'grey-800'],
     'neutral-strong': ['grey-900', 'grey-900'],
-    'info-muted': ['blue-100', 'blue-100'],
+    'info-fill': ['blue-100', 'blue-100'],
     'info-indicator': ['blue-600', 'blue-800'],
     'info-strong': ['blue-900', 'blue-900'],
-    'success-muted': ['green-100', 'green-100'],
+    'success-fill': ['green-100', 'green-100'],
     'success-indicator': ['green-600', 'green-800'],
     'success-strong': ['green-900', 'green-900'],
-    'warning-muted': ['yellow-100', 'yellow-100'],
+    'warning-fill': ['yellow-100', 'yellow-100'],
     'warning-indicator': ['yellow-700', 'yellow-800'],
     'warning-strong': ['yellow-900', 'yellow-900'],
-    'destructive-muted': ['red-100', 'red-100'],
+    'destructive-fill': ['red-100', 'red-100'],
     'destructive-indicator': ['red-600', 'red-800'],
     'destructive-strong': ['red-900', 'red-900'],
     sidebar: ['grey-900', 'grey-900'],
@@ -228,9 +230,25 @@ describe('theme.css', () => {
     const TONES = ['neutral', 'info', 'success', 'warning', 'destructive']
     type Floor = [foreground: string, background: string, floor: number]
 
+    it.each(TONES)('gives %s every step of the tone scale', (tone) => {
+        const steps = [
+            '',
+            '-subtle',
+            '-fill',
+            '-border',
+            '-indicator',
+            '-strong',
+        ]
+        const missing = steps
+            .map((step) => `dhis2-${tone}${step}`)
+            .filter((name) => !defaultLayer.has(name))
+        expect(missing).toEqual([])
+    })
+
     it.each([
         ...TONES.map((tone): Floor => [`${tone}-indicator`, 'background', 3]),
-        ...TONES.map((tone): Floor => [`${tone}-strong`, `${tone}-muted`, 7]),
+        ...TONES.map((tone): Floor => [`${tone}-strong`, `${tone}-fill`, 7]),
+        ...TONES.map((tone): Floor => [tone, `${tone}-subtle`, 4.5]),
         ['warning', 'warning-subtle', 4.5],
         ['muted-foreground', 'background-subtle', 7],
     ] satisfies Floor[])(
@@ -244,7 +262,8 @@ describe('theme.css', () => {
 
     it.each([
         ...TONES.map((tone): Floor => [`${tone}-indicator`, 'background', 4.5]),
-        ...TONES.map((tone): Floor => [`${tone}-strong`, `${tone}-muted`, 7]),
+        ...TONES.map((tone): Floor => [`${tone}-strong`, `${tone}-fill`, 7]),
+        ...TONES.map((tone): Floor => [tone, `${tone}-subtle`, 4.5]),
     ] satisfies Floor[])(
         'high-contrast theme: %s on %s is at least %s:1',
         (foreground, background, floor) => {

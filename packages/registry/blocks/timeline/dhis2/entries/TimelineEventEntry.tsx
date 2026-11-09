@@ -95,11 +95,11 @@ const MARKER = {
 } satisfies Record<DerivedEventStatus, string | undefined>
 
 const STATUS_STYLE = {
-    completed: 'bg-dhis2-success-muted text-dhis2-success-strong',
-    active: 'bg-dhis2-info-muted text-dhis2-info-strong',
-    scheduled: 'bg-dhis2-neutral-muted text-dhis2-neutral-strong',
-    overdue: 'bg-dhis2-destructive-muted text-dhis2-destructive-strong',
-    skipped: 'bg-dhis2-neutral-muted text-dhis2-neutral-strong',
+    completed: 'bg-dhis2-success-fill text-dhis2-success-strong',
+    active: 'bg-dhis2-info-fill text-dhis2-info-strong',
+    scheduled: 'bg-dhis2-neutral-fill text-dhis2-neutral-strong',
+    overdue: 'bg-dhis2-destructive-fill text-dhis2-destructive-strong',
+    skipped: 'bg-dhis2-neutral-fill text-dhis2-neutral-strong',
 } satisfies Record<DerivedEventStatus, string>
 
 /**

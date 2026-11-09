@@ -147,7 +147,7 @@ describe('colour usage', () => {
         'className="forced-colors:border-[CanvasText]"',
         "const tone = 'warning'",
         'Mark the record as red-flagged in the notes',
-        'className="bg-dhis2-neutral-muted text-dhis2-destructive"',
+        'className="bg-dhis2-neutral-fill text-dhis2-destructive"',
     ])('lets %s through', (line) => {
         expect(rawColoursIn([line])).toEqual([])
     })

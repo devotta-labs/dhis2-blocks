@@ -14,7 +14,7 @@ export const EventStatusBadge = ({ rowId }: { rowId: string }) => {
     return marker === undefined ? null : (
         <>
             {' '}
-            <span className="inline-block rounded-full bg-dhis2-neutral-muted px-1.5 text-xs text-dhis2-neutral-strong">
+            <span className="inline-block rounded-full bg-dhis2-neutral-fill px-1.5 text-xs text-dhis2-neutral-strong">
                 {marker}
             </span>
         </>

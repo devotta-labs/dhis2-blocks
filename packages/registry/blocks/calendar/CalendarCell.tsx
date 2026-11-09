@@ -13,11 +13,11 @@ export const TONE_DOT = {
 } satisfies Record<CalendarTone, string>
 
 export const TONE_CHIP = {
-    neutral: 'bg-dhis2-neutral-muted text-dhis2-neutral-strong',
-    info: 'bg-dhis2-info-muted text-dhis2-info-strong',
-    positive: 'bg-dhis2-success-muted text-dhis2-success-strong',
-    warning: 'bg-dhis2-warning-muted text-dhis2-warning-strong',
-    critical: 'bg-dhis2-destructive-muted text-dhis2-destructive-strong',
+    neutral: 'bg-dhis2-neutral-fill text-dhis2-neutral-strong',
+    info: 'bg-dhis2-info-fill text-dhis2-info-strong',
+    positive: 'bg-dhis2-success-fill text-dhis2-success-strong',
+    warning: 'bg-dhis2-warning-fill text-dhis2-warning-strong',
+    critical: 'bg-dhis2-destructive-fill text-dhis2-destructive-strong',
 } satisfies Record<CalendarTone, string>
 
 interface DayContextValue {

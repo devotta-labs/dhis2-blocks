@@ -136,9 +136,12 @@ them:
   `text-dhis2-subtle-foreground`.
 - Lines and surfaces: `border-dhis2-border`, `bg-dhis2-background`,
   `bg-dhis2-muted`.
-- Statuses: `bg-dhis2-<tone>-subtle`, `bg-dhis2-<tone>-muted`,
-  `text-dhis2-<tone>-strong` and `bg-dhis2-<tone>-indicator`, where the tone
-  is `neutral`, `info`, `success`, `warning` or `destructive`.
+- Statuses, where the tone is `neutral`, `info`, `success`, `warning` or
+  `destructive`. Every tone has the same steps:
+    - `text-dhis2-<tone>` for text and icons, on `bg-dhis2-<tone>-subtle` with
+      `border-dhis2-<tone>-border`, as in an alert;
+    - `bg-dhis2-<tone>-fill` with `text-dhis2-<tone>-strong` for a chip or badge;
+    - `bg-dhis2-<tone>-indicator` for a dot, an edge or a marker.
 - In a style or a chart config, the variable itself, such as
   `var(--dhis2-info-indicator)`.
 

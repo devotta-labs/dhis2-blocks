@@ -45,7 +45,7 @@ const NOTE_ICONS = {
 }
 
 const NOTE_TONES = {
-    info: 'text-dhis2-muted-foreground',
+    info: 'text-dhis2-neutral',
     warning: 'font-medium text-dhis2-warning',
     error: 'font-medium text-dhis2-destructive',
 }

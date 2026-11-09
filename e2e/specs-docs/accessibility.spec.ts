@@ -31,9 +31,47 @@ const violations = async (page: Page) =>
         })
     )
 
-/** The focused element and its row, styled as focused, then as not. */
-const unmarkedStop = (page: Page) =>
-    page.evaluate(() => {
+declare global {
+    interface Window {
+        /** Each focusable element's look just before the next Tab press. */
+        unfocusedMarks?: Map<Element, string>
+    }
+}
+
+/**
+ * Before a Tab press, how each focusable element and its row look; after it,
+ * whether the newly focused element looks any different. Only real Tab presses
+ * move focus, so the page's own focus and blur handlers see what a person does.
+ */
+const focusStep = (page: Page, phase: 'before' | 'after') =>
+    page.evaluate((phase) => {
+        const marks = (element: Element) =>
+            [element, element.closest('tr')]
+                .map((part) => {
+                    if (part === null) {
+                        return ''
+                    }
+                    const style = getComputedStyle(part)
+                    return [
+                        style.outlineStyle,
+                        style.outlineWidth,
+                        style.outlineColor,
+                        style.boxShadow,
+                        style.borderColor,
+                        style.backgroundColor,
+                    ].join(' ')
+                })
+                .join('|')
+        if (phase === 'before') {
+            window.unfocusedMarks = new Map(
+                [
+                    ...document.querySelectorAll(
+                        'a[href], button, input, select, textarea, summary, [tabindex], [contenteditable]'
+                    ),
+                ].map((element) => [element, marks(element)])
+            )
+            return undefined
+        }
         const element = document.activeElement
         if (
             !(element instanceof HTMLElement) ||
@@ -42,34 +80,17 @@ const unmarkedStop = (page: Page) =>
         ) {
             return undefined
         }
-        const marks = () =>
-            [element, element.closest('tr')].map((part) => {
-                if (part === null) {
-                    return ''
-                }
-                const style = getComputedStyle(part)
-                return [
-                    style.outlineStyle,
-                    style.outlineWidth,
-                    style.outlineColor,
-                    style.boxShadow,
-                    style.borderColor,
-                    style.backgroundColor,
-                ].join(' ')
-            })
-        const focused = marks().join('|')
-        element.blur()
-        const blurred = marks().join('|')
-        element.focus()
-        if (focused !== blurred) {
+        const unfocused = window.unfocusedMarks?.get(element)
+        if (unfocused !== undefined && unfocused !== marks(element)) {
             return undefined
         }
         const name =
             element.getAttribute('aria-label') ??
             element.textContent?.trim().slice(0, 40) ??
             ''
-        return `${element.tagName.toLowerCase()}[role=${element.getAttribute('role') ?? ''}][slot=${element.dataset.slot ?? ''}] ${name}`
-    })
+        const reason = unfocused === undefined ? ' (appeared with focus)' : ''
+        return `${element.tagName.toLowerCase()}[role=${element.getAttribute('role') ?? ''}][slot=${element.dataset.slot ?? ''}] ${name}${reason}`
+    }, phase)
 
 for (const slug of slugs) {
     test.describe(slug, () => {
@@ -88,8 +109,9 @@ for (const slug of slugs) {
             await open(page, slug)
             const unmarked = new Set<string>()
             for (let stop = 0; stop < TAB_STOPS; stop++) {
+                await focusStep(page, 'before')
                 await page.keyboard.press('Tab')
-                const found = await unmarkedStop(page)
+                const found = await focusStep(page, 'after')
                 if (found !== undefined) {
                     unmarked.add(found)
                 }

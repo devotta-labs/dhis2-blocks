@@ -143,11 +143,12 @@ const OrganisationUnitSearchPagination = ({
                 data-test="org-unit-search-load-more"
                 onClick={onSearchLoadMore}
                 disabled={searchLoadingMore}
+                focusableWhenDisabled
             >
                 {searchLoadingMore && (
                     <Spinner data-icon="inline-start" className="size-4" />
                 )}
-                {i18n.t('Show more')}
+                {searchLoadingMore ? i18n.t('Loading…') : i18n.t('Show more')}
             </Button>
         </div>
     )

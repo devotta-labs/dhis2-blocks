@@ -150,7 +150,7 @@ export const ConfigureMenu = ({
                         onSubmit={(event) => {
                             event.preventDefault()
                             const nextName = name.trim()
-                            if (!nextName || busy) {
+                            if (!nextName || busy || createPending) {
                                 return
                             }
                             setNameError(undefined)
@@ -206,6 +206,7 @@ export const ConfigureMenu = ({
                                 type="submit"
                                 data-test="working-list-name-submit"
                                 disabled={!name.trim() || busy || createPending}
+                                focusableWhenDisabled
                             >
                                 {createPending && (
                                     <Spinner
@@ -213,7 +214,9 @@ export const ConfigureMenu = ({
                                         className="size-4"
                                     />
                                 )}
-                                {i18n.t('Save')}
+                                {createPending
+                                    ? i18n.t('Saving…')
+                                    : i18n.t('Save')}
                             </Button>
                         </DialogFooter>
                     </form>

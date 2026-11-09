@@ -1,5 +1,5 @@
 import React from 'react'
-import { page } from 'vitest/browser'
+import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { WorkingListSavedView } from '../../provider/contracts'
 import { ConfigureMenu } from '../ConfigureMenu'
@@ -44,17 +44,20 @@ const renderMenu = async ({
         </WorkingListTextProvider>
     )
 
-    return { screen, onDownload, onUpdate }
+    return { screen, onDownload, onSaveAs, onUpdate }
 }
 
 describe('working-list actions', () => {
-    it('keeps the save button named Save while it saves', async () => {
-        const { screen } = await renderMenu({ createPending: true })
+    it('says Saving… and keeps focus on the save button while it saves', async () => {
+        const { screen, onSaveAs } = await renderMenu({ createPending: true })
         await screen.getByRole('button', { name: 'Save view' }).click()
-        // The spinner beside the label is decoration: the button says what it does.
-        await expect
-            .element(page.getByRole('button', { name: 'Save', exact: true }))
-            .toBeVisible()
+        await page.getByRole('textbox', { name: 'Name' }).fill('Clinic A')
+
+        const saving = page.getByRole('button', { name: 'Saving…' })
+        await expect.element(saving).toHaveAttribute('aria-disabled', 'true')
+        await expect.element(saving).not.toHaveAttribute('disabled')
+        await userEvent.keyboard('{Enter}')
+        expect(onSaveAs).not.toHaveBeenCalled()
     })
 
     it('offers create and download for an unfiltered default view', async () => {

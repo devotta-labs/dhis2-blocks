@@ -529,6 +529,7 @@ export const SpreadsheetGrid = ({
     }
 
     return (
+        // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- remembers which cell had focus; the cells are the controls
         <div
             className={cn('flex flex-col gap-4', className)}
             onFocus={(event) => {

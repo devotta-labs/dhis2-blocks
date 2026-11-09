@@ -188,6 +188,7 @@ export const CalendarGrid = ({
             <HiddenDaysNote count={hiddenCount} />
             <table
                 ref={tableRef}
+                // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- the ARIA grid pattern on a table: arrow keys move between days
                 role="grid"
                 aria-busy={
                     results.status === 'pending' ||

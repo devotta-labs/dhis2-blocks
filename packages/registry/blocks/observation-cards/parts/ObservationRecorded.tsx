@@ -81,6 +81,7 @@ function RecordedNote({
                 {...tooltip.trigger}
                 render={
                     <span
+                        // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a tooltip trigger: focus shows the detail to keyboard users
                         tabIndex={0}
                         data-slot="recorded-note"
                         className="inline-flex cursor-default flex-wrap items-center gap-x-2 gap-y-1 rounded-dhis2-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-ring"
@@ -137,6 +138,7 @@ function PartialNote() {
                 {...tooltip.trigger}
                 render={
                     <span
+                        // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a tooltip trigger: focus shows the detail to keyboard users
                         tabIndex={0}
                         data-slot="partial-note"
                         className="ms-auto inline-flex cursor-default rounded-dhis2-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-ring"

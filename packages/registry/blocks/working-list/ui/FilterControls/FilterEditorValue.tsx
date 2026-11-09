@@ -370,6 +370,7 @@ export const EditorValue = ({
                           count: minimumCharacters,
                       })
             }
+            // oxlint-disable-next-line jsx-a11y/no-autofocus -- the popover opens to edit this value, so focus starts in it as in a dialog
             autoFocus
             value={text}
             minLength={minimumCharacters}

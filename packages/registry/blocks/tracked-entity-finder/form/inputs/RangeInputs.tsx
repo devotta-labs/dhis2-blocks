@@ -26,6 +26,7 @@ const RangeFrame = ({
 > & {
     children: ReactNode
 }) => (
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- tracks focus leaving both ends; the inputs inside are the controls
     <fieldset
         data-invalid={error ? true : undefined}
         // Left only when focus moves out of both ends, not from From to To.

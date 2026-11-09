@@ -20,22 +20,22 @@ export function FinderSearching({
     children,
     ...props
 }: FinderSearchingProps) {
-    if (useFinderResults().status !== 'searching') {
-        return null
-    }
+    const active = useFinderResults().status === 'searching'
     return (
         <div
             role="status"
+            aria-atomic="true"
             {...props}
             data-slot="finder-searching"
-            className={cn(STATE_TEXT, className)}
+            className={cn(active ? STATE_TEXT : 'sr-only', className)}
         >
-            {children ?? (
-                <>
-                    <Spinner aria-hidden />
-                    {i18n.t('Searching…')}
-                </>
-            )}
+            {active &&
+                (children ?? (
+                    <>
+                        <Spinner aria-hidden />
+                        {i18n.t('Searching…')}
+                    </>
+                ))}
         </div>
     )
 }
@@ -46,17 +46,16 @@ export function FinderEmpty({
     children,
     ...props
 }: FinderEmptyProps) {
-    if (useFinderResults().status !== 'empty') {
-        return null
-    }
+    const active = useFinderResults().status === 'empty'
     return (
         <div
             role="status"
+            aria-atomic="true"
             {...props}
             data-slot="finder-empty"
-            className={cn(STATE_TEXT, className)}
+            className={cn(active ? STATE_TEXT : 'sr-only', className)}
         >
-            {children ?? i18n.t('No one found')}
+            {active && (children ?? i18n.t('No one found'))}
         </div>
     )
 }
@@ -67,17 +66,17 @@ export function FinderTooMany({
     children,
     ...props
 }: FinderTooManyProps) {
-    if (useFinderResults().status !== 'too-many') {
-        return null
-    }
+    const active = useFinderResults().status === 'too-many'
     return (
         <div
             role="status"
+            aria-atomic="true"
             {...props}
             data-slot="finder-too-many"
-            className={cn(STATE_TEXT, className)}
+            className={cn(active ? STATE_TEXT : 'sr-only', className)}
         >
-            {children ?? i18n.t('Too many matches. Add another detail.')}
+            {active &&
+                (children ?? i18n.t('Too many matches. Add another detail.'))}
         </div>
     )
 }

@@ -3,24 +3,26 @@ import { memo, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useStore } from 'zustand'
 import {
+    composing,
     formatCount,
     matchCount,
+    MIN_LENGTH,
+    searchFor,
     useAnnounced,
+    useServerSearch,
 } from '@/components/dhis2-value-input'
+import type { Found } from '@/components/dhis2-value-input'
 import {
     optionIndex,
     searchOptions,
     typedText,
 } from '@/components/dhis2-value-types'
 import type { Option } from '@/components/dhis2-value-types'
-import { composing } from '@/components/dhis2-value-input'
 import { cn } from '@/components/dhis2/ui/cn'
 import { NO_NAMES, useSpreadsheetContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
 import { OptionList } from './OptionList'
-import { MIN_LENGTH, searchFor, useServerSearch } from './serverSearch'
-import type { Found } from './serverSearch'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
 import { addsRow, READY_CLASS, useCellMode } from './useCellMode'
 

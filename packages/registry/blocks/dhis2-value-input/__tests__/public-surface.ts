@@ -3,9 +3,11 @@ import type { useDataEngine } from '@dhis2/app-runtime'
 import type {
     EditorProblem,
     FileUploads,
+    Found,
     PopupEditor,
     PopupEditorProps,
     PopupValueType,
+    ServerSearch,
 } from '../index'
 import {
     composing,
@@ -13,16 +15,21 @@ import {
     editorFor,
     formatCount,
     matchCount,
+    MIN_LENGTH,
     popupEditors,
+    searchFor,
     useAnnounced,
+    useServerSearch,
 } from '../index'
 
 export type SupportedValueInputTypes = [
     EditorProblem,
     FileUploads,
+    Found,
     PopupEditor,
     PopupEditorProps,
     PopupValueType,
+    ServerSearch,
 ]
 
 // Every export, used as an app would use it.
@@ -35,3 +42,6 @@ export const uploadsFor = (
     engine: ReturnType<typeof useDataEngine>,
     key: string
 ): FileUploads => createFileUploads(engine, new Map(), key)
+export const searched: ServerSearch | undefined = searchFor('USERNAME')
+export const found = (search: ServerSearch | undefined): Found | undefined =>
+    useServerSearch(search?.search, 'a'.repeat(MIN_LENGTH))

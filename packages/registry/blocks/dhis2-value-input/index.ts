@@ -9,3 +9,5 @@ export type {
     PopupEditorProps,
     PopupValueType,
 } from './editors/popupEditors'
+export { MIN_LENGTH, searchFor, useServerSearch } from './search/serverSearch'
+export type { Found, ServerSearch } from './search/serverSearch'

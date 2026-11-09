@@ -965,6 +965,11 @@
                     "path": "packages/registry/blocks/dhis2-value-input/index.ts",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-input/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/search/serverSearch.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/search/serverSearch.ts"
                 }
             ]
         },
@@ -1340,7 +1345,6 @@
                 "@dhis2/ui-icons@^10.17.0",
                 "@tanstack/react-virtual@^3.14.21",
                 "prop-types@^15.8.1",
-                "zod@^4.4.3",
                 "zustand@^5.0.15"
             ],
             "registryDependencies": [
@@ -1408,11 +1412,6 @@
                     "path": "packages/registry/blocks/spreadsheet/cells/pastePolicy.ts",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/cells/pastePolicy.ts"
-                },
-                {
-                    "path": "packages/registry/blocks/spreadsheet/cells/serverSearch.ts",
-                    "type": "registry:file",
-                    "target": "@components/spreadsheet/cells/serverSearch.ts"
                 },
                 {
                     "path": "packages/registry/blocks/spreadsheet/cells/useCellMode.ts",

@@ -14,15 +14,13 @@ const buttonVariants = cva(
         variants: {
             variant: {
                 default:
-                    // colour-literal: @dhis2/ui's primary gradient stops; contrast-more fills it solid
-                    'border-dhis2-primary-strong bg-[#2b61b3] bg-linear-to-b from-[#1565c0] to-[#0650a3] font-medium text-dhis2-primary-foreground hover:from-[#054fa3] hover:to-[#034793] focus-visible:-outline-offset-5 active:shadow-[inset_0_0_0_1px_rgb(0_0_0/0.18)] disabled:border-[#93a6bd] disabled:bg-none disabled:bg-[#b3c6de] contrast-more:bg-none contrast-more:bg-dhis2-primary contrast-more:border-dhis2-primary-strong contrast-more:hover:bg-dhis2-primary-strong contrast-more:focus-visible:outline-dhis2-primary-foreground contrast-more:disabled:border-dhis2-border-strong contrast-more:disabled:bg-dhis2-accent-strong contrast-more:disabled:text-dhis2-disabled-foreground',
+                    'border-dhis2-primary-strong bg-dhis2-primary font-medium text-dhis2-primary-foreground hover:bg-dhis2-primary-strong focus-visible:-outline-offset-5 focus-visible:outline-dhis2-primary-foreground active:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--dhis2-foreground)_20%,transparent)] disabled:border-dhis2-border-strong disabled:bg-dhis2-accent-strong disabled:text-dhis2-disabled-foreground',
                 outline:
                     'border-dhis2-input bg-dhis2-muted text-dhis2-foreground hover:bg-dhis2-accent active:bg-dhis2-accent active:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--dhis2-foreground)_10%,transparent)] disabled:border-dhis2-border-strong disabled:bg-dhis2-muted disabled:text-dhis2-disabled-foreground',
                 secondary:
                     'border-dhis2-border-strong bg-transparent text-dhis2-foreground hover:border-dhis2-input hover:bg-dhis2-muted active:bg-dhis2-accent disabled:border-dhis2-border-strong disabled:bg-transparent disabled:text-dhis2-disabled-foreground',
                 destructive:
-                    // colour-literal: @dhis2/ui's destructive gradient stops; contrast-more fills it solid
-                    'border-[#a10b0b] bg-[#b9242b] bg-linear-to-b from-[#d32f2f] to-[#b71c1c] font-medium text-dhis2-destructive-foreground hover:from-[#b81c1c] hover:to-[#b80c0b] active:shadow-[inset_0_0_0_1px_rgb(0_0_0/0.18)] disabled:border-[#c59898] disabled:bg-none disabled:bg-[#d6a8a8] contrast-more:border-dhis2-destructive contrast-more:bg-none contrast-more:bg-dhis2-destructive contrast-more:hover:bg-[color-mix(in_srgb,var(--dhis2-destructive),var(--dhis2-foreground)_25%)] contrast-more:focus-visible:outline-dhis2-destructive-foreground contrast-more:disabled:border-dhis2-border-strong contrast-more:disabled:bg-dhis2-accent-strong contrast-more:disabled:text-dhis2-disabled-foreground',
+                    'border-dhis2-destructive bg-dhis2-destructive font-medium text-dhis2-destructive-foreground hover:bg-[color-mix(in_srgb,var(--dhis2-destructive),var(--dhis2-foreground)_25%)] focus-visible:-outline-offset-5 focus-visible:outline-dhis2-destructive-foreground active:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--dhis2-foreground)_20%,transparent)] disabled:border-dhis2-border-strong disabled:bg-dhis2-accent-strong disabled:text-dhis2-disabled-foreground',
                 ghost: 'border-transparent bg-transparent text-dhis2-foreground hover:bg-dhis2-accent disabled:text-dhis2-disabled-foreground',
                 link: 'border-transparent bg-transparent text-dhis2-primary underline-offset-4 hover:underline disabled:text-dhis2-disabled-foreground',
             },

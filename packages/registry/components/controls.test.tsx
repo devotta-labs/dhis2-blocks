@@ -1,4 +1,5 @@
 import React from 'react'
+import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { Button } from './button'
 import { Checkbox } from './checkbox'
@@ -67,4 +68,46 @@ describe('form controls in the default theme', () => {
             'rgb(1, 2, 3)'
         )
     })
+
+    it.each([
+        ['default', 'primary', 'primary-foreground'],
+        ['destructive', 'destructive', 'destructive-foreground'],
+    ] as const)(
+        'fill a %s button with its role, with no gradient',
+        async (variant, fill, text) => {
+            const screen = await render(<Button variant={variant}>Go</Button>)
+            const button = style(screen.getByRole('button').element())
+            expect(button.backgroundImage).toBe('none')
+            expect(button.backgroundColor).toBe(roleColour(fill))
+            expect(button.color).toBe(roleColour(text))
+        }
+    )
+
+    it.each(['default', 'destructive'] as const)(
+        'grey out a disabled %s button like the others',
+        async (variant) => {
+            const screen = await render(
+                <Button variant={variant} disabled>
+                    Go
+                </Button>
+            )
+            const button = style(screen.getByRole('button').element())
+            expect(button.backgroundColor).toBe(roleColour('accent-strong'))
+            expect(button.color).toBe(roleColour('disabled-foreground'))
+        }
+    )
+
+    it.each([
+        ['default', 'primary-foreground'],
+        ['destructive', 'destructive-foreground'],
+    ] as const)(
+        'outline a focused %s button in its text colour over its fill',
+        async (variant, role) => {
+            const screen = await render(<Button variant={variant}>Go</Button>)
+            await userEvent.tab()
+            const button = screen.getByRole('button').element()
+            expect(document.activeElement).toBe(button)
+            expect(style(button).outlineColor).toBe(roleColour(role))
+        }
+    )
 })

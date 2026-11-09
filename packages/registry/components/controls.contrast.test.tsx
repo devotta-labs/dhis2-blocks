@@ -25,14 +25,14 @@ describe('form controls with more contrast', () => {
         ).toBe(roleColour('control'))
     })
 
-    it('fill a primary button solid, without the gradient', async () => {
+    it('fill a primary button with the darker primary', async () => {
         const screen = await render(<Button>Save</Button>)
         const button = style(screen.getByRole('button').element())
         expect(button.backgroundImage).toBe('none')
         expect(button.backgroundColor).toBe(roleColour('primary'))
     })
 
-    it('fill a destructive button solid, without the gradient', async () => {
+    it('fill a destructive button with the darker destructive', async () => {
         const screen = await render(
             <Button variant="destructive">Delete</Button>
         )

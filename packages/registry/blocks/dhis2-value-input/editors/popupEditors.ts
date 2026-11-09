@@ -1,12 +1,10 @@
 import type { ReactNode } from 'react'
-import { cellKind } from '@/components/dhis2-value-types'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
-import type { CellKey, CommitResult } from '../model/types'
-import { AgeEditor } from './editors/AgeEditor'
-import { CoordinateEditor } from './editors/CoordinateEditor'
-import { FileEditor } from './editors/FileEditor'
-import { LongTextEditor } from './editors/LongTextEditor'
-import { MultiSelectEditor } from './editors/MultiSelectEditor'
+import type { Politeness } from '@/components/dhis2/ui/announcer'
+import { AgeEditor } from './AgeEditor'
+import { CoordinateEditor } from './CoordinateEditor'
+import { LongTextEditor } from './LongTextEditor'
+import { MultiSelectEditor } from './MultiSelectEditor'
 
 /** The pop-up value types, which a cell edits in a small editor that opens from it, and each one's editor. */
 interface PopupEditors {
@@ -17,6 +15,9 @@ interface PopupEditors {
     FILE_RESOURCE?: PopupEditor
     IMAGE?: PopupEditor
 }
+
+/** Whether a save was taken: `invalid` is refused, `unchanged` is the stored value, `queued` is accepted. */
+type CommitResult = 'invalid' | 'unchanged' | 'queued'
 
 export type PopupValueType = keyof PopupEditors
 
@@ -33,9 +34,9 @@ export interface PopupEditorProps {
     value: string | undefined
     settings: ValueSettings
     /** The cell's own DOM id; editors name their fields with it. */
-    cellId: string
+    cellId?: string
     /** The cell's key, as the provider's `keyOf` gives it. */
-    cellKey: CellKey
+    cellKey?: string
     labelledBy: string
     hiddenOptions?: ReadonlySet<string>
     /** A stored value, or null to clear. The cell commits it, and says whether it took it. */
@@ -51,6 +52,10 @@ export interface PopupEditorProps {
      * composed by an input method or a dead key.
      */
     firstKey?: string
+    /** Says an outcome to screen reader users; the shared announcer by default. */
+    announce?(text: string, politeness?: Politeness): void
+    /** Draws the editor in the page, not in a pop-up. */
+    inline?: boolean
 }
 
 /**
@@ -65,31 +70,8 @@ export const popupEditors: PopupEditors = {
     MULTI_TEXT: MultiSelectEditor,
     AGE: AgeEditor,
     COORDINATE: CoordinateEditor,
-    FILE_RESOURCE: FileEditor,
-    IMAGE: FileEditor,
 }
-
-/** Value types whose typed text parses, so paste can fill them. */
-const pasteable: ReadonlySet<string> = new Set<PopupValueType>([
-    'LONG_TEXT',
-    'MULTI_TEXT',
-    'AGE',
-    'COORDINATE',
-])
 
 /** The editor for a field's value type, which can be any DHIS2 value type. */
 export const editorFor = (valueType: string): PopupEditor | undefined =>
     Object.entries(popupEditors).find(([type]) => type === valueType)?.[1]
-
-/** Whether a pasted block fills a field's cells: not read-only kinds, pop-up kinds without an editor or whose text does not parse, or usernames. */
-export const takesPastedText = (field: Field) => {
-    const kind = cellKind(field)
-    if (kind === 'popup') {
-        return (
-            editorFor(field.valueType) !== undefined &&
-            pasteable.has(field.valueType)
-        )
-    }
-    // A username is checked against DHIS2 as it is typed, which paste cannot do.
-    return kind !== 'readOnly' && field.valueType !== 'USERNAME'
-}

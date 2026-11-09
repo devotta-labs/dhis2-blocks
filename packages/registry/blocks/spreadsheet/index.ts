@@ -6,7 +6,7 @@ export type {
     CellProps,
     ControlProps,
 } from './cells/cellProps'
-export { formatCount } from './cells/OptionCell'
+export { formatCount } from '@/components/dhis2-value-input'
 export { typingIn } from './cells/useCellMode'
 export { nameFrom, rowHeaderDomId } from './grid/headers'
 export type { NavKey } from './grid/navigation'

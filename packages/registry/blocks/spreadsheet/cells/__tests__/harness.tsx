@@ -11,8 +11,11 @@ import type { CellKey, GridTable } from '../../model/types'
 import { Spreadsheet } from '../../provider/Spreadsheet'
 import { createCellStore } from '../../store/store'
 import type { CellOverrides } from '../cellProps'
-import { popupEditors } from '../popupEditors'
-import type { PopupEditor, PopupValueType } from '../popupEditors'
+import { popupEditors } from '@/components/dhis2-value-input'
+import type {
+    PopupEditor,
+    PopupValueType,
+} from '@/components/dhis2-value-input'
 
 const GREGORIAN = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 

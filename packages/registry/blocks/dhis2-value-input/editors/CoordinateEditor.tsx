@@ -6,7 +6,7 @@ import {
 } from '@/components/dhis2-value-types'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
-import type { PopupEditorProps } from '../popupEditors'
+import type { PopupEditorProps } from './popupEditors'
 import { EditorButtons, saveOnCtrlEnter } from './EditorButtons'
 
 type Axis = 'latitude' | 'longitude'

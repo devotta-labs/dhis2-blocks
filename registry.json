@@ -886,6 +886,70 @@
             ]
         },
         {
+            "name": "dhis2-value-input",
+            "type": "registry:block",
+            "title": "DHIS2 Value Input",
+            "description": "A form control for each DHIS2 value type, accepting what the grid accepts, in the system calendar.",
+            "dependencies": ["@dhis2/d2-i18n@1.2.0"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/announcer",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/checkbox",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-types",
+                "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/label",
+                "devotta-labs/dhis2-blocks/textarea"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/announce.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/announce.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/composing.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/composing.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/editors/AgeEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/editors/AgeEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/editors/CoordinateEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/editors/CoordinateEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/editors/EditorButtons.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/editors/EditorButtons.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/editors/LongTextEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/editors/LongTextEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/editors/MultiSelectEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/editors/MultiSelectEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/editors/popupEditors.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/editors/popupEditors.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/index.ts"
+                }
+            ]
+        },
+        {
             "name": "dhis2-value-types",
             "type": "registry:block",
             "title": "DHIS2 Value Types",
@@ -1268,13 +1332,12 @@
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/dhis2-value-input",
                 "devotta-labs/dhis2-blocks/dhis2-value-types",
                 "devotta-labs/dhis2-blocks/dropdown-menu",
-                "devotta-labs/dhis2-blocks/input",
                 "devotta-labs/dhis2-blocks/kbd",
                 "devotta-labs/dhis2-blocks/label",
-                "devotta-labs/dhis2-blocks/popover",
-                "devotta-labs/dhis2-blocks/textarea"
+                "devotta-labs/dhis2-blocks/popover"
             ],
             "files": [
                 {
@@ -1318,34 +1381,9 @@
                     "target": "@components/spreadsheet/cells/cellProps.ts"
                 },
                 {
-                    "path": "packages/registry/blocks/spreadsheet/cells/editors/AgeEditor.tsx",
-                    "type": "registry:file",
-                    "target": "@components/spreadsheet/cells/editors/AgeEditor.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/spreadsheet/cells/editors/CoordinateEditor.tsx",
-                    "type": "registry:file",
-                    "target": "@components/spreadsheet/cells/editors/CoordinateEditor.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/spreadsheet/cells/editors/EditorButtons.tsx",
-                    "type": "registry:file",
-                    "target": "@components/spreadsheet/cells/editors/EditorButtons.tsx"
-                },
-                {
                     "path": "packages/registry/blocks/spreadsheet/cells/editors/FileEditor.tsx",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/cells/editors/FileEditor.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/spreadsheet/cells/editors/LongTextEditor.tsx",
-                    "type": "registry:file",
-                    "target": "@components/spreadsheet/cells/editors/LongTextEditor.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/spreadsheet/cells/editors/MultiSelectEditor.tsx",
-                    "type": "registry:file",
-                    "target": "@components/spreadsheet/cells/editors/MultiSelectEditor.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/spreadsheet/cells/editors/fileApi.ts",
@@ -1353,9 +1391,9 @@
                     "target": "@components/spreadsheet/cells/editors/fileApi.ts"
                 },
                 {
-                    "path": "packages/registry/blocks/spreadsheet/cells/popupEditors.ts",
+                    "path": "packages/registry/blocks/spreadsheet/cells/pastePolicy.ts",
                     "type": "registry:file",
-                    "target": "@components/spreadsheet/cells/popupEditors.ts"
+                    "target": "@components/spreadsheet/cells/pastePolicy.ts"
                 },
                 {
                     "path": "packages/registry/blocks/spreadsheet/cells/serverSearch.ts",

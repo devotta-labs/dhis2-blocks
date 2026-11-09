@@ -12,8 +12,8 @@ import { NO_NAMES, useSpreadsheetContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
 import { storedFileUrl } from './editors/FileEditor'
-import { editorFor } from './popupEditors'
-import type { EditorProblem } from './popupEditors'
+import { editorFor } from '@/components/dhis2-value-input'
+import type { EditorProblem } from '@/components/dhis2-value-input'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
 import { composing, READY_CLASS, useCellMode } from './useCellMode'
 
@@ -368,6 +368,7 @@ export const PopupCell = memo(function PopupCell({
                             settings={settings}
                             cellId={id}
                             cellKey={cellKey}
+                            announce={announce}
                             labelledBy={labelledBy}
                             hiddenOptions={view.effects.hiddenOptions}
                             save={save}

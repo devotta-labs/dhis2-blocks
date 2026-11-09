@@ -2,7 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import { useEffect, useId, useRef, useState } from 'react'
 import { parseTyped } from '@/components/dhis2-value-types'
 import { Textarea } from '@/components/dhis2/ui/textarea'
-import type { PopupEditorProps } from '../popupEditors'
+import type { PopupEditorProps } from './popupEditors'
 import { EditorButtons, saveOnCtrlEnter } from './EditorButtons'
 
 /**

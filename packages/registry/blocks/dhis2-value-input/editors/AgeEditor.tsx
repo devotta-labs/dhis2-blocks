@@ -12,7 +12,7 @@ import type { Age, Field, ValueSettings } from '@/components/dhis2-value-types'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
 import { todayIso } from '@/components/dhis2-value-types'
-import type { PopupEditorProps } from '../popupEditors'
+import type { PopupEditorProps } from './popupEditors'
 import { EditorButtons, saveOnCtrlEnter } from './EditorButtons'
 
 // The date of birth is typed and shown as any date is: in the system calendar and date format.

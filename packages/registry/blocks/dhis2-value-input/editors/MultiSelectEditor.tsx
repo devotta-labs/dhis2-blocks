@@ -6,9 +6,9 @@ import { Button } from '@/components/dhis2/ui/button'
 import { Checkbox } from '@/components/dhis2/ui/checkbox'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
-import { useSpreadsheetContext } from '../../provider/context'
-import { matchCount, useAnnounced } from '../OptionCell'
-import type { PopupEditorProps } from '../popupEditors'
+import { announce as announceInHouse } from '@/components/dhis2/ui/announcer'
+import { matchCount, useAnnounced } from '../announce'
+import type { PopupEditorProps } from './popupEditors'
 import { EditorButtons } from './EditorButtons'
 
 const NO_OPTIONS: ReadonlyArray<Option> = []
@@ -30,8 +30,8 @@ export const MultiSelectEditor = ({
     save,
     report,
     cancel,
+    announce = announceInHouse,
 }: PopupEditorProps) => {
-    const { announce } = useSpreadsheetContext()
     const options = field.options ?? NO_OPTIONS
     const [stored] = useState<ReadonlySet<string>>(
         () => new Set(value?.split(','))
@@ -63,7 +63,10 @@ export const MultiSelectEditor = ({
         }
     }, [index, at, query])
     const count = matchCount(found.codes.length, found.total)
-    useAnnounced(found.codes.length === 0 ? i18n.t('No matches') : count)
+    useAnnounced(
+        found.codes.length === 0 ? i18n.t('No matches') : count,
+        announce
+    )
 
     // A code the option set lacks is not kept.
     const choice = (codes: ReadonlySet<string>) => {

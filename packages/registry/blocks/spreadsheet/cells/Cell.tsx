@@ -16,7 +16,7 @@ import { CellContext, CellStatus, describeCell } from './CellStatus'
 import { BooleanCell, TrueOnlyCell } from './ChoiceCells'
 import { OptionCell } from './OptionCell'
 import { PopupCell } from './PopupCell'
-import { editorFor } from './popupEditors'
+import { editorFor } from '@/components/dhis2-value-input'
 import { TextCell } from './TextCell'
 
 // A cell with no control: greyed, skipped by the arrows, its reason read out. Positioned, so the hidden reason stays

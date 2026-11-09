@@ -7,9 +7,12 @@ import { Button, buttonVariants } from '@/components/dhis2/ui/button'
 import type { CellKey, CellState } from '../../model/types'
 import { useCellView, useSpreadsheetContext } from '../../provider/context'
 import type { SpreadsheetContext } from '../../provider/context'
-import { useAnnounced } from '../OptionCell'
-import type { PopupEditorProps } from '../popupEditors'
-import { EditorButtons } from './EditorButtons'
+import {
+    EditorButtons,
+    popupEditors,
+    useAnnounced,
+} from '@/components/dhis2-value-input'
+import type { PopupEditorProps } from '@/components/dhis2-value-input'
 import { uploadFile } from './fileApi'
 
 // A file's name and DHIS2's reason are said as they are, not HTML-escaped.
@@ -73,13 +76,18 @@ interface Upload {
  * provider's `fileUrl` gives an address for offers "Download" in a new tab, and an image a preview, or its name when the
  * image does not load; any other file shows its name. Each upload, and why one failed, is said.
  */
-export const FileEditor = ({
+const FileEditor = ({
     field,
     value,
-    cellKey,
+    cellKey: key,
     save,
     cancel,
 }: PopupEditorProps) => {
+    if (key === undefined) {
+        throw new Error('The file editor needs the key of the cell it edits.')
+    }
+    // SAFETY: the grid gives every editor the key it composed with `cellKey()`.
+    const cellKey = key as CellKey
     const { announce, effects, fileNames, offline, fileUrl } =
         useSpreadsheetContext()
     const engine = useDataEngine()
@@ -103,7 +111,7 @@ export const FileEditor = ({
         }
     }, [])
     const disconnected = i18n.t('Connect to the internet to upload files')
-    useAnnounced(offline ? disconnected : '')
+    useAnnounced(offline ? disconnected : '', announce)
     const busy = upload !== undefined
     // A refusal shows at once, over an earlier upload still running.
     const status =
@@ -303,3 +311,6 @@ export const FileEditor = ({
         </>
     )
 }
+
+popupEditors.FILE_RESOURCE = FileEditor
+popupEditors.IMAGE = FileEditor

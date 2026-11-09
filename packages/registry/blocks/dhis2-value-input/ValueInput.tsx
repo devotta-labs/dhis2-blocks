@@ -1,5 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
-import { useId } from 'react'
+import { useId, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
@@ -14,7 +14,8 @@ import {
 } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
 import type { EditorProblem } from './editors/popupEditors'
-import { ChoiceInput } from './kinds/ChoiceInput'
+import { ChoiceInput, offeredOptions } from './kinds/ChoiceInput'
+import { DateInput, dateFormatHint } from './kinds/DateInput'
 import { READ_ONLY_CLASS, TypedInput } from './kinds/TypedInput'
 import { useDraft } from './useDraft'
 
@@ -93,12 +94,29 @@ export const ValueInput = ({
     const generatedId = useId()
     const id = givenId ?? generatedId
     const kind = cellKind(field)
-    const typed = kind === 'text' || kind === 'number'
+    const typed = kind === 'text' || kind === 'number' || kind === 'time'
+    const dated = kind === 'date' || kind === 'dateTime'
     const edited =
-        typed || kind === 'boolean' || kind === 'trueOnly' || kind === 'option'
+        typed ||
+        dated ||
+        kind === 'boolean' ||
+        kind === 'trueOnly' ||
+        kind === 'option'
     const reason = readOnly ?? (edited ? undefined : editedElsewhere())
+    // A long option set's typed text may name only the options offered, so a hidden one is refused as any other text.
+    const options = field.options
+    const offered = useMemo(
+        () =>
+            options === undefined || hiddenOptions === undefined
+                ? field
+                : {
+                      ...field,
+                      options: offeredOptions(options, hiddenOptions, value),
+                  },
+        [field, options, hiddenOptions, value]
+    )
     const draft = useDraft({
-        field,
+        field: offered,
         settings,
         value,
         onChange,
@@ -109,7 +127,18 @@ export const ValueInput = ({
         messages.some(({ tone }) => tone === 'error')
 
     let control: ReactNode
-    if (typed) {
+    if (dated) {
+        control = (
+            <DateInput
+                id={id}
+                field={field}
+                settings={settings}
+                draft={draft}
+                readOnly={reason !== undefined}
+                required={required}
+            />
+        )
+    } else if (typed) {
         control = (
             <TypedInput
                 id={id}
@@ -127,6 +156,7 @@ export const ValueInput = ({
                 value={value}
                 hiddenOptions={hiddenOptions}
                 settings={settings}
+                draft={draft}
                 readOnly={reason !== undefined}
                 required={required}
                 onChange={onChange}
@@ -161,6 +191,12 @@ export const ValueInput = ({
             {description === undefined ? null : (
                 <FieldDescription>{description}</FieldDescription>
             )}
+            {reason === undefined &&
+            (kind === 'date' || kind === 'dateTime') ? (
+                <FieldDescription>
+                    {dateFormatHint(kind, settings)}
+                </FieldDescription>
+            ) : null}
             {reason === undefined ? null : (
                 <FieldDescription>{reason}</FieldDescription>
             )}

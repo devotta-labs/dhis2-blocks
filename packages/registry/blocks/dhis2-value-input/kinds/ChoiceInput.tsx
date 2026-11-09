@@ -12,6 +12,7 @@ import { Button } from '@/components/dhis2/ui/button'
 import { Checkbox } from '@/components/dhis2/ui/checkbox'
 import { Label } from '@/components/dhis2/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/dhis2/ui/radio-group'
+import type { useDraft } from '../useDraft'
 import { OptionComboInput } from './OptionComboInput'
 
 /** Up to this many visible options are radios; more are searched. */
@@ -24,6 +25,18 @@ const yesNo = (): ReadonlyArray<Option> => [
     { code: 'false', name: i18n.t('No') },
 ]
 
+/** The options a person may choose: those a rule hid are left out, unless the field holds one. */
+export const offeredOptions = (
+    options: ReadonlyArray<Option>,
+    hiddenOptions: ReadonlySet<string> | undefined,
+    value: string | undefined
+) =>
+    hiddenOptions === undefined
+        ? options
+        : options.filter(
+              ({ code }) => !hiddenOptions.has(code) || code === value
+          )
+
 /**
  * The choice kinds, each pick reported at once: Yes/No and short option sets as radios, an option set of more than five
  * visible options as a search, Yes-only as a checkbox. Without `required`, Clear reports no value. Options a rule hid
@@ -35,6 +48,7 @@ export const ChoiceInput = ({
     value,
     hiddenOptions,
     settings,
+    draft,
     readOnly,
     required,
     onChange,
@@ -43,6 +57,8 @@ export const ChoiceInput = ({
     field: Field
     value: string | undefined
     settings: ValueSettings
+    /** The text typed into a long option set's search. */
+    draft: ReturnType<typeof useDraft>
     hiddenOptions: ReadonlySet<string> | undefined
     readOnly: boolean
     required: boolean
@@ -55,12 +71,7 @@ export const ChoiceInput = ({
         [kind, field.options]
     )
     const offered = useMemo(
-        () =>
-            hiddenOptions === undefined
-                ? options
-                : options.filter(
-                      ({ code }) => !hiddenOptions.has(code) || code === value
-                  ),
+        () => offeredOptions(options, hiddenOptions, value),
         [options, hiddenOptions, value]
     )
     // Held options do not count: a pick that drops the held one must not change the control.
@@ -99,10 +110,9 @@ export const ChoiceInput = ({
                     id={id}
                     offered={offered}
                     value={value}
-                    shown={shown}
+                    draft={draft}
                     readOnly={readOnly}
                     required={required}
-                    pick={onChange}
                 />
             ) : (
                 <RadioGroup

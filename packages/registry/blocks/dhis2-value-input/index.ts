@@ -3,6 +3,7 @@ export { composing } from './composing'
 export { createFileUploads } from './editors/fileUploads'
 export type { FileUploads } from './editors/fileUploads'
 export { editorFor, popupEditors } from './editors/popupEditors'
+export { dateFormatHint } from './kinds/DateInput'
 export type {
     EditorProblem,
     PopupEditor,

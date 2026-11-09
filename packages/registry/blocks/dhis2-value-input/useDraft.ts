@@ -13,7 +13,7 @@ interface DraftOptions {
 }
 
 interface DraftState {
-    /** What makes the field another field, so a host may build `field` anew on every render. */
+    /** What makes the field another field, or its text another text, so a host may build both anew on every render. */
     fieldKey: string
     /** The `value` the host gave at the last render. */
     given: string | undefined
@@ -26,15 +26,24 @@ interface DraftState {
     reported: EditorProblem | undefined
 }
 
-const keyOf = ({ valueType, fieldMask, options }: Field) =>
-    JSON.stringify([valueType, fieldMask, options?.map(({ code }) => code)])
+const keyOf = (
+    { valueType, fieldMask, options }: Field,
+    { calendar, dateFormat }: ValueSettings
+) =>
+    JSON.stringify([
+        valueType,
+        fieldMask,
+        options?.map(({ code }) => code),
+        calendar,
+        dateFormat,
+    ])
 
 const fresh = (
     field: Field,
     value: string | undefined,
     settings: ValueSettings
 ): DraftState => ({
-    fieldKey: keyOf(field),
+    fieldKey: keyOf(field, settings),
     given: value,
     value,
     text: value === undefined ? '' : typedText(field, value, settings),
@@ -47,7 +56,8 @@ const sameProblem = (a: EditorProblem | undefined, b: EditorProblem) =>
 
 /**
  * The text typed in a field, reported through `onChange` only on `commit`, once for each new value or problem. A
- * `value` from the host that is not the one last reported (a rule assigned it), or another `field`, replaces the text.
+ * `value` from the host that is not the one last reported (a rule assigned it), another `field`, or another calendar or
+ * date format, replaces the text.
  * A reported problem shows until the text is fixed or committed again: it is not replaced while typing.
  */
 export const useDraft = ({
@@ -60,7 +70,7 @@ export const useDraft = ({
     const [state, setState] = useState(() => fresh(field, value, settings))
     let draft = state
     if (
-        keyOf(field) !== state.fieldKey ||
+        keyOf(field, settings) !== state.fieldKey ||
         (value !== state.given && value !== state.value) ||
         (readOnly && (state.edited || state.reported !== undefined))
     ) {

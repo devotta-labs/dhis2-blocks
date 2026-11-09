@@ -1,4 +1,3 @@
-import i18n from '@dhis2/d2-i18n'
 import { memo, useMemo, useState } from 'react'
 import { cellKind } from '@/components/dhis2-value-types'
 import type { CellKind, Field } from '@/components/dhis2-value-types'
@@ -16,7 +15,11 @@ import { CellContext, CellStatus, describeCell } from './CellStatus'
 import { BooleanCell, TrueOnlyCell } from './ChoiceCells'
 import { OptionCell } from './OptionCell'
 import { PopupCell } from './PopupCell'
-import { editedElsewhere, editorFor } from '@/components/dhis2-value-input'
+import {
+    dateFormatHint,
+    editedElsewhere,
+    editorFor,
+} from '@/components/dhis2-value-input'
 import { TextCell } from './TextCell'
 
 // A cell with no control: greyed, skipped by the arrows, its reason read out. Positioned, so the hidden reason stays
@@ -74,13 +77,7 @@ const OpenCell = ({ view, ...props }: CellProps & { view: CellView }) => {
         replacement === undefined &&
         view.value === undefined &&
         (kind === 'date' || kind === 'dateTime')
-            ? i18n.t('Date format: {{format}}', {
-                  nsSeparator: '::',
-                  format:
-                      kind === 'date'
-                          ? settings.dateFormat
-                          : `${settings.dateFormat} HH:mm`,
-              })
+            ? dateFormatHint(kind, settings)
             : undefined
     const id = cellDomId(idScope, props.cellKey)
     const { notes, aria } = describeCell(id, view, reason, hint)

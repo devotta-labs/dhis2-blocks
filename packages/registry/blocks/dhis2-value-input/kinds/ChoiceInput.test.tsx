@@ -151,6 +151,115 @@ test('a long option set shows the name of the stored value', async () => {
         .toHaveValue('Name C')
 })
 
+const OUTSIDE = 'Elsewhere'
+
+/** A long option set with something else on the page to click, so the field is left without Tab. Above it, so the
+ * open list does not cover it. */
+const mountBeside = async (props: Partial<ValueInputProps> = {}) => {
+    const onChange = vi.fn()
+    await render(
+        <>
+            <button type="button">{OUTSIDE}</button>
+            <ValueInput
+                field={LONG}
+                settings={SETTINGS}
+                label={LABEL}
+                value={undefined}
+                onChange={onChange}
+                {...props}
+            />
+        </>
+    )
+    return onChange
+}
+
+test('a long option set takes the top match of what is typed on Tab, and shows its name', async () => {
+    const onChange = await mount(LONG)
+    const box = page.getByRole('combobox', { name: LABEL })
+    await userEvent.click(box)
+    await userEvent.keyboard('name d')
+    expect(onChange).not.toHaveBeenCalled()
+    await userEvent.keyboard('{Tab}')
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('D')
+    await expect.element(box).toHaveValue('Name D')
+})
+
+test('a long option set takes the top match on Enter', async () => {
+    const onChange = await mount(LONG)
+    await userEvent.click(page.getByRole('combobox', { name: LABEL }))
+    await userEvent.keyboard('Name B{Enter}')
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('B')
+})
+
+test('an option name or code typed and left is reported as its code', async () => {
+    const onChange = await mountBeside()
+    const box = page.getByRole('combobox', { name: LABEL })
+    await userEvent.click(box)
+    await userEvent.keyboard('name f')
+    await userEvent.click(page.getByText(OUTSIDE))
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('F')
+
+    await userEvent.click(box)
+    await userEvent.keyboard('{Backspace>6/}c')
+    await userEvent.click(page.getByText(OUTSIDE))
+    expect(onChange).toHaveBeenLastCalledWith('C')
+})
+
+test('typed text that is no option is refused with the grid message, and stays shown', async () => {
+    const onChange = await mount(LONG)
+    const box = page.getByRole('combobox', { name: LABEL })
+    await userEvent.click(box)
+    await userEvent.keyboard('zzz{Tab}')
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(null, {
+        message: 'Choose one of the options',
+        text: 'zzz',
+    })
+    await expect.element(box).toHaveValue('zzz')
+    await expect.element(box).toHaveAttribute('aria-invalid', 'true')
+    await expect
+        .element(box)
+        .toHaveAccessibleDescription('Choose one of the options')
+})
+
+test('Enter with text that matches nothing reports the problem', async () => {
+    const onChange = await mount(LONG)
+    await userEvent.click(page.getByRole('combobox', { name: LABEL }))
+    await userEvent.keyboard('zzz{Enter}')
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(null, {
+        message: 'Choose one of the options',
+        text: 'zzz',
+    })
+})
+
+test('the name of a hidden option, typed and left, is refused', async () => {
+    const onChange = await mountBeside({
+        field: { valueType: 'TEXT', options: options(7) },
+        hiddenOptions: new Set(['E']),
+    })
+    await userEvent.click(page.getByRole('combobox', { name: LABEL }))
+    await userEvent.keyboard('Name E')
+    await userEvent.click(page.getByText(OUTSIDE))
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(null, {
+        message: 'Choose one of the options',
+        text: 'Name E',
+    })
+})
+
+test('emptied text on an optional long option set reports no value', async () => {
+    const onChange = await mount(LONG, { value: 'C' })
+    const box = page.getByRole('combobox', { name: LABEL })
+    await userEvent.click(box)
+    await userEvent.keyboard('{Backspace>6/}{Tab}')
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(null)
+})
+
+test('leaving a long option set untouched reports nothing', async () => {
+    const onChange = await mount(LONG, { value: 'C' })
+    await userEvent.click(page.getByRole('combobox', { name: LABEL }))
+    await userEvent.keyboard('{Tab}')
+    expect(onChange).not.toHaveBeenCalled()
+})
+
 test('Clear reports no value after a pick', async () => {
     const onChange = await mount(SHORT, { value: 'A' })
     await userEvent.click(clear())

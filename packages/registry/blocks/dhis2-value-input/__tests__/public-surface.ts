@@ -13,6 +13,7 @@ import type {
 } from '../index'
 import {
     composing,
+    dateFormatHint,
     editedElsewhere,
     createFileUploads,
     editorFor,
@@ -51,5 +52,9 @@ export const searched: ServerSearch | undefined = searchFor('USERNAME')
 export const found = (search: ServerSearch | undefined): Found | undefined =>
     useServerSearch(search?.search, 'a'.repeat(MIN_LENGTH))
 export const reason: string = editedElsewhere()
+export const hint: string = dateFormatHint('date', {
+    calendar: 'gregorian',
+    dateFormat: 'YYYY-MM-DD',
+})
 export const control = (props: ValueInputProps): ReactNode =>
     createElement(ValueInput, props)

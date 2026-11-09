@@ -13,6 +13,7 @@ import {
     typedText,
 } from '@/components/dhis2-value-types'
 import type { Option } from '@/components/dhis2-value-types'
+import { composing } from '@/components/dhis2-value-input'
 import { cn } from '@/components/dhis2/ui/cn'
 import { NO_NAMES, useSpreadsheetContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
@@ -21,7 +22,7 @@ import { OptionList } from './OptionList'
 import { MIN_LENGTH, searchFor, useServerSearch } from './serverSearch'
 import type { Found } from './serverSearch'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
-import { addsRow, composing, READY_CLASS, useCellMode } from './useCellMode'
+import { addsRow, READY_CLASS, useCellMode } from './useCellMode'
 
 const NO_OPTIONS: ReadonlyArray<Option> = []
 const NO_MATCHES = {

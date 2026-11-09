@@ -15,8 +15,6 @@ export const READY_CLASS = 'caret-transparent selection:bg-transparent'
 export const typingIn = (control: HTMLElement) =>
     control.dataset.mode === 'enter' || control.dataset.mode === 'edit'
 
-export { composing }
-
 /** The move a plain arrow, Enter or Tab asks for; a key with a modifier belongs to the browser. */
 export const navKeyOf = (event: KeyboardEvent): NavKey | undefined => {
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {

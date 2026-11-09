@@ -1,5 +1,7 @@
+import type { useDataEngine } from '@dhis2/app-runtime'
 import { z } from 'zod'
-import type { DataEngine } from '../../provider/context'
+
+export type DataEngine = ReturnType<typeof useDataEngine>
 
 const uploadSchema = z.object({
     response: z.object({

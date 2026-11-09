@@ -890,7 +890,11 @@
             "type": "registry:block",
             "title": "DHIS2 Value Input",
             "description": "A form control for each DHIS2 value type, accepting what the grid accepts, in the system calendar.",
-            "dependencies": ["@dhis2/d2-i18n@1.2.0"],
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "zod@^4.4.3"
+            ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/announcer",
                 "devotta-labs/dhis2-blocks/button",
@@ -928,6 +932,11 @@
                     "target": "@components/dhis2-value-input/editors/EditorButtons.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/dhis2-value-input/editors/FileEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/editors/FileEditor.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/dhis2-value-input/editors/LongTextEditor.tsx",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-input/editors/LongTextEditor.tsx"
@@ -936,6 +945,16 @@
                     "path": "packages/registry/blocks/dhis2-value-input/editors/MultiSelectEditor.tsx",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-input/editors/MultiSelectEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/editors/fileApi.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/editors/fileApi.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/editors/fileUploads.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/editors/fileUploads.ts"
                 },
                 {
                     "path": "packages/registry/blocks/dhis2-value-input/editors/popupEditors.ts",
@@ -1381,14 +1400,9 @@
                     "target": "@components/spreadsheet/cells/cellProps.ts"
                 },
                 {
-                    "path": "packages/registry/blocks/spreadsheet/cells/editors/FileEditor.tsx",
+                    "path": "packages/registry/blocks/spreadsheet/cells/gridFileUploads.ts",
                     "type": "registry:file",
-                    "target": "@components/spreadsheet/cells/editors/FileEditor.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/spreadsheet/cells/editors/fileApi.ts",
-                    "type": "registry:file",
-                    "target": "@components/spreadsheet/cells/editors/fileApi.ts"
+                    "target": "@components/spreadsheet/cells/gridFileUploads.ts"
                 },
                 {
                     "path": "packages/registry/blocks/spreadsheet/cells/pastePolicy.ts",

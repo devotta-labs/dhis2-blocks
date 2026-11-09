@@ -1,3 +1,4 @@
+import { useDataEngine } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import { memo, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
@@ -8,14 +9,16 @@ import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Popover, PopoverContent } from '@/components/dhis2/ui/popover'
+import type { CellKey, CellState } from '../model/types'
 import { NO_NAMES, useSpreadsheetContext } from '../provider/context'
+import type { SpreadsheetContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
-import { storedFileUrl } from './editors/FileEditor'
-import { editorFor } from '@/components/dhis2-value-input'
-import type { EditorProblem } from '@/components/dhis2-value-input'
+import { composing, editorFor } from '@/components/dhis2-value-input'
+import type { EditorProblem, FileUploads } from '@/components/dhis2-value-input'
+import { gridFileUploads } from './gridFileUploads'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
-import { composing, READY_CLASS, useCellMode } from './useCellMode'
+import { READY_CLASS, useCellMode } from './useCellMode'
 
 // Editors that start from the text typed to open them.
 const FIRST_KEY_TYPES = new Set(['LONG_TEXT'])
@@ -61,9 +64,22 @@ const headerText = (labelledBy: string) =>
         .join(' ')
         .trim()
 
+/**
+ * Where `fileUrl` says the server serves a cell's file, while the cell holds the file it saved; a file not saved yet
+ * has no address.
+ */
+const storedFileUrl = (
+    fileUrl: SpreadsheetContext['fileUrl'],
+    key: CellKey,
+    { value, base }: CellState,
+    image: boolean
+) => (value !== undefined && value === base ? fileUrl?.(key, image) : undefined)
+
 interface Opened {
     name: string
     firstKey?: string
+    /** A file cell's uploads started in this session. */
+    uploads?: FileUploads
 }
 
 /** What the editor last said it would save. */
@@ -90,8 +106,9 @@ export const PopupCell = memo(function PopupCell({
     hidden = false,
     aria,
 }: ControlProps) {
-    const { store, settings, announce, fileNames, fileUrl } =
-        useSpreadsheetContext()
+    const context = useSpreadsheetContext()
+    const { store, settings, announce, fileNames, fileUrl, offline } = context
+    const engine = useDataEngine()
     const { view } = useCellContext()
     const Editor = editorFor(field.valueType)
     const locked = readOnly !== undefined || Editor === undefined
@@ -161,7 +178,13 @@ export const PopupCell = memo(function PopupCell({
         }
     }
     const open = (firstKey?: string) => {
-        const next = { name: headerText(labelledBy), firstKey }
+        const next = {
+            name: headerText(labelledBy),
+            firstKey,
+            uploads: file
+                ? gridFileUploads(cellKey, { ...context, engine })
+                : undefined,
+        }
         session.current = next
         reported.current = undefined
         setOpened(next)
@@ -377,6 +400,19 @@ export const PopupCell = memo(function PopupCell({
                             }}
                             cancel={close}
                             firstKey={opened.firstKey}
+                            fileName={name}
+                            fileUrl={
+                                file
+                                    ? storedFileUrl(
+                                          fileUrl,
+                                          cellKey,
+                                          view,
+                                          field.valueType === 'IMAGE'
+                                      )
+                                    : undefined
+                            }
+                            offline={offline}
+                            uploads={opened.uploads}
                         />
                     </PopoverContent>
                 </Popover>

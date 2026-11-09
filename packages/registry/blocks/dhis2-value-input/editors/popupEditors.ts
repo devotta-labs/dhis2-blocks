@@ -3,6 +3,8 @@ import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import type { Politeness } from '@/components/dhis2/ui/announcer'
 import { AgeEditor } from './AgeEditor'
 import { CoordinateEditor } from './CoordinateEditor'
+import { FileEditor } from './FileEditor'
+import type { FileUploads } from './fileUploads'
 import { LongTextEditor } from './LongTextEditor'
 import { MultiSelectEditor } from './MultiSelectEditor'
 
@@ -56,6 +58,14 @@ export interface PopupEditorProps {
     announce?(text: string, politeness?: Politeness): void
     /** Draws the editor in the page, not in a pop-up. */
     inline?: boolean
+    /** The stored file's name, for file and image fields; its id is shown without one. */
+    fileName?: string
+    /** Where the stored file or image can be fetched; without it there is no preview and no "Download". */
+    fileUrl?: string
+    /** Whether the server cannot be reached now: files cannot be uploaded. */
+    offline?: boolean
+    /** Where the file editor runs its uploads; its own, stopped when it unmounts, by default. */
+    uploads?: FileUploads
 }
 
 /**
@@ -70,6 +80,8 @@ export const popupEditors: PopupEditors = {
     MULTI_TEXT: MultiSelectEditor,
     AGE: AgeEditor,
     COORDINATE: CoordinateEditor,
+    FILE_RESOURCE: FileEditor,
+    IMAGE: FileEditor,
 }
 
 /** The editor for a field's value type, which can be any DHIS2 value type. */

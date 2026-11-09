@@ -38,7 +38,6 @@ const MoreButton = ({
                 aria-describedby={error === undefined ? undefined : errorId}
                 disabled={loading}
                 focusableWhenDisabled
-                className="aria-disabled:cursor-not-allowed aria-disabled:text-dhis2-disabled-foreground"
                 onClick={() => void loadMore()}
             >
                 {label}

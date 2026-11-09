@@ -16,8 +16,9 @@ import { CalendarCellRecords, CalendarDayContext } from './CalendarCell'
 /** An ISO weekday: 1 is Monday, 7 is Sunday. */
 export type CalendarWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
+// Forced colours would repaint the circle as the page, so it takes system colours there.
 export const TODAY_CLASS =
-    'inline-flex size-5 items-center justify-center self-start rounded-full bg-dhis2-primary text-dhis2-primary-foreground'
+    'inline-flex size-5 items-center justify-center self-start rounded-full bg-dhis2-primary text-dhis2-primary-foreground forced-colors:bg-[Highlight] forced-colors:text-[HighlightText] forced-colors:[forced-color-adjust:none]'
 
 const WEEKDAYS: readonly CalendarWeekday[] = [1, 2, 3, 4, 5, 6, 7]
 

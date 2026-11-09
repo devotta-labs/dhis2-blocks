@@ -1,18 +1,18 @@
 import i18n from '@dhis2/d2-i18n'
 import { useId, useRef, useState } from 'react'
 import {
+    ageFromBirth,
+    birthFromAge,
     checkStored,
+    futureBirth,
     parseTyped,
     typedText,
 } from '@/components/dhis2-value-types'
-import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import type { Age, Field, ValueSettings } from '@/components/dhis2-value-types'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
 import { todayIso } from '@/components/dhis2-value-types'
-import { ageFromBirth, birthFromAge } from './age'
-import { futureBirth } from '../../store/store'
 import type { PopupEditorProps } from '../popupEditors'
-import type { Age } from './age'
 import { EditorButtons, saveOnCtrlEnter } from './EditorButtons'
 
 // The date of birth is typed and shown as any date is: in the system calendar and date format.

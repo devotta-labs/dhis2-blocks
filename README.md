@@ -549,6 +549,37 @@ the formatter checks Markdown and workflow files too.
 finding, including circular imports. Use `pnpm audit:exports` for a focused
 interactive export report.
 
+## Accessibility
+
+Blocks and primitives meet WCAG 2.2 AA, the level Section 508, ADA Title II,
+EN 301 549 and most donor and UN procurement rules ask for. Three checks keep
+them there:
+
+- `pnpm lint` runs the `jsx-a11y` rules. A rule turned off for one line says
+  why beside it.
+- `pnpm docs:e2e e2e/specs-docs/accessibility.spec.ts` scans every docs
+  example with axe, in the default and the more-contrast theme, and presses Tab
+  through each one to check every stop shows where focus is. CI runs it in the
+  `docs-e2e` job of `verify` when the docs or the registry change.
+- Contrast, forced-colours and reduced-motion browser tests
+  (`*.contrast.test.tsx`, `*.forced.test.tsx`, `*.motion.test.tsx`) check what
+  axe can't see.
+
+Axe finds about a third of WCAG problems. Every new block and primitive also:
+
+- announces outcomes that happen away from focus with `announce(text)` from
+  `@/components/dhis2/ui/announcer`, and errors with
+  `announce(text, 'assertive')`
+- puts focus somewhere sensible after async work, after a dialog closes, and
+  when the control that had it unmounts
+- keeps focus on a control it disables, with `focusableWhenDisabled`
+- never shows a state with colour alone: add a word, an icon or a shape
+- keeps targets at least 24 by 24 pixels
+- gives every hover-only detail a keyboard path
+- uses `Field` for every labelled control, so its label, hint and error reach
+  screen readers
+- has a docs example, which puts it under the scan
+
 ## Real-DHIS2 browser tests
 
 The existing version-specific commands remain available from the repository

@@ -97,8 +97,44 @@ jobs:
             - uses: ./.github/actions/setup
             - run: pnpm dead-code:audit
 
+    # Every docs example at WCAG 2.2 AA, against the docs DHIS2 stack.
+    # The other docs specs run locally with `pnpm docs:e2e`.
+    docs-e2e:
+        name: docs e2e (42)
+        needs: changes
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.docs == 'true'
+        runs-on: ubuntu-24.04
+        timeout-minutes: 45
+        steps:
+            - uses: actions/checkout@v4
+            - uses: ./.github/actions/setup
+              with:
+                  browser: 'true'
+            - name: Database cache period
+              id: database
+              run: |
+                  echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+                  echo "DHIS2_DB_DUMP_VOLUME=$RUNNER_TEMP/dhis2-dump" >> "$GITHUB_ENV"
+                  mkdir -p "$RUNNER_TEMP/dhis2-dump"
+            - uses: actions/cache@v4
+              with:
+                  path: ${{ runner.temp }}/dhis2-dump
+                  key: dhis2-dump-v1-42-${{ steps.database.outputs.week }}-${{ hashFiles('scripts/e2e/versions.sh', 'docker/e2e/compose.yml') }}
+            - run: pnpm docs:e2e e2e/specs-docs/accessibility.spec.ts
+              env:
+                  CI: 'true'
+            - name: artifacts
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: docs-e2e-${{ github.run_attempt }}
+                  path: e2e/artifacts/docs/
+                  if-no-files-found: warn
+                  retention-days: 14
+
     validation:
-        needs: [changes, typecheck, test, build, docs-build, lint, knip]
+        needs:
+            [changes, typecheck, test, build, docs-build, docs-e2e, lint, knip]
         if: always()
         runs-on: ubuntu-24.04
         timeout-minutes: 5

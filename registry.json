@@ -645,6 +645,7 @@
         {
             "name": "textarea",
             "type": "registry:ui",
+            "dependencies": ["@base-ui/react@^1.9.0"],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme"

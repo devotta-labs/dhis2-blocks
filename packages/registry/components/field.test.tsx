@@ -19,8 +19,10 @@ import {
     FieldLabel,
 } from './field'
 import { Input } from './input'
+import { InputGroup, InputGroupTextarea } from './input-group'
 import { RadioGroup, RadioGroupItem } from './radio-group'
 import { Select, SelectTrigger, SelectValue } from './select'
+import { Textarea } from './textarea'
 import { roleColour } from '../test/roleColour'
 
 /** A labelled, described field with an error, around `control`. */
@@ -39,6 +41,19 @@ const expectLinked = async (control: ReturnType<typeof page.getByRole>) => {
         .toHaveAccessibleDescription(/Shown on the card.*Enter a name/)
     await expect.element(control).toHaveAttribute('aria-invalid', 'true')
 }
+
+// First: React warns about a ref only once per component.
+test('renders FieldLabel without a ref warning', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    await render(
+        <Field>
+            <FieldLabel>Name</FieldLabel>
+            <Input />
+        </Field>
+    )
+    expect(error).not.toHaveBeenCalled()
+    error.mockRestore()
+})
 
 test('links an Input', async () => {
     await render(
@@ -60,6 +75,53 @@ test('links a Select', async () => {
         </Invalid>
     )
     await expectLinked(page.getByRole('combobox', { name: 'Name' }))
+})
+
+test('links a Textarea', async () => {
+    await render(
+        <Invalid>
+            <Textarea />
+        </Invalid>
+    )
+    await expectLinked(page.getByRole('textbox', { name: 'Name' }))
+})
+
+test('keeps a controlled Textarea’s own id, value, change handler and ref', async () => {
+    const ref = React.createRef<HTMLTextAreaElement>()
+    const Notes = () => {
+        const [value, setValue] = React.useState('a')
+        return (
+            <Field>
+                <FieldLabel htmlFor="notes">Notes</FieldLabel>
+                <Textarea
+                    id="notes"
+                    ref={ref}
+                    rows={4}
+                    value={value}
+                    onChange={(event) =>
+                        setValue(event.currentTarget.value.toUpperCase())
+                    }
+                />
+            </Field>
+        )
+    }
+    await render(<Notes />)
+    const notes = page.getByRole('textbox', { name: 'Notes' })
+    await userEvent.fill(notes, 'bc')
+    await expect.element(notes).toHaveValue('BC')
+    expect(ref.current?.id).toBe('notes')
+    expect(ref.current?.rows).toBe(4)
+})
+
+test('links a textarea in an InputGroup', async () => {
+    await render(
+        <Invalid>
+            <InputGroup>
+                <InputGroupTextarea />
+            </InputGroup>
+        </Invalid>
+    )
+    await expectLinked(page.getByRole('textbox', { name: 'Name' }))
 })
 
 test('links a RadioGroup', async () => {

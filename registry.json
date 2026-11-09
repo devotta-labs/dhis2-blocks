@@ -899,13 +899,21 @@
                 "devotta-labs/dhis2-blocks/announcer",
                 "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/checkbox",
+                "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
                 "devotta-labs/dhis2-blocks/dhis2-value-types",
+                "devotta-labs/dhis2-blocks/field",
                 "devotta-labs/dhis2-blocks/input",
                 "devotta-labs/dhis2-blocks/label",
                 "devotta-labs/dhis2-blocks/textarea"
             ],
             "files": [
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/ValueInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/ValueInput.tsx"
+                },
                 {
                     "path": "packages/registry/blocks/dhis2-value-input/announce.ts",
                     "type": "registry:file",
@@ -967,9 +975,19 @@
                     "target": "@components/dhis2-value-input/index.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/dhis2-value-input/kinds/TypedInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/kinds/TypedInput.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/dhis2-value-input/search/serverSearch.ts",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-input/search/serverSearch.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/useDraft.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/useDraft.ts"
                 }
             ]
         },

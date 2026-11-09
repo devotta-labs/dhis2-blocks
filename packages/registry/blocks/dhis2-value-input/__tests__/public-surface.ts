@@ -1,4 +1,5 @@
-import type { KeyboardEvent } from 'react'
+import { createElement } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import type { useDataEngine } from '@dhis2/app-runtime'
 import type {
     EditorProblem,
@@ -8,9 +9,11 @@ import type {
     PopupEditorProps,
     PopupValueType,
     ServerSearch,
+    ValueInputProps,
 } from '../index'
 import {
     composing,
+    editedElsewhere,
     createFileUploads,
     editorFor,
     formatCount,
@@ -20,6 +23,7 @@ import {
     searchFor,
     useAnnounced,
     useServerSearch,
+    ValueInput,
 } from '../index'
 
 export type SupportedValueInputTypes = [
@@ -30,6 +34,7 @@ export type SupportedValueInputTypes = [
     PopupEditorProps,
     PopupValueType,
     ServerSearch,
+    ValueInputProps,
 ]
 
 // Every export, used as an app would use it.
@@ -45,3 +50,6 @@ export const uploadsFor = (
 export const searched: ServerSearch | undefined = searchFor('USERNAME')
 export const found = (search: ServerSearch | undefined): Found | undefined =>
     useServerSearch(search?.search, 'a'.repeat(MIN_LENGTH))
+export const reason: string = editedElsewhere()
+export const control = (props: ValueInputProps): ReactNode =>
+    createElement(ValueInput, props)

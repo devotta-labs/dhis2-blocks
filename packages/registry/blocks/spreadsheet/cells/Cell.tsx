@@ -16,7 +16,7 @@ import { CellContext, CellStatus, describeCell } from './CellStatus'
 import { BooleanCell, TrueOnlyCell } from './ChoiceCells'
 import { OptionCell } from './OptionCell'
 import { PopupCell } from './PopupCell'
-import { editorFor } from '@/components/dhis2-value-input'
+import { editedElsewhere, editorFor } from '@/components/dhis2-value-input'
 import { TextCell } from './TextCell'
 
 // A cell with no control: greyed, skipped by the arrows, its reason read out. Positioned, so the hidden reason stays
@@ -66,7 +66,7 @@ const OpenCell = ({ view, ...props }: CellProps & { view: CellView }) => {
         (kind === 'readOnly' ||
             (kind === 'popup' &&
                 editorFor(props.field.valueType) === undefined))
-            ? i18n.t('Edit this field in its own form')
+            ? editedElsewhere()
             : undefined
     const reason = hiddenBy ?? readOnly ?? elsewhere
     // An empty date says how to type it.

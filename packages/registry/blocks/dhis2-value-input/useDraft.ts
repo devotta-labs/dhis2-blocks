@@ -1,0 +1,120 @@
+import { useRef, useState } from 'react'
+import { parseTyped, typedText } from '@/components/dhis2-value-types'
+import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import type { EditorProblem } from './editors/popupEditors'
+
+interface DraftOptions {
+    field: Field
+    settings: ValueSettings
+    value: string | undefined
+    onChange(value: string | null, problem?: EditorProblem): void
+    /** A locked field drops what was typed and reports nothing. */
+    readOnly: boolean
+}
+
+interface DraftState {
+    /** What makes the field another field, so a host may build `field` anew on every render. */
+    fieldKey: string
+    /** The `value` the host gave at the last render. */
+    given: string | undefined
+    /** The value the host holds, as far as the control knows: the one it gave, or the one last reported. */
+    value: string | undefined
+    text: string
+    /** Typed since the text was last set from a value or reported. */
+    edited: boolean
+    /** The problem last reported, until a value is. */
+    reported: EditorProblem | undefined
+}
+
+const keyOf = ({ valueType, fieldMask, options }: Field) =>
+    JSON.stringify([valueType, fieldMask, options?.map(({ code }) => code)])
+
+const fresh = (
+    field: Field,
+    value: string | undefined,
+    settings: ValueSettings
+): DraftState => ({
+    fieldKey: keyOf(field),
+    given: value,
+    value,
+    text: value === undefined ? '' : typedText(field, value, settings),
+    edited: false,
+    reported: undefined,
+})
+
+const sameProblem = (a: EditorProblem | undefined, b: EditorProblem) =>
+    a?.message === b.message && a.text === b.text
+
+/**
+ * The text typed in a field, reported through `onChange` only on `commit`, once for each new value or problem. A
+ * `value` from the host that is not the one last reported (a rule assigned it), or another `field`, replaces the text.
+ * A reported problem shows until the text is fixed or committed again: it is not replaced while typing.
+ */
+export const useDraft = ({
+    field,
+    settings,
+    value,
+    onChange,
+    readOnly,
+}: DraftOptions) => {
+    const [state, setState] = useState(() => fresh(field, value, settings))
+    let draft = state
+    if (
+        keyOf(field) !== state.fieldKey ||
+        (value !== state.given && value !== state.value) ||
+        (readOnly && (state.edited || state.reported !== undefined))
+    ) {
+        draft = fresh(field, value, settings)
+        setState(draft)
+    } else if (value !== state.given) {
+        draft = { ...state, given: value }
+        setState(draft)
+    }
+    // A commit's result, before React renders it: a blur that a handler further up the same Enter causes runs the
+    // commit of the render before, and must see that it is done.
+    const latest = useRef(draft)
+    latest.current = draft
+
+    const update = (next: DraftState) => {
+        latest.current = next
+        setState(next)
+    }
+
+    const commit = () => {
+        const current = latest.current
+        if (!current.edited) {
+            return
+        }
+        const typed = parseTyped(field, current.text, settings)
+        if (typed.ok) {
+            update({
+                ...fresh(field, typed.value, settings),
+                given: current.given,
+            })
+            if (
+                typed.value !== current.value ||
+                current.reported !== undefined
+            ) {
+                onChange(typed.value ?? null)
+            }
+            return
+        }
+        const next = { message: typed.problem.message, text: current.text }
+        update({ ...current, value: undefined, edited: false, reported: next })
+        if (!sameProblem(current.reported, next)) {
+            onChange(null, next)
+        }
+    }
+
+    const fixed =
+        draft.reported === undefined ||
+        parseTyped(field, draft.text, settings).ok
+    return {
+        text: draft.text,
+        /** The problem to show: the one reported, until the text is fixed. */
+        problem: fixed ? undefined : draft.reported,
+        change: (text: string) =>
+            update({ ...latest.current, text, edited: true }),
+        commit,
+    }
+}

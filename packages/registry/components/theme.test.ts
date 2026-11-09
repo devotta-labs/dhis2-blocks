@@ -286,7 +286,6 @@ describe('theme.css', () => {
         ...TONES.map((tone): Floor => [`${tone}-indicator`, 'background', 3]),
         ...TONES.map((tone): Floor => [`${tone}-strong`, `${tone}-fill`, 7]),
         ...TONES.map((tone): Floor => [tone, `${tone}-subtle`, 4.5]),
-        ['warning', 'warning-subtle', 4.5],
         ['muted-foreground', 'background-subtle', 7],
     ] satisfies Floor[])(
         'default theme: %s on %s is at least %s:1',

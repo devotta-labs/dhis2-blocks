@@ -135,14 +135,14 @@ export const NOTE_TONES = {
     info: 'border-dhis2-neutral-indicator',
 } satisfies Record<Tone, string>
 
-/**
- * What a cell shows besides its value: the required marker, whether it is saved, an amber outline for a warning, and
- * the notes while focus is in the cell (until Escape hides them). It sits after the control, in `Cell`'s `group/cell`.
- */
 /** The notes shown under a focused cell. */
 export const NOTES_POPUP_CLASS =
     'pointer-events-none z-40 hidden w-max max-w-72 flex-col gap-0.5 rounded-dhis2-sm border border-dhis2-border bg-dhis2-popover px-2 py-1 text-xs text-dhis2-popover-foreground shadow-dhis2-popover'
 
+/**
+ * What a cell shows besides its value: the required marker, whether it is saved, an amber outline for a warning, and
+ * the notes while focus is in the cell (until Escape hides them). It sits after the control, in `Cell`'s `group/cell`.
+ */
 export const CellStatus = ({
     view,
     notes,

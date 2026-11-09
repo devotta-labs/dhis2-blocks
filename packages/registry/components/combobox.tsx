@@ -72,6 +72,7 @@ function ComboboxInput({
     disabled = false,
     showTrigger = true,
     showClear = false,
+    'aria-labelledby': labelledBy,
     ...props
 }: ComboboxPrimitive.Input.Props & {
     showTrigger?: boolean
@@ -83,6 +84,9 @@ function ComboboxInput({
                 render={<InputGroupInput disabled={disabled} />}
                 disabled={disabled}
                 {...props}
+                // Only the caller's: inside a Field, the field's label names the trigger, and a search input in the
+                // popup keeps its own aria-label. An input that is the control is named by the label's `for`.
+                aria-labelledby={labelledBy}
             />
             <InputGroupAddon align="inline-end">
                 {showTrigger && (

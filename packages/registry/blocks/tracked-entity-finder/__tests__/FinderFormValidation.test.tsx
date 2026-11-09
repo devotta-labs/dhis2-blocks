@@ -1,7 +1,10 @@
 import React from 'react'
 import { page, userEvent } from 'vitest/browser'
+import { render } from 'vitest-browser-react'
 import { FinderField } from '../form/FinderField'
 import { FinderForm } from '../form/FinderForm'
+import { TrueOnlyCheckbox } from '../form/inputs/TrueOnlyCheckbox'
+import { FinderRangeField } from '../form/FinderRangeField'
 import { FinderSubmit } from '../form/FinderSubmit'
 import { useFinderField, useFinderForm } from '../hooks'
 import { renderInFinder } from './finderTestSupport'
@@ -98,5 +101,65 @@ describe('FinderForm validation', () => {
         await expect
             .element(submission())
             .toHaveTextContent(/firstName:like:Jo\s+weight:eq:72/)
+    })
+
+    it("links the date field's error to its input", async () => {
+        await renderInFinder(
+            <FinderForm>
+                <FinderField attribute="dob" />
+            </FinderForm>
+        )
+        await userEvent.fill(page.getByLabelText('Date of birth'), '2001-99-99')
+        // CalendarInput reports a typed date when the input loses focus.
+        await userEvent.tab()
+        const input = page.getByRole('textbox', { name: 'Date of birth' })
+        await expect.element(page.getByText('Enter a valid date')).toBeVisible()
+        await expect
+            .element(input)
+            .toHaveAccessibleDescription(/Enter a valid date/)
+        await expect.element(input).toHaveAttribute('aria-invalid', 'true')
+    })
+
+    it('links a range error to both of its inputs', async () => {
+        await renderInFinder(
+            <FinderForm>
+                <FinderRangeField attribute="weight" />
+            </FinderForm>
+        )
+        const weight = page.getByRole('group', { name: 'Weight' })
+        await userEvent.fill(weight.getByLabelText('From'), '80')
+        await userEvent.fill(weight.getByLabelText('To'), '60')
+        await userEvent.tab()
+        for (const side of ['From', 'To']) {
+            await expect
+                .element(weight.getByLabelText(side))
+                .toHaveAccessibleDescription(/From must not be after To/)
+        }
+    })
+
+    it('marks a yes-only checkbox invalid', async () => {
+        await render(
+            <TrueOnlyCheckbox
+                attribute={{
+                    id: 'pregnant',
+                    label: 'Pregnant',
+                    valueType: 'TRUE_ONLY',
+                    kind: 'trueOnly',
+                    unique: false,
+                    searchable: true,
+                    displayInList: false,
+                    blocked: new Set(),
+                    minCharacters: 0,
+                    usable: true,
+                }}
+                label="Pregnant"
+                setValue={() => undefined}
+                onBlur={() => undefined}
+                error="Required"
+            />
+        )
+        const checkbox = page.getByRole('checkbox', { name: 'Pregnant' })
+        await expect.element(checkbox).toHaveAttribute('aria-invalid', 'true')
+        await expect.element(checkbox).toHaveAccessibleDescription(/Required/)
     })
 })

@@ -393,8 +393,7 @@ const ValueInput = ({
     const id = React.useId()
     const descriptionId = `${id}-description`
     return (
-        // One labelled input needs no group around it.
-        <Field role="none" className="gap-[5px]">
+        <Field className="gap-[5px]">
             <FieldLabel
                 htmlFor={id}
                 className="text-xs font-medium text-dhis2-muted-foreground"

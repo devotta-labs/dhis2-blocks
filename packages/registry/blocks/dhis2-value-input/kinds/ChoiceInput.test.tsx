@@ -1,0 +1,232 @@
+import { useState } from 'react'
+import { page, userEvent } from 'vitest/browser'
+import { render } from 'vitest-browser-react'
+import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import { ValueInput } from '../ValueInput'
+import type { ValueInputProps } from '../ValueInput'
+
+const SETTINGS: ValueSettings = {
+    calendar: 'gregorian',
+    dateFormat: 'YYYY-MM-DD',
+}
+const LABEL = 'Result'
+
+const options = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({
+        code: String.fromCharCode(65 + i),
+        name: `Name ${String.fromCharCode(65 + i)}`,
+    }))
+
+const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
+    const onChange = vi.fn()
+    await render(
+        <ValueInput
+            field={field}
+            settings={SETTINGS}
+            label={LABEL}
+            value={undefined}
+            onChange={onChange}
+            {...props}
+        />
+    )
+    return onChange
+}
+
+/** A host that keeps the value it is told, as a form does. */
+const mountHeld = async (
+    field: Field,
+    props: Partial<ValueInputProps> = {}
+) => {
+    const onChange = vi.fn()
+    const Host = () => {
+        const [value, setValue] = useState(props.value)
+        return (
+            <ValueInput
+                field={field}
+                settings={SETTINGS}
+                label={LABEL}
+                {...props}
+                value={value}
+                onChange={(next, problem) => {
+                    onChange(next, problem)
+                    setValue(next ?? undefined)
+                }}
+            />
+        )
+    }
+    await render(<Host />)
+    return onChange
+}
+
+const BOOLEAN: Field = { valueType: 'BOOLEAN' }
+const SHORT: Field = { valueType: 'TEXT', options: options(3) }
+const LONG: Field = { valueType: 'TEXT', options: options(6) }
+const radio = (name: string) => page.getByRole('radio', { name })
+const clear = () => page.getByRole('button', { name: 'Clear' })
+
+test('Yes is picked with one click and reported at once', async () => {
+    const onChange = await mount(BOOLEAN)
+    await userEvent.click(radio('Yes'))
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('true')
+})
+
+test('arrow Down moves to No, checks and picks it; Tab leaves the group', async () => {
+    const onChange = await mountHeld(BOOLEAN)
+    await userEvent.click(radio('Yes'))
+    await userEvent.keyboard('{ArrowDown}')
+    expect(onChange).toHaveBeenLastCalledWith('false', undefined)
+    await expect.element(radio('No')).toBeChecked()
+    await expect.element(radio('No')).toHaveFocus()
+    await userEvent.keyboard('{Tab}')
+    // Tab left the group for the next control in the field, and picked nothing.
+    await expect.element(radio('No')).not.toHaveFocus()
+    await expect.element(clear()).toHaveFocus()
+    expect(onChange).toHaveBeenCalledTimes(2)
+})
+
+test('a Yes-only box reports Yes when ticked and no value when unticked', async () => {
+    const onChange = vi.fn()
+    const Host = () => {
+        const [value, setValue] = useState<string>()
+        return (
+            <ValueInput
+                field={{ valueType: 'TRUE_ONLY' }}
+                settings={SETTINGS}
+                label={LABEL}
+                value={value}
+                onChange={(next) => {
+                    onChange(next)
+                    setValue(next ?? undefined)
+                }}
+            />
+        )
+    }
+    await render(<Host />)
+    const box = page.getByRole('checkbox', { name: LABEL })
+    await userEvent.click(box)
+    expect(onChange).toHaveBeenLastCalledWith('true')
+    await userEvent.click(box)
+    expect(onChange).toHaveBeenLastCalledWith(null)
+})
+
+test('a short option set is a radio group named by the label, showing names', async () => {
+    await mount(SHORT)
+    await expect
+        .element(page.getByRole('radiogroup', { name: LABEL }))
+        .toBeVisible()
+    await expect.element(radio('Name B')).toBeVisible()
+    await expect
+        .element(page.getByText('B', { exact: true }))
+        .not.toBeInTheDocument()
+})
+
+test('a long option set is a combobox: typing lists a name, picking reports its code', async () => {
+    const onChange = await mount(LONG)
+    await userEvent.click(page.getByRole('combobox', { name: LABEL }))
+    await userEvent.keyboard('Name E')
+    await userEvent.click(page.getByRole('option', { name: 'Name E' }))
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('E')
+})
+
+test('a hidden option is not listed when typed for', async () => {
+    // Six are still visible, so the field is searched; with five it would be radios.
+    await mount(
+        { valueType: 'TEXT', options: options(7) },
+        { hiddenOptions: new Set(['E']) }
+    )
+    await userEvent.click(page.getByRole('combobox', { name: LABEL }))
+    await userEvent.keyboard('Name')
+    await expect
+        .element(page.getByRole('option', { name: 'Name D' }))
+        .toBeVisible()
+    await expect
+        .element(page.getByRole('option', { name: 'Name E' }))
+        .not.toBeInTheDocument()
+})
+
+test('a long option set shows the name of the stored value', async () => {
+    await mount(LONG, { value: 'C' })
+    await expect
+        .element(page.getByRole('combobox', { name: LABEL }))
+        .toHaveValue('Name C')
+})
+
+test('Clear reports no value after a pick', async () => {
+    const onChange = await mount(SHORT, { value: 'A' })
+    await userEvent.click(clear())
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(null)
+})
+
+test('Clear is not offered when nothing is chosen', async () => {
+    await mount(SHORT)
+    await expect.element(clear()).not.toBeInTheDocument()
+})
+
+test('Clear is not offered for a required field', async () => {
+    await mount(SHORT, { value: 'A', required: true })
+    await expect.element(clear()).not.toBeInTheDocument()
+})
+
+test('a value that is no option is shown as the display block gives it, with no radio checked', async () => {
+    await mount(SHORT, { value: 'GONE' })
+    await expect.element(page.getByText('GONE')).toBeVisible()
+    for (const name of ['Name A', 'Name B', 'Name C']) {
+        await expect.element(radio(name)).not.toBeChecked()
+    }
+})
+
+test('a hidden option the field holds stays shown and checked; another hidden one is absent', async () => {
+    await mount(SHORT, { value: 'A', hiddenOptions: new Set(['A', 'B']) })
+    await expect.element(radio('Name A')).toBeChecked()
+    await expect.element(radio('Name B')).not.toBeInTheDocument()
+})
+
+test('five visible options and a held hidden one is a radio group, and a pick keeps focus in it', async () => {
+    await mountHeld(
+        { valueType: 'TEXT', options: options(6) },
+        { value: 'F', hiddenOptions: new Set(['F']) }
+    )
+    await expect
+        .element(page.getByRole('radiogroup', { name: LABEL }))
+        .toBeVisible()
+    await expect.element(radio('Name F')).toBeChecked()
+    await userEvent.click(radio('Name B'))
+    await expect.element(radio('Name B')).toBeChecked()
+    await expect.element(radio('Name B')).toHaveFocus()
+    await expect.element(radio('Name F')).not.toBeInTheDocument()
+    await expect
+        .element(page.getByRole('radiogroup', { name: LABEL }))
+        .toBeVisible()
+})
+
+test('Clear moves focus to the choice', async () => {
+    await mountHeld(SHORT, { value: 'A' })
+    await userEvent.click(clear())
+    await expect.element(clear()).not.toBeInTheDocument()
+    await expect.element(radio('Name A')).toHaveFocus()
+})
+
+test('a required radio group says so', async () => {
+    await mount(SHORT, { required: true })
+    await expect
+        .element(page.getByRole('radiogroup', { name: LABEL }))
+        .toHaveAttribute('aria-required', 'true')
+})
+
+test('a read-only radio group and checkbox cannot be changed', async () => {
+    const group = await mount(SHORT, { value: 'A', readOnly: 'Locked' })
+    await userEvent.click(radio('Name B'), { force: true })
+    expect(group).not.toHaveBeenCalled()
+    await expect.element(radio('Name A')).toBeChecked()
+})
+
+test('a read-only Yes-only box cannot be changed', async () => {
+    const onChange = await mount(
+        { valueType: 'TRUE_ONLY' },
+        { readOnly: 'Locked' }
+    )
+    await userEvent.click(page.getByRole('checkbox', { name: LABEL }), {
+        force: true,
+    })
+    expect(onChange).not.toHaveBeenCalled()
+})

@@ -14,6 +14,7 @@ import {
 } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
 import type { EditorProblem } from './editors/popupEditors'
+import { ChoiceInput } from './kinds/ChoiceInput'
 import { READ_ONLY_CLASS, TypedInput } from './kinds/TypedInput'
 import { useDraft } from './useDraft'
 
@@ -86,13 +87,16 @@ export const ValueInput = ({
     required = false,
     readOnly,
     messages = [],
+    hiddenOptions,
     id: givenId,
 }: ValueInputProps): ReactNode => {
     const generatedId = useId()
     const id = givenId ?? generatedId
     const kind = cellKind(field)
     const typed = kind === 'text' || kind === 'number'
-    const reason = readOnly ?? (typed ? undefined : editedElsewhere())
+    const edited =
+        typed || kind === 'boolean' || kind === 'trueOnly' || kind === 'option'
+    const reason = readOnly ?? (edited ? undefined : editedElsewhere())
     const draft = useDraft({
         field,
         settings,
@@ -104,6 +108,45 @@ export const ValueInput = ({
         draft.problem !== undefined ||
         messages.some(({ tone }) => tone === 'error')
 
+    let control: ReactNode
+    if (typed) {
+        control = (
+            <TypedInput
+                id={id}
+                field={field}
+                draft={draft}
+                readOnly={reason !== undefined}
+                required={required}
+            />
+        )
+    } else if (edited) {
+        control = (
+            <ChoiceInput
+                id={id}
+                field={field}
+                value={value}
+                hiddenOptions={hiddenOptions}
+                settings={settings}
+                readOnly={reason !== undefined}
+                required={required}
+                onChange={onChange}
+            />
+        )
+    } else {
+        control = (
+            <Input
+                id={id}
+                type="text"
+                readOnly
+                aria-required={required || undefined}
+                value={formatDhis2Value(value, metaOf(field), {
+                    calendar: settings.calendar,
+                })}
+                className={READ_ONLY_CLASS}
+            />
+        )
+    }
+
     return (
         <FieldRoot invalid={invalid} className="gap-1">
             <FieldLabel>
@@ -114,26 +157,7 @@ export const ValueInput = ({
                     </span>
                 ) : null}
             </FieldLabel>
-            {typed ? (
-                <TypedInput
-                    id={id}
-                    field={field}
-                    draft={draft}
-                    readOnly={reason !== undefined}
-                    required={required}
-                />
-            ) : (
-                <Input
-                    id={id}
-                    type="text"
-                    readOnly
-                    aria-required={required || undefined}
-                    value={formatDhis2Value(value, metaOf(field), {
-                        calendar: settings.calendar,
-                    })}
-                    className={READ_ONLY_CLASS}
-                />
-            )}
+            {control}
             {description === undefined ? null : (
                 <FieldDescription>{description}</FieldDescription>
             )}

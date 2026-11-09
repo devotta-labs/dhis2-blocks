@@ -900,12 +900,14 @@
                 "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/checkbox",
                 "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/combobox",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/dhis2-value-display",
                 "devotta-labs/dhis2-blocks/dhis2-value-types",
                 "devotta-labs/dhis2-blocks/field",
                 "devotta-labs/dhis2-blocks/input",
                 "devotta-labs/dhis2-blocks/label",
+                "devotta-labs/dhis2-blocks/radio-group",
                 "devotta-labs/dhis2-blocks/textarea"
             ],
             "files": [
@@ -973,6 +975,16 @@
                     "path": "packages/registry/blocks/dhis2-value-input/index.ts",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-input/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/kinds/ChoiceInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/kinds/ChoiceInput.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/kinds/OptionComboInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/kinds/OptionComboInput.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/dhis2-value-input/kinds/TypedInput.tsx",

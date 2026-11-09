@@ -314,8 +314,8 @@ test('a value type no control edits is shown read-only, with the reason', async 
         .toHaveAccessibleDescription('Edit this field in its own form')
 })
 
-test('a field with options not yet editable here shows the option name', async () => {
-    const { input } = await mount({
+test('a field with options shows the option name, checked', async () => {
+    await mount({
         field: {
             valueType: 'TEXT',
             options: [
@@ -325,7 +325,9 @@ test('a field with options not yet editable here shows the option name', async (
         },
         value: 'NEG',
     })
-    await expect.element(input).toHaveValue('Negative')
+    await expect
+        .element(page.getByRole('radio', { name: 'Negative' }))
+        .toBeChecked()
 })
 
 test('after a problem, valid text clears it at once and is reported on leaving', async () => {

@@ -2,8 +2,8 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// Blocks, primitives and the docs examples people copy colour themselves with
-// the semantic roles in theme.css only, so a theme can remap them.
+// Blocks, primitives, the docs and the demo app colour themselves with the
+// semantic roles in theme.css only, so a theme can remap them.
 
 const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url))
 const ROOTS = [
@@ -11,11 +11,14 @@ const ROOTS = [
     'packages/registry/blocks',
     'apps/docs/src/examples',
     'apps/docs/src/pages',
+    'apps/docs/src/playground',
+    'apps/web/src',
 ]
 const SOURCE = /\.(?:tsx?|css|mdx?)$/
-// theme.css is where the palette and the roles are defined.
+// theme.css defines the roles, and the installation page shows fixed colours
+// as what not to write.
 const SKIPPED =
-    /\.test\.tsx?$|(?:^|\/)(?:__tests__|type-tests|fixtures)\/|components\/theme\.css$/
+    /\.test\.tsx?$|(?:^|\/)(?:__tests__|type-tests|fixtures)\/|components\/theme\.css$|pages\/installation\.mdx$/
 
 // prettier-ignore
 const NAMED = 'aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow grey honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen lightgrey lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen'.replaceAll(' ', '|');
@@ -81,15 +84,7 @@ const listSources = (directory: string): string[] =>
         .map((entry) => join(directory, String(entry)))
         .filter((path) => SOURCE.test(path) && !SKIPPED.test(path))
 
-// Playground canvases are shown to readers as code (`?canvas`), like the examples.
-const CANVAS = /(?<!Lab)Canvas\.tsx$|LabFinder\.tsx$/
-
-const files = [
-    ...ROOTS.flatMap(listSources),
-    ...listSources('apps/docs/src/playground').filter((path) =>
-        CANVAS.test(path)
-    ),
-].sort()
+const files = ROOTS.flatMap(listSources).sort()
 
 const linesOf = (path: string): string[] =>
     readFileSync(join(REPO_ROOT, path), 'utf8').split('\n')
@@ -127,6 +122,13 @@ describe('colour usage', () => {
         expect(files).not.toContain('packages/registry/components/theme.css')
     })
 
+    it('scans the demo app and the whole playground', () => {
+        expect(files.some((path) => path.startsWith('apps/web/src/'))).toBe(
+            true
+        )
+        expect(files).toContain('apps/docs/src/playground/LabServer.tsx')
+    })
+
     it.each([
         "style={{ color: 'rebeccapurple' }}",
         'stroke="navy"',
@@ -149,6 +151,7 @@ describe('colour usage', () => {
         "const tone = 'warning'",
         'Mark the record as red-flagged in the notes',
         'className="bg-dhis2-neutral-fill text-dhis2-destructive"',
+        "stroke: 'var(--dhis2-primary)'",
     ])('lets %s through', (line) => {
         expect(rawColoursIn([line])).toEqual([])
     })

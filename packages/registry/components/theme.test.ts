@@ -1,3 +1,4 @@
+import { colors } from '@dhis2/ui-constants'
 import { readFileSync } from 'node:fs'
 
 const css = readFileSync(new URL('./theme.css', import.meta.url), 'utf8')
@@ -25,20 +26,31 @@ const defaultLayer = declarations(
     blockOf(css.replace(CONTRAST_BLOCK, ''), /:root\s*\{([^}]*)\}/)
 )
 const inlineLayer = declarations(blockOf(css, /@theme inline\s*\{([^}]*)\}/))
-const PALETTE_STEP = /^dhis2-(?:grey|blue|teal|red|yellow|green|purple)-\d{3}$/
-const palette = new Map(
-    [...defaultLayer].filter(([name]) => PALETTE_STEP.test(name))
-)
+const PALETTE_STEP =
+    /^(?:color-)?dhis2-(?:grey|blue|teal|red|yellow|green|purple)-\d{3}$/
 
-/** How a role names a palette step: white is the one colour outside it. */
-const reference = (step: string): string =>
-    step === 'white' ? '#ffffff' : `var(--dhis2-${step})`
+const PALETTE = new Map<string, string>(Object.entries(colors))
 
-const resolve = (value: string): string =>
-    value.replace(
-        /var\(--([\w-]+)\)/g,
-        (_, name: string) => palette.get(name) ?? `undefined --${name}`
+/** A palette step's colour, from @dhis2/ui-constants: `grey-050` is `colors.grey050`. */
+const paletteColour = (step: string): string => {
+    const colour = PALETTE.get(step.replace('-', ''))
+    if (colour === undefined) throw new Error(`no palette step ${step}`)
+    return colour.toLowerCase()
+}
+
+/** The palette step each role names in its comment, `--dhis2-x: #hex; /* grey-100 *\/`. */
+const namedSteps = (block: string): Map<string, string> =>
+    new Map(
+        [
+            ...block.matchAll(
+                /--dhis2-([\w-]+)\s*:\s*#[0-9a-f]{6}\s*;\s*\/\*\s*([\w-]+)\s*\*\//g
+            ),
+        ].map((match) => [match[1], match[2]])
     )
+const defaultSteps = namedSteps(
+    blockOf(css.replace(CONTRAST_BLOCK, ''), /:root\s*\{([^}]*)\}/)
+)
+const contrastSteps = namedSteps(blockOf(css, CONTRAST_BLOCK))
 
 // The spec's token map: each role's palette step by default and with more contrast.
 const SPEC = {
@@ -127,17 +139,14 @@ const contrast = (first: string, second: string): number => {
     return (lighter + 0.05) / (darker + 0.05)
 }
 
-const declaredDefault = (role: string): string => {
+const defaultValue = (role: string): string => {
     const value = defaultLayer.get(`dhis2-${role}`)
     if (value === undefined) throw new Error(`--dhis2-${role} is not defined`)
     return value
 }
 
-const declaredContrast = (role: string): string =>
-    contrastLayer.get(`dhis2-${role}`) ?? declaredDefault(role)
-
-const defaultValue = (role: string): string => resolve(declaredDefault(role))
-const contrastValue = (role: string): string => resolve(declaredContrast(role))
+const contrastValue = (role: string): string =>
+    contrastLayer.get(`dhis2-${role}`) ?? defaultValue(role)
 
 describe('theme.css', () => {
     it('defines exactly the roles in the token map', () => {
@@ -158,28 +167,27 @@ describe('theme.css', () => {
     it.each(Object.entries(SPEC))(
         '%s is %j by default and with more contrast',
         (role, [defaultStep, contrastStep]) => {
-            expect([declaredDefault(role), declaredContrast(role)]).toEqual([
-                reference(defaultStep),
-                reference(contrastStep),
+            expect([defaultValue(role), contrastValue(role)]).toEqual([
+                paletteColour(defaultStep),
+                paletteColour(contrastStep),
             ])
         }
     )
 
-    it('declares the palette as runtime variables', () => {
-        expect(palette.get('dhis2-blue-700')).toBe('#1565c0')
-        expect(palette.get('dhis2-grey-900')).toBe('#212934')
-    })
+    it.each(Object.entries(SPEC))(
+        '%s names its palette steps beside its colours',
+        (role, [defaultStep, contrastStep]) => {
+            expect(defaultSteps.get(role)).toBe(defaultStep)
+            if (contrastLayer.has(`dhis2-${role}`)) {
+                expect(contrastSteps.get(role)).toBe(contrastStep)
+            }
+        }
+    )
 
-    it('names palette steps in roles instead of repeating their colours', () => {
-        const roles = [...defaultLayer, ...contrastLayer].filter(
-            ([name]) => !PALETTE_STEP.test(name)
-        )
-        const repeated = roles.filter(([, value]) =>
-            (value.match(/#[0-9a-f]{3,8}\b/gi) ?? []).some(
-                (hex) => hex.toLowerCase() !== '#ffffff'
-            )
-        )
-        expect(repeated.map(([name]) => name)).toEqual([])
+    it('ships no palette, so apps can only colour with roles', () => {
+        const names = [...defaultLayer.keys(), ...inlineLayer.keys()]
+        expect(names.filter((name) => PALETTE_STEP.test(name))).toEqual([])
+        expect(css).not.toMatch(/^@theme \{[^}]*--color-/m)
     })
 
     it('every inline colour maps to a runtime variable', () => {

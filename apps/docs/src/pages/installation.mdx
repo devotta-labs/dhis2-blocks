@@ -129,8 +129,26 @@ Blocks also keep their edges, focus and states in Windows forced colours, where
 the system replaces every colour: menus, popovers, dialogs, cards and tooltips
 gain a border, and fields and options keep a visible outline.
 
-For your own code next to the blocks, use the same roles, so it changes with
-them:
+## Colours in your own code
+
+Colour your own code with the same roles, never with a fixed colour. A role
+changes with more contrast, keeps its meaning in forced colours, and will
+follow any other theme the blocks gain. A fixed colour stays the same in all of
+them, so that part of your app stops working in each one.
+
+The theme ships only roles. There is no DHIS2 palette to reach for:
+`bg-dhis2-grey-200` colours nothing.
+
+| Instead of                            | Use                                                                  |
+| ------------------------------------- | -------------------------------------------------------------------- |
+| `text-[#4a5768]`, `text-gray-700`     | `text-dhis2-muted-foreground`                                        |
+| `bg-white`                            | `bg-dhis2-background`                                                |
+| `border-[#d5dde5]`                    | `border-dhis2-border-strong`                                         |
+| `text-[#147cd7]` for a link           | `text-dhis2-primary`                                                 |
+| `bg-[#fff5f6]` with a red border      | `bg-dhis2-destructive-subtle` with `border-dhis2-destructive-border` |
+| `stroke: '#c62828'` in a chart config | `stroke: 'var(--dhis2-destructive-indicator)'`                       |
+
+The roles:
 
 - Text: `text-dhis2-foreground`, `text-dhis2-muted-foreground`,
   `text-dhis2-subtle-foreground`.

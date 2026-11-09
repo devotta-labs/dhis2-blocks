@@ -297,22 +297,25 @@ const checkInstall = (workDirectory: string): void => {
         '--color-dhis2-primary',
         'var(--dhis2-primary)'
     )
-    // The role and the palette step it names must reach :root too, or every
-    // colour is unset.
-    const declares = (name: string, expected: string) =>
-        declarationValues(emitted, name).some(
-            (value) => normalizeCssValue(value) === expected
+    // The role's value must reach :root too, or every colour is unset.
+    if (
+        !declarationValues(emitted, '--dhis2-primary').some(
+            (value) => normalizeCssValue(value) === '#1565c0'
         )
-    if (!declares('--dhis2-primary', 'var(--dhis2-blue-700)')) {
-        fail(9, ':root does not point --dhis2-primary at --dhis2-blue-700')
+    ) {
+        fail(9, ':root does not set --dhis2-primary to #1565c0')
     }
-    if (!declares('--dhis2-blue-700', '#1565c0')) {
-        fail(9, ':root does not set --dhis2-blue-700 to #1565c0')
+    // Only roles ship: a palette step would keep its colour in every theme.
+    const palette = emitted.match(
+        /--(?:color-)?dhis2-(?:grey|blue|teal|red|yellow|green|purple)-\d{3}\b/
+    )
+    if (palette) {
+        fail(9, `the installed theme exposes the palette step ${palette[0]}`)
     }
 
     step('10. Emitted CSS carries the high-contrast block')
     if (
-        !/@media\s*\(prefers-contrast:\s*more\)\s*\{\s*:root\s*\{[^}]*--dhis2-muted-foreground:\s*var\(--dhis2-grey-800\)/i.test(
+        !/@media\s*\(prefers-contrast:\s*more\)\s*\{\s*:root\s*\{[^}]*--dhis2-muted-foreground:\s*#404b5a/i.test(
             emitted
         )
     ) {

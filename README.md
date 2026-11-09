@@ -399,10 +399,12 @@ Available items: `alert`, `alert-dialog`, `button`, `checkbox`, `cn`,
 `tooltip`. Items that import siblings (for example `combobox` imports `select`
 and `input-group`) install them too.
 
-Every design token is namespaced (`--color-dhis2-*`, `--radius-dhis2-*`,
-`--shadow-dhis2-*`, `--font-dhis2`), so utilities such as `bg-dhis2-primary` or
-`text-dhis2-grey-700` coexist with the host application's own Tailwind theme
-and never replace it. Run `pnpm registry:check` to verify the published items
+Every design token is namespaced (`--dhis2-*`, `--color-dhis2-*`,
+`--radius-dhis2-*`, `--shadow-dhis2-*`, `--font-dhis2`), so utilities such as
+`bg-dhis2-primary` or `text-dhis2-muted-foreground` coexist with the host
+application's own Tailwind theme and never replace it. The theme ships semantic
+roles only, no palette, so everything coloured with it follows the contrast
+setting. Run `pnpm registry:check` to verify the published items
 install and build in a throwaway consumer app.
 
 ## Documentation site

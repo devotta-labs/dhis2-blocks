@@ -102,7 +102,7 @@ export const ContextSelectorShowcase = () => {
 
     return (
         <div
-            className="min-h-screen bg-[#f3f5f7] pb-10"
+            className="min-h-screen bg-dhis2-muted pb-10"
             data-testid="context-selector-showcase"
         >
             <ContextSelector ariaLabel="Context selector showcase">
@@ -127,7 +127,7 @@ export const ContextSelectorShowcase = () => {
                                 className="space-y-1 p-3"
                                 aria-label="Example organisation units"
                             >
-                                <p className="m-0 pb-2 text-sm text-[#4a5768]">
+                                <p className="m-0 pb-2 text-sm text-dhis2-muted-foreground">
                                     Host-owned organisation-unit picker
                                 </p>
                                 {[
@@ -138,7 +138,7 @@ export const ContextSelectorShowcase = () => {
                                     <button
                                         key={name}
                                         type="button"
-                                        className="block w-full rounded px-3 py-2 text-left text-sm hover:bg-[#e8edf2] focus:outline-2 focus:outline-[#147cd7]"
+                                        className="block w-full rounded px-3 py-2 text-left text-sm hover:bg-dhis2-accent focus:outline-2 focus:outline-dhis2-ring"
                                         onClick={(event) => {
                                             event.preventDefault()
                                             event.stopPropagation()
@@ -207,23 +207,23 @@ export const ContextSelectorShowcase = () => {
                 />
             </ContextSelector>
 
-            <main className="mx-auto mt-6 w-[min(880px,calc(100%-32px))] rounded border border-[#d5dde5] bg-white p-6 shadow-sm">
+            <main className="mx-auto mt-6 w-[min(880px,calc(100%-32px))] rounded border border-dhis2-border-strong bg-dhis2-background p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <p className="m-0 text-xs font-semibold tracking-wide text-[#6c7787] uppercase">
+                        <p className="m-0 text-xs font-semibold tracking-wide text-dhis2-subtle-foreground uppercase">
                             Component demo
                         </p>
-                        <h1 className="mt-1 mb-2 text-2xl font-medium text-[#212934]">
+                        <h1 className="mt-1 mb-2 text-2xl font-medium text-dhis2-foreground">
                             Context Selector showcase
                         </h1>
-                        <p className="m-0 max-w-2xl text-sm leading-6 text-[#4a5768]">
+                        <p className="m-0 max-w-2xl text-sm leading-6 text-dhis2-muted-foreground">
                             Open and change every selector in the Capture-style
                             row. This page owns all values, popup state, and
                             callbacks; the block remains presentational.
                         </p>
                     </div>
                     <a
-                        className="text-sm font-medium text-[#147cd7] underline-offset-2 hover:underline"
+                        className="text-sm font-medium text-dhis2-primary underline-offset-2 hover:underline"
                         href="#/"
                     >
                         Back to Working List
@@ -231,7 +231,7 @@ export const ContextSelectorShowcase = () => {
                 </div>
 
                 <section
-                    className="mt-6 border-t border-[#e8edf2] pt-5"
+                    className="mt-6 border-t border-dhis2-border pt-5"
                     aria-labelledby="showcase-controls-heading"
                 >
                     <h2
@@ -241,10 +241,10 @@ export const ContextSelectorShowcase = () => {
                         State controls
                     </h2>
                     <div className="mt-3 flex flex-wrap items-end gap-5">
-                        <label className="grid gap-1 text-sm font-medium text-[#364152]">
+                        <label className="grid gap-1 text-sm font-medium text-dhis2-foreground">
                             Visible selectors
                             <select
-                                className="min-w-48 rounded border border-[#a0adba] bg-white px-3 py-2 font-normal text-[#212934]"
+                                className="min-w-48 rounded border border-dhis2-input bg-dhis2-background px-3 py-2 font-normal text-dhis2-foreground"
                                 value={selectorSet}
                                 onChange={(event) => {
                                     setSelectorSet(
@@ -263,10 +263,10 @@ export const ContextSelectorShowcase = () => {
                                 </option>
                             </select>
                         </label>
-                        <label className="grid gap-1 text-sm font-medium text-[#364152]">
+                        <label className="grid gap-1 text-sm font-medium text-dhis2-foreground">
                             Selector state
                             <select
-                                className="min-w-48 rounded border border-[#a0adba] bg-white px-3 py-2 font-normal text-[#212934]"
+                                className="min-w-48 rounded border border-dhis2-input bg-dhis2-background px-3 py-2 font-normal text-dhis2-foreground"
                                 value={mode}
                                 onChange={(event) => {
                                     const nextMode = event.target.value
@@ -282,7 +282,7 @@ export const ContextSelectorShowcase = () => {
                                 <option value="readOnly">Read-only</option>
                             </select>
                         </label>
-                        <label className="flex min-h-10 items-center gap-2 text-sm text-[#364152]">
+                        <label className="flex min-h-10 items-center gap-2 text-sm text-dhis2-foreground">
                             <input
                                 type="checkbox"
                                 checked={clearable}
@@ -294,7 +294,7 @@ export const ContextSelectorShowcase = () => {
                         </label>
                         <button
                             type="button"
-                            className="min-h-10 rounded border border-[#a0adba] bg-white px-4 text-sm font-medium text-[#25313f] hover:bg-[#f3f5f7]"
+                            className="min-h-10 rounded border border-dhis2-input bg-dhis2-background px-4 text-sm font-medium text-dhis2-foreground hover:bg-dhis2-muted"
                             onClick={() => setValues(initialValues)}
                         >
                             Reset sample values
@@ -303,7 +303,7 @@ export const ContextSelectorShowcase = () => {
                 </section>
 
                 <section
-                    className="mt-6 rounded bg-[#f8fafb] p-4 text-sm text-[#4a5768]"
+                    className="mt-6 rounded bg-dhis2-muted p-4 text-sm text-dhis2-muted-foreground"
                     aria-label="Showcase notes"
                 >
                     <p className="m-0">

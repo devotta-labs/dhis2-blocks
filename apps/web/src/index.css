@@ -17,8 +17,8 @@
 @source '../../../../../../packages/registry/blocks/context-selector';
 
 :root {
-    color: #212934;
-    background: #f3f5f7;
+    color: var(--dhis2-foreground);
+    background: var(--dhis2-muted);
     font-family: Roboto, Helvetica, Arial, sans-serif;
     font-synthesis: none;
 }
@@ -29,7 +29,7 @@
 
 body {
     margin: 0;
-    background: #f3f5f7;
+    background: var(--dhis2-muted);
 }
 
 button,

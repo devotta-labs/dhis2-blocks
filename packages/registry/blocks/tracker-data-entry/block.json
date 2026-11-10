@@ -1,0 +1,4 @@
+{
+    "title": "Tracker Data Entry",
+    "description": "Grid data entry for DHIS2 event and tracker programs: event lists and paper registers, program rules, and unsent changes kept on the device until DHIS2 has them."
+}

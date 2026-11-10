@@ -1,0 +1,10 @@
+{
+    "id": "xE7jOejl9FI",
+    "authorities": [
+        "F_EVENTCHART_PUBLIC_ADD",
+        "F_TRACKED_ENTITY_ATTRIBUTE_PRIVATE_ADD",
+        "F_EXPORT_EVENTS",
+        "F_TRACKED_ENTITY_COMMENT_DELETE",
+        "F_ORGUNITGROUPSET_PUBLIC_ADD"
+    ]
+}

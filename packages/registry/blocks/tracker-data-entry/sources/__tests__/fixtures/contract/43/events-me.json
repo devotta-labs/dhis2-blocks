@@ -1,0 +1,10 @@
+{
+    "id": "xE7jOejl9FI",
+    "authorities": [
+        "F_ORGANISATIONUNIT_MOVE",
+        "F_ORGANISATIONUNITLEVEL_UPDATE",
+        "F_LOCALE_ADD",
+        "F_INDICATOR_PUBLIC_ADD",
+        "F_DATA_APPROVAL_LEVEL"
+    ]
+}

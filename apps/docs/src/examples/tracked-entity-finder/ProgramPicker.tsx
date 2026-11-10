@@ -102,7 +102,10 @@ export default function ProgramPicker() {
                 <FinderResults className="mt-6" />
             </FinderProvider>
 
-            <p className="text-sm text-dhis2-grey-700" aria-live="polite">
+            <p
+                className="text-sm text-dhis2-muted-foreground"
+                aria-live="polite"
+            >
                 {person
                     ? `Selected ${person.trackedEntity} in ${program.label}`
                     : 'Pick a program, search, then select a person.'}

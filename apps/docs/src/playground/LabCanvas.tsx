@@ -42,7 +42,7 @@ export const LabCanvas = ({
             keepMounted
             className="lab-graticule relative min-h-0 flex-1 overflow-auto"
         >
-            <div className="docs-preview-surface flex flex-col gap-3 p-3 [font-family:Roboto,Helvetica,Arial,sans-serif] text-dhis2-grey-900 [color-scheme:light] md:p-6">
+            <div className="docs-preview-surface flex flex-col gap-3 p-3 [font-family:Roboto,Helvetica,Arial,sans-serif] text-dhis2-foreground [color-scheme:light] md:p-6">
                 {children}
             </div>
         </Tabs.Panel>

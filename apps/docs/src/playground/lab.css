@@ -19,6 +19,7 @@
         --lab-rule: var(--border);
         --lab-rule-faint: color-mix(in srgb, var(--border) 55%, transparent);
         --lab-fault: var(--destructive);
+        /* colour-literal: the docs site's own caution colour; it has no such token */
         --lab-caution: #b7791f;
         /* Small labels: a log column's name. */
         --lab-bar: var(--muted);
@@ -28,6 +29,7 @@
 
     .dark .lab {
         color-scheme: dark;
+        /* colour-literal: the docs site's caution colour on its dark theme */
         --lab-caution: #e2ab4f;
     }
 

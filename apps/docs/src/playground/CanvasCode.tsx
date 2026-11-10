@@ -39,7 +39,7 @@ const PropTooltip = ({
                 role="tooltip"
                 className="max-w-[min(28rem,calc(100vw-2rem))] px-3 py-2"
             >
-                <span className="mb-1 block font-mono text-xs text-white/60">
+                <span className="mb-1 block font-mono text-xs text-dhis2-background/60">
                     {label}
                 </span>
                 <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed">

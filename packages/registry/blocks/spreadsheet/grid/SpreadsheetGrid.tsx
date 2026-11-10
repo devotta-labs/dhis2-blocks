@@ -44,7 +44,7 @@ import { useAddRow } from './useAddRow'
 
 const HEADER_CLASS = cn(
     BORDER_CLASS,
-    'bg-dhis2-grey-100 px-2 py-1.5 text-start align-bottom text-[13px] font-medium text-dhis2-grey-800'
+    'bg-dhis2-muted px-2 py-1.5 text-start align-bottom text-[13px] font-medium text-dhis2-foreground'
 )
 
 interface TableViewProps {
@@ -111,14 +111,17 @@ const TableView = memo(function TableView({
     }, [])
     return (
         <div className="flex flex-col gap-2">
-            <p id={titleId} className="text-sm font-medium text-dhis2-grey-900">
+            <p
+                id={titleId}
+                className="text-sm font-medium text-dhis2-foreground"
+            >
                 {table.title}
             </p>
             <div
                 ref={region}
                 role="region"
                 aria-labelledby={titleId}
-                className="isolate w-fit max-w-full max-h-[70vh] scroll-ps-[min(12rem,30vw)] scroll-pe-9 overflow-auto [overflow-anchor:none] rounded-dhis2-sm border border-dhis2-grey-300 bg-white"
+                className="isolate w-fit max-w-full max-h-[70vh] scroll-ps-[min(12rem,30vw)] scroll-pe-9 overflow-auto [overflow-anchor:none] rounded-dhis2-sm border border-dhis2-border bg-dhis2-background"
             >
                 {/* Only the rows near the view are drawn: the row count and each row's index say where they sit. */}
                 <table
@@ -547,7 +550,7 @@ export const SpreadsheetGrid = ({
                     event.preventDefault()
                     document.getElementById(end)?.focus()
                 }}
-                className="sr-only self-start rounded-dhis2-sm bg-white px-2 py-1 text-sm text-dhis2-blue-800 underline focus:not-sr-only focus:outline-2 focus:outline-dhis2-blue-600"
+                className="sr-only self-start rounded-dhis2-sm bg-dhis2-background px-2 py-1 text-sm text-dhis2-primary underline focus:not-sr-only focus:outline-2 focus:outline-dhis2-ring"
             >
                 {i18n.t('Skip past the grid')}
             </a>

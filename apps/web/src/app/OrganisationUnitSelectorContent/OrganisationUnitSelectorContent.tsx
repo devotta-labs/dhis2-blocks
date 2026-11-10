@@ -120,7 +120,7 @@ const OrganisationUnitSearchPagination = ({
 >) => {
     if (searchLoadMoreError) {
         return (
-            <div className="flex w-full items-center justify-center gap-[8px] pb-[4px] text-[14px] text-[#4a5768]">
+            <div className="flex w-full items-center justify-center gap-[8px] pb-[4px] text-[14px] text-dhis2-muted-foreground">
                 <span>{i18n.t('Could not load more organisation units')}</span>
                 <Button
                     variant="secondary"
@@ -188,7 +188,7 @@ const OrganisationUnitSearchResults = ({
     if (searchError) {
         return (
             <div
-                className="flex w-full flex-col items-center gap-[8px] px-[16px] py-[24px] text-center text-[14px] text-[#4a5768]"
+                className="flex w-full flex-col items-center gap-[8px] px-[16px] py-[24px] text-center text-[14px] text-dhis2-muted-foreground"
                 data-test="org-unit-search-error"
             >
                 <span>{i18n.t('Could not search organisation units')}</span>
@@ -239,8 +239,8 @@ export const OrganisationUnitSelectorContent = ({
     ...searchResultsProps
 }: OrganisationUnitSelectorContentProps) => {
     return (
-        <div className="z-0 h-full w-full rounded-[3px] border border-[#e8edf2] bg-white">
-            <div className="rounded-t-[3px] bg-[#f8f9fa] p-[8px]">
+        <div className="z-0 h-full w-full rounded-[3px] border border-dhis2-border bg-dhis2-background">
+            <div className="rounded-t-[3px] bg-dhis2-muted p-[8px]">
                 <input
                     className={styles.searchInput}
                     data-test="org-unit-search-input"
@@ -257,7 +257,7 @@ export const OrganisationUnitSelectorContent = ({
                     className={
                         searchResultsProps.searchLoading
                             ? 'm-[4px] flex h-[calc(100vh-48px)] items-center justify-center'
-                            : 'flex min-h-[42px] max-w-[100vw] flex-col bg-white p-[4px] pt-[8px]'
+                            : 'flex min-h-[42px] max-w-[100vw] flex-col bg-dhis2-background p-[4px] pt-[8px]'
                     }
                     data-test="org-unit-tree"
                     data-testid="org-unit-tree"

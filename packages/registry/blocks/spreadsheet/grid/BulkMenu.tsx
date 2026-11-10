@@ -116,7 +116,7 @@ export const RowActions = ({
     rowHeader: string
     onOpen(anchor: HTMLElement): void
 }) => (
-    <td className={cn(BORDER_CLASS, ACTIONS_CLASS, 'bg-white')}>
+    <td className={cn(BORDER_CLASS, ACTIONS_CLASS, 'bg-dhis2-background')}>
         <ActionsButton
             id={`${rowHeader}-actions`}
             label={i18n.t('Row actions')}

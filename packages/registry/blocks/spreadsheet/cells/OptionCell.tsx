@@ -136,7 +136,7 @@ export const OptionCell = memo(function OptionCell({
                         value,
                         <>
                             {shown}
-                            <span className="block text-xs text-dhis2-grey-700">
+                            <span className="block text-xs text-dhis2-muted-foreground">
                                 {detail}
                             </span>
                         </>,

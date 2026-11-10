@@ -179,7 +179,7 @@ export const WorkingListRepairDialog = ({
                     </DialogTitle>
                 </DialogHeader>
                 <div className="min-h-0 flex-1 overflow-y-auto text-[14px]">
-                    <p className="m-0 text-[var(--colors-grey700)]">
+                    <p className="m-0 text-dhis2-muted-foreground">
                         {i18n.t(
                             'Some metadata changed, was removed, or is no longer accessible.'
                         )}

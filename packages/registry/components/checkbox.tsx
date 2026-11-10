@@ -11,13 +11,13 @@ import { cn } from './cn'
  * can wear it, e.g. the non-interactive box in a multi-select option.
  */
 const checkboxBoxVariants = cva(
-    'flex shrink-0 items-center justify-center border border-dhis2-grey-800 bg-white text-white data-checked:border-dhis2-teal-900 data-checked:bg-dhis2-teal-500 [&_svg]:fill-current',
+    'flex shrink-0 items-center justify-center border border-dhis2-control bg-dhis2-background text-dhis2-primary-foreground data-checked:border-dhis2-selected-foreground data-checked:bg-dhis2-selected-strong [&_svg]:fill-current',
     {
         variants: {
             size: {
                 regular:
-                    'size-[18px] rounded-[3px] data-disabled:border-dhis2-grey-400 data-disabled:bg-dhis2-grey-300 data-disabled:data-checked:border-dhis2-grey-400 data-disabled:data-checked:bg-dhis2-grey-300',
-                dense: 'size-[14px] rounded-[2px] data-disabled:border-dhis2-grey-400 data-disabled:bg-dhis2-grey-400 data-disabled:data-checked:border-dhis2-grey-500 data-disabled:data-checked:bg-dhis2-grey-400',
+                    'size-[18px] rounded-[3px] data-disabled:border-dhis2-border-strong data-disabled:bg-dhis2-accent-strong data-disabled:data-checked:border-dhis2-border-strong data-disabled:data-checked:bg-dhis2-accent-strong',
+                dense: 'size-[14px] rounded-[2px] data-disabled:border-dhis2-border-strong data-disabled:bg-dhis2-accent-strong data-disabled:data-checked:border-dhis2-border-strong data-disabled:data-checked:bg-dhis2-accent-strong',
             },
         },
         defaultVariants: { size: 'regular' },
@@ -69,7 +69,7 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
             data-slot="checkbox"
             className={cn(
                 checkboxBoxVariants(),
-                'peer relative cursor-pointer outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-1 focus-visible:outline-dhis2-ring data-disabled:cursor-not-allowed aria-invalid:border-dhis2-red-500',
+                'peer relative cursor-pointer outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-1 focus-visible:outline-dhis2-ring data-disabled:cursor-not-allowed aria-invalid:border-dhis2-destructive-border',
                 className
             )}
             {...props}

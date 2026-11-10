@@ -68,7 +68,7 @@ export const WorkingListPagination = ({
                     >
                         <span
                             aria-hidden="true"
-                            className="pe-3 text-dhis2-grey-600"
+                            className="pe-3 text-dhis2-subtle-foreground"
                         >
                             {pageSizeLabel}
                         </span>

@@ -63,7 +63,7 @@ export const TimelineChangeSummary = ({
             {...props}
             data-slot="timeline-change-summary"
             className={cn(
-                'm-0 flex flex-wrap items-baseline gap-x-2 text-sm text-dhis2-grey-900',
+                'm-0 flex flex-wrap items-baseline gap-x-2 text-sm text-dhis2-foreground',
                 className
             )}
         >
@@ -71,7 +71,10 @@ export const TimelineChangeSummary = ({
                 {summaryLabel(user.displayName, changes.length, entered)}
             </span>
             {when === undefined ? null : (
-                <time dateTime={createdAt} className="text-dhis2-grey-700">
+                <time
+                    dateTime={createdAt}
+                    className="text-dhis2-muted-foreground"
+                >
                     {when}
                 </time>
             )}
@@ -104,7 +107,9 @@ const eventFieldValue = (
 
 const Value = ({ text }: { text: string }) =>
     text === '' ? (
-        <span className="text-dhis2-grey-700 italic">{i18n.t('(empty)')}</span>
+        <span className="text-dhis2-muted-foreground italic">
+            {i18n.t('(empty)')}
+        </span>
     ) : (
         <>{text}</>
     )
@@ -128,18 +133,18 @@ const ChangeRowItem = ({ change }: { change: ResolvedChange }) => {
         <div data-slot="timeline-change-row">
             <dt
                 data-slot="timeline-change-field"
-                className="me-1 inline text-dhis2-grey-700"
+                className="me-1 inline text-dhis2-muted-foreground"
             >
                 {change.name}
             </dt>{' '}
             {/* Each value is isolated so its script can't reorder the row, and
                 the arrow turns: before → after in the reading direction. */}
-            <dd className="m-0 inline font-medium text-dhis2-grey-900">
+            <dd className="m-0 inline font-medium text-dhis2-foreground">
                 {change.type === 'CREATE' ? null : (
                     <>
                         <bdi
                             data-slot="timeline-change-before"
-                            className="font-normal text-dhis2-grey-700 line-through"
+                            className="font-normal text-dhis2-muted-foreground line-through"
                         >
                             <Value text={show(change.previousValue)} />
                         </bdi>{' '}

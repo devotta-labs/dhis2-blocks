@@ -37,13 +37,20 @@ Options and legends in DHIS2 often have a colour of their own. Pass it with
 `style`, so a badge matches the maps and reports users know:
 
 ```tsx
-<Badge style={{ backgroundColor: option.style.color, color: '#212934' }}>
+<Badge
+    style={{
+        backgroundColor: option.style.color,
+        // colour-literal: text paired with the option's own colour, not the theme
+        color: '#000000',
+    }}
+>
     {option.name}
 </Badge>
 ```
 
-Pick a text colour that is easy to read on that background: dark text on
-light colours, white on dark ones.
+Pick a text colour that reads well on the option's colour, black on light
+colours and white on dark ones. It goes with the option's colour rather than the
+theme, so it stays a fixed value.
 
 ## Writing badges
 

@@ -40,7 +40,7 @@ export function FinderHint({ className, ...props }: FinderHintProps) {
         <p
             {...props}
             data-slot="finder-hint"
-            className={cn('m-0 text-sm text-dhis2-grey-700', className)}
+            className={cn('m-0 text-sm text-dhis2-muted-foreground', className)}
         >
             {text}
         </p>

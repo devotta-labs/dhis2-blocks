@@ -66,7 +66,7 @@ export const TrueOnlyCell = memo(function TrueOnlyCell(props: ControlProps) {
     return (
         <div
             className={cn(
-                'flex h-full min-h-9 items-center px-2 text-sm focus-within:bg-white focus-within:shadow-[inset_0_0_0_2px_var(--color-dhis2-blue-600)] has-aria-invalid:not-focus-within:bg-dhis2-red-050 has-aria-invalid:not-focus-within:shadow-[inset_0_0_0_2px_var(--color-dhis2-red-600)]',
+                'flex h-full min-h-9 items-center px-2 text-sm focus-within:bg-dhis2-background focus-within:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] forced-colors:focus-within:outline-2 forced-colors:focus-within:outline-solid forced-colors:focus-within:-outline-offset-2 has-aria-invalid:not-focus-within:bg-dhis2-destructive-subtle has-aria-invalid:not-focus-within:shadow-[inset_0_0_0_2px_var(--dhis2-destructive-indicator)]',
                 locked && LOCKED_CLASS,
                 hidden && HIDDEN_CLASS
             )}
@@ -97,7 +97,7 @@ export const TrueOnlyCell = memo(function TrueOnlyCell(props: ControlProps) {
                     }
                 }}
                 className={cn(
-                    'size-4 accent-dhis2-blue-600 outline-none',
+                    'size-4 accent-dhis2-primary outline-none',
                     hidden && 'sr-only'
                 )}
             />

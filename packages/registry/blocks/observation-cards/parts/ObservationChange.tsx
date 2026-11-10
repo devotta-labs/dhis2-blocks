@@ -27,7 +27,7 @@ function Direction({
             <span
                 aria-hidden="true"
                 data-slot="change-arrow"
-                className="inline-flex align-[-2px] text-dhis2-grey-600 [&_svg]:size-3.5"
+                className="inline-flex align-[-2px] text-dhis2-subtle-foreground [&_svg]:size-3.5"
             >
                 <Arrow />
             </span>
@@ -59,7 +59,7 @@ export function ObservationChange({
         <p
             {...props}
             data-slot="observation-change"
-            className={cn('text-sm text-dhis2-grey-700', className)}
+            className={cn('text-sm text-dhis2-muted-foreground', className)}
         >
             {change.direction ? (
                 <Direction direction={change.direction} />

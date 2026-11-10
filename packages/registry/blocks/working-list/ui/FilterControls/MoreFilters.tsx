@@ -137,7 +137,7 @@ export const MoreFilters = ({
                                                         data-test={`select-filter-stage-${stage.id}`}
                                                         className={
                                                             selected
-                                                                ? 'bg-dhis2-grey-300 data-highlighted:bg-dhis2-grey-300'
+                                                                ? 'bg-dhis2-accent-strong data-highlighted:bg-dhis2-accent-strong'
                                                                 : undefined
                                                         }
                                                         disabled

@@ -61,7 +61,7 @@ const WorkingListProgramPicker = () => {
 
     if (error) {
         return (
-            <p className="text-sm text-[#a03030]">
+            <p className="text-sm text-dhis2-destructive">
                 Could not load program metadata: {error.message}
             </p>
         )
@@ -71,7 +71,7 @@ const WorkingListProgramPicker = () => {
 
     if (!parsed.success) {
         return (
-            <p className="text-sm text-[#a03030]">
+            <p className="text-sm text-dhis2-destructive">
                 Unexpected metadata response from the server.
             </p>
         )
@@ -134,7 +134,7 @@ const WorkingListProgramPicker = () => {
                     <WorkingListTable />
                 </WorkingList>
             ) : (
-                <p className="text-sm text-[#4a5768]">
+                <p className="text-sm text-dhis2-muted-foreground">
                     No tracker program or organisation unit is available for
                     this user.
                 </p>

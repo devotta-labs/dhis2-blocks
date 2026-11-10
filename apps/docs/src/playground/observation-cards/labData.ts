@@ -11,10 +11,10 @@ const VISIT_STAGE = 'labVisitStg'
 const REVIEW_STAGE = 'labReviewSt'
 
 // Legend colours as a DHIS2 admin might set them, each dark or light enough for black or white text to pass AA.
-const RED = '#c62828'
-const ORANGE = '#ef6c00'
-const YELLOW = '#fbc02d'
-const GREEN = '#2e7d32'
+const RED = '#c62828' // colour-literal: sample DHIS2 legend colour, which is data
+const ORANGE = '#ef6c00' // colour-literal: sample DHIS2 legend colour, which is data
+const YELLOW = '#fbc02d' // colour-literal: sample DHIS2 legend colour, which is data
+const GREEN = '#2e7d32' // colour-literal: sample DHIS2 legend colour, which is data
 
 interface Domain {
     min: number

@@ -153,7 +153,7 @@ const FilterEditor = ({
 
     return (
         <form
-            className="box-border w-[min(380px,calc(100vw_-_32px))] min-w-0 max-w-[calc(100vw_-_32px)] p-[16px] [&>*+*]:mt-[12px] [&>*]:box-border [&>*]:min-w-0 [&>*]:max-w-full [&_[data-test]]:box-border [&_[data-test]]:min-w-0 [&_[data-test]]:max-w-full [&_[data-testid^=filter-value-]]:box-border [&_[data-testid^=filter-value-]]:min-w-0 [&_[data-testid^=filter-value-]]:max-w-full [&_:is(input,select,textarea)]:box-border [&_:is(input,select,textarea)]:min-w-0 [&_:is(input,select,textarea)]:max-w-full [&_h3]:[margin:0_0_12px]! [&_h3]:text-[#17212b] [&_h3]:[font-size:16px]! [&_h3]:[font-weight:500]!"
+            className="box-border w-[min(380px,calc(100vw_-_32px))] min-w-0 max-w-[calc(100vw_-_32px)] p-[16px] [&>*+*]:mt-[12px] [&>*]:box-border [&>*]:min-w-0 [&>*]:max-w-full [&_[data-test]]:box-border [&_[data-test]]:min-w-0 [&_[data-test]]:max-w-full [&_[data-testid^=filter-value-]]:box-border [&_[data-testid^=filter-value-]]:min-w-0 [&_[data-testid^=filter-value-]]:max-w-full [&_:is(input,select,textarea)]:box-border [&_:is(input,select,textarea)]:min-w-0 [&_:is(input,select,textarea)]:max-w-full [&_h3]:[margin:0_0_12px]! [&_h3]:text-dhis2-foreground [&_h3]:[font-size:16px]! [&_h3]:[font-weight:500]!"
             data-testid={`filter-editor-${field.id}`}
             onSubmit={(event) => {
                 event.preventDefault()
@@ -202,13 +202,13 @@ const FilterEditor = ({
             />
             {error && (
                 <p
-                    className="text-[13px] text-[#c62828] [margin:10px_0_0]"
+                    className="text-[13px] text-dhis2-destructive [margin:10px_0_0]"
                     role="alert"
                 >
                     {error}
                 </p>
             )}
-            <div className="flex flex-wrap gap-[8px] pt-[12px] [border-top:1px_solid_#e8edf2]">
+            <div className="flex flex-wrap gap-[8px] pt-[12px] border-t border-dhis2-border">
                 <Button
                     size="sm"
                     type="submit"

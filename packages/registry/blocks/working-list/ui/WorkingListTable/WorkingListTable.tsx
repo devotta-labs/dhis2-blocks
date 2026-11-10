@@ -84,7 +84,7 @@ const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
             <TooltipTrigger
                 render={
                     <span
-                        className="inline-flex items-center text-[#b93d2e]"
+                        className="inline-flex items-center text-dhis2-destructive"
                         role="img"
                         data-testid={`row-issues-${row.id}`}
                         aria-label={i18n.t(
@@ -118,7 +118,7 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
         case 'link':
             return (
                 <a
-                    className="text-[#0053a0] underline-offset-2"
+                    className="text-dhis2-primary underline-offset-2"
                     href={display.href}
                     rel="noreferrer noopener"
                     target="_blank"
@@ -129,7 +129,7 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
         case 'file':
             return (
                 <a
-                    className="text-[#0053a0] underline-offset-2"
+                    className="text-dhis2-primary underline-offset-2"
                     href={display.href}
                     rel="noreferrer noopener"
                     target="_blank"
@@ -140,14 +140,14 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
         case 'image':
             return (
                 <a
-                    className="text-[#0053a0] underline-offset-2"
+                    className="text-dhis2-primary underline-offset-2"
                     href={display.href}
                     rel="noreferrer noopener"
                     target="_blank"
                 >
                     <img
                         alt={display.alt || i18n.t('Image attachment')}
-                        className="block h-10 w-14 rounded-[3px] border border-[#d5dde5] bg-[#f3f5f7] object-cover"
+                        className="block h-10 w-14 rounded-[3px] border border-dhis2-border-strong bg-dhis2-accent object-cover"
                         loading="lazy"
                         src={display.previewHref}
                     />

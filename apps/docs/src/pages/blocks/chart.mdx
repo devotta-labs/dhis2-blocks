@@ -47,8 +47,8 @@ const visits = [
 
 // One entry per series: what users read, and its colour.
 const config = {
-    first: { label: 'ANC 1st visit', color: '#147cd7' },
-    fourth: { label: 'ANC 4th visit', color: '#009688' },
+    first: { label: 'ANC 1st visit', color: 'var(--dhis2-info-indicator)' },
+    fourth: { label: 'ANC 4th visit', color: 'var(--dhis2-success-indicator)' },
 } satisfies ChartConfig
 
 export const AncVisits = () => (
@@ -115,8 +115,8 @@ const cases = [
 ]
 
 const config = {
-    under5: { label: 'Under 5', color: '#147cd7' },
-    child: { label: '5 to 14', color: '#009688' },
+    under5: { label: 'Under 5', color: 'var(--dhis2-info-indicator)' },
+    child: { label: '5 to 14', color: 'var(--dhis2-success-indicator)' },
 } satisfies ChartConfig
 
 <PieChart>
@@ -131,12 +131,11 @@ const config = {
 
 ## Colours
 
-- Use colours from the DHIS2 palette, such as blue `#147cd7`, teal
-  `#009688`, yellow `#ff9302` and grey `#a0adba`, so the chart sits well
-  next to the rest of the app.
-- Write them as values in the config, not as `var(--color-dhis2-…)`. Tailwind
-  only outputs the theme colours your app uses as classes, so a variable
-  can be missing.
+- Colour series with the theme's indicator roles: `var(--dhis2-info-indicator)`,
+  `var(--dhis2-success-indicator)`, `var(--dhis2-warning-indicator)` and
+  `var(--dhis2-neutral-indicator)`. They read at 3:1 or more on white, and they
+  darken when users ask their system for more contrast. The variables exist in
+  every app that installs the theme.
 - If the data comes with a legend set in DHIS2, use its colours instead,
   so the chart matches the maps and reports users already know.
 - Keep it to about five series. Beyond that, colours get hard to tell apart;

@@ -5,20 +5,22 @@
     overflow: hidden;
     padding: 12px 11px 10px;
     font-size: 14px;
-    color: #212934;
-    border: 1px solid #a0adba;
+    color: var(--dhis2-foreground);
+    background: var(--dhis2-background);
+    border: 1px solid var(--dhis2-input);
     border-radius: 3px;
-    box-shadow: inset 0 0 1px 0 rgba(48, 54, 60, 0.1);
+    box-shadow: inset 0 0 1px 0
+        color-mix(in srgb, var(--dhis2-foreground) 10%, transparent);
     text-overflow: ellipsis;
     outline: none;
 }
 
 .searchInput::placeholder {
-    color: #6c7787;
+    color: var(--dhis2-subtle-foreground);
     opacity: 1;
 }
 
 .searchInput:focus {
-    border-color: #147cd7;
-    box-shadow: inset 0 0 0 2px #147cd7;
+    border-color: var(--dhis2-ring);
+    box-shadow: inset 0 0 0 2px var(--dhis2-ring);
 }

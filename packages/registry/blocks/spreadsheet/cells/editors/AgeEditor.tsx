@@ -237,7 +237,7 @@ export const AgeEditor = ({
             <p
                 id={problemId}
                 role="alert"
-                className="text-xs text-dhis2-red-700"
+                className="text-xs text-dhis2-destructive"
             >
                 {shown.message}
             </p>

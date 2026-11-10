@@ -10,7 +10,7 @@
     },
     "scripts": {
         "test": "vitest run",
-        "test:browser": "vitest run --project browser --project browser-production",
+        "test:browser": "vitest run --project browser --project browser-production --project browser-contrast --project browser-forced",
         "typecheck": "tsc --noEmit",
         "lint": "oxlint --deny-warnings components blocks"
     },
@@ -36,6 +36,7 @@
         "zustand": "^5.0.15"
     },
     "devDependencies": {
+        "@dhis2/ui-constants": "^10.17.0",
         "@tailwindcss/vite": "^4.3.3",
         "@types/node": "^22.0.0",
         "@types/react": "^18.3.31",

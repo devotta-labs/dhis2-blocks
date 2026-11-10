@@ -311,7 +311,7 @@ test('a row message on complete has the error border', async () => {
         rowMessages: [['t1r0', [message]]],
     })
     expect(page.getByRole('listitem').element().className).toContain(
-        'border-dhis2-red-600'
+        'border-dhis2-destructive-indicator'
     )
 })
 

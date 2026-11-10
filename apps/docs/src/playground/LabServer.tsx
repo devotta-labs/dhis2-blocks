@@ -106,18 +106,18 @@ export class CanvasBoundary extends Component<
         if (!error) return this.props.children
         return (
             <div
-                className="flex flex-col gap-2 bg-white p-4 text-sm"
+                className="flex flex-col gap-2 bg-dhis2-background p-4 text-sm"
                 role="alert"
             >
-                <strong className="text-dhis2-red-700">
+                <strong className="text-dhis2-destructive">
                     The block crashed: {error.message}
                 </strong>
-                <pre className="m-0 overflow-x-auto text-xs whitespace-pre-wrap text-dhis2-grey-700">
+                <pre className="m-0 overflow-x-auto text-xs whitespace-pre-wrap text-dhis2-muted-foreground">
                     {error.stack?.split('\n').slice(0, 6).join('\n')}
                 </pre>
                 <button
                     type="button"
-                    className="self-start rounded border border-dhis2-grey-500 bg-white px-1.5 py-0.5"
+                    className="self-start rounded border border-dhis2-input bg-dhis2-background px-1.5 py-0.5"
                     onClick={() => this.setState({ error: undefined })}
                 >
                     Try again

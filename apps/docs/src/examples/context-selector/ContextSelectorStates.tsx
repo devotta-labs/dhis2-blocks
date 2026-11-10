@@ -132,11 +132,11 @@ const ContextSelectorStates = () => {
                 />
             </ContextSelector>
 
-            <div className="mt-4 flex flex-wrap items-end gap-5 border-t border-[#e8edf2] bg-white p-4">
-                <label className="grid gap-1 text-sm font-medium text-[#364152]">
+            <div className="mt-4 flex flex-wrap items-end gap-5 border-t border-dhis2-border bg-dhis2-background p-4">
+                <label className="grid gap-1 text-sm font-medium text-dhis2-foreground">
                     Selector state
                     <select
-                        className="min-w-40 rounded border border-[#a0adba] bg-white px-3 py-2 font-normal text-[#212934]"
+                        className="min-w-40 rounded border border-dhis2-input bg-dhis2-background px-3 py-2 font-normal text-dhis2-foreground"
                         value={mode}
                         onChange={(event) => {
                             const nextMode = event.target.value
@@ -154,7 +154,7 @@ const ContextSelectorStates = () => {
                         <option value="readOnly">Read-only</option>
                     </select>
                 </label>
-                <label className="flex min-h-10 items-center gap-2 text-sm text-[#364152]">
+                <label className="flex min-h-10 items-center gap-2 text-sm text-dhis2-foreground">
                     <input
                         type="checkbox"
                         checked={clearable}
@@ -164,7 +164,7 @@ const ContextSelectorStates = () => {
                 </label>
                 <button
                     type="button"
-                    className="min-h-10 rounded border border-[#a0adba] bg-white px-4 text-sm font-medium text-[#25313f] hover:bg-[#f3f5f7]"
+                    className="min-h-10 rounded border border-dhis2-input bg-dhis2-background px-4 text-sm font-medium text-dhis2-foreground hover:bg-dhis2-accent"
                     onClick={() => setValues(initialValues)}
                 >
                     Reset sample values

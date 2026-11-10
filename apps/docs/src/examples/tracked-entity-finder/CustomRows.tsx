@@ -56,7 +56,7 @@ export default function CustomRows() {
                                 <FinderValue attribute={FIRST_NAME} />{' '}
                                 <FinderValue attribute={LAST_NAME} />
                             </span>
-                            <span className="block text-dhis2-grey-700">
+                            <span className="block text-dhis2-muted-foreground">
                                 Born <FinderValue attribute={BIRTH_DATE} />
                             </span>
                         </FinderItem>
@@ -64,7 +64,10 @@ export default function CustomRows() {
                     <FinderPagination />
                 </FinderResults>
 
-                <p className="text-sm text-dhis2-grey-700" aria-live="polite">
+                <p
+                    className="text-sm text-dhis2-muted-foreground"
+                    aria-live="polite"
+                >
                     {person
                         ? `Selected ${person.trackedEntity}`
                         : 'Search, then select a person.'}

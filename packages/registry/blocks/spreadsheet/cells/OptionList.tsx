@@ -43,7 +43,7 @@ export const OptionList = ({
             onMouseDown={(event) => event.preventDefault()}
             className={cn(
                 POPOVER_CLASS,
-                'z-50 w-max max-w-[min(30rem,90vw)] min-w-full overflow-hidden rounded-dhis2-sm border border-dhis2-grey-200 bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover supports-[anchor-name:--a]:min-w-[anchor-size(width)]'
+                'z-50 w-max max-w-[min(30rem,90vw)] min-w-full overflow-hidden rounded-dhis2-sm border border-dhis2-border bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover supports-[anchor-name:--a]:min-w-[anchor-size(width)]'
             )}
         >
             {/* With no matches, only the note shows: why a search found nothing. */}
@@ -62,7 +62,7 @@ export const OptionList = ({
                             role="option"
                             aria-selected={index === active}
                             onClick={() => onPick(code)}
-                            className="cursor-pointer px-3 py-2 text-sm text-dhis2-grey-900 aria-selected:bg-dhis2-grey-200"
+                            className="cursor-pointer px-3 py-2 text-sm text-dhis2-foreground hover:bg-dhis2-muted aria-selected:bg-dhis2-accent forced-colors:aria-selected:outline-2 forced-colors:aria-selected:-outline-offset-2 forced-colors:aria-selected:outline-solid"
                         >
                             {names.get(code)}
                         </div>
@@ -70,7 +70,7 @@ export const OptionList = ({
                 </div>
             )}
             {count === '' ? null : (
-                <p className="border-t border-dhis2-grey-200 px-3 py-1.5 text-xs text-dhis2-grey-700">
+                <p className="border-t border-dhis2-border px-3 py-1.5 text-xs text-dhis2-muted-foreground">
                     {count}
                 </p>
             )}

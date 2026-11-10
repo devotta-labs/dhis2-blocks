@@ -30,7 +30,7 @@ const Status = () => {
     const status = useTrackerDataEntry((view) => view.status)
 
     return status === 'ready' ? null : (
-        <p role="status" className="text-sm text-dhis2-grey-700">
+        <p role="status" className="text-sm text-dhis2-muted-foreground">
             {status === 'loading' ? 'Loading…' : 'The form could not be loaded'}
         </p>
     )

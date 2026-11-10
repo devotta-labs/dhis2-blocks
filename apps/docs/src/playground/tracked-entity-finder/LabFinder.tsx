@@ -27,7 +27,7 @@ import {
 import type { LabComposition, LabField } from './labData'
 
 const inputClass =
-    'w-full rounded border border-dhis2-grey-500 px-2 py-1 text-sm aria-invalid:border-dhis2-red-700'
+    'w-full rounded border border-dhis2-input px-2 py-1 text-sm aria-invalid:border-dhis2-destructive-border'
 
 /** A headless field: the finder's state and rules, the lab's own markup. */
 const HookInput = ({
@@ -197,7 +197,7 @@ const HookInput = ({
     }
     if (metadataError) {
         return (
-            <p className="rounded bg-dhis2-red-050 px-2 py-1 text-sm text-dhis2-red-800">
+            <p className="rounded bg-dhis2-destructive-subtle px-2 py-1 text-sm text-dhis2-destructive">
                 {metadataError}
             </p>
         )
@@ -207,12 +207,14 @@ const HookInput = ({
             <span className="font-medium">
                 {label}
                 {attribute?.unique ? (
-                    <span className="ms-1 text-xs text-dhis2-grey-600">ID</span>
+                    <span className="ms-1 text-xs text-dhis2-subtle-foreground">
+                        ID
+                    </span>
                 ) : null}
             </span>
             {input()}
             {error ? (
-                <span className="text-xs text-dhis2-red-700">{error}</span>
+                <span className="text-xs text-dhis2-destructive">{error}</span>
             ) : null}
         </label>
     )
@@ -235,7 +237,7 @@ const HookSubmit = () => {
             type="button"
             disabled={!canSearch}
             onClick={submit}
-            className="self-start rounded bg-dhis2-teal-700 px-3 py-1.5 text-sm text-white disabled:opacity-40"
+            className="self-start rounded bg-dhis2-primary px-3 py-1.5 text-sm text-dhis2-primary-foreground disabled:opacity-40"
         >
             {canSearch ? 'Find' : `Find (${missing} more)`}
         </button>
@@ -305,7 +307,7 @@ const Forms = ({ composition }: { composition: LabComposition }) => {
                                 <button
                                     key={index}
                                     type="button"
-                                    className="text-sm text-dhis2-blue-700 underline"
+                                    className="text-sm text-dhis2-primary underline"
                                     onClick={() => setShown(index)}
                                 >
                                     {index === 0
@@ -345,7 +347,7 @@ const ComposedRows = ({ composition }: { composition: LabComposition }) => {
                 The register could not be searched. Try again.
             </FinderError>
             <FinderList className="flex flex-col gap-2">
-                <FinderItem className="rounded border border-dhis2-grey-300 p-3">
+                <FinderItem className="rounded border border-dhis2-border p-3">
                     {first ? (
                         <span className="block font-medium">
                             <FinderValue attribute={first} />
@@ -354,7 +356,7 @@ const ComposedRows = ({ composition }: { composition: LabComposition }) => {
                     {rest.map((attribute) => (
                         <span
                             key={attribute}
-                            className="block text-sm text-dhis2-grey-700"
+                            className="block text-sm text-dhis2-muted-foreground"
                         >
                             <FinderValue attribute={attribute} />
                         </span>
@@ -380,7 +382,10 @@ const HookResults = ({ rowAttributes }: { rowAttributes: string[] }) => {
     return (
         <section className="flex flex-col gap-2">
             {status ? (
-                <p role="status" className="text-sm text-dhis2-grey-700">
+                <p
+                    role="status"
+                    className="text-sm text-dhis2-muted-foreground"
+                >
                     {status}
                 </p>
             ) : null}
@@ -389,7 +394,7 @@ const HookResults = ({ rowAttributes }: { rowAttributes: string[] }) => {
                     {results.people.map((person) => (
                         <tr
                             key={person.trackedEntity}
-                            className="cursor-pointer border-b border-dhis2-grey-300 hover:bg-dhis2-grey-100"
+                            className="cursor-pointer border-b border-dhis2-border hover:bg-dhis2-muted"
                             onClick={() => results.select(person)}
                         >
                             <td className="py-1.5 font-mono text-xs">

@@ -115,7 +115,7 @@ export const CoordinateEditor = ({
                         <p
                             id={`${id}-${axis}-problem`}
                             role="alert"
-                            className="text-xs text-dhis2-red-700"
+                            className="text-xs text-dhis2-destructive"
                         >
                             {axis === 'latitude'
                                 ? i18n.t('Enter a latitude between -90 and 90')

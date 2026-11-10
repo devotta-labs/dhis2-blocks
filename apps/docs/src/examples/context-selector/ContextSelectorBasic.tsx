@@ -66,7 +66,7 @@ const ContextSelectorBasic = () => {
                             <li key={unit}>
                                 <button
                                     type="button"
-                                    className="w-full cursor-pointer rounded border-none bg-transparent px-2 py-1.5 text-left text-sm hover:bg-[#f3f5f7]"
+                                    className="w-full cursor-pointer rounded border-none bg-transparent px-2 py-1.5 text-left text-sm hover:bg-dhis2-accent"
                                     onClick={() => {
                                         setOrganisationUnit(unit)
                                         setOpenSelector(undefined)

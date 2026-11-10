@@ -77,7 +77,10 @@ export default function FindPerson() {
 
                 {/* Replace with what your app does next, such as opening the
                     person's record. */}
-                <p className="text-sm text-dhis2-grey-700" aria-live="polite">
+                <p
+                    className="text-sm text-dhis2-muted-foreground"
+                    aria-live="polite"
+                >
                     {person
                         ? `Selected ${person.trackedEntity}`
                         : 'Search, then select a person.'}

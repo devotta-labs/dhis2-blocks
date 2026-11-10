@@ -58,7 +58,7 @@ const stopUpload = (key: CellKey, controller: AbortController | undefined) => {
 
 // The house button looks disabled only when `:disabled`; these buttons stay focusable and say it with `aria-disabled`.
 const LOOKS_DISABLED =
-    'aria-disabled:cursor-not-allowed aria-disabled:border-dhis2-grey-400 aria-disabled:bg-dhis2-grey-100 aria-disabled:text-dhis2-grey-600 aria-disabled:shadow-none aria-disabled:hover:bg-dhis2-grey-100 aria-disabled:active:bg-dhis2-grey-100'
+    'aria-disabled:cursor-not-allowed aria-disabled:border-dhis2-border-strong aria-disabled:bg-dhis2-muted aria-disabled:text-dhis2-disabled-foreground aria-disabled:shadow-none aria-disabled:hover:bg-dhis2-muted aria-disabled:active:bg-dhis2-muted'
 
 interface Upload {
     /** What the editor says while it runs. */
@@ -243,8 +243,8 @@ export const FileEditor = ({
                 <p
                     className={
                         status === problem
-                            ? 'text-xs text-dhis2-red-700'
-                            : 'text-dhis2-grey-700'
+                            ? 'text-xs text-dhis2-destructive'
+                            : 'text-dhis2-muted-foreground'
                     }
                 >
                     {status}

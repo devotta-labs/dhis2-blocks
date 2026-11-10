@@ -144,7 +144,7 @@ const ColumnValue = ({
         <>
             <div
                 ref={box}
-                className="h-9 rounded-dhis2-sm border border-dhis2-grey-300"
+                className="h-9 rounded-dhis2-sm border border-dhis2-border"
                 onInput={() => setTyping(true)}
                 onBlur={() => setTyping(false)}
             >
@@ -167,7 +167,7 @@ const ColumnValue = ({
                 {i18n.t('Overwrite existing values')}
             </Label>
             {planned === undefined ? null : (
-                <p id={previewId} className="text-dhis2-grey-700">
+                <p id={previewId} className="text-dhis2-muted-foreground">
                     {previewOf(planned)}
                 </p>
             )}

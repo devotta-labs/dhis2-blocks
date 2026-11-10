@@ -110,7 +110,9 @@ test('validation messages land on cells and rows', async () => {
         .toHaveAccessibleDescription('Over 1 exceeds under 1')
     const row = page.getByRole('listitem').getByText('Rule failed')
     await expect.element(row).toBeVisible()
-    expect(row.element().className).toContain('border-dhis2-red-600')
+    expect(row.element().className).toContain(
+        'border-dhis2-destructive-indicator'
+    )
 })
 
 test('a grid with no rules', async () => {

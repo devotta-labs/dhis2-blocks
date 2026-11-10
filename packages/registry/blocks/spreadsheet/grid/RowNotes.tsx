@@ -56,7 +56,7 @@ export const NotesMarker = ({
                 size="sm"
                 tabIndex={-1}
                 aria-haspopup="dialog"
-                className="ms-1 h-5 px-1 align-middle text-xs text-dhis2-grey-700"
+                className="ms-1 h-5 px-1 align-middle text-xs text-dhis2-muted-foreground"
                 onClick={(event) =>
                     onOpen({ anchor: event.currentTarget, row, rowHeader })
                 }

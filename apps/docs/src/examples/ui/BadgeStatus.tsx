@@ -6,6 +6,7 @@ const BadgeStatus = () => (
         <Badge>Active</Badge>
         <Badge variant="secondary">Completed</Badge>
         <Badge variant="outline">Cancelled</Badge>
+        {/* colour-literal: a fill and text pair from a metadata legend */}
         <Badge style={{ backgroundColor: '#ffcdd2', color: '#891515' }}>
             High risk
         </Badge>

@@ -18,9 +18,8 @@ const visits = [
 ]
 
 const config = {
-    // DHIS2 blue-600 and teal-400.
-    first: { label: 'ANC 1st visit', color: '#147cd7' },
-    fourth: { label: 'ANC 4th visit', color: '#009688' },
+    first: { label: 'ANC 1st visit', color: 'var(--dhis2-info-indicator)' },
+    fourth: { label: 'ANC 4th visit', color: 'var(--dhis2-success-indicator)' },
 } satisfies ChartConfig
 
 /** Antenatal visits per month, as bars side by side, with a tooltip and a legend. */

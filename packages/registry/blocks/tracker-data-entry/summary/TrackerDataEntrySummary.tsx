@@ -29,12 +29,12 @@ import { useRowLabel } from '../provider/TrackerRowLabel'
 const AS_IS = { escapeValue: false }
 
 const TONES = {
-    error: 'border-dhis2-red-600',
-    errorOnComplete: 'border-dhis2-red-600',
-    failed: 'border-dhis2-red-600',
-    warning: 'border-dhis2-yellow-700',
-    warningOnComplete: 'border-dhis2-yellow-700',
-    unsent: 'border-dhis2-grey-500',
+    error: 'border-dhis2-destructive-indicator',
+    errorOnComplete: 'border-dhis2-destructive-indicator',
+    failed: 'border-dhis2-destructive-indicator',
+    warning: 'border-dhis2-warning-indicator',
+    warningOnComplete: 'border-dhis2-warning-indicator',
+    unsent: 'border-dhis2-neutral-indicator',
 } satisfies Record<SummaryItem['kind'], string>
 
 interface ItemProps {
@@ -98,7 +98,7 @@ const Item = memo(function Item({
                     focusCell(cell)
                 }}
                 // At least 24 px tall, as WCAG 2.2 asks of a target with others close by.
-                className="inline-block py-1 text-dhis2-blue-800 underline"
+                className="inline-block py-1 text-dhis2-primary underline"
             >
                 {namesField
                     ? i18n.t('{{row}}: {{message}}', {
@@ -191,7 +191,7 @@ export const TrackerDataEntrySummary = ({
     return (
         <div
             className={cn(
-                'flex flex-col gap-2 text-sm text-dhis2-grey-900',
+                'flex flex-col gap-2 text-sm text-dhis2-foreground',
                 className
             )}
         >

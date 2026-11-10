@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 
 /**
@@ -90,5 +91,49 @@ test.describe('documentation catalog', () => {
         await expect(
             page.getByText('add devotta-labs/dhis2-blocks/working-list').first()
         ).toBeVisible()
+    })
+})
+
+/**
+ * The OS contrast setting reaches a built docs example: more contrast swaps the
+ * theme roles, and forced colours keeps the sidebar's current-page bar.
+ */
+test.describe('contrast', () => {
+    const PREVIEW = '/preview/sidebar/basic'
+    const workspace = (page: Page) =>
+        page.getByRole('navigation', { name: 'Workspace navigation' })
+
+    test('more contrast switches the sidebar example to its high-contrast roles', async ({
+        page,
+    }) => {
+        await page.goto(PREVIEW)
+        const link = workspace(page).getByRole('link', { name: 'Dashboard' })
+        const colour = () =>
+            link.evaluate((element) => getComputedStyle(element).color)
+        const standard = await colour()
+        await page.emulateMedia({ contrast: 'more' })
+        await expect.poll(colour).not.toBe(standard)
+        const role = await page.evaluate(() => {
+            const probe = document.createElement('span')
+            probe.style.color = 'var(--dhis2-sidebar-foreground)'
+            document.body.append(probe)
+            const { color } = getComputedStyle(probe)
+            probe.remove()
+            return color
+        })
+        expect(await colour()).toBe(role)
+    })
+
+    test('the sidebar example keeps its current-page bar in forced colours', async ({
+        page,
+    }) => {
+        await page.emulateMedia({ forcedColors: 'active' })
+        await page.goto(PREVIEW)
+        const current = workspace(page).locator('[aria-current="page"]')
+        const [bar, text] = await current.evaluate((element) => [
+            getComputedStyle(element, '::before').backgroundColor,
+            getComputedStyle(element).color,
+        ])
+        expect(bar).toBe(text)
     })
 })

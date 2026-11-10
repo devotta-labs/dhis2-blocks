@@ -14,15 +14,15 @@ import type { NotesTarget } from './RowNotes'
 // scroll padding keep clear of it.
 export const ROW_HEADER_CLASS =
     'w-[min(12rem,30vw)] min-w-[min(12rem,30vw)] max-w-[min(12rem,30vw)]'
-export const BORDER_CLASS = 'border-b border-e border-dhis2-grey-300'
+export const BORDER_CLASS = 'border-b border-e border-dhis2-border'
 
 const NO_KEYS: ReadonlyArray<CellKey> = []
 const NO_MESSAGES: ReadonlyArray<CellMessage> = []
 
 // Marked as a cell's notes are, on the header's light background.
 const MESSAGE_TONES = {
-    error: 'border-dhis2-red-600',
-    warning: 'border-dhis2-yellow-700',
+    error: 'border-dhis2-destructive-indicator',
+    warning: 'border-dhis2-warning-indicator',
 } satisfies Record<Tone, string>
 
 /** A row's name as it changes: its label cells' values (`labelFrom`), each as its field shows it, else its label. */
@@ -86,7 +86,7 @@ export const RowHeader = memo(function RowHeader({
             className={cn(
                 BORDER_CLASS,
                 ROW_HEADER_CLASS,
-                'sticky start-0 z-10 bg-white px-2 py-1 text-start align-middle font-normal text-dhis2-grey-900 [overflow-wrap:anywhere]'
+                'sticky start-0 z-10 bg-dhis2-background px-2 py-1 text-start align-middle font-normal text-dhis2-foreground [overflow-wrap:anywhere]'
             )}
         >
             {/* Cells are named by the label alone; the badge is said once, with the row. The label sets its own
@@ -109,7 +109,7 @@ export const RowHeader = memo(function RowHeader({
                             key={i}
                             dir="auto"
                             className={cn(
-                                'border-s-2 ps-1.5 text-xs text-dhis2-grey-900',
+                                'border-s-2 ps-1.5 text-xs text-dhis2-foreground',
                                 MESSAGE_TONES[tone]
                             )}
                         >

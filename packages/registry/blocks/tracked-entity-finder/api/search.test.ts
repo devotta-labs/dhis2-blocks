@@ -50,7 +50,7 @@ describe('runSearch', () => {
             pager: { total: 500 },
         }))
         const outcome = await runSearch(client, uncapped, search, 1)
-        expect(outcome.kind).toBe('results')
+        expect(outcome).toMatchObject({ kind: 'results', total: 500 })
     })
 
     it.each([6, 10])(

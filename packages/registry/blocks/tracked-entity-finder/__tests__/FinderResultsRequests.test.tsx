@@ -125,7 +125,7 @@ describe('FinderResults paging and requests', () => {
         await expect.element(page.getByText('First0')).toBeVisible()
         await page.getByRole('button', { name: 'Next' }).click()
         await expect
-            .element(page.getByRole('alert'))
+            .element(page.getByTestId('results').getByRole('alert'))
             .toHaveTextContent("The search couldn't be completed")
 
         const previous = page.getByRole('button', { name: 'Previous' })
@@ -170,14 +170,26 @@ describe('FinderResults paging and requests', () => {
         const onSelect = vi.fn()
         const server = createFakeServer({ deferSearches: true })
         const screen = await renderWithQueries(
-            ui(server, 'hivProgram', onSelect, <FinderResults />)
+            ui(
+                server,
+                'hivProgram',
+                onSelect,
+                <FinderResults data-testid="results" />
+            )
         )
 
         await searchFor('A1')
-        await expect.element(page.getByText('Searching…')).toBeVisible()
+        await expect
+            .element(page.getByTestId('results').getByText('Searching…'))
+            .toBeVisible()
 
         await screen.rerender(
-            ui(server, 'otherProgram', onSelect, <FinderResults />)
+            ui(
+                server,
+                'otherProgram',
+                onSelect,
+                <FinderResults data-testid="results" />
+            )
         )
         server.pendingSearches[0].respond(answer([amina]))
 
@@ -187,11 +199,15 @@ describe('FinderResults paging and requests', () => {
         await expect
             .element(page.getByRole('textbox', { name: 'ART number' }))
             .toHaveValue('')
-        expect(page.getByText('Searching…').query()).toBeNull()
+        expect(
+            page.getByTestId('results').getByText('Searching…').query()
+        ).toBeNull()
         // Give the old answer a chance to land; it must not.
         await new Promise((resolve) => setTimeout(resolve, 50))
         expect(page.getByText('Amina').query()).toBeNull()
-        expect(page.getByText('No one found').query()).toBeNull()
+        expect(
+            page.getByTestId('results').getByText('No one found').query()
+        ).toBeNull()
         expect(searchRequests(server)).toHaveLength(1)
     })
 
@@ -209,7 +225,9 @@ describe('FinderResults paging and requests', () => {
         )
         await new Promise((resolve) => setTimeout(resolve, 50))
         expect(page.getByText('Older').query()).toBeNull()
-        await expect.element(page.getByText('Searching…')).toBeVisible()
+        await expect
+            .element(page.getByTestId('results').getByText('Searching…'))
+            .toBeVisible()
 
         server.pendingSearches[1].respond(
             answer([entity('new', { firstName: 'Newest' })])
@@ -223,26 +241,42 @@ describe('FinderResults paging and requests', () => {
         const onSelect = vi.fn()
         const server = createFakeServer()
         const screen = await renderWithQueries(
-            ui(server, 'hivProgram', onSelect, <FinderResults />)
+            ui(
+                server,
+                'hivProgram',
+                onSelect,
+                <FinderResults data-testid="results" />
+            )
         )
 
         await searchFor('A1')
-        await expect.element(page.getByText('No one found')).toBeVisible()
+        await expect
+            .element(page.getByTestId('results').getByText('No one found'))
+            .toBeVisible()
         expect(searchRequests(server)).toHaveLength(1)
 
         await screen.rerender(<></>)
         await screen.rerender(
-            ui(server, 'hivProgram', onSelect, <FinderResults />)
+            ui(
+                server,
+                'hivProgram',
+                onSelect,
+                <FinderResults data-testid="results" />
+            )
         )
         await expect
             .element(page.getByRole('textbox', { name: 'ART number' }))
             .toBeEnabled()
-        expect(page.getByText('No one found').query()).toBeNull()
+        expect(
+            page.getByTestId('results').getByText('No one found').query()
+        ).toBeNull()
 
         // Someone may have been registered since: never reuse the answer.
         await searchFor('A1')
         await expect.poll(() => searchRequests(server)).toHaveLength(2)
-        await expect.element(page.getByText('No one found')).toBeVisible()
+        await expect
+            .element(page.getByTestId('results').getByText('No one found'))
+            .toBeVisible()
     })
 
     it('ignores next and previous when there is no such page', async () => {

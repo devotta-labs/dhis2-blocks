@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
 import { shouldRetryFinderRequest, type FinderResourceClient } from './client'
-import { finderKeys } from './queries'
+import { finderKeys, METADATA_CACHE_TIME } from './queries'
 
 const FINDER_CALENDARS = [
     'coptic',
@@ -80,7 +80,7 @@ export const systemInfoQueryOptions = (client: FinderResourceClient) =>
                 FinderSystemInfoSchema,
                 signal
             ),
-        staleTime: Number.POSITIVE_INFINITY,
-        gcTime: Number.POSITIVE_INFINITY,
+        staleTime: METADATA_CACHE_TIME,
+        gcTime: METADATA_CACHE_TIME,
         retry: shouldRetryFinderRequest,
     })

@@ -6,6 +6,8 @@ import {
 } from './client'
 import { normaliseProgram, ProgramResponseSchema } from './schemas'
 
+export const METADATA_CACHE_TIME = 3 * 60 * 60_000
+
 export const finderKeys = {
     all: ['tracked-entity-finder'] as const,
     systemInfo: () => [...finderKeys.all, 'system-info'] as const,
@@ -41,6 +43,7 @@ export const programMetadataQueryOptions = (
                     signal
                 )
                 .then((response) => normaliseProgram(program, response)),
-        staleTime: 60 * 60_000,
+        staleTime: METADATA_CACHE_TIME,
+        gcTime: METADATA_CACHE_TIME,
         retry: shouldRetryFinderRequest,
     })

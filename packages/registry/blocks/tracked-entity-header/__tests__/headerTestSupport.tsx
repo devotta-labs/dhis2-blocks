@@ -6,6 +6,10 @@ import noProgramPerson from '../api/__fixtures__/trackedEntity.noProgram.json'
 import rmnchPerson from '../api/__fixtures__/trackedEntity.rmnch.json'
 import childProgram from '../api/__fixtures__/program.child.json'
 import rmnchProgram from '../api/__fixtures__/program.rmnch.json'
+import relationshipTypes from '../api/__fixtures__/relationshipTypes.malaria.json'
+import caseLinks from '../api/__fixtures__/relationships.case.json'
+import focusLinks from '../api/__fixtures__/relationships.focus.json'
+import viewAttributes from '../api/__fixtures__/trackedEntityAttributes.malaria.json'
 import personType from '../api/__fixtures__/trackedEntityType.person.json'
 import {
     createTrackedEntityHeaderClient,
@@ -16,6 +20,8 @@ import { useTrackedEntityHeader, type TrackedEntityHeaderState } from '../hooks'
 
 export const RMNCH = 'WSGAb5XwJ3Y'
 export const CHILD = 'IpHINAT79UW'
+/** The tracked entity the case relationships fixture is about. */
+export const CASE_RECORD = 'k8TU70vWtnP'
 
 type Fixture = 'rmnch' | 'child'
 
@@ -28,6 +34,30 @@ interface FakeServerOptions {
     deferFor?: string
     /** The person and program asked about when the request names neither of the other fixture's. */
     fixture?: Fixture
+    /** The links the record has: the case fixture's, the focus fixture's, or none. */
+    links?: 'case' | 'focus' | 'none'
+    /** Answers the relationships request alone with this status. */
+    relationshipsFail?: 403 | 500
+    /** Holds the relationships request open until `release` is called. */
+    deferRelationships?: boolean
+    /** Answers relationship types whose data views name no attributes. */
+    bareTypes?: boolean
+}
+
+const BARE_TYPES = {
+    relationshipTypes: relationshipTypes.relationshipTypes.map(
+        ({ fromConstraint, toConstraint, ...type }) => ({
+            ...type,
+            fromConstraint: { ...fromConstraint, trackerDataView: undefined },
+            toConstraint: { ...toConstraint, trackerDataView: undefined },
+        })
+    ),
+}
+
+const LINKS = {
+    case: caseLinks,
+    focus: focusLinks,
+    none: { relationships: [] },
 }
 
 const PEOPLE = { rmnch: rmnchPerson, child: childPerson }
@@ -41,6 +71,7 @@ export const createFakeServer = (options: FakeServerOptions = {}) => {
     const requests: ResourceRequest[] = []
     let failing = options.fail
     let forbidden = options.forbidden
+    let relationshipsFail = options.relationshipsFail
     let release = () => {}
     const held = new Promise<void>((resolve) => {
         release = resolve
@@ -80,6 +111,24 @@ export const createFakeServer = (options: FakeServerOptions = {}) => {
                             : PEOPLE[fixture]
                     return { [key]: { ...person, trackedEntity: request.id } }
                 }
+                case 'tracker/relationships':
+                    if (options.deferRelationships) {
+                        await held
+                    }
+                    if (relationshipsFail !== undefined) {
+                        throw Object.assign(new Error('boom'), {
+                            httpStatusCode: relationshipsFail,
+                        })
+                    }
+                    return { [key]: LINKS[options.links ?? 'case'] }
+                case 'relationshipTypes':
+                    return {
+                        [key]: options.bareTypes
+                            ? BARE_TYPES
+                            : relationshipTypes,
+                    }
+                case 'trackedEntityAttributes':
+                    return { [key]: viewAttributes }
                 case 'programs':
                     return { [key]: PROGRAMS[fixture] }
                 default:
@@ -97,6 +146,10 @@ export const createFakeServer = (options: FakeServerOptions = {}) => {
         /** The server answers person requests again. */
         recover: () => {
             failing = undefined
+        },
+        /** From now on the server answers the relationships request with this status. */
+        failRelationshipsWith: (status: 403 | 500) => {
+            relationshipsFail = status
         },
         /** From now on the server answers person requests with this status. */
         failWith: (status: 400 | 403 | 500) => {

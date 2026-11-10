@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { createFinderResourceClient, type DataEngineQuery } from './client'
 import { finderKeys, programMetadataQueryOptions } from './queries'
+import { systemInfoQueryOptions } from './systemInfo'
 
 describe('program metadata query', () => {
     it('requests the program fields the rules need', async () => {
@@ -26,6 +27,7 @@ describe('program metadata query', () => {
         )
         expect(fields).toContain('blockedSearchOperators')
         expect(options.queryKey).toEqual(finderKeys.program('prog'))
+        expect(options.gcTime).toBe(3 * 60 * 60_000)
     })
 
     it('keys searches by program, submission and page', () => {
@@ -67,11 +69,58 @@ describe('program metadata query', () => {
                     .minAttributesRequiredToSearch
             ).toBe(1)
             expect(query).toHaveBeenCalledTimes(1)
-            clock.mockReturnValue(now + 60 * 60_000 + 1)
+            clock.mockReturnValue(now + 3 * 60 * 60_000 - 1)
+            expect(
+                (await queryClient.fetchQuery(options))
+                    .minAttributesRequiredToSearch
+            ).toBe(1)
+            expect(query).toHaveBeenCalledTimes(1)
+            clock.mockReturnValue(now + 3 * 60 * 60_000)
             expect(
                 (await queryClient.fetchQuery(options))
                     .minAttributesRequiredToSearch
             ).toBe(2)
+            expect(query).toHaveBeenCalledTimes(2)
+        } finally {
+            clock.mockRestore()
+            queryClient.clear()
+        }
+    })
+})
+
+describe('system info metadata query', () => {
+    it('reuses system info for three hours, then reloads it', async () => {
+        const query = vi.fn(async () => ({
+            trackedEntityFinderResource: {
+                calendar: 'gregorian',
+                dateFormat: 'yyyy-MM-dd',
+                version: '2.43.0',
+            },
+        }))
+        const client = createFinderResourceClient({ query })
+        const options = systemInfoQueryOptions(client)
+        const queryClient = new QueryClient()
+        const now = Date.now()
+        const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
+        try {
+            expect(options.gcTime).toBe(3 * 60 * 60_000)
+            await queryClient.fetchQuery(options)
+            query.mockResolvedValue({
+                trackedEntityFinderResource: {
+                    calendar: 'ethiopian',
+                    dateFormat: 'yyyy-MM-dd',
+                    version: '2.43.0',
+                },
+            })
+            clock.mockReturnValue(now + 3 * 60 * 60_000 - 1)
+            expect((await queryClient.fetchQuery(options)).calendar).toBe(
+                'gregorian'
+            )
+            expect(query).toHaveBeenCalledTimes(1)
+            clock.mockReturnValue(now + 3 * 60 * 60_000)
+            expect((await queryClient.fetchQuery(options)).calendar).toBe(
+                'ethiopian'
+            )
             expect(query).toHaveBeenCalledTimes(2)
         } finally {
             clock.mockRestore()

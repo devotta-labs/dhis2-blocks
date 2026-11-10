@@ -72,6 +72,7 @@ describe('filter select fields', () => {
                 label="Values"
                 values={['POS']}
                 options={[{ value: 'POS', label }]}
+                noMatchText="No values match"
                 onChange={onChange}
             />
         )

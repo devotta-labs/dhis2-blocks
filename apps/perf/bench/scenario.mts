@@ -30,6 +30,8 @@ const KINDS = [
 export const ORG_UNIT = 'PerfOrgUnit'
 const STAGE = 'PerfStage01'
 
+const MOST = { columns: 500, rows: 2000, rules: 2000, options: 10_000 }
+
 export const scenarioId = ({ columns, rows, rules, options }: Scenario) =>
     `c${columns}r${rows}u${rules}o${options}`
 
@@ -39,8 +41,15 @@ export const parseScenario = (id: string): Scenario | undefined => {
         return undefined
     }
     const [columns, rows, rules, options] = match.slice(1).map(Number)
-    // Fewer columns would leave out a value type the rules read.
-    if (columns < KINDS.length || options < 1) {
+    // Fewer columns would leave out a value type the rules read; more than these would not fit in the server's memory.
+    if (
+        columns < KINDS.length ||
+        options < 1 ||
+        columns > MOST.columns ||
+        rows > MOST.rows ||
+        rules > MOST.rules ||
+        options > MOST.options
+    ) {
         return undefined
     }
     return { columns, rows, rules, options }

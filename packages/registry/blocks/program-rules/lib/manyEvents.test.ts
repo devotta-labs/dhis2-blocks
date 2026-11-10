@@ -3,7 +3,12 @@ import {
     RuleEnrollmentResponseSchema,
     toRuleEnrollmentData,
 } from '../hooks/enrollment'
-import { eventInput, programMetadata, rule } from '../__tests__/metadata'
+import {
+    currentEventVariable,
+    eventInput,
+    programMetadata,
+    rule,
+} from '../__tests__/metadata'
 import {
     RMNCH,
     rmnchEnrollmentResponse,
@@ -12,6 +17,7 @@ import {
 import { buildRuleContext } from './buildContext'
 import {
     crossEventFields,
+    createEventsRuleEvaluator,
     evaluateEventsRules,
     rowsAffectedBy,
     type EventsRuleInput,
@@ -356,5 +362,119 @@ describe('evaluateEventsRules', () => {
         )
         expect(effects.size).toBe(0)
         expect(failures.size).toBe(0)
+    })
+
+    it('re-evaluates changed-field readers and preserves unaffected effects', () => {
+        const context = buildRuleContext(
+            engine,
+            programMetadata({
+                variables: [
+                    currentEventVariable('base', 'base'),
+                    currentEventVariable('trigger', 'trigger'),
+                    currentEventVariable('other', 'other'),
+                    {
+                        id: 'calculated',
+                        name: 'calculated',
+                        sourceType: 'CALCULATED_VALUE',
+                        useCodeForOptionSet: false,
+                        valueType: 'TEXT',
+                    },
+                ],
+                rules: [
+                    rule(
+                        'fallback',
+                        "#{other} == 'yes'",
+                        [
+                            {
+                                id: 'fallback_assign',
+                                type: 'ASSIGN',
+                                dataElementId: 'assigned',
+                                data: "'fallback'",
+                            },
+                        ],
+                        { priority: 1 }
+                    ),
+                    rule(
+                        'producer',
+                        "#{base} == 'yes'",
+                        [
+                            {
+                                id: 'producer_assign',
+                                type: 'ASSIGN',
+                                content: '#{calculated}',
+                                data: "'ready'",
+                            },
+                        ],
+                        { priority: 2 }
+                    ),
+                    rule(
+                        'consumer',
+                        "#{trigger} == 'on' && #{calculated} == 'ready'",
+                        [
+                            {
+                                id: 'consumer_hide',
+                                type: 'HIDEFIELD',
+                                dataElementId: 'derived_effect',
+                            },
+                        ],
+                        { priority: 3 }
+                    ),
+                    rule(
+                        'changedAssignment',
+                        "#{trigger} == 'on'",
+                        [
+                            {
+                                id: 'changed_assign',
+                                type: 'ASSIGN',
+                                dataElementId: 'assigned',
+                                data: "'changed'",
+                            },
+                        ],
+                        { priority: 4 }
+                    ),
+                ],
+            })
+        )
+        const event = {
+            ...eventInput().event,
+            id: 'incremental',
+            dataValues: { base: 'yes', trigger: 'on', other: 'yes' },
+        }
+        const inputFor = (nextEvent: typeof event): EventsRuleInput => ({
+            rows: [{ event: nextEvent }],
+            persons: new Map(),
+            tracker: false,
+            personsLoaded: false,
+        })
+        const contexts = new Map([['stage', context]])
+        const evaluator = createEventsRuleEvaluator(engine, contexts)
+        const run = vi.spyOn(context.engine, 'evaluateEvent')
+
+        evaluator(inputFor(event), [event.id])
+        const changed = {
+            ...event,
+            dataValues: { ...event.dataValues, trigger: 'off' },
+        }
+        const incremental = evaluator(
+            inputFor(changed),
+            [event.id],
+            ['trigger']
+        )
+        const full = evaluateEventsRules(engine, contexts, inputFor(changed), [
+            event.id,
+        ])
+
+        expect(incremental).toEqual(full)
+        expect(
+            incremental.effects
+                .get(event.id)
+                ?.hiddenFields.has('derived_effect')
+        ).toBe(false)
+        expect(
+            incremental.effects.get(event.id)?.assignedValues.get('assigned')
+                ?.value
+        ).toBe('fallback')
+        expect(run.mock.calls).toHaveLength(3)
+        expect(run.mock.calls.at(1)?.[3].rules).toHaveLength(3)
     })
 })

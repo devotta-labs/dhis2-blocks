@@ -6,7 +6,6 @@ import {
     crossEventFields,
     emptyEffects,
     evaluateEnrollmentRules,
-    evaluateEventsRules,
     metadataForEnrollment,
     metadataForStage,
     rowsAffectedBy,
@@ -22,7 +21,11 @@ import {
     type RuleEventInput,
     type RuleOrgUnitGroupMetadata,
 } from '../lib'
-import { indexRows, withLiveEvents } from '../lib/manyEvents'
+import {
+    createEventsRuleEvaluator,
+    indexRows,
+    withLiveEvents,
+} from '../lib/manyEvents'
 import { shouldRetryProgramRulesRequest, useProgramRulesClient } from './client'
 import { ENROLLMENT_BATCH_SIZE, fetchRuleEnrollments } from './enrollment'
 import { useRuleEngine } from './loadRuleEngine'
@@ -59,7 +62,8 @@ export interface EventsRules {
      */
     evaluate(
         rows: ReadonlyArray<EventsRuleRow>,
-        rowIds: ReadonlyArray<string>
+        rowIds: ReadonlyArray<string>,
+        changedFields?: ReadonlyArray<string>
     ): EventsRulesEvaluation
     /**
      * The rows to run again after `fieldId` changed in `rowId`: the row itself, and for a field other events read, the
@@ -435,12 +439,11 @@ export const useEventsRules = ({
         const enrollmentContext = enrollments
             ? contexts.get(metadata.programId)
             : undefined
+        const evaluateRows = createEventsRuleEvaluator(engine, contexts)
         return {
             // A row whose person is still loading waits; one whose person the server did not return fails.
-            evaluate: (rows, rowIds) =>
-                evaluateEventsRules(
-                    engine,
-                    contexts,
+            evaluate: (rows, rowIds, changedFields) =>
+                evaluateRows(
                     {
                         rows,
                         persons: persons.persons,
@@ -449,7 +452,8 @@ export const useEventsRules = ({
                     },
                     needsPersons
                         ? withLoadedPerson(rows, persons.answered, rowIds)
-                        : rowIds
+                        : rowIds,
+                    changedFields
                 ),
             evaluateEnrollments:
                 enrollmentContext &&

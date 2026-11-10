@@ -33,9 +33,15 @@ import { fieldIdOfKey } from '../model/types'
 import type { DataRecord } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
-import { afterPaint, measured } from './afterPaint'
+import { measured } from './afterPaint'
 import { lockedElsewhere } from './formRows'
 import type { OpenForm } from './openForm'
+import {
+    addChangedField,
+    changedFieldsByEdits,
+    createRuleChangeQueue,
+    type ChangedFieldsByRow,
+} from './ruleChanges'
 import { ruleQueue, ruleWindow } from './ruleWindow'
 import type { Drawn } from './ruleWindow'
 
@@ -45,7 +51,6 @@ const PASSES = 5
 const AS_IS = { escapeValue: false }
 const NONE: ReadonlySet<string> = new Set()
 const NO_NOTES: ReadonlyArray<string> = []
-
 /** What one record's rules said, or why they failed; `raw` names the rules behind its values. */
 interface RowResult {
     recordId: string
@@ -350,7 +355,8 @@ export const connectRules = ({
     const pass = (
         rowIds: ReadonlyArray<string>,
         said: Set<string>,
-        until = Infinity
+        until = Infinity,
+        changedFields?: ReadonlyMap<string, ReadonlySet<string> | undefined>
     ) => {
         const { tables: all, records } = tables.getState()
         const cells = store.getState().cells
@@ -359,7 +365,12 @@ export const connectRules = ({
         // An enrolment runs its enrolment rules; any other record, its event rules.
         const evaluateRecord = (rowId: string, record?: DataRecord) => {
             if (record?.kind !== 'enrollment') {
-                return rules.evaluate(ruleRows, [rowId])
+                const fields = changedFields?.get(rowId)
+                return rules.evaluate(
+                    ruleRows,
+                    [rowId],
+                    fields === undefined ? undefined : [...fields]
+                )
             }
             const unit = enrollmentUnitOf(
                 records,
@@ -403,35 +414,42 @@ export const connectRules = ({
             }
         }
         const changed = apply(results, said)
-        const next = new Set(
-            changed.flatMap(({ key }) => {
-                const rowId = recordIdOf(key)
-                // The row's own rules ran with the value; the person's other rows read it through cross-event fields,
-                // and their events read the person's attributes.
-                return affectedBy(
-                    records,
-                    ruleRows,
-                    rowId,
-                    fieldIdOfKey(key)
-                ).filter((other) => other !== rowId && seen.has(other))
-            })
-        )
-        return { done, next: [...next] }
+        const next: ChangedFieldsByRow = new Map()
+        for (const { key } of changed) {
+            const rowId = recordIdOf(key)
+            const field = fieldIdOfKey(key)
+            for (const other of affectedBy(records, ruleRows, rowId, field)) {
+                if (other !== rowId && seen.has(other)) {
+                    addChangedField(
+                        next,
+                        other,
+                        field === EVENT_DATE_COLUMN || !form.fields.has(field)
+                            ? undefined
+                            : field
+                    )
+                }
+            }
+        }
+        return { done, next }
     }
 
     /**
      * Runs the rows, until `until` passes for a slice of them, then passes until the rules' own values settle, and
      * says once what they cleared. Returns the rows it did not get to.
      */
-    const run = (rowIds: ReadonlyArray<string>, until = Infinity) => {
+    const run = (
+        rowIds: ReadonlyArray<string>,
+        until = Infinity,
+        changedFields?: ReadonlyMap<string, ReadonlySet<string> | undefined>
+    ) => {
         const said = new Set<string>()
-        const first = pass(rowIds, said, until)
+        const first = pass(rowIds, said, until, changedFields)
         for (
             let next = first.next, left = PASSES - 1;
-            next.length > 0 && left > 0;
+            next.size > 0 && left > 0;
             left -= 1
         ) {
-            next = pass(next, said).next
+            next = pass([...next.keys()], said, Infinity, next).next
         }
         if (said.size > 0) {
             announce([...said].join(' '))
@@ -439,31 +457,22 @@ export const connectRules = ({
         return rowIds.slice(first.done)
     }
 
-    const pending = new Set<string>()
-    let cancelPending: (() => void) | undefined
-    const flush = () => {
-        cancelPending?.()
-        cancelPending = undefined
-        const rowIds = [...pending]
-        pending.clear()
-        if (!stopped && rowIds.length > 0) {
-            measured('data-entry:rules-edit', () => run(rowIds))
+    const runChanges = (
+        changes: ReadonlyMap<string, ReadonlySet<string> | undefined>
+    ) => {
+        if (!stopped && changes.size > 0) {
+            measured('data-entry:rules-edit', () =>
+                run([...changes.keys()], Infinity, changes)
+            )
         }
     }
-    // A person's changes until the next paint run together, after it: the key or click that made them returns first.
-    const rerun = (rowIds: ReadonlyArray<string>) => {
-        rowIds.forEach((rowId) => pending.add(rowId))
-        if (cancelPending === undefined && pending.size > 0) {
-            cancelPending = afterPaint(flush)
-        }
-    }
-    // A row added or saved re-runs before the next paint, so its rule effects never go missing for a frame.
-    const rerunNow = (rowIds: ReadonlyArray<string>) => {
-        rowIds.forEach((rowId) => pending.add(rowId))
-        if (pending.size > 0) {
-            queueMicrotask(flush)
-        }
-    }
+    const {
+        cancel: cancelPendingReruns,
+        flush,
+        onFocusOut,
+        rerun,
+        rerunNow,
+    } = createRuleChangeQueue(runChanges, held)
 
     const queue = ruleQueue({ tables, idScope, seen, lazy, run })
     queue.start()
@@ -498,18 +507,18 @@ export const connectRules = ({
             }
             const { records } = tables.getState()
             const ruleRows = ruleRowsNow(records, cells)
-            rerun(
-                edits.flatMap(({ rowId, field }) => {
-                    const record = records.get(rowId)
-                    // A slot that starts or stops being an event, its `createdWith` values with it, changes the person's
-                    // other rows, as an event date does.
-                    return record !== undefined &&
-                        isEmptySlot(record, before.cells, form.fieldsByForm) !==
-                            isEmptySlot(record, cells, form.fieldsByForm)
-                        ? personRows(records, record)
-                        : affectedBy(records, ruleRows, rowId, field)
-                })
+            const changes = changedFieldsByEdits(
+                edits,
+                records,
+                ruleRows,
+                before.cells,
+                cells,
+                form.fieldsByForm,
+                (field) =>
+                    field !== EVENT_DATE_COLUMN && form.fields.has(field),
+                affectedBy
             )
+            rerun(changes)
         }),
         // A new or removed record re-runs its person's rows; a saved status, which rewrote the row's effects, the row.
         // Of a person's rows, one neither evaluated nor drawn yet waits for the grid to draw it.
@@ -533,14 +542,6 @@ export const connectRules = ({
             rerunNow(lazy.park(rowIds, (id) => !was.has(id)))
         }),
     ]
-    const onFocusOut = ({ target }: FocusEvent) => {
-        const rowId =
-            target instanceof HTMLElement ? held.get(target.id) : undefined
-        if (target instanceof HTMLElement && rowId !== undefined) {
-            held.delete(target.id)
-            rerun([rowId])
-        }
-    }
     document.addEventListener('focusout', onFocusOut)
     // Completing touches the record: what its rules say is saved before it is checked and sent.
     const prepare = (recordId: string) => {
@@ -559,8 +560,8 @@ export const connectRules = ({
 
     return () => {
         stopped = true
+        cancelPendingReruns()
         queue.stop()
-        cancelPending?.()
         unsubscribes.forEach((unsubscribe) => unsubscribe?.())
         document.removeEventListener('focusout', onFocusOut)
         beforeComplete.delete(prepare)

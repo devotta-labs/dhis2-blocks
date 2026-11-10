@@ -99,6 +99,25 @@ test("an age's date of birth, years, months and days sit on one row when there i
     expect(box('Years').width).toBeLessThan(box('Date of birth').width)
 })
 
+test("an age's years, months and days stay on one row when the date of birth has no room beside them", async () => {
+    const { innerWidth, innerHeight } = window
+    await page.viewport(360, 600)
+    onTestFinished(() => page.viewport(innerWidth, innerHeight))
+    await mount({ valueType: 'AGE' })
+    const tops = ['Years', 'Months', 'Days'].map((name) => box(name).top)
+    expect(new Set(tops).size).toBe(1)
+    expect(tops[0]).toBeGreaterThan(box('Date of birth').bottom)
+})
+
+test("an age's date of birth says its format under it, not as a placeholder", async () => {
+    await mount({ valueType: 'AGE' })
+    const birth = page.getByRole('textbox', { name: 'Date of birth' })
+    await expect
+        .element(birth)
+        .toHaveAccessibleDescription('Date format: YYYY-MM-DD')
+    await expect.element(birth).not.toHaveAttribute('placeholder')
+})
+
 test('a day picked for the date of birth fills it and the age, and is reported when the field is left', async () => {
     const { onChange, leave } = await mount(
         { valueType: 'AGE' },

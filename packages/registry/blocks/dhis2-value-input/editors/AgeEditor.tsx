@@ -18,14 +18,9 @@ import {
 } from '@/components/dhis2/ui/input-group'
 import { Label } from '@/components/dhis2/ui/label'
 import { todayIso } from '@/components/dhis2-value-types'
-import { DatePickerButton } from '../kinds/DateInput'
+import { DatePickerButton, dateFormatHint } from '../kinds/DateInput'
 import type { PopupEditorProps } from './popupEditors'
-import {
-    EditorButtons,
-    SUB_LABEL_CLASS,
-    idList,
-    saveOnCtrlEnter,
-} from './EditorButtons'
+import { EditorButtons, idList, saveOnCtrlEnter } from './EditorButtons'
 
 // The date of birth is typed and shown as any date is: in the system calendar and date format.
 const DATE: Field = { valueType: 'DATE' }
@@ -163,6 +158,7 @@ export const AgeEditor = ({
 }: AgeEditorProps) => {
     const id = useId()
     const problemId = useId()
+    const hintId = useId()
     const birthRef = useRef<HTMLInputElement>(null)
     const [birth, setBirth] = useState(
         value === undefined ? '' : typedText(DATE, value, settings)
@@ -239,18 +235,14 @@ export const AgeEditor = ({
         'aria-invalid': invalid || shown?.part === part ? true : undefined,
         'aria-describedby': idList(
             shown?.part === part && problemId,
+            inline && part === 'birth' && hintId,
             describedBy
         ),
         onKeyDown: saveOnCtrlEnter(commit),
         className: cn(!inline && 'h-(--dhis2-field-height-dense)'),
     })
     const label = (part: Part) => (
-        <Label
-            htmlFor={`${id}-${part}`}
-            className={cn(inline && SUB_LABEL_CLASS)}
-        >
-            {labels[part]}
-        </Label>
+        <Label htmlFor={`${id}-${part}`}>{labels[part]}</Label>
     )
     // Inline, the date of birth shares its box with the calendar button, as the date kind does.
     const BirthInput = inline ? InputGroupInput : Input
@@ -259,7 +251,8 @@ export const AgeEditor = ({
             {...fieldProps('birth')}
             ref={birthRef}
             value={birth}
-            placeholder={settings.dateFormat}
+            // In a form the format is said under the box, as for a date field.
+            placeholder={inline ? undefined : settings.dateFormat}
             onChange={({ target }) => typeBirth(target.value)}
         />
     )
@@ -270,7 +263,10 @@ export const AgeEditor = ({
             <p
                 id={problemId}
                 role="alert"
-                className="text-xs text-dhis2-destructive"
+                className={cn(
+                    'text-dhis2-destructive',
+                    inline ? 'text-sm' : 'text-xs'
+                )}
             >
                 {shown.message}
             </p>
@@ -297,6 +293,14 @@ export const AgeEditor = ({
             ) : (
                 birthInput
             )}
+            {inline ? (
+                <p
+                    id={hintId}
+                    className="m-0 text-sm leading-normal text-dhis2-muted-foreground"
+                >
+                    {dateFormatHint('date', settings)}
+                </p>
+            ) : null}
             {problem(true)}
         </div>
     )
@@ -314,9 +318,10 @@ export const AgeEditor = ({
     return (
         <>
             {inline ? (
+                // Years, months and days wrap together, under the date of birth when there is no room beside it.
                 <div className="flex flex-wrap items-start gap-2">
                     {birthPart}
-                    {ageParts}
+                    <div className="flex gap-2">{ageParts}</div>
                 </div>
             ) : (
                 <>

@@ -177,16 +177,19 @@ test("a short option set's radios show and are described by each option's descri
         },
         { messages: [{ tone: 'error', text: 'Choose one' }] }
     )
-    // Its own description first, then the field's messages, as every radio has.
+    // The field's messages describe the group and each radio; an option's description follows on its radio.
+    await expect
+        .element(page.getByRole('radiogroup', { name: LABEL }))
+        .toHaveAccessibleDescription('Error: Choose one')
     const none = radio('No referral')
     await expect
         .element(none)
-        .toHaveAccessibleDescription('Treated here. Error: Choose one')
+        .toHaveAccessibleDescription('Error: Choose one Treated here.')
     await expect.element(none).toHaveAttribute('aria-invalid', 'true')
     await expect
         .element(radio('Hospital'))
         .toHaveAccessibleDescription('Error: Choose one')
-    await userEvent.click(page.getByText('Treated here.'))
+    await userEvent.click(page.getByText('No referral'))
     expect(onChange).toHaveBeenLastCalledWith('NONE')
 })
 

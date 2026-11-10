@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ValueInput } from '@/components/dhis2-value-input'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import { Button } from '@/components/dhis2/ui/button'
+import { FieldGroup, FieldLegend, FieldSet } from '@/components/dhis2/ui/field'
 
 /**
  * An example: a small form where the host passes what its rules say. Hemoglobin is required and carries a message,
@@ -48,48 +49,53 @@ const ValueInputForm = () => {
     const low = values.hemoglobin !== undefined && Number(values.hemoglobin) < 8
     return (
         <form
-            className="grid gap-4"
+            className="flex flex-col gap-6"
             onSubmit={(event) => {
                 event.preventDefault()
                 if (problems.size === 0 && values.hemoglobin !== undefined)
                     setSaved(values)
             }}
         >
-            <ValueInput
-                field={REGISTRATION}
-                settings={SETTINGS}
-                label="Registration number"
-                value={values.registration}
-                onChange={commit('registration')}
-                readOnly="Assigned by a rule"
-            />
-            <ValueInput
-                field={HEMOGLOBIN}
-                settings={SETTINGS}
-                label="Hemoglobin (g/dL)"
-                description="Measured today"
-                value={values.hemoglobin}
-                onChange={commit('hemoglobin')}
-                required
-                messages={
-                    low
-                        ? [
-                              {
-                                  tone: 'warning',
-                                  text: 'Below 8: consider a transfusion',
-                              },
-                          ]
-                        : []
-                }
-            />
-            <ValueInput
-                field={OUTCOME}
-                settings={SETTINGS}
-                label="Outcome"
-                value={values.outcome}
-                onChange={commit('outcome')}
-                hiddenOptions={HIDDEN}
-            />
+            <FieldSet>
+                <FieldLegend>Visit</FieldLegend>
+                <FieldGroup>
+                    <ValueInput
+                        field={REGISTRATION}
+                        settings={SETTINGS}
+                        label="Registration number"
+                        value={values.registration}
+                        onChange={commit('registration')}
+                        readOnly="Assigned by a rule"
+                    />
+                    <ValueInput
+                        field={HEMOGLOBIN}
+                        settings={SETTINGS}
+                        label="Hemoglobin (g/dL)"
+                        description="Measured today"
+                        value={values.hemoglobin}
+                        onChange={commit('hemoglobin')}
+                        required
+                        messages={
+                            low
+                                ? [
+                                      {
+                                          tone: 'warning',
+                                          text: 'Below 8: consider a transfusion',
+                                      },
+                                  ]
+                                : []
+                        }
+                    />
+                    <ValueInput
+                        field={OUTCOME}
+                        settings={SETTINGS}
+                        label="Outcome"
+                        value={values.outcome}
+                        onChange={commit('outcome')}
+                        hiddenOptions={HIDDEN}
+                    />
+                </FieldGroup>
+            </FieldSet>
             <div>
                 <Button type="submit">Save</Button>
             </div>

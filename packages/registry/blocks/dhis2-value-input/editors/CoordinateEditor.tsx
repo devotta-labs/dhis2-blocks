@@ -8,12 +8,7 @@ import { cn } from '@/components/dhis2/ui/cn'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
 import type { PopupEditorProps } from './popupEditors'
-import {
-    EditorButtons,
-    SUB_LABEL_CLASS,
-    idList,
-    saveOnCtrlEnter,
-} from './EditorButtons'
+import { EditorButtons, idList, saveOnCtrlEnter } from './EditorButtons'
 
 type Axis = 'latitude' | 'longitude'
 type Texts = Record<Axis, string>
@@ -104,12 +99,7 @@ export const CoordinateEditor = ({
             key={axis}
             className={cn('flex flex-col gap-1', inline && 'w-full max-w-40')}
         >
-            <Label
-                htmlFor={`${id}-${axis}`}
-                className={cn(inline && SUB_LABEL_CLASS)}
-            >
-                {labels[axis]}
-            </Label>
+            <Label htmlFor={`${id}-${axis}`}>{labels[axis]}</Label>
             <Input
                 id={`${id}-${axis}`}
                 value={texts[axis]}
@@ -130,7 +120,10 @@ export const CoordinateEditor = ({
                 <p
                     id={`${id}-${axis}-problem`}
                     role="alert"
-                    className="text-xs text-dhis2-destructive"
+                    className={cn(
+                        'text-dhis2-destructive',
+                        inline ? 'text-sm' : 'text-xs'
+                    )}
                 >
                     {messages[axis]}
                 </p>

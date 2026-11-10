@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ValueInput } from '@/components/dhis2-value-input'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import { FieldGroup } from '@/components/dhis2/ui/field'
 
 /**
  * An example: one field of each kind that needs no server. Each field is a value type (and, for a choice, its
@@ -97,7 +98,7 @@ const FIELDS: ReadonlyArray<{ id: string; label: string; field: Field }> = [
 const ValueInputKinds = () => {
     const [values, setValues] = useState<Record<string, string | undefined>>({})
     return (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <FieldGroup className="grid sm:grid-cols-2">
             {FIELDS.map(({ id, label, field }) => (
                 <ValueInput
                     key={id}
@@ -115,7 +116,7 @@ const ValueInputKinds = () => {
                     }}
                 />
             ))}
-        </div>
+        </FieldGroup>
     )
 }
 

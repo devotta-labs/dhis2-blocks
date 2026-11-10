@@ -15,11 +15,11 @@ import {
     ComboboxList,
     useComboboxAnchor,
 } from '@/components/dhis2/ui/combobox'
+import { Field, FieldItem, FieldLabel } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
-import { Label } from '@/components/dhis2/ui/label'
 import { announce as announceInHouse } from '@/components/dhis2/ui/announcer'
 import { matchCount, useAnnounced } from '../announce'
-import { RADIO_LIMIT } from '../kinds/ChoiceInput'
+import { RADIO_LIMIT, visibleCount } from '../kinds/ChoiceInput'
 import type { PopupEditorProps } from './popupEditors'
 import { EditorButtons } from './EditorButtons'
 
@@ -40,6 +40,7 @@ export const MultiSelectEditor = ({
     value,
     hiddenOptions,
     labelledBy,
+    invalid,
     inline,
     save,
     report,
@@ -65,11 +66,7 @@ export const MultiSelectEditor = ({
                   ),
         [options, hiddenOptions, stored]
     )
-    // Held options do not count, as for a radio group: a change that drops one must not change the control.
-    const listed =
-        inline &&
-        options.filter(({ code }) => !hiddenOptions?.has(code)).length <=
-            RADIO_LIMIT
+    const listed = inline && visibleCount(options, hiddenOptions) <= RADIO_LIMIT
     // Each position in the option set, for listing matches in its order.
     const { index, at } = useMemo(
         () => ({
@@ -124,18 +121,28 @@ export const MultiSelectEditor = ({
         }
         choose(next)
     }
+    const items = found.codes.map((code) => (
+        <FieldItem key={code}>
+            <Checkbox
+                checked={selected.has(code)}
+                onCheckedChange={(checked) => toggle(code, checked)}
+            />
+            <FieldLabel className="cursor-pointer">
+                {index.names.get(code)}
+            </FieldLabel>
+        </FieldItem>
+    ))
+    // Each box takes the field's invalid state. In a form the field's fieldset is the group, named by its legend.
     const boxes = (className: string) => (
-        <div role="group" aria-labelledby={labelledBy} className={className}>
-            {found.codes.map((code) => (
-                <Label key={code} className="cursor-pointer">
-                    <Checkbox
-                        checked={selected.has(code)}
-                        onCheckedChange={(checked) => toggle(code, checked)}
-                    />
-                    {index.names.get(code)}
-                </Label>
-            ))}
-        </div>
+        <Field
+            invalid={invalid}
+            className={className}
+            {...(listed
+                ? {}
+                : { role: 'group', 'aria-labelledby': labelledBy })}
+        >
+            {items}
+        </Field>
     )
     const chosen = offered.filter(({ code }) => selected.has(code))
     let picker

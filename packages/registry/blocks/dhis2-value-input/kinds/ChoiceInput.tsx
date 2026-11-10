@@ -1,5 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import { useMemo, useRef } from 'react'
+import type { ReactNode } from 'react'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
 import { cellKind } from '@/components/dhis2-value-types'
@@ -10,7 +11,14 @@ import type {
 } from '@/components/dhis2-value-types'
 import { Button } from '@/components/dhis2/ui/button'
 import { Checkbox } from '@/components/dhis2/ui/checkbox'
-import { Label } from '@/components/dhis2/ui/label'
+import {
+    FieldContent,
+    FieldDescription,
+    FieldItem,
+    FieldLabel,
+    FieldLegend,
+    FieldSet,
+} from '@/components/dhis2/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/components/dhis2/ui/radio-group'
 import { focusInto } from '../focusInto'
 import type { useDraft } from '../useDraft'
@@ -20,6 +28,26 @@ import { OptionComboInput } from './OptionComboInput'
 export const RADIO_LIMIT = 5
 
 const NO_OPTIONS: ReadonlyArray<Option> = []
+
+/** The options a person can see. Held ones a rule hid do not count: a pick that drops one must not change the control. */
+export const visibleCount = (
+    options: ReadonlyArray<Option>,
+    hiddenOptions: ReadonlySet<string> | undefined
+) => options.filter(({ code }) => !hiddenOptions?.has(code)).length
+
+/** Whether a choice field is a radio group: Yes/No, or an option set of five or fewer visible options. */
+export const asRadios = (
+    field: Field,
+    hiddenOptions: ReadonlySet<string> | undefined
+) => {
+    const kind = cellKind(field)
+    return (
+        kind === 'boolean' ||
+        (kind === 'option' &&
+            visibleCount(field.options ?? NO_OPTIONS, hiddenOptions) <=
+                RADIO_LIMIT)
+    )
+}
 
 const yesNo = (): ReadonlyArray<Option> => [
     { code: 'true', name: i18n.t('Yes') },
@@ -45,6 +73,7 @@ export const offeredOptions = (
  */
 export const ChoiceInput = ({
     id,
+    legend,
     field,
     value,
     hiddenOptions,
@@ -55,6 +84,8 @@ export const ChoiceInput = ({
     onChange,
 }: {
     id: string
+    /** A radio group's name, its legend. */
+    legend: ReactNode
     field: Field
     value: string | undefined
     settings: ValueSettings
@@ -75,10 +106,6 @@ export const ChoiceInput = ({
         () => offeredOptions(options, hiddenOptions, value),
         [options, hiddenOptions, value]
     )
-    // Held options do not count: a pick that drops the held one must not change the control.
-    const visible = options.filter(
-        ({ code }) => !hiddenOptions?.has(code)
-    ).length
     const meta: ValueMeta = {
         valueType: field.valueType,
         optionSet: {
@@ -108,12 +135,66 @@ export const ChoiceInput = ({
         <div
             ref={box}
             className={
+                // Yes and No are one row, and Clear follows them on it.
                 kind === 'boolean'
-                    ? 'flex flex-wrap items-center gap-x-6 gap-y-2'
+                    ? 'flex flex-wrap items-end gap-x-6 gap-y-2'
                     : 'flex flex-col gap-2'
             }
         >
-            {visible > RADIO_LIMIT ? (
+            {asRadios(field, hiddenOptions) ? (
+                // A fieldset that is the radio group, named by its legend: Base UI's labelled radio group.
+                <FieldSet
+                    render={
+                        <RadioGroup
+                            id={id}
+                            tabIndex={-1}
+                            onFocus={focusInto(
+                                '[role="radio"][aria-checked="true"]',
+                                '[role="radio"]'
+                            )}
+                            // An empty value checks no radio.
+                            value={known ? value : ''}
+                            readOnly={readOnly}
+                            // Not `required`: the radios' form inputs have no name, so each would be a group of its
+                            // own, missing when unchecked, and hold back the host's form.
+                            aria-required={required || undefined}
+                            onValueChange={(code: string) => onChange(code)}
+                            className={
+                                kind === 'boolean' ? 'w-auto' : undefined
+                            }
+                        />
+                    }
+                >
+                    <FieldLegend variant="label">{legend}</FieldLegend>
+                    <div
+                        className={
+                            kind === 'boolean'
+                                ? 'flex flex-wrap gap-x-6 gap-y-2'
+                                : 'flex flex-col gap-2'
+                        }
+                    >
+                        {offered.map(({ code, name, description }) => (
+                            <FieldItem key={code}>
+                                <RadioGroupItem value={code} />
+                                {description === undefined ? (
+                                    <FieldLabel className="cursor-pointer">
+                                        {name}
+                                    </FieldLabel>
+                                ) : (
+                                    <FieldContent>
+                                        <FieldLabel className="cursor-pointer">
+                                            {name}
+                                        </FieldLabel>
+                                        <FieldDescription>
+                                            {description}
+                                        </FieldDescription>
+                                    </FieldContent>
+                                )}
+                            </FieldItem>
+                        ))}
+                    </div>
+                </FieldSet>
+            ) : (
                 <OptionComboInput
                     id={id}
                     offered={offered}
@@ -122,59 +203,6 @@ export const ChoiceInput = ({
                     readOnly={readOnly}
                     required={required}
                 />
-            ) : (
-                <RadioGroup
-                    id={id}
-                    tabIndex={-1}
-                    onFocus={focusInto(
-                        '[role="radio"][aria-checked="true"]',
-                        '[role="radio"]'
-                    )}
-                    // An empty value checks no radio.
-                    value={known ? value : ''}
-                    readOnly={readOnly}
-                    // Not `required`: the radios' form inputs have no name, so each would be a group of its own,
-                    // missing when unchecked, and hold back the host's form.
-                    aria-required={required || undefined}
-                    onValueChange={(code: string) => onChange(code)}
-                    className={
-                        kind === 'boolean' ? 'flex w-auto gap-6' : undefined
-                    }
-                >
-                    {offered.map(({ code, name, description }, index) =>
-                        description === undefined ? (
-                            <Label key={code} className="cursor-pointer">
-                                <RadioGroupItem
-                                    value={code}
-                                    aria-label={name}
-                                />
-                                {name}
-                            </Label>
-                        ) : (
-                            // The house radio with a description: the radio, then its name and what it means.
-                            <Label
-                                key={code}
-                                className="cursor-pointer items-start"
-                            >
-                                <RadioGroupItem
-                                    value={code}
-                                    aria-label={name}
-                                    aria-describedby={`${id}-option-${index}`}
-                                    className="mt-px"
-                                />
-                                <span className="flex flex-col gap-1">
-                                    {name}
-                                    <span
-                                        id={`${id}-option-${index}`}
-                                        className="text-sm font-normal text-dhis2-muted-foreground"
-                                    >
-                                        {description}
-                                    </span>
-                                </span>
-                            </Label>
-                        )
-                    )}
-                </RadioGroup>
             )}
             {value !== undefined && !known ? (
                 <p className="text-sm text-dhis2-muted-foreground">{shown}</p>

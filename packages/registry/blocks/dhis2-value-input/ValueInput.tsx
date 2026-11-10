@@ -1,5 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
@@ -9,21 +9,30 @@ import type {
     Field,
     ValueSettings,
 } from '@/components/dhis2-value-types'
+import { announce } from '@/components/dhis2/ui/announcer'
 import { cn } from '@/components/dhis2/ui/cn'
 import {
     Field as FieldRoot,
+    FieldContent,
     FieldDescription,
     FieldError,
     FieldLabel,
+    FieldLegend,
+    FieldSet,
 } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
-import { Label } from '@/components/dhis2/ui/label'
 import { Textarea } from '@/components/dhis2/ui/textarea'
 import { DownloadLink } from './editors/FileEditor'
 import { editorFor } from './editors/popupEditors'
 import type { EditorProblem } from './editors/popupEditors'
 import { focusInto } from './focusInto'
-import { ChoiceInput, offeredOptions } from './kinds/ChoiceInput'
+import {
+    ChoiceInput,
+    RADIO_LIMIT,
+    asRadios,
+    offeredOptions,
+    visibleCount,
+} from './kinds/ChoiceInput'
 import { DateInput, dateFormatHint } from './kinds/DateInput'
 import { EditorInput, useEditorCommits } from './kinds/EditorInput'
 import { SearchInput, unknownName } from './kinds/SearchInput'
@@ -86,14 +95,14 @@ const TONES = {
 
 interface PartProps {
     /** A pop-up editor's: plain, see `ValueInput`. */
-    grouped: boolean
+    plain: boolean
     id?: string
     className?: string
     children: ReactNode
 }
 
-const Description = ({ grouped, className, ...props }: PartProps) =>
-    grouped ? (
+const Description = ({ plain, className, ...props }: PartProps) =>
+    plain ? (
         <p
             className={cn(
                 'm-0 text-sm leading-normal text-dhis2-muted-foreground',
@@ -105,8 +114,8 @@ const Description = ({ grouped, className, ...props }: PartProps) =>
         <FieldDescription className={className} {...props} />
     )
 
-const Problem = ({ grouped, ...props }: PartProps) =>
-    grouped ? (
+const Problem = ({ plain, ...props }: PartProps) =>
+    plain ? (
         <p role="alert" className="text-sm text-dhis2-destructive" {...props} />
     ) : (
         <FieldError {...props} />
@@ -203,14 +212,48 @@ export const ValueInput = ({
         onChange,
         readOnly: reason !== undefined,
     })
-    // A pop-up editor has fields of its own, each labelled in it, which in a Field would all take the field's one
-    // control id. Its parts are plain, and name and describe it as a group.
-    const grouped = reason === undefined && popup
+    // A pop-up editor names and describes its own controls, so its field's parts are plain: in a Field, Base UI would
+    // link them a second time. An editor of one control (a text area, a combobox of chips) is a field with a label; one
+    // of several (an age, a coordinate, a list of boxes, a file) is a fieldset with a legend.
+    const editor = reason === undefined && popup
+    const oneControl =
+        field.valueType === 'LONG_TEXT' ||
+        (field.valueType === 'MULTI_TEXT' &&
+            visibleCount(field.options ?? [], hiddenOptions) > RADIO_LIMIT)
+    const radios =
+        (kind === 'boolean' || kind === 'option') &&
+        asRadios(field, hiddenOptions)
     const commits = useEditorCommits(value, onChange)
-    const problem = draft.problem ?? (grouped ? commits.problem : undefined)
+    const problem = draft.problem ?? (editor ? commits.problem : undefined)
     const invalid =
         problem !== undefined || messages.some(({ tone }) => tone === 'error')
     const labelId = `${id}-label`
+    // A rule's error or warning that appears once the field is on the page is said, an error at once (as the house
+    // announcer asks); those it opens with are read with the field. Information is not said: a rule may update it on
+    // every commit.
+    const sayable = messages
+        .filter(({ tone }) => tone !== 'info')
+        .map(({ tone, text }) => `${tone}:${TONES[tone].say(text)}`)
+        .join('\n')
+    const said = useRef(new Set(sayable.split('\n')))
+    useEffect(() => {
+        const now = sayable.split('\n')
+        const fresh = now.filter(
+            (each) => each !== '' && !said.current.has(each)
+        )
+        said.current = new Set(now)
+        for (const tone of ['error', 'warning'] as const) {
+            const texts = fresh
+                .filter((each) => each.startsWith(`${tone}:`))
+                .map((each) => each.slice(tone.length + 1))
+            if (texts.length > 0) {
+                announce(
+                    texts.join(' '),
+                    tone === 'error' ? 'assertive' : 'polite'
+                )
+            }
+        }
+    }, [sayable])
     const describedBy = [
         description === undefined ? '' : `${id}-description`,
         problem === undefined ? '' : `${id}-problem`,
@@ -223,8 +266,22 @@ export const ValueInput = ({
         field.valueType === 'FILE_RESOURCE' || field.valueType === 'IMAGE'
     // Ids whose names the host may know.
     const named = kind === 'search' || file
+    const title = (
+        <>
+            {label}
+            {required ? (
+                <span aria-hidden="true" className="text-dhis2-destructive">
+                    *
+                </span>
+            ) : null}
+            {editor && required ? (
+                // An editor's controls cannot say it, so its name does.
+                <span className="sr-only"> {i18n.t('required')}</span>
+            ) : null}
+        </>
+    )
     let control: ReactNode
-    if (grouped) {
+    if (editor) {
         control = (
             <EditorInput
                 labelId={labelId}
@@ -277,6 +334,7 @@ export const ValueInput = ({
         control = (
             <ChoiceInput
                 id={id}
+                legend={title}
                 field={field}
                 value={value}
                 hiddenOptions={hiddenOptions}
@@ -325,43 +383,10 @@ export const ValueInput = ({
         )
     }
 
-    const title = (
-        <>
-            {label}
-            {required ? (
-                <span aria-hidden="true" className="text-dhis2-destructive">
-                    *
-                </span>
-            ) : null}
-        </>
-    )
-    const labelPart = grouped ? (
-        <Label id={labelId} className="w-fit leading-snug">
-            {title}
-            {required ? (
-                // The group's name is all a screen reader has to say it.
-                <span className="sr-only"> {i18n.t('required')}</span>
-            ) : null}
-        </Label>
-    ) : (
-        <FieldLabel id={labelId}>{title}</FieldLabel>
-    )
     const parts = (
         <>
-            {kind === 'trueOnly' ? (
-                // The house checkbox: the box, then the label that ticks it.
-                <div className="flex items-center gap-2">
-                    {control}
-                    {labelPart}
-                </div>
-            ) : (
-                <>
-                    {labelPart}
-                    {control}
-                </>
-            )}
             {description === undefined ? null : (
-                <Description grouped={grouped} id={`${id}-description`}>
+                <Description plain={editor} id={`${id}-description`}>
                     {description}
                 </Description>
             )}
@@ -376,7 +401,7 @@ export const ValueInput = ({
             )}
             {problem === undefined ? null : (
                 // An alert, said when it appears or changes: not again while more is typed.
-                <Problem grouped={grouped} id={`${id}-problem`}>
+                <Problem plain={editor} id={`${id}-problem`}>
                     {problem.message}
                 </Problem>
             )}
@@ -384,7 +409,7 @@ export const ValueInput = ({
                 <Description
                     // oxlint-disable-next-line react/no-array-index-key -- messages have no ids, and two can say the same
                     key={index}
-                    grouped={grouped}
+                    plain={editor}
                     id={`${id}-message-${index}`}
                     className={cn('border-s-2 ps-1.5', TONES[tone].border)}
                 >
@@ -393,24 +418,55 @@ export const ValueInput = ({
             ))}
         </>
     )
-    return grouped ? (
-        // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- not a control: focus given to its id goes on to its first control
-        <div
-            id={id}
-            tabIndex={-1}
-            onFocus={focusInto(
-                'input:not([hidden]), textarea, button, a[href], [tabindex="0"]'
-            )}
-            role="group"
-            aria-labelledby={labelId}
-            aria-describedby={describedBy || undefined}
-            data-invalid={invalid || undefined}
-            className="flex w-full flex-col gap-1 data-invalid:text-dhis2-destructive"
-        >
-            {parts}
-        </div>
-    ) : (
-        <FieldRoot invalid={invalid} className="gap-1">
+    // Not a control: focus given to its id goes on to its first control.
+    const focusable = {
+        id,
+        tabIndex: -1,
+        onFocus: focusInto(
+            'input:not([hidden]), textarea, button, a[href], [tabindex="0"]'
+        ),
+    }
+    if (editor && !oneControl) {
+        return (
+            <FieldSet
+                {...focusable}
+                aria-describedby={describedBy || undefined}
+                data-invalid={invalid || undefined}
+                className="gap-2 data-invalid:text-dhis2-destructive"
+            >
+                <FieldLegend id={labelId} variant="label">
+                    {title}
+                </FieldLegend>
+                {control}
+                {parts}
+            </FieldSet>
+        )
+    }
+    if (editor) {
+        return (
+            <FieldRoot invalid={invalid} {...focusable}>
+                <FieldLabel id={labelId}>{title}</FieldLabel>
+                {control}
+                {parts}
+            </FieldRoot>
+        )
+    }
+    if (kind === 'trueOnly') {
+        // The house checkbox: the box, then its label and what describes it.
+        return (
+            <FieldRoot invalid={invalid} orientation="horizontal">
+                {control}
+                <FieldContent>
+                    <FieldLabel id={labelId}>{title}</FieldLabel>
+                    {parts}
+                </FieldContent>
+            </FieldRoot>
+        )
+    }
+    return (
+        <FieldRoot invalid={invalid}>
+            {radios ? null : <FieldLabel id={labelId}>{title}</FieldLabel>}
+            {control}
             {parts}
         </FieldRoot>
     )

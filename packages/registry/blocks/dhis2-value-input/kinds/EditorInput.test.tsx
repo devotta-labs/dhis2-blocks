@@ -5,6 +5,7 @@ import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { birthFromAge, todayIso } from '@/components/dhis2-value-types'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import { popupEditors } from '../editors/popupEditors'
 import { ValueInput } from '../ValueInput'
 import type { ValueInputProps } from '../ValueInput'
 
@@ -426,4 +427,55 @@ test('a read-only image the host links shows a preview and "Download", and says 
     await expect
         .element(page.getByRole('link', { name: 'Download' }))
         .toHaveAttribute('href', STORED_IMAGE)
+})
+
+test.each([
+    ['A file', 'FILE_RESOURCE', true],
+    ['An image', 'IMAGE', true],
+    ['A long text', 'LONG_TEXT', false],
+] as const)(
+    "%s field's editor is given uploads only when it takes files",
+    async (_, type, given) => {
+        const editor = popupEditors[type]
+        const uploadsGiven = vi.fn()
+        popupEditors[type] = ({ uploads }) => {
+            uploadsGiven(uploads !== undefined)
+            return null
+        }
+        onTestFinished(() => {
+            popupEditors[type] = editor
+        })
+        await mount({ valueType: type })
+        expect(uploadsGiven).toHaveBeenLastCalledWith(given)
+    }
+)
+
+test('after a coordinate problem, the host saying back the report keeps it; another value replaces the editor and drops it', async () => {
+    const { onChange, leave, assign } = await mount(
+        { valueType: 'COORDINATE' },
+        { value: '[10,8]' }
+    )
+    const latitude = page.getByRole('textbox', { name: 'Latitude' })
+    const longitude = page.getByRole('textbox', { name: 'Longitude' })
+    await userEvent.fill(latitude, '95')
+    await leave()
+    expect(onChange.mock.calls).toEqual([
+        [
+            null,
+            { message: 'Enter a latitude between -90 and 90', text: '95, 10' },
+        ],
+    ])
+    // The host stored the cleared value the problem reported.
+    await expect.element(latitude).toHaveValue('95')
+    await expect
+        .element(page.getByText('Enter a latitude between -90 and 90'))
+        .toBeVisible()
+
+    await assign('[20,5]')
+    await expect.element(latitude).toHaveValue('5')
+    await expect.element(longitude).toHaveValue('20')
+    await expect
+        .element(page.getByText('Enter a latitude between -90 and 90'))
+        .not.toBeInTheDocument()
+    await expect.element(latitude).not.toHaveAttribute('aria-invalid')
 })

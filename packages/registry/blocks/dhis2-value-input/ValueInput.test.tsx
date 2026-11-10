@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import { popupEditors } from './editors/popupEditors'
 import { ValueInput } from './ValueInput'
 import type { ValueInputProps } from './ValueInput'
 
@@ -28,6 +29,7 @@ const watchAlerts = () => {
 }
 
 const NUMBER: Field = { valueType: 'NUMBER' }
+const COORDINATE: Field = { valueType: 'COORDINATE' }
 const SETTINGS: ValueSettings = {
     calendar: 'gregorian',
     dateFormat: 'YYYY-MM-DD',
@@ -56,8 +58,14 @@ const mount = async (props: Partial<ValueInputProps> = {}) => {
 /**
  * A host that keeps the value and problem it is given, as a form would, and builds its field anew on every render.
  */
-const Host = ({ onChange }: { onChange?: ValueInputProps['onChange'] }) => {
-    const [value, setValue] = useState<string>()
+const Host = ({
+    initial,
+    onChange,
+}: {
+    initial?: string
+    onChange?: ValueInputProps['onChange']
+}) => {
+    const [value, setValue] = useState(initial)
     const [problem, setProblem] = useState<string>()
     return (
         <>
@@ -206,6 +214,103 @@ test('a host that re-renders with a new field object after a problem keeps the t
     await expect
         .element(page.getByText('Use a full stop for decimals'))
         .toBeVisible()
+})
+
+test('a host that keeps the last good value and later gives what a problem reported keeps the text; a key resets it', async () => {
+    const onChange = vi.fn()
+    const field = (key: string, value: string | undefined) => (
+        <ValueInput
+            key={key}
+            field={NUMBER}
+            settings={SETTINGS}
+            label={LABEL}
+            value={value}
+            onChange={onChange}
+        />
+    )
+    const screen = await render(field('a', '12'))
+    const input = page.getByRole('textbox', { name: LABEL })
+    await userEvent.click(input)
+    await userEvent.keyboard('{Backspace}{Backspace}abc{Tab}')
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(null, {
+        message: 'Enter a number',
+        text: 'abc',
+    })
+
+    // Empty is what the problem reported: the host saying it back.
+    await screen.rerender(field('a', undefined))
+    await expect.element(input).toHaveValue('abc')
+    await expect.element(page.getByText('Enter a number')).toBeVisible()
+
+    await screen.rerender(field('b', undefined))
+    await expect.element(input).toHaveValue('')
+    await expect
+        .element(page.getByText('Enter a number'))
+        .not.toBeInTheDocument()
+    await expect.element(input).not.toHaveAttribute('aria-invalid')
+})
+
+test('a value from the host while a problem shows replaces the text and the problem', async () => {
+    const { input, rerender } = await mount({ value: '12' })
+    await userEvent.click(input)
+    await userEvent.keyboard('{Backspace}{Backspace}abc{Tab}')
+    await expect.element(page.getByText('Enter a number')).toBeVisible()
+
+    await rerender({ value: '40' })
+    await expect.element(input).toHaveValue('40')
+    await expect
+        .element(page.getByText('Enter a number'))
+        .not.toBeInTheDocument()
+})
+
+test('after a problem, a host passing null, as the problem reported it, keeps the typed text and the problem', async () => {
+    const { input, rerender } = await mount({ value: '12' })
+    await userEvent.click(input)
+    await userEvent.keyboard('{Backspace}{Backspace}abc{Tab}')
+    await expect.element(page.getByText('Enter a number')).toBeVisible()
+
+    await rerender({ value: null })
+    await expect.element(input).toHaveValue('abc')
+    await expect.element(page.getByText('Enter a number')).toBeVisible()
+})
+
+test('a host that stores the cleared value a problem reports, after an await, keeps the typed text and the problem', async () => {
+    const AsyncHost = () => {
+        const [value, setValue] = useState<string | undefined>('12')
+        return (
+            <ValueInput
+                field={NUMBER}
+                settings={SETTINGS}
+                label={LABEL}
+                value={value}
+                onChange={async (next) => {
+                    await new Promise((resolve) => {
+                        setTimeout(resolve, 50)
+                    })
+                    setValue(next ?? undefined)
+                }}
+            />
+        )
+    }
+    await render(<AsyncHost />)
+    const input = page.getByRole('textbox', { name: LABEL })
+    await userEvent.click(input)
+    await userEvent.keyboard('{Backspace}{Backspace}abc{Tab}')
+    await new Promise((resolve) => {
+        setTimeout(resolve, 100)
+    })
+    await expect.element(input).toHaveValue('abc')
+    await expect.element(page.getByText('Enter a number')).toBeVisible()
+})
+
+test('a host that stores the cleared value a problem reports keeps the typed text and the problem', async () => {
+    await render(<Host initial="12" />)
+    const input = page.getByRole('textbox', { name: LABEL })
+    await userEvent.click(input)
+    await userEvent.keyboard('{Backspace}{Backspace}abc{Tab}')
+    await expect.element(page.getByText('Not saved')).toBeVisible()
+    await expect.element(input).toHaveValue('abc')
+    await expect.element(page.getByText('Enter a number')).toBeVisible()
 })
 
 test('a host that moves focus on Enter gets one report', async () => {
@@ -386,6 +491,29 @@ test('while typing after a problem, the problem stands until fixed and is not re
         .toEqual(['Use a full stop for decimals', 'Enter a number'])
 })
 
+test('once the text has been valid, the problem stays hidden until the next commit', async () => {
+    const said = watchAlerts()
+    const { input } = await mount()
+    await userEvent.click(input)
+    await userEvent.keyboard('1,5{Tab}')
+    await expect.poll(() => said).toEqual(['Use a full stop for decimals'])
+
+    await userEvent.click(input)
+    await userEvent.keyboard('{Backspace}{Backspace}')
+    await expect.element(input).toHaveValue('1')
+    await expect.element(page.getByRole('alert')).not.toBeInTheDocument()
+    await userEvent.keyboard('x')
+    await expect.element(input).toHaveValue('1x')
+    await expect.element(page.getByRole('alert')).not.toBeInTheDocument()
+    expect(said).toEqual(['Use a full stop for decimals'])
+
+    await userEvent.keyboard('{Tab}')
+    await expect
+        .element(page.getByRole('alert'))
+        .toHaveTextContent('Enter a number')
+    expect(said).toEqual(['Use a full stop for decimals', 'Enter a number'])
+})
+
 test('a read-only org unit shows the name the host knows, or "Unknown" and its id', async () => {
     const { input, rerender } = await mount({
         field: { valueType: 'ORGANISATION_UNIT' },
@@ -421,16 +549,15 @@ test('a read-only long text shows every line', async () => {
         .toHaveAccessibleDescription('Assigned by a rule')
 })
 
-test.each([
-    ['a typed field', NUMBER, 'textbox'],
-    ['a radio group', { valueType: 'BOOLEAN' }, 'radiogroup'],
-    ['a pop-up field', { valueType: 'COORDINATE' }, 'group'],
-] as const)(
-    'the id given is on %s, for a host to focus or link to',
-    async (_, field, role) => {
-        await mount({ field, id: 'given' })
-        expect(document.getElementById('given')).toBe(
-            page.getByRole(role, { name: LABEL }).element()
-        )
-    }
-)
+test('a pop-up type with no editor registered is shown read-only, with the reason', async () => {
+    const editor = popupEditors.COORDINATE
+    delete popupEditors.COORDINATE
+    onTestFinished(() => {
+        popupEditors.COORDINATE = editor
+    })
+    const { input } = await mount({ field: COORDINATE, value: '[-11.4,8.1]' })
+    await expect.element(input).toHaveAttribute('readonly')
+    await expect
+        .element(input)
+        .toHaveAccessibleDescription('Edit this field in its own form')
+})

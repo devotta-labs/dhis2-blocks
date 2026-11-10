@@ -184,6 +184,19 @@ test('a long option set takes the top match of what is typed on Tab, and shows i
     await expect.element(box).toHaveValue('Name D')
 })
 
+test('an option the mouse rests on is not picked by Tab; the typed text is committed', async () => {
+    const onChange = await mount(LONG)
+    await userEvent.click(page.getByRole('combobox', { name: LABEL }))
+    await userEvent.keyboard('name')
+    const hovered = page.getByRole('option', { name: 'Name C' })
+    await userEvent.hover(hovered)
+    await expect.element(hovered).toHaveAttribute('data-highlighted')
+    await userEvent.keyboard('{Tab}')
+    expect(onChange.mock.calls).toEqual([
+        [null, { message: 'Choose one of the options', text: 'name' }],
+    ])
+})
+
 test('a long option set takes the top match on Enter', async () => {
     const onChange = await mount(LONG)
     await userEvent.click(page.getByRole('combobox', { name: LABEL }))

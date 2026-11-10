@@ -8,7 +8,6 @@ import type {
     PopupEditor,
     PopupEditorProps,
     PopupValueType,
-    ServerSearch,
     ValueInputProps,
 } from '../index'
 import {
@@ -34,7 +33,6 @@ export type SupportedValueInputTypes = [
     PopupEditor,
     PopupEditorProps,
     PopupValueType,
-    ServerSearch,
     ValueInputProps,
 ]
 
@@ -48,8 +46,8 @@ export const uploadsFor = (
     engine: ReturnType<typeof useDataEngine>,
     key: string
 ): FileUploads => createFileUploads(engine, new Map(), key)
-export const searched: ServerSearch | undefined = searchFor('USERNAME')
-export const found = (search: ServerSearch | undefined): Found | undefined =>
+export const searched = searchFor('USERNAME')
+export const found = (search: typeof searched): Found | undefined =>
     useServerSearch(search?.search, 'a'.repeat(MIN_LENGTH))
 export const reason: string = editedElsewhere()
 export const hint: string = dateFormatHint('date', {

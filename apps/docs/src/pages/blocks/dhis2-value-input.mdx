@@ -50,20 +50,20 @@ const SETTINGS = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 />
 ```
 
-| Prop                        | Meaning                                                                                             |
-| --------------------------- | --------------------------------------------------------------------------------------------------- |
-| `field`                     | The value type, with `options` for an option set and a `fieldMask` if the value must match one.     |
-| `settings`                  | The system calendar and date format.                                                                |
-| `label`, `description`      | The field's label and the text under it.                                                            |
-| `value`                     | The value as DHIS2 stores it, or `undefined`.                                                       |
-| `onChange(value, problem?)` | Called when a value is committed. `value` is what would be saved, or `null` to clear.               |
-| `required`                  | The field needs a value. It is announced, and a radio group has no Clear.                           |
-| `readOnly`                  | Why the field cannot be edited. The field stays focusable and says why. Absent means editable.      |
-| `hiddenOptions`             | Option codes a rule hides.                                                                          |
-| `messages`                  | Rule or host messages under the field, each with a tone of `error`, `warning` or `info`.            |
-| `valueName`                 | The name of a stored organisation unit or file id. Without it the field shows "Unknown" and the id. |
-| `fileUrl`                   | The link to the stored file or image, for download and preview.                                     |
-| `id`                        | The control's id. Otherwise one is generated.                                                       |
+| Prop                        | Meaning                                                                                               |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `field`                     | The value type, with `options` for an option set and a `fieldMask` if the value must match one.       |
+| `settings`                  | The system calendar and date format.                                                                  |
+| `label`, `description`      | The field's label and the text under it.                                                              |
+| `value`                     | The value as DHIS2 stores it; `undefined` or `null` for none.                                         |
+| `onChange(value, problem?)` | Called when a value is committed. `value` is what would be saved, or `null` to clear.                 |
+| `required`                  | The field needs a value. It is announced, and a choice field has no Clear.                            |
+| `readOnly`                  | Why the field cannot be edited. The field stays focusable and says why. Absent means editable.        |
+| `hiddenOptions`             | Option codes a rule hides.                                                                            |
+| `messages`                  | Rule or host messages under the field, each with a tone of `error`, `warning` or `info`.              |
+| `valueName`                 | The name of a stored organisation unit or file id. Without it the field shows "Unknown" and the id.   |
+| `fileUrl`                   | The link to the stored file or image, for download and preview.                                       |
+| `id`                        | The field's id, for a host to link to or focus; focus lands in the field. Otherwise one is generated. |
 
 ## When onChange fires
 
@@ -78,13 +78,24 @@ finished typing, not on its first digit. Enter commits before the key reaches a
 surrounding form, so Enter to save saves what was typed.
 
 A `problem` means the typed text is not a value yet. Its `message` says why and
-its `text` is what was typed. The field keeps showing the text and the message
-until the typed text is a valid value or the field is committed again. Nothing
-is checked or reported on each change. Treat the field as not valid while a problem stands,
-as the form below does.
+its `text` is what was typed. The field keeps showing the text, and shows the
+message until the text is edited into a valid value. From then on the message
+stays hidden, whatever is typed, until the field is committed again, which
+reports the value or the problem the text has then. Committing the same text
+with the same problem again shows the problem without reporting it a second
+time. Nothing is reported on each change.
+Treat the field as not valid while a problem stands, as the form below does.
 
-A `value` from the host that differs from the last value the field committed
-replaces what was typed, for example when a rule assigns the field a value.
+A `value` from the host that is the value the field last reported is the host
+saying it back, whenever it arrives, and changes nothing; `null` and `undefined`
+count as the same value. Any other `value` replaces what was typed and drops any
+problem, for example when a rule assigns the field a value. This holds for
+typed fields and pop-up fields alike.
+
+A problem reports `null`, so after a problem an empty `value` (`undefined` or
+`null`) is the host saying the report back: the typed text and the problem stay.
+To empty such a field, or to reset any field whose `value` does not change,
+after a form is saved for example, give `ValueInput` a new React `key`.
 
 A field is identified by its value type, field mask, option codes, calendar and
 date format. A new `field` or `settings` that changes any of them replaces what
@@ -102,20 +113,22 @@ anywhere.
 
 ## Kinds
 
-| Kind                 | Value types                                                                                                 | Control                                                                                                                                                                       |
-| -------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Text, number         | `TEXT`, `EMAIL`, `PHONE_NUMBER`, `URL`, `LETTER`, `TIME`, the number types, `PERCENTAGE`, the integer types | A text input with the keyboard that suits the type. It is checked when the field is left or Enter is pressed.                                                                 |
-| Date, date and time  | `DATE`, `DATETIME`                                                                                          | Typed in the system calendar and date format, with the format shown as a hint. A "Choose date" button opens a calendar. A date and time waits for the time before it commits. |
-| Yes or no            | `BOOLEAN`                                                                                                   | A radio group: Yes, No.                                                                                                                                                       |
-| Yes only             | `TRUE_ONLY`                                                                                                 | A checkbox.                                                                                                                                                                   |
-| Option set           | Any value type with options                                                                                 | Five or fewer visible options: a radio group. More: a combobox that takes the typed name or code.                                                                             |
-| Search               | `ORGANISATION_UNIT`, `USERNAME`                                                                             | A search of the server. It needs the app-runtime provider and says it needs a connection when offline.                                                                        |
-| Pop-up types, inline | `LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `FILE_RESOURCE`, `IMAGE`                                    | The grid's editor, shown inline with no Save and Cancel. A change is reported when focus leaves the editor or on Enter outside a text area; a save is reported at once.       |
-| Read-only            | Anything else                                                                                               | The value, and the reason it cannot be edited.                                                                                                                                |
+| Kind                 | Value types                                                                                                 | Control                                                                                                                                                                                                   |
+| -------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Text, number         | `TEXT`, `EMAIL`, `PHONE_NUMBER`, `URL`, `LETTER`, `TIME`, the number types, `PERCENTAGE`, the integer types | A text input with the keyboard that suits the type. It is checked when the field is left or Enter is pressed.                                                                                             |
+| Date, date and time  | `DATE`, `DATETIME`                                                                                          | Typed in the system calendar and date format, with the format shown as a hint. A "Choose date" button opens a calendar. A date and time waits for the time before it commits.                             |
+| Yes or no            | `BOOLEAN`                                                                                                   | A radio group: Yes, No.                                                                                                                                                                                   |
+| Yes only             | `TRUE_ONLY`                                                                                                 | A checkbox.                                                                                                                                                                                               |
+| Option set           | Any value type with options                                                                                 | Five or fewer visible options: a radio group. More: a combobox that takes the typed name or code.                                                                                                         |
+| Search               | `ORGANISATION_UNIT`, `USERNAME`                                                                             | A search of the server. Typing highlights the top result, which Enter or Tab picks; while a search is answering they wait. It needs the app-runtime provider and says it needs a connection when offline. |
+| Pop-up types, inline | `LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `FILE_RESOURCE`, `IMAGE`                                    | The grid's editor, shown inline with no Save and Cancel. A change is reported when focus leaves the editor or on Enter outside a text area; a save is reported at once.                                   |
+| Read-only            | Anything else, and a pop-up type with no editor in `popupEditors`                                           | The value, and the reason it cannot be edited.                                                                                                                                                            |
 
-Radio groups that are not `required` have a Clear control once they hold a value, because a radio
-group cannot otherwise go back to no value. Arrow keys move within a radio
-group and Tab leaves it. Names, not codes, are shown for options.
+A yes or no field or an option set that is not `required` has a Clear button
+once it holds a value, both as a radio group and as the combobox of more than
+five options, because a radio group cannot otherwise go back to no value.
+Arrow keys move within a radio group and Tab leaves it. Names, not codes, are
+shown for options.
 
 A hidden option is left out of the list and refused when typed, unless the field
 already holds its code.
@@ -140,7 +153,9 @@ Read the exports in the block's `index.ts` for their types.
 ## Accessibility
 
 Every control sits in a labelled field, so its label, description and messages
-are tied to it, and it says when it has an error or needs a value. A read-only
+are tied to it, and it says when it has an error or needs a value. Focusing the
+field's `id` puts focus in it: on a radio group's checked radio, or its first,
+and on a pop-up field's first control. A read-only
 field is focusable and says why it cannot be edited. A problem is announced
 once when it appears. Colours are the house tokens, so the dark and
 high-contrast themes work.

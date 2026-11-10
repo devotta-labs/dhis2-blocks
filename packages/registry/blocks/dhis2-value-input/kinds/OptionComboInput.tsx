@@ -64,8 +64,9 @@ export const OptionComboInput = ({
                     draft.change(text)
                 }
             }}
-            onItemHighlighted={(code) => {
-                highlighted.current = code
+            onItemHighlighted={(code, { reason }) => {
+                // As in the data entry grid, the mouse highlights nothing for Tab to pick.
+                highlighted.current = reason === 'pointer' ? undefined : code
             }}
             onValueChange={(code) => {
                 if (code !== null) {

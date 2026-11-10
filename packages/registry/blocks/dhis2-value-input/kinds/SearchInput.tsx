@@ -1,6 +1,6 @@
 import { useDhis2ConnectionStatus } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Field } from '@/components/dhis2-value-types'
 import { FieldDescription } from '@/components/dhis2/ui/field'
 import {
@@ -21,8 +21,9 @@ export const unknownName = (id: string) =>
 
 /**
  * An org unit or username searched on the server, from two characters on: a pick is reported at once, and the field
- * shows its name. Emptied and left, or Enter, it reports no value; other typing is dropped when the field is left.
- * Offline it says it needs a connection, and does not search.
+ * shows its name. Typing highlights the top result, which Enter or Tab picks; while the search for the typed text is
+ * still to answer, Enter and Tab wait for it, as in the data entry grid. Emptied and left, or Enter, it reports no
+ * value; other typing is dropped when the field is left. Offline it says it needs a connection, and does not search.
  */
 export const SearchInput = ({
     id,
@@ -47,6 +48,9 @@ export const SearchInput = ({
     const [picked, setPicked] = useState<{ value: string; name: string }>()
     const query = typed === null || isDisconnected ? '' : typed.trim()
     const found = useServerSearch(server?.search, query)
+    // The answer for what was typed is still to come.
+    const waiting = query.length >= MIN_LENGTH && found === undefined
+    const highlighted = useRef<string>()
     const results = new Map(
         found?.results.map((result) => [result.value, result])
     )
@@ -75,6 +79,11 @@ export const SearchInput = ({
         }
         setTyped(null)
     }
+    const pick = (result: { value: string; name: string }) => {
+        setPicked(result)
+        setTyped(null)
+        onChange(result.value)
+    }
     return (
         <>
             <Combobox
@@ -89,12 +98,15 @@ export const SearchInput = ({
                         setTyped(text)
                     }
                 }}
+                onItemHighlighted={(each, { reason }) => {
+                    // As in the data entry grid, the mouse highlights nothing for Tab to pick.
+                    highlighted.current =
+                        reason === 'pointer' ? undefined : each
+                }}
                 onValueChange={(next) => {
                     const result = next === null ? undefined : results.get(next)
                     if (result !== undefined) {
-                        setPicked(result)
-                        setTyped(null)
-                        onChange(result.value)
+                        pick(result)
                     }
                 }}
                 itemToStringLabel={(each) => results.get(each)?.name ?? shown}
@@ -106,12 +118,33 @@ export const SearchInput = ({
                     aria-required={required || undefined}
                     onBlur={leave}
                     onKeyDown={(event) => {
-                        // Here, not on keyup: a surrounding form submits on Enter, and must get the cleared field.
                         if (
-                            event.key === 'Enter' &&
-                            typed?.trim() === '' &&
-                            !composing(event)
+                            (event.key !== 'Enter' && event.key !== 'Tab') ||
+                            composing(event)
                         ) {
+                            return
+                        }
+                        if (waiting) {
+                            // Nothing to pick yet: what was typed is not dropped, nor a form submitted without it,
+                            // and the list stays open for the answer.
+                            event.preventDefault()
+                            event.preventBaseUIHandler()
+                            return
+                        }
+                        const result =
+                            typed !== null &&
+                            typed.trim() !== '' &&
+                            highlighted.current !== undefined
+                                ? results.get(highlighted.current)
+                                : undefined
+                        if (event.key === 'Tab' && result !== undefined) {
+                            // Picked as the field is left, as Tab in the data entry grid does.
+                            pick(result)
+                        } else if (
+                            event.key === 'Enter' &&
+                            typed?.trim() === ''
+                        ) {
+                            // Here, not on keyup: a surrounding form submits on Enter, and must get the cleared field.
                             leave()
                         }
                     }}

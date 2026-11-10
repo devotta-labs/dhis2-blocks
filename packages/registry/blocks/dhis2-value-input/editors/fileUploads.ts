@@ -17,6 +17,7 @@ export interface FileUploads {
         failed: (message: string) => void
     ): void
     stop(): void
+    /** A host may count subscribers to know an editor is open, so an editor subscribes exactly while it is open. */
     subscribe(listener: () => void): () => void
 }
 
@@ -112,10 +113,26 @@ export const createFileUploads = (
     }
 }
 
-/** A field's own uploads, aborted when the component unmounts. */
-export const useLocalFileUploads = (): FileUploads => {
+/**
+ * `given`, or else the field's own uploads, made only when needed (`wanted`, and none given) and stopped when the
+ * component unmounts.
+ */
+export function useLocalFileUploads(given: FileUploads | undefined): FileUploads
+export function useLocalFileUploads(
+    given: undefined,
+    wanted: boolean
+): FileUploads | undefined
+export function useLocalFileUploads(
+    given: FileUploads | undefined,
+    wanted = true
+) {
     const engine = useDataEngine()
-    const [uploads] = useState(() => createFileUploads(engine, new Map(), ''))
-    useEffect(() => uploads.stop, [uploads])
-    return uploads
+    const [own, setOwn] = useState<FileUploads>()
+    let current = own
+    if (current === undefined && given === undefined && wanted) {
+        current = createFileUploads(engine, new Map(), '')
+        setOwn(current)
+    }
+    useEffect(() => current?.stop, [current])
+    return given ?? current
 }

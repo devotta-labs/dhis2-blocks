@@ -12,6 +12,7 @@ import { Button } from '@/components/dhis2/ui/button'
 import { Checkbox } from '@/components/dhis2/ui/checkbox'
 import { Label } from '@/components/dhis2/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/dhis2/ui/radio-group'
+import { focusInto } from '../focusInto'
 import type { useDraft } from '../useDraft'
 import { OptionComboInput } from './OptionComboInput'
 
@@ -117,6 +118,11 @@ export const ChoiceInput = ({
             ) : (
                 <RadioGroup
                     id={id}
+                    tabIndex={-1}
+                    onFocus={focusInto(
+                        '[role="radio"][aria-checked="true"]',
+                        '[role="radio"]'
+                    )}
                     // An empty value checks no radio.
                     value={known ? value : ''}
                     readOnly={readOnly}

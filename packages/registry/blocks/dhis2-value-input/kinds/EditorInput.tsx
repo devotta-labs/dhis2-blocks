@@ -14,7 +14,8 @@ type OnChange = (value: string | null, problem?: EditorProblem) => void
 /**
  * What a pop-up field has committed: `commit` reports to the host and shows a problem, `send` only reports. The
  * problem shows until a change without one. A `value` from the host that is not the one last reported (a rule assigned
- * it) is another `version`, for the editor to start again on.
+ * it) is another `version`, for the editor to start again on, without the problem; the one last reported, however late
+ * it comes back, is not.
  */
 export const useEditorCommits = (
     value: string | undefined,
@@ -106,10 +107,13 @@ export const EditorInput = ({
     }
     // A file uploaded here keeps the name it was chosen under.
     const [learned, setLearned] = useState<{ id: string; name: string }>()
-    const local = useLocalFileUploads()
+    const local = useLocalFileUploads(
+        undefined,
+        field.valueType === 'FILE_RESOURCE' || field.valueType === 'IMAGE'
+    )
     // A value from the host wins over an upload still running for the editor it replaced.
-    useEffect(() => local.stop, [local, commits.version])
-    const uploads: FileUploads = {
+    useEffect(() => local?.stop, [local, commits.version])
+    const uploads: FileUploads | undefined = local && {
         ...local,
         start(file, image, done, failed) {
             const before = value ?? null

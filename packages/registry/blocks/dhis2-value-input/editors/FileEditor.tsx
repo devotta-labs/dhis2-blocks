@@ -43,8 +43,7 @@ export const FileEditor = ({
     save,
     cancel,
 }: PopupEditorProps) => {
-    const local = useLocalFileUploads()
-    const uploads = given ?? local
+    const uploads = useLocalFileUploads(given)
     const running = useSyncExternalStore(uploads.subscribe, uploads.running)
     const image = field.valueType === 'IMAGE'
     const [problem, setProblem] = useState<string>()

@@ -17,13 +17,18 @@ interface DraftState {
     fieldKey: string
     /** The `value` the host gave at the last render. */
     given: string | undefined
-    /** The value the host holds, as far as the control knows: the one it gave, or the one last reported. */
+    /**
+     * The value the host holds, as far as the control knows: the one it gave, or the one last reported (`undefined` for
+     * `null`). The host giving it back, however late, is not a new value.
+     */
     value: string | undefined
     text: string
     /** Typed since the text was last set from a value or reported. */
     edited: boolean
     /** The problem last reported, until a value is. */
     reported: EditorProblem | undefined
+    /** The text has been valid since the problem was reported, which stays hidden until the next commit. */
+    fixed: boolean
 }
 
 const keyOf = (
@@ -49,6 +54,7 @@ const fresh = (
     text: value === undefined ? '' : typedText(field, value, settings),
     edited: false,
     reported: undefined,
+    fixed: false,
 })
 
 const sameProblem = (a: EditorProblem | undefined, b: EditorProblem) =>
@@ -57,8 +63,10 @@ const sameProblem = (a: EditorProblem | undefined, b: EditorProblem) =>
 /**
  * The text typed in a field, reported through `onChange` only on `commit`, once for each new value or problem. A
  * `value` from the host that is not the one last reported (a rule assigned it), another `field`, or another calendar or
- * date format, replaces the text.
- * A reported problem shows until the text is fixed or committed again: it is not replaced while typing.
+ * date format, replaces the text and drops the problem; the host saying back what was reported, at once or later, does
+ * not.
+ * A reported problem shows until the text is valid or committed again: it is not replaced while typing, and once the
+ * text has been valid it stays hidden until the next commit.
  */
 export const useDraft = ({
     field,
@@ -110,21 +118,34 @@ export const useDraft = ({
             return
         }
         const next = { message: typed.problem.message, text: current.text }
-        update({ ...current, value: undefined, edited: false, reported: next })
+        update({
+            ...current,
+            value: undefined,
+            edited: false,
+            reported: next,
+            fixed: false,
+        })
         if (!sameProblem(current.reported, next)) {
             onChange(null, next)
         }
     }
 
-    const fixed =
-        draft.reported === undefined ||
-        parseTyped(field, draft.text, settings).ok
     return {
         text: draft.text,
-        /** The problem to show: the one reported, until the text is fixed. */
-        problem: fixed ? undefined : draft.reported,
-        change: (text: string) =>
-            update({ ...latest.current, text, edited: true }),
+        /** The problem to show: the one reported, until the text is valid. */
+        problem: draft.fixed ? undefined : draft.reported,
+        change: (text: string) => {
+            const current = latest.current
+            update({
+                ...current,
+                text,
+                edited: true,
+                fixed:
+                    current.fixed ||
+                    (current.reported !== undefined &&
+                        parseTyped(field, text, settings).ok),
+            })
+        },
         commit,
     }
 }

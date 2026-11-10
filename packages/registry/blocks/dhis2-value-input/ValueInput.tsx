@@ -16,7 +16,9 @@ import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
 import { Textarea } from '@/components/dhis2/ui/textarea'
 import { DownloadLink } from './editors/FileEditor'
+import { editorFor } from './editors/popupEditors'
 import type { EditorProblem } from './editors/popupEditors'
+import { focusInto } from './focusInto'
 import { ChoiceInput, offeredOptions } from './kinds/ChoiceInput'
 import { DateInput, dateFormatHint } from './kinds/DateInput'
 import { EditorInput, useEditorCommits } from './kinds/EditorInput'
@@ -32,8 +34,8 @@ export interface ValueInputProps {
     settings: ValueSettings
     label: string
     description?: string
-    /** The value as DHIS2 stores it. */
-    value: string | undefined
+    /** The value as DHIS2 stores it; `null` is no value, as `undefined` is. */
+    value: string | null | undefined
     /** Called when a value is committed (the field is left, Enter, a pick), never per keystroke. */
     onChange(value: string | null, problem?: EditorProblem): void
     required?: boolean
@@ -142,7 +144,7 @@ export const ValueInput = ({
     settings,
     label,
     description,
-    value,
+    value: givenValue,
     onChange,
     required = false,
     readOnly,
@@ -152,6 +154,8 @@ export const ValueInput = ({
     fileUrl,
     id: givenId,
 }: ValueInputProps): ReactNode => {
+    // One "no value" for every kind, as `onChange` reports it back (`null`) or a host keeps it (`undefined`).
+    const value = givenValue ?? undefined
     const generatedId = useId()
     const id = givenId ?? generatedId
     const kind = cellKind(field)
@@ -159,8 +163,9 @@ export const ValueInput = ({
     const dated = kind === 'date' || kind === 'dateTime'
     const choice =
         kind === 'boolean' || kind === 'trueOnly' || kind === 'option'
-    const edited =
-        typed || dated || choice || kind === 'popup' || kind === 'search'
+    // A pop-up type with no editor registered is shown read-only, as in the data entry grid.
+    const popup = kind === 'popup' && editorFor(field.valueType) !== undefined
+    const edited = typed || dated || choice || popup || kind === 'search'
     const reason = readOnly ?? (edited ? undefined : editedElsewhere())
     // A long option set's typed text may name only the options offered, so a hidden one is refused as any other text.
     const options = field.options
@@ -183,7 +188,7 @@ export const ValueInput = ({
     })
     // A pop-up editor has fields of its own, each labelled in it, which in a Field would all take the field's one
     // control id. Its parts are plain, and name and describe it as a group.
-    const grouped = reason === undefined && kind === 'popup'
+    const grouped = reason === undefined && popup
     const commits = useEditorCommits(value, onChange)
     const problem = draft.problem ?? (grouped ? commits.problem : undefined)
     const invalid =
@@ -359,8 +364,13 @@ export const ValueInput = ({
         </>
     )
     return grouped ? (
+        // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- not a control: focus given to its id goes on to its first control
         <div
             id={id}
+            tabIndex={-1}
+            onFocus={focusInto(
+                'input:not([hidden]), textarea, button, a[href], [tabindex="0"]'
+            )}
             role="group"
             aria-labelledby={labelId}
             aria-describedby={describedBy || undefined}

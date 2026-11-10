@@ -39,9 +39,12 @@ const later = (ms: number) =>
 
 test('an upload stops when its field leaves the page, and reports nothing', async () => {
     const { uploads, wrapper } = server()
-    const { result, unmount } = await renderHook(useLocalFileUploads, {
-        wrapper,
-    })
+    const { result, unmount } = await renderHook(
+        () => useLocalFileUploads(undefined),
+        {
+            wrapper,
+        }
+    )
     const done = vi.fn()
     const failed = vi.fn()
     result.current.start(file, false, done, failed)
@@ -58,7 +61,9 @@ test('an upload stops when its field leaves the page, and reports nothing', asyn
 
 test('a newer upload stops the one before', async () => {
     const { uploads, wrapper } = server()
-    const { result } = await renderHook(useLocalFileUploads, { wrapper })
+    const { result } = await renderHook(() => useLocalFileUploads(undefined), {
+        wrapper,
+    })
     const first = vi.fn()
     const second = vi.fn()
     result.current.start(file, false, first, vi.fn())
@@ -74,4 +79,22 @@ test('a newer upload stops the one before', async () => {
     await later(50)
     expect(first).not.toHaveBeenCalled()
     expect(result.current.running()).toBeUndefined()
+})
+
+test('a field makes uploads of its own only when it wants them and is given none', async () => {
+    const { wrapper } = server()
+    const { result: own } = await renderHook(
+        () => useLocalFileUploads(undefined),
+        { wrapper }
+    )
+    const { result: given } = await renderHook(
+        () => useLocalFileUploads(own.current),
+        { wrapper }
+    )
+    const { result: unwanted } = await renderHook(
+        () => useLocalFileUploads(undefined, false),
+        { wrapper }
+    )
+    expect(given.current).toBe(own.current)
+    expect(unwanted.current).toBeUndefined()
 })

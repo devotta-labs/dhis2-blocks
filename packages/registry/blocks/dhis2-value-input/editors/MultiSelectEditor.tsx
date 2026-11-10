@@ -39,6 +39,8 @@ export const MultiSelectEditor = ({
     )
     const [selected, setSelected] = useState(stored)
     const [query, setQuery] = useState('')
+    // In a form the editor is always there: its count is news once the search is typed in, not when it appears.
+    const [searched, setSearched] = useState(!inline)
     const offered = useMemo(
         () =>
             hiddenOptions === undefined
@@ -64,10 +66,8 @@ export const MultiSelectEditor = ({
         }
     }, [index, at, query])
     const count = matchCount(found.codes.length, found.total)
-    useAnnounced(
-        found.codes.length === 0 ? i18n.t('No matches') : count,
-        announce
-    )
+    const news = found.codes.length === 0 ? i18n.t('No matches') : count
+    useAnnounced(searched ? news : '', announce)
 
     // A code the option set lacks is not kept.
     const choice = (codes: ReadonlySet<string>) => {
@@ -109,7 +109,10 @@ export const MultiSelectEditor = ({
                 aria-labelledby={labelledBy}
                 autoComplete="off"
                 spellCheck={false}
-                onChange={({ target }) => setQuery(target.value)}
+                onChange={({ target }) => {
+                    setQuery(target.value)
+                    setSearched(true)
+                }}
                 className="h-(--dhis2-field-height-dense)"
             />
             {found.codes.length === 0 ? (

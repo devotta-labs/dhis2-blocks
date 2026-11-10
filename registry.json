@@ -2054,6 +2054,11 @@
                     "target": "@components/tracked-entity-header/api/types.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-header/banner/TrackedEntityBanner.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/banner/TrackedEntityBanner.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-header/format/display.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-header/format/display.ts"

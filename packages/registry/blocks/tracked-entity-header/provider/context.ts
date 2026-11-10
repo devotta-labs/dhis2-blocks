@@ -19,6 +19,8 @@ export interface HeaderContextValue {
     clientId: number
     /** The trimmed program, when there is one. */
     program?: string
+    /** The program's name once its metadata loads, even when the person request is refused. */
+    programName?: string
     display: { calendar: Dhis2Calendar; locale?: string }
     /** Logs a config problem's full text, once per provider. */
     logProblem: (message: string) => void

@@ -44,3 +44,7 @@ export {
     TrackedEntityDetails,
     type TrackedEntityDetailsProps,
 } from './parts/TrackedEntityDetails'
+export {
+    TrackedEntityBanner,
+    type TrackedEntityBannerProps,
+} from './banner/TrackedEntityBanner'

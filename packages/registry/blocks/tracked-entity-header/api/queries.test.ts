@@ -161,6 +161,73 @@ describe('fetchTrackedEntity', () => {
         expect(person.enrollment?.enrollment).toBe('later')
     })
 
+    it('a person not enrolled in the program (404) is asked for again without it, with no enrollment or owner', async () => {
+        // The person without the program still lists every enrollment and owner it has.
+        const query = vi
+            .fn<DataEngineLike['query']>()
+            .mockRejectedValueOnce(
+                Object.assign(new Error('Not found'), { httpStatusCode: 404 })
+            )
+            .mockResolvedValueOnce({
+                trackedEntityHeaderResource: personWith(
+                    [enrollmentOf('e1', 'ACTIVE', '2026-01-01')],
+                    [{ program: 'p1', orgUnit: 'ou1' }]
+                ),
+            })
+
+        const person = ok(
+            await fetchTrackedEntity(
+                createTrackedEntityHeaderResourceClient({ query }),
+                { trackedEntity: 'te1', program: 'p1' }
+            )
+        )
+
+        const requests = query.mock.calls.map(
+            ([request]) => Object.values(request)[0]
+        )
+        expect(requests).toHaveLength(2)
+        expect(requests[0]?.params).toHaveProperty('program', 'p1')
+        expect(requests[1]?.params).not.toHaveProperty('program')
+        expect(person.values.get('a1')).toBe('x')
+        expect(person.enrollment).toBeUndefined()
+        expect(person.ownerOrgUnit).toBeUndefined()
+    })
+
+    it.each([403, 500])(
+        'never asks again without the program after a %i',
+        async (httpStatusCode) => {
+            const query = vi
+                .fn<DataEngineLike['query']>()
+                .mockRejectedValue(
+                    Object.assign(new Error('no'), { httpStatusCode })
+                )
+
+            const result = await fetchTrackedEntity(
+                createTrackedEntityHeaderResourceClient({ query }),
+                { trackedEntity: 'te1', program: 'p1' }
+            )
+
+            expect(Result.isError(result)).toBe(true)
+            expect(query).toHaveBeenCalledTimes(1)
+        }
+    )
+
+    it('a person not found without a program is an error, asked for once', async () => {
+        const query = vi
+            .fn<DataEngineLike['query']>()
+            .mockRejectedValue(
+                Object.assign(new Error('Not found'), { httpStatusCode: 404 })
+            )
+
+        const result = await fetchTrackedEntity(
+            createTrackedEntityHeaderResourceClient({ query }),
+            { trackedEntity: 'te1' }
+        )
+
+        expect(Result.isError(result)).toBe(true)
+        expect(query).toHaveBeenCalledTimes(1)
+    })
+
     it('returns an error result on HTTP failure', async () => {
         const query = vi
             .fn<DataEngineLike['query']>()

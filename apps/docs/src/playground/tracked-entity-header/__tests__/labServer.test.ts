@@ -165,6 +165,18 @@ describe('the tracked entity header lab server', () => {
         )
     })
 
+    it('answers 404 for a program the person is not enrolled in, as DHIS2 does', () => {
+        expect(
+            statusOf(() =>
+                serverFor()({
+                    resource: 'tracker/trackedEntities',
+                    id: LAB_PERSON,
+                    params: { program: SUBJECTS.child.program },
+                })
+            )
+        ).toBe(404)
+    })
+
     it('answers nothing for another person', () => {
         expect(
             statusOf(() =>

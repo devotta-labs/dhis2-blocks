@@ -123,12 +123,15 @@ export function ObservationInline({
 
     return (
         <div data-slot="observation-inline" className={cn(ROW, className)}>
-            <dl className={cn(ROW, 'm-0')}>
-                {name ? (
+            {/* Without a name, just the value: a dd needs a dt. */}
+            {name ? (
+                <dl className={cn(ROW, 'm-0')}>
                     <dt className="text-dhis2-muted-foreground">{name}</dt>
-                ) : null}
-                <dd className={cn(ROW, 'm-0')}>{body}</dd>
-            </dl>
+                    <dd className={cn(ROW, 'm-0')}>{body}</dd>
+                </dl>
+            ) : (
+                body
+            )}
         </div>
     )
 }

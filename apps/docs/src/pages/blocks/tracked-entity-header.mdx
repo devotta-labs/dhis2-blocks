@@ -72,7 +72,11 @@ two, and the details open below both.
             </TrackedEntityActions>
             <TrackedEntityFacts>
                 <TrackedEntityAttribute attribute="gu1fqsmoU8r" />
-                <ObservationInline dataElement="vANAXwtLwcT" unit="g/dL" />
+                <ObservationInline
+                    dataElement="vANAXwtLwcT"
+                    label="Haemoglobin"
+                    unit="g/dL"
+                />
             </TrackedEntityFacts>
             <TrackedEntityDetails />
         </TrackedEntityBanner>
@@ -114,11 +118,16 @@ whole-record states yourself from `useTrackedEntityHeader()`, which returns
 `status` (`'loading'`, `'failed'`, `'restricted'` or `'ready'`) and `retry`:
 
 ```tsx
-;<PopoverContent aria-labelledby="quick-look-name">
-    <TrackedEntityHeaderProvider trackedEntity={personId} program={programId}>
-        <QuickLook />
-    </TrackedEntityHeaderProvider>
-</PopoverContent>
+const PersonQuickLook = ({ personId, programId }) => (
+    <PopoverContent aria-labelledby="quick-look-name">
+        <TrackedEntityHeaderProvider
+            trackedEntity={personId}
+            program={programId}
+        >
+            <QuickLook />
+        </TrackedEntityHeaderProvider>
+    </PopoverContent>
+)
 
 const QuickLook = () => {
     const { status } = useTrackedEntityHeader()

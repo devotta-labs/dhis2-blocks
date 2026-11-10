@@ -3,6 +3,7 @@ import { render } from 'vitest-browser-react'
 import { z } from 'zod'
 import childPerson from '../api/__fixtures__/trackedEntity.child.json'
 import childProgram from '../api/__fixtures__/program.child.json'
+import noProgramPerson from '../api/__fixtures__/trackedEntity.noProgram.json'
 import rmnchPerson from '../api/__fixtures__/trackedEntity.rmnch.json'
 import rmnchProgram from '../api/__fixtures__/program.rmnch.json'
 import personType from '../api/__fixtures__/trackedEntityType.person.json'
@@ -43,13 +44,14 @@ export interface RawPerson {
 }
 export interface RawProgram {
     programTrackedEntityAttributes: RawMetaAttribute[]
+    trackedEntityType?: { displayName: string }
 }
 
 export type Edit<T> = (raw: T) => T
 
 export type Status = 'ready' | 'loading' | 'failed' | 'restricted'
 
-/** RMNCH Linda Bailey or Child John Kelly, with the person or program edited, or a request that never answers or fails. */
+/** RMNCH Linda Bailey or Child John Kelly, with the person or program edited, or a request that never answers or fails. Not `enrolled`, Linda Bailey in any program. */
 export const renderParts = async (
     children: ReactNode,
     {
@@ -58,6 +60,7 @@ export const renderParts = async (
         person = (raw) => raw,
         metadata = (raw) => raw,
         orgUnitStatus = 'ready',
+        enrolled = true,
         requests = [],
     }: {
         program?: string | null
@@ -66,6 +69,8 @@ export const renderParts = async (
         metadata?: Edit<RawProgram>
         /** The organisation unit request: answered, never answered, or failed. */
         orgUnitStatus?: 'ready' | 'loading' | 'failed'
+        /** False: the person request with a program answers 404, as DHIS2 does for a person not enrolled in it. */
+        enrolled?: boolean
         /** Collects every request the client made. */
         requests?: ResourceRequest[]
     } = {}
@@ -104,13 +109,19 @@ export const renderParts = async (
                     httpStatusCode: status === 'failed' ? 500 : 403,
                 })
             }
-            return {
-                [key]: z.json().parse(
-                    person({
-                        ...(isChild ? childPerson : rmnchPerson),
-                        trackedEntity: request.id,
+            let raw: RawPerson = isChild ? childPerson : rmnchPerson
+            if (!enrolled) {
+                if (request.params?.program !== undefined) {
+                    throw Object.assign(new Error('Not found'), {
+                        httpStatusCode: 404,
                     })
-                ),
+                }
+                raw = noProgramPerson
+            }
+            return {
+                [key]: z
+                    .json()
+                    .parse(person({ ...raw, trackedEntity: request.id })),
             }
         },
     })

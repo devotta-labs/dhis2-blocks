@@ -43,7 +43,7 @@ export default function PersonBanner() {
                 >
                     <TrackedEntityBanner />
                 </TrackedEntityHeaderProvider>
-                {/* One provider per banner: each names its own region. */}
+                {/* One provider per banner: the details skip what any banner under a provider shows. */}
                 <TrackedEntityHeaderProvider
                     trackedEntity={PERSON}
                     program={PROGRAM}
@@ -59,6 +59,7 @@ export default function PersonBanner() {
                             <TrackedEntityAttribute attribute={ALLERGIES} />
                             <ObservationInline
                                 dataElement={HAEMOGLOBIN}
+                                label="Haemoglobin"
                                 unit="g/dL"
                             />
                         </TrackedEntityFacts>

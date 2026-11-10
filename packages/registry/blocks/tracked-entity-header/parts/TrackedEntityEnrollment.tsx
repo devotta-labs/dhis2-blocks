@@ -42,11 +42,17 @@ export function TrackedEntityEnrollment({
                 return i18n.t('Cancelled')
             case 'COMPLETED':
                 return completedOn
-                    ? i18n.t('Completed {{date}}', { date: completedOn })
+                    ? i18n.t('Completed {{date}}', {
+                          date: completedOn,
+                          interpolation: { escapeValue: false },
+                      })
                     : i18n.t('Completed')
             default:
                 return since
-                    ? i18n.t('Active since {{date}}', { date: since })
+                    ? i18n.t('Active since {{date}}', {
+                          date: since,
+                          interpolation: { escapeValue: false },
+                      })
                     : i18n.t('Active')
         }
     })()

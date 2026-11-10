@@ -180,7 +180,6 @@ const HeaderScope = ({
         () => new Set(counts.keys()),
         [counts]
     )
-    const [nameId, setNameId] = useState<string>()
 
     const value = useMemo<HeaderContextValue>(
         () => ({
@@ -193,8 +192,6 @@ const HeaderScope = ({
             logProblem,
             placeAttribute,
             placed,
-            nameId,
-            setNameId,
         }),
         [
             state,
@@ -206,7 +203,6 @@ const HeaderScope = ({
             logProblem,
             placeAttribute,
             placed,
-            nameId,
         ]
     )
 

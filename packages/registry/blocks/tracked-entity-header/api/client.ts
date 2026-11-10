@@ -101,6 +101,10 @@ const toRequestError = (cause: unknown, resource: string) => {
 export const isForbidden = (cause: Error): boolean =>
     cause instanceof TrackedEntityHeaderRequestError && cause.status === 403
 
+/** True when the server answered HTTP 404; only the kept status is read, never the body. */
+export const isNotFound = (cause: Error): boolean =>
+    cause instanceof TrackedEntityHeaderRequestError && cause.status === 404
+
 /**
  * Only failed requests are retried, twice, and only when the server or the
  * network failed. Malformed responses and client errors (403 included) would fail the same way again.

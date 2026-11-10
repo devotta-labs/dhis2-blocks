@@ -30,7 +30,11 @@ compose a banner, place the parts yourself:
             </TrackedEntityActions>
             <TrackedEntityFacts>
                 <TrackedEntityAttribute attribute={allergies} />
-                <ObservationInline dataElement={haemoglobin} unit="g/dL" />
+                <ObservationInline
+                    dataElement={haemoglobin}
+                    label="Haemoglobin"
+                    unit="g/dL"
+                />
             </TrackedEntityFacts>
             <TrackedEntityDetails />
         </TrackedEntityBanner>

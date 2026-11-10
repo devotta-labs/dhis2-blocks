@@ -7,9 +7,11 @@ import {
     TrackedEntityAttribute,
     TrackedEntityBorn,
     TrackedEntityDetails,
+    TrackedEntityEnrollment,
     TrackedEntityFacts,
     TrackedEntityHeaderProvider,
     TrackedEntityName,
+    TrackedEntityOwner,
     TrackedEntityStatus,
     useTrackedEntityHeader,
 } from '..'
@@ -69,6 +71,8 @@ const Ungated = () => (
         <TrackedEntityStatus />
         <TrackedEntityBorn attribute={BIRTH_DATE} />
         <TrackedEntityAttribute attribute="lZGmxYbs97q" />
+        <TrackedEntityOwner />
+        <TrackedEntityEnrollment />
         <TrackedEntityFacts>
             <TrackedEntityAttribute attribute={ALLERGIES} />
         </TrackedEntityFacts>

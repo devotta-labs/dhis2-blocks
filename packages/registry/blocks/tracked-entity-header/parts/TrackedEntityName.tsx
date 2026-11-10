@@ -1,7 +1,8 @@
 import { cn } from '@/components/dhis2/ui/cn'
 import i18n from '@dhis2/d2-i18n'
-import React, { useEffect, useId, useLayoutEffect } from 'react'
+import React, { useContext, useId, useLayoutEffect } from 'react'
 import { useHeaderContext } from '../provider/context'
+import { LabelledRegionContext } from '../provider/labelledRegion'
 import {
     resolveAttribute,
     setupMessage,
@@ -23,7 +24,8 @@ export function TrackedEntityName({
     className,
 }: TrackedEntityNameProps) {
     const context = useHeaderContext()
-    const { placeAttribute, setNameId } = context
+    const { placeAttribute } = context
+    const setRegionLabel = useContext(LabelledRegionContext)
     const generated = useId()
     const headingId = id ?? generated
     const ready = context.state.status === 'ready'
@@ -33,13 +35,14 @@ export function TrackedEntityName({
         const undo = key.split(',').filter(Boolean).map(placeAttribute)
         return () => undo.forEach((fn) => fn())
     }, [key, placeAttribute])
-    useEffect(() => {
-        if (!ready) {
+    // Before paint, so the region is never first announced by another name.
+    useLayoutEffect(() => {
+        if (!ready || !setRegionLabel) {
             return undefined
         }
-        setNameId(headingId)
-        return () => setNameId(undefined)
-    }, [ready, headingId, setNameId])
+        setRegionLabel(headingId)
+        return () => setRegionLabel(undefined)
+    }, [ready, headingId, setRegionLabel])
 
     const parts = attributes.map((uid) => resolveAttribute(uid, context))
     const problem = parts.find((part) => part.kind === 'misconfigured')

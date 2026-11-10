@@ -90,6 +90,26 @@ describe('ObservationInline', () => {
         expect(inlineOf(container)?.textContent).toContain('Unavailable')
     })
 
+    it('a failure before the metadata loads shows Unavailable, with no dd outside a named dl', async () => {
+        const { container } = await renderWith(
+            <ObservationInline dataElement={DE} />,
+            {},
+            'failed-early'
+        )
+        const inline = inlineOf(container)
+        expect(inline?.textContent).toContain('Unavailable')
+        expect(inline?.querySelector('dl, dd')).toBeNull()
+
+        const labelled = await renderWith(
+            <ObservationInline dataElement={DE} label="Hb" />,
+            {},
+            'failed-early'
+        )
+        const named = inlineOf(labelled.container)
+        expect(named?.querySelector('dl > dt')?.textContent).toBe('Hb')
+        expect(named?.querySelector('dl > dd')?.textContent).toBe('Unavailable')
+    })
+
     it('a partial series with no readable value shows Unavailable', async () => {
         const { container } = await renderWith(
             <ObservationInline dataElement={DE} />,

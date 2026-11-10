@@ -50,9 +50,14 @@ export const answer = (
                 if (settings.restricted) {
                     throw httpError(403, 'Forbidden')
                 }
-                return request.params?.program === subject.program
-                    ? data.person.withProgram
-                    : data.person.without
+                if (request.params?.program === undefined) {
+                    return data.person.without
+                }
+                // As DHIS2 does for a person not enrolled in the program.
+                if (request.params.program !== subject.program) {
+                    throw httpError(404, `Person ${request.id} not found`)
+                }
+                return data.person.withProgram
             case 'programs':
                 if (request.id !== subject.program) {
                     throw httpError(404, `Program ${request.id} not found`)

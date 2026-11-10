@@ -41,7 +41,15 @@ const OwnerName = ({
         enabled: orgUnit !== undefined,
         retry: shouldRetryTrackedEntityHeaderRequest,
     })
-    if (orgUnit !== undefined && query.isPending) {
+    if (orgUnit === undefined) {
+        return (
+            <AttributeFact
+                state={{ kind: 'missing', label: i18n.t('Owned by') }}
+                className={className}
+            />
+        )
+    }
+    if (query.isPending) {
         return <Skeleton className="h-5 w-40" />
     }
     if (query.data === undefined) {

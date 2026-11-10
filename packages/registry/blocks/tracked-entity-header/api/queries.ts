@@ -1,5 +1,5 @@
-import type { Result } from 'better-result'
-import type { TrackedEntityHeaderResourceClient } from './client'
+import { Result } from 'better-result'
+import { isNotFound, type TrackedEntityHeaderResourceClient } from './client'
 import {
     OrgUnitResponseSchema,
     ProgramAttributesResponseSchema,
@@ -43,35 +43,47 @@ const pickEnrollment = (
     )
 }
 
-/** One person, with the enrollment and owner of `program` only. Without a program, neither. */
+/** One person, with the enrollment and owner of `program` only. Without a program, or not enrolled in it, neither. */
 export const fetchTrackedEntity = async (
     client: TrackedEntityHeaderResourceClient,
     { trackedEntity, program }: { trackedEntity: string; program?: string },
     signal?: AbortSignal
 ): Promise<Result<TrackedEntityRecord, Error>> => {
-    const result = await client.query(
-        {
-            resource: 'tracker/trackedEntities',
-            id: trackedEntity,
-            params: {
-                ...(program !== undefined && { program }),
-                fields: TRACKED_ENTITY_FIELDS,
+    const request = (inProgram?: string) =>
+        client.query(
+            {
+                resource: 'tracker/trackedEntities',
+                id: trackedEntity,
+                params: {
+                    ...(inProgram !== undefined && { program: inProgram }),
+                    fields: TRACKED_ENTITY_FIELDS,
+                },
             },
-        },
-        TrackedEntityResponseSchema,
-        signal
-    )
+            TrackedEntityResponseSchema,
+            signal
+        )
+    let enrolledIn = program
+    let result = await request(program)
+    // DHIS2 answers 404 for a person not enrolled in the program; the person is still there without it.
+    if (
+        program !== undefined &&
+        Result.isError(result) &&
+        isNotFound(result.error)
+    ) {
+        enrolledIn = undefined
+        result = await request()
+    }
     return result.map((person) => {
         const enrollment =
-            program === undefined
+            enrolledIn === undefined
                 ? undefined
                 : pickEnrollment(
-                      person.enrollments.filter((e) => e.program === program)
+                      person.enrollments.filter((e) => e.program === enrolledIn)
                   )
         const ownerOrgUnit =
-            program === undefined
+            enrolledIn === undefined
                 ? undefined
-                : person.programOwners.find((o) => o.program === program)
+                : person.programOwners.find((o) => o.program === enrolledIn)
                       ?.orgUnit
         return {
             id: person.trackedEntity,

@@ -2,11 +2,12 @@ import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import i18n from '@dhis2/d2-i18n'
-import React, { type ReactNode } from 'react'
+import React, { useRef, useState, type ReactNode } from 'react'
 import { TrackedEntityAttribute } from '../parts/TrackedEntityAttribute'
 import { TrackedEntityDetails } from '../parts/TrackedEntityDetails'
 import { TrackedEntityStatus } from '../parts/TrackedEntityStatus'
 import { useHeaderContext } from '../provider/context'
+import { LabelledRegionContext } from '../provider/labelledRegion'
 
 export interface TrackedEntityBannerProps {
     /** The parts to show; without children, the program's list attributes, the tags and the details. */
@@ -51,15 +52,20 @@ export function TrackedEntityBanner({
     children,
     className,
 }: TrackedEntityBannerProps) {
-    const { state, nameId, programName } = useHeaderContext()
+    const { state, programName } = useHeaderContext()
+    // The id of a name part inside this banner; parts elsewhere never set it.
+    const [nameId, setNameId] = useState<string>()
+    const section = useRef<HTMLElement>(null)
     const ready = state.status === 'ready'
     const inactive = ready && state.trackedEntity.inactive
     // A mounted name part labels the region; without one, the type name; until the person is ready, a generic name.
     const labelledBy = ready ? nameId : undefined
     let label: string | undefined = i18n.t('Person record')
     if (ready) {
-        label = nameId ? undefined : state.metadata.typeName
+        label = nameId ? undefined : state.metadata.typeName || label
     }
+    const hasChildren =
+        children !== undefined && children !== null && children !== false
 
     const content = (() => {
         switch (state.status) {
@@ -72,7 +78,11 @@ export function TrackedEntityBanner({
                         <Button
                             variant="secondary"
                             size="sm"
-                            onClick={state.retry}
+                            onClick={() => {
+                                // The button goes when the retry starts; focus stays in the banner.
+                                section.current?.focus()
+                                state.retry()
+                            }}
                         >
                             {i18n.t('Retry')}
                         </Button>
@@ -99,18 +109,18 @@ export function TrackedEntityBanner({
                     </>
                 )
             default:
-                return (
-                    children ?? (
-                        <DefaultArrangement
-                            listOrder={state.metadata.listOrder}
-                        />
-                    )
+                return hasChildren ? (
+                    children
+                ) : (
+                    <DefaultArrangement listOrder={state.metadata.listOrder} />
                 )
         }
     })()
 
     return (
         <section
+            ref={section}
+            tabIndex={-1}
             data-slot="tracked-entity-banner"
             aria-labelledby={labelledBy}
             aria-label={label}
@@ -118,12 +128,15 @@ export function TrackedEntityBanner({
             data-tone={inactive ? 'inactive' : 'default'}
             className={cn(
                 PLACEMENT,
+                'outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-dhis2-ring focus-visible:outline-solid',
                 'rounded-dhis2-md border border-dhis2-border-strong bg-dhis2-card px-3.5 py-2.5 text-dhis2-card-foreground',
                 inactive && 'bg-dhis2-muted',
                 className
             )}
         >
-            {content}
+            <LabelledRegionContext.Provider value={setNameId}>
+                {content}
+            </LabelledRegionContext.Provider>
         </section>
     )
 }

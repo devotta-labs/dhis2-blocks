@@ -35,7 +35,12 @@ export interface FakeObservation {
     partial?: boolean
 }
 
-export type FakeStatus = 'ready' | 'pending' | 'error' | 'misconfigured'
+export type FakeStatus =
+    | 'ready'
+    | 'pending'
+    | 'error'
+    | 'failed-early'
+    | 'misconfigured'
 
 const DEFAULT_STAGE = 'Antenatal visit'
 const stageId = (name: string) => `stage-${name}`
@@ -113,6 +118,9 @@ const contextFor = (
                 metadata: metadataFor(observation),
                 error: new Error('boom'),
             }
+        case 'failed-early':
+            // A failed request before the program's metadata loaded: no name to show.
+            return { ...base, error: new Error('boom') }
         case 'misconfigured':
             return {
                 ...base,

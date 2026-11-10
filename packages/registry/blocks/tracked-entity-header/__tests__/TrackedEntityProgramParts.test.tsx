@@ -8,7 +8,12 @@ import {
     TrackedEntityOwner,
     TrackedEntityStatus,
 } from '..'
-import { renderParts, type Edit, type RawPerson } from './valuePartsSupport'
+import {
+    CHILD,
+    renderParts,
+    type Edit,
+    type RawPerson,
+} from './valuePartsSupport'
 
 const flags =
     (inactive: boolean, potentialDuplicate: boolean): Edit<RawPerson> =>
@@ -145,6 +150,24 @@ describe('TrackedEntityOwner', () => {
 
         await expect.element(page.getByText('Owned by')).toBeVisible()
         await expect.element(page.getByText('Unavailable')).toBeVisible()
+    })
+
+    it('says Owned by Not recorded, asking for no org unit, when there is no owner in the program', async () => {
+        const requests: ResourceRequest[] = []
+        await renderParts(<TrackedEntityOwner />, {
+            program: CHILD,
+            enrolled: false,
+            requests,
+        })
+
+        await expect.element(page.getByText('Owned by')).toBeVisible()
+        await expect.element(page.getByText('Not recorded')).toBeVisible()
+        await expect
+            .element(page.getByText('Unavailable'))
+            .not.toBeInTheDocument()
+        expect(
+            requests.filter((r) => r.resource === 'organisationUnits')
+        ).toHaveLength(0)
     })
 
     it('names the missing program prop without one', async () => {

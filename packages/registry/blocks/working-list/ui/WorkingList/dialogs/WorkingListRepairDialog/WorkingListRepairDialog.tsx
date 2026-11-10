@@ -131,7 +131,8 @@ export const WorkingListRepairDialog = ({
     onClose,
     onRepair,
 }: WorkingListRepairDialogProps) => {
-    const i18n = { t: useWorkingListText() }
+    const t = useWorkingListText()
+    const i18n = { t }
 
     if (
         !open ||

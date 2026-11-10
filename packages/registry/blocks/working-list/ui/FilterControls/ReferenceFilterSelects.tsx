@@ -39,7 +39,8 @@ export const UserFilterSelect = ({
     selected: string[]
     onChange: (selected: string[]) => void
 }) => {
-    const i18n = { t: useWorkingListText() }
+    const t = useWorkingListText()
+    const i18n = { t }
     const [search, setSearch] = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
     useEffect(() => {
@@ -119,7 +120,8 @@ export const OrganisationUnitFilterSelect = ({
     selectedId: string
     onChange: (id: string) => void
 }) => {
-    const i18n = { t: useWorkingListText() }
+    const t = useWorkingListText()
+    const i18n = { t }
     const rootsQuery = useQuery({
         queryKey: ['working-list', 'filter-organisation-unit-roots'],
         queryFn: ({ signal }) =>

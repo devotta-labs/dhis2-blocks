@@ -39,7 +39,8 @@ export const WorkingListPagination = ({
     onPageChange: (page: number) => void
     onPageSizeChange: (pageSize: WorkingListPageSize) => void
 }) => {
-    const i18n = { t: useWorkingListText() }
+    const t = useWorkingListText()
+    const i18n = { t }
     const pageSizeLabel = i18n.t('Items per page')
 
     return (

@@ -433,6 +433,7 @@ filtering, sorting, pagination, event mode, and saved-view persistence.
 ```sh
 pnpm typecheck
 pnpm lint
+pnpm test:lint
 pnpm dead-code:audit
 pnpm test
 pnpm build
@@ -444,6 +445,27 @@ tasks to retain dependency-aware caching without serializing package checks.
 `pnpm build` builds the web app; `pnpm build:docs` builds the docs site.
 
 Unit and component tests use Vitest. Real-DHIS2 browser tests use Playwright.
+
+`anti-slop/require-standalone-hook-calls` keeps hook calls out of conditions,
+JSX, arguments and other composed expressions, and bans reading a property or
+calling a method directly on a hook's result. Store or destructure the result
+first:
+
+```tsx
+const { status } = useFinderResults()
+if (status !== 'searching') {
+    return null
+}
+```
+
+Direct variable initializers, standalone effects and direct returns are allowed
+at function-body level (including concise hook-forwarding arrows). Parentheses
+and TypeScript-only wrappers do not hide chained access. Hook names follow
+`use` + uppercase letter/digit, including PascalCase namespaces such as
+`React.useState`; lowercase utility objects such as `vi.useFakeTimers` are not
+hooks. This is an expression-placement rule, not a replacement for React's
+Rules of Hooks control-flow checks. `pnpm test:lint` tests it through Oxlint;
+the CI lint job runs those tests too.
 
 CI runs typechecking, tests, app/docs builds, lint, Knip, and DHIS2 dev E2E
 in parallel. Path filters skip unrelated jobs (for example, docs-only changes

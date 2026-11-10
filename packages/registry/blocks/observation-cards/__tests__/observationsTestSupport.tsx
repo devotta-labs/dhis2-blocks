@@ -178,7 +178,8 @@ export const Probe = ({
     dataElement: string
     seen?: string[]
 }) => {
-    const description = describeState(useObservation(dataElement))
+    const observation = useObservation(dataElement)
+    const description = describeState(observation)
     seen?.push(description)
     return <output data-testid={id}>{description}</output>
 }

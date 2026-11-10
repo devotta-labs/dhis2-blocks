@@ -217,7 +217,8 @@ export const TimelineChangeEntry = ({
 }: ComponentPropsWithoutRef<'div'> & {
     entry: TimelineEntry<ChangeEntryData>
 }) => {
-    const inFeed = useOptionalTimeline() !== null
+    const timeline = useOptionalTimeline()
+    const inFeed = timeline !== null
     return (
         <TimelineSave data-marker="dot" {...props} save={entry.data.save}>
             <TimelineChangeSummary withDay={!inFeed} />

@@ -132,12 +132,13 @@ export const useComposedField = (
     )
     const shown = submitted || field.state.meta.isBlurred
     const [error] = field.state.meta.errors
+    const metadataErrorMessage = useMetadataErrorMessage(metadataError)
     return {
         found,
         field,
         attribute,
         error: shown ? error : undefined,
-        metadataError: useMetadataErrorMessage(metadataError),
+        metadataError: metadataErrorMessage,
     }
 }
 
@@ -147,12 +148,16 @@ const publicField = ({
 }: ReturnType<typeof useComposedField>): FinderFieldState => field
 
 /** A field searched by exact value. Use inside `FinderForm`. */
-export const useFinderField = (attribute: string): FinderFieldState =>
-    publicField(useComposedField(attribute, 'exact'))
+export const useFinderField = (attribute: string): FinderFieldState => {
+    const field = useComposedField(attribute, 'exact')
+    return publicField(field)
+}
 
 /** A From–To field for a number or date attribute. Use inside `FinderForm`. */
-export const useFinderRangeField = (attribute: string): FinderFieldState =>
-    publicField(useComposedField(attribute, 'range'))
+export const useFinderRangeField = (attribute: string): FinderFieldState => {
+    const field = useComposedField(attribute, 'range')
+    return publicField(field)
+}
 
 export interface FinderSearchState {
     /** Whether the values make a search now. */
@@ -274,7 +279,10 @@ export const useFinderResults = (): FinderResultsState => {
  * `Subscribe` and `reset`. A field counts toward the search only through
  * `useFinderField`, `useFinderRangeField` or the field parts.
  */
-export const useFinderForm = (): FinderFormApi => useFinderFormContext().form
+export const useFinderForm = (): FinderFormApi => {
+    const { form } = useFinderFormContext()
+    return form
+}
 
 /** The person of the current `FinderList` item, for custom row content. */
 export const useFinderPerson = (): FinderPerson => {

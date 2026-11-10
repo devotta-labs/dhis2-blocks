@@ -383,7 +383,10 @@ describe('TimelineChangeEntry', () => {
     })
 
     it('gives a host-composed child the save through useTimelineSave', async () => {
-        const Who = () => <b>{useTimelineSave().user.username}</b>
+        const Who = () => {
+            const { user } = useTimelineSave()
+            return <b>{user.username}</b>
+        }
         const { container } = await renderEntries(
             <TimelineSave save={group(row('attribute', 'a', 'UPDATE'))}>
                 <Who />

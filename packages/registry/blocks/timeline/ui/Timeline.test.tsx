@@ -262,7 +262,9 @@ describe('Timeline', () => {
 
     it('lets a host lay out groups from useTimeline without TimelineFeed', async () => {
         const Custom = () => {
-            const { groups } = useTimeline<string>().state
+            const {
+                state: { groups },
+            } = useTimeline<string>()
             return (
                 <div data-testid="custom">
                     {groups.map((group) => (
@@ -298,7 +300,9 @@ describe('Timeline', () => {
             label: 'Year',
         })
         const Labels = () => {
-            const { groups } = useTimeline<string>().state
+            const {
+                state: { groups },
+            } = useTimeline<string>()
             return (
                 <p data-testid="labels">{groups.map((g) => g.label).join()}</p>
             )
@@ -327,7 +331,10 @@ describe('Timeline', () => {
     it('does not regroup when the same entries and groupBy are passed again', async () => {
         const seen = new Set<unknown>()
         const Groups = () => {
-            seen.add(useTimeline().state.groups)
+            const {
+                state: { groups },
+            } = useTimeline()
+            seen.add(groups)
             return null
         }
         const Host = () => (

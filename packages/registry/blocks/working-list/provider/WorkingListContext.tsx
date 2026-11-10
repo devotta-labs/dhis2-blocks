@@ -45,8 +45,10 @@ export const useWorkingListMeta = <TSelected,>(
     return useStore(store, (snapshot) => selector(snapshot.meta))
 }
 
-export const useWorkingListActions = (): WorkingListActions =>
-    usePublicContext().actions
+export const useWorkingListActions = (): WorkingListActions => {
+    const { actions } = usePublicContext()
+    return actions
+}
 
 export const useStableWorkingListActions = (
     current: WorkingListActionImplementation

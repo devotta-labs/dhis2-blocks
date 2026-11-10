@@ -24,8 +24,8 @@ const announcementText = (node: Node): string => {
             return ''
         }
         const label = node.getAttribute('aria-label')
-        if (label) return label
-        if (node instanceof HTMLImageElement) return node.alt
+        if (label) return ` ${label} `
+        if (node instanceof HTMLImageElement && node.alt) return ` ${node.alt} `
     }
     if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? ''
     return Array.from(node.childNodes, announcementText).join('')
@@ -41,7 +41,7 @@ const useStatusAnnouncement = (active: boolean) => {
             return
         }
         const say = () => {
-            const text = announcementText(element).trim()
+            const text = announcementText(element).replace(/\s+/g, ' ').trim()
             if (text !== previous.current) {
                 previous.current = text
                 if (text) announce(text)

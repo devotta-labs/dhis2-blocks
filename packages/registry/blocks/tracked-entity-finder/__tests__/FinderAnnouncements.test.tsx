@@ -248,4 +248,19 @@ test('respects hidden content and accessible labels in custom messages', async (
     )
     await settle()
     expect(said).toHaveLength(4)
+    await screen.rerender(
+        ui(
+            server,
+            'hivProgram',
+            onSelect,
+            results(
+                <>
+                    <img alt="No matches" />
+                    Try <strong>ag</strong>ain
+                    <span role="img" aria-label="later" />
+                </>
+            )
+        )
+    )
+    await expect.poll(() => said.at(-1)).toBe('No matches Try again later')
 })

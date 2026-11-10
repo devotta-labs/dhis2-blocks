@@ -117,8 +117,8 @@ export const useSpreadsheetContext = (): SpreadsheetContext => {
     return context
 }
 
-/** A cell's view from its state and effects, as its row hands them over. */
-export const useViewOf = (
+/** A cell's view from its state and effects. */
+const viewOf = (
     key: CellKey,
     cell: CellState,
     effects: CellAnnotations
@@ -144,7 +144,7 @@ export const useCellView = (key: CellKey): CellView => {
         effects,
         (state) => state.cells[key] ?? EMPTY_EFFECTS
     )
-    return useViewOf(key, cell, cellEffects)
+    return viewOf(key, cell, cellEffects)
 }
 
 /**

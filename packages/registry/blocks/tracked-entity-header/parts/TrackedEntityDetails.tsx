@@ -1,5 +1,4 @@
 import { Button } from '@/components/dhis2/ui/button'
-import { cn } from '@/components/dhis2/ui/cn'
 import i18n from '@dhis2/d2-i18n'
 import React, { useId, useLayoutEffect, useState, type ReactNode } from 'react'
 import { useHeaderContext } from '../provider/context'
@@ -62,9 +61,8 @@ export function TrackedEntityDetails({
                     children
                 ) : (
                     <dl
-                        className={cn(
-                            'm-0 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm'
-                        )}
+                        // Labels take what they need up to 40%; a longer one wraps rather than squeezing the values.
+                        className="m-0 grid grid-cols-[fit-content(40%)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm [&>*]:break-words"
                     >
                         {left.map((uid) => (
                             <AttributeFact

@@ -183,6 +183,40 @@ describe('TrackedEntityDetails', () => {
         )
     })
 
+    it('wraps a very long label within 40% of the list, so a narrow banner never scrolls sideways', async () => {
+        const label =
+            'Number of household members who slept under an insecticide-treated net last night'
+        await page.viewport(360, 600)
+        await renderParts(<TrackedEntityDetails />, {
+            metadata: (raw) => ({
+                ...raw,
+                programTrackedEntityAttributes:
+                    raw.programTrackedEntityAttributes.map((a) =>
+                        a.trackedEntityAttribute.id === CITY
+                            ? {
+                                  ...a,
+                                  trackedEntityAttribute: {
+                                      ...a.trackedEntityAttribute,
+                                      displayFormName: label,
+                                  },
+                              }
+                            : a
+                    ),
+            }),
+        })
+        await open()
+
+        const term = page.getByText(label).element()
+        const list = term.parentElement
+        if (!list) throw new Error('No list')
+        expect(term.getBoundingClientRect().width).toBeLessThanOrEqual(
+            list.getBoundingClientRect().width * 0.4 + 1
+        )
+        expect(list.scrollWidth).toBeLessThanOrEqual(list.clientWidth)
+        expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(360)
+        await page.viewport(414, 896)
+    })
+
     it('lists an attribute again when the part showing it unmounts', async () => {
         const Toggle = () => {
             const [show, setShow] = useState(true)

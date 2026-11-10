@@ -2,6 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import type {
     Attribution,
     EventsRuleRow,
+    EventsRules,
     RuleEffects,
     RuleEnrollmentInput,
     RuleEventInput,
@@ -415,7 +416,7 @@ export const partsOf = (
 }
 
 /** Each enrolment's events among the rule rows, by enrolment id. */
-export const eventsByEnrollment = (rows: ReadonlyArray<EventsRuleRow>) => {
+const eventsByEnrollment = (rows: ReadonlyArray<EventsRuleRow>) => {
     const byEnrollment = new Map<string, RuleEventInput[]>()
     for (const { event, enrollmentId } of rows) {
         if (enrollmentId !== undefined) {
@@ -432,7 +433,7 @@ export const eventsByEnrollment = (rows: ReadonlyArray<EventsRuleRow>) => {
  * What an enrolment's rules run on: its person's live attributes and its dates, and its events (`events`), none for a
  * person being registered, as in Capture. Undefined when the form does not hold the enrolment and its person.
  */
-export const enrollmentUnitOf = (
+const enrollmentUnitOf = (
     records: ReadonlyMap<string, DataRecord>,
     enrollmentId: string,
     cells: CellStoreState['cells'],
@@ -451,4 +452,129 @@ export const enrollmentUnitOf = (
             events: both.enrollment.isNew ? [] : events(),
         }
     )
+}
+
+/** A complete rule pass: rows not to evaluate and the results for each record kind. */
+export const evaluateRuleRows = ({
+    rowIds,
+    records,
+    cells,
+    fieldsByForm,
+    rows,
+    rules,
+}: {
+    rowIds: ReadonlyArray<string>
+    records: ReadonlyMap<string, DataRecord>
+    cells: CellStoreState['cells']
+    fieldsByForm: LoadedForm['fieldsByForm']
+    rows: ReadonlyArray<EventsRuleRow>
+    rules: EventsRules
+}) => {
+    let byEnrollment: ReadonlyMap<string, RuleEventInput[]> | undefined
+    const empty = new Set<string>()
+    const eventIds: string[] = []
+    const enrollmentUnits: Array<
+        Parameters<NonNullable<EventsRules['evaluateEnrollments']>>[0][number]
+    > = []
+    for (const rowId of rowIds) {
+        const record = records.get(rowId)
+        if (record === undefined) {
+            continue
+        }
+        if (isEmptySlot(record, cells, fieldsByForm)) {
+            empty.add(rowId)
+        } else if (record.kind === 'enrollment') {
+            const unit = enrollmentUnitOf(
+                records,
+                rowId,
+                cells,
+                fieldsByForm,
+                () =>
+                    (byEnrollment ??= eventsByEnrollment(rows)).get(rowId) ?? []
+            )
+            if (unit !== undefined) {
+                enrollmentUnits.push(unit)
+            }
+        } else {
+            eventIds.push(rowId)
+        }
+    }
+    return {
+        empty,
+        events:
+            eventIds.length === 0 ? undefined : rules.evaluate(rows, eventIds),
+        enrollments:
+            enrollmentUnits.length === 0
+                ? undefined
+                : rules.evaluateEnrollments?.(enrollmentUnits),
+    }
+}
+
+export const createRuleRecordEvaluator = ({
+    records,
+    cells,
+    fieldsByForm,
+    rows,
+    rules,
+}: {
+    records: ReadonlyMap<string, DataRecord>
+    cells: CellStoreState['cells']
+    fieldsByForm: LoadedForm['fieldsByForm']
+    rows: ReadonlyArray<EventsRuleRow>
+    rules: EventsRules
+}) => {
+    let byEnrollment: ReadonlyMap<string, RuleEventInput[]> | undefined
+    return (rowId: string, record?: DataRecord) => {
+        if (record?.kind !== 'enrollment') {
+            return rules.evaluate(rows, [rowId])
+        }
+        const unit = enrollmentUnitOf(
+            records,
+            rowId,
+            cells,
+            fieldsByForm,
+            () => (byEnrollment ??= eventsByEnrollment(rows)).get(rowId) ?? []
+        )
+        return unit && rules.evaluateEnrollments?.([unit])
+    }
+}
+
+export const evaluateRuleRecord = ({
+    rowId,
+    record,
+    batch,
+    cells,
+    fieldsByForm,
+    evaluateRecord,
+}: {
+    rowId: string
+    record: DataRecord | undefined
+    batch: ReturnType<typeof evaluateRuleRows> | undefined
+    cells: CellStoreState['cells']
+    fieldsByForm: LoadedForm['fieldsByForm']
+    evaluateRecord: (
+        rowId: string,
+        record?: DataRecord
+    ) =>
+        | ReturnType<EventsRules['evaluate']>
+        | ReturnType<NonNullable<EventsRules['evaluateEnrollments']>>
+        | undefined
+}) => {
+    const isEmpty =
+        batch?.empty.has(rowId) ??
+        (record !== undefined && isEmptySlot(record, cells, fieldsByForm))
+    let evaluation:
+        | ReturnType<EventsRules['evaluate']>
+        | ReturnType<NonNullable<EventsRules['evaluateEnrollments']>>
+        | undefined
+    if (!isEmpty) {
+        if (batch === undefined) {
+            evaluation = evaluateRecord(rowId, record)
+        } else if (record?.kind === 'enrollment') {
+            evaluation = batch.enrollments
+        } else {
+            evaluation = batch.events
+        }
+    }
+    return { isEmpty, evaluation }
 }

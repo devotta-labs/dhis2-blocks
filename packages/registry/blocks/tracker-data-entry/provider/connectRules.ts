@@ -4,7 +4,6 @@ import {
     type EventsRuleRow,
     type EventsRules,
     type RuleEffects,
-    type RuleEventInput,
 } from '@/components/program-rules'
 import { typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
@@ -19,8 +18,9 @@ import {
 } from '../logic/effects'
 import type { TrackerEffects } from '../logic/effects'
 import {
-    enrollmentUnitOf,
-    eventsByEnrollment,
+    createRuleRecordEvaluator,
+    evaluateRuleRows,
+    evaluateRuleRecord,
     isEmptySlot,
     partsOf,
     personRows,
@@ -347,25 +347,24 @@ export const connectRules = ({
         const { tables: all, records } = tables.getState()
         const cells = store.getState().cells
         const ruleRows = ruleRowsNow(records, cells)
-        let byEnrollment: ReadonlyMap<string, RuleEventInput[]> | undefined
-        // An enrolment runs its enrolment rules; any other record, its event rules.
-        const evaluateRecord = (rowId: string, record?: DataRecord) => {
-            if (record?.kind !== 'enrollment') {
-                return rules.evaluate(ruleRows, [rowId])
-            }
-            const unit = enrollmentUnitOf(
-                records,
-                rowId,
-                cells,
-                form.fieldsByForm,
-                // Gathered on the first enrolment's turn.
-                () =>
-                    (byEnrollment ??= eventsByEnrollment(ruleRows)).get(
-                        rowId
-                    ) ?? []
-            )
-            return unit && rules.evaluateEnrollments?.([unit])
-        }
+        const evaluateRecord = createRuleRecordEvaluator({
+            records,
+            cells,
+            fieldsByForm: form.fieldsByForm,
+            rows: ruleRows,
+            rules,
+        })
+        const batch =
+            until === Infinity
+                ? evaluateRuleRows({
+                      rowIds,
+                      records,
+                      cells,
+                      fieldsByForm: form.fieldsByForm,
+                      rows: ruleRows,
+                      rules,
+                  })
+                : undefined
         const shown = rowsByRecord(all)
         const results: RowResult[] = []
         let done = 0
@@ -377,11 +376,17 @@ export const connectRules = ({
             done += 1
             const record = records.get(rowId)
             // An empty slot has no rules: it shows the form's own effects, whatever the rules said while it had a value.
-            const empty =
-                record !== undefined &&
-                isEmptySlot(record, cells, form.fieldsByForm)
-            const evaluation = empty ? undefined : evaluateRecord(rowId, record)
-            const raw = empty ? emptyEffects() : evaluation?.effects.get(rowId)
+            const { isEmpty, evaluation } = evaluateRuleRecord({
+                rowId,
+                record,
+                batch,
+                cells,
+                fieldsByForm: form.fieldsByForm,
+                evaluateRecord,
+            })
+            const raw = isEmpty
+                ? emptyEffects()
+                : evaluation?.effects.get(rowId)
             const outcome =
                 evaluation?.failures.get(rowId) ??
                 (raw === undefined || record === undefined

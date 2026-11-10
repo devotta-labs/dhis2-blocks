@@ -1748,6 +1748,7 @@
             ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/announcer",
                 "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/checkbox",
                 "devotta-labs/dhis2-blocks/cn",

@@ -20,6 +20,7 @@ export type SearchOutcome =
     | {
           kind: 'results'
           people: FinderPerson[]
+          total?: number
           page: number
           hasNext: boolean
       }
@@ -90,6 +91,7 @@ export const runSearch = async (
     return {
         kind: 'results',
         people: rows.map((row) => toPerson(row, model.program)),
+        total,
         page,
         hasNext:
             total !== undefined

@@ -26,7 +26,7 @@ export type RelationshipsState =
     | {
           kind: 'ready'
           groups: RelationshipGroup[]
-          /** Metadata of the types the groups, and `extraTypes`, name. */
+          /** Metadata of the types the groups and the registered parts name. */
           types: Map<string, RelationshipTypeMeta>
       }
 
@@ -40,12 +40,12 @@ const unwrap = <T>(result: Result<T, Error>): T => {
 
 const EMPTY: string[] = []
 
-/** The record's relationships, resolved into labelled groups. Parts share its three queries through the cache. `extraTypes` also fetches those types' metadata, so a type with no link can still be named. */
+/** The record's relationships, resolved into labelled groups. Parts share its three queries through the cache. The types parts have registered are fetched with the linked ones, so a type with no link can still be named. */
 export const useRelationships = (
-    labels?: Readonly<Record<string, RelationshipLabel>>,
-    extraTypes: readonly string[] = EMPTY
+    labels?: Readonly<Record<string, RelationshipLabel>>
 ): RelationshipsState => {
-    const { state, resourceClient, clientId, display } = useHeaderContext()
+    const { state, resourceClient, clientId, display, relationshipTypes } =
+        useHeaderContext()
     const id = state.status === 'ready' ? state.trackedEntity.id : undefined
 
     const relationships = useQuery({
@@ -63,16 +63,13 @@ export const useRelationships = (
                 : EMPTY,
         [relationships.data]
     )
-    const extraKey = extraTypes.join(',')
-    // Asked for once the links are known, so the key is settled: one request however the answers arrive.
+    // The same union for every part, so they share one request.
     const typeIds = useMemo(
         () =>
             relationships.data
-                ? [...new Set([...linkedTypes, ...extraKey.split(',')])].filter(
-                      Boolean
-                  )
+                ? [...new Set([...linkedTypes, ...relationshipTypes])].sort()
                 : EMPTY,
-        [relationships.data, linkedTypes, extraKey]
+        [relationships.data, linkedTypes, relationshipTypes]
     )
     const types = useQuery({
         queryKey: keys.relationshipTypes(clientId, typeIds),

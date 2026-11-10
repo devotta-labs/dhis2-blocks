@@ -8,7 +8,9 @@ import React, {
     useMemo,
     useRef,
     useState,
+    type Dispatch,
     type ReactNode,
+    type SetStateAction,
 } from 'react'
 import {
     cacheIdOf,
@@ -183,24 +185,21 @@ const HeaderScope = ({
     const [counts, setCounts] = useState<ReadonlyMap<string, number>>(
         () => new Map()
     )
-    const placeAttribute = useCallback((uid: string) => {
-        const bump = (by: number) =>
-            setCounts((current) => {
-                const next = new Map(current)
-                const count = (next.get(uid) ?? 0) + by
-                if (count > 0) {
-                    next.set(uid, count)
-                } else {
-                    next.delete(uid)
-                }
-                return next
-            })
-        bump(1)
-        return () => bump(-1)
-    }, [])
+    const [typeCounts, setTypeCounts] = useState<ReadonlyMap<string, number>>(
+        () => new Map()
+    )
+    const placeAttribute = useMemo(() => countedPlacement(setCounts), [])
+    const placeRelationshipType = useMemo(
+        () => countedPlacement(setTypeCounts),
+        []
+    )
     const placed = useMemo<ReadonlySet<string>>(
         () => new Set(counts.keys()),
         [counts]
+    )
+    const relationshipTypes = useMemo<ReadonlySet<string>>(
+        () => new Set(typeCounts.keys()),
+        [typeCounts]
     )
 
     const value = useMemo<HeaderContextValue>(
@@ -214,6 +213,8 @@ const HeaderScope = ({
             logProblem,
             placeAttribute,
             placed,
+            placeRelationshipType,
+            relationshipTypes,
         }),
         [
             state,
@@ -225,6 +226,8 @@ const HeaderScope = ({
             logProblem,
             placeAttribute,
             placed,
+            placeRelationshipType,
+            relationshipTypes,
         ]
     )
 
@@ -234,6 +237,25 @@ const HeaderScope = ({
         </HeaderContext.Provider>
     )
 }
+
+/** A placement function over a counted map: each call adds one for `uid`, its undo takes it away. */
+const countedPlacement =
+    (set: Dispatch<SetStateAction<ReadonlyMap<string, number>>>) =>
+    (uid: string) => {
+        const bump = (by: number) =>
+            set((current) => {
+                const next = new Map(current)
+                const count = (next.get(uid) ?? 0) + by
+                if (count > 0) {
+                    next.set(uid, count)
+                } else {
+                    next.delete(uid)
+                }
+                return next
+            })
+        bump(1)
+        return () => bump(-1)
+    }
 
 /**
  * Loads one tracked entity and the attribute metadata for the banner, once for all

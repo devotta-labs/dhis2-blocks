@@ -29,13 +29,13 @@ export const RESOURCES = [
     'trackedEntityAttributes',
 ]
 
-/** An error shaped like the ones app-runtime throws for an HTTP failure. */
 /** The ids of a `id:in:[a,b]` filter. */
 const idsOf = (filter: string | number | boolean | undefined) =>
     String(filter)
         .replace(/^id:in:\[|\]$/g, '')
         .split(',')
 
+/** An error shaped like the ones app-runtime throws for an HTTP failure. */
 const httpError = (status: number, message: string) =>
     Object.assign(new Error(message), {
         details: { httpStatusCode: status, message },

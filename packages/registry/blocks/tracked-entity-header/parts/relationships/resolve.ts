@@ -50,7 +50,9 @@ const linkName = (
     display: DisplayOptions
 ): string => {
     const end = meta?.ends[otherEnd]
-    const parts = (end?.view ?? []).flatMap((uid) => {
+    // Without the type's metadata the values still come back, in the order they arrived.
+    const uids = end ? end.view : [...other.values.keys()]
+    const parts = uids.flatMap((uid) => {
         const raw = other.values.get(uid)
         if (raw === undefined || raw === '') {
             return []

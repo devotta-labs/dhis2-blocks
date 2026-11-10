@@ -5,6 +5,7 @@ import type { DataEngineValue } from '../api/client'
 import {
     TrackedEntityHeaderProvider,
     TrackedEntityRelationship,
+    TrackedEntityRelationships,
     type TrackedEntityRelationshipProps,
 } from '..'
 import {
@@ -176,6 +177,106 @@ describe('TrackedEntityRelationship', () => {
             { links: 'none' }
         )
         await expect.element(labels()).toHaveTextContent('Index case to cases')
+    })
+
+    it('names an unlinked one-way type by its own name, not `label.from`', async () => {
+        await setup(
+            {
+                relationshipType: INDEX_TYPE,
+                label: { from: 'Cases', to: 'Index' },
+            },
+            { links: 'none' }
+        )
+        await expect.element(labels()).toHaveTextContent('Index case to cases')
+    })
+
+    it('labels the empty pair by the `end` of an object `label`', async () => {
+        await setup(
+            {
+                relationshipType: INDEX_TYPE,
+                end: 'to',
+                label: { from: 'Cases', to: 'Index' },
+            },
+            { links: 'none' }
+        )
+        await expect.element(labels()).toHaveTextContent(/^Index$/)
+    })
+
+    it('asks for the types once with the list and a part for an unlinked type', async () => {
+        const server = createFakeServer({ links: 'focus' })
+        const Wrapper = createWrapper()
+        await render(
+            <Wrapper>
+                <TrackedEntityHeaderProvider
+                    trackedEntity={FOCUS_RECORD}
+                    program={RMNCH}
+                    client={server.client}
+                >
+                    <TrackedEntityRelationships />
+                    <TrackedEntityRelationship relationshipType={INDEX_TYPE} />
+                </TrackedEntityHeaderProvider>
+            </Wrapper>
+        )
+        await expect.element(page.getByText('Not recorded')).toBeVisible()
+        await expect
+            .element(labels().getByText('Index case to cases'))
+            .toBeVisible()
+        expect(server.countOf('relationshipTypes')).toBe(1)
+    })
+
+    it('fetches the union once more for a part that mounts after the data loaded', async () => {
+        const server = createFakeServer({ links: 'focus' })
+        const Wrapper = createWrapper()
+        const tree = (withSingle: boolean) => (
+            <Wrapper>
+                <TrackedEntityHeaderProvider
+                    trackedEntity={FOCUS_RECORD}
+                    program={RMNCH}
+                    client={server.client}
+                >
+                    <TrackedEntityRelationships />
+                    {withSingle && (
+                        <TrackedEntityRelationship
+                            relationshipType={INDEX_TYPE}
+                        />
+                    )}
+                </TrackedEntityHeaderProvider>
+            </Wrapper>
+        )
+        const screen = await render(tree(false))
+        await expect.element(page.getByText('Focus to Case')).toBeVisible()
+        expect(server.countOf('relationshipTypes')).toBe(1)
+        await screen.rerender(tree(true))
+        await expect.element(page.getByText('Not recorded')).toBeVisible()
+        await expect
+            .element(labels().getByText('Index case to cases'))
+            .toBeVisible()
+        // The union gains a type, so its key changes: one request before, one after.
+        expect(server.countOf('relationshipTypes')).toBe(2)
+    })
+
+    it('asks for the types once with two parts for two unlinked types', async () => {
+        const server = createFakeServer({ links: 'none' })
+        const Wrapper = createWrapper()
+        await render(
+            <Wrapper>
+                <TrackedEntityHeaderProvider
+                    trackedEntity={FOCUS_RECORD}
+                    program={RMNCH}
+                    client={server.client}
+                >
+                    <TrackedEntityRelationship relationshipType={INDEX_TYPE} />
+                    <TrackedEntityRelationship
+                        relationshipType={BIDIRECTIONAL_TYPE}
+                    />
+                </TrackedEntityHeaderProvider>
+            </Wrapper>
+        )
+        await expect.element(page.getByText('Subject person')).toBeVisible()
+        await expect
+            .element(page.getByText('Index case to cases'))
+            .toBeVisible()
+        expect(server.countOf('relationshipTypes')).toBe(1)
     })
 
     it('shows nothing, when told, without a link of the type', async () => {

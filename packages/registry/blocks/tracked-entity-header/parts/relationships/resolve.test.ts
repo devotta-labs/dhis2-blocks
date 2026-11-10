@@ -252,6 +252,22 @@ describe('resolveRelationships names', () => {
         ])
     })
 
+    it('uses the returned values, in order, when the type has no metadata', () => {
+        const [g] = resolve(
+            [
+                rec(
+                    '1',
+                    'unk',
+                    'from',
+                    te('k', { zz: 'second', d1: '2024-03-05' })
+                ),
+            ],
+            [],
+            attrs
+        )
+        expect(names(g?.links ?? [])).toEqual(['second 2016-06-26'])
+    })
+
     it('uses the type name when the other end has no type name or view', () => {
         const bare = meta('bare', {
             name: 'Bare type',

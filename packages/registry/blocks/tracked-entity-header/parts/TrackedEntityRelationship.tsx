@@ -1,7 +1,8 @@
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import i18n from '@dhis2/d2-i18n'
-import React, { useMemo } from 'react'
+import React, { useLayoutEffect, useMemo } from 'react'
 import type { RelationshipEnd } from '../api/types'
+import { useHeaderContext } from '../provider/context'
 import { FactPair, Muted } from './FactPair'
 import { Names } from './relationships/Names'
 import { labelFor, type RelationshipLabel } from './relationships/resolve'
@@ -37,8 +38,12 @@ export function TrackedEntityRelationship({
         () => (label === undefined ? undefined : { [relationshipType]: label }),
         [relationshipType, label]
     )
-    const extraTypes = useMemo(() => [relationshipType], [relationshipType])
-    const state = useRelationships(labels, extraTypes)
+    const { placeRelationshipType } = useHeaderContext()
+    useLayoutEffect(
+        () => placeRelationshipType(relationshipType),
+        [placeRelationshipType, relationshipType]
+    )
+    const state = useRelationships(labels)
     if (state.kind === 'hidden') {
         return null
     }
@@ -64,9 +69,11 @@ export function TrackedEntityRelationship({
                 ? state.types.get(relationshipType)
                 : undefined
         const fallback = meta?.name ?? i18n.t('Relationship')
-        // A one-way type with no `end` has no end to name: it keeps the type's own name.
+        // A one-way type with no `end` has no end to name: it keeps the type's own name, unless one `label` names the pair.
         const emptyLabel =
-            end === undefined && !meta?.bidirectional && label === undefined
+            end === undefined &&
+            !meta?.bidirectional &&
+            (label === undefined || label instanceof Object)
                 ? fallback
                 : labelFor(
                       meta,

@@ -199,3 +199,53 @@ test('announces a status mounted in StrictMode only once', async () => {
     await settle()
     expect(said).toEqual(['No matches'])
 })
+
+test('respects hidden content and accessible labels in custom messages', async () => {
+    const results = (children: React.ReactNode) => (
+        <FinderResults>
+            <FinderEmpty>{children}</FinderEmpty>
+        </FinderResults>
+    )
+    const { server, screen, onSelect } = await renderFinder({
+        results: results(
+            <>
+                <span aria-hidden="true">Decorative icon</span>
+                <span hidden>Not part of the message</span>
+                No matches
+            </>
+        ),
+    })
+    await searchFor('A1')
+    await expect.poll(() => said).toEqual(['No matches'])
+
+    const icon = (label: string) => (
+        <svg role="img" aria-label={label}>
+            <title>Not the accessible label</title>
+        </svg>
+    )
+    await screen.rerender(
+        ui(server, 'hivProgram', onSelect, results(icon('Nobody matched')))
+    )
+    await expect.poll(() => said).toEqual(['No matches', 'Nobody matched'])
+    await screen.rerender(
+        ui(server, 'hivProgram', onSelect, results(icon('Try another detail')))
+    )
+    await expect
+        .poll(() => said)
+        .toEqual(['No matches', 'Nobody matched', 'Try another detail'])
+
+    await screen.rerender(
+        ui(server, 'hivProgram', onSelect, results(<img alt="No one found" />))
+    )
+    await expect.poll(() => said.at(-1)).toBe('No one found')
+    await screen.rerender(
+        ui(
+            server,
+            'hivProgram',
+            onSelect,
+            results(<img alt="No one found" aria-hidden="true" />)
+        )
+    )
+    await settle()
+    expect(said).toHaveLength(4)
+})

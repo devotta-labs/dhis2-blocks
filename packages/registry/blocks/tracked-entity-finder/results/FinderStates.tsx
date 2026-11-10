@@ -15,6 +15,22 @@ export type FinderErrorProps = ComponentPropsWithoutRef<'div'>
 
 const STATE_TEXT = 'flex items-center gap-2 text-sm text-dhis2-muted-foreground'
 
+const announcementText = (node: Node): string => {
+    if (node instanceof Element) {
+        if (
+            node.getAttribute('aria-hidden') === 'true' ||
+            node.hasAttribute('hidden')
+        ) {
+            return ''
+        }
+        const label = node.getAttribute('aria-label')
+        if (label) return label
+        if (node instanceof HTMLImageElement) return node.alt
+    }
+    if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? ''
+    return Array.from(node.childNodes, announcementText).join('')
+}
+
 const useStatusAnnouncement = (active: boolean) => {
     const ref = useRef<HTMLDivElement>(null)
     const previous = useRef('')
@@ -25,7 +41,7 @@ const useStatusAnnouncement = (active: boolean) => {
             return
         }
         const say = () => {
-            const text = element.textContent?.trim() ?? ''
+            const text = announcementText(element).trim()
             if (text !== previous.current) {
                 previous.current = text
                 if (text) announce(text)
@@ -38,6 +54,8 @@ const useStatusAnnouncement = (active: boolean) => {
             childList: true,
             characterData: true,
             subtree: true,
+            attributes: true,
+            attributeFilter: ['aria-hidden', 'aria-label', 'hidden', 'alt'],
         })
         return () => observer.disconnect()
     }, [active])

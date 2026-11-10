@@ -1,12 +1,15 @@
 import i18n from '@dhis2/d2-i18n'
 import { IconCalendar16 } from '@dhis2/ui-icons'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import { storedTime } from '@/components/dhis2-value-display'
 import { parseTyped, typedText } from '@/components/dhis2-value-types'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
-import { Button } from '@/components/dhis2/ui/button'
-import { cn } from '@/components/dhis2/ui/cn'
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupButton,
+} from '@/components/dhis2/ui/input-group'
 import {
     Popover,
     PopoverContent,
@@ -35,9 +38,9 @@ const directionOf = (element: Element | null) => {
 }
 
 /**
- * The button beside a typed date that opens a calendar to choose the day from. `date` is the day shown as picked, typed
- * in the system calendar and date format, or empty for none; `pick` is given the day chosen, typed so too. Focus goes
- * back to `input` when the calendar closes.
+ * The button in a typed date's box that opens a calendar to choose the day from, as Down Arrow in `input` does too.
+ * `date` is the day shown as picked, typed in the system calendar and date format, or empty for none; `pick` is given
+ * the day chosen, typed so too. Focus goes back to `input` when the calendar closes.
  */
 export const DatePickerButton = ({
     input,
@@ -53,28 +56,36 @@ export const DatePickerButton = ({
     const day = useRef<HTMLButtonElement>(null)
     const [open, setOpen] = useState(false)
     const [dir, setDir] = useState<'ltr' | 'rtl'>()
+    const show = (next: boolean) => {
+        setDir(directionOf(input.current))
+        setOpen(next)
+    }
+    useEffect(() => {
+        const element = input.current
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault()
+                show(true)
+            }
+        }
+        element?.addEventListener('keydown', onKeyDown)
+        return () => element?.removeEventListener('keydown', onKeyDown)
+    }, [input])
     return (
-        <Popover
-            open={open}
-            onOpenChange={(next) => {
-                setDir(directionOf(input.current))
-                setOpen(next)
-            }}
-        >
+        <Popover open={open} onOpenChange={show}>
             <PopoverTrigger
-                render={
-                    <Button
-                        variant="secondary"
-                        size="icon"
-                        className="size-10"
-                    />
-                }
+                render={<InputGroupButton variant="ghost" size="icon-xs" />}
                 aria-label={i18n.t('Choose date')}
             >
                 <IconCalendar16 />
             </PopoverTrigger>
             <PopoverContent
-                align="end"
+                // Under the whole box the button sits in, not under the button.
+                anchor={() =>
+                    input.current?.closest('[data-slot=input-group]') ??
+                    input.current
+                }
+                align="start"
                 initialFocus={day}
                 finalFocus={input}
                 className="w-auto"
@@ -121,17 +132,30 @@ export const DateInput = ({
     const stored = typed.ok ? typed.value : undefined
     const time = stored === undefined ? undefined : storedTime(stored)
     const withTime = field.valueType === 'DATETIME'
+    if (readOnly) {
+        return (
+            <TypedInput
+                id={id}
+                field={field}
+                draft={draft}
+                readOnly
+                required={required}
+                className={className}
+            />
+        )
+    }
     return (
-        <div className={cn('flex gap-2', className)}>
+        <InputGroup className={className}>
             <TypedInput
                 id={id}
                 inputRef={input}
                 field={field}
                 draft={draft}
-                readOnly={readOnly}
+                readOnly={false}
                 required={required}
+                grouped
             />
-            {readOnly ? null : (
+            <InputGroupAddon align="inline-end">
                 <DatePickerButton
                     input={input}
                     date={
@@ -149,7 +173,7 @@ export const DateInput = ({
                         }
                     }}
                 />
-            )}
-        </div>
+            </InputGroupAddon>
+        </InputGroup>
     )
 }

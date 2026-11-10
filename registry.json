@@ -910,6 +910,7 @@
                 "devotta-labs/dhis2-blocks/dhis2-value-types",
                 "devotta-labs/dhis2-blocks/field",
                 "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/input-group",
                 "devotta-labs/dhis2-blocks/label",
                 "devotta-labs/dhis2-blocks/popover",
                 "devotta-labs/dhis2-blocks/radio-group",

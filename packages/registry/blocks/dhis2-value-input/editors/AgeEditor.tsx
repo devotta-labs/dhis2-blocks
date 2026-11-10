@@ -11,6 +11,11 @@ import {
 import type { Age, Field, ValueSettings } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Input } from '@/components/dhis2/ui/input'
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupInput,
+} from '@/components/dhis2/ui/input-group'
 import { Label } from '@/components/dhis2/ui/label'
 import { todayIso } from '@/components/dhis2-value-types'
 import { DatePickerButton } from '../kinds/DateInput'
@@ -247,8 +252,10 @@ export const AgeEditor = ({
             {labels[part]}
         </Label>
     )
+    // Inline, the date of birth shares its box with the calendar button, as the date kind does.
+    const BirthInput = inline ? InputGroupInput : Input
     const birthInput = (
-        <Input
+        <BirthInput
             {...fieldProps('birth')}
             ref={birthRef}
             value={birth}
@@ -272,19 +279,21 @@ export const AgeEditor = ({
         <div className={cn('flex flex-col gap-1', inline && 'w-56')}>
             {label('birth')}
             {inline ? (
-                <div className="flex gap-2">
+                <InputGroup>
                     {birthInput}
-                    <DatePickerButton
-                        input={birthRef}
-                        date={
-                            reading.value === null
-                                ? ''
-                                : typedText(DATE, reading.value, settings)
-                        }
-                        settings={settings}
-                        pick={typeBirth}
-                    />
-                </div>
+                    <InputGroupAddon align="inline-end">
+                        <DatePickerButton
+                            input={birthRef}
+                            date={
+                                reading.value === null
+                                    ? ''
+                                    : typedText(DATE, reading.value, settings)
+                            }
+                            settings={settings}
+                            pick={typeBirth}
+                        />
+                    </InputGroupAddon>
+                </InputGroup>
             ) : (
                 birthInput
             )}

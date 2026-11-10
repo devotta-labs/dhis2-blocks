@@ -3,6 +3,7 @@ import { inputModeFor } from '@/components/dhis2-value-types'
 import type { Field } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Input } from '@/components/dhis2/ui/input'
+import { InputGroupInput } from '@/components/dhis2/ui/input-group'
 import { composing } from '../composing'
 import type { useDraft } from '../useDraft'
 
@@ -17,6 +18,7 @@ export const TypedInput = ({
     readOnly,
     required,
     className,
+    grouped = false,
 }: {
     id: string
     inputRef?: Ref<HTMLInputElement>
@@ -25,25 +27,30 @@ export const TypedInput = ({
     readOnly: boolean
     required: boolean
     className?: string
-}) => (
-    <Input
-        ref={inputRef}
-        id={id}
-        type="text"
-        inputMode={inputModeFor(field)}
-        autoComplete="off"
-        spellCheck={false}
-        readOnly={readOnly}
-        aria-required={required || undefined}
-        value={draft.text}
-        onChange={(event) => draft.change(event.target.value)}
-        onBlur={draft.commit}
-        onKeyDown={(event) => {
-            // Here, not on keyup: a surrounding form submits on Enter, and must get what was typed.
-            if (event.key === 'Enter' && !composing(event)) {
-                draft.commit()
-            }
-        }}
-        className={cn(readOnly && READ_ONLY_CLASS, className)}
-    />
-)
+    /** Inside a house `InputGroup`, which draws the box. */
+    grouped?: boolean
+}) => {
+    const Control = grouped ? InputGroupInput : Input
+    return (
+        <Control
+            ref={inputRef}
+            id={id}
+            type="text"
+            inputMode={inputModeFor(field)}
+            autoComplete="off"
+            spellCheck={false}
+            readOnly={readOnly}
+            aria-required={required || undefined}
+            value={draft.text}
+            onChange={(event) => draft.change(event.target.value)}
+            onBlur={draft.commit}
+            onKeyDown={(event) => {
+                // Here, not on keyup: a surrounding form submits on Enter, and must get what was typed.
+                if (event.key === 'Enter' && !composing(event)) {
+                    draft.commit()
+                }
+            }}
+            className={cn(readOnly && READ_ONLY_CLASS, className)}
+        />
+    )
+}

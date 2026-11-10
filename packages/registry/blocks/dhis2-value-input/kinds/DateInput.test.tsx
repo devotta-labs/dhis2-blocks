@@ -87,6 +87,22 @@ test('the picker button is named', async () => {
     await expect.element(chooser()).toBeVisible()
 })
 
+test('the picker button sits inside the date input', async () => {
+    const { input } = await mount()
+    const box = input.element().closest('[data-slot=input-group]')
+    expect(box).not.toBeNull()
+    expect(box!.contains(chooser().element())).toBe(true)
+})
+
+test('Down Arrow in the input opens the picker', async () => {
+    const { input } = await mount({ value: '2026-10-14' })
+    await userEvent.click(input)
+    await userEvent.keyboard('{ArrowDown}')
+    await expect
+        .element(page.getByRole('dialog'))
+        .toHaveAccessibleName('October 2026')
+})
+
 test('the picker is a dialog named by the month it shows', async () => {
     await mount({ value: '2026-10-14' })
     await userEvent.click(chooser())
@@ -292,8 +308,10 @@ test('right to left, the week runs from the right and Left moves to the next day
 
 test('a click elsewhere closes the picker and leaves focus where it was clicked', async () => {
     const onChange = vi.fn()
+    // The field above: the calendar opens over what is below.
     await render(
         <>
+            <input aria-label="Next field" />
             <ValueInput
                 field={DATE}
                 settings={GREGORIAN}
@@ -301,7 +319,6 @@ test('a click elsewhere closes the picker and leaves focus where it was clicked'
                 value="2026-10-14"
                 onChange={onChange}
             />
-            <input aria-label="Next field" />
         </>
     )
     await userEvent.click(chooser())

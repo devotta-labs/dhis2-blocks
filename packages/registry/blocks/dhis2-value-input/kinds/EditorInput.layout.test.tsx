@@ -47,8 +47,13 @@ const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
     }
 }
 
-const box = (name: string) =>
-    page.getByRole('textbox', { name }).element().getBoundingClientRect()
+/** The box drawn around a textbox: its own, or the input group's it sits in. */
+const box = (name: string) => {
+    const input = page.getByRole('textbox', { name }).element()
+    return (
+        input.closest('[data-slot=input-group]') ?? input
+    ).getBoundingClientRect()
+}
 
 test("an age's and a coordinate's fields are as tall as a typed field", async () => {
     await render(

@@ -1,4 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
+import { unstable_batchedUpdates } from 'react-dom'
 import {
     emptyEffects,
     type EventsRuleRow,
@@ -22,13 +23,11 @@ import {
     enrollmentUnitOf,
     eventsByEnrollment,
     isEmptySlot,
-    partsOf,
     personRows,
     rowRuleOutcome,
     ruleRowsCache,
-    stageFields,
 } from '../logic/ruleEffects'
-import { formOf, recordsOf, recordIdOf, rowsByRecord } from '../model/types'
+import { recordsOf, recordIdOf, rowsByRecord } from '../model/types'
 import { fieldIdOfKey } from '../model/types'
 import type { DataRecord } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
@@ -36,6 +35,7 @@ import type { LoadedForm } from '../sources/types'
 import { afterPaint, measured, onScreen, soon, whenIdle } from './afterPaint'
 import { lockedElsewhere } from './formRows'
 import type { OpenForm } from './openForm'
+import { createRecordPartsCache } from './recordParts'
 
 // Loading evaluates rows for about this long at once (a row at least), then for about a frame's time whenever the
 // browser is idle, so it never blocks the page for long.
@@ -45,7 +45,6 @@ const IDLE_SLICE_MS = 16
 const PASSES = 5
 // Rule names are shown as DHIS2 gives them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
-const NONE: ReadonlySet<string> = new Set()
 const NO_NOTES: ReadonlyArray<string> = []
 
 /** What one record's rules said, or why they failed; `raw` names the rules behind its values. */
@@ -111,19 +110,10 @@ export const connectRules = ({
     const held = new Map<string, string>()
 
     const ruleRowsNow = ruleRowsCache(form.fieldsByForm)
-    const fieldsCache = new Map<string, ReturnType<typeof stageFields>>()
-    const fieldsOf = (
-        records: ReadonlyMap<string, DataRecord>,
-        record: DataRecord
-    ) => {
-        const formIds = partsOf(records, record).map(formOf)
-        const cacheKey = formIds.join(',')
-        const fields =
-            fieldsCache.get(cacheKey) ??
-            stageFields(form, formIds, rules.optionGroupOptions)
-        fieldsCache.set(cacheKey, fields)
-        return fields
-    }
+    const { fieldsOf, partsFor } = createRecordPartsCache(
+        form,
+        rules.optionGroupOptions
+    )
 
     /**
      * The records to run again after `field` of `rowId` changed: for a data value, the row, the person's rows that read
@@ -154,13 +144,13 @@ export const connectRules = ({
      * Commits the rules' values, then writes each row's effects: an outcome, or why its rules failed. Adds what a rule
      * cleared to `said`; returns the cells the rules changed.
      */
-    const apply = (results: ReadonlyArray<RowResult>, said: Set<string>) => {
+    const apply = (
+        results: ReadonlyArray<RowResult>,
+        said: Set<string>,
+        typing: string | undefined,
+        state: ReturnType<typeof effects.getState>
+    ) => {
         const values = store.getState().cells
-        const active = document.activeElement
-        const typing =
-            active instanceof HTMLElement && typingIn(active)
-                ? active.id
-                : undefined
         const { records } = tables.getState()
         const entries: Array<{ key: CellKey; text: string }> = []
         const notes: Array<string | undefined> = []
@@ -169,13 +159,10 @@ export const connectRules = ({
             if (outcome instanceof Error || record === undefined) {
                 continue
             }
-            const parts = partsOf(records, record)
+            const { ownerByField } = partsFor(records, record)
             for (const [field, value] of outcome.assignments) {
                 // The person's attribute, else the record's own field.
-                const owner =
-                    parts.find((part) =>
-                        form.fieldsByForm.get(formOf(part))?.has(field)
-                    ) ?? record
+                const owner = ownerByField.get(field) ?? record
                 if (
                     readOnlyRecords.has(owner.id) ||
                     !(touched.has(owner.id) || touched.has(recordId))
@@ -232,22 +219,16 @@ export const connectRules = ({
         })
 
         const after = store.getState().cells
-        const state = effects.getState()
         let cells = state.cells
         let rowMessages = state.rowMessages
         let rowNotes = state.rowNotes
         for (const { recordId, outcome } of results) {
             const record = records.get(recordId)
-            for (const part of record === undefined
+            for (const { record: part, required, ids } of record === undefined
                 ? []
-                : partsOf(records, record)) {
+                : partsFor(records, record).parts) {
                 const readOnly = readOnlyRecords.get(part.id)
-                const required = form.required.get(formOf(part)) ?? NONE
                 // An event's date and every field of the record's form, shown in a column or not.
-                const ids = [
-                    ...(part.kind === 'event' ? [EVENT_DATE_COLUMN] : []),
-                    ...(form.fieldsByForm.get(formOf(part)) ?? NONE),
-                ]
                 for (const id of ids) {
                     const key = cellKey(part.id, id)
                     const rule =
@@ -325,14 +306,13 @@ export const connectRules = ({
                 sameNotes
             )
         }
-        if (
+        const nextState =
             cells !== state.cells ||
             rowMessages !== state.rowMessages ||
             rowNotes !== state.rowNotes
-        ) {
-            effects.setState({ cells, rowMessages, rowNotes })
-        }
-        return changed
+                ? { cells, rowMessages, rowNotes }
+                : state
+        return { changed, state: nextState }
     }
 
     /**
@@ -342,6 +322,8 @@ export const connectRules = ({
     const pass = (
         rowIds: ReadonlyArray<string>,
         said: Set<string>,
+        typing: string | undefined,
+        state: ReturnType<typeof effects.getState>,
         until = Infinity
     ) => {
         const { tables: all, records } = tables.getState()
@@ -393,7 +375,8 @@ export const connectRules = ({
                 seen.add(rowId)
             }
         }
-        const changed = apply(results, said)
+        const applied = apply(results, said, typing, state)
+        const { changed } = applied
         const next = new Set(
             changed.flatMap(({ key }) => {
                 const rowId = recordIdOf(key)
@@ -407,28 +390,41 @@ export const connectRules = ({
                 ).filter((other) => other !== rowId && seen.has(other))
             })
         )
-        return { done, next: [...next] }
+        return { done, next: [...next], state: applied.state }
     }
 
     /**
      * Runs the rows, until `until` passes for a slice of them, then passes until the rules' own values settle, and
      * says once what they cleared. Returns the rows it did not get to.
      */
-    const run = (rowIds: ReadonlyArray<string>, until = Infinity) => {
-        const said = new Set<string>()
-        const first = pass(rowIds, said, until)
-        for (
-            let next = first.next, left = PASSES - 1;
-            next.length > 0 && left > 0;
-            left -= 1
-        ) {
-            next = pass(next, said).next
-        }
-        if (said.size > 0) {
-            announce([...said].join(' '))
-        }
-        return rowIds.slice(first.done)
-    }
+    const run = (rowIds: ReadonlyArray<string>, until = Infinity) =>
+        unstable_batchedUpdates(() => {
+            const said = new Set<string>()
+            const active = document.activeElement
+            const typing =
+                active instanceof HTMLElement && typingIn(active)
+                    ? active.id
+                    : undefined
+            const initialEffects = effects.getState()
+            const first = pass(rowIds, said, typing, initialEffects, until)
+            let state = first.state
+            for (
+                let next = first.next, left = PASSES - 1;
+                next.length > 0 && left > 0;
+                left -= 1
+            ) {
+                const result = pass(next, said, typing, state)
+                next = result.next
+                state = result.state
+            }
+            if (state !== initialEffects) {
+                effects.setState(state)
+            }
+            if (said.size > 0) {
+                announce([...said].join(' '))
+            }
+            return rowIds.slice(first.done)
+        })
 
     const pending = new Set<string>()
     let cancelPending: (() => void) | undefined

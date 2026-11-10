@@ -2009,10 +2009,15 @@
             "description": "A banner for one tracked entity: who they are and what could hurt them, composed from attribute parts.",
             "dependencies": [
                 "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@tanstack/react-query@^5.101.4",
                 "better-result@^3.0.1",
                 "zod@^4.4.3"
             ],
-            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display"
+            ],
             "files": [
                 {
                     "path": "packages/registry/blocks/tracked-entity-header/api/client.ts",
@@ -2045,9 +2050,34 @@
                     "target": "@components/tracked-entity-header/api/types.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-header/format/display.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/format/display.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/hooks.ts"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-header/index.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-header/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/TrackedEntityHeaderProvider.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/TrackedEntityHeaderProvider.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/env.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/env.ts"
                 }
             ]
         },

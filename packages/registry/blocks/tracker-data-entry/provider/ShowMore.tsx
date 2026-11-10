@@ -54,10 +54,12 @@ const MoreButton = ({
 }
 
 /** The button while the source may have more, with why the last page could not load beside it. */
-const ShowMore = ({ skipTargetId, label }: FooterProps & { label: string }) =>
-    useTrackerDataEntry((view) => view.hasMore) ? (
+const ShowMore = ({ skipTargetId, label }: FooterProps & { label: string }) => {
+    const hasMore = useTrackerDataEntry((view) => view.hasMore)
+    return hasMore ? (
         <MoreButton skipTargetId={skipTargetId} label={label} />
     ) : null
+}
 
 /** "Show more events" after the grid, for its `GridFooter`. */
 export const ShowMoreEvents = ({ skipTargetId }: FooterProps) => (

@@ -3,7 +3,8 @@ import { useTrackerContext } from './hooks'
 
 /** "Completed" beside a completed event's label, "Scheduled" beside a scheduled or overdue one's; nothing otherwise. */
 export const EventStatusBadge = ({ rowId }: { rowId: string }) => {
-    const record = useTrackerContext().records.get(rowId)
+    const { records } = useTrackerContext()
+    const record = records.get(rowId)
     const status = record?.kind === 'event' ? record.status : undefined
     const scheduled =
         status === 'SCHEDULE' || status === 'OVERDUE'

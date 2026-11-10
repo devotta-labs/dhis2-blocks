@@ -67,7 +67,8 @@ const Item = memo(function Item({
     const dot = key.indexOf('.')
     const rowId = dot < 0 ? key : key.slice(0, dot)
     // The row that shows the record, named as the grid names it.
-    const row = useRowLabel(rows.get(rowId)) ?? rowId
+    const label = useRowLabel(rows.get(rowId))
+    const row = label ?? rowId
     const className = cn('border-s-2 ps-2', TONES[kind])
     // A message without a field is the row's, or the whole form's: there is no cell to go to.
     if (dot < 0) {

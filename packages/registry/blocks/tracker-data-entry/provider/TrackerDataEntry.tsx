@@ -159,7 +159,8 @@ export const TrackerDataEntry = ({
     )
 
     // Every DOM id of the form starts with it, so two forms on one page never share one.
-    const idScope = `data-entry-${useId().replaceAll(':', '')}`
+    const id = useId()
+    const idScope = `data-entry-${id.replaceAll(':', '')}`
     const [start] = useState(() => performance.now())
     const measured = useRef(false)
     const [announcer] = useState(createAnnouncer)
@@ -295,9 +296,11 @@ export const TrackerDataEntry = ({
     }, [opened, start])
 
     // A failed change may be only on this page: the device could not store it.
-    useLeaveWarning(
-        useStore(view, ({ summary }) => summary.unsent + summary.failed > 0)
+    const unsaved = useStore(
+        view,
+        ({ summary }) => summary.unsent + summary.failed > 0
     )
+    useLeaveWarning(unsaved)
 
     const tables = useStore(active.tables, (state) => state.tables)
     const records = useStore(active.tables, (state) => state.records)

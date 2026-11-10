@@ -336,10 +336,13 @@ export const mount = async (
     let view: StoreApi<TrackerDataEntryView> | undefined
     let tracker: TrackerContext | undefined
     const Grab = () => {
+        const spreadsheet = useSpreadsheetContext()
+        const viewStore = useContext(TrackerDataEntryViewContext)
+        const trackerContext = useContext(TrackerReactContext)
         // SAFETY: TrackerDataEntry hands the spreadsheet its form's own effects store, which tests may write.
-        context = useSpreadsheetContext() as FormContext
-        view = useContext(TrackerDataEntryViewContext)
-        tracker = useContext(TrackerReactContext)
+        context = spreadsheet as FormContext
+        view = viewStore
+        tracker = trackerContext
         return null
     }
     const tree = () => (

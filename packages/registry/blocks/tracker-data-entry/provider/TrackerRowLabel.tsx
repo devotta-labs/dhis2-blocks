@@ -63,17 +63,15 @@ export const useRowLabel = (row: TrackerRow | undefined) => {
     const { store, settings, records } = useTrackerContext()
     const id = row?.id ?? ''
     // The cells the label reads, so it changes only with them.
-    const cells = useStore(
-        store,
-        useShallow((state) =>
-            Object.fromEntries(
-                [
-                    cellKey(id, EVENT_DATE_COLUMN),
-                    ...(row?.labelFrom ?? NO_KEYS),
-                ].map((key) => [key, state.cells[key]])
-            )
+    const selectCells = useShallow((state: CellStoreState) =>
+        Object.fromEntries(
+            [
+                cellKey(id, EVENT_DATE_COLUMN),
+                ...(row?.labelFrom ?? NO_KEYS),
+            ].map((key) => [key, state.cells[key]])
         )
     )
+    const cells = useStore(store, selectCells)
     if (row === undefined) {
         return undefined
     }
@@ -87,6 +85,7 @@ export const useRowLabel = (row: TrackerRow | undefined) => {
 }
 
 /** A row's name in its header, as `useRowLabel` gives it; formatted even when the event date has no column. */
-export const TrackerRowLabel = ({ row }: { row: TrackerRow }) => (
-    <>{useRowLabel(row)}</>
-)
+export const TrackerRowLabel = ({ row }: { row: TrackerRow }) => {
+    const label = useRowLabel(row)
+    return <>{label}</>
+}

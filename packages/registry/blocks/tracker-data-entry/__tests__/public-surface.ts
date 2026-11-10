@@ -187,8 +187,10 @@ export const badSlots: TrackerRow = {
     slots: { person: 1 },
 }
 // The form's rows, to lay out controls of your own by, such as a "Complete" button per row.
-export const useRows = (): TrackerRow[] =>
-    useTrackerDataEntry((view) => view.tables).flatMap(({ rows }) => rows)
+export const useRows = (): TrackerRow[] => {
+    const tables = useTrackerDataEntry((view) => view.tables)
+    return tables.flatMap(({ rows }) => rows)
+}
 export const useLoadError = (): string | undefined =>
     useTrackerDataEntry((view) => view.error)
 export const statuses: TrackerDataEntryView['status'][] = [

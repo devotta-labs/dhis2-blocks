@@ -34,7 +34,8 @@ export const WorkingListSharingDialog = ({
     onError,
     onSave,
 }: WorkingListSharingDialogProps) => {
-    const i18n = { t: useWorkingListText() }
+    const t = useWorkingListText()
+    const i18n = { t }
 
     return (
         <>

@@ -20,7 +20,8 @@ export function FinderSearching({
     children,
     ...props
 }: FinderSearchingProps) {
-    const active = useFinderResults().status === 'searching'
+    const { status } = useFinderResults()
+    const active = status === 'searching'
     return (
         <div
             role="status"
@@ -46,7 +47,8 @@ export function FinderEmpty({
     children,
     ...props
 }: FinderEmptyProps) {
-    const active = useFinderResults().status === 'empty'
+    const { status } = useFinderResults()
+    const active = status === 'empty'
     return (
         <div
             role="status"
@@ -66,7 +68,8 @@ export function FinderTooMany({
     children,
     ...props
 }: FinderTooManyProps) {
-    const active = useFinderResults().status === 'too-many'
+    const { status } = useFinderResults()
+    const active = status === 'too-many'
     return (
         <div
             role="status"
@@ -91,7 +94,8 @@ export function FinderError({
     ...props
 }: FinderErrorProps) {
     const { state } = useFinderContext()
-    if (useFinderResults().status !== 'error') {
+    const { status } = useFinderResults()
+    if (status !== 'error') {
         return null
     }
     const text =

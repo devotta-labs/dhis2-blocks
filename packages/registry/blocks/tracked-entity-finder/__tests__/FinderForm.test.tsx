@@ -528,12 +528,14 @@ describe('FinderForm', () => {
     })
 
     it('tells field hooks the kind of value an attribute takes', async () => {
-        const Kind = ({ attribute }: { attribute: string }) => (
-            <li>{`${attribute} ${useFinderField(attribute).attribute?.kind};`}</li>
-        )
-        const Range = () => (
-            <li>{`range ${useFinderRangeField('visit').attribute?.kind};`}</li>
-        )
+        const Kind = ({ attribute }: { attribute: string }) => {
+            const { attribute: field } = useFinderField(attribute)
+            return <li>{`${attribute} ${field?.kind};`}</li>
+        }
+        const Range = () => {
+            const { attribute } = useFinderRangeField('visit')
+            return <li>{`range ${attribute?.kind};`}</li>
+        }
         await renderFinder(
             <FinderForm>
                 <ul data-testid="kinds">

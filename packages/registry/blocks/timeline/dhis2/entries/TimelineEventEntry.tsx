@@ -107,7 +107,8 @@ const STATUS_STYLE = {
  * event above "now", an overdue one in the Overdue group.
  */
 const usePlaceTellsStatus = (entry: TimelineEntry<EventEntryData>): boolean => {
-    const inFeed = useOptionalTimeline() !== null
+    const timeline = useOptionalTimeline()
+    const inFeed = timeline !== null
     const { today } = useTimelineMeta()
     if (!inFeed) {
         return false
@@ -137,7 +138,8 @@ export const TimelineEventStatus = ({
     const { data } = entry
     const { calendar, locale } = useTimelineMeta()
     const placeTellsStatus = usePlaceTellsStatus(entry)
-    const inFeed = useOptionalTimeline() !== null
+    const timeline = useOptionalTimeline()
+    const inFeed = timeline !== null
     const { event, status, stage } = data
     const showsDue = status === 'scheduled' || status === 'overdue'
     const due =
@@ -222,7 +224,11 @@ export const TimelineEventCompletedBy = ({
     className,
     ...props
 }: ComponentPropsWithoutRef<'span'>) => {
-    const { completedBy } = useTimelineEventEntry().data.event
+    const {
+        data: {
+            event: { completedBy },
+        },
+    } = useTimelineEventEntry()
     if (completedBy === undefined) {
         return null
     }
@@ -252,7 +258,9 @@ export const TimelineEventValues = ({
 }: ComponentPropsWithoutRef<'div'> & {
     dataElementIds?: readonly string[]
 }) => {
-    const { event, stage, orgUnitNames } = useTimelineEventEntry().data
+    const {
+        data: { event, stage, orgUnitNames },
+    } = useTimelineEventEntry()
     const { calendar, locale } = useTimelineMeta()
     const [open, setOpen] = useState(false)
     const listId = useId()
@@ -357,7 +365,11 @@ export const TimelineEventNotes = ({
     className,
     ...props
 }: ComponentPropsWithoutRef<'div'>) => {
-    const { notes } = useTimelineEventEntry().data.event
+    const {
+        data: {
+            event: { notes },
+        },
+    } = useTimelineEventEntry()
     const [open, setOpen] = useState(false)
     const listId = useId()
     if (notes.length === 0) {

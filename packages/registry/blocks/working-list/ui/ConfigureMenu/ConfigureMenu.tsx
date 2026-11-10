@@ -42,7 +42,8 @@ export const ConfigureMenu = ({
     onSaveAs,
     onUpdate,
 }: ConfigureMenuProps) => {
-    const i18n = { t: useWorkingListText() }
+    const t = useWorkingListText()
+    const i18n = { t }
     const [nameDialogOpen, setNameDialogOpen] = useState(false)
     const [name, setName] = useState('')
     const nameInputId = useId()

@@ -23,7 +23,8 @@ export const ProgramStageControl = ({
     onChange,
     onRemove,
 }: ProgramStageControlProps) => {
-    const i18n = { t: useWorkingListText() }
+    const t = useWorkingListText()
+    const i18n = { t }
     const [open, setOpen] = useState(defaultOpen ?? false)
     const [draft, setDraft] = useState(selectedStageId ?? '')
     const stages = useMemo(

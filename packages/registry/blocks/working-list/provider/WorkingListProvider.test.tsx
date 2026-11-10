@@ -49,10 +49,10 @@ describe('WorkingListProvider controlled selection', () => {
         const observedSelections: WorkingListSelectionMeta[] = []
 
         const Probe = () => {
-            observedActions.push(useWorkingListActions())
-            observedSelections.push(
-                useWorkingListMeta((meta) => meta.selection)
-            )
+            const actions = useWorkingListActions()
+            const selection = useWorkingListMeta((meta) => meta.selection)
+            observedActions.push(actions)
+            observedSelections.push(selection)
             return null
         }
         const renderProvider = (
@@ -132,9 +132,8 @@ describe('WorkingListProvider controlled selection', () => {
             const observedSelections: WorkingListSelectionMeta[] = []
 
             const Probe = () => {
-                observedSelections.push(
-                    useWorkingListMeta((meta) => meta.selection)
-                )
+                const selection = useWorkingListMeta((meta) => meta.selection)
+                observedSelections.push(selection)
                 return null
             }
 

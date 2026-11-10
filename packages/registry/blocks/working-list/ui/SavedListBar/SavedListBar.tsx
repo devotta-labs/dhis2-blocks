@@ -48,7 +48,8 @@ export const SavedListBar = ({
     onShare,
     onDelete,
 }: SavedListBarProps) => {
-    const i18n = { t: useWorkingListText() }
+    const t = useWorkingListText()
+    const i18n = { t }
     // The actions menu lines up with the whole pill, not just its trigger.
     const pillElements = useRef(new Map<string, HTMLElement>())
     const [deleteList, setDeleteList] = useState<WorkingListSavedView>()

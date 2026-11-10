@@ -217,7 +217,8 @@ export const WorkingListTableView = ({
     onPageSizeChange,
     onRowOpen,
 }: WorkingListTableViewProps) => {
-    const i18n = { t: useWorkingListText() }
+    const t = useWorkingListText()
+    const i18n = { t }
     const showIssuesColumn = dataQualityMode === 'highlighted'
     const interactive = Boolean(onRowOpen)
     const openRow = (row: WorkingListDisplayRow) => onRowOpen?.(row)

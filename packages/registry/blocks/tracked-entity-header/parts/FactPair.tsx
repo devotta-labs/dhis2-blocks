@@ -7,12 +7,25 @@ import { setupMessage, type AttributeValueState } from './useAttributeValue'
 const FactPair = ({
     label,
     className,
+    row,
     children,
 }: {
     label?: string
     className?: string
+    /** A bare dt/dd pair, for a `<dl>` the caller owns. */
+    row?: boolean
     children: ReactNode
 }) => {
+    if (row) {
+        return (
+            <>
+                <dt className="text-dhis2-muted-foreground">
+                    {label || i18n.t('Attribute')}
+                </dt>
+                <dd className="m-0 text-dhis2-foreground">{children}</dd>
+            </>
+        )
+    }
     const classes = cn('inline-flex flex-wrap gap-x-1.5 text-sm m-0', className)
     if (!label) {
         return (
@@ -38,10 +51,12 @@ export const AttributeFact = ({
     state,
     label,
     className,
+    row,
 }: {
     state: AttributeValueState
     label?: string
     className?: string
+    row?: boolean
 }) => {
     switch (state.kind) {
         case 'hidden':
@@ -58,19 +73,31 @@ export const AttributeFact = ({
             )
         case 'value':
             return (
-                <FactPair label={label ?? state.label} className={className}>
+                <FactPair
+                    label={label ?? state.label}
+                    className={className}
+                    row={row}
+                >
                     {state.text}
                 </FactPair>
             )
         case 'missing':
             return (
-                <FactPair label={label ?? state.label} className={className}>
+                <FactPair
+                    label={label ?? state.label}
+                    className={className}
+                    row={row}
+                >
                     <Muted>{i18n.t('Not recorded')}</Muted>
                 </FactPair>
             )
         case 'unavailable':
             return (
-                <FactPair label={label ?? state.label} className={className}>
+                <FactPair
+                    label={label ?? state.label}
+                    className={className}
+                    row={row}
+                >
                     <Muted>{i18n.t('Unavailable')}</Muted>
                 </FactPair>
             )

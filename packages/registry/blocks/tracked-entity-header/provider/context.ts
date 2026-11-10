@@ -22,7 +22,7 @@ export interface HeaderContextValue {
     display: { calendar: Dhis2Calendar; locale?: string }
     /** Logs a config problem's full text, once per provider. */
     logProblem: (message: string) => void
-    /** Marks an attribute as shown by a part, so the details list skips it. Returns the undo. */
+    /** Marks an attribute as shown by a part, so the details list skips it. Returns the undo. Call it from a layout effect so it is settled before paint. */
     placeAttribute: (uid: string) => () => void
     placed: ReadonlySet<string>
     /** The id of the heading that names the person, once one is rendered. */

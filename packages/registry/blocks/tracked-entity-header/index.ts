@@ -32,3 +32,15 @@ export {
     TrackedEntityStatus,
     type TrackedEntityStatusProps,
 } from './parts/TrackedEntityStatus'
+export {
+    TrackedEntityFacts,
+    type TrackedEntityFactsProps,
+} from './parts/TrackedEntityFacts'
+export {
+    TrackedEntityActions,
+    type TrackedEntityActionsProps,
+} from './parts/TrackedEntityActions'
+export {
+    TrackedEntityDetails,
+    type TrackedEntityDetailsProps,
+} from './parts/TrackedEntityDetails'

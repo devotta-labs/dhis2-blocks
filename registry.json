@@ -2016,6 +2016,7 @@
             ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/badge",
+                "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/dhis2-value-display",
@@ -2073,6 +2074,11 @@
                     "target": "@components/tracked-entity-header/parts/FactPair.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityActions.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityActions.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityAttribute.tsx",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-header/parts/TrackedEntityAttribute.tsx"
@@ -2083,9 +2089,19 @@
                     "target": "@components/tracked-entity-header/parts/TrackedEntityBorn.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityDetails.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityDetails.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityEnrollment.tsx",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-header/parts/TrackedEntityEnrollment.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityFacts.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityFacts.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityName.tsx",

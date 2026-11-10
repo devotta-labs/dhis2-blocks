@@ -100,6 +100,7 @@ const toMetadata = (
             })
         } else {
             invalid.set(raw.id, {
+                sortOrder,
                 label: raw.displayFormName,
                 error: new Error(
                     `Attribute ${raw.id} has metadata this block can't read: ${z.prettifyError(parsed.error)}`

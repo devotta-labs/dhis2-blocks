@@ -1,6 +1,6 @@
 import { cn } from '@/components/dhis2/ui/cn'
 import i18n from '@dhis2/d2-i18n'
-import React, { useEffect, useId } from 'react'
+import React, { useEffect, useId, useLayoutEffect } from 'react'
 import { useHeaderContext } from '../provider/context'
 import {
     resolveAttribute,
@@ -29,7 +29,7 @@ export function TrackedEntityName({
     const ready = context.state.status === 'ready'
     const key = attributes.join(',')
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const undo = key.split(',').filter(Boolean).map(placeAttribute)
         return () => undo.forEach((fn) => fn())
     }, [key, placeAttribute])

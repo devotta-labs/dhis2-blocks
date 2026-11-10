@@ -13,7 +13,7 @@ export interface AttributeMetadata {
     programName?: string
     attributes: Map<string, AttributeMeta>
     /** Attributes whose metadata could not be read: only their own parts say Unavailable. */
-    invalid: Map<string, { label?: string; error: Error }>
+    invalid: Map<string, { label?: string; error: Error; sortOrder: number }>
     /** The displayInList uids, by sortOrder. */
     listOrder: string[]
     incidentDateLabel?: string

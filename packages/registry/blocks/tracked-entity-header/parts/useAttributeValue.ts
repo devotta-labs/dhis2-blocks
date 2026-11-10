@@ -1,6 +1,6 @@
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import i18n from '@dhis2/d2-i18n'
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { useHeaderContext, type HeaderContextValue } from '../provider/context'
 import { isProduction } from '../provider/env'
 
@@ -82,7 +82,7 @@ export const setupMessage = (message: string) =>
 export const useAttributeValue = (uid: string): AttributeValueState => {
     const context = useHeaderContext()
     const { placeAttribute } = context
-    useEffect(() => placeAttribute(uid), [placeAttribute, uid])
+    useLayoutEffect(() => placeAttribute(uid), [placeAttribute, uid])
     const result = resolveAttribute(uid, context)
     useLoggedProblem(
         result.kind === 'misconfigured' ? result.message : undefined

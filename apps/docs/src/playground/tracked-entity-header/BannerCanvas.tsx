@@ -44,7 +44,9 @@ const Banner = ({
                 <TrackedEntityEnrollment />
                 <TrackedEntityOwner />
                 <TrackedEntityActions>
-                    <Button variant="outline">Record visit</Button>
+                    <Button variant="outline" size="sm">
+                        Record visit
+                    </Button>
                 </TrackedEntityActions>
                 <TrackedEntityFacts>
                     <TrackedEntityAttribute attribute={parts.fact} />

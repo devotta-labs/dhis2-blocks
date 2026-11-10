@@ -2144,6 +2144,11 @@
                     "target": "@components/tracked-entity-header/provider/TrackedEntityHeaderProvider.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/actionsSlot.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/actionsSlot.ts"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-header/provider/context.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-header/provider/context.ts"

@@ -1,19 +1,15 @@
-import { Button } from '@/components/dhis2/ui/button'
-import React, { useState, type ReactNode } from 'react'
-import { page, userEvent } from 'vitest/browser'
+import React, { useState } from 'react'
+import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import {
-    TrackedEntityActions,
     TrackedEntityAttribute,
     TrackedEntityBanner,
     TrackedEntityBorn,
-    TrackedEntityDetails,
     TrackedEntityEnrollment,
     TrackedEntityFacts,
     TrackedEntityHeaderProvider,
     TrackedEntityName,
     TrackedEntityOwner,
-    TrackedEntityStatus,
 } from '..'
 import { roleColour } from '../../../test/roleColour'
 import {
@@ -24,46 +20,20 @@ import {
 } from './headerTestSupport'
 import {
     ALLERGIES,
-    BIRTH_DATE,
     FIRST,
     LAST,
     renderParts,
     type Edit,
-    type RawPerson,
     type RawProgram,
 } from './valuePartsSupport'
+import { banner, Composed, flags, UNIQUE_ID } from './bannerTestSupport'
 
-const UNIQUE_ID = 'lZGmxYbs97q'
 /** A Child Programme attribute the person type lacks. */
 const GENDER = 'cejWyOfXge6'
-
-const banner = () => page.getByRole('region').element()
-
-const flags =
-    (inactive: boolean, potentialDuplicate = false): Edit<RawPerson> =>
-    (raw) => ({ ...raw, inactive, potentialDuplicate })
 
 const forbidden = () => {
     throw Object.assign(new Error('no'), { httpStatusCode: 403 })
 }
-
-const Composed = () => (
-    <TrackedEntityBanner>
-        <TrackedEntityName attributes={[FIRST, LAST]} />
-        <TrackedEntityStatus />
-        <TrackedEntityBorn attribute={BIRTH_DATE} />
-        <TrackedEntityAttribute attribute={UNIQUE_ID} />
-        <TrackedEntityActions>
-            <Button>Record visit</Button>
-        </TrackedEntityActions>
-        <TrackedEntityFacts>
-            <TrackedEntityAttribute attribute={ALLERGIES} />
-            <TrackedEntityOwner />
-            <TrackedEntityEnrollment />
-        </TrackedEntityFacts>
-        <TrackedEntityDetails />
-    </TrackedEntityBanner>
-)
 
 /** Name and one fact on line one, one fact on line two: the two-line banner. */
 const TwoLines = () => (
@@ -230,8 +200,11 @@ describe('TrackedEntityBanner', () => {
             'Email address',
             'Allergies',
         ])
+        const content = section.querySelector(
+            '[data-slot="tracked-entity-banner-content"]'
+        )
         expect(
-            [...section.children].map((child) =>
+            [...(content?.children ?? [])].map((child) =>
                 child.getAttribute('data-slot')
             )
         ).toEqual([
@@ -457,110 +430,5 @@ describe('TrackedEntityBanner', () => {
         expect(seen.length).toBeGreaterThan(0)
         expect(seen.filter((text) => text.includes('Linda Bailey'))).toEqual([])
         server.release()
-    })
-})
-
-describe('TrackedEntityBanner screenshots', () => {
-    afterAll(async () => {
-        await page.viewport(414, 896)
-    })
-
-    const cases: [
-        string,
-        ReactNode,
-        Parameters<typeof renderParts>[1],
-        string,
-    ][] = [
-        ['default', <TrackedEntityBanner key="default" />, {}, 'Linda'],
-        [
-            'composed',
-            <Composed key="composed" />,
-            { person: flags(true, true) },
-            'Owned by Ngelehun CHC',
-        ],
-        [
-            'inactive',
-            <TrackedEntityBanner key="inactive" />,
-            { person: flags(true) },
-            'Inactive',
-        ],
-        [
-            'restricted',
-            <Composed key="restricted" />,
-            { status: 'restricted' },
-            'WHO RMNCH Tracker',
-        ],
-    ]
-
-    describe.each([360, 1200])('at %ipx', (width) => {
-        it.each(cases)(
-            '%s fits the width',
-            async (_, children, options, shown) => {
-                await page.viewport(width, 600)
-                await renderParts(
-                    <div className="p-4">{children}</div>,
-                    options
-                )
-                await expect
-                    .element(page.getByText(shown, { exact: false }).first())
-                    .toBeVisible()
-
-                const section = banner()
-                expect(section.scrollWidth).toBeLessThanOrEqual(
-                    section.clientWidth
-                )
-                expect(await page.screenshot({ element: section })).toContain(
-                    '.png'
-                )
-            }
-        )
-    })
-})
-
-describe('TrackedEntityBanner layout', () => {
-    afterAll(async () => {
-        await page.viewport(414, 896)
-    })
-
-    it('puts the facts on line two and the actions at the end of line one', async () => {
-        await page.viewport(1200, 600)
-        await renderParts(
-            <TrackedEntityBanner>
-                <TrackedEntityName attributes={[FIRST, LAST]} />
-                <TrackedEntityActions>
-                    <Button>Record visit</Button>
-                </TrackedEntityActions>
-                <TrackedEntityFacts>
-                    <TrackedEntityAttribute attribute={ALLERGIES} />
-                </TrackedEntityFacts>
-            </TrackedEntityBanner>
-        )
-        await expect.element(page.getByText('Penicillin')).toBeVisible()
-
-        const box = (slot: string) =>
-            banner()
-                .querySelector(`[data-slot="${slot}"]`)
-                ?.getBoundingClientRect() ?? new DOMRect()
-        const name = box('tracked-entity-name')
-        const facts = box('tracked-entity-facts')
-        const actions = box('tracked-entity-actions')
-        const section = banner().getBoundingClientRect()
-        expect(facts.top).toBeGreaterThanOrEqual(name.bottom)
-        expect(actions.top).toBeLessThan(name.bottom)
-        expect(section.right - actions.right).toBeLessThan(20)
-    })
-
-    it('opens the details below both lines', async () => {
-        await renderParts(<Composed />)
-        await userEvent.click(page.getByRole('button', { name: 'Details' }))
-
-        await expect.element(page.getByText('Civil status')).toBeVisible()
-        const facts = banner().querySelector(
-            '[data-slot="tracked-entity-facts"]'
-        )
-        const list = page.getByText('Civil status').element()
-        expect(list.getBoundingClientRect().top).toBeGreaterThan(
-            facts?.getBoundingClientRect().bottom ?? Infinity
-        )
     })
 })

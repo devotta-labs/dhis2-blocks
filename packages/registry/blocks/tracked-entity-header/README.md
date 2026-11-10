@@ -26,7 +26,9 @@ compose a banner, place the parts yourself:
             <TrackedEntityBorn attribute={birthDate} />
             <TrackedEntityAttribute attribute={uniqueId} />
             <TrackedEntityActions>
-                <Button onClick={recordVisit}>Record visit</Button>
+                <Button size="sm" onClick={recordVisit}>
+                    Record visit
+                </Button>
             </TrackedEntityActions>
             <TrackedEntityFacts>
                 <TrackedEntityAttribute attribute={allergies} />

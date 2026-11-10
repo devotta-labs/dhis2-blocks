@@ -2,10 +2,11 @@ import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import i18n from '@dhis2/d2-i18n'
-import React, { useRef, useState, type ReactNode } from 'react'
+import React, { useMemo, useRef, useState, type ReactNode } from 'react'
 import { TrackedEntityAttribute } from '../parts/TrackedEntityAttribute'
 import { TrackedEntityDetails } from '../parts/TrackedEntityDetails'
 import { TrackedEntityStatus } from '../parts/TrackedEntityStatus'
+import { ActionsSlotContext } from '../provider/actionsSlot'
 import { useHeaderContext } from '../provider/context'
 import { LabelledRegionContext } from '../provider/labelledRegion'
 
@@ -16,11 +17,14 @@ export interface TrackedEntityBannerProps {
 }
 
 /**
- * Line one is everything up to the facts, with the actions at its end; the
- * facts take line two and the details open below both.
+ * Line one is everything up to the facts; the facts take line two and the
+ * details open below both.
  */
 const PLACEMENT =
-    'flex flex-wrap items-baseline gap-x-4 gap-y-1.5 [&>[data-slot=tracked-entity-actions]]:ms-auto [&>[data-slot=tracked-entity-details]]:basis-full [&>[data-slot=tracked-entity-facts]]:basis-full'
+    'flex min-w-0 flex-1 flex-wrap items-baseline gap-x-4 gap-y-1.5 [&>[data-slot=tracked-entity-details]]:basis-full [&>[data-slot=tracked-entity-facts]]:basis-full'
+
+/** The actions' own column, beside both lines; under everything when the banner is narrow. */
+const COLUMNS = 'flex flex-col gap-x-4 gap-y-2 @md:flex-row @md:items-start'
 
 const Message = ({ children }: { children: string }) => (
     <p className="m-0 text-sm text-dhis2-foreground">{children}</p>
@@ -56,6 +60,13 @@ export function TrackedEntityBanner({
     // The id of a name part inside this banner; parts elsewhere never set it.
     const [nameId, setNameId] = useState<string>()
     const section = useRef<HTMLElement>(null)
+    const [actionsColumn, setActionsColumn] = useState<HTMLDivElement | null>(
+        null
+    )
+    const actionsSlot = useMemo(
+        () => ({ element: actionsColumn }),
+        [actionsColumn]
+    )
     const ready = state.status === 'ready'
     const inactive = ready && state.trackedEntity.inactive
     // A mounted name part labels the region; without one, the type name; until the person is ready, a generic name.
@@ -127,16 +138,29 @@ export function TrackedEntityBanner({
             aria-busy={state.status === 'loading' || undefined}
             data-tone={inactive ? 'inactive' : 'default'}
             className={cn(
-                PLACEMENT,
-                'outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-dhis2-ring focus-visible:outline-solid',
+                '@container outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-dhis2-ring focus-visible:outline-solid',
                 'rounded-dhis2-md border border-dhis2-border-strong bg-dhis2-card px-3.5 py-2.5 text-dhis2-card-foreground',
                 inactive && 'bg-dhis2-muted',
                 className
             )}
         >
-            <LabelledRegionContext.Provider value={setNameId}>
-                {content}
-            </LabelledRegionContext.Provider>
+            <div className={COLUMNS}>
+                <div
+                    data-slot="tracked-entity-banner-content"
+                    className={PLACEMENT}
+                >
+                    <LabelledRegionContext.Provider value={setNameId}>
+                        <ActionsSlotContext.Provider value={actionsSlot}>
+                            {content}
+                        </ActionsSlotContext.Provider>
+                    </LabelledRegionContext.Provider>
+                </div>
+                {/* Empty, and so hidden, until the actions arrive. */}
+                <div
+                    ref={setActionsColumn}
+                    className="flex shrink-0 empty:hidden"
+                />
+            </div>
         </section>
     )
 }

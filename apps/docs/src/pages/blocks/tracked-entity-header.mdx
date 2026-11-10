@@ -56,8 +56,10 @@ states, and never shows the previous person while the next one loads.
 ## Composing a banner
 
 Place parts inside `TrackedEntityBanner` to choose what it shows. Line one is
-everything up to the facts, with the actions at its end. The facts take line
-two, and the details open below both.
+everything up to the facts, the facts take line two, and the details open below
+both. `TrackedEntityActions` sits in a column of its own on the right, wherever
+you place it, so a long line one wraps beside it. In a narrow banner the actions
+move below everything.
 
 ```tsx
 <ObservationsProvider trackedEntity={personId} program="WSGAb5XwJ3Y">
@@ -70,7 +72,9 @@ two, and the details open below both.
             <TrackedEntityEnrollment />
             <TrackedEntityOwner />
             <TrackedEntityActions>
-                <Button onClick={recordVisit}>Record visit</Button>
+                <Button size="sm" onClick={recordVisit}>
+                    Record visit
+                </Button>
             </TrackedEntityActions>
             <TrackedEntityFacts>
                 <TrackedEntityAttribute attribute="gu1fqsmoU8r" />

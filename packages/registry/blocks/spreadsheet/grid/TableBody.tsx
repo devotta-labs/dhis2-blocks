@@ -36,8 +36,8 @@ const Gap = ({ height, span }: { height: number; span: number }) => (
 )
 
 /**
- * A table's rows, only those near the view drawn, each measured. The first and last rows stay drawn, so Tab into the
- * table lands as it would; so do the row the person was last in and the rows either side, so the arrows, Enter and Tab
+ * A table's rows, only those near the view drawn, measured after the first paint. The first and last rows stay drawn,
+ * so Tab into the table lands as it would; so do the row the person was last in and the rows either side, so the arrows, Enter and Tab
  * find their next cell, and the menus opened from a row keep it.
  */
 export const TableBody = ({
@@ -87,6 +87,21 @@ export const TableBody = ({
         getItemKey: (index) => rows[index]?.id ?? index,
         rangeExtractor,
     })
+    const measureAfterPaint = useCallback(
+        (element: Element | null) => {
+            if (element === null) {
+                return
+            }
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    if (element.isConnected) {
+                        virtualizer.measureElement(element)
+                    }
+                })
+            })
+        },
+        [virtualizer]
+    )
     const note = (event: SyntheticEvent) => {
         const row =
             event.target instanceof Element
@@ -115,7 +130,7 @@ export const TableBody = ({
                       row={row}
                       index={item.index}
                       rowIndex={table.headerRows.length + item.index + 1}
-                      measure={virtualizer.measureElement}
+                      measure={measureAfterPaint}
                       labels={labels}
                       move={move}
                       openMenu={openMenu}

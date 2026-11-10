@@ -2,6 +2,8 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import calendarVisitsSource from './calendar/CalendarVisits.tsx?raw'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
+import valueInputFormSource from './dhis2-value-input/ValueInputForm.tsx?raw'
+import valueInputKindsSource from './dhis2-value-input/ValueInputKinds.tsx?raw'
 import { PersonVitalsPlaceholder } from './observation-cards/ObservationCardsPlaceholders'
 import personVitalsSource from './observation-cards/PersonVitals.tsx?raw'
 import personBannerSource from './tracked-entity-header/PersonBanner.tsx?raw'
@@ -213,6 +215,22 @@ const examples = [
         Component: lazy(() => import('./spreadsheet/TargetsGrid')),
         source: spreadsheetTargetsSource,
         minHeight: 300,
+    },
+    {
+        slug: 'dhis2-value-input/kinds',
+        title: 'Fields that need no server',
+        live: false,
+        Component: lazy(() => import('./dhis2-value-input/ValueInputKinds')),
+        source: valueInputKindsSource,
+        minHeight: 520,
+    },
+    {
+        slug: 'dhis2-value-input/form',
+        title: 'A form with rule effects',
+        live: false,
+        Component: lazy(() => import('./dhis2-value-input/ValueInputForm')),
+        source: valueInputFormSource,
+        minHeight: 520,
     },
     {
         slug: 'tracker-data-entry/event-program',

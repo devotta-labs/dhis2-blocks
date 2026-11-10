@@ -116,6 +116,16 @@ Collapsing preserves the open groups and selected page.
 See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
 examples.
 
+## Value input block
+
+`dhis2-value-input` is a form control for each DHIS2 value type, accepting what the grid accepts, in the system calendar. It reports a value when it is committed, not on each keystroke. The grid below uses its pop-up editors.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/dhis2-value-input
+```
+
+See `/blocks/dhis2-value-input` in the docs.
+
 ## Spreadsheet and Tracker Data Entry blocks
 
 Two blocks enter DHIS2 data in a grid, typed in like a spreadsheet.

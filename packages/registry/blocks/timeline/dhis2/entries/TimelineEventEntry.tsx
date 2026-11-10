@@ -431,21 +431,17 @@ const ChangesBody = ({ entry }: { entry: TimelineEntry<EventEntryData> }) => {
     switch (status) {
         case 'idle':
         case 'loading':
-            return (
-                <p
-                    role="status"
-                    className="m-0 text-sm text-dhis2-muted-foreground"
-                >
-                    {i18n.t('Loading changes')}
-                </p>
-            )
         case 'unsupported':
             return (
                 <p
                     role="status"
                     className="m-0 text-sm text-dhis2-muted-foreground"
                 >
-                    {i18n.t("Changes aren't available on this DHIS2 version.")}
+                    {status === 'unsupported'
+                        ? i18n.t(
+                              "Changes aren't available on this DHIS2 version."
+                          )
+                        : i18n.t('Loading changes')}
                 </p>
             )
         case 'error':

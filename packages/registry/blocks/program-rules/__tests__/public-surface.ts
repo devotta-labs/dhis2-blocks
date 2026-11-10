@@ -192,11 +192,13 @@ export const writes = (
 ): string | undefined => assignedVariable(action)
 
 // The graph, invalid rules and requirements need no event.
-export const useStageGraph = (): RuleDependencyGraph | undefined =>
-    useProgramRuleContext({
+export const useStageGraph = (): RuleDependencyGraph | undefined => {
+    const { context } = useProgramRuleContext({
         programId: 'WSGAb5XwJ3Y',
         programStageId: 'WZbXY0S00lP',
-    }).context?.graph
+    })
+    return context?.graph
+}
 
 export const statuses: UseProgramRulesResult['status'][] = [
     'loading',

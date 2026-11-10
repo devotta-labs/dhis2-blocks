@@ -8,7 +8,11 @@ import {
     rowHeaderDomId,
     cellKey,
 } from '@/components/spreadsheet'
-import { control, shown } from '@/components/spreadsheet/grid/__tests__/gridRig'
+import {
+    control,
+    nextFrame,
+    shown,
+} from '@/components/spreadsheet/grid/__tests__/gridRig'
 import { recordIdOf } from '../model/types'
 import type { TrackerDataEntrySource } from '../sources/types'
 import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'
@@ -88,7 +92,7 @@ const mountRmnch = async (
 const sentKeys = (memory: ReturnType<typeof memorySource>) =>
     memory.sent.flat().map(({ key }) => key)
 
-test('evaluates the visible rows first and the rest when idle', async () => {
+test('evaluates the visible rows first, the rows near them when idle, and the rest once the grid draws them', async () => {
     const idle = holdIdle()
     const events = Array.from({ length: 10 }, (_, k) =>
         antenatalOf(k).map((event) =>
@@ -103,10 +107,35 @@ test('evaluates the visible rows first and the rest when idle', async () => {
     const assigned = (id: string) =>
         context().effects.getState().cells[cellKey(id, GESTATIONAL_AGE)]
             ?.readOnly === ASSIGNED
+    const drawn = (id: string) =>
+        document.getElementById(
+            rowHeaderDomId(context().idScope, form.tables[0].id, id)
+        ) !== null
 
     // The first row is in view, so it is in the first slice.
     expect(assigned(rows[0].id)).toBe(true)
     // The rows in view take timer slices first; on a slow machine they are still running when idle time is let out.
+    await expect
+        .poll(() => {
+            idle.run()
+            return rows.filter(({ id }) => drawn(id) && !assigned(id)).length
+        })
+        .toBe(0)
+    // A row the grid does not draw is not evaluated, however long the page is idle.
+    await later(100)
+    idle.run()
+    const away = rows.filter(({ id }) => !drawn(id))
+    expect(away.length).toBeGreaterThan(30)
+    expect(away.filter(({ id }) => assigned(id))).toEqual([])
+
+    // Scrolling draws the other rows: each is evaluated when idle after the grid draws it.
+    const region = page.getByRole('region').element()
+    while (region.scrollTop + region.clientHeight < region.scrollHeight - 1) {
+        region.scrollTop += region.clientHeight / 2
+        await nextFrame()
+        await nextFrame()
+        idle.run()
+    }
     await expect
         .poll(() => {
             idle.run()

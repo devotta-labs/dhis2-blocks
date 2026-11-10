@@ -28,6 +28,11 @@ export type ReadonlyStore<T> = Pick<
     'getState' | 'getInitialState' | 'subscribe'
 >
 
+/** Table id → the ids of the rows the grid draws now: those in or near the view. A table not drawn has no entry. */
+export interface DrawnRows {
+    rows: ReadonlyMap<string, ReadonlyArray<string>>
+}
+
 /** What the cells and the grid read from the provider. */
 export interface SpreadsheetContext {
     store: StoreApi<CellStoreState>
@@ -41,6 +46,8 @@ export interface SpreadsheetContext {
     focusCell(key: CellKey): void
     /** The cell `focusCell` waits on while the grid draws its row. */
     focusing: StoreApi<{ key?: CellKey }>
+    /** Where the grid says which rows it draws, for logic that runs only for those. */
+    drawnRows?: StoreApi<DrawnRows>
     tables: ReadonlyArray<GridTable>
     /** The key of the row's cell in the column: what the cell's state, effects and DOM id are found by. */
     keyOf(row: GridRow, column: GridColumn): CellKey

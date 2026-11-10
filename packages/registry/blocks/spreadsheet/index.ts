@@ -34,7 +34,12 @@ export {
     useFocusCell,
     useRowCells,
 } from './provider/context'
-export type { Announcer, CellView, DataEngine } from './provider/context'
+export type {
+    Announcer,
+    CellView,
+    DataEngine,
+    DrawnRows,
+} from './provider/context'
 export { Spreadsheet } from './provider/Spreadsheet'
 export { createCellStore } from './store/store'
 export type { CellStoreState } from './store/store'

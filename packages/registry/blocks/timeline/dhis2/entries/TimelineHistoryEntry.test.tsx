@@ -65,7 +65,12 @@ const ENTRIES = [
     ),
 ]
 
-const EventId = () => <span>id {useTimelineEventEntry().data.event.event}</span>
+const EventId = () => {
+    const {
+        data: { event },
+    } = useTimelineEventEntry()
+    return <span>id {event.event}</span>
+}
 
 describe('TimelineHistoryEntry', () => {
     it('renders every kind in one feed, with host actions on events', async () => {

@@ -20,7 +20,8 @@ export function FinderSearching({
     children,
     ...props
 }: FinderSearchingProps) {
-    if (useFinderResults().status !== 'searching') {
+    const { status } = useFinderResults()
+    if (status !== 'searching') {
         return null
     }
     return (
@@ -46,7 +47,8 @@ export function FinderEmpty({
     children,
     ...props
 }: FinderEmptyProps) {
-    if (useFinderResults().status !== 'empty') {
+    const { status } = useFinderResults()
+    if (status !== 'empty') {
         return null
     }
     return (
@@ -67,7 +69,8 @@ export function FinderTooMany({
     children,
     ...props
 }: FinderTooManyProps) {
-    if (useFinderResults().status !== 'too-many') {
+    const { status } = useFinderResults()
+    if (status !== 'too-many') {
         return null
     }
     return (
@@ -92,7 +95,8 @@ export function FinderError({
     ...props
 }: FinderErrorProps) {
     const { state } = useFinderContext()
-    if (useFinderResults().status !== 'error') {
+    const { status } = useFinderResults()
+    if (status !== 'error') {
         return null
     }
     const text =

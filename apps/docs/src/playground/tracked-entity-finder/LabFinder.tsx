@@ -218,13 +218,15 @@ const HookInput = ({
     )
 }
 
-const HookExactField = ({ field }: { field: LabField }) => (
-    <HookInput field={field} state={useFinderField(field.attribute)} />
-)
+const HookExactField = ({ field }: { field: LabField }) => {
+    const state = useFinderField(field.attribute)
+    return <HookInput field={field} state={state} />
+}
 
-const HookRangeField = ({ field }: { field: LabField }) => (
-    <HookInput field={field} state={useFinderRangeField(field.attribute)} />
-)
+const HookRangeField = ({ field }: { field: LabField }) => {
+    const state = useFinderRangeField(field.attribute)
+    return <HookInput field={field} state={state} />
+}
 
 const HookSubmit = () => {
     const { canSearch, submit, missing } = useFinderSearch()

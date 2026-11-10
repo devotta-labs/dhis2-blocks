@@ -48,12 +48,14 @@ export const useFinderFieldApi = (
     attribute: string,
     usable: FinderAttribute | undefined,
     match: FormField['match']
-) =>
-    useField({
+) => {
+    const validator = useValidator(usable, match)
+    return useField({
         form,
         name: attribute,
-        validators: { onChange: useValidator(usable, match) },
+        validators: { onChange: validator },
     })
+}
 
 /** One attribute's TanStack field in a finder form. */
 export type FinderFieldApi = ReturnType<typeof useFinderFieldApi>

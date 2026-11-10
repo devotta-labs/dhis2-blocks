@@ -464,6 +464,26 @@ Registry items ship source only, never `.pot`/`.po` files or generated locale
 catalogues. Consuming DHIS2 apps extract the installed inline messages into
 their own app-level translations.
 
+`anti-slop/require-standalone-hook-calls` keeps hook calls out of conditions,
+JSX, arguments and other composed expressions, and bans reading a property or
+calling a method directly on a hook's result. Store or destructure the result
+first:
+
+```tsx
+const { status } = useFinderResults()
+if (status !== 'searching') {
+    return null
+}
+```
+
+Direct variable initializers, standalone effects and direct returns are allowed
+at function-body level (including concise hook-forwarding arrows). Parentheses
+and TypeScript-only wrappers do not hide chained access. Hook names follow
+`use` + uppercase letter/digit, including PascalCase namespaces such as
+`React.useState`; lowercase utility objects such as `vi.useFakeTimers` are not
+hooks. This is an expression-placement rule, not a replacement for React's
+Rules of Hooks control-flow checks.
+
 CI runs typechecking, tests, app/docs builds, lint, Knip, and DHIS2 dev E2E
 in parallel. Path filters skip unrelated jobs (for example, docs-only changes
 do not start the web app's E2E stack). Feature branches compare against their

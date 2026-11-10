@@ -238,11 +238,12 @@ describe('TimelineEventEntry', () => {
     })
 
     it('gives a host-composed child the entry through useTimelineEventEntry', async () => {
-        const Open = () => (
-            <a href={`#/event/${useTimelineEventEntry().data.event.event}`}>
-                Open
-            </a>
-        )
+        const Open = () => {
+            const {
+                data: { event },
+            } = useTimelineEventEntry()
+            return <a href={`#/event/${event.event}`}>Open</a>
+        }
         const { container } = await renderEvent(
             recordedEvent('TlE2eEvt004'),
             <Open />

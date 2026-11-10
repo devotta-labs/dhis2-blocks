@@ -62,7 +62,7 @@ const SETTINGS = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 | `hiddenOptions`             | Option codes a rule hides.                                                                            |
 | `messages`                  | Rule or host messages under the field, each with a tone of `error`, `warning` or `info`.              |
 | `valueName`                 | The name of a stored organisation unit or file id. Without it the field shows "Unknown" and the id.   |
-| `fileUrl`                   | The link to the stored file or image, for download and preview.                                       |
+| `storedFile`                | The file or image DHIS2 holds: `{ value, url }`, its file resource id and where it is served.         |
 | `id`                        | The field's id, for a host to link to or focus; focus lands in the field. Otherwise one is generated. |
 
 ## When onChange fires
@@ -140,6 +140,11 @@ unmounts mid-upload, the upload is aborted and nothing more is reported. A
 field that picked an organisation unit or uploaded a file remembers its name
 only while that field stays mounted. A remounted field shows "Unknown" and the
 id unless you pass `valueName`.
+
+`storedFile` gives the link and preview only while the field holds that file
+resource id: none once the file is removed or replaced here. After the host
+saves an upload, it passes `storedFile` with the new id, and the link shows,
+even at the same address, as DHIS2 serves an event's file.
 
 ## For block authors
 

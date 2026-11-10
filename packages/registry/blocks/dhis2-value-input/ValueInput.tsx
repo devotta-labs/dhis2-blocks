@@ -47,8 +47,11 @@ export interface ValueInputProps {
     messages?: ReadonlyArray<{ tone: Tone; text: string }>
     /** The name of a stored org unit or file id. */
     valueName?: string
-    /** The link to the stored file or image. */
-    fileUrl?: string
+    /**
+     * The file or image DHIS2 holds for the field: its file resource id and where it is served. Its link and preview
+     * show only while the field holds that id, so the link may stay the same when the file changes.
+     */
+    storedFile?: { value: string; url: string }
     id?: string
 }
 
@@ -151,11 +154,13 @@ export const ValueInput = ({
     messages = [],
     hiddenOptions,
     valueName,
-    fileUrl,
+    storedFile,
     id: givenId,
 }: ValueInputProps): ReactNode => {
     // One "no value" for every kind, as `onChange` reports it back (`null`) or a host keeps it (`undefined`).
     const value = givenValue ?? undefined
+    // The stored file's link, while the field holds that file: not once it is removed or replaced here.
+    const fileUrl = storedFile?.value === value ? storedFile?.url : undefined
     const generatedId = useId()
     const id = givenId ?? generatedId
     const kind = cellKind(field)
@@ -295,7 +300,7 @@ export const ValueInput = ({
                         className={READ_ONLY_CLASS}
                     />
                 )}
-                {file && fileUrl !== undefined && value !== undefined ? (
+                {file && fileUrl !== undefined ? (
                     <StoredFile
                         url={fileUrl}
                         image={field.valueType === 'IMAGE'}

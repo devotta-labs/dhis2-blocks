@@ -91,6 +91,7 @@ export const EditorInput = ({
     settings: ValueSettings
     value: string | undefined
     valueName: string | undefined
+    /** The stored file's link, given only while the field holds that file. */
     fileUrl: string | undefined
     hiddenOptions: ReadonlySet<string> | undefined
     commits: ReturnType<typeof useEditorCommits>
@@ -189,12 +190,7 @@ export const EditorInput = ({
                     name ??
                     (value === undefined ? undefined : unknownName(value))
                 }
-                // The host's link is to the file it stored, not one removed or uploaded here.
-                fileUrl={
-                    value === undefined || learned?.id === value
-                        ? undefined
-                        : fileUrl
-                }
+                fileUrl={fileUrl}
                 offline={isDisconnected}
                 uploads={uploads}
                 report={(next, problem) => {

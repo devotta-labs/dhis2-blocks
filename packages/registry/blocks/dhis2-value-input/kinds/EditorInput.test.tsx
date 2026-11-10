@@ -59,9 +59,11 @@ const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
     const Host = ({
         shown,
         assigned,
+        storedFile = props.storedFile,
     }: {
         shown: boolean
         assigned?: { value: string }
+        storedFile?: ValueInputProps['storedFile']
     }) => {
         const [value, setValue] = useState(props.value)
         useEffect(() => {
@@ -83,6 +85,7 @@ const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
                             settings={SETTINGS}
                             label={LABEL}
                             {...props}
+                            storedFile={storedFile}
                             value={value}
                             onChange={(next, problem) => {
                                 onChange(next, problem)
@@ -105,6 +108,8 @@ const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
         unmount: () => screen.rerender(<Host shown={false} />),
         assign: (value: string) =>
             screen.rerender(<Host shown assigned={{ value }} />),
+        link: (storedFile: ValueInputProps['storedFile']) =>
+            screen.rerender(<Host shown storedFile={storedFile} />),
     }
 }
 
@@ -381,7 +386,11 @@ const STORED_IMAGE = `data:image/gif,${[
 test('an image the host links stops showing once removed, and an upload in its place shows no link to it', async () => {
     const { uploads } = await mount(
         { valueType: 'IMAGE' },
-        { value: 'Old', valueName: 'old.png', fileUrl: STORED_IMAGE }
+        {
+            value: 'Old',
+            valueName: 'old.png',
+            storedFile: { value: 'Old', url: STORED_IMAGE },
+        }
     )
     await expect
         .element(page.getByRole('img', { name: 'old.png' }))
@@ -408,13 +417,42 @@ test('an image the host links stops showing once removed, and an upload in its p
         .not.toBeInTheDocument()
 })
 
+test('an image uploaded here shows once the host links the file it saved', async () => {
+    const { uploads, link } = await mount(
+        { valueType: 'IMAGE' },
+        {
+            value: 'Old',
+            valueName: 'old.png',
+            storedFile: { value: 'Old', url: STORED_IMAGE },
+        }
+    )
+    const picker = document.querySelector('input[type="file"]')
+    if (picker === null) {
+        throw new Error('The field has no file input')
+    }
+    await userEvent.upload(
+        picker,
+        new File(['x'], 'scan.png', { type: 'image/png' })
+    )
+    await expect.poll(() => uploads).toHaveLength(1)
+    uploads[0].release()
+    await expect.element(page.getByText('scan.png')).toBeVisible()
+    expect(document.querySelector('img')).toBeNull()
+
+    // The host saved the upload and links it at the same address, as DHIS2 serves an event's file.
+    await link({ value: 'File1', url: STORED_IMAGE })
+    await expect
+        .element(page.getByRole('img', { name: 'scan.png' }))
+        .toBeVisible()
+})
+
 test('a read-only image the host links shows a preview and "Download", and says why', async () => {
     await mount(
         { valueType: 'IMAGE' },
         {
             value: 'File1',
             valueName: 'scan.png',
-            fileUrl: STORED_IMAGE,
+            storedFile: { value: 'File1', url: STORED_IMAGE },
             readOnly: 'Assigned by a rule',
         }
     )

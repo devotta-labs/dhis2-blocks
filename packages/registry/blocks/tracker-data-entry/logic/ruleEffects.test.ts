@@ -1,5 +1,5 @@
 import type { Attribution, RuleEffects } from '@/components/program-rules'
-import type { CellState } from '@/components/spreadsheet'
+import type { CellMap, CellState } from '@/components/spreadsheet'
 import { rowRuleOutcome, ruleRowsCache, ruleRowsOf } from './ruleEffects'
 
 const by = (ruleName: string): Attribution => ({
@@ -38,6 +38,18 @@ const row = (edit: Partial<Row> = {}): Row => ({
     sections: new Map(),
     ...edit,
 })
+
+const cellsOf = (flat: Record<string, Partial<CellState>>): CellMap => {
+    const cells: CellMap = {}
+    for (const [key, cell] of Object.entries(flat)) {
+        const dot = key.indexOf('.')
+        const rowId = key.slice(0, dot)
+        const field = key.slice(dot + 1)
+        const rowCells = (cells[rowId] ??= {})
+        rowCells[field] = { sync: 'idle', source: 'person', ...cell }
+    }
+    return cells
+}
 
 test('clears a hidden field’s value unless assigned', () => {
     const hide = { hiddenFields: new Map([['a', [by('Hide if age < 5')]]]) }
@@ -274,7 +286,7 @@ test('a rule row holds every field of its stage, shown or not', () => {
             ],
         ]),
         new Map([['s1', new Set(['a', 'b'])]]),
-        {
+        cellsOf({
             'r1.a': { value: '1', sync: 'idle', source: 'person' },
             'r1.b': { value: '2', sync: 'idle', source: 'person' },
             'r1.occurredAt': {
@@ -282,7 +294,7 @@ test('a rule row holds every field of its stage, shown or not', () => {
                 sync: 'idle',
                 source: 'person',
             },
-        }
+        })
     )
     expect(row?.event).toMatchObject({
         id: 'r1',
@@ -309,29 +321,28 @@ test("a new where-slot event's rules see its where values", () => {
     const rows = (
         values: Record<string, string>,
         others: Record<string, Partial<CellState>> = {}
-    ) =>
-        ruleRowsOf(
+    ) => {
+        const cells = Object.fromEntries(
+            [
+                ...Object.entries(values).map(
+                    ([k, value]): [string, Partial<CellState>] => [k, { value }]
+                ),
+                ...Object.entries(others),
+            ].map(([k, cell]) => [
+                `n1.${k}`,
+                {
+                    sync: 'idle' as const,
+                    source: 'person' as const,
+                    ...cell,
+                },
+            ])
+        )
+        return ruleRowsOf(
             new Map([['n1', slotEvent]]),
             new Map([['s1', new Set(['vaccine', 'dose', 'weight'])]]),
-            Object.fromEntries(
-                [
-                    ...Object.entries(values).map(
-                        ([k, value]): [string, Partial<CellState>] => [
-                            k,
-                            { value },
-                        ]
-                    ),
-                    ...Object.entries(others),
-                ].map(([k, cell]) => [
-                    `n1.${k}`,
-                    {
-                        sync: 'idle' as const,
-                        source: 'person' as const,
-                        ...cell,
-                    },
-                ])
-            )
+            cellsOf(cells)
         )[0]?.event.dataValues
+    }
     expect(rows({ weight: '4' })).toEqual({
         vaccine: 'BCG',
         dose: '0',
@@ -378,16 +389,29 @@ test('the rule rows stay one array while the records and cells are the same obje
         ],
     ])
     const rowsOf = ruleRowsCache(new Map([['s1', new Set(['a'])]]))
-    const cells = {
-        'r1.a': {
-            value: '1',
-            sync: 'idle' as const,
-            source: 'person' as const,
+    const cells: CellMap = {
+        r1: {
+            a: {
+                value: '1',
+                sync: 'idle' as const,
+                source: 'person' as const,
+            },
         },
     }
     const rows = rowsOf(records, cells)
     expect(rowsOf(records, cells)).toBe(rows)
-    const changed = { 'r1.a': { ...cells['r1.a'], value: '2' } }
+    const changed: CellMap = {
+        ...cells,
+        r1: {
+            ...cells.r1,
+            a: {
+                ...cells.r1?.a,
+                value: '2',
+                sync: 'idle',
+                source: 'person',
+            },
+        },
+    }
     const again = rowsOf(records, changed)
     expect(again).not.toBe(rows)
     expect(again[0]?.event.dataValues).toEqual({ a: '2' })

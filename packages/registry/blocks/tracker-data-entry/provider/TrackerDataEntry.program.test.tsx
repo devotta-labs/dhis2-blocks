@@ -1,3 +1,4 @@
+import { cellAt, cellEntries } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import type { CustomDataProvider } from '@dhis2/app-runtime'
 import type { ComponentProps } from 'react'
@@ -103,7 +104,9 @@ test('a change made in one grid of a program is sent by another grid of it', asy
             ],
         },
     ])
-    expect(bo.context().store.getState().cells[AGE_OF_A]).toBeUndefined()
+    expect(
+        cellAt(bo.context().store.getState().cells, AGE_OF_A)
+    ).toBeUndefined()
 })
 
 test('one cell typed in two grids of a program is one record, holding the newer value', async () => {
@@ -160,7 +163,9 @@ test('a restore puts back only this form’s cells; the program’s other change
     memory.hold()
     const { context, view } = await mount(memory.source, { server })
     expect(context().tables[0].rows.map(({ id }) => id)).toEqual(['r1', 'r2'])
-    expect(Object.keys(context().store.getState().cells)).toEqual(['r1.c1'])
+    expect(
+        [...cellEntries(context().store.getState().cells)].map(([key]) => key)
+    ).toEqual(['r1.c1'])
     expect(view().summary.unsent).toBe(1)
     await expect.poll(() => memory.sent).toHaveLength(1)
     expect(memory.sent[0].map(({ key }) => key)).toEqual([
@@ -195,7 +200,7 @@ test('“All changes saved” is said only once nothing of the program is left o
     )
     context().store.getState().commit(cellKey('r1', 'c1'), '5')
     await expect
-        .poll(() => context().store.getState().cells['r1.c1']?.sync)
+        .poll(() => cellAt(context().store.getState().cells, 'r1.c1')?.sync)
         .toBe('saved')
     await later(1000)
     // The other grid's change is still on the device, not saved.
@@ -326,7 +331,7 @@ test('another tab’s refusal of a change this form does not show is counted onc
     await expect.poll(() => view().summary.failed).toBe(1)
     await later(100)
     expect(view().summary.failed).toBe(1)
-    expect(context().store.getState().cells['x1.c1']).toBeUndefined()
+    expect(cellAt(context().store.getState().cells, 'x1.c1')).toBeUndefined()
 })
 
 test('a form closed while it counts the other grids’ failed changes leaves the summary as it was', async () => {

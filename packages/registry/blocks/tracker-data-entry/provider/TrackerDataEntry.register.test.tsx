@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
 import type { Field } from '@/components/dhis2-value-types'
@@ -331,8 +332,8 @@ test('a new person’s reserved values are saved, and undo leaves them', async (
     // Twice: the second would undo the reserved value, were it the person's own.
     await userEvent.keyboard('{Control>}z{/Control}{Control>}z{/Control}')
     const { cells } = context().store.getState()
-    expect(cells[cellKey(personId, FIRST)]?.value).toBeUndefined()
-    expect(cells[reserved]?.value).toMatch(/^CH-/)
+    expect(cellAt(cells, cellKey(personId, FIRST))?.value).toBeUndefined()
+    expect(cellAt(cells, reserved)?.value).toMatch(/^CH-/)
 })
 
 test('the buttons speak of people', async () => {
@@ -407,7 +408,9 @@ test('nothing reaches the outbox for a read-only person: not a paste, an undo or
     control(cellKey('ap', LAST)).focus()
     expect(paste(control(cellKey('ap', LAST)), 'Conteh\nSesay')).toBe(true)
     const { store } = context()
-    expect(store.getState().cells[cellKey('jp', LAST)]?.value).toBe('Kamara')
+    expect(cellAt(store.getState().cells, cellKey('jp', LAST))?.value).toBe(
+        'Kamara'
+    )
     // A rule's value for the read-only person is not taken.
     expect(
         store
@@ -420,9 +423,9 @@ test('nothing reaches the outbox for a read-only person: not a paste, an undo or
     expect(await view().complete('a1')).toMatchObject([{ result: 'saved' }])
     control(cellKey('a1', 'occurredAt')).focus()
     await userEvent.keyboard('{Control>}z{/Control}')
-    expect(store.getState().cells[cellKey('a1', 'occurredAt')]?.value).toBe(
-        '2026-10-05'
-    )
+    expect(
+        cellAt(store.getState().cells, cellKey('a1', 'occurredAt'))?.value
+    ).toBe('2026-10-05')
     await expect
         .poll(() => memory.sent.flat().map(({ key, value }) => [key, value]))
         .toEqual([
@@ -476,7 +479,8 @@ test('a new person’s visit in a stage the user may not enter data in is read-o
     cell.focus()
     await userEvent.keyboard('2026-10-05{Enter}')
     expect(
-        context().store.getState().cells[cellKey(visit, 'occurredAt')]?.value
+        cellAt(context().store.getState().cells, cellKey(visit, 'occurredAt'))
+            ?.value
     ).toBeUndefined()
 })
 

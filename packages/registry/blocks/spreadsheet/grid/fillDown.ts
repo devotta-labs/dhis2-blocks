@@ -2,6 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import { typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import type { AnnotationsState } from '../model/annotations'
+import { cellAt } from '../model/types'
 import type { CellKey, GridTable } from '../model/types'
 import type { CellStoreState } from '../store/store'
 import { fieldAt } from './navGrid'
@@ -29,7 +30,7 @@ export const fillDown = (
         closed.has(above) ||
         annotations.cells[above]?.hiddenBy !== undefined
             ? undefined
-            : state.cells[above]?.value
+            : cellAt(state.cells, above)?.value
     return above === undefined || value === undefined
         ? { say: i18n.t('Nothing above to copy.') }
         : { commit: typedText(fieldAt(state, above), value, settings) }

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
 import { createStore } from 'zustand/vanilla'
+import { cellAt } from '@/components/spreadsheet'
 import type { Field } from '@/components/dhis2-value-types'
 import type { CellOverrides } from '../../cells/cellProps'
 import type {
@@ -293,7 +294,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
         announce,
         announced,
         added,
-        value: (key: CellKey) => store.getState().cells[key]?.value,
+        value: (key: CellKey) => cellAt(store.getState().cells, key)?.value,
     }
 }
 

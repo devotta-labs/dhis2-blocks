@@ -1,10 +1,11 @@
 import i18n from '@dhis2/d2-i18n'
 import type {
     CellKey,
-    CellState,
+    CellMap,
     GridTable,
     SyncState,
 } from '@/components/spreadsheet'
+import { cellEntries } from '@/components/spreadsheet'
 import { fieldIdOfKey, recordIdOf } from '../model/types'
 import type { TrackerColumn, TrackerRow } from '../model/types'
 import type { TrackerEffects, TrackerMessage } from './effects'
@@ -86,7 +87,7 @@ export const blocksCompletion = ({ kind }: SummaryItem) =>
  * and every message, with the unsent and failed counts. Errors and empty required cells stop completion; warnings block nothing.
  */
 export const summarise = (
-    cells: Partial<Record<CellKey, CellState>>,
+    cells: CellMap,
     effects: Partial<Record<CellKey, TrackerEffects>>,
     /** Record id → the messages without a field. */
     rowMessages: ReadonlyMap<string, ReadonlyArray<TrackerMessage>>,
@@ -108,7 +109,7 @@ export const summarise = (
     }
 
     const values = new Map<string, string | undefined>()
-    for (const [key, cell] of Object.entries(cells)) {
+    for (const [key, cell] of cellEntries(cells)) {
         values.set(key, cell?.value)
         if (cell?.sync === 'failed') {
             failed += 1

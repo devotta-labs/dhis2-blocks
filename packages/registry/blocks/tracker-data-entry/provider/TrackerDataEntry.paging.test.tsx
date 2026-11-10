@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
 import { RMNCH } from '@/components/program-rules/__tests__/rmnch'
@@ -133,9 +134,9 @@ test('"Show more events" appends the page, keeps focus on the button and announc
         (end?.compareDocumentPosition(showMore().element()) ?? 0) &
             Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy()
-    expect(context().store.getState().cells[cellKey('r51', 'c3')]?.value).toBe(
-        'Late'
-    )
+    expect(
+        cellAt(context().store.getState().cells, cellKey('r51', 'c3'))?.value
+    ).toBe('Late')
     // A page's names join the form's, so its cells show them.
     expect(context().orgUnitNames.getState().names.get('ou2')).toBe('Bo')
 })
@@ -244,12 +245,12 @@ test('rows already shown are not added twice', async () => {
         added,
         'r4',
     ])
-    expect(context().store.getState().cells[cellKey(added, 'c1')]?.value).toBe(
-        '7'
-    )
-    expect(context().store.getState().cells[cellKey('r4', 'c1')]?.value).toBe(
-        '2'
-    )
+    expect(
+        cellAt(context().store.getState().cells, cellKey(added, 'c1'))?.value
+    ).toBe('7')
+    expect(
+        cellAt(context().store.getState().cells, cellKey('r4', 'c1'))?.value
+    ).toBe('2')
 })
 
 test('a page restores unsent changes for its rows', async () => {
@@ -274,7 +275,7 @@ test('a page restores unsent changes for its rows', async () => {
     expect(view().summary.failed).toBe(1)
 
     await view().loadMore()
-    expect(context().store.getState().cells[later3]).toMatchObject({
+    expect(cellAt(context().store.getState().cells, later3)).toMatchObject({
         value: '9',
         sync: 'failed',
         reason: 'Too high',
@@ -447,8 +448,10 @@ test('a page with a stage the table has no columns for adds those columns', asyn
     control(cellKey(secondVisit, 'yTDoF5b1OhI')).focus()
     await userEvent.keyboard('Not checked{Enter}')
     expect(
-        context().store.getState().cells[cellKey(secondVisit, 'yTDoF5b1OhI')]
-            ?.value
+        cellAt(
+            context().store.getState().cells,
+            cellKey(secondVisit, 'yTDoF5b1OhI')
+        )?.value
     ).toBe('notchecked')
     // The new stage's rows are evaluated too.
     await expect
@@ -479,7 +482,7 @@ test('a page row whose unsent change is put back is changed: its rules save ther
     await rulesRan()
     await view().loadMore()
     expect(
-        context().store.getState().cells[cellKey(changed, RMNCH.lmp)]
+        cellAt(context().store.getState().cells, cellKey(changed, RMNCH.lmp))
     ).toMatchObject({ value: '2026-01-01', sync: 'queued' })
 
     memory.release()

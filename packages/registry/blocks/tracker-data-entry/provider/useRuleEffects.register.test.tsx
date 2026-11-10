@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import type { CustomDataProvider } from '@dhis2/app-runtime'
 import type { ComponentProps } from 'react'
@@ -390,7 +391,7 @@ const AMARA_GENDER = cellKey(AMARA.person, GENDER)
 test('an enrolment rule’s value lands on the person’s attribute once the person or the enrolment is touched', async () => {
     const touchPerson = await mountRegister({ enrollments: assigned })
     const gender = () =>
-        touchPerson.context().store.getState().cells[AMARA_GENDER]
+        cellAt(touchPerson.context().store.getState().cells, AMARA_GENDER)
     // Shown, not saved: nobody changed the row.
     expect(touchPerson.effects().cells[AMARA_GENDER]?.readOnly).toBe(
         'Assigned by rule: Assign the gender'
@@ -410,8 +411,11 @@ test('an enrolment rule’s value lands on the person’s attribute once the per
     control(cellKey(AMARA.enrollment, ENROLLED_AT)).focus()
     await userEvent.keyboard('2026-10-05{Enter}')
     await expect
-        .poll(
-            () => touchEnrollment.context().store.getState().cells[AMARA_GENDER]
+        .poll(() =>
+            cellAt(
+                touchEnrollment.context().store.getState().cells,
+                AMARA_GENDER
+            )
         )
         .toMatchObject({ value: 'Male', source: 'rule' })
 })
@@ -432,13 +436,16 @@ test('an enrolment rule never assigns on a read-only person', async () => {
     await expect
         .poll(
             () =>
-                context().store.getState().cells[
+                cellAt(
+                    context().store.getState().cells,
                     cellKey(AMARA.enrollment, ENROLLED_AT)
-                ]?.value
+                )?.value
         )
         .toBe('2026-10-05')
     await later(300)
-    expect(context().store.getState().cells[AMARA_GENDER]?.value).toBe('Female')
+    expect(cellAt(context().store.getState().cells, AMARA_GENDER)?.value).toBe(
+        'Female'
+    )
 })
 
 test('a new person’s rules run at once, without asking DHIS2 for them: offline too', async () => {

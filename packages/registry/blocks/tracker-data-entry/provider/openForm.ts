@@ -3,7 +3,12 @@ import i18n from '@dhis2/d2-i18n'
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import type { ValueSettings } from '@/components/dhis2-value-types'
-import { formatCount, cellKey, createCellStore } from '@/components/spreadsheet'
+import {
+    cellAt,
+    cellKey,
+    createCellStore,
+    formatCount,
+} from '@/components/spreadsheet'
 import type {
     CellKey,
     CellStoreState,
@@ -217,7 +222,6 @@ const connect = (
                 sync: record.state,
             }))
     )
-
     // Changes of the source no cell of the form holds (made in the program's other grids, or for people on pages not
     // loaded yet) that could not be saved, or wait: counted here, so none is stuck where no grid shows it. The failed
     // ones are downloaded and discarded here too.
@@ -240,7 +244,6 @@ const connect = (
             // Closed meanwhile: there is no one to tell.
             () => {}
         )
-
     // Whether this form heard of its own outcomes since it last said so.
     let applied = false
     const apply = (outcomes: ReadonlyArray<SyncOutcome>) => {
@@ -284,7 +287,7 @@ const connect = (
                 base:
                     result === 'saved'
                         ? value
-                        : (store.getState().cells[key]?.base ?? null),
+                        : (cellAt(store.getState().cells, key)?.base ?? null),
                 sync: result,
                 reason,
             }))
@@ -339,7 +342,6 @@ const connect = (
         }
         previous = status
     }
-
     let cancelSummary: (() => void) | undefined
     const summarize = () => {
         cancelSummary?.()
@@ -367,7 +369,6 @@ const connect = (
             summarize()
         }
     }
-
     const setStatus = async (
         recordId: string,
         status: 'COMPLETED' | 'ACTIVE'

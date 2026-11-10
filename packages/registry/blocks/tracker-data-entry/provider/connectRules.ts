@@ -8,7 +8,13 @@ import {
 } from '@/components/program-rules'
 import { typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
-import { cellDomId, typingIn, cellKey } from '@/components/spreadsheet'
+import {
+    cellAt,
+    cellDomId,
+    cellEntries,
+    cellKey,
+    typingIn,
+} from '@/components/spreadsheet'
 import type { Announcer, CellKey, CellState } from '@/components/spreadsheet'
 import {
     sameEffects,
@@ -102,7 +108,7 @@ export const connectRules = ({
     let stopped = false
     // Opening the grid changes nothing: rules' values are saved only with a row someone is changing. A failed change is
     // not on its way: it waits for the person to enter it again.
-    for (const [key, cell] of Object.entries(store.getState().cells)) {
+    for (const [key, cell] of cellEntries(store.getState().cells)) {
         if (cell !== undefined && onItsWay(cell)) {
             touched.add(recordIdOf(key))
         }
@@ -183,7 +189,7 @@ export const connectRules = ({
                     continue
                 }
                 const key = cellKey(owner.id, field)
-                const now = values[key]?.value
+                const now = cellAt(values, key)?.value
                 const definition = form.fields.get(field)
                 if (definition === undefined || (now ?? '') === (value ?? '')) {
                     continue
@@ -271,12 +277,12 @@ export const connectRules = ({
                     // A draft in a cell the rules hide can no longer be reached to clear it, and would block completion.
                     if (
                         next.hiddenBy !== undefined &&
-                        after[key]?.draft !== undefined
+                        cellAt(after, key)?.draft !== undefined
                     ) {
                         store.getState().discardDraft(key)
                     }
                     const note = cleared.get(key)
-                    if (note !== undefined && !after[key]?.value) {
+                    if (note !== undefined && !cellAt(after, key)?.value) {
                         next = {
                             ...next,
                             messages: [
@@ -502,10 +508,10 @@ export const connectRules = ({
         // A person's change re-runs the rows it can affect; an event date, an attribute or an enrolment date, every row
         // of that person.
         store.subscribe(({ cells }, before) => {
-            const edits = Object.entries(cells).flatMap(([key, cell]) => {
+            const edits = [...cellEntries(cells)].flatMap(([key, cell]) => {
                 const rowId = recordIdOf(key)
                 const field = fieldIdOfKey(key)
-                const was = before.cells[cellKey(rowId, field)]
+                const was = cellAt(before.cells, cellKey(rowId, field))
                 return cell === undefined ||
                     cell === was ||
                     cell.source === 'rule' ||

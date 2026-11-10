@@ -6,7 +6,7 @@ import type {
     RuleEnrollmentInput,
     RuleEventInput,
 } from '@/components/program-rules'
-import { cellKey } from '@/components/spreadsheet'
+import { cellAt, cellKey } from '@/components/spreadsheet'
 import type { CellStoreState } from '@/components/spreadsheet'
 import { formOf } from '../model/types'
 import type { DataRecord, EnrollmentRecord, PersonRecord } from '../model/types'
@@ -203,7 +203,7 @@ const ruleEnrollmentOf = (
     fieldsByForm: LoadedForm['fieldsByForm']
 ): RuleEnrollmentInput => {
     const valueOf = (recordId: string, field: string) =>
-        cells[cellKey(recordId, field)]?.value
+        cellAt(cells, cellKey(recordId, field))?.value
     return {
         id: enrollment.id,
         // An empty enrolment date is today's, as the engine has it for a person being registered.
@@ -247,7 +247,7 @@ export const isEmptySlot = (
     record.isNew === true &&
     record.slot !== undefined &&
     ![EVENT_DATE_COLUMN, ...(fieldsByForm.get(formOf(record)) ?? NONE)].some(
-        (field) => cells[cellKey(record.id, field)]?.value
+        (field) => cellAt(cells, cellKey(record.id, field))?.value
     )
 
 /**
@@ -287,7 +287,7 @@ export const ruleRowsOf = (
             return []
         }
         const valueOf = (field: string) =>
-            cells[cellKey(record.id, field)]?.value
+            cellAt(cells, cellKey(record.id, field))?.value
         const fields = fieldsByForm.get(formOf(record)) ?? NONE
         const occurredAt = valueOf(EVENT_DATE_COLUMN) || undefined
         const typed = Object.fromEntries(
@@ -298,7 +298,7 @@ export const ruleRowsOf = (
         )
         // A where-slot's new event carries its where values, as the payload sends them, unless a cell holds a change.
         const changed = (field: string) => {
-            const cell = cells[cellKey(record.id, field)]
+            const cell = cellAt(cells, cellKey(record.id, field))
             return (
                 cell !== undefined &&
                 (cell.value !== undefined || cell.sync !== 'idle')

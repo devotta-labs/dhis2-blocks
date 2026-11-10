@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { FetchError } from '@dhis2/app-runtime'
 import { page, userEvent } from 'vitest/browser'
@@ -125,7 +126,9 @@ test('opening the grid changes nothing; a person’s first change in a row saves
     expect(memory.sent).toEqual([])
     expect(view().summary.unsent).toBe(0)
     // No chronic conditions: the follow-ups are hidden, and keep their values.
-    expect(context().store.getState().cells[followUp]?.value).toBe('true')
+    expect(cellAt(context().store.getState().cells, followUp)?.value).toBe(
+        'true'
+    )
     expect(context().effects.getState().cells[followUp]?.hiddenBy).toBe(
         'Hidden by rule: Hide all fields for chronic conitions unless the w'
     )
@@ -158,7 +161,10 @@ test('opening the grid changes nothing; a person’s first change in a row saves
         ]?.readOnly
     ).toBe(ASSIGNED)
     expect(
-        context().store.getState().cells[cellKey(LATER_VISIT, GESTATIONAL_AGE)]
+        cellAt(
+            context().store.getState().cells,
+            cellKey(LATER_VISIT, GESTATIONAL_AGE)
+        )
     ).toBeUndefined()
 })
 
@@ -184,7 +190,10 @@ test('a row whose only unsent change failed saves no rule changes when the grid 
     await later(300)
     expect(memory.sent).toEqual([])
     expect(
-        context().store.getState().cells[cellKey(FIRST_VISIT, GESTATIONAL_AGE)]
+        cellAt(
+            context().store.getState().cells,
+            cellKey(FIRST_VISIT, GESTATIONAL_AGE)
+        )
     ).toBeUndefined()
 })
 
@@ -196,14 +205,16 @@ test('discarding a change that could not be saved makes the rules save nothing i
     })
     const { memory, context, view } = await mountRmnch(eventsOf(0), server)
     await view().discardFailed()
-    expect(context().store.getState().cells[LMP]).toMatchObject({
+    expect(cellAt(context().store.getState().cells, LMP)).toMatchObject({
         value: undefined,
         sync: 'idle',
     })
     // The hidden follow-ups keep their values: the row has no change on its way.
     await later(300)
     expect(memory.sent).toEqual([])
-    expect(context().store.getState().cells[FOLLOW_UPS[0]]?.value).toBe('true')
+    expect(cellAt(context().store.getState().cells, FOLLOW_UPS[0])?.value).toBe(
+        'true'
+    )
 })
 
 test('completing a row saves its rule changes first, and keeps its rule effects', async () => {
@@ -287,9 +298,10 @@ test('shows the rules’ notes on the row’s header', async () => {
 test('an edit to a cross-event field re-runs the person’s rows', async () => {
     const { context } = await mountRmnch([...antenatalOf(0), ...antenatalOf(1)])
     const ageOf = (eventId: string) => ({
-        value: context().store.getState().cells[
+        value: cellAt(
+            context().store.getState().cells,
             cellKey(eventId, GESTATIONAL_AGE)
-        ]?.value,
+        )?.value,
         readOnly:
             context().effects.getState().cells[
                 cellKey(eventId, GESTATIONAL_AGE)
@@ -341,7 +353,7 @@ test('announces a value cleared by a rule', async () => {
             ?.hiddenBy
     ).toBeDefined()
     for (const key of keys) {
-        expect(context().store.getState().cells[key]).toMatchObject({
+        expect(cellAt(context().store.getState().cells, key)).toMatchObject({
             value: undefined,
             source: 'rule',
         })
@@ -381,7 +393,9 @@ test('a key that saves a value returns before the rules run; they run once the b
     control(LMP).dispatchEvent(
         new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
     )
-    expect(context().store.getState().cells[LMP]?.value).toBe('2026-01-01')
+    expect(cellAt(context().store.getState().cells, LMP)?.value).toBe(
+        '2026-01-01'
+    )
     // What the key queued has run; the rules have not.
     await Promise.resolve()
     expect(edits()).toHaveLength(0)
@@ -405,11 +419,11 @@ test('a rule waits for the person to leave the cell they are typing in', async (
         .poll(() => context().effects.getState().cells[age]?.readOnly)
         .toBe(ASSIGNED)
     await later(100)
-    expect(context().store.getState().cells[age]).toBeUndefined()
+    expect(cellAt(context().store.getState().cells, age)).toBeUndefined()
 
     await userEvent.keyboard('{Tab}')
     await expect
-        .poll(() => context().store.getState().cells[age])
+        .poll(() => cellAt(context().store.getState().cells, age))
         .toMatchObject({ value: '21', source: 'rule' })
 })
 
@@ -485,7 +499,7 @@ test('text typed into a cell a rule hides is not saved', async () => {
     await expect.poll(hiddenBy).toBeDefined()
     await userEvent.keyboard('{Tab}')
     // The store refuses a person's write to a hidden cell: nothing is saved, so no rule has anything to clear.
-    expect(context().store.getState().cells[specified]).toBeUndefined()
+    expect(cellAt(context().store.getState().cells, specified)).toBeUndefined()
 })
 
 test('a draft in a cell a rule then hides is dropped with its error', async () => {
@@ -515,7 +529,7 @@ test('a draft in a cell a rule then hides is dropped with its error', async () =
         .poll(() => context().effects.getState().cells[key]?.hiddenBy)
         .toBeDefined()
     await expect.poll(errors).toEqual([])
-    expect(context().store.getState().cells[key]?.draft).toBeUndefined()
-    expect(context().store.getState().cells[key]?.error).toBeUndefined()
+    expect(cellAt(context().store.getState().cells, key)?.draft).toBeUndefined()
+    expect(cellAt(context().store.getState().cells, key)?.error).toBeUndefined()
     expect(view().summary.canComplete).toBe(true)
 })

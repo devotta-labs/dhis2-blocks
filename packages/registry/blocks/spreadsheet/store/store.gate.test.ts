@@ -1,6 +1,7 @@
 import { createStore } from 'zustand/vanilla'
 import type { Field } from '@/components/dhis2-value-types'
 import type { AnnotationsState, CellAnnotations } from '../model/annotations'
+import { cellAt } from '../model/types'
 import type { CellKey } from '../model/types'
 import { EMPTY_CELL, addsHiddenOption, createCellStore } from './store'
 
@@ -37,7 +38,8 @@ const setup = (initial: Array<[CellKey, string]> = []) => {
         annotations.setState({
             cells: { [key]: { required: false, messages: [], ...note } },
         })
-    const cell = (key: CellKey) => store.getState().cells[key] ?? EMPTY_CELL
+    const cell = (key: CellKey) =>
+        cellAt(store.getState().cells, key) ?? EMPTY_CELL
     return { store, enqueued, say, cell }
 }
 

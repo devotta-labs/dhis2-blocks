@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { cellKey } from '@/components/spreadsheet'
 import { outboxName } from '../outbox/outbox'
@@ -27,7 +28,7 @@ test('a restored change’s base is the value just loaded', async () => {
     // Held, so the change stays unsent while it is read.
     memory.hold()
     const { context } = await mount(memory.source, { server })
-    expect(context().store.getState().cells[CHILDREN]).toMatchObject({
+    expect(cellAt(context().store.getState().cells, CHILDREN)).toMatchObject({
         value: 'v2',
         base: 'v1',
     })
@@ -42,7 +43,7 @@ test('a restored change whose cell the load did not carry has no base', async ()
     memory.hold()
     const { context } = await mount(memory.source, { server })
     // The store keeps a `null` base as none.
-    expect(context().store.getState().cells[CHILDREN]).toMatchObject({
+    expect(cellAt(context().store.getState().cells, CHILDREN)).toMatchObject({
         value: 'v2',
         base: undefined,
     })

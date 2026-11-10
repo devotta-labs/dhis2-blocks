@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
 import { cellKey } from '@/components/spreadsheet'
@@ -73,7 +74,7 @@ const mountRegister = async (missing = 2, ruleless = false) => {
 const valuesOf = (
     { context }: Awaited<ReturnType<typeof mount>>,
     keys: ReadonlyArray<CellKey>
-) => keys.map((key) => context().store.getState().cells[key]?.value)
+) => keys.map((key) => cellAt(context().store.getState().cells, key)?.value)
 
 test('person and enrolment columns have no column button and are left alone by a row’s actions', async () => {
     const mounted = await mountRegister()
@@ -150,7 +151,9 @@ test('a column apply that creates events asks first; Cancel writes nothing, and 
             bcg
                 .slice(1)
                 .map(
-                    (key) => mounted.context().store.getState().cells[key]?.sync
+                    (key) =>
+                        cellAt(mounted.context().store.getState().cells, key)
+                            ?.sync
                 )
         )
         .toEqual(['saved', 'saved'])

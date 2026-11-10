@@ -1,4 +1,4 @@
-import type { CellKey, CellState } from '@/components/spreadsheet'
+import type { CellMap } from '@/components/spreadsheet'
 import type { TrackerRow } from '../model/types'
 import type { SlotDef } from '../register/compileLayout'
 import { slotOrderWarnings } from './slotOrder'
@@ -17,13 +17,11 @@ const ROW: TrackerRow = {
     label: 'Amina',
     slots: { 'visit#1': 'v1', 'visit#2': 'v2', 'visit#3': 'v3' },
 }
-const dated = (
-    dates: Record<string, string>
-): Partial<Record<CellKey, CellState>> =>
+const dated = (dates: Record<string, string>): CellMap =>
     Object.fromEntries(
         Object.entries(dates).map(([record, value]) => [
-            `${record}.occurredAt`,
-            { value, sync: 'idle', source: 'person' },
+            record,
+            { occurredAt: { value, sync: 'idle', source: 'person' } },
         ])
     )
 

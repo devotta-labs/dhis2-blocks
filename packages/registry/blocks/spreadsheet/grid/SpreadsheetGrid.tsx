@@ -16,6 +16,7 @@ import { cn } from '@/components/dhis2/ui/cn'
 import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
 import { addsRow } from '../cells/useCellMode'
+import { cellAt } from '../model/types'
 import type { CellKey, CellPlace, GridColumn, GridTable } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 import { AddRowButton } from './AddRowButton'
@@ -365,8 +366,8 @@ export const SpreadsheetGrid = ({
                     return
                 }
                 const key = keyAt(at)
-                const cell = state.cells[key]
-                const was = before.cells[key]
+                const cell = cellAt(state.cells, key)
+                const was = cellAt(before.cells, key)
                 if (
                     cell?.error !== undefined &&
                     cell !== was &&
@@ -435,8 +436,8 @@ export const SpreadsheetGrid = ({
                 filled = results.filter((result, i) =>
                     changedBy(
                         result,
-                        before.cells[entries[i].key],
-                        cells[entries[i].key]
+                        cellAt(before.cells, entries[i].key),
+                        cellAt(cells, entries[i].key)
                     )
                 ).length
             })

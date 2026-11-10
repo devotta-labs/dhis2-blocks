@@ -17,8 +17,9 @@ export type {
     CellMessage,
     Tone,
 } from './model/annotations'
-export { cellKey, indexCells } from './model/types'
+export { cellAt, cellEntries, cellKey, indexCells } from './model/types'
 export type {
+    CellMap,
     CellKey,
     CellState,
     CommitResult,

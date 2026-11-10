@@ -12,7 +12,7 @@ import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
 import { typingIn } from '../cells/useCellMode'
 import type { AnnotationsState } from '../model/annotations'
-import { cellKey } from '../model/types'
+import { cellAt, cellKey } from '../model/types'
 import type { GridColumn, GridTable } from '../model/types'
 import {
     SpreadsheetReactContext,
@@ -116,8 +116,8 @@ const ColumnValue = ({
     useEffect(
         () =>
             scratch.subscribe((state, before) => {
-                const now = state.cells[key]
-                const was = before.cells[key]
+                const now = cellAt(state.cells, key)
+                const was = cellAt(before.cells, key)
                 if (now !== was) {
                     setTyping(false)
                 }
@@ -131,7 +131,7 @@ const ColumnValue = ({
             }),
         [scratch, key, announce]
     )
-    const cell = useStore(scratch, (state) => state.cells[key])
+    const cell = useStore(scratch, (state) => cellAt(state.cells, key))
     const [overwrite, setOverwrite] = useState(false)
     const textOf = (now: typeof cell) =>
         now?.value === undefined || now.error !== undefined
@@ -191,7 +191,9 @@ const ColumnValue = ({
                                 ? active
                                 : undefined
                         control?.blur()
-                        const saved = textOf(scratch.getState().cells[key])
+                        const saved = textOf(
+                            cellAt(scratch.getState().cells, key)
+                        )
                         if (saved === undefined) {
                             control?.focus()
                         } else {

@@ -46,11 +46,9 @@ export const completionChecks = (
     const refusal = (key: CellKey, reason: string) =>
         refusalOf(sourceKey, key, reason)
     const recordCells = (recordId: string) =>
-        Object.entries(store.getState().cells).flatMap(
-            ([key, cell]): Array<[CellKey, CellState]> =>
-                cell !== undefined && key.startsWith(`${recordId}.`)
-                    ? [[cellKey(recordId, fieldIdOfKey(key)), cell]]
-                    : []
+        Object.entries(store.getState().cells[recordId] ?? {}).flatMap(
+            ([field, cell]): Array<[CellKey, CellState]> =>
+                cell === undefined ? [] : [[cellKey(recordId, field), cell]]
         )
     return {
         /**

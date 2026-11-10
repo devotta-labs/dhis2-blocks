@@ -3,6 +3,7 @@ import { useStore } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
 import { cn } from '@/components/dhis2/ui/cn'
 import type { AnnotationsState, CellMessage, Tone } from '../model/annotations'
+import { cellAt } from '../model/types'
 import type { CellKey, GridRow } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 import type { CellStoreState } from '../store/store'
@@ -30,7 +31,7 @@ const CellsLabel = ({ row }: { row: GridRow }) => {
     const { store, settings } = useSpreadsheetContext()
     const labelFrom = row.labelFrom ?? NO_KEYS
     const selectNamed = useShallow((state: CellStoreState) =>
-        labelFrom.map((key) => state.cells[key]?.value)
+        labelFrom.map((key) => cellAt(state.cells, key)?.value)
     )
     const named = useStore(store, selectNamed)
     return (

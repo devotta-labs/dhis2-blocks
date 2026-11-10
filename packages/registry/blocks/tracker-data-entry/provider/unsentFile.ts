@@ -1,4 +1,5 @@
 import type { ValueSettings } from '@/components/dhis2-value-types'
+import { cellEntries } from '@/components/spreadsheet'
 import type { CellStoreState } from '@/components/spreadsheet'
 import { fieldNamer } from '../logic/summary'
 import { recordIdOf, rowsByRecord } from '../model/types'
@@ -26,7 +27,7 @@ export const saveUnsentFile = (
     const kept = new Map<string, string | null>(
         saved.map(({ key, value }) => [key, value])
     )
-    const onlyHere = Object.entries(cells).flatMap(([key, cell]) =>
+    const onlyHere = [...cellEntries(cells)].flatMap(([key, cell]) =>
         cell?.sync === 'failed' && kept.get(key) !== (cell.value ?? null)
             ? [
                   {

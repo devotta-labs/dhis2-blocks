@@ -3,6 +3,7 @@ import type { ComponentProps, ReactNode } from 'react'
 import { onTestFinished } from 'vitest'
 import type { Locator } from 'vitest/browser'
 import { createStore } from 'zustand/vanilla'
+import { cellAt } from '@/components/spreadsheet'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import type { NavKey } from '../../grid/navigation'
 import type { AnnotationsState, CellAnnotations } from '../../model/annotations'
@@ -126,7 +127,7 @@ export const rig = (
                 </Spreadsheet>
             </CustomDataProvider>
         ),
-        stored: () => store.getState().cells[CELL],
+        stored: () => cellAt(store.getState().cells, CELL),
     }
 }
 

@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
 import type { Field } from '@/components/dhis2-value-types'
@@ -123,7 +124,9 @@ test('a block pasted across two records reaches both', async () => {
     control(FIRST).focus()
     expect(paste(control(FIRST), '5\t6')).toBe(true)
     const { cells } = context().store.getState()
-    expect([cells[FIRST]?.value, cells[SECOND]?.value]).toEqual(['5', '6'])
+    expect([cellAt(cells, FIRST)?.value, cellAt(cells, SECOND)?.value]).toEqual(
+        ['5', '6']
+    )
     await expect
         .poll(() => queued(server))
         .toEqual([
@@ -137,7 +140,10 @@ test('a paste across a row writes each value to its slot’s event', async () =>
     control(FIRST).focus()
     expect(paste(control(FIRST), '4\t7')).toBe(true)
     const { cells } = context().store.getState()
-    expect([cells['e1.a']?.value, cells['e2.a']?.value]).toEqual(['4', '7'])
+    expect([
+        cellAt(cells, 'e1.a')?.value,
+        cellAt(cells, 'e2.a')?.value,
+    ]).toEqual(['4', '7'])
 })
 
 test('undo returns to the record it changed', async () => {
@@ -149,7 +155,7 @@ test('undo returns to the record it changed', async () => {
     control(FIRST).focus()
     await userEvent.keyboard('{Control>}z{/Control}')
     expect(focused()).toBe(cellDomId(context().idScope, SECOND))
-    expect(context().store.getState().cells[SECOND]?.value).toBe('2')
+    expect(cellAt(context().store.getState().cells, SECOND)?.value).toBe('2')
 })
 
 test('a message on a slot’s record names the row and shows in its header', async () => {

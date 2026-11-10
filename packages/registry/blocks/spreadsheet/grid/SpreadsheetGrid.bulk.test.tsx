@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
 import type { Field } from '@/components/dhis2-value-types'
@@ -221,7 +222,7 @@ test('a clear drops a cell’s refused text and counts it as changed', async () 
     expect(store.getState().commit(key, 'abc')).toBe('invalid')
     await page.getByRole('button', { name: 'Row actions a' }).click()
     await page.getByRole('menuitem', { name: 'Clear row' }).click()
-    expect(store.getState().cells[key]?.draft).toBeUndefined()
+    expect(cellAt(store.getState().cells, key)?.draft).toBeUndefined()
     expect(announced).toEqual(['Cells changed: 1.'])
 })
 

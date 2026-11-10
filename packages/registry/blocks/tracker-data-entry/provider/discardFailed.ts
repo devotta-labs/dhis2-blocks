@@ -1,7 +1,6 @@
 import type { StoreApi } from 'zustand/vanilla'
-import { cellKey } from '@/components/spreadsheet'
+import { cellAt, cellEntries } from '@/components/spreadsheet'
 import type { SyncState, CellStoreState } from '@/components/spreadsheet'
-import { fieldIdOfKey, recordIdOf } from '../model/types'
 import type { PendingChange } from '../model/types'
 import type { Outbox } from '../outbox/outbox'
 
@@ -15,18 +14,9 @@ export const discardFailed = async (
     sourceKey: string,
     store: StoreApi<CellStoreState>
 ) => {
-    const failed = Object.entries(store.getState().cells).flatMap(
-        ([key, cell]) => {
-            const rowId = recordIdOf(key)
-            return cell?.sync === 'failed'
-                ? [
-                      {
-                          key: cellKey(rowId, fieldIdOfKey(key)),
-                          base: cell.base ?? null,
-                      },
-                  ]
-                : []
-        }
+    const failed = [...cellEntries(store.getState().cells)].flatMap(
+        ([key, cell]) =>
+            cell.sync === 'failed' ? [{ key, base: cell.base ?? null }] : []
     )
     const keys = new Set(failed.map(({ key }) => key))
     const held = await outbox.list(sourceKey)
@@ -40,7 +30,10 @@ export const discardFailed = async (
     store.getState().restore(
         failed
             // A cell entered again meanwhile keeps its new change.
-            .filter(({ key }) => store.getState().cells[key]?.sync === 'failed')
+            .filter(
+                ({ key }) =>
+                    cellAt(store.getState().cells, key)?.sync === 'failed'
+            )
             .map(({ key, base }): PendingChange & { sync: SyncState } => {
                 const record = kept.get(key)
                 return record === undefined

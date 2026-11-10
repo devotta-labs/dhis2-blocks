@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { page } from 'vitest/browser'
 import { cellKey } from '../model/types'
@@ -28,7 +29,7 @@ test('a block paste that creates events asks first, then keeps refused text as a
         .click()
     expect(value(first)).toBe('7')
     // Refused text stays as a draft.
-    expect(store.getState().cells[second]?.draft).toBe('abc')
+    expect(cellAt(store.getState().cells, second)?.draft).toBe('abc')
     expect(announced).toEqual(['Cells pasted: 1'])
 })
 

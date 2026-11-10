@@ -10,7 +10,7 @@ import { announce } from '@/components/dhis2/ui/announcer'
 import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { parseDateFormat } from '@/components/dhis2-value-types'
 import { preloadRuleEngine } from '@/components/program-rules'
-import { formatCount, Spreadsheet } from '@/components/spreadsheet'
+import { cellEntries, formatCount, Spreadsheet } from '@/components/spreadsheet'
 import type { CellKey, CellOverrides } from '@/components/spreadsheet'
 import { summarise } from '../logic/summary'
 import { recordIdOf, recordsOf, trackerKeyOf } from '../model/types'
@@ -339,7 +339,7 @@ export const TrackerDataEntry = ({
                 })
             )
             // `isNew` stays once DHIS2 creates the event; a cell it saved (a base, or `saved`) says it holds it.
-            for (const [key, cell] of Object.entries(store.getState().cells)) {
+            for (const [key, cell] of cellEntries(store.getState().cells)) {
                 if (cell?.base !== undefined || cell?.sync === 'saved') {
                     created.delete(recordIdOf(key))
                 }

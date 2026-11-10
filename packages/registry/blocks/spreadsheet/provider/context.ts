@@ -17,6 +17,7 @@ import type {
     GridRow,
     GridTable,
 } from '../model/types'
+import { cellAt } from '../model/types'
 import { EMPTY_CELL } from '../store/store'
 import type { CellStoreState } from '../store/store'
 
@@ -139,7 +140,10 @@ export const useViewOf = (
 /** One cell's state, effects and `commit`; it re-renders only when this cell changes in either store. */
 export const useCellView = (key: CellKey): CellView => {
     const { store, effects } = useSpreadsheetContext()
-    const cell = useStore(store, (state) => state.cells[key] ?? EMPTY_CELL)
+    const cell = useStore(
+        store,
+        (state) => cellAt(state.cells, key) ?? EMPTY_CELL
+    )
     const cellEffects = useStore(
         effects,
         (state) => state.cells[key] ?? EMPTY_EFFECTS
@@ -154,7 +158,7 @@ export const useCellView = (key: CellKey): CellView => {
 export const useRowCells = (keys: ReadonlyArray<CellKey>) => {
     const { store, effects } = useSpreadsheetContext()
     const selectStates = useShallow((state: CellStoreState) =>
-        keys.map((key) => state.cells[key] ?? EMPTY_CELL)
+        keys.map((key) => cellAt(state.cells, key) ?? EMPTY_CELL)
     )
     const selectEffects = useShallow((state: AnnotationsState) =>
         keys.map((key) => state.cells[key] ?? EMPTY_EFFECTS)

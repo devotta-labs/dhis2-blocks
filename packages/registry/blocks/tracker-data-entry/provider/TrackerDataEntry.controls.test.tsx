@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
 import type {
@@ -60,7 +61,7 @@ test('a replacement control saves through useCell as the built-in controls do', 
     control(CHILDREN).focus()
 
     expect(results).toEqual(['queued'])
-    expect(context().store.getState().cells[NOTES]).toMatchObject({
+    expect(cellAt(context().store.getState().cells, NOTES)).toMatchObject({
         value: 'Seen at home',
         sync: 'queued',
     })
@@ -79,7 +80,7 @@ test('a replacement control saves through useCell as the built-in controls do', 
 
     memory.release()
     await expect
-        .poll(() => context().store.getState().cells[NOTES])
+        .poll(() => cellAt(context().store.getState().cells, NOTES))
         .toMatchObject({
             value: 'Seen at home',
             base: 'Seen at home',
@@ -98,7 +99,7 @@ test('commit checks the value as the built-in controls do', async () => {
     })
 
     expect(commitTo(CHILDREN, 'abc')).toBe('invalid')
-    expect(context().store.getState().cells[CHILDREN]).toEqual({
+    expect(cellAt(context().store.getState().cells, CHILDREN)).toEqual({
         sync: 'idle',
         source: 'person',
         draft: 'abc',
@@ -119,7 +120,7 @@ test('commit checks the value as the built-in controls do', async () => {
         },
     }))
     expect(commitTo('r1.c2', 'B')).toBe('invalid')
-    expect(context().store.getState().cells['r1.c2']).toMatchObject({
+    expect(cellAt(context().store.getState().cells, 'r1.c2')).toMatchObject({
         draft: 'B',
         error: 'Choose one of the options',
     })
@@ -168,14 +169,14 @@ test('commit writes nothing to a cell that is locked', async () => {
     // A rule hid it: a person's write is refused too.
     expect(commitTo('r1.c2', '')).toBe('unchanged')
     expect(commitTo('r2.c2', 'A')).toBe('unchanged')
-    expect(context().store.getState().cells[CHILDREN]).toBeUndefined()
-    expect(context().store.getState().cells['r2.c1']).toBeUndefined()
-    expect(context().store.getState().cells['r2.c2']).toBeUndefined()
-    expect(context().store.getState().cells['r1.c2']).toBeUndefined()
+    expect(cellAt(context().store.getState().cells, CHILDREN)).toBeUndefined()
+    expect(cellAt(context().store.getState().cells, 'r2.c1')).toBeUndefined()
+    expect(cellAt(context().store.getState().cells, 'r2.c2')).toBeUndefined()
+    expect(cellAt(context().store.getState().cells, 'r1.c2')).toBeUndefined()
     expect(await records(server, KEY)).toEqual([])
 
     expect(commitTo('r1.c2', 'A')).toBe('unchanged')
-    expect(context().store.getState().cells['r1.c2']).toBeUndefined()
+    expect(cellAt(context().store.getState().cells, 'r1.c2')).toBeUndefined()
     expect(await records(server, KEY)).toEqual([])
 })
 

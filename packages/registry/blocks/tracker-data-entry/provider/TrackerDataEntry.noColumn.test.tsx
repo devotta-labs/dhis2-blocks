@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { cellKey } from '@/components/spreadsheet'
 import {
@@ -24,7 +25,7 @@ test('an unsent value a rule gave a field no column shows comes back on its cell
     const memory = memorySource(visitForm())
     memory.hold()
     const { context, view } = await mount(memory.source, { server })
-    expect(context().store.getState().cells[hidden]).toMatchObject({
+    expect(cellAt(context().store.getState().cells, hidden)).toMatchObject({
         value: '5',
         sync: 'queued',
     })
@@ -52,7 +53,7 @@ test('a refused change to a field no column shows counts once among the failed',
     const hidden = cellKey('r1', HIDDEN_FIELD)
     context().store.getState().commit(hidden, '5', 'rule')
     await expect
-        .poll(() => context().store.getState().cells[hidden]?.sync)
+        .poll(() => cellAt(context().store.getState().cells, hidden)?.sync)
         .toBe('failed')
     // Counting the program's other grids' failures reads the outbox afterwards.
     await later(200)

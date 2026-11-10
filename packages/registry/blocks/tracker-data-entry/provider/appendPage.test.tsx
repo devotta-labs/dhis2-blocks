@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { createStore } from 'zustand/vanilla'
 import { cellKey, createCellStore } from '@/components/spreadsheet'
@@ -63,7 +64,7 @@ test('a change the outbox no longer holds once the page is in is not left unsent
     ]
     const held = await appendPage(open, PAGE, async () => reads.shift() ?? [])
 
-    const cell = (key: CellKey) => open.store.getState().cells[key]
+    const cell = (key: CellKey) => cellAt(open.store.getState().cells, key)
     expect(cell(cellKey('r3', 'c1'))).toMatchObject({
         value: '9',
         base: '9',
@@ -94,7 +95,7 @@ test('a newer change typed in the cell before the outbox is read again keeps it 
         },
     ]
     await appendPage(open, PAGE, async () => reads.shift()?.() ?? [])
-    expect(open.store.getState().cells[key]).toMatchObject({
+    expect(cellAt(open.store.getState().cells, key)).toMatchObject({
         value: '10',
         // What the page loaded for the cell.
         base: '1',
@@ -116,7 +117,7 @@ test('a page whose second read of the outbox fails keeps its cells as restored',
     )
     expect(held).toHaveLength(1)
     expect(open.tables.getState().tables[0].rows).toHaveLength(5)
-    expect(open.store.getState().cells[key]).toMatchObject({
+    expect(cellAt(open.store.getState().cells, key)).toMatchObject({
         value: '9',
         sync: 'queued',
     })
@@ -135,7 +136,7 @@ test('a page puts back the unsent value a rule gave its rows’ field no column 
     const open = opened()
     const hidden = cellKey('r3', HIDDEN_FIELD)
     await appendPage(open, PAGE, async () => [queued(hidden, '5', 1)])
-    expect(open.store.getState().cells[hidden]).toMatchObject({
+    expect(cellAt(open.store.getState().cells, hidden)).toMatchObject({
         value: '5',
         sync: 'queued',
     })

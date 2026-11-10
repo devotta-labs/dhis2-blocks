@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
 import { SpreadsheetGrid, cellKey } from '@/components/spreadsheet'
@@ -63,7 +64,7 @@ test('a typed value is saved on this device, then saved', async () => {
     await expect
         .poll(() => notesOf(CHILDREN))
         .not.toContain('Saved on this device')
-    expect(context().store.getState().cells[CHILDREN]).toMatchObject({
+    expect(cellAt(context().store.getState().cells, CHILDREN)).toMatchObject({
         value: '5',
         base: '5',
         sync: 'saved',
@@ -465,7 +466,7 @@ test('an option a rule hid is refused when typed or pasted', async () => {
 
     control(cellKey('r1', 'c2')).focus()
     await userEvent.keyboard('Bravo{Enter}')
-    expect(context().store.getState().cells['r1.c2']).toEqual({
+    expect(cellAt(context().store.getState().cells, 'r1.c2')).toEqual({
         sync: 'idle',
         source: 'person',
         draft: 'Bravo',
@@ -474,7 +475,7 @@ test('an option a rule hid is refused when typed or pasted', async () => {
 
     control(cellKey('r2', 'c2')).focus()
     expect(paste(control(cellKey('r2', 'c2')), 'B')).toBe(true)
-    expect(context().store.getState().cells['r2.c2']).toEqual({
+    expect(cellAt(context().store.getState().cells, 'r2.c2')).toEqual({
         sync: 'idle',
         source: 'person',
         draft: 'B',
@@ -542,11 +543,11 @@ test('a multi-select keeps a hidden option it holds when another is unchecked', 
         .toBeChecked()
     await userEvent.click(page.getByRole('checkbox', { name: 'Alpha' }))
     await userEvent.click(page.getByRole('button', { name: 'Save' }))
-    expect(context().store.getState().cells[key]).toMatchObject({
+    expect(cellAt(context().store.getState().cells, key)).toMatchObject({
         value: 'C',
         base: 'A,C',
     })
-    expect(context().store.getState().cells[key]?.error).toBeUndefined()
+    expect(cellAt(context().store.getState().cells, key)?.error).toBeUndefined()
     await expect
         .poll(() => records(server, KEY))
         .toMatchObject([{ key, value: 'C', base: 'A,C', state: 'queued' }])
@@ -584,7 +585,8 @@ test('two forms on one page keep their own ids and share the live regions', asyn
     const region = liveRegion('assertive')
     control(CHILDREN).focus()
     await userEvent.keyboard('abc{Enter}')
-    const error = context().store.getState().cells[CHILDREN]?.error ?? ''
+    const error =
+        cellAt(context().store.getState().cells, CHILDREN)?.error ?? ''
     expect(error).not.toBe('')
     await expect.poll(() => region.textContent).toBe(error)
     expect(document.querySelectorAll('[aria-live]')).toHaveLength(2)

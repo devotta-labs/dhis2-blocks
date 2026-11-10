@@ -2,8 +2,9 @@ import { useStore } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
 import { typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
-import { nameFrom, cellKey } from '@/components/spreadsheet'
-import type { CellKey, CellStoreState } from '@/components/spreadsheet'
+import { cellAt, cellKey, nameFrom } from '@/components/spreadsheet'
+import type { CellKey, CellMap, CellStoreState } from '@/components/spreadsheet'
+import { recordIdOf } from '../model/types'
 import type { DataRecord, TrackerRow } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import { useTrackerContext } from './hooks'
@@ -38,20 +39,20 @@ export const rowLabel = (
 export const labelOf = (
     row: TrackerRow,
     record: DataRecord | undefined,
-    cells: CellStoreState['cells'],
+    cells: CellMap,
     fieldOf: CellStoreState['fieldOf'],
     settings: ValueSettings
 ) =>
     nameFrom(
         row.labelFrom ?? [],
-        (row.labelFrom ?? []).map((key) => cells[key]?.value),
+        (row.labelFrom ?? []).map((key) => cellAt(cells, key)?.value),
         fieldOf,
         settings
     ) ||
     rowLabel(
         row,
         record,
-        cells[cellKey(row.id, EVENT_DATE_COLUMN)]?.value,
+        cellAt(cells, cellKey(row.id, EVENT_DATE_COLUMN))?.value,
         settings
     )
 
@@ -66,9 +67,13 @@ export const useRowLabel = (row: TrackerRow | undefined) => {
     const selectCells = useShallow((state: CellStoreState) =>
         Object.fromEntries(
             [
-                cellKey(id, EVENT_DATE_COLUMN),
-                ...(row?.labelFrom ?? NO_KEYS),
-            ].map((key) => [key, state.cells[key]])
+                ...new Set(
+                    [
+                        cellKey(id, EVENT_DATE_COLUMN),
+                        ...(row?.labelFrom ?? NO_KEYS),
+                    ].map(recordIdOf)
+                ),
+            ].map((rowId) => [rowId, state.cells[rowId]])
         )
     )
     const cells = useStore(store, selectCells)

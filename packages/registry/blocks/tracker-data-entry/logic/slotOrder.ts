@@ -1,6 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
-import { cellKey } from '@/components/spreadsheet'
-import type { CellKey, CellState } from '@/components/spreadsheet'
+import { cellAt, cellKey } from '@/components/spreadsheet'
+import type { CellKey, CellMap } from '@/components/spreadsheet'
 import type { TrackerRow } from '../model/types'
 import type { SlotDef } from '../register/compileLayout'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
@@ -35,7 +35,7 @@ const ordinal = (n: number) => {
  */
 export const slotOrderWarnings = (
     rows: ReadonlyArray<TrackerRow>,
-    cells: Partial<Record<CellKey, Pick<CellState, 'value'>>>,
+    cells: CellMap,
     slots: ReadonlyArray<SlotDef>
 ): ReadonlyMap<CellKey, string> => {
     const byStage = new Map<string, SlotDef[]>()
@@ -59,7 +59,8 @@ export const slotOrderWarnings = (
                     record === undefined
                         ? undefined
                         : cellKey(record, EVENT_DATE_COLUMN)
-                const date = key === undefined ? undefined : cells[key]?.value
+                const date =
+                    key === undefined ? undefined : cellAt(cells, key)?.value
                 return key === undefined || !date ? [] : [{ slot, key, date }]
             })
             dated.forEach(({ slot, key, date }, i) => {

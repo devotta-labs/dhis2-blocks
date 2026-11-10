@@ -1,7 +1,7 @@
 import { createStore } from 'zustand/vanilla'
 import type { Field } from '@/components/dhis2-value-types'
 import type { AnnotationsState } from '../model/annotations'
-import { cellKey } from '../model/types'
+import { cellAt, cellKey } from '../model/types'
 import { createCellStore } from './store'
 
 const CHOICE: Field = {
@@ -38,8 +38,10 @@ test('undo keeps the last 100 commits', () => {
     for (let i = 0; i < 101; i++) {
         store.getState().undo()
     }
-    expect(store.getState().cells[cellKey('r1', 'c1')]?.value).toBe('1')
-    expect(store.getState().cells[cellKey('r2', 'c1')]?.value).toBeUndefined()
+    expect(cellAt(store.getState().cells, cellKey('r1', 'c1'))?.value).toBe('1')
+    expect(
+        cellAt(store.getState().cells, cellKey('r2', 'c1'))?.value
+    ).toBeUndefined()
 })
 
 test('undo of a 15,000-cell commit returns the keys in commit order', () => {
@@ -64,5 +66,5 @@ test('undo does not write back an option the rules hide', () => {
         },
     })
     expect(store.getState().undo()).toEqual([])
-    expect(store.getState().cells[key]?.value).toBe('B')
+    expect(cellAt(store.getState().cells, key)?.value).toBe('B')
 })

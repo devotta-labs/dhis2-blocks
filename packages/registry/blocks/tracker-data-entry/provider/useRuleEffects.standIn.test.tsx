@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
@@ -207,7 +208,7 @@ test('assignments are saved only in rows a person changed, into open cells of th
     })
     // Opening changes nothing: the cell shows its stored value, locked by the rule.
     expect(queued).toEqual([])
-    expect(store.getState().cells[cellKey('r1', 'c1')]).toBeUndefined()
+    expect(cellAt(store.getState().cells, cellKey('r1', 'c1'))).toBeUndefined()
     expect(effects.getState().cells[cellKey('r1', 'c1')]?.readOnly).toBe(
         'Assigned by rule: Stand-in rule'
     )
@@ -219,7 +220,7 @@ test('assignments are saved only in rows a person changed, into open cells of th
     await expect
         .poll(() => queued)
         .toEqual([cellKey('r1', 'c3'), cellKey('r1', 'c1')])
-    expect(store.getState().cells[cellKey('r1', 'c1')]).toMatchObject({
+    expect(cellAt(store.getState().cells, cellKey('r1', 'c1'))).toMatchObject({
         value: '7',
         source: 'rule',
     })
@@ -245,12 +246,14 @@ test('a value a rule assigns to a field with no column is saved with the row', a
     expect(queued).toEqual([])
     store.getState().commit(cellKey('r1', 'c2'), 'A')
     await expect.poll(() => queued).toContain(hidden)
-    expect(store.getState().cells[hidden]).toMatchObject({
+    expect(cellAt(store.getState().cells, hidden)).toMatchObject({
         value: '5',
         source: 'rule',
     })
     // Only the row a person changed.
-    expect(store.getState().cells[cellKey('r2', HIDDEN_FIELD)]).toBeUndefined()
+    expect(
+        cellAt(store.getState().cells, cellKey('r2', HIDDEN_FIELD))
+    ).toBeUndefined()
     stop()
 })
 
@@ -278,8 +281,10 @@ test('no rule value is committed in a read-only record, shown or not', async () 
     await expect.poll(() => queued).toContain(cellKey('r1', HIDDEN_FIELD))
     await later(50)
     expect(queued.filter((key) => key.startsWith('r2.'))).toEqual([])
-    expect(store.getState().cells[cellKey('r2', HIDDEN_FIELD)]).toBeUndefined()
-    expect(store.getState().cells[cellKey('r2', 'c1')]).toBeUndefined()
+    expect(
+        cellAt(store.getState().cells, cellKey('r2', HIDDEN_FIELD))
+    ).toBeUndefined()
+    expect(cellAt(store.getState().cells, cellKey('r2', 'c1'))).toBeUndefined()
     stop()
 })
 
@@ -337,18 +342,18 @@ test('what a rule cleared stays on the cell until it holds a value again', async
     const r1 = cellKey('r1', 'c2')
     // Hidden, not cleared, until a person changes the row.
     expect(said).toEqual([])
-    expect(store.getState().cells[r1]?.value).toBe('A')
+    expect(cellAt(store.getState().cells, r1)?.value).toBe('A')
 
     store.getState().commit(cellKey('r1', 'c1'), '4')
     await expect.poll(() => said).toEqual([note])
-    expect(store.getState().cells[r1]).toMatchObject({
+    expect(cellAt(store.getState().cells, r1)).toMatchObject({
         value: undefined,
         source: 'rule',
     })
     expect(effects.getState().cells[r1]?.messages).toEqual([
         { tone: 'warning', text: note, source: 'rule' },
     ])
-    expect(store.getState().cells[cellKey('r2', 'c2')]?.value).toBe('A')
+    expect(cellAt(store.getState().cells, cellKey('r2', 'c2'))?.value).toBe('A')
 
     hide = false
     store.getState().commit(cellKey('r1', 'c1'), '5')
@@ -411,7 +416,7 @@ test('a rule’s change re-runs only rows already evaluated; the others wait for
     })
     const hidden = (rowId: string) =>
         effects.getState().cells[cellKey(rowId, 'c2')]?.hiddenBy
-    expect(store.getState().cells[cellKey('r1', 'c1')]?.value).toBe('7')
+    expect(cellAt(store.getState().cells, cellKey('r1', 'c1'))?.value).toBe('7')
     expect(hidden('r2')).toBeDefined()
     expect(hidden('r3')).toBeUndefined()
     idle.next()
@@ -440,7 +445,7 @@ test('completing a changed row the rules have not reached yet runs its rules fir
     expect(effects.getState().cells[cellKey('r4', 'c2')]?.hiddenBy).toBe(
         'Hidden by rule: Stand-in rule'
     )
-    expect(store.getState().cells[cellKey('r4', 'c1')]).toMatchObject({
+    expect(cellAt(store.getState().cells, cellKey('r4', 'c1'))).toMatchObject({
         value: '7',
         source: 'rule',
     })
@@ -478,7 +483,7 @@ test('a rule’s value its type refuses leaves no draft in the locked cell', () 
         }
     )
     const children = cellKey('r1', 'c1')
-    expect(store.getState().cells[children]?.draft).toBeUndefined()
+    expect(cellAt(store.getState().cells, children)?.draft).toBeUndefined()
     expect(effects.getState().cells[children]?.readOnly).toBe(
         'Assigned by rule: Stand-in rule'
     )

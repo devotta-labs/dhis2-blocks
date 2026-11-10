@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { FetchError } from '@dhis2/app-runtime'
 import { page, userEvent } from 'vitest/browser'
@@ -45,7 +46,7 @@ test('a change the device could not store is not saved, says so, keeps the leave
     control(CHILDREN).focus()
     await userEvent.keyboard('5{Enter}')
     await expect
-        .poll(() => context().store.getState().cells[CHILDREN]?.sync)
+        .poll(() => cellAt(context().store.getState().cells, CHILDREN)?.sync)
         .toBe('failed')
     expect(notesOf(CHILDREN)).toEqual([
         'Not saved: This device could not store the change',
@@ -300,7 +301,7 @@ test('another program’s unsent changes stay in the outbox, unsent and not show
     await expect.poll(() => view().sync).toBe('idle')
     expect(memory.sent.flat().map(({ sourceKey }) => sourceKey)).toEqual([KEY])
     expect(await records(server)).toEqual([{ ...theirs, state: 'queued' }])
-    expect(context().store.getState().cells['x1.c1']).toBeUndefined()
+    expect(cellAt(context().store.getState().cells, 'x1.c1')).toBeUndefined()
 })
 
 test('a change made in the same millisecond as the one being sent is kept and sent next', async () => {
@@ -318,7 +319,7 @@ test('a change made in the same millisecond as the one being sent is kept and se
         .toMatchObject([{ value: '6', at: 5001 }])
     memory.release()
     await expect
-        .poll(() => context().store.getState().cells[CHILDREN])
+        .poll(() => cellAt(context().store.getState().cells, CHILDREN))
         .toMatchObject({ value: '6', base: '6', sync: 'saved' })
     expect(memory.sent.map((sent) => sent.map(({ value }) => value))).toEqual([
         ['5'],
@@ -337,13 +338,13 @@ test('outcomes another tab’s loop received reach this tab’s cells', async ()
     // The second tab cannot send, so its change waits in the outbox the tabs share.
     second.context().store.getState().commit(CHILDREN, '5')
     await expect.poll(() => offline.sent).toHaveLength(1)
-    expect(second.context().store.getState().cells[CHILDREN]?.sync).toBe(
-        'queued'
-    )
+    expect(
+        cellAt(second.context().store.getState().cells, CHILDREN)?.sync
+    ).toBe('queued')
     // The first tab's next round sends it, and tells the other tabs.
     first.context().store.getState().commit(cellKey('r1', 'c3'), 'Seen')
     await expect
-        .poll(() => second.context().store.getState().cells[CHILDREN])
+        .poll(() => cellAt(second.context().store.getState().cells, CHILDREN))
         .toMatchObject({ value: '5', base: '5', sync: 'saved' })
     expect(sender.sent.flat().map(({ key }) => key)).toContain(CHILDREN)
 })
@@ -391,7 +392,7 @@ test.each([
         // The newer change replaces this tab's in the outbox; the other tab sends it.
         there.context().store.getState().commit(CHILDREN, '2')
         await expect
-            .poll(() => here.context().store.getState().cells[CHILDREN])
+            .poll(() => cellAt(here.context().store.getState().cells, CHILDREN))
             .toMatchObject(cell)
         expect(here.view().summary).toMatchObject(summary)
     }
@@ -410,11 +411,11 @@ test('a draft held here survives another tab’s saved value, which is under it'
     })
     // Not a whole number: kept here as a draft with its error, and nothing is sent.
     here.context().store.getState().commit(CHILDREN, 'abc')
-    const held = here.context().store.getState().cells[CHILDREN]
+    const held = cellAt(here.context().store.getState().cells, CHILDREN)
     expect(held).toMatchObject({ draft: 'abc', error: expect.any(String) })
     there.context().store.getState().commit(CHILDREN, '2')
     await expect
-        .poll(() => here.context().store.getState().cells[CHILDREN])
+        .poll(() => cellAt(here.context().store.getState().cells, CHILDREN))
         .toMatchObject({
             value: '2',
             base: '2',
@@ -443,7 +444,7 @@ test('the download still holds what only this page has once its outbox has close
     control(CHILDREN).focus()
     await userEvent.keyboard('5{Enter}')
     await expect
-        .poll(() => context().store.getState().cells[CHILDREN]?.sync)
+        .poll(() => cellAt(context().store.getState().cells, CHILDREN)?.sync)
         .toBe('failed')
     const files = catchDownloads()
     view().downloadUnsent()
@@ -535,7 +536,7 @@ test('discarding a change the device could not store puts back the older one it 
     await expect.poll(() => view().summary.failed).toBe(1)
     put.mockRestore()
     await view().discardFailed()
-    expect(context().store.getState().cells[CHILDREN]).toMatchObject({
+    expect(cellAt(context().store.getState().cells, CHILDREN)).toMatchObject({
         value: '5',
         sync: 'queued',
     })

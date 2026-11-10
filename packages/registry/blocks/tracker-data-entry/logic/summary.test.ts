@@ -1,5 +1,10 @@
 import i18n from '@dhis2/d2-i18n'
-import type { CellKey, CellState, GridTable } from '@/components/spreadsheet'
+import type {
+    CellKey,
+    CellMap,
+    CellState,
+    GridTable,
+} from '@/components/spreadsheet'
 import type { TrackerColumn, TrackerRow } from '../model/types'
 import type { TrackerEffects, TrackerMessage } from './effects'
 import { summarise } from './summary'
@@ -28,15 +33,17 @@ const FILLED: CellState = {
 
 test('summarise counts unsent and failed cells and blocks completion on errors', () => {
     const cells = {
-        'e1.a': { value: '1', sync: 'queued', source: 'person' },
-        'e1.b': {
-            value: 'abc',
-            sync: 'failed',
-            reason: 'Value is not a number',
-            source: 'person',
+        e1: {
+            a: { value: '1', sync: 'queued', source: 'person' },
+            b: {
+                value: 'abc',
+                sync: 'failed',
+                reason: 'Value is not a number',
+                source: 'person',
+            },
+            c: { value: '3', base: '3', sync: 'saved', source: 'person' },
         },
-        'e1.c': { value: '3', base: '3', sync: 'saved', source: 'person' },
-    } satisfies Partial<Record<CellKey, CellState>>
+    } satisfies CellMap
     const effects = {
         'e1.c': {
             ...NO_EFFECTS,
@@ -61,13 +68,15 @@ test('summarise counts unsent and failed cells and blocks completion on errors',
 test('a waiting cell is unsent and says why', () => {
     const summary = summarise(
         {
-            'e1.a': {
-                value: '1',
-                sync: 'waiting',
-                reason: 'Waiting for required fields: Age',
-                source: 'person',
+            e1: {
+                a: {
+                    value: '1',
+                    sync: 'waiting',
+                    reason: 'Waiting for required fields: Age',
+                    source: 'person',
+                },
+                b: { value: '2', sync: 'sending', source: 'person' },
             },
-            'e1.b': { value: '2', sync: 'sending', source: 'person' },
         },
         {},
         NO_ROW_MESSAGES,
@@ -89,7 +98,7 @@ test('a waiting cell is unsent and says why', () => {
 
 test('warnings block nothing', () => {
     const summary = summarise(
-        { 'e1.a': FILLED },
+        { e1: { a: FILLED } },
         {
             'e1.a': {
                 required: true,
@@ -152,10 +161,10 @@ test('an empty required cell is listed by its column’s label and blocks comple
     const required = {
         'e1.a': { required: true, messages: [] },
     } satisfies Partial<Record<CellKey, TrackerEffects>>
-    const summarised = (cells: Partial<Record<CellKey, CellState>>) =>
+    const summarised = (cells: CellMap) =>
         summarise(cells, required, NO_ROW_MESSAGES, TABLES)
 
-    for (const empty of [{}, { 'e1.a': { ...FILLED, value: undefined } }]) {
+    for (const empty of [{}, { e1: { a: { ...FILLED, value: undefined } } }]) {
         expect(summarised(empty)).toMatchObject({
             // Column labels are shown as DHIS2 gives them, not HTML-escaped.
             items: [
@@ -168,7 +177,7 @@ test('an empty required cell is listed by its column’s label and blocks comple
             canComplete: false,
         })
     }
-    expect(summarised({ 'e1.a': FILLED })).toMatchObject({
+    expect(summarised({ e1: { a: FILLED } })).toMatchObject({
         items: [],
         canComplete: true,
     })
@@ -210,10 +219,12 @@ test('row messages are listed by row, and their errors block completion', () => 
 test('a cell’s own error blocks completion; its warning does not', () => {
     const invalid = summarise(
         {
-            'e1.a': {
-                ...FILLED,
-                draft: '12,5',
-                error: 'Use a full stop for decimals',
+            e1: {
+                a: {
+                    ...FILLED,
+                    draft: '12,5',
+                    error: 'Use a full stop for decimals',
+                },
             },
         },
         {},
@@ -232,7 +243,7 @@ test('a cell’s own error blocks completion; its warning does not', () => {
     })
 
     const warned = summarise(
-        { 'e1.a': { ...FILLED, warning: 'Not a valid option' } },
+        { e1: { a: { ...FILLED, warning: 'Not a valid option' } } },
         {},
         NO_ROW_MESSAGES,
         TABLES
@@ -252,12 +263,14 @@ test('a cell’s own error and warning are listed as their value type made them,
     try {
         const summary = summarise(
             {
-                'e1.a': {
-                    ...FILLED,
-                    draft: 'abc',
-                    error: 'Saisissez un nombre entier',
+                e1: {
+                    a: {
+                        ...FILLED,
+                        draft: 'abc',
+                        error: 'Saisissez un nombre entier',
+                    },
+                    b: { ...FILLED, warning: 'Option non valide' },
                 },
-                'e1.b': { ...FILLED, warning: 'Option non valide' },
             },
             {},
             NO_ROW_MESSAGES,

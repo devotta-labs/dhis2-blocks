@@ -21,6 +21,7 @@ import {
     DropdownMenuLabel,
 } from '@/components/dhis2/ui/dropdown-menu'
 import { formatCount } from '../cells/OptionCell'
+import { cellAt } from '../model/types'
 import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 import type { SpreadsheetContext } from '../provider/context'
@@ -241,14 +242,20 @@ export const BulkMenu = ({
                 if (result === 'invalid') {
                     // The planner skips what the store refuses; a refusal it missed leaves no draft behind.
                     skip(
-                        after.cells[key]?.error ??
+                        cellAt(after.cells, key)?.error ??
                             i18n.t('This cell cannot be changed')
                     )
                     after.discardDraft(key)
                     return
                 }
                 // An unchanged cell the plan left in was refused by the store, as a lock the annotations do not show.
-                if (changedBy(result, before.cells[key], after.cells[key])) {
+                if (
+                    changedBy(
+                        result,
+                        cellAt(before.cells, key),
+                        cellAt(after.cells, key)
+                    )
+                ) {
                     changed += 1
                 } else {
                     skip(i18n.t('This cell cannot be changed'))

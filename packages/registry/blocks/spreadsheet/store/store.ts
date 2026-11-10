@@ -7,11 +7,13 @@ import { todayIso } from '@/components/dhis2-value-types'
 import type { AnnotationsState } from '../model/annotations'
 import type { ReadonlyStore } from '../provider/context'
 import type {
+    CellMap,
     CellKey,
     CellState,
     CommitResult,
     SyncState,
 } from '../model/types'
+import { cellAt } from '../model/types'
 
 export interface CellStoreOptions {
     /** Every field any cell may hold, shown by a table or not, by field id: what a cell's value is checked against. */
@@ -35,7 +37,7 @@ type Source = CellState['source']
 
 export interface CellStoreState {
     /** Only cells that were loaded or touched have an entry; read the rest as `EMPTY_CELL`. */
-    cells: Partial<Record<CellKey, CellState>>
+    cells: CellMap
     /** The id of the cell's field, as `fieldIdOf` names it: cell overrides by field id are looked up by it. */
     fieldIdOf(key: CellKey): string
     /** What the cell's value is checked against; nothing for a key whose field the form does not hold. */
@@ -149,7 +151,11 @@ export const createCellStore = ({
 
     const loaded: Cells = {}
     for (const [key, value] of values) {
-        loaded[key] = {
+        const dot = key.indexOf('.')
+        const row = key.slice(0, dot)
+        const field = key.slice(dot + 1)
+        const rowCells = (loaded[row] ??= {})
+        rowCells[field] = {
             base: value,
             value,
             warning: warningOf(key, value),
@@ -182,14 +188,22 @@ export const createCellStore = ({
         ): T => {
             let cells = get().cells
             let copied = false
+            const copiedRows = new Set<string>()
             const queued: Array<[CellKey, string | null, string | null]> = []
-            const read = (key: CellKey) => cells[key]
+            const read = (key: CellKey) => cellAt(cells, key)
             const write = (key: CellKey, cell: CellState) => {
+                const dot = key.indexOf('.')
+                const row = key.slice(0, dot)
+                const field = key.slice(dot + 1)
                 if (!copied) {
                     cells = { ...cells }
                     copied = true
                 }
-                cells[key] = cell
+                if (!copiedRows.has(row)) {
+                    cells[row] = { ...cells[row] }
+                    copiedRows.add(row)
+                }
+                cells[row]![field] = cell
             }
             const queue = (
                 key: CellKey,

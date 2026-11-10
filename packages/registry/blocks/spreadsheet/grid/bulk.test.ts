@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 import { createStore } from 'zustand/vanilla'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import type { CellOverrides } from '../cells/cellProps'
@@ -89,7 +90,8 @@ const setup = ({
             annotations: effects.getState(),
             settings,
         })
-    const cell = (key: CellKey) => store.getState().cells[key] ?? EMPTY_CELL
+    const cell = (key: CellKey) =>
+        cellAt(store.getState().cells, key) ?? EMPTY_CELL
     return { store, table, isEditable, plan, cell }
 }
 

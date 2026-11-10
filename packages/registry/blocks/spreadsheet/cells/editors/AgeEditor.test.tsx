@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
 import type { Locator } from 'vitest/browser'
@@ -353,7 +354,7 @@ test('a pasted date of birth in the future is refused with the same problem; tod
     const tomorrow = addDaysIso(today, 1)
     control(key).focus()
     paste(control(key), tomorrow)
-    expect(store.getState().cells[key]).toMatchObject({
+    expect(cellAt(store.getState().cells, key)).toMatchObject({
         draft: tomorrow,
         error: FUTURE,
     })

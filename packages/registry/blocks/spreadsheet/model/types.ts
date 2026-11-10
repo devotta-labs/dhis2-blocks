@@ -4,6 +4,30 @@ export type CellKey = `${string}.${string}`
 export const cellKey = (first: string, second: string): CellKey =>
     `${first}.${second}`
 
+/** Cells indexed by their row, then by the second part of their cell key. */
+export type CellMap = Partial<
+    Record<string, Partial<Record<string, CellState>>>
+>
+
+/** Reads a cell from its row and field. */
+export const cellAt = (cells: CellMap, key: CellKey) => {
+    const dot = key.indexOf('.')
+    return cells[key.slice(0, dot)]?.[key.slice(dot + 1)]
+}
+
+/** Iterates a row-indexed cell map using the grid's full cell keys. */
+export function* cellEntries(
+    cells: CellMap
+): Generator<[CellKey, CellState], void> {
+    for (const [row, fields] of Object.entries(cells)) {
+        for (const [field, cell] of Object.entries(fields ?? {})) {
+            if (cell !== undefined) {
+                yield [cellKey(row, field), cell]
+            }
+        }
+    }
+}
+
 export interface GridRow {
     id: string
     /** Names the row in its header, unless the provider's `RowLabel` names it otherwise. */

@@ -3,6 +3,7 @@ import { parseTyped, typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { formatCount } from '../cells/OptionCell'
 import type { AnnotationsState } from '../model/annotations'
+import { cellAt } from '../model/types'
 import type {
     CellKey,
     CellState,
@@ -62,7 +63,7 @@ export const rowCandidates = (
 ): BulkCandidate[] =>
     columns.flatMap((column) => {
         const source = keyOf(from, column)
-        const value = state.cells[source]?.value
+        const value = cellAt(state.cells, source)?.value
         if (
             value === undefined ||
             annotations.cells[source]?.hiddenBy !== undefined
@@ -97,7 +98,7 @@ const offersAll = (
     }
     return !addsHiddenOption(
         field,
-        state.cells[key]?.value,
+        cellAt(state.cells, key)?.value,
         parsed.value,
         hidden
     )
@@ -109,7 +110,7 @@ const holds = (
     settings: ValueSettings,
     { key, text }: BulkCandidate
 ) => {
-    const cell = state.cells[key]
+    const cell = cellAt(state.cells, key)
     if (cell?.draft !== undefined || cell?.sync === 'failed') {
         return false
     }
@@ -178,7 +179,7 @@ export const planBulk = (
     const skipped = new Map<string, number>()
     let filled = 0
     for (const candidate of candidates) {
-        const cell = state.cells[candidate.key]
+        const cell = cellAt(state.cells, candidate.key)
         const empty = cell?.value === undefined && cell?.draft === undefined
         if (candidate.text === '' && empty) {
             continue

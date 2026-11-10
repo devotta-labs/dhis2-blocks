@@ -1,3 +1,4 @@
+import { cellAt } from '@/components/spreadsheet'
 /// <reference types="@vitest/browser-playwright" />
 import { CustomDataProvider } from '@dhis2/app-runtime'
 import { page, userEvent } from 'vitest/browser'
@@ -79,9 +80,9 @@ test('an aggregate-shaped grid: rows are data elements, columns are category opt
     const { enqueue, cells } = await mountAggregate()
     control(cellKey('measles', 'under1')).focus()
     await userEvent.keyboard('-1{Enter}')
-    expect(cells.getState().cells[cellKey('measles', 'under1')]?.error).toBe(
-        'Enter a whole number of zero or more'
-    )
+    expect(
+        cellAt(cells.getState().cells, cellKey('measles', 'under1'))?.error
+    ).toBe('Enter a whole number of zero or more')
     expect(enqueue).not.toHaveBeenCalled()
     control(cellKey('comment', 'under1')).focus()
     await userEvent.keyboard('abc{Enter}')
@@ -128,15 +129,15 @@ test('a grid with no rules', async () => {
     const key = cellKey('measles', 'under1')
     control(key).focus()
     await userEvent.keyboard('abc{Enter}')
-    expect(cells.getState().cells[key]?.error).toBe(
+    expect(cellAt(cells.getState().cells, key)?.error).toBe(
         'Enter a whole number of zero or more'
     )
     expect(enqueue).not.toHaveBeenCalled()
     const other = cellKey('measles', 'over1')
     control(other).focus()
     await userEvent.keyboard('7{Enter}')
-    expect(cells.getState().cells[other]?.value).toBe('7')
+    expect(cellAt(cells.getState().cells, other)?.value).toBe('7')
     await userEvent.keyboard('{Control>}z{/Control}')
-    expect(cells.getState().cells[other]?.value).toBeUndefined()
+    expect(cellAt(cells.getState().cells, other)?.value).toBeUndefined()
     expect(enqueue).toHaveBeenLastCalledWith(other, null, null)
 })

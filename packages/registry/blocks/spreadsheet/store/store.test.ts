@@ -1,7 +1,7 @@
 import { createStore } from 'zustand/vanilla'
 import type { Field } from '@/components/dhis2-value-types'
 import type { AnnotationsState } from '../model/annotations'
-import { cellKey } from '../model/types'
+import { cellAt, cellKey } from '../model/types'
 import type { CellKey } from '../model/types'
 import { EMPTY_CELL, createCellStore } from './store'
 
@@ -38,7 +38,8 @@ const setup = (initial: Array<[CellKey, string]> = []) => {
         annotations: createStore<AnnotationsState>()(() => NO_ANNOTATIONS),
         enqueue: (key, value, base) => enqueued.push([key, value, base]),
     })
-    const cell = (key: CellKey) => store.getState().cells[key] ?? EMPTY_CELL
+    const cell = (key: CellKey) =>
+        cellAt(store.getState().cells, key) ?? EMPTY_CELL
     const commit = (key: CellKey, text: string, source?: 'person' | 'rule') =>
         store.getState().commit(key, text, source)
     return { store, enqueued, cell, commit }
@@ -136,6 +137,21 @@ test('discarding a draft is not an undo step', () => {
     expect(store.getState().undo()).toEqual(['r1.c1'])
     expect(cell('r1.c1').value).toBe('5')
     expect(store.getState().undo()).toEqual([])
+})
+
+test('a write copies its row and keeps untouched row references', () => {
+    const { store, commit } = setup([
+        ['r1.c1', '5'],
+        ['r2.c1', '8'],
+    ])
+    const before = store.getState().cells
+
+    commit('r1.c1', '6')
+
+    const after = store.getState().cells
+    expect(after).not.toBe(before)
+    expect(after.r1).not.toBe(before.r1)
+    expect(after.r2).toBe(before.r2)
 })
 
 test('discarding when there is no draft leaves the store alone', () => {
@@ -307,7 +323,7 @@ test('a rule committing the same value on a failed cell leaves it', () => {
 
 test('cells nobody touched have no entry', () => {
     const { store } = setup([['r1.c1', '5']])
-    expect(store.getState().cells['r2.c1']).toBeUndefined()
+    expect(cellAt(store.getState().cells, 'r2.c1')).toBeUndefined()
     expect(Object.isFrozen(EMPTY_CELL)).toBe(true)
 })
 
@@ -492,7 +508,7 @@ test('commits to a field the form holds but no table shows', () => {
         .restore([
             { key: 'r3.f1', value: 'heavy', base: 'heavy', sync: 'idle' },
         ])
-    expect(store.getState().cells['r3.f1']).toMatchObject({
+    expect(cellAt(store.getState().cells, 'r3.f1')).toMatchObject({
         value: 'heavy',
         warning: 'Enter a whole number',
     })

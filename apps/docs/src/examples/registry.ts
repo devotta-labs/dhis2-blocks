@@ -4,6 +4,7 @@ import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
 import valueInputFormSource from './dhis2-value-input/ValueInputForm.tsx?raw'
 import valueInputKindsSource from './dhis2-value-input/ValueInputKinds.tsx?raw'
+import { fieldExamples } from './fieldExamples'
 import { PersonVitalsPlaceholder } from './observation-cards/ObservationCardsPlaceholders'
 import personVitalsSource from './observation-cards/PersonVitals.tsx?raw'
 import personBannerSource from './tracked-entity-header/PersonBanner.tsx?raw'
@@ -28,16 +29,6 @@ import comboboxOrgUnitsSource from './ui/ComboboxOrgUnits.tsx?raw'
 import comboboxMultipleSource from './ui/ComboboxMultiple.tsx?raw'
 import dialogConfirmSource from './ui/DialogConfirm.tsx?raw'
 import dropdownMenuActionsSource from './ui/DropdownMenuActions.tsx?raw'
-import fieldInputSource from './ui/FieldInput.tsx?raw'
-import fieldTextareaSource from './ui/FieldTextarea.tsx?raw'
-import fieldSelectSource from './ui/FieldSelect.tsx?raw'
-import fieldFieldsetSource from './ui/FieldFieldset.tsx?raw'
-import fieldCheckboxesSource from './ui/FieldCheckboxes.tsx?raw'
-import fieldRadioGroupSource from './ui/FieldRadioGroup.tsx?raw'
-import fieldRadioDescriptionSource from './ui/FieldRadioDescription.tsx?raw'
-import fieldHorizontalSource from './ui/FieldHorizontal.tsx?raw'
-import fieldGroupSeparatorSource from './ui/FieldGroupSeparator.tsx?raw'
-import fieldValidationSource from './ui/FieldValidation.tsx?raw'
 import inputFieldSource from './ui/InputField.tsx?raw'
 import inputGroupSearchSource from './ui/InputGroupSearch.tsx?raw'
 import popoverDetailsSource from './ui/PopoverDetails.tsx?raw'
@@ -400,86 +391,7 @@ const examples = [
         source: dropdownMenuActionsSource,
         minHeight: 300,
     },
-    {
-        slug: 'field/input',
-        title: 'Phone number',
-        live: false,
-        Component: lazy(() => import('./ui/FieldInput')),
-        source: fieldInputSource,
-        minHeight: 160,
-    },
-    {
-        slug: 'field/textarea',
-        title: 'Clinical notes',
-        live: false,
-        Component: lazy(() => import('./ui/FieldTextarea')),
-        source: fieldTextareaSource,
-        minHeight: 200,
-    },
-    {
-        slug: 'field/select',
-        title: 'Visit type',
-        live: false,
-        Component: lazy(() => import('./ui/FieldSelect')),
-        source: fieldSelectSource,
-        minHeight: 160,
-    },
-    {
-        slug: 'field/fieldset',
-        title: 'Home location',
-        live: false,
-        Component: lazy(() => import('./ui/FieldFieldset')),
-        source: fieldFieldsetSource,
-        minHeight: 220,
-    },
-    {
-        slug: 'field/checkboxes',
-        title: 'Symptoms',
-        live: false,
-        Component: lazy(() => import('./ui/FieldCheckboxes')),
-        source: fieldCheckboxesSource,
-        minHeight: 200,
-    },
-    {
-        slug: 'field/radio-group',
-        title: 'Malaria test result',
-        live: false,
-        Component: lazy(() => import('./ui/FieldRadioGroup')),
-        source: fieldRadioGroupSource,
-        minHeight: 180,
-    },
-    {
-        slug: 'field/radio-description',
-        title: 'TB treatment outcome',
-        live: false,
-        Component: lazy(() => import('./ui/FieldRadioDescription')),
-        source: fieldRadioDescriptionSource,
-        minHeight: 240,
-    },
-    {
-        slug: 'field/horizontal',
-        title: 'Consent and reminders',
-        live: false,
-        Component: lazy(() => import('./ui/FieldHorizontal')),
-        source: fieldHorizontalSource,
-        minHeight: 160,
-    },
-    {
-        slug: 'field/group',
-        title: 'Find a person',
-        live: false,
-        Component: lazy(() => import('./ui/FieldGroupSeparator')),
-        source: fieldGroupSeparatorSource,
-        minHeight: 240,
-    },
-    {
-        slug: 'field/validation',
-        title: 'Weight and test result',
-        live: false,
-        Component: lazy(() => import('./ui/FieldValidation')),
-        source: fieldValidationSource,
-        minHeight: 300,
-    },
+    ...fieldExamples,
     {
         slug: 'input/field',
         title: 'Text fields',

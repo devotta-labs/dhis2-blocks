@@ -8,7 +8,8 @@ import { cn } from './cn'
 
 /*
  * shadcn Select (Base UI) restyled to match @dhis2/ui SingleSelect.
- * size `sm` = DHIS2 `dense` (32px), `default` = 40px. Menus open below the
+ * size `sm` = DHIS2 `dense` (32px), `default` = the density's (40px, or 32px
+ * compact). Menus open below the
  * trigger, as DHIS2's do, instead of over it.
  */
 
@@ -40,7 +41,8 @@ const selectTriggerVariants = cva(
     {
         variants: {
             size: {
-                default: 'min-h-10 py-1.5 ps-3 pe-1.5',
+                default:
+                    'min-h-(--dhis2-control-height) py-[calc((var(--dhis2-control-height)-28px)/2)] ps-3 pe-1.5',
                 sm: 'min-h-(--dhis2-field-height-dense) py-0.5 ps-2 pe-1',
             },
         },

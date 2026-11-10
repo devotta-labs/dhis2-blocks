@@ -11,19 +11,68 @@ import { Separator } from './separator'
 
 /** shadcn Field, restyled to match @dhis2/ui Field spacing and colors. */
 
-/** Groups related fields, or a group's options, under a legend; Base UI names the fieldset by its legend. */
-function FieldSet({ className, ...props }: FieldsetPrimitive.Root.Props) {
+/**
+ * Inside a Field, its label, description and error are Base UI's, linked to the field's control. Outside one they are
+ * plain, as shadcn's are: a description under a fieldset's legend, a label for a control by `htmlFor`.
+ */
+const InField = React.createContext(false)
+
+/** Says that a fieldset's own description or error (by id) is on the page, so the fieldset is described by it. */
+const FieldSetMessages = React.createContext<
+    ((id: string, shown: boolean) => void) | undefined
+>(undefined)
+
+/** Describes the fieldset around with `id`, while the part is on the page; nothing for `undefined`. */
+const useFieldSetMessage = (id: string | undefined) => {
+    const say = React.useContext(FieldSetMessages)
+    React.useEffect(() => {
+        if (say === undefined || id === undefined) {
+            return undefined
+        }
+        say(id, true)
+        return () => say(id, false)
+    }, [say, id])
+}
+
+/** A part's props, with a class and style as shadcn's take them: not Base UI's functions of state, which a plain part could not call. */
+type PlainStyled<Props> = Omit<Props, 'className' | 'style'> & {
+    className?: string
+    style?: React.CSSProperties
+}
+
+/**
+ * Groups related fields, or a group's options, under a legend; Base UI names the fieldset by its legend. A
+ * description or error directly in it, outside a Field, describes it.
+ */
+function FieldSet({
+    className,
+    'aria-describedby': describedBy,
+    ...props
+}: FieldsetPrimitive.Root.Props) {
+    const [messages, setMessages] = React.useState<ReadonlyArray<string>>([])
+    const say = React.useCallback(
+        (id: string, shown: boolean) =>
+            setMessages((all) =>
+                shown ? [...all, id] : all.filter((each) => each !== id)
+            ),
+        []
+    )
+    const ids = [describedBy, ...messages].filter(Boolean).join(' ')
     return (
-        <FieldsetPrimitive.Root
-            data-slot="field-set"
-            className={cn(
-                // Rendered as a radio group (`render={<RadioGroup />}`), the options' spacing holds: the role marks it, as its
-                // slot and classes are the fieldset's.
-                'm-0 flex min-w-0 flex-col gap-4 border-0 p-0 has-[>[data-slot=checkbox-group]]:gap-2 has-[>[data-slot=radio-group]]:gap-2 [&[role=radiogroup]]:gap-2',
-                className
-            )}
-            {...props}
-        />
+        <FieldSetMessages.Provider value={say}>
+            <FieldsetPrimitive.Root
+                data-slot="field-set"
+                className={cn(
+                    // Rendered as a radio group (`render={<RadioGroup />}`), the options' spacing holds: the role marks
+                    // it, as its slot and classes are the fieldset's.
+                    'm-0 flex min-w-0 flex-col gap-(--dhis2-field-group-gap) border-0 p-0 has-[>[data-slot=checkbox-group]]:gap-2 has-[>[data-slot=radio-group]]:gap-2 [&[role=radiogroup]]:gap-2',
+                    className
+                )}
+                // Only when there is one: an empty one would replace what a radio group's field describes it with.
+                {...(ids === '' ? {} : { 'aria-describedby': ids })}
+                {...props}
+            />
+        </FieldSetMessages.Provider>
     )
 }
 
@@ -61,7 +110,7 @@ function FieldGroup({ className, ...props }: React.ComponentProps<'div'>) {
         <div
             data-slot="field-group"
             className={cn(
-                'group/field-group @container/field-group flex w-full flex-col gap-4 data-[slot=checkbox-group]:gap-2 *:data-[slot=field-group]:gap-3',
+                'group/field-group @container/field-group flex w-full flex-col gap-(--dhis2-field-group-gap) data-[slot=checkbox-group]:gap-2 *:data-[slot=field-group]:gap-3',
                 className
             )}
             {...props}
@@ -70,7 +119,7 @@ function FieldGroup({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 const fieldVariants = cva(
-    'group/field flex w-full gap-2 data-invalid:text-dhis2-destructive',
+    'group/field flex w-full gap-(--dhis2-field-gap) data-invalid:text-dhis2-destructive',
     {
         variants: {
             orientation: {
@@ -92,12 +141,14 @@ function Field({
     ...props
 }: FieldPrimitive.Root.Props & VariantProps<typeof fieldVariants>) {
     return (
-        <FieldPrimitive.Root
-            data-slot="field"
-            data-orientation={orientation}
-            className={cn(fieldVariants({ orientation }), className)}
-            {...props}
-        />
+        <InField.Provider value>
+            <FieldPrimitive.Root
+                data-slot="field"
+                data-orientation={orientation}
+                className={cn(fieldVariants({ orientation }), className)}
+                {...props}
+            />
+        </InField.Provider>
     )
 }
 
@@ -131,16 +182,35 @@ function FieldContent({ className, ...props }: React.ComponentProps<'div'>) {
     )
 }
 
-function FieldLabel({ className, ...props }: FieldPrimitive.Label.Props) {
+// Medium, so a field's label leads; an option's label, in a FieldItem, is regular.
+const LABEL_CLASS =
+    'group/field-label peer/field-label flex w-fit gap-2 leading-snug font-medium group-data-disabled/field:text-dhis2-disabled-foreground in-data-[slot=field-item]:font-normal'
+
+function FieldLabel({
+    className,
+    style,
+    render,
+    nativeLabel,
+    ...props
+}: PlainStyled<FieldPrimitive.Label.Props>) {
+    const inField = React.useContext(InField)
+    if (!inField) {
+        return (
+            <Label
+                data-slot="field-label"
+                className={cn(LABEL_CLASS, className)}
+                style={style}
+                {...props}
+            />
+        )
+    }
     return (
         <FieldPrimitive.Label
             data-slot="field-label"
-            render={<Label />}
-            className={cn(
-                // Medium, so a field's label leads; an option's label, in a FieldItem, is regular.
-                'group/field-label peer/field-label flex w-fit gap-2 leading-snug font-medium group-data-disabled/field:text-dhis2-disabled-foreground in-data-[slot=field-item]:font-normal',
-                className
-            )}
+            render={render ?? <Label />}
+            nativeLabel={nativeLabel}
+            className={cn(LABEL_CLASS, className)}
+            style={style}
             {...props}
         />
     )
@@ -160,30 +230,61 @@ function FieldTitle({ className, ...props }: React.ComponentProps<'div'>) {
     )
 }
 
+// Right under a fieldset's legend, it reads with the legend, as shadcn's does.
+const DESCRIPTION_CLASS =
+    'm-0 text-left text-sm leading-normal font-normal text-dhis2-muted-foreground [[data-variant=legend]+&]:-mt-3'
+
 function FieldDescription({
     className,
+    style,
+    render,
+    id,
     ...props
-}: FieldPrimitive.Description.Props) {
+}: PlainStyled<FieldPrimitive.Description.Props>) {
+    const inField = React.useContext(InField)
+    const generatedId = React.useId()
+    const plainId = id ?? generatedId
+    useFieldSetMessage(inField ? undefined : plainId)
+    if (!inField) {
+        return (
+            <p
+                id={plainId}
+                data-slot="field-description"
+                className={cn(DESCRIPTION_CLASS, className)}
+                style={style}
+                {...props}
+            />
+        )
+    }
     return (
         <FieldPrimitive.Description
+            id={id}
+            render={render}
             data-slot="field-description"
-            className={cn(
-                'm-0 text-left text-sm leading-normal font-normal text-dhis2-muted-foreground',
-                className
-            )}
+            className={cn(DESCRIPTION_CLASS, className)}
+            style={style}
             {...props}
         />
     )
 }
 
+const ERROR_CLASS = 'text-sm font-normal text-dhis2-destructive'
+
 function FieldError({
     className,
     children,
     errors,
+    id,
+    match,
+    render,
+    style,
     ...props
-}: FieldPrimitive.Error.Props & {
+}: PlainStyled<FieldPrimitive.Error.Props> & {
     errors?: Array<{ message?: string } | undefined>
 }) {
+    const inField = React.useContext(InField)
+    const generatedId = React.useId()
+    const plainId = id ?? generatedId
     const content = useMemo(() => {
         if (children) {
             return children
@@ -211,20 +312,37 @@ function FieldError({
         )
     }, [children, errors])
 
+    useFieldSetMessage(inField || !content ? undefined : plainId)
+
     if (!content) {
         return null
+    }
+
+    if (!inField) {
+        return (
+            <div
+                id={plainId}
+                role="alert"
+                data-slot="field-error"
+                className={cn(ERROR_CLASS, className)}
+                style={style}
+                {...props}
+            >
+                {content}
+            </div>
+        )
     }
 
     return (
         // Shown whenever it has content, not only when the browser finds the control invalid.
         <FieldPrimitive.Error
-            match
+            id={id}
+            render={render}
+            match={match ?? true}
             role="alert"
             data-slot="field-error"
-            className={cn(
-                'text-sm font-normal text-dhis2-destructive',
-                className
-            )}
+            className={cn(ERROR_CLASS, className)}
+            style={style}
             {...props}
         >
             {content}

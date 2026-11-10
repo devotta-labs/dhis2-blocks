@@ -6,7 +6,7 @@ description: A label, a hint and an error around a control, and groups of them.
 import { ExampleCard } from '../../components/ExampleCard'
 import { InstallCommand } from '../../components/InstallCommand'
 
-<ExampleCard slug="field/input" />
+<ExampleCard slug="field/demo" />
 
 A field puts a label, a hint and an error around one control, such as an
 input, a select or a group of radios. It links them to the control, so
@@ -41,6 +41,10 @@ export const PhoneNumber = () => (
     </Field>
 )
 ```
+
+## Input
+
+<ExampleCard slug="field/input" />
 
 ## Textarea
 
@@ -154,6 +158,24 @@ than the problem ("Invalid value"). `FieldError` also takes a list of
 `errors` with a `message` each, for example from a form library, and shows
 each message once.
 
+## Density
+
+<ExampleCard slug="field/density" />
+
+Fields are as tall and as spaced as `@dhis2/ui`'s regular fields: 40px
+controls and 36px buttons. Put `data-density="compact"` on any element to
+make everything inside it compact: 32px controls and buttons, and tighter
+gaps between a field's parts and between fields. Put it on a form, a side
+panel or a dialog, or on one `Field` to make only that field compact.
+
+```tsx
+<form data-density="compact">…</form>
+```
+
+The theme sets the sizes as `--dhis2-control-height`, `--dhis2-button-height`,
+`--dhis2-field-gap` and `--dhis2-field-group-gap`, so your own controls can use
+them too.
+
 ## Anatomy
 
 - `Field` — one control and its label, description and error. Use one for
@@ -180,7 +202,11 @@ each message once.
   renders an `<input>`, or passes the field's ids and state to your own
   element through `render`.
 
-`FieldDescription`, `FieldError` and `FieldItem` belong inside a `Field`.
+`FieldItem` belongs inside a `Field`. `FieldLabel`, `FieldDescription` and
+`FieldError` are linked by the `Field` they are in. Outside one they are
+plain: a label names its control by `htmlFor`, and a description or error
+directly in a `FieldSet`, such as one under its legend, describes the
+fieldset.
 
 ## Accessibility
 

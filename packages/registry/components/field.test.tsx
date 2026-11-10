@@ -318,3 +318,70 @@ test('a field label and a legend are medium; an option label is regular', async 
     expect(weight('Test result')).toBe('500')
     expect(weight('Positive')).toBe('400')
 })
+
+test("a fieldset's own description and error describe it, outside a Field", async () => {
+    const Visit = ({ invalid }: { invalid: boolean }) => (
+        <FieldSet>
+            <FieldLegend>Patient</FieldLegend>
+            <FieldDescription>As on the health card.</FieldDescription>
+            <Field>
+                <FieldLabel>Name</FieldLabel>
+                <Input />
+                <FieldDescription>Given name first.</FieldDescription>
+            </Field>
+            {invalid ? <FieldError>Fill in the patient</FieldError> : null}
+        </FieldSet>
+    )
+    const { rerender } = await render(<Visit invalid={false} />)
+    const group = page.getByRole('group', { name: 'Patient' })
+    await expect
+        .element(group)
+        .toHaveAccessibleDescription('As on the health card.')
+    await expect
+        .element(page.getByRole('textbox', { name: 'Name' }))
+        .toHaveAccessibleDescription('Given name first.')
+
+    await rerender(<Visit invalid />)
+    await expect
+        .element(group)
+        .toHaveAccessibleDescription(
+            'As on the health card. Fill in the patient'
+        )
+    await expect
+        .element(page.getByRole('alert'))
+        .toHaveTextContent('Fill in the patient')
+})
+
+test('a label outside a Field names its control by htmlFor', async () => {
+    await render(
+        <>
+            <FieldLabel htmlFor="unique-id">Unique ID</FieldLabel>
+            <Input id="unique-id" />
+        </>
+    )
+    await expect
+        .element(page.getByRole('textbox', { name: 'Unique ID' }))
+        .toBeVisible()
+})
+
+test('compact density makes controls and gaps smaller inside it, for a form or one field', async () => {
+    await render(
+        <>
+            <Field data-testid="regular">
+                <FieldLabel>Regular</FieldLabel>
+                <Input />
+            </Field>
+            <Field data-testid="compact" data-density="compact">
+                <FieldLabel>Compact</FieldLabel>
+                <Input />
+            </Field>
+        </>
+    )
+    const height = (name: string) =>
+        page.getByRole('textbox', { name }).element().getBoundingClientRect()
+            .height
+    const gap = (id: string) =>
+        getComputedStyle(page.getByTestId(id).element()).rowGap
+    expect([height('Regular'), height('Compact')]).toEqual([40, 32])
+    expect([gap('regular'), gap('compact')]).toEqual(['8px', '4px'])
+})

@@ -5,6 +5,7 @@ export const PLAYGROUND_BLOCKS = [
     { slug: 'timeline', title: 'Timeline' },
     { slug: 'tracked-entity-finder', title: 'Tracked Entity Finder' },
     { slug: 'tracked-entity-header', title: 'Tracked Entity Header' },
+    { slug: 'dhis2-value-input', title: 'Value Input' },
     { slug: 'tracker-data-entry', title: 'Tracker Data Entry' },
 ] as const
 

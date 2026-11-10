@@ -49,7 +49,7 @@ export interface RawProgram {
 
 export type Edit<T> = (raw: T) => T
 
-export type Status = 'ready' | 'loading' | 'failed' | 'restricted'
+export type Status = 'ready' | 'loading' | 'failed' | 'restricted' | 'not-found'
 
 /** RMNCH Linda Bailey or Child John Kelly, with the person or program edited, or a request that never answers or fails. Not `enrolled`, Linda Bailey in any program. */
 export const renderParts = async (
@@ -104,10 +104,13 @@ export const renderParts = async (
             if (status === 'loading') {
                 return new Promise(() => {})
             }
-            if (status === 'failed' || status === 'restricted') {
-                throw Object.assign(new Error('no'), {
-                    httpStatusCode: status === 'failed' ? 500 : 403,
-                })
+            if (status !== 'ready') {
+                const httpStatusCode = {
+                    failed: 500,
+                    restricted: 403,
+                    'not-found': 404,
+                }[status]
+                throw Object.assign(new Error('no'), { httpStatusCode })
             }
             let raw: RawPerson = isChild ? childPerson : rmnchPerson
             if (!enrolled) {

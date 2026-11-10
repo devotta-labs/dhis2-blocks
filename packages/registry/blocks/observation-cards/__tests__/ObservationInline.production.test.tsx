@@ -14,7 +14,7 @@ describe('a misconfigured ObservationInline in production', () => {
         const message = container.querySelector(
             '[data-slot="observation-config-error"]'
         )
-        expect(message?.textContent).toBe("This card isn't set up correctly")
+        expect(message?.textContent).toBe("This part isn't set up correctly")
         expect(container.textContent).not.toContain(DE)
     })
 })

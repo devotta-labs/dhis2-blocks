@@ -5,6 +5,7 @@ export const DEFAULT_SETTINGS: LabSettings = {
     inactive: false,
     potentialDuplicate: false,
     restricted: false,
+    missing: false,
     enrollment: 'enrolled',
     calendar: 'gregorian',
     arrangement: 'composed',
@@ -85,6 +86,7 @@ export const PRESETS: readonly Preset[] = [
         actions: 'several',
     }),
     preset('States', 'Restricted', { restricted: true }),
+    preset('States', 'Not found', { missing: true }),
     preset('States', 'Failed', {
         network: {
             delay: 50,

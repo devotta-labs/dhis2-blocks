@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import React, {
     useCallback,
+    useEffect,
     useMemo,
     useRef,
     useState,
@@ -12,12 +13,16 @@ import React, {
 import {
     cacheIdOf,
     isForbidden,
+    isNotFound,
     resourceClientOf,
     shouldRetryTrackedEntityHeaderRequest,
     type TrackedEntityHeaderClient,
 } from '../api/client'
 import { fetchAttributeMetadata, fetchTrackedEntity } from '../api/queries'
-import { trackedEntityHeaderQueryKeys } from '../api/queryKeys'
+import {
+    METADATA_STALE_TIME,
+    trackedEntityHeaderQueryKeys,
+} from '../api/queryKeys'
 import { useTrackedEntityHeaderClient } from '../api/runtimeClient'
 import { displayLocale } from '../format/display'
 import {
@@ -58,6 +63,9 @@ const useDisplayOptions = (): HeaderContextValue['display'] => {
     const locale = displayLocale()
     return useMemo(() => ({ calendar, locale }), [calendar, locale])
 }
+
+const MISSING_ID =
+    'TrackedEntityHeaderProvider needs a trackedEntity id; it shows loading until it has one'
 
 const HeaderScope = ({
     trackedEntity,
@@ -109,6 +117,7 @@ const HeaderScope = ({
             ),
         enabled: teId !== '' && (progId !== undefined || type !== undefined),
         retry: shouldRetryTrackedEntityHeaderRequest,
+        staleTime: METADATA_STALE_TIME,
     })
 
     const { refetch: refetchEntity } = entity
@@ -124,10 +133,13 @@ const HeaderScope = ({
         }
     }, [entityFailed, metadataFailed, refetchEntity, refetchMetadata])
 
-    const entityError = entity.error
-    const metadataError = metadata.error
     const entityData = entity.data
     const metadataData = metadata.data
+    // A refetch that fails keeps what loaded, unless access was withdrawn.
+    const blocking = (error: Error | null, loaded: boolean) =>
+        error && (!loaded || isForbidden(error)) ? error : null
+    const entityError = blocking(entity.error, entityData !== undefined)
+    const metadataError = blocking(metadata.error, metadataData !== undefined)
     const state = useMemo((): TrackedEntityHeaderState => {
         const errors = [entityError, metadataError].filter(
             (error): error is Error => error !== null
@@ -135,6 +147,10 @@ const HeaderScope = ({
         // Restricted outranks failed: the record can't be shown however the other request went.
         if (errors.some(isForbidden)) {
             return { status: 'restricted', retry }
+        }
+        // Asked for again without the program and still missing: there is no such record.
+        if (entityError && isNotFound(entityError)) {
+            return { status: 'not-found', retry }
         }
         if (errors.length > 0) {
             return { status: 'failed', retry }
@@ -157,6 +173,12 @@ const HeaderScope = ({
             console.error(message)
         }
     }, [])
+
+    useEffect(() => {
+        if (teId === '') {
+            logProblem(MISSING_ID)
+        }
+    }, [teId, logProblem])
 
     const [counts, setCounts] = useState<ReadonlyMap<string, number>>(
         () => new Map()

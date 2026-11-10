@@ -50,6 +50,9 @@ export const answer = (
                 if (settings.restricted) {
                     throw httpError(403, 'Forbidden')
                 }
+                if (settings.missing) {
+                    throw httpError(404, `Person ${request.id} not found`)
+                }
                 if (request.params?.program === undefined) {
                     return data.record.without
                 }

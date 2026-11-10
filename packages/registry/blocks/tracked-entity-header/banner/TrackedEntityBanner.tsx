@@ -118,10 +118,12 @@ export function TrackedEntityBanner({
                                       "You don't have access to this record"
                                   )}
                         </Message>
-                        {/* Only the actions render here, so a host's "Request access" still shows. */}
-                        {children}
+                        {/* Mounted but hidden: only the actions, drawn in their own column, show, so a host's "Request access" still does. */}
+                        <div hidden>{children}</div>
                     </>
                 )
+            case 'not-found':
+                return <Message>{i18n.t("This record doesn't exist")}</Message>
             default:
                 return hasChildren ? (
                     children

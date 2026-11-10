@@ -50,8 +50,11 @@ The provider loads the tracked entity and the program's attribute metadata once,
 every part inside it. Values are shown as DHIS2 shows them: option names
 rather than codes, and dates in the system's calendar. A value the record
 doesn't have says "Not recorded", and one that can't be read says
-"Unavailable". The banner draws its own loading, failed and restricted
-states, and never shows the previous record while the next one loads.
+"Unavailable". The banner draws its own loading, failed, restricted and not
+found states, and never shows the previous record while the next one loads. A
+record that has loaded stays on screen if a later refresh fails, unless access
+has been withdrawn. Program metadata and organisation unit names are kept for
+an hour.
 
 ## Composing a banner
 
@@ -127,7 +130,8 @@ The banner is one layout, not a requirement. Every part works anywhere under
 `TrackedEntityHeaderProvider`, so you can build a quick look popover or a
 half-page summary from the same parts. Outside the banner you draw the
 whole-record states yourself from `useTrackedEntityHeader()`, which returns
-`status` (`'loading'`, `'failed'`, `'restricted'` or `'ready'`) and `retry`:
+`status` (`'loading'`, `'failed'`, `'restricted'`, `'not-found'` or `'ready'`)
+and `retry`:
 
 ```tsx
 const QuickLookPopover = ({ trackedEntityId, programId }) => (
@@ -162,8 +166,8 @@ const QuickLook = () => {
 
 Whatever you do, every value part renders nothing until `status` is
 `'ready'`, so a restricted record never shows a name or a misleading "Not
-recorded". `TrackedEntityActions` always renders, so a "Request access" button
-still shows. Label your own container, such as a dialog or popover, with
+recorded". Outside a banner `TrackedEntityActions` renders in every state, so
+a "Request access" button still shows. Label your own container, such as a dialog or popover, with
 `aria-labelledby` pointing at `TrackedEntityName`, which takes an `id`. The
 provider fetches when it mounts, so a popover loads the record when it opens.
 

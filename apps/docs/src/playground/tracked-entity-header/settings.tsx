@@ -45,6 +45,12 @@ export const OptionsControls = ({
         >
             No access (403)
         </Check>
+        <Check
+            checked={settings.missing}
+            onChange={(missing) => onChange({ missing })}
+        >
+            Doesn't exist (404)
+        </Check>
         <SelectRow
             label="Enrollment"
             value={settings.enrollment}

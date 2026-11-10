@@ -264,6 +264,12 @@ describe('the tracked entity header lab server', () => {
         })
     })
 
+    it('answers 404 with and without the program for Not found', () => {
+        const settings = settingsOf('Not found')
+        expect(statusOf(() => recordOf(settings))).toBe(404)
+        expect(statusOf(() => recordOf(settings, false))).toBe(404)
+    })
+
     describe('layout presets', () => {
         const programOf = (settings: ReturnType<typeof settingsOf>) =>
             ProgramAttributesResponseSchema.parse(

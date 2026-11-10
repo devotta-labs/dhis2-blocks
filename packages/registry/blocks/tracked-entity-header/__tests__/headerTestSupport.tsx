@@ -23,7 +23,7 @@ interface FakeServerOptions {
     /** Answers person requests with a 403. */
     forbidden?: boolean
     /** Answers person requests with this status, until `recover` is called. */
-    fail?: 400 | 500
+    fail?: 400 | 404 | 500
     /** Holds the tracked entity request for this one, or this program, open until `release` is called. */
     deferFor?: string
     /** The person and program asked about when the request names neither of the other fixture's. */
@@ -40,6 +40,7 @@ const FIXTURE_OF_PROGRAM = new Map<string, Fixture>([
 export const createFakeServer = (options: FakeServerOptions = {}) => {
     const requests: ResourceRequest[] = []
     let failing = options.fail
+    let forbidden = options.forbidden
     let release = () => {}
     const held = new Promise<void>((resolve) => {
         release = resolve
@@ -57,7 +58,7 @@ export const createFakeServer = (options: FakeServerOptions = {}) => {
                 'rmnch'
             switch (request.resource) {
                 case 'tracker/trackedEntities': {
-                    if (options.forbidden) {
+                    if (forbidden) {
                         throw Object.assign(new Error('Forbidden'), {
                             httpStatusCode: 403,
                         })
@@ -96,6 +97,14 @@ export const createFakeServer = (options: FakeServerOptions = {}) => {
         /** The server answers person requests again. */
         recover: () => {
             failing = undefined
+        },
+        /** From now on the server answers person requests with this status. */
+        failWith: (status: 400 | 403 | 500) => {
+            if (status === 403) {
+                forbidden = true
+            } else {
+                failing = status
+            }
         },
     }
 }

@@ -60,11 +60,13 @@ takes a `className`. `TrackedEntityDate` shows a date attribute, or with
 `enrollmentDate` the enrollment's incident or enrollment date under the
 program's own label. Every value part renders nothing until the record is
 ready, so a restricted record never shows a value. `TrackedEntityActions`
-always renders.
+renders in every state outside a banner; inside one it shows once the record
+is ready, and when access is restricted, so a "Request access" button still
+shows.
 
 Parts also work outside the banner, anywhere under the provider.
 `useTrackedEntityHeader()` returns `status` (`'loading'`, `'failed'`,
-`'restricted'` or `'ready'`), `retry` and, once ready, the tracked entity and
+`'restricted'`, `'not-found'` or `'ready'`), `retry` and, once ready, the tracked entity and
 attribute metadata, so a popover or a summary can draw its own states.
 `createTrackedEntityHeaderClient` wraps a custom data engine; by default the
 block uses the DHIS2 app-runtime.

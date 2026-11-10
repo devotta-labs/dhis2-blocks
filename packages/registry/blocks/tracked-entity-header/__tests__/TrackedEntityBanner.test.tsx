@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
+import { Button } from '@/components/dhis2/ui/button'
 import {
+    TrackedEntityActions,
     TrackedEntityAttribute,
     TrackedEntityBanner,
     TrackedEntityDate,
@@ -351,6 +353,35 @@ describe('TrackedEntityBanner', () => {
         }
         expect(text).not.toContain('Not recorded')
         expect(text).not.toContain('Unavailable')
+    })
+
+    it("restricted: hides the host's own content, keeping only the actions", async () => {
+        await renderParts(
+            <TrackedEntityBanner>
+                <TrackedEntityName attributes={[FIRST, LAST]} />
+                <span>Host secret</span>
+                <TrackedEntityActions>
+                    <Button>Request access</Button>
+                </TrackedEntityActions>
+            </TrackedEntityBanner>,
+            { status: 'restricted' }
+        )
+
+        await expect
+            .element(page.getByRole('button', { name: 'Request access' }))
+            .toBeVisible()
+        expect(page.getByText('Host secret').element()).not.toBeVisible()
+    })
+
+    it('not found: says the record does not exist, with no Retry', async () => {
+        await renderParts(<Composed />, { status: 'not-found' })
+
+        const region = page.getByRole('region', { name: 'Record' })
+        await expect
+            .element(region.getByText("This record doesn't exist"))
+            .toBeVisible()
+        expect(region.getByRole('button', { name: 'Retry' }).query()).toBeNull()
+        expect(region.element().textContent).not.toContain('Linda')
     })
 
     it('restricted with no program name: the message without a program', async () => {

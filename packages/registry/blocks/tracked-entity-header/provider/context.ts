@@ -4,7 +4,10 @@ import type { TrackedEntityHeaderResourceClient } from '../api/client'
 import type { AttributeMetadata, TrackedEntityRecord } from '../api/types'
 
 export type TrackedEntityHeaderState =
-    | { status: 'loading' | 'failed' | 'restricted'; retry(): void }
+    | {
+          status: 'loading' | 'failed' | 'restricted' | 'not-found'
+          retry(): void
+      }
     | {
           status: 'ready'
           retry(): void

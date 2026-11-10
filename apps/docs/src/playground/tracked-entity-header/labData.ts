@@ -28,6 +28,8 @@ export interface LabSettings {
     potentialDuplicate: boolean
     /** The server refuses the person with a 403. */
     restricted: boolean
+    /** The server has no such record and answers 404, with or without the program. */
+    missing: boolean
     /** Enrolled in the program, not enrolled (DHIS2 answers 404), or enrolled again after completing. */
     enrollment: 'enrolled' | 'none' | 'again'
     calendar: Dhis2Calendar

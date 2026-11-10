@@ -5,7 +5,10 @@ import { Result } from 'better-result'
 import React from 'react'
 import { shouldRetryTrackedEntityHeaderRequest } from '../api/client'
 import { fetchOrgUnitName } from '../api/queries'
-import { trackedEntityHeaderQueryKeys } from '../api/queryKeys'
+import {
+    METADATA_STALE_TIME,
+    trackedEntityHeaderQueryKeys,
+} from '../api/queryKeys'
 import { useHeaderContext } from '../provider/context'
 import { AttributeFact } from './FactPair'
 import { useLoggedProblem } from './useAttributeValue'
@@ -44,6 +47,7 @@ const OwnerName = ({
         },
         enabled: orgUnit !== undefined,
         retry: shouldRetryTrackedEntityHeaderRequest,
+        staleTime: METADATA_STALE_TIME,
     })
     if (orgUnit === undefined) {
         return (

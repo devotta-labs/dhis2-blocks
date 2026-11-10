@@ -1,3 +1,4 @@
+import { focusManager } from '@tanstack/react-query'
 import React from 'react'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
@@ -127,8 +128,11 @@ describe('TrackedEntityHeaderProvider', () => {
     })
 
     it.each(['', '   '])(
-        '%j as trackedEntity makes no request and stays loading',
+        '%j as trackedEntity makes no request, stays loading and says why in the console',
         async (id) => {
+            const errors = vi
+                .spyOn(console, 'error')
+                .mockImplementation(() => {})
             const server = createFakeServer()
             const Wrapper = createWrapper()
 
@@ -146,8 +150,96 @@ describe('TrackedEntityHeaderProvider', () => {
 
             await expect.element(state()).toHaveTextContent('loading')
             expect(server.requests).toHaveLength(0)
+            expect(errors).toHaveBeenCalledTimes(1)
+            expect(String(errors.mock.calls[0]?.[0])).toContain(
+                'needs a trackedEntity'
+            )
+            errors.mockRestore()
         }
     )
+
+    it.each([
+        [400, 'ready te1 WHO RMNCH Tracker 5'],
+        [403, 'restricted'],
+    ] as const)(
+        'a refetch that fails with %i after loading shows %s',
+        async (status, shown) => {
+            const server = createFakeServer()
+            const Wrapper = createWrapper()
+
+            await render(
+                <Wrapper>
+                    <TrackedEntityHeaderProvider
+                        trackedEntity="te1"
+                        program={RMNCH}
+                        client={server.client}
+                    >
+                        <Probe />
+                    </TrackedEntityHeaderProvider>
+                </Wrapper>
+            )
+            await expect
+                .element(state())
+                .toHaveTextContent('ready te1 WHO RMNCH Tracker 5')
+
+            server.failWith(status)
+            const before = server.countOf('tracker/trackedEntities')
+            // A return to the window refetches the stale record.
+            focusManager.setFocused(false)
+            focusManager.setFocused(true)
+            await expect
+                .poll(() => server.countOf('tracker/trackedEntities'))
+                .toBeGreaterThan(before)
+            // The failed answer lands a moment after the request.
+            await new Promise((resolve) => setTimeout(resolve, 100))
+            expect(state().element()).toHaveTextContent(shown)
+            focusManager.setFocused(undefined)
+        }
+    )
+
+    it('a record that does not exist is not-found', async () => {
+        const server = createFakeServer({ fail: 404 })
+        const Wrapper = createWrapper()
+
+        await render(
+            <Wrapper>
+                <TrackedEntityHeaderProvider
+                    trackedEntity="gone"
+                    program={RMNCH}
+                    client={server.client}
+                >
+                    <Probe />
+                </TrackedEntityHeaderProvider>
+            </Wrapper>
+        )
+
+        await expect.element(state()).toHaveTextContent('not-found')
+    })
+
+    it('keeps the program metadata for later records, asking for it once', async () => {
+        const server = createFakeServer()
+        const Wrapper = createWrapper()
+        const Header = ({ id }: { id: string }) => (
+            <Wrapper>
+                <TrackedEntityHeaderProvider
+                    trackedEntity={id}
+                    program={RMNCH}
+                    client={server.client}
+                >
+                    <Probe />
+                </TrackedEntityHeaderProvider>
+            </Wrapper>
+        )
+
+        const { rerender } = await render(<Header id="te1" />)
+        await expect.element(state()).toHaveTextContent('ready te1')
+        await rerender(<Header id="te2" />)
+        await expect.element(state()).toHaveTextContent('ready te2')
+        await rerender(<Header id="te1" />)
+        await expect.element(state()).toHaveTextContent('ready te1')
+
+        expect(server.countOf('programs')).toBe(1)
+    })
 
     it('switching trackedEntity shows loading until the new person arrives', async () => {
         const server = createFakeServer({ deferFor: 'te2' })

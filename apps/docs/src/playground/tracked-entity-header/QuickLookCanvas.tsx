@@ -32,6 +32,9 @@ const QuickLookStatus = () => {
     if (state.status === 'restricted') {
         return <p className="m-0">You don't have access to this record</p>
     }
+    if (state.status === 'not-found') {
+        return <p className="m-0">This record doesn't exist</p>
+    }
     return (
         <>
             <p className="m-0">Couldn't load this record</p>

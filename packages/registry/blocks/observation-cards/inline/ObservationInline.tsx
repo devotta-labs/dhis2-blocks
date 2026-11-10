@@ -73,7 +73,7 @@ export function ObservationInline({
                     className="text-sm break-words text-dhis2-destructive-strong"
                 >
                     {isProduction()
-                        ? i18n.t("This card isn't set up correctly")
+                        ? i18n.t("This part isn't set up correctly")
                         : state.message}
                 </span>
             </div>

@@ -50,6 +50,9 @@ const Sidebar = ({ parts }: { parts: Parts }) => {
             <p className="m-0 text-sm">You don't have access to this record</p>
         )
     }
+    if (status === 'not-found') {
+        return <p className="m-0 text-sm">This record doesn't exist</p>
+    }
     if (status === 'failed') {
         return (
             <Button variant="outline" size="sm" onClick={retry}>

@@ -55,7 +55,7 @@ const useClickableTooltip = () => {
  * it is. Clicking, focusing or hovering it shows the date and program stage;
  * a screen reader hears those in full instead of the short form.
  */
-function RecordedNote({
+export function RecordedNote({
     point,
     staleAfterDays,
     stale,

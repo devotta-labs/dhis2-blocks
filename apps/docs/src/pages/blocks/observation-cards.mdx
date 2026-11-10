@@ -119,6 +119,28 @@ read the threshold. Without it, nothing is ever marked out of date.
 Pick the number for each data element, since a haemoglobin reading and a
 smoking status go stale at different speeds.
 
+## One line in a banner
+
+`ObservationInline` shows one data element as a single line: its label, the
+latest value with unit, the legend name in words and how long ago it was
+recorded, which becomes "Out of date" past `staleAfterDays`. It has no frame,
+sparkline or change, for a facts line such as the one in a
+[Tracked Entity Header](/blocks/tracked-entity-header).
+
+```tsx
+<ObservationsProvider trackedEntity={personId} program="WSGAb5XwJ3Y">
+    <ObservationInline
+        dataElement="vANAXwtLwcT"
+        unit="g/dL"
+        staleAfterDays={90}
+    />
+</ObservationsProvider>
+```
+
+It reads the same provider as the cards, so it adds no requests. It takes
+`dataElement`, `unit`, `label`, `staleAfterDays` and `className`, and shows
+the card's loading, "Not recorded" and "Unavailable" states.
+
 ## API reference
 
 ### ObservationsProvider

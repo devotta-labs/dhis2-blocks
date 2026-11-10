@@ -2153,7 +2153,8 @@
                     "type": "registry:file",
                     "target": "@components/tracked-entity-header/provider/env.ts"
                 }
-            ]
+            ],
+            "docs": "Wrap a banner in TrackedEntityHeaderProvider with a trackedEntity and, usually, a program; it loads the person and the program's attribute metadata once for every part inside. TrackedEntityBanner with no children shows the program's list attributes, the person's state tags and a details disclosure for the rest. To compose a banner, place the parts TrackedEntityName, TrackedEntityBorn, TrackedEntityAttribute, TrackedEntityStatus, TrackedEntityOwner, TrackedEntityEnrollment, TrackedEntityFacts, TrackedEntityActions and TrackedEntityDetails inside it, and place TrackedEntityStatus yourself so an inactive person is never shown by colour alone. Event facts such as a latest reading come from ObservationInline in observation-cards, inside an ObservationsProvider. Every part works outside the banner under the provider; read status and retry from useTrackedEntityHeader to draw the loading, failed and restricted states yourself. A restricted person shows no values. See the tracked entity header docs page for examples."
         },
         {
             "name": "tracker-data-entry",

@@ -1,0 +1,177 @@
+---
+title: Tracked Entity Header
+description: A banner for one person in a tracker program, composed from attribute parts.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="tracked-entity-header/person-banner" />
+
+This preview reads one person in the WHO RMNCH Tracker in the Sierra Leone
+demo database. The first banner is the default: the program's list
+attributes, a tag for a person who is inactive or a possible duplicate, and
+a **Details** disclosure for every other attribute. The second is composed
+from parts: the name, birth date, unique ID, allergies and the latest
+haemoglobin reading. This person has no unique ID or allergies recorded, so
+those say "Not recorded" rather than leaving a gap. Copy the example's code
+to start from it, and edit the uids at the top of the file.
+
+## Installation
+
+<InstallCommand item="tracked-entity-header" />
+
+## Usage
+
+Wrap a banner in `TrackedEntityHeaderProvider` with the person and the
+program. `trackedEntity` is the only required prop; without `program` the
+banner shows only the person type's attributes, and the owner and enrollment
+parts say they need one.
+
+```tsx
+import {
+    TrackedEntityBanner,
+    TrackedEntityHeaderProvider,
+} from '@/components/tracked-entity-header'
+
+export function PersonHeader({ personId }: { personId: string }) {
+    return (
+        <TrackedEntityHeaderProvider
+            trackedEntity={personId}
+            program="WSGAb5XwJ3Y"
+        >
+            <TrackedEntityBanner />
+        </TrackedEntityHeaderProvider>
+    )
+}
+```
+
+The provider loads the person and the program's attribute metadata once, for
+every part inside it. Values are shown as DHIS2 shows them: option names
+rather than codes, and dates in the system's calendar. A value the person
+doesn't have says "Not recorded", and one that can't be read says
+"Unavailable". The banner draws its own loading, failed and restricted
+states, and never shows the previous person while the next one loads.
+
+## Composing a banner
+
+Place parts inside `TrackedEntityBanner` to choose what it shows. Line one is
+everything up to the facts, with the actions at its end. The facts take line
+two, and the details open below both.
+
+```tsx
+<ObservationsProvider trackedEntity={personId} program="WSGAb5XwJ3Y">
+    <TrackedEntityHeaderProvider trackedEntity={personId} program="WSGAb5XwJ3Y">
+        <TrackedEntityBanner className="sticky top-0">
+            <TrackedEntityName attributes={['w75KJ2mc4zz', 'zDhUuAYrxNC']} />
+            <TrackedEntityStatus />
+            <TrackedEntityBorn attribute="gHGyrwKPzej" />
+            <TrackedEntityAttribute attribute="lZGmxYbs97q" />
+            <TrackedEntityActions>
+                <Button onClick={recordVisit}>Record visit</Button>
+            </TrackedEntityActions>
+            <TrackedEntityFacts>
+                <TrackedEntityAttribute attribute="gu1fqsmoU8r" />
+                <ObservationInline dataElement="vANAXwtLwcT" unit="g/dL" />
+            </TrackedEntityFacts>
+            <TrackedEntityDetails />
+        </TrackedEntityBanner>
+    </TrackedEntityHeaderProvider>
+</ObservationsProvider>
+```
+
+Place `TrackedEntityStatus` yourself when composing. Without it, an inactive
+person is shown by the banner's muted surface alone, which is colour alone. A
+banner with no children places it for you.
+
+The banner is labelled by the `TrackedEntityName` you place. Without one it
+takes the person type's name, such as "Person". `TrackedEntityDetails` lists
+every attribute no other part shows, so an attribute you place, even inside
+`TrackedEntityFacts`, isn't repeated there.
+
+Stickiness is the host's, since only the host knows its scroll container: pass
+`className="sticky top-0"` as above.
+
+The parts are `TrackedEntityName`, `TrackedEntityBorn`,
+`TrackedEntityAttribute`, `TrackedEntityStatus`, `TrackedEntityOwner`,
+`TrackedEntityEnrollment`, `TrackedEntityFacts`, `TrackedEntityActions` and
+`TrackedEntityDetails`. Each takes a `className`. `TrackedEntityBorn` takes
+an `attribute`, or `enrollmentDate="occurredAt"` or `"enrolledAt"` for programs
+that keep the birth date on the enrollment. It shows the date only.
+`TrackedEntityOwner` and `TrackedEntityEnrollment` need a `program`.
+
+The event facts, such as the haemoglobin above, come from
+[Observation Cards](/blocks/observation-cards): `ObservationInline` needs an
+`ObservationsProvider` above it, and shares its requests with the cards on the
+same page.
+
+## Parts outside a frame
+
+The banner is one layout, not a requirement. Every part works anywhere under
+`TrackedEntityHeaderProvider`, so you can build a quick look popover or a
+half-page summary from the same parts. Outside the banner you draw the
+whole-record states yourself from `useTrackedEntityHeader()`, which returns
+`status` (`'loading'`, `'failed'`, `'restricted'` or `'ready'`) and `retry`:
+
+```tsx
+;<PopoverContent aria-labelledby="quick-look-name">
+    <TrackedEntityHeaderProvider trackedEntity={personId} program={programId}>
+        <QuickLook />
+    </TrackedEntityHeaderProvider>
+</PopoverContent>
+
+const QuickLook = () => {
+    const { status } = useTrackedEntityHeader()
+    if (status !== 'ready') return <QuickLookStatus status={status} />
+    return (
+        <>
+            <TrackedEntityName
+                id="quick-look-name"
+                attributes={[firstName, lastName]}
+            />
+            <TrackedEntityStatus />
+            <TrackedEntityBorn attribute={birthDate} />
+            <TrackedEntityFacts>
+                <TrackedEntityAttribute attribute={allergies} />
+            </TrackedEntityFacts>
+        </>
+    )
+}
+```
+
+Whatever you do, every value part renders nothing until `status` is
+`'ready'`, so a restricted person never shows a name or a misleading "Not
+recorded". `TrackedEntityActions` always renders, so a "Request access" button
+still shows. Label your own container, such as a dialog or popover, with
+`aria-labelledby` pointing at `TrackedEntityName`, which takes an `id`. The
+provider fetches when it mounts, so a popover loads the person when it opens.
+
+## Finding attribute uids
+
+Parts name attributes by uid. List a program's attributes, with which ones
+show in lists:
+
+```
+GET /api/programs/<program>?fields=programTrackedEntityAttributes[displayInList,sortOrder,trackedEntityAttribute[id,displayName,valueType]]
+```
+
+## API reference
+
+### TrackedEntityHeaderProvider
+
+- `trackedEntity: string` — **required.** The person the banner shows.
+- `program?: string` — the program whose attributes, enrollment and owner are
+  shown. Changing either prop starts from nothing.
+- `client?: TrackedEntityHeaderClient` — a custom data engine, from
+  `createTrackedEntityHeaderClient`. Defaults to the DHIS2 app runtime. Create
+  it once, outside render.
+- `children?: ReactNode` — the banner and any of your own UI that uses
+  `useTrackedEntityHeader`.
+
+### TrackedEntityBanner
+
+- `children?: ReactNode` — the parts to show. Without children, the program's
+  list attributes, the tags and the details.
+- `className?: string` — applied to the banner.
+
+The parts take `className` and the props listed in their types.

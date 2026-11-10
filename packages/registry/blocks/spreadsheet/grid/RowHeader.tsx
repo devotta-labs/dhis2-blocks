@@ -80,6 +80,7 @@ export const RowHeader = memo(function RowHeader({
     return (
         <th
             scope="row"
+            aria-colindex={1}
             aria-describedby={
                 notes.length === 0 ? undefined : notesDomId(rowHeader)
             }

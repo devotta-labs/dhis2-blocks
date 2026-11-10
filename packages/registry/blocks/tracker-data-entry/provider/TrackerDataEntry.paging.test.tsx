@@ -1,7 +1,10 @@
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
 import { RMNCH } from '@/components/program-rules/__tests__/rmnch'
-import { control } from '@/components/spreadsheet/grid/__tests__/gridRig'
+import {
+    control,
+    scrolledTo,
+} from '@/components/spreadsheet/grid/__tests__/gridRig'
 import { cellKey } from '@/components/spreadsheet'
 import type { CellKey } from '@/components/spreadsheet'
 import meAdmin from '../sources/__tests__/fixtures/me-admin.json'
@@ -432,9 +435,10 @@ test('a page with a stage the table has no columns for adds those columns', asyn
     // The second visit's own fields join at the end.
     const added = ['QM5d0hfSbKk', 'DCUDZxqOxUo', 'SeXllT5ypsh', 'yTDoF5b1OhI']
     expect(table.columns.map(({ id }) => id)).toEqual([...before, ...added])
-    await expect
-        .element(page.getByRole('columnheader', { name: 'PROM Management' }))
-        .toBeInTheDocument()
+    // They are past the columns in view: the table scrolls to them.
+    await scrolledTo(() =>
+        page.getByRole('columnheader', { name: 'PROM Management' }).query()
+    )
     expect(table.closed.get(cellKey(RMNCH.eventId, 'SeXllT5ypsh'))).toBe(
         'Not in this stage'
     )

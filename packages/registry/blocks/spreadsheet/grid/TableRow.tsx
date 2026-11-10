@@ -5,6 +5,7 @@ import type { GridRow, GridTable } from '../model/types'
 import { useSpreadsheetContext, useRowCells } from '../provider/context'
 import { RowActions } from './BulkMenu'
 import type { BulkTarget } from './BulkMenu'
+import type { ColumnWindow } from './columnWindow'
 import { rowHeaderDomId } from './headers'
 import type { NavKey } from './navigation'
 import { fieldAt } from './navGrid'
@@ -15,6 +16,15 @@ import type { NotesTarget } from './RowNotes'
 const CELL_CLASS = cn(BORDER_CLASS, 'h-9 min-w-28 p-0')
 // The last column's line is the actions column's own.
 export const LAST_CLASS = 'border-e-0'
+
+/** Space for columns not drawn, out of the accessibility tree. */
+const Gap = ({ width }: { width: number }) => (
+    <td
+        aria-hidden="true"
+        className="border-b border-dhis2-border p-0"
+        style={{ minWidth: width }}
+    />
+)
 
 interface TableRowProps {
     idScope: string
@@ -28,12 +38,17 @@ interface TableRowProps {
     measure(element: Element | null): void
     /** The ids of the column headers that name each column's cells. */
     labels: ReadonlyArray<string>
+    /** The columns drawn. */
+    columns: ColumnWindow
     move(key: NavKey): void
     openMenu(target: BulkTarget): void
     openNotes(target: NotesTarget): void
 }
 
-/** One row of a table: it reads its cells' states and effects, once for the row, and hands each cell its own. */
+/**
+ * One row of a table, its drawn columns only: it reads their cells' states and effects, once for the row, and hands
+ * each cell its own.
+ */
 export const TableRow = memo(function TableRow({
     idScope,
     table,
@@ -42,12 +57,16 @@ export const TableRow = memo(function TableRow({
     rowIndex,
     measure,
     labels,
+    columns,
     move,
     openMenu,
     openNotes,
 }: TableRowProps) {
     const { keyOf, store } = useSpreadsheetContext()
-    const keys = table.columns.map((column) => keyOf(row, column))
+    const count = table.columns.length
+    const keys = columns.drawn.map(({ index }) =>
+        keyOf(row, table.columns[index])
+    )
     const { states, effects } = useRowCells(keys)
     const rowHeader = rowHeaderDomId(idScope, table.id, row.id)
     return (
@@ -58,27 +77,32 @@ export const TableRow = memo(function TableRow({
                 row={row}
                 openNotes={openNotes}
             />
-            {table.columns.map((column, c) => (
+            {columns.drawn.flatMap(({ index, gap }, c) => [
+                gap > 0 ? <Gap key={`gap-${index}`} width={gap} /> : null,
                 <td
-                    key={column.id}
+                    key={table.columns[index].id}
+                    data-column={index}
+                    aria-colindex={index + 2}
                     className={cn(
                         CELL_CLASS,
-                        c === keys.length - 1 && LAST_CLASS
+                        index === count - 1 && LAST_CLASS
                     )}
                 >
                     <RowCell
                         cellKey={keys[c]}
                         field={fieldAt(store.getState(), keys[c])}
-                        labelledBy={`${labels[c]} ${rowHeader}`}
+                        labelledBy={`${labels[index]} ${rowHeader}`}
                         move={move}
                         closedReason={table.closed.get(keys[c])}
                         cell={states[c]}
                         effects={effects[c]}
                     />
-                </td>
-            ))}
+                </td>,
+            ])}
+            {columns.after > 0 ? <Gap width={columns.after} /> : null}
             <RowActions
                 rowHeader={rowHeader}
+                colIndex={count + 2}
                 onOpen={(anchor) => openMenu({ anchor, table, row })}
             />
         </tr>

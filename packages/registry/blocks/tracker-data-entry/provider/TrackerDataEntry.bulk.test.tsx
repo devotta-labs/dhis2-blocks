@@ -1,6 +1,7 @@
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
 import { cellKey } from '@/components/spreadsheet'
+import { nextFrame } from '@/components/spreadsheet/grid/__tests__/gridRig'
 import type { CellKey } from '@/components/spreadsheet'
 import type { TrackerRow } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
@@ -78,10 +79,30 @@ const valuesOf = (
 test('person and enrolment columns have no column button and are left alone by a row’s actions', async () => {
     const mounted = await mountRegister()
     const buttons = page.getByRole('button', { name: /^Column actions/ })
-    await expect.poll(() => buttons.elements()).toHaveLength(4)
-    expect(
-        page.getByRole('button', { name: 'Column actions Registered' }).query()
-    ).toBeNull()
+    await expect.poll(() => buttons.elements().length).toBeGreaterThan(0)
+    // Only the columns near the view are drawn: the buttons are counted as the table scrolls past them.
+    const seen = new Set<string>()
+    const region = page.getByRole('region').element()
+    for (
+        let left = 0;
+        left <= region.scrollWidth;
+        left += region.clientWidth / 2
+    ) {
+        region.scrollLeft = left
+        await nextFrame()
+        await nextFrame()
+        for (const button of buttons.elements()) {
+            seen.add(button.getAttribute('aria-labelledby') ?? '')
+        }
+        expect(
+            page
+                .getByRole('button', { name: 'Column actions Registered' })
+                .query()
+        ).toBeNull()
+    }
+    expect(seen.size).toBe(4)
+    region.scrollLeft = 0
+    await nextFrame()
 
     const [first] = mounted.rows
     const person = first?.slots?.person ?? ''

@@ -72,6 +72,7 @@ export const FilterButton = ({
             value={summary ?? i18n.t('All')}
             clearLabel={i18n.t('Clear {{filter}} filter', {
                 filter: displayPrefix,
+                interpolation: { escapeValue: false },
             })}
             disabled={disabled}
             open={open}

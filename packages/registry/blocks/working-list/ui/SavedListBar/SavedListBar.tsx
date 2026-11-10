@@ -156,7 +156,12 @@ export const SavedListBar = ({
                                             data-testid={`working-list-view-${list.id}-menu`}
                                             aria-label={i18n.t(
                                                 'Actions for {{name}}',
-                                                { name }
+                                                {
+                                                    name,
+                                                    interpolation: {
+                                                        escapeValue: false,
+                                                    },
+                                                }
                                             )}
                                         >
                                             <IconMore16 />
@@ -232,6 +237,7 @@ export const SavedListBar = ({
                         <AlertDialogDescription>
                             {i18n.t('“{{name}}” will be permanently deleted.', {
                                 name: deleteList.name,
+                                interpolation: { escapeValue: false },
                             })}
                         </AlertDialogDescription>
                         <AlertDialogFooter>

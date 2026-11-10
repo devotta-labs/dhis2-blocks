@@ -230,6 +230,7 @@ export const ComboboxField = ({
                                     key={value}
                                     removeLabel={i18n.t('Remove {{label}}', {
                                         label: labelFor(value),
+                                        interpolation: { escapeValue: false },
                                     })}
                                 >
                                     {labelFor(value)}

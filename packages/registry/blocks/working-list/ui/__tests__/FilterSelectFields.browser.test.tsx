@@ -63,6 +63,27 @@ const ControlledCombobox = ({
 }
 
 describe('filter select fields', () => {
+    it('preserves special characters as plain text in option removal labels', async () => {
+        const label = 'Result <b>A&B</b> "North"'
+        const onChange = vi.fn()
+        const screen = await render(
+            <ComboboxField
+                multiple
+                label="Values"
+                values={['POS']}
+                options={[{ value: 'POS', label }]}
+                onChange={onChange}
+            />
+        )
+        const remove = screen
+            .getByRole('button', { name: `Remove ${label}`, exact: true })
+            .first()
+        await expect.element(remove).toBeVisible()
+        expect(screen.container.querySelector('b')).toBeNull()
+        await remove.click()
+        expect(onChange).toHaveBeenCalledWith([])
+    })
+
     it('picks and removes option values inside a filter editor without closing it', async () => {
         const onApply = vi.fn<(filter: AppliedFilter) => void>()
         await render(

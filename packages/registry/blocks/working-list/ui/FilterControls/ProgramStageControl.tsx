@@ -44,10 +44,12 @@ export const ProgramStageControl = ({
             prefix={i18n.t('{{filterName}}{{escape}}', {
                 filterName: i18n.t('Program stage'),
                 escape: ':',
+                interpolation: { escapeValue: false },
             })}
             value={selectedName ?? ''}
             clearLabel={i18n.t('Clear {{filter}} filter', {
                 filter: i18n.t('Program stage'),
+                interpolation: { escapeValue: false },
             })}
             disabled={disabled}
             open={open}

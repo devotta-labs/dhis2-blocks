@@ -2154,6 +2154,11 @@
                     "target": "@components/tracker-data-entry/provider/openForm.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/ruleWindow.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/ruleWindow.ts"
+                },
+                {
                     "path": "packages/registry/blocks/tracker-data-entry/provider/signedIn.ts",
                     "type": "registry:file",
                     "target": "@components/tracker-data-entry/provider/signedIn.ts"

@@ -333,7 +333,8 @@ export const connectRules = ({
         return changed
     }
 
-    // While the worker has rows, those whose values may have changed since: what it says of them is out of date.
+    // While the worker's answer is awaited or being applied, the rows whose values may have changed since it was
+    // asked: what it says of them is out of date.
     let stale: Set<string> | undefined
 
     /**
@@ -488,11 +489,13 @@ export const connectRules = ({
                 forMs
             ),
         watch: () => {
-            const changed = new Set<string>()
-            stale = changed
-            return () => {
-                stale = undefined
-                return changed
+            const rows = new Set<string>()
+            stale = rows
+            return {
+                rows,
+                stop: () => {
+                    stale = undefined
+                },
             }
         },
     })

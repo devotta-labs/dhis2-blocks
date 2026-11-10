@@ -11,8 +11,15 @@ import type { FormTables } from './openForm'
 const FIRST_SLICE_MS = 100
 const IDLE_SLICE_MS = 16
 // Where the rules run in a worker, loading asks it for this many rows at a time, and it answers with those it got to
-// in the first slice's time: the main thread only applies what they say.
+// in the first slice's time: the main thread only applies what they say, in the slices it would have run them in.
 const WORKER_ROWS = 50
+
+/** What the worker said of `rowIds`, and the rows that changed since it was asked. */
+interface Answer {
+    evaluation: EventsRulesEvaluation
+    rowIds: string[]
+    changed: { rows: ReadonlySet<string>; stop(): void }
+}
 
 interface SliceOptions {
     tables: FormTables['tables']
@@ -34,8 +41,8 @@ interface SliceOptions {
         rowIds: ReadonlyArray<string>,
         forMs: number
     ): ReturnType<NonNullable<EventsRules['evaluateInBackground']>>
-    /** Starts noting the rows that change while the worker has them; the function returned stops, and says which. */
-    watch(): () => ReadonlySet<string>
+    /** Starts noting the rows that change from now, while the worker has them and until its answer is applied. */
+    watch(): Answer['changed']
 }
 
 /**
@@ -87,10 +94,29 @@ export const runInSlices = ({
     let cancel = () => {}
     // Rows still in view take short slices one after another; the rest wait for idle time.
     const schedule = () => (inView ? soon : whenIdle)(nextSlice)
-    /**
-     * Asks the worker for the next rows and applies what it says when it answers, then asks again. False where no
-     * worker is ready: the rows run here.
-     */
+    // What the worker said of rows whose effects are not applied yet.
+    let answered: Answer | undefined
+    /** Applies what the worker said, a slice of the rows at a time as the rows run here are; then asks it again. */
+    const applyAnswer = ({ evaluation, rowIds, changed }: Answer) => {
+        // A row that changed meanwhile runs here, on what it holds now.
+        for (const rowId of changed.rows) {
+            evaluation.effects.delete(rowId)
+            evaluation.failures.delete(rowId)
+        }
+        const left = run(rowIds, performance.now() + IDLE_SLICE_MS, evaluation)
+        took(rest.slice(rowIds.length - left.length))
+        if (left.length > 0) {
+            answered = { evaluation, rowIds: left, changed }
+            cancel = schedule()
+            return
+        }
+        changed.stop()
+        answered = undefined
+        if (rest.length > 0 && !askWorker()) {
+            cancel = schedule()
+        }
+    }
+    /** Asks the worker for the next rows. False where no worker is ready: the rows run here. */
     const askWorker = () => {
         const rowIds = rest.slice(0, WORKER_ROWS)
         const answer = ask(rowIds, FIRST_SLICE_MS)
@@ -99,29 +125,29 @@ export const runInSlices = ({
         }
         const changed = watch()
         void answer.then((reply) => {
-            const stale = changed()
             if (stopped) {
-                return
-            }
-            if (reply !== undefined) {
-                const { effects, failures } = reply.evaluation
-                // A row that changed meanwhile runs here, on what it holds now.
-                for (const rowId of stale) {
-                    effects.delete(rowId)
-                    failures.delete(rowId)
-                }
-                run(rowIds.slice(0, reply.done), Infinity, reply.evaluation)
-                took(rest.slice(reply.done))
-            }
-            // A worker that failed leaves the rows to the slices here.
-            if (rest.length > 0 && !askWorker()) {
+                changed.stop()
+            } else if (reply === undefined) {
+                // A worker that failed leaves the rows to the slices here.
+                changed.stop()
                 cancel = schedule()
+            } else {
+                applyAnswer({
+                    evaluation: reply.evaluation,
+                    rowIds: rowIds.slice(0, reply.done),
+                    changed,
+                })
             }
         })
         return true
     }
     const nextSlice = () => {
-        if (!stopped && rest.length > 0 && !askWorker()) {
+        if (stopped || rest.length === 0) {
+            return
+        }
+        if (answered !== undefined) {
+            applyAnswer(answered)
+        } else if (!askWorker()) {
             slice(IDLE_SLICE_MS)
             cancel = schedule()
         }
@@ -131,6 +157,7 @@ export const runInSlices = ({
         stop: () => {
             stopped = true
             cancel()
+            answered?.changed.stop()
         },
         waiting: (rowId: string) => rest.includes(rowId),
     }

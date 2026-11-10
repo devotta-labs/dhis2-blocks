@@ -119,13 +119,21 @@ test('a row changed while the worker has it runs here on what it holds now; the 
     expect(hidden('r3')).toBeUndefined()
     expect(hidden('r4')).toBeUndefined()
 
+    // r3 runs here again in place of the worker's answer, slowly: what the worker said of the others waits its turn.
+    slow = true
     await asked[0].answer()
+    expect(here).toEqual(['r1', 'r2', 'r3', 'r3'])
     expect(hidden('r3')).toBeUndefined()
-    expect(hidden('r4')).toBeDefined()
+    expect(hidden('r4')).toBeUndefined()
+    // r4 changes before its answer is applied: it runs here too.
+    slow = false
+    rows.set('r4', '1')
+    store.getState().commit(cellKey('r4', 'c1'), '1')
+    idle.next()
+    expect(hidden('r4')).toBeUndefined()
     expect(hidden('r5')).toBeDefined()
     expect(asked).toHaveLength(1)
-    // r3 ran here after its change, and again in place of the worker's answer.
-    expect(here).toEqual(['r1', 'r2', 'r3', 'r3'])
+    expect(here).toEqual(['r1', 'r2', 'r3', 'r3', 'r4'])
     stop()
 })
 

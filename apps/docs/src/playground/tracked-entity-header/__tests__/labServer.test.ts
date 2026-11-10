@@ -187,4 +187,79 @@ describe('the tracked entity header lab server', () => {
             )
         ).toBe(404)
     })
+
+    describe('edge-case presets', () => {
+        it('keeps an unbroken identifier, a leap-day birth and an option code the set no longer has', () => {
+            const values = new Map(
+                personOf(settingsOf('Long values')).attributes.map(
+                    ({ attribute, value }) => [attribute, value]
+                )
+            )
+            expect(values.get('labUniqueId')).not.toContain(' ')
+            expect(values.get('labBirthDat')).toBe('1988-02-29')
+            expect(values.get('labAllergie')).toContain('LATEX')
+        })
+
+        it('records nothing for the person with nothing recorded', () => {
+            expect(personOf(settingsOf('Nothing recorded')).attributes).toEqual(
+                []
+            )
+        })
+
+        it('serves option sets the block cannot read for broken metadata', () => {
+            const settings = settingsOf('Broken metadata')
+            const metadata = ProgramAttributesResponseSchema.parse(
+                serverFor(settings)({
+                    resource: 'programs',
+                    id: SUBJECTS[settings.person].program,
+                })
+            )
+            expect([...metadata.invalid.keys()]).toEqual([
+                'labLastBrkn',
+                'labAllerBrk',
+            ])
+        })
+
+        it('answers 404 with the program when not enrolled, and the person without it', () => {
+            const settings = settingsOf('Not enrolled')
+            expect(statusOf(() => personOf(settings))).toBe(404)
+            expect(personOf(settings, false).attributes.length).toBeGreaterThan(
+                0
+            )
+        })
+
+        it('gives the person enrolled again a completed and an active enrollment', () => {
+            expect(
+                personOf(settingsOf('Enrolled again')).enrollments.map(
+                    ({ status }) => status
+                )
+            ).toEqual(['COMPLETED', 'ACTIVE'])
+        })
+
+        it('fails only the owner request when the owner fails', () => {
+            expect(settingsOf('Owner fails').network.endpoints).toEqual({
+                organisationUnits: { behaviour: 'fails' },
+            })
+        })
+
+        it('writes the Amharic person in Ge’ez script on the Ethiopian calendar', () => {
+            const settings = settingsOf('Amharic, Ethiopian calendar')
+            expect(settings.calendar).toBe('ethiopian')
+            expect(
+                personOf(settings).attributes.find(
+                    ({ attribute }) => attribute === 'labFirstNam'
+                )?.value
+            ).toMatch(/^[\u1200-\u137F]+$/)
+        })
+
+        it('lays the Arabic person out right to left', () => {
+            const settings = settingsOf('Arabic, right to left')
+            expect(settings.rtl).toBe(true)
+            expect(
+                personOf(settings).attributes.find(
+                    ({ attribute }) => attribute === 'labFirstNam'
+                )?.value
+            ).toMatch(/^[\u0600-\u06FF]+$/)
+        })
+    })
 })

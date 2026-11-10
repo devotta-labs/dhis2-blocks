@@ -8,7 +8,15 @@ import { LAB_PERSON, LAB_PROGRAM } from '../observation-cards/labData'
 // Everyone in the lab is the observation cards lab's one person, so the pregnancy person has visits to show.
 export { LAB_PERSON }
 
-type LabPerson = 'child' | 'pregnancy' | 'adult'
+type LabPerson =
+    | 'child'
+    | 'pregnancy'
+    | 'adult'
+    | 'long'
+    | 'empty'
+    | 'broken'
+    | 'amharic'
+    | 'arabic'
 
 export interface LabSettings {
     person: LabPerson
@@ -16,10 +24,14 @@ export interface LabSettings {
     potentialDuplicate: boolean
     /** The server refuses the person with a 403. */
     restricted: boolean
+    /** Enrolled in the program, not enrolled (DHIS2 answers 404), or enrolled again after completing. */
+    enrollment: 'enrolled' | 'none' | 'again'
     calendar: Dhis2Calendar
     /** The default banner, or the parts composed by hand. */
     arrangement: 'default' | 'composed'
     width: 'narrow' | 'wide'
+    /** The canvas laid out right to left. */
+    rtl: boolean
     network: LabNetwork
 }
 
@@ -30,12 +42,17 @@ const UNIQUE_ID = 'labUniqueId'
 const GENDER = 'labGender01'
 const MOBILE = 'labMobile01'
 const ALLERGIES = 'labAllergie'
+// Same labels, but their option sets have no names, so the block can't read them.
+const BROKEN_LAST = 'labLastBrkn'
+const BROKEN_ALLERGIES = 'labAllerBrk'
 
 interface AttributeSpec {
     label: string
     valueType: string
     options?: Array<[code: string, displayName: string]>
     displayInList: boolean
+    /** Options without names: metadata the block can't read. */
+    broken?: boolean
 }
 
 const ATTRIBUTES = new Map<string, AttributeSpec>(
@@ -84,6 +101,20 @@ const ATTRIBUTES = new Map<string, AttributeSpec>(
             ],
             displayInList: true,
         },
+        [BROKEN_LAST]: {
+            label: 'Last name',
+            valueType: 'TEXT',
+            options: [['Sesay', 'Sesay']],
+            displayInList: true,
+            broken: true,
+        },
+        [BROKEN_ALLERGIES]: {
+            label: 'Allergies',
+            valueType: 'MULTI_TEXT',
+            options: [['Penicillin', 'Penicillin and related antibiotics']],
+            displayInList: true,
+            broken: true,
+        },
     })
 )
 
@@ -129,6 +160,11 @@ interface Subjects {
     child: Subject
     pregnancy: Subject
     adult: Subject
+    long: Subject
+    empty: Subject
+    broken: Subject
+    amharic: Subject
+    arabic: Subject
 }
 
 export const SUBJECTS: Subjects = {
@@ -216,6 +252,165 @@ export const SUBJECTS: Subjects = {
             fact: ALLERGIES,
         },
     },
+    long: {
+        program: 'labAdultPrg',
+        programName: 'Chronic care',
+        type: 'labPersonTyp',
+        typeName: 'Person',
+        attributes: [
+            UNIQUE_ID,
+            FIRST_NAME,
+            LAST_NAME,
+            MOBILE,
+            BIRTH_DATE,
+            ALLERGIES,
+        ],
+        values: {
+            // One unbroken token, to test wrapping.
+            [UNIQUE_ID]: 'SLANC2026WESTERNAREARURAL000918273645',
+            [FIRST_NAME]: 'Mary-Elizabeth Ngozi Adaeze Oluwakemi',
+            [LAST_NAME]: 'Bankole-Williams-Fitzgerald',
+            [MOBILE]: '+232 76 123456 / +232 88 654321',
+            // A leap day.
+            [BIRTH_DATE]: '1988-02-29',
+            // LATEX is not an option of the set: a code the program has since removed.
+            [ALLERGIES]: 'Penicillin,SULFA,NSAIDS,LATEX',
+        },
+        enrollment: {
+            status: 'ACTIVE',
+            enrolledDaysAgo: 45,
+            occurredDaysAgo: 45,
+        },
+        parts: {
+            ...COMMON,
+            born: { attribute: BIRTH_DATE },
+            fact: ALLERGIES,
+        },
+    },
+    empty: {
+        program: 'labAdultPrg',
+        programName: 'Chronic care',
+        type: 'labPersonTyp',
+        typeName: 'Person',
+        attributes: [
+            UNIQUE_ID,
+            FIRST_NAME,
+            LAST_NAME,
+            MOBILE,
+            BIRTH_DATE,
+            ALLERGIES,
+        ],
+        // Registered with nothing recorded, not even a name.
+        values: {},
+        enrollment: {
+            status: 'ACTIVE',
+            enrolledDaysAgo: 2,
+            occurredDaysAgo: 2,
+        },
+        parts: {
+            ...COMMON,
+            born: { attribute: BIRTH_DATE },
+            fact: ALLERGIES,
+        },
+    },
+    broken: {
+        program: 'labAdultPrg',
+        programName: 'Chronic care',
+        type: 'labPersonTyp',
+        typeName: 'Person',
+        attributes: [
+            UNIQUE_ID,
+            FIRST_NAME,
+            BROKEN_LAST,
+            MOBILE,
+            BIRTH_DATE,
+            BROKEN_ALLERGIES,
+        ],
+        values: {
+            [UNIQUE_ID]: '5521907',
+            [FIRST_NAME]: 'Fatmata',
+            [BROKEN_LAST]: 'Sesay',
+            [BIRTH_DATE]: '1979-07-14',
+            [BROKEN_ALLERGIES]: 'Penicillin',
+        },
+        enrollment: {
+            status: 'ACTIVE',
+            enrolledDaysAgo: 200,
+            occurredDaysAgo: 200,
+        },
+        parts: {
+            name: [FIRST_NAME, BROKEN_LAST],
+            identifier: UNIQUE_ID,
+            born: { attribute: BIRTH_DATE },
+            fact: BROKEN_ALLERGIES,
+        },
+    },
+    amharic: {
+        program: 'labAncEthPr',
+        programName: 'የቅድመ ወሊድ ክትትል',
+        type: 'labPersonTyp',
+        typeName: 'ሰው',
+        attributes: [
+            UNIQUE_ID,
+            FIRST_NAME,
+            LAST_NAME,
+            MOBILE,
+            BIRTH_DATE,
+            ALLERGIES,
+        ],
+        values: {
+            [UNIQUE_ID]: '7730041',
+            [FIRST_NAME]: 'ሰላማዊት',
+            [LAST_NAME]: 'ተስፋዬ',
+            [MOBILE]: '+251 91 123 4567',
+            // Pagume 6, 1987: the extra 13th-month day of an Ethiopian leap year.
+            [BIRTH_DATE]: '1995-09-11',
+            [ALLERGIES]: 'NSAIDS',
+        },
+        enrollment: {
+            status: 'ACTIVE',
+            enrolledDaysAgo: 90,
+            occurredDaysAgo: 90,
+        },
+        parts: {
+            ...COMMON,
+            born: { attribute: BIRTH_DATE },
+            fact: ALLERGIES,
+        },
+    },
+    arabic: {
+        program: 'labAncArbPr',
+        programName: 'رعاية ما قبل الولادة',
+        type: 'labPersonTyp',
+        typeName: 'شخص',
+        attributes: [
+            UNIQUE_ID,
+            FIRST_NAME,
+            LAST_NAME,
+            MOBILE,
+            BIRTH_DATE,
+            ALLERGIES,
+        ],
+        values: {
+            // Latin digits inside right-to-left text.
+            [UNIQUE_ID]: '5520193',
+            [FIRST_NAME]: 'فاطمة',
+            [LAST_NAME]: 'عبد الرحمن',
+            [MOBILE]: '+249 91 234 5678',
+            [BIRTH_DATE]: '1993-04-17',
+            [ALLERGIES]: 'Penicillin,NSAIDS',
+        },
+        enrollment: {
+            status: 'ACTIVE',
+            enrolledDaysAgo: 60,
+            occurredDaysAgo: 60,
+        },
+        parts: {
+            ...COMMON,
+            born: { attribute: BIRTH_DATE },
+            fact: ALLERGIES,
+        },
+    },
 }
 
 /** The docs example's person and parts on the Sierra Leone demo (WHO RMNCH Tracker). */
@@ -238,17 +433,16 @@ const daysAgo = (today: string, days: number) => {
 }
 
 const attributeJson = (id: string) => {
-    const { label, valueType, options } = specOf(id)
+    const { label, valueType, options, broken } = specOf(id)
     return {
         id,
         displayFormName: label,
         valueType,
         ...(options && {
             optionSet: {
-                options: options.map(([code, displayName]) => ({
-                    code,
-                    displayName,
-                })),
+                options: options.map(([code, displayName]) =>
+                    broken ? { code } : { code, displayName }
+                ),
             },
         }),
     }
@@ -257,7 +451,15 @@ const attributeJson = (id: string) => {
 /** Everything the lab's DHIS2 holds for its one person, as the block's requests see it. */
 export const generateLabData = (settings: LabSettings, today = isoToday()) => {
     const subject = SUBJECTS[settings.person]
-    const { enrollment } = subject
+    // Enrolled again: the current enrollment is the open one.
+    const enrollment =
+        settings.enrollment === 'again'
+            ? {
+                  status: 'ACTIVE' as const,
+                  enrolledDaysAgo: 20,
+                  occurredDaysAgo: 20,
+              }
+            : subject.enrollment
     const personJson = (withProgram: boolean) => ({
         trackedEntity: LAB_PERSON,
         trackedEntityType: subject.type,
@@ -277,6 +479,21 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
             })),
         enrollments: withProgram
             ? [
+                  // Completed years ago; the block shows the active one.
+                  ...(settings.enrollment === 'again'
+                      ? [
+                            {
+                                enrollment: 'labEnrolmnt0',
+                                program: subject.program,
+                                status: 'COMPLETED',
+                                orgUnit: ORG_UNIT,
+                                enrolledAt: daysAgo(today, 900),
+                                occurredAt: daysAgo(today, 900),
+                                completedAt: daysAgo(today, 600),
+                                followUp: false,
+                            },
+                        ]
+                      : []),
                   {
                       enrollment: 'labEnrolmnt1',
                       program: subject.program,
@@ -284,12 +501,13 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
                       orgUnit: ORG_UNIT,
                       enrolledAt: daysAgo(today, enrollment.enrolledDaysAgo),
                       occurredAt: daysAgo(today, enrollment.occurredDaysAgo),
-                      ...(enrollment.completedDaysAgo !== undefined && {
-                          completedAt: daysAgo(
-                              today,
-                              enrollment.completedDaysAgo
-                          ),
-                      }),
+                      ...('completedDaysAgo' in enrollment &&
+                          enrollment.completedDaysAgo !== undefined && {
+                              completedAt: daysAgo(
+                                  today,
+                                  enrollment.completedDaysAgo
+                              ),
+                          }),
                       followUp: false,
                   },
               ]

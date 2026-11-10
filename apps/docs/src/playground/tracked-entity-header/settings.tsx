@@ -17,6 +17,11 @@ export const OptionsControls = ({
                 ['pregnancy', 'Pregnancy'],
                 ['child', 'Child'],
                 ['adult', 'Adult'],
+                ['long', 'Long values'],
+                ['empty', 'Nothing recorded'],
+                ['broken', 'Broken metadata'],
+                ['amharic', 'Amharic'],
+                ['arabic', 'Arabic'],
             ]}
             onChange={(person) => onChange({ person })}
         />
@@ -38,6 +43,16 @@ export const OptionsControls = ({
         >
             No access (403)
         </Check>
+        <SelectRow
+            label="Enrollment"
+            value={settings.enrollment}
+            options={[
+                ['enrolled', 'Enrolled'],
+                ['again', 'Enrolled again'],
+                ['none', 'Not enrolled'],
+            ]}
+            onChange={(enrollment) => onChange({ enrollment })}
+        />
         <SelectRow
             label="Calendar"
             value={settings.calendar}
@@ -69,5 +84,8 @@ export const OptionsControls = ({
             ]}
             onChange={(width) => onChange({ width })}
         />
+        <Check checked={settings.rtl} onChange={(rtl) => onChange({ rtl })}>
+            Right to left
+        </Check>
     </Section>
 )

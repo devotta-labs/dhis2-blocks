@@ -54,7 +54,10 @@ export const answer = (
                     return data.person.without
                 }
                 // As DHIS2 does for a person not enrolled in the program.
-                if (request.params.program !== subject.program) {
+                if (
+                    request.params.program !== subject.program ||
+                    settings.enrollment === 'none'
+                ) {
                     throw httpError(404, `Person ${request.id} not found`)
                 }
                 return data.person.withProgram

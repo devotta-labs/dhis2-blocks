@@ -157,27 +157,29 @@ export const TrackedEntityHeaderLab = () => {
                 </>
             }
         >
-            <CanvasBoundary key={run}>
-                {mode === 'lab' ? (
-                    <LabServerScope
-                        key={run}
-                        network={settings.network}
-                        resources={RESOURCES}
-                        respond={respond}
-                        log={log}
-                        systemInfo={data.systemInfo}
-                    >
-                        <Canvas {...canvasProps} />
-                    </LabServerScope>
-                ) : (
-                    <LivePreviewHost
-                        key={run}
-                        placeholder={<PreviewSpinner className="h-96" />}
-                    >
-                        <Canvas {...canvasProps} />
-                    </LivePreviewHost>
-                )}
-            </CanvasBoundary>
+            <div dir={mode === 'lab' && settings.rtl ? 'rtl' : 'ltr'}>
+                <CanvasBoundary key={run}>
+                    {mode === 'lab' ? (
+                        <LabServerScope
+                            key={run}
+                            network={settings.network}
+                            resources={RESOURCES}
+                            respond={respond}
+                            log={log}
+                            systemInfo={data.systemInfo}
+                        >
+                            <Canvas {...canvasProps} />
+                        </LabServerScope>
+                    ) : (
+                        <LivePreviewHost
+                            key={run}
+                            placeholder={<PreviewSpinner className="h-96" />}
+                        >
+                            <Canvas {...canvasProps} />
+                        </LivePreviewHost>
+                    )}
+                </CanvasBoundary>
+            </div>
         </LabLayout>
     )
 }

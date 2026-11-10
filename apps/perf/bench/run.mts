@@ -1,9 +1,9 @@
 import { execSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { cpus, totalmem } from 'node:os'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
-import { measure, median } from './measure.mts'
+import { measure, median, round } from './measure.mts'
 import type { Case, Metrics } from './measure.mts'
 import type { Profile } from './session.mts'
 import { serve } from './serve.mts'
@@ -50,38 +50,16 @@ const medians = (runs: Metrics[]) =>
     Object.fromEntries(
         [...(runs.at(0)?.keys() ?? [])].map((name) => [
             name,
-            Math.round(
-                median(runs.map((run) => run.get(name) ?? Number.NaN)) * 10
-            ) / 10,
+            round(name, median(runs.map((run) => run.get(name) ?? Number.NaN))),
         ])
     )
-
-/**
- * What the processor did since boot, in ticks: `worked` for this machine, `stolen` while its hypervisor ran another.
- * A virtual machine's stolen time stretches every time measured on it. Nothing is stolen where Linux does not say.
- */
-const processor = () => {
-    if (!existsSync('/proc/stat')) {
-        return { worked: 0, stolen: 0 }
-    }
-    const [user = 0, nice = 0, system = 0, , , , , stolen = 0] = readFileSync(
-        '/proc/stat',
-        'utf8'
-    )
-        .split('\n', 1)[0]
-        .trim()
-        .split(/\s+/)
-        .slice(1)
-        .map(Number)
-    return { worked: user + nice + system, stolen }
-}
 
 const { values: args } = parseArgs({
     options: {
         profile: { type: 'string', default: 'desktop' },
         runs: { type: 'string', default: '3' },
-        // A run that lost a larger share of its processor time than this is measured again.
-        stolen: { type: 'string', default: '0.15' },
+        // A run whose main thread lost a larger share of its processor time than this is measured again.
+        stolen: { type: 'string', default: '0.35' },
         axis: { type: 'string' },
         out: { type: 'string', default: 'results' },
         port: { type: 'string', default: '8788' },
@@ -110,24 +88,26 @@ const results: Array<{
 mkdirSync(args.out, { recursive: true })
 
 const wanted = Number(args.runs)
+
+// The first run after a while reads the browser off the disk: it is not counted.
+const [first] = cases
+if (first !== undefined) {
+    const { axis: _, ...warm } = first
+    await measure(origin, warm, profile)
+}
 const limit = Number(args.stolen)
 
 for (const { axis, ...each } of cases) {
     const attempts: Array<{ metrics: Metrics; stolen: number }> = []
     const failures: string[] = []
     const quiet = () => attempts.filter(({ stolen }) => stolen <= limit).length
-    // Up to three times the runs asked for, until enough of them had the processor to themselves.
-    while (quiet() < wanted && attempts.length + failures.length < wanted * 3) {
+    // Up to twice the runs asked for, until enough of them kept enough of the processor.
+    while (quiet() < wanted && attempts.length + failures.length < wanted * 2) {
         const started = Date.now()
-        const before = processor()
         let note = ''
         try {
             const metrics = await measure(origin, each, profile)
-            const after = processor()
-            const lost = after.stolen - before.stolen
-            const stolen =
-                lost / Math.max(1, lost + after.worked - before.worked)
-            metrics.set('run.stolenShare', stolen)
+            const stolen = metrics.get('run.stolenShare') ?? 0
             attempts.push({ metrics, stolen })
             note = `, ${Math.round(stolen * 100)}% stolen`
         } catch (error) {

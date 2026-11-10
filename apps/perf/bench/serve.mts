@@ -237,6 +237,7 @@ const send = (
     response.end(out)
 }
 
+const LOGO = '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>'
 const files = new Map<string, Buffer>()
 
 const sendFile = (
@@ -311,6 +312,11 @@ export const serve = (port: number, log = false): Promise<Server> => {
         const resource = /^\/api\/(?:\d+\/)?(.+)$/.exec(url.pathname)?.[1]
         if (resource === undefined) {
             response.writeHead(302, { location: app }).end()
+            return
+        }
+        if (resource === 'staticContent/logo_banner') {
+            // The header bar's logo.
+            send(request, response, 200, 'image/svg+xml', LOGO)
             return
         }
         void bodyOf(request).then((body) => {

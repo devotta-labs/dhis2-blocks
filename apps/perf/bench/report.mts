@@ -43,7 +43,7 @@ const LOAD: Column[] = [
     ['Layout', 'load.layoutMs'],
     ['API kB', 'load.apiKb'],
     ['API requests', 'load.apiRequests'],
-    ['Stolen %', 'run.stolenShare', -2],
+    ['Stolen %', 'load.stolenShare', -2],
 ]
 
 const MEMORY: Column[] = [
@@ -172,6 +172,7 @@ writeFileSync(
         '',
         'Written by `pnpm --filter @dhis2-blocks/perf report`; see the README beside this file for what each number is.',
         'Every number is the median of the runs, and times are in milliseconds.',
+        'The times leave out the processor time the hypervisor stole from the page; "Stolen %" is the share that was.',
         '',
         `Measured at \`${machine.commit}\` on ${machine.cpu} (${machine.cores} cores, ${machine.memoryGb} GB), ${profiles[0].results[0]?.runs.length} runs each.`,
         '',

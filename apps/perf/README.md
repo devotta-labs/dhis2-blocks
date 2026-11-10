@@ -44,12 +44,25 @@ pnpm --filter @dhis2-blocks/perf report results BASELINE.md
 
 `bench` takes `--runs 3`, `--axis columns,rows,rules,options,large` and `--out results`. It measures the
 production build, and starts a browser for every run so that nothing is cached and the renderer's memory is that
-page's alone. Run one profile at a time on an otherwise idle machine.
+page's alone. Run one profile at a time on an otherwise idle machine; the first run is a warm-up and is not counted.
+
+#### Stolen processor time
 
 On a virtual machine the hypervisor takes processor time away for its other guests, and every time measured
-while it does is longer. Each run records the share it lost (`run.stolenShare`, from `/proc/stat`), a run that
-lost more than `--stolen 0.15` is measured again, up to three times the runs asked for, and the runs that lost
-least are kept. The report shows the share beside the numbers: compare only runs that lost about as little.
+while it does is longer: on the machine behind the baseline a fixed loop took between 1.05 and 2.25 s. So on Linux
+the benchmark keeps one processor for the page's main thread alone (`bench/processor.mts`), reads what was stolen
+from that processor off `/proc/stat`, and takes it out:
+
+- a time that spans waiting on the network (the load's milestones, "Show more") loses the milliseconds stolen in
+  its own stretch;
+- main thread time loses the share stolen during its part of the run;
+- a time the display paces (a frame, or from a key to the frame after it) loses that share too, but does not go
+  below one frame (16.7 ms), and one shorter than a frame is left as it is.
+
+Each part records the share it lost (`load.stolenShare`, `edit.stolenShare`, …, and `run.stolenShare` for the
+whole run). The fixed loop, corrected so, came to between 0.99 and 1.15 s, so read differences under a tenth as
+noise. A run that lost more than `--stolen 0.35` is measured again, up to twice the runs asked for, and the runs
+that lost least are kept. Elsewhere than Linux nothing is corrected and the shares are zero.
 
 | Profile   | Processor | Network                                             |
 | --------- | --------- | --------------------------------------------------- |
@@ -101,6 +114,29 @@ registry files and functions the main thread spent longest in (through the build
 
 ## The baseline
 
-[`BASELINE.md`](./BASELINE.md) is the grid before any work on its performance, and `baseline/` holds every run
-behind it. Run the benchmark on the same machine before comparing with it: the numbers are only comparable with
-others from the same hardware.
+[`BASELINE.md`](./BASELINE.md) is the grid before any work on its performance. `baseline/` holds every run behind
+it, and a `hotspots-*.md` for the base form, each axis' largest form and the large form. Run the benchmark on the
+same machine before comparing with it: the numbers are only comparable with others from the same hardware.
+
+What it shows, on the low-end profile:
+
+- **The app's code is the floor.** 639 kB of compressed script puts first paint at 2.2 s and the grid's first
+  request at 3.4 s whatever the form.
+- **Rules are the largest cost of loading.** The rule engine is 31% of the base form's load, 50% with 200 rules.
+  The rows on screen get their effects first (6–7 s whatever the row count), but the rest run in the background and
+  keep the main thread busy: 2.4 s of work for 10 rows, 19.4 s for 500. "Show more" pays the same: 0.9 s for 10 rows, 5.8 s for 500,
+  3.9 s with 200 rules.
+- **Columns are not virtualised.** DOM nodes grow with them (2,171 at 10 columns, 21,470 at 160), and so do the
+  longest task of the load (0.3 to 1.8 s), a scrolled frame (25 to 147 ms), adding a row (0.4 to 2.6 s) and the
+  renderer's memory (191 to 251 MB). Moving the cursor and scrolling are mostly the browser's own style, layout
+  and paint over that DOM.
+- **An edit walks every loaded cell.** From Enter to the rules' effects takes 138 ms with 10 rows and 481 ms with
+  500, though one row changed: `summarise` (`logic/summary.ts`), the rules' store subscriber
+  (`provider/connectRules.ts`) and the copy of the cell map on write (`spreadsheet/store/store.ts`) each go over
+  all of them.
+- **Option sets cost nothing** up to 1,000 options.
+- **Memory is the browser's more than the grid's.** The smallest form's renderer process is 191 MB (114 MB as
+  PSS) and the large form's 265 MB, 337 MB after use; the JS heap is 13–40 MB.
+
+Not measured: a real DHIS2 server's response times, a real low-end device (the profile slows the processor but
+has the host's memory and GPU), and the enrolment and register sources.

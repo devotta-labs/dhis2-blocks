@@ -2,7 +2,8 @@ import { chromium } from 'playwright'
 import type { Page } from 'playwright'
 import { elementId, eventId, ORG_UNIT, scenarioId } from './scenario.mts'
 import type { Scenario } from './scenario.mts'
-import { memory, open, settle, totals, transferred } from './session.mts'
+import { watch } from './processor.mts'
+import { kept, memory, open, settle, totals, transferred } from './session.mts'
 import type { MainThread, Profile, Sampled, Session } from './session.mts'
 
 /** One grid to measure: a generated program and how many of its events a page holds. */
@@ -13,6 +14,20 @@ export type Metrics = Map<string, number>
 const SLOW_FRAME_MS = 20
 const LONG_TASK_MS = 50
 const NOTHING: MainThread = { task: 0, script: 0, layout: 0 }
+
+/** A share to a thousandth; anything else to a tenth. */
+export const round = (name: string, value: number) => {
+    const steps = name.endsWith('Share') ? 1000 : 10
+    return Math.round(value * steps) / steps
+}
+
+const FRAME_MS = 1000 / 60
+
+// The times that are all main thread work; the others end on a frame.
+const WORK = new Set(['taskMs', 'rulesMs'])
+
+// The parts whose times span waiting on the network: they take out what was stolen stretch by stretch.
+const OWN = new Set(['load', 'showMore', 'scrollDown', 'scrollAcross'])
 
 const median = (values: number[]) => {
     const sorted = values.filter(Number.isFinite).sort((a, b) => a - b)
@@ -96,6 +111,23 @@ const press = async (page: Page, key: string, times = 1) => {
 
 const cell = (page: Page, row: number, column: number) =>
     page.locator(`[id$="-cell-${eventId(row)}.${elementId(column)}"]`)
+
+/** What the hypervisor stole from the main thread in a stretch of the page's time. */
+const stolen = ({ clock, origin }: Session, start: number, duration: number) =>
+    clock.between(origin + start, origin + start + duration)
+
+/**
+ * How long something the display paces (a frame, or from a key to the frame after it) would have taken with
+ * `share` of the main thread's time not stolen. Only the work shrinks, not the wait for the display, so a time
+ * does not shrink below a frame, and one shorter than a frame stays as it is.
+ */
+const paced = (ms: number, share: number) =>
+    Math.max(ms * (1 - share), Math.min(ms, FRAME_MS))
+
+/** How long a stretch of the page's time would have been with nothing stolen. */
+const calm = (session: Session, start: number, duration: number) =>
+    duration - stolen(session, start, duration).stolenMs
+
 const loaded = async (session: Session, rules: boolean) => {
     let settled = await settle(session)
     const ready = () =>
@@ -133,24 +165,32 @@ const loaded = async (session: Session, rules: boolean) => {
             longTasks: window.__perf.longTasks,
         }
     })
-    const { longTasks, ...times } = seen
     const main = await totals(session)
     const { kb, requests, apiRequests } = transferred(session)
+    const { share } = stolen(session, 0, settled)
+    const longTasks = seen.longTasks.map(({ start, duration }) =>
+        calm(session, start, duration)
+    )
     return {
-        ...times,
-        settledMs: settled,
+        firstPaintMs: calm(session, 0, seen.firstPaintMs),
+        largestPaintMs: calm(session, 0, seen.largestPaintMs),
+        layoutShift: seen.layoutShift,
+        gridMountedMs: calm(session, 0, seen.gridMountedMs),
+        gridReadyMs: calm(session, 0, seen.gridReadyMs),
+        rulesFirstSliceMs: seen.rulesFirstSliceMs * (1 - share),
+        rulesVisibleMs: calm(session, 0, seen.rulesVisibleMs),
+        settledMs: calm(session, 0, settled),
         blockedMs: longTasks.reduce(
-            (sum, { duration }) => sum + Math.max(0, duration - LONG_TASK_MS),
+            (sum, duration) => sum + Math.max(0, duration - LONG_TASK_MS),
             0
         ),
-        longestTaskMs: Math.max(
-            0,
-            ...longTasks.map(({ duration }) => duration)
-        ),
-        longTasks: longTasks.length,
-        taskMs: main.task,
-        scriptMs: main.script,
-        layoutMs: main.layout,
+        longestTaskMs: Math.max(0, ...longTasks),
+        longTasks: longTasks.filter((duration) => duration > LONG_TASK_MS)
+            .length,
+        taskMs: main.task * (1 - share),
+        scriptMs: main.script * (1 - share),
+        layoutMs: main.layout * (1 - share),
+        stolenShare: share,
         requests,
         apiRequests,
         scriptKb: kb.script,
@@ -289,7 +329,7 @@ const addRow = async (session: Session) => {
     }
 }
 
-const scroll = async ({ page }: Session, axis: 'x' | 'y') => {
+const scroll = async ({ page, clock }: Session, axis: 'x' | 'y') => {
     const room = await page.evaluate((along) => {
         const region = document.querySelector('table')?.parentElement
         if (region === null || region === undefined) {
@@ -308,14 +348,19 @@ const scroll = async ({ page }: Session, axis: 'x' | 'y') => {
             frameMs: Number.NaN,
             worstFrameMs: Number.NaN,
             slowShare: Number.NaN,
+            stolenShare: Number.NaN,
         }
     }
     await frame(page)
-    const took = await page.evaluate(
+    const from = clock.now()
+    const frameTimes = await page.evaluate(
         ([along, by, count]) => window.__perf.scroll(along, by, count),
         [axis, step, frames] as const
     )
+    const { share } = clock.between(from, clock.now())
+    const took = frameTimes.map((ms) => paced(ms, share))
     return {
+        stolenShare: share,
         frameMs: median(took),
         worstFrameMs: percentile(took, 0.95),
         slowShare: took.filter((ms) => ms > SLOW_FRAME_MS).length / took.length,
@@ -333,10 +378,12 @@ const showMore = async (session: Session) => {
     })
     const click = seen.inputs.findLast(({ type }) => type === 'click')
     const from = click?.at ?? Number.NaN
+    const { share } = stolen(session, from, seen.settled - from)
     return {
-        drawnMs: drawn - from,
-        settledMs: seen.settled - from,
-        taskMs: seen.taskMs,
+        drawnMs: calm(session, from, drawn - from),
+        settledMs: calm(session, from, seen.settled - from),
+        taskMs: seen.taskMs * (1 - share),
+        stolenShare: share,
     }
 }
 
@@ -353,36 +400,63 @@ export const measure = async (
 ): Promise<Metrics> => {
     await fetch(`${origin}/__reset`)
     // A browser of its own: nothing cached, and a renderer whose memory is this page's alone.
+    const clock = watch()
     const browser = await chromium.launch({ channel: 'chromium' })
     try {
+        const started = clock.now()
         const session = await open(
             browser,
             profile,
             `${origin}/apps/blocks-perf/?program=${scenarioId(grid)}&orgUnit=${ORG_UNIT}&pageSize=${grid.pageSize}`,
-            sampled !== undefined
+            sampled !== undefined,
+            clock
         )
-        // Sampling stops between the parts, so that reading the memory, which collects garbage, is in none of them.
-        const part = async <Numbers,>(
+        /**
+         * Runs one part of the use. Its times are then as they would have been had the hypervisor stolen nothing
+         * from the main thread; the parts in `OWN` see to that themselves.
+         */
+        const part = async (
             name: string,
-            run: () => Promise<Numbers>
+            run: () => Promise<Record<string, number>>
         ) => {
-            if (sampled === undefined) {
-                return run()
-            }
+            // Sampling stops between the parts, so that reading the memory, which collects garbage, is in none.
             // The load is sampled from before the page opens.
-            if (name !== 'load') {
+            if (sampled !== undefined && name !== 'load') {
                 await session.cdp.send('Profiler.start')
             }
             const before = name === 'load' ? NOTHING : await totals(session)
+            const from = clock.now()
             const numbers = await run()
-            const after = await totals(session)
-            const { profile: samples } = await session.cdp.send('Profiler.stop')
-            sampled(name, samples, {
-                task: after.task - before.task,
-                script: after.script - before.script,
-                layout: after.layout - before.layout,
-            })
-            return numbers
+            const { share } = clock.between(from, clock.now())
+            if (sampled !== undefined) {
+                const after = await totals(session)
+                const { profile: samples } =
+                    await session.cdp.send('Profiler.stop')
+                sampled(name, samples, {
+                    task: (after.task - before.task) * (1 - share),
+                    script: (after.script - before.script) * (1 - share),
+                    layout: (after.layout - before.layout) * (1 - share),
+                })
+            }
+            if (OWN.has(name)) {
+                return numbers
+            }
+            return {
+                ...Object.fromEntries(
+                    Object.entries(numbers).map(([key, value]) => {
+                        if (!key.endsWith('Ms')) {
+                            return [key, value]
+                        }
+                        return [
+                            key,
+                            WORK.has(key)
+                                ? value * (1 - share)
+                                : paced(value, share),
+                        ]
+                    })
+                ),
+                stolenShare: share,
+            }
         }
         const sections = {
             load: await part('load', () => loaded(session, grid.rules > 0)),
@@ -398,18 +472,25 @@ export const measure = async (
             ),
             showMore: await part('showMore', () => showMore(session)),
             memoryUsed: await memory(session),
+            run: { stolenShare: clock.between(started, clock.now()).share },
+        }
+        if (!(await kept(session))) {
+            throw new Error(
+                'The page ran in a renderer that was not on the kept processor'
+            )
         }
         return new Map(
             Object.entries(sections).flatMap(([section, numbers]) =>
                 Object.entries(numbers).map(
                     ([name, value]): [string, number] => [
                         `${section}.${name}`,
-                        Math.round(value * 10) / 10,
+                        round(name, value),
                     ]
                 )
             )
         )
     } finally {
+        clock.stop()
         await browser.close()
     }
 }

@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs'
 import { setTimeout as sleep } from 'node:timers/promises'
 import type { Browser, CDPSession, Page } from 'playwright'
 import { install } from './page.mts'
+import { pin } from './processor.mts'
+import type { Clock } from './processor.mts'
 
 /** The machine the grid runs on: how much slower its processor is than this one, and its connection. */
 export type Profile = {
@@ -22,6 +24,11 @@ export type Session = {
     browser: Browser
     inFlight: Set<string>
     transfers: Map<string, { url: string; type: string; bytes: number }>
+    clock: Clock
+    /** When the page's own clock started, in milliseconds since 1970. */
+    origin: number
+    /** The renderers whose main thread has the kept processor. */
+    pinned: Set<number>
 }
 
 /** The main thread's time in milliseconds: in all, running script, and working out style and layout. */
@@ -70,15 +77,26 @@ export const settle = async (session: Session) => {
     throw new Error('The page never became idle')
 }
 
-/** The renderer's memory as the kernel counts it (Linux only): all it has mapped in, and its share of shared pages. */
-const processMemory = async (browser: Browser) => {
+const renderers = async (browser: Browser) => {
     const session = await browser.newBrowserCDPSession()
     const { processInfo } = await session.send('SystemInfo.getProcessInfo')
     await session.detach()
-    const renderer = processInfo
+    return processInfo
         .filter(({ type }) => type === 'renderer')
-        .sort((a, b) => b.cpuTime - a.cpuTime)
-        .at(0)
+        .toSorted((one, other) => other.cpuTime - one.cpuTime)
+}
+
+/** Whether the renderer that did the page's work is one whose main thread was given the kept processor. */
+export const kept = async ({ browser, pinned }: Session) => {
+    const [renderer] = await renderers(browser)
+    return (
+        pinned.size === 0 || (renderer !== undefined && pinned.has(renderer.id))
+    )
+}
+
+/** The renderer's memory as the kernel counts it (Linux only): all it has mapped in, and its share of shared pages. */
+const processMemory = async (browser: Browser) => {
+    const [renderer] = await renderers(browser)
     try {
         const rollup = readFileSync(
             `/proc/${renderer?.id}/smaps_rollup`,
@@ -109,7 +127,8 @@ export const open = async (
     browser: Browser,
     profile: Profile,
     address: string,
-    sampling: boolean
+    sampling: boolean,
+    clock: Clock
 ): Promise<Session> => {
     const context = await browser.newContext({ viewport: VIEWPORT })
     const page = await context.newPage()
@@ -134,6 +153,9 @@ export const open = async (
         browser,
         inFlight: new Set(),
         transfers: new Map(),
+        clock,
+        origin: 0,
+        pinned: new Set(),
     }
     cdp.on('Network.requestWillBeSent', ({ requestId, request }) => {
         session.inFlight.add(requestId)
@@ -165,6 +187,12 @@ export const open = async (
         await cdp.send('Profiler.start')
     }
     await page.goto(address, { waitUntil: 'commit' })
+    for (const { id } of await renderers(browser)) {
+        if (pin(id)) {
+            session.pinned.add(id)
+        }
+    }
+    session.origin = await page.evaluate(() => performance.timeOrigin)
     return session
 }
 

@@ -60,8 +60,9 @@ from that processor off `/proc/stat`, and takes it out:
   below one frame (16.7 ms), and one shorter than a frame is left as it is.
 
 Each part records the share it lost (`load.stolenShare`, `edit.stolenShare`, …, and `run.stolenShare` for the
-whole run). The fixed loop, corrected so, came to between 0.99 and 1.15 s, so read differences under a tenth as
-noise. A run that lost more than `--stolen 0.35` is measured again, up to twice the runs asked for, and the runs
+whole run). The fixed loop, corrected so, came to between 0.99 and 1.15 s. What is left shows in the report: the
+base form is measured again on every axis, and its medians differ by up to a quarter (its first table), so a
+smaller difference is not one. A run that lost more than `--stolen 0.35` is measured again, up to twice the runs asked for, and the runs
 that lost least are kept. Elsewhere than Linux nothing is corrected and the shares are zero.
 
 | Profile   | Processor | Network                                             |

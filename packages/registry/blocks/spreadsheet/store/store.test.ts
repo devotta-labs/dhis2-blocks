@@ -356,6 +356,19 @@ const THREE = [
     { key: cellKey('r1', 'c2'), text: 'yes' },
 ]
 
+test('store updates report only the cell keys they wrote', () => {
+    const { store } = setup()
+    const updates: ReadonlyArray<CellKey>[] = []
+    store.subscribe(({ changedCellKeys }) => {
+        updates.push(changedCellKeys)
+    })
+
+    store.getState().commitMany(THREE)
+    store.getState().commit('r3.c1', '8')
+
+    expect(updates).toEqual([THREE.map(({ key }) => key), ['r3.c1']])
+})
+
 test('commitMany queues every cell, in order, in one store update', () => {
     const { store, enqueued, cell } = setup()
     let updates = 0

@@ -147,20 +147,23 @@ const parts: Array<
     { part: string; main: MainThread } & ReturnType<typeof summary>
 > = []
 mkdirSync(join(args.out, 'profiles'), { recursive: true })
-await measure(
-    `http://localhost:${port}`,
-    { name, ...grid },
-    { name: 'sampled', cpuSlowdown: Number(args.slowdown) },
-    (part, samples, main) => {
-        // Opens in the browser's Performance panel, which reads the source maps itself.
-        writeFileSync(
-            join(args.out, 'profiles', `${name}-${part}.cpuprofile`),
-            JSON.stringify(samples)
-        )
-        parts.push({ part, main, ...summary(samples) })
-    }
-)
-server.close()
+try {
+    await measure(
+        `http://localhost:${port}`,
+        { name, ...grid },
+        { name: 'sampled', cpuSlowdown: Number(args.slowdown) },
+        (part, samples, main) => {
+            // Opens in the browser's Performance panel, which reads the source maps itself.
+            writeFileSync(
+                join(args.out, 'profiles', `${name}-${part}.cpuprofile`),
+                JSON.stringify(samples)
+            )
+            parts.push({ part, main, ...summary(samples) })
+        }
+    )
+} finally {
+    server.close()
+}
 
 const lines = parts.flatMap(({ part, main, busyMs, places, functions }) => [
     `## ${part}`,

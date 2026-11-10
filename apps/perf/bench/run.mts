@@ -89,69 +89,76 @@ mkdirSync(args.out, { recursive: true })
 
 const wanted = Number(args.runs)
 
-// The first run after a while reads the browser off the disk: it is not counted.
-const [first] = cases
-if (first !== undefined) {
-    const { axis: _, ...warm } = first
-    await measure(origin, warm, profile)
-}
-const limit = Number(args.stolen)
+try {
+    // The first run after a while reads the browser off the disk: it is not counted.
+    const [first] = cases
+    if (first !== undefined) {
+        const { axis: _, ...warm } = first
+        await measure(origin, warm, profile)
+    }
+    const limit = Number(args.stolen)
 
-for (const { axis, ...each } of cases) {
-    const attempts: Array<{ metrics: Metrics; stolen: number }> = []
-    const failures: string[] = []
-    const quiet = () => attempts.filter(({ stolen }) => stolen <= limit).length
-    // Up to twice the runs asked for, until enough of them kept enough of the processor.
-    while (quiet() < wanted && attempts.length + failures.length < wanted * 2) {
-        const started = Date.now()
-        let note = ''
-        try {
-            const metrics = await measure(origin, each, profile)
-            const stolen = metrics.get('run.stolenShare') ?? 0
-            attempts.push({ metrics, stolen })
-            note = `, ${Math.round(stolen * 100)}% stolen`
-        } catch (error) {
-            failures.push(
-                error instanceof Error ? error.message : String(error)
+    for (const { axis, ...each } of cases) {
+        const attempts: Array<{ metrics: Metrics; stolen: number }> = []
+        const failures: string[] = []
+        const quiet = () =>
+            attempts.filter(({ stolen }) => stolen <= limit).length
+        // Up to twice the runs asked for, until enough of them kept enough of the processor.
+        while (
+            quiet() < wanted &&
+            attempts.length + failures.length < wanted * 2
+        ) {
+            const started = Date.now()
+            let note = ''
+            try {
+                const metrics = await measure(origin, each, profile)
+                const stolen = metrics.get('run.stolenShare') ?? 0
+                attempts.push({ metrics, stolen })
+                note = `, ${Math.round(stolen * 100)}% stolen`
+            } catch (error) {
+                failures.push(
+                    error instanceof Error ? error.message : String(error)
+                )
+                note = ` (${failures.at(-1)?.split('\n')[0]})`
+            }
+            console.log(
+                `${profile.name} · ${axis} · ${each.name} · run ${attempts.length + failures.length}: ${Math.round((Date.now() - started) / 1000)} s${note}`
             )
-            note = ` (${failures.at(-1)?.split('\n')[0]})`
         }
-        console.log(
-            `${profile.name} · ${axis} · ${each.name} · run ${attempts.length + failures.length}: ${Math.round((Date.now() - started) / 1000)} s${note}`
+        // The runs that lost least are the ones kept.
+        const runs = attempts
+            .toSorted((one, other) => one.stolen - other.stolen)
+            .slice(0, wanted)
+            .map(({ metrics }) => metrics)
+        results.push({
+            axis,
+            case: each,
+            runs: runs.map((run) => Object.fromEntries(run)),
+            median: medians(runs),
+            discarded: attempts.length - runs.length,
+            failures,
+        })
+        writeFileSync(
+            join(args.out, `${profile.name}.json`),
+            JSON.stringify(
+                {
+                    profile,
+                    machine: {
+                        cpu: cpus()[0]?.model,
+                        cores: cpus().length,
+                        memoryGb: Math.round(totalmem() / 1024 ** 3),
+                        node: process.version,
+                        commit: execSync('git rev-parse --short HEAD')
+                            .toString()
+                            .trim(),
+                    },
+                    results,
+                },
+                undefined,
+                1
+            )
         )
     }
-    // The runs that lost least are the ones kept.
-    const runs = attempts
-        .toSorted((one, other) => one.stolen - other.stolen)
-        .slice(0, wanted)
-        .map(({ metrics }) => metrics)
-    results.push({
-        axis,
-        case: each,
-        runs: runs.map((run) => Object.fromEntries(run)),
-        median: medians(runs),
-        discarded: attempts.length - runs.length,
-        failures,
-    })
-    writeFileSync(
-        join(args.out, `${profile.name}.json`),
-        JSON.stringify(
-            {
-                profile,
-                machine: {
-                    cpu: cpus()[0]?.model,
-                    cores: cpus().length,
-                    memoryGb: Math.round(totalmem() / 1024 ** 3),
-                    node: process.version,
-                    commit: execSync('git rev-parse --short HEAD')
-                        .toString()
-                        .trim(),
-                },
-                results,
-            },
-            undefined,
-            1
-        )
-    )
+} finally {
+    server.close()
 }
-server.close()

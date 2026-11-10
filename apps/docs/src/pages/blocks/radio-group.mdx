@@ -60,6 +60,29 @@ Users move between the options with the arrow keys.
 Short options can sit side by side with `className="flex gap-6"` on the
 group.
 
+## With descriptions
+
+<ExampleCard slug="radio-group/description" />
+
+When an option needs a line of explanation, give each radio its own
+horizontal `Field`, with the label and description in a `FieldContent`. The
+label names the radio and the description is read with it; clicking the
+label picks the option.
+
+<InstallCommand item="field" />
+
+```tsx
+<RadioGroup aria-labelledby="referral" className="w-fit">
+    <Field orientation="horizontal">
+        <RadioGroupItem value="hospital" />
+        <FieldContent>
+            <FieldLabel>Hospital</FieldLabel>
+            <FieldDescription>For danger signs: send today.</FieldDescription>
+        </FieldContent>
+    </Field>
+</RadioGroup>
+```
+
 ## API reference
 
 `RadioGroup`:

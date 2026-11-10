@@ -31,6 +31,7 @@ import dropdownMenuActionsSource from './ui/DropdownMenuActions.tsx?raw'
 import inputFieldSource from './ui/InputField.tsx?raw'
 import inputGroupSearchSource from './ui/InputGroupSearch.tsx?raw'
 import popoverDetailsSource from './ui/PopoverDetails.tsx?raw'
+import radioGroupDescriptionSource from './ui/RadioGroupDescription.tsx?raw'
 import radioGroupOutcomeSource from './ui/RadioGroupOutcome.tsx?raw'
 import selectPeriodSource from './ui/SelectPeriod.tsx?raw'
 import spinnerSizesSource from './ui/SpinnerSizes.tsx?raw'
@@ -460,6 +461,14 @@ const examples = [
         Component: lazy(() => import('./ui/RadioGroupOutcome')),
         source: radioGroupOutcomeSource,
         minHeight: 160,
+    },
+    {
+        slug: 'radio-group/description',
+        title: 'Referral',
+        live: false,
+        Component: lazy(() => import('./ui/RadioGroupDescription')),
+        source: radioGroupDescriptionSource,
+        minHeight: 200,
     },
     {
         slug: 'spinner/sizes',

@@ -141,12 +141,39 @@ export const ChoiceInput = ({
                         kind === 'boolean' ? 'flex w-auto gap-6' : undefined
                     }
                 >
-                    {offered.map(({ code, name }) => (
-                        <Label key={code} className="cursor-pointer">
-                            <RadioGroupItem value={code} aria-label={name} />
-                            {name}
-                        </Label>
-                    ))}
+                    {offered.map(({ code, name, description }, index) =>
+                        description === undefined ? (
+                            <Label key={code} className="cursor-pointer">
+                                <RadioGroupItem
+                                    value={code}
+                                    aria-label={name}
+                                />
+                                {name}
+                            </Label>
+                        ) : (
+                            // The house radio with a description: the radio, then its name and what it means.
+                            <Label
+                                key={code}
+                                className="cursor-pointer items-start"
+                            >
+                                <RadioGroupItem
+                                    value={code}
+                                    aria-label={name}
+                                    aria-describedby={`${id}-option-${index}`}
+                                    className="mt-px"
+                                />
+                                <span className="flex flex-col gap-1">
+                                    {name}
+                                    <span
+                                        id={`${id}-option-${index}`}
+                                        className="text-sm font-normal text-dhis2-muted-foreground"
+                                    >
+                                        {description}
+                                    </span>
+                                </span>
+                            </Label>
+                        )
+                    )}
                 </RadioGroup>
             )}
             {value !== undefined && !known ? (

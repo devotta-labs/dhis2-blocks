@@ -37,7 +37,11 @@ const FIELDS: ReadonlyArray<{ id: string; label: string; field: Field }> = [
             options: [
                 { code: 'POS', name: 'Positive' },
                 { code: 'NEG', name: 'Negative' },
-                { code: 'INV', name: 'Invalid' },
+                {
+                    code: 'INV',
+                    name: 'Invalid',
+                    description: 'No control line: repeat the test.',
+                },
             ],
         },
     },

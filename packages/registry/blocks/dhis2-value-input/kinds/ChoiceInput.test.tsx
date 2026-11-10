@@ -162,6 +162,34 @@ test('Yes and No sit on one row, with Clear after them; an option set has a radi
     )
 })
 
+test("a short option set's radios show and are described by each option's description", async () => {
+    const onChange = await mount(
+        {
+            valueType: 'TEXT',
+            options: [
+                {
+                    code: 'NONE',
+                    name: 'No referral',
+                    description: 'Treated here.',
+                },
+                { code: 'HOSP', name: 'Hospital' },
+            ],
+        },
+        { messages: [{ tone: 'error', text: 'Choose one' }] }
+    )
+    // Its own description first, then the field's messages, as every radio has.
+    const none = radio('No referral')
+    await expect
+        .element(none)
+        .toHaveAccessibleDescription('Treated here. Error: Choose one')
+    await expect.element(none).toHaveAttribute('aria-invalid', 'true')
+    await expect
+        .element(radio('Hospital'))
+        .toHaveAccessibleDescription('Error: Choose one')
+    await userEvent.click(page.getByText('Treated here.'))
+    expect(onChange).toHaveBeenLastCalledWith('NONE')
+})
+
 test('a short option set is a radio group named by the label, showing names', async () => {
     await mount(SHORT)
     await expect

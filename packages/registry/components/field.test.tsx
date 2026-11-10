@@ -13,6 +13,7 @@ import {
 } from './combobox'
 import {
     Field,
+    FieldContent,
     FieldControl,
     FieldDescription,
     FieldError,
@@ -133,6 +134,42 @@ test('links a RadioGroup', async () => {
         </Invalid>
     )
     await expectLinked(page.getByRole('radiogroup', { name: 'Name' }))
+})
+
+test('names and describes each radio in its own horizontal field', async () => {
+    await render(
+        <RadioGroup aria-label="Spacing">
+            <Field orientation="horizontal">
+                <RadioGroupItem value="compact" />
+                <FieldContent>
+                    <FieldLabel>Compact</FieldLabel>
+                    <FieldDescription>Fits more on screen.</FieldDescription>
+                </FieldContent>
+            </Field>
+            <Field orientation="horizontal">
+                <RadioGroupItem value="comfortable" />
+                <FieldContent>
+                    <FieldLabel>Comfortable</FieldLabel>
+                    <FieldDescription>Room to read.</FieldDescription>
+                </FieldContent>
+            </Field>
+        </RadioGroup>
+    )
+    const compact = page.getByRole('radio', { name: 'Compact' })
+    await expect
+        .element(compact)
+        .toHaveAccessibleDescription('Fits more on screen.')
+    await expect
+        .element(page.getByRole('radio', { name: 'Comfortable' }))
+        .toHaveAccessibleDescription('Room to read.')
+    await userEvent.click(page.getByText('Room to read.'))
+    await expect
+        .element(page.getByRole('radio', { name: 'Comfortable' }))
+        .not.toBeChecked()
+    await userEvent.click(page.getByText('Comfortable', { exact: true }))
+    await expect
+        .element(page.getByRole('radio', { name: 'Comfortable' }))
+        .toBeChecked()
 })
 
 test('links a Checkbox', async () => {

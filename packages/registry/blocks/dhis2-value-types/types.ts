@@ -3,6 +3,8 @@ import type { Dhis2Calendar } from '@/components/dhis2-value-display'
 export interface Option {
     code: string
     name: string
+    /** What the option means, where its metadata says. */
+    description?: string
 }
 
 /** What a cell holds: its value type and, for an option set, its options. */

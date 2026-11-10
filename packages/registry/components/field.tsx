@@ -34,7 +34,7 @@ const fieldLegendVariants = cva(
             variant: {
                 legend: 'mb-1 text-base leading-snug font-medium',
                 // As a field's label: for a group of options, or a fieldset inside another.
-                label: 'text-sm leading-snug',
+                label: 'text-sm leading-snug font-medium',
             },
         },
         defaultVariants: { variant: 'legend' },
@@ -137,7 +137,8 @@ function FieldLabel({ className, ...props }: FieldPrimitive.Label.Props) {
             data-slot="field-label"
             render={<Label />}
             className={cn(
-                'group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-disabled/field:text-dhis2-disabled-foreground',
+                // Medium, so a field's label leads; an option's label, in a FieldItem, is regular.
+                'group/field-label peer/field-label flex w-fit gap-2 leading-snug font-medium group-data-disabled/field:text-dhis2-disabled-foreground in-data-[slot=field-item]:font-normal',
                 className
             )}
             {...props}
@@ -151,7 +152,7 @@ function FieldTitle({ className, ...props }: React.ComponentProps<'div'>) {
         <div
             data-slot="field-label"
             className={cn(
-                'flex w-fit items-center gap-2 text-sm leading-snug text-dhis2-foreground group-data-disabled/field:text-dhis2-disabled-foreground',
+                'flex w-fit items-center gap-2 text-sm leading-snug font-medium text-dhis2-foreground group-data-disabled/field:text-dhis2-disabled-foreground',
                 className
             )}
             {...props}

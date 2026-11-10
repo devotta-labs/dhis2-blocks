@@ -292,3 +292,29 @@ test("a combobox's popup search keeps its own name", async () => {
         .element(page.getByRole('combobox', { name: 'Search facilities' }))
         .toBeVisible()
 })
+
+test('a field label and a legend are medium; an option label is regular', async () => {
+    await render(
+        <>
+            <Field>
+                <FieldLabel>Full name</FieldLabel>
+                <Input />
+            </Field>
+            <Field>
+                <FieldSet render={<RadioGroup />}>
+                    <FieldLegend variant="label">Test result</FieldLegend>
+                    <FieldItem>
+                        <RadioGroupItem value="POS" />
+                        <FieldLabel>Positive</FieldLabel>
+                    </FieldItem>
+                </FieldSet>
+            </Field>
+        </>
+    )
+    const weight = (text: string) =>
+        getComputedStyle(page.getByText(text, { exact: true }).element())
+            .fontWeight
+    expect(weight('Full name')).toBe('500')
+    expect(weight('Test result')).toBe('500')
+    expect(weight('Positive')).toBe('400')
+})

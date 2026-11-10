@@ -159,15 +159,16 @@ each message once.
 - `Field` — one control and its label, description and error. Use one for
   each input, select, textarea, single checkbox or switch, and for a whole
   group of radios or checkboxes.
-- `FieldLabel` — names the control. Inside a `FieldItem`, it names that
-  option.
+- `FieldLabel` — names the control, in medium weight so it leads. Inside a
+  `FieldItem`, it names that option, in regular weight.
 - `FieldDescription` — a hint under the control. Inside a `FieldItem`, it
   describes that option.
 - `FieldError` — the message shown while the value is wrong.
 - `FieldSet` and `FieldLegend` — a group of options, or of fields, under one
   legend.
 - `FieldLegend variant="label"` — for a group that is one field's choice,
-  such as a radio group. It looks like a label instead of a heading.
+  such as a radio group. It looks like a field's label (medium weight)
+  instead of a heading, so it stands above its options' labels.
 - `FieldItem` — one option of a radio or checkbox group, inside the group's
   `Field`.
 - `FieldContent` — stacks a label and its description beside a control.

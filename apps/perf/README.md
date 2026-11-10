@@ -127,13 +127,13 @@ What it shows, on the low-end profile:
   request at 3.4 s whatever the form.
 - **Rules are the largest cost of loading.** The rule engine is 31% of the base form's load, 50% with 200 rules.
   The rows on screen get their effects first (6–7 s whatever the row count), but the rest run in the background and
-  keep the main thread busy: 2.4 s of work for 10 rows, 19.4 s for 500. "Show more" pays the same: 0.9 s for 10 rows, 5.8 s for 500,
+  keep the main thread busy: 2.4 s of work for 10 rows, 19.4 s for 500. "Show more" pays the same: 1.0 s for 10 rows, 5.8 s for 500,
   3.9 s with 200 rules.
 - **Columns are not virtualised.** DOM nodes grow with them (2,171 at 10 columns, 21,470 at 160), and so do the
   longest task of the load (0.3 to 1.8 s), a scrolled frame (25 to 147 ms), adding a row (0.4 to 2.6 s) and the
   renderer's memory (191 to 251 MB). Moving the cursor and scrolling are mostly the browser's own style, layout
   and paint over that DOM.
-- **An edit walks every loaded cell.** From Enter to the rules' effects takes 138 ms with 10 rows and 481 ms with
+- **An edit walks every loaded cell.** From Enter to the rules' effects takes 133 ms with 10 rows and 481 ms with
   500, though one row changed: `summarise` (`logic/summary.ts`), the rules' store subscriber
   (`provider/connectRules.ts`) and the copy of the cell map on write (`spreadsheet/store/store.ts`) each go over
   all of them.

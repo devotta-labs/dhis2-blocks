@@ -11,6 +11,8 @@ import { AttributeFact } from './FactPair'
 import { useLoggedProblem } from './useAttributeValue'
 
 export interface TrackedEntityOwnerProps {
+    /** Shows the owner as this label and the unit's name, in place of "Owned by …". */
+    label?: string
     className?: string
 }
 
@@ -19,9 +21,11 @@ const MISSING_PROGRAM =
 
 const OwnerName = ({
     orgUnit,
+    label,
     className,
 }: {
     orgUnit?: string
+    label?: string
     className?: string
 }) => {
     const { resourceClient, clientId } = useHeaderContext()
@@ -44,7 +48,10 @@ const OwnerName = ({
     if (orgUnit === undefined) {
         return (
             <AttributeFact
-                state={{ kind: 'missing', label: i18n.t('Owned by') }}
+                state={{
+                    kind: 'missing',
+                    label: label || i18n.t('Owned by'),
+                }}
                 className={className}
             />
         )
@@ -55,28 +62,38 @@ const OwnerName = ({
     if (query.data === undefined) {
         return (
             <AttributeFact
-                state={{ kind: 'unavailable', label: i18n.t('Owned by') }}
+                state={{
+                    kind: 'unavailable',
+                    label: label || i18n.t('Owned by'),
+                }}
                 className={className}
             />
         )
     }
     return (
         <AttributeFact
-            state={{
-                kind: 'value',
-                label: '',
-                text: i18n.t('Owned by {{orgUnit}}', {
-                    orgUnit: query.data,
-                    interpolation: { escapeValue: false },
-                }),
-            }}
+            state={
+                label
+                    ? { kind: 'value', label, text: query.data }
+                    : {
+                          kind: 'value',
+                          label: '',
+                          text: i18n.t('Owned by {{orgUnit}}', {
+                              orgUnit: query.data,
+                              interpolation: { escapeValue: false },
+                          }),
+                      }
+            }
             className={className}
         />
     )
 }
 
 /** The organisation unit that owns the person's record in the program. */
-export function TrackedEntityOwner({ className }: TrackedEntityOwnerProps) {
+export function TrackedEntityOwner({
+    label,
+    className,
+}: TrackedEntityOwnerProps) {
     const { state, program } = useHeaderContext()
     const problem = program ? undefined : MISSING_PROGRAM
     useLoggedProblem(problem)
@@ -93,6 +110,7 @@ export function TrackedEntityOwner({ className }: TrackedEntityOwnerProps) {
     return (
         <OwnerName
             orgUnit={state.trackedEntity.ownerOrgUnit}
+            label={label}
             className={className}
         />
     )

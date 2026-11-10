@@ -95,7 +95,10 @@ export function ObservationInline({
         const text = formatPointValue(series, latest, display)
         body = (
             <>
-                <span data-slot="value-text" className="text-dhis2-foreground">
+                <span
+                    data-slot="value-text"
+                    className="font-medium text-dhis2-foreground"
+                >
                     {shownUnit ? `${text} ${shownUnit}` : text}
                 </span>
                 {legend ? (

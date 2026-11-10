@@ -67,8 +67,8 @@ move below everything.
         <TrackedEntityBanner className="sticky top-0">
             <TrackedEntityName attributes={['w75KJ2mc4zz', 'zDhUuAYrxNC']} />
             <TrackedEntityStatus />
-            <TrackedEntityBorn attribute="gHGyrwKPzej" />
-            <TrackedEntityAttribute attribute="lZGmxYbs97q" />
+            <TrackedEntityBorn attribute="gHGyrwKPzej" label="Born" />
+            <TrackedEntityAttribute attribute="lZGmxYbs97q" label="ID" />
             <TrackedEntityEnrollment />
             <TrackedEntityOwner />
             <TrackedEntityActions>
@@ -89,6 +89,11 @@ move below everything.
     </TrackedEntityHeaderProvider>
 </ObservationsProvider>
 ```
+
+Each value shows under its attribute's form name, and a hairline separates
+the pairs. Form names are often long, so pass `label` to shorten one, as with
+`label="ID"` above. `TrackedEntityAttribute`, `TrackedEntityBorn`,
+`TrackedEntityOwner` and `ObservationInline` take a `label`.
 
 Place `TrackedEntityStatus` yourself when composing. Without it, an inactive
 person is shown by the banner's muted surface alone, which is colour alone. A

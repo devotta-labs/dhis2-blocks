@@ -22,7 +22,9 @@ const FactPair = ({
                 <dt className="text-dhis2-muted-foreground">
                     {label || i18n.t('Attribute')}
                 </dt>
-                <dd className="m-0 text-dhis2-foreground">{children}</dd>
+                <dd className="m-0 font-medium text-dhis2-foreground">
+                    {children}
+                </dd>
             </>
         )
     }
@@ -30,20 +32,24 @@ const FactPair = ({
     if (!label) {
         return (
             <span data-slot="tracked-entity-fact" className={classes}>
-                <span className="text-dhis2-foreground">{children}</span>
+                <span className="font-medium text-dhis2-foreground">
+                    {children}
+                </span>
             </span>
         )
     }
     return (
         <dl data-slot="tracked-entity-fact" className={classes}>
             <dt className="text-dhis2-muted-foreground">{label}</dt>
-            <dd className="m-0 text-dhis2-foreground">{children}</dd>
+            <dd className="m-0 font-medium text-dhis2-foreground">
+                {children}
+            </dd>
         </dl>
     )
 }
 
 const Muted = ({ children }: { children: string }) => (
-    <span className="text-dhis2-muted-foreground">{children}</span>
+    <span className="font-normal text-dhis2-muted-foreground">{children}</span>
 )
 
 /** The shared rendering of a resolved attribute; `label` overrides the metadata's. */

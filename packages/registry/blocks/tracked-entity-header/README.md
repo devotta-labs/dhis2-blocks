@@ -23,8 +23,8 @@ compose a banner, place the parts yourself:
         <TrackedEntityBanner className="sticky top-0">
             <TrackedEntityName attributes={[firstName, lastName]} />
             <TrackedEntityStatus />
-            <TrackedEntityBorn attribute={birthDate} />
-            <TrackedEntityAttribute attribute={uniqueId} />
+            <TrackedEntityBorn attribute={birthDate} label="Born" />
+            <TrackedEntityAttribute attribute={uniqueId} label="ID" />
             <TrackedEntityActions>
                 <Button size="sm" onClick={recordVisit}>
                     Record visit

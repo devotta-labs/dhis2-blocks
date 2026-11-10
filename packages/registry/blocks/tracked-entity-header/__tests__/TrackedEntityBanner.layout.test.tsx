@@ -9,7 +9,7 @@ import {
     TrackedEntityName,
 } from '..'
 import { banner, Composed, flags } from './bannerTestSupport'
-import { ALLERGIES, FIRST, LAST, renderParts } from './valuePartsSupport'
+import { ALLERGIES, CITY, FIRST, LAST, renderParts } from './valuePartsSupport'
 
 describe('TrackedEntityBanner screenshots', () => {
     afterAll(async () => {
@@ -159,6 +159,57 @@ describe('TrackedEntityBanner layout', () => {
                 ?.getBoundingClientRect() ?? new DOMRect()
         expect(actions.top).toBeGreaterThanOrEqual(facts.bottom)
         expect(section.scrollWidth).toBeLessThanOrEqual(section.clientWidth)
+    })
+
+    it('draws a hairline between pairs, but none at the start of a line', async () => {
+        await page.viewport(360, 600)
+        await renderParts(<Composed />)
+        await expect.element(page.getByText('Penicillin')).toBeVisible()
+
+        const row = banner().querySelector<HTMLElement>(
+            '[data-slot="tracked-entity-banner-content"]'
+        )
+        if (!row) throw new Error('No banner content')
+        const edge = row.getBoundingClientRect().left
+        const parts = [...row.children]
+            .filter((child) => !child.classList.contains('sr-only'))
+            .map((part) => part.getBoundingClientRect())
+        const dividers = [...row.children]
+            .filter((child) => !child.classList.contains('sr-only'))
+            .map((part) => getComputedStyle(part, '::before'))
+        expect(getComputedStyle(row).overflowX).toBe('clip')
+        let between = 0
+        parts.forEach((part, index) => {
+            expect(dividers[index].width).toBe('1px')
+            const dividerAt =
+                part.left - edge + parseFloat(dividers[index].insetInlineStart)
+            // A line's first part draws its divider outside the row, where it is clipped.
+            const startsLine =
+                index === 0 || part.top >= parts[index - 1].bottom - 1
+            if (startsLine) {
+                expect(dividerAt).toBeLessThan(0)
+            } else {
+                expect(dividerAt).toBeGreaterThan(0)
+                between += 1
+            }
+        })
+        expect(between).toBeGreaterThan(0)
+    })
+
+    it('sets values in medium weight, and Not recorded in regular', async () => {
+        await renderParts(
+            <TrackedEntityBanner>
+                <TrackedEntityName attributes={[FIRST, LAST]} />
+                <TrackedEntityAttribute attribute={ALLERGIES} />
+                <TrackedEntityAttribute attribute={CITY} />
+            </TrackedEntityBanner>
+        )
+        await expect.element(page.getByText('Not recorded')).toBeVisible()
+
+        const weight = (text: string) =>
+            getComputedStyle(page.getByText(text).element()).fontWeight
+        expect(weight('Penicillin')).toBe('500')
+        expect(weight('Not recorded')).toBe('400')
     })
 
     it('opens the details below both lines', async () => {

@@ -55,8 +55,14 @@ export default function PersonBanner() {
                             attributes={[FIRST_NAME, LAST_NAME]}
                         />
                         <TrackedEntityStatus />
-                        <TrackedEntityBorn attribute={BIRTH_DATE} />
-                        <TrackedEntityAttribute attribute={UNIQUE_ID} />
+                        <TrackedEntityBorn
+                            attribute={BIRTH_DATE}
+                            label="Born"
+                        />
+                        <TrackedEntityAttribute
+                            attribute={UNIQUE_ID}
+                            label="ID"
+                        />
                         <TrackedEntityEnrollment />
                         <TrackedEntityOwner />
                         <TrackedEntityFacts>

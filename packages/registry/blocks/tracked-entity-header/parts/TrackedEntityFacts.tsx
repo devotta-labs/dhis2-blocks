@@ -1,6 +1,7 @@
 import { cn } from '@/components/dhis2/ui/cn'
 import React, { type ReactNode } from 'react'
 import { useHeaderContext } from '../provider/context'
+import { DIVIDED } from './divided'
 
 export interface TrackedEntityFactsProps {
     children: ReactNode
@@ -20,7 +21,8 @@ export function TrackedEntityFacts({
         <div
             data-slot="tracked-entity-facts"
             className={cn(
-                'flex flex-wrap items-center gap-x-4 gap-y-1',
+                'flex flex-wrap items-baseline gap-y-1',
+                DIVIDED,
                 className
             )}
         >

@@ -6,6 +6,7 @@ import React, { useMemo, useRef, useState, type ReactNode } from 'react'
 import { TrackedEntityAttribute } from '../parts/TrackedEntityAttribute'
 import { TrackedEntityDetails } from '../parts/TrackedEntityDetails'
 import { TrackedEntityStatus } from '../parts/TrackedEntityStatus'
+import { DIVIDED } from '../parts/divided'
 import { ActionsSlotContext } from '../provider/actionsSlot'
 import { useHeaderContext } from '../provider/context'
 import { LabelledRegionContext } from '../provider/labelledRegion'
@@ -20,8 +21,10 @@ export interface TrackedEntityBannerProps {
  * Line one is everything up to the facts; the facts take line two and the
  * details open below both.
  */
-const PLACEMENT =
-    'flex min-w-0 flex-1 flex-wrap items-baseline gap-x-4 gap-y-1.5 [&>[data-slot=tracked-entity-details]]:basis-full [&>[data-slot=tracked-entity-facts]]:basis-full'
+const PLACEMENT = cn(
+    'flex min-w-0 flex-1 flex-wrap items-baseline gap-y-1.5 [&>[data-slot=tracked-entity-details]]:basis-full [&>[data-slot=tracked-entity-facts]]:basis-full',
+    DIVIDED
+)
 
 /** The actions' own column, beside both lines; under everything when the banner is narrow. */
 const COLUMNS = 'flex flex-col gap-x-4 gap-y-2 @md:flex-row @md:items-start'

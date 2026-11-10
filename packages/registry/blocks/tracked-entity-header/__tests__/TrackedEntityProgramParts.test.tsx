@@ -99,6 +99,14 @@ describe('TrackedEntityOwner', () => {
         ).toHaveLength(1)
     })
 
+    it('shows the unit under a label when given one', async () => {
+        await renderParts(<TrackedEntityOwner label="Facility" />)
+
+        await expect.element(page.getByText('Ngelehun CHC')).toBeVisible()
+        expect(page.getByRole('term').element()).toHaveTextContent('Facility')
+        expect(page.getByText('Owned by', { exact: false }).query()).toBeNull()
+    })
+
     it('shares one request between two owners', async () => {
         const requests: ResourceRequest[] = []
         await renderParts(

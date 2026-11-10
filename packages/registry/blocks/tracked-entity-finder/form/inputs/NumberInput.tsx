@@ -29,7 +29,6 @@ export const NumberInput = ({
                 inputMode="decimal"
                 autoComplete="off"
                 placeholder={placeholder}
-                aria-invalid={error ? true : undefined}
                 onBlur={onBlur}
                 value={value?.kind === 'number' ? value.value : ''}
                 onChange={(event) =>

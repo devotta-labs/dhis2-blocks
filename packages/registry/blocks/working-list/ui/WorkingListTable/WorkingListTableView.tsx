@@ -18,7 +18,7 @@ import { WorkingListPagination } from './WorkingListPagination'
 
 /** The column header's sort button. */
 export const SORT_BUTTON_CLASS =
-    'group/sort flex min-h-6 w-full cursor-pointer items-center border-0 bg-transparent p-0 text-left text-[inherit] [font-weight:inherit] outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-dhis2-ring/35 contrast-more:focus-visible:outline-dhis2-ring disabled:cursor-default'
+    'group/sort flex min-h-6 w-full cursor-pointer items-center border-0 bg-transparent p-0 text-left text-[inherit] [font-weight:inherit] outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-dhis2-ring disabled:cursor-default'
 
 // Reserve the native scrollbar gutter before the columns are known.
 const tableScrollClassName =
@@ -337,7 +337,8 @@ export const WorkingListTableView = ({
                                         key={row.id}
                                         className={
                                             interactive
-                                                ? 'cursor-pointer'
+                                                ? // The open button is hidden, so its row shows where focus is.
+                                                  'cursor-pointer has-[button:focus-visible]:outline-2 has-[button:focus-visible]:-outline-offset-2 has-[button:focus-visible]:outline-dhis2-ring has-[button:focus-visible]:outline-solid'
                                                 : undefined
                                         }
                                         data-test={`working-list-row-${row.id}`}

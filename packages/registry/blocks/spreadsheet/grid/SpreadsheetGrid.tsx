@@ -372,7 +372,7 @@ export const SpreadsheetGrid = ({
                     cell !== was &&
                     cell.draft !== was?.draft
                 ) {
-                    announce(cell.error)
+                    announce(cell.error, 'assertive')
                 }
             }),
         // `keyAt` reads `tables` and `keyOf`, which `positions` follows.
@@ -529,6 +529,7 @@ export const SpreadsheetGrid = ({
     }
 
     return (
+        // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- remembers which cell had focus; the cells are the controls
         <div
             className={cn('flex flex-col gap-4', className)}
             onFocus={(event) => {

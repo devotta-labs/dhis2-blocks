@@ -125,6 +125,7 @@ export const TableBody = ({
     })
     const after = virtualizer.getTotalSize() - end
     return (
+        // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- notes which row holds focus; the cells inside are the controls
         <tbody onFocus={note} onPointerDown={note}>
             {drawn}
             {after > 0 ? <Gap height={after} span={span} /> : null}

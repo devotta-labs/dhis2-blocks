@@ -28,7 +28,6 @@ export const TextInput = ({
                 type="text"
                 autoComplete="off"
                 placeholder={placeholder}
-                aria-invalid={error ? true : undefined}
                 onBlur={onBlur}
                 value={value?.kind === 'text' ? value.text : ''}
                 onChange={(event) =>

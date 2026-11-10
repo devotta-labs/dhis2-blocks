@@ -139,7 +139,7 @@ export const FileEditor = ({
         if (image && file.type !== '' && !file.type.startsWith('image/')) {
             const refusal = i18n.t('Choose an image file')
             setProblem(refusal)
-            announce(refusal)
+            announce(refusal, 'assertive')
             return
         }
         stopUpload(cellKey, running.get(cellKey))
@@ -200,7 +200,7 @@ export const FileEditor = ({
                 const reason = failure(error)
                 setProblem(reason)
                 // Said even when the editor has closed: the person has moved on and sees no editor.
-                announce(reason)
+                announce(reason, 'assertive')
             }
         )
     }

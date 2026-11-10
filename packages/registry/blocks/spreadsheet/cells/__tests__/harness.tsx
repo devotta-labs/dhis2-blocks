@@ -8,7 +8,6 @@ import type { NavKey } from '../../grid/navigation'
 import type { AnnotationsState, CellAnnotations } from '../../model/annotations'
 import { cellKey } from '../../model/types'
 import type { CellKey, GridTable } from '../../model/types'
-import { createAnnouncer } from '../../provider/context'
 import { Spreadsheet } from '../../provider/Spreadsheet'
 import { createCellStore } from '../../store/store'
 import type { CellOverrides } from '../cellProps'
@@ -94,7 +93,6 @@ export const rig = (
         announce: (text: string) => {
             announced.push(text)
         },
-        announcements: createAnnouncer().announcements,
     }
     return {
         store,

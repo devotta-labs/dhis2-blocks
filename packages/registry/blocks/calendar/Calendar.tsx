@@ -78,6 +78,7 @@ export const CalendarProvider = ({
                 meta: {
                     weekDayLabels: state.weekDayLabels,
                     dayName: state.dayName,
+                    monthName: state.monthName,
                     currMonth: state.navigation.currMonth,
                     currYear: state.navigation.currYear,
                     months: state.navigation.months,

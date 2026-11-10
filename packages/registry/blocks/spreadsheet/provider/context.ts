@@ -5,6 +5,7 @@ import { useStore } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
+import type { Politeness } from '@/components/dhis2/ui/announcer'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import type { CellOverrides } from '../cells/cellProps'
 import type { AnnotationsState, CellAnnotations } from '../model/annotations'
@@ -27,11 +28,6 @@ export type ReadonlyStore<T> = Pick<
     'getState' | 'getInitialState' | 'subscribe'
 >
 
-/** What the one polite live region says. */
-interface Announcement {
-    text: string
-}
-
 /** What the cells and the grid read from the provider. */
 export interface SpreadsheetContext {
     store: StoreApi<CellStoreState>
@@ -39,10 +35,8 @@ export interface SpreadsheetContext {
     /** Starts every DOM id of the form, so two forms on one page never share one. */
     idScope: string
     settings: ValueSettings
-    /** Says an outcome in the grid's one polite live region. */
-    announce(text: string): void
-    /** What `announce` last said, for the grid's live region to show. */
-    announcements: StoreApi<Announcement>
+    /** Says an outcome to screen reader users; failures are `'assertive'`. */
+    announce(text: string, politeness?: Politeness): void
     /** Focuses the cell, which scrolls it into view; a cell whose row the grid has not drawn is drawn first. */
     focusCell(key: CellKey): void
     /** The cell `focusCell` waits on while the grid draws its row. */
@@ -91,44 +85,8 @@ export const NO_NAMES: SpreadsheetContext['orgUnitNames'] = createStore(() => ({
     names: new Map(),
 }))
 
-// Long enough for screen readers to notice the region emptied, so the same text said twice is heard twice.
-const CLEARED_FOR_MS = 100
-// Between one text and the next, so a text said right after another is heard after it rather than over it.
-const APART_MS = 150
-
-/** `announce`, and what it last said for the live region to show. */
-export type Announcer = Pick<SpreadsheetContext, 'announce' | 'announcements'>
-
-/**
- * `announce` and the text it sets: each text in turn, 150 ms after the one before, the region emptied first. A newer
- * text replaces one still waiting: it is the newer news.
- */
-export const createAnnouncer = (): Announcer => {
-    const announcements = createStore<Announcement>()(() => ({ text: '' }))
-    const waiting: string[] = []
-    let saying = false
-    const sayNext = () => {
-        const text = waiting.shift()
-        saying = text !== undefined
-        if (text === undefined) {
-            return
-        }
-        announcements.setState({ text: '' })
-        setTimeout(() => {
-            announcements.setState({ text })
-            setTimeout(sayNext, APART_MS - CLEARED_FOR_MS)
-        }, CLEARED_FOR_MS)
-    }
-    return {
-        announcements,
-        announce(text) {
-            waiting.splice(0, waiting.length, text)
-            if (!saying) {
-                sayNext()
-            }
-        },
-    }
-}
+/** `announce`, for code outside the grid that says outcomes too; the shared `announce` by default. */
+export type Announcer = Pick<SpreadsheetContext, 'announce'>
 
 /** What a cell with no entry reads as; one stable object. */
 const EMPTY_EFFECTS: Readonly<CellAnnotations> = Object.freeze({
@@ -212,7 +170,7 @@ export const useFocusCell = () => {
     return focusCell
 }
 
-/** Says an outcome in the spreadsheet's one polite live region. */
+/** Says an outcome to screen reader users, through the shared announcer. */
 export const useAnnounce = () => {
     const { announce } = useSpreadsheetContext()
     return announce

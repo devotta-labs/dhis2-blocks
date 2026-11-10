@@ -41,9 +41,9 @@ Add a `FieldDescription` to explain what to enter. When the value is wrong,
 mark the field and say how to fix it:
 
 ```tsx
-<Field data-invalid={invalid}>
+<Field invalid={invalid}>
     <FieldLabel htmlFor="age">Age in years</FieldLabel>
-    <Input id="age" type="number" aria-invalid={invalid} />
+    <Input id="age" type="number" />
     <FieldDescription>Use the age at the last birthday.</FieldDescription>
     {invalid && <FieldError>Enter an age of 110 or less.</FieldError>}
 </Field>

@@ -93,6 +93,7 @@ const OpenCell = ({ view, ...props }: CellProps & { view: CellView }) => {
     )
     const Control = replacement ?? cells[kind]
     return (
+        // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- the control inside takes focus; this wrapper handles Escape and focus for the cell
         <div
             className="group/cell relative h-full focus-within:[anchor-name:--data-entry-cell]"
             onFocus={() => setDismissed(false)}

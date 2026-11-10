@@ -33,7 +33,8 @@ function Alert({
     return (
         <div
             data-slot="alert"
-            role="alert"
+            // Only an error interrupts; other alerts wait their turn.
+            role={variant === 'destructive' ? 'alert' : 'status'}
             className={cn(alertVariants({ variant }), className)}
             {...props}
         />

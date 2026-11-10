@@ -1,5 +1,5 @@
 import React from 'react'
-import { page } from 'vitest/browser'
+import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { WorkingListSavedView } from '../../provider/contracts'
 import { ConfigureMenu } from '../ConfigureMenu'
@@ -19,10 +19,12 @@ const renderMenu = async ({
     selectedView,
     dirty = false,
     online = true,
+    createPending = false,
 }: {
     selectedView?: WorkingListSavedView
     dirty?: boolean
     online?: boolean
+    createPending?: boolean
 }) => {
     const onDownload = vi.fn()
     const onSaveAs = vi.fn(async () => undefined)
@@ -34,7 +36,7 @@ const renderMenu = async ({
                 dirty={dirty}
                 online={online}
                 busy={false}
-                createPending={false}
+                createPending={createPending}
                 onDownload={onDownload}
                 onSaveAs={onSaveAs}
                 onUpdate={onUpdate}
@@ -42,10 +44,22 @@ const renderMenu = async ({
         </WorkingListTextProvider>
     )
 
-    return { screen, onDownload, onUpdate }
+    return { screen, onDownload, onSaveAs, onUpdate }
 }
 
 describe('working-list actions', () => {
+    it('says Saving… and keeps focus on the save button while it saves', async () => {
+        const { screen, onSaveAs } = await renderMenu({ createPending: true })
+        await screen.getByRole('button', { name: 'Save view' }).click()
+        await page.getByRole('textbox', { name: 'Name' }).fill('Clinic A')
+
+        const saving = page.getByRole('button', { name: 'Saving…' })
+        await expect.element(saving).toHaveAttribute('aria-disabled', 'true')
+        await expect.element(saving).not.toHaveAttribute('disabled')
+        await userEvent.keyboard('{Enter}')
+        expect(onSaveAs).not.toHaveBeenCalled()
+    })
+
     it('offers create and download for an unfiltered default view', async () => {
         const { screen, onDownload } = await renderMenu({})
         const save = screen.getByRole('button', { name: 'Save view' })

@@ -82,6 +82,7 @@ export const FilterChip = ({
             >
                 {/* A combobox doesn't take its name from its contents. */}
                 <PopoverTrigger
+                    // oxlint-disable-next-line jsx-a11y/role-has-required-aria-props -- PopoverTrigger sets aria-expanded and aria-controls at runtime
                     role="combobox"
                     aria-label={`${prefix} ${value}`}
                     data-size="sm"

@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
 import { formatCount } from '@/components/spreadsheet'
 import type {
+    Announcer,
     CellKey,
-    GridTable,
-    DataEngine,
     CellStoreState,
+    DataEngine,
+    GridTable,
 } from '@/components/spreadsheet'
 import { trackerKeyOf, recordsOf, recordIdOf } from '../model/types'
 import type { DataRecord, TrackerColumn, TrackerRow } from '../model/types'
@@ -238,7 +239,7 @@ interface PagesOptions {
     source: TrackerDataEntrySource
     engine: DataEngine
     view: StoreApi<TrackerDataEntryView>
-    announce(text: string): void
+    announce: Announcer['announce']
     orgUnitNames: Names
     fileNames: Names
 }
@@ -321,7 +322,7 @@ export const usePages = ({
                         if (!stop.signal.aborted) {
                             const reason = reasonOf(error)
                             view.setState({ loadMoreError: reason })
-                            announce(reason)
+                            announce(reason, 'assertive')
                         }
                     })
                 loading = false

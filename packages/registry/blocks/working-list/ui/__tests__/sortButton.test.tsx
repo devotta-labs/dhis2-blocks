@@ -1,0 +1,20 @@
+import React from 'react'
+import { userEvent } from 'vitest/browser'
+import { render } from 'vitest-browser-react'
+import { SORT_BUTTON_CLASS } from '../WorkingListTable/WorkingListTableView'
+import { roleColour } from '../../../../test/roleColour'
+
+describe('sort button', () => {
+    it('focus ring is full strength', async () => {
+        const screen = await render(
+            <button type="button" className={SORT_BUTTON_CLASS}>
+                Name
+            </button>
+        )
+        await userEvent.tab()
+        const button = screen.getByRole('button').element()
+        expect(document.activeElement).toBe(button)
+        expect(getComputedStyle(button).outlineStyle).toBe('solid')
+        expect(getComputedStyle(button).outlineColor).toBe(roleColour('ring'))
+    })
+})

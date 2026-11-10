@@ -26,8 +26,9 @@ const RangeFrame = ({
 > & {
     children: ReactNode
 }) => (
-    <fieldset
-        data-invalid={error ? true : undefined}
+    <Field
+        render={<fieldset />}
+        invalid={error !== undefined}
         // Left only when focus moves out of both ends, not from From to To.
         onBlur={(event) => {
             if (
@@ -50,7 +51,7 @@ const RangeFrame = ({
         </div>
         {description && <FieldDescription>{description}</FieldDescription>}
         {error && <FieldError>{error}</FieldError>}
-    </fieldset>
+    </Field>
 )
 
 const RangeNumberSide = ({
@@ -68,7 +69,7 @@ const RangeNumberSide = ({
 }) => {
     const id = useId()
     return (
-        <Field className="gap-1">
+        <Field invalid={invalid} className="gap-1">
             <FieldLabel htmlFor={id}>{label}</FieldLabel>
             <Input
                 id={id}
@@ -76,7 +77,6 @@ const RangeNumberSide = ({
                 inputMode="decimal"
                 autoComplete="off"
                 placeholder={placeholder}
-                aria-invalid={invalid || undefined}
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
             />

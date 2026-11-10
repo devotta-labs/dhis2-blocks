@@ -166,6 +166,10 @@ describe('organisation-unit selector interaction reliability', () => {
         expect(props.onSearchLoadMore).toHaveBeenCalledOnce()
 
         await screen.rerender(
+            <OrganisationUnitSelectorContent {...props} searchHasMore />
+        )
+        showMore.element().focus()
+        await screen.rerender(
             <OrganisationUnitSelectorContent
                 {...props}
                 searchHasMore
@@ -173,7 +177,9 @@ describe('organisation-unit selector interaction reliability', () => {
             />
         )
         await expect.element(error).not.toBeInTheDocument()
-        await expect.element(showMore).toBeDisabled()
+        const loading = screen.getByRole('button', { name: 'Loading…' })
+        await expect.element(loading).toHaveAttribute('aria-disabled', 'true')
+        expect(document.activeElement).toBe(loading.element())
 
         await screen.rerender(
             <OrganisationUnitSelectorContent {...props} searchHasMore />

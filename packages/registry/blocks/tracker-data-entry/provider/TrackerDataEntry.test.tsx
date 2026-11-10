@@ -20,6 +20,7 @@ import {
     visit,
     visitForm,
 } from './__tests__/rig'
+import { liveRegion } from '../../../test/liveRegion'
 
 afterEach(cleanUp)
 
@@ -143,8 +144,7 @@ test('the leave-page prompt is armed while anything is unsent', async () => {
 test('announces outcomes once, politely', async () => {
     const memory = memorySource(visitForm())
     await mount(memory.source)
-    expect(page.getByRole('status').elements()).toHaveLength(1)
-    const region = page.getByRole('status').element()
+    const region = liveRegion()
     const said: string[] = []
     new MutationObserver(() => said.push(region.textContent ?? '')).observe(
         region,
@@ -567,7 +567,7 @@ test('two forms of one program on one page share no DOM id', async () => {
     expect(ids.filter((id, at) => ids.indexOf(id) !== at)).toEqual([])
 })
 
-test('two forms on one page keep their own ids and live regions', async () => {
+test('two forms on one page keep their own ids and share the live regions', async () => {
     const { context } = await mount(
         memorySource(visitForm(), 'memory:a').source,
         {
@@ -580,17 +580,12 @@ test('two forms on one page keep their own ids and live regions', async () => {
     expect(new Set([...cells].map(({ id }) => id)).size).toBe(2)
     const ids = [...document.querySelectorAll('[id]')].map(({ id }) => id)
     expect(ids.filter((id, at) => ids.indexOf(id) !== at)).toEqual([])
-    // Form A comes first on the page, its live region with it.
-    const [regionA, regionB] = page.getByRole('status').elements()
-    const saidB: string[] = []
-    new MutationObserver(() => saidB.push(regionB.textContent ?? '')).observe(
-        regionB,
-        { childList: true, characterData: true, subtree: true }
-    )
+    // A refused value is an error, said in the one assertive region the page shares.
+    const region = liveRegion('assertive')
     control(CHILDREN).focus()
     await userEvent.keyboard('abc{Enter}')
     const error = context().store.getState().cells[CHILDREN]?.error ?? ''
     expect(error).not.toBe('')
-    await expect.element(regionA).toHaveTextContent(error)
-    expect(saidB).toEqual([])
+    await expect.poll(() => region.textContent).toBe(error)
+    expect(document.querySelectorAll('[aria-live]')).toHaveLength(2)
 })

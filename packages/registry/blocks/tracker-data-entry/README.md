@@ -321,7 +321,7 @@ Ctrl+D (Cmd+D) is like typing: it fills any cell that can be edited and never as
   cells go back to what DHIS2 has. A new
   event waits on the device until its event date is filled in, and, in a stage that checks required fields on every
   save, those fields too.
-- One polite live region says outcomes once things settle ("All changes saved", once nothing of the program is left
+- The shared announcer says outcomes once things settle, failures assertively ("All changes saved", once nothing of the program is left
   on the device), each in turn, never progress.
 
 ## Boundaries

@@ -13,9 +13,9 @@ export {
     type TrackedEntityAttributeProps,
 } from './parts/TrackedEntityAttribute'
 export {
-    TrackedEntityBorn,
-    type TrackedEntityBornProps,
-} from './parts/TrackedEntityBorn'
+    TrackedEntityDate,
+    type TrackedEntityDateProps,
+} from './parts/TrackedEntityDate'
 export {
     TrackedEntityName,
     type TrackedEntityNameProps,

@@ -6,16 +6,16 @@ import { AttributeFact } from './FactPair'
 import { TrackedEntityAttribute } from './TrackedEntityAttribute'
 import { useLoggedProblem, type AttributeValueState } from './useAttributeValue'
 
-interface BornBase {
+interface DateBase {
     /** Replaces the label. */
     label?: string
     className?: string
 }
 
-export type TrackedEntityBornProps =
-    | (BornBase & { attribute: string; enrollmentDate?: never })
-    | (BornBase & {
-          /** The date to show from the person's enrollment in the `program`. */
+export type TrackedEntityDateProps =
+    | (DateBase & { attribute: string; enrollmentDate?: never })
+    | (DateBase & {
+          /** The date to show from the enrollment in the `program`. */
           enrollmentDate: 'occurredAt' | 'enrolledAt'
           attribute?: never
       })
@@ -30,14 +30,14 @@ const resolveEnrollmentDate = (
     if (!program) {
         return {
             kind: 'misconfigured',
-            message: `A tracked entity born part with enrollmentDate "${enrollmentDate}" needs the program prop: the date comes from the person's enrollment in a program`,
+            message: `A tracked entity date part with enrollmentDate "${enrollmentDate}" needs the program prop: the date comes from the enrollment in a program`,
         }
     }
     const { metadata, trackedEntity } = state
     const label =
         enrollmentDate === 'occurredAt'
-            ? (metadata.incidentDateLabel ?? i18n.t('Date of birth'))
-            : (metadata.enrollmentDateLabel ?? i18n.t('Date of enrollment'))
+            ? (metadata.incidentDateLabel ?? i18n.t('Incident date'))
+            : (metadata.enrollmentDateLabel ?? i18n.t('Enrollment date'))
     const raw = trackedEntity.enrollment?.[enrollmentDate]
     if (!raw) {
         return { kind: 'missing', label }
@@ -50,7 +50,7 @@ const FromEnrollment = ({
     enrollmentDate,
     label,
     className,
-}: BornBase & { enrollmentDate: 'occurredAt' | 'enrolledAt' }) => {
+}: DateBase & { enrollmentDate: 'occurredAt' | 'enrolledAt' }) => {
     const context = useHeaderContext()
     const result = resolveEnrollmentDate(enrollmentDate, context)
     useLoggedProblem(
@@ -65,8 +65,8 @@ const FromEnrollment = ({
     )
 }
 
-/** When the person was born: a date attribute, or an enrollment date labelled by the program. */
-export function TrackedEntityBorn(props: TrackedEntityBornProps) {
+/** A date of the record: a date attribute, or an enrollment date labelled by the program. */
+export function TrackedEntityDate(props: TrackedEntityDateProps) {
     return props.enrollmentDate ? (
         <FromEnrollment {...props} enrollmentDate={props.enrollmentDate} />
     ) : (

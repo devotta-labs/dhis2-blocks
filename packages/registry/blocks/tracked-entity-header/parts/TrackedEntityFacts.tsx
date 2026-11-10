@@ -8,7 +8,7 @@ export interface TrackedEntityFactsProps {
     className?: string
 }
 
-/** The row of facts under the name. Renders nothing until the person is ready. */
+/** The row of facts under the name. Renders nothing until the record is ready. */
 export function TrackedEntityFacts({
     children,
     className,

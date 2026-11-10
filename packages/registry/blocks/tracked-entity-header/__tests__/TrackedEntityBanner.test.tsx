@@ -4,7 +4,7 @@ import { render } from 'vitest-browser-react'
 import {
     TrackedEntityAttribute,
     TrackedEntityBanner,
-    TrackedEntityBorn,
+    TrackedEntityDate,
     TrackedEntityEnrollment,
     TrackedEntityFacts,
     TrackedEntityHeaderProvider,
@@ -68,7 +68,7 @@ describe('TrackedEntityBanner', () => {
             .toBeVisible()
     })
 
-    it('with no type name, is labelled Person record', async () => {
+    it('with no type name, is labelled Record', async () => {
         await renderParts(<TrackedEntityBanner />, {
             metadata: (raw) => ({
                 ...raw,
@@ -77,7 +77,7 @@ describe('TrackedEntityBanner', () => {
         })
 
         await expect.element(page.getByText('Linda')).toBeVisible()
-        expect(banner().getAttribute('aria-label')).toBe('Person record')
+        expect(banner().getAttribute('aria-label')).toBe('Record')
     })
 
     it('with every name attribute empty, is labelled Name not recorded', async () => {
@@ -154,7 +154,7 @@ describe('TrackedEntityBanner', () => {
         await renderParts(
             <TrackedEntityBanner>
                 <TrackedEntityName attributes={[FIRST, LAST]} />
-                <TrackedEntityBorn enrollmentDate="occurredAt" />
+                <TrackedEntityDate enrollmentDate="occurredAt" />
                 <TrackedEntityAttribute attribute={GENDER} />
                 <TrackedEntityFacts>
                     <TrackedEntityOwner />
@@ -254,7 +254,7 @@ describe('TrackedEntityBanner', () => {
 
     it('shows a skeleton while loading, busy, the height of the loaded banner', async () => {
         await renderParts(<TwoLines />, { status: 'loading' })
-        const loading = page.getByRole('region', { name: 'Person record' })
+        const loading = page.getByRole('region', { name: 'Record' })
         await expect.element(loading).toHaveAttribute('aria-busy', 'true')
         const skeleton = loading.element()
         expect(
@@ -288,9 +288,9 @@ describe('TrackedEntityBanner', () => {
             </Wrapper>
         )
 
-        const region = page.getByRole('region', { name: 'Person record' })
+        const region = page.getByRole('region', { name: 'Record' })
         await expect
-            .element(region.getByText("Couldn't load this person"))
+            .element(region.getByText("Couldn't load this record"))
             .toBeVisible()
         expect(region.element().textContent).not.toContain('Record visit')
 
@@ -316,9 +316,9 @@ describe('TrackedEntityBanner', () => {
                 </TrackedEntityHeaderProvider>
             </Wrapper>
         )
-        const region = page.getByRole('region', { name: 'Person record' })
+        const region = page.getByRole('region', { name: 'Record' })
         await expect
-            .element(region.getByText("Couldn't load this person"))
+            .element(region.getByText("Couldn't load this record"))
             .toBeVisible()
         const section = region.element()
 
@@ -334,11 +334,11 @@ describe('TrackedEntityBanner', () => {
     it("restricted: names the program, shows no values, keeps the host's actions", async () => {
         await renderParts(<Composed />, { status: 'restricted' })
 
-        const region = page.getByRole('region', { name: 'Person record' })
+        const region = page.getByRole('region', { name: 'Record' })
         await expect
             .element(
                 region.getByText(
-                    "You don't have access to this person's record in WHO RMNCH Tracker"
+                    "You don't have access to this record in WHO RMNCH Tracker"
                 )
             )
             .toBeVisible()
@@ -362,10 +362,9 @@ describe('TrackedEntityBanner', () => {
 
         await expect
             .element(
-                page.getByText(
-                    "You don't have access to this person's record",
-                    { exact: true }
-                )
+                page.getByText("You don't have access to this record", {
+                    exact: true,
+                })
             )
             .toBeVisible()
     })
@@ -423,7 +422,7 @@ describe('TrackedEntityBanner', () => {
         await screen.rerender(at('te2'))
         seen.push(screen.container.textContent ?? '')
         await expect
-            .element(page.getByRole('region', { name: 'Person record' }))
+            .element(page.getByRole('region', { name: 'Record' }))
             .toHaveAttribute('aria-busy', 'true')
         observer.disconnect()
 

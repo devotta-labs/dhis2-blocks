@@ -27,9 +27,9 @@ import {
 } from './context'
 
 export interface TrackedEntityHeaderProviderProps {
-    /** The person the banner shows. */
+    /** The tracked entity the banner shows. */
     trackedEntity: string
-    /** The program whose attributes, enrollment and owner the banner shows; without one, the person type's. */
+    /** The program whose attributes, enrollment and owner the banner shows; without one, the tracked entity type's. */
     program?: string
     /** A custom data engine's client; app-runtime's is the default. */
     client?: TrackedEntityHeaderClient
@@ -73,7 +73,7 @@ const HeaderScope = ({
     const progId = normaliseProgram(program)
     const display = useDisplayOptions()
 
-    const person = useQuery({
+    const entity = useQuery({
         queryKey: trackedEntityHeaderQueryKeys.trackedEntity(
             clientId,
             teId,
@@ -90,8 +90,8 @@ const HeaderScope = ({
         enabled: teId !== '',
         retry: shouldRetryTrackedEntityHeaderRequest,
     })
-    // Without a program, the person's type says which attributes there are.
-    const type = person.data?.type
+    // Without a program, the tracked entity type says which attributes there are.
+    const type = entity.data?.type
     const metadata = useQuery({
         queryKey: trackedEntityHeaderQueryKeys.attributeMetadata(
             clientId,
@@ -111,44 +111,44 @@ const HeaderScope = ({
         retry: shouldRetryTrackedEntityHeaderRequest,
     })
 
-    const { refetch: refetchPerson } = person
+    const { refetch: refetchEntity } = entity
     const { refetch: refetchMetadata } = metadata
-    const personFailed = person.isError
+    const entityFailed = entity.isError
     const metadataFailed = metadata.isError
     const retry = useCallback(() => {
-        if (personFailed) {
-            void refetchPerson()
+        if (entityFailed) {
+            void refetchEntity()
         }
         if (metadataFailed) {
             void refetchMetadata()
         }
-    }, [personFailed, metadataFailed, refetchPerson, refetchMetadata])
+    }, [entityFailed, metadataFailed, refetchEntity, refetchMetadata])
 
-    const personError = person.error
+    const entityError = entity.error
     const metadataError = metadata.error
-    const personData = person.data
+    const entityData = entity.data
     const metadataData = metadata.data
     const state = useMemo((): TrackedEntityHeaderState => {
-        const errors = [personError, metadataError].filter(
+        const errors = [entityError, metadataError].filter(
             (error): error is Error => error !== null
         )
-        // Restricted outranks failed: the person can't be shown however the other request went.
+        // Restricted outranks failed: the record can't be shown however the other request went.
         if (errors.some(isForbidden)) {
             return { status: 'restricted', retry }
         }
         if (errors.length > 0) {
             return { status: 'failed', retry }
         }
-        if (!personData || !metadataData) {
+        if (!entityData || !metadataData) {
             return { status: 'loading', retry }
         }
         return {
             status: 'ready',
             retry,
-            trackedEntity: personData,
+            trackedEntity: entityData,
             metadata: metadataData,
         }
-    }, [personError, metadataError, personData, metadataData, retry])
+    }, [entityError, metadataError, entityData, metadataData, retry])
 
     const logged = useRef(new Set<string>())
     const logProblem = useCallback((message: string) => {
@@ -214,14 +214,14 @@ const HeaderScope = ({
 }
 
 /**
- * Loads one person and the attribute metadata for the banner, once for all
+ * Loads one tracked entity and the attribute metadata for the banner, once for all
  * the parts inside. It renders only its children.
  */
 export function TrackedEntityHeaderProvider(
     props: TrackedEntityHeaderProviderProps
 ) {
-    // Another person or program starts from nothing, so a part never shows
-    // the previous person's values while the new ones load.
+    // Another tracked entity or program starts from nothing, so a part never shows
+    // the previous record's values while the new ones load.
     return (
         <HeaderScope
             key={`${props.trackedEntity}:${normaliseProgram(props.program) ?? ''}`}

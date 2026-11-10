@@ -10,13 +10,8 @@ import type { Log } from '../network'
 import { usePresetParam } from '../usePresetParam'
 import { BannerCanvas } from './BannerCanvas'
 import bannerSource from './BannerCanvas.tsx?canvas'
-import {
-    generateLabData,
-    LAB_PERSON,
-    LIVE_PARTS,
-    SUBJECTS,
-    type LabSettings,
-} from './labData'
+import { generateLabData, LAB_PERSON, type LabSettings } from './labData'
+import { LIVE_PARTS, partsFor, SUBJECTS } from './labSubjects'
 import { answer, RESOURCES } from './labServer'
 import { initialLabState, labReducer } from './labState'
 import { PRESETS } from './presets'
@@ -47,11 +42,11 @@ export const TrackedEntityHeaderLab = () => {
     const data = useMemo(() => generateLabData(settings), [settings])
     const respond = useMemo(() => answer(settings, data), [settings, data])
 
-    const subject = SUBJECTS[settings.person]
+    const subject = SUBJECTS[settings.record]
     const canvasProps = {
-        trackedEntity: mode === 'lab' ? LAB_PERSON : live.personId,
+        trackedEntity: mode === 'lab' ? LAB_PERSON : live.trackedEntityId,
         program: mode === 'lab' ? subject.program : live.programId,
-        parts: mode === 'lab' ? subject.parts : LIVE_PARTS,
+        parts: mode === 'lab' ? partsFor(settings) : LIVE_PARTS,
         settings: { arrangement: settings.arrangement, width: settings.width },
     }
     const Canvas = canvas === 'banner' ? BannerCanvas : QuickLookCanvas
@@ -123,7 +118,7 @@ export const TrackedEntityHeaderLab = () => {
                             {(
                                 [
                                     ['programId', 'Program'],
-                                    ['personId', 'Person (tracked entity)'],
+                                    ['trackedEntityId', 'Tracked entity'],
                                 ] as const
                             ).map(([field, name]) => (
                                 <label

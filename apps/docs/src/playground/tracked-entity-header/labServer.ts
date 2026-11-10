@@ -1,10 +1,10 @@
 import {
     generateLabData,
     LAB_PERSON,
-    SUBJECTS,
     type LabData,
     type LabSettings,
 } from './labData'
+import { SUBJECTS } from './labSubjects'
 import { answer as answerObservations } from '../observation-cards/labServer'
 import { DEFAULT_SETTINGS as OBSERVATION_DEFAULTS } from '../observation-cards/presets'
 
@@ -36,7 +36,7 @@ export const answer = (
     settings: LabSettings,
     data: LabData = generateLabData(settings)
 ) => {
-    const subject = SUBJECTS[settings.person]
+    const subject = SUBJECTS[settings.record]
     const observations = answerObservations(
         { ...OBSERVATION_DEFAULTS, calendar: settings.calendar },
         data.observations
@@ -51,7 +51,7 @@ export const answer = (
                     throw httpError(403, 'Forbidden')
                 }
                 if (request.params?.program === undefined) {
-                    return data.person.without
+                    return data.record.without
                 }
                 // As DHIS2 does for a person not enrolled in the program.
                 if (
@@ -60,7 +60,7 @@ export const answer = (
                 ) {
                     throw httpError(404, `Person ${request.id} not found`)
                 }
-                return data.person.withProgram
+                return data.record.withProgram
             case 'programs':
                 if (request.id !== subject.program) {
                     throw httpError(404, `Program ${request.id} not found`)

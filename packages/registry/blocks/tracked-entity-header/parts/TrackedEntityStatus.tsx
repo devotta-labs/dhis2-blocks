@@ -8,7 +8,7 @@ export interface TrackedEntityStatusProps {
     className?: string
 }
 
-/** Words for the person's flags: Inactive, Possible duplicate. Nothing when neither applies. */
+/** Words for the tracked entity's flags: Inactive, Possible duplicate. Nothing when neither applies. */
 export function TrackedEntityStatus({ className }: TrackedEntityStatusProps) {
     const { state } = useHeaderContext()
     if (state.status !== 'ready') {

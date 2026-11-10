@@ -24,7 +24,7 @@ interface FakeServerOptions {
     forbidden?: boolean
     /** Answers person requests with this status, until `recover` is called. */
     fail?: 400 | 500
-    /** Holds the person request for this person, or this program, open until `release` is called. */
+    /** Holds the tracked entity request for this one, or this program, open until `release` is called. */
     deferFor?: string
     /** The person and program asked about when the request names neither of the other fixture's. */
     fixture?: Fixture

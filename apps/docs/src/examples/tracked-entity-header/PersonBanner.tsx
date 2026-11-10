@@ -5,7 +5,7 @@ import {
 import {
     TrackedEntityAttribute,
     TrackedEntityBanner,
-    TrackedEntityBorn,
+    TrackedEntityDate,
     TrackedEntityDetails,
     TrackedEntityEnrollment,
     TrackedEntityFacts,
@@ -55,7 +55,7 @@ export default function PersonBanner() {
                             attributes={[FIRST_NAME, LAST_NAME]}
                         />
                         <TrackedEntityStatus />
-                        <TrackedEntityBorn
+                        <TrackedEntityDate
                             attribute={BIRTH_DATE}
                             label="Born"
                         />

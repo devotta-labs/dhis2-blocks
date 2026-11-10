@@ -17,7 +17,7 @@ const EnrollmentSchema = z.looseObject({
     completedAt: text,
 })
 
-/** Entries that cannot be read are dropped one by one, so one odd value never fails the person. */
+/** Entries that cannot be read are dropped one by one, so one odd value never fails the record. */
 const entries = <T>(schema: z.ZodType<T>) =>
     z
         .array(z.unknown())
@@ -29,7 +29,7 @@ const entries = <T>(schema: z.ZodType<T>) =>
             })
         )
 
-/** `tracker/trackedEntities/{id}`: the person as received; the query narrows it to one program. */
+/** `tracker/trackedEntities/{id}`: the tracked entity as received; the query narrows it to one program. */
 export const TrackedEntityResponseSchema = z.looseObject({
     trackedEntity: z.string().min(1),
     trackedEntityType: z.string().min(1),

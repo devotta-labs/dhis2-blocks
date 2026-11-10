@@ -1,21 +1,25 @@
 # Tracked Entity Header
 
-A banner for one person in a DHIS2 tracker program, for React 18
-applications: who they are and what could hurt them, composed from attribute
-parts. Read-only. The provider loads the person and the program's attribute
-metadata once for every part inside it.
+A banner for one tracked entity in a DHIS2 tracker program, such as a person
+or a shipment, for React 18 applications: what it is and the facts that
+matter most, composed from attribute parts. Read-only. The provider loads the
+tracked entity and the program's attribute metadata once for every part
+inside it.
 
 ```tsx
-<TrackedEntityHeaderProvider trackedEntity={personId} program={programId}>
+<TrackedEntityHeaderProvider
+    trackedEntity={trackedEntityId}
+    program={programId}
+>
     <TrackedEntityBanner />
 </TrackedEntityHeaderProvider>
 ```
 
-With no children the banner shows the program's list attributes, the
-person's state tags (`Inactive`, `Possible duplicate`) and a details
-disclosure for every other attribute. Without `program`, only the person
-type's attributes show, and the owner and enrollment parts need one. To
-compose a banner, place the parts yourself:
+With no children the banner shows the program's list attributes, its state
+tags (`Inactive`, `Possible duplicate`) and a details disclosure for every
+other attribute. Without `program`, only the tracked entity type's attributes
+show, and the owner and enrollment parts need one. To compose a banner, place
+the parts yourself, here for a person:
 
 ```tsx
 <ObservationsProvider trackedEntity={personId} program={programId}>
@@ -23,7 +27,7 @@ compose a banner, place the parts yourself:
         <TrackedEntityBanner className="sticky top-0">
             <TrackedEntityName attributes={[firstName, lastName]} />
             <TrackedEntityStatus />
-            <TrackedEntityBorn attribute={birthDate} label="Born" />
+            <TrackedEntityDate attribute={birthDate} label="Born" />
             <TrackedEntityAttribute attribute={uniqueId} label="ID" />
             <TrackedEntityActions>
                 <Button size="sm" onClick={recordVisit}>
@@ -45,20 +49,22 @@ compose a banner, place the parts yourself:
 ```
 
 Place `TrackedEntityStatus` yourself when composing: without it an inactive
-person is shown by the banner's muted surface alone. `ObservationInline` is
+record is shown by the banner's muted surface alone. `ObservationInline` is
 from the `observation-cards` block and needs an `ObservationsProvider`;
 stickiness is the host's.
 
-Parts: `TrackedEntityName`, `TrackedEntityBorn`, `TrackedEntityAttribute`,
+Parts: `TrackedEntityName`, `TrackedEntityDate`, `TrackedEntityAttribute`,
 `TrackedEntityStatus`, `TrackedEntityOwner`, `TrackedEntityEnrollment`,
 `TrackedEntityFacts`, `TrackedEntityActions` and `TrackedEntityDetails`; each
-takes a `className`. Every value part renders nothing until the person is
-ready, so a restricted person never shows a value. `TrackedEntityActions`
+takes a `className`. `TrackedEntityDate` shows a date attribute, or with
+`enrollmentDate` the enrollment's incident or enrollment date under the
+program's own label. Every value part renders nothing until the record is
+ready, so a restricted record never shows a value. `TrackedEntityActions`
 always renders.
 
 Parts also work outside the banner, anywhere under the provider.
 `useTrackedEntityHeader()` returns `status` (`'loading'`, `'failed'`,
-`'restricted'` or `'ready'`), `retry` and, once ready, the person and
+`'restricted'` or `'ready'`), `retry` and, once ready, the tracked entity and
 attribute metadata, so a popover or a summary can draw its own states.
 `createTrackedEntityHeaderClient` wraps a custom data engine; by default the
 block uses the DHIS2 app-runtime.

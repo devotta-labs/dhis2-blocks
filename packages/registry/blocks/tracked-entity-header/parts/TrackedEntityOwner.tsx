@@ -17,7 +17,7 @@ export interface TrackedEntityOwnerProps {
 }
 
 const MISSING_PROGRAM =
-    "A tracked entity owner part needs the program prop: the owner is the person's owner for a program"
+    'A tracked entity owner part needs the program prop: the owner is the owner for a program'
 
 const OwnerName = ({
     orgUnit,
@@ -89,7 +89,7 @@ const OwnerName = ({
     )
 }
 
-/** The organisation unit that owns the person's record in the program. */
+/** The organisation unit that owns the record in the program. */
 export function TrackedEntityOwner({
     label,
     className,

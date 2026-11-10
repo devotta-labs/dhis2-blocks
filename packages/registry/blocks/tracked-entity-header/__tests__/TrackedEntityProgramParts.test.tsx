@@ -188,14 +188,12 @@ describe('TrackedEntityOwner', () => {
 })
 
 describe('TrackedEntityEnrollment', () => {
-    it('says Active since the enrollment date', async () => {
+    it('says Enrolled and the enrollment date', async () => {
         await renderParts(<TrackedEntityEnrollment />)
 
         await expect
             .element(
-                page.getByText(
-                    `Active since ${date('2026-01-10T12:05:00.000')}`
-                )
+                page.getByText(`Enrolled ${date('2026-01-10T12:05:00.000')}`)
             )
             .toBeVisible()
     })

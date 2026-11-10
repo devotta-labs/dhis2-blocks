@@ -66,7 +66,7 @@ describe('the tracked entity header lab state', () => {
     it('restarts on a new person, and leaves width alone in place', () => {
         const person = labReducer(withRequest, {
             type: 'changeSettings',
-            changes: { person: 'adult' },
+            changes: { record: 'adult' },
         })
         expect(person.preset).toBeUndefined()
         expect(person.run).toBe(1)
@@ -93,9 +93,9 @@ describe('the tracked entity header lab state', () => {
     it('changes live ids by restarting, since the person is new', () => {
         const state = labReducer(withRequest, {
             type: 'changeLive',
-            changes: { personId: 'abc123def45' },
+            changes: { trackedEntityId: 'abc123def45' },
         })
-        expect(state.live.personId).toBe('abc123def45')
+        expect(state.live.trackedEntityId).toBe('abc123def45')
         expect(state.run).toBe(1)
     })
 

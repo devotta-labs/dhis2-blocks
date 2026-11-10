@@ -1,7 +1,7 @@
 import type { LabSettings } from './labData'
 
 export const DEFAULT_SETTINGS: LabSettings = {
-    person: 'pregnancy',
+    record: 'pregnancy',
     inactive: false,
     potentialDuplicate: false,
     restricted: false,
@@ -10,6 +10,8 @@ export const DEFAULT_SETTINGS: LabSettings = {
     arrangement: 'composed',
     width: 'wide',
     rtl: false,
+    actions: 'one',
+    lineOne: 'usual',
     network: { delay: 50, endpoints: {} },
 }
 
@@ -31,41 +33,56 @@ const preset = (
 
 export const PRESETS: readonly Preset[] = [
     preset('People', 'Pregnancy'),
-    preset('People', 'Child', { person: 'child' }),
-    preset('People', 'Adult, completed', { person: 'adult' }),
+    preset('People', 'Child', { record: 'child' }),
+    preset('People', 'Adult, completed', { record: 'adult' }),
     preset('Flags', 'Inactive', { inactive: true }),
     preset('Flags', 'Possible duplicate', { potentialDuplicate: true }),
     preset('Flags', 'Every flag', {
         inactive: true,
         potentialDuplicate: true,
     }),
-    preset('Values', 'Long values', { person: 'long' }),
+    preset('Values', 'Long values', { record: 'long' }),
     preset('Values', 'Long values, narrow', {
-        person: 'long',
+        record: 'long',
         width: 'narrow',
     }),
-    preset('Values', 'Nothing recorded', { person: 'empty' }),
-    preset('Values', 'Broken metadata', { person: 'broken' }),
+    preset('Values', 'Nothing recorded', { record: 'empty' }),
+    preset('Values', 'Broken metadata', { record: 'broken' }),
     preset('Enrollment', 'Not enrolled', {
-        person: 'adult',
+        record: 'adult',
         enrollment: 'none',
     }),
     preset('Enrollment', 'Enrolled again', {
-        person: 'adult',
+        record: 'adult',
         enrollment: 'again',
     }),
     preset('Languages', 'Amharic, Ethiopian calendar', {
-        person: 'amharic',
+        record: 'amharic',
         calendar: 'ethiopian',
     }),
     preset('Languages', 'Arabic, right to left', {
-        person: 'arabic',
+        record: 'arabic',
         rtl: true,
     }),
     preset('Languages', 'Arabic, right to left, narrow', {
-        person: 'arabic',
+        record: 'arabic',
         rtl: true,
         width: 'narrow',
+    }),
+    preset('Layout', 'Several actions', { actions: 'several' }),
+    preset('Layout', 'Several actions, narrow', {
+        actions: 'several',
+        width: 'narrow',
+    }),
+    preset('Layout', 'Many values on line one', {
+        record: 'detailed',
+        lineOne: 'more',
+    }),
+    preset('Layout', 'Many details', { record: 'detailed' }),
+    preset('Layout', 'No details', { record: 'child' }),
+    preset('Not a person', 'Vaccine shipment', {
+        record: 'shipment',
+        actions: 'several',
     }),
     preset('States', 'Restricted', { restricted: true }),
     preset('States', 'Failed', {
@@ -75,7 +92,7 @@ export const PRESETS: readonly Preset[] = [
         },
     }),
     preset('States', 'Owner fails', {
-        person: 'adult',
+        record: 'adult',
         network: {
             delay: 50,
             endpoints: { organisationUnits: { behaviour: 'fails' } },

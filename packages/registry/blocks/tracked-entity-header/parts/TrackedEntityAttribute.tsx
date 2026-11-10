@@ -10,7 +10,7 @@ export interface TrackedEntityAttributeProps {
     className?: string
 }
 
-/** One attribute of the person: its label and value, `Not recorded` or `Unavailable`. */
+/** One attribute of the tracked entity: its label and value, `Not recorded` or `Unavailable`. */
 export function TrackedEntityAttribute({
     attribute,
     label,

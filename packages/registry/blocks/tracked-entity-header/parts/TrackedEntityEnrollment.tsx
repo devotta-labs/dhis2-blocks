@@ -10,9 +10,9 @@ export interface TrackedEntityEnrollmentProps {
 }
 
 const MISSING_PROGRAM =
-    "A tracked entity enrollment part needs the program prop: the enrollment is the person's enrollment in a program"
+    'A tracked entity enrollment part needs the program prop: the enrollment is in a program'
 
-/** Where the person stands in the program: active since, completed, cancelled or not enrolled. */
+/** Where the tracked entity stands in the program: enrolled, completed, cancelled or not enrolled. */
 export function TrackedEntityEnrollment({
     className,
 }: TrackedEntityEnrollmentProps) {
@@ -49,7 +49,7 @@ export function TrackedEntityEnrollment({
                     : i18n.t('Completed')
             default:
                 return since
-                    ? i18n.t('Active since {{date}}', {
+                    ? i18n.t('Enrolled {{date}}', {
                           date: since,
                           interpolation: { escapeValue: false },
                       })

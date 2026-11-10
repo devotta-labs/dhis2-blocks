@@ -11,8 +11,8 @@ export const OptionsControls = ({
 }) => (
     <Section title="Options">
         <SelectRow
-            label="Person"
-            value={settings.person}
+            label="Record"
+            value={settings.record}
             options={[
                 ['pregnancy', 'Pregnancy'],
                 ['child', 'Child'],
@@ -22,8 +22,10 @@ export const OptionsControls = ({
                 ['broken', 'Broken metadata'],
                 ['amharic', 'Amharic'],
                 ['arabic', 'Arabic'],
+                ['detailed', 'Many attributes'],
+                ['shipment', 'Vaccine shipment'],
             ]}
-            onChange={(person) => onChange({ person })}
+            onChange={(record) => onChange({ record })}
         />
         <Check
             checked={settings.inactive}
@@ -83,6 +85,24 @@ export const OptionsControls = ({
                 ['wide', 'Wide'],
             ]}
             onChange={(width) => onChange({ width })}
+        />
+        <SegmentedRow
+            label="Actions"
+            value={settings.actions}
+            options={[
+                ['one', 'One'],
+                ['several', 'Several'],
+            ]}
+            onChange={(actions) => onChange({ actions })}
+        />
+        <SegmentedRow
+            label="Line one"
+            value={settings.lineOne}
+            options={[
+                ['usual', 'Usual'],
+                ['more', 'More values'],
+            ]}
+            onChange={(lineOne) => onChange({ lineOne })}
         />
         <Check checked={settings.rtl} onChange={(rtl) => onChange({ rtl })}>
             Right to left

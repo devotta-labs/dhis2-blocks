@@ -6,14 +6,15 @@ import {
 } from '@/components/dhis2/ui/popover'
 import {
     TrackedEntityAttribute,
-    TrackedEntityBorn,
+    TrackedEntityDate,
     TrackedEntityFacts,
     TrackedEntityHeaderProvider,
     TrackedEntityName,
     TrackedEntityStatus,
     useTrackedEntityHeader,
 } from '@/components/tracked-entity-header'
-import type { LabSettings, Parts } from './labData'
+import type { LabSettings } from './labData'
+import type { Parts } from './labSubjects'
 
 interface Props {
     trackedEntity: string
@@ -29,13 +30,11 @@ const QuickLookStatus = () => {
         return <p className="m-0">Loading</p>
     }
     if (state.status === 'restricted') {
-        return (
-            <p className="m-0">You don't have access to this person's record</p>
-        )
+        return <p className="m-0">You don't have access to this record</p>
     }
     return (
         <>
-            <p className="m-0">Couldn't load this person</p>
+            <p className="m-0">Couldn't load this record</p>
             <Button variant="outline" onClick={state.retry}>
                 Retry
             </Button>
@@ -52,7 +51,7 @@ const QuickLook = ({ parts }: Pick<Props, 'parts'>) => {
         <>
             <TrackedEntityName id="quick-look-name" attributes={parts.name} />
             <TrackedEntityStatus />
-            <TrackedEntityBorn {...parts.born} />
+            <TrackedEntityDate {...parts.date} />
             <TrackedEntityFacts>
                 <TrackedEntityAttribute attribute={parts.fact} />
             </TrackedEntityFacts>
@@ -60,7 +59,7 @@ const QuickLook = ({ parts }: Pick<Props, 'parts'>) => {
     )
 }
 
-/** The parts in a popover, with no banner: the person loads when it opens. */
+/** The parts in a popover, with no banner: the record loads when it opens. */
 export const QuickLookCanvas = ({
     trackedEntity,
     program,

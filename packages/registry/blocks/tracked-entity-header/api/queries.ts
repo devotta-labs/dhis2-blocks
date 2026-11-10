@@ -23,7 +23,7 @@ const PROGRAM_FIELDS = `displayName,accessLevel,incidentDateLabel,enrollmentDate
 const TYPE_FIELDS = `displayName,trackedEntityTypeAttributes[displayInList,${ATTRIBUTE_FIELDS}]`
 
 /**
- * A person re-enrolled after completing has several enrollments in the program:
+ * A tracked entity re-enrolled after completing has several enrollments in the program:
  * the ACTIVE one stands, else the latest enrolledAt. ISO date-times in one
  * format order as text.
  */
@@ -43,7 +43,7 @@ const pickEnrollment = (
     )
 }
 
-/** One person, with the enrollment and owner of `program` only. Without a program, or not enrolled in it, neither. */
+/** One tracked entity, with the enrollment and owner of `program` only. Without a program, or not enrolled in it, neither. */
 export const fetchTrackedEntity = async (
     client: TrackedEntityHeaderResourceClient,
     { trackedEntity, program }: { trackedEntity: string; program?: string },
@@ -64,7 +64,7 @@ export const fetchTrackedEntity = async (
         )
     let enrolledIn = program
     let result = await request(program)
-    // DHIS2 answers 404 for a person not enrolled in the program; the person is still there without it.
+    // DHIS2 answers 404 for a tracked entity not enrolled in the program; it is still there without it.
     if (
         program !== undefined &&
         Result.isError(result) &&
@@ -73,25 +73,25 @@ export const fetchTrackedEntity = async (
         enrolledIn = undefined
         result = await request()
     }
-    return result.map((person) => {
+    return result.map((entity) => {
         const enrollment =
             enrolledIn === undefined
                 ? undefined
                 : pickEnrollment(
-                      person.enrollments.filter((e) => e.program === enrolledIn)
+                      entity.enrollments.filter((e) => e.program === enrolledIn)
                   )
         const ownerOrgUnit =
             enrolledIn === undefined
                 ? undefined
-                : person.programOwners.find((o) => o.program === enrolledIn)
+                : entity.programOwners.find((o) => o.program === enrolledIn)
                       ?.orgUnit
         return {
-            id: person.trackedEntity,
-            type: person.trackedEntityType,
-            inactive: person.inactive,
-            potentialDuplicate: person.potentialDuplicate,
+            id: entity.trackedEntity,
+            type: entity.trackedEntityType,
+            inactive: entity.inactive,
+            potentialDuplicate: entity.potentialDuplicate,
             values: new Map(
-                person.attributes.map((a) => [a.attribute, a.value])
+                entity.attributes.map((a) => [a.attribute, a.value])
             ),
             ...(enrollment && {
                 enrollment: {
@@ -107,7 +107,7 @@ export const fetchTrackedEntity = async (
     })
 }
 
-/** The program's attributes, or the person type's when there is no program. */
+/** The program's attributes, or the tracked entity type's when there is no program. */
 export const fetchAttributeMetadata = (
     client: TrackedEntityHeaderResourceClient,
     subject: { program: string } | { trackedEntityType: string },

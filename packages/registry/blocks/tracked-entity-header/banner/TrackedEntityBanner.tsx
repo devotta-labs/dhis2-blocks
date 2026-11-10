@@ -54,7 +54,7 @@ const DefaultArrangement = ({ listOrder }: { listOrder: string[] }) => (
     </>
 )
 
-/** One person as a strip of parts, with the loading, failed and restricted states drawn for them. */
+/** One tracked entity as a strip of parts, with the loading, failed and restricted states drawn for them. */
 export function TrackedEntityBanner({
     children,
     className,
@@ -72,9 +72,9 @@ export function TrackedEntityBanner({
     )
     const ready = state.status === 'ready'
     const inactive = ready && state.trackedEntity.inactive
-    // A mounted name part labels the region; without one, the type name; until the person is ready, a generic name.
+    // A mounted name part labels the region; without one, the type name; until the record is ready, a generic name.
     const labelledBy = ready ? nameId : undefined
-    let label: string | undefined = i18n.t('Person record')
+    let label: string | undefined = i18n.t('Record')
     if (ready) {
         label = nameId ? undefined : state.metadata.typeName || label
     }
@@ -88,7 +88,7 @@ export function TrackedEntityBanner({
             case 'failed':
                 return (
                     <>
-                        <Message>{i18n.t("Couldn't load this person")}</Message>
+                        <Message>{i18n.t("Couldn't load this record")}</Message>
                         <Button
                             variant="secondary"
                             size="sm"
@@ -108,14 +108,14 @@ export function TrackedEntityBanner({
                         <Message>
                             {programName
                                 ? i18n.t(
-                                      "You don't have access to this person's record in {{program}}",
+                                      "You don't have access to this record in {{program}}",
                                       {
                                           program: programName,
                                           interpolation: { escapeValue: false },
                                       }
                                   )
                                 : i18n.t(
-                                      "You don't have access to this person's record"
+                                      "You don't have access to this record"
                                   )}
                         </Message>
                         {/* Only the actions render here, so a host's "Request access" still shows. */}

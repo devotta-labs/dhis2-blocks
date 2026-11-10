@@ -9,7 +9,7 @@ export interface TrackedEntityActionsProps {
 }
 
 /**
- * Where the caller's buttons go. Always renders, whatever state the person is
+ * Where the caller's buttons go. Always renders, whatever state the record is
  * in. A frame with a place for actions gets them there; elsewhere they stay
  * where they are placed.
  */

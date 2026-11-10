@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS, PRESETS, type Preset } from './presets'
 
 interface Live {
     programId: string
-    personId: string
+    trackedEntityId: string
 }
 
 type Canvas = 'banner' | 'quick-look'
@@ -35,7 +35,7 @@ export type LabAction =
     | { type: 'clearRequests' }
 
 // WHO RMNCH Tracker and Linda Bailey on the Sierra Leone demo.
-const LIVE: Live = { programId: 'WSGAb5XwJ3Y', personId: 'Y8aEiTpHSSQ' }
+const LIVE: Live = { programId: 'WSGAb5XwJ3Y', trackedEntityId: 'Y8aEiTpHSSQ' }
 
 /** Settings that only change the lab's layout, so the person keeps their data. */
 const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>([

@@ -5,7 +5,7 @@ import {
     TrackedEntityActions,
     TrackedEntityAttribute,
     TrackedEntityBanner,
-    TrackedEntityBorn,
+    TrackedEntityDate,
     TrackedEntityDetails,
     TrackedEntityEnrollment,
     TrackedEntityFacts,
@@ -35,7 +35,7 @@ export const Composed = () => (
     <TrackedEntityBanner>
         <TrackedEntityName attributes={[FIRST, LAST]} />
         <TrackedEntityStatus />
-        <TrackedEntityBorn attribute={BIRTH_DATE} />
+        <TrackedEntityDate attribute={BIRTH_DATE} />
         <TrackedEntityAttribute attribute={UNIQUE_ID} />
         <TrackedEntityActions>
             <Button>Record visit</Button>

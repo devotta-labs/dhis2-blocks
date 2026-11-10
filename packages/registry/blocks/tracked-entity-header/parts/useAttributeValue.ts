@@ -5,7 +5,7 @@ import { useHeaderContext, type HeaderContextValue } from '../provider/context'
 import { isProduction } from '../provider/env'
 
 export type AttributeValueState =
-    /** Nothing to show yet: the person is loading, failed or restricted. */
+    /** Nothing to show yet: the record is loading, failed or restricted. */
     | { kind: 'hidden' }
     | { kind: 'value'; label: string; text: string }
     | { kind: 'missing'; label: string }
@@ -22,7 +22,7 @@ const describeMisconfigured = (
                   .map(({ id, label }) => `${id} (${label})`)
                   .join(', ')
             : ''
-    const scope = program ? `program ${program}` : "the person's type"
+    const scope = program ? `program ${program}` : 'the tracked entity type'
     return `Attribute ${uid} is not an attribute of ${scope}. Attributes: ${known || 'none'}`
 }
 
@@ -76,7 +76,7 @@ export const setupMessage = (message: string) =>
     isProduction() ? i18n.t("This part isn't set up correctly") : message
 
 /**
- * One attribute of the provider's person, ready to show. Registers the uid as
+ * One attribute of the provider's tracked entity, ready to show. Registers the uid as
  * placed while mounted, so the details list skips it.
  */
 export const useAttributeValue = (uid: string): AttributeValueState => {

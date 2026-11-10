@@ -3,7 +3,7 @@ import { page } from 'vitest/browser'
 import { Probe } from './headerTestSupport'
 import {
     TrackedEntityAttribute,
-    TrackedEntityBorn,
+    TrackedEntityDate,
     TrackedEntityName,
 } from '..'
 import {
@@ -242,16 +242,16 @@ describe('TrackedEntityAttribute', () => {
     )
 })
 
-describe('TrackedEntityBorn', () => {
+describe('TrackedEntityDate', () => {
     it('shows a date attribute in the system calendar', async () => {
-        await renderParts(<TrackedEntityBorn attribute={BIRTH_DATE} />)
+        await renderParts(<TrackedEntityDate attribute={BIRTH_DATE} />)
 
         await expect.element(page.getByText('Birth date')).toBeVisible()
         await expect.element(page.getByText('May 28, 1992')).toBeVisible()
     })
 
     it("shows the enrollment's occurredAt, labelled by the program's incident date label", async () => {
-        await renderParts(<TrackedEntityBorn enrollmentDate="occurredAt" />, {
+        await renderParts(<TrackedEntityDate enrollmentDate="occurredAt" />, {
             program: CHILD,
         })
 
@@ -260,7 +260,7 @@ describe('TrackedEntityBorn', () => {
     })
 
     it('says Not recorded under the label when the person has no enrollment in the program', async () => {
-        await renderParts(<TrackedEntityBorn enrollmentDate="occurredAt" />, {
+        await renderParts(<TrackedEntityDate enrollmentDate="occurredAt" />, {
             program: CHILD,
             person: (raw) => ({ ...raw, enrollments: [] }),
         })
@@ -271,7 +271,7 @@ describe('TrackedEntityBorn', () => {
 
     it('names the missing program prop when there is none', async () => {
         const error = vi.spyOn(console, 'error').mockImplementation(() => {})
-        await renderParts(<TrackedEntityBorn enrollmentDate="enrolledAt" />, {
+        await renderParts(<TrackedEntityDate enrollmentDate="enrolledAt" />, {
             program: null,
         })
 
@@ -288,7 +288,7 @@ describe('TrackedEntityBorn', () => {
                 <>
                     <Probe />
                     <div data-testid="part">
-                        <TrackedEntityBorn attribute={BIRTH_DATE} />
+                        <TrackedEntityDate attribute={BIRTH_DATE} />
                     </div>
                 </>,
                 { status }

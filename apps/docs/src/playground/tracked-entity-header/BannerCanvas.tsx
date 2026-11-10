@@ -6,7 +6,7 @@ import {
     TrackedEntityActions,
     TrackedEntityAttribute,
     TrackedEntityBanner,
-    TrackedEntityBorn,
+    TrackedEntityDate,
     TrackedEntityDetails,
     TrackedEntityEnrollment,
     TrackedEntityFacts,
@@ -17,7 +17,8 @@ import {
 } from '@/components/tracked-entity-header'
 import { Button } from '@/components/dhis2/ui/button'
 import type { ReactNode } from 'react'
-import type { LabSettings, Parts } from './labData'
+import type { LabSettings } from './labData'
+import type { Parts } from './labSubjects'
 
 interface Props {
     trackedEntity: string
@@ -39,14 +40,22 @@ const Banner = ({
             <>
                 <TrackedEntityName attributes={parts.name} />
                 <TrackedEntityStatus />
-                <TrackedEntityBorn {...parts.born} />
+                <TrackedEntityDate {...parts.date} />
                 <TrackedEntityAttribute attribute={parts.identifier} />
+                {parts.more.map((attribute) => (
+                    <TrackedEntityAttribute
+                        key={attribute}
+                        attribute={attribute}
+                    />
+                ))}
                 <TrackedEntityEnrollment />
                 <TrackedEntityOwner />
                 <TrackedEntityActions>
-                    <Button variant="outline" size="sm">
-                        Record visit
-                    </Button>
+                    {parts.actions.map((action) => (
+                        <Button key={action} variant="outline" size="sm">
+                            {action}
+                        </Button>
+                    ))}
                 </TrackedEntityActions>
                 <TrackedEntityFacts>
                     <TrackedEntityAttribute attribute={parts.fact} />

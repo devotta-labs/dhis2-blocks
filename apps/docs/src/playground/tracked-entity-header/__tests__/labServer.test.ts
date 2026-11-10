@@ -6,7 +6,8 @@ import {
 } from '@/components/tracked-entity-header/api/schemas'
 import { z } from 'zod'
 import { describe, expect, it } from 'vitest'
-import { generateLabData, LAB_PERSON, SUBJECTS } from '../labData'
+import { generateLabData, LAB_PERSON } from '../labData'
+import { partsFor, SUBJECTS } from '../labSubjects'
 import { answer } from '../labServer'
 import { DEFAULT_SETTINGS, PRESETS } from '../presets'
 
@@ -21,13 +22,13 @@ const settingsOf = (name: string) => {
 const serverFor = (settings = DEFAULT_SETTINGS) =>
     answer(settings, generateLabData(settings, TODAY))
 
-const personOf = (settings = DEFAULT_SETTINGS, withProgram = true) =>
+const recordOf = (settings = DEFAULT_SETTINGS, withProgram = true) =>
     TrackedEntityResponseSchema.parse(
         serverFor(settings)({
             resource: 'tracker/trackedEntities',
             id: LAB_PERSON,
             params: withProgram
-                ? { program: SUBJECTS[settings.person].program }
+                ? { program: SUBJECTS[settings.record].program }
                 : {},
         })
     )
@@ -48,9 +49,9 @@ const statusOf = (run: () => object): number | undefined => {
 describe('the tracked entity header lab server', () => {
     it('answers the person, program, type and org unit in the shapes the block parses', () => {
         const settings = settingsOf('Pregnancy')
-        const { program, type } = SUBJECTS[settings.person]
+        const { program, type } = SUBJECTS[settings.record]
         const respond = serverFor(settings)
-        expect(personOf(settings).attributes.length).toBeGreaterThan(0)
+        expect(recordOf(settings).attributes.length).toBeGreaterThan(0)
         expect(
             ProgramAttributesResponseSchema.parse(
                 respond({ resource: 'programs', id: program })
@@ -69,8 +70,8 @@ describe('the tracked entity header lab server', () => {
     })
 
     it('answers the person type’s attributes alone without a program', () => {
-        const withProgram = personOf(settingsOf('Pregnancy'))
-        const without = personOf(settingsOf('Pregnancy'), false)
+        const withProgram = recordOf(settingsOf('Pregnancy'))
+        const without = recordOf(settingsOf('Pregnancy'), false)
         expect(without.attributes.length).toBeLessThan(
             withProgram.attributes.length
         )
@@ -78,7 +79,7 @@ describe('the tracked entity header lab server', () => {
 
     it('gives the child an enrollment, and its date of birth is the incident date', () => {
         const settings = settingsOf('Child')
-        const [enrollment] = personOf(settings).enrollments
+        const [enrollment] = recordOf(settings).enrollments
         expect(enrollment?.occurredAt).toBeDefined()
         expect(
             ProgramAttributesResponseSchema.parse(
@@ -92,7 +93,7 @@ describe('the tracked entity header lab server', () => {
 
     it('answers a completed enrollment and leaves values out for the adult', () => {
         const settings = settingsOf('Adult, completed')
-        const person = personOf(settings)
+        const person = recordOf(settings)
         expect(person.enrollments[0]?.status).toBe('COMPLETED')
         const metadata = ProgramAttributesResponseSchema.parse(
             serverFor(settings)({
@@ -109,11 +110,11 @@ describe('the tracked entity header lab server', () => {
     })
 
     it('carries the person-level flags', () => {
-        expect(personOf(settingsOf('Inactive')).inactive).toBe(true)
+        expect(recordOf(settingsOf('Inactive')).inactive).toBe(true)
         expect(
-            personOf(settingsOf('Possible duplicate')).potentialDuplicate
+            recordOf(settingsOf('Possible duplicate')).potentialDuplicate
         ).toBe(true)
-        expect(personOf().inactive).toBe(false)
+        expect(recordOf().inactive).toBe(false)
     })
 
     it('refuses the person with a 403 for Restricted, and only then', () => {
@@ -191,7 +192,7 @@ describe('the tracked entity header lab server', () => {
     describe('edge-case presets', () => {
         it('keeps an unbroken identifier, a leap-day birth and an option code the set no longer has', () => {
             const values = new Map(
-                personOf(settingsOf('Long values')).attributes.map(
+                recordOf(settingsOf('Long values')).attributes.map(
                     ({ attribute, value }) => [attribute, value]
                 )
             )
@@ -201,7 +202,7 @@ describe('the tracked entity header lab server', () => {
         })
 
         it('records nothing for the person with nothing recorded', () => {
-            expect(personOf(settingsOf('Nothing recorded')).attributes).toEqual(
+            expect(recordOf(settingsOf('Nothing recorded')).attributes).toEqual(
                 []
             )
         })
@@ -211,7 +212,7 @@ describe('the tracked entity header lab server', () => {
             const metadata = ProgramAttributesResponseSchema.parse(
                 serverFor(settings)({
                     resource: 'programs',
-                    id: SUBJECTS[settings.person].program,
+                    id: SUBJECTS[settings.record].program,
                 })
             )
             expect([...metadata.invalid.keys()]).toEqual([
@@ -222,15 +223,15 @@ describe('the tracked entity header lab server', () => {
 
         it('answers 404 with the program when not enrolled, and the person without it', () => {
             const settings = settingsOf('Not enrolled')
-            expect(statusOf(() => personOf(settings))).toBe(404)
-            expect(personOf(settings, false).attributes.length).toBeGreaterThan(
+            expect(statusOf(() => recordOf(settings))).toBe(404)
+            expect(recordOf(settings, false).attributes.length).toBeGreaterThan(
                 0
             )
         })
 
         it('gives the person enrolled again a completed and an active enrollment', () => {
             expect(
-                personOf(settingsOf('Enrolled again')).enrollments.map(
+                recordOf(settingsOf('Enrolled again')).enrollments.map(
                     ({ status }) => status
                 )
             ).toEqual(['COMPLETED', 'ACTIVE'])
@@ -246,7 +247,7 @@ describe('the tracked entity header lab server', () => {
             const settings = settingsOf('Amharic, Ethiopian calendar')
             expect(settings.calendar).toBe('ethiopian')
             expect(
-                personOf(settings).attributes.find(
+                recordOf(settings).attributes.find(
                     ({ attribute }) => attribute === 'labFirstNam'
                 )?.value
             ).toMatch(/^[\u1200-\u137F]+$/)
@@ -256,10 +257,75 @@ describe('the tracked entity header lab server', () => {
             const settings = settingsOf('Arabic, right to left')
             expect(settings.rtl).toBe(true)
             expect(
-                personOf(settings).attributes.find(
+                recordOf(settings).attributes.find(
                     ({ attribute }) => attribute === 'labFirstNam'
                 )?.value
             ).toMatch(/^[\u0600-\u06FF]+$/)
+        })
+    })
+
+    describe('layout presets', () => {
+        const programOf = (settings: ReturnType<typeof settingsOf>) =>
+            ProgramAttributesResponseSchema.parse(
+                serverFor(settings)({
+                    resource: 'programs',
+                    id: SUBJECTS[settings.record].program,
+                })
+            )
+        const placedBy = (settings: ReturnType<typeof settingsOf>) => {
+            const { name, date, identifier, fact, more } = partsFor(settings)
+            return [
+                ...name,
+                'attribute' in date ? date.attribute : '',
+                identifier,
+                fact,
+                ...more,
+            ]
+        }
+
+        it('gives the host one button, or several', () => {
+            expect(partsFor(DEFAULT_SETTINGS).actions).toEqual(['Record visit'])
+            expect(
+                partsFor(settingsOf('Several actions')).actions.length
+            ).toBeGreaterThan(2)
+        })
+
+        it('places eight more attributes on line one, none of them twice', () => {
+            const settings = settingsOf('Many values on line one')
+            const placed = placedBy(settings)
+            expect(partsFor(settings).more).toHaveLength(8)
+            expect(new Set(placed).size).toBe(placed.length)
+            for (const id of partsFor(settings).more) {
+                expect(programOf(settings).attributes.has(id)).toBe(true)
+            }
+        })
+
+        it('leaves many attributes for the details, and none for No details', () => {
+            const unplaced = (name: string) => {
+                const settings = settingsOf(name)
+                const placed = placedBy(settings)
+                return [...programOf(settings).attributes.keys()].filter(
+                    (id) => !placed.includes(id)
+                )
+            }
+            expect(unplaced('Many details').length).toBeGreaterThan(10)
+            expect(unplaced('No details')).toEqual([])
+        })
+
+        it('serves a vaccine shipment with its own type, date label and buttons', () => {
+            const settings = settingsOf('Vaccine shipment')
+            const respond = serverFor(settings)
+            expect(
+                TypeAttributesResponseSchema.parse(
+                    respond({
+                        resource: 'trackedEntityTypes',
+                        id: SUBJECTS.shipment.type,
+                    })
+                ).typeName
+            ).toBe('Shipment')
+            expect(programOf(settings).incidentDateLabel).toBe('Dispatched')
+            expect(partsFor(settings).actions).toContain('Receive')
+            expect(recordOf(settings).attributes.length).toBeGreaterThan(5)
         })
     })
 })

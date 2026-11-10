@@ -5,7 +5,7 @@ import { render } from 'vitest-browser-react'
 import {
     TrackedEntityActions,
     TrackedEntityAttribute,
-    TrackedEntityBorn,
+    TrackedEntityDate,
     TrackedEntityDetails,
     TrackedEntityEnrollment,
     TrackedEntityFacts,
@@ -49,7 +49,7 @@ const QuickLook = () => {
                 attributes={[FIRST, LAST]}
             />
             <TrackedEntityStatus />
-            <TrackedEntityBorn attribute={BIRTH_DATE} />
+            <TrackedEntityDate attribute={BIRTH_DATE} />
             <TrackedEntityFacts>
                 <TrackedEntityAttribute attribute={ALLERGIES} />
             </TrackedEntityFacts>
@@ -69,7 +69,7 @@ const Ungated = () => (
         <StatusMark />
         <TrackedEntityName attributes={[FIRST, LAST]} />
         <TrackedEntityStatus />
-        <TrackedEntityBorn attribute={BIRTH_DATE} />
+        <TrackedEntityDate attribute={BIRTH_DATE} />
         <TrackedEntityAttribute attribute="lZGmxYbs97q" />
         <TrackedEntityOwner />
         <TrackedEntityEnrollment />

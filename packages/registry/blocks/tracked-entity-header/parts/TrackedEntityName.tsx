@@ -17,7 +17,7 @@ export interface TrackedEntityNameProps {
     className?: string
 }
 
-/** The person's name, as the banner's heading. */
+/** The tracked entity's name, as the banner's heading. */
 export function TrackedEntityName({
     attributes,
     id,

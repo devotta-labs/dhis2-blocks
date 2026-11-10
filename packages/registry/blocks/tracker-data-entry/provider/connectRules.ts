@@ -472,13 +472,16 @@ export const connectRules = ({
         drawn?.subscribe(queue.drawn),
         // A person's change re-runs the rows it can affect; an event date, an attribute or an enrolment date, every row
         // of that person.
-        store.subscribe(({ cells }, before) => {
-            const edits = Object.entries(cells).flatMap(([key, cell]) => {
+        store.subscribe(({ cells, changedCellKeys }, before) => {
+            const edits = changedCellKeys.flatMap((key) => {
+                const cell = cells[key]
+                if (cell === undefined) {
+                    return []
+                }
                 const rowId = recordIdOf(key)
                 const field = fieldIdOfKey(key)
-                const was = before.cells[cellKey(rowId, field)]
-                return cell === undefined ||
-                    cell === was ||
+                const was = before.cells[key]
+                return cell === was ||
                     cell.source === 'rule' ||
                     (cell.value ?? '') === (was?.value ?? '')
                     ? []

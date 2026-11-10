@@ -94,8 +94,10 @@ export const sheet = (): ReactNode =>
     })
 
 // What a row's cells hold, and a way to say what became of them.
-export const useRowValues = (keys: CellKey[]): Array<string | undefined> =>
-    useRowCells(keys).states.map(({ value }) => value)
+export const useRowValues = (keys: CellKey[]): Array<string | undefined> => {
+    const { states } = useRowCells(keys)
+    return states.map(({ value }) => value)
+}
 export const useSay = (): ((text: string) => void) => useAnnounce()
 
 // The defaults per kind, ready to wrap.
@@ -138,5 +140,7 @@ export const Typed: CellComponent = ({ id, cellKey, readOnly }) => {
 }
 
 // A row named by one of its cells' values once it has one, else by its label.
-export const useRowName = (row: GridRow): string =>
-    useCell(`${row.id}.name`).value ?? row.label
+export const useRowName = (row: GridRow): string => {
+    const { value } = useCell(`${row.id}.name`)
+    return value ?? row.label
+}

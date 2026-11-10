@@ -181,11 +181,12 @@ export const useViewOf = (
 /** One cell's state, effects and `commit`; it re-renders only when this cell changes in either store. */
 export const useCellView = (key: CellKey): CellView => {
     const { store, effects } = useSpreadsheetContext()
-    return useViewOf(
-        key,
-        useStore(store, (state) => state.cells[key] ?? EMPTY_CELL),
-        useStore(effects, (state) => state.cells[key] ?? EMPTY_EFFECTS)
+    const cell = useStore(store, (state) => state.cells[key] ?? EMPTY_CELL)
+    const cellEffects = useStore(
+        effects,
+        (state) => state.cells[key] ?? EMPTY_EFFECTS
     )
+    return useViewOf(key, cell, cellEffects)
 }
 
 /**
@@ -194,24 +195,25 @@ export const useCellView = (key: CellKey): CellView => {
  */
 export const useRowCells = (keys: ReadonlyArray<CellKey>) => {
     const { store, effects } = useSpreadsheetContext()
-    return {
-        states: useStore(
-            store,
-            useShallow((state) =>
-                keys.map((key) => state.cells[key] ?? EMPTY_CELL)
-            )
-        ),
-        effects: useStore(
-            effects,
-            useShallow((state) =>
-                keys.map((key) => state.cells[key] ?? EMPTY_EFFECTS)
-            )
-        ),
-    }
+    const selectStates = useShallow((state: CellStoreState) =>
+        keys.map((key) => state.cells[key] ?? EMPTY_CELL)
+    )
+    const selectEffects = useShallow((state: AnnotationsState) =>
+        keys.map((key) => state.cells[key] ?? EMPTY_EFFECTS)
+    )
+    const states = useStore(store, selectStates)
+    const rowEffects = useStore(effects, selectEffects)
+    return { states, effects: rowEffects }
 }
 
 /** Focuses a cell by its key, wherever the grid has scrolled: its row is drawn first when it is not. */
-export const useFocusCell = () => useSpreadsheetContext().focusCell
+export const useFocusCell = () => {
+    const { focusCell } = useSpreadsheetContext()
+    return focusCell
+}
 
 /** Says an outcome in the spreadsheet's one polite live region. */
-export const useAnnounce = () => useSpreadsheetContext().announce
+export const useAnnounce = () => {
+    const { announce } = useSpreadsheetContext()
+    return announce
+}

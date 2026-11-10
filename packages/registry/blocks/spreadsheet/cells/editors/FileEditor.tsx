@@ -84,7 +84,8 @@ export const FileEditor = ({
         useSpreadsheetContext()
     const engine = useDataEngine()
     const image = field.valueType === 'IMAGE'
-    const url = storedFileUrl(fileUrl, cellKey, useCellView(cellKey), image)
+    const view = useCellView(cellKey)
+    const url = storedFileUrl(fileUrl, cellKey, view, image)
     const name = useStore(fileNames, ({ names }) =>
         value === undefined ? undefined : names.get(value)
     )

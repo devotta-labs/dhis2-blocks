@@ -29,7 +29,8 @@ test('the context stays the same object when the app re-renders', async () => {
     })
     const seen: SpreadsheetContext[] = []
     const Probe = () => {
-        seen.push(useSpreadsheetContext())
+        const context = useSpreadsheetContext()
+        seen.push(context)
         return null
     }
     const App = () => {

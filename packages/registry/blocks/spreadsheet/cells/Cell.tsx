@@ -120,9 +120,10 @@ const OpenCell = ({ view, ...props }: CellProps & { view: CellView }) => {
 }
 
 // A cell on its own reads its state and effects itself.
-const SubscribedCell = (props: CellProps) => (
-    <OpenCell {...props} view={useCellView(props.cellKey)} />
-)
+const SubscribedCell = (props: CellProps) => {
+    const view = useCellView(props.cellKey)
+    return <OpenCell {...props} view={view} />
+}
 
 /**
  * The cell for a field: closed, or one control that is typed, read-only (a rule, or a value type edited elsewhere) or

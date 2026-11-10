@@ -2,9 +2,10 @@ import { memo } from 'react'
 import { useStore } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
 import { cn } from '@/components/dhis2/ui/cn'
-import type { CellMessage, Tone } from '../model/annotations'
+import type { AnnotationsState, CellMessage, Tone } from '../model/annotations'
 import type { CellKey, GridRow } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
+import type { CellStoreState } from '../store/store'
 import { nameFrom, rowHeaderDomId } from './headers'
 import { NotesMarker, notesDomId, useRowNotes } from './RowNotes'
 import type { NotesTarget } from './RowNotes'
@@ -28,10 +29,10 @@ const MESSAGE_TONES = {
 const CellsLabel = ({ row }: { row: GridRow }) => {
     const { store, settings } = useSpreadsheetContext()
     const labelFrom = row.labelFrom ?? NO_KEYS
-    const named = useStore(
-        store,
-        useShallow((state) => labelFrom.map((key) => state.cells[key]?.value))
+    const selectNamed = useShallow((state: CellStoreState) =>
+        labelFrom.map((key) => state.cells[key]?.value)
     )
+    const named = useStore(store, selectNamed)
     return (
         <>
             {nameFrom(labelFrom, named, store.getState().fieldOf, settings) ||
@@ -64,20 +65,18 @@ export const RowHeader = memo(function RowHeader({
     const rowHeader = rowHeaderDomId(idScope, tableId, row.id)
     const notes = useRowNotes(row)
     // Every key the row's messages are under, as for its notes.
-    const messages = useStore(
-        effects,
-        useShallow((state) =>
-            rowKeysOf(row)
-                .flatMap((id) => state.rowMessages.get(id) ?? NO_MESSAGES)
-                .filter(
-                    (message, at, all) =>
-                        all.findIndex(
-                            ({ tone, text }) =>
-                                tone === message.tone && text === message.text
-                        ) === at
-                )
-        )
+    const selectMessages = useShallow((state: AnnotationsState) =>
+        rowKeysOf(row)
+            .flatMap((id) => state.rowMessages.get(id) ?? NO_MESSAGES)
+            .filter(
+                (message, at, all) =>
+                    all.findIndex(
+                        ({ tone, text }) =>
+                            tone === message.tone && text === message.text
+                    ) === at
+            )
     )
+    const messages = useStore(effects, selectMessages)
     return (
         <th
             scope="row"

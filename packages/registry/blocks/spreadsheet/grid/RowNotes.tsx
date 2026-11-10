@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { Button } from '@/components/dhis2/ui/button'
 import { Popover, PopoverContent } from '@/components/dhis2/ui/popover'
 import { formatCount } from '../cells/OptionCell'
+import type { AnnotationsState } from '../model/annotations'
 import type { GridRow } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 
@@ -15,16 +16,12 @@ const NO_NOTES: ReadonlyArray<string> = []
  */
 export const useRowNotes = (row: GridRow) => {
     const { effects, rowKeysOf } = useSpreadsheetContext()
-    return useStore(
-        effects,
-        useShallow((state) => [
-            ...new Set(
-                rowKeysOf(row).flatMap(
-                    (id) => state.rowNotes.get(id) ?? NO_NOTES
-                )
-            ),
-        ])
-    )
+    const selectNotes = useShallow((state: AnnotationsState) => [
+        ...new Set(
+            rowKeysOf(row).flatMap((id) => state.rowNotes.get(id) ?? NO_NOTES)
+        ),
+    ])
+    return useStore(effects, selectNotes)
 }
 
 /** What the grid's one notes popover is open for: the row, and the marker that opened it, where focus goes back. */
@@ -78,19 +75,22 @@ export const NotesMarker = ({
     )
 
 /** A row's notes, each as plain text with its line breaks. */
-const NotesList = ({ row }: { row: GridRow }) => (
-    <ul className="flex flex-col gap-2">
-        {useRowNotes(row).map((note, i) => (
-            <li
-                key={i}
-                dir="auto"
-                className="whitespace-pre-wrap [overflow-wrap:anywhere]"
-            >
-                {note}
-            </li>
-        ))}
-    </ul>
-)
+const NotesList = ({ row }: { row: GridRow }) => {
+    const notes = useRowNotes(row)
+    return (
+        <ul className="flex flex-col gap-2">
+            {notes.map((note, i) => (
+                <li
+                    key={i}
+                    dir="auto"
+                    className="whitespace-pre-wrap [overflow-wrap:anywhere]"
+                >
+                    {note}
+                </li>
+            ))}
+        </ul>
+    )
+}
 
 /** The grid's one popover of a row's notes, kept after it closes so it closes in place. */
 export const NotesPopover = ({

@@ -97,7 +97,8 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
     confirmBulk,
     children,
 }: SpreadsheetProps<R, C>) => {
-    const ownScope = `spreadsheet-${useId().replaceAll(':', '')}`
+    const id = useId()
+    const ownScope = `spreadsheet-${id.replaceAll(':', '')}`
     const [own] = useState(() => ({
         announcer: createAnnouncer(),
         orgUnitNames: names(),

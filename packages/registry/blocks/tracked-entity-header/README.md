@@ -55,14 +55,20 @@ stickiness is the host's.
 
 Parts: `TrackedEntityName`, `TrackedEntityDate`, `TrackedEntityAttribute`,
 `TrackedEntityStatus`, `TrackedEntityOwner`, `TrackedEntityEnrollment`,
-`TrackedEntityFacts`, `TrackedEntityActions` and `TrackedEntityDetails`; each
-takes a `className`. `TrackedEntityDate` shows a date attribute, or with
+`TrackedEntityFacts`, `TrackedEntityActions`, `TrackedEntityDetails`,
+`TrackedEntityRelationship` and `TrackedEntityRelationships`; each takes a
+`className`. `TrackedEntityDate` shows a date attribute, or with
 `enrollmentDate` the enrollment's incident or enrollment date under the
 program's own label. Every value part renders nothing until the record is
 ready, so a restricted record never shows a value. `TrackedEntityActions`
 renders in every state outside a banner; inside one it shows once the record
 is ready, and when access is restricted, so a "Request access" button still
 shows.
+
+`TrackedEntityRelationship` shows one relationship type by uid, such as a
+mother. `TrackedEntityRelationships` lists every link, one line per type with
+its count and first names, as a disclosure in a banner. Names link through
+`href` or `onSelect`; the block ships no peek, and labels can be overridden.
 
 Parts also work outside the banner, anywhere under the provider.
 `useTrackedEntityHeader()` returns `status` (`'loading'`, `'failed'`,

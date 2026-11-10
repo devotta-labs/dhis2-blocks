@@ -112,8 +112,9 @@ Stickiness is the host's, since only the host knows its scroll container: pass
 
 The parts are `TrackedEntityName`, `TrackedEntityDate`,
 `TrackedEntityAttribute`, `TrackedEntityStatus`, `TrackedEntityOwner`,
-`TrackedEntityEnrollment`, `TrackedEntityFacts`, `TrackedEntityActions` and
-`TrackedEntityDetails`. Each takes a `className`. `TrackedEntityDate` takes
+`TrackedEntityEnrollment`, `TrackedEntityFacts`, `TrackedEntityActions`,
+`TrackedEntityDetails`, `TrackedEntityRelationship` and
+`TrackedEntityRelationships`. Each takes a `className`. `TrackedEntityDate` takes
 a date `attribute`, or `enrollmentDate="occurredAt"` or `"enrolledAt"` for a
 date kept on the enrollment, labelled as the program labels it: a birth date
 in a child programme, or "Dispatched" for a shipment. It shows the date only.
@@ -123,6 +124,103 @@ The event facts, such as the haemoglobin above, come from
 [Observation Cards](/blocks/observation-cards): `ObservationInline` needs an
 `ObservationsProvider` above it, and shares its requests with the cards on the
 same page.
+
+## Relationships
+
+Two parts show what a record is linked to. `TrackedEntityRelationship` is a
+fact: one relationship type, by uid, labelled and named like any other value.
+`TrackedEntityRelationships` is every link, one line per relationship type with
+its count and the first three names.
+
+```tsx
+<TrackedEntityBanner>
+    <TrackedEntityName attributes={['w75KJ2mc4zz', 'zDhUuAYrxNC']} />
+    <TrackedEntityFacts>
+        <TrackedEntityRelationship
+            relationshipType="dDrh5UyCyvQ"
+            label={{ from: 'Baby', to: 'Mother' }}
+            hideWhenEmpty
+            href={(id) => `/people/${id}`}
+        />
+        <TrackedEntityRelationship relationshipType="Mv8R4MPcNcX" />
+    </TrackedEntityFacts>
+    <TrackedEntityRelationships
+        labels={{ m6XJSapEvOa: 'Linked cases' }}
+        onSelect={openRecord}
+        moreHref={(type) => `/links?type=${type}`}
+    />
+</TrackedEntityBanner>
+```
+
+A link is labelled from this record's end. A one-way type uses `fromToName` at
+the `from` end and `toFromName` at the `to` end, and falls back to the type's
+own name when that is not set, as "Focus to Case" does. Demo
+types are named like `Mother-Child_a-to-b_(Person-Person)`, so every label can
+be replaced. Pass a string to `label`, or to `labels` by type uid, for either
+end. Pass `{ from, to }` when the type reads differently from each end: `from`
+is the label when this record is the `from` end, so the mother's banner says
+"Child" and the baby's says "Mother".
+
+A one-way type can hold this record at either end. Without `end`, each end is
+its own pair, labelled from its end. Pass `end="from"` or `end="to"` to show
+one. For a bidirectional type `end` has no effect. `hideWhenEmpty` is for a
+link most records won't have: with none, the part renders nothing instead of
+"Not recorded". It hides only a known absence. A request that fails still says
+"Unavailable".
+
+Names are plain text. Pass `href` to make them real links, so ctrl- or middle-click opens a new tab.
+Pass `onSelect` when your app routes itself: it is called with the linked
+record's id on a plain click. With both, the link's default is prevented.
+`moreHref` and `onMore` do the same for "and N more", with the relationship
+type uid. A linked record the user can't read says "You don't have access to
+this record", with no name and no link. A link whose other end is an event or an
+enrollment is counted, not named, such as "2 events".
+
+Inside a banner, `TrackedEntityRelationships` is a **Related · N** disclosure
+below both lines. It shows nothing while loading or when there are no links,
+and "Unavailable" if the request fails. Outside a banner it is the list itself,
+or "No related records". Both parts share one request for the record's links,
+made only when one of them is placed, so a banner with no children makes none.
+
+The block ships no peek. Build one from the Quick look parts: `onSelect` keeps
+the linked id in your state, and a popover loads that record when it opens.
+
+```tsx
+const RelatedPeek = ({ trackedEntityId, programId }) => {
+    const anchor = useRef<HTMLDivElement>(null)
+    const [linked, setLinked] = useState<string>()
+    return (
+        <>
+            <div ref={anchor}>
+                <TrackedEntityHeaderProvider
+                    trackedEntity={trackedEntityId}
+                    program={programId}
+                >
+                    <TrackedEntityRelationships onSelect={setLinked} />
+                </TrackedEntityHeaderProvider>
+            </div>
+            <Popover
+                open={!!linked}
+                onOpenChange={(open) => !open && setLinked(undefined)}
+            >
+                <PopoverContent anchor={anchor} aria-labelledby="peek-name">
+                    {linked && (
+                        <TrackedEntityHeaderProvider
+                            trackedEntity={linked}
+                            program={programId}
+                        >
+                            <QuickLook />
+                        </TrackedEntityHeaderProvider>
+                    )}
+                </PopoverContent>
+            </Popover>
+        </>
+    )
+}
+```
+
+`QuickLook` is the component from the next section, with `id="peek-name"` on
+its `TrackedEntityName`.
 
 ## Parts outside a frame
 

@@ -1,5 +1,7 @@
+import i18n from '@dhis2/d2-i18n'
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { announce } from '@/components/dhis2/ui/announcer'
 import {
     shouldRetryFinderRequest,
     type FinderResourceClient,
@@ -77,6 +79,40 @@ export const useSearchResults = ({
     })
 
     const outcome = submission ? query.data : undefined
+    const completed = useRef(0)
+    useEffect(() => {
+        if (
+            !submissionId ||
+            query.isPending ||
+            query.isPlaceholderData ||
+            completed.current === submissionId
+        ) {
+            return
+        }
+        completed.current = submissionId
+        if (
+            page === 1 &&
+            query.isSuccess &&
+            outcome?.kind === 'results' &&
+            outcome.people.length > 0
+        ) {
+            const count = outcome.total ?? outcome.people.length
+            // Both keys are extractable; count also reaches i18next's plural rules.
+            announce(
+                count === 1
+                    ? i18n.t('{{count}} person found', { count })
+                    : i18n.t('{{count}} people found', { count })
+            )
+        }
+    }, [
+        submissionId,
+        page,
+        outcome,
+        query.isPending,
+        query.isPlaceholderData,
+        query.isSuccess,
+    ])
+
     const status: FinderResultsStatus = (() => {
         if (finderStatus === 'error') {
             return 'error'

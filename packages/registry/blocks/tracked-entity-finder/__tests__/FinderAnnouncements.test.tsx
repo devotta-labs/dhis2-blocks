@@ -1,7 +1,9 @@
 import React, { StrictMode, useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { page } from 'vitest/browser'
 import { announce } from '@/components/dhis2/ui/announcer'
 import { useFinderResults } from '../hooks'
+import { hivProgram } from './fixtures/program'
 import { FinderResults } from '../results/FinderResults'
 import {
     FinderEmpty,
@@ -11,6 +13,7 @@ import {
 import {
     amina,
     answer,
+    entity,
     renderFinder,
     searchFor,
     ui,
@@ -61,7 +64,7 @@ test('uses one shared live region across repeated searches and outcomes', async 
             response: answer([amina], 6),
             text: 'Too many matches. Add another detail.',
         },
-        { response: answer([amina]), text: '' },
+        { response: answer([amina]), text: '1 person found' },
         { response: answer([]), text: 'No one found' },
     ]
 
@@ -78,10 +81,9 @@ test('uses one shared live region across repeated searches and outcomes', async 
 
         server.pendingSearches[index].respond(outcome.response)
         await expect.element(results).toHaveAttribute('aria-busy', 'false')
-        if (outcome.text) {
-            expected.push(outcome.text)
-            await expect.poll(() => said).toEqual(expected)
-        } else {
+        expected.push(outcome.text)
+        await expect.poll(() => said).toEqual(expected)
+        if (outcome.text === '1 person found') {
             await expect
                 .element(results.getByRole('button', { name: /Amina/ }))
                 .toBeVisible()
@@ -90,6 +92,79 @@ test('uses one shared live region across repeated searches and outcomes', async 
     }
     await settle()
     expect(said).toEqual(expected)
+})
+
+test('counts new searches once, not paging, cached pages or background refreshes', async () => {
+    const Refresh = () => {
+        const queryClient = useQueryClient()
+        return (
+            <button
+                type="button"
+                onClick={() => {
+                    void queryClient.invalidateQueries({
+                        queryKey: ['tracked-entity-finder', 'search'],
+                    })
+                }}
+            >
+                Refresh results
+            </button>
+        )
+    }
+    const { server } = await renderFinder({
+        options: {
+            program: { ...hivProgram, maxTeiCountToReturn: 0 },
+            deferSearches: true,
+        },
+        results: (
+            <>
+                <FinderResults data-testid="results" />
+                <Refresh />
+            </>
+        ),
+    })
+    const results = page.getByTestId('results')
+    await searchFor('A1')
+    await expect.poll(() => said).toEqual(['Searching…'])
+    const firstPage = Array.from({ length: 10 }, (_, i) =>
+        entity(`p1-${i}`, { firstName: `Person${i}` })
+    )
+    server.pendingSearches[0].respond(answer(firstPage, 12))
+    await expect.poll(() => said).toEqual(['Searching…', '12 people found'])
+
+    await page.getByRole('button', { name: 'Next' }).click()
+    await expect.element(results).toHaveAttribute('aria-busy', 'true')
+    await settle()
+    expect(said).toEqual(['Searching…', '12 people found'])
+    server.pendingSearches[1].respond(answer([amina], 12, 2))
+    await expect
+        .element(results.getByRole('button', { name: /Amina/ }))
+        .toBeVisible()
+    await page.getByRole('button', { name: 'Previous' }).click()
+    await expect
+        .element(results.getByText('Person0', { exact: true }))
+        .toBeVisible()
+
+    await page.getByRole('button', { name: 'Refresh results' }).click()
+    await expect.poll(() => server.pendingSearches.length).toBe(3)
+    await expect.element(results).toHaveAttribute('aria-busy', 'true')
+    server.pendingSearches[2].respond(answer([amina]))
+    await expect.element(results).toHaveAttribute('aria-busy', 'false')
+    await settle()
+    expect(said).toEqual(['Searching…', '12 people found'])
+
+    await searchFor('A1')
+    await expect.poll(() => said.at(-1)).toBe('Searching…')
+    server.pendingSearches[3].respond(answer([amina]))
+    await expect
+        .poll(() => said)
+        .toEqual([
+            'Searching…',
+            '12 people found',
+            'Searching…',
+            '1 person found',
+        ])
+    await settle()
+    expect(said).toHaveLength(4)
 })
 
 test('announces custom JSX and independent child updates without duplicate speech', async () => {

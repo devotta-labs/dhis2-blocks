@@ -6,6 +6,8 @@ export const trackedEntityFinderTranslationCatalog = () => [
     i18n.t('Search'),
     i18n.t('Searching…'),
     i18n.t('No one found'),
+    i18n.t('{{count}} person found'),
+    i18n.t('{{count}} people found'),
     i18n.t('Too many matches. Add another detail.'),
     i18n.t("This search isn't set up correctly"),
     i18n.t('Add 1 more detail to search'),

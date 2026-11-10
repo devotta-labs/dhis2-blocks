@@ -3,8 +3,13 @@ import React from 'react'
 import { Muted } from '../FactPair'
 import type { ResolvedLink } from './resolve'
 
-const LINK_CLASS =
+export const LINK_CLASS =
     'cursor-pointer rounded-dhis2-sm text-dhis2-primary underline underline-offset-2 hover:text-dhis2-primary-strong focus-visible:outline-2 focus-visible:outline-dhis2-ring'
+
+/** A left click with no modifier: the one a handler may take over from the browser. */
+export const isPlainClick = (event: React.MouseEvent) =>
+    event.button === 0 &&
+    !(event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)
 
 /** A linked record's name: a link, a button, or plain text, by the navigation the caller gave. */
 export const LinkedName = ({
@@ -26,15 +31,7 @@ export const LinkedName = ({
                 href={href(id)}
                 className={LINK_CLASS}
                 onClick={(event) => {
-                    const plain =
-                        event.button === 0 &&
-                        !(
-                            event.ctrlKey ||
-                            event.metaKey ||
-                            event.shiftKey ||
-                            event.altKey
-                        )
-                    if (onSelect && plain) {
+                    if (onSelect && isPlainClick(event)) {
                         event.preventDefault()
                         onSelect(id)
                     }

@@ -9,6 +9,7 @@ import { TrackedEntityStatus } from '../parts/TrackedEntityStatus'
 import { DIVIDED } from '../parts/divided'
 import { ActionsSlotContext } from '../provider/actionsSlot'
 import { useHeaderContext } from '../provider/context'
+import { InFrameContext } from '../provider/frame'
 import { LabelledRegionContext } from '../provider/labelledRegion'
 
 export interface TrackedEntityBannerProps {
@@ -22,7 +23,7 @@ export interface TrackedEntityBannerProps {
  * details open below both.
  */
 const PLACEMENT = cn(
-    'flex min-w-0 flex-1 flex-wrap items-baseline gap-y-1.5 [&>[data-slot=tracked-entity-details]]:basis-full [&>[data-slot=tracked-entity-facts]]:basis-full',
+    'flex min-w-0 flex-1 flex-wrap items-baseline gap-y-1.5 [&>[data-slot=tracked-entity-details]]:basis-full [&>[data-slot=tracked-entity-facts]]:basis-full [&>[data-slot=tracked-entity-relationships]]:basis-full',
     DIVIDED
 )
 
@@ -154,11 +155,13 @@ export function TrackedEntityBanner({
                     data-slot="tracked-entity-banner-content"
                     className={PLACEMENT}
                 >
-                    <LabelledRegionContext.Provider value={setNameId}>
-                        <ActionsSlotContext.Provider value={actionsSlot}>
-                            {content}
-                        </ActionsSlotContext.Provider>
-                    </LabelledRegionContext.Provider>
+                    <InFrameContext.Provider value>
+                        <LabelledRegionContext.Provider value={setNameId}>
+                            <ActionsSlotContext.Provider value={actionsSlot}>
+                                {content}
+                            </ActionsSlotContext.Provider>
+                        </LabelledRegionContext.Provider>
+                    </InFrameContext.Provider>
                 </div>
                 {/* Empty, and so hidden, until the actions arrive. */}
                 <div

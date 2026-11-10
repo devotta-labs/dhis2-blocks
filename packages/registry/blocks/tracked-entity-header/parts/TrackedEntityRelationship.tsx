@@ -3,12 +3,8 @@ import i18n from '@dhis2/d2-i18n'
 import React, { useMemo } from 'react'
 import type { RelationshipEnd } from '../api/types'
 import { FactPair, Muted } from './FactPair'
-import { LinkedName } from './relationships/LinkedName'
-import {
-    labelFor,
-    type RelationshipGroup,
-    type RelationshipLabel,
-} from './relationships/resolve'
+import { Names } from './relationships/Names'
+import { labelFor, type RelationshipLabel } from './relationships/resolve'
 import { useRelationships } from './relationships/useRelationships'
 
 export interface TrackedEntityRelationshipProps {
@@ -25,44 +21,6 @@ export interface TrackedEntityRelationshipProps {
     /** Called with a linked record's id when its name is chosen. */
     onSelect?: (trackedEntity: string) => void
     className?: string
-}
-
-const NAMES_SHOWN = 3
-
-const counted = (group: RelationshipGroup) => {
-    const { count } = group
-    if (group.kind === 'events') {
-        return count === 1
-            ? i18n.t('1 event')
-            : i18n.t('{{count}} events', { count })
-    }
-    return count === 1
-        ? i18n.t('1 enrollment')
-        : i18n.t('{{count}} enrollments', { count })
-}
-
-const Names = ({
-    group,
-    href,
-    onSelect,
-}: Pick<TrackedEntityRelationshipProps, 'href' | 'onSelect'> & {
-    group: RelationshipGroup
-}) => {
-    if (group.kind !== 'records') {
-        return <>{counted(group)}</>
-    }
-    const rest = group.links.length - NAMES_SHOWN
-    return (
-        <>
-            {group.links.slice(0, NAMES_SHOWN).map((link, index) => (
-                <React.Fragment key={'id' in link ? link.id : `r${index}`}>
-                    {index > 0 && ', '}
-                    <LinkedName link={link} href={href} onSelect={onSelect} />
-                </React.Fragment>
-            ))}
-            {rest > 0 && ` ${i18n.t('and {{count}} more', { count: rest })}`}
-        </>
-    )
 }
 
 /** The record's link of one relationship type, e.g. "Mother · Fatmata Sesay". */

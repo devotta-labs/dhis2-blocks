@@ -12,6 +12,7 @@ import {
 import type { CellView } from '../provider/context'
 import { cellDomId } from './cellProps'
 import type { CellComponent, CellOverrides, CellProps } from './cellProps'
+import { translatedText } from './translatedText'
 import { CellContext, CellStatus, describeCell } from './CellStatus'
 import { BooleanCell, TrueOnlyCell } from './ChoiceCells'
 import { OptionCell } from './OptionCell'
@@ -66,7 +67,7 @@ const OpenCell = ({ view, ...props }: CellProps & { view: CellView }) => {
         (kind === 'readOnly' ||
             (kind === 'popup' &&
                 editorFor(props.field.valueType) === undefined))
-            ? i18n.t('Edit this field in its own form')
+            ? translatedText('Edit this field in its own form')
             : undefined
     const reason = hiddenBy ?? readOnly ?? elsewhere
     // An empty date says how to type it.

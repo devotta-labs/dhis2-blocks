@@ -1,8 +1,8 @@
-import i18n from '@dhis2/d2-i18n'
 import { memo, useLayoutEffect, useMemo, useRef } from 'react'
 import type { KeyboardEvent } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import type { CellComponent, ControlProps } from './cellProps'
+import { translatedText } from './translatedText'
 import { useCellContext } from './CellStatus'
 import { OptionCell } from './OptionCell'
 import { HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
@@ -25,8 +25,8 @@ export const BooleanCell = memo(function BooleanCell(props: ControlProps) {
         () => ({
             ...field,
             options: [
-                { code: 'true', name: i18n.t('Yes') },
-                { code: 'false', name: i18n.t('No') },
+                { code: 'true', name: translatedText('Yes') },
+                { code: 'false', name: translatedText('No') },
             ],
         }),
         [field]
@@ -101,7 +101,9 @@ export const TrueOnlyCell = memo(function TrueOnlyCell(props: ControlProps) {
                     hidden && 'sr-only'
                 )}
             />
-            {hidden ? <span aria-hidden="true">{i18n.t('Hidden')}</span> : null}
+            {hidden ? (
+                <span aria-hidden="true">{translatedText('Hidden')}</span>
+            ) : null}
         </div>
     )
 }) satisfies CellComponent

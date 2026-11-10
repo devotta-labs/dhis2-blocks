@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import type { Attribution, RuleEffects } from '@/components/program-rules'
 import type { CellState } from '@/components/spreadsheet'
 import { rowRuleOutcome, ruleRowsCache, ruleRowsOf } from './ruleEffects'
@@ -101,6 +102,28 @@ test('hiding a section hides its fields', () => {
     expect(outcome.cells.get('a')?.hiddenBy).toBeUndefined()
     // A hidden section keeps its fields' values.
     expect(outcome.assignments.size).toBe(0)
+})
+
+test('translates a shared rule label once across fields in a row', () => {
+    const translated = vi.spyOn(i18n, 't')
+    try {
+        const outcome = rowRuleOutcome(
+            effectsWith({
+                hiddenSections: new Map([['s', [by('Hide S')]]]),
+            }),
+            row({ sections: new Map([['s', ['f1', 'f2']]]) })
+        )
+
+        expect(outcome.cells.get('f1')?.hiddenBy).toBe('Hidden by rule: Hide S')
+        expect(outcome.cells.get('f2')?.hiddenBy).toBe('Hidden by rule: Hide S')
+        expect(
+            translated.mock.calls.filter(
+                ([key]) => String(key) === 'Hidden by rule: {{rule}}'
+            )
+        ).toHaveLength(1)
+    } finally {
+        translated.mockRestore()
+    }
 })
 
 test('a HIDEFIELD clears its field; a hidden section does not', () => {

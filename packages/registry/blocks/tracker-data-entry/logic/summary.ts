@@ -40,6 +40,17 @@ const BLOCKS_COMPLETION = new Set<SummaryItem['kind']>([
 
 // Server reasons and field names are shown as DHIS2 gives them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
+const notSavedText = (reason: string): string =>
+    i18n.t('Not saved: {{reason}}', {
+        nsSeparator: '::',
+        reason,
+        interpolation: AS_IS,
+    })
+const requiredText = (field: string): string =>
+    i18n.t('{{field}} is required', {
+        field,
+        interpolation: AS_IS,
+    })
 
 /**
  * A cell's field's name: the heading of the column that shows it (a slot's own, where several slots show the field),
@@ -108,18 +119,21 @@ export const summarise = (
     }
 
     const values = new Map<string, string | undefined>()
+    const notSaved = new Map<string, string>()
     for (const [key, cell] of Object.entries(cells)) {
         values.set(key, cell?.value)
         if (cell?.sync === 'failed') {
             failed += 1
+            const reason = cell.reason ?? ''
+            let text = notSaved.get(reason)
+            if (text === undefined) {
+                text = notSavedText(reason)
+                notSaved.set(reason, text)
+            }
             add({
                 key,
                 kind: 'failed',
-                text: i18n.t('Not saved: {{reason}}', {
-                    nsSeparator: '::',
-                    reason: cell.reason ?? '',
-                    interpolation: AS_IS,
-                }),
+                text,
             })
         } else if (cell !== undefined && UNSENT.has(cell.sync)) {
             unsent += 1
@@ -138,6 +152,7 @@ export const summarise = (
 
     // Named only when a required cell is empty: building the names reads every row.
     let nameOf: ReturnType<typeof fieldNamer> | undefined
+    const requiredMessages = new Map<string, string>()
     for (const [key, cellEffects] of Object.entries(effects)) {
         if (cellEffects === undefined) {
             continue
@@ -145,13 +160,16 @@ export const summarise = (
         const { required, messages } = cellEffects
         if (required && !values.get(key) && !emptySlot?.(recordIdOf(key))) {
             nameOf ??= fieldNamer(tables, fieldNames)
+            const field = nameOf(key)
+            let text = requiredMessages.get(field)
+            if (text === undefined) {
+                text = requiredText(field)
+                requiredMessages.set(field, text)
+            }
             add({
                 key,
                 kind: 'errorOnComplete',
-                text: i18n.t('{{field}} is required', {
-                    field: nameOf(key),
-                    interpolation: AS_IS,
-                }),
+                text,
                 namesField: true,
             })
         }

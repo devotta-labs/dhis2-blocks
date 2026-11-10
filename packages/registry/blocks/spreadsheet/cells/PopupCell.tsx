@@ -15,6 +15,7 @@ import { storedFileUrl } from './editors/FileEditor'
 import { editorFor } from './popupEditors'
 import type { EditorProblem } from './popupEditors'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
+import { translatedText } from './translatedText'
 import { composing, READY_CLASS, useCellMode } from './useCellMode'
 
 // Editors that start from the text typed to open them.
@@ -251,7 +252,7 @@ export const PopupCell = memo(function PopupCell({
     }
     // One line in the input, which would drop line breaks and run the lines together.
     const shown = hidden
-        ? i18n.t('Hidden')
+        ? translatedText('Hidden')
         : ((locked ? undefined : view.draft) ?? stored).replace(/\r?\n/g, ' ')
     return (
         <>

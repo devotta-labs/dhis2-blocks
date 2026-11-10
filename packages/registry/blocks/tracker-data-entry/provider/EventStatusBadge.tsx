@@ -1,4 +1,4 @@
-import i18n from '@dhis2/d2-i18n'
+import { translatedText } from '../../spreadsheet/cells/translatedText'
 import { useTrackerContext } from './hooks'
 
 /** "Completed" beside a completed event's label, "Scheduled" beside a scheduled or overdue one's; nothing otherwise. */
@@ -8,9 +8,10 @@ export const EventStatusBadge = ({ rowId }: { rowId: string }) => {
     const status = record?.kind === 'event' ? record.status : undefined
     const scheduled =
         status === 'SCHEDULE' || status === 'OVERDUE'
-            ? i18n.t('Scheduled')
+            ? translatedText('Scheduled')
             : undefined
-    const marker = status === 'COMPLETED' ? i18n.t('Completed') : scheduled
+    const marker =
+        status === 'COMPLETED' ? translatedText('Completed') : scheduled
     return marker === undefined ? null : (
         <>
             {' '}

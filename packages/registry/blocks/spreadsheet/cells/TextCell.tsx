@@ -1,4 +1,3 @@
-import i18n from '@dhis2/d2-i18n'
 import { memo, useState } from 'react'
 import {
     cellKind,
@@ -7,6 +6,7 @@ import {
 } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
 import { useSpreadsheetContext } from '../provider/context'
+import { translatedText } from './translatedText'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
 import { READY_CLASS, useCellMode } from './useCellMode'
@@ -61,7 +61,7 @@ export const TextCell = memo(function TextCell({
     const stored =
         view.value === undefined ? '' : typedText(field, view.value, settings)
     const entered = locked ? stored : (draft ?? view.draft ?? stored)
-    const shown = hidden ? i18n.t('Hidden') : entered
+    const shown = hidden ? translatedText('Hidden') : entered
     return (
         <input
             {...inputProps}

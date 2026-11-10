@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { createStore } from 'zustand/vanilla'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import type { CellOverrides } from '../cells/cellProps'
@@ -122,6 +123,23 @@ describe('reasonOf', () => {
         expect(isEditable('r1.f')).toBe(OWN_FORM)
         expect(isEditable('r1.i')).toBe(OWN_FORM)
         expect(isEditable('r1.u')).toBe(OWN_FORM)
+    })
+
+    test('translates the own-form reason once for repeated lookups', () => {
+        const translated = vi.spyOn(i18n, 't')
+        try {
+            const { isEditable } = setup()
+            expect(
+                ['f', 'i', 'u'].map((field) => isEditable(`r1.${field}`))
+            ).toEqual([OWN_FORM, OWN_FORM, OWN_FORM])
+            expect(
+                translated.mock.calls.filter(
+                    ([key]) => String(key) === 'Edit this field in its own form'
+                )
+            ).toHaveLength(1)
+        } finally {
+            translated.mockRestore()
+        }
     })
 
     test('a replacement control makes a file cell editable', () => {

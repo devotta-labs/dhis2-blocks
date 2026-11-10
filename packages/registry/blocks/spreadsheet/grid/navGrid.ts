@@ -41,14 +41,15 @@ export const typedHere = (
  * Why a typed or pasted value cannot go into a table's cell, named as the cell names it, or undefined when it can:
  * closed, hidden by a rule, read-only, or a kind paste cannot fill.
  */
-export const reasonOf =
-    (
-        closed: GridTable['closed'],
-        store: StoreApi<CellStoreState>,
-        effects: ReadonlyStore<AnnotationsState>,
-        overrides: CellOverrides | undefined
-    ) =>
-    (key: CellKey): string | undefined => {
+export const reasonOf = (
+    closed: GridTable['closed'],
+    store: StoreApi<CellStoreState>,
+    effects: ReadonlyStore<AnnotationsState>,
+    overrides: CellOverrides | undefined
+) => {
+    let ownFormReason: string | undefined
+    let ownFormLanguage: string | undefined
+    return (key: CellKey): string | undefined => {
         const closedReason = closed.get(key)
         if (closedReason !== undefined) {
             return closedReason
@@ -57,10 +58,17 @@ export const reasonOf =
         if (cell?.hiddenBy !== undefined || cell?.readOnly !== undefined) {
             return cell.hiddenBy ?? cell.readOnly
         }
-        return typedHere(store.getState(), key, overrides)
-            ? undefined
-            : i18n.t('Edit this field in its own form')
+        if (typedHere(store.getState(), key, overrides)) {
+            return undefined
+        }
+        const language = i18n.language
+        if (ownFormLanguage !== language) {
+            ownFormLanguage = language
+            ownFormReason = undefined
+        }
+        return (ownFormReason ??= i18n.t('Edit this field in its own form'))
     }
+}
 
 /** What `nextCell` and `pasteTargets` walk; each lookup is a map read, as they ask once per cell stepped over. */
 export const navGrid = (

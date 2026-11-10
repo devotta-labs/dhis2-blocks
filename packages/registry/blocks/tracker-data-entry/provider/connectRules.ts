@@ -1,4 +1,3 @@
-import i18n from '@dhis2/d2-i18n'
 import {
     emptyEffects,
     type EventsRuleRow,
@@ -20,10 +19,12 @@ import {
 import type { TrackerEffects } from '../logic/effects'
 import {
     enrollmentUnitOf,
+    createRuleLabelCache,
     eventsByEnrollment,
     isEmptySlot,
     partsOf,
     personRows,
+    ruleLabel,
     rowRuleOutcome,
     ruleRowsCache,
     stageFields,
@@ -43,8 +44,6 @@ const FIRST_SLICE_MS = 100
 const IDLE_SLICE_MS = 16
 // Rules whose values keep changing each other's rows stop after this many passes; settled rules need two.
 const PASSES = 5
-// Rule names are shown as DHIS2 gives them, not HTML-escaped.
-const AS_IS = { escapeValue: false }
 const NONE: ReadonlySet<string> = new Set()
 const NO_NOTES: ReadonlyArray<string> = []
 
@@ -164,6 +163,7 @@ export const connectRules = ({
         const { records } = tables.getState()
         const entries: Array<{ key: CellKey; text: string }> = []
         const notes: Array<string | undefined> = []
+        const clearedByRule = createRuleLabelCache()
         for (const { recordId, outcome, raw } of results) {
             const record = records.get(recordId)
             if (outcome instanceof Error || record === undefined) {
@@ -205,11 +205,11 @@ export const connectRules = ({
                     raw?.hiddenFields.get(field)?.[0]
                 notes.push(
                     value === null && now
-                        ? i18n.t('Cleared by rule: {{rule}}', {
-                              nsSeparator: '::',
-                              rule: by?.ruleName ?? '',
-                              interpolation: AS_IS,
-                          })
+                        ? ruleLabel(
+                              clearedByRule,
+                              'cleared',
+                              by?.ruleName ?? ''
+                          )
                         : undefined
                 )
             }
@@ -347,6 +347,7 @@ export const connectRules = ({
         const { tables: all, records } = tables.getState()
         const cells = store.getState().cells
         const ruleRows = ruleRowsNow(records, cells)
+        const ruleLabels = createRuleLabelCache()
         let byEnrollment: ReadonlyMap<string, RuleEventInput[]> | undefined
         // An enrolment runs its enrolment rules; any other record, its event rules.
         const evaluateRecord = (rowId: string, record?: DataRecord) => {
@@ -386,7 +387,11 @@ export const connectRules = ({
                 evaluation?.failures.get(rowId) ??
                 (raw === undefined || record === undefined
                     ? undefined
-                    : rowRuleOutcome(raw, fieldsOf(records, record)))
+                    : rowRuleOutcome(
+                          raw,
+                          fieldsOf(records, record),
+                          ruleLabels
+                      ))
             // A record in neither map was not evaluated: it keeps its last effects. One no row shows has none.
             if (shown.has(rowId) && outcome !== undefined) {
                 results.push({ recordId: rowId, outcome, raw })

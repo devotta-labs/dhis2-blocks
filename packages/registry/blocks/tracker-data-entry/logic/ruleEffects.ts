@@ -72,6 +72,40 @@ export const stageFields = (
 // Rule names are shown as DHIS2 gives them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
+export type RuleLabelKind = 'hidden' | 'assigned' | 'cleared'
+export type RuleLabelCache = Map<RuleLabelKind, Map<string, string>>
+
+const RULE_LABEL_KEYS = {
+    hidden: 'Hidden by rule: {{rule}}',
+    assigned: 'Assigned by rule: {{rule}}',
+    cleared: 'Cleared by rule: {{rule}}',
+} satisfies Record<RuleLabelKind, string>
+
+export const createRuleLabelCache = (): RuleLabelCache => new Map()
+
+export const ruleLabel = (
+    cache: RuleLabelCache,
+    kind: RuleLabelKind,
+    ruleName: string
+) => {
+    let labels = cache.get(kind)
+    const cached = labels?.get(ruleName)
+    if (cached !== undefined) {
+        return cached
+    }
+    const text = i18n.t(RULE_LABEL_KEYS[kind], {
+        nsSeparator: '::',
+        rule: ruleName,
+        interpolation: AS_IS,
+    })
+    if (labels === undefined) {
+        labels = new Map()
+        cache.set(kind, labels)
+    }
+    labels.set(ruleName, text)
+    return text
+}
+
 /** The value an ASSIGN saves; `null` clears, and DHIS2 refuses a value outside the field's options, so it clears too. */
 const assignable = (field: string, value: string | null, row: RowFields) => {
     if (value === null || value === '') {
@@ -90,7 +124,11 @@ const assignable = (field: string, value: string | null, row: RowFields) => {
  * key-value pairs). A required field (by metadata or by a rule) is never hidden. A HIDEFIELD clears its field's
  * value unless an ASSIGN targets it; a hidden section hides its fields and keeps their values.
  */
-export const rowRuleOutcome = (effects: RuleEffects, row: RowFields) => {
+export const rowRuleOutcome = (
+    effects: RuleEffects,
+    row: RowFields,
+    labels: RuleLabelCache = createRuleLabelCache()
+) => {
     const { stageFields, optionGroups } = row
     const isRequired = (field: string) =>
         row.required.has(field) || effects.mandatoryFields.has(field)
@@ -169,20 +207,9 @@ export const rowRuleOutcome = (effects: RuleEffects, row: RowFields) => {
         const assigned = effects.assignedValues.get(field)
         cells.set(field, {
             required: isRequired(field),
-            hiddenBy:
-                hidden &&
-                i18n.t('Hidden by rule: {{rule}}', {
-                    nsSeparator: '::',
-                    rule: hidden.ruleName,
-                    interpolation: AS_IS,
-                }),
+            hiddenBy: hidden && ruleLabel(labels, 'hidden', hidden.ruleName),
             readOnly:
-                assigned &&
-                i18n.t('Assigned by rule: {{rule}}', {
-                    nsSeparator: '::',
-                    rule: assigned.by.ruleName,
-                    interpolation: AS_IS,
-                }),
+                assigned && ruleLabel(labels, 'assigned', assigned.by.ruleName),
             messages: messagesOf(field),
             hiddenOptions: hiddenOptionsOf(field),
         })

@@ -58,6 +58,51 @@ test('summarise counts unsent and failed cells and blocks completion on errors',
     })
 })
 
+test('reuses translated messages for repeated failure reasons and field names', () => {
+    const translated = vi.spyOn(i18n, 't')
+    try {
+        const summary = summarise(
+            {
+                'e1.a': {
+                    sync: 'failed',
+                    reason: 'Offline',
+                    source: 'person',
+                },
+                'e2.a': {
+                    sync: 'failed',
+                    reason: 'Offline',
+                    source: 'person',
+                },
+            },
+            {
+                'e1.a': { ...NO_EFFECTS, required: true },
+                'e2.a': { ...NO_EFFECTS, required: true },
+            },
+            NO_ROW_MESSAGES,
+            TABLES
+        )
+
+        expect(summary.items.map(({ text }) => text)).toEqual([
+            'Not saved: Offline',
+            'Not saved: Offline',
+            'Height & weight is required',
+            'Height & weight is required',
+        ])
+        expect(
+            translated.mock.calls.filter(
+                ([key]) => String(key) === 'Not saved: {{reason}}'
+            )
+        ).toHaveLength(1)
+        expect(
+            translated.mock.calls.filter(
+                ([key]) => String(key) === '{{field}} is required'
+            )
+        ).toHaveLength(1)
+    } finally {
+        translated.mockRestore()
+    }
+})
+
 test('a waiting cell is unsent and says why', () => {
     const summary = summarise(
         {

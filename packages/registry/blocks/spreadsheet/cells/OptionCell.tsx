@@ -12,6 +12,7 @@ import { cn } from '@/components/dhis2/ui/cn'
 import { NO_NAMES, useSpreadsheetContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
+import { translatedText } from './translatedText'
 import { OptionList } from './OptionList'
 import { MIN_LENGTH, searchFor, useServerSearch } from './serverSearch'
 import type { Found } from './serverSearch'
@@ -218,7 +219,7 @@ export const OptionCell = memo(function OptionCell({
             ? ''
             : (name ?? typedText(field, view.value, settings))
     const entered = locked ? stored : (draft ?? view.draft ?? stored)
-    const shown = hidden ? i18n.t('Hidden') : entered
+    const shown = hidden ? translatedText('Hidden') : entered
     return (
         <>
             <input

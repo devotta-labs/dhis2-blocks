@@ -4,6 +4,7 @@ import { cn } from '@/components/dhis2/ui/cn'
 import type { SyncState } from '../model/types'
 import type { CellView } from '../provider/context'
 import type { ControlProps } from './cellProps'
+import { translatedText } from './translatedText'
 
 type Tone = 'error' | 'warning' | 'info'
 
@@ -57,7 +58,7 @@ const notesOf = (
         if (view.reason !== undefined) {
             texts.push(['info', view.reason])
         }
-        texts.push(['info', i18n.t('Saved on this device')])
+        texts.push(['info', translatedText('Saved on this device')])
     }
     return texts.map(([tone, text], index): CellNote => ({
         id: `${id}-note-${index}`,

@@ -1,5 +1,6 @@
 import React, { type ComponentPropsWithoutRef } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
+import { useFinderResults } from '../hooks'
 import { FinderItem } from './FinderItem'
 import { FinderList } from './FinderList'
 import { FinderPagination } from './FinderPagination'
@@ -21,8 +22,10 @@ export function FinderResults({
     children,
     ...props
 }: FinderResultsProps) {
+    const { status, refreshing } = useFinderResults()
     return (
         <div
+            aria-busy={status === 'searching' || refreshing}
             {...props}
             data-slot="finder-results"
             className={cn('flex flex-col gap-3', className)}

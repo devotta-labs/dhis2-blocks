@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import type { Page } from '@playwright/test'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { expect, test } from './fixtures'
 
 /**
@@ -11,11 +11,16 @@ import { expect, test } from './fixtures'
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 const TAB_STOPS = 60
 
-const slugs = [
-    ...readFileSync('apps/docs/src/examples/registry.ts', 'utf8').matchAll(
-        /slug: '([^']+)'/g
-    ),
-].map(([, slug]) => slug)
+// Every example list in the examples folder: the registry, and the lists it spreads in.
+const EXAMPLES = 'apps/docs/src/examples'
+const slugs = readdirSync(EXAMPLES)
+    .filter((name) => name.endsWith('.ts'))
+    .flatMap((name) => [
+        ...readFileSync(`${EXAMPLES}/${name}`, 'utf8').matchAll(
+            /slug: '([^']+)'/g
+        ),
+    ])
+    .map(([, slug]) => slug)
 
 const open = async (page: Page, slug: string) => {
     await page.goto(`/preview/${slug}`)

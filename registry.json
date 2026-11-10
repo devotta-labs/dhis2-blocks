@@ -2015,6 +2015,7 @@
                 "zod@^4.4.3"
             ],
             "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
                 "devotta-labs/dhis2-blocks/dhis2-value-display"
             ],
@@ -2063,6 +2064,31 @@
                     "path": "packages/registry/blocks/tracked-entity-header/index.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-header/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/FactPair.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/FactPair.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityAttribute.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityAttribute.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityBorn.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityBorn.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityName.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityName.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/useAttributeValue.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/useAttributeValue.ts"
                 },
                 {
                     "path": "packages/registry/blocks/tracked-entity-header/provider/TrackedEntityHeaderProvider.tsx",

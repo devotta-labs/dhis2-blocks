@@ -1,0 +1,75 @@
+import { cn } from '@/components/dhis2/ui/cn'
+import i18n from '@dhis2/d2-i18n'
+import React, { useEffect, useId } from 'react'
+import { useHeaderContext } from '../provider/context'
+import {
+    resolveAttribute,
+    setupMessage,
+    useLoggedProblem,
+} from './useAttributeValue'
+
+export interface TrackedEntityNameProps {
+    /** The name attributes' uids, joined in order with a space. */
+    attributes: string[]
+    /** The heading's id; one is made when left out. */
+    id?: string
+    className?: string
+}
+
+/** The person's name, as the banner's heading. */
+export function TrackedEntityName({
+    attributes,
+    id,
+    className,
+}: TrackedEntityNameProps) {
+    const context = useHeaderContext()
+    const { placeAttribute, setNameId } = context
+    const generated = useId()
+    const headingId = id ?? generated
+    const ready = context.state.status === 'ready'
+    const key = attributes.join(',')
+
+    useEffect(() => {
+        const undo = key.split(',').filter(Boolean).map(placeAttribute)
+        return () => undo.forEach((fn) => fn())
+    }, [key, placeAttribute])
+    useEffect(() => {
+        if (!ready) {
+            return undefined
+        }
+        setNameId(headingId)
+        return () => setNameId(undefined)
+    }, [ready, headingId, setNameId])
+
+    const parts = attributes.map((uid) => resolveAttribute(uid, context))
+    const problem = parts.find((part) => part.kind === 'misconfigured')
+    useLoggedProblem(problem?.message)
+
+    if (!ready) {
+        return null
+    }
+    const name = parts
+        .map((part) => (part.kind === 'value' ? part.text.trim() : ''))
+        .filter(Boolean)
+        .join(' ')
+    let text = name || i18n.t('Name not recorded')
+    // No half identity: one unreadable name attribute makes the whole name unavailable.
+    if (parts.some((part) => part.kind === 'unavailable')) {
+        text = i18n.t('Name unavailable')
+    }
+    if (problem) {
+        text = setupMessage(problem.message)
+    }
+    return (
+        <h2
+            id={headingId}
+            data-slot="tracked-entity-name"
+            className={cn(
+                'm-0 text-xl font-semibold text-dhis2-foreground',
+                className
+            )}
+        >
+            {text}
+        </h2>
+    )
+}

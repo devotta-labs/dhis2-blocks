@@ -116,6 +116,23 @@
                 ]
             }
         },
+        "apps/perf": {
+            "entry": [
+                "d2.config.js",
+                "src/App.tsx",
+                "bench/{serve,run,report,hotspots}.mts"
+            ],
+            "project": ["src/**/*.{ts,tsx,css}", "bench/**/*.mts"],
+            "ignoreDependencies": [
+                "@dhis2/app-runtime",
+                "@dhis2/d2-i18n",
+                "@dhis2/ui"
+            ],
+            "ignoreIssues": {
+                "d2.config.js": ["exports"],
+                "src/App.tsx": ["exports"]
+            }
+        },
         "apps/docs": {
             "entry": ["server/**/*.test.mjs"],
             "ignoreDependencies": ["typeface-roboto"],

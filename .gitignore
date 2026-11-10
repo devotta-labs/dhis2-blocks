@@ -20,3 +20,6 @@ e2e/artifacts
 .vercel
 
 **/__screenshots__/**
+apps/perf/results
+apps/perf/src/locales
+apps/perf/i18n

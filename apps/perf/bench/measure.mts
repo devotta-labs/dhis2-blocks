@@ -298,9 +298,11 @@ const PASTED = [
 const PASTED_ROWS = 10
 
 /** Pastes a block ten rows tall and ten columns wide, a value of each column's type. */
-const paste = async (session: Session) => {
+const paste = async (session: Session, pageSize: number) => {
     const { page } = session
-    await cell(page, 8, 0).click()
+    // Below the rows edited so far, where the page is long enough to hold the whole block there.
+    const top = Math.max(0, Math.min(8, pageSize - PASTED_ROWS))
+    await cell(page, top, 0).click()
     const text = Array.from({ length: PASTED_ROWS }, () =>
         PASTED.join('\t')
     ).join('\n')
@@ -464,7 +466,7 @@ export const measure = async (
             edit: await part('edit', () => edit(session)),
             navigate: await part('navigate', () => navigate(session)),
             option: await part('option', () => pickOption(session)),
-            paste: await part('paste', () => paste(session)),
+            paste: await part('paste', () => paste(session, grid.pageSize)),
             addRow: await part('addRow', () => addRow(session)),
             scrollDown: await part('scrollDown', () => scroll(session, 'y')),
             scrollAcross: await part('scrollAcross', () =>

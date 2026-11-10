@@ -97,6 +97,15 @@ const hiddenFollowUps = (
 
 /** The engine, failing on the later visit the way it fails on input it cannot read. */
 class FailsOnLaterVisit extends engine.RuleEngineJs {
+    override evaluateAll(
+        ...args: Parameters<engine.RuleEngineJs['evaluateAll']>
+    ) {
+        if (args[1].some((event) => event.event === LATER_VISIT)) {
+            throw new Error('the engine failed on the later visit')
+        }
+        return super.evaluateAll(...args)
+    }
+
     override evaluateEvent(
         ...args: Parameters<engine.RuleEngineJs['evaluateEvent']>
     ) {
@@ -135,6 +144,142 @@ describe('rowsAffectedBy', () => {
 })
 
 describe('evaluateEventsRules', () => {
+    it('evaluates independent event-program rows in one engine call', () => {
+        const context = buildRuleContext(
+            engine,
+            programMetadata({
+                rules: [
+                    rule('hide', 'true', [
+                        { id: 'hide-x', type: 'HIDEFIELD', dataElementId: 'x' },
+                    ]),
+                ],
+            })
+        )
+        let batchCalls = 0
+        const batchEngine = new (class extends engine.RuleEngineJs {
+            override evaluateAll(
+                ...args: Parameters<engine.RuleEngineJs['evaluateAll']>
+            ) {
+                batchCalls += 1
+                return super.evaluateAll(...args)
+            }
+        })()
+        const batchContexts = new Map([
+            ['stage', { ...context, engine: batchEngine }],
+        ])
+        const rows = ['first', 'second'].map((id) => ({
+            event: { ...eventInput().event, id },
+        }))
+        const result = evaluateEventsRules(
+            engine,
+            batchContexts,
+            input(rows, {
+                persons: new Map(),
+                tracker: false,
+                personsLoaded: false,
+            }),
+            ['first', 'second']
+        )
+
+        expect(batchCalls).toBe(1)
+        expect(result.failures.size).toBe(0)
+        expect(result.effects.get('first')?.hiddenFields.has('x')).toBe(true)
+        expect(result.effects.get('second')?.hiddenFields.has('x')).toBe(true)
+    })
+
+    it('batches tracker rows only when their enrollment inputs match', () => {
+        const context = buildRuleContext(
+            engine,
+            programMetadata({
+                variables: [
+                    {
+                        id: 'gender',
+                        name: 'gender',
+                        sourceType: 'TEI_ATTRIBUTE',
+                        useCodeForOptionSet: false,
+                        attributeId: 'gender',
+                        fieldValueType: 'TEXT',
+                    },
+                ],
+                rules: [
+                    rule('hide', "A{gender} == 'Male'", [
+                        { id: 'hide-x', type: 'HIDEFIELD', dataElementId: 'x' },
+                    ]),
+                ],
+            })
+        )
+        let batchCalls = 0
+        const batchEngine = new (class extends engine.RuleEngineJs {
+            override evaluateAll(
+                ...args: Parameters<engine.RuleEngineJs['evaluateAll']>
+            ) {
+                batchCalls += 1
+                return super.evaluateAll(...args)
+            }
+        })()
+        const batchContexts = new Map([
+            ['stage', { ...context, engine: batchEngine }],
+        ])
+        const enrollment = {
+            id: 'P1',
+            enrolledAt: '2026-10-01',
+            orgUnitId: 'ou',
+            attributes: { gender: 'Male' },
+        }
+        const rows = ['first', 'second'].map((id) => ({
+            event: { ...eventInput().event, id },
+            enrollmentId: enrollment.id,
+            enrollment,
+        }))
+        const ruleInput = input(rows, {
+            persons: new Map(),
+            tracker: true,
+            personsLoaded: false,
+        })
+        const result = evaluateEventsRules(engine, batchContexts, ruleInput, [
+            'first',
+            'second',
+        ])
+
+        expect(batchCalls).toBe(1)
+        expect(result.failures.size).toBe(0)
+        expect(result.effects.get('first')?.hiddenFields.has('x')).toBe(true)
+        expect(result.effects.get('second')?.hiddenFields.has('x')).toBe(true)
+        for (const id of ['first', 'second']) {
+            expect(
+                evaluateEventsRules(engine, batchContexts, ruleInput, [
+                    id,
+                ]).effects.get(id)
+            ).toEqual(result.effects.get(id))
+        }
+    })
+
+    it('keeps per-row failures isolated when a batch evaluation fails', () => {
+        const context = buildRuleContext(engine, programMetadata())
+        const failing = new Map([
+            ['stage', { ...context, engine: new FailsOnLaterVisit() }],
+        ])
+        const rows = [FIRST_VISIT, LATER_VISIT].map((id) => ({
+            event: { ...eventInput().event, id },
+        }))
+        const { effects, failures } = evaluateEventsRules(
+            engine,
+            failing,
+            input(rows, {
+                persons: new Map(),
+                tracker: false,
+                personsLoaded: false,
+            }),
+            [FIRST_VISIT, LATER_VISIT]
+        )
+
+        expect([...effects.keys()]).toEqual([FIRST_VISIT])
+        expect([...failures.keys()]).toEqual([LATER_VISIT])
+        expect(failures.get(LATER_VISIT)?.message).toBe(
+            'the engine failed on the later visit'
+        )
+    })
+
     // The rule hides the follow-ups unless chronic conditions is true, so an empty value also hides them: only a
     // 'true' that can come from another row proves that row was read.
     it('uses another row’s live value over the server’s', () => {

@@ -1,9 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import {
-    emptyEffects,
-    type EventsRuleRow,
     type EventsRules,
-    type RuleEffects,
     type RuleEventInput,
 } from '@/components/program-rules'
 import { typedText } from '@/components/dhis2-value-types'
@@ -24,17 +21,24 @@ import {
     isEmptySlot,
     partsOf,
     personRows,
-    rowRuleOutcome,
     ruleRowsCache,
     stageFields,
 } from '../logic/ruleEffects'
-import { formOf, recordsOf, recordIdOf, rowsByRecord } from '../model/types'
-import { fieldIdOfKey } from '../model/types'
+import {
+    fieldIdOfKey,
+    formOf,
+    recordIdOf,
+    recordsOf,
+    rowsByRecord,
+} from '../model/types'
 import type { DataRecord } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
 import { afterPaint, measured, onScreen, soon, whenIdle } from './afterPaint'
+import { affectedBy } from './affectedBy'
+import { evaluateEventBatch } from './evaluateEventBatch'
 import { lockedElsewhere } from './formRows'
+import { createRowResultAppender, type RowResult } from './rowResults'
 import type { OpenForm } from './openForm'
 
 // Loading evaluates rows for about this long at once (a row at least), then for about a frame's time whenever the
@@ -47,13 +51,6 @@ const PASSES = 5
 const AS_IS = { escapeValue: false }
 const NONE: ReadonlySet<string> = new Set()
 const NO_NOTES: ReadonlyArray<string> = []
-
-/** What one record's rules said, or why they failed; `raw` names the rules behind its values. */
-interface RowResult {
-    recordId: string
-    outcome: ReturnType<typeof rowRuleOutcome> | Error
-    raw?: RuleEffects
-}
 
 /** Whether the cell holds a change on its way to DHIS2: a failed one waits for the person to enter it again. */
 const onItsWay = ({ sync }: CellState) => sync !== 'idle' && sync !== 'failed'
@@ -100,6 +97,7 @@ export const connectRules = ({
     idScope,
 }: ConnectOptions) => {
     let stopped = false
+    const lastEventRulesMs = new Map<string, number>()
     // Opening the grid changes nothing: rules' values are saved only with a row someone is changing. A failed change is
     // not on its way: it waits for the person to enter it again.
     for (const [key, cell] of Object.entries(store.getState().cells)) {
@@ -123,31 +121,6 @@ export const connectRules = ({
             stageFields(form, formIds, rules.optionGroupOptions)
         fieldsCache.set(cacheKey, fields)
         return fields
-    }
-
-    /**
-     * The records to run again after `field` of `rowId` changed: for a data value, the row, the person's rows that read
-     * it and a register's enrolment; for an event date, an attribute or an enrolment date, every row of that person.
-     */
-    const affectedBy = (
-        records: ReadonlyMap<string, DataRecord>,
-        ruleRows: ReadonlyArray<EventsRuleRow>,
-        rowId: string,
-        field: string
-    ) => {
-        const record = records.get(rowId)
-        if (record === undefined) {
-            return []
-        }
-        if (record.kind !== 'event' || field === EVENT_DATE_COLUMN) {
-            return personRows(records, record)
-        }
-        const rows = rules.rowsAffectedBy(ruleRows, rowId, field)
-        // A register's enrolment rules read its events.
-        return record.enrollmentId !== undefined &&
-            records.get(record.enrollmentId)?.kind === 'enrollment'
-            ? [...rows, record.enrollmentId]
-            : rows
     }
 
     /**
@@ -335,10 +308,7 @@ export const connectRules = ({
         return changed
     }
 
-    /**
-     * Evaluates the rows in order, one at a time, until `until` (a `performance.now()` time) passes, a row at least,
-     * and applies what they say. Returns how many it evaluated and the rows the rules' own values can change.
-     */
+    /** Evaluates rows in order, in small compatible event batches, until `until` passes, a row at least. */
     const pass = (
         rowIds: ReadonlyArray<string>,
         said: Set<string>,
@@ -368,30 +338,51 @@ export const connectRules = ({
         }
         const shown = rowsByRecord(all)
         const results: RowResult[] = []
+        const addResult = createRowResultAppender(
+            results,
+            shown,
+            seen,
+            (record) => fieldsOf(records, record)
+        )
         let done = 0
         while (
             done < rowIds.length &&
             (done === 0 || performance.now() < until)
         ) {
             const rowId = rowIds[done]
-            done += 1
             const record = records.get(rowId)
             // An empty slot has no rules: it shows the form's own effects, whatever the rules said while it had a value.
             const empty =
                 record !== undefined &&
                 isEmptySlot(record, cells, form.fieldsByForm)
-            const evaluation = empty ? undefined : evaluateRecord(rowId, record)
-            const raw = empty ? emptyEffects() : evaluation?.effects.get(rowId)
-            const outcome =
-                evaluation?.failures.get(rowId) ??
-                (raw === undefined || record === undefined
-                    ? undefined
-                    : rowRuleOutcome(raw, fieldsOf(records, record)))
-            // A record in neither map was not evaluated: it keeps its last effects. One no row shows has none.
-            if (shown.has(rowId) && outcome !== undefined) {
-                results.push({ recordId: rowId, outcome, raw })
-                seen.add(rowId)
+            if (record?.kind === 'event' && !empty) {
+                const batchKey = `${record.programStageId}\u0000${record.enrollmentId ?? ''}`
+                const batch = evaluateEventBatch(
+                    rowIds,
+                    done,
+                    record,
+                    records,
+                    until,
+                    lastEventRulesMs.get(batchKey),
+                    (event) => isEmptySlot(event, cells, form.fieldsByForm),
+                    (ids) => rules.evaluate(ruleRows, ids)
+                )
+                lastEventRulesMs.set(batchKey, batch.millisecondsPerRow)
+                for (const batchId of batch.rowIds) {
+                    addResult(
+                        batchId,
+                        records.get(batchId),
+                        false,
+                        batch.result
+                    )
+                }
+                done += batch.rowIds.length
+                continue
             }
+            const evaluation = empty ? undefined : evaluateRecord(rowId, record)
+            // A record in neither map was not evaluated: it keeps its last effects. One no row shows has none.
+            addResult(rowId, record, empty, evaluation)
+            done += 1
         }
         const changed = apply(results, said)
         const next = new Set(
@@ -400,6 +391,7 @@ export const connectRules = ({
                 // The row's own rules ran with the value; the person's other rows read it through cross-event fields,
                 // and their events read the person's attributes.
                 return affectedBy(
+                    rules,
                     records,
                     ruleRows,
                     rowId,
@@ -533,7 +525,7 @@ export const connectRules = ({
                         isEmptySlot(record, before.cells, form.fieldsByForm) !==
                             isEmptySlot(record, cells, form.fieldsByForm)
                         ? personRows(records, record)
-                        : affectedBy(records, ruleRows, rowId, field)
+                        : affectedBy(rules, records, ruleRows, rowId, field)
                 })
             )
         }),

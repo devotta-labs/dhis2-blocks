@@ -1,6 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import { Result } from 'better-result'
-import { evaluateEventRules } from './evaluate'
+import { evaluateEventRules, evaluateEventRulesBatch } from './evaluate'
 import type {
     EventRuleInput,
     ProgramRulesMetadata,
@@ -117,6 +117,25 @@ interface RowIndex {
 
 const rowIndexes = new WeakMap<ReadonlyArray<EventsRuleRow>, RowIndex>()
 
+const sameEnrollment = (
+    left: RuleEnrollmentInput | undefined,
+    right: RuleEnrollmentInput | undefined
+) => {
+    if (left === right) return true
+    if (left === undefined || right === undefined) return false
+    const leftAttributes = Object.entries(left.attributes)
+    return (
+        left.id === right.id &&
+        left.enrolledAt === right.enrolledAt &&
+        left.occurredAt === right.occurredAt &&
+        left.orgUnitId === right.orgUnitId &&
+        left.orgUnitCode === right.orgUnitCode &&
+        left.status === right.status &&
+        leftAttributes.length === Object.keys(right.attributes).length &&
+        leftAttributes.every(([id, value]) => right.attributes[id] === value)
+    )
+}
+
 /** The rows by id and by person, built once per array: a grid evaluates one row at a time over the same rows. */
 export const indexRows = (rows: ReadonlyArray<EventsRuleRow>): RowIndex => {
     const cached = rowIndexes.get(rows)
@@ -154,6 +173,11 @@ export const evaluateEventsRules = (
     const { byId: rows, byPerson: rowsOfPerson } = indexRows(input.rows)
     const effects = new Map<string, RuleEffects>()
     const failures = new Map<string, Error>()
+    const prepared: {
+        rowId: string
+        context: RuleContext
+        ruleInput: EventRuleInput
+    }[] = []
     for (const rowId of rowIds) {
         const row = rows.get(rowId)
         const context =
@@ -195,15 +219,72 @@ export const evaluateEventsRules = (
                   otherEvents: otherEventsOf(row, person, siblings),
               }
             : { event: row.event, otherEvents: [] }
+        prepared.push({ rowId, context, ruleInput })
+    }
+
+    const evaluateOne = (item: (typeof prepared)[number]) => {
         const evaluation = Result.try({
-            try: () => evaluateEventRules(engine, context, ruleInput),
+            try: () => evaluateEventRules(engine, item.context, item.ruleInput),
             catch: (cause) =>
                 cause instanceof Error ? cause : new Error(String(cause)),
         })
         if (evaluation.isOk()) {
-            effects.set(rowId, evaluation.value)
+            effects.set(item.rowId, evaluation.value)
         } else {
-            failures.set(rowId, evaluation.error)
+            failures.set(item.rowId, evaluation.error)
+        }
+    }
+
+    const independent = new Map<string, (typeof prepared)[number][]>()
+    for (const item of prepared) {
+        if (item.context.requirements.otherEvents) {
+            evaluateOne(item)
+            continue
+        }
+        const groupId = [
+            item.ruleInput.event.programStageId,
+            item.ruleInput.enrollment?.id ?? '',
+        ].join('\u0000')
+        const sameStage = independent.get(groupId) ?? []
+        sameStage.push(item)
+        independent.set(groupId, sameStage)
+    }
+
+    for (const sameStage of independent.values()) {
+        if (sameStage.length === 1) {
+            evaluateOne(sameStage[0])
+            continue
+        }
+        if (
+            !sameStage.every((item) =>
+                sameEnrollment(
+                    item.ruleInput.enrollment,
+                    sameStage[0].ruleInput.enrollment
+                )
+            )
+        ) {
+            sameStage.forEach(evaluateOne)
+            continue
+        }
+        const evaluation = Result.try({
+            try: () =>
+                evaluateEventRulesBatch(
+                    engine,
+                    sameStage[0].context,
+                    sameStage.map(({ ruleInput }) => ruleInput)
+                ),
+            catch: (cause) =>
+                cause instanceof Error ? cause : new Error(String(cause)),
+        })
+        for (const item of sameStage) {
+            const rowEffects = evaluation.isOk()
+                ? evaluation.value.get(item.rowId)
+                : undefined
+            if (rowEffects === undefined) {
+                evaluateOne(item)
+            } else {
+                effects.set(item.rowId, rowEffects)
+            }
         }
     }
     return { effects, failures }

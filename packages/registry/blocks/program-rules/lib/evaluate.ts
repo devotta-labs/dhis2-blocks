@@ -190,6 +190,45 @@ export const evaluateEventRules = (
     )
 }
 
+export const evaluateEventRulesBatch = (
+    engine: RuleEngineModule,
+    context: RuleContext,
+    inputs: ReadonlyArray<EventRuleInput>
+): ReadonlyMap<string, RuleEffects> => {
+    const first = inputs[0]
+    if (first === undefined) return new Map()
+
+    const built = buildEngineInput(engine, context, {
+        ...first,
+        otherEvents: [],
+    })
+    const events = new Map<string, Engine.RuleEventJs>()
+    const rowIds = new Set(inputs.map(({ event }) => event.id))
+    for (const input of inputs) {
+        events.set(
+            input.event.id,
+            input === first
+                ? built.event
+                : toEngineEvent(engine, context, input.event)
+        )
+    }
+
+    const effects = context.engine.evaluateAll(
+        built.enrollment,
+        [...events.values()],
+        context.engineContext
+    )
+
+    return new Map(
+        effects
+            .filter(({ trackerObjectUid }) => rowIds.has(trackerObjectUid))
+            .map(({ trackerObjectUid, ruleEffects }) => [
+                trackerObjectUid,
+                sortEffects(context, ruleEffects),
+            ])
+    )
+}
+
 /**
  * Runs the rules of an enrolment, as Capture's registration form and enrolment page do: on its attributes and dates,
  * with `events` its events (none for a person not yet registered). Pass a context built without stage rules

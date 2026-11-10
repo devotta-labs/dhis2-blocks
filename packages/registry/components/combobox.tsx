@@ -136,7 +136,7 @@ function ComboboxContent({
                     data-slot="combobox-content"
                     data-chips={!!anchor}
                     className={cn(
-                        'group/combobox-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-32 origin-(--transform-origin) overflow-hidden rounded-dhis2-sm border border-dhis2-border bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover *:data-[slot=input-group]:m-2 *:data-[slot=input-group]:mb-1 *:data-[slot=input-group]:h-(--dhis2-field-height-dense)',
+                        'group/combobox-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-[calc(var(--anchor-width)+--spacing(7))] origin-(--transform-origin) data-[chips=true]:min-w-(--anchor-width) overflow-hidden rounded-dhis2-sm border border-dhis2-border bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover *:data-[slot=input-group]:m-2 *:data-[slot=input-group]:mb-1 *:data-[slot=input-group]:h-(--dhis2-field-height-dense)',
                         className
                     )}
                     {...props}

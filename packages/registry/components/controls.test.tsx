@@ -3,7 +3,15 @@ import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { Button } from './button'
 import { Checkbox } from './checkbox'
-import { Combobox, ComboboxChips, ComboboxChipsInput } from './combobox'
+import {
+    Combobox,
+    ComboboxChips,
+    ComboboxChipsInput,
+    ComboboxContent,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from './combobox'
 import { Input } from './input'
 import { RadioGroup, RadioGroupItem } from './radio-group'
 import { Toggle } from './toggle'
@@ -56,6 +64,36 @@ describe('form controls in the default theme', () => {
         expect(height(screen.getByTestId('chips').element())).toBe(
             height(screen.getByRole('textbox', { name: 'Name' }).element())
         )
+    })
+
+    it('open a combobox list under the whole field, its button too', async () => {
+        const screen = await render(
+            <div style={{ width: 300 }}>
+                <Combobox items={['Bo', 'Kenema']}>
+                    <ComboboxInput aria-label="District" />
+                    <ComboboxContent>
+                        <ComboboxList>
+                            {(item: string) => (
+                                <ComboboxItem key={item} value={item}>
+                                    {item}
+                                </ComboboxItem>
+                            )}
+                        </ComboboxList>
+                    </ComboboxContent>
+                </Combobox>
+            </div>
+        )
+        await userEvent.click(
+            screen.getByRole('combobox', { name: 'District' })
+        )
+        const field = document
+            .querySelector('[data-slot=input-group]')!
+            .getBoundingClientRect()
+        const list = document
+            .querySelector('[data-slot=combobox-content]')!
+            .getBoundingClientRect()
+        // Within the field's borders, as the list sits under its input.
+        expect(list.width).toBeGreaterThanOrEqual(field.width - 2)
     })
 
     it('ring a checkbox in the control colour, and fill it teal once checked', async () => {

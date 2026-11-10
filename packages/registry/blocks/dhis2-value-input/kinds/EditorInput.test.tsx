@@ -1,0 +1,368 @@
+import { CustomDataProvider } from '@dhis2/app-runtime'
+import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
+import { page, userEvent } from 'vitest/browser'
+import { render } from 'vitest-browser-react'
+import { birthFromAge, todayIso } from '@/components/dhis2-value-types'
+import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import { ValueInput } from '../ValueInput'
+import type { ValueInputProps } from '../ValueInput'
+
+const SETTINGS: ValueSettings = {
+    calendar: 'gregorian',
+    dateFormat: 'YYYY-MM-DD',
+}
+const LABEL = 'Notes'
+
+/** A server that keeps each upload waiting until the test lets it answer or fail, and the signal it was sent with. */
+const server = () => {
+    const uploads: Array<{
+        signal?: AbortSignal
+        release(): void
+        fail(): void
+    }> = []
+    const Server = ({ children }: { children: ReactNode }) => (
+        <CustomDataProvider
+            data={{
+                fileResources: (_type, _request, execute) =>
+                    new Promise((resolve, reject) => {
+                        const id = `File${uploads.length + 1}`
+                        uploads.push({
+                            signal: execute?.signal,
+                            fail: () => reject(new Error('Disk full')),
+                            release: () =>
+                                resolve({
+                                    status: 'OK',
+                                    response: {
+                                        fileResource: { id, name: `${id}.txt` },
+                                    },
+                                }),
+                        })
+                    }),
+            }}
+        >
+            {children}
+        </CustomDataProvider>
+    )
+    return { uploads, Server }
+}
+
+/**
+ * A field in a form that keeps the value it is told, with a button after it to leave the field for. `submits` has, for
+ * each time the form submitted, how many changes were reported by then. `assign` sets a value as a rule would.
+ */
+const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
+    const onChange = vi.fn()
+    const submits: number[] = []
+    const { uploads, Server } = server()
+    const Host = ({
+        shown,
+        assigned,
+    }: {
+        shown: boolean
+        assigned?: { value: string }
+    }) => {
+        const [value, setValue] = useState(props.value)
+        useEffect(() => {
+            if (assigned !== undefined) {
+                setValue(assigned.value)
+            }
+        }, [assigned])
+        return (
+            <Server>
+                <form
+                    onSubmit={(event) => {
+                        event.preventDefault()
+                        submits.push(onChange.mock.calls.length)
+                    }}
+                >
+                    {shown ? (
+                        <ValueInput
+                            field={field}
+                            settings={SETTINGS}
+                            label={LABEL}
+                            {...props}
+                            value={value}
+                            onChange={(next, problem) => {
+                                onChange(next, problem)
+                                setValue(next ?? undefined)
+                            }}
+                        />
+                    ) : null}
+                    <button type="button">After</button>
+                    <button type="submit">Submit</button>
+                </form>
+            </Server>
+        )
+    }
+    const screen = await render(<Host shown />)
+    return {
+        onChange,
+        uploads,
+        submits,
+        leave: () => page.getByRole('button', { name: 'After' }).click(),
+        unmount: () => screen.rerender(<Host shown={false} />),
+        assign: (value: string) =>
+            screen.rerender(<Host shown assigned={{ value }} />),
+    }
+}
+
+const choose = (name: string) => {
+    const picker = document.querySelector('input[type="file"]')
+    if (picker === null) {
+        throw new Error('The field has no file input')
+    }
+    return userEvent.upload(
+        picker,
+        new File(['x'], name, { type: 'text/plain' })
+    )
+}
+
+const later = (ms: number) =>
+    new Promise((resolve) => {
+        setTimeout(resolve, ms)
+    })
+
+test('long text is reported once, when the field is left; Enter adds a line', async () => {
+    const { onChange, leave } = await mount({ valueType: 'LONG_TEXT' })
+    const text = page.getByRole('textbox', { name: LABEL })
+    // In a form the field waits to be focused, and has no buttons of its own.
+    await expect.element(text).not.toHaveFocus()
+    expect(page.getByRole('button', { name: 'Save' }).elements()).toEqual([])
+    expect(page.getByRole('button', { name: 'Cancel' }).elements()).toEqual([])
+
+    await userEvent.click(text)
+    await userEvent.keyboard('Seen{Enter}at home')
+    await expect.element(text).toHaveValue('Seen\nat home')
+    expect(onChange).not.toHaveBeenCalled()
+
+    await leave()
+    expect(onChange.mock.calls).toEqual([['Seen\nat home', undefined]])
+})
+
+test('an age typed in years is reported as the date of birth when the field is left', async () => {
+    const { onChange, leave } = await mount({ valueType: 'AGE' })
+    expect(page.getByRole('button', { name: 'Save' }).elements()).toEqual([])
+    expect(page.getByRole('button', { name: 'Cancel' }).elements()).toEqual([])
+
+    await userEvent.fill(page.getByRole('textbox', { name: 'Years' }), '30')
+    // Moving between the age's own fields is not leaving it.
+    await userEvent.click(page.getByRole('textbox', { name: 'Months' }))
+    expect(onChange).not.toHaveBeenCalled()
+
+    await leave()
+    expect(onChange.mock.calls).toEqual([
+        [
+            birthFromAge({ years: 30, months: 0, days: 0 }, todayIso()),
+            undefined,
+        ],
+    ])
+})
+
+test('a coordinate out of range is reported as a problem when the field is left, and shown', async () => {
+    const { onChange, leave } = await mount({ valueType: 'COORDINATE' })
+    const latitude = page.getByRole('textbox', { name: 'Latitude' })
+    await userEvent.fill(latitude, '95')
+    await userEvent.fill(page.getByRole('textbox', { name: 'Longitude' }), '10')
+    expect(onChange).not.toHaveBeenCalled()
+
+    await leave()
+    const problem = {
+        message: 'Enter a latitude between -90 and 90',
+        text: '95, 10',
+    }
+    expect(onChange.mock.calls).toEqual([[null, problem]])
+    await expect
+        .element(page.getByRole('alert'))
+        .toHaveTextContent(problem.message)
+
+    // Fixed, the problem goes, and the value is reported on leaving.
+    await userEvent.fill(latitude, '8')
+    await expect.element(page.getByRole('alert')).not.toBeInTheDocument()
+    await leave()
+    expect(onChange.mock.calls.at(-1)).toEqual(['[10,8]', undefined])
+})
+
+test('a multi-select is reported when the field is left, in option-set order; Clear all at once', async () => {
+    const { onChange, leave } = await mount({
+        valueType: 'MULTI_TEXT',
+        options: [
+            { code: 'FEVER', name: 'Fever' },
+            { code: 'COUGH', name: 'Cough' },
+        ],
+    })
+    await userEvent.click(page.getByRole('checkbox', { name: 'Cough' }))
+    await userEvent.click(page.getByRole('checkbox', { name: 'Fever' }))
+    expect(onChange).not.toHaveBeenCalled()
+
+    await leave()
+    expect(onChange.mock.calls).toEqual([['FEVER,COUGH', undefined]])
+
+    await userEvent.click(page.getByRole('button', { name: 'Clear all' }))
+    expect(onChange.mock.calls.at(-1)).toEqual([null, undefined])
+    await expect
+        .element(page.getByRole('checkbox', { name: 'Fever' }))
+        .not.toBeChecked()
+})
+
+test('a chosen file is reported as still uploading at once, then as its id', async () => {
+    const { onChange, uploads } = await mount({ valueType: 'FILE_RESOURCE' })
+    const scan = new File(['x'], 'scan.txt', { type: 'text/plain' })
+    const picker = document.querySelector('input[type="file"]')
+    if (picker === null) {
+        throw new Error('The field has no file input')
+    }
+    await userEvent.upload(picker, scan)
+    await expect.poll(() => uploads).toHaveLength(1)
+    expect(onChange.mock.calls).toEqual([
+        [null, { message: 'Still uploading', text: 'scan.txt' }],
+    ])
+
+    uploads[0].release()
+    await expect.poll(() => onChange.mock.calls).toHaveLength(2)
+    expect(onChange.mock.calls[1]).toEqual(['File1', undefined])
+    // The field keeps the name of the file it chose.
+    await expect.element(page.getByText('scan.txt')).toBeVisible()
+})
+
+test('a field that leaves the page mid-upload stops the upload and reports nothing more', async () => {
+    const { onChange, uploads, unmount } = await mount({
+        valueType: 'FILE_RESOURCE',
+    })
+    const picker = document.querySelector('input[type="file"]')
+    if (picker === null) {
+        throw new Error('The field has no file input')
+    }
+    await userEvent.upload(
+        picker,
+        new File(['x'], 'scan.txt', { type: 'text/plain' })
+    )
+    await expect.poll(() => uploads).toHaveLength(1)
+    expect(onChange).toHaveBeenCalledTimes(1)
+
+    await unmount()
+    expect(uploads[0].signal?.aborted).toBe(true)
+    uploads[0].release()
+    await later(50)
+    expect(onChange).toHaveBeenCalledTimes(1)
+})
+
+test('Enter in an age field reports it before a surrounding form submits, while focus stays', async () => {
+    const { onChange, submits } = await mount({ valueType: 'AGE' })
+    const years = page.getByRole('textbox', { name: 'Years' })
+    await userEvent.fill(years, '30')
+    await userEvent.keyboard('{Enter}')
+    expect(onChange.mock.calls).toEqual([
+        [
+            birthFromAge({ years: 30, months: 0, days: 0 }, todayIso()),
+            undefined,
+        ],
+    ])
+    expect(submits).toEqual([1])
+    await expect.element(years).toHaveFocus()
+})
+
+test('a required pop-up field says so in its name', async () => {
+    await mount({ valueType: 'COORDINATE' }, { required: true })
+    await expect
+        .element(page.getByRole('group', { name: `${LABEL} required` }))
+        .toBeVisible()
+})
+
+test("a coordinate's fields are marked invalid and described by the problem once it is reported", async () => {
+    const { leave } = await mount({ valueType: 'COORDINATE' })
+    const latitude = page.getByRole('textbox', { name: 'Latitude' })
+    const longitude = page.getByRole('textbox', { name: 'Longitude' })
+    await expect.element(latitude).not.toHaveAttribute('aria-invalid')
+
+    await userEvent.fill(latitude, '95')
+    await leave()
+    for (const each of [latitude, longitude]) {
+        await expect.element(each).toHaveAttribute('aria-invalid', 'true')
+        await expect
+            .element(each)
+            .toHaveAccessibleDescription('Enter a latitude between -90 and 90')
+    }
+    await expect
+        .element(page.getByRole('group', { name: LABEL }))
+        .not.toHaveAttribute('aria-invalid')
+})
+
+test("an age's fields are marked invalid by an error message from the host", async () => {
+    await mount(
+        { valueType: 'AGE' },
+        { messages: [{ tone: 'error', text: 'Too young for this stage' }] }
+    )
+    const years = page.getByRole('textbox', { name: 'Years' })
+    await expect.element(years).toHaveAttribute('aria-invalid', 'true')
+    await expect
+        .element(years)
+        .toHaveAccessibleDescription('Error: Too young for this stage')
+})
+
+test("long text is described by the field's description and messages, and marked invalid by an error", async () => {
+    await mount(
+        { valueType: 'LONG_TEXT' },
+        {
+            description: 'What the nurse saw',
+            messages: [
+                { tone: 'warning', text: 'Ask about travel' },
+                { tone: 'error', text: 'Say where' },
+            ],
+        }
+    )
+    const text = page.getByRole('textbox', { name: LABEL })
+    await expect
+        .element(text)
+        .toHaveAccessibleDescription(
+            'What the nurse saw Warning: Ask about travel Error: Say where'
+        )
+    await expect.element(text).toHaveAttribute('aria-invalid', 'true')
+})
+
+test('a rule that assigns again what was typed before its own value shows it', async () => {
+    const { onChange, leave, assign } = await mount({ valueType: 'LONG_TEXT' })
+    const text = page.getByRole('textbox', { name: LABEL })
+    await userEvent.fill(text, 'Mine')
+    await leave()
+    expect(onChange.mock.calls).toEqual([['Mine', undefined]])
+
+    await assign('Rule')
+    await expect.element(text).toHaveValue('Rule')
+    await assign('Mine')
+    await expect.element(text).toHaveValue('Mine')
+})
+
+test('a value a rule assigns during an upload stops the upload, which then reports nothing', async () => {
+    const { onChange, uploads, assign } = await mount({
+        valueType: 'FILE_RESOURCE',
+    })
+    await choose('scan.txt')
+    await expect.poll(() => uploads).toHaveLength(1)
+    expect(onChange).toHaveBeenCalledTimes(1)
+
+    await assign('Assigned')
+    await expect.poll(() => uploads[0].signal?.aborted).toBe(true)
+    uploads[0].release()
+    await later(50)
+    expect(onChange).toHaveBeenCalledTimes(1)
+})
+
+test('an upload that fails reports the file the field held before, and says why', async () => {
+    const { onChange, uploads } = await mount(
+        { valueType: 'FILE_RESOURCE' },
+        { value: 'Old', valueName: 'old.pdf' }
+    )
+    await choose('scan.txt')
+    await expect.poll(() => uploads).toHaveLength(1)
+    uploads[0].fail()
+    await expect.poll(() => onChange.mock.calls).toHaveLength(2)
+    expect(onChange.mock.calls).toEqual([
+        [null, { message: 'Still uploading', text: 'scan.txt' }],
+        ['Old', undefined],
+    ])
+    await expect
+        .element(page.getByText('Could not upload the file. Try again.'))
+        .toBeVisible()
+    await expect.element(page.getByText('old.pdf')).toBeVisible()
+})

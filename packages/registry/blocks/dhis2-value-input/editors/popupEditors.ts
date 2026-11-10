@@ -40,6 +40,10 @@ export interface PopupEditorProps {
     /** The cell's key, as the provider's `keyOf` gives it. */
     cellKey?: string
     labelledBy: string
+    /** The ids of what describes the field in a form, for an editor whose one control stands for it. */
+    describedBy?: string
+    /** In a form: the field has a problem or an error message, so each of the editor's fields is marked invalid. */
+    invalid?: boolean
     hiddenOptions?: ReadonlySet<string>
     /** A stored value, or null to clear. The cell commits it, and says whether it took it. */
     save(value: string | null): CommitResult

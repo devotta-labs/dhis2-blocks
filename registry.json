@@ -996,9 +996,19 @@
                     "target": "@components/dhis2-value-input/kinds/DatePicker.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/dhis2-value-input/kinds/EditorInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/kinds/EditorInput.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/dhis2-value-input/kinds/OptionComboInput.tsx",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-input/kinds/OptionComboInput.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-input/kinds/SearchInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/kinds/SearchInput.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/dhis2-value-input/kinds/TypedInput.tsx",

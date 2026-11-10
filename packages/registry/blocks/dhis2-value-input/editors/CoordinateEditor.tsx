@@ -7,7 +7,7 @@ import {
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
 import type { PopupEditorProps } from './popupEditors'
-import { EditorButtons, saveOnCtrlEnter } from './EditorButtons'
+import { EditorButtons, idList, saveOnCtrlEnter } from './EditorButtons'
 
 type Axis = 'latitude' | 'longitude'
 type Texts = Record<Axis, string>
@@ -40,6 +40,9 @@ const read = (texts: Texts) => {
  */
 export const CoordinateEditor = ({
     value,
+    inline,
+    describedBy,
+    invalid = false,
     save,
     report,
     cancel,
@@ -100,12 +103,13 @@ export const CoordinateEditor = ({
                         value={texts[axis]}
                         autoComplete="off"
                         spellCheck={false}
-                        aria-invalid={shown.includes(axis) ? true : undefined}
-                        aria-describedby={
-                            shown.includes(axis)
-                                ? `${id}-${axis}-problem`
-                                : undefined
+                        aria-invalid={
+                            invalid || shown.includes(axis) ? true : undefined
                         }
+                        aria-describedby={idList(
+                            shown.includes(axis) && `${id}-${axis}-problem`,
+                            describedBy
+                        )}
                         onChange={({ target }) => change(axis, target.value)}
                         onKeyDown={saveOnCtrlEnter(commit)}
                         className="h-(--dhis2-field-height-dense)"
@@ -121,7 +125,7 @@ export const CoordinateEditor = ({
                     ) : null}
                 </div>
             ))}
-            <EditorButtons save={commit} cancel={cancel} />
+            <EditorButtons save={commit} cancel={cancel} inline={inline} />
         </>
     )
 }

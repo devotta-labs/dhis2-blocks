@@ -13,7 +13,7 @@ import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
 import { todayIso } from '@/components/dhis2-value-types'
 import type { PopupEditorProps } from './popupEditors'
-import { EditorButtons, saveOnCtrlEnter } from './EditorButtons'
+import { EditorButtons, idList, saveOnCtrlEnter } from './EditorButtons'
 
 // The date of birth is typed and shown as any date is: in the system calendar and date format.
 const DATE: Field = { valueType: 'DATE' }
@@ -141,6 +141,9 @@ export const AgeEditor = ({
     field,
     value,
     settings,
+    inline,
+    describedBy,
+    invalid = false,
     save,
     report,
     cancel,
@@ -220,8 +223,11 @@ export const AgeEditor = ({
         id: `${id}-${part}`,
         autoComplete: 'off',
         spellCheck: false,
-        'aria-invalid': shown?.part === part ? true : undefined,
-        'aria-describedby': shown?.part === part ? problemId : undefined,
+        'aria-invalid': invalid || shown?.part === part ? true : undefined,
+        'aria-describedby': idList(
+            shown?.part === part && problemId,
+            describedBy
+        ),
         onKeyDown: saveOnCtrlEnter(commit),
         className: 'h-(--dhis2-field-height-dense)',
     })
@@ -265,7 +271,7 @@ export const AgeEditor = ({
                 ))}
             </div>
             {problem(false)}
-            <EditorButtons save={commit} cancel={cancel} />
+            <EditorButtons save={commit} cancel={cancel} inline={inline} />
         </>
     )
 }

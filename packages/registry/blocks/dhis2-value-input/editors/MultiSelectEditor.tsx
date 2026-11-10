@@ -27,6 +27,7 @@ export const MultiSelectEditor = ({
     value,
     hiddenOptions,
     labelledBy,
+    inline,
     save,
     report,
     cancel,
@@ -140,13 +141,20 @@ export const MultiSelectEditor = ({
             <EditorButtons
                 save={() => save(choice(selected).value)}
                 cancel={cancel}
+                inline={inline}
             >
                 <Button
                     type="button"
                     size="sm"
                     variant="secondary"
                     className="me-auto"
-                    onClick={() => save(null)}
+                    onClick={() => {
+                        // In a form the editor stays, so its boxes show the cleared choice.
+                        if (inline) {
+                            setSelected(new Set())
+                        }
+                        save(null)
+                    }}
                 >
                     {i18n.t('Clear all')}
                 </Button>

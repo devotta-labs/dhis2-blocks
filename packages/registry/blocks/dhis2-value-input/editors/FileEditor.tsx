@@ -26,6 +26,7 @@ export const FileEditor = ({
     offline = false,
     uploads: given,
     announce = announceInHouse,
+    inline = false,
     save,
     cancel,
 }: PopupEditorProps) => {
@@ -57,7 +58,11 @@ export const FileEditor = ({
         save(next)
     }
     // Escape is Cancel wherever focus is in the editor: a button disabled during an upload keeps keys from the dialog.
+    // A form has no Cancel: Escape is the page's.
     useEffect(() => {
+        if (inline) {
+            return undefined
+        }
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 event.preventDefault()
@@ -146,6 +151,7 @@ export const FileEditor = ({
                     }
                 }}
                 cancel={quit}
+                inline={inline}
             >
                 {/* Focusable while disabled, so focus stays in the editor and the reason beside it is found. */}
                 <Button

@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { parseTyped } from '@/components/dhis2-value-types'
 import { Textarea } from '@/components/dhis2/ui/textarea'
 import type { PopupEditorProps } from './popupEditors'
-import { EditorButtons, saveOnCtrlEnter } from './EditorButtons'
+import { EditorButtons, idList, saveOnCtrlEnter } from './EditorButtons'
 
 /**
  * Long text in a text area: Enter adds a line, Ctrl+Enter or ⌘+Enter saves. It opens on the stored text with the
@@ -15,7 +15,10 @@ export const LongTextEditor = ({
     value,
     settings,
     labelledBy,
+    describedBy,
+    invalid = false,
     firstKey,
+    inline = false,
     save,
     report,
     cancel,
@@ -36,6 +39,10 @@ export const LongTextEditor = ({
         }
     }
     useEffect(() => {
+        // In a form the field waits to be focused.
+        if (inline) {
+            return
+        }
         const box = area.current
         box?.focus()
         box?.setSelectionRange(text.length, text.length)
@@ -61,10 +68,14 @@ export const LongTextEditor = ({
                 ref={area}
                 value={text}
                 aria-labelledby={labelledBy}
-                aria-describedby={
-                    problem === undefined ? hintId : `${problemId} ${hintId}`
+                aria-describedby={idList(
+                    problem !== undefined && problemId,
+                    !inline && hintId,
+                    describedBy
+                )}
+                aria-invalid={
+                    invalid || problem !== undefined ? true : undefined
                 }
-                aria-invalid={problem === undefined ? undefined : true}
                 onChange={({ target }) => {
                     setText(target.value)
                     setProblem(undefined)
@@ -82,10 +93,12 @@ export const LongTextEditor = ({
                     {problem}
                 </p>
             )}
-            <p id={hintId} className="text-xs text-dhis2-muted-foreground">
-                {i18n.t('Ctrl+Enter or ⌘+Enter saves')}
-            </p>
-            <EditorButtons save={commit} cancel={cancel} />
+            {inline ? null : (
+                <p id={hintId} className="text-xs text-dhis2-muted-foreground">
+                    {i18n.t('Ctrl+Enter or ⌘+Enter saves')}
+                </p>
+            )}
+            <EditorButtons save={commit} cancel={cancel} inline={inline} />
         </>
     )
 }

@@ -385,3 +385,24 @@ test('while typing after a problem, the problem stands until fixed and is not re
         .poll(() => said)
         .toEqual(['Use a full stop for decimals', 'Enter a number'])
 })
+
+test('a read-only org unit shows the name the host knows, or "Unknown" and its id', async () => {
+    const { input, rerender } = await mount({
+        field: { valueType: 'ORGANISATION_UNIT' },
+        value: 'DiszpKrYNg8',
+        readOnly: 'Assigned by a rule',
+    })
+    await expect.element(input).toHaveValue('Unknown (DiszpKrYNg8)')
+    await rerender({ valueName: 'Ngelehun CHC' })
+    await expect.element(input).toHaveValue('Ngelehun CHC')
+})
+
+test('a read-only long text shows its value, not a name given for it', async () => {
+    const { input } = await mount({
+        field: { valueType: 'LONG_TEXT' },
+        value: 'Seen',
+        valueName: 'Not this',
+        readOnly: 'Assigned by a rule',
+    })
+    await expect.element(input).toHaveValue('Seen')
+})

@@ -5,6 +5,10 @@ import { DEFAULT_SETTINGS as OBSERVATION_DEFAULTS } from '../observation-cards/p
 
 import { LAB_PERSON } from '../observation-cards/labData'
 import { specOf } from './labAttributes'
+import {
+    generateRelationshipData,
+    type RelationshipScenario,
+} from './labRelationships'
 import { SUBJECTS } from './labSubjects'
 
 // Everyone in the lab is the observation cards lab's one person, so the pregnancy person has visits to show.
@@ -40,6 +44,8 @@ export interface LabSettings {
     actions: 'one' | 'several'
     /** Line one as composed, or with more of the attributes placed on it. */
     lineOne: 'usual' | 'more'
+    /** The links the person has to other records. */
+    relationships: RelationshipScenario
     /** The canvas laid out right to left. */
     rtl: boolean
     network: LabNetwork
@@ -174,6 +180,10 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
                 trackedEntityAttribute,
             })),
         },
+        relationships: generateRelationshipData(
+            settings.relationships,
+            LAB_PERSON
+        ),
         observations,
         systemInfo: observations.systemInfo,
     }

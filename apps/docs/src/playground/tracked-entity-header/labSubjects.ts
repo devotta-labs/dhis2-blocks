@@ -33,6 +33,10 @@ import {
 } from './labAttributes'
 import { LAB_PROGRAM } from '../observation-cards/labData'
 import type { LabSettings } from './labData'
+import {
+    relationshipPartsFor,
+    type RelationshipParts,
+} from './labRelationships'
 
 /** The parts the canvases place, as the person's own attribute uids. */
 export interface Parts {
@@ -47,6 +51,7 @@ export interface Parts {
     actions: string[]
     /** Further attributes placed on line one. */
     more: string[]
+    relationships?: RelationshipParts
 }
 
 interface Subject {
@@ -444,8 +449,10 @@ export const partsFor = (settings: LabSettings): Parts => {
         identifier,
         fact,
     ]
+    const relationships = relationshipPartsFor(settings.relationships)
     return {
         ...subject.parts,
+        ...(relationships && { relationships }),
         actions: settings.actions === 'one' ? actions.slice(0, 1) : actions,
         more:
             settings.lineOne === 'more'

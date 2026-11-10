@@ -13,10 +13,12 @@ import {
     TrackedEntityHeaderProvider,
     TrackedEntityName,
     TrackedEntityOwner,
+    TrackedEntityRelationship,
+    TrackedEntityRelationships,
     TrackedEntityStatus,
 } from '@/components/tracked-entity-header'
 import { Button } from '@/components/dhis2/ui/button'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { LabSettings } from './labData'
 import type { Parts } from './labSubjects'
 
@@ -31,9 +33,11 @@ interface Props {
 const Banner = ({
     parts,
     arrangement,
+    onSelect,
 }: {
     parts: Parts
     arrangement: LabSettings['arrangement']
+    onSelect: (trackedEntity: string) => void
 }) => (
     <TrackedEntityBanner>
         {arrangement === 'composed' ? (
@@ -65,8 +69,23 @@ const Banner = ({
                             unit="g/dL"
                         />
                     ) : null}
+                    {parts.relationships?.key ? (
+                        <TrackedEntityRelationship
+                            {...parts.relationships.key}
+                            href={(id) => `#${id}`}
+                            onSelect={onSelect}
+                        />
+                    ) : null}
                 </TrackedEntityFacts>
                 <TrackedEntityDetails />
+                {parts.relationships ? (
+                    <TrackedEntityRelationships
+                        labels={parts.relationships.labels}
+                        href={(id) => `#${id}`}
+                        onSelect={onSelect}
+                        moreHref={(type) => `#cases-${type}`}
+                    />
+                ) : null}
             </>
         ) : null}
     </TrackedEntityBanner>
@@ -95,19 +114,31 @@ export const BannerCanvas = ({
     program,
     parts,
     settings,
-}: Props) => (
-    <div className={settings.width === 'narrow' ? 'max-w-sm' : 'max-w-4xl'}>
-        <WithObservations
-            trackedEntity={trackedEntity}
-            program={program}
-            needed={parts.haemoglobin !== undefined}
-        >
-            <TrackedEntityHeaderProvider
+}: Props) => {
+    const [opened, setOpened] = useState<string>()
+    return (
+        <div className={settings.width === 'narrow' ? 'max-w-sm' : 'max-w-4xl'}>
+            <WithObservations
                 trackedEntity={trackedEntity}
                 program={program}
+                needed={parts.haemoglobin !== undefined}
             >
-                <Banner parts={parts} arrangement={settings.arrangement} />
-            </TrackedEntityHeaderProvider>
-        </WithObservations>
-    </div>
-)
+                <TrackedEntityHeaderProvider
+                    trackedEntity={trackedEntity}
+                    program={program}
+                >
+                    <Banner
+                        parts={parts}
+                        arrangement={settings.arrangement}
+                        onSelect={setOpened}
+                    />
+                </TrackedEntityHeaderProvider>
+            </WithObservations>
+            {opened ? (
+                <p className="m-0 mt-2 text-xs text-dhis2-muted-foreground">
+                    Host opens {opened}
+                </p>
+            ) : null}
+        </div>
+    )
+}

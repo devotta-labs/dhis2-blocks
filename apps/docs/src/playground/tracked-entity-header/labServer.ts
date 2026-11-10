@@ -4,6 +4,7 @@ import {
     type LabData,
     type LabSettings,
 } from './labData'
+import { viewAttribute } from './labRelationships'
 import { SUBJECTS } from './labSubjects'
 import { answer as answerObservations } from '../observation-cards/labServer'
 import { DEFAULT_SETTINGS as OBSERVATION_DEFAULTS } from '../observation-cards/presets'
@@ -23,9 +24,18 @@ export const RESOURCES = [
     'organisationUnits',
     'tracker/enrollments',
     'tracker/events',
+    'tracker/relationships',
+    'relationshipTypes',
+    'trackedEntityAttributes',
 ]
 
 /** An error shaped like the ones app-runtime throws for an HTTP failure. */
+/** The ids of a `id:in:[a,b]` filter. */
+const idsOf = (filter: string | number | boolean | undefined) =>
+    String(filter)
+        .replace(/^id:in:\[|\]$/g, '')
+        .split(',')
+
 const httpError = (status: number, message: string) =>
     Object.assign(new Error(message), {
         details: { httpStatusCode: status, message },
@@ -72,6 +82,27 @@ export const answer = (
                 return data.program
             case 'trackedEntityTypes':
                 return data.type
+            case 'tracker/relationships':
+                return {
+                    relationships:
+                        request.params?.trackedEntity === LAB_PERSON
+                            ? data.relationships.relationships
+                            : [],
+                }
+            case 'relationshipTypes': {
+                const ids = idsOf(request.params?.filter)
+                return {
+                    relationshipTypes: data.relationships.types.filter((t) =>
+                        ids.includes(t.id)
+                    ),
+                }
+            }
+            case 'trackedEntityAttributes':
+                return {
+                    trackedEntityAttributes: idsOf(request.params?.filter).map(
+                        viewAttribute
+                    ),
+                }
             case 'organisationUnits':
                 return { displayName: 'Ngelehun CHC' }
             default:

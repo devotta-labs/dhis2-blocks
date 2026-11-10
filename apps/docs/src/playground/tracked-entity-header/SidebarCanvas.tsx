@@ -12,11 +12,12 @@ import {
     TrackedEntityHeaderProvider,
     TrackedEntityName,
     TrackedEntityOwner,
+    TrackedEntityRelationships,
     TrackedEntityStatus,
     useTrackedEntityHeader,
 } from '@/components/tracked-entity-header'
 import { Button } from '@/components/dhis2/ui/button'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { LabSettings } from './labData'
 import type { Parts } from './labSubjects'
 
@@ -42,7 +43,13 @@ const Section = ({
     </section>
 )
 
-const Sidebar = ({ parts }: { parts: Parts }) => {
+const Sidebar = ({
+    parts,
+    onSelect,
+}: {
+    parts: Parts
+    onSelect: (trackedEntity: string) => void
+}) => {
     const { status, retry } = useTrackedEntityHeader()
     if (status === 'loading') return <p className="m-0 text-sm">Loading</p>
     if (status === 'restricted') {
@@ -108,6 +115,16 @@ const Sidebar = ({ parts }: { parts: Parts }) => {
                 <TrackedEntityEnrollment />
                 <TrackedEntityOwner />
             </Section>
+            {parts.relationships ? (
+                <Section title="Related">
+                    <TrackedEntityRelationships
+                        labels={parts.relationships.labels}
+                        href={(id) => `#${id}`}
+                        onSelect={onSelect}
+                        moreHref={(type) => `#cases-${type}`}
+                    />
+                </Section>
+            ) : null}
             <Section title="Everything else">
                 <TrackedEntityDetails />
             </Section>
@@ -117,12 +134,13 @@ const Sidebar = ({ parts }: { parts: Parts }) => {
 
 /** The parts as a page sidebar, with no banner, beside stand-ins for the rest of the page. */
 export const SidebarCanvas = ({ trackedEntity, program, parts }: Props) => {
+    const [opened, setOpened] = useState<string>()
     const content = (
         <TrackedEntityHeaderProvider
             trackedEntity={trackedEntity}
             program={program}
         >
-            <Sidebar parts={parts} />
+            <Sidebar parts={parts} onSelect={setOpened} />
         </TrackedEntityHeaderProvider>
     )
     return (
@@ -143,6 +161,11 @@ export const SidebarCanvas = ({ trackedEntity, program, parts }: Props) => {
                 )}
             </aside>
             <div className="flex min-w-0 flex-1 flex-col gap-3">
+                {opened ? (
+                    <p className="m-0 text-xs text-dhis2-muted-foreground">
+                        Host opens {opened}
+                    </p>
+                ) : null}
                 {['Visits', 'Observations', 'Timeline'].map((title) => (
                     <div
                         key={title}

@@ -4,6 +4,11 @@ import {
     TrackedEntityResponseSchema,
     TypeAttributesResponseSchema,
 } from '@/components/tracked-entity-header/api/schemas'
+import {
+    RelationshipsResponseSchema,
+    RelationshipTypesResponseSchema,
+    ViewAttributesResponseSchema,
+} from '@/components/tracked-entity-header/api/relationshipSchemas'
 import { z } from 'zod'
 import { describe, expect, it } from 'vitest'
 import { generateLabData, LAB_PERSON } from '../labData'
@@ -332,6 +337,88 @@ describe('the tracked entity header lab server', () => {
             expect(programOf(settings).incidentDateLabel).toBe('Dispatched')
             expect(partsFor(settings).actions).toContain('Receive')
             expect(recordOf(settings).attributes.length).toBeGreaterThan(5)
+        })
+    })
+
+    describe('relationship presets', () => {
+        const relationshipsOf = (name: string) => {
+            const settings = settingsOf(name)
+            const respond = serverFor(settings)
+            const links = RelationshipsResponseSchema.parse(
+                respond({
+                    resource: 'tracker/relationships',
+                    params: { trackedEntity: LAB_PERSON },
+                })
+            )
+            const typeIds = [...new Set(links.map((l) => l.relationshipType))]
+            const types = RelationshipTypesResponseSchema.parse(
+                respond({
+                    resource: 'relationshipTypes',
+                    params: { filter: `id:in:[${typeIds.join(',')}]` },
+                })
+            )
+            return { settings, links, types, respond }
+        }
+
+        it('leaves the other presets without relationship parts', () => {
+            expect(partsFor(settingsOf('Pregnancy')).relationships).toBe(
+                undefined
+            )
+        })
+
+        it('has the mother at the from end of a one-way Mother-Child type, labelled for the baby', () => {
+            const { settings, links, types, respond } =
+                relationshipsOf('Mother and baby')
+            expect(links).toHaveLength(1)
+            expect(types.get(links[0]?.relationshipType ?? '')).toMatchObject({
+                name: 'Mother-Child',
+                bidirectional: false,
+            })
+            expect(links[0]?.from.entityId).toBe(LAB_PERSON)
+            expect(partsFor(settings).relationships?.key).toMatchObject({
+                end: 'from',
+                label: { from: 'Baby', to: 'Mother' },
+            })
+            const view = types.get('labMothChld')?.ends.to.view ?? []
+            expect(
+                ViewAttributesResponseSchema.parse(
+                    respond({
+                        resource: 'trackedEntityAttributes',
+                        params: { filter: `id:in:[${view.join(',')}]` },
+                    })
+                ).size
+            ).toBe(view.length)
+        })
+
+        it('has 300 links of one type and a moreHref', () => {
+            const { links } = relationshipsOf('Focus with 300 cases')
+            expect(links).toHaveLength(300)
+            expect(new Set(links.map((l) => l.relationshipType)).size).toBe(1)
+        })
+
+        it('has a linked record the block cannot read', () => {
+            const { links } = relationshipsOf('Linked record without access')
+            expect(links.map((l) => l.to.linked.kind)).toEqual(['unreadable'])
+        })
+
+        it('has two linked events', () => {
+            const { links } = relationshipsOf('Linked events only')
+            expect(links.map((l) => l.to.linked.kind)).toEqual([
+                'event',
+                'event',
+            ])
+        })
+
+        it('names the raw types as the demo does, with and without labels', () => {
+            const raw = relationshipsOf('Raw type names')
+            const name = raw.types.get('labMothChld')?.name
+            expect(name).toBe('Mother-Child_a-to-b_(Person-Person)')
+            expect(partsFor(raw.settings).relationships?.labels).toBe(undefined)
+            const relabelled = relationshipsOf('Raw type names, relabelled')
+            expect(relabelled.types.get('labMothChld')?.name).toBe(name)
+            expect(
+                partsFor(relabelled.settings).relationships?.labels
+            ).toHaveProperty('labMothChld')
         })
     })
 })

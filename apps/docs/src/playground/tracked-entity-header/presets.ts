@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: LabSettings = {
     rtl: false,
     actions: 'one',
     lineOne: 'usual',
+    relationships: 'none',
     network: { delay: 50, endpoints: {} },
 }
 
@@ -84,6 +85,19 @@ export const PRESETS: readonly Preset[] = [
     preset('Not a person', 'Vaccine shipment', {
         record: 'shipment',
         actions: 'several',
+    }),
+    preset('Relationships', 'Mother and baby', { relationships: 'mother' }),
+    preset('Relationships', 'Focus with 300 cases', {
+        record: 'adult',
+        relationships: 'focus',
+    }),
+    preset('Relationships', 'Linked record without access', {
+        relationships: 'unreadable',
+    }),
+    preset('Relationships', 'Linked events only', { relationships: 'events' }),
+    preset('Relationships', 'Raw type names', { relationships: 'raw' }),
+    preset('Relationships', 'Raw type names, relabelled', {
+        relationships: 'rawRelabelled',
     }),
     preset('States', 'Restricted', { restricted: true }),
     preset('States', 'Not found', { missing: true }),

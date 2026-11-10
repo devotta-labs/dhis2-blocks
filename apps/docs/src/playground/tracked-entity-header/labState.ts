@@ -7,7 +7,7 @@ interface Live {
     trackedEntityId: string
 }
 
-type Canvas = 'banner' | 'quick-look'
+type Canvas = 'banner' | 'quick-look' | 'sidebar'
 
 export interface LabState {
     mode: 'lab' | 'live'

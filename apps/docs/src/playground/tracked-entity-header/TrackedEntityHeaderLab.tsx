@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
-import { PresetControls, Section, Segmented } from '../controls'
+import { PresetControls, Section, Segmented, SegmentedRow } from '../controls'
 import { LabLayout } from '../LabLayout'
 import { LogPanel } from '../LogPanel'
 import { CanvasBoundary, LabServerScope } from '../LabServer'
@@ -17,9 +17,17 @@ import { initialLabState, labReducer } from './labState'
 import { PRESETS } from './presets'
 import { QuickLookCanvas } from './QuickLookCanvas'
 import quickLookSource from './QuickLookCanvas.tsx?canvas'
+import { SidebarCanvas } from './SidebarCanvas'
+import sidebarSource from './SidebarCanvas.tsx?canvas'
 import { OptionsControls } from './settings'
 
 /** The tracked entity header lab: the banner and a popover of the same parts, beside the requests they make. */
+const CANVASES = {
+    banner: { Canvas: BannerCanvas, source: bannerSource },
+    'quick-look': { Canvas: QuickLookCanvas, source: quickLookSource },
+    sidebar: { Canvas: SidebarCanvas, source: sidebarSource },
+}
+
 export const TrackedEntityHeaderLab = () => {
     const [linkedPreset, setLinkedPreset] = usePresetParam()
     const [state, dispatch] = useReducer(
@@ -49,8 +57,7 @@ export const TrackedEntityHeaderLab = () => {
         parts: mode === 'lab' ? partsFor(settings) : LIVE_PARTS,
         settings: { arrangement: settings.arrangement, width: settings.width },
     }
-    const Canvas = canvas === 'banner' ? BannerCanvas : QuickLookCanvas
-    const source = canvas === 'banner' ? bannerSource : quickLookSource
+    const { Canvas, source } = CANVASES[canvas]
 
     return (
         <LabLayout
@@ -84,15 +91,43 @@ export const TrackedEntityHeaderLab = () => {
                     />
                     <Section title="Canvas">
                         <Segmented
-                            value={canvas}
+                            value={canvas === 'banner' ? 'banner' : 'custom'}
                             options={[
                                 ['banner', 'Banner'],
-                                ['quick-look', 'Quick look'],
+                                ['custom', 'Custom'],
                             ]}
                             onChange={(next) =>
-                                dispatch({ type: 'switchCanvas', canvas: next })
+                                dispatch({
+                                    type: 'switchCanvas',
+                                    canvas:
+                                        next === 'banner'
+                                            ? 'banner'
+                                            : 'quick-look',
+                                })
                             }
                         />
+                        {canvas === 'banner' ? null : (
+                            <>
+                                <p className="m-0 text-xs text-dhis2-muted-foreground">
+                                    Your own layout from the parts. These are
+                                    examples, not layouts the block ships.
+                                </p>
+                                <SegmentedRow
+                                    label="Example"
+                                    value={canvas}
+                                    options={[
+                                        ['quick-look', 'Quick look'],
+                                        ['sidebar', 'Sidebar'],
+                                    ]}
+                                    onChange={(next) =>
+                                        dispatch({
+                                            type: 'switchCanvas',
+                                            canvas: next,
+                                        })
+                                    }
+                                />
+                            </>
+                        )}
                     </Section>
                     {mode === 'lab' ? (
                         <>

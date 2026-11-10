@@ -9,6 +9,7 @@ import type { KeyboardEvent, RefObject } from 'react'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
+import { PopoverTitle } from '@/components/dhis2/ui/popover'
 
 type PickerCalendar = NonNullable<
     Parameters<typeof useDatePicker>[0]['options']['calendar']
@@ -174,9 +175,10 @@ export const DatePicker = ({
                         <IconChevronLeft16 />
                     </span>
                 </Button>
-                <span id={titleId} className="font-medium">
+                {/* Names the picker's dialog as well as its grid. */}
+                <PopoverTitle id={titleId} className="text-sm">
                     {title}
-                </span>
+                </PopoverTitle>
                 <Button
                     variant="secondary"
                     size="icon-sm"
@@ -240,8 +242,9 @@ export const DatePicker = ({
                                             }
                                             className={cn(
                                                 'flex size-9 cursor-pointer items-center justify-center rounded-dhis2-sm border border-transparent bg-transparent text-sm text-dhis2-foreground hover:bg-dhis2-muted focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring',
+                                                // Forced colours would give every day the same edge.
                                                 shown.isToday &&
-                                                    'border-dhis2-primary',
+                                                    'border-dhis2-primary forced-colors:border-[Highlight]',
                                                 shown.isSelected && PICKED
                                             )}
                                         >

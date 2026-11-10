@@ -185,7 +185,12 @@ export const EditorInput = ({
                     name ??
                     (value === undefined ? undefined : unknownName(value))
                 }
-                fileUrl={fileUrl}
+                // The host's link is to the file it stored, not one removed or uploaded here.
+                fileUrl={
+                    value === undefined || learned?.id === value
+                        ? undefined
+                        : fileUrl
+                }
                 offline={isDisconnected}
                 uploads={uploads}
                 report={(next, problem) => {

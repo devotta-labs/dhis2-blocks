@@ -4,8 +4,7 @@ import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 
 /**
  * An example: one field of each kind that needs no server. Each field is a value type (and, for a choice, its
- * options); `ValueInput` picks the control. Search and file fields need the DHIS2 app-runtime provider, so they are
- * not shown here.
+ * options); `ValueInput` picks the control. Search and file fields fetch from DHIS2, so they are not shown here.
  */
 
 const SETTINGS: ValueSettings = {
@@ -17,7 +16,13 @@ const FIELDS: ReadonlyArray<{ id: string; label: string; field: Field }> = [
     { id: 'name', label: 'Full name', field: { valueType: 'TEXT' } },
     { id: 'weight', label: 'Weight (kg)', field: { valueType: 'NUMBER' } },
     { id: 'seen', label: 'Date seen', field: { valueType: 'DATE' } },
+    {
+        id: 'admitted',
+        label: 'Admitted at',
+        field: { valueType: 'DATETIME' },
+    },
     { id: 'arrived', label: 'Arrival time', field: { valueType: 'TIME' } },
+    { id: 'age', label: 'Age', field: { valueType: 'AGE' } },
     { id: 'pregnant', label: 'Pregnant', field: { valueType: 'BOOLEAN' } },
     {
         id: 'consent',
@@ -36,6 +41,20 @@ const FIELDS: ReadonlyArray<{ id: string; label: string; field: Field }> = [
             ],
         },
     },
+    {
+        id: 'symptoms',
+        label: 'Symptoms',
+        field: {
+            valueType: 'MULTI_TEXT',
+            options: [
+                { code: 'FEVER', name: 'Fever' },
+                { code: 'COUGH', name: 'Cough' },
+                { code: 'RASH', name: 'Rash' },
+            ],
+        },
+    },
+    { id: 'home', label: 'Home location', field: { valueType: 'COORDINATE' } },
+    { id: 'notes', label: 'Notes', field: { valueType: 'LONG_TEXT' } },
 ]
 
 const ValueInputKinds = () => {

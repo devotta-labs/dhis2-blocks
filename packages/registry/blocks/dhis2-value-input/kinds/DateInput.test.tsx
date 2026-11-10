@@ -87,6 +87,14 @@ test('the picker button is named', async () => {
     await expect.element(chooser()).toBeVisible()
 })
 
+test('the picker is a dialog named by the month it shows', async () => {
+    await mount({ value: '2026-10-14' })
+    await userEvent.click(chooser())
+    await expect
+        .element(page.getByRole('dialog'))
+        .toHaveAccessibleName('October 2026')
+})
+
 test('the picker opens on the stored day; arrows move days, Page Down a month, Enter picks', async () => {
     const { input, onChange } = await mount({ value: '2026-10-14' })
     await userEvent.click(chooser())

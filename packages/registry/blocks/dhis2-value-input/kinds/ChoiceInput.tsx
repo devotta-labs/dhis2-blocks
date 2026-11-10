@@ -116,10 +116,13 @@ export const ChoiceInput = ({
                 />
             ) : (
                 <RadioGroup
+                    id={id}
                     // An empty value checks no radio.
                     value={known ? value : ''}
                     readOnly={readOnly}
-                    required={required}
+                    // Not `required`: the radios' form inputs have no name, so each would be a group of its own,
+                    // missing when unchecked, and hold back the host's form.
+                    aria-required={required || undefined}
                     onValueChange={(code: string) => onChange(code)}
                 >
                     {offered.map(({ code, name }) => (

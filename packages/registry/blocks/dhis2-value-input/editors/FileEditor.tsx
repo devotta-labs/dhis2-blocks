@@ -11,6 +11,19 @@ import type { PopupEditorProps } from './popupEditors'
 const LOOKS_DISABLED =
     'aria-disabled:cursor-not-allowed aria-disabled:border-dhis2-border-strong aria-disabled:bg-dhis2-muted aria-disabled:text-dhis2-disabled-foreground aria-disabled:shadow-none aria-disabled:hover:bg-dhis2-muted aria-disabled:active:bg-dhis2-muted'
 
+/** "Download" for the file at `url`, in a new tab: across origins `download` is ignored, and the page would be left. */
+export const DownloadLink = ({ url }: { url: string }) => (
+    <a
+        href={url}
+        download
+        target="_blank"
+        rel="noopener"
+        className={buttonVariants({ variant: 'link', size: 'sm' })}
+    >
+        {i18n.t('Download')}
+    </a>
+)
+
 /**
  * A file, or an image, uploaded to DHIS2 as soon as it is chosen: a file cannot wait in the outbox, its id can. The
  * upload runs in `uploads`, the field's own by default, and saves the id; a newer choice, Remove or Save stops it, and
@@ -89,21 +102,7 @@ export const FileEditor = ({
         value === undefined ? null : (
             <p className="flex min-w-0 items-center gap-2">
                 <span className="truncate">{name ?? value}</span>
-                {url === undefined ? null : (
-                    // A new tab: across origins `download` is ignored, and the grid would be navigated away.
-                    <a
-                        href={url}
-                        download
-                        target="_blank"
-                        rel="noopener"
-                        className={buttonVariants({
-                            variant: 'link',
-                            size: 'sm',
-                        })}
-                    >
-                        {i18n.t('Download')}
-                    </a>
-                )}
+                {url === undefined ? null : <DownloadLink url={url} />}
             </p>
         )
 

@@ -406,3 +406,31 @@ test('a read-only long text shows its value, not a name given for it', async () 
     })
     await expect.element(input).toHaveValue('Seen')
 })
+
+test('a read-only long text shows every line', async () => {
+    const { input } = await mount({
+        field: { valueType: 'LONG_TEXT' },
+        value: 'Seen\nat home',
+        readOnly: 'Assigned by a rule',
+    })
+    await expect.element(input).toHaveValue('Seen\nat home')
+    expect(input.element().tagName).toBe('TEXTAREA')
+    await expect.element(input).toHaveAttribute('readonly')
+    await expect
+        .element(input)
+        .toHaveAccessibleDescription('Assigned by a rule')
+})
+
+test.each([
+    ['a typed field', NUMBER, 'textbox'],
+    ['a radio group', { valueType: 'BOOLEAN' }, 'radiogroup'],
+    ['a pop-up field', { valueType: 'COORDINATE' }, 'group'],
+] as const)(
+    'the id given is on %s, for a host to focus or link to',
+    async (_, field, role) => {
+        await mount({ field, id: 'given' })
+        expect(document.getElementById('given')).toBe(
+            page.getByRole(role, { name: LABEL }).element()
+        )
+    }
+)

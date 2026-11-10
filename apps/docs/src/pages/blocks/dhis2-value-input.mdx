@@ -9,11 +9,12 @@ import { InstallCommand } from '../../components/InstallCommand'
 <ExampleCard slug="dhis2-value-input/kinds" />
 
 This example has one field of each kind that needs no server: text, number,
-date, time, yes or no, a yes-only checkbox and an option set. `ValueInput`
-picks the control from the field's value type, so a host that does not know the
-types ahead, such as a form built from metadata, renders every field the same
-way. Search fields (organisation units and users) and file fields need the
-DHIS2 app-runtime provider and a server, so the examples leave them out.
+date, date and time, time, age, yes or no, a yes-only checkbox, an option set, a
+multi-select, a coordinate and long text. `ValueInput` picks the control from
+the field's value type, so a host that does not know the types ahead, such as a
+form built from metadata, renders every field the same way. Search fields
+(organisation units and users) and file fields fetch from DHIS2, so the
+examples leave them out.
 
 ## Installation
 
@@ -48,9 +49,6 @@ const SETTINGS = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
     }}
 />
 ```
-
-Keep `field` and `settings` outside the component, or memoised, so they are
-the same objects on every render.
 
 | Prop                        | Meaning                                                                                             |
 | --------------------------- | --------------------------------------------------------------------------------------------------- |

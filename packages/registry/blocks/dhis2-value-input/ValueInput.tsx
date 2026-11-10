@@ -1,5 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
-import { useId, useMemo } from 'react'
+import { useId, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
@@ -14,6 +14,8 @@ import {
 } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
+import { Textarea } from '@/components/dhis2/ui/textarea'
+import { DownloadLink } from './editors/FileEditor'
 import type { EditorProblem } from './editors/popupEditors'
 import { ChoiceInput, offeredOptions } from './kinds/ChoiceInput'
 import { DateInput, dateFormatHint } from './kinds/DateInput'
@@ -108,6 +110,32 @@ const metaOf = ({ valueType, options }: Field): ValueMeta => ({
     },
 })
 
+/** A read-only stored file's "Download", after an image's preview, which leaves when the image does not load. */
+const StoredFile = ({
+    url,
+    image,
+    name,
+}: {
+    url: string
+    image: boolean
+    name: string
+}) => {
+    const [unloadable, setUnloadable] = useState<string>()
+    return (
+        <div className="flex flex-col items-start gap-1">
+            {image && url !== unloadable ? (
+                <img
+                    src={`${url}?dimension=MEDIUM`}
+                    alt={name}
+                    onError={() => setUnloadable(url)}
+                    className="max-h-48 max-w-full rounded-dhis2-sm object-contain"
+                />
+            ) : null}
+            <DownloadLink url={url} />
+        </div>
+    )
+}
+
 /** A form control for any DHIS2 value type: labelled, described, and reporting a value only when it is committed. */
 export const ValueInput = ({
     field,
@@ -169,11 +197,10 @@ export const ValueInput = ({
         .filter((each) => each !== '')
         .join(' ')
 
+    const file =
+        field.valueType === 'FILE_RESOURCE' || field.valueType === 'IMAGE'
     // Ids whose names the host may know.
-    const named =
-        kind === 'search' ||
-        field.valueType === 'FILE_RESOURCE' ||
-        field.valueType === 'IMAGE'
+    const named = kind === 'search' || file
     let control: ReactNode
     if (grouped) {
         control = (
@@ -237,21 +264,40 @@ export const ValueInput = ({
             />
         )
     } else {
+        const shown =
+            named && value !== undefined
+                ? (valueName ?? unknownName(value))
+                : formatDhis2Value(value, metaOf(field), {
+                      calendar: settings.calendar,
+                  })
         control = (
-            <Input
-                id={id}
-                type="text"
-                readOnly
-                aria-required={required || undefined}
-                value={
-                    named && value !== undefined
-                        ? (valueName ?? unknownName(value))
-                        : formatDhis2Value(value, metaOf(field), {
-                              calendar: settings.calendar,
-                          })
-                }
-                className={READ_ONLY_CLASS}
-            />
+            <>
+                {field.valueType === 'LONG_TEXT' ? (
+                    <Textarea
+                        id={id}
+                        readOnly
+                        aria-required={required || undefined}
+                        value={shown}
+                        className={READ_ONLY_CLASS}
+                    />
+                ) : (
+                    <Input
+                        id={id}
+                        type="text"
+                        readOnly
+                        aria-required={required || undefined}
+                        value={shown}
+                        className={READ_ONLY_CLASS}
+                    />
+                )}
+                {file && fileUrl !== undefined && value !== undefined ? (
+                    <StoredFile
+                        url={fileUrl}
+                        image={field.valueType === 'IMAGE'}
+                        name={shown}
+                    />
+                ) : null}
+            </>
         )
     }
 
@@ -314,6 +360,7 @@ export const ValueInput = ({
     )
     return grouped ? (
         <div
+            id={id}
             role="group"
             aria-labelledby={labelId}
             aria-describedby={describedBy || undefined}

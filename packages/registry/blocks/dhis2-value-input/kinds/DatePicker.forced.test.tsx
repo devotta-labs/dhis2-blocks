@@ -31,18 +31,29 @@ describe('the date picker in forced colours', () => {
         expect(picked.color).not.toBe(picked.backgroundColor)
     })
 
-    it('keeps an edge around today', async () => {
+    it('marks today apart from the other days', async () => {
         await open()
         await expect
             .poll(() => document.activeElement?.getAttribute('aria-current'))
             .toBe('date')
-        const focused = document.activeElement
-        if (focused === null) {
-            throw new Error('Expected a day to have focus')
+        const today = document.activeElement
+        const other = document.querySelector(
+            '[role="grid"] button:not([aria-current])'
+        )
+        if (today === null || other === null) {
+            throw new Error('Expected today and another day')
         }
-        const today = getComputedStyle(focused)
-        expect(today.borderTopStyle).toBe('solid')
-        expect(today.borderTopWidth).toBe('1px')
+        // Focus marks a day of its own: today is compared without it.
+        await userEvent.keyboard('{Shift>}{Tab}{/Shift}')
+        await expect
+            .element(page.getByRole('button', { name: 'Next month' }))
+            .toHaveFocus()
+        const style = getComputedStyle(today)
+        expect(style.borderTopStyle).toBe('solid')
+        expect(style.borderTopWidth).toBe('1px')
+        expect(style.borderTopColor).not.toBe(
+            getComputedStyle(other).borderTopColor
+        )
     })
 
     it('outlines the focused day', async () => {

@@ -366,3 +366,64 @@ test('an upload that fails reports the file the field held before, and says why'
         .toBeVisible()
     await expect.element(page.getByText('old.pdf')).toBeVisible()
 })
+
+// A 1x1 GIF the browser draws, as raw bytes: an image decoder ignores the `?dimension=MEDIUM` added after its end.
+const STORED_IMAGE = `data:image/gif,${[
+    0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00, 0x80, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x21, 0xf9, 0x04, 0x01, 0x00,
+    0x00, 0x00, 0x00, 0x2c, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+    0x00, 0x02, 0x02, 0x44, 0x01, 0x00, 0x3b,
+]
+    .map((byte) => `%${byte.toString(16).padStart(2, '0')}`)
+    .join('')}`
+
+test('an image the host links stops showing once removed, and an upload in its place shows no link to it', async () => {
+    const { uploads } = await mount(
+        { valueType: 'IMAGE' },
+        { value: 'Old', valueName: 'old.png', fileUrl: STORED_IMAGE }
+    )
+    await expect
+        .element(page.getByRole('img', { name: 'old.png' }))
+        .toBeVisible()
+
+    await userEvent.click(page.getByRole('button', { name: 'Remove' }))
+    // Not by role: an image with no name left is no `img` to a screen reader, and still shows.
+    await expect.poll(() => document.querySelector('img')).toBeNull()
+
+    const picker = document.querySelector('input[type="file"]')
+    if (picker === null) {
+        throw new Error('The field has no file input')
+    }
+    await userEvent.upload(
+        picker,
+        new File(['x'], 'scan.png', { type: 'image/png' })
+    )
+    await expect.poll(() => uploads).toHaveLength(1)
+    uploads[0].release()
+    await expect.element(page.getByText('scan.png')).toBeVisible()
+    expect(document.querySelector('img')).toBeNull()
+    await expect
+        .element(page.getByRole('link', { name: 'Download' }))
+        .not.toBeInTheDocument()
+})
+
+test('a read-only image the host links shows a preview and "Download", and says why', async () => {
+    await mount(
+        { valueType: 'IMAGE' },
+        {
+            value: 'File1',
+            valueName: 'scan.png',
+            fileUrl: STORED_IMAGE,
+            readOnly: 'Assigned by a rule',
+        }
+    )
+    const name = page.getByRole('textbox', { name: LABEL })
+    await expect.element(name).toHaveValue('scan.png')
+    await expect.element(name).toHaveAccessibleDescription('Assigned by a rule')
+    await expect
+        .element(page.getByRole('img', { name: 'scan.png' }))
+        .toBeVisible()
+    await expect
+        .element(page.getByRole('link', { name: 'Download' }))
+        .toHaveAttribute('href', STORED_IMAGE)
+})

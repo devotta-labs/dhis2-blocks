@@ -322,6 +322,45 @@ test('a required radio group says so', async () => {
         .toHaveAttribute('aria-required', 'true')
 })
 
+test('a required Yes/No in a form lets the form submit, with a value or without', async () => {
+    const submitted = vi.fn()
+    const Host = () => {
+        const [value, setValue] = useState<string>()
+        return (
+            <form
+                onSubmit={(event) => {
+                    event.preventDefault()
+                    submitted()
+                }}
+            >
+                <ValueInput
+                    field={BOOLEAN}
+                    settings={SETTINGS}
+                    label={LABEL}
+                    value={value}
+                    required
+                    onChange={(next) => setValue(next ?? undefined)}
+                />
+                <button type="submit">Submit</button>
+            </form>
+        )
+    }
+    await render(<Host />)
+    const submit = page.getByRole('button', { name: 'Submit' })
+    await expect
+        .element(page.getByRole('radiogroup', { name: LABEL }))
+        .toHaveAttribute('aria-required', 'true')
+    // The radios' form inputs have no name, so each is a group of its own, which a browser following HTML (Firefox)
+    // finds missing when unchecked; Chromium does not, so the inputs themselves are checked.
+    expect(document.querySelectorAll('input[required]')).toHaveLength(0)
+    // The host checks what it needs: the browser does not hold the form back.
+    await userEvent.click(submit)
+    expect(submitted).toHaveBeenCalledTimes(1)
+    await userEvent.click(radio('Yes'))
+    await userEvent.click(submit)
+    expect(submitted).toHaveBeenCalledTimes(2)
+})
+
 test('a read-only radio group and checkbox cannot be changed', async () => {
     const group = await mount(SHORT, { value: 'A', readOnly: 'Locked' })
     await userEvent.click(radio('Name B'), { force: true })

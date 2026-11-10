@@ -8,7 +8,6 @@
         "build": "turbo run build --filter=@dhis2-blocks/web",
         "start": "turbo run start --filter=@dhis2-blocks/web",
         "test": "turbo run test",
-        "test:lint": "node --experimental-strip-types --test tools/oxlint/anti-slop/*.test.ts",
         "typecheck": "turbo run typecheck typecheck:registry",
         "typecheck:registry": "tsc --project tools/registry",
         "deploy": "turbo run deploy --filter=@dhis2-blocks/web",

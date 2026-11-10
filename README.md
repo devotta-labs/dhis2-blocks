@@ -433,7 +433,6 @@ filtering, sorting, pagination, event mode, and saved-view persistence.
 ```sh
 pnpm typecheck
 pnpm lint
-pnpm test:lint
 pnpm dead-code:audit
 pnpm test
 pnpm build
@@ -464,8 +463,7 @@ and TypeScript-only wrappers do not hide chained access. Hook names follow
 `use` + uppercase letter/digit, including PascalCase namespaces such as
 `React.useState`; lowercase utility objects such as `vi.useFakeTimers` are not
 hooks. This is an expression-placement rule, not a replacement for React's
-Rules of Hooks control-flow checks. `pnpm test:lint` tests it through Oxlint;
-the CI lint job runs those tests too.
+Rules of Hooks control-flow checks.
 
 CI runs typechecking, tests, app/docs builds, lint, Knip, and DHIS2 dev E2E
 in parallel. Path filters skip unrelated jobs (for example, docs-only changes

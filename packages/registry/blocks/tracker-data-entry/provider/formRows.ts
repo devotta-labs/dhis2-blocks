@@ -3,7 +3,7 @@ import { cellKey } from '@/components/spreadsheet'
 import type { CellKey, GridTable } from '@/components/spreadsheet'
 import type { TrackerEffects, TrackerEffectsState } from '../logic/effects'
 import { isEmptySlot } from '../logic/ruleEffects'
-import { summarise } from '../logic/summary'
+import { createSummariser } from '../logic/summary'
 import {
     formOf,
     trackerKeyOf,
@@ -23,6 +23,8 @@ import { generateUid } from '../sources/uid'
 import type { OpenForm } from './openForm'
 
 /** The form's summary, from its cells, their effects, its tables and its fields' names; empty slots ask for nothing. */
+const summaries = new WeakMap<object, ReturnType<typeof createSummariser>>()
+
 export const summaryOf = (
     { store, effects, tables }: Pick<OpenForm, 'store' | 'effects' | 'tables'>,
     {
@@ -32,6 +34,11 @@ export const summaryOf = (
 ) => {
     const { cells } = store.getState()
     const { records } = tables.getState()
+    let summarise = summaries.get(store)
+    if (summarise === undefined) {
+        summarise = createSummariser()
+        summaries.set(store, summarise)
+    }
     return summarise(
         cells,
         effects.getState().cells,

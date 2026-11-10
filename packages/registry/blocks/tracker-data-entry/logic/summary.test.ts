@@ -2,7 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import type { CellKey, CellState, GridTable } from '@/components/spreadsheet'
 import type { TrackerColumn, TrackerRow } from '../model/types'
 import type { TrackerEffects, TrackerMessage } from './effects'
-import { summarise } from './summary'
+import { createSummariser, summarise } from './summary'
 
 const NO_EFFECTS: TrackerEffects = { required: false, messages: [] }
 const NO_ROW_MESSAGES = new Map<string, TrackerMessage[]>()
@@ -56,6 +56,91 @@ test('summarise counts unsent and failed cells and blocks completion on errors',
         failed: 1,
         canComplete: false,
     })
+})
+
+test('an incremental summary reuses unchanged rows and refreshes changed cells', () => {
+    const summarise = createSummariser()
+    const cells = {
+        'e1.a': {
+            ...FILLED,
+            sync: 'failed',
+            reason: 'First failure',
+        },
+        'e2.a': {
+            ...FILLED,
+            sync: 'failed',
+            reason: 'Second failure',
+        },
+    } satisfies Partial<Record<CellKey, CellState>>
+    const first = summarise(cells, {}, NO_ROW_MESSAGES, TABLES)
+    const next = summarise(
+        { ...cells, 'e2.a': { ...cells['e2.a'], reason: 'Retry failed' } },
+        {},
+        NO_ROW_MESSAGES,
+        TABLES
+    )
+
+    expect(next).toEqual({
+        items: [
+            { key: 'e1.a', kind: 'failed', text: 'Not saved: First failure' },
+            { key: 'e2.a', kind: 'failed', text: 'Not saved: Retry failed' },
+        ],
+        unsent: 0,
+        failed: 2,
+        canComplete: true,
+    })
+    expect(next.items[0]).toBe(first.items[0])
+    expect(next.items[1]).not.toBe(first.items[1])
+})
+
+test('an incremental summary notices changed empty-slot results and table labels', () => {
+    const summarise = createSummariser()
+    const effects = {
+        'e1.a': { required: true, messages: [] },
+    } satisfies Partial<Record<CellKey, TrackerEffects>>
+    const emptySlot = summarise(
+        {},
+        effects,
+        NO_ROW_MESSAGES,
+        TABLES,
+        undefined,
+        () => true
+    )
+    expect(emptySlot.items).toEqual([])
+
+    const required = summarise(
+        {},
+        effects,
+        NO_ROW_MESSAGES,
+        TABLES,
+        undefined,
+        () => false
+    )
+    expect(required.items).toEqual([
+        {
+            key: 'e1.a',
+            kind: 'errorOnComplete',
+            text: 'Height & weight is required',
+            namesField: true,
+        },
+    ])
+
+    const renamed = summarise(
+        {},
+        effects,
+        NO_ROW_MESSAGES,
+        [
+            {
+                ...TABLES[0],
+                columns: [
+                    { id: 'a', label: 'Renamed', field: { valueType: 'TEXT' } },
+                ],
+            },
+        ],
+        undefined,
+        () => false
+    )
+    expect(renamed.items[0]?.text).toBe('Renamed is required')
 })
 
 test('a waiting cell is unsent and says why', () => {

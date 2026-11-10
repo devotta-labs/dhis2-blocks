@@ -54,7 +54,9 @@ the benchmark keeps one processor for the page's main thread alone (`bench/proce
 from that processor off `/proc/stat`, and takes it out:
 
 - a time that spans waiting on the network (the load's milestones, "Show more") loses the milliseconds stolen in
-  its own stretch;
+  its own stretch. Time is only stolen while the main thread has work, so an idle wait loses nothing; but where
+  script ran beside a request that took longer, what was stolen from the script did not delay the milestone, and
+  the time comes out that much too short;
 - main thread time loses the share stolen during its part of the run;
 - a time the display paces (a frame, or from a key to the frame after it) loses that share too, but does not go
   below one frame (16.7 ms), and one shorter than a frame is left as it is.

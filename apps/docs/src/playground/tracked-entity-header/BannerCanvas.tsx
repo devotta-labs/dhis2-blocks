@@ -8,9 +8,11 @@ import {
     TrackedEntityBanner,
     TrackedEntityBorn,
     TrackedEntityDetails,
+    TrackedEntityEnrollment,
     TrackedEntityFacts,
     TrackedEntityHeaderProvider,
     TrackedEntityName,
+    TrackedEntityOwner,
     TrackedEntityStatus,
 } from '@/components/tracked-entity-header'
 import { Button } from '@/components/dhis2/ui/button'
@@ -39,6 +41,8 @@ const Banner = ({
                 <TrackedEntityStatus />
                 <TrackedEntityBorn {...parts.born} />
                 <TrackedEntityAttribute attribute={parts.identifier} />
+                <TrackedEntityEnrollment />
+                <TrackedEntityOwner />
                 <TrackedEntityActions>
                     <Button variant="outline">Record visit</Button>
                 </TrackedEntityActions>

@@ -7,9 +7,11 @@ import {
     TrackedEntityBanner,
     TrackedEntityBorn,
     TrackedEntityDetails,
+    TrackedEntityEnrollment,
     TrackedEntityFacts,
     TrackedEntityHeaderProvider,
     TrackedEntityName,
+    TrackedEntityOwner,
     TrackedEntityStatus,
 } from '@/components/tracked-entity-header'
 
@@ -55,6 +57,8 @@ export default function PersonBanner() {
                         <TrackedEntityStatus />
                         <TrackedEntityBorn attribute={BIRTH_DATE} />
                         <TrackedEntityAttribute attribute={UNIQUE_ID} />
+                        <TrackedEntityEnrollment />
+                        <TrackedEntityOwner />
                         <TrackedEntityFacts>
                             <TrackedEntityAttribute attribute={ALLERGIES} />
                             <ObservationInline

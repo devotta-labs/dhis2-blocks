@@ -23,7 +23,8 @@ export interface ObservationInlineProps {
     className?: string
 }
 
-const ROW = 'inline-flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-1'
+const ROW =
+    'inline-flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-1 text-sm'
 
 /**
  * One data element's latest reading as a single line for a facts line: label,
@@ -94,7 +95,7 @@ export function ObservationInline({
         const text = formatPointValue(series, latest, display)
         body = (
             <>
-                <span data-slot="value-text" className="font-medium">
+                <span data-slot="value-text" className="text-dhis2-foreground">
                     {shownUnit ? `${text} ${shownUnit}` : text}
                 </span>
                 {legend ? (
@@ -112,7 +113,11 @@ export function ObservationInline({
             </>
         )
     } else if (series && !series.partial) {
-        body = <span>{i18n.t('Not recorded')}</span>
+        body = (
+            <span className="text-dhis2-muted-foreground">
+                {i18n.t('Not recorded')}
+            </span>
+        )
     } else {
         body = (
             <span data-slot="observation-error">

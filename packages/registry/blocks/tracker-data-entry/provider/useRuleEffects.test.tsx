@@ -8,7 +8,7 @@ import {
     rowHeaderDomId,
     cellKey,
 } from '@/components/spreadsheet'
-import { control } from '@/components/spreadsheet/grid/__tests__/gridRig'
+import { control, shown } from '@/components/spreadsheet/grid/__tests__/gridRig'
 import { recordIdOf } from '../model/types'
 import type { TrackerDataEntrySource } from '../sources/types'
 import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'
@@ -131,7 +131,7 @@ test('opening the grid changes nothing; a person’s first change in a row saves
     )
 
     const paint = holdPaint()
-    control(LMP).focus()
+    ;(await shown(LMP)).focus()
     await userEvent.keyboard('2026-01-01{Enter}')
     // Until the browser paints, the change waits on the page with the rules it asks for.
     await later(200)
@@ -296,7 +296,7 @@ test('an edit to a cross-event field re-runs the person’s rows', async () => {
             ]?.readOnly,
     })
 
-    control(LMP).focus()
+    ;(await shown(LMP)).focus()
     await userEvent.keyboard('2026-01-01{Enter}')
     // The edited visit saves its age: 1 January to 12 March is 10 weeks.
     await expect
@@ -332,7 +332,7 @@ test('announces a value cleared by a rule', async () => {
     // Nothing is saved, so no "All changes saved" follows what the rule said.
     memory.hold()
 
-    control(cellKey(FIRST_VISIT, RMNCH.chronic)).focus()
+    ;(await shown(cellKey(FIRST_VISIT, RMNCH.chronic))).focus()
     await userEvent.keyboard('n')
     const keys = cleared.map((id) => cellKey(FIRST_VISIT, id))
     await expect.poll(clearedItems).toEqual([...keys].sort())
@@ -374,7 +374,7 @@ test('a key that saves a value returns before the rules run; they run once the b
         context().effects.getState().cells[
             cellKey(FIRST_VISIT, GESTATIONAL_AGE)
         ]?.readOnly
-    control(LMP).focus()
+    ;(await shown(LMP)).focus()
     await userEvent.keyboard('2026-01-01')
 
     // The key's own handling: Enter saves the value.
@@ -397,7 +397,7 @@ test('a rule waits for the person to leave the cell they are typing in', async (
     // The person has changed the later visit, so its rule changes are saved.
     context().store.getState().commit(cellKey(LATER_VISIT, HEMOGLOBIN), '11')
 
-    control(age).focus()
+    ;(await shown(age)).focus()
     await userEvent.keyboard('3')
     // Another change makes the rules assign the cell being typed in.
     context().store.getState().commit(LMP, '2026-01-01')
@@ -478,7 +478,7 @@ test('text typed into a cell a rule hides is not saved', async () => {
         context().effects.getState().cells[specified]?.hiddenBy
     expect(hiddenBy()).toBeUndefined()
 
-    control(specified).focus()
+    ;(await shown(specified)).focus()
     await userEvent.keyboard('Asthma')
     // Meanwhile the answer that shows the cell becomes no, and a rule hides it.
     context().store.getState().commit(cellKey(FIRST_VISIT, OTHER), 'false')

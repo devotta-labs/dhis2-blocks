@@ -16,36 +16,24 @@ import { cn } from '@/components/dhis2/ui/cn'
 import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '../cells/OptionCell'
 import { addsRow } from '../cells/useCellMode'
-import type { CellKey, CellPlace, GridColumn, GridTable } from '../model/types'
+import type { CellKey, CellPlace, GridTable } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 import { AddRowButton } from './AddRowButton'
-import {
-    ACTIONS_CLASS,
-    ActionsButton,
-    BulkMenu,
-    opensMenu,
-    takesColumnActions,
-    useBulkConfirm,
-} from './BulkMenu'
+import { BulkMenu, opensMenu, useBulkConfirm } from './BulkMenu'
 import type { BulkTarget } from './BulkMenu'
 import { changedBy } from './bulk'
-import { columnHeaderIds, headerDomId } from './headers'
+import { columnHeaderIds } from './headers'
 import { nextCell } from './navigation'
 import type { NavKey } from './navigation'
 import { fillDown } from './fillDown'
 import { fieldAt, navGrid, positionsOf, reasonOf } from './navGrid'
 import { isBlock, pastedBlock, pasteTargets } from './paste'
-import { BORDER_CLASS, ROW_HEADER_CLASS } from './RowHeader'
 import { NotesPopover } from './RowNotes'
 import type { NotesTarget } from './RowNotes'
 import { TableBody } from './TableBody'
-import { LAST_CLASS } from './TableRow'
+import { TableHead } from './TableHead'
 import { useAddRow } from './useAddRow'
-
-const HEADER_CLASS = cn(
-    BORDER_CLASS,
-    'bg-dhis2-muted px-2 py-1.5 text-start align-bottom text-[13px] font-medium text-dhis2-foreground'
-)
+import { useColumnWindow } from './useColumnWindow'
 
 interface TableViewProps {
     idScope: string
@@ -59,6 +47,8 @@ interface TableViewProps {
     openNotes(target: NotesTarget): void
     /** A row to draw wherever the region has scrolled, for a cell about to get focus. */
     reveal?: number
+    /** That cell's column, drawn and scrolled to as well. */
+    revealColumn?: number
 }
 
 /** One table in its own scrolling region, its header row and first column sticky. */
@@ -71,29 +61,18 @@ const TableView = memo(function TableView({
     openMenu,
     openNotes,
     reveal,
+    revealColumn,
 }: TableViewProps) {
-    const context = useSpreadsheetContext()
     const region = useRef<HTMLDivElement>(null)
     const head = useRef<HTMLTableSectionElement>(null)
     const labels = useMemo(
         () => columnHeaderIds(idScope, table),
         [idScope, table]
     )
-    // The column each leaf heading names, for the columns that take column actions.
-    const bulkLeaves = useMemo(
-        () =>
-            new Map(
-                table.columns.flatMap(
-                    (column, c): Array<[string, GridColumn]> =>
-                        takesColumnActions(context, table, column)
-                            ? [[labels[c].split(' ').at(-1) ?? '', column]]
-                            : []
-                )
-            ),
-        [context, table, labels]
-    )
     const titleId = `${idScope}-${table.id}-title`
     const [headerHeight, setHeaderHeight] = useState(0)
+    const { columns, row, note, measure, startInset, endInset } =
+        useColumnWindow(table, region, revealColumn)
     // Scroll padding as tall as the sticky header, however its labels wrap, so a focused cell never sits under it.
     useLayoutEffect(() => {
         const scroller = region.current
@@ -123,108 +102,37 @@ const TableView = memo(function TableView({
                 aria-labelledby={titleId}
                 className="isolate w-fit max-w-full max-h-[70vh] scroll-ps-[min(12rem,30vw)] scroll-pe-9 overflow-auto [overflow-anchor:none] rounded-dhis2-sm border border-dhis2-border bg-dhis2-background"
             >
-                {/* Only the rows near the view are drawn: the row count and each row's index say where they sit. */}
+                {/* Only the rows and columns near the view are drawn: the counts and each cell's indexes say where they sit. */}
                 <table
                     aria-labelledby={titleId}
                     aria-rowcount={table.headerRows.length + table.rows.length}
+                    aria-colcount={table.columns.length + 2}
                     className="border-separate border-spacing-0 text-sm"
                 >
-                    <thead ref={head} className="sticky top-0 z-20">
-                        {table.headerRows.map((cells, level) => (
-                            <tr key={level} aria-rowindex={level + 1}>
-                                {level === 0 ? (
-                                    <td
-                                        rowSpan={table.headerRows.length}
-                                        className={cn(
-                                            HEADER_CLASS,
-                                            ROW_HEADER_CLASS,
-                                            'sticky start-0 z-10'
-                                        )}
-                                    />
-                                ) : null}
-                                {cells.map(({ id, label, span, rowSpan }) => {
-                                    // The label alone names the cells; a button in the heading is not part of it.
-                                    const labelId = headerDomId(
-                                        idScope,
-                                        table.id,
-                                        id
-                                    )
-                                    const column =
-                                        span === 1
-                                            ? bulkLeaves.get(labelId)
-                                            : undefined
-                                    return (
-                                        <th
-                                            key={id}
-                                            colSpan={span}
-                                            rowSpan={rowSpan}
-                                            scope="col"
-                                            className={cn(
-                                                HEADER_CLASS,
-                                                'min-w-28',
-                                                labels
-                                                    .at(-1)
-                                                    ?.split(' ')
-                                                    .includes(labelId) &&
-                                                    LAST_CLASS
-                                            )}
-                                        >
-                                            {/* A group wider than the screen keeps its label beside the row headers. */}
-                                            {span > 1 ? (
-                                                <span
-                                                    id={labelId}
-                                                    className="sticky start-[min(12rem,30vw)] inline-block"
-                                                >
-                                                    {label}
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-end justify-between gap-1">
-                                                    <span id={labelId}>
-                                                        {label}
-                                                    </span>
-                                                    {column ===
-                                                    undefined ? null : (
-                                                        <ActionsButton
-                                                            id={`${labelId}-actions`}
-                                                            label={i18n.t(
-                                                                'Column actions'
-                                                            )}
-                                                            labelledBy={labelId}
-                                                            onOpen={(anchor) =>
-                                                                openMenu({
-                                                                    anchor,
-                                                                    table,
-                                                                    column,
-                                                                })
-                                                            }
-                                                        />
-                                                    )}
-                                                </span>
-                                            )}
-                                        </th>
-                                    )
-                                })}
-                                {level === 0 ? (
-                                    <td
-                                        rowSpan={table.headerRows.length}
-                                        className={cn(
-                                            HEADER_CLASS,
-                                            ACTIONS_CLASS
-                                        )}
-                                    />
-                                ) : null}
-                            </tr>
-                        ))}
-                    </thead>
+                    <TableHead
+                        idScope={idScope}
+                        table={table}
+                        labels={labels}
+                        columns={columns}
+                        head={head}
+                        startInset={startInset}
+                        endInset={endInset}
+                        measure={measure}
+                        note={note}
+                        openMenu={openMenu}
+                    />
                     <TableBody
                         idScope={idScope}
                         table={table}
                         labels={labels}
+                        columns={columns}
                         move={move}
                         openMenu={openMenu}
                         openNotes={openNotes}
                         region={region}
                         headerHeight={headerHeight}
+                        at={row}
+                        note={note}
                         reveal={reveal}
                     />
                 </table>
@@ -325,7 +233,7 @@ export const SpreadsheetGrid = ({
 
     const add = useAddRow(focusCell, tables, addRow, keyOf)
 
-    // A cell `focusCell` waits on: its row is drawn, then it gets focus.
+    // A cell `focusCell` waits on: its row and column are drawn, then it gets focus.
     const waiting = useStore(focusing, (state) => state.key)
     const reveal =
         waiting === undefined
@@ -566,6 +474,9 @@ export const SpreadsheetGrid = ({
                     openMenu={openMenu}
                     openNotes={openNotes}
                     reveal={reveal?.table === t ? reveal.row : undefined}
+                    revealColumn={
+                        reveal?.table === t ? reveal.column : undefined
+                    }
                 />
             ))}
             <BulkMenu

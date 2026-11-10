@@ -306,6 +306,39 @@ export const control = (key: CellKey): HTMLElement => {
     return element
 }
 
+/**
+ * Scrolls each table sideways from its start, as a person looking for a column does, until `find` finds what it looks
+ * for: only the columns near the view are drawn.
+ */
+export const scrolledTo = async <Found,>(
+    find: () => Found | null | undefined
+): Promise<Found> => {
+    for (const region of document.querySelectorAll('[role="region"]')) {
+        const sign = getComputedStyle(region).direction === 'rtl' ? -1 : 1
+        for (
+            let left = 0;
+            left <= region.scrollWidth;
+            left += region.clientWidth / 2
+        ) {
+            region.scrollLeft = sign * left
+            await nextFrame()
+            await nextFrame()
+            const found = find()
+            if (found !== null && found !== undefined) {
+                return found
+            }
+        }
+        region.scrollLeft = 0
+    }
+    throw new Error('Not in any table, wherever it scrolls')
+}
+
+/** The cell's control, its table scrolled sideways until its column is drawn. */
+export const shown = (key: CellKey) =>
+    scrolledTo(() =>
+        document.querySelector<HTMLElement>(`[id$="-cell-${key}"]`)
+    )
+
 export const focused = () => document.activeElement?.id
 
 /** Pastes as a spreadsheet does; says whether the grid took the paste from the browser. */

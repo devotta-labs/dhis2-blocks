@@ -8,6 +8,7 @@
         "module": "esnext",
         "moduleResolution": "bundler",
         "noEmit": true,
+        "resolveJsonModule": true,
         "paths": {
             "@/components/dhis2/ui/*": ["./components/*"],
             "@/components/*": ["./blocks/*"]

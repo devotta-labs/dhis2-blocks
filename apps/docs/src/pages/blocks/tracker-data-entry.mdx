@@ -1,0 +1,460 @@
+---
+title: Tracker Data Entry
+description: Grid data entry for DHIS2 event and tracker programs, typed in like a spreadsheet and kept on the device until DHIS2 has it.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="tracker-data-entry/event-program" />
+
+This preview shows the Inpatient morbidity and mortality events of Ngelehun CHC
+in the Sierra Leone demo database, one row per event and one column per data
+element. The preview is live: what you type is saved to the demo database
+behind this site.
+
+Each cell works as a spreadsheet's does (see [Spreadsheet](/blocks/spreadsheet)). Type to replace a value, press F2 to
+edit it, and use Enter and the arrow keys to save and move. Every change is
+kept on the device before it is sent, so a dropped connection, a reload or a
+crash loses nothing. Program rules run for the rows whose stage the grid shows,
+as Capture runs them.
+
+## Installation
+
+<InstallCommand item="tracker-data-entry" />
+
+It installs `spreadsheet` (the grid), `dhis2-value-types` (what each value type
+accepts), `dhis2-value-display` (the calendar) and `program-rules` with it.
+
+## Usage
+
+Render `TrackerDataEntry` with a source and place the parts you need inside it.
+The grid, the summary and your own parts all read the same loaded form.
+`TrackerDataEntry` needs the DHIS2 app-runtime provider and a React Query `QueryClientProvider`
+above it, nothing else.
+
+```tsx
+import { SpreadsheetGrid } from '@/components/spreadsheet'
+import {
+    TrackerDataEntry,
+    TrackerDataEntrySummary,
+    eventSource,
+    useTrackerDataEntry,
+} from '@/components/tracker-data-entry'
+
+// Made once: a source with new keys loads the form again.
+const inpatient = eventSource({
+    programId: 'eBAyeGv0exc',
+    orgUnitId: 'DiszpKrYNg8',
+})
+
+const Status = () => {
+    const status = useTrackerDataEntry((view) => view.status)
+
+    return status === 'ready' ? null : (
+        <p>
+            {status === 'loading' ? 'Loading…' : 'The form could not be loaded'}
+        </p>
+    )
+}
+
+export const InpatientGrid = () => (
+    <TrackerDataEntry source={inpatient}>
+        <Status />
+        <SpreadsheetGrid />
+        <TrackerDataEntrySummary />
+    </TrackerDataEntry>
+)
+```
+
+The grid shows nothing until the form has loaded, so show the loading and
+error states yourself with `useTrackerDataEntry((view) => view.status)`, and why the
+form could not load with `view.error`. Render your own `Cell`s only once
+`status` is `'ready'`: before that there are no cells to bind them to. Several
+forms can share a page: each starts its DOM ids with its own prefix.
+
+## Choose which events are rows
+
+`eventSource` loads the events of one program, and everything else narrows or
+widens them.
+
+- **An event program at one organisation unit**, as above: one row per event,
+  and "Add event" adds a row.
+- **One stage across many people**, as a register. Name the stage and use
+  `orgUnitMode: 'DESCENDANTS'` to include the units below the one you pass:
+
+<ExampleCard slug="tracker-data-entry/tracker-register" />
+
+A register's rows belong to different people, so it has no "Add event": a new
+row there would mean enrolling someone.
+
+- **One person's events**, wherever they happened. Pass `enrollmentId`, and
+  `newRowStageId` to let "Add event" add an event of that stage for the person;
+  `orgUnitId` is then the organisation unit where those events are created. The
+  columns are the data elements of all the stages shown, and a cell a row's own
+  stage has no field for says "Not in this stage":
+
+<ExampleCard slug="tracker-data-entry/person-events" />
+
+```ts
+interface EventSourceOptions {
+    programId: string
+    programStageId?: string
+    orgUnitId: string // with enrollmentId, where "Add event" creates events
+    orgUnitMode?: 'SELECTED' | 'DESCENDANTS' // default SELECTED
+    enrollmentId?: string // one person's events, wherever they happened
+    newRowStageId?: string // with enrollmentId: "Add event" adds an event of this stage for the person
+    pageSize?: number // default 50
+    order?: 'occurredAt:asc' | 'occurredAt:desc' // default occurredAt:desc
+}
+```
+
+## More events
+
+The first `pageSize` events load with the form. While a page comes back full,
+**Show more events** follows the grid: each press appends the next page in the
+same order and announces "Events shown: …". The button keeps focus, and says
+it is busy while the page loads. No total is asked for, since counting costs
+DHIS2 a query on large databases, so the button goes only once a page comes
+back short, and focus then moves past the grid. A page that cannot load says
+why, and shows why beside the button until the next try; the button stays to
+try again.
+
+A page's events join the end of their table, except those already shown, such
+as a new event saved here. A stage the table has no columns for adds its
+columns at the end, and the other rows show "Not in this stage" there. The
+page's unsent changes are put back on its cells, in the state they were left
+in, and its rows' rules run as they do on load: loading a page saves nothing.
+
+## Registers
+
+A paper register is one person a row: the person's attributes, the enrolment
+date, and a date or a few values for each visit or dose. `registerSource`
+shows a program's enrolments at one organisation unit, enrolled in a period,
+oldest first, one row per person, and lays the columns out as the paper does.
+`layout` is that paper as data: columns, with groups for the headings above
+them.
+
+<ExampleCard slug="tracker-data-entry/immunisation-register" />
+
+The immunisation register is a program with one repeatable stage, a
+vaccination per event, with Vaccine and Dose data elements. "DPT 2" is the
+event whose Vaccine is `DPT` and Dose is `2`, so each date column is a `where`
+slot: typing the date makes that event, with the vaccine and dose no column
+shows.
+
+A cohort register follows each person through a program's stages. The first
+visit is the one event of its stage, and the later visits are the events of a
+repeatable stage in date order, as `occurrence` 1, 2 and 3:
+
+<ExampleCard slug="tracker-data-entry/cohort-anc-register" />
+
+```ts
+interface RegisterSourceOptions {
+    programId: string
+    orgUnitId: string // the register's organisation unit; new people are enrolled here
+    enrolledFrom: string // the period's first enrolment day, YYYY-MM-DD, included
+    enrolledTo: string // and its last, included
+    layout: RegisterLayout
+    pageSize?: number // people a page, default 25
+    today?: string // the day expiry is checked against, YYYY-MM-DD; the device's date by default
+}
+
+interface RegisterLayout {
+    title?: string
+    rowLabel?: FieldRef[] // what names a row; the first two text attributes by default
+    columns: LayoutNode[] // columns and groups, in the paper's order
+}
+
+type LayoutNode = LayoutColumn | { group: string; children: LayoutNode[] }
+
+interface LayoutColumn {
+    field: FieldRef
+    label?: string // the paper's heading; the field's form name by default
+}
+
+type FieldRef =
+    | { attribute: string }
+    | { enrollment: 'enrolledAt' | 'occurredAt' }
+    | ({
+          stage: string
+          occurrence?: number
+          where?: Record<string, string>
+      } & ({ dataElement: string } | { eventDate: true }))
+```
+
+A stage's column is in one **slot**: the event of a non-repeatable stage, the
+nth event of a repeatable stage by date (`occurrence`, counting from 1), or the
+event holding given values (`where`, a data element id and the option code or
+value it holds). A slot has an `occurrence` or a `where`, not both, and a
+column of a repeatable stage needs one of them. Events
+that fit no slot, or several, are said on the row ("2 more visits of … not in
+this register"). `compileLayout(layout, metadata)` says what a program cannot
+do for a layout, such as a field it does not have, before anything loads, and
+`registerLayoutSchema` checks a layout you store or write by hand, refusing a
+key it does not know.
+
+New people are added with **Add person** (Ctrl+Enter): a person, an enrolment
+and an event per slot, at the organisation unit. The layout must have a column
+for each mandatory attribute and for the enrolment date. The events Capture
+schedules on enrolment are made too and fill their slots. One in a slot with a
+date column stays scheduled until its date is typed, as the paper has it; one
+in a slot without is dated as Capture dates it.
+
+What saves and what waits:
+
+- One save sends the people, enrolments and events that changed, together.
+  Only cells that were typed in are saved: an empty slot costs nothing.
+- A new person waits for the attributes its type and program require, an
+  enrolment for its date and its person, and an event for its date, its
+  enrolment and the required fields of a stage that checks them. A waiting
+  cell says what it waits for ("Waiting for: Last name").
+- Generated attributes are reserved when the row is added.
+
+Read-only, with the reason on each cell: a program the user cannot enter data
+in, people of a type the user cannot change, a cancelled enrolment, and the
+event rules of the grid above (completed in a stage that blocks entry, expired,
+skipped). A register has no Complete or Reopen per row.
+
+## Rows and cells
+
+Cells are typed in and edited as the [Spreadsheet](/blocks/spreadsheet) page
+describes. In a table with "Add event", Ctrl+Enter (Cmd+Enter on a Mac) saves
+what was typed, adds a row and moves to its first cell. A row is named by its
+event date, in the system calendar and date format, once it has one, followed
+by its stage where the grid shows several; a new row is "New event" until its
+date is typed.
+
+File cells read each row as an event and each column as a data element. A file
+DHIS2 holds shows its name and **Download**, and an image a small preview, both
+from the event's own endpoints.
+
+### Bulk actions
+
+The row and column actions work as the
+[Spreadsheet](/blocks/spreadsheet#bulk-actions) page describes. In a register
+they fill the visit columns only: the person's attributes and both enrolment
+dates (the enrolment and the incident date) have no column button, and a row's
+actions leave them alone. In an event grid every column takes part.
+
+An action that would write to an event DHIS2 does not hold yet (a visit with no
+event, or an event grid's newly added, unsaved row) creates that event, so it
+first asks **Create events?** ("This creates 3 events on this page.") with
+**Create events** and **Cancel**: undo cannot delete an event once it is sent.
+
+Ctrl+D (Cmd+D on a Mac) is like typing: it fills any cell that can be edited and
+never asks.
+
+## Every value type
+
+A source can load any data, not only DHIS2 events. This preview's source keeps
+a small form in the page's memory, with a column for each value type: typed in
+the cell, edited in a pop-up, or shown only. Its changes are saved in memory;
+org unit and user searches, and uploads, still go to the demo database. A
+saved file's **Download** and an image's preview do not work here: they need
+rows that are DHIS2 events.
+
+<ExampleCard slug="tracker-data-entry/value-types" />
+
+A source implements `TrackerDataEntrySource`. `key` names its unsent changes on the
+device, `load` returns the form (its tables, values, and what is read-only),
+and `save` takes the changes and says what became of each one. `setStatus`
+completes and reopens rows, `restoreRows` gives back the new rows found unsent
+after a reload, and `loadPage`, when a source has one, loads the next page.
+
+## Program rules
+
+Rules hide fields and options, make fields required, lock the values they
+assign, and put their messages on cells. A message without a field shows in
+the row's header, marked as a cell's are, and in the summary. What a rule
+displays, such as texts and key-value pairs, is the row's notes, behind a
+marker in its header ("Note", "Notes: 2") that opens them. A row whose rules
+fail shows the error in its header and keeps none of their effects.
+
+Opening the grid never changes data. In a row nobody has changed, an assigned
+cell shows the value DHIS2 holds, locked with its rule, and a hidden cell shows
+"Hidden". The values rules assign, and the clearing of fields they hide, are
+saved only with a row a person changes or completes, together with that
+person's change. A rule never changes the cell being typed in. A row cannot be
+completed while its rules are still loading, or if they could not be loaded.
+
+The rules of the rows in view are evaluated first, and the rest when the
+browser is idle. An edit evaluates its row again, and every row of the same
+person when other events read the field or the event date changed, once the
+browser has shown the edit, so typing never waits for the rules. Completing a
+row runs them first.
+
+## Saving
+
+- Every change goes to an IndexedDB outbox on this device before it is sent,
+  once the browser has shown it and together with the values its rules
+  assign, so both are sent in one save. The outbox opens only for the same
+  user on the same server. Nothing in it is encrypted.
+- Unsent changes belong to the program and the kind of grid, not the grid. The
+  event grids of a program keep one change per cell, the newer one, and so do
+  its registers; any open grid of that kind sends them all, the changes made in
+  its other grids included. Event grids and registers keep their changes
+  apart, as a register's save brings what an event grid's cannot, such as the
+  events Capture schedules. A cell changed in both kinds before either is sent
+  keeps both changes: the one sent last is what DHIS2 holds, and a grid shows
+  what the other kind saved when it loads again. They are sent
+  oldest first, 100 events at a time: each chunk's events are read, then
+  imported, each request within its own minute. Two changes to one cell send
+  only the latest. A chunk that fails keeps the chunks before it saved: refused
+  as a whole, it refuses its own events and the chunks after it are sent next;
+  otherwise it and the chunks after it are sent again. A change to an event DHIS2 no longer returns is refused.
+- Before sending, the server is asked who is signed in. When it is someone
+  else, as when another tab signed in (tabs share the session), the form locks
+  until the page is reloaded: every cell is read-only and back to what DHIS2
+  had, nothing more is sent, and the summary says "Signed in as someone else.
+  Reload to continue as that user." The changes stay on the device for their
+  user. A dropped connection pauses sending; an expired session pauses it too,
+  the summary asks the person to sign in, and sending starts again when they
+  come back to the page.
+- While anything is unsent or not saved, leaving the page asks first. The
+  summary counts the changes DHIS2 does not have yet, and **Download unsent
+  changes** saves them as a CSV file with enough to enter them again by hand,
+  the ones that could not be saved included. The changes of the program's other
+  grids that could not be saved are counted and downloaded too, so none is
+  stuck where no grid shows it.
+- A refusal keeps the value and marks the cell "Not saved" with DHIS2's reason.
+  It is not sent again until the person enters the value again. Once they are
+  downloaded, **Discard changes that could not be saved** drops them from the
+  device after asking, the program's other grids' too, and this form's cells
+  go back to what DHIS2 has.
+- A new event waits on the device until its event date is filled in, and, in a
+  stage that checks required fields on every save, those fields too.
+- A polite live region announces outcomes once things settle, such as "All
+  changes saved" once nothing of the program is left on the device, each in
+  turn, and never progress.
+
+Events the user cannot edit are read-only, with the reason on each cell:
+events in a stage the user cannot write to, skipped events, completed events
+in a stage that blocks entry, expired events (unless the user has
+`F_EDIT_EXPIRED`), and every event of a program with attribute categories.
+
+## Boundaries
+
+- Events load a page at a time, `pageSize` of them (default 50), in `order`.
+  Events added or deleted elsewhere between pages shift DHIS2's pages: a row
+  already shown is never shown twice, but one can be left out until the form
+  loads again. Changing an event date here can move its row to a later page,
+  and so leave one event out the same way.
+- The form loads once per mount, and not again when the app invalidates its
+  queries. Changes made elsewhere show after the next load.
+- Program rules run only for rows whose stage the grid shows: the stages of the
+  loaded events, pages included, and of new rows, or the stage asked for when
+  there are none. A row of any other stage is not evaluated.
+- Opening the grid never changes data. Rule-assigned values and clearings are
+  saved only with a row a person changes or completes.
+- `TRACKER_ASSOCIATE`, `REFERENCE` and `GEOJSON` show their value and are
+  edited in their own form.
+- An org unit pasted into a cell shows its id until the form loads again. One
+  picked but not yet sent, and a file uploaded but not yet sent, show their id
+  after a reload too: names load only for the values DHIS2 holds.
+
+## API reference
+
+### TrackerDataEntry
+
+- `source: TrackerDataEntrySource` — **required.** Loads the form and saves its
+  changes. Create it once, as a module constant or with `useMemo`.
+- `cells?: CellOverrides` — controls that replace the default ones, as
+  `{ valueTypes?, fields? }`. See "Replace a control" on the
+  [Spreadsheet](/blocks/spreadsheet) page.
+
+The grid is `SpreadsheetGrid` from `spreadsheet`, placed inside
+`TrackerDataEntry`; its props are on the Spreadsheet page.
+
+### TrackerDataEntrySummary
+
+Every message, each about a cell a link to it, the number of changes DHIS2 does
+not have yet, the download of unsent changes, and discarding the changes that
+could not be saved, after asking.
+
+- `className?: string`
+
+### Hooks
+
+- `useTrackerDataEntry(select)` — anything about the form. Select a value, not
+  a new object.
+
+`useTrackerDataEntry` also gives the actions:
+
+```ts
+interface TrackerDataEntryView {
+    status: 'loading' | 'ready' | 'error'
+    error?: string // why the form could not be loaded, while status is 'error'
+    tables: ReadonlyArray<GridTable<TrackerRow, TrackerColumn>> // as the grid shows them, new rows included
+    // what each row's cells save to, by record id
+    records: ReadonlyMap<string, DataRecord>
+    summary: {
+        items: SummaryItem[]
+        unsent: number
+        failed: number
+        canComplete: boolean
+    }
+    sync: 'idle' | 'sending' | 'offline' | 'signIn' | 'retrying'
+    addRow(tableId: string): void
+    complete(rowId: string): Promise<SaveOutcome[]>
+    reopen(rowId: string): Promise<SaveOutcome[]>
+    downloadUnsent(): void
+    discardFailed(): Promise<void>
+    hasMore: boolean // the last page came back full: there may be more
+    loadingMore: boolean
+    loadMoreError?: string // why the last page could not load, until the next try
+    loadMore(): Promise<void> // appends the next page; one at a time
+}
+```
+
+The host decides where the buttons go. `complete(rowId)` refuses at once, with
+one `failed` outcome per reason, when the device is offline or someone else is
+signed in, and while the row has an error, an empty required field, or a
+change that waits or that DHIS2 refused. Otherwise it sends the row's unsent
+changes first, then asks DHIS2. `reopen(rowId)` asks DHIS2 only for a
+completed row the user may reopen. A saved status shows in the row's header
+and locks or unlocks the row where its stage blocks entry once completed.
+`tables` gives the rows to lay such buttons out by, and `records` each row's
+status:
+
+```tsx
+import { useCell } from '@/components/spreadsheet'
+import {
+    useTrackerDataEntry,
+    type TrackerRow,
+} from '@/components/tracker-data-entry'
+
+// A "Complete" button for each active row, beside the grid, named by the
+// row's event date once it has one.
+const CompleteButton = ({ row }: { row: TrackerRow }) => {
+    const complete = useTrackerDataEntry((view) => view.complete)
+    const status = useTrackerDataEntry(
+        (view) => view.records.get(row.id)?.status
+    )
+    const { value: date } = useCell(`${row.id}.occurredAt`)
+
+    return status === 'ACTIVE' ? (
+        <button type="button" onClick={() => void complete(row.id)}>
+            Complete {date ?? row.label}
+        </button>
+    ) : null
+}
+
+const CompleteButtons = () => {
+    const tables = useTrackerDataEntry((view) => view.tables)
+
+    return tables
+        .flatMap(({ rows }) => rows)
+        .map((row) => <CompleteButton key={row.id} row={row} />)
+}
+```
+
+A refusal comes back as `failed` outcomes with their `reason`, and the summary
+lists what stops the row too.
+
+### Your own layout
+
+`Cell({ cellKey, field, labelledBy, move })` and `useCell`, from `spreadsheet`,
+are for layouts of your own that do not use `SpreadsheetGrid`: `Cell` is one
+bound control with its notes and markers, and `useCell` reads one cell. Take the
+rows from `useTrackerDataEntry((view) => view.tables)`.

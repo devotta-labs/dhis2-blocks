@@ -70,7 +70,16 @@ export const docsNavigation: readonly NavigationSection[] = [
                     },
                 ],
             },
-            { title: 'Data entry', links: [] },
+            {
+                title: 'Data entry',
+                links: [
+                    { title: 'Spreadsheet', href: '/blocks/spreadsheet' },
+                    {
+                        title: 'Tracker Data Entry',
+                        href: '/blocks/tracker-data-entry',
+                    },
+                ],
+            },
         ],
     },
 ]

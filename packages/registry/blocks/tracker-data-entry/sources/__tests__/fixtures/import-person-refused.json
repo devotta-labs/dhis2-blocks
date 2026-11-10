@@ -1,0 +1,38 @@
+{
+    "status": "OK",
+    "validationReport": {
+        "errorReports": [
+            {
+                "message": "enrollment `EnrRefused1` cannot be created because trackedEntity `PsnRefused1` referenced by it could not be created.",
+                "errorCode": "E5000",
+                "trackerType": "ENROLLMENT",
+                "uid": "EnrRefused1",
+                "args": [
+                    "enrollment",
+                    "EnrRefused1",
+                    "trackedEntity",
+                    "PsnRefused1"
+                ]
+            },
+            {
+                "message": "Error validating attribute value type: `DATE`; Error: `Value type is DATE but the value `not-a-date` is not.`.",
+                "errorCode": "E1007",
+                "trackerType": "TRACKED_ENTITY",
+                "uid": "PsnRefused1",
+                "args": [
+                    "DATE",
+                    "Value type is DATE but the value `not-a-date` is not."
+                ]
+            }
+        ],
+        "warningReports": []
+    },
+    "stats": {
+        "created": 0,
+        "updated": 0,
+        "deleted": 0,
+        "ignored": 2,
+        "total": 2
+    },
+    "bundleReport": { "typeReportMap": {} }
+}

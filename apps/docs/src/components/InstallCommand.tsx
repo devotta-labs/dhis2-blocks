@@ -19,8 +19,10 @@ type Commands = Record<PackageManager, string>
 type Block =
     | 'context-selector'
     | 'observation-cards'
+    | 'spreadsheet'
     | 'timeline'
     | 'tracked-entity-finder'
+    | 'tracker-data-entry'
     | 'working-list'
 
 const PackageManagerCommand = ({ commands }: { commands: Commands }) => {

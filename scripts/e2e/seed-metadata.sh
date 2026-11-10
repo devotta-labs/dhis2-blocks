@@ -285,6 +285,16 @@ post_and_require_ok \
     "$E2E_REPO_ROOT/e2e/metadata/working-list-tracker-data.json" \
     "$tracker_response"
 
+echo "Importing the child immunisation register program and children ..."
+post_and_require_ok \
+    '/api/metadata?importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&importReportMode=ERRORS' \
+    "$E2E_REPO_ROOT/e2e/metadata/immunisation-metadata.json" \
+    "$artifact_dir/immunisation-metadata-import.json"
+post_and_require_ok \
+    '/api/tracker?async=false&importStrategy=CREATE_AND_UPDATE&atomicMode=ALL&reportMode=FULL' \
+    "$E2E_REPO_ROOT/e2e/metadata/immunisation-tracker-data.json" \
+    "$artifact_dir/immunisation-tracker-import.json"
+
 curl --fail --silent --show-error \
     --user "$username:$password" \
     "$E2E_DHIS2_URL/api/programs/WlE2ePrg001?fields=id,programType" \

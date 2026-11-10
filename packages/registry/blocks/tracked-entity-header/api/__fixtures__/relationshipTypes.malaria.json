@@ -1,0 +1,79 @@
+{
+    "relationshipTypes": [
+        {
+            "fromConstraint": {
+                "relationshipEntity": "TRACKED_ENTITY_INSTANCE",
+                "trackedEntityType": {
+                    "displayName": "Focus area",
+                    "id": "We9I19a3vO1"
+                },
+                "trackerDataView": {
+                    "attributes": ["Kv4fmHVAzwX", "QRg7SZ6VOAV", "coaSpbzZiTB"]
+                }
+            },
+            "toConstraint": {
+                "relationshipEntity": "TRACKED_ENTITY_INSTANCE",
+                "trackedEntityType": {
+                    "displayName": "Malaria Entity",
+                    "id": "Zy2SEgA61ys"
+                },
+                "trackerDataView": {
+                    "attributes": ["aW66s2QSosT", "h5FuguPFF2j", "flGbXLXCrEo"]
+                }
+            },
+            "bidirectional": false,
+            "fromToName": "Focus to Case",
+            "displayName": "Focus to Case",
+            "id": "Mv8R4MPcNcX"
+        },
+        {
+            "fromConstraint": {
+                "relationshipEntity": "TRACKED_ENTITY_INSTANCE",
+                "trackedEntityType": {
+                    "displayName": "Malaria Entity",
+                    "id": "Zy2SEgA61ys"
+                },
+                "trackerDataView": {
+                    "attributes": ["aW66s2QSosT", "h5FuguPFF2j", "flGbXLXCrEo"]
+                }
+            },
+            "toConstraint": {
+                "relationshipEntity": "TRACKED_ENTITY_INSTANCE",
+                "trackedEntityType": {
+                    "displayName": "Malaria Entity",
+                    "id": "Zy2SEgA61ys"
+                },
+                "trackerDataView": {
+                    "attributes": ["aW66s2QSosT", "h5FuguPFF2j", "flGbXLXCrEo"]
+                }
+            },
+            "bidirectional": false,
+            "fromToName": "Index case to cases",
+            "displayName": "Index case to cases",
+            "id": "m6XJSapEvOa"
+        },
+        {
+            "fromConstraint": {
+                "relationshipEntity": "PROGRAM_STAGE_INSTANCE",
+                "trackerDataView": {
+                    "attributes": []
+                }
+            },
+            "toConstraint": {
+                "relationshipEntity": "TRACKED_ENTITY_INSTANCE",
+                "trackedEntityType": {
+                    "displayName": "Person",
+                    "id": "nEenWmSyUEp"
+                },
+                "trackerDataView": {
+                    "attributes": ["w75KJ2mc4zz", "zDhUuAYrxNC"]
+                }
+            },
+            "bidirectional": true,
+            "fromToName": "Subject person",
+            "toFromName": "Malaria case",
+            "displayName": "Malaria case linked to person",
+            "id": "mxZDvSZYxlw"
+        }
+    ]
+}

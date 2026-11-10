@@ -18,6 +18,17 @@ export const trackedEntityHeaderQueryKeys = {
         [ROOT, clientId, 'attributeMetadata', subject] as const,
     orgUnit: (clientId: number, id: string) =>
         [ROOT, clientId, 'orgUnit', id] as const,
+    relationships: (clientId: number, trackedEntity: string) =>
+        [ROOT, clientId, 'relationships', trackedEntity] as const,
+    relationshipTypes: (clientId: number, ids: string[]) =>
+        [
+            ROOT,
+            clientId,
+            'relationshipTypes',
+            [...ids].sort().join(','),
+        ] as const,
+    viewAttributes: (clientId: number, ids: string[]) =>
+        [ROOT, clientId, 'viewAttributes', [...ids].sort().join(',')] as const,
 }
 
 /** Metadata and org unit names change rarely; a record is always asked for fresh. */

@@ -39,3 +39,35 @@ export interface TrackedEntityRecord {
     enrollment?: EnrollmentRecord
     ownerOrgUnit?: string
 }
+
+export type RelationshipEnd = 'from' | 'to'
+
+export type LinkedEnd =
+    | {
+          kind: 'trackedEntity'
+          id: string
+          type: string
+          values: Map<string, string>
+      }
+    | { kind: 'event' | 'enrollment'; id: string }
+    | { kind: 'unreadable' }
+
+export interface RelationshipRecord {
+    id: string
+    type: string
+    /** Shown when the type's metadata is missing. */
+    name?: string
+    /** This record's end. */
+    end: RelationshipEnd
+    other: LinkedEnd
+}
+
+export interface RelationshipTypeMeta {
+    id: string
+    name: string
+    fromToName?: string
+    toFromName?: string
+    bidirectional: boolean
+    /** Per end: the type name of a tracked entity there, and its data-view attribute uids, in order. */
+    ends: Record<RelationshipEnd, { typeName?: string; view: string[] }>
+}

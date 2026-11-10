@@ -18,7 +18,7 @@ const EnrollmentSchema = z.looseObject({
 })
 
 /** Entries that cannot be read are dropped one by one, so one odd value never fails the record. */
-const entries = <T>(schema: z.ZodType<T>) =>
+export const entries = <T>(schema: z.ZodType<T>) =>
     z
         .array(z.unknown())
         .catch([])

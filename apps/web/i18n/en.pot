@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-11-10T13:20:48.250Z\n"
-"PO-Revision-Date: 2026-11-10T13:20:48.251Z\n"
+"POT-Creation-Date: 2026-11-10T13:23:31.631Z\n"
+"PO-Revision-Date: 2026-11-10T13:23:31.631Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -543,6 +543,9 @@ msgstr "{{count}} person found"
 
 msgid "{{count}} people found"
 msgstr "{{count}} people found"
+
+msgid "At least {{count}} people found"
+msgstr "At least {{count}} people found"
 
 msgid "Too many matches. Add another detail."
 msgstr "Too many matches. Add another detail."

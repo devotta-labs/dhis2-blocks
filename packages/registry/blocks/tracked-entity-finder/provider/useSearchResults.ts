@@ -97,6 +97,10 @@ export const useSearchResults = ({
             outcome.people.length > 0
         ) {
             const count = outcome.total ?? outcome.people.length
+            if (outcome.total === undefined && outcome.hasNext) {
+                announce(i18n.t('At least {{count}} people found', { count }))
+                return
+            }
             // Both keys are extractable; count also reaches i18next's plural rules.
             announce(
                 count === 1

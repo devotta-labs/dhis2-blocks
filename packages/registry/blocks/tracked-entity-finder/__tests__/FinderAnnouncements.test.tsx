@@ -167,6 +167,29 @@ test('counts new searches once, not paging, cached pages or background refreshes
     expect(said).toHaveLength(4)
 })
 
+test.each([
+    { count: 2, message: '2 people found' },
+    { count: 10, message: 'At least 10 people found' },
+])(
+    'announces $message when the server omits totals',
+    async ({ count, message }) => {
+        await renderFinder({
+            options: {
+                program: { ...hivProgram, maxTeiCountToReturn: 0 },
+                searchResponse: {
+                    trackedEntities: Array.from({ length: count }, (_, i) =>
+                        entity(`person${i}`)
+                    ),
+                },
+            },
+        })
+        await searchFor('A1')
+        await expect.poll(() => said).toContain(message)
+        await settle()
+        expect(said.filter((text) => text !== 'Searching…')).toEqual([message])
+    }
+)
+
 test('announces custom JSX and independent child updates without duplicate speech', async () => {
     const updates = new EventTarget()
     const Message = () => {

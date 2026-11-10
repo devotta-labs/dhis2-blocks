@@ -1,8 +1,9 @@
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import type { Range } from '@tanstack/react-virtual'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react'
 import type { RefObject, SyntheticEvent } from 'react'
 import type { GridTable } from '../model/types'
+import { useSpreadsheetContext } from '../provider/context'
 import type { BulkTarget } from './BulkMenu'
 import type { NavKey } from './navigation'
 import type { NotesTarget } from './RowNotes'
@@ -96,9 +97,34 @@ export const TableBody = ({
             setCurrent(row.id)
         }
     }
+    const items = virtualizer.getVirtualItems()
+    const { drawnRows } = useSpreadsheetContext()
+    const tableId = table.id
+    // After every render, as scrolling changes the rows drawn without changing a prop.
+    useLayoutEffect(() => {
+        const ids = items.flatMap(({ index }) => rows[index]?.id ?? [])
+        const said = drawnRows?.getState().rows.get(tableId)
+        if (
+            said?.length !== ids.length ||
+            ids.some((id, at) => id !== said[at])
+        ) {
+            drawnRows?.setState((state) => ({
+                rows: new Map(state.rows).set(tableId, ids),
+            }))
+        }
+    })
+    useLayoutEffect(
+        () => () =>
+            drawnRows?.setState((state) => {
+                const left = new Map(state.rows)
+                left.delete(tableId)
+                return { rows: left }
+            }),
+        [drawnRows, tableId]
+    )
     const span = table.columns.length + 2
     let end = headerHeight
-    const drawn = virtualizer.getVirtualItems().flatMap((item) => {
+    const drawn = items.flatMap((item) => {
         const row = rows[item.index]
         const gap = item.start - end
         end = item.end

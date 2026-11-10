@@ -11,7 +11,12 @@ import { cellKey } from '../model/types'
 import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
 import type { CellStoreState } from '../store/store'
 import { SpreadsheetReactContext } from './context'
-import type { Announcer, ReadonlyStore, SpreadsheetContext } from './context'
+import type {
+    Announcer,
+    DrawnRows,
+    ReadonlyStore,
+    SpreadsheetContext,
+} from './context'
 
 type Names = SpreadsheetContext['orgUnitNames']
 
@@ -35,6 +40,8 @@ interface SpreadsheetProps<R extends GridRow, C extends GridColumn> {
     orgUnitNames?: Names
     /** Names of files by id, for file cells; a store of its own by default. */
     fileNames?: Names
+    /** Kept up to date with the rows the grid draws, for logic that runs only for those; nothing by default. */
+    drawnRows?: StoreApi<DrawnRows>
     /** Whether the server cannot be reached now: files cannot be uploaded. */
     offline?: boolean
     fileUrl?: SpreadsheetContext['fileUrl']
@@ -72,6 +79,7 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
     addRow,
     orgUnitNames,
     fileNames,
+    drawnRows,
     offline = false,
     fileUrl,
     announcer,
@@ -111,6 +119,7 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
             announce,
             focusCell,
             focusing: own.focusing,
+            drawnRows,
             tables,
             keyOf,
             rowKeysOf,
@@ -135,6 +144,7 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
             settings,
             announce,
             focusCell,
+            drawnRows,
             tables,
             keyOf,
             rowKeysOf,

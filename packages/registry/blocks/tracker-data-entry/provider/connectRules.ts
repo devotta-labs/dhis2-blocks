@@ -28,19 +28,17 @@ import {
     ruleRowsCache,
     stageFields,
 } from '../logic/ruleEffects'
-import { formOf, recordsOf, recordIdOf, rowsByRecord } from '../model/types'
+import { formOf, recordIdOf, rowsByRecord } from '../model/types'
 import { fieldIdOfKey } from '../model/types'
 import type { DataRecord } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
-import { afterPaint, measured, onScreen, soon, whenIdle } from './afterPaint'
+import { afterPaint, measured } from './afterPaint'
 import { lockedElsewhere } from './formRows'
 import type { OpenForm } from './openForm'
+import { ruleQueue, ruleWindow } from './ruleWindow'
+import type { Drawn } from './ruleWindow'
 
-// Loading evaluates rows for about this long at once (a row at least), then for about a frame's time whenever the
-// browser is idle, so it never blocks the page for long.
-const FIRST_SLICE_MS = 100
-const IDLE_SLICE_MS = 16
 // Rules whose values keep changing each other's rows stop after this many passes; settled rules need two.
 const PASSES = 5
 // Rule names are shown as DHIS2 gives them, not HTML-escaped.
@@ -80,12 +78,15 @@ interface ConnectOptions {
     seen: Set<string>
     /** Starts the form's DOM ids. */
     idScope: string
+    /** The rows the grid draws. Without a grid drawing the form, every row's rules run. */
+    drawn?: Drawn
 }
 
 /**
- * Runs the rules over the rows: the visible ones first for a slice of time, the rest when idle, then again for what
- * each change can affect. Rule effects are merged with the form's own; in touched rows the values rules assign or clear
- * are committed as the rule's. Returns how to stop.
+ * Runs the rules over the rows the grid draws and the touched ones: the visible ones first for a slice of time, the
+ * rest when idle, a row not evaluated yet once the grid draws it, then again for what each change can affect. A row
+ * never drawn, changed or completed is never evaluated. Rule effects are merged with the form's own; in touched rows
+ * the values rules assign or clear are committed as the rule's. Returns how to stop.
  */
 export const connectRules = ({
     open: { store, effects, tables, readOnlyRecords, beforeComplete },
@@ -98,6 +99,7 @@ export const connectRules = ({
     ruleNotes,
     seen,
     idScope,
+    drawn,
 }: ConnectOptions) => {
     let stopped = false
     // Opening the grid changes nothing: rules' values are saved only with a row someone is changing. A failed change is
@@ -107,6 +109,12 @@ export const connectRules = ({
             touched.add(recordIdOf(key))
         }
     }
+    // A row neither evaluated nor touched waits for the grid to draw it: its rules' values would not be saved.
+    const lazy = ruleWindow(
+        drawn,
+        () => tables.getState().tables,
+        (id) => seen.has(id) || touched.has(id)
+    )
     // Control id → row id: a value the rules held back while the cell was typed in.
     const held = new Map<string, string>()
 
@@ -391,6 +399,7 @@ export const connectRules = ({
             if (shown.has(rowId) && outcome !== undefined) {
                 results.push({ recordId: rowId, outcome, raw })
                 seen.add(rowId)
+                lazy.evaluated(rowId)
             }
         }
         const changed = apply(results, said)
@@ -456,49 +465,11 @@ export const connectRules = ({
         }
     }
 
-    // The records of the visible rows first, then the rest, in their rows' order. Rows evaluated before a reconnection
-    // show their effects meanwhile: they run again after the rows not evaluated yet, in view and off screen alike, as
-    // the people the rules have now can change them.
-    const order = tables.getState().tables.flatMap(({ id: tableId, rows }) =>
-        rows.flatMap((row) => {
-            const visible = onScreen(idScope, tableId, row.id)
-            return recordsOf(row).map((id) => ({ id, visible }))
-        })
-    )
-    const ids = (keep: (entry: (typeof order)[number]) => boolean) =>
-        order.filter(keep).map(({ id }) => id)
-    const later = [
-        ...ids(({ id, visible }) => !visible && !seen.has(id)),
-        ...ids(({ id, visible }) => !visible && seen.has(id)),
-    ]
-    let rest = [
-        ...ids(({ id, visible }) => visible && !seen.has(id)),
-        ...ids(({ id, visible }) => visible && seen.has(id)),
-        ...later,
-    ]
-    const start = performance.now()
-    let inView = true
-    const slice = (ms: number) => {
-        rest = run(rest, performance.now() + ms)
-        // The rows in view are done, however many slices they took.
-        if (inView && rest.length <= later.length) {
-            inView = false
-            performance.measure('data-entry:rules-visible', { start })
-        }
-    }
-    measured('data-entry:rules', () => slice(FIRST_SLICE_MS))
-    let cancel = () => {}
-    // Rows still in view take short slices one after another; the rest wait for idle time.
-    const schedule = () => (inView ? soon : whenIdle)(nextSlice)
-    const nextSlice = () => {
-        if (!stopped && rest.length > 0) {
-            slice(IDLE_SLICE_MS)
-            cancel = schedule()
-        }
-    }
-    cancel = schedule()
+    const queue = ruleQueue({ tables, idScope, seen, lazy, run })
+    queue.start()
 
     const unsubscribes = [
+        drawn?.subscribe(queue.drawn),
         // A person's change re-runs the rows it can affect; an event date, an attribute or an enrolment date, every row
         // of that person.
         store.subscribe(({ cells }, before) => {
@@ -538,11 +509,12 @@ export const connectRules = ({
             )
         }),
         // A new or removed record re-runs its person's rows; a saved status, which rewrote the row's effects, the row.
+        // Of a person's rows, one neither evaluated nor drawn yet waits for the grid to draw it.
         tables.subscribe(({ records: is }, { records: was }) => {
             if (is === was) {
                 return
             }
-            rerunNow([
+            const rowIds = [
                 ...[...is.values()].flatMap((record) => {
                     if (was.get(record.id) === record) {
                         return []
@@ -554,7 +526,8 @@ export const connectRules = ({
                 ...[...was.values()].flatMap((record) =>
                     is.has(record.id) ? [] : personRows(is, record)
                 ),
-            ])
+            ]
+            rerunNow(lazy.park(rowIds, (id) => !was.has(id)))
         }),
     ]
     const onFocusOut = ({ target }: FocusEvent) => {
@@ -572,9 +545,7 @@ export const connectRules = ({
         flush()
         // A changed row its rules reached, and that is not waiting to run again, holds what they say.
         const due =
-            !touched.has(recordId) ||
-            !seen.has(recordId) ||
-            rest.includes(recordId)
+            !touched.has(recordId) || !seen.has(recordId) || queue.has(recordId)
         if (!stopped && due) {
             touched.add(recordId)
             measured('data-entry:rules-edit', () => run([recordId]))
@@ -585,9 +556,9 @@ export const connectRules = ({
 
     return () => {
         stopped = true
-        cancel()
+        queue.stop()
         cancelPending?.()
-        unsubscribes.forEach((unsubscribe) => unsubscribe())
+        unsubscribes.forEach((unsubscribe) => unsubscribe?.())
         document.removeEventListener('focusout', onFocusOut)
         beforeComplete.delete(prepare)
     }

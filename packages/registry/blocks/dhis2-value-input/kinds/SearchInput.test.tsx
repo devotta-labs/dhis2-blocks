@@ -30,7 +30,7 @@ const DISCONNECTED = {
 }
 
 /**
- * An org unit field in a form that keeps the value it is told, over a server whose org units start "Ngelehun" and
+ * An org unit field in a form that keeps the value it is told, with a field after it, over a server whose org units start "Ngelehun" and
  * whose one user is "admin"; offline, the runtime says the server cannot be reached.
  */
 const mount = async (
@@ -81,6 +81,7 @@ const mount = async (
                         setValue(next ?? undefined)
                     }}
                 />
+                <input aria-label="Next field" />
             </CustomDataProvider>
         )
     }
@@ -167,7 +168,9 @@ test('Tab picks the highlighted result, as the field is left', async () => {
 
     expect(onChange.mock.calls).toEqual([[CHC, undefined]])
     await expect.element(box).toHaveValue('Ngelehun CHC')
-    await expect.element(box).not.toHaveFocus()
+    await expect
+        .element(page.getByRole('textbox', { name: 'Next field' }))
+        .toHaveFocus()
 })
 
 test('Enter picks the highlighted result', async () => {

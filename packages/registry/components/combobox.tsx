@@ -2,6 +2,7 @@
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
 import { IconChevronDown16 } from '@dhis2/ui-icons'
+import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 import { CheckboxCheckmark, checkboxBoxVariants } from './checkbox'
 import { cn } from './cn'
@@ -97,6 +98,8 @@ function ComboboxInput({
                         data-slot="input-group-button"
                         className="group-has-data-[slot=combobox-clear]/input-group:hidden"
                         disabled={disabled}
+                        // The input opens the list from the keyboard; the button is for the pointer, not a Tab stop.
+                        tabIndex={-1}
                     />
                 )}
                 {showClear && <ComboboxClear disabled={disabled} />}
@@ -265,19 +268,37 @@ function ComboboxSeparator({
     )
 }
 
-function ComboboxChips({
-    className,
-    ...props
-}: React.ComponentPropsWithRef<typeof ComboboxPrimitive.Chips> &
-    ComboboxPrimitive.Chips.Props) {
-    return (
-        <ComboboxPrimitive.Chips
-            data-slot="combobox-chips"
-            className={cn('flex flex-wrap items-center gap-1', className)}
-            {...props}
-        />
-    )
-}
+/**
+ * The box holding the chips and the chips input, framed like the house input
+ * and select trigger; `size="sm"` matches the dense select trigger.
+ */
+const comboboxChipsVariants = cva(
+    'relative flex w-full min-w-0 cursor-text flex-wrap items-center gap-1 rounded-dhis2-sm border border-dhis2-input bg-dhis2-background text-sm leading-4 text-dhis2-foreground shadow-[inset_0_0_1px_0_color-mix(in_srgb,var(--dhis2-foreground)_10%,transparent)] outline-none has-focus-visible:border-dhis2-ring has-focus-visible:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] forced-colors:has-[[data-slot=combobox-chip-input]:focus-visible]:outline-2 forced-colors:has-[[data-slot=combobox-chip-input]:focus-visible]:outline-solid forced-colors:has-[[data-slot=combobox-chip-input]:focus-visible]:-outline-offset-2 has-data-popup-open:border-dhis2-ring has-data-popup-open:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] has-disabled:cursor-not-allowed has-disabled:bg-dhis2-muted has-disabled:text-dhis2-disabled-foreground has-aria-invalid:border-dhis2-destructive-border',
+    {
+        variants: {
+            size: {
+                default: 'min-h-10 py-1.5 ps-3 pe-1.5',
+                sm: 'min-h-(--dhis2-field-height-dense) py-0.5 ps-2 pe-1',
+            },
+        },
+        defaultVariants: {
+            size: 'default',
+        },
+    }
+)
+
+const ComboboxChips = React.forwardRef<
+    HTMLDivElement,
+    ComboboxPrimitive.Chips.Props & VariantProps<typeof comboboxChipsVariants>
+>(({ className, size = 'default', ...props }, ref) => (
+    <ComboboxPrimitive.Chips
+        ref={ref}
+        data-slot="combobox-chips"
+        className={cn(comboboxChipsVariants({ size }), className)}
+        {...props}
+    />
+))
+ComboboxChips.displayName = 'ComboboxChips'
 
 /** Matches the dense @dhis2/ui Chip that MultiSelect shows per selection. */
 function ComboboxChip({

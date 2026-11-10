@@ -25,6 +25,7 @@ import chartTrendSource from './ui/ChartTrend.tsx?raw'
 import chartVisitsSource from './ui/ChartVisits.tsx?raw'
 import checkboxOptionsSource from './ui/CheckboxOptions.tsx?raw'
 import comboboxOrgUnitsSource from './ui/ComboboxOrgUnits.tsx?raw'
+import comboboxMultipleSource from './ui/ComboboxMultiple.tsx?raw'
 import dialogConfirmSource from './ui/DialogConfirm.tsx?raw'
 import dropdownMenuActionsSource from './ui/DropdownMenuActions.tsx?raw'
 import inputFieldSource from './ui/InputField.tsx?raw'
@@ -363,6 +364,14 @@ const examples = [
         Component: lazy(() => import('./ui/ComboboxOrgUnits')),
         source: comboboxOrgUnitsSource,
         minHeight: 420,
+    },
+    {
+        slug: 'combobox/multiple',
+        title: 'Programs as chips',
+        live: false,
+        Component: lazy(() => import('./ui/ComboboxMultiple')),
+        source: comboboxMultipleSource,
+        minHeight: 320,
     },
     {
         slug: 'dialog/confirm',

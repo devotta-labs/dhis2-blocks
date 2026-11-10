@@ -3,6 +3,7 @@ import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { Button } from './button'
 import { Checkbox } from './checkbox'
+import { Combobox, ComboboxChips, ComboboxChipsInput } from './combobox'
 import { Input } from './input'
 import { RadioGroup, RadioGroupItem } from './radio-group'
 import { Toggle } from './toggle'
@@ -19,6 +20,41 @@ describe('form controls in the default theme', () => {
         expect(style(input).borderTopColor).toBe(roleColour('input'))
         expect(getComputedStyle(input, '::placeholder').color).toBe(
             roleColour('subtle-foreground')
+        )
+    })
+
+    it('ring a chips box like an input while its input has focus', async () => {
+        const screen = await render(
+            <Combobox items={['Bo']} multiple>
+                <ComboboxChips data-testid="chips">
+                    <ComboboxChipsInput aria-label="Facilities" />
+                </ComboboxChips>
+            </Combobox>
+        )
+        const chips = style(screen.getByTestId('chips').element())
+        expect(chips.borderTopColor).toBe(roleColour('input'))
+        await userEvent.tab()
+        expect(chips.borderTopColor).toBe(roleColour('ring'))
+        expect(chips.boxShadow).toContain(
+            `${roleColour('ring')} 0px 0px 0px 2px inset`
+        )
+    })
+
+    it('size a chips box like an input', async () => {
+        const screen = await render(
+            <>
+                <Input aria-label="Name" />
+                <Combobox items={['Bo']} multiple>
+                    <ComboboxChips data-testid="chips">
+                        <ComboboxChipsInput aria-label="Facilities" />
+                    </ComboboxChips>
+                </Combobox>
+            </>
+        )
+        const height = (element: Element) =>
+            element.getBoundingClientRect().height
+        expect(height(screen.getByTestId('chips').element())).toBe(
+            height(screen.getByRole('textbox', { name: 'Name' }).element())
         )
     })
 

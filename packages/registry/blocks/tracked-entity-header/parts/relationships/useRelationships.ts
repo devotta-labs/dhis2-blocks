@@ -11,6 +11,7 @@ import {
     METADATA_STALE_TIME,
     trackedEntityHeaderQueryKeys as keys,
 } from '../../api/queryKeys'
+import type { RelationshipTypeMeta } from '../../api/types'
 import { useHeaderContext } from '../../provider/context'
 import {
     resolveRelationships,
@@ -22,7 +23,12 @@ export type RelationshipsState =
     | { kind: 'hidden' }
     | { kind: 'loading' }
     | { kind: 'unavailable' }
-    | { kind: 'ready'; groups: RelationshipGroup[] }
+    | {
+          kind: 'ready'
+          groups: RelationshipGroup[]
+          /** Metadata of the types the groups, and `extraTypes`, name. */
+          types: Map<string, RelationshipTypeMeta>
+      }
 
 /** Unwraps a Result so React Query owns the error state. */
 const unwrap = <T>(result: Result<T, Error>): T => {
@@ -34,9 +40,10 @@ const unwrap = <T>(result: Result<T, Error>): T => {
 
 const EMPTY: string[] = []
 
-/** The record's relationships, resolved into labelled groups. Parts share its three queries through the cache. */
+/** The record's relationships, resolved into labelled groups. Parts share its three queries through the cache. `extraTypes` also fetches those types' metadata, so a type with no link can still be named. */
 export const useRelationships = (
-    labels?: Readonly<Record<string, RelationshipLabel>>
+    labels?: Readonly<Record<string, RelationshipLabel>>,
+    extraTypes: readonly string[] = EMPTY
 ): RelationshipsState => {
     const { state, resourceClient, clientId, display } = useHeaderContext()
     const id = state.status === 'ready' ? state.trackedEntity.id : undefined
@@ -49,12 +56,23 @@ export const useRelationships = (
         retry: shouldRetryTrackedEntityHeaderRequest,
     })
 
-    const typeIds = useMemo(
+    const linkedTypes = useMemo(
         () =>
             relationships.data
                 ? [...new Set(relationships.data.map(({ type }) => type))]
                 : EMPTY,
         [relationships.data]
+    )
+    const extraKey = extraTypes.join(',')
+    // Asked for once the links are known, so the key is settled: one request however the answers arrive.
+    const typeIds = useMemo(
+        () =>
+            relationships.data
+                ? [...new Set([...linkedTypes, ...extraKey.split(',')])].filter(
+                      Boolean
+                  )
+                : EMPTY,
+        [relationships.data, linkedTypes, extraKey]
     )
     const types = useQuery({
         queryKey: keys.relationshipTypes(clientId, typeIds),
@@ -72,14 +90,16 @@ export const useRelationships = (
             types.data
                 ? [
                       ...new Set(
-                          [...types.data.values()].flatMap(({ ends }) => [
-                              ...ends.from.view,
-                              ...ends.to.view,
-                          ])
+                          linkedTypes.flatMap((type) => {
+                              const ends = types.data.get(type)?.ends
+                              return ends
+                                  ? [...ends.from.view, ...ends.to.view]
+                                  : []
+                          })
                       ),
                   ]
                 : EMPTY,
-        [types.data]
+        [types.data, linkedTypes]
     )
     const attributes = useQuery({
         queryKey: keys.viewAttributes(clientId, viewIds),
@@ -122,5 +142,5 @@ export const useRelationships = (
     ) {
         return { kind: 'loading' }
     }
-    return { kind: 'ready', groups }
+    return { kind: 'ready', groups, types: typeData ?? new Map() }
 }

@@ -4,7 +4,7 @@ import React, { type ReactNode } from 'react'
 import { setupMessage, type AttributeValueState } from './useAttributeValue'
 
 /** A label and its value side by side, wrapping when narrow. Without a label, just the value. */
-const FactPair = ({
+export const FactPair = ({
     label,
     className,
     row,
@@ -48,7 +48,7 @@ const FactPair = ({
     )
 }
 
-const Muted = ({ children }: { children: string }) => (
+export const Muted = ({ children }: { children: string }) => (
     <span className="font-normal text-dhis2-muted-foreground">{children}</span>
 )
 

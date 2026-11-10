@@ -29,6 +29,11 @@ export {
     type TrackedEntityOwnerProps,
 } from './parts/TrackedEntityOwner'
 export {
+    TrackedEntityRelationship,
+    type TrackedEntityRelationshipProps,
+} from './parts/TrackedEntityRelationship'
+export { type RelationshipLabel } from './parts/relationships/resolve'
+export {
     TrackedEntityStatus,
     type TrackedEntityStatusProps,
 } from './parts/TrackedEntityStatus'

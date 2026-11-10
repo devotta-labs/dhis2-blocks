@@ -14,6 +14,7 @@ import personType from '../api/__fixtures__/trackedEntityType.person.json'
 import {
     createTrackedEntityHeaderClient,
     type DataEngineLike,
+    type DataEngineValue,
     type ResourceRequest,
 } from '../api/client'
 import { useTrackedEntityHeader, type TrackedEntityHeaderState } from '../hooks'
@@ -38,6 +39,8 @@ interface FakeServerOptions {
     links?: 'case' | 'focus' | 'none'
     /** Answers the relationships request alone with this status. */
     relationshipsFail?: 403 | 500
+    /** Answers the relationships request with this body, in place of `links`. */
+    relationshipsBody?: { relationships: DataEngineValue[] }
     /** Holds the relationships request open until `release` is called. */
     deferRelationships?: boolean
     /** Answers relationship types whose data views name no attributes. */
@@ -120,7 +123,11 @@ export const createFakeServer = (options: FakeServerOptions = {}) => {
                             httpStatusCode: relationshipsFail,
                         })
                     }
-                    return { [key]: LINKS[options.links ?? 'case'] }
+                    return {
+                        [key]:
+                            options.relationshipsBody ??
+                            LINKS[options.links ?? 'case'],
+                    }
                 case 'relationshipTypes':
                     return {
                         [key]: options.bareTypes

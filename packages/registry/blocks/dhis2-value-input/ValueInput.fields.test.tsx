@@ -102,3 +102,30 @@ test("a yes-only field's description sits under its label, beside the box", asyn
     expect(text.left).toBe(label.left)
     expect(text.top).toBeGreaterThan(label.top)
 })
+
+test('on a right-to-left page, a number keeps left to right and text follows its script', async () => {
+    await render(
+        <div dir="rtl">
+            <ValueInput
+                field={{ valueType: 'PHONE_NUMBER' }}
+                settings={SETTINGS}
+                label="Phone"
+                value="+23276123456"
+                onChange={vi.fn()}
+            />
+            <ValueInput
+                field={{ valueType: 'TEXT' }}
+                settings={SETTINGS}
+                label="Name"
+                value="Fatmata"
+                onChange={vi.fn()}
+            />
+        </div>
+    )
+    const phone = page.getByRole('textbox', { name: 'Phone' }).element()
+    expect(phone).toHaveAttribute('dir', 'ltr')
+    expect(getComputedStyle(phone).textAlign).toBe('right')
+    await expect
+        .element(page.getByRole('textbox', { name: 'Name' }))
+        .toHaveAttribute('dir', 'auto')
+})

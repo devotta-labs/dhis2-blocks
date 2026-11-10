@@ -1,5 +1,5 @@
 import type { Ref } from 'react'
-import { inputModeFor } from '@/components/dhis2-value-types'
+import { inputModeFor, textDirectionFor } from '@/components/dhis2-value-types'
 import type { Field } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Input } from '@/components/dhis2/ui/input'
@@ -37,6 +37,7 @@ export const TypedInput = ({
             id={id}
             type="text"
             inputMode={inputModeFor(field)}
+            dir={textDirectionFor(field)}
             autoComplete="off"
             spellCheck={false}
             readOnly={readOnly}
@@ -50,7 +51,12 @@ export const TypedInput = ({
                     draft.commit()
                 }
             }}
-            className={cn(readOnly && READ_ONLY_CLASS, className)}
+            // On a right-to-left page the text keeps to the page's start, whatever its own direction.
+            className={cn(
+                readOnly && READ_ONLY_CLASS,
+                'rtl:text-right',
+                className
+            )}
         />
     )
 }

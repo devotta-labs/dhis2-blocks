@@ -103,6 +103,8 @@ export const CoordinateEditor = ({
             <Input
                 id={`${id}-${axis}`}
                 value={texts[axis]}
+                // Signed decimals, in order on a right-to-left page too.
+                dir="ltr"
                 autoComplete="off"
                 spellCheck={false}
                 aria-invalid={
@@ -114,7 +116,10 @@ export const CoordinateEditor = ({
                 )}
                 onChange={({ target }) => change(axis, target.value)}
                 onKeyDown={saveOnCtrlEnter(commit)}
-                className={cn(!inline && 'h-(--dhis2-field-height-dense)')}
+                className={cn(
+                    'rtl:text-right',
+                    !inline && 'h-(--dhis2-field-height-dense)'
+                )}
             />
             {shown.includes(axis) ? (
                 <p

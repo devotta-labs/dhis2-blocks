@@ -3,7 +3,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
-import { cellKind } from '@/components/dhis2-value-types'
+import { cellKind, textDirectionFor } from '@/components/dhis2-value-types'
 import type {
     CellKind,
     Field,
@@ -266,11 +266,15 @@ export const ValueInput = ({
         field.valueType === 'FILE_RESOURCE' || field.valueType === 'IMAGE'
     // Ids whose names the host may know.
     const named = kind === 'search' || file
+    // One piece of text, so the mark follows the last word however the label wraps.
     const title = (
-        <>
+        <span>
             {label}
             {required ? (
-                <span aria-hidden="true" className="text-dhis2-destructive">
+                <span
+                    aria-hidden="true"
+                    className="ms-0.5 text-dhis2-destructive"
+                >
                     *
                 </span>
             ) : null}
@@ -278,7 +282,7 @@ export const ValueInput = ({
                 // An editor's controls cannot say it, so its name does.
                 <span className="sr-only"> {i18n.t('required')}</span>
             ) : null}
-        </>
+        </span>
     )
     let control: ReactNode
     if (editor) {
@@ -357,6 +361,7 @@ export const ValueInput = ({
                 {field.valueType === 'LONG_TEXT' ? (
                     <Textarea
                         id={id}
+                        dir="auto"
                         readOnly
                         aria-required={required || undefined}
                         value={shown}
@@ -369,7 +374,8 @@ export const ValueInput = ({
                         readOnly
                         aria-required={required || undefined}
                         value={shown}
-                        className={READ_ONLY_CLASS}
+                        dir={textDirectionFor(field)}
+                        className={cn(READ_ONLY_CLASS, 'rtl:text-right')}
                     />
                 )}
                 {file && fileUrl !== undefined ? (

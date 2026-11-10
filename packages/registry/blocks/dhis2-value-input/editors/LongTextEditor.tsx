@@ -67,6 +67,8 @@ export const LongTextEditor = ({
             <Textarea
                 ref={area}
                 value={text}
+                // Typed text follows its own script, on a right-to-left page too.
+                dir="auto"
                 aria-labelledby={labelledBy}
                 aria-describedby={idList(
                     problem !== undefined && problemId,

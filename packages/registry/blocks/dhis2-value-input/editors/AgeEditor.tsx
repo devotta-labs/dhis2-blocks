@@ -230,6 +230,8 @@ export const AgeEditor = ({
     }
     const fieldProps = (part: Part) => ({
         id: `${id}-${part}`,
+        // A date and whole numbers, in order on a right-to-left page too.
+        dir: 'ltr',
         autoComplete: 'off',
         spellCheck: false,
         'aria-invalid': invalid || shown?.part === part ? true : undefined,
@@ -239,7 +241,10 @@ export const AgeEditor = ({
             describedBy
         ),
         onKeyDown: saveOnCtrlEnter(commit),
-        className: cn(!inline && 'h-(--dhis2-field-height-dense)'),
+        className: cn(
+            'rtl:text-right',
+            !inline && 'h-(--dhis2-field-height-dense)'
+        ),
     })
     const label = (part: Part) => (
         <Label htmlFor={`${id}-${part}`}>{labels[part]}</Label>

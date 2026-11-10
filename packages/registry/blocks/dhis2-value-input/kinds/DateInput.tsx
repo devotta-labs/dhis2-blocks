@@ -31,9 +31,9 @@ export const dateFormatHint = (
 
 const DAY: Field = { valueType: 'DATE' }
 
-/** The direction the page sets around an element, if any. */
+/** The direction the page sets around an element, if any: not the element's own, as a date's text is always `ltr`. */
 const directionOf = (element: Element | null) => {
-    const dir = element?.closest('[dir]')?.getAttribute('dir')
+    const dir = element?.parentElement?.closest('[dir]')?.getAttribute('dir')
     return dir === 'rtl' || dir === 'ltr' ? dir : undefined
 }
 

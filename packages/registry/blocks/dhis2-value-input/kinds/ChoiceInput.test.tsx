@@ -109,6 +109,59 @@ test('a Yes-only box reports Yes when ticked and no value when unticked', async 
     expect(onChange).toHaveBeenLastCalledWith(null)
 })
 
+test('a Yes-only box keeps its size in a wide field', async () => {
+    await render(
+        <div style={{ width: 400 }}>
+            <ValueInput
+                field={{ valueType: 'TRUE_ONLY' }}
+                settings={SETTINGS}
+                label={LABEL}
+                value={undefined}
+                onChange={() => undefined}
+            />
+        </div>
+    )
+    const box = page.getByRole('checkbox', { name: LABEL }).element()
+    const { width, height } = box.getBoundingClientRect()
+    expect(width).toBe(height)
+})
+
+test('a Yes-only box has its label beside it, which ticks it when clicked', async () => {
+    const onChange = await mount(
+        { valueType: 'TRUE_ONLY' },
+        { required: true, description: 'Seen today' }
+    )
+    const box = page.getByRole('checkbox', { name: LABEL })
+    const label = page.getByText(LABEL)
+    const boxAt = box.element().getBoundingClientRect()
+    const labelAt = label.element().getBoundingClientRect()
+    expect(labelAt.left).toBeGreaterThan(boxAt.right)
+    expect(labelAt.top).toBeLessThan(boxAt.bottom)
+    await expect.element(box).toHaveAccessibleDescription('Seen today')
+    await expect.element(box).toHaveAttribute('aria-required', 'true')
+    expect(
+        page.getByText('Seen today').element().getBoundingClientRect().top
+    ).toBeGreaterThanOrEqual(boxAt.bottom)
+
+    await userEvent.click(label)
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('true')
+})
+
+test('Yes and No sit on one row, with Clear after them; an option set has a radio per line', async () => {
+    await mount(BOOLEAN, { value: 'true' })
+    const top = (element: Element) => element.getBoundingClientRect().top
+    const yes = radio('Yes').element()
+    expect(top(radio('No').element())).toBe(top(yes))
+    expect(clear().element().getBoundingClientRect().left).toBeGreaterThan(
+        radio('No').element().getBoundingClientRect().right
+    )
+
+    await mount(SHORT)
+    expect(top(radio('Name B').element())).toBeGreaterThan(
+        top(radio('Name A').element())
+    )
+})
+
 test('a short option set is a radio group named by the label, showing names', async () => {
     await mount(SHORT)
     await expect

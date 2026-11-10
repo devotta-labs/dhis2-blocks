@@ -4,10 +4,16 @@ import {
     coordinateNumber,
     parseCoordinate,
 } from '@/components/dhis2-value-types'
+import { cn } from '@/components/dhis2/ui/cn'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
 import type { PopupEditorProps } from './popupEditors'
-import { EditorButtons, idList, saveOnCtrlEnter } from './EditorButtons'
+import {
+    EditorButtons,
+    SUB_LABEL_CLASS,
+    idList,
+    saveOnCtrlEnter,
+} from './EditorButtons'
 
 type Axis = 'latitude' | 'longitude'
 type Texts = Record<Axis, string>
@@ -93,38 +99,47 @@ export const CoordinateEditor = ({
         // Back to the first field a message is about, whether Save was clicked or Ctrl+Enter pressed.
         document.getElementById(`${id}-${wrong[0]}`)?.focus()
     }
+    const axes = AXES.map((axis) => (
+        <div
+            key={axis}
+            className={cn('flex flex-col gap-1', inline && 'w-full max-w-40')}
+        >
+            <Label
+                htmlFor={`${id}-${axis}`}
+                className={cn(inline && SUB_LABEL_CLASS)}
+            >
+                {labels[axis]}
+            </Label>
+            <Input
+                id={`${id}-${axis}`}
+                value={texts[axis]}
+                autoComplete="off"
+                spellCheck={false}
+                aria-invalid={
+                    invalid || shown.includes(axis) ? true : undefined
+                }
+                aria-describedby={idList(
+                    shown.includes(axis) && `${id}-${axis}-problem`,
+                    describedBy
+                )}
+                onChange={({ target }) => change(axis, target.value)}
+                onKeyDown={saveOnCtrlEnter(commit)}
+                className={cn(!inline && 'h-(--dhis2-field-height-dense)')}
+            />
+            {shown.includes(axis) ? (
+                <p
+                    id={`${id}-${axis}-problem`}
+                    role="alert"
+                    className="text-xs text-dhis2-destructive"
+                >
+                    {messages[axis]}
+                </p>
+            ) : null}
+        </div>
+    ))
     return (
         <>
-            {AXES.map((axis) => (
-                <div key={axis} className="flex flex-col gap-1">
-                    <Label htmlFor={`${id}-${axis}`}>{labels[axis]}</Label>
-                    <Input
-                        id={`${id}-${axis}`}
-                        value={texts[axis]}
-                        autoComplete="off"
-                        spellCheck={false}
-                        aria-invalid={
-                            invalid || shown.includes(axis) ? true : undefined
-                        }
-                        aria-describedby={idList(
-                            shown.includes(axis) && `${id}-${axis}-problem`,
-                            describedBy
-                        )}
-                        onChange={({ target }) => change(axis, target.value)}
-                        onKeyDown={saveOnCtrlEnter(commit)}
-                        className="h-(--dhis2-field-height-dense)"
-                    />
-                    {shown.includes(axis) ? (
-                        <p
-                            id={`${id}-${axis}-problem`}
-                            role="alert"
-                            className="text-xs text-dhis2-destructive"
-                        >
-                            {messages[axis]}
-                        </p>
-                    ) : null}
-                </div>
-            ))}
+            {inline ? <div className="flex flex-wrap gap-2">{axes}</div> : axes}
             <EditorButtons save={commit} cancel={cancel} inline={inline} />
         </>
     )

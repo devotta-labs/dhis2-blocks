@@ -95,6 +95,35 @@ test('a number is reported when the field is left, not while it is typed', async
     expect(onChange).toHaveBeenCalledExactlyOnceWith('12')
 })
 
+const itself = (input: Element) => input
+// The row the date's input and picker button share.
+const row = (input: Element) => input.parentElement
+
+test.each([
+    ['a number', NUMBER, itself, 192],
+    ['a date with its picker button', { valueType: 'DATE' }, row, 224],
+] as const)(
+    "%s is no wider than its value in a wide field; the field is the host's width",
+    async (_, field, control, most) => {
+        await render(
+            <div style={{ width: 600 }}>
+                <ValueInput
+                    field={field}
+                    settings={SETTINGS}
+                    label={LABEL}
+                    value={undefined}
+                    onChange={() => undefined}
+                />
+            </div>
+        )
+        const input = page.getByRole('textbox', { name: LABEL }).element()
+        expect(control(input)?.getBoundingClientRect().width).toBe(most)
+        expect(
+            input.closest('[data-slot="field"]')?.getBoundingClientRect().width
+        ).toBe(600)
+    }
+)
+
 test('text that is not a number is reported as a problem, shown and marked invalid', async () => {
     const { input, onChange } = await mount()
     await userEvent.click(input)

@@ -16,8 +16,8 @@ import { focusInto } from '../focusInto'
 import type { useDraft } from '../useDraft'
 import { OptionComboInput } from './OptionComboInput'
 
-/** Up to this many visible options are radios; more are searched. */
-const RADIO_LIMIT = 5
+/** Up to this many visible options are radios, or a multi-select's boxes; more are searched. */
+export const RADIO_LIMIT = 5
 
 const NO_OPTIONS: ReadonlyArray<Option> = []
 
@@ -105,7 +105,14 @@ export const ChoiceInput = ({
         calendar: settings.calendar,
     })
     return (
-        <div ref={box} className="flex flex-col gap-2">
+        <div
+            ref={box}
+            className={
+                kind === 'boolean'
+                    ? 'flex flex-wrap items-center gap-x-6 gap-y-2'
+                    : 'flex flex-col gap-2'
+            }
+        >
             {visible > RADIO_LIMIT ? (
                 <OptionComboInput
                     id={id}
@@ -130,6 +137,9 @@ export const ChoiceInput = ({
                     // missing when unchecked, and hold back the host's form.
                     aria-required={required || undefined}
                     onValueChange={(code: string) => onChange(code)}
+                    className={
+                        kind === 'boolean' ? 'flex w-auto gap-6' : undefined
+                    }
                 >
                     {offered.map(({ code, name }) => (
                         <Label key={code} className="cursor-pointer">

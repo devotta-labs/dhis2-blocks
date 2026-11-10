@@ -37,6 +37,9 @@ export const EditorButtons = ({
     )
 }
 
+/** In a form, the label of an editor's part, small and muted so the field's own label leads. */
+export const SUB_LABEL_CLASS = 'text-xs text-dhis2-muted-foreground'
+
 /** Ids for `aria-describedby`, without the absent ones; undefined for none. */
 export const idList = (...ids: Array<string | false | undefined>) =>
     ids.filter(Boolean).join(' ') || undefined

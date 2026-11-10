@@ -210,7 +210,6 @@ test('a multi-select is reported when the field is left, in option-set order; Cl
         .element(page.getByRole('checkbox', { name: 'Fever' }))
         .not.toBeChecked()
 })
-
 test('a chosen file is reported as still uploading at once, then as its id', async () => {
     const { onChange, uploads } = await mount({ valueType: 'FILE_RESOURCE' })
     const scan = new File(['x'], 'scan.txt', { type: 'text/plain' })

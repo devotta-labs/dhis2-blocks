@@ -53,6 +53,39 @@ const FIELDS: ReadonlyArray<{ id: string; label: string; field: Field }> = [
             ],
         },
     },
+    {
+        id: 'occupation',
+        label: 'Occupation',
+        field: {
+            valueType: 'TEXT',
+            options: [
+                { code: 'FARM', name: 'Farmer' },
+                { code: 'TEACH', name: 'Teacher' },
+                { code: 'TRADE', name: 'Trader' },
+                { code: 'HEALTH', name: 'Health worker' },
+                { code: 'STUDENT', name: 'Student' },
+                { code: 'MINER', name: 'Miner' },
+                { code: 'FISHER', name: 'Fisher' },
+                { code: 'OTHER', name: 'Other' },
+            ],
+        },
+    },
+    {
+        id: 'danger',
+        label: 'Danger signs',
+        field: {
+            valueType: 'MULTI_TEXT',
+            options: [
+                { code: 'CONV', name: 'Convulsions' },
+                { code: 'LETH', name: 'Lethargy' },
+                { code: 'VOMIT', name: 'Vomiting everything' },
+                { code: 'DRINK', name: 'Unable to drink' },
+                { code: 'BREATH', name: 'Difficult breathing' },
+                { code: 'BLEED', name: 'Abnormal bleeding' },
+                { code: 'JAUND', name: 'Jaundice' },
+            ],
+        },
+    },
     { id: 'home', label: 'Home location', field: { valueType: 'COORDINATE' } },
     { id: 'notes', label: 'Notes', field: { valueType: 'LONG_TEXT' } },
 ]

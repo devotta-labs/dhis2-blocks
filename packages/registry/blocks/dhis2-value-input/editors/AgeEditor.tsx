@@ -9,11 +9,18 @@ import {
     typedText,
 } from '@/components/dhis2-value-types'
 import type { Age, Field, ValueSettings } from '@/components/dhis2-value-types'
+import { cn } from '@/components/dhis2/ui/cn'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
 import { todayIso } from '@/components/dhis2-value-types'
+import { DatePickerButton } from '../kinds/DateInput'
 import type { PopupEditorProps } from './popupEditors'
-import { EditorButtons, idList, saveOnCtrlEnter } from './EditorButtons'
+import {
+    EditorButtons,
+    SUB_LABEL_CLASS,
+    idList,
+    saveOnCtrlEnter,
+} from './EditorButtons'
 
 // The date of birth is typed and shown as any date is: in the system calendar and date format.
 const DATE: Field = { valueType: 'DATE' }
@@ -151,6 +158,7 @@ export const AgeEditor = ({
 }: AgeEditorProps) => {
     const id = useId()
     const problemId = useId()
+    const birthRef = useRef<HTMLInputElement>(null)
     const [birth, setBirth] = useState(
         value === undefined ? '' : typedText(DATE, value, settings)
     )
@@ -229,8 +237,25 @@ export const AgeEditor = ({
             describedBy
         ),
         onKeyDown: saveOnCtrlEnter(commit),
-        className: 'h-(--dhis2-field-height-dense)',
+        className: cn(!inline && 'h-(--dhis2-field-height-dense)'),
     })
+    const label = (part: Part) => (
+        <Label
+            htmlFor={`${id}-${part}`}
+            className={cn(inline && SUB_LABEL_CLASS)}
+        >
+            {labels[part]}
+        </Label>
+    )
+    const birthInput = (
+        <Input
+            {...fieldProps('birth')}
+            ref={birthRef}
+            value={birth}
+            placeholder={settings.dateFormat}
+            onChange={({ target }) => typeBirth(target.value)}
+        />
+    )
     // Under the date of birth, or under the parts, whichever the refused save is about.
     const problem = (aboutBirth: boolean) =>
         shown === undefined ||
@@ -243,33 +268,53 @@ export const AgeEditor = ({
                 {shown.message}
             </p>
         )
+    const birthPart = (
+        <div className={cn('flex flex-col gap-1', inline && 'w-56')}>
+            {label('birth')}
+            {inline ? (
+                <div className="flex gap-2">
+                    {birthInput}
+                    <DatePickerButton
+                        input={birthRef}
+                        date={
+                            reading.value === null
+                                ? ''
+                                : typedText(DATE, reading.value, settings)
+                        }
+                        settings={settings}
+                        pick={typeBirth}
+                    />
+                </div>
+            ) : (
+                birthInput
+            )}
+            {problem(true)}
+        </div>
+    )
+    const ageParts = AGE_PARTS.map((part) => (
+        <div key={part} className={cn('flex flex-col gap-1', inline && 'w-20')}>
+            {label(part)}
+            <Input
+                {...fieldProps(part)}
+                value={age[part]}
+                inputMode="numeric"
+                onChange={({ target }) => typeAge(part, target.value)}
+            />
+        </div>
+    ))
     return (
         <>
-            <div className="flex flex-col gap-1">
-                <Label htmlFor={`${id}-birth`}>{labels.birth}</Label>
-                <Input
-                    {...fieldProps('birth')}
-                    value={birth}
-                    placeholder={settings.dateFormat}
-                    onChange={({ target }) => typeBirth(target.value)}
-                />
-                {problem(true)}
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-                {AGE_PARTS.map((part) => (
-                    <div key={part} className="flex flex-col gap-1">
-                        <Label htmlFor={`${id}-${part}`}>{labels[part]}</Label>
-                        <Input
-                            {...fieldProps(part)}
-                            value={age[part]}
-                            inputMode="numeric"
-                            onChange={({ target }) =>
-                                typeAge(part, target.value)
-                            }
-                        />
-                    </div>
-                ))}
-            </div>
+            {inline ? (
+                <div className="flex flex-wrap items-start gap-2">
+                    {birthPart}
+                    {ageParts}
+                </div>
+            ) : (
+                <>
+                    {birthPart}
+                    <div className="grid grid-cols-3 gap-2">{ageParts}</div>
+                </>
+            )}
             {problem(false)}
             <EditorButtons save={commit} cancel={cancel} inline={inline} />
         </>

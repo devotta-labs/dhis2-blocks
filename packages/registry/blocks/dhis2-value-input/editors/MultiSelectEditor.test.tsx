@@ -31,22 +31,22 @@ const mount = async (inline: boolean) => {
             />
         </>
     )
-    return {
-        announce,
-        search: page.getByRole('searchbox', { name: 'Symptoms' }),
-    }
+    return { announce }
 }
 
-test('inline, the count is said once the search is typed in, not when the editor appears', async () => {
-    const { announce, search } = await mount(true)
-    await expect.element(page.getByText(COUNT)).toBeVisible()
+test('inline, the count is said once the combobox is typed in, not when the editor appears', async () => {
+    const { announce } = await mount(true)
+    const search = page.getByRole('combobox', { name: 'Symptoms' })
+    await expect.element(search).toBeVisible()
     expect(announce).not.toHaveBeenCalled()
 
-    await userEvent.fill(search, 'option')
+    await userEvent.click(search)
+    await userEvent.keyboard('option')
     await expect.poll(() => announce.mock.calls).toEqual([[COUNT]])
 })
 
-test('in a dialog, the count is said when the editor opens', async () => {
+test('in a dialog, the count is shown and said when the editor opens', async () => {
     const { announce } = await mount(false)
+    await expect.element(page.getByText(COUNT)).toBeVisible()
     await expect.poll(() => announce.mock.calls).toEqual([[COUNT]])
 })

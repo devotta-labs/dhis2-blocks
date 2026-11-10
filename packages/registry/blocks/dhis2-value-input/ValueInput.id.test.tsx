@@ -8,6 +8,13 @@ const NUMBER: Field = { valueType: 'NUMBER' }
 const BOOLEAN: Field = { valueType: 'BOOLEAN' }
 const COORDINATE: Field = { valueType: 'COORDINATE' }
 const LABEL = 'Temperature'
+const multiSelect = (count: number): Field => ({
+    valueType: 'MULTI_TEXT',
+    options: Array.from({ length: count }, (_, index) => ({
+        code: `O${index + 1}`,
+        name: `Option ${index + 1}`,
+    })),
+})
 
 /** A field with the id `given`, as a host that links to or focuses it gives one. */
 const mount = async (props: Partial<ValueInputProps>) => {
@@ -42,6 +49,20 @@ test.each([
         undefined,
         'textbox',
         /Latitude/,
+    ],
+    [
+        'a short multi-select, at its first box',
+        multiSelect(5),
+        undefined,
+        'checkbox',
+        'Option 1',
+    ],
+    [
+        'a long multi-select, at its combobox',
+        multiSelect(6),
+        undefined,
+        'combobox',
+        LABEL,
     ],
 ] as const)(
     'a host focusing the id given puts focus in %s',

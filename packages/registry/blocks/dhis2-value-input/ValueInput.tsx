@@ -4,7 +4,11 @@ import type { ReactNode } from 'react'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
 import { cellKind } from '@/components/dhis2-value-types'
-import type { Field, ValueSettings } from '@/components/dhis2-value-types'
+import type {
+    CellKind,
+    Field,
+    ValueSettings,
+} from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
 import {
     Field as FieldRoot,
@@ -107,6 +111,14 @@ const Problem = ({ grouped, ...props }: PartProps) =>
     ) : (
         <FieldError {...props} />
     )
+
+// A control as wide as the value it holds; the field is as wide as the host makes it.
+const WIDTHS = new Map<CellKind, string>([
+    ['number', 'max-w-48'],
+    ['time', 'max-w-32'],
+    ['date', 'max-w-56'],
+    ['dateTime', 'max-w-64'],
+])
 
 const metaOf = ({ valueType, options }: Field): ValueMeta => ({
     valueType,
@@ -247,6 +259,7 @@ export const ValueInput = ({
                 draft={draft}
                 readOnly={reason !== undefined}
                 required={required}
+                className={WIDTHS.get(kind)}
             />
         )
     } else if (typed) {
@@ -257,6 +270,7 @@ export const ValueInput = ({
                 draft={draft}
                 readOnly={reason !== undefined}
                 required={required}
+                className={WIDTHS.get(kind)}
             />
         )
     } else if (choice) {
@@ -321,20 +335,31 @@ export const ValueInput = ({
             ) : null}
         </>
     )
+    const labelPart = grouped ? (
+        <Label id={labelId} className="w-fit leading-snug">
+            {title}
+            {required ? (
+                // The group's name is all a screen reader has to say it.
+                <span className="sr-only"> {i18n.t('required')}</span>
+            ) : null}
+        </Label>
+    ) : (
+        <FieldLabel id={labelId}>{title}</FieldLabel>
+    )
     const parts = (
         <>
-            {grouped ? (
-                <Label id={labelId} className="w-fit leading-snug">
-                    {title}
-                    {required ? (
-                        // The group's name is all a screen reader has to say it.
-                        <span className="sr-only"> {i18n.t('required')}</span>
-                    ) : null}
-                </Label>
+            {kind === 'trueOnly' ? (
+                // The house checkbox: the box, then the label that ticks it.
+                <div className="flex items-center gap-2">
+                    {control}
+                    {labelPart}
+                </div>
             ) : (
-                <FieldLabel id={labelId}>{title}</FieldLabel>
+                <>
+                    {labelPart}
+                    {control}
+                </>
             )}
-            {control}
             {description === undefined ? null : (
                 <Description grouped={grouped} id={`${id}-description`}>
                     {description}

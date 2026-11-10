@@ -16,6 +16,7 @@ export const TypedInput = ({
     draft,
     readOnly,
     required,
+    className,
 }: {
     id: string
     inputRef?: Ref<HTMLInputElement>
@@ -23,6 +24,7 @@ export const TypedInput = ({
     draft: ReturnType<typeof useDraft>
     readOnly: boolean
     required: boolean
+    className?: string
 }) => (
     <Input
         ref={inputRef}
@@ -42,6 +44,6 @@ export const TypedInput = ({
                 draft.commit()
             }
         }}
-        className={cn(readOnly && READ_ONLY_CLASS)}
+        className={cn(readOnly && READ_ONLY_CLASS, className)}
     />
 )

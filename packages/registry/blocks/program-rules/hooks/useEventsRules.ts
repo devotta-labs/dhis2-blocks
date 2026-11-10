@@ -23,6 +23,11 @@ import {
     type RuleOrgUnitGroupMetadata,
 } from '../lib'
 import { indexRows, withLiveEvents } from '../lib/manyEvents'
+import {
+    backgroundRules,
+    startRulesWorker,
+    type BackgroundEvaluation,
+} from './backgroundRules'
 import { shouldRetryProgramRulesRequest, useProgramRulesClient } from './client'
 import { ENROLLMENT_BATCH_SIZE, fetchRuleEnrollments } from './enrollment'
 import { useRuleEngine } from './loadRuleEngine'
@@ -61,6 +66,19 @@ export interface EventsRules {
         rows: ReadonlyArray<EventsRuleRow>,
         rowIds: ReadonlyArray<string>
     ): EventsRulesEvaluation
+    /**
+     * `evaluate` in a Web Worker, so a grid loading many rows leaves the main thread free: for the first of `rowIds`
+     * the worker gets to in `forMs`, a row at least, `done` of them in order. Rows and effects are copied to the worker
+     * and back, so what it returns describes `rows` as they were when asked: evaluate again the rows that changed
+     * meanwhile. A row among the `done` in neither map is one `evaluate` answers without running a rule: ask it.
+     * Returns undefined while the worker is starting and where there is none, and resolves to undefined when the worker
+     * failed: use `evaluate` then. Absent for a program without rules.
+     */
+    evaluateInBackground?(
+        rows: ReadonlyArray<EventsRuleRow>,
+        rowIds: ReadonlyArray<string>,
+        forMs: number
+    ): Promise<BackgroundEvaluation | undefined> | undefined
     /**
      * The rows to run again after `fieldId` changed in `rowId`: the row itself, and for a field other events read, the
      * person's other rows. Covers data value edits only. After an event date changes, or a row is added or removed,
@@ -306,6 +324,12 @@ export const useEventsRules = ({
     const ruleEngine = useRuleEngine(enabled && hasRules)
     // Another hook may have loaded the engine already; a program without rules still needs no context.
     const engine = hasRules ? ruleEngine.engine : undefined
+    // The worker loads its own engine while this one loads.
+    useEffect(() => {
+        if (enabled && hasRules) {
+            startRulesWorker()
+        }
+    }, [enabled, hasRules])
 
     // Read through its content, so a new array of the same stages keeps the contexts.
     const stageKey = [...new Set(programStageIds)].sort().join(',')
@@ -346,6 +370,7 @@ export const useEventsRules = ({
         [engine, metadata, stageIds, enrollments, groupsQuery.data]
     )
     const built = groups.length > 0 ? groupedContexts : baseContexts
+    const orgUnitGroups = groups.length > 0 ? groupsQuery.data : undefined
     const contexts = built?.isOk() ? built.value : undefined
 
     const withEvents = requirements.some((needs) => needs.otherEvents)
@@ -419,6 +444,41 @@ export const useEventsRules = ({
         }
     }, [fetchPersons, loadedChunks, newPeople])
 
+    // The same rules and people in the worker, for `evaluateInBackground`.
+    const background = useMemo(
+        () =>
+            engine === undefined ||
+            metadata === undefined ||
+            metadata.rules.length === 0 ||
+            contexts === undefined ||
+            persons === undefined
+                ? undefined
+                : backgroundRules({
+                      metadata,
+                      stageIds,
+                      orgUnitGroups,
+                      contexts,
+                      persons: persons.persons,
+                      answered: persons.answered,
+                      tracker,
+                      personsLoaded: needsPersons,
+                  }),
+        [
+            engine,
+            metadata,
+            stageIds,
+            orgUnitGroups,
+            contexts,
+            persons,
+            tracker,
+            needsPersons,
+        ]
+    )
+    useEffect(() => {
+        background?.open()
+        return () => background?.release()
+    }, [background])
+
     const rules = useMemo((): EventsRules | undefined => {
         if (metadata !== undefined && metadata.rules.length === 0) {
             return NO_RULES
@@ -451,6 +511,7 @@ export const useEventsRules = ({
                         ? withLoadedPerson(rows, persons.answered, rowIds)
                         : rowIds
                 ),
+            evaluateInBackground: background?.evaluate,
             evaluateEnrollments:
                 enrollmentContext &&
                 ((units) =>
@@ -476,6 +537,7 @@ export const useEventsRules = ({
         tracker,
         needsPersons,
         enrollments,
+        background,
     ])
 
     // A query only fails the hook while it is needed and has nothing to show:

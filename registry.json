@@ -1086,6 +1086,11 @@
             "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
             "files": [
                 {
+                    "path": "packages/registry/blocks/program-rules/hooks/backgroundRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/backgroundRules.ts"
+                },
+                {
                     "path": "packages/registry/blocks/program-rules/hooks/client.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/hooks/client.ts"
@@ -1114,6 +1119,11 @@
                     "path": "packages/registry/blocks/program-rules/hooks/queryKeys.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/hooks/queryKeys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/rulesWorker.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/rulesWorker.ts"
                 },
                 {
                     "path": "packages/registry/blocks/program-rules/hooks/useEventsRules.ts",
@@ -2152,6 +2162,11 @@
                     "path": "packages/registry/blocks/tracker-data-entry/provider/openForm.ts",
                     "type": "registry:file",
                     "target": "@components/tracker-data-entry/provider/openForm.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/ruleSlices.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/ruleSlices.ts"
                 },
                 {
                     "path": "packages/registry/blocks/tracker-data-entry/provider/signedIn.ts",

@@ -3,6 +3,7 @@ import {
     emptyEffects,
     type EventsRuleRow,
     type EventsRules,
+    type EventsRulesEvaluation,
     type RuleEffects,
     type RuleEventInput,
 } from '@/components/program-rules'
@@ -28,19 +29,16 @@ import {
     ruleRowsCache,
     stageFields,
 } from '../logic/ruleEffects'
-import { formOf, recordsOf, recordIdOf, rowsByRecord } from '../model/types'
+import { formOf, recordIdOf, rowsByRecord } from '../model/types'
 import { fieldIdOfKey } from '../model/types'
 import type { DataRecord } from '../model/types'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { LoadedForm } from '../sources/types'
-import { afterPaint, measured, onScreen, soon, whenIdle } from './afterPaint'
+import { afterPaint, measured } from './afterPaint'
 import { lockedElsewhere } from './formRows'
 import type { OpenForm } from './openForm'
+import { runInSlices } from './ruleSlices'
 
-// Loading evaluates rows for about this long at once (a row at least), then for about a frame's time whenever the
-// browser is idle, so it never blocks the page for long.
-const FIRST_SLICE_MS = 100
-const IDLE_SLICE_MS = 16
 // Rules whose values keep changing each other's rows stop after this many passes; settled rules need two.
 const PASSES = 5
 // Rule names are shown as DHIS2 gives them, not HTML-escaped.
@@ -335,14 +333,19 @@ export const connectRules = ({
         return changed
     }
 
+    // While the worker has rows, those whose values may have changed since: what it says of them is out of date.
+    let stale: Set<string> | undefined
+
     /**
      * Evaluates the rows in order, one at a time, until `until` (a `performance.now()` time) passes, a row at least,
-     * and applies what they say. Returns how many it evaluated and the rows the rules' own values can change.
+     * and applies what they say. A row in `known`, what the worker evaluated, is not evaluated again. Returns how many
+     * it evaluated and the rows the rules' own values can change.
      */
     const pass = (
         rowIds: ReadonlyArray<string>,
         said: Set<string>,
-        until = Infinity
+        until = Infinity,
+        known?: EventsRulesEvaluation
     ) => {
         const { tables: all, records } = tables.getState()
         const cells = store.getState().cells
@@ -350,6 +353,11 @@ export const connectRules = ({
         let byEnrollment: ReadonlyMap<string, RuleEventInput[]> | undefined
         // An enrolment runs its enrolment rules; any other record, its event rules.
         const evaluateRecord = (rowId: string, record?: DataRecord) => {
+            if (known?.effects.has(rowId) || known?.failures.has(rowId)) {
+                return known
+            }
+            // What the worker says of the row, when it answers, is older than this.
+            stale?.add(rowId)
             if (record?.kind !== 'enrollment') {
                 return rules.evaluate(ruleRows, [rowId])
             }
@@ -399,12 +407,14 @@ export const connectRules = ({
                 const rowId = recordIdOf(key)
                 // The row's own rules ran with the value; the person's other rows read it through cross-event fields,
                 // and their events read the person's attributes.
-                return affectedBy(
+                const others = affectedBy(
                     records,
                     ruleRows,
                     rowId,
                     fieldIdOfKey(key)
-                ).filter((other) => other !== rowId && seen.has(other))
+                ).filter((other) => other !== rowId)
+                others.forEach((other) => stale?.add(other))
+                return others.filter((other) => seen.has(other))
             })
         )
         return { done, next: [...next] }
@@ -412,11 +422,15 @@ export const connectRules = ({
 
     /**
      * Runs the rows, until `until` passes for a slice of them, then passes until the rules' own values settle, and
-     * says once what they cleared. Returns the rows it did not get to.
+     * says once what they cleared. `known` is what the worker evaluated of them. Returns the rows it did not get to.
      */
-    const run = (rowIds: ReadonlyArray<string>, until = Infinity) => {
+    const run = (
+        rowIds: ReadonlyArray<string>,
+        until = Infinity,
+        known?: EventsRulesEvaluation
+    ) => {
         const said = new Set<string>()
-        const first = pass(rowIds, said, until)
+        const first = pass(rowIds, said, until, known)
         for (
             let next = first.next, left = PASSES - 1;
             next.length > 0 && left > 0;
@@ -443,60 +457,45 @@ export const connectRules = ({
     }
     // A person's changes until the next paint run together, after it: the key or click that made them returns first.
     const rerun = (rowIds: ReadonlyArray<string>) => {
-        rowIds.forEach((rowId) => pending.add(rowId))
+        rowIds.forEach((rowId) => {
+            pending.add(rowId)
+            stale?.add(rowId)
+        })
         if (cancelPending === undefined && pending.size > 0) {
             cancelPending = afterPaint(flush)
         }
     }
     // A row added or saved re-runs before the next paint, so its rule effects never go missing for a frame.
     const rerunNow = (rowIds: ReadonlyArray<string>) => {
-        rowIds.forEach((rowId) => pending.add(rowId))
+        rowIds.forEach((rowId) => {
+            pending.add(rowId)
+            stale?.add(rowId)
+        })
         if (pending.size > 0) {
             queueMicrotask(flush)
         }
     }
 
-    // The records of the visible rows first, then the rest, in their rows' order. Rows evaluated before a reconnection
-    // show their effects meanwhile: they run again after the rows not evaluated yet, in view and off screen alike, as
-    // the people the rules have now can change them.
-    const order = tables.getState().tables.flatMap(({ id: tableId, rows }) =>
-        rows.flatMap((row) => {
-            const visible = onScreen(idScope, tableId, row.id)
-            return recordsOf(row).map((id) => ({ id, visible }))
-        })
-    )
-    const ids = (keep: (entry: (typeof order)[number]) => boolean) =>
-        order.filter(keep).map(({ id }) => id)
-    const later = [
-        ...ids(({ id, visible }) => !visible && !seen.has(id)),
-        ...ids(({ id, visible }) => !visible && seen.has(id)),
-    ]
-    let rest = [
-        ...ids(({ id, visible }) => visible && !seen.has(id)),
-        ...ids(({ id, visible }) => visible && seen.has(id)),
-        ...later,
-    ]
-    const start = performance.now()
-    let inView = true
-    const slice = (ms: number) => {
-        rest = run(rest, performance.now() + ms)
-        // The rows in view are done, however many slices they took.
-        if (inView && rest.length <= later.length) {
-            inView = false
-            performance.measure('data-entry:rules-visible', { start })
-        }
-    }
-    measured('data-entry:rules', () => slice(FIRST_SLICE_MS))
-    let cancel = () => {}
-    // Rows still in view take short slices one after another; the rest wait for idle time.
-    const schedule = () => (inView ? soon : whenIdle)(nextSlice)
-    const nextSlice = () => {
-        if (!stopped && rest.length > 0) {
-            slice(IDLE_SLICE_MS)
-            cancel = schedule()
-        }
-    }
-    cancel = schedule()
+    const slices = runInSlices({
+        tables: tables.getState().tables,
+        seen,
+        idScope,
+        run,
+        ask: (rowIds, forMs) =>
+            rules.evaluateInBackground?.(
+                ruleRowsNow(tables.getState().records, store.getState().cells),
+                rowIds,
+                forMs
+            ),
+        watch: () => {
+            const changed = new Set<string>()
+            stale = changed
+            return () => {
+                stale = undefined
+                return changed
+            }
+        },
+    })
 
     const unsubscribes = [
         // A person's change re-runs the rows it can affect; an event date, an attribute or an enrolment date, every row
@@ -574,7 +573,7 @@ export const connectRules = ({
         const due =
             !touched.has(recordId) ||
             !seen.has(recordId) ||
-            rest.includes(recordId)
+            slices.waiting(recordId)
         if (!stopped && due) {
             touched.add(recordId)
             measured('data-entry:rules-edit', () => run([recordId]))
@@ -585,7 +584,7 @@ export const connectRules = ({
 
     return () => {
         stopped = true
-        cancel()
+        slices.stop()
         cancelPending?.()
         unsubscribes.forEach((unsubscribe) => unsubscribe())
         document.removeEventListener('focusout', onFocusOut)

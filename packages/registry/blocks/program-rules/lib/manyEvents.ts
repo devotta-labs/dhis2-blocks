@@ -140,6 +140,20 @@ export const indexRows = (rows: ReadonlyArray<EventsRuleRow>): RowIndex => {
 }
 
 /**
+ * Whether the row's rules cannot run: a tracker row with no enrolment of its own whose fetched person is missing.
+ * Without its person an ASSIGN that reads attributes assigns nothing, which would clear the row's values.
+ */
+export const lacksPerson = (
+    input: Pick<EventsRuleInput, 'persons' | 'tracker' | 'personsLoaded'>,
+    row: EventsRuleRow
+): boolean =>
+    input.tracker &&
+    input.personsLoaded &&
+    row.enrollmentId !== undefined &&
+    input.persons.get(row.enrollmentId) === undefined &&
+    row.enrollment === undefined
+
+/**
  * Runs the rules of the requested rows against the grid's live values, each row on its own: a row the engine fails on,
  * or a tracker row with no enrolment of its own whose fetched person is missing, is in `failures`, and the other rows still get their effects.
  * `contexts` is keyed by program stage id; a row of a stage without a context, or an id that is not in `input.rows`, is
@@ -168,14 +182,7 @@ export const evaluateEventsRules = (
             enrollmentId === undefined
                 ? undefined
                 : input.persons.get(enrollmentId)
-        // Without its person an ASSIGN that reads attributes assigns nothing, which would clear the row's values.
-        if (
-            input.tracker &&
-            input.personsLoaded &&
-            enrollmentId !== undefined &&
-            person === undefined &&
-            row.enrollment === undefined
-        ) {
+        if (lacksPerson(input, row)) {
             failures.set(
                 rowId,
                 new Error(

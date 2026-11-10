@@ -202,6 +202,11 @@ useEventsRules({
             rows: ReadonlyArray<EventsRuleRow>,
             rowIds: ReadonlyArray<string>
         ): { effects: Map<string, RuleEffects>; failures: Map<string, Error> } // rowId → effects, rowId → why it failed
+        evaluateInBackground?( // `evaluate` in a Web Worker: the first `done` of `rowIds`, those it got to in `forMs`
+            rows: ReadonlyArray<EventsRuleRow>,
+            rowIds: ReadonlyArray<string>,
+            forMs: number
+        ): Promise<{ evaluation: { effects; failures }; done: number } | undefined> | undefined
         rowsAffectedBy(rows: ReadonlyArray<EventsRuleRow>, rowId: string, fieldId: string): string[]
         evaluateEnrollments?(
             units: ReadonlyArray<{ enrollment: RuleEnrollmentInput; events: ReadonlyArray<RuleEventInput> }>
@@ -245,6 +250,15 @@ const fresh = rules?.evaluate(rows, stale)
   effects. In a tracker program whose rules read the enrollment or other events, a row whose person is never put in
   `enrollmentIds` is never evaluated. A tracker row sees its person's other events: the server's, each replaced by its
   live row, plus the live rows the server lacks (unsaved ones). The row itself is never one of its own `otherEvents`.
+- `evaluateInBackground` runs the same rules in a Web Worker, so a grid loading many rows leaves the main thread free
+  to type and scroll. The worker holds its own copy of the engine, started once a program is known to have rules, and
+  the same rules and people. It evaluates the first of `rowIds` it gets to in `forMs` (a row at least) and resolves to
+  their evaluation and `done`, how many of `rowIds` that covers. Rows and effects are copied to the worker and back,
+  so the answer describes `rows` as they were when asked: evaluate again the rows that changed meanwhile. A row among
+  the `done` in neither map is one `evaluate` answers without running a rule (not in `rows`, a stage not asked for, a
+  person loading or missing): ask `evaluate` for it. It returns `undefined` while the worker starts and where there is
+  none (no `Worker`, or a content security policy that refuses it), and resolves to `undefined` when the worker
+  failed, which also stops it for good: use `evaluate` then. Enrolment rules always run on the main thread.
 - `rowsAffectedBy` returns the row itself and, when the field is one that other events' rules read (a newest-event or
   previous-event variable), the person's other rows. It covers data value edits. When a row's event date changes, or a
   row is added or removed, re-evaluate every row of that person: which event is newest or previous changes. A deleted

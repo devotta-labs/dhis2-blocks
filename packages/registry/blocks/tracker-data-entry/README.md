@@ -253,7 +253,9 @@ its type refused is dropped. A rule never changes the cell being typed in; it do
 a row; if they cannot be loaded, the summary says so and nothing completes.
 
 On load the rows in view are evaluated first, for about 100 ms, and the rest about 16 ms at a time when the browser is
-idle. An edit re-runs its row, and every row of that person when other events read the field or the event date changed,
+idle. Once the rules' Web Worker has started, the rest are evaluated there instead, some rows at a time, and the main
+thread only applies what they say; a row changed meanwhile is evaluated again on the main thread, and without a worker
+every row is. An edit re-runs its row, and every row of that person when other events read the field or the event date changed,
 once the browser has shown the edit, so typing never waits for rules; completing a row runs them first.
 The `performance` measures `data-entry:rules` (the first slice) and `data-entry:rules-edit` (each edit) time them.
 

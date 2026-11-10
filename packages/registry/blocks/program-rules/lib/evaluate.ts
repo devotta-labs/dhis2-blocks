@@ -24,6 +24,11 @@ const MESSAGE_KINDS = new Map<string, RuleMessage['kind']>([
     ['WARNINGONCOMPLETE', 'warningOnComplete'],
 ])
 
+const subsetContexts = new WeakMap<
+    RuleContext,
+    Map<string, Engine.RuleEngineContextJs>
+>()
+
 /** Effects with nothing in them: what a row gets when no rule acts on it. */
 export const emptyEffects = (): RuleEffects => ({
     hiddenFields: new Map(),
@@ -172,21 +177,61 @@ const sortEffects = (
     return effects
 }
 
+/** Runs the selected rules for one event and returns their raw effects. */
+export const evaluateEventRuleEffects = (
+    engine: RuleEngineModule,
+    context: RuleContext,
+    input: EventRuleInput,
+    ruleIds: ReadonlySet<string>
+): Engine.RuleEffectJs[] => {
+    const built = buildEngineInput(engine, context, input)
+    const orderedRuleIds = [...context.graph.rules.keys()]
+    const rules = context.rules.filter((_rule, index) =>
+        ruleIds.has(orderedRuleIds[index] ?? '')
+    )
+    if (rules.length === context.rules.length) {
+        return context.engine.evaluateEvent(
+            built.event,
+            built.enrollment,
+            built.otherEvents,
+            context.engineContext
+        )
+    }
+    const key = orderedRuleIds.filter((id) => ruleIds.has(id)).join('\u0000')
+    let contexts = subsetContexts.get(context)
+    if (contexts === undefined) {
+        contexts = new Map()
+        subsetContexts.set(context, contexts)
+    }
+    let engineContext = contexts.get(key)
+    if (engineContext === undefined) {
+        engineContext = context.engineContext.copy(rules)
+        contexts.set(key, engineContext)
+    }
+    return context.engine.evaluateEvent(
+        built.event,
+        built.enrollment,
+        built.otherEvents,
+        engineContext
+    )
+}
+
+/** Sorts raw engine effects according to the block's action and attribution rules. */
+export const sortEventRuleEffects = (
+    context: RuleContext,
+    raw: ReadonlyArray<Engine.RuleEffectJs>
+): RuleEffects => sortEffects(context, raw)
+
 /** Runs every rule for one event and sorts the effects by what they do. Pure. */
 export const evaluateEventRules = (
     engine: RuleEngineModule,
     context: RuleContext,
     input: EventRuleInput
 ): RuleEffects => {
-    const built = buildEngineInput(engine, context, input)
-    return sortEffects(
+    const allRuleIds = new Set(context.graph.rules.keys())
+    return sortEventRuleEffects(
         context,
-        context.engine.evaluateEvent(
-            built.event,
-            built.enrollment,
-            built.otherEvents,
-            context.engineContext
-        )
+        evaluateEventRuleEffects(engine, context, input, allRuleIds)
     )
 }
 

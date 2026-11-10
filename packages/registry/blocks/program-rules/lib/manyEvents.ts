@@ -1,6 +1,11 @@
+import type * as Engine from '@dhis2/rule-engine'
 import i18n from '@dhis2/d2-i18n'
 import { Result } from 'better-result'
-import { evaluateEventRules } from './evaluate'
+import {
+    evaluateEventRuleEffects,
+    evaluateEventRules,
+    sortEventRuleEffects,
+} from './evaluate'
 import type {
     EventRuleInput,
     ProgramRulesMetadata,
@@ -44,6 +49,17 @@ export interface EventsRulesEvaluation {
     /** rowId → why the engine could not run the row's rules */
     failures: Map<string, Error>
 }
+
+interface CachedRowEffects {
+    context: RuleContext
+    byRule: Map<string, Engine.RuleEffectJs[]>
+}
+
+type RowRuleEvaluator = (
+    rowId: string,
+    context: RuleContext,
+    input: EventRuleInput
+) => RuleEffects
 
 /** The variable source types that read a value from another event. */
 const CROSS_EVENT_SOURCES = new Set([
@@ -145,11 +161,12 @@ export const indexRows = (rows: ReadonlyArray<EventsRuleRow>): RowIndex => {
  * `contexts` is keyed by program stage id; a row of a stage without a context, or an id that is not in `input.rows`, is
  * in neither map. `input.rows` is indexed once per array: pass a new array when the rows change.
  */
-export const evaluateEventsRules = (
+const evaluateEventsRulesWith = (
     engine: RuleEngineModule,
     contexts: ReadonlyMap<string, RuleContext>,
     input: EventsRuleInput,
-    rowIds: ReadonlyArray<string>
+    rowIds: ReadonlyArray<string>,
+    evaluate: RowRuleEvaluator
 ): EventsRulesEvaluation => {
     const { byId: rows, byPerson: rowsOfPerson } = indexRows(input.rows)
     const effects = new Map<string, RuleEffects>()
@@ -196,7 +213,7 @@ export const evaluateEventsRules = (
               }
             : { event: row.event, otherEvents: [] }
         const evaluation = Result.try({
-            try: () => evaluateEventRules(engine, context, ruleInput),
+            try: () => evaluate(rowId, context, ruleInput),
             catch: (cause) =>
                 cause instanceof Error ? cause : new Error(String(cause)),
         })
@@ -207,4 +224,113 @@ export const evaluateEventsRules = (
         }
     }
     return { effects, failures }
+}
+
+export const evaluateEventsRules = (
+    engine: RuleEngineModule,
+    contexts: ReadonlyMap<string, RuleContext>,
+    input: EventsRuleInput,
+    rowIds: ReadonlyArray<string>
+): EventsRulesEvaluation =>
+    evaluateEventsRulesWith(
+        engine,
+        contexts,
+        input,
+        rowIds,
+        (_rowId, context, ruleInput) =>
+            evaluateEventRules(engine, context, ruleInput)
+    )
+
+const rulesForFields = (
+    context: RuleContext,
+    fields: ReadonlyArray<string>
+): Set<string> => {
+    const ids = [...context.graph.rules.keys()]
+    const positions = new Map(ids.map((id, index) => [id, index]))
+    const selected = new Set(context.graph.alwaysRun)
+    for (const field of fields) {
+        context.graph.fieldReaders.get(field)?.forEach((id) => selected.add(id))
+    }
+
+    const visited = new Set<string>()
+    const includeVariableInputs = (id: string) => {
+        if (visited.has(id)) return
+        visited.add(id)
+        const position = positions.get(id)
+        const dependencies = context.graph.rules.get(id)
+        if (position === undefined || dependencies === undefined) return
+        const needed = new Set(dependencies.readsVariables)
+        for (let index = position - 1; index >= 0; index -= 1) {
+            const earlierId = ids[index]
+            if (earlierId === undefined) continue
+            const earlier = context.graph.rules.get(earlierId)
+            if (
+                earlier === undefined ||
+                !earlier.writesVariables.some((name) => needed.has(name))
+            ) {
+                continue
+            }
+            selected.add(earlierId)
+            earlier.readsVariables.forEach((name) => needed.add(name))
+            includeVariableInputs(earlierId)
+        }
+    }
+    for (const id of selected) includeVariableInputs(id)
+    return selected
+}
+
+/** Creates a stateful evaluator that re-runs only rules indexed for edited fields. */
+export const createEventsRuleEvaluator = (
+    engine: RuleEngineModule,
+    contexts: ReadonlyMap<string, RuleContext>
+) => {
+    const previous = new Map<string, CachedRowEffects>()
+    return (
+        input: EventsRuleInput,
+        rowIds: ReadonlyArray<string>,
+        changedFields?: ReadonlyArray<string>
+    ): EventsRulesEvaluation =>
+        evaluateEventsRulesWith(
+            engine,
+            contexts,
+            input,
+            rowIds,
+            (rowId, context, ruleInput) => {
+                const cached = previous.get(rowId)
+                const incremental =
+                    changedFields !== undefined && cached?.context === context
+                const selected = incremental
+                    ? rulesForFields(context, changedFields)
+                    : new Set(context.graph.rules.keys())
+                const byRule = incremental
+                    ? new Map(cached.byRule)
+                    : new Map<string, Engine.RuleEffectJs[]>()
+                try {
+                    const raw = evaluateEventRuleEffects(
+                        engine,
+                        context,
+                        ruleInput,
+                        selected
+                    )
+                    for (const id of selected) byRule.delete(id)
+                    for (const effect of raw) {
+                        const id =
+                            effect.ruleAction.values.get('ruleId') ??
+                            effect.ruleId
+                        if (!selected.has(id)) continue
+                        const effects = byRule.get(id) ?? []
+                        effects.push(effect)
+                        byRule.set(id, effects)
+                    }
+                    previous.set(rowId, { context, byRule })
+                    const combined = [...context.graph.rules.keys()].flatMap(
+                        (id) => byRule.get(id) ?? []
+                    )
+                    return sortEventRuleEffects(context, combined)
+                } catch (error) {
+                    previous.delete(rowId)
+                    throw error
+                }
+            }
+        )
 }

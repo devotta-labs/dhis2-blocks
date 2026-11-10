@@ -20,3 +20,15 @@ export {
     TrackedEntityName,
     type TrackedEntityNameProps,
 } from './parts/TrackedEntityName'
+export {
+    TrackedEntityEnrollment,
+    type TrackedEntityEnrollmentProps,
+} from './parts/TrackedEntityEnrollment'
+export {
+    TrackedEntityOwner,
+    type TrackedEntityOwnerProps,
+} from './parts/TrackedEntityOwner'
+export {
+    TrackedEntityStatus,
+    type TrackedEntityStatusProps,
+} from './parts/TrackedEntityStatus'

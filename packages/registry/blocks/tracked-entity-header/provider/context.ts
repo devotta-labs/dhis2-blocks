@@ -1,5 +1,6 @@
 import type { Dhis2Calendar } from '@/components/dhis2-value-display'
 import { createContext, useContext } from 'react'
+import type { TrackedEntityHeaderResourceClient } from '../api/client'
 import type { AttributeMetadata, TrackedEntityRecord } from '../api/types'
 
 export type TrackedEntityHeaderState =
@@ -13,6 +14,9 @@ export type TrackedEntityHeaderState =
 
 export interface HeaderContextValue {
     state: TrackedEntityHeaderState
+    /** The request runner and cache id the provider uses, for parts with a request of their own. */
+    resourceClient: TrackedEntityHeaderResourceClient
+    clientId: number
     /** The trimmed program, when there is one. */
     program?: string
     display: { calendar: Dhis2Calendar; locale?: string }

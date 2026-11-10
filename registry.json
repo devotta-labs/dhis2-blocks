@@ -2015,9 +2015,11 @@
                 "zod@^4.4.3"
             ],
             "registryDependencies": [
+                "devotta-labs/dhis2-blocks/badge",
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
-                "devotta-labs/dhis2-blocks/dhis2-value-display"
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/skeleton"
             ],
             "files": [
                 {
@@ -2081,9 +2083,24 @@
                     "target": "@components/tracked-entity-header/parts/TrackedEntityBorn.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityEnrollment.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityEnrollment.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityName.tsx",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-header/parts/TrackedEntityName.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityOwner.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityOwner.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityStatus.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityStatus.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/tracked-entity-header/parts/useAttributeValue.ts",

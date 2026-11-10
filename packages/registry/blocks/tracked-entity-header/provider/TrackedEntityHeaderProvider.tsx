@@ -185,6 +185,8 @@ const HeaderScope = ({
     const value = useMemo<HeaderContextValue>(
         () => ({
             state,
+            resourceClient,
+            clientId,
             program: progId,
             display,
             logProblem,
@@ -193,7 +195,17 @@ const HeaderScope = ({
             nameId,
             setNameId,
         }),
-        [state, progId, display, logProblem, placeAttribute, placed, nameId]
+        [
+            state,
+            resourceClient,
+            clientId,
+            progId,
+            display,
+            logProblem,
+            placeAttribute,
+            placed,
+            nameId,
+        ]
     )
 
     return (

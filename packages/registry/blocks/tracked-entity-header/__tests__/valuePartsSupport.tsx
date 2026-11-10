@@ -6,7 +6,11 @@ import childProgram from '../api/__fixtures__/program.child.json'
 import rmnchPerson from '../api/__fixtures__/trackedEntity.rmnch.json'
 import rmnchProgram from '../api/__fixtures__/program.rmnch.json'
 import personType from '../api/__fixtures__/trackedEntityType.person.json'
-import { createTrackedEntityHeaderClient } from '../api/client'
+import orgUnit from '../api/__fixtures__/organisationUnit.json'
+import {
+    createTrackedEntityHeaderClient,
+    type ResourceRequest,
+} from '../api/client'
 import { TrackedEntityHeaderProvider } from '../provider/TrackedEntityHeaderProvider'
 import { CHILD, createWrapper, RMNCH } from './headerTestSupport'
 
@@ -21,14 +25,21 @@ interface RawAttribute {
     attribute: string
     value?: string
 }
+interface RawEnrollment {
+    status: string
+    enrolledAt?: string
+    completedAt?: string
+}
 interface RawMetaAttribute {
     trackedEntityAttribute: { id: string; optionSet?: unknown }
 }
 /** The parts of a recorded response the tests edit. */
 export interface RawPerson {
     attributes: RawAttribute[]
-    enrollments: unknown[]
+    enrollments: RawEnrollment[]
     trackedEntity?: string
+    inactive?: boolean
+    potentialDuplicate?: boolean
 }
 export interface RawProgram {
     programTrackedEntityAttributes: RawMetaAttribute[]
@@ -46,17 +57,35 @@ export const renderParts = async (
         status = 'ready',
         person = (raw) => raw,
         metadata = (raw) => raw,
+        orgUnitStatus = 'ready',
+        requests = [],
     }: {
         program?: string | null
         status?: Status
         person?: Edit<RawPerson>
         metadata?: Edit<RawProgram>
+        /** The organisation unit request: answered, never answered, or failed. */
+        orgUnitStatus?: 'ready' | 'loading' | 'failed'
+        /** Collects every request the client made. */
+        requests?: ResourceRequest[]
     } = {}
 ) => {
     const isChild = program === CHILD
     const client = createTrackedEntityHeaderClient({
         query: async (query) => {
             const [[key, request]] = Object.entries(query)
+            requests.push(request)
+            if (request.resource === 'organisationUnits') {
+                if (orgUnitStatus === 'loading') {
+                    return new Promise(() => {})
+                }
+                if (orgUnitStatus === 'failed') {
+                    throw Object.assign(new Error('no'), {
+                        httpStatusCode: 500,
+                    })
+                }
+                return { [key]: orgUnit }
+            }
             if (request.resource === 'programs') {
                 return {
                     [key]: z

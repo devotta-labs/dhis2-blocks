@@ -19,13 +19,12 @@ const InputField = () => {
                 <FieldLabel htmlFor="first-name">First name</FieldLabel>
                 <Input id="first-name" placeholder="For example, Aminata" />
             </Field>
-            <Field data-invalid={invalid}>
+            <Field invalid={invalid}>
                 <FieldLabel htmlFor="age">Age in years</FieldLabel>
                 <Input
                     id="age"
                     type="number"
                     value={age}
-                    aria-invalid={invalid}
                     onChange={(event) => setAge(event.target.value)}
                 />
                 <FieldDescription>

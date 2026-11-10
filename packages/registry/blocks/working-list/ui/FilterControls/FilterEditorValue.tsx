@@ -373,6 +373,7 @@ export const EditorValue = ({
                           count: minimumCharacters,
                       })
             }
+            // oxlint-disable-next-line jsx-a11y/no-autofocus -- the popover opens to edit this value, so focus starts in it as in a dialog
             autoFocus
             value={text}
             minLength={minimumCharacters}
@@ -395,8 +396,7 @@ const ValueInput = ({
     const id = React.useId()
     const descriptionId = `${id}-description`
     return (
-        // One labelled input needs no group around it.
-        <Field role="none" className="gap-[5px]">
+        <Field className="gap-[5px]">
             <FieldLabel
                 htmlFor={id}
                 className="text-xs font-medium text-dhis2-muted-foreground"

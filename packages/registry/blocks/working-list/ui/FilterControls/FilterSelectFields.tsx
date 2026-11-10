@@ -129,10 +129,7 @@ export const ComboboxField = ({
             />
             <ComboboxEmpty>
                 {loading ? (
-                    <Spinner
-                        aria-label={i18n.t('Loading')}
-                        className="size-4"
-                    />
+                    <Spinner label={i18n.t('Loading')} className="size-4" />
                 ) : (
                     noMatchText
                 )}
@@ -141,10 +138,7 @@ export const ComboboxField = ({
                 resolves, so show that it is still loading above them. */}
             {loading && items.length > 0 && (
                 <div className="flex justify-center px-6 py-2">
-                    <Spinner
-                        aria-label={i18n.t('Loading')}
-                        className="size-4"
-                    />
+                    <Spinner label={i18n.t('Loading')} className="size-4" />
                 </div>
             )}
             <ComboboxList>

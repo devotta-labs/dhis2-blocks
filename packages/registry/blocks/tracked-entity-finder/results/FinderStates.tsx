@@ -33,7 +33,7 @@ export function FinderSearching({
         >
             {children ?? (
                 <>
-                    <Spinner aria-hidden />
+                    <Spinner />
                     {i18n.t('Searching…')}
                 </>
             )}

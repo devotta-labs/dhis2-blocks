@@ -1,6 +1,10 @@
 import React, { useCallback } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
-import { FieldDescription, FieldError } from '@/components/dhis2/ui/field'
+import {
+    Field,
+    FieldDescription,
+    FieldError,
+} from '@/components/dhis2/ui/field'
 import { CalendarDateInput } from '../../calendar/CalendarDateInput'
 import { useFinderContext } from '../../provider/context'
 import type { FieldInputProps } from './types'
@@ -25,9 +29,9 @@ export const DateInput = ({
         return null
     }
     return (
-        <div
-            data-invalid={error ? true : undefined}
-            className={cn('flex flex-col gap-1', className)}
+        <Field
+            invalid={error !== undefined}
+            className={cn('gap-1', className)}
             // Blur bubbles in React, so leaving the calendar's input counts.
             onBlur={onBlur}
         >
@@ -40,6 +44,6 @@ export const DateInput = ({
             />
             {description && <FieldDescription>{description}</FieldDescription>}
             {error && <FieldError>{error}</FieldError>}
-        </div>
+        </Field>
     )
 }

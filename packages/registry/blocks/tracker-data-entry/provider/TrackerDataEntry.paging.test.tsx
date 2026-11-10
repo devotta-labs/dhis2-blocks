@@ -40,6 +40,7 @@ import {
 } from './__tests__/rmnchRig'
 import type { FixtureEvent } from './__tests__/rmnchRig'
 import { signedInAsOther } from './signedIn'
+import { liveRegion } from '../../../test/liveRegion'
 
 afterEach(cleanUp)
 beforeEach(() => performance.clearMeasures('data-entry:rules'))
@@ -179,8 +180,8 @@ test('a page that cannot be loaded is said and shown beside the button, which st
     const { view, context } = await mount(source)
     await userEvent.click(showMore())
     await expect
-        .element(page.getByRole('status'))
-        .toHaveTextContent('The connection dropped')
+        .poll(() => liveRegion('assertive').textContent)
+        .toBe('The connection dropped')
     await expect.element(showMore()).toHaveAttribute('aria-disabled', 'false')
     await expect.element(showMore()).toHaveFocus()
     expect(context().tables[0].rows).toHaveLength(2)

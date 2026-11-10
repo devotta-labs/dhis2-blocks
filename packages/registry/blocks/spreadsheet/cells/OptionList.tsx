@@ -39,6 +39,7 @@ export const OptionList = ({
     }, [active])
     return (
         // Focus stays in the cell, which saves the pick, whatever part of the list is pressed.
+        // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- keeps focus in the cell when the list is pressed
         <div
             onMouseDown={(event) => event.preventDefault()}
             className={cn(
@@ -56,6 +57,7 @@ export const OptionList = ({
                     className="max-h-64 overflow-y-auto overscroll-contain"
                 >
                     {codes.map((code, index) => (
+                        // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus -- focus stays in the cell, which moves the active option with aria-activedescendant and picks with Enter
                         <div
                             key={code}
                             id={optionId(code)}

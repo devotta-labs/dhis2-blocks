@@ -82,16 +82,15 @@ export const Targets = () => {
 ## API
 
 ```ts
-Spreadsheet({ cells, annotations, tables, settings, keyOf?, rowKeysOf?, idScope?, overrides?, addRow?, orgUnitNames?, fileNames?, offline?, fileUrl?, announcer?, RowLabel?, RowBadge?, GridFooter?, bulkColumn?, confirmBulk?, children }) // the provider; renders the one polite live region after its children
+Spreadsheet({ cells, annotations, tables, settings, keyOf?, rowKeysOf?, idScope?, overrides?, addRow?, orgUnitNames?, fileNames?, offline?, fileUrl?, announcer?, RowLabel?, RowBadge?, GridFooter?, bulkColumn?, confirmBulk?, children }) // the provider
 SpreadsheetGrid({ tableId?, className? }) // every table, or one of them
 Cell({ cellKey, field, labelledBy, move }) // one bound control with its notes and markers, for your own layouts
 cells: Record<CellKind, CellComponent> // the default control per kind of field
 useCell(cellKey): CellView // one cell's value, draft, error, sync state and annotations, and commit(text) to save it
 useRowCells(keys) // the states and annotations of a row's cells, in the order of keys
-useAnnounce(): (text: string) => void // says an outcome in the live region
+useAnnounce(): (text: string, politeness?: 'polite' | 'assertive') => void // says an outcome through the shared announcer
 useFocusCell(): (key: CellKey) => void // focuses a cell, drawing its row first when the grid has scrolled past it
 createCellStore(options): StoreApi<CellStoreState> // the cells' values and states
-createAnnouncer(): Announcer // an announcer to pass to Spreadsheet, for code outside the grid that says outcomes too
 cellKey(rowId, fieldId): CellKey // `<row id>.<column id>`; a row id contains no dot
 ```
 
@@ -196,7 +195,7 @@ changes.
 - `fileUrl(key, image)`: where the server serves the file a cell's saved value names (`image` for an image cell), or
   `undefined`. Without it, file and image cells show the file's name only: no preview and no "Download".
 - `idScope`: starts every DOM id of the grid, so two grids on one page never share one; a generated one by default.
-- `announcer`: made with `createAnnouncer()`, for code outside the grid that says outcomes through the same live region.
+- `announcer`: how the grid says outcomes; the shared `announce` from `@/components/dhis2/ui/announcer` by default, which code outside the grid uses too. Failures are said `'assertive'`.
 
 ## Saving
 

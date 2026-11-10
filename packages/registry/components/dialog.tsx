@@ -62,7 +62,7 @@ function DialogOverlay({
 
 /** The @dhis2/ui Modal card, shared with AlertDialogContent. */
 const dialogContentVariants = cva(
-    'fixed left-1/2 flex max-h-[calc(100vh-128px)] max-w-[calc(100vw-128px)] -translate-x-1/2 flex-col rounded-dhis2-sm bg-dhis2-background p-6 text-dhis2-foreground shadow-dhis2-card outline-none forced-colors:border',
+    'fixed left-1/2 flex max-h-[calc(100vh-128px)] overflow-y-auto max-w-[calc(100vw-128px)] -translate-x-1/2 flex-col rounded-dhis2-sm bg-dhis2-background p-6 text-dhis2-foreground shadow-dhis2-card outline-none forced-colors:border',
     {
         variants: {
             size: {
@@ -113,7 +113,7 @@ function DialogContent({
                     <DialogPrimitive.Close
                         data-slot="dialog-close"
                         aria-label={closeLabel}
-                        className="absolute end-0 top-0 flex cursor-pointer rounded-dhis2-sm border-0 bg-transparent px-1 pt-1 pb-0 text-dhis2-muted-foreground outline-none hover:bg-dhis2-accent hover:text-dhis2-foreground focus-visible:bg-dhis2-accent focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-dhis2-ring active:bg-dhis2-accent-strong [&_svg]:fill-current"
+                        className="absolute end-0 top-0 flex size-6 cursor-pointer items-center justify-center rounded-dhis2-sm border-0 bg-transparent p-0 text-dhis2-muted-foreground outline-none hover:bg-dhis2-accent hover:text-dhis2-foreground focus-visible:bg-dhis2-accent focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-dhis2-ring active:bg-dhis2-accent-strong [&_svg]:fill-current"
                     >
                         <IconCross16 />
                     </DialogPrimitive.Close>

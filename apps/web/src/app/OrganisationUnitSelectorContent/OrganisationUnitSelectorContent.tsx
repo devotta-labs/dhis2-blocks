@@ -143,15 +143,12 @@ const OrganisationUnitSearchPagination = ({
                 data-test="org-unit-search-load-more"
                 onClick={onSearchLoadMore}
                 disabled={searchLoadingMore}
+                focusableWhenDisabled
             >
                 {searchLoadingMore && (
-                    <Spinner
-                        aria-label={i18n.t('Loading')}
-                        data-icon="inline-start"
-                        className="size-4"
-                    />
+                    <Spinner data-icon="inline-start" className="size-4" />
                 )}
-                {i18n.t('Show more')}
+                {searchLoadingMore ? i18n.t('Loading…') : i18n.t('Show more')}
             </Button>
         </div>
     )
@@ -178,10 +175,7 @@ const OrganisationUnitSearchResults = ({
 >) => {
     if (searchLoading) {
         return (
-            <Spinner
-                aria-label={i18n.t('Loading')}
-                className="size-12 border-6"
-            />
+            <Spinner label={i18n.t('Loading')} className="size-12 border-6" />
         )
     }
 

@@ -36,7 +36,7 @@ export const ContextStatus = ({
                 aria-live="polite"
             >
                 <Spinner
-                    aria-label={i18n.t('Loading')}
+                    label={i18n.t('Loading')}
                     className="size-6 border-4"
                 />
                 <p>{i18n.t('Loading tracker programs…')}</p>

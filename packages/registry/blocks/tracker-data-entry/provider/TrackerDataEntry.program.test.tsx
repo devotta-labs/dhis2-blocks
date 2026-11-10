@@ -25,6 +25,7 @@ import {
     visitForm,
     withOutbox,
 } from './__tests__/rig'
+import { liveRegion } from '../../../test/liveRegion'
 
 afterEach(cleanUp)
 
@@ -186,7 +187,7 @@ test('“All changes saved” is said only once nothing of the program is left o
     })
     const memory = memorySource(visitForm())
     const { context } = await mount(memory.source, { server })
-    const region = page.getByRole('status').element()
+    const region = liveRegion()
     const said: string[] = []
     new MutationObserver(() => said.push(region.textContent ?? '')).observe(
         region,

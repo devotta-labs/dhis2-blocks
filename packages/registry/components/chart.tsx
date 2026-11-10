@@ -49,9 +49,12 @@ function ChartContainer({
     children,
     config,
     initialDimension = INITIAL_DIMENSION,
+    summary,
     ...props
 }: React.ComponentProps<'div'> & {
     config: ChartConfig
+    /** What the chart shows, in words, for screen reader users. */
+    summary?: string
     children: React.ComponentProps<
         typeof RechartsPrimitive.ResponsiveContainer
     >['children']
@@ -70,12 +73,15 @@ function ChartContainer({
                 data-chart={chartId}
                 className={cn(
                     // colour-literal: recharts' default stroke and fill values, matched as attribute selectors, not colours
-                    "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-dhis2-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-dhis2-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-dhis2-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-dhis2-border [&_.recharts-radial-bar-background-sector]:fill-dhis2-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-dhis2-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-dhis2-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
+                    "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-dhis2-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-dhis2-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-dhis2-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-dhis2-border [&_.recharts-radial-bar-background-sector]:fill-dhis2-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-dhis2-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-dhis2-border [&_.recharts-sector[stroke='#fff']]:stroke-transparent",
                     className
                 )}
                 {...props}
             >
                 <ChartStyle id={chartId} config={config} />
+                {summary === undefined ? null : (
+                    <p className="sr-only">{summary}</p>
+                )}
                 <RechartsPrimitive.ResponsiveContainer
                     initialDimension={initialDimension}
                 >

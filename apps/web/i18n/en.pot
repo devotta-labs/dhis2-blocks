@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-11-10T09:52:28.302Z\n"
-"PO-Revision-Date: 2026-11-10T09:52:28.302Z\n"
+"POT-Creation-Date: 2026-11-10T10:19:20.121Z\n"
+"PO-Revision-Date: 2026-11-10T10:19:20.121Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -129,6 +129,9 @@ msgstr "Reload application"
 
 msgid "Could not load more organisation units"
 msgstr "Could not load more organisation units"
+
+msgid "Loading…"
+msgstr "Loading…"
 
 msgid "Show more"
 msgstr "Show more"
@@ -685,11 +688,11 @@ msgid_plural "{{count}} notes"
 msgstr[0] "{{count}} notes"
 msgstr[1] "{{count}} notes"
 
-msgid "Loading changes"
-msgstr "Loading changes"
-
 msgid "Changes aren't available on this DHIS2 version."
 msgstr "Changes aren't available on this DHIS2 version."
+
+msgid "Loading changes"
+msgstr "Loading changes"
 
 msgid "Couldn't load changes."
 msgstr "Couldn't load changes."
@@ -1320,6 +1323,9 @@ msgstr "Save as new working list"
 
 msgid "Name"
 msgstr "Name"
+
+msgid "Saving…"
+msgstr "Saving…"
 
 msgid ""
 "You are offline. Cached results remain available; server actions are "

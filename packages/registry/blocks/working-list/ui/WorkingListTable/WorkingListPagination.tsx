@@ -88,6 +88,7 @@ export const WorkingListPagination = ({
                     className="ps-0"
                     data-test="working-list-pagination-page-previous"
                     disabled={disabled || page <= 1}
+                    focusableWhenDisabled
                     onClick={() => onPageChange(page - 1)}
                 >
                     <span className="flex rtl:rotate-180">
@@ -101,6 +102,7 @@ export const WorkingListPagination = ({
                     className="pe-0"
                     data-test="working-list-pagination-page-next"
                     disabled={disabled || !hasNextPage}
+                    focusableWhenDisabled
                     onClick={() => onPageChange(page + 1)}
                 >
                     {i18n.t('Next')}

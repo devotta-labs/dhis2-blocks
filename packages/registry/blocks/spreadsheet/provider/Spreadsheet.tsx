@@ -1,8 +1,8 @@
 import { useCallback, useId, useMemo, useState } from 'react'
 import type { ComponentType, ReactNode } from 'react'
-import { useStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
+import { announce as sharedAnnounce } from '@/components/dhis2/ui/announcer'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { cellDomId } from '../cells/cellProps'
 import type { CellOverrides } from '../cells/cellProps'
@@ -10,11 +10,7 @@ import type { AnnotationsState } from '../model/annotations'
 import { cellKey } from '../model/types'
 import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
 import type { CellStoreState } from '../store/store'
-import {
-    createAnnouncer,
-    SpreadsheetReactContext,
-    useSpreadsheetContext,
-} from './context'
+import { SpreadsheetReactContext } from './context'
 import type { Announcer, ReadonlyStore, SpreadsheetContext } from './context'
 
 type Names = SpreadsheetContext['orgUnitNames']
@@ -42,7 +38,7 @@ interface SpreadsheetProps<R extends GridRow, C extends GridColumn> {
     /** Whether the server cannot be reached now: files cannot be uploaded. */
     offline?: boolean
     fileUrl?: SpreadsheetContext['fileUrl']
-    /** The live region's announcer, for a consumer that also says outcomes from outside; one of its own by default. */
+    /** Says the grid's outcomes to screen reader users; the shared `announce` by default. */
     announcer?: Announcer
     RowLabel?: ComponentType<{ row: R }>
     RowBadge?: SpreadsheetContext['RowBadge']
@@ -60,20 +56,9 @@ const names = (): Names =>
         names: new Map(),
     }))
 
-/** The one polite live region, saying what `announce` was given. */
-const LiveRegion = () => {
-    const { announcements } = useSpreadsheetContext()
-    const text = useStore(announcements, (state) => state.text)
-    return (
-        <div role="status" className="sr-only">
-            {text}
-        </div>
-    )
-}
-
 /**
  * What the grid and its cells read: the cell store, what logic says about each cell, the tables and how their cells
- * are keyed, and the one polite live region, rendered after `children`.
+ * are keyed, and how outcomes are announced.
  */
 export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
     cells,
@@ -100,12 +85,11 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
     const id = useId()
     const ownScope = `spreadsheet-${id.replaceAll(':', '')}`
     const [own] = useState(() => ({
-        announcer: createAnnouncer(),
         orgUnitNames: names(),
         fileNames: names(),
         focusing: createStore<{ key?: CellKey }>()(() => ({})),
     }))
-    const { announce, announcements } = announcer ?? own.announcer
+    const announce = announcer?.announce ?? sharedAnnounce
     const scope = idScope ?? ownScope
     const focusCell = useCallback(
         (key: CellKey) => {
@@ -125,7 +109,6 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
             idScope: scope,
             settings,
             announce,
-            announcements,
             focusCell,
             focusing: own.focusing,
             tables,
@@ -151,7 +134,6 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
             scope,
             settings,
             announce,
-            announcements,
             focusCell,
             tables,
             keyOf,
@@ -173,7 +155,6 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
     return (
         <SpreadsheetReactContext.Provider value={context}>
             {children}
-            <LiveRegion />
         </SpreadsheetReactContext.Provider>
     )
 }

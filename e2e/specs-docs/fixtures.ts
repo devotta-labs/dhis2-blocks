@@ -43,8 +43,9 @@ const isAbortedBootstrapRead = (diagnostic: BrowserDiagnostic) =>
     diagnostic.method === 'GET' &&
     bootstrapApiPath.test(urlPath(diagnostic.url) ?? '')
 
-// The data entry specs run program rules; no other spec does.
-const DATA_ENTRY_SPEC = /tracker-data-entry-[^/]*\.spec\.ts$/
+// The data entry specs run program rules, and so does the accessibility scan of
+// the data entry examples; no other spec does.
+const DATA_ENTRY_SPEC = /(?:tracker-data-entry-[^/]*|accessibility)\.spec\.ts$/
 
 const isKnownBenignDiagnostic = (
     diagnostic: BrowserDiagnostic,

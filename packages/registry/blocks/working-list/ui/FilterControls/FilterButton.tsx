@@ -160,6 +160,7 @@ const FilterEditor = ({
                 apply()
             }}
         >
+            {/* oxlint-disable-next-line jsx-a11y/heading-has-content -- PopoverTitle renders its children into the heading */}
             <PopoverTitle render={<h3 />}>
                 {fieldDisplayName(field)}
             </PopoverTitle>

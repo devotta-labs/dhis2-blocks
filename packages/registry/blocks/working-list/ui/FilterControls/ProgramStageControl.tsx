@@ -74,6 +74,7 @@ export const ProgramStageControl = ({
                         setOpen(false)
                     }}
                 >
+                    {/* oxlint-disable-next-line jsx-a11y/heading-has-content -- PopoverTitle renders its children into the heading */}
                     <PopoverTitle render={<h3 />}>
                         {i18n.t('Program stage')}
                     </PopoverTitle>

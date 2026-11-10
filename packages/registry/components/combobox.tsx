@@ -72,6 +72,7 @@ function ComboboxInput({
     disabled = false,
     showTrigger = true,
     showClear = false,
+    'aria-labelledby': labelledBy,
     ...props
 }: ComboboxPrimitive.Input.Props & {
     showTrigger?: boolean
@@ -83,6 +84,9 @@ function ComboboxInput({
                 render={<InputGroupInput disabled={disabled} />}
                 disabled={disabled}
                 {...props}
+                // Only the caller's: inside a Field, the field's label names the trigger, and a search input in the
+                // popup keeps its own aria-label. An input that is the control is named by the label's `for`.
+                aria-labelledby={labelledBy}
             />
             <InputGroupAddon align="inline-end">
                 {showTrigger && (
@@ -285,13 +289,13 @@ function ComboboxChip({
 }: ComboboxPrimitive.Chip.Props & {
     showRemove?: boolean
     /** Accessible name for the remove button, e.g. "Remove Positive". */
-    removeLabel?: string
+    removeLabel: string
 }) {
     return (
         <ComboboxPrimitive.Chip
             data-slot="combobox-chip"
             className={cn(
-                'inline-flex h-6 w-fit items-center rounded-2xl bg-dhis2-accent text-[13px] leading-[15px] whitespace-nowrap text-dhis2-foreground outline-none has-disabled:pointer-events-none has-disabled:cursor-not-allowed has-disabled:opacity-30',
+                'inline-flex h-6 w-fit items-center rounded-2xl bg-dhis2-accent text-[13px] leading-[15px] whitespace-nowrap text-dhis2-foreground outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-solid focus-visible:outline-dhis2-ring has-disabled:pointer-events-none has-disabled:cursor-not-allowed has-disabled:opacity-30',
                 className
             )}
             {...props}
@@ -300,7 +304,7 @@ function ComboboxChip({
             {showRemove && (
                 <ComboboxPrimitive.ChipRemove
                     aria-label={removeLabel}
-                    className="-ms-2 me-1 flex size-5 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-dhis2-subtle-foreground hover:bg-dhis2-accent-strong [&_svg]:fill-current"
+                    className="-ms-2 me-1 flex size-6 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-dhis2-subtle-foreground hover:bg-dhis2-accent-strong [&_svg]:fill-current"
                     data-slot="combobox-chip-remove"
                 >
                     <svg

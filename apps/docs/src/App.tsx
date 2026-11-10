@@ -117,6 +117,10 @@ const router = createBrowserRouter([
                         './pages/blocks/context-selector.mdx'
                     ),
                     docRoute(
+                        '/blocks/dhis2-value-input',
+                        './pages/blocks/dhis2-value-input.mdx'
+                    ),
+                    docRoute(
                         '/blocks/spreadsheet',
                         './pages/blocks/spreadsheet.mdx'
                     ),
